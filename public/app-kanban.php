@@ -70,12 +70,12 @@ function render_task_card( $task ) {
 				$due_date = get_post_meta( $task->ID, 'duedate', true );
 
 				$relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined</span>';
-				$formatted_due_date = "";
+				$formatted_due_date = '';
 
-				if ( ! empty($due_date)) {
-					$relative_time = esc_html( Decker_Utility_Functions::getRelativeTime( $due_date ) );
-					$formatted_due_date = date( 'd M Y', strtotime( $due_date ) );
-				}
+			if ( ! empty( $due_date ) ) {
+				$relative_time = esc_html( Decker_Utility_Functions::getRelativeTime( $due_date ) );
+				$formatted_due_date = date( 'd M Y', strtotime( $due_date ) );
+			}
 			?>
 			<small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo $relative_time; ?></small>
 
@@ -555,7 +555,7 @@ function() {
 
 								const closestAvatar = element.closest('.card').querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
 								if (closestAvatar) {
-								    closestAvatar.classList.add('today');
+									closestAvatar.classList.add('today');
 								}
 
 							} else {
@@ -591,7 +591,7 @@ function() {
 						
 								const closestAvatar = element.closest('.card').querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
 								if (closestAvatar) {
-								    closestAvatar.classList.remove('today');
+									closestAvatar.classList.remove('today');
 								}
 
 							} else {

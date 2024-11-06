@@ -517,8 +517,8 @@ class Decker_Tasks {
 	/**
 	 * Add a user-date relation for a task.
 	 *
-	 * @param int $task_id The task ID.
-	 * @param int $user_id The user ID.
+	 * @param int    $task_id The task ID.
+	 * @param int    $user_id The user ID.
 	 * @param string $date The date to mark.
 	 */
 	public function add_user_date_relation( $task_id, $user_id, $date ) {

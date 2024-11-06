@@ -14,7 +14,7 @@ $args = array(
 		),
 		array(
 			'key' => 'assigned_users',
-			'value' => sprintf(':"%s";', $current_user_id), // Search in serialized data
+			'value' => sprintf( ':"%s";', $current_user_id ), // Search in serialized data
 			'compare' => 'LIKE',
 		),
 	),
@@ -399,59 +399,59 @@ $show_import_message = ! $today_tasks->have_posts();
 			</thead>
 			<tbody>
 			  <?php
-			  // Obtener tareas de días anteriores
-			  $days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
-			  $previous_dates = array();
-			  for ( $i = 1; $i <= $days_to_load; $i++ ) {
-				  $previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
-			  }
+				// Obtener tareas de días anteriores
+				$days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
+				$previous_dates = array();
+				for ( $i = 1; $i <= $days_to_load; $i++ ) {
+					$previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
+				}
 
-			  $args = array(
-				  'post_type' => 'decker_task',
-				  'meta_query' => array(
-					  array(
-						  'key' => '_user_date_relations',
-						  'value' => implode( ',', $previous_dates ),
-						  'compare' => 'REGEXP',
-					  ),
-					  array(
-						  'key' => 'assigned_users',
-              'value' => sprintf(':"%s";', $current_user_id), // Search in serialized data
-						  'compare' => 'LIKE',
-					  ),
-				  ),
-			  );
-			  $previous_tasks = new WP_Query( $args );
+				$args = array(
+					'post_type' => 'decker_task',
+					'meta_query' => array(
+						array(
+							'key' => '_user_date_relations',
+							'value' => implode( ',', $previous_dates ),
+							'compare' => 'REGEXP',
+						),
+						array(
+							'key' => 'assigned_users',
+							'value' => sprintf( ':"%s";', $current_user_id ), // Search in serialized data
+							'compare' => 'LIKE',
+						),
+					),
+				);
+				$previous_tasks = new WP_Query( $args );
 
-			  if ( $previous_tasks->have_posts() ) :
-				  while ( $previous_tasks->have_posts() ) :
-					  $previous_tasks->the_post();
-					  $board_terms = get_the_terms( get_the_ID(), 'decker_board' );
-					  $board = $board_terms && ! is_wp_error( $board_terms ) ? $board_terms[0]->name : 'No board assigned';
-					  $stack = get_post_meta( get_the_ID(), 'stack', true );
-					  ?>
+				if ( $previous_tasks->have_posts() ) :
+					while ( $previous_tasks->have_posts() ) :
+						$previous_tasks->the_post();
+						$board_terms = get_the_terms( get_the_ID(), 'decker_board' );
+						$board = $board_terms && ! is_wp_error( $board_terms ) ? $board_terms[0]->name : 'No board assigned';
+						$stack = get_post_meta( get_the_ID(), 'stack', true );
+						?>
 					  <tr class="task-row" data-task-id="<?php echo esc_attr( get_the_ID() ); ?>">
 						  <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( get_the_ID() ); ?>"></td>
 						  <td>
 							  <?php
-							  if ( $board_terms && ! is_wp_error( $board_terms ) ) {
-								  foreach ( $board_terms as $term ) {
-									  $color = get_term_meta( $term->term_id, 'term-color', true );
-									  echo '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $term->name ) . '</span> ';
-								  }
-							  } else {
-								  echo 'No board assigned';
-							  }
-							  ?>
+								if ( $board_terms && ! is_wp_error( $board_terms ) ) {
+									foreach ( $board_terms as $term ) {
+										$color = get_term_meta( $term->term_id, 'term-color', true );
+										echo '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $term->name ) . '</span> ';
+									}
+								} else {
+									echo 'No board assigned';
+								}
+								?>
 						  </td>
 						  <td><?php echo esc_html( $stack ); ?></td>
 						  <td><?php the_title(); ?></td>
 					  </tr>
-					  <?php
-				  endwhile;
-				  wp_reset_postdata();
+						<?php
+					endwhile;
+					wp_reset_postdata();
 			  else :
-				  ?>
+					?>
 				  <tr>
 					  <td colspan="4">No hay tareas de días anteriores para importar.</td>
 				  </tr>

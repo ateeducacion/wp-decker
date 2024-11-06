@@ -190,15 +190,15 @@ class Decker_Utility_Functions {
 		$isFuture = $dueDate > $now; // Check if the date is in the future
 
 		if ( $interval->y > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d year%s', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' ) : sprintf( __( 'more than %d year%s ago', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d year%2$s', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d year%2$s ago', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' );
 		} elseif ( $interval->m > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d month%s', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' ) : sprintf( __( 'more than %d month%s ago', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d month%2$s', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d month%2$s ago', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' );
 		} elseif ( $interval->d > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d day%s', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' ) : sprintf( __( 'more than %d day%s ago', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d day%2$s', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d day%2$s ago', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' );
 		} elseif ( $interval->h > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d hour%s', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' ) : sprintf( __( 'more than %d hour%s ago', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d hour%2$s', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d hour%2$s ago', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' );
 		} elseif ( $interval->i > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d minute%s', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' ) : sprintf( __( 'more than %d minute%s ago', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d minute%2$s', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d minute%2$s ago', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' );
 		} else {
 			return $isFuture ? __( 'in a few seconds', 'text-domain' ) : __( 'more than a few seconds ago', 'text-domain' );
 		}

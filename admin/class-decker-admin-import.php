@@ -331,29 +331,33 @@ class Decker_Admin_Import {
 	 * @return array|false|WP_Error The term array, false on failure, or WP_Error on error.
 	 */
 	private function maybe_create_term( $title, $taxonomy, $color ) {
-	    $term = term_exists( $title, $taxonomy );
-	    if ( ! $term ) {
-	        $sanitized_color = '';
-	        if ( $color ) {
-	            $sanitized_color = sanitize_hex_color( strpos($color, '#') === 0 ? $color : '#' . $color );
-	        }
+		$term = term_exists( $title, $taxonomy );
+		if ( ! $term ) {
+			$sanitized_color = '';
+			if ( $color ) {
+				$sanitized_color = sanitize_hex_color( strpos( $color, '#' ) === 0 ? $color : '#' . $color );
+			}
 
-	        $term = wp_insert_term( $title, $taxonomy, array( 
-	            'slug' => sanitize_title( $title )
-	        ) );
+			$term = wp_insert_term(
+				$title,
+				$taxonomy,
+				array(
+					'slug' => sanitize_title( $title ),
+				)
+			);
 
-	        if ( is_wp_error( $term ) ) {
-	            Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	            return $term; // Return the error for better handling
-	        }
+			if ( is_wp_error( $term ) ) {
+				Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+				return $term; // Return the error for better handling
+			}
 
-	        // If term creation is successful, add metadata
-	        if ( $sanitized_color ) {
-	            add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
-	        }
-	    }
+			// If term creation is successful, add metadata
+			if ( $sanitized_color ) {
+				add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
+			}
+		}
 
-	    return $term;
+		return $term;
 	}
 
 
@@ -446,7 +450,7 @@ class Decker_Admin_Import {
 							array(
 								'ID'           => $post_id,
 								'post_title'   => trim( $card['title'] ),
-								'post_content' => $Parsedown->text($card['description']),
+								'post_content' => $Parsedown->text( $card['description'] ),
 							)
 						);
 						Decker_Utility_Functions::write_log( 'Task updated successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
@@ -479,7 +483,7 @@ class Decker_Admin_Import {
 		$post_status = ! empty( $card['archived'] ) && $card['archived'] ? 'archived' : 'publish';
 
 		$Parsedown = new Parsedown();
-		$html_description = $Parsedown->text($card['description']);
+		$html_description = $Parsedown->text( $card['description'] );
 
 		$post_id = wp_insert_post(
 			array(

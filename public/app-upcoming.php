@@ -32,16 +32,16 @@ $columns = array(
 );
 
 $current_date = new DateTime();
-$tomorrow_date = ( new DateTime() )->setTime(0, 0)->modify( '+1 day' );
-$next_7_days_date = ( new DateTime() )->setTime(0, 0)->modify( '+8 days' );
+$tomorrow_date = ( new DateTime() )->setTime( 0, 0 )->modify( '+1 day' );
+$next_7_days_date = ( new DateTime() )->setTime( 0, 0 )->modify( '+8 days' );
 
 foreach ( $tasks as $task ) {
 	$due_date = get_post_meta( $task->ID, 'duedate', true );
-	$due_date_obj = (new DateTime($due_date))->setTime(0, 0);
+	$due_date_obj = ( new DateTime( $due_date ) )->setTime( 0, 0 );
 
-	if ( $due_date_obj < $current_date->setTime(0, 0) ) {
+	if ( $due_date_obj < $current_date->setTime( 0, 0 ) ) {
 		$columns['delayed'][] = $task;
-	} elseif ( $due_date_obj == $current_date->setTime(0, 0) ) {
+	} elseif ( $due_date_obj == $current_date->setTime( 0, 0 ) ) {
 		$columns['today'][] = $task;
 	} elseif ( $due_date_obj == $tomorrow_date ) {
 		$columns['tomorrow'][] = $task;
@@ -672,7 +672,7 @@ function() {
 							
 								const closestAvatar = element.closest('.card').querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
 								if (closestAvatar) {
-								    closestAvatar.classList.add('today');
+									closestAvatar.classList.add('today');
 								}
 
 							} else {
@@ -708,7 +708,7 @@ function() {
 
 								const closestAvatar = element.closest('.card').querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
 								if (closestAvatar) {
-								    closestAvatar.classList.remove('today');
+									closestAvatar.classList.remove('today');
 								}
 
 							} else {
