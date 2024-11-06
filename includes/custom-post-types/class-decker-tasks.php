@@ -53,6 +53,7 @@ class Decker_Tasks {
 		if ( 'order' === $orderby ) {
 			$query->set( 'meta_key', 'order' );
 			$query->set( 'orderby', 'meta_value_num' );
+			$query->set( 'order', $query->get( 'order' ) === 'asc' ? 'ASC' : 'DESC' );
 		}
 	}
 
