@@ -295,35 +295,35 @@ class Decker_Admin_Import {
 	 *
 	 * @param string $title The term title.
 	 * @param string $taxonomy The taxonomy slug.
-	 * @param string $color The color associated with the term (optional).
+	 * @param string $color The color associated with the term.
 	 * @return array|false|WP_Error The term array, false on failure, or WP_Error on error.
 	 */
-	private function maybe_create_term( $title, $taxonomy, $color = '' ) {
-		$term = term_exists( $title, $taxonomy );
-		if ( ! $term ) {
-			$term = wp_insert_term( $title, $taxonomy, array( 'slug' => sanitize_title( $title ) ) );
+	private function maybe_create_term( $title, $taxonomy, $color ) {
+	    $term = term_exists( $title, $taxonomy );
+	    if ( ! $term ) {
+	        $sanitized_color = '';
+	        if ( $color ) {
+	            $sanitized_color = sanitize_hex_color( strpos($color, '#') === 0 ? $color : '#' . $color );
+	        }
 
-			if ( is_wp_error( $term ) ) {
-				Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
-				return $term; // Return the error for better handling
-			}
-		}
+	        $term = wp_insert_term( $title, $taxonomy, array( 
+	            'slug' => sanitize_title( $title )
+	        ) );
 
-		if ( $color ) {
-			$sanitized_color = sanitize_hex_color( '#' . $color );
-			if ( $sanitized_color ) {
-				$updated = update_term_meta( $term['term_id'], 'term-color', $sanitized_color );
-				if ( ! $updated ) {
-					Decker_Utility_Functions::write_log( 'Error updating term color for term ID: ' . $term['term_id'] . '. Failed to update term meta.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-				}
-			} else {
-				Decker_Utility_Functions::write_log( 'Error updating term color for term ID: ' . $term['term_id'] . '. Invalid color: ' . $color, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-				return false;
-			}
-		}
+	        if ( is_wp_error( $term ) ) {
+	            Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	            return $term; // Return the error for better handling
+	        }
 
-		return $term;
+	        // If term creation is successful, add metadata
+	        if ( $sanitized_color ) {
+	            add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
+	        }
+	    }
+
+	    return $term;
 	}
+
 
 	/**
 	 * Imports labels and tasks for a board.
