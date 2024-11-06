@@ -430,9 +430,20 @@ $show_import_message = ! $today_tasks->have_posts();
 					  $board = $board_terms && ! is_wp_error( $board_terms ) ? $board_terms[0]->name : 'No board assigned';
 					  $stack = get_post_meta( get_the_ID(), 'stack', true );
 					  ?>
-					  <tr>
+					  <tr class="task-row" data-task-id="<?php echo esc_attr( get_the_ID() ); ?>">
 						  <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( get_the_ID() ); ?>"></td>
-						  <td><?php echo esc_html( $board ); ?></td>
+						  <td>
+							  <?php
+							  if ( $board_terms && ! is_wp_error( $board_terms ) ) {
+								  foreach ( $board_terms as $term ) {
+									  $color = get_term_meta( $term->term_id, 'term-color', true );
+									  echo '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $term->name ) . '</span> ';
+								  }
+							  } else {
+								  echo 'No board assigned';
+							  }
+							  ?>
+						  </td>
 						  <td><?php echo esc_html( $stack ); ?></td>
 						  <td><?php the_title(); ?></td>
 					  </tr>
@@ -509,6 +520,16 @@ $show_import_message = ! $today_tasks->have_posts();
 
 		// Actualiza el botón "Importar" cuando se carga la página/modal (por si acaso)
 		updateImportButton();
+		// Hacer clic en cualquier parte de la fila para marcar el checkbox
+		document.querySelectorAll('.task-row').forEach(row => {
+			row.addEventListener('click', function(event) {
+				if (event.target.tagName !== 'INPUT') { // Evitar el clic en el propio checkbox
+					const checkbox = this.querySelector('.task-checkbox');
+					checkbox.checked = !checkbox.checked;
+					updateImportButton();
+				}
+			});
+		});
 	});
 </script>
 
