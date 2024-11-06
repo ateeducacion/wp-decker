@@ -1257,6 +1257,11 @@ class Decker_Tasks {
 			return $post_id;
 		}
 
+		// Prevent changes if the task is archived
+		if ( 'archived' === get_post_status( $post_id ) ) {
+			return $post_id;
+		}
+
 		// Save task details.
 		if ( isset( $_POST['duedate'] ) ) {
 			update_post_meta( $post_id, 'duedate', sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) );
