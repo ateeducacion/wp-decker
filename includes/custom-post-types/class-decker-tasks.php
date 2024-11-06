@@ -31,6 +31,56 @@ class Decker_Tasks {
 		add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
 		add_action( 'wp_ajax_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
 		add_action( 'wp_ajax_nopriv_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
+		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
+		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
+		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
+	}
+
+	/**
+	 * Add custom columns to the task list table.
+	 *
+	 * @param array $columns Existing columns.
+	 * @return array Modified columns.
+	 */
+	public function add_custom_columns( $columns ) {
+		unset( $columns['date'] ); // Remove the date column if needed
+		$columns['stack'] = __( 'Stack', 'decker' );
+		$columns['order'] = __( 'Order', 'decker' );
+		return $columns;
+	}
+
+	/**
+	 * Render custom columns in the task list table.
+	 *
+	 * @param string $column  The name of the column.
+	 * @param int    $post_id The ID of the post.
+	 */
+	public function render_custom_columns( $column, $post_id ) {
+		switch ( $column ) {
+			case 'stack':
+				echo esc_html( get_post_meta( $post_id, 'stack', true ) );
+				break;
+			case 'order':
+				echo esc_html( get_post_meta( $post_id, 'order', true ) );
+				break;
+		}
+	}
+
+	/**
+	 * Remove row actions from the task list table.
+	 *
+	 * @param array  $actions Existing actions.
+	 * @param object $post    The current post object.
+	 * @return array Modified actions.
+	 */
+	public function remove_row_actions( $actions, $post ) {
+		if ( 'decker_task' === $post->post_type ) {
+			unset( $actions['edit'] );
+			unset( $actions['inline hide-if-no-js'] );
+			unset( $actions['trash'] );
+			unset( $actions['view'] );
+		}
+		return $actions;
 	}
 
 	/**
