@@ -552,6 +552,12 @@ function() {
 								// Toggle menu options
 								element.style.display = 'none';
 								element.closest('.card').querySelector('.unmark-for-today').style.display = 'block';
+
+								const closestAvatar = element.closest('.card').querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
+								if (closestAvatar) {
+								    closestAvatar.classList.add('today');
+								}
+
 							} else {
 								alert('Failed to mark task for today.');
 							}
@@ -582,6 +588,12 @@ function() {
 								// Toggle menu options
 								element.style.display = 'none';
 								element.closest('.card').querySelector('.mark-for-today').style.display = 'block';
+						
+								const closestAvatar = element.closest('.card').querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
+								if (closestAvatar) {
+								    closestAvatar.classList.remove('today');
+								}
+
 							} else {
 								alert('Failed to unmark task for today.');
 							}
