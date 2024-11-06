@@ -246,9 +246,8 @@ function render_task_menu( $task_id ) {
 													</span>
 													<?php
 													$due_date = get_post_meta( $task->ID, 'duedate', true );
-													$relative_time = Decker_Utility_Functions::getRelativeTime( $due_date );
 													?>
-													<small class="text-muted" title="<?php echo esc_attr( $due_date ); ?>"><?php echo esc_html( $relative_time ); ?></small>
+													<small class="text-muted" title="<?php echo esc_attr( $due_date ); ?>">Today</small>
 
 													<h5 class="my-2 fs-16">
 														<a href="
@@ -318,7 +317,6 @@ function render_task_menu( $task_id ) {
 													</span>
 													<?php
 													$due_date = get_post_meta( $task->ID, 'duedate', true );
-													$relative_time = Decker_Utility_Functions::getRelativeTime( $due_date );
 													$formatted_due_date = date( 'd M Y', strtotime( $due_date ) );
 													?>
 													<small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>">Tomorrow</small>
