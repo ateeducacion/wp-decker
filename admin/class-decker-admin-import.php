@@ -1,4 +1,6 @@
 <?php
+require_once 'vendor/parsedown-1.7.4/Parsedown.php';
+
 /**
  * Decker_Admin_Import Class
  *
