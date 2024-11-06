@@ -74,7 +74,7 @@ class Decker_Tasks {
 				echo esc_html( get_post_meta( $post_id, 'stack', true ) );
 				break;
 			case 'order':
-				echo esc_html( get_post_meta( $post_id, 'order', true ) );
+				echo esc_html( intval( get_post_meta( $post_id, 'order', true ) ) );
 				break;
 		}
 	}
@@ -285,7 +285,7 @@ class Decker_Tasks {
 		);
 
 		foreach ( $tasks_in_stack as $index => $task ) {
-			update_post_meta( $task->ID, 'order', $index + 1 );
+			update_post_meta( $task->ID, 'order', intval( $index + 1 ) );
 		}
 	}
 
