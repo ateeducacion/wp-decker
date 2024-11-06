@@ -47,7 +47,7 @@
 							<div class="card">
 								<div class="card-body">
 									<h4 class="card-title">Active Tasks</h4>
-									<h2 class="text-primary" id="active-tasks-count">0</h2>
+									<h2 class="text-primary" id="active-tasks-count"><?php echo wp_count_posts( 'decker_task' )->publish; ?></h2>
 								</div>
 							</div>
 						</div>
@@ -55,7 +55,7 @@
 							<div class="card">
 								<div class="card-body">
 									<h4 class="card-title">Total Users</h4>
-									<h2 class="text-primary" id="total-users-count">0</h2>
+									<h2 class="text-primary" id="total-users-count"><?php echo count_users()['total_users']; ?></h2>
 								</div>
 							</div>
 						</div>
@@ -63,7 +63,7 @@
 							<div class="card">
 								<div class="card-body">
 									<h4 class="card-title">Archived Tasks</h4>
-									<h2 class="text-primary" id="archived-tasks-count">0</h2>
+									<h2 class="text-primary" id="archived-tasks-count"><?php echo wp_count_posts( 'decker_task' )->archived; ?></h2>
 								</div>
 							</div>
 						</div>
@@ -71,7 +71,7 @@
 							<div class="card">
 								<div class="card-body">
 									<h4 class="card-title">Total Boards</h4>
-									<h2 class="text-primary" id="total-boards-count">0</h2>
+									<h2 class="text-primary" id="total-boards-count"><?php echo wp_count_terms( 'decker_board' ); ?></h2>
 								</div>
 							</div>
 						</div>
@@ -145,28 +145,8 @@
 
 	<!-- Custom Script for Dashboard -->
 	<script>
-
-		// Fetch dynamic data for counts using AJAX
-		jQuery(document).ready(function($) {
-			$.ajax({
-				url: '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>',
-				type: 'POST',
-				data: {
-					action: 'get_dashboard_counts'
-				},
-				success: function(response) {
-					if (response.success) {
-						$('#active-tasks-count').text(response.data.total_tasks);
-						$('#total-users-count').text(response.data.total_users);
-						$('#archived-tasks-count').text(response.data.archived_tasks);
-						$('#total-boards-count').text(response.data.total_boards);
-					}
-				}
-			});
-		});
-
-
 		<?php
+
 		// Obtener datos de tareas por tablero y colores
 		$boards = get_terms(
 			array(

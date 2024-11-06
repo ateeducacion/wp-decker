@@ -25,41 +25,11 @@ class Decker_Tasks {
 	public function __construct() {
 		$this->define_hooks();
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		add_action( 'template_redirect', array( $this, 'template_redirect' ) );
 		add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
-		add_action( 'wp_ajax_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
-		add_action( 'wp_ajax_nopriv_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
-		add_action( 'pre_get_posts', array( $this, 'sort_by_custom_order' ) );
-	}
-
-	/**
-	 * Sort tasks by custom order in the admin list.
-	 *
-	 * @param WP_Query $query The current query object.
-	 */
-	public function sort_by_custom_order( $query ) {
-	    // Verifica que estamos en el área de administración, en la consulta principal y con el tipo de post correcto
-	    if ( ! is_admin() || ! $query->is_main_query() || 'decker_task' !== $query->get( 'post_type' ) ) {
-	        return;
-	    }
-
-	    $orderby = $query->get( 'orderby' );
-
-	    // Verifica si el orden debe basarse en el campo 'order'
-	    if ( 'order' === $orderby ) {
-	        $query->set( 'meta_key', 'order' );
-	        $query->set( 'orderby', 'meta_value_num' );
-
-	        // Establece el orden ascendente o descendente de manera segura
-	        $order = strtolower( $query->get( 'order' ) );
-	        $query->set( 'order', ( 'asc' === $order ) ? 'ASC' : 'DESC' );
-	    }
 	}
 
 	/**
@@ -70,7 +40,7 @@ class Decker_Tasks {
 	 */
 	public function make_columns_sortable( $columns ) {
 		$columns['stack'] = 'stack';
-		$columns['order'] = 'order';
+		$columns['menu_order'] = 'menu_order';
 		return $columns;
 	}
 
@@ -83,7 +53,7 @@ class Decker_Tasks {
 	public function add_custom_columns( $columns ) {
 		unset( $columns['date'] ); // Remove the date column if needed
 		$columns['stack'] = __( 'Stack', 'decker' );
-		$columns['order'] = __( 'Order', 'decker' );
+		$columns['menu_order'] = __( 'Order', 'decker' );
 		return $columns;
 	}
 
@@ -97,9 +67,6 @@ class Decker_Tasks {
 		switch ( $column ) {
 			case 'stack':
 				echo esc_html( get_post_meta( $post_id, 'stack', true ) );
-				break;
-			case 'order':
-				echo esc_html( intval( get_post_meta( $post_id, 'order', true ) ) );
 				break;
 		}
 	}
@@ -150,25 +117,6 @@ class Decker_Tasks {
 
 		// If no tasks exist in the stack, start with order 1
 		return $max_order ? $max_order + 1 : 1;
-	}
-
-	/**
-	 * Get dashboard counts for tasks, users, archived tasks, and boards.
-	 */
-	public function get_dashboard_counts() {
-		$total_tasks = wp_count_posts( 'decker_task' )->publish;
-		$total_users = count_users()['total_users'];
-		$archived_tasks = wp_count_posts( 'decker_task' )->archived;
-		$total_boards = wp_count_terms( 'decker_board' );
-
-		wp_send_json_success(
-			array(
-				'total_tasks' => $total_tasks,
-				'total_users' => $total_users,
-				'archived_tasks' => $archived_tasks,
-				'total_boards' => $total_boards,
-			)
-		);
 	}
 
 	/**
@@ -430,29 +378,6 @@ class Decker_Tasks {
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 
 		return new WP_REST_Response( array( 'message' => 'Relation unmarked successfully.' ), 200 );
-	}
-
-	public function add_rewrite_rules() {
-		add_rewrite_rule( '^decker/task/([0-9]+)/?', 'index.php?decker_task_id=$matches[1]', 'top' );
-		flush_rewrite_rules();
-	}
-
-	public function add_query_vars( $vars ) {
-		$vars[] = 'decker_task_id';
-		return $vars;
-	}
-
-	public function template_redirect() {
-		$task_id = get_query_var( 'decker_task_id' );
-		if ( $task_id ) {
-			$task = get_post( $task_id );
-			if ( $task && 'decker_task' === $task->post_type ) {
-				include plugin_dir_path( __FILE__ ) . '../../public/layouts/task-card.php';
-			} else {
-				wp_die( 'Tarea no encontrada.' );
-			}
-			exit;
-		}
 	}
 
 	/**
@@ -786,6 +711,7 @@ class Decker_Tasks {
 				'custom-fields',
 				'comments',
 				'excerpt',
+				'page-attributes',
 			),
 			'taxonomies'         => array( 'decker_board', 'decker_label' ),
 			'show_in_rest'       => true,
@@ -956,7 +882,6 @@ class Decker_Tasks {
 	 */
 	public function display_meta_box( $post ) {
 		$duedate = get_post_meta( $post->ID, 'duedate', true );
-		$order = get_post_meta( $post->ID, 'order', true );
 		$max_priority = get_post_meta( $post->ID, 'max_priority', true );
 		$stack = get_post_meta( $post->ID, 'stack', true );
 		$id_nextcloud_card = get_post_meta( $post->ID, 'id_nextcloud_card', true );
@@ -966,10 +891,6 @@ class Decker_Tasks {
 		<p>
 			<label for="duedate"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
 			<input type="date" name="duedate" value="<?php echo esc_attr( $duedate ); ?>" class="widefat">
-		</p>
-		<p>
-			<label for="order"><?php esc_html_e( 'Order', 'decker' ); ?></label>
-			<input type="number" name="order" value="<?php echo esc_attr( $order ); ?>" class="widefat">
 		</p>
 		<p>
 			<label for="max_priority"><?php esc_html_e( 'Max Priority', 'decker' ); ?></label>
@@ -1266,9 +1187,6 @@ class Decker_Tasks {
 		if ( isset( $_POST['duedate'] ) ) {
 			update_post_meta( $post_id, 'duedate', sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) );
 		}
-		// if ( isset( $_POST['order'] ) ) {
-		// 	wp_die( 'Error: El campo "order" no puede ser actualizado manualmente.', 'Error', array( 'response' => 400 ) );
-		// }
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		update_post_meta( $post_id, 'max_priority', $max_priority );
 		if ( isset( $_POST['stack'] ) ) {
