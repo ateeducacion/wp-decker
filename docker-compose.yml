@@ -1,0 +1,45 @@
+services:
+
+  mariadb:
+    image: mariadb:latest
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=wordpress
+      - MYSQL_DATABASE=wordpress
+      - MYSQL_USER=wordpress
+      - MYSQL_PASSWORD=wordpress
+    volumes:
+      - mariadb:/var/lib/mysql
+
+  wordpress:
+    image: erseco/alpine-wordpress:latest
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    ports:
+      - 8080:8080
+    environment:
+      WP_LANGUAGE: es_ES
+      WP_ADMIN_USERNAME: admin
+      WP_ADMIN_PASSWORD: PLEASE_CHANGEME
+      WP_DEBUG: true
+      WP_PLUGINS: sql-buddy
+      WP_SITE_URL: http://localhost:8080
+      POST_CONFIGURE_COMMANDS: |
+        echo "this is a test line 1"
+        echo "this is a test line 2"
+        wp plugin activate decker
+        if ! wp user get test1 --field=ID --quiet; then
+          wp user create test1 test1@example.com --role=decker_role --user_pass=test1
+        fi
+        if ! wp user get test2 --field=ID --quiet; then
+          wp user create test2 test2@example.com --role=decker_role --user_pass=test2
+        fi
+    volumes:
+      - wordpress:/var/www/html
+      - ./:/var/www/html/wp-content/plugins/decker
+
+volumes:
+  mariadb: null
+  wordpress: null
+

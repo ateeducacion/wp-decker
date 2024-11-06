@@ -1,0 +1,523 @@
+# Copyright (C) 2024 Área de Tecnología Educativa
+# This file is distributed under the GPL-2.0+.
+msgid ""
+msgstr ""
+"Project-Id-Version: ATE Decker 1.9.2\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/decker\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.11.0\n"
+"X-Domain: decker\n"
+
+#. Plugin Name of the plugin
+#: decker.php
+msgid "ATE Decker"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: decker.php
+msgid "https://www3.gobiernodecanarias.org/medusa/gestionate/"
+msgstr ""
+
+#. Description of the plugin
+#: decker.php
+msgid "ATE Decker es un plug-in de WordPress creado para el uso interno de ATE, enfocado en presentar de forma eficiente y estructurada un listado de tareas."
+msgstr ""
+
+#. Author of the plugin
+#: decker.php
+msgid "Área de Tecnología Educativa"
+msgstr ""
+
+#. Author URI of the plugin
+#: decker.php
+msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate//"
+msgstr ""
+
+#: admin/class-decker-admin-export.php:61
+#: admin/class-decker-admin-settings.php:98
+msgid "Decker"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:39
+msgid "Decker Tasks from NextCloud"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:40
+msgid "Import tasks, labels, and boards from NextCloud."
+msgstr ""
+
+#: admin/class-decker-admin-import.php:55
+msgid "NextCloud settings are not configured."
+msgstr ""
+
+#: admin/class-decker-admin-import.php:60
+msgid "Import Decker Tasks from NextCloud"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:69
+msgid "Import Now"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:72
+msgid "Import Progress"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:77
+msgid "Show Log"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:97
+#: admin/class-decker-admin-settings.php:289
+msgid "Decker Settings"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:115
+msgid "Decker Configuration"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:121
+msgid "Nextcloud URL Base"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:122
+msgid "Nextcloud Username"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:123
+msgid "Nextcloud Access Token"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:124
+msgid "Ignored Boards"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:125
+msgid "Max Priority Label"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:126
+#: admin/class-decker-admin-settings.php:219
+msgid "Clear Cache"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:127
+#: admin/class-decker-admin-settings.php:230
+msgid "Clear All Data"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:128
+msgid "Log Level"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:129
+msgid "Decker Log"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:130
+#: admin/class-decker-admin-settings.php:276
+msgid "Clear Log"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:152
+msgid "Enter your Nextcloud user and access token to configure the Decker plugin."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:197
+msgid "Enter the IDs of the boards you want to ignore, separated by commas."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:209
+msgid "Set the label for \"Max Priority\"."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:220
+msgid "Click the button to clear Decker cache."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:230
+msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:231
+msgid "Click the button to delete all Decker labels, tasks, and boards."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:277
+msgid "Click the button to clear the Decker log."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:306
+msgid "Decker cache has been cleared."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:309
+msgid "All Decker records have been deleted."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:312
+msgid "Decker log has been cleared."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:370
+msgid "Invalid URL."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:375
+msgid "Invalid IDs. Must be numbers separated by commas."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:38
+msgctxt "taxonomy general name"
+msgid "Actions"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:39
+msgctxt "taxonomy singular name"
+msgid "Action"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:40
+msgid "Search Actions"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:41
+msgid "All Actions"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:42
+msgid "Edit Action"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:43
+msgid "Update Action"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:44
+msgid "Add New Action"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:45
+msgid "New Action Name"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:46
+msgid "Actions"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:97
+msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-actions.php:135
+msgid "You are not authorized to access this resource."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:41
+msgctxt "taxonomy general name"
+msgid "Boards"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:42
+msgctxt "taxonomy singular name"
+msgid "Board"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:43
+msgid "Search Boards"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:44
+msgid "All Boards"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:45
+msgid "Edit Board"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:46
+msgid "Update Board"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:47
+msgid "Add New Board"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:48
+msgid "New Board Name"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:49
+msgid "Boards"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-boards.php:75
+#: includes/custom-post-types/class-decker-boards.php:91
+#: includes/custom-post-types/class-decker-boards.php:135
+#: includes/custom-post-types/class-decker-labels.php:82
+#: includes/custom-post-types/class-decker-labels.php:98
+#: includes/custom-post-types/class-decker-labels.php:142
+#: includes/custom-post-types/class-decker-user-extended.php:48
+#: includes/custom-post-types/class-decker-user-extended.php:102
+msgid "Color"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:48
+msgctxt "taxonomy general name"
+msgid "Labels"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:49
+msgctxt "taxonomy singular name"
+msgid "Label"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:50
+msgid "Search Labels"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:51
+msgid "All Labels"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:52
+msgid "Edit Label"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:53
+msgid "Update Label"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:54
+msgid "Add New Label"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:55
+msgid "New Label Name"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-labels.php:56
+#: includes/custom-post-types/class-decker-tasks.php:241
+msgid "Labels"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:57
+msgctxt "post type general name"
+msgid "Tasks"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:58
+msgctxt "post type singular name"
+msgid "Task"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:59
+msgctxt "admin menu"
+msgid "Decker"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:60
+msgctxt "add new on admin bar"
+msgid "Task"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:61
+msgctxt "task"
+msgid "Add New"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:62
+msgid "Add New Task"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:63
+msgid "New Task"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:64
+msgid "Edit Task"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:65
+msgid "View Task"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:66
+msgid "All Tasks"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:67
+msgid "Search Tasks"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:68
+msgid "Parent Tasks:"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:69
+msgid "No tasks found."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:70
+msgid "No tasks found in Trash."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:111
+msgctxt "post status"
+msgid "Archived"
+msgstr ""
+
+#. translators: %s: Number of items
+#: includes/custom-post-types/class-decker-tasks.php:117
+msgid "Archived <span class=\"count\">(%s)</span>"
+msgid_plural "Archived <span class=\"count\">(%s)</span>"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/custom-post-types/class-decker-tasks.php:132
+#: includes/custom-post-types/class-decker-tasks.php:136
+#: includes/custom-post-types/class-decker-tasks.php:172
+msgid "Archived"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:138
+msgid "Archivado"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:176
+msgid "Custom Draft State"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:196
+msgid "Task Details"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:205
+msgid "Responsible"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:214
+msgid "Assigned Users"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:223
+msgid "Task User and Date"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:232
+msgid "Attachments"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:250
+msgid "Board"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:274
+msgid "Due Date"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:278
+msgid "Order"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:282
+msgid "Max Priority"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:286
+msgid "Stack"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:288
+msgid "Select Stack"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:289
+msgid "To-Do"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:290
+msgid "In Progress"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:291
+msgid "In Review"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:292
+msgid "Done"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:296
+msgid "Nextcloud Card ID"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:312
+msgid "Select Responsible User"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:314
+msgid "Select User"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:366
+msgid "Select Board"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:415
+msgid "Assign User:"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:425
+msgid "Assign Date:"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:429
+msgid "Add Relation"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:435
+#: includes/custom-post-types/class-decker-tasks.php:460
+#: includes/custom-post-types/class-decker-tasks.php:514
+msgid "Remove"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:453
+msgid "Please select a user and date."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:691
+msgid "Show All Boards"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:692
+msgid "Show All Labels"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-tasks.php:737
+msgid "Status"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:44
+msgid "Additional Information"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:52
+msgid "Select your favorite color."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:56
+msgid "Custom Field"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:60
+msgid "Enter additional information."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:120
+msgid "Undefined"
+msgstr ""

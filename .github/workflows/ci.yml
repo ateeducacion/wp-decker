@@ -1,0 +1,39 @@
+---
+name: CI
+
+on:
+  pull_request:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  lint_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - uses: actions/checkout@v4
+
+      - name: PHP setup
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'  # Adjust the version according to your needs
+          extensions: mbstring, intl, curl, dom, json, pdo, mysql, xml, zip
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      # - name: Run code linting
+      #   run: make lint
+
+      # - name: Run unit tests
+      #   run: make test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: make upd
+
+
+

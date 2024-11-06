@@ -1,0 +1,21 @@
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    verbose="true"
+    stopOnFailure="true"
+    >
+    <php>
+        <ini name="display_errors" value="1"/>
+        <ini name="error_reporting" value="-1"/>
+    </php>
+    <testsuites>
+        <testsuite name="testing">
+            <directory suffix=".php">./tests/</directory>
+            <!-- <exclude>./tests/test-sample.php</exclude> -->
+        </testsuite>
+    </testsuites>
+</phpunit>

@@ -1,0 +1,40 @@
+# Exclude common development files and folders
+/node_modules/
+/vendor/
+/composer.lock
+*.log
+*.sql
+*.sql.gz
+*.tar.gz
+*.zip
+wp-decker*/
+decker*/
+*.swp
+*.swo
+*.bak
+*.bkp
+*.back
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+sftp-config.json
+
+# Exclude specific editor/IDE files
+/.idea/
+.vscode/
+.project
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Exclude test-related files and directories
+# /tests/
+# /phpunit.xml
+# /phpunit.xml.dist
+.phpunit.result.cache
+/behat.yml
+
+decker/
+.aider*
+.env

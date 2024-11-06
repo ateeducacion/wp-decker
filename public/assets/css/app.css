@@ -1,0 +1,143 @@
+@charset "UTF-8";
+/*
+Template Name: Attex - Responsive Bootstrap 5 Admin Dashboard
+Version: 1.0.0
+Author: CoderThemes
+Email: support@coderthemes.com
+File: Main Css File
+*/
+@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap");
+:root {
+  --ct-logo-lg-height: 22px;
+  --ct-logo-sm-height: 22px;
+  --ct-leftbar-width: 240px;
+  --ct-leftbar-width-md: 160px;
+  --ct-leftbar-width-sm: 70px;
+  --ct-leftbar-condensed-height: 1500px;
+  --ct-topbar-height: 70px;
+  --ct-menu-item-icon-size: 1.1rem;
+  --ct-menu-item-icon-width: 40px;
+  --ct-menu-item-font-size: 0.925rem;
+  --ct-menu-item-padding-x: 8px;
+  --ct-menu-item-padding-y: 9px;
+  --ct-footer-height: 60px;
+  --ct-theme-card-border-width: 0px;
+}
+
+html[data-menu-color=light] {
+  --ct-menu-bg: #ffffff;
+  --ct-menu-item-color: #495057;
+  --ct-menu-item-hover-color: #3e60d5;
+  --ct-menu-item-active-color: #3e60d5;
+  --ct-menu-condensed-link-bg: #313a46;
+  --ct-help-box-bg: #3e60d5;
+}
+
+html[data-menu-color=dark] {
+  --ct-menu-bg: #212529;
+  --ct-menu-item-color: #8391a2;
+  --ct-menu-item-hover-color: #bccee4;
+  --ct-menu-item-active-color: #ffffff;
+  --ct-menu-condensed-link-bg: #313a46;
+  --ct-help-box-bg: rgba(255, 255, 255, 0.07);
+}
+
+html[data-menu-color=brand] {
+  --ct-menu-bg: linear-gradient(135deg, #6379c3 0%, #3e60d5 60%);
+  --ct-menu-item-color: #cedce4;
+  --ct-menu-item-hover-color: #ffffff;
+  --ct-menu-item-active-color: #ffffff;
+  --ct-menu-condensed-link-bg: #313a46;
+  --ct-help-box-bg: rgba(255, 255, 255, 0.07);
+}
+
+html[data-bs-theme=dark][data-menu-color=light],
+html[data-bs-theme=dark][data-menu-color=dark] {
+  --ct-menu-bg: #313a46;
+  --ct-menu-item-color: #8391a2;
+  --ct-menu-item-hover-color: #bccee4;
+  --ct-menu-item-active-color: #ffffff;
+  --ct-menu-condensed-link-bg: #313a46;
+  --ct-help-box-bg: rgba(255, 255, 255, 0.07);
+}
+
+html[data-topbar-color=light] {
+  --ct-topbar-bg: #ffffff;
+  --ct-topbar-item-color: #495057;
+  --ct-topbar-item-hover-color: #3e60d5;
+  --ct-topbar-search-bg: #f3f3f8;
+  --ct-topbar-user-bg: #fbfcfc;
+  --ct-topbar-user-border: #eef2f7;
+}
+
+html[data-topbar-color=dark] {
+  --ct-topbar-bg: #313a46;
+  --ct-topbar-item-color: #8391a2;
+  --ct-topbar-item-hover-color: #bccee4;
+  --ct-topbar-search-bg: #464f5b;
+  --ct-topbar-user-bg: #3c4655;
+  --ct-topbar-user-border: #414d5d;
+}
+
+html[data-topbar-color=brand] {
+  --ct-topbar-bg: linear-gradient(135deg, #6379c3 0%, #3e60d5 60%);
+  --ct-topbar-item-color: rgba(255, 255, 255, 0.7);
+  --ct-topbar-item-hover-color: #ffffff;
+  --ct-topbar-search-bg: rgba(255, 255, 255, 0.1);
+  --ct-topbar-user-bg: rgba(255, 255, 255, 0.1);
+  --ct-topbar-user-border: rgba(255, 255, 255, 0.15);
+}
+
+html[data-bs-theme=dark][data-topbar-color=light],
+html[data-bs-theme=dark][data-topbar-color=dark] {
+  --ct-topbar-bg: #2f3742;
+  --ct-topbar-item-color: #8391a2;
+  --ct-topbar-item-hover-color: #bccee4;
+  --ct-topbar-search-bg: #363f4a;
+  --ct-topbar-user-bg: #363f4a;
+  --ct-topbar-user-border: #414d5d;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+}
+
+
+
+
+
+
+.side-nav {
+    overflow-y: auto;
+    height: 100% !important;
+
+    scrollbar-color: #888 transparent; /* Barra de desplazamiento en color y fondo transparente */
+    scrollbar-width: thin;
+
+}
+
+
+
+
+
+
+
+/* Estilo para los avatares seleccionados */
+.avatar-group-item.selected .rounded-circle {
+  position: relative;
+  border: 2px solid transparent; /* Evita que el tamaño de la imagen cambie */
+}
+
+/* Aureola verde alrededor de los avatares seleccionados */
+
+/* Estilo base para los avatares con clase .today */
+.avatar-group-item.selected.today .rounded-circle {
+  box-shadow: 0 0 0 4px rgba(0, 255, 1, 0.7); /* Ajusta el tamaño y color de la aureola */
+  border: 0px solid transparent; /* Mantén el borde actual */
+}
+
+
+/* Si también quieres una aureola en los divs que no tienen imagen (letras iniciales o contadores) */
+.today {
+  box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
+}
