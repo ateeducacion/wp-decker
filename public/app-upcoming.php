@@ -1,5 +1,6 @@
 <?php
 include 'layouts/main.php';
+include_once 'includes/class-decker-utility-functions.php';
 
 // Consultar las tareas asociadas al board
 $tasks = get_posts(
@@ -172,7 +173,11 @@ function render_task_menu( $task_id ) {
 													<span class="float-end badge <?php echo $max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'; ?>">
 														<?php echo $max_priority ? '🔥' : 'Normal'; ?>
 													</span>
-													<small class="text-muted"><?php echo get_the_date( 'd M Y', $task->ID ); ?></small>
+													<?php
+													$due_date = get_post_meta( $task->ID, 'duedate', true );
+													$relative_time = Decker_Utility_Functions::getRelativeTime( $due_date );
+													?>
+													<small class="text-muted" title="<?php echo esc_attr( $due_date ); ?>"><?php echo esc_html( $relative_time ); ?></small>
 
 													<h5 class="my-2 fs-16">
 														<a href="
