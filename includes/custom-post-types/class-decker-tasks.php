@@ -8,7 +8,39 @@
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
-}
+	/**
+	 * Get the new order for a task in a specific stack.
+	 *
+	 * @param string $stack The stack to calculate the order for.
+	 * @return int The new order value.
+	 */
+	private function get_new_task_order( $stack ) {
+		global $wpdb;
+
+		// Get the maximum order value in the current stack
+		$max_order = $wpdb->get_var(
+			$wpdb->prepare(
+				"
+				SELECT MAX(CAST(pm.meta_value AS UNSIGNED))
+				FROM $wpdb->postmeta pm
+				INNER JOIN $wpdb->posts p ON pm.post_id = p.ID
+				WHERE pm.meta_key = 'order'
+				AND p.post_type = 'decker_task'
+				AND p.post_status = 'publish'
+				AND pm.post_id IN (
+					SELECT post_id
+					FROM $wpdb->postmeta
+					WHERE meta_key = 'stack'
+					AND meta_value = %s
+				)
+				",
+				$stack
+			)
+		);
+
+		// If no tasks exist in the stack, start with order 1
+		return $max_order ? $max_order + 1 : 1;
+	}
 
 /**
  * Class Decker_Tasks
@@ -58,6 +90,7 @@ class Decker_Tasks {
 	public function handle_save_task() {
 		if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'save_decker_task' || ! current_user_can( 'edit_posts' ) ) {
 			wp_die( 'No tienes permiso para realizar esta acción.' );
+			update_post_meta( $task_id, 'order', $new_order );
 		}
 
 		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
@@ -69,6 +102,11 @@ class Decker_Tasks {
 		$labels = isset( $_POST['labels'] ) ? array_map( 'intval', $_POST['labels'] ) : array();
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		$description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
+
+		// Calculate the order for the new task
+		if ( $task_id === 0 ) {
+			$new_order = $this->get_new_task_order( $stack );
+		}
 
 		$post_data = array(
 			'post_title'   => $title,
