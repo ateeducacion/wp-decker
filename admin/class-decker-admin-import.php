@@ -427,10 +427,13 @@ class Decker_Admin_Import {
 		// Determine the post status based on whether the card is archived or not.
 		$post_status = ! empty( $card['archived'] ) && $card['archived'] ? 'archived' : 'publish';
 
+		$Parsedown = new Parsedown();
+		$html_description = $Parsedown->text($card['description']);
+
 		$post_id = wp_insert_post(
 			array(
 				'post_title'   => trim( $card['title'] ),
-				'post_content' => $card['description'],
+				'post_content' => $html_description,
 				'post_status'  => $post_status,
 				'post_type'    => 'decker_task',
 				'post_date'    => date( 'Y-m-d H:i:s', $card['createdAt'] ),
