@@ -969,7 +969,7 @@ class Decker_Tasks {
 		</p>
 		<p>
 			<label for="order"><?php esc_html_e( 'Order', 'decker' ); ?></label>
-			<input type="number" name="order" value="<?php echo esc_attr( $order ); ?>" class="widefat" readonly>
+			<input type="number" name="order" value="<?php echo esc_attr( $order ); ?>" class="widefat">
 		</p>
 		<p>
 			<label for="max_priority"><?php esc_html_e( 'Max Priority', 'decker' ); ?></label>
@@ -978,7 +978,6 @@ class Decker_Tasks {
 		<p>
 			<label for="stack"><?php esc_html_e( 'Stack', 'decker' ); ?></label>
 			<select name="stack" class="widefat">
-				<option value=""><?php esc_html_e( 'Select Stack', 'decker' ); ?></option>
 				<option value="to-do" <?php selected( 'to-do', $stack ); ?>><?php esc_html_e( 'To-Do', 'decker' ); ?></option>
 				<option value="in-progress" <?php selected( 'in-progress', $stack ); ?>><?php esc_html_e( 'In Progress', 'decker' ); ?></option>
 				<option value="done" <?php selected( 'done', $stack ); ?>><?php esc_html_e( 'Done', 'decker' ); ?></option>
@@ -986,7 +985,7 @@ class Decker_Tasks {
 		</p>
 		<p>
 			<label for="id_nextcloud_card"><?php esc_html_e( 'Nextcloud Card ID', 'decker' ); ?></label>
-			<input type="text" name="id_nextcloud_card" value="<?php echo esc_attr( $id_nextcloud_card ); ?>" class="widefat">
+			<input type="number" name="id_nextcloud_card" value="<?php echo esc_attr( $id_nextcloud_card ); ?>" class="widefat">
 		</p>
 		<?php
 	}
@@ -1262,9 +1261,9 @@ class Decker_Tasks {
 		if ( isset( $_POST['duedate'] ) ) {
 			update_post_meta( $post_id, 'duedate', sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) );
 		}
-		if ( isset( $_POST['order'] ) ) {
-			wp_die( 'Error: El campo "order" no puede ser actualizado manualmente.', 'Error', array( 'response' => 400 ) );
-		}
+		// if ( isset( $_POST['order'] ) ) {
+		// 	wp_die( 'Error: El campo "order" no puede ser actualizado manualmente.', 'Error', array( 'response' => 400 ) );
+		// }
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		update_post_meta( $post_id, 'max_priority', $max_priority );
 		if ( isset( $_POST['stack'] ) ) {
