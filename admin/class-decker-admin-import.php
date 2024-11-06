@@ -75,6 +75,7 @@ class Decker_Admin_Import {
 					<label for="ignore-existing">
 						<input type="checkbox" id="ignore-existing" name="ignore_existing" value="1">
 						<?php esc_html_e( 'Ignore existing tasks', 'decker' ); ?>
+						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will not be updated or duplicated.', 'decker' ); ?></span>
 					</label>
 					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
 				</form>
