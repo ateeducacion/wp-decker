@@ -32,20 +32,20 @@ $columns = array(
 );
 
 $current_date = new DateTime();
-$tomorrow_date = ( new DateTime() )->modify( '+1 day' );
-$next_7_days_date = ( new DateTime() )->modify( '+7 days' );
+$tomorrow_date = ( new DateTime() )->setTime(0, 0)->modify( '+1 day' );
+$next_7_days_date = ( new DateTime() )->setTime(0, 0)->modify( '+8 days' );
 
 foreach ( $tasks as $task ) {
 	$due_date = get_post_meta( $task->ID, 'duedate', true );
-	$due_date_obj = new DateTime( $due_date );
+	$due_date_obj = (new DateTime($due_date))->setTime(0, 0);
 
-	if ( $due_date_obj < $current_date ) {
+	if ( $due_date_obj < $current_date->setTime(0, 0) ) {
 		$columns['delayed'][] = $task;
-	} elseif ( $due_date_obj->format( 'Y-m-d' ) === $current_date->format( 'Y-m-d' ) ) {
+	} elseif ( $due_date_obj == $current_date->setTime(0, 0) ) {
 		$columns['today'][] = $task;
-	} elseif ( $due_date_obj->format( 'Y-m-d' ) === $tomorrow_date->format( 'Y-m-d' ) ) {
+	} elseif ( $due_date_obj == $tomorrow_date ) {
 		$columns['tomorrow'][] = $task;
-	} elseif ( $due_date_obj > $tomorrow_date && $due_date_obj <= $next_7_days_date ) {
+	} elseif ( $due_date_obj > $tomorrow_date && $due_date_obj < $next_7_days_date ) {
 		$columns['next-7-days'][] = $task;
 	}
 }
