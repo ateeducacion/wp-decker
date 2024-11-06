@@ -44,17 +44,22 @@ class Decker_Tasks {
 	 * @param WP_Query $query The current query object.
 	 */
 	public function sort_by_custom_order( $query ) {
-		if ( ! is_admin() || ! $query->is_main_query() || 'decker_task' !== $query->get( 'post_type' ) ) {
-			return;
-		}
+	    // Verifica que estamos en el área de administración, en la consulta principal y con el tipo de post correcto
+	    if ( ! is_admin() || ! $query->is_main_query() || 'decker_task' !== $query->get( 'post_type' ) ) {
+	        return;
+	    }
 
-		$orderby = $query->get( 'orderby' );
+	    $orderby = $query->get( 'orderby' );
 
-		if ( 'order' === $orderby ) {
-			$query->set( 'meta_key', 'order' );
-			$query->set( 'orderby', 'meta_value_num' );
-			$query->set( 'order', $query->get( 'order' ) === 'asc' ? 'ASC' : 'DESC' );
-		}
+	    // Verifica si el orden debe basarse en el campo 'order'
+	    if ( 'order' === $orderby ) {
+	        $query->set( 'meta_key', 'order' );
+	        $query->set( 'orderby', 'meta_value_num' );
+
+	        // Establece el orden ascendente o descendente de manera segura
+	        $order = strtolower( $query->get( 'order' ) );
+	        $query->set( 'order', ( 'asc' === $order ) ? 'ASC' : 'DESC' );
+	    }
 	}
 
 	/**
