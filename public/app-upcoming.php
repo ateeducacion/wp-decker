@@ -4,10 +4,22 @@ include 'layouts/main.php';
 // Consultar las tareas asociadas al board
 $tasks = get_posts(
 	array(
-		'post_type' => 'decker_task',
-		'meta_key' => 'stack',
-		'orderby'  => 'meta_value_num',
-		'order'    => 'ASC',
+		'post_type'   => 'decker_task',
+		'post_status' => 'publish',
+		'meta_query'  => array(
+			'relation' => 'AND',
+			array(
+				'key'     => 'duedate',
+				'compare' => 'EXISTS',
+			),
+			array(
+				'key'     => 'stack',
+				'value'   => array( 'to-do', 'in-progress' ),
+				'compare' => 'IN',
+			),
+		),
+		'orderby'     => 'meta_value_num',
+		'order'       => 'ASC',
 		'numberposts' => -1,
 	)
 );
