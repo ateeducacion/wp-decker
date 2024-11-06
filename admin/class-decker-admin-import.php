@@ -156,6 +156,13 @@ class Decker_Admin_Import {
 							const currentBoard = importData.data[importedBoards];
 							const boardId = currentBoard.id.toString();
 
+							if (stopImport) {
+								logMessages.innerHTML += `<li style="color: orange;">Import stopped by user.</li>`;
+								progressText.textContent = 'Import stopped.';
+								progressBar.style.width = '0%';
+								return;
+							}
+
 							if (ignoredBoardIds.includes(boardId)) {
 								logMessages.innerHTML += `<li style="color: gray;">Ignoring board with ID: ${boardId}</li>`;
 								importedBoards++;
