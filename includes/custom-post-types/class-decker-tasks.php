@@ -60,8 +60,6 @@ class Decker_Tasks {
 			wp_die( 'No tienes permiso para realizar esta acción.' );
 		}
 
-		print_r( 'HOLA' );
-
 		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 		$title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
 		$duedate = isset( $_POST['duedate'] ) ? sanitize_text_field( $_POST['duedate'] ) : '';
