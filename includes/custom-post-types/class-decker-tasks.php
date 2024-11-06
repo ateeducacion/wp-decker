@@ -35,6 +35,25 @@ class Decker_Tasks {
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
+		add_action( 'pre_get_posts', array( $this, 'sort_by_custom_order' ) );
+	}
+
+	/**
+	 * Sort tasks by custom order in the admin list.
+	 *
+	 * @param WP_Query $query The current query object.
+	 */
+	public function sort_by_custom_order( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() || 'decker_task' !== $query->get( 'post_type' ) ) {
+			return;
+		}
+
+		$orderby = $query->get( 'orderby' );
+
+		if ( 'order' === $orderby ) {
+			$query->set( 'meta_key', 'order' );
+			$query->set( 'orderby', 'meta_value_num' );
+		}
 	}
 
 	/**
