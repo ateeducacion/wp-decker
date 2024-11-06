@@ -416,7 +416,8 @@ $show_import_message = ! $today_tasks->have_posts();
 					  ),
 					  array(
 						  'key' => 'assigned_users',
-						  'value' => $current_user_id,
+						  // 'value' => $current_user_id,
+              'value' => sprintf(':"%s";', $current_user_id), // Esto busca el valor serializado
 						  'compare' => 'LIKE',
 					  ),
 				  ),
