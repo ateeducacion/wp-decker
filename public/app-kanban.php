@@ -73,11 +73,11 @@ function render_task_card( $task ) {
 				$formatted_due_date = "";
 
 				if ( ! empty($due_date)) {
-					$relative_time = Decker_Utility_Functions::getRelativeTime( $due_date );
+					$relative_time = esc_html( Decker_Utility_Functions::getRelativeTime( $due_date ) );
 					$formatted_due_date = date( 'd M Y', strtotime( $due_date ) );
 				}
 			?>
-			<small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo esc_html( $relative_time ); ?></small>
+			<small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo $relative_time; ?></small>
 
 			<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $task->ID ); ?>">
 				<a href="
