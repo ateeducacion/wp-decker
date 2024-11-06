@@ -310,9 +310,14 @@ class Decker_Admin_Import {
 		}
 
 		if ( $color ) {
-			$updated = update_term_meta( $term['term_id'], 'term-color', sanitize_hex_color( '#' . $color ) );
-			if ( ! $updated ) {
-				Decker_Utility_Functions::write_log( 'Error updating term color for term ID: ' . $term['term_id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+			$sanitized_color = sanitize_hex_color( '#' . $color );
+			if ( $sanitized_color ) {
+				$updated = update_term_meta( $term['term_id'], 'term-color', $sanitized_color );
+				if ( ! $updated ) {
+					Decker_Utility_Functions::write_log( 'Error updating term color for term ID: ' . $term['term_id'] . '. Failed to update term meta.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+				}
+			} else {
+				Decker_Utility_Functions::write_log( 'Error updating term color for term ID: ' . $term['term_id'] . '. Invalid color: ' . $color, Decker_Utility_Functions::LOG_LEVEL_ERROR );
 				return false;
 			}
 		}
