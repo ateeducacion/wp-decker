@@ -211,8 +211,18 @@ function render_task_menu( $task_id ) {
 														if ( $assigned_users ) {
 															foreach ( $assigned_users as $user_id ) {
 																$user_info = get_userdata( $user_id );
+																$is_today = false;
+																if ( $user_date_relations ) {
+																	foreach ( $user_date_relations as $relation ) {
+																		if ( $relation['user_id'] == $user_id && $relation['date'] == date( 'Y-m-d' ) ) {
+																			$is_today = true;
+																			break;
+																		}
+																	}
+																}
+																$avatar_class = $is_today ? 'avatar-group-item today' : 'avatar-group-item';
 																?>
-																<a href="javascript: void(0);" class="avatar-group-item"
+																<a href="javascript: void(0);" class="<?php echo $avatar_class; ?>"
 																	data-bs-toggle="tooltip" data-bs-placement="top"
 																	title="<?php echo esc_attr( $user_info->display_name ); ?>">
 																	<img src="<?php echo esc_url( get_avatar_url( $user_id ) ); ?>" alt=""
