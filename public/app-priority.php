@@ -19,6 +19,21 @@ $args = array(
 		),
 	),
 );
+if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
+	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
+	$current_user_id = get_current_user_id();
+	$today = date( 'Y-m-d' );
+
+	foreach ( $task_ids as $task_id ) {
+		$decker_tasks = new Decker_Tasks();
+		$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
+	}
+
+	// Redirigir para evitar reenvío de formulario
+	wp_redirect( esc_url( $_SERVER['REQUEST_URI'] ) );
+	exit;
+}
+
 $today_tasks = new WP_Query( $args );
 
 // Mostrar mensaje si no hay tareas para hoy
@@ -364,78 +379,81 @@ $show_import_message = ! $today_tasks->have_posts();
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
 	<div class="modal-content">
-	  <div class="modal-header">
-		<h5 class="modal-title" id="taskModalLabel">Selecciona las tareas para importar</h5>
-		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-	  </div>
-	  <div class="modal-body">
-		<!-- Aquí se insertarán dinámicamente las tareas con checkboxes -->
-		<table class="table table-striped table-hover">
-		  <thead class="table thead-sticky bg-light">
-			  <tr>
-				  <th scope="col" style="width: 50px;">
-					  <input type="checkbox" id="selectAllCheckbox" class="">
-				  </th>                        
-				  <th scope="col">Tablero</th>
-				  <th scope="col">Columna</th>
-				  <th scope="col">Título</th>
-			  </tr>
-		  </thead>
-		  <tbody>
-			<?php
-			// Obtener tareas de días anteriores
-			$days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
-			$previous_dates = array();
-			for ( $i = 1; $i <= $days_to_load; $i++ ) {
-				$previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
-			}
-
-			$args = array(
-				'post_type' => 'decker_task',
-				'meta_query' => array(
-					array(
-						'key' => '_user_date_relations',
-						'value' => implode( ',', $previous_dates ),
-						'compare' => 'REGEXP',
-					),
-					array(
-						'key' => 'assigned_users',
-						'value' => $current_user_id,
-						'compare' => 'LIKE',
-					),
-				),
-			);
-			$previous_tasks = new WP_Query( $args );
-
-			if ( $previous_tasks->have_posts() ) :
-				while ( $previous_tasks->have_posts() ) :
-					$previous_tasks->the_post();
-					$board_terms = get_the_terms( get_the_ID(), 'decker_board' );
-					$board = $board_terms && ! is_wp_error( $board_terms ) ? $board_terms[0]->name : 'No board assigned';
-					$stack = get_post_meta( get_the_ID(), 'stack', true );
-					?>
-					<tr>
-						<td><input type="checkbox" class="task-checkbox" value="<?php echo esc_attr( get_the_ID() ); ?>"></td>
-						<td><?php echo esc_html( $board ); ?></td>
-						<td><?php echo esc_html( $stack ); ?></td>
-						<td><?php the_title(); ?></td>
-					</tr>
-					<?php
-				endwhile;
-				wp_reset_postdata();
-			else :
-				?>
+	  <form method="post" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ); ?>">
+		<div class="modal-header">
+		  <h5 class="modal-title" id="taskModalLabel">Selecciona las tareas para importar</h5>
+		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+		</div>
+		<div class="modal-body">
+		  <!-- Aquí se insertarán dinámicamente las tareas con checkboxes -->
+		  <table class="table table-striped table-hover">
+			<thead class="table thead-sticky bg-light">
 				<tr>
-					<td colspan="4">No hay tareas de días anteriores para importar.</td>
+					<th scope="col" style="width: 50px;">
+						<input type="checkbox" id="selectAllCheckbox" class="">
+					</th>                        
+					<th scope="col">Tablero</th>
+					<th scope="col">Columna</th>
+					<th scope="col">Título</th>
 				</tr>
-			<?php endif; ?>
-		  </tbody>
-		</table>
-	  </div>
-	  <div class="modal-footer">
-		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-		<button type="button" class="btn btn-primary import-selected-tasks" disabled>Importar</button>
-	  </div>
+			</thead>
+			<tbody>
+			  <?php
+			  // Obtener tareas de días anteriores
+			  $days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
+			  $previous_dates = array();
+			  for ( $i = 1; $i <= $days_to_load; $i++ ) {
+				  $previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
+			  }
+
+			  $args = array(
+				  'post_type' => 'decker_task',
+				  'meta_query' => array(
+					  array(
+						  'key' => '_user_date_relations',
+						  'value' => implode( ',', $previous_dates ),
+						  'compare' => 'REGEXP',
+					  ),
+					  array(
+						  'key' => 'assigned_users',
+						  'value' => $current_user_id,
+						  'compare' => 'LIKE',
+					  ),
+				  ),
+			  );
+			  $previous_tasks = new WP_Query( $args );
+
+			  if ( $previous_tasks->have_posts() ) :
+				  while ( $previous_tasks->have_posts() ) :
+					  $previous_tasks->the_post();
+					  $board_terms = get_the_terms( get_the_ID(), 'decker_board' );
+					  $board = $board_terms && ! is_wp_error( $board_terms ) ? $board_terms[0]->name : 'No board assigned';
+					  $stack = get_post_meta( get_the_ID(), 'stack', true );
+					  ?>
+					  <tr>
+						  <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( get_the_ID() ); ?>"></td>
+						  <td><?php echo esc_html( $board ); ?></td>
+						  <td><?php echo esc_html( $stack ); ?></td>
+						  <td><?php the_title(); ?></td>
+					  </tr>
+					  <?php
+				  endwhile;
+				  wp_reset_postdata();
+			  else :
+				  ?>
+				  <tr>
+					  <td colspan="4">No hay tareas de días anteriores para importar.</td>
+				  </tr>
+			  <?php endif; ?>
+			</tbody>
+		  </table>
+		</div>
+		<div class="modal-footer">
+		  <?php wp_nonce_field( 'import_tasks', 'import_tasks_nonce' ); ?>
+		  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+		  <button type="submit" class="btn btn-primary import-selected-tasks" disabled>Importar</button>
+		</div>
+	  </form>
 	</div>
   </div>
 </div>

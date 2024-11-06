@@ -254,11 +254,7 @@ class Decker_Tasks {
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();
 
-		$relations[] = array(
-			'user_id' => $user_id,
-			'date' => $date,
-		);
-		update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->add_user_date_relation( $task_id, $user_id, $date );
 
 		return new WP_REST_Response( array( 'message' => 'Relation marked successfully.' ), 200 );
 	}
@@ -518,7 +514,23 @@ class Decker_Tasks {
 
 		return new WP_REST_Response( array( 'message' => 'User removed successfully.' ), 200 );
 	}
-	// For example:
+	/**
+	 * Add a user-date relation for a task.
+	 *
+	 * @param int $task_id The task ID.
+	 * @param int $user_id The user ID.
+	 * @param string $date The date to mark.
+	 */
+	private function add_user_date_relation( $task_id, $user_id, $date ) {
+		$relations = get_post_meta( $task_id, '_user_date_relations', true );
+		$relations = $relations ? $relations : array();
+
+		$relations[] = array(
+			'user_id' => $user_id,
+			'date' => $date,
+		);
+		update_post_meta( $task_id, '_user_date_relations', $relations );
+	}
 	public function get_tasks( $request ) {
 		// Logic to retrieve tasks.
 	}
