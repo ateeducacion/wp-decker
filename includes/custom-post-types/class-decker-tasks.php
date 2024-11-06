@@ -8,6 +8,30 @@
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
+
+/**
+ * Class Decker_Tasks
+ *
+ * Handles the Custom Post Type and its metaboxes for tasks in the Decker plugin.
+ */
+class Decker_Tasks {
+
+	/**
+	 * Constructor
+	 *
+	 * Initializes the class by setting up the hooks.
+	 */
+	public function __construct() {
+		$this->define_hooks();
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
+		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
+		add_action( 'template_redirect', array( $this, 'template_redirect' ) );
+		add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
+		add_action( 'wp_ajax_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
+		add_action( 'wp_ajax_nopriv_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
+	}
+
 	/**
 	 * Get the new order for a task in a specific stack.
 	 *
@@ -40,29 +64,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 		// If no tasks exist in the stack, start with order 1
 		return $max_order ? $max_order + 1 : 1;
-	}
-
-/**
- * Class Decker_Tasks
- *
- * Handles the Custom Post Type and its metaboxes for tasks in the Decker plugin.
- */
-class Decker_Tasks {
-
-	/**
-	 * Constructor
-	 *
-	 * Initializes the class by setting up the hooks.
-	 */
-	public function __construct() {
-		$this->define_hooks();
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		add_action( 'init', array( $this, 'add_rewrite_rules' ) );
-		add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
-		add_action( 'template_redirect', array( $this, 'template_redirect' ) );
-		add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
-		add_action( 'wp_ajax_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
-		add_action( 'wp_ajax_nopriv_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
 	}
 
 	/**
