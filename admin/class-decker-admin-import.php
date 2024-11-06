@@ -73,9 +73,9 @@ class Decker_Admin_Import {
 				<form method="post" id="decker-import-form">
 					<?php wp_nonce_field( 'decker-import' ); ?>
 					<label for="ignore-existing">
-						<input type="checkbox" id="ignore-existing" name="ignore_existing" value="1">
-						<?php esc_html_e( 'Ignore existing tasks', 'decker' ); ?>
-						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will not be updated or duplicated.', 'decker' ); ?></span>
+						<input type="checkbox" id="ignore-existing" name="ignore_existing" value="1" checked>
+						<?php esc_html_e( 'Overwrite existing tasks', 'decker' ); ?>
+						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be updated.', 'decker' ); ?></span>
 					</label>
 					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
 				</form>
@@ -404,7 +404,7 @@ class Decker_Admin_Import {
 						)
 					);
 
-					if ( empty( $existing_task ) || ! $ignore_existing ) {
+					if ( empty( $existing_task ) ) {
 
 						Decker_Utility_Functions::write_log( 'Creating task for card ID: ' . $card['id'], Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 
@@ -429,6 +429,17 @@ class Decker_Admin_Import {
 
 						Decker_Utility_Functions::write_log( 'Task created successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 						$task_count++;
+					} elseif ( $ignore_existing ) {
+						// Update the existing task
+						$post_id = $existing_task[0]->ID;
+						wp_update_post(
+							array(
+								'ID'           => $post_id,
+								'post_title'   => trim( $card['title'] ),
+								'post_content' => $Parsedown->text($card['description']),
+							)
+						);
+						Decker_Utility_Functions::write_log( 'Task updated successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 					}
 
 					usleep( 100000 ); // Little sleep to not be banned by nextcloud
