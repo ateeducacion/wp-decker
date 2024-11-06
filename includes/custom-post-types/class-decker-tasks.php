@@ -93,7 +93,20 @@ class Decker_Tasks {
 		if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'save_decker_task' || ! current_user_can( 'edit_posts' ) ) {
 			wp_die( 'No tienes permiso para realizar esta acción.' );
 			update_post_meta( $task_id, 'order', $new_order );
+			// Reorder tasks in the stack after creating a new task
+			$this->reorder_tasks_in_stack($stack);
 		}
+
+		// Reorder tasks when changing the board
+		add_action('save_post', function($post_id) {
+			if (get_post_type($post_id) === 'decker_task') {
+				$stack = get_post_meta($post_id, 'stack', true);
+				$this->reorder_tasks_in_stack($stack);
+			}
+		});
+
+		// Reorder tasks in the stack after deleting a task
+		add_action('before_delete_post', array($this, 'handle_task_deletion'));
 
 		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 		$title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
