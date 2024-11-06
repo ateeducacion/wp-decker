@@ -72,6 +72,10 @@ class Decker_Admin_Import {
 			<?php else : ?>
 				<form method="post" id="decker-import-form">
 					<?php wp_nonce_field( 'decker-import' ); ?>
+					<label for="ignore-existing">
+						<input type="checkbox" id="ignore-existing" name="ignore_existing" value="1">
+						<?php esc_html_e( 'Ignore existing tasks', 'decker' ); ?>
+					</label>
 					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
 				</form>
 				<div id="import-progress" style="display: none;">
@@ -119,6 +123,7 @@ class Decker_Admin_Import {
 			const formData = new FormData(form);
 			formData.append('action', 'decker_start_import');
 			formData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
+			formData.append('ignore_existing', document.getElementById('ignore-existing').checked ? 1 : 0);
 
 			fetch(ajaxurl, {
 				method: 'POST',
@@ -258,6 +263,7 @@ class Decker_Admin_Import {
 	public function import_board() {
 		check_ajax_referer( 'decker_import_nonce', 'security' );
 
+		$ignore_existing = isset( $_POST['ignore_existing'] ) && $_POST['ignore_existing'] == 1;
 		$board = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
 		$ignored_board_ids = explode( ',', DECKER_IGNORED_BOARD_IDS );
 
@@ -381,7 +387,7 @@ class Decker_Admin_Import {
 						)
 					);
 
-					if ( empty( $existing_task ) ) {
+					if ( empty( $existing_task ) || ! $ignore_existing ) {
 
 						Decker_Utility_Functions::write_log( 'Creating task for card ID: ' . $card['id'], Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 
