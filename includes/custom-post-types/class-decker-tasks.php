@@ -1178,7 +1178,7 @@ class Decker_Tasks {
 			update_post_meta( $post_id, 'duedate', sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) );
 		}
 		if ( isset( $_POST['order'] ) ) {
-			update_post_meta( $post_id, 'order', sanitize_text_field( wp_unslash( $_POST['order'] ) ) );
+			wp_die( 'Error: El campo "order" no puede ser actualizado manualmente.', 'Error', array( 'response' => 400 ) );
 		}
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		update_post_meta( $post_id, 'max_priority', $max_priority );
