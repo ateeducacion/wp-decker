@@ -866,7 +866,7 @@ class Decker_Tasks {
 		</p>
 		<p>
 			<label for="order"><?php esc_html_e( 'Order', 'decker' ); ?></label>
-			<input type="number" name="order" value="<?php echo esc_attr( $order ); ?>" class="widefat">
+			<input type="number" name="order" value="<?php echo esc_attr( $order ); ?>" class="widefat" readonly>
 		</p>
 		<p>
 			<label for="max_priority"><?php esc_html_e( 'Max Priority', 'decker' ); ?></label>
