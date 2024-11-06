@@ -69,7 +69,7 @@ function render_task_card( $task ) {
 			<?php
 				$due_date = get_post_meta( $task->ID, 'duedate', true );
 
-				$relative_time = "<span>no definido</span>";
+				$relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined</span>';
 				$formatted_due_date = "";
 
 				if ( ! empty($due_date)) {
