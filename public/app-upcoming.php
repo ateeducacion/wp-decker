@@ -1,6 +1,5 @@
 <?php
 include 'layouts/main.php';
-include_once 'includes/class-decker-utility-functions.php';
 
 // Consultar las tareas asociadas al board
 $tasks = get_posts(
