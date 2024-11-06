@@ -28,6 +28,18 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render Shared Key Field
+	 *
+	 * Outputs the HTML for the shared_key field.
+	 */
+	public function shared_key_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : wp_generate_uuid4();
+		echo '<input type="text" name="decker_settings[shared_key]" value="' . esc_attr( $value ) . '" class="regular-text">';
+		echo '<p class="description">' . esc_html__( 'Enter the shared key for securing the email-to-post endpoint. Example endpoint: https://yourdomain.com/wp-json/decker/v1/email-to-post?shared_key=YOUR_SHARED_KEY', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render User Profile Field
 	 *
 	 * Outputs the HTML for the user_profile field.
@@ -184,6 +196,7 @@ class Decker_Admin_Settings {
 			'nextcloud_url_base' => __( 'Nextcloud URL Base', 'decker' ),
 			'nextcloud_username' => __( 'Nextcloud Username', 'decker' ),
 			'nextcloud_access_token' => __( 'Nextcloud Access Token', 'decker' ),
+			'shared_key' => __( 'Shared Key', 'decker' ),
 			'decker_ignored_board_ids' => __( 'Ignored Boards', 'decker' ),
 			'prioridad_maxima_etiqueta' => __( 'Max Priority Label', 'decker' ),
 			'clear_cache_button' => __( 'Clear Cache', 'decker' ),
@@ -440,7 +453,8 @@ class Decker_Admin_Settings {
 			$input['decker_ignored_board_ids'] = '';
 		}
 
-		// Validate log level
+		// Validate shared key
+		$input['shared_key'] = sanitize_text_field( $input['shared_key'] );
 		if ( ! in_array(
 			$input['log_level'],
 			array(

@@ -7,7 +7,7 @@ class Decker_Email_To_Post {
 	/**
 	 * Clave compartida para asegurar el endpoint.
 	 */
-	const SHARED_KEY = 'YOUR_SHARED_KEY';
+	const SHARED_KEY = 'YOUR_SHARED_KEY'; // Este valor será sobrescrito por el valor en la configuración
 
 	/**
 	 * Inicializa la clase registrando el endpoint.
