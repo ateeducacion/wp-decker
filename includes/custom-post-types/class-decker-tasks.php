@@ -33,7 +33,20 @@ class Decker_Tasks {
 		add_action( 'wp_ajax_nopriv_get_dashboard_counts', array( $this, 'get_dashboard_counts' ) );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
+		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
+	}
+
+	/**
+	 * Make custom columns sortable.
+	 *
+	 * @param array $columns Existing sortable columns.
+	 * @return array Modified sortable columns.
+	 */
+	public function make_columns_sortable( $columns ) {
+		$columns['stack'] = 'stack';
+		$columns['order'] = 'order';
+		return $columns;
 	}
 
 	/**
@@ -75,10 +88,7 @@ class Decker_Tasks {
 	 */
 	public function remove_row_actions( $actions, $post ) {
 		if ( 'decker_task' === $post->post_type ) {
-			unset( $actions['edit'] );
-			unset( $actions['inline hide-if-no-js'] );
-			unset( $actions['trash'] );
-			unset( $actions['view'] );
+			return array(); // Remove all actions
 		}
 		return $actions;
 	}
