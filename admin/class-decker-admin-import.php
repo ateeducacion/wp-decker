@@ -341,6 +341,7 @@ class Decker_Admin_Import {
 	 * @return array|false An array with counts of labels and tasks, or false on failure.
 	 */
 	private function import_labels_and_tasks( $board, $board_term, $archived = false ) {
+		$ignore_existing = isset( $_POST['ignore_existing'] ) && $_POST['ignore_existing'] == 1;
 		$label_count = 0;
 		$task_count  = 0;
 
