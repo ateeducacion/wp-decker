@@ -66,7 +66,18 @@ function render_task_card( $task ) {
 			<span class="float-end badge <?php echo $max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'; ?>">
 				<?php echo $max_priority ? '🔥' : 'Normal'; ?>
 			</span>
-			<small class="text-muted"><?php echo get_the_date( 'd M Y', $task->ID ); ?></small>
+			<?php
+				$due_date = get_post_meta( $task->ID, 'duedate', true );
+
+				$relative_time = "<span>no definido</span>";
+				$formatted_due_date = "";
+
+				if ( ! empty($due_date)) {
+					$relative_time = Decker_Utility_Functions::getRelativeTime( $due_date );
+					$formatted_due_date = date( 'd M Y', strtotime( $due_date ) );
+				}
+			?>
+			<small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo esc_html( $relative_time ); ?></small>
 
 			<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $task->ID ); ?>">
 				<a href="
