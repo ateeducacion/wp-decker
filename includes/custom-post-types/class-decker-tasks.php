@@ -521,7 +521,7 @@ class Decker_Tasks {
 	 * @param int $user_id The user ID.
 	 * @param string $date The date to mark.
 	 */
-	private function add_user_date_relation( $task_id, $user_id, $date ) {
+	public function add_user_date_relation( $task_id, $user_id, $date ) {
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();
 
