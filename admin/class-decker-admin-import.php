@@ -149,6 +149,7 @@ class Decker_Admin_Import {
 							if (stopImport) {
 								logMessages.innerHTML += `<li style="color: orange;">Import stopped by user.</li>`;
 								progressText.textContent = 'Import stopped.';
+								progressBar.style.width = '0%';
 								return;
 							}
 
