@@ -292,11 +292,14 @@ class Decker_Admin_Import {
 
 		if ( ! in_array( $board['id'], $ignored_board_ids, true ) ) {
 
-			$board_term = $this->maybe_create_term( $board['title'], 'decker_board', $board['color'] );
-			if ( is_wp_error( $board_term ) ) {
-				Decker_Utility_Functions::write_log( 'Error creating board term for board ID: ' . $board['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
-				wp_send_json_error( 'Failed to create board term.' );
-				return;
+			$board_term = null;
+			if ( ! empty( $board['title'] ) ) {
+				$board_term = $this->maybe_create_term( $board['title'], 'decker_board', $board['color'] );
+				if ( is_wp_error( $board_term ) ) {
+					Decker_Utility_Functions::write_log( 'Error creating board term for board ID: ' . $board['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+					wp_send_json_error( 'Failed to create board term.' );
+					return;
+				}
 			}
 
 			// Import the regular tasks.
