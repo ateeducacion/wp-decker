@@ -459,10 +459,12 @@ class Decker_Admin_Import {
 		}
 
 		$label_ids = array();
-		foreach ( $card['labels'] as $label ) {
-			$label_term = term_exists( $label['title'], 'decker_label' );
-			if ( ! is_wp_error( $label_term ) && $label_term ) {
-				$label_ids[] = (int) $label_term['term_id'];
+		if ( is_array( $card['labels'] ) ) {
+			foreach ( $card['labels'] as $label ) {
+				$label_term = term_exists( $label['title'], 'decker_label' );
+				if ( ! is_wp_error( $label_term ) && $label_term ) {
+					$label_ids[] = (int) $label_term['term_id'];
+				}
 			}
 		}
 		if ( $label_ids ) {
