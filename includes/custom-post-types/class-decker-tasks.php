@@ -210,8 +210,13 @@ class Decker_Tasks {
 		$tasks_in_stack = get_posts(
 			array(
 				'post_type'   => 'decker_task',
-				'meta_key'    => 'stack',
-				'meta_value'  => $stack,
+				'meta_query'  => array(
+					array(
+						'key'     => 'stack',
+						'value'   => $stack,
+						'compare' => '='
+					)
+				),
 				'orderby'     => 'meta_value_num',
 				'meta_key'    => 'order',
 				'order'       => 'ASC',

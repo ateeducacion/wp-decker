@@ -404,6 +404,11 @@ class Decker_Admin_Import {
 
 		Decker_Utility_Functions::write_log( 'Stacks retrieved successfully.', Decker_Utility_Functions::LOG_LEVEL_INFO );
 
+		// Sort stacks by the 'order' field before processing
+		usort( $stacks, function( $a, $b ) {
+			return $a['order'] <=> $b['order'];
+		});
+
 		foreach ( $stacks as $stack ) {
 
 			if ( isset( $stack['cards'] ) && is_array( $stack['cards'] ) ) {
