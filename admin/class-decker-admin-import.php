@@ -85,6 +85,7 @@ class Decker_Admin_Import {
 						<div id="progress" style="width: 0%; height: 30px; background-color: #4caf50;"></div>
 					</div>
 					<p id="progress-text"></p>
+					<button id="stop-import" style="display: none;"><?php esc_html_e( 'Stop Import', 'decker' ); ?></button>
 					<button id="toggle-log"><?php esc_html_e( 'Show Log', 'decker' ); ?></button>
 					<div id="log-container" style="max-height: 200px; overflow-y: auto; display: none;">
 						<ul id="log-messages"></ul>
@@ -98,6 +99,7 @@ class Decker_Admin_Import {
 	document.addEventListener('DOMContentLoaded', function() {
 		const form = document.getElementById('decker-import-form');
 		const progressContainer = document.getElementById('import-progress');
+		let stopImport = false;
 		const progressBar = document.getElementById('progress');
 		const progressText = document.getElementById('progress-text');
 		const logContainer = document.getElementById('log-container');
@@ -117,9 +119,15 @@ class Decker_Admin_Import {
 			}
 		});
 
+		document.getElementById('stop-import').addEventListener('click', function() {
+			stopImport = true;
+			this.style.display = 'none';
+		});
+
 		form.addEventListener('submit', function(event) {
 			event.preventDefault();
 			progressContainer.style.display = 'block';
+			document.getElementById('stop-import').style.display = 'inline-block';
 
 			const formData = new FormData(form);
 			formData.append('action', 'decker_start_import');
@@ -138,6 +146,12 @@ class Decker_Admin_Import {
 
 					const importBoard = (retries = 0) => {
 						if (importedBoards < totalBoards) {
+							if (stopImport) {
+								logMessages.innerHTML += `<li style="color: orange;">Import stopped by user.</li>`;
+								progressText.textContent = 'Import stopped.';
+								return;
+							}
+
 							const currentBoard = importData.data[importedBoards];
 							const boardId = currentBoard.id.toString();
 
