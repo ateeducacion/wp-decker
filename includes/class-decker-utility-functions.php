@@ -190,17 +190,17 @@ class Decker_Utility_Functions {
 		$isFuture = $dueDate > $now; // Check if the date is in the future
 
 		if ( $interval->y > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d years', 'text-domain' ), $interval->y ) : sprintf( __( ' %d years ago', 'text-domain' ), $interval->y );
+			return $isFuture ? sprintf( __( 'in %d year%s', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' ) : sprintf( __( 'more than %d year%s ago', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' );
 		} elseif ( $interval->m > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d months', 'text-domain' ), $interval->m ) : sprintf( __( ' %d months ago', 'text-domain' ), $interval->m );
+			return $isFuture ? sprintf( __( 'in %d month%s', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' ) : sprintf( __( 'more than %d month%s ago', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' );
 		} elseif ( $interval->d > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d days', 'text-domain' ), $interval->d ) : sprintf( __( ' %d days ago', 'text-domain' ), $interval->d );
+			return $isFuture ? sprintf( __( 'in %d day%s', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' ) : sprintf( __( 'more than %d day%s ago', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' );
 		} elseif ( $interval->h > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d hours', 'text-domain' ), $interval->h ) : sprintf( __( ' %d hours ago', 'text-domain' ), $interval->h );
+			return $isFuture ? sprintf( __( 'in %d hour%s', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' ) : sprintf( __( 'more than %d hour%s ago', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' );
 		} elseif ( $interval->i > 0 ) {
-			return $isFuture ? sprintf( __( 'in %d minutes', 'text-domain' ), $interval->i ) : sprintf( __( ' %d minutes ago', 'text-domain' ), $interval->i );
+			return $isFuture ? sprintf( __( 'in %d minute%s', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' ) : sprintf( __( 'more than %d minute%s ago', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' );
 		} else {
-			return $isFuture ? __( 'in a few seconds', 'text-domain' ) : __( 'a few seconds ago', 'text-domain' );
+			return $isFuture ? __( 'in a few seconds', 'text-domain' ) : __( 'more than a few seconds ago', 'text-domain' );
 		}
 	}
 }
