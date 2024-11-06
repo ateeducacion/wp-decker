@@ -207,6 +207,7 @@ function render_task_menu( $task_id ) {
 
 													<div class="avatar-group mt-2">
 														<?php
+														$user_date_relations = get_post_meta( $task->ID, '_user_date_relations', true );
 														$assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
 														if ( $assigned_users ) {
 															foreach ( $assigned_users as $user_id ) {
