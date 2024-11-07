@@ -1,4 +1,6 @@
-<?php include 'layouts/main.php'; ?>
+<?php
+include 'layouts/main.php';
+?>
 
 <head>
 	<title>Tasks Detail | Decker</title>
@@ -6,7 +8,7 @@
 	<?php include 'layouts/head-css.php'; ?>
 </head>
 
-<body>
+<body <?php body_class(); ?>>
 	<!-- Begin page -->
 	<div class="wrapper">
 

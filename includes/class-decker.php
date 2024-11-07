@@ -116,9 +116,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
 
-		require_once plugin_dir_path( __DIR__ ) . 'includes/class-api-integration.php';
-		require_once plugin_dir_path( __DIR__ ) . 'includes/class-ajax-handlers.php';
-
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
 
 		/**
@@ -139,14 +136,6 @@ class Decker {
 	 * Define plugin settings constants.
 	 */
 	private function define_settings_constants() {
-		$options = get_option( 'decker_settings', array() );
-		define( 'DECKER_NEXTCLOUD_URL', isset( $options['nextcloud_url_base'] ) ? $options['nextcloud_url_base'] : 'https://nube.canariaseducacion.org' );
-		define( 'DECKER_NEXTCLOUD_USERNAME', isset( $options['nextcloud_username'] ) ? $options['nextcloud_username'] : '' );
-		define( 'DECKER_NEXTCLOUD_ACCESS_TOKEN', isset( $options['nextcloud_access_token'] ) ? $options['nextcloud_access_token'] : '' );
-		define( 'DECKER_PRIORIDAD_MAXIMA_ETIQUETA', isset( $options['prioridad_maxima_etiqueta'] ) ? $options['prioridad_maxima_etiqueta'] : 'PRIORIDAD MÁXIMA 🔥🧨' );
-
-		$ignored_board_ids = array( 21, 498, 447 );
-		define( 'DECKER_IGNORED_BOARD_IDS', isset( $options['decker_ignored_board_ids'] ) ? $options['decker_ignored_board_ids'] : implode( ',', $ignored_board_ids ) );
 	}
 
 	/**

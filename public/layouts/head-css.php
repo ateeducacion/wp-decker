@@ -1,4 +1,7 @@
 
+<!-- TODO: Add the WP Head -->
+<?php // wp_head(); ?>
+
 <!-- Theme Config Js -->
 <script src="<?php echo plugins_url( 'assets/js/config.js', __DIR__ ); ?>"></script>
 
@@ -23,3 +26,4 @@
 
 <!-- Choices.js CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+

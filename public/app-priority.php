@@ -97,7 +97,7 @@ $show_import_message = ! $today_tasks->have_posts();
 
 </head>
 
-<body>
+<body <?php body_class(); ?>>
 	<!-- Begin page -->
 	<div class="wrapper">
 

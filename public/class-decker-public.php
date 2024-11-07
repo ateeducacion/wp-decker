@@ -270,21 +270,11 @@ class Decker_Public {
 
 			// Localize the script with new data.
 			$script_data = array(
-				'ajax_url'                  => admin_url( 'admin-ajax.php?action=decker_load' ),
-				'ajax_url_archived'         => admin_url( 'admin-ajax.php?action=decker_load_archived' ),
-				'newtask_ajax_url'          => admin_url( 'admin-ajax.php?action=decker_newtask' ),
-				'settoday_ajax_url'         => admin_url( 'admin-ajax.php?action=decker_settoday' ),
-				'changestack_ajax_url'      => admin_url( 'admin-ajax.php?action=decker_changestack' ),
-				'delete_ajax_url'           => admin_url( 'admin-ajax.php?action=decker_delete' ),
-				'getcard_ajax_url'          => admin_url( 'admin-ajax.php?action=decker_getcard' ),
-				'prioridad_maxima_etiqueta' => DECKER_PRIORIDAD_MAXIMA_ETIQUETA,
 				'display_name'              => $current_user->display_name,
 				'nickname'                  => $current_user->nickname,
 
 			);
 
-			// wp_localize_script( 'decker-custom-js', 'deckerData', $script_data );
-			// Le pasamos el "handle" del script.js.
 			wp_localize_script( 'decker-public', 'deckerData', $script_data );
 
 		}

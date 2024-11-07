@@ -127,19 +127,22 @@ class Decker_Tasks {
 			wp_die( 'No tienes permiso para realizar esta acción.' );
 			update_post_meta( $task_id, 'order', $new_order );
 			// Reorder tasks in the stack after creating a new task
-			$this->reorder_tasks_in_stack($stack);
+			$this->reorder_tasks_in_stack( $stack );
 		}
 
 		// Reorder tasks when changing the board
-		add_action('save_post', function($post_id) {
-			if (get_post_type($post_id) === 'decker_task') {
-				$stack = get_post_meta($post_id, 'stack', true);
-				$this->reorder_tasks_in_stack($stack);
+		add_action(
+			'save_post',
+			function ( $post_id ) {
+				if ( get_post_type( $post_id ) === 'decker_task' ) {
+					$stack = get_post_meta( $post_id, 'stack', true );
+					$this->reorder_tasks_in_stack( $stack );
+				}
 			}
-		});
+		);
 
 		// Reorder tasks in the stack after deleting a task
-		add_action('before_delete_post', array($this, 'handle_task_deletion'));
+		add_action( 'before_delete_post', array( $this, 'handle_task_deletion' ) );
 
 		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 		$title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
@@ -247,8 +250,8 @@ class Decker_Tasks {
 					array(
 						'key'     => 'stack',
 						'value'   => $stack,
-						'compare' => '='
-					)
+						'compare' => '=',
+					),
 				),
 				'orderby'     => 'meta_value_num',
 				'meta_key'    => 'order',
@@ -821,15 +824,6 @@ class Decker_Tasks {
 		);
 
 		add_meta_box(
-			'responsible_user_meta_box',
-			__( 'Responsible', 'decker' ),
-			array( $this, 'display_responsible_user_meta_box' ),
-			'decker_task',
-			'side',
-			'default'
-		);
-
-		add_meta_box(
 			'decker_users_meta_box',
 			__( 'Assigned Users', 'decker' ),
 			array( $this, 'display_users_meta_box' ),
@@ -907,29 +901,6 @@ class Decker_Tasks {
 		<p>
 			<label for="id_nextcloud_card"><?php esc_html_e( 'Nextcloud Card ID', 'decker' ); ?></label>
 			<input type="number" name="id_nextcloud_card" value="<?php echo esc_attr( $id_nextcloud_card ); ?>" class="widefat">
-		</p>
-		<?php
-	}
-
-	/**
-	 * Display the Responsible meta box.
-	 *
-	 * @param WP_Post $post The current post object.
-	 */
-	public function display_responsible_user_meta_box( $post ) {
-		$users = get_users( array( 'orderby' => 'display_name' ) );
-		$responsible_user = get_post_meta( $post->ID, 'responsible_user', true );
-		?>
-		<p>
-			<label for="responsible_user"><?php esc_html_e( 'Select Responsible User', 'decker' ); ?></label>
-			<select name="responsible_user" id="responsible_user" class="widefat">
-				<option value=""><?php esc_html_e( 'Select User', 'decker' ); ?></option>
-				<?php foreach ( $users as $user ) { ?>
-					<option value="<?php echo esc_attr( $user->ID ); ?>" <?php selected( $responsible_user, $user->ID ); ?>>
-						<?php echo esc_html( $user->display_name ); ?>
-					</option>
-				<?php } ?>
-			</select>
 		</p>
 		<?php
 	}
@@ -1194,11 +1165,6 @@ class Decker_Tasks {
 		}
 		if ( isset( $_POST['id_nextcloud_card'] ) ) {
 			update_post_meta( $post_id, 'id_nextcloud_card', sanitize_text_field( wp_unslash( $_POST['id_nextcloud_card'] ) ) );
-		}
-		$responsible_user = isset( $_POST['responsible_user'] ) ? sanitize_text_field( wp_unslash( $_POST['responsible_user'] ) ) : '';
-		update_post_meta( $post_id, 'responsible_user', $responsible_user );
-		if ( isset( $_POST['assigned_users'] ) ) {
-			update_post_meta( $post_id, 'assigned_users', array_map( 'sanitize_text_field', wp_unslash( $_POST['assigned_users'] ) ) );
 		}
 		if ( isset( $_POST['decker_labels'] ) ) {
 			$labels = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_labels'] ) );

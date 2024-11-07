@@ -84,9 +84,6 @@ class TestAdminSettings extends TestCase {
 
 		$input = array(
 			'nextcloud_url_base' => 'https://example.com',
-			'decker_ignored_board_ids' => '1,2,3',
-			'parallel_curl_requests' => true,
-			'task_creation_enabled' => false,
 		);
 
 		$result = $settings->settings_validate( $input );

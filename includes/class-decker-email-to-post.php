@@ -1,23 +1,29 @@
 <?php
 /**
- * Clase para manejar la creación de posts desde emails en el plugin Decker.
+ * Class to handle the creation of posts from emails in the Decker plugin.
  */
 class Decker_Email_To_Post {
 
 	/**
-	 * Clave compartida para asegurar el endpoint.
+	 * Shared key for securing the endpoint.
+	 *
+	 * @var string
 	 */
-	const SHARED_KEY = 'YOUR_SHARED_KEY'; // Este valor será sobrescrito por el valor en la configuración
+	private string $shared_key;
 
 	/**
-	 * Inicializa la clase registrando el endpoint.
+	 * Initializes the class and registers the endpoint.
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_endpoint' ) );
+
+		// Retrieve options and set the shared key.
+		$options = get_option( 'decker_settings', array() );
+		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 	}
 
 	/**
-	 * Registra el endpoint REST para procesar el email.
+	 * Registers the REST API endpoint to process the email.
 	 */
 	public function register_endpoint() {
 		register_rest_route(
@@ -32,53 +38,53 @@ class Decker_Email_To_Post {
 	}
 
 	/**
-	 * Callback para procesar el email recibido y crear un post.
+	 * Callback to process the received email and create a post.
 	 *
-	 * @param WP_REST_Request $request Los datos de la solicitud REST.
-	 * @return WP_REST_Response
+	 * @param WP_REST_Request $request The REST request data.
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function process_email( $request ) {
+	public function process_email( WP_REST_Request $request ) {
 		$shared_key = $request->get_param( 'shared_key' );
-		if ( $shared_key !== self::SHARED_KEY ) {
-			return new WP_Error( 'forbidden', 'Clave de acceso incorrecta', array( 'status' => 403 ) );
+		if ( $shared_key !== $this->shared_key ) {
+			return new WP_Error( 'forbidden', 'Invalid access key', array( 'status' => 403 ) );
 		}
 
 		$email_data = $request->get_json_params();
 
 		if ( ! $this->validate_sender( $email_data['from'] ) ) {
-			return new WP_Error( 'forbidden', 'Remitente no autorizado', array( 'status' => 403 ) );
+			return new WP_Error( 'forbidden', 'Unauthorized sender', array( 'status' => 403 ) );
 		}
 
 		$post_id = $this->create_post_from_email( $email_data );
 
 		return rest_ensure_response(
 			array(
-				'status' => 'success',
+				'status'  => 'success',
 				'post_id' => $post_id,
 			)
 		);
 	}
 
 	/**
-	 * Verifica si el remitente es un usuario registrado en WordPress.
+	 * Validates if the sender is a registered WordPress user.
 	 *
-	 * @param string $email Dirección de email del remitente.
-	 * @return bool True si el remitente es válido, False en caso contrario.
+	 * @param string $email The sender's email address.
+	 * @return bool True if the sender is valid, false otherwise.
 	 */
 	private function validate_sender( $email ) {
 		return get_user_by( 'email', $email ) !== false;
 	}
 
 	/**
-	 * Procesa los archivos adjuntos y los sube como medios en WordPress.
+	 * Processes and uploads attachments as WordPress media.
 	 *
-	 * @param string $filename Nombre del archivo.
-	 * @param string $content  Contenido del archivo.
-	 * @return int ID del adjunto.
+	 * @param string $filename Name of the file.
+	 * @param string $content  File content.
+	 * @return int Attachment ID.
 	 */
 	private function upload_attachment( $filename, $content ) {
 		$upload_dir = wp_upload_dir();
-		$path = $upload_dir['path'] . '/' . $filename;
+		$path = $upload_dir['path'] . '/' . sanitize_file_name( $filename );
 
 		file_put_contents( $path, $content );
 
@@ -100,19 +106,19 @@ class Decker_Email_To_Post {
 	}
 
 	/**
-	 * Crea un post en WordPress a partir de los datos de un email.
+	 * Creates a WordPress post from email data.
 	 *
-	 * @param array $email_data Datos del email.
-	 * @return int ID del post creado.
+	 * @param array $email_data The email data.
+	 * @return int ID of the created post.
 	 */
 	private function create_post_from_email( $email_data ) {
-		$author = get_user_by( 'email', $email_data['from'] );
+		$author = get_user_by( 'email', sanitize_email( $email_data['from'] ) );
 		$post_id = wp_insert_post(
 			array(
 				'post_title'   => sanitize_text_field( $email_data['subject'] ),
 				'post_content' => sanitize_textarea_field( $email_data['body'] ),
 				'post_status'  => 'publish',
-				'post_author'  => $author->ID,
+				'post_author'  => $author ? $author->ID : 0,
 			)
 		);
 

@@ -198,7 +198,6 @@ class Decker_Admin_Settings {
 			'nextcloud_access_token' => __( 'Nextcloud Access Token', 'decker' ),
 			'shared_key' => __( 'Shared Key', 'decker' ),
 			'decker_ignored_board_ids' => __( 'Ignored Boards', 'decker' ),
-			'prioridad_maxima_etiqueta' => __( 'Max Priority Label', 'decker' ),
 			'clear_cache_button' => __( 'Clear Cache', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'log_level' => __( 'Log Level', 'decker' ), // Log level radio buttons
@@ -273,18 +272,6 @@ class Decker_Admin_Settings {
 		$value = isset( $options['decker_ignored_board_ids'] ) ? sanitize_text_field( $options['decker_ignored_board_ids'] ) : '';
 		echo '<input type="text" name="decker_settings[decker_ignored_board_ids]" value="' . esc_attr( $value ) . '" class="regular-text">';
 		echo '<p class="description">' . esc_html__( 'Enter the IDs of the boards you want to ignore, separated by commas.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Max Priority Label Field
-	 *
-	 * Outputs the HTML for the prioridad_maxima_etiqueta field.
-	 */
-	public function prioridad_maxima_etiqueta_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['prioridad_maxima_etiqueta'] ) ? sanitize_text_field( $options['prioridad_maxima_etiqueta'] ) : '';
-		echo '<input type="text" name="decker_settings[prioridad_maxima_etiqueta]" value="' . esc_attr( $value ) . '" class="regular-text">';
-		echo '<p class="description">' . esc_html__( 'Set the label for "Max Priority".', 'decker' ) . '</p>';
 	}
 
 	/**

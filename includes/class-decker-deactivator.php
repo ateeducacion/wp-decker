@@ -26,6 +26,6 @@ class Decker_Deactivator {
 	 */
 	public static function deactivate() {
 
-		// flush_rewrite_rules();
+		flush_rewrite_rules();
 	}
 }

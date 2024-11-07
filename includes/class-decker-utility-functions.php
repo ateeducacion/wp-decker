@@ -152,25 +152,6 @@ class Decker_Utility_Functions {
 		set_transient( 'decker_admin_error_msg', $error_msg, 60 );
 	}
 
-	/**
-	 * Obtener una opción de WordPress.
-	 *
-	 * @param string $option_name El nombre de la opción.
-	 * @return mixed El valor de la opción.
-	 */
-	public static function decker_get_option( $option_name ) {
-		return get_option( $option_name );
-	}
-
-	/**
-	 * Another example utility function.
-	 *
-	 * @return bool True.
-	 */
-	public static function example_utility_function() {
-		return true;
-	}
-
 	public static function getRelativeTime( $dateString ) {
 
 		if ( empty( $dateString ) ) {

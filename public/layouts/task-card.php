@@ -227,18 +227,25 @@ function deleteComment(commentId) {
 		</div>
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<select class="form-select" id="task-assignee" required>
-					<option value="" disabled selected>Select Assignee</option>
+				<select class="form-select" id="task-author" required>
+					<option value="" disabled selected>Select Author</option>
 					<?php
+
+					$current_author_id = get_current_user_id(); // For new posts, select the current user.
+					if ( $task_id > 0 ) {
+						// For existing posts, get the current post author.
+						$current_author_id = get_post_field( 'post_author', get_the_ID() );
+					}
+					$current_author_id = get_post_field( 'post_author', get_the_ID() ); // Get the current post author ID.
 					$users = get_users();
 					foreach ( $users as $user ) {
-						$selected = is_array( $assignees ) && in_array( $user->ID, $assignees ) ? 'selected' : '';
+						$selected = ( $user->ID == $current_author_id ) ? 'selected' : '';
 						echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
-				<label for="task-assignee" class="form-label">Assignee</label>
-				<div class="invalid-feedback">Please select an assignee.</div>				
+				<label for="task-author" class="form-label">Author</label>
+				<div class="invalid-feedback">Please select an author.</div>				
 			</div>
 		</div>
 	</div>

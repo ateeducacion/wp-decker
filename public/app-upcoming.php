@@ -95,8 +95,6 @@ function render_task_menu( $task_id ) {
     </div>';
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
 <head>
 	<title>Upcoming Tasks | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
@@ -104,7 +102,7 @@ function render_task_menu( $task_id ) {
 	<?php include 'layouts/head-css.php'; ?>
 	</head>
 
-	<body>
+<body <?php body_class(); ?>>
 		<!-- Begin page -->
 		<div class="wrapper">
 

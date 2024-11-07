@@ -1,4 +1,6 @@
-<?php include 'layouts/main.php'; ?>
+<?php
+include 'layouts/main.php';
+?>
 
 <head>
 	<title>Tasks | Decker</title>
@@ -94,8 +96,7 @@ table#tablaTareas td:nth-child(4) {
 
 	</style>
 </head>
-
-<body>
+<body <?php body_class(); ?>>
 	<!-- Begin page -->
 	<div class="wrapper">
 

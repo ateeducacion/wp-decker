@@ -184,16 +184,13 @@ function render_task_menu( $task_id ) {
     </div>';
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
 <head>
 	<title>Kanban Board | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
-	</head>
-
-	<body>
+</head>
+<body <?php body_class(); ?>>
 		<!-- Begin page -->
 		<div class="wrapper">
 

@@ -29,11 +29,4 @@ class TestUtilityFunctions extends TestCase {
 		WP_Mock::tearDown();
 		parent::tearDown();
 	}
-
-	/**
-	 * Test decker_get_option function
-	 */
-	public function test_decker_get_option() {
-		// Your test code here.
-	}
 }

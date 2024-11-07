@@ -106,8 +106,10 @@ class Decker_Admin_Import {
 		const logMessages = document.getElementById('log-messages');
 		const toggleLogButton = document.getElementById('toggle-log');
 		const maxRetries = 3;  // Maximum number of retries allowed
-
-		const ignoredBoardIds = '<?php echo esc_js( DECKER_IGNORED_BOARD_IDS ); ?>'.split(',').map(id => id.trim());
+		<?php
+			$options    = get_option( 'decker_settings', array() );
+		?>
+		const ignoredBoardIds = '<?php echo esc_js( $options['decker_ignored_board_ids'] ); ?>'.split(',').map(id => id.trim());
 
 		toggleLogButton.addEventListener('click', function() {
 			if (logContainer.style.display === 'none') {
@@ -227,8 +229,10 @@ class Decker_Admin_Import {
 	 * @return array|null The list of boards or null on failure.
 	 */
 	private function get_nextcloud_boards() {
-		$auth = base64_encode( DECKER_NEXTCLOUD_USERNAME . ':' . DECKER_NEXTCLOUD_ACCESS_TOKEN );
-		$boards_url = DECKER_NEXTCLOUD_URL . '/index.php/apps/deck/api/v1.0/boards?details=true';
+		$options    = get_option( 'decker_settings', array() );
+		$auth       = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
+		$boards_url = $options['nextcloud_url_base'] . '/index.php/apps/deck/api/v1.0/boards?details=true';
+
 		return $this->make_request( $boards_url, $auth );
 	}
 
@@ -288,7 +292,8 @@ class Decker_Admin_Import {
 
 		$ignore_existing = isset( $_POST['ignore_existing'] ) && $_POST['ignore_existing'] == 1;
 		$board = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
-		$ignored_board_ids = explode( ',', DECKER_IGNORED_BOARD_IDS );
+		$options    = get_option( 'decker_settings', array() );
+		$ignored_board_ids = explode( ',', $options['decker_ignored_board_ids'] );
 
 		if ( ! in_array( $board['id'], $ignored_board_ids, true ) ) {
 
@@ -390,8 +395,9 @@ class Decker_Admin_Import {
 			}
 		}
 
-		$auth       = base64_encode( DECKER_NEXTCLOUD_USERNAME . ':' . DECKER_NEXTCLOUD_ACCESS_TOKEN );
-		$stacks_url = DECKER_NEXTCLOUD_URL . "/index.php/apps/deck/api/v1.0/boards/{$board['id']}/stacks" . $archived_suffix;
+		$options    = get_option( 'decker_settings', array() );
+		$auth       = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
+		$stacks_url = $options['nextcloud_url_base'] . "/index.php/apps/deck/api/v1.0/boards/{$board['id']}/stacks" . $archived_suffix;
 
 		Decker_Utility_Functions::write_log( 'Requesting stacks from URL: ' . $stacks_url, Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 
@@ -405,9 +411,12 @@ class Decker_Admin_Import {
 		Decker_Utility_Functions::write_log( 'Stacks retrieved successfully.', Decker_Utility_Functions::LOG_LEVEL_INFO );
 
 		// Sort stacks by the 'order' field before processing
-		usort( $stacks, function( $a, $b ) {
-			return $a['order'] <=> $b['order'];
-		});
+		usort(
+			$stacks,
+			function ( $a, $b ) {
+				return $a['order'] <=> $b['order'];
+			}
+		);
 
 		foreach ( $stacks as $stack ) {
 
@@ -580,8 +589,10 @@ class Decker_Admin_Import {
 	 * @param int $post_id The ID of the WordPress post.
 	 */
 	private function import_comments( $card_id, $post_id ) {
-		$auth = base64_encode( DECKER_NEXTCLOUD_USERNAME . ':' . DECKER_NEXTCLOUD_ACCESS_TOKEN );
-		$comments_url = DECKER_NEXTCLOUD_URL . "/ocs/v2.php/apps/deck/api/v1.0/cards/{$card_id}/comments";
+
+		$options       = get_option( 'decker_settings', array() );
+		$auth          = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
+		$comments_url  = $options['nextcloud_url_base'] . '/ocs/v2.php/apps/deck/api/v1.0/cards/{$card_id}/comments';
 		$comments_data = $this->make_request( $comments_url, $auth );
 
 		if ( isset( $comments_data['ocs']['data'] ) && is_array( $comments_data['ocs']['data'] ) ) {
