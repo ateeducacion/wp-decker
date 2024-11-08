@@ -57,6 +57,8 @@ class Decker_Tasks {
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
 
+		add_filter( 'wp_insert_post_data', array( $this, 'modify_task_order_before_save' ), 10, 2 );
+
 	}
 
 	/**
@@ -115,110 +117,49 @@ class Decker_Tasks {
 	/**
 	 * Get the new order for a task in a specific stack.
 	 *
+	 * This function retrieves the maximum menu_order value for tasks in the specified board and stack
+	 * and returns the next incremented value.
+	 *
+	 * @param string $board_term_id The board to calculate the order for.
 	 * @param string $stack The stack to calculate the order for.
 	 * @return int The new order value.
 	 */
-	private function get_new_task_order( $stack ) {
-		global $wpdb;
+	private function get_new_task_order( $board_term_id, $stack ) {
+	    // Query arguments to find posts in the specified stack
+	    $args = array(
+	        'post_type'      => 'decker_task',
+	        'post_status'    => 'publish',
+		    'tax_query'      => array(
+		        array(
+		            'taxonomy' => 'decker_board',
+		            'field'    => 'term_id',
+		            'terms'    => $board_term_id,
+		        ),
+		    ),
+		    'meta_query'     => array(
+		        array(
+		            'key'     => 'stack',
+		            'value'   => $stack,
+		            'compare' => '='
+		        ),
+		    ),
+	        'orderby'        => 'menu_order',
+	        'order'          => 'DESC',
+	        'posts_per_page' => 1,
+	        'fields'         => 'ids',
+	    );
 
-		// Get the maximum order value in the current stack
-		$max_order = $wpdb->get_var(
-			$wpdb->prepare(
-				"
-				SELECT MAX(CAST(pm.meta_value AS UNSIGNED))
-				FROM $wpdb->postmeta pm
-				INNER JOIN $wpdb->posts p ON pm.post_id = p.ID
-				WHERE pm.meta_key = 'order'
-				AND p.post_type = 'decker_task'
-				AND p.post_status = 'publish'
-				AND pm.post_id IN (
-					SELECT post_id
-					FROM $wpdb->postmeta
-					WHERE meta_key = 'stack'
-					AND meta_value = %s
-				)
-				",
-				$stack
-			)
-		);
+	    // Get the posts
+	    $posts = get_posts( $args );
 
-		// If no tasks exist in the stack, start with order 1
-		return $max_order ? $max_order + 1 : 1;
-	}
+	    // If a post exists, get its menu_order and increment it
+	    if ( ! empty( $posts ) ) {
+	        $max_order = get_post_field( 'menu_order', $posts[0] );
+	        return $max_order + 1;
+	    }
 
-	/**
-	 * Handle saving a task from the form submission.
-	 */
-	public function handle_save_task() {
-		print_r("HOLAAA");
-		die();
-
-
-
-		if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'save_decker_task' || ! current_user_can( 'edit_posts' ) ) {
-			wp_die( 'No tienes permiso para realizar esta acción.' );
-			update_post_meta( $task_id, 'order', $new_order );
-			// Reorder tasks in the stack after creating a new task
-			$this->reorder_tasks_in_stack( $stack );
-		}
-
-		// Reorder tasks when changing the board
-		add_action(
-			'save_post',
-			function ( $post_id ) {
-				if ( get_post_type( $post_id ) === 'decker_task' ) {
-					$stack = get_post_meta( $post_id, 'stack', true );
-					$this->reorder_tasks_in_stack( $stack );
-				}
-			}
-		);
-
-		// Reorder tasks in the stack after deleting a task
-		add_action( 'before_delete_post', array( $this, 'handle_task_deletion' ) );
-
-		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
-		$duedate = isset( $_POST['duedate'] ) ? sanitize_text_field( $_POST['duedate'] ) : '';
-		$stack = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
-		$board = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
-		$assigned_users = isset($_POST['assigned_users']) ? $_POST['assigned_users'] : array();
-	
-	
-
-		$labels = isset( $_POST['labels'] ) ? array_map( 'intval', $_POST['labels'] ) : array();
-		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
-		$description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
-
-		// Calculate the order for the new task
-		if ( $task_id === 0 ) {
-			$new_order = $this->get_new_task_order( $stack );
-		}
-
-		$post_data = array(
-			'post_title'   => $title,
-			'post_content' => $description,
-			'post_type'    => 'decker_task',
-			'post_status'  => 'publish',
-		);
-
-		if ( $task_id > 0 ) {
-			$post_data['ID'] = $task_id;
-			wp_update_post( $post_data );
-		} else {
-			$task_id = wp_insert_post( $post_data );
-		}
-
-		if ( $task_id ) {
-			update_post_meta( $task_id, 'duedate', $duedate );
-			update_post_meta( $task_id, 'stack', $stack );
-			update_post_meta( $task_id, 'max_priority', $max_priority );
-			update_post_meta( $task_id, 'assigned_users', $assigned_users );
-			wp_set_post_terms( $task_id, $board, 'decker_board' );
-			wp_set_post_terms( $task_id, $labels, 'decker_label' );
-		}
-
-		wp_redirect( add_query_arg( 'id', $task_id, wp_get_referer() ) );
-		exit;
+	    // If no posts exist, start with order 1
+	    return 1;
 	}
 
 	/**
@@ -273,32 +214,55 @@ class Decker_Tasks {
 
 
 	/**
-	 * Reorder tasks within a stack.
+	 * Reorder tasks within a stack and board after a task is deleted.
 	 *
+	 * @param string $board_term_id The board term ID.
 	 * @param string $stack The stack to reorder.
 	 */
-	private function reorder_tasks_in_stack( $stack ) {
-		$tasks_in_stack = get_posts(
-			array(
-				'post_type'   => 'decker_task',
-				'meta_query'  => array(
-					array(
-						'key'     => 'stack',
-						'value'   => $stack,
-						'compare' => '=',
-					),
-				),
-				'orderby'     => 'meta_value_num',
-				'meta_key'    => 'order',
-				'order'       => 'ASC',
-				'numberposts' => -1,
-			)
-		);
+	private function reorder_tasks_in_stack( $board_term_id, $stack ) {
 
-		foreach ( $tasks_in_stack as $index => $task ) {
-			update_post_meta( $task->ID, 'order', intval( $index + 1 ) );
-		}
+	    // Fetch all tasks in the current board and stack, ordered by menu_order.
+	    $tasks_in_stack = get_posts(
+	        array(
+	            'post_type'      => 'decker_task',
+	            'post_status'    => 'publish',
+	            'tax_query'      => array(
+	                array(
+	                    'taxonomy' => 'decker_board',
+	                    'field'    => 'term_id',
+	                    'terms'    => $board_term_id,
+	                ),
+	            ),
+				'meta_key'    => 'max_priority', // Definir el campo meta para ordenar
+				'meta_type' => 'BOOL',
+	            'meta_query'     => array(
+	                array(
+	                    'key'     => 'stack',
+	                    'value'   => $stack,
+	                    'compare' => '=',
+	                ),
+	            ),
+				'orderby'     => array(
+					'max_priority' => 'DESC',
+					'menu_order'   => 'ASC',
+				),
+	            'numberposts'    => -1,
+	            'fields'         => 'ids', // Fetch only the post IDs for better performance
+
+	        )
+	    );
+
+	    // Reassign menu_order for each task.
+	    foreach ( $tasks_in_stack as $index => $task ) {
+	        wp_update_post(
+	            array(
+	                'ID'         => $task->ID,
+	                'menu_order' => $index + 1,
+	            )
+	        );
+	    }
 	}
+
 
 	/**
 	 * Handle task deletion to reorder tasks.
@@ -306,12 +270,15 @@ class Decker_Tasks {
 	 * @param int $post_id The ID of the post being deleted.
 	 */
 	public function handle_task_deletion( $post_id ) {
-		if ( get_post_type( $post_id ) !== 'decker_task' ) {
-			return;
-		}
+	    if ( 'decker_task' !== get_post_type( $post_id ) ) {
+	        return;
+	    }
 
-		$stack = get_post_meta( $post_id, 'stack', true );
-		$this->reorder_tasks_in_stack( $stack );
+	    $board_term_id = get_post_meta( $post_id, 'decker_board', true );
+	    $stack = get_post_meta( $post_id, 'stack', true );
+	    if ( $stack ) {
+	        $this->reorder_tasks_in_stack( $board_term_id, $stack );
+	    }
 	}
 
 	/**
@@ -327,8 +294,9 @@ class Decker_Tasks {
 		}
 
 		if ( $new_status === 'archived' || $old_status === 'archived' ) {
+		    $board_term_id = get_post_meta( $post->ID, 'decker_board', true );
 			$stack = get_post_meta( $post->ID, 'stack', true );
-			$this->reorder_tasks_in_stack( $stack );
+			$this->reorder_tasks_in_stack( $board_term_id, $stack );
 		}
 	}
 
@@ -1059,6 +1027,33 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Modify the menu_order before the post is saved.
+	 *
+	 * @param array $data The data to be saved for the post.
+	 * @param array $postarr The post array containing data input.
+	 * @return array The modified data array.
+	 */
+	public function modify_task_order_before_save( $data, $postarr ) {
+	    // Ensure we're working with the right post type.
+	    if ( 'decker_task' === $data['post_type'] ) {
+	        // Check if both 'board' and 'stack' are provided.
+	        if ( isset( $postarr['decker_board'], $postarr['stack'] ) ) {
+	            $board = sanitize_text_field( $postarr['decker_board'] );
+	            $stack = sanitize_text_field( $postarr['stack'] );
+
+	            // Ensure $board and $stack are valid.
+	            if ( ! empty( $board ) && ! empty( $stack ) ) {
+	                // Get new order value based on board and stack.
+	                $new_order = $this->get_new_task_order( $board, $stack );
+	                $data['menu_order'] = $new_order;
+	            }
+	        }
+	    }
+	    return $data;
+	}
+
+
+	/**
 	 * Save the custom meta fields.
 	 *
 	 * @param int $post_id The current post ID.
@@ -1085,7 +1080,8 @@ class Decker_Tasks {
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		update_post_meta( $post_id, 'max_priority', $max_priority );
 		if ( isset( $_POST['stack'] ) ) {
-			update_post_meta( $post_id, 'stack', sanitize_text_field( wp_unslash( $_POST['stack'] ) ) );
+			$stack = sanitize_text_field( wp_unslash( $_POST['stack'] ) );
+			update_post_meta( $post_id, 'stack', $stack );
 		}
 		if ( isset( $_POST['id_nextcloud_card'] ) ) {
 			update_post_meta( $post_id, 'id_nextcloud_card', sanitize_text_field( wp_unslash( $_POST['id_nextcloud_card'] ) ) );

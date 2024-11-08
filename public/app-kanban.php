@@ -11,6 +11,7 @@ $board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
 $tasks = get_posts(
 	array(
 		'post_type'   => 'decker_task',
+        'post_status'    => 'publish',		
 		'tax_query'   => array(
 			array(
 				'taxonomy' => 'decker_board',
