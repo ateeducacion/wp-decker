@@ -121,7 +121,20 @@ table#tablaTareas td:nth-child(4) {
 
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
-								<h4 class="page-title">Tasks <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
+							
+							<?php
+								$current_type = isset( $_GET['decker_page'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'tasks';
+
+								$page_title = 'Tasks';
+								if ( $current_type === 'active' ) {
+								    $page_title = 'Active Tasks';
+								} elseif ( $current_type === 'my' ) {
+								    $page_title = 'My Tasks';
+								} elseif ( $current_type === 'archived' ) {
+								    $page_title = 'Archived Tasks';
+								}
+							?>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
 
 
 	
@@ -217,9 +230,21 @@ table#tablaTareas td:nth-child(4) {
 															</td>
 															<td>
 																<?php
-																$board_color = get_term_meta( $board_terms[0]->term_id, 'term-color', true );
+																	// Check if terms are available and there are no errors
+																	if ( ! empty( $board_terms ) && ! is_wp_error( $board_terms ) ) {
+																	    // Retrieve the board name and color
+																	    $board_name = $board_terms[0]->name;
+																	    $board_color = get_term_meta( $board_terms[0]->term_id, 'term-color', true );
+																	    ?>
+																	    <span class="badge rounded-pill" style="background-color: <?php echo esc_attr( $board_color ); ?>;"><?php echo esc_html( $board_name ); ?></span>
+																	    <?php
+																	} else {
+																	    // Display a fallback badge if no board is assigned
+																	    ?>
+																	    <span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined board</span>
+																	    <?php
+																	}
 																?>
-																<span class="badge rounded-pill" style="background-color: <?php echo esc_attr( $board_color ); ?>;"><?php echo esc_html( $board_name ); ?></span>
 															</td>
 															<td><?php echo esc_html( $stack ); ?></td>
 															<td><a href="
