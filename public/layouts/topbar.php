@@ -73,7 +73,7 @@
 						<span>My Profile</span>
 					</a>
 					<!-- item-->
-					<a href="http://localhost:8080/wp-admin/options-general.php?page=decker_settings" class="dropdown-item">
+					<a href="<?php echo esc_url( admin_url( 'options-general.php?page=decker_settings' ) ); ?>" class="dropdown-item">
 						<i class="ri-settings-4-line fs-18 align-middle me-1"></i>
 						<span>Decker Settings</span>
 					</a>

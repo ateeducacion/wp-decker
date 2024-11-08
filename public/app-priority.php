@@ -4,25 +4,126 @@ include 'layouts/main.php';
 // Verificar si el usuario actual tiene tareas para hoy
 $current_user_id = get_current_user_id();
 $today = date( 'Y-m-d' );
+
+$today = date( 'Y-m-d' );
 $args = array(
-	'post_type' => 'decker_task',
-	'meta_query' => array(
-		array(
-			'key' => '_user_date_relations',
-			'value' => sprintf( ':"%s"', $today ),
-			'compare' => 'LIKE',
-		),
-		array(
-			'key' => 'assigned_users',
-			'value' => sprintf( ':"%s";', $current_user_id ), // Search in serialized data
-			'compare' => 'LIKE',
-		),
-	),
+    'post_type'   => 'decker_task',
+    'post_status' => 'publish',
+    'meta_query'  => array(
+        'relation' => 'AND',
+        array(
+            'key'     => 'assigned_users',
+            'value'   => '"' . $current_user_id . '"',
+            'compare' => 'LIKE',
+        ),
+        array(
+            'key'     => '_user_date_relations',
+            'value'   => '"user_id";i:' . $current_user_id . ';s:4:"date";s:\d+:"' . preg_quote( $today, '/' ) . '"',
+            'compare' => 'REGEXP',
+        ),
+    ),
 );
+$today_tasks = new WP_Query( $args );
+
+// Mostrar mensaje si no hay tareas para hoy
+$show_import_message = ! $today_tasks->have_posts();
+
+
+// Obtener tareas de días anteriores
+$days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
+$previous_dates = array();
+for ( $i = 1; $i <= $days_to_load; $i++ ) {
+    $previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
+}
+
+$dates_pattern = implode( '|', array_map( function( $date ) {
+    return preg_quote( $date, '/' );
+}, $previous_dates ) );
+
+$value_regex = '"user_id";i:' . $current_user_id . ';s:4:"date";s:\d+:"(' . $dates_pattern . ')"';
+
+$args = array(
+    'post_type'   => 'decker_task',
+    'post_status' => 'publish',
+    'meta_query'  => array(
+        'relation' => 'AND',
+        array(
+            'key'     => 'assigned_users',
+            'value'   => $current_user_id,
+            'compare' => 'LIKE',
+        ),
+        array(
+            'key'     => '_user_date_relations',
+            'value'   => $value_regex,
+            'compare' => 'REGEXP',
+        ),
+    ),
+);
+
+$previous_tasks = new WP_Query( $args );
+
+
+		// $days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
+		// 		$previous_dates = array();
+		// 		for ( $i = 1; $i <= $days_to_load; $i++ ) {
+		// 			$previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
+		// 		}
+
+
+		//     $args = array(
+		//         'post_type'   => 'decker_task',
+		//         'post_status' => 'publish',
+		//         'meta_query'  => array(
+		//             'relation' => 'AND',
+
+    //     // Condition for dates in _user_date_relations
+    //     array(
+    //         'key'     => '_user_date_relations',
+    //         'value'   => '"' . implode('|', $previous_dates) . '"',
+    //         'compare' => 'REGEXP',
+    //     ),
+    //     // Condition to match user_id within _user_date_relations (serialized array)
+    //     array(
+    //         'key'     => '_user_date_relations',
+    //         'value'   => sprintf(':"%d";', $current_user_id), // Match user ID in serialized format
+    //         'compare' => 'LIKE',
+    //     ),
+
+		// 				// array(
+		// 				// 	'key' => '_user_date_relations',
+		// 				// 	'value' => implode( ',', $previous_dates ),
+		// 				// 	'compare' => 'REGEXP',
+		// 				// ),
+		//             // Check within user_date_relations meta for matching user and date range
+		//             // array(
+		//             //     'key'     => '_user_date_relations',
+		//             //     'value'   => sprintf(
+		//             //         '{"user_id":%d,"date":"%s"}',
+		//             //         $current_user_id,
+		//             //         $start_date // Search exact match - you can adjust for ranges
+		//             //     ),
+		//             //     'compare' => 'LIKE',
+		//             // ),
+	
+		//             // Check within assigned_users meta if the user is assigned
+		//             array(
+		//                 'key'     => 'assigned_users',
+		//                 'value'   => $current_user_id,
+		//                 'compare' => 'LIKE',
+		//             ),
+
+		//         ),
+		//     );
+		// 		$previous_tasks = new WP_Query( $args );
+				// echo "<pre>";
+				// print_r($previous_tasks->have_posts());
+				// echo "<br>";
+				// print_r(count($previous_tasks->posts));
+				// die();
+
+
 if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
 	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
-	$current_user_id = get_current_user_id();
-	$today = date( 'Y-m-d' );
 
 	foreach ( $task_ids as $task_id ) {
 		$decker_tasks = new Decker_Tasks();
@@ -34,10 +135,6 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 	exit;
 }
 
-$today_tasks = new WP_Query( $args );
-
-// Mostrar mensaje si no hay tareas para hoy
-$show_import_message = ! $today_tasks->have_posts();
 ?>
 <head>
 
@@ -167,6 +264,7 @@ $show_import_message = ! $today_tasks->have_posts();
 											// Obtener tareas con max_priority
 											$args = array(
 												'post_type' => 'decker_task',
+								        'post_status'    => 'publish',
 												'meta_query' => array(
 													array(
 														'key' => 'max_priority',
@@ -399,30 +497,6 @@ $show_import_message = ! $today_tasks->have_posts();
 			</thead>
 			<tbody>
 			  <?php
-				// Obtener tareas de días anteriores
-				$days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
-				$previous_dates = array();
-				for ( $i = 1; $i <= $days_to_load; $i++ ) {
-					$previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
-				}
-
-				$args = array(
-					'post_type' => 'decker_task',
-					'meta_query' => array(
-						array(
-							'key' => '_user_date_relations',
-							'value' => implode( ',', $previous_dates ),
-							'compare' => 'REGEXP',
-						),
-						array(
-							'key' => 'assigned_users',
-							'value' => sprintf( ':"%s";', $current_user_id ), // Search in serialized data
-							'compare' => 'LIKE',
-						),
-					),
-				);
-				$previous_tasks = new WP_Query( $args );
-
 				if ( $previous_tasks->have_posts() ) :
 					while ( $previous_tasks->have_posts() ) :
 						$previous_tasks->the_post();

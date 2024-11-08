@@ -59,6 +59,8 @@ class Decker_Tasks {
 
 		add_filter( 'wp_insert_post_data', array( $this, 'modify_task_order_before_save' ), 10, 2 );
 
+		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
+
 	}
 
 	/**
@@ -69,8 +71,23 @@ class Decker_Tasks {
 	 */
 	public function make_columns_sortable( $columns ) {
 		$columns['stack'] = 'stack';
-		$columns['menu_order'] = 'menu_order';
 		return $columns;
+	}
+
+	/**
+	 * Modify the order of the 'decker_task' post type in the admin when sorting by 'stack'.
+	 *
+	 * @param WP_Query $query The current query object.
+	 */
+	public function custom_order_by_stack( $query ) {
+	    if ( ! is_admin() || ! $query->is_main_query() ) {
+	        return;
+	    }
+
+	    if ( 'decker_task' === $query->get( 'post_type' ) && 'stack' === $query->get( 'orderby' ) ) {
+	        $query->set( 'meta_key', 'stack' );
+	        $query->set( 'orderby', 'meta_value' );
+	    }
 	}
 
 	/**
@@ -82,7 +99,6 @@ class Decker_Tasks {
 	public function add_custom_columns( $columns ) {
 		unset( $columns['date'] ); // Remove the date column if needed
 		$columns['stack'] = __( 'Stack', 'decker' );
-		$columns['menu_order'] = __( 'Order', 'decker' );
 		return $columns;
 	}
 
@@ -262,6 +278,56 @@ class Decker_Tasks {
 	        );
 	    }
 	}
+
+
+
+
+	private function reorder_tasks_via_sql( $board_term_id, $stack, $exclude_post_id = null ) {
+	    global $wpdb;
+
+	    // Consulta para obtener los IDs de los posts ordenados por `menu_order`.
+	    $query = $wpdb->prepare(
+	        "
+	        SELECT p.ID
+	        FROM $wpdb->posts p
+	        INNER JOIN $wpdb->term_relationships tr ON p.ID = tr.object_id
+	        INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+	        WHERE p.post_type = 'decker_task'
+	          AND p.post_status = 'publish'
+	          AND tt.term_id = %d
+	          AND EXISTS (
+	              SELECT 1 FROM $wpdb->postmeta pm
+	              WHERE pm.post_id = p.ID
+	                AND pm.meta_key = 'stack'
+	                AND pm.meta_value = %s
+	          )
+	        ORDER BY p.menu_order ASC
+	        ",
+	        $board_term_id,
+	        $stack
+	    );
+
+	    $task_ids = $wpdb->get_col( $query );
+
+	    // Excluir el post, si es necesario.
+	    if ( $exclude_post_id !== null ) {
+	        $task_ids = array_filter( $task_ids, function( $id ) use ( $exclude_post_id ) {
+	            return $id != $exclude_post_id;
+	        });
+	    }
+
+	    // Actualizar `menu_order` en una sola consulta.
+	    foreach ( $task_ids as $index => $task_id ) {
+	        $wpdb->update(
+	            $wpdb->posts,
+	            array( 'menu_order' => $index + 1 ),
+	            array( 'ID' => $task_id ),
+	            array( '%d' ),
+	            array( '%d' )
+	        );
+	    }
+	}
+
 
 
 	/**
