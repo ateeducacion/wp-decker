@@ -4,6 +4,9 @@ include 'layouts/main.php';
 // Obtener el slug del board desde la URL
 $board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
 
+// Retrieve the term based on the slug
+$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
+
 // Consultar las tareas asociadas al board
 $tasks = get_posts(
 	array(
@@ -74,8 +77,6 @@ function render_task_card( $task ) {
 	            <span class="task-id label-to-hide"><?php echo $relative_time; ?></span>
 	            <span class="task-id label-to-show" style="display: none;">#<?php echo esc_html($task->ID); ?></span>
 	        </small>
-
-			<!-- <small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo $relative_time; ?></small> -->
 
 			<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $task->ID ); ?>">
 				<a href="
@@ -233,10 +234,8 @@ function render_task_menu( $task_id ) {
 
 									</div>
 
-									<h4 class="page-title">Kanban Board 
+									<h4 class="page-title"><?php echo esc_html( $board_term->name ); ?>
 										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3">Add New</a>
-
-
 
 									</h4>
 								</div>
