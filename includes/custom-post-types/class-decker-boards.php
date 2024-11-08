@@ -19,10 +19,17 @@ class Decker_Boards {
 
 	/**
 	 * Constructor
-	 *
-	 * Initializes the class by setting up hooks.
 	 */
 	public function __construct() {
+		$this->define_hooks();
+	}
+
+	/**
+	 * Define Hooks
+	 *
+	 * Registers all the hooks related to the decker_label taxonomy.
+	 */
+	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_action( 'decker_board_add_form_fields', array( $this, 'add_color_field' ), 10, 2 );
 		add_action( 'decker_board_edit_form_fields', array( $this, 'edit_color_field' ), 10, 2 );
@@ -58,8 +65,8 @@ class Decker_Boards {
 			'show_tagcloud'     => false,
 			'show_in_quick_edit' => false,
 			'rewrite'           => array( 'slug' => 'decker_board' ),
-			'show_in_rest'      => true, // Enable REST API.
-			'rest_base'         => 'boards', // REST API base name.
+			'show_in_rest'      => true,
+			'rest_base'         => 'boards',
 			'can_export'        => true,
 		);
 
@@ -102,12 +109,9 @@ class Decker_Boards {
 	 * @param int $term_id The term ID.
 	 */
 	public function save_color_meta( $term_id ) {
-		if ( isset( $_POST['term-color'] ) && isset( $_POST['_wpnonce'] ) ) {
-			$nonce = sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) );
-			if ( wp_verify_nonce( $nonce, 'save_decker_board_color_meta' ) ) {
-				$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
-				update_term_meta( $term_id, 'term-color', $term_color );
-			}
+		if ( isset( $_POST['term-color'] ) ) {
+			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
+			update_term_meta( $term_id, 'term-color', $term_color );
 		}
 	}
 

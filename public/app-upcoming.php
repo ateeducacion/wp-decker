@@ -19,7 +19,7 @@ $tasks = get_posts(
 			),
 		),
 		'orderby'     => 'meta_value_num',
-		'order'       => 'ASC',
+		'menu_order'       => 'ASC',
 		'numberposts' => -1,
 	)
 );

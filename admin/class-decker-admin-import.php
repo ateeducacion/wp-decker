@@ -328,7 +328,7 @@ class Decker_Admin_Import {
 	}
 
 	/**
-	 * Creates a term if it doesn't exist.
+	 * Creates a term if it doesn't exist and checks for name-ID conflicts.
 	 *
 	 * @param string $title The term title.
 	 * @param string $taxonomy The taxonomy slug.
@@ -336,35 +336,49 @@ class Decker_Admin_Import {
 	 * @return array|false|WP_Error The term array, false on failure, or WP_Error on error.
 	 */
 	private function maybe_create_term( $title, $taxonomy, $color ) {
-		$term = term_exists( $title, $taxonomy );
-		if ( ! $term ) {
-			$sanitized_color = '';
-			if ( $color ) {
-				$sanitized_color = sanitize_hex_color( strpos( $color, '#' ) === 0 ? $color : '#' . $color );
-			}
+	    $existing_term = term_exists( $title, $taxonomy );
 
-			$term = wp_insert_term(
-				$title,
-				$taxonomy,
-				array(
-					'slug' => sanitize_title( $title ),
-				)
-			);
+	    // If the term already exists and its name matches another board ID, handle the conflict.
+	    if ( $existing_term && is_numeric( $title ) && intval( $title ) !== $existing_term['term_id'] ) {
+	        Decker_Utility_Functions::write_log( 'Conflict: Term name matches another board ID: ' . $title, Decker_Utility_Functions::LOG_LEVEL_WARNING );
+	        return new WP_Error( 'term_conflict', 'Term name matches another board ID.' );
+	    }
 
-			if ( is_wp_error( $term ) ) {
-				Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
-				return $term; // Return the error for better handling
-			}
+	    // If the term doesn't exist, create it.
+	    if ( ! $existing_term ) {
+	        $sanitized_color = '';
+	        if ( $color ) {
+	            $sanitized_color = sanitize_hex_color( strpos( $color, '#' ) === 0 ? $color : '#' . $color );
+	        }
 
-			// If term creation is successful, add metadata
-			if ( $sanitized_color ) {
-				add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
-			}
-		}
+	        if ( is_numeric( $title ) ) {
+	           Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	            return $term;	        	
+	        }
 
-		return $term;
+
+	        $term = wp_insert_term(
+	            $title,
+	            $taxonomy,
+	            array(
+	                'slug' => sanitize_title( $title ),
+	            )
+	        );
+
+	        if ( is_wp_error( $term ) ) {
+	            Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	            return $term;
+	        }
+
+	        // Add metadata for the color if successful
+	        if ( $sanitized_color ) {
+	            add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
+	        }
+	        return $term;
+	    }
+
+	    return $existing_term;
 	}
-
 
 	/**
 	 * Imports labels and tasks for a board.

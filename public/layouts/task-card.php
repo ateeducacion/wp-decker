@@ -234,9 +234,8 @@ function deleteComment(commentId) {
 					$current_author_id = get_current_user_id(); // For new posts, select the current user.
 					if ( $task_id > 0 ) {
 						// For existing posts, get the current post author.
-						$current_author_id = get_post_field( 'post_author', get_the_ID() );
+						$current_author_id = get_post_field( 'post_author', $task_id );
 					}
-					$current_author_id = get_post_field( 'post_author', get_the_ID() ); // Get the current post author ID.
 					$users = get_users();
 					foreach ( $users as $user ) {
 						$selected = ( $user->ID == $current_author_id ) ? 'selected' : '';

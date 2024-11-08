@@ -24,12 +24,39 @@ class Decker_Tasks {
 	 */
 	public function __construct() {
 		$this->define_hooks();
+
+	}
+
+	/**
+	 * Define Hooks
+	 *
+	 * Registers all the hooks related to the decker_task custom post type.
+	 */
+	private function define_hooks() {
+		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_action( 'init', array( $this, 'register_archived_post_status' ) );
+		add_action( 'admin_footer-post.php', array( $this, 'append_post_status_list' ) );
+		add_action( 'before_delete_post', array( $this, 'handle_task_deletion' ) );
+		add_action( 'transition_post_status', array( $this, 'handle_task_status_change' ), 10, 3 );
+
+		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
+
+		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+		add_action( 'save_post', array( $this, 'save_meta' ) );
+		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
+		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
+		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
+		add_filter( 'parse_query', array( $this, 'filter_tasks_by_taxonomies' ) );
+		add_action( 'restrict_manage_posts', array( $this, 'add_taxonomy_filters' ) );
+		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
+
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 		add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
+
 	}
 
 	/**
@@ -123,6 +150,11 @@ class Decker_Tasks {
 	 * Handle saving a task from the form submission.
 	 */
 	public function handle_save_task() {
+		print_r("HOLAAA");
+		die();
+
+
+
 		if ( ! isset( $_POST['action'] ) || $_POST['action'] !== 'save_decker_task' || ! current_user_can( 'edit_posts' ) ) {
 			wp_die( 'No tienes permiso para realizar esta acción.' );
 			update_post_meta( $task_id, 'order', $new_order );
@@ -149,7 +181,10 @@ class Decker_Tasks {
 		$duedate = isset( $_POST['duedate'] ) ? sanitize_text_field( $_POST['duedate'] ) : '';
 		$stack = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
 		$board = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
-		$assignees = isset( $_POST['assignees'] ) ? array_map( 'intval', $_POST['assignees'] ) : array();
+		$assigned_users = isset($_POST['assigned_users']) ? $_POST['assigned_users'] : array();
+	
+	
+
 		$labels = isset( $_POST['labels'] ) ? array_map( 'intval', $_POST['labels'] ) : array();
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		$description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
@@ -177,7 +212,7 @@ class Decker_Tasks {
 			update_post_meta( $task_id, 'duedate', $duedate );
 			update_post_meta( $task_id, 'stack', $stack );
 			update_post_meta( $task_id, 'max_priority', $max_priority );
-			update_post_meta( $task_id, 'assigned_users', $assignees );
+			update_post_meta( $task_id, 'assigned_users', $assigned_users );
 			wp_set_post_terms( $task_id, $board, 'decker_board' );
 			wp_set_post_terms( $task_id, $labels, 'decker_label' );
 		}
@@ -387,26 +422,6 @@ class Decker_Tasks {
 	 * Register REST API routes for decker_task.
 	 */
 	public function register_rest_routes() {
-		register_rest_route(
-			'decker/v1',
-			'/tasks',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'get_tasks' ),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks',
-			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'create_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
-		);
 
 		register_rest_route(
 			'decker/v1',
@@ -480,50 +495,6 @@ class Decker_Tasks {
 			)
 		);
 
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'get_task' ),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks',
-			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'create_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)',
-			array(
-				'methods'  => 'PUT',
-				'callback' => array( $this, 'update_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)',
-			array(
-				'methods'  => 'DELETE',
-				'callback' => array( $this, 'delete_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'delete_posts' );
-				},
-			)
-		);
 	}
 
 	/**
@@ -602,17 +573,6 @@ class Decker_Tasks {
 		);
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
-	public function get_tasks( $request ) {
-		// Logic to retrieve tasks.
-	}
-
-	public function get_task( $request ) {
-		// Logic to retrieve a single task by ID.
-	}
-
-	public function create_task( $request ) {
-		// Logic to create a new task.
-	}
 
 	public function update_task( $request ) {
 		$task_id = $request['id'];
@@ -643,34 +603,6 @@ class Decker_Tasks {
 		}
 
 		return new WP_REST_Response( array( 'message' => 'Task status updated successfully.' ), 200 );
-	}
-
-	public function delete_task( $request ) {
-		// Logic to delete a task.
-	}
-
-	/**
-	 * Define Hooks
-	 *
-	 * Registers all the hooks related to the decker_task custom post type.
-	 */
-	private function define_hooks() {
-		add_action( 'init', array( $this, 'register_post_type' ) );
-		add_action( 'init', array( $this, 'register_archived_post_status' ) );
-		add_action( 'admin_footer-post.php', array( $this, 'append_post_status_list' ) );
-		add_action( 'before_delete_post', array( $this, 'handle_task_deletion' ) );
-		add_action( 'transition_post_status', array( $this, 'handle_task_status_change' ), 10, 3 );
-
-		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
-
-		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
-		add_action( 'save_post', array( $this, 'save_meta' ) );
-		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
-		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
-		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
-		add_filter( 'parse_query', array( $this, 'filter_tasks_by_taxonomies' ) );
-		add_action( 'restrict_manage_posts', array( $this, 'add_taxonomy_filters' ) );
-		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 	}
 
 	/**
@@ -879,8 +811,6 @@ class Decker_Tasks {
 		$max_priority = get_post_meta( $post->ID, 'max_priority', true );
 		$stack = get_post_meta( $post->ID, 'stack', true );
 		$id_nextcloud_card = get_post_meta( $post->ID, 'id_nextcloud_card', true );
-
-		wp_nonce_field( basename( __FILE__ ), 'decker_task_nonce' );
 		?>
 		<p>
 			<label for="duedate"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
@@ -996,7 +926,6 @@ class Decker_Tasks {
 		$relations = $relations ? $relations : array();
 
 		$users = get_users();
-		wp_nonce_field( basename( __FILE__ ), 'user_date_nonce' );
 		?>
 		<div id="user-date-meta-box">
 			<p>
@@ -1090,7 +1019,6 @@ class Decker_Tasks {
 	 */
 	public function display_attachment_meta_box( $post ) {
 		$attachments = get_post_meta( $post->ID, 'attachments', true );
-		wp_nonce_field( basename( __FILE__ ), 'attachment_nonce' );
 		?>
 		<div id="attachments-meta-box">
 			<input type="file" id="attachment_file" name="attachment_file[]" multiple>
@@ -1136,10 +1064,6 @@ class Decker_Tasks {
 	 * @param int $post_id The current post ID.
 	 */
 	public function save_meta( $post_id ) {
-		// Verify nonce for security.
-		if ( ! isset( $_POST['decker_task_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['decker_task_nonce'] ) ), basename( __FILE__ ) ) ) {
-			return $post_id;
-		}
 
 		// Check autosave and post type.
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
@@ -1185,35 +1109,36 @@ class Decker_Tasks {
 			}
 		}
 
-		// Verify nonce for attachments.
-		if ( isset( $_POST['attachment_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['attachment_nonce'] ) ), basename( __FILE__ ) ) ) {
-			$attachments = array();
-			if ( ! empty( $_FILES['attachment_file']['name'][0] ) ) {
-				foreach ( $_FILES['attachment_file']['name'] as $key => $value ) {
-					if ( isset( $_FILES['attachment_file']['name'][ $key ] ) && isset( $_FILES['attachment_file']['type'][ $key ] ) && isset( $_FILES['attachment_file']['tmp_name'][ $key ] ) && isset( $_FILES['attachment_file']['error'][ $key ] ) && isset( $_FILES['attachment_file']['size'][ $key ] ) ) {
-						$file = array(
-							'name'     => sanitize_file_name( wp_unslash( $_FILES['attachment_file']['name'][ $key ] ) ),
-							'type'     => sanitize_mime_type( wp_unslash( $_FILES['attachment_file']['type'][ $key ] ) ),
-							'tmp_name' => sanitize_text_field( wp_unslash( $_FILES['attachment_file']['tmp_name'][ $key ] ) ),
-							'error'    => intval( $_FILES['attachment_file']['error'][ $key ] ),
-							'size'     => intval( $_FILES['attachment_file']['size'][ $key ] ),
-						);
-						$_FILES = array( 'upload_attachment' => $file );
-						$newupload = $this->insert_attachment( 'upload_attachment', $post_id );
-						if ( $newupload ) {
-							$attachments[] = $newupload;
-						}
+		$attachments = array();
+		if ( ! empty( $_FILES['attachment_file']['name'][0] ) ) {
+			foreach ( $_FILES['attachment_file']['name'] as $key => $value ) {
+				if ( isset( $_FILES['attachment_file']['name'][ $key ] ) && isset( $_FILES['attachment_file']['type'][ $key ] ) && isset( $_FILES['attachment_file']['tmp_name'][ $key ] ) && isset( $_FILES['attachment_file']['error'][ $key ] ) && isset( $_FILES['attachment_file']['size'][ $key ] ) ) {
+					$file = array(
+						'name'     => sanitize_file_name( wp_unslash( $_FILES['attachment_file']['name'][ $key ] ) ),
+						'type'     => sanitize_mime_type( wp_unslash( $_FILES['attachment_file']['type'][ $key ] ) ),
+						'tmp_name' => sanitize_text_field( wp_unslash( $_FILES['attachment_file']['tmp_name'][ $key ] ) ),
+						'error'    => intval( $_FILES['attachment_file']['error'][ $key ] ),
+						'size'     => intval( $_FILES['attachment_file']['size'][ $key ] ),
+					);
+					$_FILES = array( 'upload_attachment' => $file );
+					$newupload = $this->insert_attachment( 'upload_attachment', $post_id );
+					if ( $newupload ) {
+						$attachments[] = $newupload;
 					}
 				}
-				update_post_meta( $post_id, 'attachments', $attachments );
 			}
+			update_post_meta( $post_id, 'attachments', $attachments );
+		}
+
+		// Save assigned users
+		if ( isset( $_POST['assigned_users'] ) ) {
+		    $assigned_users = array_map( 'intval', wp_unslash( $_POST['assigned_users'] ) );
+		    update_post_meta( $post_id, 'assigned_users', $assigned_users );
 		}
 
 		// Save user date relations.
-		if ( isset( $_POST['user_date_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['user_date_nonce'] ) ), basename( __FILE__ ) ) ) {
-			$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) ) ), true ) : array();
-			update_post_meta( $post_id, '_user_date_relations', $relations );
-		}
+		$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) ) ), true ) : array();
+		update_post_meta( $post_id, '_user_date_relations', $relations );
 	}
 
 	/**
@@ -1224,10 +1149,6 @@ class Decker_Tasks {
 	 * @return string|false The URL of the attachment or false on failure.
 	 */
 	private function insert_attachment( $file_handler, $post_id ) {
-
-		if ( ! isset( $_POST['attachment_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['attachment_nonce'] ) ), basename( __FILE__ ) ) ) {
-			return $post_id;
-		}
 
 		if ( ! isset( $_FILES[ $file_handler ]['error'] ) || UPLOAD_ERR_OK !== $_FILES[ $file_handler ]['error'] ) {
 			return false;

@@ -68,22 +68,66 @@
 
 
 document.addEventListener('mousedown', function(event) {
-  // Detecta si el clic fue en un enlace que tiene data-bs-toggle="modal"
+  // Detects if the click was on a link that has data-bs-toggle="modal"
   const link = event.target.closest('a[data-bs-toggle="modal"]');
   if (link) {
-    // Si Ctrl (Windows) o Cmd (Mac) están presionados, deja que el enlace abra en una nueva pestaña
+    // If Ctrl (Windows) or Cmd (Mac) are pressed, allow the link to open in a new tab
     if (event.ctrlKey || event.metaKey) {
-      link.removeAttribute('data-bs-toggle'); // Remueve temporalmente el atributo para evitar el modal
+      link.removeAttribute('data-bs-toggle'); // Temporarily remove the attribute to prevent the modal
 
       setTimeout(() => {
-        // Restaura el atributo después de que se complete el clic para que el modal funcione en futuros clics
+        // Restore the attribute after the click completes so the modal works for future clicks
         link.setAttribute('data-bs-toggle', 'modal');
       }, 100);
 
       event.preventDefault();
-      return; // Permite el comportamiento predeterminado para abrir en nueva pestaña
+      return; // Allow the default behavior to open in a new tab
     }
   }
 });
 
+
+let altPressed = false;
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Alt' || event.code === 'AltLeft' || event.code === 'AltRight') {
+    if (!altPressed) {
+      altPressed = true;
+
+      // Select all elements with the classes label-to-show and label-to-hide
+      const showLabels = document.querySelectorAll('.label-to-show');
+      const hideLabels = document.querySelectorAll('.label-to-hide');
+
+      // Hide all elements with label-to-show
+      showLabels.forEach(label => {
+        label.style.display = 'block';
+      });
+
+      // Show all elements with label-to-hide
+      hideLabels.forEach(label => {
+        label.style.display = 'none';
+      });
+    }
+  }
+});
+
+document.addEventListener('keyup', function(event) {
+  if (event.key === 'Alt' || event.code === 'AltLeft' || event.code === 'AltRight') {
+    altPressed = false;
+
+    // Select all elements with the classes label-to-show and label-to-hide
+    const showLabels = document.querySelectorAll('.label-to-show');
+    const hideLabels = document.querySelectorAll('.label-to-hide');
+
+    // Hide all elements with label-to-show
+    showLabels.forEach(label => {
+      label.style.display = 'none';
+    });
+
+    // Show all elements with label-to-hide
+    hideLabels.forEach(label => {
+      label.style.display = 'block';
+    });
+  }
+});
 

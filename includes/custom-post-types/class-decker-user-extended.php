@@ -18,18 +18,23 @@ class Decker_User_Extended {
 
 	/**
 	 * Constructor
-	 *
-	 * Initializes the class by setting up hooks.
 	 */
 	public function __construct() {
+		$this->define_hooks();
+	}
+
+	/**
+	 * Define Hooks
+	 *
+	 * Registers all the hooks related to the decker_label taxonomy.
+	 */
+	private function define_hooks() {
 		add_action( 'show_user_profile', array( $this, 'add_custom_user_profile_fields' ) );
 		add_action( 'edit_user_profile', array( $this, 'add_custom_user_profile_fields' ) );
 		add_action( 'personal_options_update', array( $this, 'save_custom_user_profile_fields' ) );
 		add_action( 'edit_user_profile_update', array( $this, 'save_custom_user_profile_fields' ) );
 		add_filter( 'manage_users_columns', array( $this, 'add_custom_user_columns' ) );
 		add_filter( 'manage_users_custom_column', array( $this, 'show_custom_user_column_content' ), 10, 3 );
-		add_action( 'user_register', array( $this, 'generate_user_secret' ) );
-		register_activation_hook( __FILE__, array( $this, 'generate_general_secret' ) );
 	}
 
 	/**
@@ -50,14 +55,6 @@ class Decker_User_Extended {
 					<input type="text" name="decker_color" id="decker_color" value="<?php echo esc_attr( get_the_author_meta( 'decker_color', $user->ID ) ); ?>" class="regular-text" />
 					<br />
 					<span class="description"><?php esc_html_e( 'Select your favorite color.', 'decker' ); ?></span>
-				</td>
-			</tr>
-			<tr>
-				<th><label for="decker_custom_field"><?php esc_html_e( 'Custom Field', 'decker' ); ?></label></th>
-				<td>
-					<input type="text" name="decker_custom_field" id="decker_custom_field" value="<?php echo esc_attr( get_the_author_meta( 'decker_custom_field', $user->ID ) ); ?>" class="regular-text" />
-					<br />
-					<span class="description"><?php esc_html_e( 'Enter additional information.', 'decker' ); ?></span>
 				</td>
 			</tr>
 		</table>
@@ -86,10 +83,6 @@ class Decker_User_Extended {
 			update_user_meta( $user_id, 'decker_color', $decker_color );
 		}
 
-		if ( isset( $_POST['decker_custom_field'] ) ) {
-			$decker_custom_field = sanitize_text_field( wp_unslash( $_POST['decker_custom_field'] ) );
-			update_user_meta( $user_id, 'decker_custom_field', $decker_custom_field );
-		}
 	}
 
 	/**
@@ -117,29 +110,12 @@ class Decker_User_Extended {
 			if ( $color ) {
 				$value = '<span style="display:inline-block;width:20px;height:20px;background-color:' . esc_attr( $color ) . ';"></span>';
 			} else {
-				$value = esc_html__( 'Undefined', 'decker' );
+				$value = esc_html( '—' );
 			}
 		}
 		return $value;
 	}
 
-	/**
-	 * Generate user secret key.
-	 *
-	 * @param int $user_id The user ID.
-	 */
-	public function generate_user_secret( $user_id ) {
-		$secret = wp_generate_password( 20, false );
-		update_user_meta( $user_id, 'user_ics_secret', $secret );
-	}
-
-	/**
-	 * Generate general secret key.
-	 */
-	public function generate_general_secret() {
-		$secret = wp_generate_password( 20, false );
-		update_option( 'general_ics_secret', $secret );
-	}
 }
 
 // Instantiate the class.

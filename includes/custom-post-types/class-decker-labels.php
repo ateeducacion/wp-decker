@@ -22,88 +22,6 @@ class Decker_Labels {
 	 */
 	public function __construct() {
 		$this->define_hooks();
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-	}
-
-	/**
-	 * Register REST API routes for decker_label.
-	 */
-	public function register_rest_routes() {
-		register_rest_route(
-			'decker/v1',
-			'/labels',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'get_labels' ),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/labels/(?P<id>\d+)',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'get_label' ),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/labels',
-			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'create_label' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/labels/(?P<id>\d+)',
-			array(
-				'methods'  => 'PUT',
-				'callback' => array( $this, 'update_label' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/labels/(?P<id>\d+)',
-			array(
-				'methods'  => 'DELETE',
-				'callback' => array( $this, 'delete_label' ),
-				'permission_callback' => function () {
-					return current_user_can( 'delete_posts' );
-				},
-			)
-		);
-	}
-
-	// Define the callback functions for the REST API routes here.
-	// For example:
-	public function get_labels( $request ) {
-		// Logic to retrieve labels.
-	}
-
-	public function get_label( $request ) {
-		// Logic to retrieve a single label by ID.
-	}
-
-	public function create_label( $request ) {
-		// Logic to create a new label.
-	}
-
-	public function update_label( $request ) {
-		// Logic to update an existing label.
-	}
-
-	public function delete_label( $request ) {
-		// Logic to delete a label.
 	}
 
 	/**
@@ -191,12 +109,9 @@ class Decker_Labels {
 	 * @param int $term_id The term ID.
 	 */
 	public function save_color_meta( $term_id ) {
-		if ( isset( $_POST['term-color'] ) && isset( $_POST['_wpnonce'] ) ) {
-			$nonce = sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) );
-			if ( wp_verify_nonce( $nonce, 'save_decker_label_color_meta' ) ) {
-				$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
-				update_term_meta( $term_id, 'term-color', $term_color );
-			}
+		if ( isset( $_POST['term-color'] ) ) {
+			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
+			update_term_meta( $term_id, 'term-color', $term_color );
 		}
 	}
 

@@ -14,26 +14,16 @@ $tasks = get_posts(
 				'field'    => 'slug',
 				'terms'    => $board_slug,
 			),
-		),
-		'meta_query'  => array(
-			'relation' => 'AND',
-			'max_priority_clause' => array(
-				'key'   => 'max_priority',
-				'type'  => 'NUMERIC',
-			),
-			'order_clause' => array(
-				'key'   => 'order',
-				'type'  => 'NUMERIC',
-			),
-		),
+		),		
+		'meta_key'    => 'max_priority', // Definir el campo meta para ordenar
+		'meta_type' => 'BOOL',
 		'orderby'     => array(
-			'max_priority_clause' => 'DESC',
-			'order_clause'        => 'ASC',
+			'max_priority' => 'DESC',
+			'menu_order'   => 'ASC',
 		),
 		'numberposts' => -1,
 	)
 );
-
 
 // Dividir las tareas en columnas
 $columns = array(
@@ -62,14 +52,17 @@ function render_task_card( $task ) {
 	?>
 	<div class="card mb-0" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
 		<div class="card-body p-3">
+
 			<?php $max_priority = get_post_meta( $task->ID, 'max_priority', true ); ?>
 			<span class="float-end badge <?php echo $max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'; ?>">
-				<?php echo $max_priority ? '🔥' : 'Normal'; ?>
+				<span class="label-to-hide"><?php echo $max_priority ? '🔥' : 'Normal'; ?></span>
+				<span class="menu-order label-to-show" style="display: none;">Order: <?php echo esc_html(get_post_field('menu_order', $task->ID)); ?></span> 
+
 			</span>
 			<?php
 				$due_date = get_post_meta( $task->ID, 'duedate', true );
 
-				$relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined</span>';
+				$relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined date</span>';
 				$formatted_due_date = '';
 
 			if ( ! empty( $due_date ) ) {
@@ -77,7 +70,12 @@ function render_task_card( $task ) {
 				$formatted_due_date = date( 'd M Y', strtotime( $due_date ) );
 			}
 			?>
-			<small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo $relative_time; ?></small>
+	        <small class="text-muted relative-time-badge">
+	            <span class="task-id label-to-hide"><?php echo $relative_time; ?></span>
+	            <span class="task-id label-to-show" style="display: none;">#<?php echo esc_html($task->ID); ?></span>
+	        </small>
+
+			<!-- <small class="text-muted" title="<?php echo esc_attr( $formatted_due_date ); ?>"><?php echo $relative_time; ?></small> -->
 
 			<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $task->ID ); ?>">
 				<a href="
@@ -138,6 +136,7 @@ function render_task_card( $task ) {
 	</div>
 	<?php
 }
+
 function render_task_menu( $task_id ) {
 	return '
     <div class="dropdown float-end mt-2">
