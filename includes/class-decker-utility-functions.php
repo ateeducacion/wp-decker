@@ -152,14 +152,11 @@ class Decker_Utility_Functions {
 		set_transient( 'decker_admin_error_msg', $error_msg, 60 );
 	}
 
-	public static function getRelativeTime( $dateString ) {
+	public static function getRelativeTime(?DateTime $dueDate ): string {
 
-		if ( empty( $dateString ) ) {
+		if ( empty( $dueDate ) ) {
 			return '';
 		}
-
-		// Verify if the date is valid
-		$dueDate = DateTime::createFromFormat( 'Y-m-d H:i:s', $dateString ) ?: new DateTime( $dateString );
 
 		$errors = DateTime::getLastErrors();
 		if ( ! $dueDate || ( is_array( $errors ) && ( $errors['warning_count'] > 0 || $errors['error_count'] > 0 ) ) ) {
@@ -173,15 +170,15 @@ class Decker_Utility_Functions {
 		if ( $interval->y > 0 ) {
 			return $isFuture ? sprintf( __( 'in %1$d year%2$s', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d year%2$s ago', 'text-domain' ), $interval->y, $interval->y > 1 ? 's' : '' );
 		} elseif ( $interval->m > 0 ) {
-			return $isFuture ? sprintf( __( 'in %1$d month%2$s', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d month%2$s ago', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d month%2$s', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' ) : sprintf( __( '%1$d month%2$s ago', 'text-domain' ), $interval->m, $interval->m > 1 ? 's' : '' );
 		} elseif ( $interval->d > 0 ) {
-			return $isFuture ? sprintf( __( 'in %1$d day%2$s', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d day%2$s ago', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d day%2$s', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' ) : sprintf( __( '%1$d day%2$s ago', 'text-domain' ), $interval->d, $interval->d > 1 ? 's' : '' );
 		} elseif ( $interval->h > 0 ) {
-			return $isFuture ? sprintf( __( 'in %1$d hour%2$s', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d hour%2$s ago', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d hour%2$s', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' ) : sprintf( __( '%1$d hour%2$s ago', 'text-domain' ), $interval->h, $interval->h > 1 ? 's' : '' );
 		} elseif ( $interval->i > 0 ) {
-			return $isFuture ? sprintf( __( 'in %1$d minute%2$s', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' ) : sprintf( __( 'more than %1$d minute%2$s ago', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' );
+			return $isFuture ? sprintf( __( 'in %1$d minute%2$s', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' ) : sprintf( __( '%1$d minute%2$s ago', 'text-domain' ), $interval->i, $interval->i > 1 ? 's' : '' );
 		} else {
-			return $isFuture ? __( 'in a few seconds', 'text-domain' ) : __( 'more than a few seconds ago', 'text-domain' );
+			return $isFuture ? __( 'in a few seconds', 'text-domain' ) : __( 'a few seconds ago', 'text-domain' );
 		}
 	}
 }

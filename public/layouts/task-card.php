@@ -1,37 +1,13 @@
 <?php
-require_once $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php'; // Because it can be loade in a iframe
 require_once 'head-css.php';
 
-$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
-$title = '';
-$due_date = '';
-$stack = 'to-do';
-$assigned_board = '';
-$assignees = '';
-$assigned_labels = '';
-$description = '';
-$max_priority = '';
-
-if ( $task_id ) {
-	// Aquí puedes cargar los datos de la tarea usando el ID
-	$task = get_post( $task_id );
-	if ( $task ) {
-		// Cargar los datos de la tarea y mostrarlos
-		$title = get_the_title( $task );
-		$due_date = get_post_meta( $task->ID, 'duedate', true );
-		$stack = get_post_meta( $task->ID, 'stack', true );
-		$assigned_board = wp_get_post_terms( $task->ID, 'decker_board', array( 'fields' => 'ids' ) );
-		$assigned_board = ! empty( $assigned_board ) ? $assigned_board[0] : '';
-		$assignees = get_post_meta( $task->ID, 'assigned_users', true );
-		$assigned_labels = wp_get_post_terms( $task->ID, 'decker_label', array( 'fields' => 'ids' ) );
-		$description = $task->post_content;
-		$max_priority = get_post_meta( $task->ID, 'max_priority', true );
-		$max_priority = get_post_meta( $task->ID, 'max_priority', true );
-	} else {
-		echo '<p>Tarea no encontrada.</p>';
-		return;
-	}
+$task_id = 0;
+if (isset( $_GET['id'] ) ) {
+	$task_id = intval( $_GET['id'] );
 }
+$task = new Task($task_id);
+
 ?>
 <script type="text/javascript">
 function loadComments() {
@@ -174,7 +150,7 @@ function deleteComment(commentId) {
 		<!-- Título -->
 		<div class="col-md-9 mb-3">
 			<div class="form-floating">
-				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $title ); ?>" placeholder="Título de la tarea" required>
+				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="Título de la tarea" required>
 				<label for="task-title" class="form-label">Title<span id="high-label" class="badge bg-danger ms-2 d-none">MAXIMUM PRIORITY</span></label>
 				<div class="invalid-feedback">Please provide a title.</div>
 			</div>
@@ -182,7 +158,7 @@ function deleteComment(commentId) {
 
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $due_date ); ?>" placeholder="Seleccionar fecha" required>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->due_date ); ?>" placeholder="Seleccionar fecha" required>
 				<label class="form-label" for="task-due-date">Due Date</label>
 				<div class="invalid-feedback">Please select a due date.</div>
 			</div>
@@ -196,16 +172,12 @@ function deleteComment(commentId) {
 				<select class="form-select" id="task-board" required>
 					<option value="" disabled selected>Select Board</option>
 					<?php
-					$boards = get_terms(
-						array(
-							'taxonomy' => 'decker_board',
-							'hide_empty' => false,
-						)
-					);
+					$boards = BoardManager::getAllBoards();
+
 					foreach ( $boards as $board ) {
-						$selected = ( $assigned_board == $board->term_id ) ? 'selected' : '';
-						$selected = ( isset( $assigned_board ) && $assigned_board == $board->term_id ) ? 'selected' : '';
-						echo '<option value="' . esc_attr( $board->term_id ) . '" ' . $selected . '>' . esc_html( $board->name ) . '</option>';
+						$selected = ( $task->board->id == $board->id ) ? 'selected' : '';
+						$selected = ( isset( $task->board->id ) && $task->board->id == $board->id ) ? 'selected' : '';
+						echo '<option value="' . esc_attr( $board->id ) . '" ' . $selected . '>' . esc_html( $board->name ) . '</option>';
 					}
 					?>
 
@@ -218,9 +190,9 @@ function deleteComment(commentId) {
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
 				<select class="form-select" id="task-column" required>
-					<option value="to-do" <?php selected( $stack, 'to-do' ); ?>>To Do</option>
-					<option value="in-progress" <?php selected( $stack, 'in-progress' ); ?>>In Progress</option>
-					<option value="done" <?php selected( $stack, 'done' ); ?>>Done</option>
+					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>>To Do</option>
+					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>>In Progress</option>
+					<option value="done" <?php selected( $task->stack, 'done' ); ?>>Done</option>
 				</select>
 				<label for="task-column" class="form-label">Column</label>
 			</div>
@@ -230,15 +202,9 @@ function deleteComment(commentId) {
 				<select class="form-select" id="task-author" required>
 					<option value="" disabled selected>Select Author</option>
 					<?php
-
-					$current_author_id = get_current_user_id(); // For new posts, select the current user.
-					if ( $task_id > 0 ) {
-						// For existing posts, get the current post author.
-						$current_author_id = get_post_field( 'post_author', $task_id );
-					}
 					$users = get_users();
 					foreach ( $users as $user ) {
-						$selected = ( $user->ID == $current_author_id ) ? 'selected' : '';
+						$selected = ( $user->ID == $task->author ) ? 'selected' : '';
 						echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
@@ -261,7 +227,7 @@ function deleteComment(commentId) {
 			<select class="form-select" id="task-assignees" multiple>
 				<?php
 				foreach ( $users as $user ) {
-					$selected = is_array( $assignees ) && in_array( $user->ID, $assignees ) ? 'selected' : '';
+		            $selected = in_array($user->ID, array_column($task->assigned_users, 'ID')) ? 'selected' : '';
 					echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
 				}
 				?>
@@ -271,26 +237,11 @@ function deleteComment(commentId) {
 			<label for="task-labels" class="form-label">Labels</label>
 			<select class="form-select" id="task-labels" multiple>
 				<?php
-				$labels = get_terms(
-					array(
-						'taxonomy' => 'decker_label',
-						'hide_empty' => false,
-					)
-				);
-
-				if ( ! is_wp_error( $labels ) ) {
+					$labels = LabelManager::getAllLabels();
 					foreach ( $labels as $label ) {
-						$color = get_term_meta( $label->term_id, 'term-color', true );
-						$selected = is_array( $assigned_labels ) && in_array( $label->term_id, $assigned_labels ) ? 'selected' : '';
-						// echo '<option value="' . esc_attr( $label->term_id ) . '" style="background-color: ' . esc_attr( $color ) . ';" ' . $selected . '>' . esc_html( $label->name ) . '</option>';
-						// echo '<option value="' . esc_attr( $label->term_id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $color ) . '"}\' ' . $selected . '>' . esc_html( $label->name ) . '</option>';
-						echo '<option value="' . esc_attr( $label->term_id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $color ) . '"}\' ' . $selected . '>' . esc_html( $label->name ) . '</option>';
-
-
+			            $selected = in_array($label->id, array_column($task->labels, 'id')) ? 'selected' : '';
+						echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . $selected . '>' . esc_html( $label->name ) . '</option>';
 					}
-				} else {
-					echo '<option value="" disabled>Error loading labels</option>';
-				}
 				?>
 			</select>
 		</div>
@@ -301,9 +252,6 @@ function deleteComment(commentId) {
 	<ul class="nav nav-tabs nav-bordered mb-3">
 		<li class="nav-item">
 			<a href="#description-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link active">Description
-
-
-
 			</a>
 		</li>
 		<li class="nav-item">
@@ -332,7 +280,7 @@ function deleteComment(commentId) {
 	<div class="tab-content">
 		<!-- Descripción (Editor Quill) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor" style="height: 200px;"><?php echo $description; ?></div>
+			<div id="editor" style="height: 200px;"><?php echo $task->description; ?></div>
 		</div>
 
 		<!-- Comentarios -->
@@ -391,7 +339,7 @@ function deleteComment(commentId) {
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
 		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php echo ( $max_priority ? 'checked' : '' ); ?> <?php echo current_user_can( 'administrator' ) ? '' : 'disabled'; ?>>
+			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php echo ( $task->max_priority ? 'checked' : '' ); ?> <?php echo current_user_can( 'administrator' ) ? '' : 'disabled'; ?>>
 			<label class="form-check-label" for="task-max-priority">Maximum Priority</label>
 		</div>
 		<button type="button" class="btn btn-secondary me-2" id="archive-task" <?php echo $task_id === 0 ? 'disabled' : ''; ?>>

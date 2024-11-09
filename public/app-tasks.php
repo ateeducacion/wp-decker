@@ -1,5 +1,8 @@
 <?php
 include 'layouts/main.php';
+
+$taskManager = new TaskManager();
+
 ?>
 
 <head>
@@ -146,15 +149,10 @@ table#tablaTareas td:nth-child(4) {
 									<select id="boardFilter" class="form-select">
 										<option value="">All Boards</option>
 										<?php
-										$boards = get_terms(
-											array(
-												'taxonomy' => 'decker_board',
-												'hide_empty' => false,
-											)
-										);
-										foreach ( $boards as $board ) {
-											echo '<option value="' . esc_attr( $board->name ) . '">' . esc_html( $board->name ) . '</option>';
-										}
+											$boards = BoardManager::getAllBoards();
+											foreach ($boards as $board) {
+											    echo '<option value="' . esc_attr($board->name) . '">' . esc_html($board->name) . '</option>';
+											}
 										?>
 									</select>
 								</div>
@@ -183,142 +181,49 @@ table#tablaTareas td:nth-child(4) {
 												<tbody>
 													<?php
 													$type = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : 'all';
-													$args = array(
-														'post_type' => 'decker_task',
-														'posts_per_page' => -1,
-													);
 
-													if ( $type === 'archived' ) {
-														$args['post_status'] = 'archived';
-													} elseif ( $type === 'my' ) {
-														$args['meta_query'] = array(
-															array(
-																'key' => 'assigned_users',
-																'value' => get_current_user_id(),
-																'compare' => 'LIKE',
-															),
-														);
-													} else {
-														$args['post_status'] = 'publish';
-													}
+                                                    $tasks = [];
 
-													$tasks = get_posts( $args );
+                                                    if ($type === 'archived') {
+                                                        $tasks = $taskManager->getTasksByStatus('archived');
+                                                    } elseif ($type === 'my') {
+                                                        $tasks = $taskManager->getTasksByUser(get_current_user_id());
+                                                    } else {
+                                                        $tasks = $taskManager->getTasksByStatus('publish');
+                                                    }
 
-													foreach ( $tasks as $task ) {
-														$board_terms = wp_get_post_terms( $task->ID, 'decker_board' );
-														$board_name = ! empty( $board_terms ) ? $board_terms[0]->name : 'Unassigned';
-														$stack = get_post_meta( $task->ID, 'stack', true );
-														$priority = get_post_meta( $task->ID, 'max_priority', true ) ? 'High' : 'Normal';
-														$assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
-														$assigned_users = is_array( $assigned_users ) ? $assigned_users : array();
-														// $user_avatars = array_map(
-														// function ( $user_id ) {
-														// $user_info = get_userdata( $user_id );
-														// return array(
-														// 'name' => $user_info->display_name,
-														// 'avatar' => get_avatar_url( $user_id, array( 'size' => 32 ) ),
-														// );
-														// },
-														// $assigned_users
-														// );
-														?>
-														<tr>
-															<td>
-																<?php if ( get_post_meta( $task->ID, 'max_priority', true ) ) : ?>
-																	🔥
-																<?php endif; ?>
-															</td>
-															<td>
-																<?php
-																	// Check if terms are available and there are no errors
-																	if ( ! empty( $board_terms ) && ! is_wp_error( $board_terms ) ) {
-																	    // Retrieve the board name and color
-																	    $board_name = $board_terms[0]->name;
-																	    $board_color = get_term_meta( $board_terms[0]->term_id, 'term-color', true );
-																	    ?>
-																	    <span class="badge rounded-pill" style="background-color: <?php echo esc_attr( $board_color ); ?>;"><?php echo esc_html( $board_name ); ?></span>
-																	    <?php
-																	} else {
-																	    // Display a fallback badge if no board is assigned
-																	    ?>
-																	    <span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined board</span>
-																	    <?php
-																	}
-																?>
-															</td>
-															<td><?php echo esc_html( $stack ); ?></td>
-															<td><a href="
-															<?php
-															echo add_query_arg(
-																array(
-																	'decker_page' => 'task',
-																	'id' => esc_attr( $task->ID ),
-																),
-																home_url( '/' )
-															);
-															?>
-																			" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>"><?php echo esc_html( get_the_title( $task ) ); ?></a></td>
-															<td>
-																<?php
-																$labels = wp_get_post_terms( $task->ID, 'decker_label' );
-																foreach ( $labels as $label ) {
-																	$label_color = get_term_meta( $label->term_id, 'term-color', true );
-																	echo '<span class="badge" style="background-color: ' . esc_attr( $label_color ) . ';">' . esc_html( $label->name ) . '</span> ';
-																}
-																?>
-															</td>
-															<td>
-																<div class="avatar-group">
+                                                    foreach ($tasks as $task) {
+                                                        echo '<tr>';
+                                                        echo '<td>' . ($task->max_priority ? '🔥' : '') . '</td>';
+                                                        echo '<td>';
 
-																<?php
-																$today = date( 'Y-m-d' );
-																if ( ! empty( $assigned_users ) ) {
-																	foreach ( $assigned_users as $user_id ) {
-																		$user_info = get_userdata( $user_id );
-																		if ( $user_info ) {
-																			$user_date_relations = get_post_meta( $task->ID, '_user_date_relations', true );
-																			$is_today = false;
-																			if ( $user_date_relations ) {
-																				foreach ( $user_date_relations as $relation ) {
-																					if ( $relation['user_id'] == $user_id && $relation['date'] == $today ) {
-																						$is_today = true;
-																						break;
-																					}
-																				}
-																			}
-																			$avatar_class = $is_today ? 'avatar-group-item today' : 'avatar-group-item';
-																			?>
-																			<a href="javascript: void(0);" class="<?php echo $avatar_class; ?>" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="<?php echo esc_attr( $user_info->display_name ); ?>" data-bs-original-title="<?php echo esc_attr( $user_info->display_name ); ?>">
-																				<img src="<?php echo esc_url( get_avatar_url( $user_id ) ); ?>" alt="" class="rounded-circle avatar-xs">
-																			</a>
-																			<?php
-																		}
-																	}
-																}
-																?>
+														if (null === $task->board) {
+														    echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined board</span>';
+														} else {														    
+														    echo '<span class="badge rounded-pill" style="background-color: ' . esc_attr($task->board->color) . ';">' . esc_html($task->board->name) . '</span>';
+														}
+                                                        echo '</td>';
+                                                        echo '<td>' . esc_html($task->stack ) . '</td>';
+                                                        echo '<td><a href="' . esc_url(add_query_arg(array('decker_page' => 'task', 'ID' => $task->ID), home_url('/'))) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr($task->ID) . '">' . esc_html($task->title) . '</a></td>';
+                                                        echo '<td>';
+                                                        foreach ($task->labels as $label) {
+                                                            echo '<span class="badge" style="background-color: ' . esc_attr($label->color) . ';">' . esc_html($label->name) . '</span> ';
+                                                        }
+                                                        echo '</td>';
+                                                        echo '<td><div class="avatar-group">';
 
+                                                        foreach ($task->assigned_users as $user) {
+                                                        	$today_class = $user->today ? ' today' : '';
+                                                            echo '<a href="javascript: void(0);" class="avatar-group-item' . esc_attr($today_class) . '" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr($user->display_name) . '" data-bs-original-title="' . esc_attr($user->display_name) . '">';
+                                                            echo '<img src="' . esc_url(get_avatar_url($user->ID)) . '" alt="" class="rounded-circle avatar-xs">';
+                                                            echo '</a>';
+                                                        }
+                                                        echo '</div></td>';
+                                                        echo '<td>' . esc_html($task->getRelativeTime()) . '</td>';
+                                                        echo '</tr>';
+                                                    }
 
-
-
-
-
-																</div>
-															</td>
-															<td>
-
-																<?php
-
-
-																// echo esc_html( get_post_meta( $task->ID, 'duedate', true ) );
-
-																echo Decker_Utility_Functions::getRelativeTime( get_post_meta( $task->ID, 'duedate', true ) );
-
-																?>
-																	
-
-																</td>
-														</tr>
-													<?php } ?>
+													?>
 													
 													<!-- Add more task rows as needed -->
 												</tbody>

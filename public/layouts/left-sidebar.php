@@ -71,17 +71,9 @@
 		  <ul class="side-nav-second-level">
 			<?php
 			$active_tasks_count = wp_count_posts( 'decker_task' )->publish;
-			$current_user_id = get_current_user_id();
-			$my_tasks_count = count(
-				get_posts(
-					array(
-						'post_type' => 'decker_task',
-						'meta_key' => 'assigned_users',
-						'meta_value' => $current_user_id,
-						'meta_compare' => 'LIKE',
-					)
-				)
-			);
+      $taskManager = new taskManager();
+      $my_tasks = $taskManager->getTasksByUser(get_current_user_id());
+      $my_tasks_count = count($my_tasks);
 			$archived_tasks_count = wp_count_posts( 'decker_task' )->archived;
 			?>
 			<li><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="
@@ -95,7 +87,7 @@
 								);
 								?>
 			">Active Tasks</a></li>
-			<li><span class="badge bg-success float-end"><?php echo esc_html( $my_tasks_count ); ?></span><a href="
+			<li><span class="badge bg-info float-end"><?php echo esc_html( $my_tasks_count ); ?></span><a href="
 																	<?php
 																	echo add_query_arg(
 																		array(
@@ -106,7 +98,7 @@
 																	);
 																	?>
 			">My Tasks</a></li>
-			<li><span class="badge bg-success float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="
+			<li><span class="badge bg-warning float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="
 																	<?php
 																	echo add_query_arg(
 																		array(
@@ -145,25 +137,18 @@
 		  <ul class="side-nav-second-level">
 
 			<?php
-
-			$boards = get_terms(
-				array(
-					'taxonomy' => 'decker_board',
-					'hide_empty' => false,
-				)
-			);
-
-			foreach ( $boards as $board ) {
-				echo '<li><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
-					add_query_arg(
-						array(
-							'decker_page' => 'board',
-							'slug' => $board->slug,
-						),
-						home_url( '/' )
-					)
-				) . '">' . esc_html( $board->name ) . '</a></li>';
-			}
+				$boards = BoardManager::getAllBoards();
+				foreach ( $boards as $board ) {
+					echo '<li><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
+						add_query_arg(
+							array(
+								'decker_page' => 'board',
+								'slug' => $board->slug,
+							),
+							home_url( '/' )
+						)
+					) . '">' . esc_html( $board->name ) . '</a></li>';
+				}
 			?>
 
 		  </ul>

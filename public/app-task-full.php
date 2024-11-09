@@ -40,10 +40,11 @@ include 'layouts/main.php';
 								// Set default title to "New task"
 								$title = 'New task';
 
-								// Obtener el parámetro 'id' directamente de la URL
+
+								// TODO: Change to use Task class
 								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 								if ( $task_id > 0 ) {
-									$task = get_post( $task_id );
+									$title = get_post_field('post_title', $post_id);
 									if ( $task && 'decker_task' === $task->post_type ) {
 										$title = 'Task detail #' . $task_id;
 									} else {

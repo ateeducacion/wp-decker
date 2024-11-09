@@ -149,17 +149,13 @@ include 'layouts/main.php';
 		<?php
 
 		// Obtener datos de tareas por tablero y colores
-		$boards = get_terms(
-			array(
-				'taxonomy' => 'decker_board',
-				'hide_empty' => false,
-			)
-		);
+		$boards = BoardManager::getAllBoards(); 
 		$tasks_by_board_and_stack = array();
 		$board_labels = array();
 		$board_colors = array();
 
 		// Obtener todos los posts de tipo decker_task de una sola vez
+		// TO-DO use the TaskManager
 		$all_tasks = get_posts(
 			array(
 				'post_type' => 'decker_task',
@@ -186,7 +182,7 @@ include 'layouts/main.php';
 		// Procesar tareas por tablero y stack
 		foreach ( $boards as $board ) {
 			$board_labels[] = $board->name;
-			$board_colors[] = get_term_meta( $board->term_id, 'term-color', true );
+			$board_colors[] = $board->color;
 			$tasks_by_board_and_stack[ $board->name ] = array(
 				'to-do' => 0,
 				'in-progress' => 0,
@@ -197,7 +193,7 @@ include 'layouts/main.php';
 				$task_boards = wp_get_post_terms( $task->ID, 'decker_board', array( 'fields' => 'ids' ) );
 				$task_stack = get_post_meta( $task->ID, 'stack', true );
 
-				if ( in_array( $board->term_id, $task_boards ) ) {
+				if ( in_array( $board->id, $task_boards ) ) {
 					$tasks_by_board_and_stack[ $board->name ][ $task_stack ]++;
 				}
 			}

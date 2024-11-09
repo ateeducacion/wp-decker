@@ -2,6 +2,9 @@
 <!-- TODO: Add the WP Head -->
 <?php // wp_head(); ?>
 
+<script type="text/javascript">
+	const userId = <?php echo get_current_user_id(); ?>;
+</script>
 <!-- Theme Config Js -->
 <script src="<?php echo plugins_url( 'assets/js/config.js', __DIR__ ); ?>"></script>
 

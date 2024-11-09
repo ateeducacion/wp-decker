@@ -44,6 +44,7 @@ class Decker_Loader {
 
 		$this->actions = array();
 		$this->filters = array();
+
 	}
 
 	/**

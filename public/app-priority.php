@@ -1,125 +1,6 @@
 <?php
 include 'layouts/main.php';
 
-// Verificar si el usuario actual tiene tareas para hoy
-$current_user_id = get_current_user_id();
-$today = date( 'Y-m-d' );
-
-$today = date( 'Y-m-d' );
-$args = array(
-    'post_type'   => 'decker_task',
-    'post_status' => 'publish',
-    'meta_query'  => array(
-        'relation' => 'AND',
-        array(
-            'key'     => 'assigned_users',
-            'value'   => '"' . $current_user_id . '"',
-            'compare' => 'LIKE',
-        ),
-        array(
-            'key'     => '_user_date_relations',
-            'value'   => '"user_id";i:' . $current_user_id . ';s:4:"date";s:\d+:"' . preg_quote( $today, '/' ) . '"',
-            'compare' => 'REGEXP',
-        ),
-    ),
-);
-$today_tasks = new WP_Query( $args );
-
-// Mostrar mensaje si no hay tareas para hoy
-$show_import_message = ! $today_tasks->have_posts();
-
-
-// Obtener tareas de días anteriores
-$days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
-$previous_dates = array();
-for ( $i = 1; $i <= $days_to_load; $i++ ) {
-    $previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
-}
-
-$dates_pattern = implode( '|', array_map( function( $date ) {
-    return preg_quote( $date, '/' );
-}, $previous_dates ) );
-
-$value_regex = '"user_id";i:' . $current_user_id . ';s:4:"date";s:\d+:"(' . $dates_pattern . ')"';
-
-$args = array(
-    'post_type'   => 'decker_task',
-    'post_status' => 'publish',
-    'meta_query'  => array(
-        'relation' => 'AND',
-        array(
-            'key'     => 'assigned_users',
-            'value'   => $current_user_id,
-            'compare' => 'LIKE',
-        ),
-        array(
-            'key'     => '_user_date_relations',
-            'value'   => $value_regex,
-            'compare' => 'REGEXP',
-        ),
-    ),
-);
-
-$previous_tasks = new WP_Query( $args );
-
-
-		// $days_to_load = ( date( 'N' ) == 1 ) ? 3 : 1; // Si es lunes, cargar los tres días anteriores
-		// 		$previous_dates = array();
-		// 		for ( $i = 1; $i <= $days_to_load; $i++ ) {
-		// 			$previous_dates[] = date( 'Y-m-d', strtotime( "-$i days" ) );
-		// 		}
-
-
-		//     $args = array(
-		//         'post_type'   => 'decker_task',
-		//         'post_status' => 'publish',
-		//         'meta_query'  => array(
-		//             'relation' => 'AND',
-
-    //     // Condition for dates in _user_date_relations
-    //     array(
-    //         'key'     => '_user_date_relations',
-    //         'value'   => '"' . implode('|', $previous_dates) . '"',
-    //         'compare' => 'REGEXP',
-    //     ),
-    //     // Condition to match user_id within _user_date_relations (serialized array)
-    //     array(
-    //         'key'     => '_user_date_relations',
-    //         'value'   => sprintf(':"%d";', $current_user_id), // Match user ID in serialized format
-    //         'compare' => 'LIKE',
-    //     ),
-
-		// 				// array(
-		// 				// 	'key' => '_user_date_relations',
-		// 				// 	'value' => implode( ',', $previous_dates ),
-		// 				// 	'compare' => 'REGEXP',
-		// 				// ),
-		//             // Check within user_date_relations meta for matching user and date range
-		//             // array(
-		//             //     'key'     => '_user_date_relations',
-		//             //     'value'   => sprintf(
-		//             //         '{"user_id":%d,"date":"%s"}',
-		//             //         $current_user_id,
-		//             //         $start_date // Search exact match - you can adjust for ranges
-		//             //     ),
-		//             //     'compare' => 'LIKE',
-		//             // ),
-	
-		//             // Check within assigned_users meta if the user is assigned
-		//             array(
-		//                 'key'     => 'assigned_users',
-		//                 'value'   => $current_user_id,
-		//                 'compare' => 'LIKE',
-		//             ),
-
-		//         ),
-		//     );
-		// 		$previous_tasks = new WP_Query( $args );
-				// echo "<pre>";
-				// print_r($previous_tasks->have_posts());
-				// echo "<br>";
-				// print_r(count($previous_tasks->posts));
-				// die();
 
 
 if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
@@ -133,6 +14,21 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 	// Redirigir para evitar reenvío de formulario
 	wp_redirect( esc_url( $_SERVER['REQUEST_URI'] ) );
 	exit;
+
+
+
+}
+
+$previous_tasks = array();
+$taskManager = new TaskManager();
+
+// Verificar si hay tareas para hoy
+$has_today_tasks = $taskManager->hasUserTodayTasks();
+
+// Si no hay tareas para hoy, cargar las tareas de días previos
+if (!$has_today_tasks) {
+    $days_to_load = (date('N') == 1) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
+    $previous_tasks = $taskManager->getUserTasksForPreviousDays($days_to_load);
 }
 
 ?>
@@ -229,126 +125,88 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 
 <?php include 'layouts/top-alert.php'; ?>
 
-<?php if ( $show_import_message ) : ?>
+<?php if (!$has_today_tasks) { ?>
 	<div id="alert-import-today-1" class="alert-import-today alert alert-warning alert-dismissible fade show" role="alert">
 		<i class="ri-alert-fill"></i>
 		Usted no tiene definidas tareas para hoy. ¿Desea importar las del día anterior?
 		<button type="button" class="import-today btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">Sí</button>
 		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
 	</div>
-<?php endif; ?>
+<?php } ?>
 
 					<div class="row">
 						<div class="col-lg-12">
 							<div class="card">
 								<div class="d-flex card-header justify-content-between align-items-center">
-									<h4 class="header-title">MAX PRIORITY 🔥🧨</h4>
+									<h4 class="header-title">MAX PRIORITY 🔥</h4>
 								</div>
 
+							<div class="table-responsive">
+																
+							<table id="priority-table" class="table table-striped table-responsive">
+								<thead>
+									<tr>
+										<th style="width: 10%;">Board</th>
+										<th class="d-none d-md-table-cell" style="width: 10%;">Stack</th>
+										<th style="width: auto;">Title</th>
+										<th style="width: 15%;">Assigned Users</th>
+									</tr>
+								</thead>
+								<tbody id="priority-id-table">
+									<?php
+									// Obtener tareas con max_priority
+									$args = array(
+										'meta_query' => array(
+											array(
+												'key' => 'max_priority',
+												'value' => '1',
+												'compare' => '=',
+											),
+										),
+									);
+									$tasks = $taskManager->getTasks($args);
+									foreach ($tasks as $task) {
 
+									    $board = 'No board assigned';
+									    if ($task->board) {
+									        $board = sprintf(
+									            '<span class="custom-badge overflow-visible" style="background-color: %s;">%s</span>',
+									            esc_attr($task->board->color),
+									            esc_html($task->board->name)
+									        );
+									    }
 
-<div class="table-responsive">
-
-									
-<table id="priority-table" class="table table-striped table-responsive">
-										<thead>
-											<tr>
-												<th style="width: 10%;">Board</th>
-												<th class="d-none d-md-table-cell" style="width: 10%;">Stack</th>
-												<th style="width: auto;">Title</th>
-												<th style="width: 15%;">Assigned Users</th>
-											</tr>
-										</thead>
-										<tbody id="priority-id-table">
-											<?php
-											// Obtener tareas con max_priority
-											$args = array(
-												'post_type' => 'decker_task',
-								        'post_status'    => 'publish',
-												'meta_query' => array(
-													array(
-														'key' => 'max_priority',
-														'value' => '1',
-														'compare' => '=',
-													),
-												),
-											);
-											$tasks = new WP_Query( $args );
-											if ( $tasks->have_posts() ) :
-												while ( $tasks->have_posts() ) :
-													$tasks->the_post();
-													$board_terms = get_the_terms( get_the_ID(), 'decker_board' );
-													if ( $board_terms && ! is_wp_error( $board_terms ) ) {
-														$board = '';
-														foreach ( $board_terms as $term ) {
-															$color = get_term_meta( $term->term_id, 'term-color', true );
-															$board .= '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $term->name ) . '</span> ';
-														}
-													} else {
-														$board = 'No board assigned';
-													}
-													$stack = get_post_meta( get_the_ID(), 'stack', true );
-													$assigned_users = get_post_meta( get_the_ID(), 'assigned_users', true );
-													?>
-													<tr>
-														<td><?php echo $board; ?></td>
-														<td class="d-none d-md-table-cell"><?php echo esc_html( $stack ); ?></td>
-														<td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php the_title(); ?>">
-															<a href="
-															<?php
-															echo add_query_arg(
-																array(
-																	'decker_page' => 'task',
-																	'id' => esc_attr( get_the_ID() ),
-																),
-																home_url( '/' )
-															);
-															?>
-																		" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( get_the_ID() ); ?>"><?php the_title(); ?></a>
-														</td>
-														<td>
-															<div class="avatar-group mt-2">
-																<?php
-																$today = date( 'Y-m-d' );
-																if ( ! empty( $assigned_users ) ) {
-																	foreach ( $assigned_users as $user_id ) {
-																		$user_info = get_userdata( $user_id );
-																		if ( $user_info ) {
-																			$user_date_relations = get_post_meta( get_the_ID(), '_user_date_relations', true );
-																			$is_today = false;
-																			if ( $user_date_relations ) {
-																				foreach ( $user_date_relations as $relation ) {
-																					if ( $relation['user_id'] == $user_id && $relation['date'] == $today ) {
-																						$is_today = true;
-																						break;
-																					}
-																				}
-																			}
-																			$avatar_class = $is_today ? 'avatar-group-item today' : 'avatar-group-item';
-																			?>
-																			<a href="javascript: void(0);" class="<?php echo $avatar_class; ?>" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="<?php echo esc_attr( $user_info->display_name ); ?>" data-bs-original-title="<?php echo esc_attr( $user_info->display_name ); ?>">
-																				<img src="<?php echo esc_url( get_avatar_url( $user_id ) ); ?>" alt="" class="rounded-circle avatar-xs">
-																			</a>
-																			<?php
-																		}
-																	}
-																}
-																?>
-															</div>
-														</td>
-													</tr>
-													<?php
-												endwhile;
-												wp_reset_postdata();
-											endif;
-											?>
-										</tbody>
-									</table>
-
-
-
-
-							
+									    $stack = esc_html($task->stack);
+									    ?>
+									    <tr>
+									        <td><?php echo $board; ?></td>
+									        <td class="d-none d-md-table-cell"><?php echo $stack; ?></td>
+									        <td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr($task->title); ?>">
+									            <a href="<?php echo esc_url(add_query_arg(['decker_page' => 'task', 'id' => esc_attr($task->ID)], home_url('/'))); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr($task->ID); ?>">
+									                <?php echo esc_html($task->title); ?>
+									            </a>
+									        </td>
+									        <td>
+									            <div class="avatar-group mt-2">
+									                <?php
+									                $today = date('Y-m-d');
+									                foreach ($task->assigned_users as $user_info) {
+									                    $today_class = $user_info->today ? 'today' : '';
+									                    ?>
+									                    <a href="javascript: void(0);" class="avatar-group-item <?php echo esc_attr($today_class); ?>" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="<?php echo esc_attr($user_info->display_name); ?>" data-bs-original-title="<?php echo esc_attr($user_info->display_name); ?>">
+									                        <img src="<?php echo esc_url(get_avatar_url($user_info->ID)); ?>" alt="" class="rounded-circle avatar-xs">
+									                    </a>
+									                    <?php
+									                }
+									                ?>
+									            </div>
+									        </td>
+									    </tr>
+									    <?php
+									}
+									?>
+								</tbody>
+							</table>
 
 						</div> <!-- end col-->
 
@@ -371,23 +229,21 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 						$current_user_id = get_current_user_id();
 						foreach ( $users as $user ) {
 							$card_class = ( $user->ID === $current_user_id ) ? 'card border-primary border' : 'card';
-							$user_tasks = new WP_Query(
-								array(
-									'post_type' => 'decker_task',
-									'meta_query' => array(
-										array(
-											'key' => '_user_date_relations',
-											'value' => sprintf( ':"%s"', $today ),
-											'compare' => 'LIKE',
-										),
-										array(
-											'key' => 'assigned_users',
-											'value' => $user->ID,
-											'compare' => 'LIKE',
-										),
+							$args = array(
+								'meta_query' => array(
+									array(
+										'key' => '_user_date_relations',
+										'value' => sprintf( ':"%s"', $today ),
+										'compare' => 'LIKE',
 									),
-								)
+									array(
+										'key' => 'assigned_users',
+										'value' => $user->ID,
+										'compare' => 'LIKE',
+									),
+								),
 							);
+							$user_tasks = $taskManager->getTasks($args); 
 							?>
 							<div class="col-xl-6">
 								<div class="<?php echo $card_class; ?>">
@@ -405,43 +261,37 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 													</tr>
 												</thead>
 												<tbody>
-													<?php
-													if ( $user_tasks->have_posts() ) :
-														while ( $user_tasks->have_posts() ) :
-															$user_tasks->the_post();
-															$board_terms = get_the_terms( get_the_ID(), 'decker_board' );
-															$board = 'No board assigned';
-															if ( $board_terms && ! is_wp_error( $board_terms ) ) {
-																$board = '';
-																foreach ( $board_terms as $term ) {
-																	$color = get_term_meta( $term->term_id, 'term-color', true );
-																	$board .= '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $term->name ) . '</span> ';
-																}
-															}
-															?>
-															<tr>
-																<td><?php echo $board; ?></td>
-																<td><a href="
-																<?php
-																echo add_query_arg(
-																	array(
-																		'decker_page' => 'task',
-																		'id' => esc_attr( get_the_ID() ),
-																	),
-																	home_url( '/' )
-																);
-																?>
-																				" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( get_the_ID() ); ?>"><?php the_title(); ?></a></td>
-															</tr>
-															<?php
-														endwhile;
-														wp_reset_postdata();
-													else :
-														?>
-														<tr>
-															<td colspan="2">No tasks for today.</td>
-														</tr>
-													<?php endif; ?>
+												<?php
+													foreach ($user_tasks as $task) {
+													    // Ensuring the board is displayed as intended without directly modifying the board property
+													    $board_display = '';
+													    if (!empty($task->board)) {
+													        $board_display = '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr($task->board->color) . ';">' . esc_html($task->board->name) . '</span>';
+													    }
+												?>
+													    <tr>
+													        <td><?php echo $board_display; ?></td>
+													        <td>
+													            <a href="<?php echo esc_url(add_query_arg(
+													                array(
+													                    'decker_page' => 'task',
+													                    'id' => esc_attr($task->ID),
+													                ),
+													                home_url('/')
+													            )); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr($task->ID); ?>">
+													                <?php echo esc_html($task->title); ?>
+													            </a>
+													        </td>
+													    </tr>
+													    <?php
+													}
+													if (empty($user_tasks)) {
+												?>
+													    <tr>
+													        <td colspan="2">No tasks for today.</td>
+													    </tr>
+												<?php } ?>
+
 												</tbody>
 											</table>
 										</div>
@@ -496,40 +346,24 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 				</tr>
 			</thead>
 			<tbody>
-			  <?php
-				if ( $previous_tasks->have_posts() ) :
-					while ( $previous_tasks->have_posts() ) :
-						$previous_tasks->the_post();
-						$board_terms = get_the_terms( get_the_ID(), 'decker_board' );
-						$board = $board_terms && ! is_wp_error( $board_terms ) ? $board_terms[0]->name : 'No board assigned';
-						$stack = get_post_meta( get_the_ID(), 'stack', true );
-						?>
-					  <tr class="task-row" data-task-id="<?php echo esc_attr( get_the_ID() ); ?>">
-						  <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( get_the_ID() ); ?>"></td>
-						  <td>
-							  <?php
-								if ( $board_terms && ! is_wp_error( $board_terms ) ) {
-									foreach ( $board_terms as $term ) {
-										$color = get_term_meta( $term->term_id, 'term-color', true );
-										echo '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $term->name ) . '</span> ';
-									}
-								} else {
-									echo 'No board assigned';
-								}
-								?>
-						  </td>
-						  <td><?php echo esc_html( $stack ); ?></td>
-						  <td><?php the_title(); ?></td>
-					  </tr>
-						<?php
-					endwhile;
-					wp_reset_postdata();
-			  else :
-					?>
-				  <tr>
-					  <td colspan="4">No hay tareas de días anteriores para importar.</td>
-				  </tr>
-			  <?php endif; ?>
+			<?php if (!$has_today_tasks) : ?>
+			    <?php foreach ($previous_tasks as $task) : ?>
+			        <tr class="task-row" data-task-id="<?php echo esc_attr($task->ID); ?>">
+			            <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr($task->ID); ?>"></td>
+			            <td>
+			                <span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr($task->board->color); ?>;">
+			                    <?php echo esc_html($task->board->name); ?>
+			                </span>
+			            </td>
+			            <td><?php echo esc_html($task->stack); ?></td>
+			            <td><?php echo esc_html($task->title); ?></td>
+			        </tr>
+			    <?php endforeach; ?>
+			<?php else : ?>
+			    <tr>
+			        <td colspan="4">No hay tareas de días anteriores para importar.</td>
+			    </tr>
+			<?php endif; ?>
 			</tbody>
 		  </table>
 		</div>

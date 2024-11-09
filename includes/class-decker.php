@@ -110,13 +110,27 @@ class Decker {
 		/**
 		 * The classes responsible for defining the custom-post-types.
 		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-actions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-boards.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-labels.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
-		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
+
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
+
+		/**
+		 * The class responsible for defining the MVC.
+		 */
+	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
+	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
+	
+	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board-manager.php';
+	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label-manager.php';
+	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task-manager.php';
+
+	    require_once plugin_dir_path( __DIR__ ) . 'includes/controllers/class-task-controller.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
