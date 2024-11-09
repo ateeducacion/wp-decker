@@ -182,24 +182,74 @@ class TaskManager {
 
         $tasks = $this->getTasks($args);
 
+        // echo "<pre>";
+        // // print_r($days);
+        // // print_r($args);
+        // // print_r($tasks);
+
+        // print_r(count($tasks));
+        // die();        
+
+
+
         // Further filter tasks to check if any have a user_date relation for today
-        foreach ($tasks as $task_id) {
-            $task = new Task($task_id);
+        foreach ($tasks as $task) {
             if (isset($task->meta['_user_date_relations'][0])) {
                 $user_date_relations = maybe_unserialize($task->meta['_user_date_relations'][0]);
 
                 if (is_array($user_date_relations)) {
                     $today = (new DateTime())->format('Y-m-d');
+
+
                     foreach ($user_date_relations as $relation) {
+
+                        // if (isset($relation['user_id'], $relation['date'])) {
+
+
+                        // echo "<pre>";
+
+                        // print_r($relation);
+
+                        //     // die();
+                        // }
+
                         if (isset($relation['user_id'], $relation['date']) &&
                             $relation['user_id'] == $user_id &&
-                            $relation['date'] === $today) {
+                            $relation['date'] == $today) {
                             return true;
                         }
                     }
                 }
             }
         }
+
+        // return true;
+
+        // echo "<pre>";
+
+        // $today = (new DateTime())->format('Y-m-d');
+        // echo $today;
+        // echo "---------";
+        // echo "---------";
+        //         echo "---------";
+        // foreach ($tasks as $task) {
+        //     echo "\n";
+        //     print_r($task->meta['_user_date_relations']);
+
+        // }
+
+        // die();
+
+
+      
+        // print_r($days);
+        // print_r($args);
+        // print_r($tasks);
+
+        // print_r(count($tasks));
+        // die();        
+
+
 
         return false;
     }
@@ -232,17 +282,24 @@ class TaskManager {
 
         $tasks = $this->getTasks($args);
 
-        echo "<pre>";
-        print_r($days);
-        // print_r($args);
+        // echo "<pre>";
+        // // print_r($days);
+        // // print_r($args);
         // print_r($tasks);
-        die();        
+
+        // print_r(count($tasks));
+        // die();        
 
 
+        // foreach ($tasks as $task) {
+        //     echo "\n";
+        //     print_r($task->meta['_user_date_relations']);
 
-        return $tasks;
+        // }
 
+        // return $tasks;
 
+        // die();
 
         // Filter tasks to check if they have a user_date relation within the specified number of past days
         $filteredTasks = array_filter($tasks, function ($task) use ($user_id, $days) {
@@ -264,6 +321,20 @@ class TaskManager {
             }
             return false;
         });
+
+
+        // echo "---------";
+        // echo "---------";
+        //         echo "---------";
+        // foreach ($filteredTasks as $task) {
+        //     echo "\n";
+        //     print_r($task->meta['_user_date_relations']);
+
+        // }
+
+        // die();
+
+
 
         return $filteredTasks;
     }
