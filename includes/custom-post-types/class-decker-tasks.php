@@ -51,15 +51,20 @@ class Decker_Tasks {
 		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
+		// add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
 
-		add_filter( 'wp_insert_post_data', array( $this, 'modify_task_order_before_save' ), 10, 2 );
+		add_filter( 'wp_insert_post_data', array( $this, 'modify_task_order_before_save' ), 10, 4 );
 
 		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
+
+
+		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
+		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
+
 
 	}
 
@@ -1141,24 +1146,85 @@ class Decker_Tasks {
 	 * @param array $postarr The post array containing data input.
 	 * @return array The modified data array.
 	 */
-	public function modify_task_order_before_save( $data, $postarr ) {
-	    // Ensure we're working with the right post type.
-	    if ( 'decker_task' === $data['post_type'] ) {
-	        // Check if both 'board' and 'stack' are provided.
-	        if ( isset( $postarr['decker_board'], $postarr['stack'] ) ) {
-	            $board = sanitize_text_field( $postarr['decker_board'] );
-	            $stack = sanitize_text_field( $postarr['stack'] );
+	public function modify_task_order_before_save(array $data, array $postarr, array $unsanitized_postarr, bool $update ) {
 
-	            // Ensure $board and $stack are valid.
-	            if ( ! empty( $board ) && ! empty( $stack ) ) {
-	                // Get new order value based on board and stack.
-	                $new_order = $this->get_new_task_order( $board, $stack );
-	                $data['menu_order'] = $new_order;
+	    // Ensure we're working with the correct post type.
+	    if ( 'decker_task' === $postarr['post_type'] ) {
+
+	        // Log the function call for debugging.
+	        Decker_Utility_Functions::write_log( 'Function modify_task_order_before_save called.', Decker_Utility_Functions::LOG_LEVEL_INFO );
+
+	        Decker_Utility_Functions::write_log( 'Update:' . $update , Decker_Utility_Functions::LOG_LEVEL_INFO );
+
+
+	        // Log input data for inspection.
+	        Decker_Utility_Functions::write_log( 'Input $data: ' . print_r( $data, true ), Decker_Utility_Functions::LOG_LEVEL_DEBUG );
+	        Decker_Utility_Functions::write_log( 'Input $postarr: ' . print_r( $postarr, true ), Decker_Utility_Functions::LOG_LEVEL_DEBUG );
+
+	        // Initialize variables.
+	        $board = '';
+	        $stack = '';
+
+	        // 1. Attempt to retrieve 'decker_board' and 'stack' directly from $postarr.
+	        if ( isset( $postarr['decker_board'] ) ) {
+	            $board = sanitize_text_field( $postarr['decker_board'] );
+	            Decker_Utility_Functions::write_log( "Found 'decker_board' directly in \$postarr: $board", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
+	        }
+
+	        if ( isset( $postarr['stack'] ) ) {
+	            $stack = sanitize_text_field( $postarr['stack'] );
+	            Decker_Utility_Functions::write_log( "Found 'stack' directly in \$postarr: $stack", Decker_Utility_Functions::LOG_LEVEL_INFO );
+	        }
+
+	        // 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
+	        if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
+	            $board_name = sanitize_text_field( $postarr['tax_input']['decker_board'][0] );
+
+			    // Retrieve the term ID based on the term name.
+			    $term = get_term_by( 'name', $board_name, 'decker_board' );
+
+			    if ( $term && ! is_wp_error( $term ) ) {
+			        $board = $term->term_id; // Get the term ID.
+			        Decker_Utility_Functions::write_log( "Retrieved term ID for 'decker_board' with name '$board_name': $board", Decker_Utility_Functions::LOG_LEVEL_INFO );
+			    } else {
+			        Decker_Utility_Functions::write_log( "Failed to retrieve term ID for 'decker_board' with name '$board_name'.", Decker_Utility_Functions::LOG_LEVEL_ERROR );
+			    }
+	        }
+
+	        if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
+	            $stack = sanitize_text_field( $postarr['meta_input']['stack'] );
+	            Decker_Utility_Functions::write_log( "Found 'stack' in 'meta_input': $stack", Decker_Utility_Functions::LOG_LEVEL_INFO );
+	        }
+
+	        // 3. Validate that both 'board' and 'stack' have been retrieved.
+	        if ( ! empty( $board ) && ! empty( $stack ) ) {
+
+	            Decker_Utility_Functions::write_log( $board, Decker_Utility_Functions::LOG_LEVEL_INFO );
+	            Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_INFO );
+
+	            // Calculate the new order value based on 'board' and 'stack'.
+	            $new_order = $this->get_new_task_order( $board, $stack );
+
+	            // Ensure that the new order is a valid number.
+	            if ( is_numeric( $new_order ) ) {
+	                // Assign the calculated menu_order to the post data.
+	                $data['menu_order'] = intval( $new_order );
+
+	                // Log the new menu_order value.
+	                Decker_Utility_Functions::write_log( "Assigned 'menu_order' = $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_INFO );
+	            } else {
+	                // Log an error if the new_order is not numeric.
+	                Decker_Utility_Functions::write_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
 	            }
+	        } else {
+	            // Log a warning if either 'board' or 'stack' is missing.
+	            Decker_Utility_Functions::write_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
 	        }
 	    }
+
 	    return $data;
 	}
+
 
 
 	/**
@@ -1502,6 +1568,218 @@ class Decker_Tasks {
 
 		return true;
 	}
+
+    public function handle_save_decker_task() {
+        // Verificar el nonce de seguridad
+        check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
+
+        // Obtener y sanitizar los datos del formulario
+        $ID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+        $title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
+        $description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
+        $stack = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
+        $board = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
+        $max_priority = isset( $_POST['max_priority'] ) ? boolval( $_POST['max_priority'] ) : false;
+              
+		try {
+		    $duedate = isset( $_POST['due_date'] ) ? new DateTime( sanitize_text_field( $_POST['due_date'] ) ) : new DateTime();
+		} catch ( Exception $e ) {
+		    $duedate = new DateTime(); // Default value if conversion fails
+		}
+
+	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log($_POST['assignees'] , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log($_POST['labels'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log($duedate, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+		// if (is_array($_POST['assignees'])) {
+		//     Decker_Utility_Functions::write_log('assignees es un array', Decker_Utility_Functions::LOG_LEVEL_ERROR);
+		// } elseif (is_string($_POST['assignees'])) {
+		//     Decker_Utility_Functions::write_log('assignees es una cadena: ' . $_POST['assignees'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
+		// } else {
+		//     Decker_Utility_Functions::write_log('assignees es de tipo: ' . gettype($_POST['assignees']), Decker_Utility_Functions::LOG_LEVEL_ERROR);
+		// }
+
+	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+        $author = isset( $_POST['author'] ) ? intval( $_POST['author'] ) : get_current_user_id();
+                
+		// $assigned_users = isset( $_POST['assignees'] ) && is_array( $_POST['assignees'] ) 
+		//     ? array_map( function( $assignee ) {
+		//         return isset( $assignee['value'] ) ? intval( $assignee['value'] ) : 0;
+		//     }, $_POST['assignees'] ) 
+		//     : [];
+
+		$assigned_users = is_string($_POST['assignees'])
+		    ? array_map('intval', explode(',', $_POST['assignees']))
+		    : (is_array($_POST['assignees']) ? array_map('intval', $_POST['assignees']) : []);
+
+		$labels = is_string($_POST['labels'])
+		    ? array_map('intval', explode(',', $_POST['labels']))
+		    : (is_array($_POST['labels']) ? array_map('intval', $_POST['labels']) : []);
+
+
+		// $labels = isset( $_POST['labels'] ) && is_array( $_POST['labels'] ) 
+		//     ? array_map( function( $label ) {
+		//         return isset( $label['value'] ) ? intval( $label['value'] ) : 0;
+		//     }, $_POST['labels'] ) 
+		//     : [];
+
+	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log($labels, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log($assigned_users, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log($duedate, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
+        $creation_date = new DateTime(); // O ajusta según corresponda
+
+        // Llamar a la función común para crear o actualizar la tarea
+        $result = self::create_or_update_task(
+            $ID,
+            $title,
+            $description,
+            $stack,
+            $board,
+            $max_priority,
+            $duedate,
+            $author,
+            $assigned_users,
+            $labels,
+            $creation_date,
+            false,
+            0,
+        );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+        } else {
+            wp_send_json_success( [ 'message' => 'Tarea guardada exitosamente.', 'task_id' => $result ] );
+        }
+
+        wp_die(); // Finalizar correctamente
+    }
+
+
+	public static function create_or_update_task(
+	    int $ID,
+	    string $title,
+	    string $description,
+	    string $stack,
+	    int $board,
+	    bool $max_priority,
+	    DateTime $duedate,
+	    int $author,
+	    array $assigned_users,
+	    array $labels,
+	    DateTime $creation_date,
+	    bool $archived = false,
+	    int $id_nextcloud_card = 0
+	) {
+
+
+	    // Validate required fields
+	    if ( empty( $title ) ) {
+	        return new WP_Error( 'missing_field', __( 'The title is required.', 'decker' ) );
+	    }
+	    if ( empty( $stack ) ) {
+	        return new WP_Error( 'missing_field', __( 'The stack is required.', 'decker' ) );
+	    }
+	    if ( $board <= 0 ) {
+	        return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
+	    }
+
+
+	    // Convertir objetos DateTime a formato string
+	    $duedate_str = $duedate->format('Y-m-d H:i:s');
+	    $creation_date_str = $creation_date->format('Y-m-d H:i:s');
+
+	    // Preparar los términos para tax_input
+	    $tax_input = array();
+
+	    // Asignar la taxonomía 'decker_board' con el ID del board
+	    if ( $board > 0 ) {
+	        $tax_input['decker_board'] = array( $board );
+	    }
+
+	    // Incluir etiquetas en tax_input si las hay
+	    if ( ! empty( $labels ) ) {
+	        // Asegúrate de que $labels contiene IDs de términos válidos
+	        $tax_input['decker_label'] = array_map( 'intval', $labels );
+	    }
+
+	    // Preparar los metadatos personalizados
+	    $meta_input = array(
+	        'id_nextcloud_card' => $id_nextcloud_card,
+	        'stack'             => sanitize_text_field( $stack ),
+	        'duedate'           => $duedate_str,
+	        'max_priority'      => $max_priority ? '1' : '0',
+	        'assigned_users'    => array_map( 'intval', $assigned_users ),
+	    );
+
+	    // Preparar los datos del post
+	    $post_data = array(
+	        'post_title'    => sanitize_text_field( $title ),
+	        'post_content'  => wp_kses_post( $description ),
+	        'post_status'   => $archived ? 'archived' : 'publish',
+	        'post_type'     => 'decker_task',
+	        'post_date'     => $creation_date_str,
+	        'post_author'   => $author,
+	        'meta_input'    => $meta_input,
+	        'tax_input'     => $tax_input,
+	    );
+
+
+
+	    // Determinar si es una actualización o creación
+	    if ( $ID > 0 ) {
+	        // Actualizar el post existente
+	        $post_data['ID'] = $ID;
+	        $task_id = wp_update_post( $post_data );
+
+	        if ( is_wp_error( $task_id ) ) {
+	            return $task_id; // Retornar el error para manejarlo externamente
+	        }
+	    } else {
+	        // Crear un nuevo post
+	        $task_id = wp_insert_post( $post_data );
+
+	        if ( is_wp_error( $task_id ) ) {
+	            return $task_id; // Retornar el error para manejarlo externamente
+	        }
+	    }
+
+	    // Retornar el ID de la tarea creada o actualizada
+	    return $task_id;
+
+
+
+
+
+	    // Determinar si es una actualización o creación
+	    if ( $ID > 0 ) {
+	        // Actualizar el post existente
+	        $post_data['ID'] = $ID;
+	        $task_id = wp_update_post( $post_data );
+
+	        if ( is_wp_error( $task_id ) ) {
+	            return $task_id; // Retornar el error para manejarlo externamente
+	        }
+	    } else {
+	        // Crear un nuevo post
+	        $task_id = wp_insert_post( $post_data );
+
+	        if ( is_wp_error( $task_id ) ) {
+	            return $task_id; // Retornar el error para manejarlo externamente
+	        }
+	    }
+
+	    // Retornar el ID de la tarea creada o actualizada
+	    return $task_id;
+	}
+
+
+
 }
 
 // Instantiate the class.

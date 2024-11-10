@@ -35,22 +35,22 @@ include 'layouts/main.php';
 										<li class="breadcrumb-item active">Task Detail</li>
 									</ol>
 								</div>
-
 							   <?php
-								// Set default title to "New task"
-								$title = 'New task';
+									// Set default title to "New task"
+									$title = 'New task';
+									$valid_task = true;
 
-
-								// TODO: Change to use Task class
-								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
-								if ( $task_id > 0 ) {
-									$title = get_post_field('post_title', $post_id);
-									if ( $task && 'decker_task' === $task->post_type ) {
-										$title = 'Task detail #' . $task_id;
-									} else {
-										$title = 'Task not found';
+									// TODO: Change to use Task class
+									$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+									if ( $task_id > 0 ) {
+									    $task = get_post( $task_id );
+									    if ( $task && 'decker_task' === $task->post_type ) {
+									        $title = $task->post_title;
+									    } else {
+									        $title = 'Task not found';
+									        $valid_task = false;
+									    }
 									}
-								}
 								?>
 
 								<h4 class="page-title"><?php echo esc_html( $title ); ?></h4>
@@ -65,8 +65,11 @@ include 'layouts/main.php';
 							
 							<div id="task-card" class="card d-block">
 								<div class="card-body">
-
-									<?php include 'layouts/task-card.php'; ?>
+								<?php 
+									if ($valid_task) {
+										include 'layouts/task-card.php';
+									}
+									?>
 								</div>
 							</div>
 

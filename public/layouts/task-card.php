@@ -1,6 +1,6 @@
 <?php
 require_once $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php'; // Because it can be loade in a iframe
-require_once 'head-css.php';
+// require_once 'head-css.php';
 
 $task_id = 0;
 if (isset( $_GET['id'] ) ) {
@@ -143,7 +143,7 @@ function deleteComment(commentId) {
 </script>
 
 <!-- Task card -->
-<form id="task-form" class="needs-validation" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" novalidate>
+<form id="task-form" class="needs-validation" target="_self" novalidate>
 	<input type="hidden" name="action" value="save_decker_task">
 	<input type="hidden" name="task_id" value="<?php echo esc_attr( $task_id ); ?>">
 	<div class="row">
@@ -175,7 +175,7 @@ function deleteComment(commentId) {
 					$boards = BoardManager::getAllBoards();
 
 					foreach ( $boards as $board ) {
-						$selected = ( $task->board->id == $board->id ) ? 'selected' : '';
+						$selected = ( $task->board && $task->board->id == $board->id ) ? 'selected' : '';
 						$selected = ( isset( $task->board->id ) && $task->board->id == $board->id ) ? 'selected' : '';
 						echo '<option value="' . esc_attr( $board->id ) . '" ' . $selected . '>' . esc_html( $board->name ) . '</option>';
 					}
@@ -298,7 +298,7 @@ function deleteComment(commentId) {
 					<textarea rows="3" class="form-control border-0 resize-none" placeholder="Write your comment..." id="comment-text" name="comment-text"></textarea>
 					<div class="invalid-feedback">Please enter a comment.</div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
-						<button type="button" class="btn btn-sm btn-success" id="submit-comment"><i class="ri-send-plane-2 me-1"></i> Send</button>
+						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-send-plane-2 me-1"></i> Send</button>
 					</div>
 				</div>
 			</div>
@@ -365,6 +365,10 @@ function deleteComment(commentId) {
 
 <script type="text/javascript">
 
+var quill;
+var assigneesSelect;
+var labelsSelect;
+
 document.addEventListener('DOMContentLoaded', function() {
 	initializeTaskPage();
 });
@@ -387,7 +391,7 @@ function initializeTaskPage() {
 
 
 	if (document.getElementById('editor')) {
-		var quill = new Quill('#editor', {
+		quill = new Quill('#editor', {
 			theme: 'snow',
 			modules: {
 				toolbar: [
@@ -405,12 +409,12 @@ function initializeTaskPage() {
 
 	// Inicializar Choices.js para los selectores de asignados y etiquetas
 	if (document.getElementById('task-assignees')) {
-		const assigneesSelect = new Choices('#task-assignees', { removeItemButton: true});
+		assigneesSelect = new Choices('#task-assignees', { removeItemButton: true});
 	}
 
 
 	if (document.getElementById('task-labels')) {
-		const labelsSelect = new Choices('#task-labels', { removeItemButton: true, allowHTML: true });
+		labelsSelect = new Choices('#task-labels', { removeItemButton: true, allowHTML: true });
 	}
 
 
@@ -444,5 +448,124 @@ function togglePriorityLabel(element) {
 		}
 	}
 }
+
+// custom-task.js
+
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('task-form');
+    const saveTaskButton = document.getElementById('save-task');
+
+
+ const taskModal = document.getElementById('task-modal');
+
+if (taskModal) {
+    taskModal.addEventListener('shown.bs.modal', function () {
+        const formModal = taskModal.querySelector('#task-form');
+
+        if (formModal && !formModal.dataset.listener) { // Evita adjuntar múltiples listeners
+            formModal.dataset.listener = 'true'; // Marca que ya tiene el listener
+
+            formModal.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                formModal.classList.remove('was-validated');
+
+                if (!formModal.checkValidity()) {
+                    event.stopPropagation();
+                    formModal.classList.add('was-validated');
+                    return;
+                }
+
+                enviarFormularioAJAX(formModal);
+            });
+        }
+    });
+}
+
+
+
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Previene el envío por defecto
+
+        // Remueve la clase 'was-validated' previamente
+        form.classList.remove('was-validated');
+
+        // Verifica la validez del formulario
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Si el formulario es válido, procede con el envío vía AJAX
+        const selectedAssigneesValues = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
+        const selectedLabelsValues = labelsSelect.getValue().map(item => parseInt(item.value, 10));
+
+        // Recopila los datos del formulario
+        const formData = {
+            action: 'save_decker_task',
+            nonce: '<?php echo  wp_create_nonce( 'save_decker_task_nonce' ); ?>',
+            task_id: document.querySelector('input[name="task_id"]').value,
+            title: document.getElementById('task-title').value,
+            due_date: document.getElementById('task-due-date').value,
+            board: document.getElementById('task-board').value,
+            stack: document.getElementById('task-column').value,
+            author: document.getElementById('task-author').value,
+            assignees: selectedAssigneesValues,
+            labels: selectedLabelsValues,
+            description: quill.root.innerHTML,
+            max_priority: document.getElementById('task-max-priority').checked ? 1 : 0,
+        };
+
+        // Envía la solicitud AJAX
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?php echo admin_url( 'admin-ajax.php' ); ?>', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 400) {
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    alert(response.data.message);
+
+                    // Redirecciona o actualiza según la respuesta
+                    window.location.href = '<?php echo esc_url( add_query_arg( 'decker_page', 'task', home_url( '/' ) ) ); ?>' + '&id=' + response.data.task_id;
+                } else {
+                    alert(response.data.message || 'Error al guardar la tarea.');
+                }
+            } else {
+                console.error('Error en la respuesta del servidor.');
+                alert('Ocurrió un error al guardar la tarea.');
+            }
+        };
+
+        xhr.onerror = function() {
+            console.error('Error en la solicitud.');
+            alert('Ocurrió un error al guardar la tarea.');
+        };
+
+        const encodedData = Object.keys(formData)
+            .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
+            .join('&');
+
+        xhr.send(encodedData);
+    });
+
+    // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
+    const commentText = document.getElementById('comment-text');
+    const submitCommentButton = document.getElementById('submit-comment');
+
+    if (commentText) {
+        commentText.addEventListener('input', function() {
+            if (commentText.value.trim() !== '') {
+                submitCommentButton.disabled = false;
+            } else {
+                submitCommentButton.disabled = true;
+            }
+        });
+    }
+});
+
 
 </script>

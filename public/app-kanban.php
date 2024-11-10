@@ -6,9 +6,15 @@ $board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
 
 // Retrieve the Board based on the slug
 $main_board = BoardManager::getBoardBySlug($board_slug);
+
+if (is_null($main_board)) {
+
+	wp_die("Error: The board <strong>{$board_slug}</strong> doesn't exists.");
+
+}
+
 $taskManager = new TaskManager();
 $tasks = $taskManager->getTasksByBoard($main_board);
-
 
 
 // Dividir las tareas en columnas

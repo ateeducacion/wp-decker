@@ -73,10 +73,22 @@
 						<span>My Profile</span>
 					</a>
 					<!-- item-->
+
+					<?php if ( current_user_can( 'manage_options' ) ) { ?> 
+
+					<!-- item-->
 					<a href="<?php echo esc_url( admin_url( 'options-general.php?page=decker_settings' ) ); ?>" class="dropdown-item">
 						<i class="ri-settings-4-line fs-18 align-middle me-1"></i>
 						<span>Decker Settings</span>
 					</a>
+
+					<!-- item-->
+					<a href="<?php echo esc_url( admin_url( 'admin.php?import=decker_import' ) ); ?>" class="dropdown-item">
+						<i class="ri-import-line fs-18 align-middle me-1"></i>
+						<span>Import Tasks</span>
+					</a>
+
+					<?php } ?>
 					<!-- item-->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">
 						<i class="ri-logout-box-line fs-18 align-middle me-1"></i>
