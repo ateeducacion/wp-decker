@@ -6,6 +6,9 @@ include 'layouts/main.php';
 if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
 	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
 
+	$today = date( 'Y-m-d' );
+	$current_user_id = get_current_user_id();
+
 	foreach ( $task_ids as $task_id ) {
 		$decker_tasks = new Decker_Tasks();
 		$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
@@ -27,8 +30,11 @@ $has_today_tasks = $taskManager->hasUserTodayTasks();
 
 // Si no hay tareas para hoy, cargar las tareas de días previos
 if (!$has_today_tasks) {
+
+	$current_user_id = get_current_user_id();
     $days_to_load = (date('N') == 1) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
-    $previous_tasks = $taskManager->getUserTasksForPreviousDays($days_to_load);
+
+    $previous_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays($current_user_id, $days_to_load);
 }
 
 ?>
@@ -243,8 +249,8 @@ if (!$has_today_tasks) {
 									),
 								),
 							);
-							$user_tasks = $taskManager->getTasks($args); 
-							?>
+							$user_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays($user->ID, 0);
+						?>
 							<div class="col-xl-6">
 								<div class="<?php echo $card_class; ?>">
 									<div class="d-flex card-header justify-content-between align-items-center">
@@ -349,10 +355,19 @@ if (!$has_today_tasks) {
 			<?php if (!$has_today_tasks) : ?>
 			    <?php foreach ($previous_tasks as $task) : ?>
 			        <tr class="task-row" data-task-id="<?php echo esc_attr($task->ID); ?>">
+			        	<?php
+			        		$board_color = "red";
+			        		$board_name = "Unassigned";
+	        		     	if ($task->board) {
+	        		     		$board_color = $task->board->color;
+	        		     		$board_name = $task->board->name;
+	                    	}
+	                    ?>
+
 			            <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr($task->ID); ?>"></td>
 			            <td>
-			                <span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr($task->board->color); ?>;">
-			                    <?php echo esc_html($task->board->name); ?>
+			                <span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr($board_color); ?>;">
+			                    <?php echo esc_html($board_name); ?>
 			                </span>
 			            </td>
 			            <td><?php echo esc_html($task->stack); ?></td>

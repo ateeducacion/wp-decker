@@ -956,95 +956,137 @@ class Decker_Tasks {
 	 * @param WP_Post $post The current post object.
 	 */
 	public function display_user_date_meta_box( $post ) {
-		$relations = get_post_meta( $post->ID, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
+	    // Retrieve existing relations from post meta; initialize as empty array if none exist
+	    $relations = get_post_meta( $post->ID, '_user_date_relations', true );
+	    $relations = is_array( $relations ) ? $relations : array();
 
-		$users = get_users();
-		?>
-		<div id="user-date-meta-box">
-			<p>
-				<label for="assigned_user"><?php esc_html_e( 'Assign User:', 'decker' ); ?></label>
-				<select id="assigned_user" class="widefat">
-					<?php foreach ( $users as $user ) { ?>
-						<option value="<?php echo esc_attr( $user->ID ); ?>">
-							<?php echo esc_html( $user->display_name ); ?>
-						</option>
-					<?php } ?>
-				</select>
-			</p>
-			<p>
-				<label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
-				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( date( 'Y-m-d' ) ); ?>">
-			</p>
-			<p>
-				<button type="button" class="button" id="add-user-date-relation"><?php esc_html_e( 'Add Relation', 'decker' ); ?></button>
-			</p>
-			<ul id="user-date-relations-list">
-				<?php foreach ( $relations as $relation ) { ?>
-					<li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
-						<?php echo esc_html( get_userdata( $relation['user_id'] )->display_name . ' - ' . $relation['date'] ); ?>
-						<button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
-					</li>
-				<?php } ?>
-			</ul>
-		</div>
-		<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			const addBtn = document.getElementById('add-user-date-relation');
-			const userSelect = document.getElementById('assigned_user');
-			const dateInput = document.getElementById('assigned_date');
-			const relationsList = document.getElementById('user-date-relations-list');
+	    // Retrieve all users to populate the select dropdown
+	    $users = get_users();
+	    ?>
+	    <div id="user-date-meta-box">
+	        <!-- User Selection -->
+	        <p>
+	            <label for="assigned_user"><?php esc_html_e( 'Assign User:', 'decker' ); ?></label>
+	            <select id="assigned_user" class="widefat">
+	                <option value=""><?php esc_html_e( '-- Select User --', 'decker' ); ?></option>
+	                <?php foreach ( $users as $user ) { ?>
+	                    <option value="<?php echo esc_attr( $user->ID ); ?>">
+	                        <?php echo esc_html( $user->display_name ); ?>
+	                    </option>
+	                <?php } ?>
+	            </select>
+	        </p>
+	        
+	        <!-- Date Selection -->
+	        <p>
+	            <label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
+	            <input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( date( 'Y-m-d' ) ); ?>">
+	        </p>
+	        
+	        <!-- Add Relation Button -->
+	        <p>
+	            <button type="button" class="button" id="add-user-date-relation"><?php esc_html_e( 'Add Relation', 'decker' ); ?></button>
+	        </p>
+	        
+	        <!-- Relations List -->
+	        <ul id="user-date-relations-list">
+	            <?php foreach ( $relations as $relation ) { 
+	                // Safely retrieve user data
+	                $user = get_userdata( $relation['user_id'] );
+	                $display_name = $user ? esc_html( $user->display_name ) : esc_html__( 'Unknown User', 'decker' );
+	                $date = esc_html( $relation['date'] );
+	                ?>
+	                <li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
+	                    <?php echo $display_name . ' - ' . $date; ?>
+	                    <button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
+	                </li>
+	            <?php } ?>
+	        </ul>
+	    </div>
+	    
+	    <!-- Inline JavaScript for Meta Box Functionality -->
+	    <script>
+	    document.addEventListener('DOMContentLoaded', function () {
+	        const addBtn = document.getElementById('add-user-date-relation');
+	        const userSelect = document.getElementById('assigned_user');
+	        const dateInput = document.getElementById('assigned_date');
+	        const relationsList = document.getElementById('user-date-relations-list');
 
-			addBtn.addEventListener('click', function () {
-				const userId = userSelect.value;
-				const userName = userSelect.options[userSelect.selectedIndex].text;
-				const date = dateInput.value;
+	        // Add Relation Button Click Event
+	        addBtn.addEventListener('click', function () {
+	            const userId = userSelect.value;
+	            const userName = userSelect.options[userSelect.selectedIndex].text;
+	            const date = dateInput.value;
 
-				if (!userId || !date) {
-					alert('<?php esc_html_e( 'Please select a user and date.', 'decker' ); ?>');
-					return;
-				}
+	            // Validate user selection and date input
+	            if (!userId || !date) {
+	                alert('<?php echo esc_js( __( "Please select a user and date.", "decker" ) ); ?>');
+	                return;
+	            }
 
-				const listItem = document.createElement('li');
-				listItem.setAttribute('data-user-id', userId);
-				listItem.setAttribute('data-date', date);
-				listItem.innerHTML = `${userName} - ${date} <button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>`;
-				relationsList.appendChild(listItem);
+	            // Check if the user is already added with the same date
+	            const existing = Array.from(relationsList.children).some(item => 
+	                item.getAttribute('data-user-id') === userId && item.getAttribute('data-date') === date
+	            );
+	            if (existing) {
+	                alert('<?php echo esc_js( __( "This user and date combination already exists.", "decker" ) ); ?>');
+	                return;
+	            }
 
-				listItem.querySelector('.remove-relation').addEventListener('click', function () {
-					listItem.remove();
-				});
+	            // Create a new list item for the relation
+	            const listItem = document.createElement('li');
+	            listItem.setAttribute('data-user-id', userId);
+	            listItem.setAttribute('data-date', date);
+	            listItem.innerHTML = `
+	                ${userName} - ${date} 
+	                <button type="button" class="button remove-relation"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>
+	            `;
+	            relationsList.appendChild(listItem);
 
-				userSelect.value = '';
-				dateInput.value = '';
-			});
+	            // Add event listener to the remove button
+	            listItem.querySelector('.remove-relation').addEventListener('click', function () {
+	                listItem.remove();
+	            });
 
-			document.querySelectorAll('.remove-relation').forEach(button => {
-				button.addEventListener('click', function () {
-					button.parentElement.remove();
-				});
-			});
+	            // Reset the select and date input
+	            userSelect.value = '';
+	            dateInput.value = '';
+	        });
 
-			// Add hidden fields to form when saving
-			document.getElementById('post').addEventListener('submit', function () {
-				const relations = [];
-				document.querySelectorAll('#user-date-relations-list li').forEach(item => {
-					relations.push({
-						user_id: item.getAttribute('data-user-id'),
-						date: item.getAttribute('data-date')
-					});
-				});
+	        // Add event listeners to existing remove buttons
+	        document.querySelectorAll('.remove-relation').forEach(button => {
+	            button.addEventListener('click', function () {
+	                button.parentElement.remove();
+	            });
+	        });
 
-				const hiddenInput = document.createElement('input');
-				hiddenInput.type = 'hidden';
-				hiddenInput.name = 'user_date_relations';
-				hiddenInput.value = JSON.stringify(relations);
-				this.appendChild(hiddenInput);
-			});
-		});
-		</script>
-		<?php
+	        // Add hidden fields to the form when saving the post
+	        document.getElementById('post').addEventListener('submit', function () {
+	            // Remove any existing hidden inputs to prevent duplicates
+	            const existingInput = document.querySelector('input[name="user_date_relations"]');
+	            if (existingInput) {
+	                existingInput.remove();
+	            }
+
+	            const relations = [];
+	            document.querySelectorAll('#user-date-relations-list li').forEach(item => {
+	                relations.push({
+	                    user_id: item.getAttribute('data-user-id'),
+	                    date: item.getAttribute('data-date')
+	                });
+	            });
+
+	            const hiddenInput = document.createElement('input');
+	            hiddenInput.type = 'hidden';
+	            hiddenInput.name = 'user_date_relations';
+	            hiddenInput.value = JSON.stringify(relations);
+	            this.appendChild(hiddenInput);
+	        });
+	    });
+	    </script>
+	    <?php
 	}
+
 
 	/**
 	 * Display the attachments meta box.
@@ -1199,8 +1241,10 @@ class Decker_Tasks {
 		}
 
 		// Save user date relations.
-		$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) ) ), true ) : array();
-		update_post_meta( $post_id, '_user_date_relations', $relations );
+
+    	$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();
+	    update_post_meta( $post_id, '_user_date_relations', $relations );
+
 	}
 
 	/**

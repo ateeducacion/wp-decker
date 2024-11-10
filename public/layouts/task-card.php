@@ -158,7 +158,7 @@ function deleteComment(commentId) {
 
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->due_date ); ?>" placeholder="Seleccionar fecha" required>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="Seleccionar fecha" required>
 				<label class="form-label" for="task-due-date">Due Date</label>
 				<div class="invalid-feedback">Please select a due date.</div>
 			</div>

@@ -4,41 +4,66 @@ include 'layouts/main.php';
 $current_date = new DateTime();
 $tomorrow_date = ( new DateTime() )->modify( '+1 day' );
 $next_7_days_date = ( new DateTime() )->modify( '+7 days' );
-
+$one_year_ago_date = ( new DateTime() )->modify( '-1 year' );
 
 $taskManager = new TaskManager();
 
-$args = array(
-	'post_type' => 'decker_task',
-	'post_status' => 'publish',
-	'meta_key' => 'stack',
-	'orderby'  => 'meta_value_num',
-	'order'    => 'ASC',
-	'numberposts' => -1,
-);
-$tasks = $taskManager->getTasks(); // TODO: Change this to a function getTaskByDate(from, until)
+$tasks = $taskManager->getUpcomingTasksByDate($one_year_ago_date, $next_7_days_date); // TODO: Change this to a function getTaskByDate(from, until)
 
+// Set the timezone to ensure consistency
+date_default_timezone_set('UTC'); // Change to your preferred timezone
+
+// Initialize DateTime objects for current date and specific ranges
+
+// Current date at 00:00:00
+$current_date = new DateTime('today');
+
+// Yesterday at 23:59:59
+$yesterday_end = (clone $current_date)->modify('-1 day')->setTime(23, 59, 59);
+
+// Today
+$today_start = clone $current_date; // Today at 00:00:00
+$today_end = (clone $current_date)->setTime(23, 59, 59);
+
+// Tomorrow
+$tomorrow_start = (clone $current_date)->modify('+1 day'); // Tomorrow at 00:00:00
+$tomorrow_end = (clone $tomorrow_start)->setTime(23, 59, 59);
+
+// Next 7 Days (Day after tomorrow to seven days ahead)
+$next_7_days_start = (clone $current_date)->modify('+2 days'); // Day after tomorrow at 00:00:00
+$next_7_days_end = (clone $current_date)->modify('+7 days')->setTime(23, 59, 59);
+
+// Initialize columns with empty arrays
 $columns = array(
-	'delayed' => array(),
-	'today' => array(),
-	'tomorrow' => array(),
-	'next-7-days' => array(),
+    'delayed'     => array(),
+    'today'       => array(),
+    'tomorrow'    => array(),
+    'next-7-days' => array(),
 );
 
-
+// Iterate through each task and categorize it
 foreach ( $tasks as $task ) {
+    // Ensure the task has a due date and it's a DateTime object
+    if ( isset( $task->duedate ) && $task->duedate instanceof DateTime ) {
+        // Clone the due date to avoid modifying the original
+        $due_date = clone $task->duedate;
 
-	if ($task->duedate) {
-		if ( $task->duedate < $current_date ) {
-			$columns['delayed'][] = $task;
-		} elseif ( $task->duedate->format( 'Y-m-d' ) === $current_date->format( 'Y-m-d' ) ) {
-			$columns['today'][] = $task;
-		} elseif ( $task->duedate->format( 'Y-m-d' ) === $tomorrow_date->format( 'Y-m-d' ) ) {
-			$columns['tomorrow'][] = $task;
-		} elseif ( $task->duedate > $tomorrow_date && $task->duedate <= $next_7_days_date ) {
-			$columns['next-7-days'][] = $task;
-		}
-	}
+        // Categorize based on due date
+        if ( $due_date <= $yesterday_end ) {
+            // Delayed: Due up to yesterday at 23:59:59
+            $columns['delayed'][] = $task;
+        } elseif ( $due_date >= $today_start && $due_date <= $today_end ) {
+            // Today: Due today from 00:00:00 to 23:59:59
+            $columns['today'][] = $task;
+        } elseif ( $due_date >= $tomorrow_start && $due_date <= $tomorrow_end ) {
+            // Tomorrow: Due tomorrow from 00:00:00 to 23:59:59
+            $columns['tomorrow'][] = $task;
+        } elseif ( $due_date >= $next_7_days_start && $due_date <= $next_7_days_end ) {
+            // Next 7 Days: Due from day after tomorrow up to seven days ahead
+            $columns['next-7-days'][] = $task;
+        }
+        // Optional: Handle tasks beyond the next 7 days if needed
+    }
 }
 
 ?>

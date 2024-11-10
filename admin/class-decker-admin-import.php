@@ -523,8 +523,8 @@ class Decker_Admin_Import {
 				'meta_input'   => array(
 					'id_nextcloud_card' => $card['id'],
 					'stack'             => esc_html( $stack_title ),
-					'due_date'          => esc_html( $card['duedate'] ),
-					'order'             => intval( $card['order'] ),
+					'duedate'          => esc_html( $card['duedate'] ),
+					// 'order'             => intval( $card['order'] ),
 					'max_priority'      => ( isset( $card['labels'] ) && is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) ? '1' : '',
 				),
 			)

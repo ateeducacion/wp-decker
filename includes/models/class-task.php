@@ -225,6 +225,27 @@ class Task {
         return Decker_Utility_Functions::getRelativeTime($this->duedate);
     }
 
+    public function getDuedateAsString(): string {
+
+        // Initialize $duedate to an empty string
+        $duedate = '';
+
+        // Check if 'duedate' property exists and is a DateTime object
+        if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
+            // Format the DateTime object to 'Y-m-d'
+            $duedate = $this->duedate->format( 'Y-m-d' );
+        } elseif ( isset( $this->duedate ) && is_string( $this->duedate ) ) {
+            // If 'duedate' is a string, attempt to parse it to 'Y-m-d'
+            $date = date_create( $this->duedate );
+            if ( $date ) {
+                $duedate = $date->format( 'Y-m-d' );
+            }
+        }
+
+        return $duedate;
+
+    }
+
 
     /**
      * Render the current task card for Kanban.
@@ -236,12 +257,11 @@ class Task {
         );
         $priorityBadgeClass = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
         $priorityLabel = $this->max_priority ? '🔥' : 'Normal';
-        $formatted_due_date = '';
+        $formatted_duedate = $this->getDuedateAsString();
         $relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined date</span>';
 
-        if (!empty($this->due_date)) {
+        if (!empty($this->duedate)) {
             $relative_time = esc_html($this->getRelativeTime());
-            $formatted_due_date = date('d M Y', strtotime($this->due_date));
         }
 
         ?>
@@ -252,7 +272,7 @@ class Task {
                     <span class="menu-order label-to-show" style="display: none;">Order: <?php echo esc_html($this->order); ?></span>
                 </span>
 
-                <small class="text-muted relative-time-badge">
+                <small class="text-muted relative-time-badge" title="<?php echo $formatted_duedate; ?>">
                     <span class="task-id label-to-hide"><?php echo $relative_time; ?></span>
                     <span class="task-id label-to-show" style="display: none;">#<?php echo esc_html($this->ID); ?></span>
                 </small>

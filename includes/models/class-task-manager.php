@@ -34,7 +34,7 @@ class TaskManager {
         $default_args = array(
             'post_type' => 'decker_task',
             'post_status' => 'publish',
-            'numberposts' => -1
+            'numberposts' => -1,
         );
         $query_args = array_merge($default_args, $args);
         $posts = get_posts($query_args);
@@ -47,12 +47,6 @@ class TaskManager {
                 // Log or handle the error if needed
             }
         }
-
-        // echo "<pre>";
-        // print_r($args);
-        // print_r($tasks);
-        // die();
-
 
         return $tasks;
     }
@@ -165,6 +159,7 @@ class TaskManager {
         $args = array(
             'post_type' => 'decker_task',
             'post_status' => 'publish',
+            'numberposts' => -1,
             'fields' => 'ids', // Only retrieve IDs for performance optimization
             'meta_query' => array(
                 'relation' => 'AND',
@@ -179,164 +174,138 @@ class TaskManager {
                 )
             )
         );
+        
+        // Important! Here we are using direct post_id retrieval for optimization.
+        $post_ids = get_posts($args);
+        $today    = (new DateTime())->format('Y-m-d');
 
-        $tasks = $this->getTasks($args);
+        // Additional filtering: Check tasks that are not truly assigned to the specified user.
+        // Filtering serialized data can be risky and unreliable due to how data is stored.
+        foreach ($post_ids as $post_id) {
+            $user_date_relations = get_post_meta($post_id, '_user_date_relations', true);
 
-        // echo "<pre>";
-        // // print_r($days);
-        // // print_r($args);
-        // // print_r($tasks);
-
-        // print_r(count($tasks));
-        // die();        
-
-
-
-        // Further filter tasks to check if any have a user_date relation for today
-        foreach ($tasks as $task) {
-            if (isset($task->meta['_user_date_relations'][0])) {
-                $user_date_relations = maybe_unserialize($task->meta['_user_date_relations'][0]);
-
-                if (is_array($user_date_relations)) {
-                    $today = (new DateTime())->format('Y-m-d');
-
-
-                    foreach ($user_date_relations as $relation) {
-
-                        // if (isset($relation['user_id'], $relation['date'])) {
-
-
-                        // echo "<pre>";
-
-                        // print_r($relation);
-
-                        //     // die();
-                        // }
-
-                        if (isset($relation['user_id'], $relation['date']) &&
-                            $relation['user_id'] == $user_id &&
-                            $relation['date'] == $today) {
-                            return true;
-                        }
+            if (is_array($user_date_relations)) {
+                foreach ($user_date_relations as $relation) {
+                    if (
+                        isset($relation['user_id'], $relation['date']) &&
+                        $relation['user_id'] == $user_id &&
+                        $relation['date'] == $today
+                    ) {
+                        return true;
                     }
                 }
             }
         }
 
-        // return true;
-
-        // echo "<pre>";
-
-        // $today = (new DateTime())->format('Y-m-d');
-        // echo $today;
-        // echo "---------";
-        // echo "---------";
-        //         echo "---------";
-        // foreach ($tasks as $task) {
-        //     echo "\n";
-        //     print_r($task->meta['_user_date_relations']);
-
-        // }
-
-        // die();
-
-
-      
-        // print_r($days);
-        // print_r($args);
-        // print_r($tasks);
-
-        // print_r(count($tasks));
-        // die();        
-
-
-
         return false;
     }
 
     /**
-     * Retrieves tasks assigned to the current user within a specified number of previous days.
+     * Retrieves tasks with an upcoming due date within a specified date range.
      *
-     * @param int $days Number of days to look back.
+     * This function fetches tasks of type 'decker_task' that are published, have a 'duedate' meta key,
+     * and whose 'duedate' falls between the specified $from and $until dates. Additionally, it filters
+     * tasks that have a 'stack' meta value within a defined set (e.g., 'to-do' or 'in-progress').
+     *
+     * @param DateTime $from The start date of the range to filter tasks by.
+     * @param DateTime $until The end date of the range to filter tasks by.
+     * @return Task[] List of Task objects that meet the specified criteria.
+     */
+    public function getUpcomingTasksByDate(DateTime $from, DateTime $until): array {
+        $args = array(
+            'post_type'   => 'decker_task',
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'meta_query'  => array(
+                array(
+                    'key'     => 'duedate',
+                    'compare' => 'EXISTS'
+                ),
+                array(
+                    'key'     => 'duedate',
+                    'value'   => array( $from->format( 'Y-m-d' ), $until->format( 'Y-m-d' ) ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'DATE',
+                ),
+                array(
+                    'key'     => 'stack', 
+                    'value'   => array('to-do', 'in-progress'),
+                    'compare' => 'IN',
+                ),                
+            ),
+        );
+        return $this->getTasks($args);
+
+    }
+
+    /**
+     * Retrieves tasks assigned to a specific user that have been marked between today and a specified number of previous days.
+     *
+     * The function fetches tasks assigned to the given user and filters them based on user-date relations.
+     * It returns tasks where the user has a relation date between the start date (today minus $days) and today.
+     *
+     * @param int $user_id The ID of the user.
+     * @param int $days Number of days to look back from today. Pass 0 to get tasks for today only.
      * @return Task[] List of Task objects within the specified time range.
      */
-    public function getUserTasksForPreviousDays(int $days): array {
-        $user_id = get_current_user_id();
-        $args = array(
-            'post_type' => 'decker_task',
+    public function getUserTasksMarkedForTodayForPreviousDays(int $user_id, int $days): array {
+        $args    = array(
+            'post_type'   => 'decker_task',
             'post_status' => 'publish',
-            'fields' => 'ids', // Only retrieve IDs for performance optimization
-            'meta_query' => array(
+            'numberposts' => -1,
+            'fields'      => 'ids', // Only retrieve IDs for performance optimization
+            'meta_query'  => array(
                 'relation' => 'AND',
                 array(
-                    'key' => 'assigned_users',
-                    'value' => $user_id,
+                    'key'     => 'assigned_users',
+                    'value'   => $user_id,
                     'compare' => 'LIKE'
                 ),
                 array(
-                    'key' => '_user_date_relations',
-                    'compare' => 'EXISTS' // Only include tasks where the meta key exists
+                    'key'     => '_user_date_relations',
+                    'compare' => 'EXISTS'
                 )
             )
         );
 
-        $tasks = $this->getTasks($args);
+        // Important! Here we are using direct post_id retrieval for optimization.
+        $post_ids   = get_posts($args);
+        $tasks      = [];
+        $today      = (new DateTime())->setTime(23, 59);
+        $start_date = (new DateTime())->setTime(0, 0)->modify("-$days days");
 
-        // echo "<pre>";
-        // // print_r($days);
-        // // print_r($args);
-        // print_r($tasks);
+        // Additional filtering: Remove tasks that are not truly assigned to the specified user.
+        // Filtering serialized data can be risky and unreliable due to how data is stored.
+        foreach ($post_ids as $post_id) {
 
-        // print_r(count($tasks));
-        // die();        
+            // Retrieve the assigned users for the task.
+            $assigned_users = get_post_meta($post_id, 'assigned_users', true);
 
+            if (is_array($assigned_users) && in_array($user_id, $assigned_users)) {
 
-        // foreach ($tasks as $task) {
-        //     echo "\n";
-        //     print_r($task->meta['_user_date_relations']);
+                $user_date_relations = get_post_meta($post_id, '_user_date_relations', true);
 
-        // }
-
-        // return $tasks;
-
-        // die();
-
-        // Filter tasks to check if they have a user_date relation within the specified number of past days
-        $filteredTasks = array_filter($tasks, function ($task) use ($user_id, $days) {
-            if (isset($task->meta['_user_date_relations'][0])) {
-                $user_date_relations = maybe_unserialize($task->meta['_user_date_relations'][0]);
 
                 if (is_array($user_date_relations)) {
-                    $today = new DateTime();
                     foreach ($user_date_relations as $relation) {
-                        if (isset($relation['user_id'], $relation['date']) &&
-                            $relation['user_id'] == $user_id) {
+                        if (isset($relation['user_id'], $relation['date']) && $relation['user_id'] == $user_id) {
                             $relation_date = DateTime::createFromFormat('Y-m-d', $relation['date']);
-                            if ($relation_date && $relation_date >= (clone $today)->modify("-$days days") && $relation_date < $today) {
-                                return true;
+                            if (
+                                $relation_date &&
+                                $relation_date >= $start_date &&
+                                $relation_date <= $today
+                            ) {
+                                $tasks[] = new Task($post_id);
+                                break; // No need to check more dates for this task
                             }
                         }
                     }
                 }
+
             }
-            return false;
-        });
+        }
 
-
-        // echo "---------";
-        // echo "---------";
-        //         echo "---------";
-        // foreach ($filteredTasks as $task) {
-        //     echo "\n";
-        //     print_r($task->meta['_user_date_relations']);
-
-        // }
-
-        // die();
-
-
-
-        return $filteredTasks;
+        return $tasks;
     }
 
 }
