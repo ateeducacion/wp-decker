@@ -204,7 +204,7 @@ table#tablaTareas td:nth-child(4) {
 														}
                                                         echo '</td>';
                                                         echo '<td>' . esc_html($task->stack ) . '</td>';
-                                                        echo '<td><a href="' . esc_url(add_query_arg(array('decker_page' => 'task', 'ID' => $task->ID), home_url('/'))) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr($task->ID) . '">' . esc_html($task->title) . '</a></td>';
+                                                        echo '<td><a href="' . esc_url(add_query_arg(array('decker_page' => 'task', 'id' => $task->ID), home_url('/'))) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr($task->ID) . '">' . esc_html($task->title) . '</a></td>';
                                                         echo '<td>';
                                                         foreach ($task->labels as $label) {
                                                             echo '<span class="badge" style="background-color: ' . esc_attr($label->color) . ';">' . esc_html($label->name) . '</span> ';

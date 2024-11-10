@@ -45,7 +45,7 @@ include 'layouts/main.php';
 									if ( $task_id > 0 ) {
 									    $task = get_post( $task_id );
 									    if ( $task && 'decker_task' === $task->post_type ) {
-									        $title = $task->post_title;
+									        $title = $task->post_title;  
 									    } else {
 									        $title = 'Task not found';
 									        $valid_task = false;
