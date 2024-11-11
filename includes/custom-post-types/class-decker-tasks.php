@@ -145,7 +145,7 @@ class Decker_Tasks {
 	 * @param string $stack The stack to calculate the order for.
 	 * @return int The new order value.
 	 */
-	private function get_new_task_order( $board_term_id, $stack ) {
+	private function get_new_task_order(int $board_term_id, string $stack ) {
 	    // Query arguments to find posts in the specified stack
 	    $args = array(
 	        'post_type'      => 'decker_task',
@@ -173,9 +173,15 @@ class Decker_Tasks {
 	    // Get the posts
 	    $posts = get_posts( $args );
 
+
+	    // Decker_Utility_Functions::write_log( $posts , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( "------------" , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
+
 	    // If a post exists, get its menu_order and increment it
 	    if ( ! empty( $posts ) ) {
-	        $max_order = get_post_field( 'menu_order', $posts[0] );
+	        $max_order = intval( get_post_field( 'menu_order', $posts[0] ) );
 	        return $max_order + 1;
 	    }
 
@@ -1167,7 +1173,7 @@ class Decker_Tasks {
 
 	        // 1. Attempt to retrieve 'decker_board' and 'stack' directly from $postarr.
 	        if ( isset( $postarr['decker_board'] ) ) {
-	            $board = sanitize_text_field( $postarr['decker_board'] );
+	            $board = intval( $postarr['decker_board'] );
 	            Decker_Utility_Functions::write_log( "Found 'decker_board' directly in \$postarr: $board", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	        }
 
@@ -1178,17 +1184,22 @@ class Decker_Tasks {
 
 	        // 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
 	        if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
-	            $board_name = sanitize_text_field( $postarr['tax_input']['decker_board'][0] );
+	            $board = intval( $postarr['tax_input']['decker_board'][0] );
+
+	            // Decker_Utility_Functions::write_log( "-----" , Decker_Utility_Functions::LOG_LEVEL_INFO );
+
+	            // Decker_Utility_Functions::write_log( $postarr['tax_input']['decker_board'], Decker_Utility_Functions::LOG_LEVEL_INFO );
+
 
 			    // Retrieve the term ID based on the term name.
-			    $term = get_term_by( 'name', $board_name, 'decker_board' );
+			    // $term = get_term( $board, 'decker_board' );
 
-			    if ( $term && ! is_wp_error( $term ) ) {
-			        $board = $term->term_id; // Get the term ID.
-			        Decker_Utility_Functions::write_log( "Retrieved term ID for 'decker_board' with name '$board_name': $board", Decker_Utility_Functions::LOG_LEVEL_INFO );
-			    } else {
-			        Decker_Utility_Functions::write_log( "Failed to retrieve term ID for 'decker_board' with name '$board_name'.", Decker_Utility_Functions::LOG_LEVEL_ERROR );
-			    }
+			    // if ( $term && ! is_wp_error( $term ) ) {
+			    //     $board_name = $term->name; // Get the term ID.
+			    //     Decker_Utility_Functions::write_log( "Retrieved term ID for 'decker_board' with ID '$board': $board_name", Decker_Utility_Functions::LOG_LEVEL_INFO );
+			    // } else {
+			    //     Decker_Utility_Functions::write_log( "Failed to retrieve term Name for 'decker_board' with ID '$board'.", Decker_Utility_Functions::LOG_LEVEL_ERROR );
+			    // }
 	        }
 
 	        if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
@@ -1199,8 +1210,8 @@ class Decker_Tasks {
 	        // 3. Validate that both 'board' and 'stack' have been retrieved.
 	        if ( ! empty( $board ) && ! empty( $stack ) ) {
 
-	            Decker_Utility_Functions::write_log( $board, Decker_Utility_Functions::LOG_LEVEL_INFO );
-	            Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_INFO );
+	            // Decker_Utility_Functions::write_log( $board, Decker_Utility_Functions::LOG_LEVEL_INFO );
+	            // Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_INFO );
 
 	            // Calculate the new order value based on 'board' and 'stack'.
 	            $new_order = $this->get_new_task_order( $board, $stack );

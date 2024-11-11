@@ -126,9 +126,9 @@ class Decker_Admin_Import {
 			.then(response => response.json())
 			.then(importData => {
 				if (importData.success) {
-					// const totalBoards = importData.data.length;
+					const totalBoards = importData.data.length;
 
-					const totalBoards = 2; //TO DEBUG just one board
+					// const totalBoards = 2; //TO DEBUG just one board
 
 					let importedBoards = 0;
 
