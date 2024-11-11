@@ -16,11 +16,11 @@ class TestDeckerEmailToPost extends TestCase {
 		// Mock WordPress functions
 		M::userFunction('get_option', [
 			'args' => ['decker_settings', []],
-			'return' => ['shared_key' => '0a9b479d-b49b-4379-b5ac-19500e0be09c'],
+			'return' => ['shared_key' => 'RANDOM_VALUE_FOR_TEST'],
 		]);
 
 		M::userFunction('get_user_by', [
-			'args' => ['email', 'esercol@gobiernodecanarias.org'],
+			'args' => ['email', 'user1@example.com'],
 			'return' => (object) ['ID' => 1],
 		]);
 
@@ -35,10 +35,10 @@ class TestDeckerEmailToPost extends TestCase {
 
 		// Simulate a REST request
 		$request = new WP_REST_Request('POST', '/decker/v1/email-to-post');
-		$request->set_param('shared_key', '0a9b479d-b49b-4379-b5ac-19500e0be09c');
+		$request->set_param('shared_key', 'RANDOM_VALUE_FOR_TEST');
 		$request->set_json_params([
-			'from' => 'esercol@gobiernodecanarias.org',
-			'to' => ['cmorsoc@example.com', 'esercol@gobiernodecanarias.org'],
+			'from' => 'user1@example.com',
+			'to' => ['user2@example.com', 'user1@example.com'],
 			'subject' => 'Test Email Subject',
 			'body' => 'This is a test email body',
 			'headers' => [
