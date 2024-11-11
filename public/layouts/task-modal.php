@@ -45,6 +45,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		}
 
+		url += '&nocache=' + new Date().getTime();
+
 
 
 		// Realizar una solicitud AJAX para obtener el contenido desde task-card.php
