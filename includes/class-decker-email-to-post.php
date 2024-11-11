@@ -20,7 +20,41 @@ class Decker_Email_To_Post {
 		// Retrieve options and set the shared key.
 		$options = get_option( 'decker_settings', array() );
 		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
+
+        // Registrar el autoloader para MailMimeParser.
+        $this->register_mailmimeparser_autoloader();
+
 	}
+
+
+	/**
+     * Registra un autoloader PSR-4 simple para MailMimeParser.
+     */
+    private function register_mailmimeparser_autoloader() {
+        spl_autoload_register(function ($class) {
+            $prefix = 'ZBateson\\MailMimeParser\\';
+            $base_dir = __DIR__ . '/vendor/mail-mime-parser/src/';
+
+            // Verificar si la clase utiliza el prefijo.
+            $len = strlen($prefix);
+            if (strncmp($prefix, $class, $len) !== 0) {
+                // No pertenece a MailMimeParser, saltar.
+                return;
+            }
+
+            // Obtener el nombre relativo de la clase.
+            $relative_class = substr($class, $len);
+
+            // Reemplazar los separadores de namespace por directorios y agregar .php.
+            $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+            // Si el archivo existe, incluirlo.
+            if (file_exists($file)) {
+                require_once $file;
+            }
+        });
+    }
+
 
 	/**
 	 * Registers the REST API endpoint to process the email.
