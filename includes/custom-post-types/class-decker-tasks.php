@@ -259,6 +259,38 @@ class Decker_Tasks {
 		);
 	}
 
+	private function reorder_tasks_in_stack_after_archive_or_delete( int $board_term_id, string $stack, int $archived_menu_order ) {
+	    global $wpdb;
+
+	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $board_term_id, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $archived_menu_order, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
+	    // Update all tasks with menu_order greater than the archived task
+	    $wpdb->query(
+	        $wpdb->prepare(
+	            "
+	            UPDATE $wpdb->posts p
+	            INNER JOIN $wpdb->term_relationships tr ON p.ID = tr.object_id
+	            INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+	            INNER JOIN $wpdb->postmeta pm_stack ON p.ID = pm_stack.post_id AND pm_stack.meta_key = 'stack'
+	            SET p.menu_order = p.menu_order - 1
+	            WHERE p.post_type = 'decker_task'
+	              AND p.post_status = 'publish'
+	              AND pm_stack.meta_value = %s
+	              AND tt.term_id = %d
+	              AND p.menu_order > %d
+	            ",
+	            $stack,
+	            $board_term_id,
+	            $archived_menu_order
+	        )
+	    );
+	}
+
 
 	/**
 	 * Reorder tasks within a stack and board after a task is deleted.
@@ -266,7 +298,7 @@ class Decker_Tasks {
 	 * @param string $board_term_id The board term ID.
 	 * @param string $stack The stack to reorder.
 	 */
-	private function reorder_tasks_in_stack( $board_term_id, $stack ) {
+	private function reorder_tasks_in_stack( int $board_term_id, string $stack ) {
 
 	    // Fetch all tasks in the current board and stack, ordered by menu_order.
 	    $tasks_in_stack = get_posts(
@@ -371,10 +403,11 @@ class Decker_Tasks {
 	        return;
 	    }
 
-	    $board_term_id = get_post_meta( $post_id, 'decker_board', true );
+	    $board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
 	    $stack = get_post_meta( $post_id, 'stack', true );
-	    if ( $stack ) {
-	        $this->reorder_tasks_in_stack( $board_term_id, $stack );
+		$archived_menu_order = (int) get_post_field( 'menu_order', $post_id );
+	    if ( $board_term_id >0 && $stack ) {
+	        $this->reorder_tasks_in_stack_after_archive_or_delete( $board_term_id, $stack, $archived_menu_order);
 	    }
 	}
 
@@ -390,10 +423,33 @@ class Decker_Tasks {
 			return;
 		}
 
-		if ( $new_status === 'archived' || $old_status === 'archived' ) {
-		    $board_term_id = get_post_meta( $post->ID, 'decker_board', true );
+	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $new_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $old_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
+
+		if ( $new_status === 'archived' && $old_status === 'publish' ) {
+		    // $board_term_id = get_post_meta( $post->ID, 'decker_board', true );
+
+
+			$board_term_id = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
+			$board_term_id = ! empty( $board_term_id ) ? $board_term_id[0] : 0;
+
 			$stack = get_post_meta( $post->ID, 'stack', true );
-			$this->reorder_tasks_in_stack( $board_term_id, $stack );
+			$archived_menu_order = (int) get_post_field( 'menu_order', $post_id );
+
+
+	    Decker_Utility_Functions::write_log( $board_term_id, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    Decker_Utility_Functions::write_log( $archived_menu_order, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
+		    if ( $board_term_id >0 && $stack ) {
+		        $this->reorder_tasks_in_stack_after_archive_or_delete( $board_term_id, $stack, $archived_menu_order);
+		    }
 		}
 	}
 
@@ -1723,29 +1779,8 @@ class Decker_Tasks {
 		    $duedate = new DateTime(); // Default value if conversion fails
 		}
 
-	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log($_POST['assignees'] , Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log($_POST['labels'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log($duedate, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-
-		// if (is_array($_POST['assignees'])) {
-		//     Decker_Utility_Functions::write_log('assignees es un array', Decker_Utility_Functions::LOG_LEVEL_ERROR);
-		// } elseif (is_string($_POST['assignees'])) {
-		//     Decker_Utility_Functions::write_log('assignees es una cadena: ' . $_POST['assignees'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
-		// } else {
-		//     Decker_Utility_Functions::write_log('assignees es de tipo: ' . gettype($_POST['assignees']), Decker_Utility_Functions::LOG_LEVEL_ERROR);
-		// }
-
-	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-
         $author = isset( $_POST['author'] ) ? intval( $_POST['author'] ) : get_current_user_id();
                 
-		// $assigned_users = isset( $_POST['assignees'] ) && is_array( $_POST['assignees'] ) 
-		//     ? array_map( function( $assignee ) {
-		//         return isset( $assignee['value'] ) ? intval( $assignee['value'] ) : 0;
-		//     }, $_POST['assignees'] ) 
-		//     : [];
 
 		$assigned_users = is_string($_POST['assignees'])
 		    ? array_map('intval', explode(',', $_POST['assignees']))
@@ -1754,18 +1789,6 @@ class Decker_Tasks {
 		$labels = is_string($_POST['labels'])
 		    ? array_map('intval', explode(',', $_POST['labels']))
 		    : (is_array($_POST['labels']) ? array_map('intval', $_POST['labels']) : []);
-
-
-		// $labels = isset( $_POST['labels'] ) && is_array( $_POST['labels'] ) 
-		//     ? array_map( function( $label ) {
-		//         return isset( $label['value'] ) ? intval( $label['value'] ) : 0;
-		//     }, $_POST['labels'] ) 
-		//     : [];
-
-	    // Decker_Utility_Functions::write_log( '--------------', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log($labels, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log($assigned_users, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log($duedate, Decker_Utility_Functions::LOG_LEVEL_ERROR );
 
 
         $creation_date = new DateTime(); // O ajusta según corresponda
@@ -1830,16 +1853,6 @@ class Decker_Tasks {
 			Decker_Utility_Functions::write_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
 	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
-
-		// if ( ! current_user_can( 'assign_terms' ) ) {
-		// 	Decker_Utility_Functions::write_log( 'User cannot assign terms.', Decker_Utility_Functions::LOG_LEVEL_ERROR );		
-		//     return new WP_Error( 'permission_error', 'User cannot assign terms.', array( 'status' => 403 ) );
-		// }
-
-		// if ( ! current_user_can( 'assign_decker_board' ) ) {
-		//     Decker_Utility_Functions::write_log( 'User cannot assign terms.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-		//     return new WP_Error( 'permission_error', 'User cannot assign terms.', array( 'status' => 403 ) );
-		// }
 
 
 	    // Convertir objetos DateTime a formato string
