@@ -8,6 +8,12 @@ if (isset( $_GET['id'] ) ) {
 }
 $task = new Task($task_id);
 
+$disabled = false;
+
+if ($task_id > 0 && $task->status == 'archived') {
+	$disabled = true;
+}
+
 ?>
 <script type="text/javascript">
 function loadComments() {
@@ -150,7 +156,7 @@ function deleteComment(commentId) {
 		<!-- Título -->
 		<div class="col-md-9 mb-3">
 			<div class="form-floating">
-				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="Título de la tarea" required>
+				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="Título de la tarea" required <?php disabled($disabled); ?>>
 				<label for="task-title" class="form-label">Title<span id="high-label" class="badge bg-danger ms-2 d-none">MAXIMUM PRIORITY</span></label>
 				<div class="invalid-feedback">Please provide a title.</div>
 			</div>
@@ -158,7 +164,7 @@ function deleteComment(commentId) {
 
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="Seleccionar fecha" required>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="Seleccionar fecha" required <?php disabled($disabled); ?>>
 				<label class="form-label" for="task-due-date">Due Date</label>
 				<div class="invalid-feedback">Please select a due date.</div>
 			</div>
@@ -169,7 +175,7 @@ function deleteComment(commentId) {
 	<div class="row">
 		<div class="col-md-6 mb-3">
 			<div class="form-floating">
-				<select class="form-select" id="task-board" required>
+				<select class="form-select" id="task-board" required <?php disabled($disabled); ?>>
 					<option value="" disabled selected>Select Board</option>
 					<?php
 					$boards = BoardManager::getAllBoards();
@@ -189,7 +195,7 @@ function deleteComment(commentId) {
 		</div>
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<select class="form-select" id="task-column" required>
+				<select class="form-select" id="task-column" required <?php disabled($disabled); ?>>
 					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>>To Do</option>
 					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>>In Progress</option>
 					<option value="done" <?php selected( $task->stack, 'done' ); ?>>Done</option>
@@ -199,7 +205,7 @@ function deleteComment(commentId) {
 		</div>
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<select class="form-select" id="task-author" required>
+				<select class="form-select" id="task-author" required <?php disabled($disabled); ?>>
 					<option value="" disabled selected>Select Author</option>
 					<?php
 					$users = get_users();
@@ -224,7 +230,7 @@ function deleteComment(commentId) {
 
 		<div class="mb-3">
 			<label for="task-assignees" class="form-label">Assign to</label>
-			<select class="form-select" id="task-assignees" multiple>
+			<select class="form-select" id="task-assignees" multiple <?php disabled($disabled); ?>>
 				<?php
 				foreach ( $users as $user ) {
 		            $selected = in_array($user->ID, array_column($task->assigned_users, 'ID')) ? 'selected' : '';
@@ -235,7 +241,7 @@ function deleteComment(commentId) {
 		</div>
 		<div class="mb-3">
 			<label for="task-labels" class="form-label">Labels</label>
-			<select class="form-select" id="task-labels" multiple>
+			<select class="form-select" id="task-labels" multiple <?php disabled($disabled); ?>>
 				<?php
 					$labels = LabelManager::getAllLabels();
 					foreach ( $labels as $label ) {
@@ -339,10 +345,10 @@ function deleteComment(commentId) {
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
 		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php echo ( $task->max_priority ? 'checked' : '' ); ?> <?php echo current_user_can( 'administrator' ) ? '' : 'disabled'; ?>>
+			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled || !current_user_can( 'administrator' ) ); ?>>
 			<label class="form-check-label" for="task-max-priority">Maximum Priority</label>
 		</div>
-		<button type="button" class="btn btn-secondary me-2" id="archive-task" <?php echo $task_id === 0 ? 'disabled' : ''; ?>>
+		<button type="button" class="btn btn-secondary me-2" id="archive-task" <?php disabled($disabled || $task_id === 0 ); ?>>
 			<i class="ri-archive-line"></i> Archive
 		</button>
 		<div class="btn-group me-2">
@@ -357,7 +363,7 @@ function deleteComment(commentId) {
 				</li>
 			</ul>
 		</div>
-		<button type="submit" class="btn btn-primary" id="save-task">
+		<button type="submit" class="btn btn-primary" id="save-task" disabled>
 			<i class="ri-save-line"></i> Save
 		</button>
 	</div>
@@ -393,6 +399,7 @@ function initializeTaskPage() {
 	if (document.getElementById('editor')) {
 		quill = new Quill('#editor', {
 			theme: 'snow',
+			readOnly: <?php echo $disabled ? 'true' : 'false'; ?>,
 			modules: {
 				toolbar: [
 					[{ 'header': [1, 2, false] }],
@@ -405,6 +412,7 @@ function initializeTaskPage() {
 				]
 			}
 		});
+
 	}
 
 	// Inicializar Choices.js para los selectores de asignados y etiquetas
@@ -436,6 +444,42 @@ function initializeTaskPage() {
 			togglePriorityLabel(this);
 		});
 	}
+
+
+	const saveButton = document.getElementById('save-task');
+
+	// Function to enable save button when any field changes
+    const enableSaveButton = function() {
+        saveButton.disabled = false;
+    };
+
+	const form = document.getElementById('task-form');
+
+    // Add event listeners to all form inputs
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(function(input) {
+        input.addEventListener('change', enableSaveButton);
+        input.addEventListener('input', enableSaveButton);
+    });
+
+    // For Quill Editor
+    if (quill) {
+        quill.on('text-change', function() {
+            saveButton.disabled = false;
+        });
+    }
+
+    // For Choices.js Selects
+    if (assigneesSelect) {
+        assigneesSelect.passedElement.element.addEventListener('change', enableSaveButton);
+    }
+    if (labelsSelect) {
+        labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
+    }
+
+
+
+
 }
 
 function togglePriorityLabel(element) {
@@ -451,12 +495,8 @@ function togglePriorityLabel(element) {
 
 // custom-task.js
 
-document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('task-form');
-    const saveTaskButton = document.getElementById('save-task');
 
-
- const taskModal = document.getElementById('task-modal');
+taskModal = document.getElementById('task-modal');
 
 if (taskModal) {
     taskModal.addEventListener('shown.bs.modal', function () {
@@ -476,17 +516,28 @@ if (taskModal) {
                     return;
                 }
 
-                enviarFormularioAJAX(formModal);
+
+				sendFormByAjax();
             });
         }
     });
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    
+
+    sendFormByAjax();
+
+});
 
 
+function sendFormByAjax() {
+
+	const form = document.getElementById('task-form');
 
     form.addEventListener('submit', function(event) {
         event.preventDefault(); // Previene el envío por defecto
+
 
         // Remueve la clase 'was-validated' previamente
         form.classList.remove('was-validated');
@@ -527,10 +578,23 @@ if (taskModal) {
             if (xhr.status >= 200 && xhr.status < 400) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
-                    alert(response.data.message);
+                    // alert(response.data.message);
 
-                    // Redirecciona o actualiza según la respuesta
-                    window.location.href = '<?php echo esc_url( add_query_arg( 'decker_page', 'task', home_url( '/' ) ) ); ?>' + '&id=' + response.data.task_id;
+                    if (taskModal) {
+
+						var modalInstance = bootstrap.Modal.getInstance(taskModal);
+						if (modalInstance) {
+						    modalInstance.hide();
+						}
+
+
+                    } else {
+
+		                // Redirecciona o actualiza según la respuesta
+		                window.location.href = '<?php echo esc_url( add_query_arg( 'decker_page', 'task', home_url( '/' ) ) ); ?>' + '&id=' + response.data.task_id;
+
+					}
+
                 } else {
                     alert(response.data.message || 'Error al guardar la tarea.');
                 }
@@ -551,21 +615,22 @@ if (taskModal) {
 
         xhr.send(encodedData);
     });
+}
 
-    // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
-    const commentText = document.getElementById('comment-text');
-    const submitCommentButton = document.getElementById('submit-comment');
+    // // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
+    // const commentText = document.getElementById('comment-text');
+    // const submitCommentButton = document.getElementById('submit-comment');
 
-    if (commentText) {
-        commentText.addEventListener('input', function() {
-            if (commentText.value.trim() !== '') {
-                submitCommentButton.disabled = false;
-            } else {
-                submitCommentButton.disabled = true;
-            }
-        });
-    }
-});
+    // if (commentText) {
+    //     commentText.addEventListener('input', function() {
+    //         if (commentText.value.trim() !== '') {
+    //             submitCommentButton.disabled = false;
+    //         } else {
+    //             submitCommentButton.disabled = true;
+    //         }
+    //     });
+    // }
+
 
 
 </script>

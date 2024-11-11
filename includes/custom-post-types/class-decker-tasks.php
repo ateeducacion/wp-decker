@@ -40,6 +40,8 @@ class Decker_Tasks {
 		add_action( 'transition_post_status', array( $this, 'handle_task_status_change' ), 10, 3 );
 
 		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
+        add_action( 'admin_head', array( $this, 'disable_menu_order_field' ) );
+
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( $this, 'save_meta' ) );
@@ -1154,8 +1156,15 @@ class Decker_Tasks {
 	 */
 	public function modify_task_order_before_save(array $data, array $postarr, array $unsanitized_postarr, bool $update ) {
 
-	    // Ensure we're working with the correct post type.
-	    if ( 'decker_task' === $postarr['post_type'] ) {
+		// Prevent the user from directly modifying the menu_order
+		if ( isset( $postarr['menu_order'] ) ) {
+		    // Remove the menu_order field so it won't be saved
+		    unset( $postarr['menu_order'] );
+	        Decker_Utility_Functions::write_log( 'Avoid order modification by user.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		}
+
+	    // Ensure we're working with the correct post type and only on Insert post.
+	    if ( !$update && 'decker_task' === $postarr['post_type'] ) {
 
 	        // Log the function call for debugging.
 	        Decker_Utility_Functions::write_log( 'Function modify_task_order_before_save called.', Decker_Utility_Functions::LOG_LEVEL_INFO );
@@ -1354,6 +1363,26 @@ class Decker_Tasks {
 				#edit-slug-box, #post-name { display: none; }
 			</style>';
 		}
+	}
+
+	/**
+	 * Disables the menu_order field in the admin interface for decker_task.
+	 */
+	public function disable_menu_order_field() {
+	    $screen = get_current_screen();
+	    if ( $screen && 'decker_task' === $screen->post_type && 'post' === $screen->base ) {
+	        ?>
+	        <script type="text/javascript">
+	            document.addEventListener('DOMContentLoaded', function() {
+	                // Disable the menu_order field
+	                var menuOrderField = document.getElementById('menu_order');
+	                if (menuOrderField) {
+	                    menuOrderField.disabled = true;
+	                }
+	            });
+	        </script>
+	        <?php
+	    }
 	}
 
 	/**

@@ -45,10 +45,21 @@ class Decker_User_Extended {
 	public function add_custom_user_profile_fields( $user ) {
 		wp_enqueue_script( 'wp-color-picker' );
 		wp_enqueue_style( 'wp-color-picker' );
+
+		// Retrieve all boards for the select box.
+		$boards = get_terms( array(
+			'taxonomy'   => 'decker_board',
+			'hide_empty' => false,
+		) );
+
+		// Retrieve the user's selected default board.
+		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
+
 		?>
 		<h3><?php esc_html_e( 'Additional Information', 'decker' ); ?></h3>
 
 		<table class="form-table">
+			<!-- Color Picker Field -->
 			<tr>
 				<th><label for="decker_color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
 				<td>
@@ -57,6 +68,30 @@ class Decker_User_Extended {
 					<span class="description"><?php esc_html_e( 'Select your favorite color.', 'decker' ); ?></span>
 				</td>
 			</tr>
+			<!-- Default Board Select Box -->
+			<tr>
+				<th><label for="decker_default_board"><?php esc_html_e( 'Default Board', 'decker' ); ?></label></th>
+				<td>
+					<select name="decker_default_board" id="decker_default_board">
+						<option value=""><?php esc_html_e( 'Select a board', 'decker' ); ?></option>
+						<?php
+						if ( ! empty( $boards ) && ! is_wp_error( $boards ) ) {
+							foreach ( $boards as $board ) {
+								printf(
+									'<option value="%1$s" %2$s>%3$s</option>',
+									esc_attr( $board->term_id ),
+									selected( $default_board, $board->term_id, false ),
+									esc_html( $board->name )
+								);
+							}
+						}
+						?>
+					</select>
+					<br />
+					<span class="description"><?php esc_html_e( 'Select your default board.', 'decker' ); ?></span>
+				</td>
+			</tr>
+
 		</table>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
@@ -78,9 +113,25 @@ class Decker_User_Extended {
 
 		check_admin_referer( 'update-user_' . $user_id );
 
+		// TODO: Verify nonce for security (optional but recommended).
+		// Uncomment the following lines if you add a nonce field in the form.
+		/*
+		if ( ! isset( $_POST['decker_user_extended_nonce'] ) ||
+			 ! wp_verify_nonce( $_POST['decker_user_extended_nonce'], 'decker_user_extended' ) ) {
+			return false;
+		}
+		*/
+
+		// Save the color meta if set.
 		if ( isset( $_POST['decker_color'] ) ) {
-			$decker_color = sanitize_text_field( wp_unslash( $_POST['decker_color'] ) );
+			$decker_color = sanitize_hex_color( wp_unslash( $_POST['decker_color'] ) );
 			update_user_meta( $user_id, 'decker_color', $decker_color );
+		}
+
+		// Save the default board meta if set.
+		if ( isset( $_POST['decker_default_board'] ) ) {
+			$decker_default_board = intval( $_POST['decker_default_board'] );
+			update_user_meta( $user_id, 'decker_default_board', $decker_default_board );
 		}
 
 	}
