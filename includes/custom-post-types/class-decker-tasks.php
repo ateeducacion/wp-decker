@@ -68,6 +68,8 @@ class Decker_Tasks {
 		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 
 
+		add_action('admin_menu', array($this, 'remove_add_new_link'));
+
 	}
 
 	/**
@@ -189,6 +191,22 @@ class Decker_Tasks {
 
 	    // If no posts exist, start with order 1
 	    return 1;
+	}
+
+	/**
+	 * Remove 'Add New' button for decker_task post type.
+	 */
+	public function remove_add_new_link() {
+	    global $submenu;
+	    // Remove the "Add New" submenu link
+		if (isset($submenu['edit.php?post_type=decker_task'])) {
+		    foreach ($submenu['edit.php?post_type=decker_task'] as $key => $item) {
+		        // Busca la entrada "Añadir nueva entrada"
+		        if ($item[2] === 'post-new.php?post_type=decker_task') {
+		            unset($submenu['edit.php?post_type=decker_task'][$key]);
+		        }
+		    }
+		}
 	}
 
 	/**
@@ -660,10 +678,10 @@ class Decker_Tasks {
 			'name'               => _x( 'Tasks', 'post type general name', 'decker' ),
 			'singular_name'      => _x( 'Task', 'post type singular name', 'decker' ),
 			'menu_name'          => _x( 'Decker', 'admin menu', 'decker' ),
-			'name_admin_bar'     => _x( 'Task', 'add new on admin bar', 'decker' ),
-			'add_new'            => _x( 'Add New', 'task', 'decker' ),
-			'add_new_item'       => __( 'Add New Task', 'decker' ),
-			'new_item'           => __( 'New Task', 'decker' ),
+			// 'name_admin_bar'     => _x( 'Task', 'add new on admin bar', 'decker' ),
+			// 'add_new'            => _x( 'Add New', 'task', 'decker' ),
+			// 'add_new_item'       => __( 'Add New Task', 'decker' ),
+			// 'new_item'           => __( 'New Task', 'decker' ),
 			'edit_item'          => __( 'Edit Task', 'decker' ),
 			'view_item'          => __( 'View Task', 'decker' ),
 			'all_items'          => __( 'All Tasks', 'decker' ),
@@ -1485,6 +1503,9 @@ class Decker_Tasks {
 		        .inline-edit-group.wp-clearfix {
 		            display: none;
 		        }
+		        .page-title-action {
+	               	display: none !important;
+	            }
 			</style>';
 		}
 	}
@@ -1729,6 +1750,13 @@ class Decker_Tasks {
 	        return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
 	    }
 
+		// Check if the default board exists as a term in the decker_board taxonomy
+		$term_board = get_term( $board, 'decker_board' );
+		if ( is_wp_error( $term_board ) ) {
+			// Log an error if the term doesn't exist
+			Decker_Utility_Functions::write_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
+		}
 
 	    // Convertir objetos DateTime a formato string
 	    $duedate_str = $duedate->format('Y-m-d H:i:s');

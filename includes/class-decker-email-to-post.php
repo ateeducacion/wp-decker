@@ -44,8 +44,14 @@ class Decker_Email_To_Post {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function process_email( WP_REST_Request $request ) {
+
 		$shared_key = $request->get_param( 'shared_key' );
 		if ( $shared_key !== $this->shared_key ) {
+
+		    Decker_Utility_Functions::write_log( $shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		    Decker_Utility_Functions::write_log( $this->shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
 			return new WP_Error( 'forbidden', 'Invalid access key', array( 'status' => 403 ) );
 		}
 
@@ -112,25 +118,105 @@ class Decker_Email_To_Post {
 	 * @return int ID of the created post.
 	 */
 	private function create_post_from_email( $email_data ) {
+	
+
+        // Verificar si 'body' está presente
+        if ( empty( $email_data['body'] ) ) {
+            return new WP_Error( 'invalid_email', 'El contenido del correo está vacío.', array( 'status' => 400 ) );
+        }
+
+
+
+        // // Instanciar MailMimeParser
+        // $mailParser = new MailMimeParser();
+
+        // // Parsear el correo electrónico
+        // try {
+        //     $message = $mailParser->parse($email_data['body']);
+        // } catch ( Exception $e ) {
+        //     Decker_Utility_Functions::write_log( 'Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+        //     return new WP_Error( 'parse_error', 'No se pudo parsear el correo electrónico.', array( 'status' => 500 ) );
+        // }
+
+
+
+
+	 	// Get the author based on email
 		$author = get_user_by( 'email', sanitize_email( $email_data['from'] ) );
-		$post_id = wp_insert_post(
-			array(
-				'post_title'   => sanitize_text_field( $email_data['subject'] ),
-				'post_content' => sanitize_textarea_field( $email_data['body'] ),
-				'post_status'  => 'publish',
-				'post_author'  => $author ? $author->ID : 0,
-			)
+		$owner = $author->ID;
+
+		// Set task parameters
+		$title = trim( sanitize_text_field( $email_data['subject'] ) );
+		$description = sanitize_textarea_field( $email_data['body'] );
+
+		$stack_title = 'to-do'; // Set stack title if needed
+
+		// Retrieve the user's selected default board.
+		$default_board = get_user_meta( $owner, 'decker_default_board', true );
+
+		if ( empty( $default_board ) ||  !is_numeric( $default_board ) ) {
+			Decker_Utility_Functions::write_log( 'Invalid user default board: "' . esc_html( $default_board ) . '".', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+			return new WP_Error( 'forbidden', 'Invalid user default board', array( 'status' => 403 ) );
+		}	
+
+		$label_ids = []; // Set based on your logic to categorize tasks
+		$assigned_users = [];
+	    
+	    // Add users from 'TO', 'CC' and 'BCC' fields if they exist in WordPress
+	    $to_addresses = !empty($email_data['to']) ? $email_data['to'] : [];
+	    $cc_addresses = !empty($email_data['cc']) ? $email_data['cc'] : [];
+	    $bcc_addresses = !empty($email_data['bcc']) ? $email_data['bcc'] : [];
+	    $emails_to_check = array_merge( (array) $to_addresses, (array) $cc_addresses, (array) $bcc_addresses );
+
+	    foreach ( $emails_to_check as $email ) {
+	        $user = get_user_by( 'email', sanitize_email( $email ) );
+	        if ( $user ) {
+	            $assigned_users[] = $user->ID;
+	        }
+	    }
+
+	    // Ensure unique user IDs in assigned users list
+	    $assigned_users = array_unique( $assigned_users );
+
+
+	    // Set due date to 3 days from now
+	    $due_date = new DateTime();
+	    $due_date->modify('+3 days');
+
+		// Create or update the task using the Decker_Tasks function
+		$task_id = Decker_Tasks::create_or_update_task(
+		    0, // 0 indicates a new task
+		    $title,
+		    $description,
+		    $stack_title,
+		    $default_board,
+		    false, // Placeholder for max_priority, adapt as necessary
+		    $due_date,
+		    $owner,
+		    $assigned_users,
+		    $label_ids,
+		    new DateTime(), // Creation date as now or adapt as necessary
+		    false,
+		    0
 		);
 
-		if ( ! empty( $email_data['attachments'] ) ) {
-			foreach ( $email_data['attachments'] as $filename => $content ) {
-				$attach_id = $this->upload_attachment( $filename, $content );
-				if ( $attach_id ) {
-					add_post_meta( $post_id, '_email_attachment', $attach_id );
-				}
-			}
+		// Optional handling of attachments if needed
+		if ( !empty( $email_data['attachments'] ) ) {
+		    foreach ( $email_data['attachments'] as $filename => $content ) {
+		        $attach_id = $this->upload_attachment( $filename, $content );
+		        if ( $attach_id ) {
+		            add_post_meta( $task_id, '_email_attachment', $attach_id );
+		        }
+		    }
 		}
 
-		return $post_id;
+		return $task_id;
+
 	}
+}
+
+
+// Instantiate the class.
+if ( class_exists( 'Decker_Email_To_Post' ) ) {
+	new Decker_Email_To_Post();
 }

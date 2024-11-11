@@ -27,16 +27,24 @@ class Decker_Admin_Settings {
 		$this->define_hooks();
 	}
 
-	/**
+	/*
 	 * Render Shared Key Field
 	 *
-	 * Outputs the HTML for the shared_key field.
+	 * Outputs the HTML for the shared_key field, generating it only if it does not exist or does not meet the criteria.
 	 */
 	public function shared_key_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : wp_generate_uuid4();
-		echo '<input type="text" name="decker_settings[shared_key]" value="' . esc_attr( $value ) . '" class="regular-text">';
-		echo '<p class="description">' . esc_html__( 'Enter the shared key for securing the email-to-post endpoint. Example endpoint: https://yourdomain.com/wp-json/decker/v1/email-to-post?shared_key=YOUR_SHARED_KEY', 'decker' ) . '</p>';
+	    $options = get_option( 'decker_settings', array() );
+
+	    // Generate a new shared key (UUID) only if it does not exist or does not meet criteria
+	    if ( empty( $options['shared_key'] ) ) {
+	        $options['shared_key'] = wp_generate_uuid4();
+	        // Save the newly generated UUID back to the options
+	        update_option( 'decker_settings', $options );
+	    }
+
+	    $value = sanitize_text_field( $options['shared_key'] );
+	    echo '<input type="text" name="decker_settings[shared_key]" pattern=".{8,}" value="' . esc_attr( $value ) . '" class="regular-text" pattern="" title="The key must be at least 8 characters long and include letters, numbers, and symbols." required>';
+	    echo '<p class="description">' . esc_html__( 'Enter the shared key for securing the email-to-post endpoint. Example endpoint: https://yourdomain.com/wp-json/decker/v1/email-to-post?shared_key=YOUR_SHARED_KEY', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -430,42 +438,58 @@ class Decker_Admin_Settings {
 	 * @return array The validated fields.
 	 */
 	public function settings_validate( $input ) {
-		if ( ! preg_match( '/\bhttps?:\/\/\S+/i', $input['nextcloud_url_base'] ) ) {
-			add_settings_error( 'nextcloud_url_base', 'invalid-url', __( 'Invalid URL.', 'decker' ) );
-			$input['nextcloud_url_base'] = '';
-		}
+	    // Validate Nextcloud URL base
+	    if ( isset( $input['nextcloud_url_base'] ) && ! preg_match( '/\bhttps?:\/\/\S+/i', $input['nextcloud_url_base'] ) ) {
+	        add_settings_error( 'nextcloud_url_base', 'invalid-url', __( 'Invalid URL.', 'decker' ) );
+	        $input['nextcloud_url_base'] = '';
+	    } else {
+	        $input['nextcloud_url_base'] = isset( $input['nextcloud_url_base'] ) ? esc_url_raw( $input['nextcloud_url_base'] ) : '';
+	    }
 
-		if ( ! preg_match( '/^(\d+(,\d+)*)?$/', $input['decker_ignored_board_ids'] ) ) {
-			add_settings_error( 'decker_ignored_board_ids', 'invalid-ids', __( 'Invalid IDs. Must be numbers separated by commas.', 'decker' ) );
-			$input['decker_ignored_board_ids'] = '';
-		}
+	    // Validate ignored board IDs
+	    if ( isset( $input['decker_ignored_board_ids'] ) && ! preg_match( '/^(\d+(,\d+)*)?$/', $input['decker_ignored_board_ids'] ) ) {
+	        add_settings_error( 'decker_ignored_board_ids', 'invalid-ids', __( 'Invalid IDs. Must be numbers separated by commas.', 'decker' ) );
+	        $input['decker_ignored_board_ids'] = '';
+	    } else {
+	        $input['decker_ignored_board_ids'] = isset( $input['decker_ignored_board_ids'] ) ? sanitize_text_field( $input['decker_ignored_board_ids'] ) : '';
+	    }
 
-		// Validate shared key
-		$input['shared_key'] = sanitize_text_field( $input['shared_key'] );
-		if ( ! in_array(
-			$input['log_level'],
-			array(
-				Decker_Utility_Functions::LOG_LEVEL_DEBUG,
-				Decker_Utility_Functions::LOG_LEVEL_INFO,
-				Decker_Utility_Functions::LOG_LEVEL_ERROR,
-			)
-		) ) {
-			$input['log_level'] = Decker_Utility_Functions::LOG_LEVEL_ERROR; // Default to ERROR if invalid
-		}
+	    // Validate shared key
+	    $input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
 
-		// Validate alert color
-		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
-		if ( ! in_array( $input['alert_color'], $valid_colors ) ) {
-			$input['alert_color'] = 'info'; // Default to info if invalid
-		}
+	    // Validate log level
+	    if ( isset( $input['log_level'] ) && ! in_array(
+	        $input['log_level'],
+	        array(
+	            Decker_Utility_Functions::LOG_LEVEL_DEBUG,
+	            Decker_Utility_Functions::LOG_LEVEL_INFO,
+	            Decker_Utility_Functions::LOG_LEVEL_ERROR,
+	        )
+	    ) ) {
+	        $input['log_level'] = Decker_Utility_Functions::LOG_LEVEL_ERROR; // Default to ERROR if invalid
+	    } else {
+	        $input['log_level'] = isset( $input['log_level'] ) ? $input['log_level'] : Decker_Utility_Functions::LOG_LEVEL_ERROR;
+	    }
 
-		// Validate user profile
-		$roles = wp_roles()->get_names();
-		if ( ! array_key_exists( $input['user_profile'], $roles ) ) {
-			$input['user_profile'] = 'decker_role'; // Default to decker_role if invalid
-		}
-		$input['alert_message'] = wp_kses_post( $input['alert_message'] );
+	    // Validate alert color
+	    $valid_colors = array( 'success', 'danger', 'warning', 'info' );
+	    if ( isset( $input['alert_color'] ) && ! in_array( $input['alert_color'], $valid_colors ) ) {
+	        $input['alert_color'] = 'info'; // Default to info if invalid
+	    } else {
+	        $input['alert_color'] = isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
+	    }
 
-		return $input;
+	    // Validate user profile
+	    $roles = wp_roles()->get_names();
+	    if ( isset( $input['user_profile'] ) && ! array_key_exists( $input['user_profile'], $roles ) ) {
+	        $input['user_profile'] = 'decker_role'; // Default to decker_role if invalid
+	    } else {
+	        $input['user_profile'] = isset( $input['user_profile'] ) ? $input['user_profile'] : 'decker_role';
+	    }
+
+	    // Validate alert message
+	    $input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
+
+	    return $input;
 	}
 }
