@@ -68,7 +68,19 @@ class Decker_Labels {
 			'show_in_rest'      => true,
 			'rest_base'         => 'labels',
 			'can_export'        => true,
+			'capabilities'      => array(
+			    'manage_terms' => 'manage_decker_labels',
+			    'edit_terms'   => 'edit_decker_labels',
+			    'delete_terms' => 'delete_decker_labels',
+			    'assign_terms' => 'assign_decker_boards',
+			),			
 		);
+
+		function allow_all_to_assign_decker_boards( $allcaps, $caps, $args, $user ) {
+		    $allcaps['assign_decker_boards'] = true;
+		    return $allcaps;
+		}
+		add_filter( 'user_has_cap', 'allow_all_to_assign_decker_boards', 10, 4 );
 
 		register_taxonomy( 'decker_label', array( 'decker_task', 'decker_board' ), $args );
 	}

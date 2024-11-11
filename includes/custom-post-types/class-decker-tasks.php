@@ -1825,20 +1825,25 @@ class Decker_Tasks {
 	        return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
 	    }
 
-		// Check if the default board exists as a term in the decker_board taxonomy
-		$term_board = get_term( $board, 'decker_board' );
-		if ( is_wp_error( $term_board ) ) {
-			// Log an error if the term doesn't exist
+		if ( ! term_exists( $board, 'decker_board' ) ) {		
+
 			Decker_Utility_Functions::write_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
 	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
-		Decker_Utility_Functions::write_log( $term_board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		// if ( ! current_user_can( 'assign_terms' ) ) {
+		// 	Decker_Utility_Functions::write_log( 'User cannot assign terms.', Decker_Utility_Functions::LOG_LEVEL_ERROR );		
+		//     return new WP_Error( 'permission_error', 'User cannot assign terms.', array( 'status' => 403 ) );
+		// }
 
+		// if ( ! current_user_can( 'assign_decker_board' ) ) {
+		//     Decker_Utility_Functions::write_log( 'User cannot assign terms.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		//     return new WP_Error( 'permission_error', 'User cannot assign terms.', array( 'status' => 403 ) );
+		// }
 
 
 	    // Convertir objetos DateTime a formato string
-	    $duedate_str = $duedate->format('Y-m-d H:i:s');
+	    $duedate_str = $duedate->format('Y-m-d');
 	    $creation_date_str = $creation_date->format('Y-m-d H:i:s');
 
 	    // Preparar los términos para tax_input
@@ -1890,7 +1895,6 @@ class Decker_Tasks {
 	    } else {
 	        // Crear un nuevo post
 	        $task_id = wp_insert_post( $post_data );
-
 	        if ( is_wp_error( $task_id ) ) {
 	            return $task_id; // Retornar el error para manejarlo externamente
 	        }

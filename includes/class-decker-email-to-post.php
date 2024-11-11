@@ -125,7 +125,6 @@ class Decker_Email_To_Post {
             return new WP_Error( 'invalid_email', 'El contenido del correo está vacío.', array( 'status' => 400 ) );
         }
 
-
 	    // Requiere la clase del Mail Parser.
 	    require_once __DIR__ . '/../admin/vendor/mail-parser/src/MessagePart.php';
 	    require_once __DIR__ . '/../admin/vendor/mail-parser/src/Message.php';
@@ -138,29 +137,26 @@ class Decker_Email_To_Post {
 	        return new WP_Error('parse_error', 'No se pudo parsear el correo electrónico.', array('status' => 500));
 	    }
 
-
 	 	// Get the author based on email
 		$author = get_user_by( 'email', sanitize_email( $email_data['from'] ) );
-		$owner = $author->ID;
 
 		// Set task parameters
 		$title = trim( sanitize_text_field( $email_data['subject'] ) );
 
-
-    	$body_html = $message->getHtmlPart()?->getContent() ?? ''; // Obteniendo contenido html
-
-
+		// Obtener el contenido HTML si está disponible, o el texto plano si no lo está.
+		$body_html = $message->getHtmlPart()?->getContent() ?? '';
+		$body_text = $message->getTextPart()?->getContent() ?? '';
+		$body = !empty($body_html) ? $body_html : (!empty($body_text) ? $body_text : $email_data['body']);
 
 		$stack_title = 'to-do'; // Set stack title if needed
 
 		// Retrieve the user's selected default board.
-		$default_board = (int) get_user_meta( $owner, 'decker_default_board', true );
+		$default_board = (int) get_user_meta( $author->ID, 'decker_default_board', true );
 
 		if ($default_board <= 0) {
 			Decker_Utility_Functions::write_log( 'Invalid user default board: "' . esc_html( $default_board ) . '".', Decker_Utility_Functions::LOG_LEVEL_ERROR );
 			return new WP_Error( 'forbidden', 'Invalid user default board', array( 'status' => 403 ) );
 		}	
-
 
 		// Decker_Utility_Functions::write_log( "------", Decker_Utility_Functions::LOG_LEVEL_ERROR );
 		// Decker_Utility_Functions::write_log( $default_board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
@@ -190,22 +186,28 @@ class Decker_Email_To_Post {
 	    $due_date = new DateTime();
 	    $due_date->modify('+3 days');
 
+	    // Temporarily set the current user to the mail sent user, because the WP Rest user (0) doesn't have the required capabilities
+		wp_set_current_user( $author->ID );
+
 		// Create or update the task using the Decker_Tasks function
 		$task_id = Decker_Tasks::create_or_update_task(
 		    0, // 0 indicates a new task
 		    $title,
-		    $body_html,
+		    $body,
 		    $stack_title,
 		    $default_board,
 		    false, // Placeholder for max_priority, adapt as necessary
 		    $due_date,
-		    $owner,
+		    $author->ID,
 		    $assigned_users,
 		    $label_ids,
 		    new DateTime(), // Creation date as now or adapt as necessary
 		    false,
 		    0
 		);
+
+	    // Reset the user context
+	    wp_set_current_user( 0 );
 
 		// Optional handling of attachments if needed
 		if ( !empty( $email_data['attachments'] ) ) {
@@ -233,8 +235,6 @@ class Decker_Email_To_Post {
 		        add_post_meta($task_id, '_email_attachment', $attach_id);
 		    }
 		}
-
-
 
 		return $task_id;
 

@@ -68,6 +68,12 @@ class Decker_Boards {
 			'show_in_rest'      => true,
 			'rest_base'         => 'boards',
 			'can_export'        => true,
+			'capabilities'      => array(
+			    'manage_terms' => 'manage_decker_boards',
+			    'edit_terms'   => 'edit_decker_boards',
+			    'delete_terms' => 'delete_decker_boards',
+			    'assign_terms' => 'read', // Allow all users to assign terms
+			),
 		);
 
 		register_taxonomy( 'decker_board', array( 'decker_task' ), $args );
