@@ -32,7 +32,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		if (taskId) {
 			url += '?id=' + taskId; // Añadir el ID de la tarea a la URL si existe
+		} else {
+
+			// Obtener los parámetros de la URL actual
+			const params = new URLSearchParams(window.location.search);
+
+			// Obtener el valor del parámetro 'slug'
+			const boardSlug = params.get('slug');
+			if (boardSlug) {
+				url += '?slug=' + boardSlug; // Añadir el slug de la tarea a la URL si existe
+			}
+
 		}
+
+
 
 		// Realizar una solicitud AJAX para obtener el contenido desde task-card.php
 		$.ajax({

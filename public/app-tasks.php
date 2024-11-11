@@ -129,15 +129,17 @@ table#tablaTareas td:nth-child(4) {
 								$current_type = isset( $_GET['decker_page'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'tasks';
 
 								$page_title = 'Tasks';
+								$class_disabled = '';
 								if ( $current_type === 'active' ) {
 								    $page_title = 'Active Tasks';
 								} elseif ( $current_type === 'my' ) {
 								    $page_title = 'My Tasks';
 								} elseif ( $current_type === 'archived' ) {
 								    $page_title = 'Archived Tasks';
+								    $class_disabled = ' disabled';
 								}
 							?>
-								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo $class_disabled; ?>" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
 
 
 	

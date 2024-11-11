@@ -427,14 +427,20 @@ if (!$has_today_tasks) {
 		}
 
 		// Evento para el botón "Sí" en el mensaje de importación
-		document.querySelector('.import-today').addEventListener('click', loadPreviousTasks);
-		selectAllCheckbox.addEventListener('change', function() {
-			const isChecked = this.checked;
-			taskCheckboxes.forEach(checkbox => {
-				checkbox.checked = isChecked;
+
+		const importTodayYesButton = document.querySelector('.import-today');
+		if (importTodayYesButton) {
+
+			document.querySelector('.import-today').addEventListener('click', loadPreviousTasks);
+			selectAllCheckbox.addEventListener('change', function() {
+				const isChecked = this.checked;
+				taskCheckboxes.forEach(checkbox => {
+					checkbox.checked = isChecked;
+				});
+				updateImportButton(); // Actualiza el estado del botón después de seleccionar/desmarcar todos
 			});
-			updateImportButton(); // Actualiza el estado del botón después de seleccionar/desmarcar todos
-		});
+
+		}
 
 		// Evento para actualizar el estado del botón "Importar" cuando se cambia un checkbox individual
 		taskCheckboxes.forEach(checkbox => {

@@ -21,40 +21,7 @@ class Decker_Email_To_Post {
 		$options = get_option( 'decker_settings', array() );
 		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 
-        // Registrar el autoloader para MailMimeParser.
-        $this->register_mailmimeparser_autoloader();
-
 	}
-
-
-	/**
-     * Registra un autoloader PSR-4 simple para MailMimeParser.
-     */
-    private function register_mailmimeparser_autoloader() {
-        spl_autoload_register(function ($class) {
-            $prefix = 'ZBateson\\MailMimeParser\\';
-            $base_dir = __DIR__ . '../admin/vendor/mail-mime-parser/src/';
-
-            // Verificar si la clase utiliza el prefijo.
-            $len = strlen($prefix);
-            if (strncmp($prefix, $class, $len) !== 0) {
-                // No pertenece a MailMimeParser, saltar.
-                return;
-            }
-
-            // Obtener el nombre relativo de la clase.
-            $relative_class = substr($class, $len);
-
-            // Reemplazar los separadores de namespace por directorios y agregar .php.
-            $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
-
-            // Si el archivo existe, incluirlo.
-            if (file_exists($file)) {
-                require_once $file;
-            }
-        });
-    }
-
 
 	/**
 	 * Registers the REST API endpoint to process the email.
@@ -82,9 +49,8 @@ class Decker_Email_To_Post {
 		$shared_key = $request->get_param( 'shared_key' );
 		if ( $shared_key !== $this->shared_key ) {
 
-		    Decker_Utility_Functions::write_log( $shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
-		    Decker_Utility_Functions::write_log( $this->shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
-
+		    // Decker_Utility_Functions::write_log( $shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		    // Decker_Utility_Functions::write_log( $this->shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
 
 			return new WP_Error( 'forbidden', 'Invalid access key', array( 'status' => 403 ) );
 		}
@@ -160,29 +126,17 @@ class Decker_Email_To_Post {
         }
 
 
+	    // Requiere la clase del Mail Parser.
+	    require_once __DIR__ . '/../admin/vendor/mail-parser/src/MessagePart.php';
+	    require_once __DIR__ . '/../admin/vendor/mail-parser/src/Message.php';
 
-
-
-        // Instanciar MailMimeParser
-        $mailParser = new MailMimeParser();
-
-        // Parsear el correo electrónico
-        try {
-            $message = $mailParser->parse($email_data['body']);
-        } catch ( Exception $e ) {
-            Decker_Utility_Functions::write_log( 'Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
-            return new WP_Error( 'parse_error', 'No se pudo parsear el correo electrónico.', array( 'status' => 500 ) );
-        }
-
-
-
-        // Parsear el correo electrónico
-        try {
-            $message = $mailParser->parse($email_data['body']);
-        } catch ( Exception $e ) {
-            Decker_Utility_Functions::write_log( 'Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
-            return new WP_Error( 'parse_error', 'No se pudo parsear el correo electrónico.', array( 'status' => 500 ) );
-        }
+	    // Instanciar y parsear el correo electrónico.
+	    try {
+	        $message = Opcodes\MailParser\Message::fromString($email_data['body']);
+	    } catch (Exception $e) {
+	        Decker_Utility_Functions::write_log('Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR);
+	        return new WP_Error('parse_error', 'No se pudo parsear el correo electrónico.', array('status' => 500));
+	    }
 
 
 	 	// Get the author based on email
@@ -191,17 +145,26 @@ class Decker_Email_To_Post {
 
 		// Set task parameters
 		$title = trim( sanitize_text_field( $email_data['subject'] ) );
-		$description = sanitize_textarea_field( $email_data['body'] );
+
+
+    	$body_html = $message->getHtmlPart()?->getContent() ?? ''; // Obteniendo contenido html
+
+
 
 		$stack_title = 'to-do'; // Set stack title if needed
 
 		// Retrieve the user's selected default board.
-		$default_board = get_user_meta( $owner, 'decker_default_board', true );
+		$default_board = (int) get_user_meta( $owner, 'decker_default_board', true );
 
-		if ( empty( $default_board ) ||  !is_numeric( $default_board ) ) {
+		if ($default_board <= 0) {
 			Decker_Utility_Functions::write_log( 'Invalid user default board: "' . esc_html( $default_board ) . '".', Decker_Utility_Functions::LOG_LEVEL_ERROR );
 			return new WP_Error( 'forbidden', 'Invalid user default board', array( 'status' => 403 ) );
 		}	
+
+
+		// Decker_Utility_Functions::write_log( "------", Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		// Decker_Utility_Functions::write_log( $default_board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
 
 		$label_ids = []; // Set based on your logic to categorize tasks
 		$assigned_users = [];
@@ -231,7 +194,7 @@ class Decker_Email_To_Post {
 		$task_id = Decker_Tasks::create_or_update_task(
 		    0, // 0 indicates a new task
 		    $title,
-		    $description,
+		    $body_html,
 		    $stack_title,
 		    $default_board,
 		    false, // Placeholder for max_priority, adapt as necessary
@@ -253,6 +216,25 @@ class Decker_Email_To_Post {
 		        }
 		    }
 		}
+
+		// Obtener los adjuntos del mensaje
+		$attachments = $message->getAttachments(); // Esto devuelve un array de MessagePart que representan los adjuntos.
+
+		foreach ($attachments as $attachment) {
+		    // Obtener el nombre del archivo adjunto
+		    $filename = $attachment->getFilename();
+
+		    // Obtener el contenido del archivo adjunto
+		    $content = $attachment->getContent();
+
+		    // Puedes manejar el adjunto, por ejemplo, subirlo o guardarlo en el sistema de archivos
+		    $attach_id = $this->upload_attachment($filename, $content);
+		    if ($attach_id) {
+		        add_post_meta($task_id, '_email_attachment', $attach_id);
+		    }
+		}
+
+
 
 		return $task_id;
 

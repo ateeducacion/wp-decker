@@ -49,7 +49,7 @@
           return response.json();
         })
         .then(data => {
-          if (data.message === 'User assigned successfully.') {
+          if (data.success) {
             const taskCard = element.closest('.card');
             const avatarGroup = taskCard.querySelector('.avatar-group');
             const newAvatar = document.createElement('a');
@@ -90,7 +90,7 @@
           return response.json();
         })
         .then(data => {
-          if (data.message === 'User removed successfully.') {
+          if (data.success) {
             const taskCard = element.closest('.card');
             const avatarGroup = taskCard.querySelector('.avatar-group');
             const userAvatar = avatarGroup.querySelector(`a[data-bs-original-title="<?php echo esc_attr( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
@@ -129,7 +129,7 @@
           return response.json();
         })
         .then(data => {
-          if (data.message === 'Relation marked successfully.') {
+          if (data.success) {
             // Toggle menu options
             element.style.display = 'none';
             element.closest('.card').querySelector('.unmark-for-today').style.display = 'block';
@@ -165,7 +165,7 @@
           return response.json();
         })
         .then(data => {
-          if (data.message === 'Relation unmarked successfully.') {
+          if (data.success) {
             // Toggle menu options
             element.style.display = 'none';
             element.closest('.card').querySelector('.mark-for-today').style.display = 'block';
@@ -187,8 +187,8 @@
       element.addEventListener('click', function () {
         var taskId = element.getAttribute('data-task-id');
         if (confirm('Are you sure you want to archive this task?')) {
-          fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId), {
-            method: 'PUT',
+          fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
+            method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
@@ -202,7 +202,7 @@
             return response.json();
           })
           .then(data => {
-            if (data.message === 'Task status updated successfully.') {
+            if (data.success) {
               element.closest('.card').remove();
             } else {
               alert('Failed to archive task.');

@@ -80,7 +80,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<h4 class="page-title"><?php echo esc_html( $main_board->name ); ?>
-										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3">Add New</a>
+										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task', 'slug' => $board_slug ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3">Add New</a>
 
 									</h4>
 								</div>

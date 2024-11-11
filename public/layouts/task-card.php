@@ -8,8 +8,12 @@ if (isset( $_GET['id'] ) ) {
 }
 $task = new Task($task_id);
 
-$disabled = false;
+$board_slug = "";
+if (isset( $_GET['slug'] ) ) {
+	$board_slug = $_GET['slug'];
+}
 
+$disabled = false;
 if ($task_id > 0 && $task->status == 'archived') {
 	$disabled = true;
 }
@@ -178,13 +182,12 @@ function deleteComment(commentId) {
 				<select class="form-select" id="task-board" required <?php disabled($disabled); ?>>
 					<option value="" disabled selected>Select Board</option>
 					<?php
-					$boards = BoardManager::getAllBoards();
 
-					foreach ( $boards as $board ) {
-						$selected = ( $task->board && $task->board->id == $board->id ) ? 'selected' : '';
-						$selected = ( isset( $task->board->id ) && $task->board->id == $board->id ) ? 'selected' : '';
-						echo '<option value="' . esc_attr( $board->id ) . '" ' . $selected . '>' . esc_html( $board->name ) . '</option>';
-					}
+						$boards = BoardManager::getAllBoards();
+
+						foreach ( $boards as $board ) {
+						    echo '<option value="' . esc_attr( $board->id ) . '" ' . selected( $task->board && $task->board->id == $board->id ) . ' ' . selected( $board_slug, $board->slug ) . '>' . esc_html( $board->name ) . '</option>';
+						}
 					?>
 
 				</select>

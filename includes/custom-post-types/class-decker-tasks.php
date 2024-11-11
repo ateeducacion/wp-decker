@@ -560,6 +560,18 @@ class Decker_Tasks {
 			)
 		);
 
+		register_rest_route(
+		    'decker/v1',
+		    '/tasks/(?P<id>\d+)/archive',
+		    array(
+		        'methods'             => 'POST',
+		        'callback'            => array( $this, 'archive_task' ),
+		        'permission_callback' => function () {
+		            return current_user_can( 'edit_posts' );
+		        },
+		    )
+		);
+
 	}
 
 	/**
@@ -573,12 +585,18 @@ class Decker_Tasks {
 		$user_id = $request->get_param( 'user_id' );
 
 		if ( ! $task_id || ! $user_id ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
+			return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'Invalid parameters.' ), 
+			400 );
 		}
 
 		$task = get_post( $task_id );
 		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
+			return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'Task not found.' ), 
+			404 );
 		}
 
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
@@ -591,7 +609,10 @@ class Decker_Tasks {
 			update_post_meta( $task_id, 'assigned_users', $assigned_users );
 		}
 
-		return new WP_REST_Response( array( 'message' => 'User assigned successfully.' ), 200 );
+		return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'User assigned successfully.' ), 
+		200 );
 	}
 
 	/**
@@ -605,12 +626,18 @@ class Decker_Tasks {
 		$user_id = $request->get_param( 'user_id' );
 
 		if ( ! $task_id || ! $user_id ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
+			return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'Invalid parameters.' ), 
+			400 );
 		}
 
 		$task = get_post( $task_id );
 		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
+			return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'Task not found.' ), 
+			404 );
 		}
 
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
@@ -619,7 +646,10 @@ class Decker_Tasks {
 			update_post_meta( $task_id, 'assigned_users', $assigned_users );
 		}
 
-		return new WP_REST_Response( array( 'message' => 'User removed successfully.' ), 200 );
+		return new WP_REST_Response( array(
+	        	'success' => true,
+            	'message' => 'User removed successfully.' ), 
+		200 );
 	}
 	/**
 	 * Add a user-date relation for a task.
@@ -639,36 +669,81 @@ class Decker_Tasks {
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
 
-	public function update_task( $request ) {
-		$task_id = $request['id'];
-		$status = $request->get_param( 'status' );
-		$stack = $request->get_param( 'stack' );
+	// public function update_task( $request ) {
+	// 	$task_id = $request['id'];
+	// 	$status = $request->get_param( 'status' );
+	// 	$stack = $request->get_param( 'stack' );
 
-		if ( ! $task_id || ( ! $status && ! $stack ) ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
-		}
+	// 	if ( ! $task_id || ( ! $status && ! $stack ) ) {
+	// 		return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
+	// 	}
 
-		$task = get_post( $task_id );
-		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
-		}
+	// 	$task = get_post( $task_id );
+	// 	if ( ! $task || 'decker_task' !== $task->post_type ) {
+	// 		return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
+	// 	}
 
-		// Update the task status or stack
-		$update_data = array( 'ID' => $task_id );
-		if ( $status ) {
-			$update_data['post_status'] = $status;
-		}
-		if ( $stack ) {
-			update_post_meta( $task_id, 'stack', $stack );
-		}
-		$updated = wp_update_post( $update_data, true );
+	// 	// Update the task status or stack
+	// 	$update_data = array( 'ID' => $task_id );
+	// 	if ( $status ) {
+	// 		$update_data['post_status'] = $status;
+	// 	}
+	// 	if ( $stack ) {
+	// 		update_post_meta( $task_id, 'stack', $stack );
+	// 	}
+	// 	$updated = wp_update_post( $update_data, true );
 
-		if ( is_wp_error( $updated ) ) {
-			return new WP_REST_Response( array( 'message' => 'Failed to update task status.' ), 500 );
-		}
+	// 	if ( is_wp_error( $updated ) ) {
+	// 		return new WP_REST_Response( array( 'message' => 'Failed to update task status.' ), 500 );
+	// 	}
 
-		return new WP_REST_Response( array( 'message' => 'Task status updated successfully.' ), 200 );
+	// 	return new WP_REST_Response( array( 'message' => 'Task status updated successfully.' ), 200 );
+	// }
+
+	/**
+	 * Archive a task by updating its status to 'archived'.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function archive_task( $request ) {
+	    $task_id = $request['id'];
+
+	    // Validar el ID de la tarea
+	    if ( ! $task_id ) {
+	        return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'ID de tarea inválido.' ), 
+	        400 );
+	    }
+
+	    $task = get_post( $task_id );
+	    if ( ! $task || 'decker_task' !== $task->post_type ) {
+	        return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'Tarea no encontrada.' ),
+	        404 );
+	    }
+
+	    // Actualizar el estado de la tarea a 'archived'
+	    $updated = wp_update_post( array(
+	        'ID'          => $task_id,
+	        'post_status' => 'archived',
+	    ), true );
+
+	    if ( is_wp_error( $updated ) ) {
+	        return new WP_REST_Response( array(
+	        	'success' => false,
+            	'message' => 'Error al archivar la tarea.' ), 
+	        500 );
+	    }
+
+	    return new WP_REST_Response( array(
+	        	'success' => true,
+            	'message' => 'Tarea archivada exitosamente.' ), 
+	  	200 );
 	}
+
 
 	/**
 	 * Register the decker_task post type.
@@ -780,27 +855,27 @@ class Decker_Tasks {
 		}
 	}
 
-	/**
-	 * Display custom post states.
-	 *
-	 * @param array $statuses The current post states.
-	 * @return array The modified post states.
-	 */
-	public function display_post_states( $statuses ) {
-		global $post;
+	// /**
+	//  * Display custom post states.
+	//  *
+	//  * @param array $statuses The current post states.
+	//  * @return array The modified post states.
+	//  */
+	// public function display_post_states( $statuses ) {
+	// 	global $post;
 
-		if ( 'decker_task' == $post->post_type ) {
-			if ( 'archived' == $post->post_status ) {
-				$statuses['archived'] = __( 'Archived', 'decker' );
-			}
+	// 	if ( 'decker_task' == $post->post_type ) {
+	// 		if ( 'archived' == $post->post_status ) {
+	// 			$statuses['archived'] = __( 'Archived', 'decker' );
+	// 		}
 
-			if ( 'draft' == $post->post_status ) {
-				$statuses['draft'] = __( 'Custom Draft State', 'decker' );
-			}
-		}
+	// 		if ( 'draft' == $post->post_status ) {
+	// 			$statuses['draft'] = __( 'Custom Draft State', 'decker' );
+	// 		}
+	// 	}
 
-		return $statuses;
-	}
+	// 	return $statuses;
+	// }
 
 	/**
 	 * Add metaboxes for the decker_task post type.
@@ -1758,6 +1833,10 @@ class Decker_Tasks {
 	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
+		Decker_Utility_Functions::write_log( $term_board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
+
 	    // Convertir objetos DateTime a formato string
 	    $duedate_str = $duedate->format('Y-m-d H:i:s');
 	    $creation_date_str = $creation_date->format('Y-m-d H:i:s');
@@ -1796,31 +1875,6 @@ class Decker_Tasks {
 	        'meta_input'    => $meta_input,
 	        'tax_input'     => $tax_input,
 	    );
-
-
-
-	    // Determinar si es una actualización o creación
-	    if ( $ID > 0 ) {
-	        // Actualizar el post existente
-	        $post_data['ID'] = $ID;
-	        $task_id = wp_update_post( $post_data );
-
-	        if ( is_wp_error( $task_id ) ) {
-	            return $task_id; // Retornar el error para manejarlo externamente
-	        }
-	    } else {
-	        // Crear un nuevo post
-	        $task_id = wp_insert_post( $post_data );
-
-	        if ( is_wp_error( $task_id ) ) {
-	            return $task_id; // Retornar el error para manejarlo externamente
-	        }
-	    }
-
-	    // Retornar el ID de la tarea creada o actualizada
-	    return $task_id;
-
-
 
 
 
