@@ -33,7 +33,7 @@ class Decker_Email_To_Post {
     private function register_mailmimeparser_autoloader() {
         spl_autoload_register(function ($class) {
             $prefix = 'ZBateson\\MailMimeParser\\';
-            $base_dir = __DIR__ . '/vendor/mail-mime-parser/src/';
+            $base_dir = __DIR__ . '../admin/vendor/mail-mime-parser/src/';
 
             // Verificar si la clase utiliza el prefijo.
             $len = strlen($prefix);
@@ -161,18 +161,28 @@ class Decker_Email_To_Post {
 
 
 
-        // // Instanciar MailMimeParser
-        // $mailParser = new MailMimeParser();
-
-        // // Parsear el correo electrónico
-        // try {
-        //     $message = $mailParser->parse($email_data['body']);
-        // } catch ( Exception $e ) {
-        //     Decker_Utility_Functions::write_log( 'Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
-        //     return new WP_Error( 'parse_error', 'No se pudo parsear el correo electrónico.', array( 'status' => 500 ) );
-        // }
 
 
+        // Instanciar MailMimeParser
+        $mailParser = new MailMimeParser();
+
+        // Parsear el correo electrónico
+        try {
+            $message = $mailParser->parse($email_data['body']);
+        } catch ( Exception $e ) {
+            Decker_Utility_Functions::write_log( 'Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+            return new WP_Error( 'parse_error', 'No se pudo parsear el correo electrónico.', array( 'status' => 500 ) );
+        }
+
+
+
+        // Parsear el correo electrónico
+        try {
+            $message = $mailParser->parse($email_data['body']);
+        } catch ( Exception $e ) {
+            Decker_Utility_Functions::write_log( 'Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+            return new WP_Error( 'parse_error', 'No se pudo parsear el correo electrónico.', array( 'status' => 500 ) );
+        }
 
 
 	 	// Get the author based on email
