@@ -1323,9 +1323,7 @@ class Decker_Tasks {
 	    if ( !$update && 'decker_task' === $postarr['post_type'] ) {
 
 	        // Log the function call for debugging.
-	        Decker_Utility_Functions::write_log( 'Function modify_task_order_before_save called.', Decker_Utility_Functions::LOG_LEVEL_INFO );
-
-	        Decker_Utility_Functions::write_log( 'Update:' . $update , Decker_Utility_Functions::LOG_LEVEL_INFO );
+	        Decker_Utility_Functions::write_log( 'Function modify_task_order_before_save called.', Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 
 
 	        // Log input data for inspection.
@@ -1344,7 +1342,7 @@ class Decker_Tasks {
 
 	        if ( isset( $postarr['stack'] ) ) {
 	            $stack = sanitize_text_field( $postarr['stack'] );
-	            Decker_Utility_Functions::write_log( "Found 'stack' directly in \$postarr: $stack", Decker_Utility_Functions::LOG_LEVEL_INFO );
+	            Decker_Utility_Functions::write_log( "Found 'stack' directly in \$postarr: $stack", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	        }
 
 	        // 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
@@ -1369,7 +1367,7 @@ class Decker_Tasks {
 
 	        if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
 	            $stack = sanitize_text_field( $postarr['meta_input']['stack'] );
-	            Decker_Utility_Functions::write_log( "Found 'stack' in 'meta_input': $stack", Decker_Utility_Functions::LOG_LEVEL_INFO );
+	            Decker_Utility_Functions::write_log( "Found 'stack' in 'meta_input': $stack", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	        }
 
 	        // 3. Validate that both 'board' and 'stack' have been retrieved.
@@ -1387,7 +1385,7 @@ class Decker_Tasks {
 	                $data['menu_order'] = intval( $new_order );
 
 	                // Log the new menu_order value.
-	                Decker_Utility_Functions::write_log( "Assigned 'menu_order' = $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_INFO );
+	                Decker_Utility_Functions::write_log( "Assigned 'menu_order' = $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	            } else {
 	                // Log an error if the new_order is not numeric.
 	                Decker_Utility_Functions::write_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_ERROR );

@@ -75,9 +75,9 @@ class Decker_Admin_Import {
 			<?php else : ?>
 				<form method="post" id="decker-import-form">
 					<?php wp_nonce_field( 'decker-import' ); ?>
-					<label for="ignore-existing">
-						<input type="checkbox" id="ignore-existing" name="ignore_existing" value="1" checked>
-						<?php esc_html_e( 'Overwrite existing tasks', 'decker' ); ?>
+					<label for="skip-existing">
+						<input type="checkbox" id="skip-existing" name="skip_existing" value="1">
+						<?php esc_html_e( 'Skip already existing tasks', 'decker' ); ?>
 						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be updated.', 'decker' ); ?></span>
 					</label>
 					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
@@ -104,7 +104,7 @@ class Decker_Admin_Import {
 		const progressText = document.getElementById('progress-text');
 		const logContainer = document.getElementById('log-container');
 		const logMessages = document.getElementById('log-messages');
-		const maxRetries = 3;  // Maximum number of retries allowed
+		const maxRetries = 4;  // Maximum number of retries allowed
 		<?php
 			$options    = get_option( 'decker_settings', array() );
 		?>
@@ -117,7 +117,7 @@ class Decker_Admin_Import {
 			const formData = new FormData(form);
 			formData.append('action', 'decker_start_import');
 			formData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
-			formData.append('ignore_existing', document.getElementById('ignore-existing').checked ? 1 : 0);
+			formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
 			fetch(ajaxurl, {
 				method: 'POST',
@@ -148,26 +148,31 @@ class Decker_Admin_Import {
 							boardData.append('action', 'decker_import_board');
 							boardData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
 							boardData.append('board', JSON.stringify(currentBoard));
-							boardData.append('ignore_existing', formData.get('ignore_existing'));
+							boardData.append('skip_existing', formData.get('skip_existing'));
 
 							fetch(ajaxurl, {
 								method: 'POST',
 								body: boardData
 							})
-							.then(response => response.json())
-							.then(boardResponse => {
-								if (boardResponse.success) {
-									importedBoards++;
-									const progress = (importedBoards / totalBoards) * 100;
-									progressBar.style.width = progress + '%';
-									progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
-
-									logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
-
-									importBoard(); 
-								} else {
-									logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
-								}
+							.then(response => response.text())
+							.then(responseText => {
+							    try {
+							        const boardResponse = JSON.parse(responseText); // Intentar parsear a JSON
+							        if (boardResponse.success) {
+							            // Manejar la respuesta exitosa
+							            importedBoards++;
+							            const progress = (importedBoards / totalBoards) * 100;
+							            progressBar.style.width = progress + '%';
+							            progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
+							            logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
+							            importBoard();
+							        } else {
+							            logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
+							        }
+							    } catch (error) {
+							        // Mostrar el contenido que causó el fallo de JSON.parse()
+							        logMessages.innerHTML += `<li style="color: red;">Failed to parse response for board ID: ${boardId}. Error: ${error.message}</li>`;
+							    }
 							})
 							.catch(error => {
 								if (retries < maxRetries) {
@@ -221,7 +226,7 @@ class Decker_Admin_Import {
 	protected function make_request( $url, $auth, $method = 'GET', $data = null ) {
 		$args = array(
 			'method'  => $method,
-			'timeout' => 30,
+			'timeout' => 60,
 			'headers' => array(
 				'Authorization'  => 'Basic ' . esc_attr( $auth ),
 				'OCS-APIRequest' => 'true',
@@ -270,7 +275,7 @@ class Decker_Admin_Import {
 	        wp_send_json_error('Access denied.');
 	    }
 
-		$ignore_existing = isset( $_POST['ignore_existing'] ) && $_POST['ignore_existing'] == 1;
+		$skip_existing = isset( $_POST['skip_existing'] ) && $_POST['skip_existing'] == 1;
 		$board = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
 		$options    = get_option( 'decker_settings', array() );
 		$ignored_board_ids = explode( ',', $options['decker_ignored_board_ids'] );
@@ -383,7 +388,7 @@ class Decker_Admin_Import {
 	 * @return array|false An array with counts of labels and tasks, or false on failure.
 	 */
 	private function import_labels_and_tasks( $board, $board_term, $archived = false ) {
-		$ignore_existing = isset( $_POST['ignore_existing'] ) && $_POST['ignore_existing'] == 1;
+		$skip_existing = isset( $_POST['skip_existing'] ) && $_POST['skip_existing'] == 1;
 		$label_count = 0;
 		$task_count  = 0;
 
@@ -467,7 +472,7 @@ class Decker_Admin_Import {
 
 						Decker_Utility_Functions::write_log( 'Task created successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 						$task_count++;
-					} elseif ( $ignore_existing ) {
+					} elseif ( $skip_existing ) {
 						// Update the existing task.
 						$post_id = $existing_task[0];
 						wp_update_post(
@@ -480,7 +485,7 @@ class Decker_Admin_Import {
 						Decker_Utility_Functions::write_log( 'Task updated successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 					}
 
-					usleep( 100000 ); // Little sleep to not be banned by nextcloud
+					usleep( 100 ); // Little sleep to not be banned by nextcloud
 
 				}
 			}

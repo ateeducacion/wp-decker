@@ -376,7 +376,7 @@ function deleteComment(commentId) {
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
 		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled || !current_user_can( 'administrator' ) ); ?>>
+			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled || !current_user_can( 'manage_options' ) ); ?>>
 			<label class="form-check-label" for="task-max-priority">Maximum Priority</label>
 		</div>
 		<button type="button" class="btn btn-secondary me-2" id="archive-task" <?php disabled($disabled || $task_id === 0 ); ?>>
@@ -482,6 +482,9 @@ function initializeTaskPage() {
 	// Function to enable save button when any field changes
     const enableSaveButton = function() {
         saveButton.disabled = false;
+
+        // TO-DO: Finish this to prevent closing without saving
+        // hasUnsavedChanges = true;
     };
 
 	const form = document.getElementById('task-form');
@@ -509,6 +512,17 @@ function initializeTaskPage() {
     }
 
 }
+
+// TO-DO: Finish this to prevent closing without saving
+// var hasUnsavedChanges = false;
+// window.addEventListener('beforeunload', function(event) {
+//     if (hasUnsavedChanges) {
+//         // Mostrará una advertencia al usuario
+//         event.preventDefault();
+//         event.returnValue = ''; // Para algunos navegadores, esto es necesario
+//     }
+// });
+
 
 function togglePriorityLabel(element) {
 	var highLabel = document.getElementById('high-label');
@@ -538,6 +552,21 @@ if (taskModal) {
             });
         }
     });
+
+    // TO-DO: Finish this to prevent closing without saving
+	// taskModal.addEventListener('hide.bs.modal', function(event) {
+	//     if (hasUnsavedChanges) {
+	//         event.preventDefault(); // Prevent the modal from closing
+	//         if (confirm('You have unsaved changes. Are you sure you want to close the modal?')) {
+	//             // resetUnsavedChanges(); // Allow closing if confirmed
+	//             const modalInstance = bootstrap.Modal.getInstance(taskModal);
+	//             if (modalInstance) {
+	//                 modalInstance.hide();
+	//             }
+	//         }
+	//     }
+	// });
+
 }
 
 document.addEventListener('DOMContentLoaded', function () {
