@@ -198,6 +198,13 @@ foreach ( $tasks as $task ) {
 				}
 			}) : dragula(a);
 
+			let oldOrder = null;
+
+			drake.on('drag', function(el, source) {
+			    // Capture the old order of the element being dragged
+			    oldOrder = Array.from(source.children).indexOf(el) + 1;
+			});
+
 			drake.on('drop', function (el, target, source, sibling) {
 				const taskId = el.getAttribute('data-task-id');
 				if (!taskId) {
@@ -222,6 +229,7 @@ foreach ( $tasks as $task ) {
 							board_id: boardId,
 							source_stack: sourceStack,
 							target_stack: targetStack,
+							source_order: oldOrder,
 							target_order: newOrder
 						})
 					})
@@ -249,6 +257,7 @@ foreach ( $tasks as $task ) {
 							board_id: boardId,
 							source_stack: sourceStack,
 							target_stack: targetStack,
+							source_order: oldOrder,
 							target_order: newOrder
 						})
 

@@ -76,9 +76,9 @@ class Decker_Admin_Import {
 				<form method="post" id="decker-import-form">
 					<?php wp_nonce_field( 'decker-import' ); ?>
 					<label for="skip-existing">
-						<input type="checkbox" id="skip-existing" name="skip_existing" value="1">
+						<input type="checkbox" id="skip-existing" name="skip_existing" value="1" checked>
 						<?php esc_html_e( 'Skip already existing tasks', 'decker' ); ?>
-						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be updated.', 'decker' ); ?></span>
+						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
 					</label>
 					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
 				</form>
@@ -96,106 +96,111 @@ class Decker_Admin_Import {
 		</div>
 
 <script>
-	// JavaScript for managing import progress and log display
-	document.addEventListener('DOMContentLoaded', function() {
-		const form = document.getElementById('decker-import-form');
-		const progressContainer = document.getElementById('import-progress');
-		const progressBar = document.getElementById('progress');
-		const progressText = document.getElementById('progress-text');
-		const logContainer = document.getElementById('log-container');
-		const logMessages = document.getElementById('log-messages');
-		const maxRetries = 4;  // Maximum number of retries allowed
-		<?php
-			$options    = get_option( 'decker_settings', array() );
-		?>
-		const ignoredBoardIds = '<?php echo esc_js( $options['decker_ignored_board_ids'] ); ?>'.split(',').map(id => id.trim());
+// JavaScript for managing import progress and log display	
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('decker-import-form');
+    const progressContainer = document.getElementById('import-progress');
+    const progressBar = document.getElementById('progress');
+    const progressText = document.getElementById('progress-text');
+    const logContainer = document.getElementById('log-container');
+    const logMessages = document.getElementById('log-messages');
+    const maxRetries = 4;  // Maximum number of retries
+    <?php
+        $options = get_option('decker_settings', array());
+    ?>
+    const ignoredBoardIds = '<?php echo esc_js($options['decker_ignored_board_ids']); ?>'.split(',').map(id => id.trim());
 
-		form.addEventListener('submit', function(event) {
-			event.preventDefault();
-			progressContainer.style.display = 'block';
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent form submission
+        progressContainer.style.display = 'block';
 
-			const formData = new FormData(form);
-			formData.append('action', 'decker_start_import');
-			formData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
-			formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
+        const formData = new FormData(form);
+        formData.append('action', 'decker_start_import');
+        formData.append('security', '<?php echo esc_js(wp_create_nonce('decker_import_nonce')); ?>');
+        formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
-			fetch(ajaxurl, {
-				method: 'POST',
-				body: formData
-			})
-			.then(response => response.json())
-			.then(importData => {
-				if (importData.success) {
-					const totalBoards = importData.data.length;
+        fetch(ajaxurl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(importData => {
+            if (importData.success) {
+                const totalBoards = importData.data.length;
+				// const totalBoards = 2; // TODO: Just for DEBUG importing just two boards
 
-					// const totalBoards = 2; //TO DEBUG just one board
+                let importedBoards = 0;
 
-					let importedBoards = 0;
+                // Filter boards that are not ignored
+                const boardsToProcess = importData.data.filter(board => !ignoredBoardIds.includes(board.id.toString()));
 
-					const importBoard = (retries = 0) => {
-						if (importedBoards < totalBoards) {
-							const currentBoard = importData.data[importedBoards];
-							const boardId = currentBoard.id.toString();
+                // Start the board import process
+                processBoards(boardsToProcess, importedBoards, totalBoards);
+            } else {
+                logMessages.innerHTML += `<li style="color: red;">Error starting import: ${importData.data}</li>`;
+            }
+        })
+        .catch(error => {
+            logMessages.innerHTML += `<li style="color: red;">Error starting import: ${error.message}</li>`;
+        });
+    });
 
-							if (ignoredBoardIds.includes(boardId)) {
-								logMessages.innerHTML += `<li style="color: gray;">Ignoring board with ID: ${boardId}</li>`;
-								importedBoards++;
-								importBoard();  // Skip to the next board
-								return;
-							}
+    function processBoards(boards, importedBoards, totalBoards) {
+        if (boards.length === 0) {
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Import completed!';
+            logMessages.innerHTML += `<li>Import completed successfully.</li>`;
+            return;
+        }
 
-							const boardData = new FormData();
-							boardData.append('action', 'decker_import_board');
-							boardData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
-							boardData.append('board', JSON.stringify(currentBoard));
-							boardData.append('skip_existing', formData.get('skip_existing'));
+        const currentBoard = boards.shift();
+        const boardId = currentBoard.id.toString();
 
-							fetch(ajaxurl, {
-								method: 'POST',
-								body: boardData
-							})
-							.then(response => response.text())
-							.then(responseText => {
-							    try {
-							        const boardResponse = JSON.parse(responseText); // Intentar parsear a JSON
-							        if (boardResponse.success) {
-							            // Manejar la respuesta exitosa
-							            importedBoards++;
-							            const progress = (importedBoards / totalBoards) * 100;
-							            progressBar.style.width = progress + '%';
-							            progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
-							            logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
-							            importBoard();
-							        } else {
-							            logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
-							        }
-							    } catch (error) {
-							        // Mostrar el contenido que causó el fallo de JSON.parse()
-							        logMessages.innerHTML += `<li style="color: red;">Failed to parse response for board ID: ${boardId}. Error: ${error.message}</li>`;
-							    }
-							})
-							.catch(error => {
-								if (retries < maxRetries) {
-									logMessages.innerHTML += `<li style="color: orange;">Retrying board with ID: ${boardId} (${retries + 1}/${maxRetries})...</li>`;
-									setTimeout(() => importBoard(retries + 1), 3000); // Retry after 3 seconds
-								} else {
-									logMessages.innerHTML += `<li style="color: red;">Failed to import board with ID: ${boardId} after ${maxRetries} attempts. Error: ${error.message}</li>`;
-								}
-							});
-						} else {
-							progressBar.style.width = '100%';
-							progressText.textContent = 'Import completed!';
-							logMessages.innerHTML += `<li>Import completed successfully.</li>`;
-						}
-					};
+        const boardData = new FormData();
+        boardData.append('action', 'decker_import_board');
+        boardData.append('security', '<?php echo esc_js(wp_create_nonce('decker_import_nonce')); ?>');
+        boardData.append('board', JSON.stringify(currentBoard));
+        boardData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
-					importBoard();
-				} else {
-					logMessages.innerHTML += `<li style="color: red;">Error starting import: ${importData.data}</li>`;
-				}
-			});
-		});
-	});
+        fetch(ajaxurl, {
+            method: 'POST',
+            body: boardData
+        })
+        .then(response => response.text())
+        .then(responseText => {
+            try {
+                const boardResponse = JSON.parse(responseText);
+                if (boardResponse.success) {
+                    importedBoards++;
+                    const progress = (importedBoards / totalBoards) * 100;
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
+                    logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
+                } else {
+                    logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
+                }
+            } catch (error) {
+                // Display the content that caused the JSON.parse() failure
+                console.error('Received response:', error.message);
+                console.error(error.message);
+                console.error('Received response:', responseText);
+                logMessages.innerHTML += `<li style="color: red;">Failed to parse response for board ID: ${boardId}. Retrying...</li>`;
+            }
+            // Process the next board
+            setTimeout(() => {
+                processBoards(boards, importedBoards, totalBoards);
+            }, 500); // Add a small delay if necessary
+        })
+        .catch(error => {
+            logMessages.innerHTML += `<li style="color: red;">Failed to import board with ID: ${boardId}. Error: ${error.message}</li>`;
+            // Process the next board
+            processBoards(boards, importedBoards, totalBoards);
+        });
+    }
+});
+
+
+
 </script>
 
 		<?php
@@ -472,7 +477,7 @@ class Decker_Admin_Import {
 
 						Decker_Utility_Functions::write_log( 'Task created successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 						$task_count++;
-					} elseif ( $skip_existing ) {
+					} elseif ( !$skip_existing ) {
 						// Update the existing task.
 						$post_id = $existing_task[0];
 						wp_update_post(
@@ -516,13 +521,8 @@ class Decker_Admin_Import {
 
 	    // Obtener la fecha de vencimiento
 	    $due_date_str = ! empty( $card['due_date'] ) ? sanitize_text_field( $card['due_date'] ) : null;
-	    try {
-	        $due_date = $due_date_str ? new DateTime( $due_date_str ) : new DateTime();
-	    } catch ( Exception $e ) {
-	        // Manejar la excepción si la fecha no es válida
-	        Decker_Utility_Functions::write_log( 'Fecha de vencimiento inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	        $due_date = new DateTime(); // Asignar una fecha por defecto
-	    }
+	    $due_date = $due_date_str ? new DateTime( $due_date_str ) : null;
+
 
 	    // Determinar el propietario (owner)
 	    if ( is_string( $card['owner'] ) ) {
@@ -630,108 +630,6 @@ class Decker_Admin_Import {
 
 	    return $task_id;
 	}
-
-
-	// private function create_task( $card, $board_term, $stack_title, $archived ) {
-
-	// 	// Determine the post status based on whether the card is archived or not.
-	// 	$post_status = ! empty( $card['archived'] ) && $card['archived'] ? 'archived' : 'publish';
-
-	// 	$html_description = $this->Parsedown->text( $card['description'] );
-
-	// 	$due_date = ! empty( $card['due_date'] ) ? sanitize_text_field( $card['due_date'] ) : null;
-
-
-	// 	// Check if the owner is directly a string (UUID) or an object containing 'uid'.
-	// 	if ( is_string( $card['owner'] ) ) {
-	// 		$nickname = sanitize_text_field( $card['owner'] );
-	// 	} elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
-	// 		$nickname = sanitize_text_field( $card['owner']['uid'] );
-	// 	} else {
-	// 		$nickname = '';
-	// 	}
-
-	// 	// Use the "nickname" field because the login won't be valid.
-	// 	$owner_obj = get_users(
-	// 		array(
-	// 			'search'         => $nickname,
-	// 			'search_columns' => array( 'display_name', 'nickname' ),
-	// 			'number'         => 1,
-	// 		)
-	// 	);
-	// 	$owner = get_current_user();
-	// 	if ( ! empty( $owner_obj ) && is_array( $owner_obj ) ) {
-	// 		$owner = $owner_obj[0]->ID;
-	// 	}
-
-	// 	$assigned_users = array();
-	// 	if ( is_array( $card['assignedUsers'] ) ) {	
-	// 		foreach ( $card['assignedUsers'] as $user ) {
-	// 			$user_obj = get_user_by( 'login', sanitize_user( $user['participant']['uid'] ) );
-	// 			if ( $user_obj ) {
-	// 				$assigned_users[] = $user_obj->ID;
-	// 			}
-	// 		}
-	// 	}
-
-	//     // Preparar los términos para tax_input
-	//     $tax_input = array();
-
-	//     if ( ! is_wp_error( $board_term ) && isset( $board_term['term_id'] ) ) {
-	//         // Obtener el nombre del término usando su ID
-	//         $term = get_term( intval( $board_term['term_id'] ), 'decker_board' );
-	//         if ( ! is_wp_error( $term ) && $term ) {
-	//             $tax_input['decker_board'] = array( $term->name );
-	//         }
-	//     } else {
-	//         Decker_Utility_Functions::write_log( 'Invalid board term for task creation.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	//     }
-
-	//     // Incluir etiquetas en tax_input si las hay.
-	//     if ( is_array( $card['labels'] ) ) {
-	//         $tax_input['decker_label'] = array(); // Inicializar el array.
-	//         foreach ( $card['labels'] as $label ) {
-	//             $label_term = term_exists( $label['title'], 'decker_label' );
-	//             if ( ! is_wp_error( $label_term ) && $label_term ) {
-	//                 // Obtener el objeto del término usando su ID.
-	//                 $term = get_term( intval( $label_term['term_id'] ), 'decker_label' );
-	//                 if ( ! is_wp_error( $term ) && $term ) {
-	//                     $tax_input['decker_label'][] = $term->name;
-	//                 }
-	//             }
-	//         }
-	//         // Eliminar la taxonomía si no hay etiquetas válidas.
-	//         if ( empty( $tax_input['decker_label'] ) ) {
-	//             unset( $tax_input['decker_label'] );
-	//         }
-	//     }
-
-	// 	$post_id = wp_insert_post(
-	// 		array(
-	// 			'post_title'   => trim( $card['title'] ),
-	// 			'post_content' => $html_description,
-	// 			'post_status'  => $post_status,
-	// 			'post_type'    => 'decker_task',
-	// 			'post_date'    => date( 'Y-m-d H:i:s', $card['createdAt'] ),
-	// 			'post_author'  => $owner,
-	// 			'meta_input'   => array(
-	// 				'id_nextcloud_card' => $card['id'],
-	// 				'stack'             => esc_html( $stack_title ),
-	// 				'duedate'          => $due_date,
-	// 				'max_priority'      => ( isset( $card['labels'] ) && is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) ? '1' : '',
-	// 				'assigned_users'    => $assigned_users,
-	// 			),
-	// 			'tax_input'    => $tax_input,
-	// 		)
-	// 	);
-
-	// 	if ( ! $archived ) {
-	// 		// Import and process comments for this task.
-	// 		$this->import_comments( $card['id'], $post_id );
-	// 	}
-
-	// 	return $post_id;
-	// }
 
 	/**
 	 * Imports comments for a task.

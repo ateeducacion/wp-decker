@@ -329,11 +329,13 @@ class Task {
             esc_attr($this->ID)
         );
 
-        // Add 'Edit in WordPress' menu item
-        $menuItems[] = sprintf(
-            '<a href="%s" class="dropdown-item" target="_blank"><i class="ri-wordpress-line me-1"></i>Edit in WordPress</a>',
-            esc_url(get_edit_post_link($this->ID))
-        );
+        if ( current_user_can( 'manage_options' ) ) { 
+            // Add 'Edit in WordPress' menu item
+            $menuItems[] = sprintf(
+                '<a href="%s" class="dropdown-item" target="_blank"><i class="ri-wordpress-line me-1"></i>Edit in WordPress</a>',
+                esc_url(get_edit_post_link($this->ID))
+            );
+        }
 
         // Add 'Archive' menu item
         $menuItems[] = sprintf(

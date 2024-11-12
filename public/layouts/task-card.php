@@ -206,7 +206,8 @@ function deleteComment(commentId) {
 	<div class="row">
 		<div class="col-md-6 mb-3">
 			<div class="form-floating">
-				<select class="form-select" id="task-board" required <?php disabled($disabled); ?>>
+				<?php //TODO: Allow changing the board. ?>
+				<select class="form-select" id="task-board" required <?php disabled($disabled || $task_id > 0); ?>>
 					<option value="" disabled selected>Select Board</option>
 					<?php
 
