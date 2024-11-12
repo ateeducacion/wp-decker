@@ -208,7 +208,8 @@ function deleteComment(commentId) {
 		</div>
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<select class="form-select" id="task-author" required <?php disabled($disabled); ?>>
+				<!-- Author always disabled -->
+				<select class="form-select" id="task-author" required <?php disabled(true); ?>>
 					<option value="" disabled selected>Select Author</option>
 					<?php
 					$users = get_users();
@@ -480,9 +481,6 @@ function initializeTaskPage() {
         labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
     }
 
-
-
-
 }
 
 function togglePriorityLabel(element) {
@@ -505,41 +503,36 @@ if (taskModal) {
     taskModal.addEventListener('shown.bs.modal', function () {
         const formModal = taskModal.querySelector('#task-form');
 
-        if (formModal && !formModal.dataset.listener) { // Evita adjuntar múltiples listeners
-            formModal.dataset.listener = 'true'; // Marca que ya tiene el listener
+        if (formModal && !formModal.dataset.listener) {
+            formModal.dataset.listener = 'true';
 
             formModal.addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                formModal.classList.remove('was-validated');
-
-                if (!formModal.checkValidity()) {
-                    event.stopPropagation();
-                    formModal.classList.add('was-validated');
-                    return;
-                }
-
-
-				sendFormByAjax();
+                sendFormByAjax(event);
             });
         }
     });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    
+    const form = document.getElementById('task-form');
 
-    sendFormByAjax();
+    if (form && !form.dataset.listener) {
+        form.dataset.listener = 'true';
 
+        form.addEventListener('submit', function(event) {
+            sendFormByAjax(event);
+        });
+    }
 });
 
 
-function sendFormByAjax() {
+function sendFormByAjax(event) {
+	event.preventDefault();
 
 	const form = document.getElementById('task-form');
 
-    form.addEventListener('submit', function(event) {
-        event.preventDefault(); // Previene el envío por defecto
+    // form.addEventListener('submit', function(event) {
+    //     event.preventDefault(); // Previene el envío por defecto
 
 
         // Remueve la clase 'was-validated' previamente
@@ -617,7 +610,7 @@ function sendFormByAjax() {
             .join('&');
 
         xhr.send(encodedData);
-    });
+    // });
 }
 
     // // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios

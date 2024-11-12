@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		if (taskId) {
 			url += '?id=' + taskId; // Añadir el ID de la tarea a la URL si existe
+
+			url += '&nocache=' + new Date().getTime();
+
 		} else {
 
 			// Obtener los parámetros de la URL actual
@@ -45,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		}
 
-		url += '&nocache=' + new Date().getTime();
 
 
 

@@ -81,7 +81,15 @@ foreach ( $tasks as $task ) {
 
 									<h4 class="page-title"><?php echo esc_html( $main_board->name ); ?>
 										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task', 'slug' => $board_slug ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3">Add New</a>
-
+	
+									<?php if ( current_user_can( 'manage_options' ) ) { ?> 
+									<!-- <span class="label-to-show"> -->
+									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id ); ?>" class="btn btn-danger btn-sm ms-3">Fix Order</a>
+    								<!-- </span> -->
+					<!-- 				<span class="label-to-hide">
+									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id  ); ?>" class="btn btn-danger btn-sm ms-3">Fix Order</a>
+    								</span> -->
+									<?php } ?>
 									</h4>
 								</div>
 							</div>
@@ -196,7 +204,7 @@ foreach ( $tasks as $task ) {
 					console.error('Task ID is undefined');
 					return;
 				}
-				const newStack = target.id.replace('task-list-', '');
+				const boardId = <?php echo $main_board->id; ?>;
 				const newOrder = Array.from(target.children).indexOf(el) + 1;
 
 				const sourceStack = source.id.replace('task-list-', '');
@@ -209,7 +217,13 @@ foreach ( $tasks as $task ) {
 							'Content-Type': 'application/json',
 							'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
 						},
-						body: JSON.stringify({ order: newOrder })
+						body: JSON.stringify({
+							task_id: taskId,
+							board_id: boardId,
+							source_stack: sourceStack,
+							target_stack: targetStack,
+							target_order: newOrder
+						})
 					})
 					.then(response => {
 						if (!response.ok) {
@@ -218,7 +232,7 @@ foreach ( $tasks as $task ) {
 						return response.json();
 					})
 					.then(data => {
-						if (data.message !== 'Task order updated successfully.') {
+						if (!data.success) {
 							alert('Failed to update task order.');
 						}
 					})
@@ -230,7 +244,15 @@ foreach ( $tasks as $task ) {
 							'Content-Type': 'application/json',
 							'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
 						},
-						body: JSON.stringify({ stack: newStack, order: newOrder })
+						body: JSON.stringify({
+							task_id: taskId,
+							board_id: boardId,
+							source_stack: sourceStack,
+							target_stack: targetStack,
+							target_order: newOrder
+						})
+
+
 					})
 					.then(response => {
 						if (!response.ok) {
@@ -239,7 +261,7 @@ foreach ( $tasks as $task ) {
 						return response.json();
 					})
 					.then(data => {
-						if (data.status !== 'success') {
+						if (!data.success) {
 							alert('Failed to update task stack and order.');
 						}
 					})

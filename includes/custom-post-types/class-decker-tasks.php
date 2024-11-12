@@ -215,36 +215,68 @@ class Decker_Tasks {
 	 * @param WP_REST_Request $request The REST request.
 	 * @return WP_REST_Response The REST response.
 	 */
-	public function update_task_stack( $request ) {
+	public function update_task_stack_and_order( $request ) {
 		$task_id    = $request['id'];
-		$new_stack  = $request->get_param( 'stack' );
-		$new_order  = $request->get_param( 'order' );
+		// $new_stack  = $request->get_param( 'stack' );
+		// $new_order  = $request->get_param( 'order' );
+		$board_id = $request->get_param('board_id');
+	    $source_stack = $request->get_param('source_stack');
+	    $target_stack = $request->get_param('target_stack');
+	    // $source_order = $request->get_param('source_order');
+	    $target_order = $request->get_param('target_order');
+
 
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
-		if ( ! in_array( $new_stack, $valid_stacks ) ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid stack value.' ), 400 );
+		if ( ! in_array( $source_stack, $valid_stacks ) || ! in_array( $target_stack, $valid_stacks ) ) {
+			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid stack value.' ), 400 );
 		}
 
-		if ( ! $task_id || ! $new_stack ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
+		if (!$task_id || !$target_order ) {
+			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
 		}
 
 		$task = get_post( $task_id );
 		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
+			return new WP_REST_Response( array( 'success' => false, 'message' => 'Task not found.' ), 404 );
 		}
 
-		// Update the stack
-		update_post_meta( $task_id, 'stack', $new_stack );
+		// Update the stack and the order
+		update_post_meta( $task_id, 'stack', $target_stack );
+		// wp_update_post(['ID' => $task_id, 'menu_order' => $target_order]);
 
-		// Set default order if not provided
-		if ( empty( $new_order ) ) {
-			$new_order = 1;
+
+
+		global $wpdb;
+
+		// Realiza la actualización usando SQL directamente
+		$updated = $wpdb->update(
+		    $wpdb->posts, // La tabla de posts de WordPress
+		    array('menu_order' => $target_order), // El valor que deseas actualizar
+		    array('ID' => $task_id), // La condición para encontrar la fila correcta
+		    array('%d'), // El tipo de datos de los valores (entero)
+		    array('%d')  // El tipo de datos de la condición (entero)
+		);
+
+		// Verifica si la actualización fue exitosa
+		if (false === $updated) {
+		    // Manejo de error, por ejemplo, registro de error
+		    error_log('Error updating menu_order for task ID ' . $task_id . ': ' . $wpdb->last_error);
+	
+		    Decker_Utility_Functions::write_log( $wpdb->last_error, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
 		}
 
-		// Reorder tasks in the new stack
-		$result = $this->reorder_tasks( $new_stack, $task_id, $new_order );
+
+
+
+		// Reorder tasks in the source stack
+		if ($source_stack !== $target_stack) {
+			$result = $this->reorder_tasks_in_stack( $board_id, $source_stack );
+		}
+		// Reorder tasks in the target stack
+		$result = $this->reorder_tasks_in_stack( $board_id, $target_stack );
+
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -252,6 +284,7 @@ class Decker_Tasks {
 
 		return new WP_REST_Response(
 			array(
+				'success' => true,
 				'status'  => 'success',
 				'message' => 'Task stack and order updated successfully.',
 			),
@@ -259,139 +292,106 @@ class Decker_Tasks {
 		);
 	}
 
-	private function reorder_tasks_in_stack_after_archive_or_delete( int $board_term_id, string $stack, int $archived_menu_order ) {
-	    global $wpdb;
-
-	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $board_term_id, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $archived_menu_order, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-
-
-	    // Update all tasks with menu_order greater than the archived task
-	    $wpdb->query(
-	        $wpdb->prepare(
-	            "
-	            UPDATE $wpdb->posts p
-	            INNER JOIN $wpdb->term_relationships tr ON p.ID = tr.object_id
-	            INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-	            INNER JOIN $wpdb->postmeta pm_stack ON p.ID = pm_stack.post_id AND pm_stack.meta_key = 'stack'
-	            SET p.menu_order = p.menu_order - 1
-	            WHERE p.post_type = 'decker_task'
-	              AND p.post_status = 'publish'
-	              AND pm_stack.meta_value = %s
-	              AND tt.term_id = %d
-	              AND p.menu_order > %d
-	            ",
-	            $stack,
-	            $board_term_id,
-	            $archived_menu_order
-	        )
-	    );
-	}
-
-
 	/**
 	 * Reorder tasks within a stack and board after a task is deleted.
 	 *
-	 * @param string $board_term_id The board term ID.
+	 * @param int $board_term_id The board term ID.
 	 * @param string $stack The stack to reorder.
+	 * @param int $exclude_post_id Task to exclude.
 	 */
-	private function reorder_tasks_in_stack( int $board_term_id, string $stack ) {
+	private function reorder_tasks_in_stack( int $board_term_id, string $stack, int $exclude_post_id = 0 ) {
+	    global $wpdb;
 
-	    // Fetch all tasks in the current board and stack, ordered by menu_order.
-	    $tasks_in_stack = get_posts(
-	        array(
-	            'post_type'      => 'decker_task',
-	            'post_status'    => 'publish',
-	            'tax_query'      => array(
-	                array(
-	                    'taxonomy' => 'decker_board',
-	                    'field'    => 'term_id',
-	                    'terms'    => $board_term_id,
-	                ),
-	            ),
-				'meta_key'    => 'max_priority', // Definir el campo meta para ordenar
-				'meta_type' => 'BOOL',
-	            'meta_query'     => array(
-	                array(
-	                    'key'     => 'stack',
-	                    'value'   => $stack,
-	                    'compare' => '=',
-	                ),
-	            ),
-				'orderby'     => array(
-					'max_priority' => 'DESC',
-					'menu_order'   => 'ASC',
-				),
-	            'numberposts'    => -1,
-	            'fields'         => 'ids', // Fetch only the post IDs for better performance
+	    // Initialize the row number variable
+	    $wpdb->query( "SET @rownum := 0" );
 
+	    // Perform the UPDATE in a single statement
+	    $result = $wpdb->query(
+	        $wpdb->prepare(
+	            // "
+	            // UPDATE $wpdb->posts p
+	            // INNER JOIN (
+	            //     SELECT p.ID, (@rownum := @rownum + 1) AS new_menu_order
+	            //     FROM $wpdb->posts p
+	            //     INNER JOIN $wpdb->term_relationships tr ON p.ID = tr.object_id
+	            //     INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+	            //     INNER JOIN $wpdb->postmeta pm_stack ON p.ID = pm_stack.post_id AND pm_stack.meta_key = 'stack'
+	            //     LEFT JOIN $wpdb->postmeta pm_priority ON p.ID = pm_priority.post_id AND pm_priority.meta_key = 'max_priority'
+	            //     WHERE p.post_type = 'decker_task'
+	            //       AND p.post_status = 'publish'
+	            //       AND pm_stack.meta_value = %s
+	            //       AND tt.term_id = %d
+	            //       AND p.ID != %d
+	            //     ORDER BY pm_priority.meta_value DESC, p.menu_order ASC
+	            // ) AS ordered_tasks ON p.ID = ordered_tasks.ID
+	            // SET p.menu_order = ordered_tasks.new_menu_order
+	            // ",
+	// "
+	//         SELECT main_query.ID, (@rownum := @rownum + 1) AS new_menu_order
+	//         FROM (
+	//             SELECT p.ID
+	//             FROM {$wpdb->posts} p
+	//             INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+	//             INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+	//             INNER JOIN {$wpdb->postmeta} pm_stack 
+	//                 ON p.ID = pm_stack.post_id 
+	//                 AND pm_stack.meta_key = 'stack'
+	//             LEFT JOIN {$wpdb->postmeta} pm_priority 
+	//                 ON p.ID = pm_priority.post_id 
+	//                 AND pm_priority.meta_key = 'max_priority'
+	//             WHERE 
+	//                 p.post_type = 'decker_task'
+	//                 AND p.post_status = 'publish'
+	//                 AND pm_stack.meta_value = %s
+	//                 AND tt.term_id = %d
+	//                 AND p.ID != %d
+	//             ORDER BY 
+	//                 (pm_priority.meta_value = '1') DESC,  -- Prioridad máxima primero
+	//                 p.menu_order ASC  -- Ordenar por menu_order si no hay prioridad
+	//         ) AS main_query
+	//     ",
+
+
+	 "
+	        UPDATE {$wpdb->posts} p
+	        INNER JOIN (
+	            SELECT p.ID, (@rownum := @rownum + 1) AS new_menu_order
+	            FROM {$wpdb->posts} p
+	            INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+	            INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+	            INNER JOIN {$wpdb->postmeta} pm_stack 
+	                ON p.ID = pm_stack.post_id 
+	                AND pm_stack.meta_key = 'stack'
+	            LEFT JOIN {$wpdb->postmeta} pm_priority 
+	                ON p.ID = pm_priority.post_id 
+	                AND pm_priority.meta_key = 'max_priority'
+	            WHERE 
+	                p.post_type = 'decker_task'
+	                AND p.post_status = 'publish'
+	                AND pm_stack.meta_value = %s
+	                AND tt.term_id = %d
+	                AND p.ID != %d
+	            GROUP BY p.ID
+	            ORDER BY 
+	                COALESCE(CAST(pm_priority.meta_value AS UNSIGNED), 9999) ASC,
+	                p.menu_order ASC
+	        ) AS ordered_tasks ON p.ID = ordered_tasks.ID
+	        SET p.menu_order = ordered_tasks.new_menu_order
+	        ",
+
+
+	            $stack,
+	            $board_term_id,
+	            $exclude_post_id
 	        )
 	    );
 
-	    // Reassign menu_order for each task.
-	    foreach ( $tasks_in_stack as $index => $task ) {
-	        wp_update_post(
-	            array(
-	                'ID'         => $task->ID,
-	                'menu_order' => $index + 1,
-	            )
-	        );
-	    }
+		if ( $result === false ) {
+		    // Handle error, e.g., log the error
+		    Decker_Utility_Functions::write_log( $wpdb->last_error, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		}
+
 	}
-
-
-
-
-	private function reorder_tasks_via_sql( $board_term_id, $stack, $exclude_post_id = null ) {
-	    global $wpdb;
-
-	    // Consulta para obtener los IDs de los posts ordenados por `menu_order`.
-	    $query = $wpdb->prepare(
-	        "
-	        SELECT p.ID
-	        FROM $wpdb->posts p
-	        INNER JOIN $wpdb->term_relationships tr ON p.ID = tr.object_id
-	        INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-	        WHERE p.post_type = 'decker_task'
-	          AND p.post_status = 'publish'
-	          AND tt.term_id = %d
-	          AND EXISTS (
-	              SELECT 1 FROM $wpdb->postmeta pm
-	              WHERE pm.post_id = p.ID
-	                AND pm.meta_key = 'stack'
-	                AND pm.meta_value = %s
-	          )
-	        ORDER BY p.menu_order ASC
-	        ",
-	        $board_term_id,
-	        $stack
-	    );
-
-	    $task_ids = $wpdb->get_col( $query );
-
-	    // Excluir el post, si es necesario.
-	    if ( $exclude_post_id !== null ) {
-	        $task_ids = array_filter( $task_ids, function( $id ) use ( $exclude_post_id ) {
-	            return $id != $exclude_post_id;
-	        });
-	    }
-
-	    // Actualizar `menu_order` en una sola consulta.
-	    foreach ( $task_ids as $index => $task_id ) {
-	        $wpdb->update(
-	            $wpdb->posts,
-	            array( 'menu_order' => $index + 1 ),
-	            array( 'ID' => $task_id ),
-	            array( '%d' ),
-	            array( '%d' )
-	        );
-	    }
-	}
-
-
 
 	/**
 	 * Handle task deletion to reorder tasks.
@@ -405,9 +405,8 @@ class Decker_Tasks {
 
 	    $board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
 	    $stack = get_post_meta( $post_id, 'stack', true );
-		$archived_menu_order = (int) get_post_field( 'menu_order', $post_id );
 	    if ( $board_term_id >0 && $stack ) {
-	        $this->reorder_tasks_in_stack_after_archive_or_delete( $board_term_id, $stack, $archived_menu_order);
+	        $this->reorder_tasks_in_stack( $board_term_id, $stack, $post_id);
 	    }
 	}
 
@@ -423,9 +422,9 @@ class Decker_Tasks {
 			return;
 		}
 
-	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $new_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $old_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( $new_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( $old_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
 
 
 
@@ -437,51 +436,49 @@ class Decker_Tasks {
 			$board_term_id = ! empty( $board_term_id ) ? $board_term_id[0] : 0;
 
 			$stack = get_post_meta( $post->ID, 'stack', true );
-			$archived_menu_order = (int) get_post_field( 'menu_order', $post_id );
 
 
-	    Decker_Utility_Functions::write_log( $board_term_id, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    Decker_Utility_Functions::write_log( $archived_menu_order, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( $board_term_id, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_ERROR );
 
-	    Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
 
 
 		    if ( $board_term_id >0 && $stack ) {
-		        $this->reorder_tasks_in_stack_after_archive_or_delete( $board_term_id, $stack, $archived_menu_order);
+		        $this->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID);
 		    }
 		}
 	}
 
-	/**
-	 * Update the order of a task within its stack.
-	 *
-	 * @param WP_REST_Request $request The REST request.
-	 * @return WP_REST_Response The REST response.
-	 */
-	public function update_task_order( $request ) {
-		$task_id   = intval( $request['id'] );
-		$new_order = intval( $request->get_param( 'order' ) );
+	// /**
+	//  * Update the order of a task within its stack.
+	//  *
+	//  * @param WP_REST_Request $request The REST request.
+	//  * @return WP_REST_Response The REST response.
+	//  */
+	// public function update_task_order( $request ) {
+	// 	$task_id   = intval( $request['id'] );
+	// 	$new_order = intval( $request->get_param( 'order' ) );
 
-		if ( ! $task_id || ! is_numeric( $new_order ) ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
-		}
+	// 	if ( ! $task_id || ! is_numeric( $new_order ) ) {
+	// 		return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
+	// 	}
 
-		$task = get_post( $task_id );
-		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
-		}
+	// 	$task = get_post( $task_id );
+	// 	if ( ! $task || 'decker_task' !== $task->post_type ) {
+	// 		return new WP_REST_Response( array( 'success' => false, 'message' => 'Task not found.' ), 404 );
+	// 	}
 
-		$current_stack = get_post_meta( $task_id, 'stack', true );
+	// 	$current_stack = get_post_meta( $task_id, 'stack', true );
 
-		$result = $this->reorder_tasks( $current_stack, $task_id, $new_order );
+	// 	$result = $this->reorder_tasks_in_stack( $current_stack, $task_id, $new_order );
 
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
+	// 	if ( is_wp_error( $result ) ) {
+	// 		return $result;
+	// 	}
 
-		return new WP_REST_Response( array( 'message' => 'Task order updated successfully.' ), 200 );
-	}
+	// 	return new WP_REST_Response( array( 'success' => true, 'message' => 'Task order updated successfully.' ), 200 );
+	// }
 
 
 
@@ -498,7 +495,7 @@ class Decker_Tasks {
 		$date = $request->get_param( 'date' );
 
 		if ( ! $task_id || ! $user_id || ! $date ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
+			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
 		}
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
@@ -506,7 +503,7 @@ class Decker_Tasks {
 
 		$this->add_user_date_relation( $task_id, $user_id, $date );
 
-		return new WP_REST_Response( array( 'message' => 'Relation marked successfully.' ), 200 );
+		return new WP_REST_Response( array( 'success' => true, 'message' => 'Relation marked successfully.' ), 200 );
 	}
 
 	/**
@@ -521,7 +518,7 @@ class Decker_Tasks {
 		$date = $request->get_param( 'date' );
 
 		if ( ! $task_id || ! $user_id || ! $date ) {
-			return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
+			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
 		}
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
@@ -536,7 +533,7 @@ class Decker_Tasks {
 
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 
-		return new WP_REST_Response( array( 'message' => 'Relation unmarked successfully.' ), 200 );
+		return new WP_REST_Response( array( 'success' => true, 'message' => 'Relation unmarked successfully.' ), 200 );
 	}
 
 	/**
@@ -573,7 +570,7 @@ class Decker_Tasks {
 			'/tasks/(?P<id>\d+)/order',
 			array(
 				'methods'  => 'PUT',
-				'callback' => array( $this, 'update_task_order' ),
+				'callback' => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
 					return current_user_can( 'edit_posts' );
 				},
@@ -585,7 +582,7 @@ class Decker_Tasks {
 			'/tasks/(?P<id>\d+)/stack',
 			array(
 				'methods'  => 'PUT',
-				'callback' => array( $this, 'update_task_stack' ),
+				'callback' => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
 					return current_user_can( 'edit_posts' );
 				},
@@ -627,6 +624,19 @@ class Decker_Tasks {
 		        },
 		    )
 		);
+
+		register_rest_route(
+		    'decker/v1',
+		    '/fix-order/(?P<board_id>\d+)',
+		    array(
+		        'methods'  => 'POST',
+		        'callback' => array( $this, 'handle_fix_order' ),
+		        'permission_callback' => function () {
+		            return current_user_can( 'manage_options' );
+		        },
+		    )
+		);
+
 
 	}
 
@@ -725,37 +735,6 @@ class Decker_Tasks {
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
 
-	// public function update_task( $request ) {
-	// 	$task_id = $request['id'];
-	// 	$status = $request->get_param( 'status' );
-	// 	$stack = $request->get_param( 'stack' );
-
-	// 	if ( ! $task_id || ( ! $status && ! $stack ) ) {
-	// 		return new WP_REST_Response( array( 'message' => 'Invalid parameters.' ), 400 );
-	// 	}
-
-	// 	$task = get_post( $task_id );
-	// 	if ( ! $task || 'decker_task' !== $task->post_type ) {
-	// 		return new WP_REST_Response( array( 'message' => 'Task not found.' ), 404 );
-	// 	}
-
-	// 	// Update the task status or stack
-	// 	$update_data = array( 'ID' => $task_id );
-	// 	if ( $status ) {
-	// 		$update_data['post_status'] = $status;
-	// 	}
-	// 	if ( $stack ) {
-	// 		update_post_meta( $task_id, 'stack', $stack );
-	// 	}
-	// 	$updated = wp_update_post( $update_data, true );
-
-	// 	if ( is_wp_error( $updated ) ) {
-	// 		return new WP_REST_Response( array( 'message' => 'Failed to update task status.' ), 500 );
-	// 	}
-
-	// 	return new WP_REST_Response( array( 'message' => 'Task status updated successfully.' ), 200 );
-	// }
-
 	/**
 	 * Archive a task by updating its status to 'archived'.
 	 *
@@ -799,6 +778,34 @@ class Decker_Tasks {
             	'message' => 'Tarea archivada exitosamente.' ), 
 	  	200 );
 	}
+
+	/**
+	 * Handle fixing the order for tasks in the specified board.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_fix_order( $request ) {
+	    $board_id = intval( $request['board_id'] );
+
+	    if ( $board_id <= 0 ) {
+	        return new WP_REST_Response( array(
+	            'message' => 'Invalid board ID.'
+	        ), 400 );
+	    }
+
+	    $stacks = array( 'to-do', 'in-progress', 'done' );
+
+	    foreach ( $stacks as $stack ) {
+	        $this->reorder_tasks_in_stack( $board_id, $stack );
+	    }
+
+	    return new WP_REST_Response( array(
+	        'success' => true,
+	        'message' => 'Tasks reordered successfully for board ' . $board_id . '.'
+	    ), 200 );
+	}
+
 
 
 	/**
@@ -1639,126 +1646,6 @@ class Decker_Tasks {
 	            }
 			</style>';
 		}
-	}
-
-
-
-	private function reorder_tasks( $stack, $task_id, $new_order ) {
-		global $wpdb;
-
-		// Fetch all tasks in the current stack
-		$tasks_in_stack = $wpdb->get_results(
-			$wpdb->prepare(
-				"
-	        SELECT p.ID as post_id, pm_order.meta_value as order_value
-	        FROM $wpdb->posts p
-	        INNER JOIN $wpdb->postmeta pm_stack ON p.ID = pm_stack.post_id AND pm_stack.meta_key = 'stack'
-	        LEFT JOIN $wpdb->postmeta pm_order ON p.ID = pm_order.post_id AND pm_order.meta_key = 'order'
-	        WHERE p.post_type = 'decker_task'
-	          AND p.post_status = 'publish'
-	          AND pm_stack.meta_value = %s
-	        ",
-				$stack
-			)
-		);
-
-		if ( ! $tasks_in_stack ) {
-			return new WP_REST_Response( array( 'message' => 'No tasks found in the stack.' ), 404 );
-		}
-
-		// Remove the current task from the list
-		foreach ( $tasks_in_stack as $key => $task_in_stack ) {
-			if ( intval( $task_in_stack->post_id ) === intval( $task_id ) ) {
-				unset( $tasks_in_stack[ $key ] );
-				break;
-			}
-		}
-
-		// Assign default order values to tasks without an 'order' meta value
-		foreach ( $tasks_in_stack as $task_in_stack ) {
-			if ( is_null( $task_in_stack->order_value ) ) {
-				$task_in_stack->order_value = PHP_INT_MAX; // Place tasks without 'order' at the end
-			} else {
-				$task_in_stack->order_value = intval( $task_in_stack->order_value );
-			}
-		}
-
-		// Sort tasks by 'order_value'
-		usort(
-			$tasks_in_stack,
-			function ( $a, $b ) {
-				return $a->order_value - $b->order_value;
-			}
-		);
-
-		// Re-index the array
-		$tasks_in_stack = array_values( $tasks_in_stack );
-
-		// Adjust the new order
-		$tasks_count = count( $tasks_in_stack );
-		$new_order = max( 1, min( $new_order, $tasks_count + 1 ) );
-
-		// Insert the current task at the new position
-		array_splice( $tasks_in_stack, $new_order - 1, 0, array( (object) array( 'post_id' => $task_id ) ) );
-
-		// Begin transaction for atomicity
-		$wpdb->query( 'START TRANSACTION' );
-
-		// Prepare data for bulk update
-		$placeholders = array();
-		$values = array();
-		$post_ids = array();
-
-		foreach ( $tasks_in_stack as $index => $task_in_stack ) {
-			$post_id = intval( $task_in_stack->post_id );
-			$order_value = $index + 1;
-
-			$placeholders[] = '(%d, %s, %s)';
-			$values[] = $post_id;
-			$values[] = 'order';
-			$values[] = $order_value;
-
-			$post_ids[] = $post_id;
-		}
-
-		// Delete existing 'order' meta keys for the affected posts
-		$delete_result = $wpdb->query(
-			$wpdb->prepare(
-				"
-	        DELETE FROM $wpdb->postmeta
-	        WHERE post_id IN (" . implode( ',', array_fill( 0, count( $post_ids ), '%d' ) ) . ')
-	          AND meta_key = %s
-	        ',
-				array_merge( $post_ids, array( 'order' ) )
-			)
-		);
-
-		if ( false === $delete_result ) {
-			$wpdb->query( 'ROLLBACK' );
-			return new WP_REST_Response( array( 'message' => 'Failed to update task order.' ), 500 );
-		}
-
-		// Insert new 'order' meta values
-		$insert_query = "
-	        INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value)
-	        VALUES " . implode( ', ', $placeholders );
-
-		$insert_result = $wpdb->query( $wpdb->prepare( $insert_query, $values ) );
-
-		if ( false === $insert_result ) {
-			$wpdb->query( 'ROLLBACK' );
-			return new WP_REST_Response( array( 'message' => 'Failed to update task order.' ), 500 );
-		}
-
-		// Commit transaction
-		$wpdb->query( 'COMMIT' );
-
-		// Clear the cache for affected posts
-		foreach ( $post_ids as $post_id ) {
-			clean_post_cache( $post_id );
-		}
-
-		return true;
 	}
 
     public function handle_save_decker_task() {
