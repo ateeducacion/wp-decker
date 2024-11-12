@@ -1,6 +1,33 @@
 <?php
-require_once $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php'; // Because it can be loade in a iframe
-// require_once 'head-css.php';
+/**
+ * Function to find and include wp-load.php dynamically.
+ *
+ * @param int $max_levels Maximum number of directory levels to traverse upward.
+ * @return bool Returns true if wp-load.php is found and included, otherwise false.
+ */
+function include_wp_load($max_levels = 10) {
+    $dir = __DIR__;
+    for ($i = 0; $i < $max_levels; $i++) {
+        if (file_exists($dir . '/wp-load.php')) {
+            require_once $dir . '/wp-load.php';
+            return true;
+        }
+        // Move up one level in the directory structure
+        $parent_dir = dirname($dir);
+        if ($parent_dir === $dir) {
+            // Reached the root directory of the file system
+            break;
+        }
+        $dir = $parent_dir;
+    }
+    return false;
+}
+
+// Attempt to include wp-load.php, required when we are loading the task-card in a Bootstrap modal.
+if (!include_wp_load()) { 
+    exit('Error: wp-load.php not found.');
+}
+
 
 $task_id = 0;
 if (isset( $_GET['id'] ) ) {
