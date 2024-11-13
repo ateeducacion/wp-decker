@@ -1182,51 +1182,82 @@ class Decker_Tasks {
 	}
 
 
-	/**
-	 * Display the attachments meta box.
-	 *
-	 * @param WP_Post $post The current post object.
-	 */
-	public function display_attachment_meta_box( $post ) {
-		$attachments = get_post_meta( $post->ID, 'attachments', true );
-		?>
-		<div id="attachments-meta-box">
-			<input type="file" id="attachment_file" name="attachment_file[]" multiple>
-			<ul id="attachments-list">
-				<?php if ( ! empty( $attachments ) ) : ?>
-					<?php foreach ( $attachments as $attachment ) : ?>
-						<li>
-							<a href="<?php echo esc_url( $attachment ); ?>" target="_blank"><?php echo esc_html( basename( $attachment ) ); ?></a>
-							<button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
-						</li>
-					<?php endforeach; ?>
-				<?php endif; ?>
-			</ul>
-		</div>
-		<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			const attachmentsList = document.getElementById('attachments-list');
-			
-			document.getElementById('attachment_file').addEventListener('change', function (event) {
-				const files = event.target.files;
-				const formData = new FormData();
-				Array.from(files).forEach((file, index) => {
-					formData.append(`attachment_file_${index}`, file);
-				});
+public function display_attachment_meta_box( $post ) {
+    // Retrieve existing attachments from post meta; initialize as empty array if none exist
+    $attachments = get_post_meta( $post->ID, 'attachments', true );
+    $attachments = is_array( $attachments ) ? $attachments : array();
 
-				// Here you can add an AJAX request to upload the files
+    // Include the nonce field for security
+    wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
+    ?>
+    <div id="attachments-meta-box">
+        <!-- Button to open the media library modal -->
+        <p>
+            <button type="button" class="button" id="add-attachments"><?php esc_html_e( 'Add Attachments', 'decker' ); ?></button>
+        </p>
+        
+        <!-- List of attached media -->
+        <ul id="attachments-list">
+            <?php foreach ( $attachments as $attach_id ) : 
+                $attachment_url = wp_get_attachment_url( $attach_id );
+                $attachment_title = get_the_title( $attach_id );
+                ?>
+                <li data-attachment-id="<?php echo esc_attr( $attach_id ); ?>">
+                    <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $attachment_title ); ?></a>
+                    <button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
+                    <!-- Hidden input to store attachment IDs -->
+                    <input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attach_id ); ?>">
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+    <!-- JavaScript to handle the media library modal -->
+    <script>
+    jQuery(document).ready(function($){
+        var frame;
+        $('#add-attachments').on('click', function(e){
+            e.preventDefault();
+            // If the media frame already exists, reopen it.
+            if ( frame ) {
+                frame.open();
+                return;
+            }
+            // Create a new media frame
+            frame = wp.media({
+                title: '<?php echo esc_js( __( 'Select Attachments', 'decker' ) ); ?>',
+                button: {
+                    text: '<?php echo esc_js( __( 'Add Attachments', 'decker' ) ); ?>',
+                },
+                multiple: true // Set to true to allow multiple files to be selected
+            });
+            // When an attachment is selected, run a callback.
+            frame.on( 'select', function() {
+                var attachments = frame.state().get('selection').toJSON();
+                attachments.forEach(function(attachment){
+                    // Append the selected attachments to the list
+                    $('#attachments-list').append(
+                        '<li data-attachment-id="' + attachment.id + '">' +
+                            '<a href="' + attachment.url + '" target="_blank">' + attachment.title + '</a> ' +
+                            '<button type="button" class="button remove-attachment"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>' +
+                            '<input type="hidden" name="attachments[]" value="' + attachment.id + '">' +
+                        '</li>'
+                    );
+                });
+            });
+            // Finally, open the modal
+            frame.open();
+        });
+        // Handle removal of attachments
+        $('#attachments-list').on('click', '.remove-attachment', function(){
+            $(this).closest('li').remove();
+        });
+    });
+    </script>
+    <?php
+}
 
-			});
 
-			attachmentsList.addEventListener('click', function (event) {
-				if (event.target.classList.contains('remove-attachment')) {
-					event.target.closest('li').remove();
-				}
-			});
-		});
-		</script>
-		<?php
-	}
+
 
 	/**
 	 * Modify the menu_order before the post is saved.
@@ -1378,26 +1409,14 @@ class Decker_Tasks {
 			}
 		}
 
-		$attachments = array();
-		if ( ! empty( $_FILES['attachment_file']['name'][0] ) ) {
-			foreach ( $_FILES['attachment_file']['name'] as $key => $value ) {
-				if ( isset( $_FILES['attachment_file']['name'][ $key ] ) && isset( $_FILES['attachment_file']['type'][ $key ] ) && isset( $_FILES['attachment_file']['tmp_name'][ $key ] ) && isset( $_FILES['attachment_file']['error'][ $key ] ) && isset( $_FILES['attachment_file']['size'][ $key ] ) ) {
-					$file = array(
-						'name'     => sanitize_file_name( wp_unslash( $_FILES['attachment_file']['name'][ $key ] ) ),
-						'type'     => sanitize_mime_type( wp_unslash( $_FILES['attachment_file']['type'][ $key ] ) ),
-						'tmp_name' => sanitize_text_field( wp_unslash( $_FILES['attachment_file']['tmp_name'][ $key ] ) ),
-						'error'    => intval( $_FILES['attachment_file']['error'][ $key ] ),
-						'size'     => intval( $_FILES['attachment_file']['size'][ $key ] ),
-					);
-					$_FILES = array( 'upload_attachment' => $file );
-					$newupload = $this->insert_attachment( 'upload_attachment', $post_id );
-					if ( $newupload ) {
-						$attachments[] = $newupload;
-					}
-				}
-			}
-			update_post_meta( $post_id, 'attachments', $attachments );
-		}
+	    // Save attachments
+	    if ( isset( $_POST['attachments'] ) ) {
+	        $attachments = array_map( 'intval', $_POST['attachments'] );
+	        update_post_meta( $post_id, 'attachments', $attachments );
+	    } else {
+	        // If no attachments are provided, delete the meta
+	        delete_post_meta( $post_id, 'attachments' );
+	    }
 
 		// Save assigned users
 		if ( isset( $_POST['assigned_users'] ) ) {
@@ -1410,26 +1429,6 @@ class Decker_Tasks {
     	$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();
 	    update_post_meta( $post_id, '_user_date_relations', $relations );
 
-	}
-
-	/**
-	 * Insert the attachment.
-	 *
-	 * @param string $file_handler The file handler.
-	 * @param int    $post_id      The current post ID.
-	 * @return string|false The URL of the attachment or false on failure.
-	 */
-	private function insert_attachment( $file_handler, $post_id ) {
-
-		if ( ! isset( $_FILES[ $file_handler ]['error'] ) || UPLOAD_ERR_OK !== $_FILES[ $file_handler ]['error'] ) {
-			return false;
-		}
-
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		$attach_id = media_handle_upload( $file_handler, $post_id );
-		return wp_get_attachment_url( $attach_id );
 	}
 
 	/**

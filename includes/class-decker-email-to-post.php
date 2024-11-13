@@ -209,31 +209,47 @@ class Decker_Email_To_Post {
 	    // Reset the user context
 	    wp_set_current_user( 0 );
 
+
+	    $attachment_ids = [];
+
 		// Optional handling of attachments if needed
-		if ( !empty( $email_data['attachments'] ) ) {
+		if ( ! empty( $email_data['attachments'] ) ) {
 		    foreach ( $email_data['attachments'] as $filename => $content ) {
-		        $attach_id = $this->upload_attachment( $filename, $content );
+		        $attach_id = $this->upload_attachment( $filename, $content, $task_id );
 		        if ( $attach_id ) {
-		            add_post_meta( $task_id, '_email_attachment', $attach_id );
+		            $attachment_ids[] = $attach_id;
 		        }
 		    }
 		}
 
-		// Obtener los adjuntos del mensaje
-		$attachments = $message->getAttachments(); // Esto devuelve un array de MessagePart que representan los adjuntos.
+		// Obtener los adjuntos del mensaje parseado
+		$attachments = $message->getAttachments(); // Devuelve un array de MessagePart que representan los adjuntos.
 
-		foreach ($attachments as $attachment) {
+		foreach ( $attachments as $attachment ) {
 		    // Obtener el nombre del archivo adjunto
 		    $filename = $attachment->getFilename();
 
 		    // Obtener el contenido del archivo adjunto
 		    $content = $attachment->getContent();
 
-		    // Puedes manejar el adjunto, por ejemplo, subirlo o guardarlo en el sistema de archivos
-		    $attach_id = $this->upload_attachment($filename, $content);
-		    if ($attach_id) {
-		        add_post_meta($task_id, '_email_attachment', $attach_id);
+		    // Subir el adjunto a la biblioteca multimedia
+		    $attach_id = $this->upload_attachment( $filename, $content, $task_id );
+		    if ( $attach_id ) {
+		        $attachment_ids[] = $attach_id;
 		    }
+		}
+
+		// Si hay IDs de adjuntos, actualizar el meta 'attachments'
+		if ( ! empty( $attachment_ids ) ) {
+		    // Obtener adjuntos existentes (si los hay)
+		    $existing_attachments = get_post_meta( $task_id, 'attachments', true );
+		    $existing_attachments = is_array( $existing_attachments ) ? $existing_attachments : [];
+
+		    // Combinar y asegurar que los IDs sean únicos
+		    $all_attachments = array_unique( array_merge( $existing_attachments, $attachment_ids ) );
+
+		    // Actualizar el meta 'attachments'
+		    update_post_meta( $task_id, 'attachments', $all_attachments );
 		}
 
 		return $task_id;
