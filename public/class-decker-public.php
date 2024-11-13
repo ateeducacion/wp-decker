@@ -114,15 +114,20 @@ class Decker_Public {
 
 		if ( $decker_page ) {
 			// Verify if user is logged in.
-			if ( ! is_user_logged_in() ) {
-				$http_host = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
-				$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-				$redirect_url = 'https://' . $http_host . $request_uri;
+		    if ( ! is_user_logged_in() ) {
+		        // Retrieve and sanitize the current request URI.
+		        $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
-				// Redirige al usuario a la página de login y luego a la página actual después del inicio de sesión.
-				wp_redirect( wp_login_url( $redirect_url ) );
-				exit;
-			}
+		        // Build the full redirect URL, respecting the site's protocol and maintaining query arguments.
+		        $redirect_url = home_url( $request_uri );
+
+		        // Get the login URL with the redirect URL as a parameter.
+		        $login_url = wp_login_url( $redirect_url );
+
+		        // Safely redirect the user to the login page.
+		        wp_safe_redirect( $login_url );
+		        exit;
+		    }
 
 			// Verify user permissions.
 			if ( ! current_user_can( 'decker_role' ) && ! is_super_admin() ) {
@@ -151,26 +156,6 @@ class Decker_Public {
 				default:
 					// Default action if no match is found
 					break;
-			}
-
-			// Verify if user is logged in.
-			if ( ! is_user_logged_in() ) {
-				$http_host = isset( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
-				$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-
-				// Detect if the current request is using HTTPS or HTTP
-				$protocol = ( ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off' ) || $_SERVER['SERVER_PORT'] == 443 ? 'https://' : 'http://';
-
-				$redirect_url = $protocol . $http_host . $request_uri;
-
-				// Redirige al usuario a la página de login y luego a la página actual después del inicio de sesión.
-				wp_redirect( wp_login_url( $redirect_url ) );
-				exit;
-			}
-
-			// Verify user permissions.
-			if ( ! current_user_can( 'decker_role' ) && ! is_super_admin() ) {
-				die( 'No tiene permisos para ver esta página.' );
 			}
 
 			exit;
