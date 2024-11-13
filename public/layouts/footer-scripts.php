@@ -224,31 +224,36 @@
     const fixOrderButton = document.getElementById('fix-order-btn');
     if (fixOrderButton) {
       fixOrderButton.addEventListener('click', function () {
-        const boardId = fixOrderButton.getAttribute('data-board-id');
-        if (boardId) {
-          fetch('<?php echo esc_url( rest_url( 'decker/v1/fix-order/' ) ); ?>' + encodeURIComponent(boardId), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-            }
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            if (data.success) {
-              alert(data.message);
-              // Reload the page if the request was successful
-              location.reload();              
-            }
-          })
-          .catch(error => console.error('Error:', error));
-        } else {
-          console.error('Board ID not found.');
+
+      if (confirm('Are you sure you want to fix the order?')) {
+
+          const boardId = fixOrderButton.getAttribute('data-board-id');
+          if (boardId) {
+            fetch('<?php echo esc_url( rest_url( 'decker/v1/fix-order/' ) ); ?>' + encodeURIComponent(boardId), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+              }
+            })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json();
+            })
+            .then(data => {
+              if (data.success) {
+                alert(data.message);
+                // Reload the page if the request was successful
+                location.reload();              
+              }
+            })
+            .catch(error => console.error('Error:', error));
+          } else {
+            console.error('Board ID not found.');
+          }
+
         }
       });
     }
