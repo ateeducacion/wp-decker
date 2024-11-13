@@ -359,7 +359,6 @@ class Decker_Admin_Settings {
 	public function options_page() {
 		?>
 		<form action="options.php" method="post">
-			<h2><?php esc_html_e( 'Decker Settings', 'decker' ); ?></h2>
 			<?php
 			settings_fields( 'decker' );
 			do_settings_sections( 'decker' );
