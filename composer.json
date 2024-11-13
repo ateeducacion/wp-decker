@@ -1,7 +1,7 @@
 {    
     "require": {
-        "erusev/parsedown": "*",
-        "opcodesio/mail-parser": "*"
+        "erusev/parsedown": "^1.7",
+        "opcodesio/mail-parser": "^0.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^9",
