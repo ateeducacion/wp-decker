@@ -601,7 +601,7 @@ class Decker_Tasks {
 		}
 
 		return new WP_REST_Response( array(
-	        	'success' => false,
+	        	'success' => true,
             	'message' => 'User assigned successfully.' ), 
 		200 );
 	}

@@ -376,8 +376,14 @@ function deleteComment(commentId) {
 
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
+
 		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled || !current_user_can( 'manage_options' ) ); ?>>
+			<input class="form-check-input" type="checkbox" id="task-today" <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled($disabled || !$task->is_current_user_assigned_to_task() ); ?>>
+			<label class="form-check-label" for="task-max-priority">Today <?php echo ($task->is_current_user_today_assigned()) ? '🔥' : '🪵'; ?></label>
+		</div>
+
+		<div class="form-check form-switch me-3">
+			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled ); ?>>
 			<label class="form-check-label" for="task-max-priority">Maximum Priority</label>
 		</div>
 		<button type="button" class="btn btn-secondary me-2" id="archive-task" <?php disabled($disabled || $task_id === 0 ); ?>>
@@ -632,6 +638,19 @@ function sendFormByAjax(event) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
                     // alert(response.data.message);
+
+		            const taskTodayElement = document.getElementById('task-today');
+		            if (taskTodayElement && !taskTodayElement.disabled) {
+		                // Obtiene el estado actual de 'today' y lo convierte a booleano
+		                let markForToday = taskTodayElement.checked;
+		                let taskId = response.data.task_id;
+
+		                // Llama a la función para marcar o desmarcar (invierte el estado actual)
+		                toggleMarkForToday(taskId, markForToday);
+
+		                // Actualiza el valor del elemento
+		                // taskTodayElement.value = (!today).toString();
+		            }
 
                     if (taskModal) {
 

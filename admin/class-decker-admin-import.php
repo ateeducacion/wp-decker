@@ -519,10 +519,16 @@ document.addEventListener('DOMContentLoaded', function() {
 	    // Convertir la descripción usando Parsedown
 	    $html_description = $this->Parsedown->text( $card['description'] );
 
-	    // Obtener la fecha de vencimiento
-	    $due_date_str = ! empty( $card['due_date'] ) ? sanitize_text_field( $card['due_date'] ) : null;
-	    $due_date = $due_date_str ? new DateTime( $due_date_str ) : null;
-
+		// Obtener la fecha de vencimiento (duedate)
+		$due_date_str = !empty($card['duedate']) ? sanitize_text_field($card['duedate']) : null;
+		$due_date = null;
+		if ($due_date_str) {
+		    try {
+		        $due_date = new DateTime($due_date_str);
+		    } catch (Exception $e) {
+		        Decker_Utility_Functions::write_log('Fecha de vencimiento inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
+		    }
+		}
 
 	    // Determinar el propietario (owner)
 	    if ( is_string( $card['owner'] ) ) {
@@ -590,13 +596,16 @@ document.addEventListener('DOMContentLoaded', function() {
 	        $max_priority = true;
 	    }
 
-	    // Preparar la fecha de creación
-	    try {
-	        $creation_date = new DateTime( date( 'Y-m-d H:i:s', $card['createdAt'] ) );
-	    } catch ( Exception $e ) {
-	        Decker_Utility_Functions::write_log( 'Fecha de creación inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	        $creation_date = new DateTime(); // Asignar una fecha por defecto
-	    }
+		// Preparar la fecha de creación (createdAt)
+		$creation_date = null;
+		if (!empty($card['createdAt']) && is_numeric($card['createdAt'])) {
+		    try {
+		        $creation_date = new DateTime(date('Y-m-d H:i:s', $card['createdAt']));
+		    } catch (Exception $e) {
+		        Decker_Utility_Functions::write_log('Fecha de creación inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
+		        $creation_date = new DateTime(); // Asignar una fecha por defecto si hay un error
+		    }
+		}
 
 	    // id_nextcloud_card
 	    $id_nextcloud_card = isset( $card['id'] ) ? intval( $card['id'] ) : 0;

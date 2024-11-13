@@ -106,42 +106,6 @@ class Task {
     }
 
     /**
-     * Saves the changes made to the task.
-     */
-    // public function save(): void {
-    //     wp_update_post(array(
-    //         'ID' => $this->ID,
-    //         'post_title' => $this->title,
-    //         'post_content' => $this->content,
-    //         'post_status' => $this->status,
-    //     ));
-
-    //     update_post_meta($this->ID, 'stack', $this->stack);
-    //     update_post_meta($this->ID, 'max_priority', $this->max_priority ? '1' : '0');
-    //     update_post_meta($this->ID, 'duedate', $this->duedate);
-    //     update_post_meta($this->ID, 'assigned_users', $this->assigned_users);
-    //     update_post_meta($this->ID, 'attachments', $this->attachments);
-
-    //     // Save labels and board (taxonomies)
-    //     if (!empty($this->board)) {
-    //         $term = get_term_by('name', $this->board, 'decker_board');
-    //         if ($term && !is_wp_error($term)) {
-    //             wp_set_post_terms($this->ID, array($term->term_id), 'decker_board');
-    //         }
-    //     }
-    //     if (!empty($this->labels)) {
-    //         $term_ids = array();
-    //         foreach ($this->labels as $label_name) {
-    //             $term = get_term_by('name', $label_name, 'decker_label');
-    //             if ($term && !is_wp_error($term)) {
-    //                 $term_ids[] = $term->term_id;
-    //             }
-    //         }
-    //         wp_set_post_terms($this->ID, $term_ids, 'decker_label');
-    //     }
-    // }
-
-    /**
      * Converts an array of user IDs from meta into WP_User objects and adds a `today` property.
      *
      * @param array $meta Meta data array containing user IDs.
@@ -164,6 +128,23 @@ class Task {
         return $users;
     }
 
+    public function is_current_user_assigned_to_task() {
+
+        $current_user_id = get_current_user_id();
+
+        foreach($this->assigned_users as $user) {
+
+            if ( $current_user_id == $user->ID )
+                return true;
+
+        }
+
+        return false;
+    }
+
+    public function is_current_user_today_assigned() {
+        return $this->is_today_assigned(get_current_user_id(), $this->meta);   
+    }
 
     /**
      * Determines if the user should have the `today` flag set to true based on `_user_date_relations` meta.
