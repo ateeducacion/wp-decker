@@ -127,9 +127,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(importData => {
             if (importData.success) {
                 const totalBoards = importData.data.length;
-				// const totalBoards = 2; // TODO: Just for DEBUG importing just two boards
 
                 let importedBoards = 0;
+
+                // // TODO: Just for DEBUG importing just two boards
+				// if (importedBoards > 1) {
+				// 	console.log("Stopped import")
+				// 	return;
+        		// }
 
                 // Filter boards that are not ignored
                 const boardsToProcess = importData.data.filter(board => !ignoredBoardIds.includes(board.id.toString()));
