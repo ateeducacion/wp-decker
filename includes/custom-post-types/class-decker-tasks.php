@@ -70,7 +70,95 @@ class Decker_Tasks {
 
 		add_action('admin_menu', array($this, 'remove_add_new_link'));
 
+
+		add_action( 'wp_ajax_upload_task_attachment', array($this, 'upload_task_attachment' ) );
+		add_action( 'wp_ajax_delete_task_attachment', array($this, 'delete_task_attachment' ) );
+
+
 	}
+
+
+public function upload_task_attachment() {
+    check_ajax_referer( 'upload_attachment_nonce', 'nonce' );
+
+    // Verificar permisos y datos necesarios
+    if ( ! current_user_can( 'upload_files' ) ) {
+        wp_send_json_error( array( 'message' => 'You do not have permission to upload files.' ) );
+    }
+
+    $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+
+    if ( ! $task_id ) {
+        wp_send_json_error( array( 'message' => 'Invalid task ID.' ) );
+    }
+
+    if ( empty( $_FILES['attachment'] ) ) {
+        wp_send_json_error( array( 'message' => 'No file uploaded.' ) );
+    }
+
+    // Manejar la subida del archivo
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+
+    $attachment_id = media_handle_upload( 'attachment', $task_id );
+
+    if ( is_wp_error( $attachment_id ) ) {
+        wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
+    }
+
+    // Actualizar el meta 'attachments' de la tarea
+    $existing_attachments = get_post_meta( $task_id, 'attachments', true );
+    $existing_attachments = is_array( $existing_attachments ) ? $existing_attachments : array();
+    $existing_attachments[] = $attachment_id;
+    $existing_attachments = array_unique( $existing_attachments );
+
+    update_post_meta( $task_id, 'attachments', $existing_attachments );
+
+    $attachment_url = wp_get_attachment_url( $attachment_id );
+    $attachment_title = get_the_title( $attachment_id );
+
+    wp_send_json_success( array(
+        'message' => 'Attachment uploaded successfully.',
+        'attachment_id' => $attachment_id,
+        'attachment_url' => $attachment_url,
+        'attachment_title' => $attachment_title,
+    ) );
+}
+
+
+public function delete_task_attachment() {
+    check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
+
+    if ( ! current_user_can( 'delete_posts' ) ) {
+        wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
+    }
+
+    $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+    $attachment_id = isset( $_POST['attachment_id'] ) ? intval( $_POST['attachment_id'] ) : 0;
+
+    if ( ! $task_id || ! $attachment_id ) {
+        wp_send_json_error( array( 'message' => 'Invalid task ID or attachment ID.' ) );
+    }
+
+    // Eliminar el adjunto de la lista en el meta de la tarea
+    $attachments = get_post_meta( $task_id, 'attachments', true );
+    $attachments = is_array( $attachments ) ? $attachments : array();
+
+    if ( ( $key = array_search( $attachment_id, $attachments ) ) !== false ) {
+        unset( $attachments[ $key ] );
+        update_post_meta( $task_id, 'attachments', $attachments );
+
+        // Opcional: Eliminar el adjunto de la biblioteca multimedia
+        wp_delete_attachment( $attachment_id, true );
+
+        wp_send_json_success( array( 'message' => 'Attachment deleted successfully.' ) );
+    } else {
+        wp_send_json_error( array( 'message' => 'Attachment not found in task.' ) );
+    }
+}
+
+
 
 	/**
 	 * Make custom columns sortable.
@@ -1413,9 +1501,9 @@ public function display_attachment_meta_box( $post ) {
 	    if ( isset( $_POST['attachments'] ) ) {
 	        $attachments = array_map( 'intval', $_POST['attachments'] );
 	        update_post_meta( $post_id, 'attachments', $attachments );
-	    } else {
-	        // If no attachments are provided, delete the meta
-	        delete_post_meta( $post_id, 'attachments' );
+	    // } else {
+	    //     // If no attachments are provided, delete the meta
+	    //     delete_post_meta( $post_id, 'attachments' );
 	    }
 
 		// Save assigned users

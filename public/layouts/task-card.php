@@ -293,25 +293,33 @@ function deleteComment(commentId) {
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link <?php echo $task_id === 0 ? 'disabled' : ''; ?>">
-				Comments
+			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>Comments
 			   <span class="badge bg-light text-dark" id="comment-count">0</span>
 
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link <?php echo $task_id === 0 ? 'disabled' : ''; ?>">Attachments 
-			<span class="badge bg-light text-dark">0</span>
+			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>Attachments 
+
+			<?php
+			// Obtener los adjuntos asociados con la tarea
+			$attachment_ids = get_post_meta( $task_id, 'attachments', true );
+			$attachment_ids = is_array( $attachment_ids ) ? $attachment_ids : array();
+			?>
+
+
+
+			<span class="badge bg-light text-dark"><?php echo count( $attachment_ids ); ?></span>
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link <?php echo $task_id === 0 ? 'disabled' : ''; ?>">History
+			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>History
 
 			<span class="badge bg-light text-dark">0</span>
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link <?php echo $task_id === 0 ? 'disabled' : ''; ?>">Gantt</a>
+			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>Gantt</a>
 		</li>
 	</ul>
 
@@ -343,9 +351,34 @@ function deleteComment(commentId) {
 			<?php } ?>
 		</div>
 
-		<!-- Adjuntos -->
+			<!-- Adjuntos -->
+			<div class="tab-pane" id="attachments-tab">
+			    <ul class="list-group mt-3" id="attachments-list">
+			        <?php foreach ( $attachment_ids as $attachment_id ) : 
+			            $attachment_url = wp_get_attachment_url( $attachment_id );
+			            $attachment_title = get_the_title( $attachment_id );
+			            ?>
+			            <li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-id="<?php echo esc_attr( $attachment_id ); ?>">
+			                <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank">
+			                    <?php echo esc_html( $attachment_title ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
+			                </a>
+			                <div>
+			                    <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>>Delete</button>
+			                </div>
+			            </li>
+			        <?php endforeach; ?>
+			    </ul>
+			    <br>
+			    <div class="d-flex align-items-center">
+			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> />
+			        <button class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>>Upload</button>
+			    </div>
+			</div>
+
+		
+		<!-- Adjuntos
 		<div class="tab-pane" id="attachments-tab">
-			<ul class="list-group mt-3">
+		<ul class="list-group mt-3">
 				<li class="list-group-item d-flex justify-content-between align-items-center"><a href="#">
 					file-2.pdf <i class="bi bi-box-arrow-up-right ms-2"></i></a>
 					<div>
@@ -357,8 +390,8 @@ function deleteComment(commentId) {
 			<div class="d-flex align-items-center">
 				<input type="file" id="file-input" class="form-control me-2" />
 				<button class="btn btn-sm btn-success" id="upload-file">Upload</button>
-			</div>
-		</div>
+			</div> 
+		</div> -->
 
 		<!-- Historial -->
 		<div class="tab-pane" id="history-tab">
@@ -465,15 +498,17 @@ function initializeTaskPage() {
 
 
 
-	var uploadFileButton = document.getElementById('upload-file');
-	if (uploadFileButton) {
-		uploadFileButton.addEventListener('click', function () {
-			var fileInput = document.getElementById('file-input').value;
-			if (fileInput) {
-				alert('File uploaded: ' + fileInput);
-			}
-		});
-	}
+    var uploadFileButton = document.getElementById('upload-file');
+    if (uploadFileButton) {
+        uploadFileButton.addEventListener('click', function () {
+            var fileInput = document.getElementById('file-input');
+            if (fileInput.files.length > 0) {
+                uploadAttachment(fileInput.files[0]);
+            } else {
+                alert('Please select a file to upload.');
+            }
+        });
+    }
 	
 	// Show/hide "High" label for maximum priority
 	var taskMaxPriority = document.getElementById('task-max-priority');
@@ -530,6 +565,103 @@ function initializeTaskPage() {
 //     }
 // });
 
+function uploadAttachment(file) {
+    var formData = new FormData();
+    formData.append('action', 'upload_task_attachment');
+    formData.append('task_id', <?php echo json_encode( $task_id ); ?>);
+    formData.append('attachment', file);
+    formData.append('nonce', '<?php echo wp_create_nonce( 'upload_attachment_nonce' ); ?>');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '<?php echo admin_url( 'admin-ajax.php' ); ?>', true);
+
+    xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 400) {
+            var response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                // Añadir el nuevo adjunto a la lista en la interfaz
+                addAttachmentToList(response.data.attachment_id, response.data.attachment_url, response.data.attachment_title);
+                // Limpiar el input de archivo
+                document.getElementById('file-input').value = '';
+            } else {
+                alert(response.data.message || 'Error uploading attachment.');
+            }
+        } else {
+            console.error('Server error.');
+            alert('An error occurred while uploading the attachment.');
+        }
+    };
+
+    xhr.onerror = function() {
+        console.error('Request error.');
+        alert('An error occurred while uploading the attachment.');
+    };
+
+    xhr.send(formData);
+}
+
+function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle) {
+    var attachmentsList = document.getElementById('attachments-list');
+    var li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.setAttribute('data-attachment-id', attachmentId);
+
+    li.innerHTML = `
+        <a href="${attachmentUrl}" target="_blank">
+            ${attachmentTitle} <i class="bi bi-box-arrow-up-right ms-2"></i>
+        </a>
+        <div>
+            <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"<?php echo $disabled ? ' disabled' : ''; ?>>Delete</button>
+        </div>
+    `;
+
+    attachmentsList.appendChild(li);
+}
+
+document.addEventListener('click', function(event) {
+    if (event.target && event.target.classList.contains('remove-attachment')) {
+        var listItem = event.target.closest('li');
+        var attachmentId = listItem.getAttribute('data-attachment-id');
+        deleteAttachment(attachmentId, listItem);
+    }
+});
+
+function deleteAttachment(attachmentId, listItem) {
+    if (!confirm('Are you sure you want to delete this attachment?')) {
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append('action', 'delete_task_attachment');
+    formData.append('task_id', <?php echo json_encode( $task_id ); ?>);
+    formData.append('attachment_id', attachmentId);
+    formData.append('nonce', '<?php echo wp_create_nonce( 'delete_attachment_nonce' ); ?>');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '<?php echo admin_url( 'admin-ajax.php' ); ?>', true);
+
+    xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 400) {
+            var response = JSON.parse(xhr.responseText);
+            if (response.success) {
+                // Eliminar el adjunto de la lista en la interfaz
+                listItem.remove();
+            } else {
+                alert(response.data.message || 'Error deleting attachment.');
+            }
+        } else {
+            console.error('Server error.');
+            alert('An error occurred while deleting the attachment.');
+        }
+    };
+
+    xhr.onerror = function() {
+        console.error('Request error.');
+        alert('An error occurred while deleting the attachment.');
+    };
+
+    xhr.send(formData);
+}
 
 function togglePriorityLabel(element) {
 	var highLabel = document.getElementById('high-label');
