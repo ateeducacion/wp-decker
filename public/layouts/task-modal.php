@@ -22,12 +22,12 @@
 // Espera a que el documento esté listo
 document.addEventListener('DOMContentLoaded', function () {
 	// Evento que se dispara cuando el modal se va a mostrar
-	$('#task-modal').on('show.bs.modal', function (e) {
-		var modal = $(this);
+	jQuery('#task-modal').on('show.bs.modal', function (e) {
+		var modal = jQuery(this);
 		// Limpiar el contenido previo del modal para evitar contenido duplicado
 		modal.find('.modal-body').html('');
 
-		var taskId = $(e.relatedTarget).data('task-id'); // Obtener el ID de la tarea si se proporciona
+		var taskId = jQuery(e.relatedTarget).data('task-id'); // Obtener el ID de la tarea si se proporciona
 		var url = '<?php echo plugins_url( 'layouts/task-card.php', __DIR__ ); ?>';
 
 		if (taskId) {
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 		// Realizar una solicitud AJAX para obtener el contenido desde task-card.php
-		$.ajax({
+		jQuery.ajax({
 			url: url,
 			type: 'GET',
 			success: function(data) {

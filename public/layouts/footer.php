@@ -14,3 +14,11 @@
 		</div>
 	</div>
 </footer>
+<?php 
+
+if ( defined('WP_DEBUG') && WP_DEBUG ) {
+
+	wp_footer();
+}
+
+?>

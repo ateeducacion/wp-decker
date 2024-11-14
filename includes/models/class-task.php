@@ -327,7 +327,7 @@ class Task {
      * Render the task card contextual menu.
      *
      */
-     private function renderTaskMenu(): string {
+     public function renderTaskMenu(): string {
         $menuItems = [];
 
         // Add 'Edit' menu item

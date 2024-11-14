@@ -45,79 +45,50 @@ if ($task_id > 0 && $task->status == 'archived') {
 	$disabled = true;
 }
 
-?>
-<script type="text/javascript">
-function loadComments() {
-	const taskId = <?php echo json_encode( $task_id ); ?>;
-	fetch(`/wp-json/wp/v2/comments?post=${taskId}`)
-		.then(response => response.json())
-		.then(comments => {
-			const commentsList = document.getElementById('comments-list');
-			const commentCount = document.getElementById('comment-count');
-			commentsList.innerHTML = '';
-			commentCount.textContent = comments.length;
+$comments = array();
 
-			const nestedComments = comments.reduce((acc, comment) => {
-				const parentId = comment.parent || 0;
-				if (!acc[parentId]) acc[parentId] = [];
-				acc[parentId].push(comment);
-				return acc;
-			}, {});
+if ( $task_id > 0 ) { 
 
-			function createCommentElement(comment) {
-				const commentElement = document.createElement('div');
-				commentElement.classList.add('d-flex', 'align-items-start', 'mb-2');
-				commentElement.style.marginLeft = comment.parent ? '20px' : '0'; // Añadir margen para respuestas
-				commentElement.innerHTML = `
-					<img class="me-2 rounded-circle" src="${comment.author_avatar_urls[48]}" alt="Avatar" height="32" />
-					<div class="w-100">
-						<h5 class="mt-0">${comment.author_name} <small class="text-muted float-end">${new Date(comment.date).toLocaleString()}</small></h5>
-						${comment.content.rendered}
-						<br />
-						${comment.author === <?php echo get_current_user_id(); ?> ? `<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="${comment.id}"><i class="ri-delete-bin-line"></i> Delete</a>` : ''}
-						<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="${comment.id}"><i class="ri-reply-line"></i> Reply</a>
-					</div>
-				`;
-				return commentElement;
-			}
+	// Obtener comentarios asociados al task_id
+	$comments = get_comments(array(
+	    'post_id' => $task_id,
+	    'status' => 'approve',
+	    'orderby' => 'comment_date_gmt',
+	    'order' => 'ASC',
+	));
 
-			function appendComments(parentElement, parentId) {
-				if (nestedComments[parentId]) {
-					nestedComments[parentId].forEach(comment => {
-						const commentElement = createCommentElement(comment);
-						parentElement.appendChild(commentElement);
-						appendComments(commentElement, comment.id);
-					});
-				}
-			}
-
-			appendComments(commentsList, 0);
-
-			// Add delete event listeners
-			document.querySelectorAll('.comment-delete').forEach(button => {
-				button.addEventListener('click', function() {
-					const commentId = this.getAttribute('data-comment-id');
-					deleteComment(commentId);
-				});
-			});
-		});
-
-		// Add reply event listeners
-		document.querySelectorAll('.comment-reply').forEach(button => {
-			button.addEventListener('click', function() {
-				replyToCommentId = this.getAttribute('data-comment-id');
-				const replyingTo = this.closest('.d-flex').querySelector('h5').textContent.trim();
-				document.getElementById('replying-to').textContent = replyingTo;
-				document.getElementById('reply-indicator').classList.remove('d-none');
-			});
-		});
-
-		// Cancel reply
-		document.getElementById('cancel-reply').addEventListener('click', function() {
-			replyToCommentId = null;
-			document.getElementById('reply-indicator').classList.add('d-none');
-		});
 }
+
+/**
+ * Función para organizar comentarios en estructura jerárquica
+ */
+function render_comments($comments, $parent_id = 0, $current_user_id) {
+    foreach ($comments as $comment) {
+        if ($comment->comment_parent == $parent_id) {
+            // Obtener respuestas recursivamente
+            echo '<div class="d-flex align-items-start mb-2" style="margin-left:' . ($comment->comment_parent ? '20px' : '0') . ';">';
+            echo '<img class="me-2 rounded-circle" src="' . esc_url(get_avatar_url($comment->user_id, ['size' => 48])) . '" alt="Avatar" height="32" />';
+            echo '<div class="w-100">';
+            echo '<h5 class="mt-0">' . esc_html($comment->comment_author) . ' <small class="text-muted float-end">' . esc_html(get_comment_date('', $comment)) . '</small></h5>';
+            echo apply_filters('the_content', $comment->comment_content);
+            
+            // Mostrar enlace de eliminar si el comentario pertenece al usuario actual
+            if ($comment->user_id == get_current_user_id()) {
+                echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-delete-bin-line"></i> Delete</a> ';
+            }
+            
+            echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-reply-line"></i> Reply</a>';
+            echo '</div>';
+            echo '</div>';
+
+            // Llamada recursiva para renderizar respuestas
+            render_comments($comments, $comment->comment_ID, $current_user_id);
+        }
+    }
+}
+?>
+
+<script type="text/javascript">
 
 var replyToCommentId = null;
 
@@ -150,7 +121,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			.then(data => {
 				if (data.id) {
 					document.getElementById('comment-text').value = '';
-					loadComments();
 					replyToCommentId = null; // Reset replyToCommentId after successful submission
 					alert('Failed to add comment.');
 				}
@@ -171,7 +141,7 @@ function deleteComment(commentId) {
 	.then(response => response.json())
 	.then(data => {
 		if (data.deleted) {
-			loadComments();
+			alert('Comment deleted.');
 		} else {
 			alert('Failed to delete comment.');
 		}
@@ -273,9 +243,8 @@ function deleteComment(commentId) {
 		<div class="col-md-2 mb-2 d-flex justify-content-center">
 			<div class="form-check form-switch me-2">
 				<input class="form-check-input" type="checkbox" id="task-today" 
-			       <?php checked( $task->is_current_user_today_assigned() ); ?> 
-			       <?php disabled( $task_id !== 0 && ($disabled || !$task->is_current_user_assigned_to_task()) ); ?>>
-				<label class="form-check-label" for="task-max-priority">Today <?php echo ($task->is_current_user_today_assigned()) ? '🔥' : ''; ?></label>
+			       <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled($disabled ); ?>>
+				<label class="form-check-label" for="task-today">Today</label>
 			</div>
 		</div>
 
@@ -304,35 +273,32 @@ function deleteComment(commentId) {
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>Comments
-			   <span class="badge bg-light text-dark" id="comment-count">0</span>
+			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?= ($task_id === 0) ? ' disabled' : '' ?>" <?php disabled( $task_id === 0 ); ?>>Comments
+			   <span class="badge bg-light text-dark" id="comment-count"><?php echo count($comments); ?></span>
 
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>Attachments 
+			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?= ($task_id === 0) ? ' disabled' : '' ?>" <?php disabled( $task_id === 0 ); ?>>Attachments 
 
 			<?php
-			// Obtener los adjuntos asociados con la tarea
-			
-			$attachments = get_attached_media( '', $task_id );			
-			// $attachments = is_array( $attachments ) ? $attachments : array();
+				// Obtener los adjuntos asociados con la tarea
+				
+				$attachments = get_attached_media( '', $task_id );			
+				// $attachments = is_array( $attachments ) ? $attachments : array();
 
 			?>
-
-
-
 			<span class="badge bg-light text-dark"><?php echo count( $attachments ); ?></span>
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>History
+			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?= ($task_id === 0) ? ' disabled' : '' ?>" <?php disabled( $task_id === 0 ); ?>>History
 
 			<!-- <span class="badge bg-light text-dark">0</span> -->
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>Gantt</a>
+			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?= ($task_id === 0) ? ' disabled' : '' ?>" <?php disabled( $task_id === 0 ); ?>>Gantt</a>
 		</li>
 	</ul>
 
@@ -344,9 +310,16 @@ function deleteComment(commentId) {
 
 		<!-- Comentarios -->
 		<div class="tab-pane" id="comments-tab">
-			<?php if ( $task_id > 0 ) { ?>
 			<div id="comments-list">
-				<!-- Los comentarios se cargarán aquí -->
+			    <?php
+			    if ($task_id > 0) {
+			        if ($comments) {
+			            render_comments($comments, 0, get_current_user_id());
+			        } else {
+			            echo '<p>No hay comentarios aún.</p>';
+			        }
+			    }
+			    ?>
 			</div>
 			<div class="border rounded mt-4">
 				<div class="comment-area-box">
@@ -361,7 +334,7 @@ function deleteComment(commentId) {
 					</div>
 				</div>
 			</div>
-			<?php } ?>
+
 		</div>
 
 			<!-- Adjuntos -->
@@ -388,7 +361,7 @@ function deleteComment(commentId) {
 			    </ul>
 			    <br>
 			    <div class="d-flex align-items-center">
-			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> novalidate />
+			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> />
 			        <button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>>Upload</button>
 			    </div>
 			</div>
@@ -479,25 +452,27 @@ function deleteComment(commentId) {
 			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled ); ?>>
 			<label class="form-check-label" for="task-max-priority">Maximum Priority</label>
 		</div>
-		<button type="button" class="btn btn-secondary me-2" id="archive-task" <?php disabled($disabled || $task_id === 0 ); ?>>
-			<i class="ri-archive-line"></i> Archive
-		</button>
-		<div class="btn-group me-2">
-			<button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-				<i class="ri-more-2-fill"></i>
+
+
+
+		<div class="btn-group mb-2 dropup">
+		    <button type="submit" class="btn btn-primary" id="save-task" disabled>
+				<i class="ri-save-line"></i> Save
 			</button>
-			<ul class="dropdown-menu">
-				<li>
-					<a class="dropdown-item <?php echo $task_id > 0 ? '' : 'disabled'; ?>" href="<?php echo $task_id > 0 ? get_edit_post_link( $task_id ) : '#'; ?>">
-						<i class="ri-wordpress-line me-1"></i> Edit in WordPress
-					</a>
-				</li>
-			</ul>
-		</div>
-		<button type="submit" class="btn btn-primary" id="save-task" disabled>
-			<i class="ri-save-line"></i> Save
-		</button>
+		    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled($task_id == 0 ); ?>>
+		        <span class="visually-hidden">Toggle Dropdown</span>
+		    </button>
+
+		    <div class="dropdown-menu " style="">
+		    	<?php echo $task->renderTaskMenu(); ?>
+		    </div>
+        </div>
+
+
 	</div>
+
+
+
 </form>
 
 <script type="text/javascript">
@@ -516,12 +491,6 @@ function initializeTaskPage() {
 	const taskElement = document.querySelector(`[data-task-id="${<?php echo json_encode( $task_id ); ?>}"]`);
 	if (taskElement) {
 		console.log('Task ID found in data-task-id:', taskElement.getAttribute('data-task-id'));
-
-
-		// Cargar comentarios al iniciar
-		loadComments();
-
-
 	} else {
 		console.log('Task ID not found in data-task-id');
 	}
@@ -551,7 +520,7 @@ function initializeTaskPage() {
 		assigneesSelect = new Choices('#task-assignees', { removeItemButton: true});
 	
         // TODO: Agregar el evento de cambio para los asignados
-        // assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
+        assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
 
 	}
 
@@ -584,19 +553,11 @@ function initializeTaskPage() {
 
 
 	// TODO Cambios esteticos al selencionar/deselecionar el check tareas
-    // const taskTodayCheckbox = document.getElementById('task-today');
-	// // Verifica si el checkbox está presente en la página
-    // if (taskTodayCheckbox) {
-    //     taskTodayCheckbox.addEventListener('change', handleTaskTodayChange);
-
-    //     // Estado inicial: si la casilla está marcada, asegurarse de que el usuario esté seleccionado
-    //     if (taskTodayCheckbox.checked) {
-    //         const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-    //         if (!selectedValues.includes(userId)) {
-    //             assigneesSelect.setChoiceByValue(userId);
-    //         }
-    //     }
-    // }
+    const taskTodayCheckbox = document.getElementById('task-today');
+	// Verifica si el checkbox está presente en la página
+    if (taskTodayCheckbox) {
+        taskTodayCheckbox.addEventListener('change', handleTaskTodayChange);
+    }
 
 
 	const saveButton = document.getElementById('save-task');
@@ -651,27 +612,37 @@ function initializeTaskPage() {
 
 
 // TO-DO: Función para manejar cambios en la casilla "task-today"
-// function handleTaskTodayChange(event) {
-//     if (event.target.checked) {
-//         // Verificar si el usuario ya está seleccionado
-//         const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-//         if (!selectedValues.includes(userId)) {
-//             assigneesSelect.setChoiceByValue(userId);
-//         }
-//     }
-//     // Si se desmarca, no hacer nada
-// }
+function handleTaskTodayChange(event) {
+
+	// Si el usuario marca una tarea para hoy
+    if (event.target.checked) {
+        // Verificar si el usuario ya está seleccionado
+        const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+        // Y si no está seleccioando
+        if (!selectedValues.includes(userId)) {
+        	// Lo selecciona
+            // assigneesSelect.setChoiceByValue(userId);
+            assigneesSelect.setChoiceByValue(userId.toString()); // Asegúrate de que userId sea un string
+
+            
+        }
+    }
+    // Si se desmarca, no hacer nada
+}
 
 // TO-DO: Función para manejar cambios en los asignados
-// function handleAssigneesChange(event) {
-//     const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-//     if (!selectedValues.includes(userId)) {
-//         const taskTodayCheckbox = document.getElementById('task-today');
-//         if (taskTodayCheckbox && taskTodayCheckbox.checked) {
-//             taskTodayCheckbox.checked = false;
-//         }
-//     }
-// }
+function handleAssigneesChange(event) {
+	// Si el usuario se quita de los asignados a la tarea
+    const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+    if (!selectedValues.includes(userId.toString())) {
+        const taskTodayCheckbox = document.getElementById('task-today');
+        // Y tiene la tarea marcada para hoy
+        if (taskTodayCheckbox && taskTodayCheckbox.checked) {
+        	// La desmarca
+            taskTodayCheckbox.checked = false;
+        }
+    }
+}
 
 
 // TO-DO: Finish this to prevent closing without saving

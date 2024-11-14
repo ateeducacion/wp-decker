@@ -473,8 +473,8 @@ if (!$has_today_tasks) {
 
 
 <script>
-$(document).ready(function() {
-	$('#priority-table').DataTable({
+jQuery(document).ready(function() {
+	jQuery('#priority-table').DataTable({
 		// Configuraciones adicionales, como desactivar paginación o buscar dentro de ciertas columnas
 		info: false,
 		paging: false,

@@ -1,6 +1,12 @@
 
-<!-- TODO: Add the WP Head -->
-<?php // wp_head(); ?>
+<?php
+
+// Show the admin bar (just on DEBUG mode)
+if ( defined('WP_DEBUG') && WP_DEBUG ) {
+    wp_head();
+    show_admin_bar( true );
+}
+?>
 
 <script type="text/javascript">
 	const userId = <?php echo get_current_user_id(); ?>;

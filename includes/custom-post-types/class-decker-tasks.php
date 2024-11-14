@@ -925,9 +925,9 @@ public function delete_task_attachment() {
 			}
 			echo '<script>
 			jQuery(document).ready(function($){
-				$("select#post_status").append("<option value=\"archived\" ' . esc_attr( $complete ) . '>' . esc_html__( 'Archived', 'decker' ) . '</option>");
-				if ($("#post_status").val() === "archived") {
-			        $("#post-status-display").text("' . esc_html__( 'Archivado', 'decker' ) . '");
+				jQuery("select#post_status").append("<option value=\"archived\" ' . esc_attr( $complete ) . '>' . esc_html__( 'Archived', 'decker' ) . '</option>");
+				if (jQuery("#post_status").val() === "archived") {
+			        jQuery("#post-status-display").text("' . esc_html__( 'Archivado', 'decker' ) . '");
 			    }
 
 
@@ -1326,7 +1326,7 @@ public function display_attachment_meta_box( $post ) {
     <script>
     jQuery(document).ready(function($){
         var frame;
-        $('#add-attachments').on('click', function(e){
+        jQuery('#add-attachments').on('click', function(e){
             e.preventDefault();
             // If the media frame already exists, reopen it.
             if ( frame ) {
@@ -1346,7 +1346,7 @@ public function display_attachment_meta_box( $post ) {
                 var attachments = frame.state().get('selection').toJSON();
                 attachments.forEach(function(attachment){
                     // Append the selected attachments to the list
-                    $('#attachments-list').append(
+                    jQuery('#attachments-list').append(
                         '<li data-attachment-id="' + attachment.id + '">' +
                             '<a href="' + attachment.url + '" target="_blank">' + attachment.title + '</a> ' +
                             '<button type="button" class="button remove-attachment"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>' +
@@ -1359,8 +1359,8 @@ public function display_attachment_meta_box( $post ) {
             frame.open();
         });
         // Handle removal of attachments
-        $('#attachments-list').on('click', '.remove-attachment', function(){
-            $(this).closest('li').remove();
+        jQuery('#attachments-list').on('click', '.remove-attachment', function(){
+            jQuery(this).closest('li').remove();
         });
     });
     </script>
@@ -1640,7 +1640,7 @@ public function display_attachment_meta_box( $post ) {
 		if ( $post_type === 'decker_task' ) {
 			echo '<script>
 	            jQuery(document).ready(function($) {
-	                $("#submitdiv .hndle").text("' . esc_html__( 'Status', 'decker' ) . '");
+	                jQuery("#submitdiv .hndle").text("' . esc_html__( 'Status', 'decker' ) . '");
 	            });
 	        </script>';
 		}

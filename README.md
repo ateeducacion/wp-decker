@@ -4,11 +4,12 @@
 ![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%207.4-8892bf)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-**Tags:** ate, deck, tasks, boards  
+**Tags:** ate, deck, tasks, boards
 **Requires at least:** WordPress 6.1  
-**Tested up to:** WordPress 6.1  
+**Tested up to:** WordPress 6.7  
 **License:** GPL-3.0  
 **License URI:** [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.html)  
+**Short description:** **ATE Decker** is a WordPress plugin developed for internal use at the Área de Tecnología Educativa (ATE). Its main goal is to efficiently present a task list with a simple Kanban board interface and unique priority system.
 
 ## Description
 
