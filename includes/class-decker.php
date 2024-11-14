@@ -244,14 +244,47 @@ function write_log( $message ) {
 }
 
 function register_decker_role() {
-	add_role(
-		'decker_role',
-		__( 'Decker User' ),
-		array(
-			'read'         => true,  // Habilitar la capacidad de leer.
-			'edit_posts'   => false, // No permitir la edición de posts.
-			'delete_posts' => false, // No permitir la eliminación de posts.
-		)
-	);
+    // Create the "Decker User" role if it doesn't exist.
+    add_role(
+        'decker_role',
+        __( 'Decker User' ),
+        array(
+            'read'                   => true,  // Enable reading capability.
+            'edit_posts'             => true, // Disallow editing standard posts.
+            'delete_posts'           => false, // Disallow deleting posts.
+            'upload_files'           => true,  // Allow file and image uploads.
+			'delete_attachments'     => true,  // Allow deleting attachments.            
+            'manage_decker_tasks'    => true,  // Allow editing 'decker_task' posts and terms.
+            // 'publish_decker_tasks'   => true,  // Allow publishing 'decker_task' posts.
+            // 'delete_decker_tasks'    => false,  // Disallow deleting 'decker_task' posts.
+            // 'edit_others_decker_tasks' => true, // Allow editing others' 'decker_task' posts.
+        )
+    );
 }
 add_action( 'init', 'register_decker_role' );
+
+// Ensure that custom capabilities for the 'decker_task' post type are added to the role.
+function add_custom_caps_to_decker_role() {
+    // Get the "Decker User" role.
+    $role = get_role( 'decker_role' );
+
+    if ( $role ) {
+        // Add custom capabilities related to the 'decker_task' custom post type.
+    	$role->add_cap( 'upload_files');
+        $role->add_cap( 'delete_attachments' );      
+        $role->add_cap( 'manage_decker_tasks' );        
+    }
+}
+add_action( 'init', 'add_custom_caps_to_decker_role' );
+
+function add_capabilities_to_admin() {
+    // Get the administrator role.
+    $admin_role = get_role( 'administrator' );
+
+    if ( $admin_role ) {
+        // Add the generic capability for managing 'decker_task'.
+        $admin_role->add_cap( 'manage_decker_tasks' );
+    }
+}
+add_action( 'init', 'add_capabilities_to_admin' );
+

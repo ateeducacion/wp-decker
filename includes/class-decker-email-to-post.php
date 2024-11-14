@@ -55,13 +55,60 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'forbidden', 'Invalid access key', array( 'status' => 403 ) );
 		}
 
-		$email_data = $request->get_json_params();
+	    // // Verificar si la solicitud tiene el encabezado 'Content-Type' igual a 'application/json'.
+	    // $content_type = $request->get_header('content-type');
+	    // if ( strpos( $content_type, 'application/json' ) === false ) {
+	    //     return new WP_Error(
+	    //         'invalid_content_type',
+	    //         'This endpoint only accepts requests with Content-Type: application/json',
+	    //         array( 'status' => 415 ) // 415 Unsupported Media Type
+	    //     );
+	    // }
 
-		if ( ! $this->validate_sender( $email_data['from'] ) ) {
-			return new WP_Error( 'forbidden', 'Unauthorized sender', array( 'status' => 403 ) );
+	    $content_type = $request->get_header('content-type');
+
+	    if ( strpos( $content_type, 'application/json' ) !== false ) {
+
+
+			$email_data = $request->get_json_params();
+
+			if ( ! $this->validate_sender( $email_data['from'] ) ) {
+				return new WP_Error( 'forbidden', 'Unauthorized sender', array( 'status' => 403 ) );
+			}
+
+			$post_id = $this->process_email_data( $email_data );
+
+    	} elseif ( strpos( $content_type, 'multipart/form-data' ) !== false ) {
+
+
+		 	// Manejar solicitud multipart/form-data
+	        $email_data = array(
+	            'from' => sanitize_text_field( $request->get_param('from') ),
+	            'to' => (array) $request->get_param('to'),
+	            'subject' => sanitize_text_field( $request->get_param('subject') ),
+	            'body' => sanitize_textarea_field( $request->get_param('body') ),
+	            'headers' => $request->get_param('headers'),
+	        );
+
+	        // Manejo de archivos adjuntos
+	        $files = $request->get_file_params();
+	        if ( ! empty( $files['attachment'] ) ) {
+	            $uploaded_file = $files['attachment'];
+	            $email_data['attachments'] = array(
+	                'filename' => sanitize_file_name( $uploaded_file['name'] ),
+	                'content' => file_get_contents( $uploaded_file['tmp_name'] ),
+	                'mimetype' => mime_content_type( $uploaded_file['tmp_name'] ),
+	            );
+	        }
+
+	        // Validar y procesar datos del email
+			$post_id = $this->process_email_data( $email_data );
+
+	  	} else {
+    	
+    		return new WP_Error( 'unsupported_media_type', 'This endpoint only accepts application/json or multipart/form-data requests', array( 'status' => 415 ) );
+		
 		}
-
-		$post_id = $this->create_post_from_email( $email_data );
 
 		return rest_ensure_response(
 			array(
@@ -82,6 +129,34 @@ class Decker_Email_To_Post {
 	}
 
 	/**
+	 * Creates a temporary file from the given content.
+	 *
+	 * @param string $content The content to write to the temporary file.
+	 * @return string The path to the created temporary file.
+	 * @throws Exception If the temporary file cannot be created.
+	 */
+	private function create_temp_file( $content ) {
+	    // Create a temporary file
+	    $temp_file = tempnam(sys_get_temp_dir(), 'decker_temp_');
+
+	    if ($temp_file === false) {
+	        throw new Exception('Unable to create a temporary file.');
+	    }
+
+	    // Write the content to the temporary file
+	    if (file_put_contents($temp_file, $content) === false) {
+	        // Remove the temp file if writing fails
+	        unlink($temp_file);
+	        throw new Exception('Unable to write to the temporary file.');
+	    }
+
+	    // Return the path to the temporary file
+	    return $temp_file;
+	}
+
+
+
+	/**
 	 * Processes and uploads attachments as WordPress media.
 	 *
 	 * @param string $filename Name of the file.
@@ -93,6 +168,25 @@ class Decker_Email_To_Post {
 
 
 
+	    try {
+	        // Crear el archivo temporal y obtener su ruta
+	        $tmp_file_path = $this->create_temp_file( $content );
+	    } catch ( Exception $e ) {
+	        return new WP_Error( 'temp_file_error', 'Error al crear archivo temporal: ' . $e->getMessage() );
+	    }
+
+
+	    // Determinar el tipo MIME utilizando la ruta del archivo temporal
+	    $mime_type = mime_content_type( $tmp_file_path );
+
+	    if ( !$mime_type ) {
+	        // Eliminar el archivo temporal si no se puede determinar el tipo MIME
+	        unlink( $tmp_file_path );
+	        return new WP_Error( 'mime_type_error', 'No se pudo determinar el tipo MIME del archivo adjunto.' );
+	    }
+
+
+
         // Generar un nonce para la verificación
         $_POST['nonce'] = wp_create_nonce('upload_attachment_nonce');
 
@@ -100,8 +194,8 @@ class Decker_Email_To_Post {
         $_POST['task_id'] = $post_id;
         $_FILES['attachment'] = array(
             'name' => $filename,
-            'type' => mime_content_type($content),
-            'tmp_name' => $this->create_temp_file($content),
+		     'type'     => $mime_type,
+        		'tmp_name' => $tmp_file_path,
             'error' => 0,
             'size' => strlen($content),
         );
@@ -151,7 +245,7 @@ class Decker_Email_To_Post {
 	 * @param array $email_data The email data.
 	 * @return int ID of the created post.
 	 */
-	private function create_post_from_email( $email_data ) {
+	private function process_email_data( $email_data ) {
 	
 
         // Verificar si 'body' está presente

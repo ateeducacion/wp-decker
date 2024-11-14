@@ -258,9 +258,7 @@ function deleteComment(commentId) {
 	<div class="row">
 
 
-
-
-		<div class="mb-3">
+		<div class="col-md-10 mb-10">
 			<label for="task-assignees" class="form-label">Assign to</label>
 			<select class="form-select" id="task-assignees" multiple <?php disabled($disabled); ?>>
 				<?php
@@ -271,6 +269,19 @@ function deleteComment(commentId) {
 				?>
 			</select>
 		</div>
+
+		<div class="col-md-2 mb-2 d-flex justify-content-center">
+			<div class="form-check form-switch me-2">
+				<input class="form-check-input" type="checkbox" id="task-today" 
+			       <?php checked( $task->is_current_user_today_assigned() ); ?> 
+			       <?php disabled( $task_id !== 0 && ($disabled || !$task->is_current_user_assigned_to_task()) ); ?>>
+				<label class="form-check-label" for="task-max-priority">Today <?php echo ($task->is_current_user_today_assigned()) ? '🔥' : ''; ?></label>
+			</div>
+		</div>
+
+		</div>
+		<div class="row">
+
 		<div class="mb-3">
 			<label for="task-labels" class="form-label">Labels</label>
 			<select class="form-select" id="task-labels" multiple <?php disabled($disabled); ?>>
@@ -378,7 +389,7 @@ function deleteComment(commentId) {
 			    <br>
 			    <div class="d-flex align-items-center">
 			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> novalidate />
-			        <button class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>>Upload</button>
+			        <button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>>Upload</button>
 			    </div>
 			</div>
 
@@ -406,9 +417,7 @@ function deleteComment(commentId) {
 			<table id="user-history-table" class="table table-bordered table-striped table-hover table-sm">
 			    <thead>
 			        <tr>
-			            <th>Avatar</th>
 			            <th>Nickname</th>
-			            <th>Full Name</th>
 			            <th>Date</th>
 			        </tr>
 			    </thead>
@@ -424,9 +433,7 @@ function deleteComment(commentId) {
 			            $date = esc_html($record['date']);
 
 			            echo '<tr>';
-			            echo '<td>' . $avatar . '</td>';
-			            echo '<td>' . $nickname . '</td>';
-			            echo '<td title="' . $full_name . '">' . $full_name . '</td>';
+			            echo '<td title="' . $full_name . '">' . $avatar . ' ' . $nickname . '</td>';
 			            echo '<td>' . $date . '</td>';
 			            echo '</tr>';
 
@@ -456,138 +463,17 @@ function deleteComment(commentId) {
 		</div>
 
 		<!-- Gantt -->
-
-
-
-	<!-- Gantt -->
-	<div class="tab-pane" id="gantt-tab">
 		<div class="tab-pane" id="gantt-tab">
-		    <?php if (!empty($timelineData)) : ?>
-		        <div class="d-flex justify-content-center">
-		            <div id="timeline-container" class="w-100" style="height: 400px; overflow: auto;">
-		                <div id="timeline" style="width: 100%; height: 100%;"></div>		    
-		            </div>
-		        </div>
-		    <?php else : ?>
-		        <p class="text-muted">No hay datos disponibles para mostrar el diagrama de Gantt.</p>
-		    <?php endif; ?>
+			<div class="tab-pane" id="gantt-tab">
+				<p class="text-muted">Under construction...</p>
+			</div>
 		</div>
+
 	</div>
 
-</div>
-
-
-<?php if (!empty($timelineData)) : ?>
-    <!-- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> -->
-    <script type="text/javascript">
-
-    google.charts.load('current', {'packages':['timeline']});
-    google.charts.setOnLoadCallback(function() {
-        // No dibujar el gráfico aquí; esperar a que el modal se muestre
-    });
-
-function drawChart() {
-    // Datos pasados desde PHP
-    var rawData = <?php echo $timelineDataJson; ?>;
-
-    function groupConsecutiveDatesForTimeline(data) {
-        var groupedData = {};
-
-        data.forEach(function(record) {
-            var user = record.nickname;
-            var dateParts = record.date.split('-');
-            var date = new Date(
-                parseInt(dateParts[0]),
-                parseInt(dateParts[1]) - 1,
-                parseInt(dateParts[2])
-            );
-
-            if (!groupedData[user]) {
-                groupedData[user] = [];
-            }
-
-            groupedData[user].push(date);
-        });
-
-        var tasks = [];
-
-        for (var user in groupedData) {
-            var dates = groupedData[user];
-            dates.sort(function(a, b) { return a - b; });
-
-            var startDate = dates[0];
-            var endDate = dates[0];
-
-            for (var i = 1; i <= dates.length; i++) {
-                var currentDate = dates[i];
-                var previousDate = dates[i - 1];
-                if (currentDate && (currentDate - previousDate === 86400000)) {
-                    // Fechas consecutivas
-                    endDate = currentDate;
-                } else {
-                    // No es consecutiva o no hay más fechas, guardar la tarea actual
-                    tasks.push([
-                        user,
-                        '', // Puedes agregar más detalles aquí si lo deseas
-                        new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()),
-                        new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1)
-                    ]);
-                    // Iniciar una nueva tarea si hay más fechas
-                    if (currentDate) {
-                        startDate = currentDate;
-                        endDate = currentDate;
-                    }
-                }
-            }
-        }
-
-        return tasks;
-    }
-
-    var container = document.getElementById('timeline');
-    var chart = new google.visualization.Timeline(container);
-    var dataTable = new google.visualization.DataTable();
-
-    dataTable.addColumn({ type: 'string', id: 'User' });
-    dataTable.addColumn({ type: 'string', id: 'Label' });
-    dataTable.addColumn({ type: 'date', id: 'Start' });
-    dataTable.addColumn({ type: 'date', id: 'End' });
-
-    var tasks = groupConsecutiveDatesForTimeline(rawData);
-    dataTable.addRows(tasks);
-
-    var options = {
-        timeline: { showRowLabels: true },
-        height: container.parentElement.clientHeight, // Ajusta la altura basada en el contenedor
-        width: '100%',
-        chartArea: { width: '90%', height: '80%' }, // Ajusta el área del gráfico
-    };
-
-    chart.draw(dataTable, options);
-}
-
-// taskModal.addEventListener('shown.bs.modal', function () {
-//     google.charts.setOnLoadCallback(drawChart);
-// });
-
-// Redibujar el gráfico al cambiar el tamaño de la ventana para mantener la responsividad
-window.addEventListener('resize', function() {
-    drawChart();
-});
-
-
-    </script>
-<?php endif; ?>
 
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
-
-		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-today" 
-		       <?php checked( $task->is_current_user_today_assigned() ); ?> 
-		       <?php disabled( $task_id !== 0 && ($disabled || !$task->is_current_user_assigned_to_task()) ); ?>>
-			<label class="form-check-label" for="task-max-priority">Today <?php echo ($task->is_current_user_today_assigned()) ? '🔥' : '🪵'; ?></label>
-		</div>
 
 		<div class="form-check form-switch me-3">
 			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled ); ?>>
@@ -664,8 +550,8 @@ function initializeTaskPage() {
 	if (document.getElementById('task-assignees')) {
 		assigneesSelect = new Choices('#task-assignees', { removeItemButton: true});
 	
-        // Agregar el evento de cambio para los asignados
-        assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
+        // TODO: Agregar el evento de cambio para los asignados
+        // assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
 
 	}
 
@@ -697,52 +583,20 @@ function initializeTaskPage() {
 	}
 
 
-    const taskTodayCheckbox = document.getElementById('task-today');
-
-	// Verifica si el checkbox está presente en la página
-
-    if (taskTodayCheckbox) {
-        taskTodayCheckbox.addEventListener('change', handleTaskTodayChange);
-
-        // Estado inicial: si la casilla está marcada, asegurarse de que el usuario esté seleccionado
-        if (taskTodayCheckbox.checked) {
-            const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-            if (!selectedValues.includes(userId)) {
-                assigneesSelect.setChoiceByValue(userId);
-            }
-        }
-    }
-
-
+	// TODO Cambios esteticos al selencionar/deselecionar el check tareas
+    // const taskTodayCheckbox = document.getElementById('task-today');
+	// // Verifica si el checkbox está presente en la página
     // if (taskTodayCheckbox) {
-    //     // Listener para el cambio en el checkbox de 'task-today'
-    //     taskTodayCheckbox.addEventListener('change', function() {
-    //         if (this.checked) {
-    //             // Agrega el usuario actual a los valores seleccionados si está marcado
-    //             const userId = window.userId; // Usamos la constante global
-    //             const currentAssignees = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
-                
-    //             // Verifica si el userId ya está presente, si no, lo agrega
-    //             if (!currentAssignees.includes(userId)) {
-    //                 assigneesSelect.setValue([...currentAssignees, { value: userId, label: 'You' }]);
-    //             }
-    //         }
-    //     });
+    //     taskTodayCheckbox.addEventListener('change', handleTaskTodayChange);
 
-    //     // Listener para cambios en la selección de asignados
-    //     assigneesSelect.passedElement.element.addEventListener('change', function() {
-    //         const selectedAssignees = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
-    //         // Si el userId no está más en la lista de seleccionados, desmarcar el checkbox
-    //         if (!selectedAssignees.includes(window.userId)) {
-    //             taskTodayCheckbox.checked = false;
+    //     // Estado inicial: si la casilla está marcada, asegurarse de que el usuario esté seleccionado
+    //     if (taskTodayCheckbox.checked) {
+    //         const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+    //         if (!selectedValues.includes(userId)) {
+    //             assigneesSelect.setChoiceByValue(userId);
     //         }
-    //     });
+    //     }
     // }
-
-
-
-
-
 
 
 	const saveButton = document.getElementById('save-task');
@@ -757,13 +611,27 @@ function initializeTaskPage() {
 
 	const form = document.getElementById('task-form');
 
-    // Add event listeners to all form inputs
-    const inputs = form.querySelectorAll('input, textarea, select');
-    inputs.forEach(function(input) {
-        input.addEventListener('change', enableSaveButton);
-        input.addEventListener('input', enableSaveButton);
-    });
+    // // Add event listeners to all form inputs
+    // const inputs = form.querySelectorAll('input, textarea, select');
+    // inputs.forEach(function(input) {
+    //     input.addEventListener('change', enableSaveButton);
+    //     input.addEventListener('input', enableSaveButton);
+    // });
 
+
+	// Add event listeners to all form inputs
+	const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-column', 'task-author', 'task-today', 'task-max-priority'];
+
+	// Iterate and assing listeners
+	inputIds.forEach(function(id) {
+	    const element = document.getElementById(id);
+	    if (element) {
+	        element.addEventListener('change', enableSaveButton);
+	        element.addEventListener('input', enableSaveButton);
+	    }
+	});
+ 
+   
     // For Quill Editor
     if (quill) {
         quill.on('text-change', function() {
@@ -782,28 +650,28 @@ function initializeTaskPage() {
 }
 
 
-// Función para manejar cambios en la casilla "task-today"
-function handleTaskTodayChange(event) {
-    if (event.target.checked) {
-        // Verificar si el usuario ya está seleccionado
-        const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-        if (!selectedValues.includes(userId)) {
-            assigneesSelect.setChoiceByValue(userId);
-        }
-    }
-    // Si se desmarca, no hacer nada
-}
+// TO-DO: Función para manejar cambios en la casilla "task-today"
+// function handleTaskTodayChange(event) {
+//     if (event.target.checked) {
+//         // Verificar si el usuario ya está seleccionado
+//         const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+//         if (!selectedValues.includes(userId)) {
+//             assigneesSelect.setChoiceByValue(userId);
+//         }
+//     }
+//     // Si se desmarca, no hacer nada
+// }
 
-// Función para manejar cambios en los asignados
-function handleAssigneesChange(event) {
-    const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-    if (!selectedValues.includes(userId)) {
-        const taskTodayCheckbox = document.getElementById('task-today');
-        if (taskTodayCheckbox && taskTodayCheckbox.checked) {
-            taskTodayCheckbox.checked = false;
-        }
-    }
-}
+// TO-DO: Función para manejar cambios en los asignados
+// function handleAssigneesChange(event) {
+//     const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+//     if (!selectedValues.includes(userId)) {
+//         const taskTodayCheckbox = document.getElementById('task-today');
+//         if (taskTodayCheckbox && taskTodayCheckbox.checked) {
+//             taskTodayCheckbox.checked = false;
+//         }
+//     }
+// }
 
 
 // TO-DO: Finish this to prevent closing without saving
@@ -941,14 +809,6 @@ if (taskModal) {
                 sendFormByAjax(event);
             });
         }
-
-    google.charts.setOnLoadCallback(drawChart);
-
-
-
-// taskModal.addEventListener('shown.bs.modal', function () {
-//     google.charts.setOnLoadCallback(drawChart);
-// });
 
     });
 

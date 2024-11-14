@@ -156,7 +156,7 @@ public function upload_task_attachment() {
 public function delete_task_attachment() {
     check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
 
-    if ( ! current_user_can( 'delete_posts' ) ) {
+    if ( ! current_user_can( 'delete_attachments' ) ) {
         wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
     }
 
@@ -884,7 +884,7 @@ public function delete_task_attachment() {
 				'page-attributes',
 			),
 			'taxonomies'         => array( 'decker_board', 'decker_label' ),
-			'show_in_rest'       => true,
+			'show_in_rest'       => false,
 			'rest_base'          => 'tasks',
 			'can_export'         => true,
 		);
@@ -1681,6 +1681,13 @@ public function display_attachment_meta_box( $post ) {
         $description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
         $stack = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
         $board = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
+      
+		// Decker_Utility_Functions::write_log( "-----", Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		// Decker_Utility_Functions::write_log($_POST['board'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+		// Decker_Utility_Functions::write_log($board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
+
         $max_priority = isset( $_POST['max_priority'] ) ? boolval( $_POST['max_priority'] ) : false;
               
 		try {
@@ -1763,6 +1770,10 @@ public function display_attachment_meta_box( $post ) {
 			Decker_Utility_Functions::write_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
 	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
+
+
+		// Decker_Utility_Functions::write_log($board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+
 
 	    // Convertir objetos DateTime a formato string (si no, pasamos null to undefined)
 	    $duedate_str = $duedate ? $duedate->format('Y-m-d') : null;

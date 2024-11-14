@@ -38,9 +38,17 @@ services:
         if ! wp user get test2 --field=ID --quiet; then
           wp user create test2 test2@example.com --role=decker_role --user_pass=test2
         fi
+        echo "Configurando entorno de pruebas..."
+        # bash wp-content/plugins/decker/bin/install-wp-tests.sh wordpress wordpress wordpress mariadb latest
+        # phpunit
     volumes:
       - wordpress:/var/www/html
       - ./:/var/www/html/wp-content/plugins/decker
+
+
+
+
+
 
 volumes:
   mariadb: null

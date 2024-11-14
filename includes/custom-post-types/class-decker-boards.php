@@ -65,15 +65,12 @@ class Decker_Boards {
 			'show_tagcloud'     => false,
 			'show_in_quick_edit' => false,
 			'rewrite'           => array( 'slug' => 'decker_board' ),
-			'show_in_rest'      => true,
+			'show_in_rest'      => false,
 			'rest_base'         => 'boards',
 			'can_export'        => true,
-			// 'capabilities'      => array(
-			//     'manage_terms' => 'manage_decker_boards',
-			//     'edit_terms'   => 'edit_decker_boards',
-			//     'delete_terms' => 'delete_decker_boards',
-			//     'assign_terms' => 'read', // Allow all users to assign terms
-			// ),
+			'capabilities' => array(
+			    'assign_terms' => 'read',
+			),
 		);
 
 		// function allow_all_to_assign_decker_boards( $allcaps, $caps, $args, $user ) {

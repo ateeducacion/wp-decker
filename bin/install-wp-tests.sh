@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 if [ $# -lt 3 ]; then
 	echo "usage: $0 <db-name> <db-user> <db-pass> [db-host] [wp-version] [skip-database-creation]"
@@ -176,6 +176,6 @@ install_db() {
 	fi
 }
 
-install_wp
+# install_wp
 install_test_suite
-install_db
+# install_db

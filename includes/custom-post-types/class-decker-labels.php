@@ -65,15 +65,12 @@ class Decker_Labels {
 			'show_tagcloud'     => false,
 			'show_in_quick_edit' => false,
 			'rewrite'           => array( 'slug' => 'decker_label' ),
-			'show_in_rest'      => true,
+			'show_in_rest'      => false,
 			'rest_base'         => 'labels',
 			'can_export'        => true,
-			// 'capabilities'      => array(
-			//     'manage_terms' => 'manage_decker_labels',
-			//     'edit_terms'   => 'edit_decker_labels',
-			//     'delete_terms' => 'delete_decker_labels',
-			//     'assign_terms' => 'assign_decker_boards',
-			// ),			
+			'capabilities' => array(
+			    'assign_terms' => 'read',
+			),		
 		);
 
 		register_taxonomy( 'decker_label', array( 'decker_task', 'decker_board' ), $args );

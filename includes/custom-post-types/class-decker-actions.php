@@ -58,6 +58,9 @@ class Decker_Actions {
 			'show_in_rest'      => true, // Enable REST API.
 			'rest_base'         => 'actions', // Base name in REST API.
 			'can_export'        => true,
+			'capabilities' => array(
+			    'assign_terms' => 'read',
+			),			
 		);
 
 		register_taxonomy( 'decker_action', array( 'decker_task' ), $args );
