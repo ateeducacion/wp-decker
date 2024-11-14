@@ -90,26 +90,44 @@ class Decker_Email_To_Post {
 	 * @return int Attachment ID.
 	 */
 	private function upload_attachment( $filename, $content, $post_id ) {
-		$upload_dir = wp_upload_dir();
-		$path = $upload_dir['path'] . '/' . sanitize_file_name( $filename );
 
-		file_put_contents( $path, $content );
 
-		$filetype = wp_check_filetype( $filename );
-		$attachment = array(
-			'guid'           => $upload_dir['url'] . '/' . basename( $filename ),
-			'post_mime_type' => $filetype['type'],
-			'post_title'     => sanitize_file_name( $filename ),
-			'post_content'   => '',
-			'post_status'    => 'inherit',
-		);
 
-		$attach_id = wp_insert_attachment( $attachment, $path );
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-		$attach_data = wp_generate_attachment_metadata( $attach_id, $path );
-		wp_update_attachment_metadata( $attach_id, $attach_data );
+	     // Simular una petición AJAX
+	     $_POST['task_id'] = $post_id;
+	     $_FILES['attachment'] = array(
+	         'name' => $filename,
+	         'type' => mime_content_type($content),
+	         'tmp_name' => $this->create_temp_file($content),
+	         'error' => 0,
+	         'size' => strlen($content),
+	     );
 
-		return $attach_id;
+	     // Llamar a la función upload_task_attachment
+	     $decker_tasks = new Decker_Tasks();
+	     $decker_tasks->upload_task_attachment();
+      
+
+		// $upload_dir = wp_upload_dir();
+		// $path = $upload_dir['path'] . '/' . sanitize_file_name( $filename );
+
+		// file_put_contents( $path, $content );
+
+		// $filetype = wp_check_filetype( $filename );
+		// $attachment = array(
+		// 	'guid'           => $upload_dir['url'] . '/' . basename( $filename ),
+		// 	'post_mime_type' => $filetype['type'],
+		// 	'post_title'     => sanitize_file_name( $filename ),
+		// 	'post_content'   => '',
+		// 	'post_status'    => 'inherit',
+		// );
+
+		// $attach_id = wp_insert_attachment( $attachment, $path );
+		// require_once ABSPATH . 'wp-admin/includes/image.php';
+		// $attach_data = wp_generate_attachment_metadata( $attach_id, $path );
+		// wp_update_attachment_metadata( $attach_id, $attach_data );
+
+		// return $attach_id;
 	}
 
 	/**
