@@ -327,18 +327,20 @@ class Task {
      * Render the task card contextual menu.
      *
      */
-     public function renderTaskMenu(): string {
+     public function renderTaskMenu(bool $card=false): string {
         $menuItems = [];
 
-        // Add 'Edit' menu item
-        $menuItems[] = sprintf(
-            '<a href="%s" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="%d" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>',
-            esc_url(add_query_arg(
-                ['decker_page' => 'task', 'id' => esc_attr($this->ID)],
-                home_url('/')
-            )),
-            esc_attr($this->ID)
-        );
+        if (!$card) {
+            // Add 'Edit' menu item
+            $menuItems[] = sprintf(
+                '<a href="%s" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="%d" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>',
+                esc_url(add_query_arg(
+                    ['decker_page' => 'task', 'id' => esc_attr($this->ID)],
+                    home_url('/')
+                )),
+                esc_attr($this->ID)
+            );
+        }
 
         if ( current_user_can( 'manage_options' ) ) { 
             // Add 'Edit in WordPress' menu item
@@ -354,54 +356,70 @@ class Task {
             esc_attr($this->ID)
         );
 
-        // Add 'Assign to me' and 'Leave' menu items based on assigned users
-        $isAssigned = in_array(get_current_user_id(), array_column($this->assigned_users, 'ID'));
-        $menuItems[] = sprintf(
-            '<a href="javascript:void(0);" class="dropdown-item assign-to-me" data-task-id="%d" style="%s"><i class="ri-user-add-line me-1"></i>Assign to me</a>',
-            esc_attr($this->ID),
-            $isAssigned ? 'display: none;' : ''
-        );
+        if (!$card) {
 
-        // Add 'Leave' menu item
-        $menuItems[] = sprintf(
-            '<a href="javascript:void(0);" class="dropdown-item leave-task" data-task-id="%d" style="%s"><i class="ri-logout-circle-line me-1"></i>Leave</a>',
-            esc_attr($this->ID),
-            !$isAssigned ? 'display: none;' : ''
-        );
+            // Add 'Assign to me' and 'Leave' menu items based on assigned users
+            $isAssigned = in_array(get_current_user_id(), array_column($this->assigned_users, 'ID'));
+            $menuItems[] = sprintf(
+                '<a href="javascript:void(0);" class="dropdown-item assign-to-me" data-task-id="%d" style="%s"><i class="ri-user-add-line me-1"></i>Assign to me</a>',
+                esc_attr($this->ID),
+                $isAssigned ? 'display: none;' : ''
+            );
 
-        // Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag
-        if ($isAssigned) {
-            $isMarkedForToday = false;
-            foreach ($this->assigned_users as $user) {
-                if ($user->ID == get_current_user_id() && !empty($user->today)) {
-                    $isMarkedForToday = true;
-                    break;
+            // Add 'Leave' menu item
+            $menuItems[] = sprintf(
+                '<a href="javascript:void(0);" class="dropdown-item leave-task" data-task-id="%d" style="%s"><i class="ri-logout-circle-line me-1"></i>Leave</a>',
+                esc_attr($this->ID),
+                !$isAssigned ? 'display: none;' : ''
+            );
+
+            // Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag
+            if ($isAssigned) {
+                $isMarkedForToday = false;
+                foreach ($this->assigned_users as $user) {
+                    if ($user->ID == get_current_user_id() && !empty($user->today)) {
+                        $isMarkedForToday = true;
+                        break;
+                    }
                 }
+
+                $menuItems[] = sprintf(
+                    '<a href="javascript:void(0);" class="dropdown-item mark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-check-line me-1"></i>Mark for today</a>',
+                    esc_attr($this->ID),
+                    $isMarkedForToday ? 'display: none;' : ''
+                );
+
+                $menuItems[] = sprintf(
+                    '<a href="javascript:void(0);" class="dropdown-item unmark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-close-line me-1"></i>Unmark for today</a>',
+                    esc_attr($this->ID),
+                    !$isMarkedForToday ? 'display: none;' : ''
+                );
             }
-
-            $menuItems[] = sprintf(
-                '<a href="javascript:void(0);" class="dropdown-item mark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-check-line me-1"></i>Mark for today</a>',
-                esc_attr($this->ID),
-                $isMarkedForToday ? 'display: none;' : ''
-            );
-
-            $menuItems[] = sprintf(
-                '<a href="javascript:void(0);" class="dropdown-item unmark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-close-line me-1"></i>Unmark for today</a>',
-                esc_attr($this->ID),
-                !$isMarkedForToday ? 'display: none;' : ''
-            );
         }
 
-        // Generate dropdown HTML
-        return sprintf(
-            '<div class="dropdown float-end mt-2">
-                <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="ri-more-2-fill fs-18"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end">%s</div>
-            </div>',
-            implode('', $menuItems)
-        );
+        if (!$card) {
+            // Generate dropdown HTML for card
+            return sprintf(
+                '<div class="dropdown float-end mt-2">
+                    <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="ri-more-2-fill fs-18"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end">%s</div>
+                </div>',
+                implode('', $menuItems)
+            );
+
+        } else {
+
+            return sprintf(
+                '<div class="dropdown float-end mt-2">
+                    
+                    <div class="dropdown-menu dropdown-menu-end">%s</div>
+                </div>',
+                implode('', $menuItems)
+            );
+
+        }
     }
 
 }

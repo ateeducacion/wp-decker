@@ -38,4 +38,12 @@
 	box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
 }
 
+/* Fix para la fuente cuando se ponen los headers de WP */
+:root {
+    --wp--preset--font-family--heading: inherit; /* O puedes usar otra fuente predeterminada */
+}
 
+/* Corregir posicion por si se muestra la brra de wp en debug */
+.leftside-menu { 
+	padding-top: 3px;
+}

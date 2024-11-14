@@ -288,7 +288,7 @@ function deleteComment(commentId) {
 				// $attachments = is_array( $attachments ) ? $attachments : array();
 
 			?>
-			<span class="badge bg-light text-dark"><?php echo count( $attachments ); ?></span>
+			<span class="badge bg-light text-dark" id="attachment-count"><?php echo count( $attachments ); ?></span>
 			</a>
 		</li>
 		<li class="nav-item">
@@ -459,13 +459,11 @@ function deleteComment(commentId) {
 		    <button type="submit" class="btn btn-primary" id="save-task" disabled>
 				<i class="ri-save-line"></i> Save
 			</button>
-		    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled($task_id == 0 ); ?>>
+		    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled($disabled || $task_id == 0 ); ?>>
 		        <span class="visually-hidden">Toggle Dropdown</span>
 		    </button>
+	    	<?php echo $task->renderTaskMenu(true); ?>
 
-		    <div class="dropdown-menu " style="">
-		    	<?php echo $task->renderTaskMenu(); ?>
-		    </div>
         </div>
 
 
@@ -624,7 +622,7 @@ function handleTaskTodayChange(event) {
             // assigneesSelect.setChoiceByValue(userId);
             assigneesSelect.setChoiceByValue(userId.toString()); // Asegúrate de que userId sea un string
 
-            
+
         }
     }
     // Si se desmarca, no hacer nada
@@ -706,6 +704,9 @@ function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle) {
     `;
 
     attachmentsList.appendChild(li);
+
+    // Actualiza el contador de archivos
+    updateAttachmentCount(1); // Incrementar en 1    
 }
 
 document.addEventListener('click', function(event) {
@@ -736,6 +737,9 @@ function deleteAttachment(attachmentId, listItem) {
             if (response.success) {
                 // Eliminar el adjunto de la lista en la interfaz
                 listItem.remove();
+
+                // Actualiza el contador de archivos
+                updateAttachmentCount(-1); // Decrementar en 1                
             } else {
                 alert(response.data.message || 'Error deleting attachment.');
             }
@@ -751,6 +755,15 @@ function deleteAttachment(attachmentId, listItem) {
     };
 
     xhr.send(formData);
+}
+
+function updateAttachmentCount(change) {
+    var attachmentCountElement = document.getElementById('attachment-count');
+    if (attachmentCountElement) {
+        var currentCount = parseInt(attachmentCountElement.textContent, 10) || 0;
+        var newCount = currentCount + change;
+        attachmentCountElement.textContent = newCount;
+    }
 }
 
 function togglePriorityLabel(element) {
