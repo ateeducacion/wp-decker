@@ -93,19 +93,34 @@ class Decker_Email_To_Post {
 
 
 
-	     // Simular una petición AJAX
-	     $_POST['task_id'] = $post_id;
-	     $_FILES['attachment'] = array(
-	         'name' => $filename,
-	         'type' => mime_content_type($content),
-	         'tmp_name' => $this->create_temp_file($content),
-	         'error' => 0,
-	         'size' => strlen($content),
-	     );
+        // Generar un nonce para la verificación
+        $_POST['nonce'] = wp_create_nonce('upload_attachment_nonce');
 
-	     // Llamar a la función upload_task_attachment
-	     $decker_tasks = new Decker_Tasks();
-	     $decker_tasks->upload_task_attachment();
+        // Simular una petición AJAX
+        $_POST['task_id'] = $post_id;
+        $_FILES['attachment'] = array(
+            'name' => $filename,
+            'type' => mime_content_type($content),
+            'tmp_name' => $this->create_temp_file($content),
+            'error' => 0,
+            'size' => strlen($content),
+        );
+
+        // Llamar a la función upload_task_attachment
+        $decker_tasks = new Decker_Tasks();
+        ob_start(); // Iniciar el buffer de salida para capturar la respuesta
+        $decker_tasks->upload_task_attachment();
+        $response = ob_get_clean(); // Obtener la respuesta y limpiar el buffer
+
+        // Decodificar la respuesta JSON para obtener el attachment_id
+        $response_data = json_decode($response, true);
+        if (isset($response_data['success']) && $response_data['success']) {
+            $attachment_id = $response_data['attachment_id'];
+            return $attachment_id;
+        } else {
+            // Manejar el error si es necesario
+            return new WP_Error('upload_error', 'Error al subir el adjunto.');
+        }
       
 
 		// $upload_dir = wp_upload_dir();
