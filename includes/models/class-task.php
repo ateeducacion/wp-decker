@@ -179,6 +179,36 @@ class Task {
 
 
     /**
+     * Retrieves a historical record of users and their assigned dates as user objects.
+     *
+     * @return array An array of historical records with user objects and dates.
+     */
+    public function get_user_history_with_objects(): array {
+        $history = [];
+
+        if (isset($this->meta['_user_date_relations'][0])) {
+            $user_date_relations = maybe_unserialize($this->meta['_user_date_relations'][0]);
+
+            if ($user_date_relations && is_array($user_date_relations)) {
+                foreach ($user_date_relations as $relation) {
+                    if (isset($relation['user_id'], $relation['date'])) {
+                        // Retrieve WordPress user object
+                        $user = get_userdata($relation['user_id']);
+                        if ($user) {
+                            $history[] = [
+                                'user' => $user,
+                                'date' => $relation['date']
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $history;
+    }
+
+    /**
      * Assigns a user to the task.
      *
      * @param int $user_id The user ID.

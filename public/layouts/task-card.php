@@ -303,19 +303,21 @@ function deleteComment(commentId) {
 
 			<?php
 			// Obtener los adjuntos asociados con la tarea
-			$attachment_ids = get_post_meta( $task_id, 'attachments', true );
-			$attachment_ids = is_array( $attachment_ids ) ? $attachment_ids : array();
+			
+			$attachments = get_attached_media( '', $task_id );			
+			// $attachments = is_array( $attachments ) ? $attachments : array();
+
 			?>
 
 
 
-			<span class="badge bg-light text-dark"><?php echo count( $attachment_ids ); ?></span>
+			<span class="badge bg-light text-dark"><?php echo count( $attachments ); ?></span>
 			</a>
 		</li>
 		<li class="nav-item">
 			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link" <?php disabled( $task_id === 0 ); ?>>History
 
-			<span class="badge bg-light text-dark">0</span>
+			<!-- <span class="badge bg-light text-dark">0</span> -->
 			</a>
 		</li>
 		<li class="nav-item">
@@ -354,13 +356,18 @@ function deleteComment(commentId) {
 			<!-- Adjuntos -->
 			<div class="tab-pane" id="attachments-tab">
 			    <ul class="list-group mt-3" id="attachments-list">
-			        <?php foreach ( $attachment_ids as $attachment_id ) : 
-			            $attachment_url = wp_get_attachment_url( $attachment_id );
-			            $attachment_title = get_the_title( $attachment_id );
+			        <?php foreach ( $attachments as $attachment ) : 
+			            $attachment_url = $attachment->guid;
+
+			            // Obtener el nombre original si está disponible
+			            $original_filename = get_post_meta( $attachment->ID, '_original_filename', true );
+			            $display_name = ! empty( $original_filename ) ? $original_filename : get_the_title( $attachment->ID );
+
+
 			            ?>
-			            <li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-id="<?php echo esc_attr( $attachment_id ); ?>">
+			            <li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
 			                <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank">
-			                    <?php echo esc_html( $attachment_title ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
+			                    <?php echo esc_html( $display_name ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
 			                </a>
 			                <div>
 			                    <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>>Delete</button>
@@ -370,7 +377,7 @@ function deleteComment(commentId) {
 			    </ul>
 			    <br>
 			    <div class="d-flex align-items-center">
-			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> />
+			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> novalidate />
 			        <button class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>>Upload</button>
 			    </div>
 			</div>
@@ -395,23 +402,190 @@ function deleteComment(commentId) {
 
 		<!-- Historial -->
 		<div class="tab-pane" id="history-tab">
-			<ul class="list-group">
+
+			<table id="user-history-table" class="table table-bordered table-striped table-hover table-sm">
+			    <thead>
+			        <tr>
+			            <th>Avatar</th>
+			            <th>Nickname</th>
+			            <th>Full Name</th>
+			            <th>Date</th>
+			        </tr>
+			    </thead>
+			    <tbody>
+			        <?php
+			        $history = $task->get_user_history_with_objects();
+			        $timelineData = [];
+			        foreach ($history as $record) {
+			            $user = $record['user'];
+			            $avatar = get_avatar($user->ID, 32); // Get WordPress avatar
+			            $nickname = esc_html($user->nickname);
+			            $full_name = esc_attr($user->first_name . ' ' . $user->last_name); // Assuming first and last name exist
+			            $date = esc_html($record['date']);
+
+			            echo '<tr>';
+			            echo '<td>' . $avatar . '</td>';
+			            echo '<td>' . $nickname . '</td>';
+			            echo '<td title="' . $full_name . '">' . $full_name . '</td>';
+			            echo '<td>' . $date . '</td>';
+			            echo '</tr>';
+
+
+		               // Prepare data for the Timeline Chart
+		                $timelineData[] = [
+		                    'nickname' => $nickname,
+		                    'date' => $record['date']
+		                ];
+
+			        }
+
+            // Convert PHP array to JSON for use in JavaScript
+            $timelineDataJson = json_encode($timelineData);
+
+
+			        ?>
+			    </tbody>
+			</table>
+
+
+
+<!-- 			<ul class="list-group">
 				<li class="list-group-item">User 1 completed the task on 09/01/2023</li>
 				<li class="list-group-item">User 2 reviewed the task on 09/02/2023</li>
-			</ul>
+			</ul> -->
 		</div>
 
 		<!-- Gantt -->
+
+
+
+	<!-- Gantt -->
+	<div class="tab-pane" id="gantt-tab">
 		<div class="tab-pane" id="gantt-tab">
-			<p class="text-muted">Under construction...</p>
+		    <?php if (!empty($timelineData)) : ?>
+		        <div class="d-flex justify-content-center">
+		            <div id="timeline-container" class="w-100" style="height: 400px; overflow: auto;">
+		                <div id="timeline" style="width: 100%; height: 100%;"></div>		    
+		            </div>
+		        </div>
+		    <?php else : ?>
+		        <p class="text-muted">No hay datos disponibles para mostrar el diagrama de Gantt.</p>
+		    <?php endif; ?>
 		</div>
 	</div>
+
+</div>
+
+
+<?php if (!empty($timelineData)) : ?>
+    <!-- <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script> -->
+    <script type="text/javascript">
+
+    google.charts.load('current', {'packages':['timeline']});
+    google.charts.setOnLoadCallback(function() {
+        // No dibujar el gráfico aquí; esperar a que el modal se muestre
+    });
+
+function drawChart() {
+    // Datos pasados desde PHP
+    var rawData = <?php echo $timelineDataJson; ?>;
+
+    function groupConsecutiveDatesForTimeline(data) {
+        var groupedData = {};
+
+        data.forEach(function(record) {
+            var user = record.nickname;
+            var dateParts = record.date.split('-');
+            var date = new Date(
+                parseInt(dateParts[0]),
+                parseInt(dateParts[1]) - 1,
+                parseInt(dateParts[2])
+            );
+
+            if (!groupedData[user]) {
+                groupedData[user] = [];
+            }
+
+            groupedData[user].push(date);
+        });
+
+        var tasks = [];
+
+        for (var user in groupedData) {
+            var dates = groupedData[user];
+            dates.sort(function(a, b) { return a - b; });
+
+            var startDate = dates[0];
+            var endDate = dates[0];
+
+            for (var i = 1; i <= dates.length; i++) {
+                var currentDate = dates[i];
+                var previousDate = dates[i - 1];
+                if (currentDate && (currentDate - previousDate === 86400000)) {
+                    // Fechas consecutivas
+                    endDate = currentDate;
+                } else {
+                    // No es consecutiva o no hay más fechas, guardar la tarea actual
+                    tasks.push([
+                        user,
+                        '', // Puedes agregar más detalles aquí si lo deseas
+                        new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()),
+                        new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1)
+                    ]);
+                    // Iniciar una nueva tarea si hay más fechas
+                    if (currentDate) {
+                        startDate = currentDate;
+                        endDate = currentDate;
+                    }
+                }
+            }
+        }
+
+        return tasks;
+    }
+
+    var container = document.getElementById('timeline');
+    var chart = new google.visualization.Timeline(container);
+    var dataTable = new google.visualization.DataTable();
+
+    dataTable.addColumn({ type: 'string', id: 'User' });
+    dataTable.addColumn({ type: 'string', id: 'Label' });
+    dataTable.addColumn({ type: 'date', id: 'Start' });
+    dataTable.addColumn({ type: 'date', id: 'End' });
+
+    var tasks = groupConsecutiveDatesForTimeline(rawData);
+    dataTable.addRows(tasks);
+
+    var options = {
+        timeline: { showRowLabels: true },
+        height: container.parentElement.clientHeight, // Ajusta la altura basada en el contenedor
+        width: '100%',
+        chartArea: { width: '90%', height: '80%' }, // Ajusta el área del gráfico
+    };
+
+    chart.draw(dataTable, options);
+}
+
+// taskModal.addEventListener('shown.bs.modal', function () {
+//     google.charts.setOnLoadCallback(drawChart);
+// });
+
+// Redibujar el gráfico al cambiar el tamaño de la ventana para mantener la responsividad
+window.addEventListener('resize', function() {
+    drawChart();
+});
+
+
+    </script>
+<?php endif; ?>
 
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
 
 		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-today" <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled($disabled || !$task->is_current_user_assigned_to_task() ); ?>>
+			<input class="form-check-input" type="checkbox" id="task-today" 
+		       <?php checked( $task->is_current_user_today_assigned() ); ?> 
+		       <?php disabled( $task_id !== 0 && ($disabled || !$task->is_current_user_assigned_to_task()) ); ?>>
 			<label class="form-check-label" for="task-max-priority">Today <?php echo ($task->is_current_user_today_assigned()) ? '🔥' : '🪵'; ?></label>
 		</div>
 
@@ -489,6 +663,10 @@ function initializeTaskPage() {
 	// Inicializar Choices.js para los selectores de asignados y etiquetas
 	if (document.getElementById('task-assignees')) {
 		assigneesSelect = new Choices('#task-assignees', { removeItemButton: true});
+	
+        // Agregar el evento de cambio para los asignados
+        assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
+
 	}
 
 
@@ -517,6 +695,54 @@ function initializeTaskPage() {
 			togglePriorityLabel(this);
 		});
 	}
+
+
+    const taskTodayCheckbox = document.getElementById('task-today');
+
+	// Verifica si el checkbox está presente en la página
+
+    if (taskTodayCheckbox) {
+        taskTodayCheckbox.addEventListener('change', handleTaskTodayChange);
+
+        // Estado inicial: si la casilla está marcada, asegurarse de que el usuario esté seleccionado
+        if (taskTodayCheckbox.checked) {
+            const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+            if (!selectedValues.includes(userId)) {
+                assigneesSelect.setChoiceByValue(userId);
+            }
+        }
+    }
+
+
+    // if (taskTodayCheckbox) {
+    //     // Listener para el cambio en el checkbox de 'task-today'
+    //     taskTodayCheckbox.addEventListener('change', function() {
+    //         if (this.checked) {
+    //             // Agrega el usuario actual a los valores seleccionados si está marcado
+    //             const userId = window.userId; // Usamos la constante global
+    //             const currentAssignees = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
+                
+    //             // Verifica si el userId ya está presente, si no, lo agrega
+    //             if (!currentAssignees.includes(userId)) {
+    //                 assigneesSelect.setValue([...currentAssignees, { value: userId, label: 'You' }]);
+    //             }
+    //         }
+    //     });
+
+    //     // Listener para cambios en la selección de asignados
+    //     assigneesSelect.passedElement.element.addEventListener('change', function() {
+    //         const selectedAssignees = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
+    //         // Si el userId no está más en la lista de seleccionados, desmarcar el checkbox
+    //         if (!selectedAssignees.includes(window.userId)) {
+    //             taskTodayCheckbox.checked = false;
+    //         }
+    //     });
+    // }
+
+
+
+
+
 
 
 	const saveButton = document.getElementById('save-task');
@@ -554,6 +780,31 @@ function initializeTaskPage() {
     }
 
 }
+
+
+// Función para manejar cambios en la casilla "task-today"
+function handleTaskTodayChange(event) {
+    if (event.target.checked) {
+        // Verificar si el usuario ya está seleccionado
+        const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+        if (!selectedValues.includes(userId)) {
+            assigneesSelect.setChoiceByValue(userId);
+        }
+    }
+    // Si se desmarca, no hacer nada
+}
+
+// Función para manejar cambios en los asignados
+function handleAssigneesChange(event) {
+    const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+    if (!selectedValues.includes(userId)) {
+        const taskTodayCheckbox = document.getElementById('task-today');
+        if (taskTodayCheckbox && taskTodayCheckbox.checked) {
+            taskTodayCheckbox.checked = false;
+        }
+    }
+}
+
 
 // TO-DO: Finish this to prevent closing without saving
 // var hasUnsavedChanges = false;
@@ -690,6 +941,15 @@ if (taskModal) {
                 sendFormByAjax(event);
             });
         }
+
+    google.charts.setOnLoadCallback(drawChart);
+
+
+
+// taskModal.addEventListener('shown.bs.modal', function () {
+//     google.charts.setOnLoadCallback(drawChart);
+// });
+
     });
 
     // TO-DO: Finish this to prevent closing without saving

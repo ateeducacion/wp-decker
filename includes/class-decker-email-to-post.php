@@ -86,9 +86,10 @@ class Decker_Email_To_Post {
 	 *
 	 * @param string $filename Name of the file.
 	 * @param string $content  File content.
+	 * @param int $post_id Linked post.
 	 * @return int Attachment ID.
 	 */
-	private function upload_attachment( $filename, $content ) {
+	private function upload_attachment( $filename, $content, $post_id ) {
 		$upload_dir = wp_upload_dir();
 		$path = $upload_dir['path'] . '/' . sanitize_file_name( $filename );
 
@@ -209,16 +210,11 @@ class Decker_Email_To_Post {
 	    // Reset the user context
 	    wp_set_current_user( 0 );
 
-
-	    $attachment_ids = [];
-
 		// Optional handling of attachments if needed
 		if ( ! empty( $email_data['attachments'] ) ) {
 		    foreach ( $email_data['attachments'] as $filename => $content ) {
-		        $attach_id = $this->upload_attachment( $filename, $content, $task_id );
-		        if ( $attach_id ) {
-		            $attachment_ids[] = $attach_id;
-		        }
+		        $this->upload_attachment( $filename, $content, $task_id );
+
 		    }
 		}
 
@@ -233,23 +229,7 @@ class Decker_Email_To_Post {
 		    $content = $attachment->getContent();
 
 		    // Subir el adjunto a la biblioteca multimedia
-		    $attach_id = $this->upload_attachment( $filename, $content, $task_id );
-		    if ( $attach_id ) {
-		        $attachment_ids[] = $attach_id;
-		    }
-		}
-
-		// Si hay IDs de adjuntos, actualizar el meta 'attachments'
-		if ( ! empty( $attachment_ids ) ) {
-		    // Obtener adjuntos existentes (si los hay)
-		    $existing_attachments = get_post_meta( $task_id, 'attachments', true );
-		    $existing_attachments = is_array( $existing_attachments ) ? $existing_attachments : [];
-
-		    // Combinar y asegurar que los IDs sean únicos
-		    $all_attachments = array_unique( array_merge( $existing_attachments, $attachment_ids ) );
-
-		    // Actualizar el meta 'attachments'
-		    update_post_meta( $task_id, 'attachments', $all_attachments );
+		    $this->upload_attachment( $filename, $content, $task_id );
 		}
 
 		return $task_id;

@@ -17,6 +17,22 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Decker_Tasks {
 
+
+    /**
+     * Flag to indicate if the current upload is for a decker_task.
+     *
+     * @var bool
+     */
+    private $is_decker_task_upload = false;
+
+    /**
+     * Stores the original filename before obfuscation.
+     *
+     * @var string
+     */
+    private $original_filename = '';
+
+
 	/**
 	 * Constructor
 	 *
@@ -75,6 +91,10 @@ class Decker_Tasks {
 		add_action( 'wp_ajax_delete_task_attachment', array($this, 'delete_task_attachment' ) );
 
 
+   // Agregar el filtro para sanitizar el nombre del archivo
+        add_filter( 'sanitize_file_name', array( $this, 'decker_sanitize_file_name' ), 10, 1 );
+
+
 	}
 
 
@@ -101,19 +121,25 @@ public function upload_task_attachment() {
     require_once ABSPATH . 'wp-admin/includes/media.php';
     require_once ABSPATH . 'wp-admin/includes/image.php';
 
+	// Establecer la bandera para indicar que esta subida es para decker_task
+    $this->is_decker_task_upload = true;
+
     $attachment_id = media_handle_upload( 'attachment', $task_id );
+
+    // Reiniciar la bandera después de la subida
+    $this->is_decker_task_upload = false;
+
+    // Guardar el nombre original en los metadatos del adjunto
+    if ( ! empty( $this->original_filename ) ) {
+        update_post_meta( $attachment_id, '_original_filename', sanitize_file_name( $this->original_filename ) );
+        // Limpiar la variable temporal
+        $this->original_filename = '';
+    }
+
 
     if ( is_wp_error( $attachment_id ) ) {
         wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
     }
-
-    // Actualizar el meta 'attachments' de la tarea
-    $existing_attachments = get_post_meta( $task_id, 'attachments', true );
-    $existing_attachments = is_array( $existing_attachments ) ? $existing_attachments : array();
-    $existing_attachments[] = $attachment_id;
-    $existing_attachments = array_unique( $existing_attachments );
-
-    update_post_meta( $task_id, 'attachments', $existing_attachments );
 
     $attachment_url = wp_get_attachment_url( $attachment_id );
     $attachment_title = get_the_title( $attachment_id );
@@ -141,20 +167,13 @@ public function delete_task_attachment() {
         wp_send_json_error( array( 'message' => 'Invalid task ID or attachment ID.' ) );
     }
 
-    // Eliminar el adjunto de la lista en el meta de la tarea
-    $attachments = get_post_meta( $task_id, 'attachments', true );
-    $attachments = is_array( $attachments ) ? $attachments : array();
+	$result = wp_delete_attachment( $attachment_id, true );
 
-    if ( ( $key = array_search( $attachment_id, $attachments ) ) !== false ) {
-        unset( $attachments[ $key ] );
-        update_post_meta( $task_id, 'attachments', $attachments );
+	if ( is_wp_error( $result ) ) {        
+	    wp_send_json_error( array( 'message' => 'Attachment not found in task.' ) );
 
-        // Opcional: Eliminar el adjunto de la biblioteca multimedia
-        wp_delete_attachment( $attachment_id, true );
-
-        wp_send_json_success( array( 'message' => 'Attachment deleted successfully.' ) );
     } else {
-        wp_send_json_error( array( 'message' => 'Attachment not found in task.' ) );
+	    wp_send_json_success( array( 'message' => 'Attachment deleted successfully.' ) );
     }
 }
 
@@ -1271,9 +1290,8 @@ public function delete_task_attachment() {
 
 
 public function display_attachment_meta_box( $post ) {
-    // Retrieve existing attachments from post meta; initialize as empty array if none exist
-    $attachments = get_post_meta( $post->ID, 'attachments', true );
-    $attachments = is_array( $attachments ) ? $attachments : array();
+    // Retrieve existing attachments linked to post.
+    $attachments = get_attached_media( '', $post->ID );		
 
     // Include the nonce field for security
     wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
@@ -1286,15 +1304,20 @@ public function display_attachment_meta_box( $post ) {
         
         <!-- List of attached media -->
         <ul id="attachments-list">
-            <?php foreach ( $attachments as $attach_id ) : 
-                $attachment_url = wp_get_attachment_url( $attach_id );
-                $attachment_title = get_the_title( $attach_id );
+            <?php foreach ( $attachments as $attachment ) : 
+                $attachment_url = $attachment->guid;
+                $attachment_title = $attachment->post_title;
+
+	            // Obtener el nombre original si está disponible
+	            $original_filename = get_post_meta( $attachment->ID, '_original_filename', true );
+	            $display_name = ! empty( $original_filename ) ? $original_filename : get_the_title( $attachment->ID );
+
                 ?>
-                <li data-attachment-id="<?php echo esc_attr( $attach_id ); ?>">
-                    <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $attachment_title ); ?></a>
+                <li data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
+                    <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $display_name ); ?></a>
                     <button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
                     <!-- Hidden input to store attachment IDs -->
-                    <input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attach_id ); ?>">
+                    <input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attachment->ID ); ?>">
                 </li>
             <?php endforeach; ?>
         </ul>
@@ -1497,15 +1520,6 @@ public function display_attachment_meta_box( $post ) {
 			}
 		}
 
-	    // Save attachments
-	    if ( isset( $_POST['attachments'] ) ) {
-	        $attachments = array_map( 'intval', $_POST['attachments'] );
-	        update_post_meta( $post_id, 'attachments', $attachments );
-	    // } else {
-	    //     // If no attachments are provided, delete the meta
-	    //     delete_post_meta( $post_id, 'attachments' );
-	    }
-
 		// Save assigned users
 		if ( isset( $_POST['assigned_users'] ) ) {
 		    $assigned_users = array_map( 'intval', wp_unslash( $_POST['assigned_users'] ) );
@@ -1513,7 +1527,6 @@ public function display_attachment_meta_box( $post ) {
 		}
 
 		// Save user date relations.
-
     	$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();
 	    update_post_meta( $post_id, '_user_date_relations', $relations );
 
@@ -1812,6 +1825,49 @@ public function display_attachment_meta_box( $post ) {
 	    // Retornar el ID de la tarea creada o actualizada
 	    return $task_id;
 	}
+
+
+
+/**
+ * Sanitize and obfuscate the file name for decker_task uploads.
+ *
+ * @param string $filename The original filename.
+ * @return string The sanitized (obfuscated) filename.
+ */
+public function decker_sanitize_file_name( $filename ) {
+    if ( $this->is_decker_task_upload ) {
+        // Almacenar el nombre original
+        $this->original_filename = $filename;
+
+        // Generar un nombre único y ofuscado (por ejemplo, UUID v4)
+        $obfuscated_name = $this->generate_uuid4() . '.' . pathinfo( $filename, PATHINFO_EXTENSION );
+
+        return $obfuscated_name;
+    }
+
+    return $filename;
+}
+
+/**
+ * Generate a UUID v4.
+ *
+ * @return string UUID v4.
+ */
+private function generate_uuid4() {
+    if ( function_exists( 'wp_generate_uuid4' ) ) {
+        return wp_generate_uuid4();
+    }
+
+    // Generar UUID v4 manualmente si la función no existe
+    $data = openssl_random_pseudo_bytes( 16 );
+    assert( strlen( $data ) == 16 );
+
+    $data[6] = chr( ord( $data[6] ) & 0x0f | 0x40 ); // versión 4
+    $data[8] = chr( ord( $data[8] ) & 0x3f | 0x80 ); // variante RFC 4122
+
+    return vsprintf( '%s%s-%s-%s-%s-%s%s%s', str_split( bin2hex( $data ), 4 ) );
+}
+
 
 
 
