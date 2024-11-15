@@ -41,7 +41,7 @@ jobs:
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: './tmp-build/decker'
+          build-dir: './tmp-build'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
