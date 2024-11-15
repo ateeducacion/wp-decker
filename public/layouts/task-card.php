@@ -462,7 +462,11 @@ function deleteComment(commentId) {
 		    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled($disabled || $task_id == 0 ); ?>>
 		        <span class="visually-hidden">Toggle Dropdown</span>
 		    </button>
-	    	<?php echo $task->renderTaskMenu(true); ?>
+	    	<?php 
+		    	if ($task_id > 0 ) {
+			    	echo $task->renderTaskMenu(true); 
+		    	}
+	    	?>
 
         </div>
 
@@ -605,6 +609,43 @@ function initializeTaskPage() {
     if (labelsSelect) {
         labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
     }
+
+    // TO-DO: esto está duplicado de footer-scripts, unificar...
+	document.querySelectorAll('.archive-task').forEach((element) => {
+      element.addEventListener('click', function () {
+        var taskId = element.getAttribute('data-task-id');
+        if (confirm('Are you sure you want to archive this task?')) {
+          fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+            },
+            body: JSON.stringify({ status: 'archived' })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+
+              // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
+              // element.closest('.card').remove();
+
+              // Reload the page if the request was successful
+              location.reload();   
+
+            } else {
+              alert('Failed to archive task.');
+            }
+          })
+          .catch(error => console.error('Error:', error));
+        }
+      });
+    });    
 
 }
 
@@ -895,6 +936,12 @@ function sendFormByAjax(event) {
 						    modalInstance.hide();
 						}
 
+
+		              // TO-DO: Maybe will be better just close de the modal and update the the card, but we reload just for better debuggin
+		              // element.closest('.card').remove();
+
+		              // Reload the page if the request was successful
+		              location.reload();   
 
                     } else {
 

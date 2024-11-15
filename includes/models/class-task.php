@@ -284,7 +284,7 @@ class Task {
                 </span>
 
                 <small class="text-muted relative-time-badge" title="<?php echo esc_attr($formatted_duedate); ?>">
-                    <span class="task-id label-to-hide"><?php echo esc_html($relative_time); ?></span>
+                    <span class="task-id label-to-hide"><?php echo $relative_time; ?></span>
                     <span class="task-id label-to-show" style="display: none;">#<?php echo esc_html($this->ID); ?></span>
                 </small>
 
@@ -305,7 +305,7 @@ class Task {
                     </span>
                 </p>
 
-                <?php echo esc_html( $this->renderTaskMenu() ); ?>
+                <?php echo $this->renderTaskMenu(); ?>
 
                 <div class="avatar-group mt-2">
                     <?php foreach ($this->assigned_users as $user_info): ?>
