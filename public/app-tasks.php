@@ -139,7 +139,7 @@ table#tablaTareas td:nth-child(4) {
 								    $class_disabled = ' disabled';
 								}
 							?>
-								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo $class_disabled; ?>" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr($class_disabled); ?>" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
 
 
 	

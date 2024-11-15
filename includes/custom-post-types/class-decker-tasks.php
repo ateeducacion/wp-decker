@@ -1198,7 +1198,7 @@ public function delete_task_attachment() {
 	                $date = esc_html( $relation['date'] );
 	                ?>
 	                <li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
-	                    <?php echo $display_name . ' - ' . $date; ?>
+	                    <?php echo esc_html($display_name) . ' - ' . esc_html($date); ?>
 	                    <button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
 	                </li>
 	            <?php } ?>

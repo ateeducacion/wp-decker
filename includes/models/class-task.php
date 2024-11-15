@@ -278,13 +278,13 @@ class Task {
         ?>
         <div class="card mb-0" data-task-id="<?php echo esc_attr($this->ID); ?>">
             <div class="card-body p-3">
-                <span class="float-end badge <?php echo $priorityBadgeClass; ?>">
-                    <span class="label-to-hide"><?php echo $priorityLabel; ?></span>
+                <span class="float-end badge <?php echo esc_attr($priorityBadgeClass); ?>">
+                    <span class="label-to-hide"><?php echo esc_html($priorityLabel); ?></span>
                     <span class="menu-order label-to-show" style="display: none;">Order: <?php echo esc_html($this->order); ?></span>
                 </span>
 
-                <small class="text-muted relative-time-badge" title="<?php echo $formatted_duedate; ?>">
-                    <span class="task-id label-to-hide"><?php echo $relative_time; ?></span>
+                <small class="text-muted relative-time-badge" title="<?php echo esc_attr($formatted_duedate); ?>">
+                    <span class="task-id label-to-hide"><?php echo esc_html($relative_time); ?></span>
                     <span class="task-id label-to-show" style="display: none;">#<?php echo esc_html($this->ID); ?></span>
                 </small>
 
@@ -305,7 +305,7 @@ class Task {
                     </span>
                 </p>
 
-                <?php echo $this->renderTaskMenu(); ?>
+                <?php echo esc_html( $this->renderTaskMenu() ); ?>
 
                 <div class="avatar-group mt-2">
                     <?php foreach ($this->assigned_users as $user_info): ?>

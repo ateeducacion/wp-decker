@@ -181,12 +181,10 @@ if (!$has_today_tasks) {
 									            esc_html($task->board->name)
 									        );
 									    }
-
-									    $stack = esc_html($task->stack);
 									    ?>
 									    <tr>
-									        <td><?php echo $board; ?></td>
-									        <td class="d-none d-md-table-cell"><?php echo $stack; ?></td>
+									        <td><?php echo esc_html($board); ?></td>
+									        <td class="d-none d-md-table-cell"><?php echo esc_html($task->stack); ?></td>
 									        <td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr($task->title); ?>">
 									            <a href="<?php echo esc_url(add_query_arg(['decker_page' => 'task', 'id' => esc_attr($task->ID)], home_url('/'))); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr($task->ID); ?>">
 									                <?php echo esc_html($task->title); ?>
@@ -252,7 +250,7 @@ if (!$has_today_tasks) {
 							$user_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays($user->ID, 0);
 						?>
 							<div class="col-xl-6">
-								<div class="<?php echo $card_class; ?>">
+								<div class="<?php echo esc_attr($card_class); ?>">
 									<div class="d-flex card-header justify-content-between align-items-center">
 										<h4 class="header-title"><?php echo esc_html( $user->display_name ); ?></h4>
 										<img src="<?php echo esc_url( get_avatar_url( $user->ID ) ); ?>" class="rounded-circle avatar-xs hoverZoomLink" alt="<?php echo esc_attr( $user->display_name ); ?>">
@@ -276,7 +274,7 @@ if (!$has_today_tasks) {
 													    }
 												?>
 													    <tr>
-													        <td><?php echo $board_display; ?></td>
+													        <td><?php echo esc_html($board_display); ?></td>
 													        <td>
 													            <a href="<?php echo esc_url(add_query_arg(
 													                array(
