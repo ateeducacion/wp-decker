@@ -943,7 +943,7 @@ public function delete_task_attachment() {
 	 */
 	public function filter_tasks_by_status( $query ) {
 		global $pagenow;
-		$post_type = isset( $_GET['post_type'] ) ? $_GET['post_type'] : '';
+	    $post_type = isset( $_GET['post_type'] ) ? sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) : '';
 
 		if ( 'edit.php' === $pagenow && 'decker_task' === $post_type && ! isset( $_GET['post_status'] ) ) {
 			$query->set( 'post_status', 'publish' );
