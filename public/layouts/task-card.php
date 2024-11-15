@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (document.getElementById('submit-comment')) {
 		document.getElementById('submit-comment').addEventListener('click', function() {
 			const commentText = document.getElementById('comment-text').value;
-			const taskId = <?php echo json_encode( $task_id ); ?>;
+			const taskId = <?php echo wp_json_encode( $task_id ); ?>;
 			const parentId = replyToCommentId;
 
 			if (commentText.trim() === '') {
@@ -420,7 +420,7 @@ function deleteComment(commentId) {
 			        }
 
             // Convert PHP array to JSON for use in JavaScript
-            $timelineDataJson = json_encode($timelineData);
+            $timelineDataJson = wp_json_encode($timelineData);
 
 
 			        ?>
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeTaskPage() {
 	// Verificar si el task_id está presente en data-task-id
-	const taskElement = document.querySelector(`[data-task-id="${<?php echo json_encode( $task_id ); ?>}"]`);
+	const taskElement = document.querySelector(`[data-task-id="${<?php echo wp_json_encode( $task_id ); ?>}"]`);
 	if (taskElement) {
 		console.log('Task ID found in data-task-id:', taskElement.getAttribute('data-task-id'));
 	} else {
@@ -656,7 +656,7 @@ function handleAssigneesChange(event) {
 function uploadAttachment(file) {
     var formData = new FormData();
     formData.append('action', 'upload_task_attachment');
-    formData.append('task_id', <?php echo json_encode( $task_id ); ?>);
+    formData.append('task_id', <?php echo wp_json_encode( $task_id ); ?>);
     formData.append('attachment', file);
     formData.append('nonce', '<?php echo wp_create_nonce( 'upload_attachment_nonce' ); ?>');
 
@@ -724,7 +724,7 @@ function deleteAttachment(attachmentId, listItem) {
 
     var formData = new FormData();
     formData.append('action', 'delete_task_attachment');
-    formData.append('task_id', <?php echo json_encode( $task_id ); ?>);
+    formData.append('task_id', <?php echo wp_json_encode( $task_id ); ?>);
     formData.append('attachment_id', attachmentId);
     formData.append('nonce', '<?php echo wp_create_nonce( 'delete_attachment_nonce' ); ?>');
 

@@ -42,7 +42,7 @@ class TestDeckerAdminImport extends TestCase {
 			'wp_send_json_success',
 			array(
 				'return' => function ( $data ) {
-					echo json_encode(
+					echo wp_json_encode(
 						array(
 							'success' => true,
 							'data' => $data,
@@ -56,7 +56,7 @@ class TestDeckerAdminImport extends TestCase {
 			'wp_send_json_error',
 			array(
 				'return' => function ( $data ) {
-					echo json_encode(
+					echo wp_json_encode(
 						array(
 							'success' => false,
 							'data' => $data,

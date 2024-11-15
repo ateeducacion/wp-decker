@@ -235,42 +235,42 @@ include 'layouts/main.php';
 
 		// Datos para las gráficas
 		const tasksData = {
-			labels: <?php echo json_encode( $board_labels ); ?>,
+			labels: <?php echo wp_json_encode( $board_labels ); ?>,
 			datasets: [
 				{
 					label: 'To-Do',
-					data: <?php echo json_encode( array_column( $tasks_by_board_and_stack, 'to-do' ) ); ?>,
+					data: <?php echo wp_json_encode( array_column( $tasks_by_board_and_stack, 'to-do' ) ); ?>,
 					backgroundColor: '#ff6384'
 				},
 				{
 					label: 'In Progress',
-					data: <?php echo json_encode( array_column( $tasks_by_board_and_stack, 'in-progress' ) ); ?>,
+					data: <?php echo wp_json_encode( array_column( $tasks_by_board_and_stack, 'in-progress' ) ); ?>,
 					backgroundColor: '#36a2eb'
 				},
 				{
 					label: 'Done',
-					data: <?php echo json_encode( array_column( $tasks_by_board_and_stack, 'done' ) ); ?>,
+					data: <?php echo wp_json_encode( array_column( $tasks_by_board_and_stack, 'done' ) ); ?>,
 					backgroundColor: '#cc65fe'
 				}
 			]
 		};
 
 		const usersData = {
-			labels: <?php echo json_encode( $user_labels ); ?>,
+			labels: <?php echo wp_json_encode( $user_labels ); ?>,
 			datasets: [
 				{
 					label: 'To-Do',
-					data: <?php echo json_encode( array_column( $tasks_by_user_and_stack, 'to-do' ) ); ?>,
+					data: <?php echo wp_json_encode( array_column( $tasks_by_user_and_stack, 'to-do' ) ); ?>,
 					backgroundColor: '#ff6384'
 				},
 				{
 					label: 'In Progress',
-					data: <?php echo json_encode( array_column( $tasks_by_user_and_stack, 'in-progress' ) ); ?>,
+					data: <?php echo wp_json_encode( array_column( $tasks_by_user_and_stack, 'in-progress' ) ); ?>,
 					backgroundColor: '#36a2eb'
 				},
 				{
 					label: 'Done',
-					data: <?php echo json_encode( array_column( $tasks_by_user_and_stack, 'done' ) ); ?>,
+					data: <?php echo wp_json_encode( array_column( $tasks_by_user_and_stack, 'done' ) ); ?>,
 					backgroundColor: '#cc65fe'
 				}
 			]
@@ -280,7 +280,7 @@ include 'layouts/main.php';
 			labels: ['To Do', 'In Progress', 'Done'],
 			datasets: [{
 				label: 'Tasks by Stack',
-				data: <?php echo json_encode( $tasks_by_stack ); ?>,
+				data: <?php echo wp_json_encode( $tasks_by_stack ); ?>,
 				backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56']
 			}]
 		};
