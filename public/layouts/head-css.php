@@ -1,11 +1,11 @@
 
 <?php
 
-// Show the admin bar (just on DEBUG mode)
-if ( defined('WP_DEBUG') && WP_DEBUG ) {
-    wp_head();
-    show_admin_bar( true );
-}
+// // Show the admin bar (just on DEBUG mode)
+// if ( defined('WP_DEBUG') && WP_DEBUG ) {
+//     wp_head();
+    show_admin_bar( false );
+// }
 ?>
 
 <script type="text/javascript">

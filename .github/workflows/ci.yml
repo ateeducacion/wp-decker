@@ -6,7 +6,8 @@ on:
   push:
     tags:
       - '*'
-
+    branches:
+      - '*' 
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
@@ -28,6 +29,19 @@ jobs:
 
       # - name: Run unit tests
       #   run: make test
+
+      - name: Create package using the Makefile
+        run: make package VERSION=6.6.6
+
+      - name: Extract ZIP file
+        run: |
+          mkdir -p tmp-build
+          unzip decker-6.6.6.zip -d tmp-build
+
+      - name: Run plugin check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: './tmp-build/decker'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
