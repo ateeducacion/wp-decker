@@ -594,6 +594,12 @@ function initializeTaskPage() {
 	    }
 	});
  
+
+     // Check the initial state of the max-priority checkbox and toggle the label accordingly
+    var taskMaxPriority = document.getElementById('task-max-priority');
+    if (taskMaxPriority) {
+        togglePriorityLabel(taskMaxPriority);
+    }
    
     // For Quill Editor
     if (quill) {
