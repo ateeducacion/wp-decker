@@ -1383,7 +1383,7 @@ public function display_attachment_meta_box( $post ) {
 		if ( isset( $postarr['menu_order'] ) ) {
 		    // Remove the menu_order field so it won't be saved
 		    unset( $postarr['menu_order'] );
-	        Decker_Utility_Functions::write_log( 'Avoid order modification by user.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	        Decker_Utility_Functions::write_log( 'Avoid order modification by user.', Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 		}
 
 	    // Ensure we're working with the correct post type and only on Insert post.
