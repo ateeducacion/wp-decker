@@ -605,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		$creation_date = null;
 		if (!empty($card['createdAt']) && is_numeric($card['createdAt'])) {
 		    try {
-		        $creation_date = new DateTime(date('Y-m-d H:i:s', $card['createdAt']));
+		        $creation_date = new DateTime(gmdate('Y-m-d H:i:s', $card['createdAt']));
 		    } catch (Exception $e) {
 		        Decker_Utility_Functions::write_log('Fecha de creación inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
 		        $creation_date = new DateTime(); // Asignar una fecha por defecto si hay un error
@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			if ( $user_id ) {
 
 				// Extract the date (without time) from the comment's creation date.
-				$date = date( 'Y-m-d', strtotime( $comment['creationDateTime'] ) );
+				$date = gmdate( 'Y-m-d', strtotime( $comment['creationDateTime'] ) );
 
 				// Check if there's already an entry for this user and date.
 				$exists = false;

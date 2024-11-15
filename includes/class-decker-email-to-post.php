@@ -96,7 +96,7 @@ class Decker_Email_To_Post {
 	            $uploaded_file = $files['attachment'];
 	            $email_data['attachments'] = array(
 	                'filename' => sanitize_file_name( $uploaded_file['name'] ),
-	                'content' => file_get_contents( $uploaded_file['tmp_name'] ),
+	                'content' => wp_remote_get( $uploaded_file['tmp_name'] ),
 	                'mimetype' => mime_content_type( $uploaded_file['tmp_name'] ),
 	            );
 	        }
@@ -146,7 +146,7 @@ class Decker_Email_To_Post {
 	    // Write the content to the temporary file
 	    if (file_put_contents($temp_file, $content) === false) {
 	        // Remove the temp file if writing fails
-	        unlink($temp_file);
+	        wp_delete_file($temp_file);
 	        throw new Exception('Unable to write to the temporary file.');
 	    }
 
@@ -181,7 +181,7 @@ class Decker_Email_To_Post {
 
 	    if ( !$mime_type ) {
 	        // Eliminar el archivo temporal si no se puede determinar el tipo MIME
-	        unlink( $tmp_file_path );
+	        wp_delete_file( $tmp_file_path );
 	        return new WP_Error( 'mime_type_error', 'No se pudo determinar el tipo MIME del archivo adjunto.' );
 	    }
 

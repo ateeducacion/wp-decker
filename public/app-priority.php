@@ -6,7 +6,7 @@ include 'layouts/main.php';
 if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
 	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
 
-	$today = date( 'Y-m-d' );
+	$today = gmdate( 'Y-m-d' );
 	$current_user_id = get_current_user_id();
 
 	foreach ( $task_ids as $task_id ) {
@@ -32,7 +32,7 @@ $has_today_tasks = $taskManager->hasUserTodayTasks();
 if (!$has_today_tasks) {
 
 	$current_user_id = get_current_user_id();
-    $days_to_load = (date('N') == 1) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
+    $days_to_load = (gmdate('N') == 1) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
 
     $previous_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays($current_user_id, $days_to_load);
 }
@@ -195,7 +195,7 @@ if (!$has_today_tasks) {
 									        <td>
 									            <div class="avatar-group mt-2">
 									                <?php
-									                $today = date('Y-m-d');
+									                $today = gmdate('Y-m-d');
 									                foreach ($task->assigned_users as $user_info) {
 									                    $today_class = $user_info->today ? 'today' : '';
 									                    ?>
@@ -222,7 +222,7 @@ if (!$has_today_tasks) {
 					<div class="row" id="cards-container">
 
 						<?php
-						$today = date( 'Y-m-d' );
+						$today = gmdate( 'Y-m-d' );
 						$options = get_option( 'decker_settings', array() );
 						$selected_role = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
 						$users = get_users(
@@ -231,7 +231,7 @@ if (!$has_today_tasks) {
 								'orderby' => 'display_name',
 							)
 						);
-						$today = date( 'Y-m-d' );
+						$today = gmdate( 'Y-m-d' );
 						$current_user_id = get_current_user_id();
 						foreach ( $users as $user ) {
 							$card_class = ( $user->ID === $current_user_id ) ? 'card border-primary border' : 'card';
