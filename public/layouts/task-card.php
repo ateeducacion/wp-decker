@@ -1042,18 +1042,18 @@ function sendFormByAjax(event) {
 }
 
     // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
-    const commentText = document.getElementById('comment-text');
-    const submitCommentButton = document.getElementById('submit-comment');
+    // const commentText = document.getElementById('comment-text');
+    // const submitCommentButton = document.getElementById('submit-comment');
 
-    if (commentText) {
-        commentText.addEventListener('input', function() {
-            if (commentText.value.trim() !== '') {
-                submitCommentButton.disabled = false;
-            } else {
-                submitCommentButton.disabled = true;
-            }
-        });
-    }
+    // if (commentText) {
+    //     commentText.addEventListener('input', function() {
+    //         if (commentText.value.trim() !== '') {
+    //             submitCommentButton.disabled = false;
+    //         } else {
+    //             submitCommentButton.disabled = true;
+    //         }
+    //     });
+    // }
 
 
 
