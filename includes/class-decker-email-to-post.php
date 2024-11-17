@@ -21,7 +21,6 @@ class Decker_Email_To_Post {
 		$options = get_option( 'decker_settings', array() );
 		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 
-		error_log("hola");
 	}
 
 	/**
@@ -59,16 +58,11 @@ class Decker_Email_To_Post {
 	 */
 	public function process_email( WP_REST_Request $request ) {
 
-		error_log("paso 1");
-
-
         // Validate authorization
         $auth_header = $request->get_header('authorization');
         if (!$this->validate_authorization($auth_header)) {
             return new WP_Error('forbidden', 'Access denied', array('status' => 403));
         }
-
-		error_log("paso 2");
 
 	    // Get and validate payload
         $payload = $request->get_json_params();
@@ -77,24 +71,7 @@ class Decker_Email_To_Post {
             return new WP_Error('invalid_payload', 'Invalid email payload', array('status' => 400));
         }
 
-
-
-		error_log("paso 3");
-
-	    // // Verificar si la solicitud tiene el encabezado 'Content-Type' igual a 'application/json'.
-	    // $content_type = $request->get_header('content-type');
-	    // if ( strpos( $content_type, 'application/json' ) === false ) {
-	    //     return new WP_Error(
-	    //         'invalid_content_type',
-	    //         'This endpoint only accepts requests with Content-Type: application/json',
-	    //         array( 'status' => 415 ) // 415 Unsupported Media Type
-	    //     );
-	    // }
-
-
 	 	try {
-
-			error_log("El body raw:");
 
             // Parse email
             $message = $this->parse_email($payload['rawEmail']);
@@ -114,11 +91,6 @@ class Decker_Email_To_Post {
             );
 
 
-
-
-            // error_log("El body tiene:");
-            // error_log($email_data['body']);
-
             // Validate sender
             $author = $this->get_author($email_data['from']);
             if (is_wp_error($author)) {
@@ -130,8 +102,6 @@ class Decker_Email_To_Post {
 			    $assigned_users[] = $author->ID;
 			}
 
-            error_log("creando tarea");
-
 	        // Temporarily set current user
 	        wp_set_current_user($author->ID);
 
@@ -141,19 +111,15 @@ class Decker_Email_To_Post {
                 return $task_id;
             }
 
-            error_log("Creada tarea");
-
             // Handle attachments
             $attachments = $message->getAttachments();
             if (!empty($attachments)) {
-            	error_log("Subiendo adjuntos");
                 $this->upload_task_attachments($attachments, $task_id);
             }
 
 	        // Reset user
 	        wp_set_current_user(0);
 	        
-
             return rest_ensure_response(array(
                 'status' => 'success',
                 'task_id' => $task_id
@@ -186,13 +152,10 @@ class Decker_Email_To_Post {
 	 	// Debug: Log the first part of the raw email
         // error_log("First 1000 chars of raw email: " . substr($rawEmail, 0, 1000));
 
-
 		$message = new Decker_Email_Parser($rawEmail);
 
 		return $message;
-
     }
-
 
 	/**
 	 * Processes and uploads attachments as WordPress media.
