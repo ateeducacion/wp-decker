@@ -46,10 +46,6 @@ services:
       - ./:/var/www/html/wp-content/plugins/decker
 
 
-
-
-
-
 volumes:
   mariadb: null
   wordpress: null
