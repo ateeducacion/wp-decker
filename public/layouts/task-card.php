@@ -62,7 +62,7 @@ if ( $task_id > 0 ) {
 /**
  * Función para organizar comentarios en estructura jerárquica
  */
-function render_comments($comments, $parent_id = 0, $current_user_id) {
+function render_comments(array $comments, int $parent_id, int $current_user_id) {
     foreach ($comments as $comment) {
         if ($comment->comment_parent == $parent_id) {
             // Obtener respuestas recursivamente
@@ -74,7 +74,7 @@ function render_comments($comments, $parent_id = 0, $current_user_id) {
             
             // Mostrar enlace de eliminar si el comentario pertenece al usuario actual
             if ($comment->user_id == get_current_user_id()) {
-                echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-delete-bin-line"></i> Delete</a> ';
+                echo '<a href="javscript:void(0)" onclick="deleteComment('. esc_attr($comment->comment_ID) .');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-delete-bin-line"></i> Delete</a> ';
             }
             
             echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-reply-line"></i> Reply</a>';
@@ -105,32 +105,81 @@ document.addEventListener('DOMContentLoaded', function () {
 				return;
 			}
 
+            // Mostrar indicador de carga
+            const submitButton = document.getElementById('submit-comment');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Sending...';
+
+            // Preparar los datos del comentario
+            const commentData = {
+                post: taskId,
+                content: commentText,
+                author: <?php echo get_current_user_id(); ?>, // Añadir el ID del usuario actual                
+            };
+
+            // Añadir parentId solo si existe (para respuestas)
+            if (parentId) {
+                commentData.parent = parentId;
+            }
+
+
 			fetch('/wp-json/wp/v2/comments', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
 				},
-				body: JSON.stringify({
-					post: taskId,
-					content: commentText,
-					parent: parentId
-				})
+				body: JSON.stringify(commentData),
+                credentials: 'same-origin' // Importante para incluir cookies de sesión)
 			})
-			.then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+					submitButton.disabled = false;
+			        if (response.status === 409) {
+			            throw new Error('Mensaje duplicado');
+			        } else {
+
+	                    throw new Error('Error en la respuesta: ' + response.status);
+                    }
+                }
+
+                return response.json();
+            })
 			.then(data => {
-				if (data.id) {
-					document.getElementById('comment-text').value = '';
-					replyToCommentId = null; // Reset replyToCommentId after successful submission
-					alert('Failed to add comment.');
-				}
-			});
+                if (data.id) {
+                    // Éxito - limpiar el formulario
+                    document.getElementById('comment-text').value = '';
+                    replyToCommentId = null;
+                    
+                    // Opcional: actualizar la lista de comentarios
+                    // Puedes añadir aquí código para actualizar la UI
+                    
+                    submitButton.disabled = true;
+
+                    // alert('Comentario añadido exitosamente.');
+                } else {
+                    throw new Error('No se recibió ID del comentario');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al añadir el comentario: ' + error.message);
+            })
+            .finally(() => {
+                // Restaurar el botón
+                
+                submitButton.textContent = 'Send';
+            });
 		});
 	}
 });
 
 // Borrar comentario
 function deleteComment(commentId) {
+    if (!confirm('Are you sure you want to delete this comment?')) {
+        return;
+    }
+
 	fetch(`/wp-json/wp/v2/comments/${commentId}`, {
 		method: 'DELETE',
 		headers: {
@@ -154,7 +203,8 @@ function deleteComment(commentId) {
 	<input type="hidden" name="action" value="save_decker_task">
 	<input type="hidden" name="task_id" value="<?php echo esc_attr( $task_id ); ?>">
 	<div class="row">
-		<!-- Título -->
+
+		<!-- Title -->
 		<div class="col-md-9 mb-3">
 			<div class="form-floating">
 				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="Título de la tarea" required <?php disabled($disabled); ?>>
@@ -163,18 +213,25 @@ function deleteComment(commentId) {
 			</div>
 		</div>
 
-		<div class="col-md-3 mb-3">
-			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="Seleccionar fecha" required <?php disabled($disabled); ?>>
-				<label class="form-label" for="task-due-date">Due Date</label>
-				<div class="invalid-feedback">Please select a due date.</div>
-			</div>
+		<!-- Maximum priority and For today -->
+		<div class="col-md-3 mb-2 d-flex flex-column align-items-start">
+		    <div class="form-check form-switch mb-2">
+		        <input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked($task->max_priority); ?> <?php disabled($disabled); ?>>
+		        <label class="form-check-label" for="task-max-priority">Maximum Priority</label>
+		    </div>
+		    <div class="form-check form-switch">
+		        <input class="form-check-input" type="checkbox" id="task-today" 
+		           <?php checked($task->is_current_user_today_assigned()); ?> <?php disabled($disabled); ?>>
+		        <label class="form-check-label" for="task-today">For today</label>
+		    </div>
 		</div>
+
 	</div>
 
-	<!-- Tablero y Columna -->
 	<div class="row">
-		<div class="col-md-6 mb-3">
+
+		<!-- Boards -->
+		<div class="col-md-4 mb-3">
 			<div class="form-floating">
 				<?php //TODO: Allow changing the board. ?>
 				<select class="form-select" id="task-board" required <?php disabled($disabled || $task_id > 0); ?>>
@@ -194,16 +251,9 @@ function deleteComment(commentId) {
 
 			</div>
 		</div>
-		<div class="col-md-3 mb-3">
-			<div class="form-floating">
-				<select class="form-select" id="task-column" required <?php disabled($disabled); ?>>
-					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>>To Do</option>
-					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>>In Progress</option>
-					<option value="done" <?php selected( $task->stack, 'done' ); ?>>Done</option>
-				</select>
-				<label for="task-column" class="form-label">Column</label>
-			</div>
-		</div>
+
+		
+		<!-- Author -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
 				<!-- Author always disabled -->
@@ -221,35 +271,46 @@ function deleteComment(commentId) {
 				<div class="invalid-feedback">Please select an author.</div>				
 			</div>
 		</div>
+
+		<!-- Stack -->
+		<div class="col-md-2 mb-2">
+			<div class="form-floating">
+				<select class="form-select" id="task-column" required <?php disabled($disabled); ?>>
+					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>>To Do</option>
+					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>>In Progress</option>
+					<option value="done" <?php selected( $task->stack, 'done' ); ?>>Done</option>
+				</select>
+				<label for="task-column" class="form-label">Column</label>
+			</div>
+		</div>
+
+		<!-- Due date -->
+		<div class="col-md-3 mb-3">
+			<div class="form-floating">
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="Seleccionar fecha" required <?php disabled($disabled); ?>>
+				<label class="form-label" for="task-due-date">Due Date</label>
+				<div class="invalid-feedback">Please select a due date.</div>
+			</div>
+		</div>
+
 	</div>
 
 
 	<!-- Asignados y Etiquetas con ejemplos preseleccionados -->
 	<div class="row">
-
-
-		<div class="col-md-10 mb-10">
+		<div class="mb-3">
 			<label for="task-assignees" class="form-label">Assign to</label>
-			<select class="form-select" id="task-assignees" multiple <?php disabled($disabled); ?>>
-				<?php
-				foreach ( $users as $user ) {
-		            $selected = in_array($user->ID, array_column($task->assigned_users, 'ID')) ? 'selected' : '';
-					echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
-				}
-				?>
-			</select>
+				<select class="form-select" id="task-assignees" multiple <?php disabled($disabled); ?>>
+					<?php
+					foreach ( $users as $user ) {
+			            $selected = in_array($user->ID, array_column($task->assigned_users, 'ID')) ? 'selected' : '';
+						echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
+					}
+					?>
+				</select>
 		</div>
-
-		<div class="col-md-2 mb-2 d-flex justify-content-center">
-			<div class="form-check form-switch me-2">
-				<input class="form-check-input" type="checkbox" id="task-today" 
-			       <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled($disabled ); ?>>
-				<label class="form-check-label" for="task-today">Today</label>
-			</div>
-		</div>
-
-		</div>
-		<div class="row">
+	</div>
+	<div class="row">
 
 		<div class="mb-3">
 			<label for="task-labels" class="form-label">Labels</label>
@@ -341,17 +402,15 @@ function deleteComment(commentId) {
 			<div class="tab-pane" id="attachments-tab">
 			    <ul class="list-group mt-3" id="attachments-list">
 			        <?php foreach ( $attachments as $attachment ) : 
+
 			            $attachment_url = $attachment->guid;
-
-			            // Obtener el nombre original si está disponible
-			            $original_filename = get_post_meta( $attachment->ID, '_original_filename', true );
-			            $display_name = ! empty( $original_filename ) ? $original_filename : get_the_title( $attachment->ID );
-
+			            $file_extension = pathinfo($attachment_url, PATHINFO_EXTENSION);
+		                $attachment_title = $attachment->post_title . '.' . $file_extension;
 
 			            ?>
 			            <li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
-			                <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank">
-			                    <?php echo esc_html( $display_name ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
+			                <a href="<?php echo esc_url( $attachment_url ); ?>" download="<?php echo esc_attr( $attachment_title ); ?>">
+			                    <?php echo esc_html( $attachment_title ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
 			                </a>
 			                <div>
 			                    <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>>Delete</button>
@@ -448,12 +507,6 @@ function deleteComment(commentId) {
 	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
 
-		<div class="form-check form-switch me-3">
-			<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled($disabled ); ?>>
-			<label class="form-check-label" for="task-max-priority">Maximum Priority</label>
-		</div>
-
-
 
 		<div class="btn-group mb-2 dropup">
 		    <button type="submit" class="btn btn-primary" id="save-task" disabled>
@@ -489,6 +542,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 function initializeTaskPage() {
+
+
+
+
+	new Tablesort(document.getElementById('user-history-table'));
+
+
+
 	// Verificar si el task_id está presente en data-task-id
 	const taskElement = document.querySelector(`[data-task-id="${<?php echo wp_json_encode( $task_id ); ?>}"]`);
 	if (taskElement) {
@@ -715,7 +776,7 @@ function uploadAttachment(file) {
             var response = JSON.parse(xhr.responseText);
             if (response.success) {
                 // Añadir el nuevo adjunto a la lista en la interfaz
-                addAttachmentToList(response.data.attachment_id, response.data.attachment_url, response.data.attachment_title);
+                addAttachmentToList(response.data.attachment_id, response.data.attachment_url, response.data.attachment_title, response.data.attachment_extension);
                 // Limpiar el input de archivo
                 document.getElementById('file-input').value = '';
             } else {
@@ -735,15 +796,17 @@ function uploadAttachment(file) {
     xhr.send(formData);
 }
 
-function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle) {
+function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle, attachmentExtension) {
     var attachmentsList = document.getElementById('attachments-list');
     var li = document.createElement('li');
+    var attachmentFilename = `${attachmentTitle}.${attachmentExtension}`; 
+
     li.className = 'list-group-item d-flex justify-content-between align-items-center';
     li.setAttribute('data-attachment-id', attachmentId);
 
     li.innerHTML = `
-        <a href="${attachmentUrl}" target="_blank">
-            ${attachmentTitle} <i class="bi bi-box-arrow-up-right ms-2"></i>
+        <a href="${attachmentUrl}" target="_blank" download="${attachmentFilename}">
+            ${attachmentFilename} <i class="bi bi-box-arrow-up-right ms-2"></i>
         </a>
         <div>
             <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"<?php echo $disabled ? ' disabled' : ''; ?>>Delete</button>
@@ -978,19 +1041,19 @@ function sendFormByAjax(event) {
     // });
 }
 
-    // // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
-    // const commentText = document.getElementById('comment-text');
-    // const submitCommentButton = document.getElementById('submit-comment');
+    // Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
+    const commentText = document.getElementById('comment-text');
+    const submitCommentButton = document.getElementById('submit-comment');
 
-    // if (commentText) {
-    //     commentText.addEventListener('input', function() {
-    //         if (commentText.value.trim() !== '') {
-    //             submitCommentButton.disabled = false;
-    //         } else {
-    //             submitCommentButton.disabled = true;
-    //         }
-    //     });
-    // }
+    if (commentText) {
+        commentText.addEventListener('input', function() {
+            if (commentText.value.trim() !== '') {
+                submitCommentButton.disabled = false;
+            } else {
+                submitCommentButton.disabled = true;
+            }
+        });
+    }
 
 
 

@@ -21,6 +21,7 @@ class Decker_Email_To_Post {
 		$options = get_option( 'decker_settings', array() );
 		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 
+		error_log("hola");
 	}
 
 	/**
@@ -38,6 +39,18 @@ class Decker_Email_To_Post {
 		);
 	}
 
+
+    // Función para extraer el email de una cadena que puede contener nombre y correo
+    private function extract_email( $email ) {
+        // Verificar si la cadena contiene un formato "Nombre <email@example.com>"
+        if ( preg_match( '/<([^>]+)>/', $email, $matches ) ) {
+            return sanitize_email( $matches[1] );
+        }
+
+        // Si no hay corchetes, asumir que contiene solo el email
+        return sanitize_email( $email );
+    }
+
 	/**
 	 * Callback to process the received email and create a post.
 	 *
@@ -46,14 +59,27 @@ class Decker_Email_To_Post {
 	 */
 	public function process_email( WP_REST_Request $request ) {
 
-		$shared_key = $request->get_param( 'shared_key' );
-		if ( $shared_key !== $this->shared_key ) {
+		error_log("paso 1");
 
-		    // Decker_Utility_Functions::write_log( $shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
-		    // Decker_Utility_Functions::write_log( $this->shared_key , Decker_Utility_Functions::LOG_LEVEL_ERROR );
 
-			return new WP_Error( 'forbidden', 'Invalid access key', array( 'status' => 403 ) );
-		}
+        // Validate authorization
+        $auth_header = $request->get_header('authorization');
+        if (!$this->validate_authorization($auth_header)) {
+            return new WP_Error('forbidden', 'Access denied', array('status' => 403));
+        }
+
+		error_log("paso 2");
+
+	    // Get and validate payload
+        $payload = $request->get_json_params();
+        if (!isset($payload['rawEmail']) || empty($payload['metadata'])) {
+		    Decker_Utility_Functions::write_log('Invalid email payload', Decker_Utility_Functions::LOG_LEVEL_ERROR);        	
+            return new WP_Error('invalid_payload', 'Invalid email payload', array('status' => 400));
+        }
+
+
+
+		error_log("paso 3");
 
 	    // // Verificar si la solicitud tiene el encabezado 'Content-Type' igual a 'application/json'.
 	    // $content_type = $request->get_header('content-type');
@@ -65,57 +91,78 @@ class Decker_Email_To_Post {
 	    //     );
 	    // }
 
-	    $content_type = $request->get_header('content-type');
 
-	    if ( strpos( $content_type, 'application/json' ) !== false ) {
+	 	try {
+
+			error_log("El body raw:");
+
+            // Parse email
+            $message = $this->parse_email($payload['rawEmail']);
+            if (is_wp_error($message)) {
+                return $message;
+            }
+
+            // Extract email content
+            $email_data = array(
+                'from' => $payload['metadata']['from'],
+                'to' => $payload['metadata']['to'],
+                'cc' => $payload['metadata']['cc'],
+                'bcc' => $payload['metadata']['bcc'],
+                'subject' => $payload['metadata']['subject'],
+                'body' => $message->getBody(),
+                'attachments' => $message->getAttachments(),
+            );
 
 
-			$email_data = $request->get_json_params();
 
-			if ( ! $this->validate_sender( $email_data['from'] ) ) {
-				return new WP_Error( 'forbidden', 'Unauthorized sender', array( 'status' => 403 ) );
+
+            // error_log("El body tiene:");
+            // error_log($email_data['body']);
+
+            // Validate sender
+            $author = $this->get_author($email_data['from']);
+            if (is_wp_error($author)) {
+                return $author;
+            }
+
+			$assigned_users = $this->get_assigned_users($email_data);
+			if (empty($assigned_users)) {
+			    $assigned_users[] = $author->ID;
 			}
 
-			$post_id = $this->process_email_data( $email_data );
+            error_log("creando tarea");
 
-    	} elseif ( strpos( $content_type, 'multipart/form-data' ) !== false ) {
+	        // Temporarily set current user
+	        wp_set_current_user($author->ID);
 
+            // Create task
+            $task_id = $this->create_task($email_data, $author, $assigned_users);
+            if (is_wp_error($task_id)) {
+                return $task_id;
+            }
 
-		 	// Manejar solicitud multipart/form-data
-	        $email_data = array(
-	            'from' => sanitize_text_field( $request->get_param('from') ),
-	            'to' => (array) $request->get_param('to'),
-	            'subject' => sanitize_text_field( $request->get_param('subject') ),
-	            'body' => sanitize_textarea_field( $request->get_param('body') ),
-	            'headers' => $request->get_param('headers'),
-	        );
+            error_log("Creada tarea");
 
-	        // Manejo de archivos adjuntos
-	        $files = $request->get_file_params();
-	        if ( ! empty( $files['attachment'] ) ) {
-	            $uploaded_file = $files['attachment'];
-	            $email_data['attachments'] = array(
-	                'filename' => sanitize_file_name( $uploaded_file['name'] ),
-	                'content' => wp_remote_get( $uploaded_file['tmp_name'] ),
-	                'mimetype' => mime_content_type( $uploaded_file['tmp_name'] ),
-	            );
-	        }
+            // Handle attachments
+            $attachments = $message->getAttachments();
+            if (!empty($attachments)) {
+            	error_log("Subiendo adjuntos");
+                $this->upload_task_attachments($attachments, $task_id);
+            }
 
-	        // Validar y procesar datos del email
-			$post_id = $this->process_email_data( $email_data );
+	        // Reset user
+	        wp_set_current_user(0);
+	        
 
-	  	} else {
-    	
-    		return new WP_Error( 'unsupported_media_type', 'This endpoint only accepts application/json or multipart/form-data requests', array( 'status' => 415 ) );
-		
-		}
+            return rest_ensure_response(array(
+                'status' => 'success',
+                'task_id' => $task_id
+            ));
 
-		return rest_ensure_response(
-			array(
-				'status'  => 'success',
-				'post_id' => $post_id,
-			)
-		);
+        } catch (Exception $e) {
+            return new WP_Error('processing_error', $e->getMessage(), array('status' => 500));
+        }
+
 	}
 
 	/**
@@ -129,31 +176,22 @@ class Decker_Email_To_Post {
 	}
 
 	/**
-	 * Creates a temporary file from the given content.
-	 *
-	 * @param string $content The content to write to the temporary file.
-	 * @return string The path to the created temporary file.
-	 * @throws Exception If the temporary file cannot be created.
-	 */
-	private function create_temp_file( $content ) {
-	    // Create a temporary file
-	    $temp_file = tempnam(sys_get_temp_dir(), 'decker_temp_');
+     * Parses raw email content with support for multipart and different encodings
+     */
+    private function parse_email($rawEmail) {
 
-	    if ($temp_file === false) {
-	        throw new Exception('Unable to create a temporary file.');
-	    }
+		// Parse raw email
+		require_once __DIR__ . '/class-decker-email-parser.php';
 
-	    // Write the content to the temporary file
-	    if (file_put_contents($temp_file, $content) === false) {
-	        // Remove the temp file if writing fails
-	        wp_delete_file($temp_file);
-	        throw new Exception('Unable to write to the temporary file.');
-	    }
+	 	// Debug: Log the first part of the raw email
+        // error_log("First 1000 chars of raw email: " . substr($rawEmail, 0, 1000));
 
-	    // Return the path to the temporary file
-	    return $temp_file;
-	}
 
+		$message = new Decker_Email_Parser($rawEmail);
+
+		return $message;
+
+    }
 
 
 	/**
@@ -161,136 +199,88 @@ class Decker_Email_To_Post {
 	 *
 	 * @param string $filename Name of the file.
 	 * @param string $content  File content.
+	 * @param string $type MIME type of the file
 	 * @param int $post_id Linked post.
 	 * @return int Attachment ID.
 	 */
-	private function upload_attachment( $filename, $content, $post_id ) {
+	private function upload_attachment($filename, $content, $type, $post_id) {
+	    // Verificar permisos y datos necesarios
+	    if (!current_user_can('upload_files')) {
+	        return new WP_Error('permission_error', 'No tienes permisos para subir archivos.');
+	    }
 
-
-
-	    try {
-	        // Crear el archivo temporal y obtener su ruta
-	        $tmp_file_path = $this->create_temp_file( $content );
-	    } catch ( Exception $e ) {
-	        return new WP_Error( 'temp_file_error', 'Error al crear archivo temporal: ' . $e->getMessage() );
+	    if (!$post_id) {
+	        return new WP_Error('invalid_post', 'ID de post inválido.');
 	    }
 
 
-	    // Determinar el tipo MIME utilizando la ruta del archivo temporal
-	    $mime_type = mime_content_type( $tmp_file_path );
+	    // Extraer solo el tipo MIME sin parámetros adicionales
+	    $type = explode(';', $type)[0];
 
-	    if ( !$mime_type ) {
-	        // Eliminar el archivo temporal si no se puede determinar el tipo MIME
-	        wp_delete_file( $tmp_file_path );
-	        return new WP_Error( 'mime_type_error', 'No se pudo determinar el tipo MIME del archivo adjunto.' );
+	    // Crear un nombre de archivo único
+	    $original_filename = sanitize_file_name($filename);
+	    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+	    $upload_dir = wp_upload_dir();
+	    
+	    // Generar nombre único para el archivo usando la función nativa de WordPress
+	    $obfuscated_name = wp_unique_filename(
+	        $upload_dir['path'], 
+	        wp_generate_uuid4() . '.' . $extension
+	    );
+
+	    // Construir la ruta completa del archivo
+	    $file_path = $upload_dir['path'] . '/' . $obfuscated_name;
+
+	    // Escribir el contenido directamente en el directorio de uploads
+	    if (file_put_contents($file_path, $content) === false) {
+	        return new WP_Error('file_write_error', 'Error al escribir el archivo.');
 	    }
 
+	    // Preparar el array de información del adjunto
+	    $attachment = array(
+	        'guid'           => $upload_dir['url'] . '/' . $obfuscated_name,
+	        'post_mime_type' => $type,
+	        'post_title'     => preg_replace('/\.[^.]+$/', '', $original_filename),
+	        'post_content'   => '',
+	        'post_status'    => 'inherit',
+	        'post_parent'    => $post_id  // Establecer el post parent
+	    );
 
+	    // Insertar el adjunto en la base de datos
+	    $attachment_id = wp_insert_attachment($attachment, $file_path, $post_id);
 
-        // Generar un nonce para la verificación
-        $_POST['nonce'] = wp_create_nonce('upload_attachment_nonce');
+	    if (is_wp_error($attachment_id)) {
+	        @unlink($file_path);
+	        return $attachment_id;
+	    }
 
-        // Simular una petición AJAX
-        $_POST['task_id'] = $post_id;
-        $_FILES['attachment'] = array(
-            'name' => $filename,
-		     'type'     => $mime_type,
-        		'tmp_name' => $tmp_file_path,
-            'error' => 0,
-            'size' => strlen($content),
-        );
+	    // Generar metadatos del adjunto
+	    require_once ABSPATH . 'wp-admin/includes/image.php';
+	    $attachment_data = wp_generate_attachment_metadata($attachment_id, $file_path);
+	    wp_update_attachment_metadata($attachment_id, $attachment_data);
 
-        // Llamar a la función upload_task_attachment
-        $decker_tasks = new Decker_Tasks();
-        ob_start(); // Iniciar el buffer de salida para capturar la respuesta
-        $decker_tasks->upload_task_attachment();
-        $response = ob_get_clean(); // Obtener la respuesta y limpiar el buffer
+	    // Guardar el nombre original en los metadatos
+	    update_post_meta($attachment_id, '_original_filename', $original_filename);
 
-        // Decodificar la respuesta JSON para obtener el attachment_id
-        $response_data = json_decode($response, true);
-        if (isset($response_data['success']) && $response_data['success']) {
-            $attachment_id = $response_data['attachment_id'];
-            return $attachment_id;
-        } else {
-            // Manejar el error si es necesario
-            return new WP_Error('upload_error', 'Error al subir el adjunto.');
-        }
-      
-
-		// $upload_dir = wp_upload_dir();
-		// $path = $upload_dir['path'] . '/' . sanitize_file_name( $filename );
-
-		// file_put_contents( $path, $content );
-
-		// $filetype = wp_check_filetype( $filename );
-		// $attachment = array(
-		// 	'guid'           => $upload_dir['url'] . '/' . basename( $filename ),
-		// 	'post_mime_type' => $filetype['type'],
-		// 	'post_title'     => sanitize_file_name( $filename ),
-		// 	'post_content'   => '',
-		// 	'post_status'    => 'inherit',
-		// );
-
-		// $attach_id = wp_insert_attachment( $attachment, $path );
-		// require_once ABSPATH . 'wp-admin/includes/image.php';
-		// $attach_data = wp_generate_attachment_metadata( $attach_id, $path );
-		// wp_update_attachment_metadata( $attach_id, $attach_data );
-
-		// return $attach_id;
+	    return $attachment_id;
 	}
 
-	/**
-	 * Creates a WordPress post from email data.
-	 *
-	 * @param array $email_data The email data.
-	 * @return int ID of the created post.
-	 */
-	private function process_email_data( $email_data ) {
-	
+    private function validate_authorization($auth_header) {
+        return $auth_header && 
+               strpos($auth_header, 'Bearer ') === 0 && 
+               hash_equals($this->shared_key, substr($auth_header, 7));
+    }
 
-        // Verificar si 'body' está presente
-        if ( empty( $email_data['body'] ) ) {
-            return new WP_Error( 'invalid_email', 'El contenido del correo está vacío.', array( 'status' => 400 ) );
+    private function get_author($email) {
+        $author = get_user_by('email', $this->extract_email($email));
+        if (!$author) {
+            return new WP_Error('invalid_author', 'Sender not associated with any user');
         }
+        return $author;
+    }
 
-	    // Requiere la clase del Mail Parser.
-	    require_once __DIR__ . '/../admin/vendor/mail-parser/src/MessagePart.php';
-	    require_once __DIR__ . '/../admin/vendor/mail-parser/src/Message.php';
+    private function get_assigned_users(array $email_data) {
 
-	    // Instanciar y parsear el correo electrónico.
-	    try {
-	        $message = Opcodes\MailParser\Message::fromString($email_data['body']);
-	    } catch (Exception $e) {
-	        Decker_Utility_Functions::write_log('Error al parsear el correo: ' . $e->getMessage(), Decker_Utility_Functions::LOG_LEVEL_ERROR);
-	        return new WP_Error('parse_error', 'No se pudo parsear el correo electrónico.', array('status' => 500));
-	    }
-
-	 	// Get the author based on email
-		$author = get_user_by( 'email', sanitize_email( $email_data['from'] ) );
-
-		// Set task parameters
-		$title = trim( sanitize_text_field( $email_data['subject'] ) );
-
-		// Obtener el contenido HTML si está disponible, o el texto plano si no lo está.
-		$body_html = $message->getHtmlPart()?->getContent() ?? '';
-		$body_text = $message->getTextPart()?->getContent() ?? '';
-		$body = !empty($body_html) ? $body_html : (!empty($body_text) ? $body_text : $email_data['body']);
-
-		$stack_title = 'to-do'; // Set stack title if needed
-
-		// Retrieve the user's selected default board.
-		$default_board = (int) get_user_meta( $author->ID, 'decker_default_board', true );
-
-		if ($default_board <= 0) {
-			Decker_Utility_Functions::write_log( 'Invalid user default board: "' . esc_html( $default_board ) . '".', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-			return new WP_Error( 'forbidden', 'Invalid user default board', array( 'status' => 403 ) );
-		}	
-
-		// Decker_Utility_Functions::write_log( "------", Decker_Utility_Functions::LOG_LEVEL_ERROR );
-		// Decker_Utility_Functions::write_log( $default_board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-
-
-		$label_ids = []; // Set based on your logic to categorize tasks
 		$assigned_users = [];
 	    
 	    // Add users from 'TO', 'CC' and 'BCC' fields if they exist in WordPress
@@ -300,7 +290,7 @@ class Decker_Email_To_Post {
 	    $emails_to_check = array_merge( (array) $to_addresses, (array) $cc_addresses, (array) $bcc_addresses );
 
 	    foreach ( $emails_to_check as $email ) {
-	        $user = get_user_by( 'email', sanitize_email( $email ) );
+	        $user = get_user_by( 'email', $this->extract_email( $email ) );
 	        if ( $user ) {
 	            $assigned_users[] = $user->ID;
 	        }
@@ -309,59 +299,64 @@ class Decker_Email_To_Post {
 	    // Ensure unique user IDs in assigned users list
 	    $assigned_users = array_unique( $assigned_users );
 
+	    return $assigned_users;
 
-	    // Set due date to 3 days from now
-	    $due_date = new DateTime();
-	    $due_date->modify('+3 days');
+    }
 
-	    // Temporarily set the current user to the mail sent user, because the WP Rest user (0) doesn't have the required capabilities
-		wp_set_current_user( $author->ID );
+    private function create_task($email_data, $author, $assigned_users) {
+        // Get default board
+        $default_board = (int) get_user_meta($author->ID, 'decker_default_board', true);
+        if ($default_board <= 0 || !term_exists($default_board, 'decker_board')) {
+            return new WP_Error('invalid_board', 'Invalid default board');
+        }
 
-		// Create or update the task using the Decker_Tasks function
-		$task_id = Decker_Tasks::create_or_update_task(
-		    0, // 0 indicates a new task
-		    $title,
-		    $body,
-		    $stack_title,
-		    $default_board,
-		    false, // Placeholder for max_priority, adapt as necessary
-		    $due_date,
-		    $author->ID,
-		    $assigned_users,
-		    $label_ids,
-		    new DateTime(), // Creation date as now or adapt as necessary
-		    false,
-		    0
-		);
+        // Set task parameters
+        $due_date = new DateTime('+3 days');
+                
+        // Create task
+        $task_id = Decker_Tasks::create_or_update_task(
+            0,
+            $email_data['subject'],
+            $email_data['body'],
+            'to-do',
+            $default_board,
+            false,
+            $due_date,
+            $author->ID,
+            $assigned_users,
+            [],
+            new DateTime(),
+            false,
+            0
+        );
+        
+        return $task_id;
+    }
 
-	    // Reset the user context
-	    wp_set_current_user( 0 );
+    private function upload_task_attachments($attachments, $task_id) {
+        foreach ($attachments as $attachment) {
+            try {
+                $result = $this->upload_attachment(
+                    $attachment['filename'],
+                    $attachment['content'],
+                    $attachment['mimetype'],
+                    $task_id
+                );
+                if (is_wp_error($result)) {
+                    Decker_Utility_Functions::write_log(
+                        "Error uploading attachment {$attachment['filename']}: " . $result->get_error_message(),
+                        Decker_Utility_Functions::LOG_LEVEL_ERROR
+                    );
+                }
+            } catch (Exception $e) {
+                Decker_Utility_Functions::write_log(
+                    "Exception processing attachment {$attachment['filename']}: " . $e->getMessage(),
+                    Decker_Utility_Functions::LOG_LEVEL_ERROR
+                );
+            }
+        }
+    }
 
-		// Optional handling of attachments if needed
-		if ( ! empty( $email_data['attachments'] ) ) {
-		    foreach ( $email_data['attachments'] as $filename => $content ) {
-		        $this->upload_attachment( $filename, $content, $task_id );
-
-		    }
-		}
-
-		// Obtener los adjuntos del mensaje parseado
-		$attachments = $message->getAttachments(); // Devuelve un array de MessagePart que representan los adjuntos.
-
-		foreach ( $attachments as $attachment ) {
-		    // Obtener el nombre del archivo adjunto
-		    $filename = $attachment->getFilename();
-
-		    // Obtener el contenido del archivo adjunto
-		    $content = $attachment->getContent();
-
-		    // Subir el adjunto a la biblioteca multimedia
-		    $this->upload_attachment( $filename, $content, $task_id );
-		}
-
-		return $task_id;
-
-	}
 }
 
 

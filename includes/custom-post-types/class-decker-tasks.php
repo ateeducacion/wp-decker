@@ -17,22 +17,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Decker_Tasks {
 
-
-    /**
-     * Flag to indicate if the current upload is for a decker_task.
-     *
-     * @var bool
-     */
-    private $is_decker_task_upload = false;
-
-    /**
-     * Stores the original filename before obfuscation.
-     *
-     * @var string
-     */
-    private $original_filename = '';
-
-
 	/**
 	 * Constructor
 	 *
@@ -91,10 +75,6 @@ class Decker_Tasks {
 		add_action( 'wp_ajax_delete_task_attachment', array($this, 'delete_task_attachment' ) );
 
 
-   // Agregar el filtro para sanitizar el nombre del archivo
-        add_filter( 'sanitize_file_name', array( $this, 'decker_sanitize_file_name' ), 10, 1 );
-
-
 	}
 
 
@@ -116,26 +96,20 @@ public function upload_task_attachment() {
         wp_send_json_error( array( 'message' => 'No file uploaded.' ) );
     }
 
-    // Manejar la subida del archivo
+    // Manejar la subida del archivo con un callback personalizado
     require_once ABSPATH . 'wp-admin/includes/file.php';
     require_once ABSPATH . 'wp-admin/includes/media.php';
     require_once ABSPATH . 'wp-admin/includes/image.php';
 
-	// Establecer la bandera para indicar que esta subida es para decker_task
-    $this->is_decker_task_upload = true;
+    // Generar nombre ofuscado para el archivo usando la función nativa de WordPress
+    $overrides = array(
+    	'test_form' => false,
+        'unique_filename_callback' => function($dir, $name, $ext) {
+            return wp_generate_uuid4() . $ext;
+        }
+    );
 
-    $attachment_id = media_handle_upload( 'attachment', $task_id );
-
-    // Reiniciar la bandera después de la subida
-    $this->is_decker_task_upload = false;
-
-    // Guardar el nombre original en los metadatos del adjunto
-    if ( ! empty( $this->original_filename ) ) {
-        update_post_meta( $attachment_id, '_original_filename', sanitize_file_name( $this->original_filename ) );
-        // Limpiar la variable temporal
-        $this->original_filename = '';
-    }
-
+    $attachment_id = media_handle_upload( 'attachment', $task_id, array(), $overrides );
 
     if ( is_wp_error( $attachment_id ) ) {
         wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
@@ -143,12 +117,14 @@ public function upload_task_attachment() {
 
     $attachment_url = wp_get_attachment_url( $attachment_id );
     $attachment_title = get_the_title( $attachment_id );
+	$attachment_extension = pathinfo($attachment_url, PATHINFO_EXTENSION);
 
     wp_send_json_success( array(
         'message' => 'Attachment uploaded successfully.',
         'attachment_id' => $attachment_id,
         'attachment_url' => $attachment_url,
         'attachment_title' => $attachment_title,
+        'attachment_extension' => $attachment_extension,
     ) );
 }
 
@@ -1307,14 +1283,13 @@ public function display_attachment_meta_box( $post ) {
             <?php foreach ( $attachments as $attachment ) : 
                 $attachment_url = $attachment->guid;
                 $attachment_title = $attachment->post_title;
-
-	            // Obtener el nombre original si está disponible
-	            $original_filename = get_post_meta( $attachment->ID, '_original_filename', true );
-	            $display_name = ! empty( $original_filename ) ? $original_filename : get_the_title( $attachment->ID );
+	            $file_extension = pathinfo($attachment_url, PATHINFO_EXTENSION);
+	            $file_name = $attachment->post_title . '.' . $file_extension;
 
                 ?>
                 <li data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
-                    <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $display_name ); ?></a>
+                    <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $file_name ); ?></a>
+ 
                     <button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
                     <!-- Hidden input to store attachment IDs -->
                     <input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attachment->ID ); ?>">
@@ -1793,13 +1768,21 @@ public function display_attachment_meta_box( $post ) {
 	        $tax_input['decker_label'] = array_map( 'intval', $labels );
 	    }
 
+		if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
+		    if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
+		        $assigned_users = wp_list_pluck( $assigned_users, 'ID' );
+		    }
+		}
+
+
+
 	    // Preparar los metadatos personalizados
 	    $meta_input = array(
 	        'id_nextcloud_card' => $id_nextcloud_card,
 	        'stack'             => sanitize_text_field( $stack ),
 	        'duedate'           => $duedate_str,
 	        'max_priority'      => $max_priority ? '1' : '0',
-	        'assigned_users'    => array_map( 'intval', $assigned_users ),
+	        'assigned_users'    => $assigned_users,
 	    );
 
 	    // Preparar los datos del post
@@ -1836,50 +1819,6 @@ public function display_attachment_meta_box( $post ) {
 	    // Retornar el ID de la tarea creada o actualizada
 	    return $task_id;
 	}
-
-
-
-/**
- * Sanitize and obfuscate the file name for decker_task uploads.
- *
- * @param string $filename The original filename.
- * @return string The sanitized (obfuscated) filename.
- */
-public function decker_sanitize_file_name( $filename ) {
-    if ( $this->is_decker_task_upload ) {
-        // Almacenar el nombre original
-        $this->original_filename = $filename;
-
-        // Generar un nombre único y ofuscado (por ejemplo, UUID v4)
-        $obfuscated_name = $this->generate_uuid4() . '.' . pathinfo( $filename, PATHINFO_EXTENSION );
-
-        return $obfuscated_name;
-    }
-
-    return $filename;
-}
-
-/**
- * Generate a UUID v4.
- *
- * @return string UUID v4.
- */
-private function generate_uuid4() {
-    if ( function_exists( 'wp_generate_uuid4' ) ) {
-        return wp_generate_uuid4();
-    }
-
-    // Generar UUID v4 manualmente si la función no existe
-    $data = openssl_random_pseudo_bytes( 16 );
-    assert( strlen( $data ) == 16 );
-
-    $data[6] = chr( ord( $data[6] ) & 0x0f | 0x40 ); // versión 4
-    $data[8] = chr( ord( $data[8] ) & 0x3f | 0x80 ); // variante RFC 4122
-
-    return vsprintf( '%s%s-%s-%s-%s-%s%s%s', str_split( bin2hex( $data ), 4 ) );
-}
-
-
 
 
 }

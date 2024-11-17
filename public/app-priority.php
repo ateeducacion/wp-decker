@@ -155,7 +155,7 @@ if (!$has_today_tasks) {
 										<th style="width: 10%;">Board</th>
 										<th class="d-none d-md-table-cell" style="width: 10%;">Stack</th>
 										<th style="width: auto;">Title</th>
-										<th style="width: 15%;">Assigned Users</th>
+										<th style="width: 15%;" data-sort-method='none'>Assigned Users</th>
 									</tr>
 								</thead>
 								<tbody id="priority-id-table">
@@ -472,17 +472,7 @@ if (!$has_today_tasks) {
 
 <script>
 jQuery(document).ready(function() {
-	jQuery('#priority-table').DataTable({
-		// Configuraciones adicionales, como desactivar paginación o buscar dentro de ciertas columnas
-		info: false,
-		paging: false,
-		ordering: true,
-		searching: false,
-		// order: [[ 2, "asc" ]], // Ordena por la columna "Title"
-		columnDefs: [
-			{ "orderable": false, "targets": 3 } // Desactiva la ordenación en la columna "Assigned Users"
-		]
-	});
+	new Tablesort(document.getElementById('priority-table'));
 });
 </script>
 

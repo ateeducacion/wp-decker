@@ -157,9 +157,11 @@ class Message implements \JsonSerializable
     /**
      * Parse the email message into headers and body parts.
      */
-    protected function parse(): void
+    protected function parse2(): void
     {
-        $lines = explode("\n", $this->message);
+        $lines = preg_split("/\r\n|\n|\r/", $this->message);
+        // $lines = explode("\n", $this->message);
+
         $headerInProgress = null;
 
         $collectingBody = false;
@@ -170,18 +172,25 @@ class Message implements \JsonSerializable
         foreach ($lines as $line) {
             $line = rtrim($line, "\r\n ");
 
+            // Handle continued header lines for main headers
             if ($headerInProgress) {
                 $this->headers[$headerInProgress] .= PHP_EOL . $line;
-                $headerInProgress = str_ends_with($this->headers[$headerInProgress], ';');
+                if (!str_ends_with($this->headers[$headerInProgress], ';')) {
+                    $headerInProgress = null;
+                }
                 continue;
             }
 
+            // Handle continued header lines for body-specific headers
             if ($currentBodyHeaderInProgress) {
                 $currentBodyHeaders[$currentBodyHeaderInProgress] .= PHP_EOL . $line;
-                $currentBodyHeaderInProgress = str_ends_with($currentBodyHeaders[$currentBodyHeaderInProgress], ';');
+                if (!str_ends_with($currentBodyHeaders[$currentBodyHeaderInProgress], ';')) {
+                    $currentBodyHeaderInProgress = null;
+                }
                 continue;
             }
 
+            // Detect end boundary and finish processing
             if (isset($this->boundary) && str_ends_with($line, '--'.$this->boundary.'--')) {
                 $line = str_replace('--'.$this->boundary.'--', '', $line);
                 $currentBody .= $line;
@@ -189,6 +198,7 @@ class Message implements \JsonSerializable
                 break;
             }
 
+            // Detect boundary separator and process new part
             if (isset($this->boundary) && str_ends_with($line, '--'.$this->boundary)) {
                 $line = str_replace('--'.$this->boundary, '', $line);
 
@@ -203,10 +213,11 @@ class Message implements \JsonSerializable
                 continue;
             }
 
+            // Parse headers for a body part
             if ($collectingBody && preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
                 $currentBodyHeaders[$matches['key']] = $matches['value'];
 
-                // if the last character is a semicolon, then the header is continued on the next line
+                // Check if header continues onto the next line
                 if (str_ends_with($currentBodyHeaders[$matches['key']], ';')) {
                     $currentBodyHeaderInProgress = $matches['key'];
                 }
@@ -214,17 +225,20 @@ class Message implements \JsonSerializable
                 continue;
             }
 
+            // Collect body content if we are in a body part
             if ($collectingBody) {
                 $currentBody .= $line . PHP_EOL;
                 continue;
             }
 
+            // General header parsing for the message
             if (preg_match("/^Content-Type: (?<contenttype>multipart\/.*); boundary=(?<boundary>.*)$/", $line, $matches)) {
                 $this->headers['Content-Type'] = $matches['contenttype']."; boundary=".$matches['boundary'];
                 $this->boundary = trim($matches['boundary'], '"');
                 continue;
             }
 
+            // General header parsing for the message
             if (preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
                 if (strtolower($matches['key']) === 'content-type' && !isset($this->boundary) && !str_contains($matches['value'], 'multipart/mixed')) {
                     // this might be a single-part message. Let's start collecting the body.
@@ -234,6 +248,7 @@ class Message implements \JsonSerializable
                         $matches['key'] => $matches['value'],
                     ];
 
+                    // Handle continued headers
                     if (str_ends_with($currentBodyHeaders[$matches['key']], ';')) {
                         $currentBodyHeaderInProgress = $matches['key'];
                     }
@@ -251,6 +266,7 @@ class Message implements \JsonSerializable
                 continue;
             }
 
+            // Detect initial boundary in the message body
             if (preg_match("~^--(?<boundary>[0-9A-Za-z'()+_,-./:=?]{0,68}[0-9A-Za-z'()+_,-./=?])~", $line, $matches)) {
                 $this->boundary = trim($matches['boundary']);
                 $collectingBody = true;
@@ -263,10 +279,12 @@ class Message implements \JsonSerializable
             $this->message = ltrim(substr($this->message, strlen($line)));
         }
 
+        // Add final body part if there is content
         if (!empty($currentBody) || !empty($currentBodyHeaders)) {
             $this->addPart($currentBody, $currentBodyHeaders);
         }
 
+        // Update content-type header if missing
         if (! $this->getContentType() && ($part = $this->getParts()[0] ?? null)) {
             foreach ($part->getHeaders() as $key => $value) {
                 if (strtolower($key) === 'content-type') {
@@ -281,4 +299,107 @@ class Message implements \JsonSerializable
     {
         $this->parts[] = new MessagePart(trim($currentBody), $currentBodyHeaders);
     }
+
+
+protected function parse(): void
+{
+    $this->headers = [];
+    $this->parts = [];
+    // $this->boundary = null;
+
+    // Separar encabezados y cuerpo
+    list($headerPart, $bodyPart) = preg_split("/\r\n\r\n|\n\n|\r\r/", $this->message, 2);
+
+    // Parsear encabezados principales
+    $this->parseHeaders($headerPart);
+
+    // Iniciar el parseo del cuerpo
+    $this->parseBody($bodyPart, $this->getBoundaryFromHeaders($this->headers));
+}
+
+protected function parseHeaders(string $headerPart): void
+{
+    $lines = preg_split("/\r\n|\n|\r/", $headerPart);
+    $currentHeader = '';
+
+    foreach ($lines as $line) {
+        if (preg_match('/^\s+/', $line)) {
+            // Línea continuada
+            if ($currentHeader) {
+                $this->headers[$currentHeader] .= ' ' . trim($line);
+            }
+        } elseif (preg_match('/^(?<key>[A-Za-z\-0-9]+):\s*(?<value>.*)$/', $line, $matches)) {
+            $currentHeader = strtolower($matches['key']);
+            $this->headers[$currentHeader] = trim($matches['value']);
+        }
+    }
+}
+
+protected function getBoundaryFromHeaders(array $headers): ?string
+{
+    if (isset($headers['content-type'])) {
+        if (preg_match('/boundary="?([^"\s;]+)"?/', $headers['content-type'], $matches)) {
+            return $matches[1];
+        }
+    }
+    return null;
+}
+
+protected function parseBody(string $body, ?string $boundary): void
+{
+    if ($boundary) {
+        $parts = preg_split("/--" . preg_quote($boundary, '/') . "--|--" . preg_quote($boundary, '/') . "/", $body);
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (empty($part)) continue;
+
+            // Separar encabezados y cuerpo de la parte
+            list($partHeaders, $partBody) = preg_split("/\r\n\r\n|\n\n|\r\r/", $part, 2);
+
+            // Parsear encabezados de la parte
+            $parsedHeaders = [];
+            $lines = preg_split("/\r\n|\n|\r/", $partHeaders);
+            $currentHeader = '';
+            foreach ($lines as $line) {
+                if (preg_match('/^\s+/', $line)) {
+                    // Línea continuada
+                    if ($currentHeader) {
+                        $parsedHeaders[$currentHeader] .= ' ' . trim($line);
+                    }
+                } elseif (preg_match('/^(?<key>[A-Za-z\-0-9]+):\s*(?<value>.*)$/', $line, $matches)) {
+                    $currentHeader = strtolower($matches['key']);
+                    $parsedHeaders[$currentHeader] = trim($matches['value']);
+                }
+            }
+
+            // Determinar el tipo de la parte
+            if (isset($parsedHeaders['content-type'])) {
+                if (preg_match('/multipart\/([^;]+)/', $parsedHeaders['content-type'], $matches)) {
+                    // Parte multipart, parsear recursivamente
+                    $nestedBoundary = $this->extractBoundary($parsedHeaders['content-type']);
+                    $this->parseBody($partBody, $nestedBoundary);
+                } else {
+                    // Parte simple, agregar como MessagePart
+                    $this->parts[] = new MessagePart(trim($partBody), $parsedHeaders);
+                }
+            } else {
+                // Parte sin Content-Type, tratar como texto plano
+                $this->parts[] = new MessagePart(trim($partBody), $parsedHeaders);
+            }
+        }
+    } else {
+        // No es multipart, tratar el cuerpo completo como una sola parte
+        $this->parts[] = new MessagePart(trim($body), $this->headers);
+    }
+}
+
+protected function extractBoundary(string $contentType): ?string
+{
+    if (preg_match('/boundary="?([^"\s;]+)"?/', $contentType, $matches)) {
+        return $matches[1];
+    }
+    return null;
+}
+
+    
 }

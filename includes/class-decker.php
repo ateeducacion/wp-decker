@@ -272,7 +272,14 @@ function add_custom_caps_to_decker_role() {
         // Add custom capabilities related to the 'decker_task' custom post type.
     	$role->add_cap( 'upload_files');
         $role->add_cap( 'delete_attachments' );      
-        $role->add_cap( 'manage_decker_tasks' );        
+        $role->add_cap( 'manage_decker_tasks' );
+
+        // Add capabilities for comments (only their own).
+        $role->add_cap( 'read' ); // Allow reading in general if needed.
+        $role->add_cap( 'edit_comments' ); // Allow editing comments in general.
+        $role->add_cap( 'delete_comments' ); // Allow deleting comments in general.
+        $role->add_cap( 'publish_comments' ); // Permite publicar comentarios.
+
     }
 }
 add_action( 'init', 'add_custom_caps_to_decker_role' );
@@ -288,3 +295,48 @@ function add_capabilities_to_admin() {
 }
 add_action( 'init', 'add_capabilities_to_admin' );
 
+// Filter to restrict editing and deleting of comments to the comment's author.
+function restrict_comment_editing_to_author( $allcaps, $cap, $args ) {
+    // Check if the current capability is 'edit_comment' or 'delete_comment'.
+    if ( in_array( $cap[0], ['edit_comment', 'delete_comment'] ) ) {
+        // Get the comment object.
+        $comment = get_comment( $args[2] );
+        
+        // Only allow editing/deleting if the current user is the author of the comment.
+        if ( isset( $comment->user_id ) && $comment->user_id !== get_current_user_id() ) {
+            $allcaps[$cap[0]] = false;
+        }
+    }
+
+    return $allcaps;
+}
+add_filter( 'map_meta_cap', 'restrict_comment_editing_to_author', 10, 3 );
+
+
+// Restringir la edición/borrado de comentarios al post type 'decker_task'.
+function restrict_comment_capabilities_to_decker_task( $caps, $cap, $user_id, $args ) {
+    // Verificar si la capacidad es para editar o borrar un comentario.
+    if ( in_array( $cap, ['edit_comment', 'delete_comment'] ) && ! empty( $args[0] ) ) {
+        // Obtener el comentario.
+        $comment = get_comment( $args[0] );
+
+        if ( $comment ) {
+            // Obtener el post asociado al comentario.
+            $post = get_post( $comment->comment_post_ID );
+
+            // Verificar si el post está asociado al tipo 'decker_task'.
+            if ( $post && $post->post_type === 'decker_task' ) {
+                // Permitir que los usuarios editen/borrar solo sus propios comentarios.
+                if ( $comment->user_id != $user_id ) {
+                    $caps[] = 'do_not_allow';
+                }
+            } else {
+                // Si el comentario no pertenece al tipo 'decker_task', denegar el permiso.
+                $caps[] = 'do_not_allow';
+            }
+        }
+    }
+
+    return $caps;
+}
+add_filter( 'map_meta_cap', 'restrict_comment_capabilities_to_decker_task', 10, 4 );

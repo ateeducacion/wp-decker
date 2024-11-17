@@ -44,7 +44,12 @@ class Decker_Admin_Settings {
 
 	    $value = sanitize_text_field( $options['shared_key'] );
 	    echo '<input type="text" name="decker_settings[shared_key]" pattern=".{8,}" value="' . esc_attr( $value ) . '" class="regular-text" pattern="" title="The key must be at least 8 characters long and include letters, numbers, and symbols." required>';
-	    echo '<p class="description">' . esc_html__( 'Enter the shared key for securing the email-to-post endpoint. Example endpoint: https://yourdomain.com/wp-json/decker/v1/email-to-post?shared_key=YOUR_SHARED_KEY', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:', 'decker' ) . '</p>';
+		echo '<pre style="background: #f5f5f5; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">';
+		echo 'POST ' . esc_url( get_site_url() ) . '/wp-json/decker/v1/email-to-post';
+		echo "\nHeader: Authorization: Bearer YOUR_SHARED_KEY";
+		echo '</pre>';
+
 	}
 
 	/**
