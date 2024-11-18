@@ -40,7 +40,7 @@ if (!$has_today_tasks) {
 ?>
 <head>
 
-	<title>Priority | Decker</title>
+	<title><?php _e('Priority', 'decker'); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -119,11 +119,11 @@ if (!$has_today_tasks) {
 									<div class="page-title-right">
 										<ol class="breadcrumb m-0">
 											<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-											<li class="breadcrumb-item active">Priority</li>
+											<li class="breadcrumb-item active"><?php _e('Priority', 'decker'); ?></li>
 										</ol>
 									</div>
-									<h4 class="page-title">Priority
-										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3">Add New</a></h4>
+									<h4 class="page-title"><?php _e('Priority', 'decker'); ?>
+										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php _e('Add New', 'decker'); ?></a></h4>
 								</div>
 							</div>
 						</div>     
@@ -134,9 +134,9 @@ if (!$has_today_tasks) {
 <?php if (!$has_today_tasks) { ?>
 	<div id="alert-import-today-1" class="alert-import-today alert alert-warning alert-dismissible fade show" role="alert">
 		<i class="ri-alert-fill"></i>
-		Usted no tiene definidas tareas para hoy. ¿Desea importar las del día anterior?
-		<button type="button" class="import-today btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal">Sí</button>
-		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		<?php _e('You have no tasks defined for today. Do you want to import those from the previous day?', 'decker'); ?>
+		<button type="button" class="import-today btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal"><?php _e('Yes', 'decker'); ?></button>
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php esc_attr_e('Close', 'decker'); ?>"></button>
 	</div>
 <?php } ?>
 
@@ -144,7 +144,7 @@ if (!$has_today_tasks) {
 						<div class="col-lg-12">
 							<div class="card">
 								<div class="d-flex card-header justify-content-between align-items-center">
-									<h4 class="header-title">MAX PRIORITY 🔥</h4>
+									<h4 class="header-title"><?php _e('MAX PRIORITY', 'decker'); ?> 🔥</h4>
 								</div>
 
 							<div class="table-responsive">
@@ -152,10 +152,10 @@ if (!$has_today_tasks) {
 							<table id="priority-table" class="table table-striped table-responsive">
 								<thead>
 									<tr>
-										<th style="width: 10%;">Board</th>
-										<th class="d-none d-md-table-cell" style="width: 10%;">Stack</th>
-										<th style="width: auto;">Title</th>
-										<th style="width: 15%;" data-sort-method='none'>Assigned Users</th>
+										<th style="width: 10%;"><?php _e('Board', 'decker'); ?></th>
+										<th class="d-none d-md-table-cell" style="width: 10%;"><?php _e('Stack', 'decker'); ?></th>
+										<th style="width: auto;"><?php _e('Title', 'decker'); ?></th>
+										<th style="width: 15%;" data-sort-method='none'><?php _e('Assigned Users', 'decker'); ?></th>
 									</tr>
 								</thead>
 								<tbody id="priority-id-table">
@@ -173,7 +173,7 @@ if (!$has_today_tasks) {
 									$tasks = $taskManager->getTasks($args);
 									foreach ($tasks as $task) {
 
-									    $board = 'No board assigned';
+									    $board = __('No board assigned', 'decker');
 									    if ($task->board) {
 									        $board = sprintf(
 									            '<span class="custom-badge overflow-visible" style="background-color: %s;">%s</span>',
@@ -292,7 +292,7 @@ if (!$has_today_tasks) {
 													if (empty($user_tasks)) {
 												?>
 													    <tr>
-													        <td colspan="2">No tasks for today.</td>
+													        <td colspan="2"><?php _e('No tasks for today.', 'decker'); ?></td>
 													    </tr>
 												<?php } ?>
 
@@ -333,8 +333,8 @@ if (!$has_today_tasks) {
 	<div class="modal-content">
 	  <form method="post" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ); ?>">
 		<div class="modal-header">
-		  <h5 class="modal-title" id="taskModalLabel">Selecciona las tareas para importar</h5>
-		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+		  <h5 class="modal-title" id="taskModalLabel"><?php _e('Select tasks to import', 'decker'); ?></h5>
+		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e('Close', 'decker'); ?>"></button>
 		</div>
 		<div class="modal-body">
 		  <!-- Aquí se insertarán dinámicamente las tareas con checkboxes -->
@@ -344,9 +344,9 @@ if (!$has_today_tasks) {
 					<th scope="col" style="width: 50px;">
 						<input type="checkbox" id="selectAllCheckbox" class="">
 					</th>                        
-					<th scope="col">Tablero</th>
-					<th scope="col">Columna</th>
-					<th scope="col">Título</th>
+					<th scope="col"><?php _e('Board', 'decker'); ?></th>
+					<th scope="col"><?php _e('Column', 'decker'); ?></th>
+					<th scope="col"><?php _e('Title', 'decker'); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -374,7 +374,7 @@ if (!$has_today_tasks) {
 			    <?php endforeach; ?>
 			<?php else : ?>
 			    <tr>
-			        <td colspan="4">No hay tareas de días anteriores para importar.</td>
+			        <td colspan="4"><?php _e('There are no tasks from previous days to import.', 'decker'); ?></td>
 			    </tr>
 			<?php endif; ?>
 			</tbody>
