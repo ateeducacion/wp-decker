@@ -377,7 +377,7 @@ function deleteComment(commentId) {
 			        if ($comments) {
 			            render_comments($comments, 0, get_current_user_id());
 			        } else {
-			            echo '<p>No hay comentarios aún.</p>';
+			            echo '<p>' . esc_html__('No comments yet.', 'decker') . '</p>';
 			        }
 			    }
 			    ?>
@@ -1030,7 +1030,7 @@ function sendFormByAjax(event) {
 
         xhr.onerror = function() {
             console.error(<?php echo wp_json_encode(__('Request error.', 'decker')); ?>);
-            alert('Ocurrió un error al guardar la tarea.');
+            alert(<?php echo wp_json_encode(__('Error saving task.', 'decker')); ?>);
         };
 
         const encodedData = Object.keys(formData)
