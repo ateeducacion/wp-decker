@@ -188,23 +188,33 @@ class Decker_Utility_Functions {
 	    // Determine the appropriate relative time string based on the interval
 	    if ( $interval->y > 0 ) {
 	        return $isFuture
+	            /* translators: 1: number of years, 2: 's' for plural or empty for singular */
 	            ? sprintf( __( 'in %1$d year%2$s', 'decker' ), $interval->y, $interval->y > 1 ? 's' : '' )
+	            /* translators: 1: number of years, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d year%2$s ago', 'decker' ), $interval->y, $interval->y > 1 ? 's' : '' );
 	    } elseif ( $interval->m > 0 ) {
 	        return $isFuture
+	            /* translators: 1: number of months, 2: 's' for plural or empty for singular */
 	            ? sprintf( __( 'in %1$d month%2$s', 'decker' ), $interval->m, $interval->m > 1 ? 's' : '' )
+	            /* translators: 1: number of months, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d month%2$s ago', 'decker' ), $interval->m, $interval->m > 1 ? 's' : '' );
 	    } elseif ( $interval->d > 0 ) {
 	        return $isFuture
+	            /* translators: 1: number of days, 2: 's' for plural or empty for singular */
 	            ? sprintf( __( 'in %1$d day%2$s', 'decker' ), $interval->d, $interval->d > 1 ? 's' : '' )
+	            /* translators: 1: number of days, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d day%2$s ago', 'decker' ), $interval->d, $interval->d > 1 ? 's' : '' );
 	    } elseif ( $interval->h > 0 ) {
 	        return $isFuture
+	            /* translators: 1: number of hours, 2: 's' for plural or empty for singular */
 	            ? sprintf( __( 'in %1$d hour%2$s', 'decker' ), $interval->h, $interval->h > 1 ? 's' : '' )
+	            /* translators: 1: number of hours, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d hour%2$s ago', 'decker' ), $interval->h, $interval->h > 1 ? 's' : '' );
 	    } elseif ( $interval->i > 0 ) {
 	        return $isFuture
+	            /* translators: 1: number of minutes, 2: 's' for plural or empty for singular */
 	            ? sprintf( __( 'in %1$d minute%2$s', 'decker' ), $interval->i, $interval->i > 1 ? 's' : '' )
+	            /* translators: 1: number of minutes, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d minute%2$s ago', 'decker' ), $interval->i, $interval->i > 1 ? 's' : '' );
 	    } else {
 	        return $isFuture
