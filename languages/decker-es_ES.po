@@ -1077,32 +1077,32 @@ msgstr "Por favor, seleccione un autor"
 
 #: public/layouts/task-card.php:500
 msgid "Under construction..."
-msgstr ""
+msgstr "En construcción..."
 
 #: public/layouts/task-card.php:513
 msgid "Save"
-msgstr ""
+msgstr "Guardar"
 
 #: public/layouts/task-card.php:516
 msgid "Toggle Dropdown"
-msgstr ""
+msgstr "Alternar Desplegable"
 
 #: public/layouts/task-card.php:604
 msgid "Please select a file to upload."
-msgstr ""
+msgstr "Por favor, seleccione un archivo para subir."
 
 #: public/layouts/task-card.php:684
 msgid "Are you sure you want to archive this task?"
-msgstr ""
+msgstr "¿Está seguro de que desea archivar esta tarea?"
 
 #: public/layouts/task-card.php:709
 msgid "Failed to archive task."
-msgstr ""
+msgstr "Error al archivar la tarea."
 
 #: public/layouts/task-card.php:783
 msgid "Error uploading attachment."
-msgstr ""
+msgstr "Error al subir el archivo adjunto."
 
 #: public/layouts/task-card.php:831
 msgid "Are you sure you want to delete this attachment?"
-msgstr ""
+msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
