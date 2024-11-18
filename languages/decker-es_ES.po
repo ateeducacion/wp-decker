@@ -36,7 +36,7 @@ msgstr "Importar tareas, etiquetas y tableros desde NextCloud"
 
 #: admin/class-decker-admin-import.php:60
 msgid "NextCloud settings are not configured."
-msgstr ""
+msgstr "La configuración de NextCloud no está configurada."
 
 #: admin/class-decker-admin-import.php:65
 msgid "Import Decker Tasks from NextCloud"
@@ -88,7 +88,7 @@ msgstr "Borrar Todos los Datos"
 
 #: admin/class-decker-admin-settings.php:216
 msgid "Log Level"
-msgstr ""
+msgstr "Nivel de Registro"
 
 #: admin/class-decker-admin-settings.php:217
 #, fuzzy
@@ -473,518 +473,518 @@ msgstr ""
 
 #: admin/class-decker-admin-import.php:80
 msgid "Skip already existing tasks"
-msgstr ""
+msgstr "Omitir tareas ya existentes"
 
 #: admin/class-decker-admin-import.php:81
 msgid "If checked, tasks that already exist in the system will be skipped and not updated."
-msgstr ""
+msgstr "Si está marcado, las tareas que ya existen en el sistema se omitirán y no se actualizarán."
 
 #: admin/class-decker-admin-settings.php:47
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
-msgstr ""
+msgstr "Proporcione el token Bearer en el encabezado de autorización para el endpoint de correo a publicación. Solicitud de ejemplo:"
 
 #: admin/class-decker-admin-settings.php:71
 msgid "Select the user profile to be used by the plugin. Administrators will also have access."
-msgstr ""
+msgstr "Seleccione el perfil de usuario que será utilizado por el plugin. Los administradores también tendrán acceso."
 
 #: admin/class-decker-admin-settings.php:83
 msgid "Enter the alert message to display as a banner. Supports HTML. Leave empty to hide."
-msgstr ""
+msgstr "Ingrese el mensaje de alerta para mostrar como un banner. Soporta HTML. Deje vacío para ocultar."
 
 #: admin/class-decker-admin-settings.php:108
 msgid "Select the color for the alert message."
-msgstr ""
+msgstr "Seleccione el color para el mensaje de alerta."
 
 #: admin/class-decker-admin-settings.php:212
 msgid "Shared Key"
-msgstr ""
+msgstr "Clave Compartida"
 
 #: admin/class-decker-admin-settings.php:219
 msgid "Alert Message"
-msgstr ""
+msgstr "Mensaje de Alerta"
 
 #: admin/class-decker-admin-settings.php:220
 msgid "Alert Color"
-msgstr ""
+msgstr "Color de Alerta"
 
 #: admin/class-decker-admin-settings.php:221
 msgid "User Profile"
-msgstr ""
+msgstr "Perfil de Usuario"
 
 #: admin/class-decker-admin.php:60
 msgid "Settings"
-msgstr ""
+msgstr "Configuraciones"
 
 #: admin/class-decker-admin.php:77
 #: admin/class-decker-admin.php:80
 msgid "Go to Frontend"
-msgstr ""
+msgstr "Ir al Frontend"
 
 #: includes/class-decker-utility-functions.php:191
 msgid "in %1$d year%2$s"
-msgstr ""
+msgstr "en %1$d año%2$s"
 
 #: includes/class-decker-utility-functions.php:192
 msgid "%1$d year%2$s ago"
-msgstr ""
+msgstr "hace %1$d año%2$s"
 
 #: includes/class-decker-utility-functions.php:195
 msgid "in %1$d month%2$s"
-msgstr ""
+msgstr "en %1$d mes%2$s"
 
 #: includes/class-decker-utility-functions.php:196
 msgid "%1$d month%2$s ago"
-msgstr ""
+msgstr "hace %1$d mes%2$s"
 
 #: includes/class-decker-utility-functions.php:199
 msgid "in %1$d day%2$s"
-msgstr ""
+msgstr "en %1$d día%2$s"
 
 #: includes/class-decker-utility-functions.php:200
 msgid "%1$d day%2$s ago"
-msgstr ""
+msgstr "hace %1$d día%2$s"
 
 #: includes/class-decker-utility-functions.php:203
 msgid "in %1$d hour%2$s"
-msgstr ""
+msgstr "en %1$d hora%2$s"
 
 #: includes/class-decker-utility-functions.php:204
 msgid "%1$d hour%2$s ago"
-msgstr ""
+msgstr "hace %1$d hora%2$s"
 
 #: includes/class-decker-utility-functions.php:207
 msgid "in %1$d minute%2$s"
-msgstr ""
+msgstr "en %1$d minuto%2$s"
 
 #: includes/class-decker-utility-functions.php:208
 msgid "%1$d minute%2$s ago"
-msgstr ""
+msgstr "hace %1$d minuto%2$s"
 
 #: includes/class-decker-utility-functions.php:211
 msgid "in a few seconds"
-msgstr ""
+msgstr "en unos segundos"
 
 #: includes/class-decker-utility-functions.php:212
 msgid "a few seconds ago"
-msgstr ""
+msgstr "hace unos segundos"
 
 #: includes/class-decker.php:250
 msgid "Decker User"
-msgstr ""
+msgstr "Usuario Decker"
 
 #: includes/custom-post-types/class-decker-tasks.php:1148
 msgid "-- Select User --"
-msgstr ""
+msgstr "-- Seleccionar Usuario --"
 
 #: includes/custom-post-types/class-decker-tasks.php:1173
 msgid "Unknown User"
-msgstr ""
+msgstr "Usuario Desconocido"
 
 #: includes/custom-post-types/class-decker-tasks.php:1209
 msgid "This user and date combination already exists."
-msgstr ""
+msgstr "Esta combinación de usuario y fecha ya existe."
 
 #: includes/custom-post-types/class-decker-tasks.php:1278
 #: includes/custom-post-types/class-decker-tasks.php:1315
 msgid "Add Attachments"
-msgstr ""
+msgstr "Agregar Adjuntos"
 
 #: includes/custom-post-types/class-decker-tasks.php:1313
 msgid "Select Attachments"
-msgstr ""
+msgstr "Seleccionar Adjuntos"
 
 #: includes/custom-post-types/class-decker-tasks.php:1734
 msgid "The title is required."
-msgstr ""
+msgstr "El título es obligatorio."
 
 #: includes/custom-post-types/class-decker-tasks.php:1737
 msgid "The stack is required."
-msgstr ""
+msgstr "La pila es obligatoria."
 
 #: includes/custom-post-types/class-decker-tasks.php:1740
 msgid "The board is required and must be a positive integer."
-msgstr ""
+msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
 #: includes/custom-post-types/class-decker-tasks.php:1746
 msgid "The board does not exist in the decker_board taxonomy."
-msgstr ""
+msgstr "El tablero no existe en la taxonomía decker_board."
 
 #: includes/custom-post-types/class-decker-user-extended.php:73
 msgid "Default Board"
-msgstr ""
+msgstr "Tablero Predeterminado"
 
 #: includes/custom-post-types/class-decker-user-extended.php:76
 msgid "Select a board"
-msgstr ""
+msgstr "Seleccionar un tablero"
 
 #: includes/custom-post-types/class-decker-user-extended.php:91
 msgid "Select your default board."
-msgstr ""
+msgstr "Seleccione su tablero predeterminado."
 
 #: public/app-analytics.php:6
 msgid "Analytics Dashboard"
-msgstr ""
+msgstr "Panel de Análisis"
 
 #: public/app-analytics.php:35
 #: public/app-analytics.php:38
 #: public/layouts/left-sidebar.php:186
 msgid "Analytics"
-msgstr ""
+msgstr "Análisis"
 
 #: public/app-analytics.php:50
 #: public/app-tasks.php:134
 #: public/layouts/left-sidebar.php:113
 msgid "Active Tasks"
-msgstr ""
+msgstr "Tareas Activas"
 
 #: public/app-analytics.php:58
 msgid "Total Users"
-msgstr ""
+msgstr "Usuarios Totales"
 
 #: public/app-analytics.php:66
 #: public/app-tasks.php:138
 #: public/layouts/left-sidebar.php:131
 msgid "Archived Tasks"
-msgstr ""
+msgstr "Tareas Archivadas"
 
 #: public/app-analytics.php:74
 msgid "Total Boards"
-msgstr ""
+msgstr "Tableros Totales"
 
 #: public/app-analytics.php:90
 msgid "Tasks by Board"
-msgstr ""
+msgstr "Tareas por Tablero"
 
 #: public/app-analytics.php:99
 msgid "Tasks by User"
-msgstr ""
+msgstr "Tareas por Usuario"
 
 #: public/app-analytics.php:110
 msgid "Tasks by Stack"
-msgstr ""
+msgstr "Tareas por Pila"
 
 #: public/app-kanban.php:12
 msgid "Error: The board <strong>%s</strong> does not exist."
-msgstr ""
+msgstr "Error: El tablero <strong>%s</strong> no existe."
 
 #: public/app-kanban.php:33
 msgid "Kanban Board"
-msgstr ""
+msgstr "Tablero Kanban"
 
 #: public/app-kanban.php:66
 #: public/app-upcoming.php:107
 msgid "Search..."
-msgstr ""
+msgstr "Buscar..."
 
 #: public/app-kanban.php:66
 #: public/app-upcoming.php:107
 msgid "Search"
-msgstr ""
+msgstr "Buscar"
 
 #: public/app-kanban.php:70
 #: public/app-upcoming.php:111
 msgid "All Users"
-msgstr ""
+msgstr "Todos los Usuarios"
 
 #: public/app-kanban.php:83
 #: public/app-priority.php:126
 #: public/app-tasks.php:142
 #: public/app-upcoming.php:123
 msgid "Add New"
-msgstr ""
+msgstr "Agregar Nuevo"
 
 #: public/app-kanban.php:87
 msgid "Fix Order"
-msgstr ""
+msgstr "Corregir Orden"
 
 #: public/app-kanban.php:105
 msgid "TO-DO"
-msgstr ""
+msgstr "POR HACER"
 
 #: public/app-priority.php:43
 #: public/app-priority.php:122
 #: public/app-priority.php:125
 #: public/layouts/left-sidebar.php:66
 msgid "Priority"
-msgstr ""
+msgstr "Prioridad"
 
 #: public/app-priority.php:137
 msgid "You have no tasks defined for today. Do you want to import those from the previous day?"
-msgstr ""
+msgstr "No tienes tareas definidas para hoy. ¿Quieres importar las del día anterior?"
 
 #: public/app-priority.php:138
 msgid "Yes"
-msgstr ""
+msgstr "Sí"
 
 #: public/app-priority.php:139
 #: public/app-priority.php:337
 msgid "Close"
-msgstr ""
+msgstr "Cerrar"
 
 #: public/app-priority.php:147
 msgid "MAX PRIORITY"
-msgstr ""
+msgstr "MÁXIMA PRIORIDAD"
 
 #: public/app-priority.php:157
 #: public/app-priority.php:349
 msgid "Title"
-msgstr ""
+msgstr "Título"
 
 #: public/app-priority.php:176
 msgid "No board assigned"
-msgstr ""
+msgstr "Ningún tablero asignado"
 
 #: public/app-priority.php:295
 msgid "No tasks for today."
-msgstr ""
+msgstr "No hay tareas para hoy."
 
 #: public/app-priority.php:336
 msgid "Select tasks to import"
-msgstr ""
+msgstr "Seleccionar tareas para importar"
 
 #: public/app-priority.php:348
 msgid "Column"
-msgstr ""
+msgstr "Columna"
 
 #: public/app-priority.php:377
 msgid "There are no tasks from previous days to import."
-msgstr ""
+msgstr "No hay tareas de días anteriores para importar."
 
 #: public/app-task-full.php:6
 msgid "Tasks Detail"
-msgstr ""
+msgstr "Detalle de Tareas"
 
 #: public/app-task-full.php:34
 #: public/app-tasks.php:9
 #: public/app-tasks.php:131
 #: public/layouts/left-sidebar.php:93
 msgid "Tasks"
-msgstr ""
+msgstr "Tareas"
 
 #: public/app-task-full.php:35
 msgid "Task Detail"
-msgstr ""
+msgstr "Detalle de la Tarea"
 
 #: public/app-task-full.php:40
 #: public/layouts/left-sidebar.php:132
 msgid "New task"
-msgstr ""
+msgstr "Nueva tarea"
 
 #: public/app-task-full.php:50
 msgid "Task not found"
-msgstr ""
+msgstr "Tarea no encontrada"
 
 #: public/app-tasks.php:136
 #: public/layouts/left-sidebar.php:122
 msgid "My Tasks"
-msgstr ""
+msgstr "Mis Tareas"
 
 #: public/app-tasks.php:174
 msgid "P."
-msgstr ""
+msgstr "P."
 
 #: public/app-tasks.php:177
 msgid "Description"
-msgstr ""
+msgstr "Descripción"
 
 #: public/app-tasks.php:178
 msgid "Tags"
-msgstr ""
+msgstr "Etiquetas"
 
 #: public/app-tasks.php:180
 msgid "Remaining Time"
-msgstr ""
+msgstr "Tiempo Restante"
 
 #: public/app-tasks.php:203
 msgid "Undefined board"
-msgstr ""
+msgstr "Tablero no definido"
 
 #: public/app-upcoming.php:73
 #: public/layouts/left-sidebar.php:75
 msgid "Upcoming Tasks"
-msgstr ""
+msgstr "Próximas Tareas"
 
 #: public/app-upcoming.php:135
 msgid "DELAYED"
-msgstr ""
+msgstr "RETARDADO"
 
 #: public/app-upcoming.php:149
 msgid "Today"
-msgstr ""
+msgstr "Hoy"
 
 #: public/app-upcoming.php:164
 msgid "Tomorrow"
-msgstr ""
+msgstr "Mañana"
 
 #: public/app-upcoming.php:177
 msgid "Next 7 Days"
-msgstr ""
+msgstr "Próximos 7 Días"
 
 #: public/class-decker-public.php:134
 msgid "You do not have permission to view this page."
-msgstr ""
+msgstr "No tienes permiso para ver esta página."
 
 #: public/layouts/footer.php:11
 msgid "Version"
-msgstr ""
+msgstr "Versión"
 
 #: public/layouts/left-sidebar.php:44
 msgid "Show Full Sidebar"
-msgstr ""
+msgstr "Mostrar Barra Lateral Completa"
 
 #: public/layouts/left-sidebar.php:60
 msgid "Navigation"
-msgstr ""
+msgstr "Navegación"
 
 #: public/layouts/left-sidebar.php:82
 msgid "Apps"
-msgstr ""
+msgstr "Aplicaciones"
 
 #: public/layouts/right-sidebar.php:3
 msgid "Theme Settings"
-msgstr ""
+msgstr "Configuración del Tema"
 
 #: public/layouts/right-sidebar.php:11
 msgid "Customize"
-msgstr ""
+msgstr "Personalizar"
 
 #: public/layouts/right-sidebar.php:11
 msgid "the overall color scheme, sidebar menu, etc."
-msgstr ""
+msgstr "el esquema de color general, menú de la barra lateral, etc."
 
 #: public/layouts/right-sidebar.php:14
 msgid "Choose Layout"
-msgstr ""
+msgstr "Elegir Diseño"
 
 #: public/layouts/right-sidebar.php:18
 msgid "Vertical"
-msgstr ""
+msgstr "Vertical"
 
 #: public/layouts/right-sidebar.php:22
 msgid "Horizontal"
-msgstr ""
+msgstr "Horizontal"
 
 #: public/layouts/right-sidebar.php:26
 msgid "Color Scheme"
-msgstr ""
+msgstr "Esquema de Color"
 
 #: public/layouts/right-sidebar.php:31
 #: public/layouts/right-sidebar.php:70
 #: public/layouts/right-sidebar.php:90
 msgid "Light"
-msgstr ""
+msgstr "Claro"
 
 #: public/layouts/right-sidebar.php:36
 #: public/layouts/right-sidebar.php:75
 #: public/layouts/right-sidebar.php:95
 msgid "Dark"
-msgstr ""
+msgstr "Oscuro"
 
 #: public/layouts/right-sidebar.php:41
 msgid "Layout Mode"
-msgstr ""
+msgstr "Modo de Diseño"
 
 #: public/layouts/right-sidebar.php:46
 msgid "Fluid"
-msgstr ""
+msgstr "Fluido"
 
 #: public/layouts/right-sidebar.php:52
 msgid "Boxed"
-msgstr ""
+msgstr "En Caja"
 
 #: public/layouts/right-sidebar.php:59
 msgid "Detached"
-msgstr ""
+msgstr "Desprendido"
 
 #: public/layouts/right-sidebar.php:65
 msgid "Topbar Color"
-msgstr ""
+msgstr "Color de la Barra Superior"
 
 #: public/layouts/right-sidebar.php:80
 #: public/layouts/right-sidebar.php:99
 msgid "Brand"
-msgstr ""
+msgstr "Marca"
 
 #: public/layouts/right-sidebar.php:85
 msgid "Menu Color"
-msgstr ""
+msgstr "Color del Menú"
 
 #: public/layouts/right-sidebar.php:105
 msgid "Sidebar Size"
-msgstr ""
+msgstr "Tamaño de la Barra Lateral"
 
 #: public/layouts/right-sidebar.php:110
 msgid "Default"
-msgstr ""
+msgstr "Predeterminado"
 
 #: public/layouts/right-sidebar.php:115
 msgid "Compact"
-msgstr ""
+msgstr "Compacto"
 
 #: public/layouts/right-sidebar.php:120
 msgid "Condensed"
-msgstr ""
+msgstr "Condensado"
 
 #: public/layouts/right-sidebar.php:125
 msgid "Hover View"
-msgstr ""
+msgstr "Vista Flotante"
 
 #: public/layouts/right-sidebar.php:130
 msgid "Full Layout"
-msgstr ""
+msgstr "Diseño Completo"
 
 #: public/layouts/right-sidebar.php:135
 msgid "Fullscreen Layout"
-msgstr ""
+msgstr "Diseño de Pantalla Completa"
 
 #: public/layouts/right-sidebar.php:141
 msgid "Layout Position"
-msgstr ""
+msgstr "Posición del Diseño"
 
 #: public/layouts/right-sidebar.php:145
 msgid "Fixed"
-msgstr ""
+msgstr "Fijo"
 
 #: public/layouts/right-sidebar.php:148
 msgid "Scrollable"
-msgstr ""
+msgstr "Desplazable"
 
 #: public/layouts/right-sidebar.php:154
 msgid "Sidebar User Info"
-msgstr ""
+msgstr "Información del Usuario en la Barra Lateral"
 
 #: public/layouts/right-sidebar.php:168
 msgid "Reset"
-msgstr ""
+msgstr "Restablecer"
 
 #: public/layouts/right-sidebar.php:171
 msgid "Buy Now"
-msgstr ""
+msgstr "Comprar Ahora"
 
 #: public/layouts/task-modal.php:6
 msgid "Task"
-msgstr ""
+msgstr "Tarea"
 
 #: public/layouts/task-modal.php:67
 msgid "Error loading content. Please try again."
-msgstr ""
+msgstr "Error al cargar el contenido. Por favor, inténtelo de nuevo."
 
 #: public/layouts/topbar.php:39
 msgid "Theme Mode"
-msgstr ""
+msgstr "Modo de Tema"
 
 #: public/layouts/topbar.php:67
 msgid "Welcome !"
-msgstr ""
+msgstr "¡Bienvenido!"
 
 #: public/layouts/topbar.php:73
 msgid "My Profile"
-msgstr ""
+msgstr "Mi Perfil"
 
 #: public/layouts/topbar.php:88
 msgid "Import Tasks"
-msgstr ""
+msgstr "Importar Tareas"
 
 #: public/layouts/topbar.php:95
 msgid "Logout"
-msgstr ""
+msgstr "Cerrar Sesión"
