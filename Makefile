@@ -65,6 +65,10 @@ update: check-docker
 pot:
 	composer make-pot
 
+# Update .po files from .pot file
+po:
+	composer update-po
+
 # Generate .mo files from .po files
 mo:
 	composer make-mo
@@ -104,6 +108,7 @@ help:
 	@echo "  package           - Generate a .zip package"
 	@echo "  help              - Show help with available commands"
 	@echo "  pot               - Generate a .pot file for translations"
+	@echo "  po                - Update .po files from .pot file"
 	@echo "  mo                - Generate .mo files from .po files"
 
 # Establecer la ayuda como el objetivo predeterminado si no se especifica ningún objetivo
