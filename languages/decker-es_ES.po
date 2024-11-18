@@ -280,6 +280,7 @@ msgstr "Nombre de la Nueva Etiqueta"
 
 #: includes/custom-post-types/class-decker-labels.php:56
 #: includes/custom-post-types/class-decker-tasks.php:998
+#: public/layouts/task-card.php:316
 msgid "Labels"
 msgstr "Etiquetas"
 
@@ -364,6 +365,7 @@ msgid "Task User and Date"
 msgstr "Usuario y Fecha de la Tarea"
 
 #: includes/custom-post-types/class-decker-tasks.php:989
+#: public/layouts/task-card.php:343
 msgid "Attachments"
 msgstr "Adjuntos"
 
@@ -376,6 +378,7 @@ msgid "Board"
 msgstr "Tablero"
 
 #: includes/custom-post-types/class-decker-tasks.php:1027
+#: public/layouts/task-card.php:291
 msgid "Due Date"
 msgstr "Fecha de Vencimiento"
 
@@ -396,11 +399,13 @@ msgstr "Por Hacer"
 
 #: includes/custom-post-types/class-decker-tasks.php:1038
 #: public/app-kanban.php:118
+#: public/layouts/task-card.php:280
 msgid "In Progress"
 msgstr "En Progreso"
 
 #: includes/custom-post-types/class-decker-tasks.php:1039
 #: public/app-kanban.php:133
+#: public/layouts/task-card.php:281
 msgid "Done"
 msgstr "Hecho"
 
@@ -409,6 +414,7 @@ msgid "Nextcloud Card ID"
 msgstr "ID de Tarjeta de Nextcloud"
 
 #: includes/custom-post-types/class-decker-tasks.php:1095
+#: public/layouts/task-card.php:238
 #, fuzzy
 msgid "Select Board"
 msgstr "Buscar Tableros"
@@ -520,51 +526,61 @@ msgstr "Configuraciones"
 msgid "Go to Frontend"
 msgstr "Ir al Frontend"
 
-#: includes/class-decker-utility-functions.php:191
+#. translators: 1: number of years, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:192
 msgid "in %1$d year%2$s"
 msgstr "en %1$d año%2$s"
 
-#: includes/class-decker-utility-functions.php:192
+#. translators: 1: number of years, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:194
 msgid "%1$d year%2$s ago"
 msgstr "hace %1$d año%2$s"
 
-#: includes/class-decker-utility-functions.php:195
+#. translators: 1: number of months, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:198
 msgid "in %1$d month%2$s"
 msgstr "en %1$d mes%2$s"
 
-#: includes/class-decker-utility-functions.php:196
+#. translators: 1: number of months, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:200
 msgid "%1$d month%2$s ago"
 msgstr "hace %1$d mes%2$s"
 
-#: includes/class-decker-utility-functions.php:199
+#. translators: 1: number of days, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:204
 msgid "in %1$d day%2$s"
 msgstr "en %1$d día%2$s"
 
-#: includes/class-decker-utility-functions.php:200
+#. translators: 1: number of days, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:206
 msgid "%1$d day%2$s ago"
 msgstr "hace %1$d día%2$s"
 
-#: includes/class-decker-utility-functions.php:203
+#. translators: 1: number of hours, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:210
 msgid "in %1$d hour%2$s"
 msgstr "en %1$d hora%2$s"
 
-#: includes/class-decker-utility-functions.php:204
+#. translators: 1: number of hours, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:212
 msgid "%1$d hour%2$s ago"
 msgstr "hace %1$d hora%2$s"
 
-#: includes/class-decker-utility-functions.php:207
+#. translators: 1: number of minutes, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:216
 msgid "in %1$d minute%2$s"
 msgstr "en %1$d minuto%2$s"
 
-#: includes/class-decker-utility-functions.php:208
+#. translators: 1: number of minutes, 2: 's' for plural or empty for singular
+#: includes/class-decker-utility-functions.php:218
 msgid "%1$d minute%2$s ago"
 msgstr "hace %1$d minuto%2$s"
 
-#: includes/class-decker-utility-functions.php:211
+#: includes/class-decker-utility-functions.php:221
 msgid "in a few seconds"
 msgstr "en unos segundos"
 
-#: includes/class-decker-utility-functions.php:212
+#: includes/class-decker-utility-functions.php:222
 msgid "a few seconds ago"
 msgstr "hace unos segundos"
 
@@ -723,6 +739,7 @@ msgstr "MÁXIMA PRIORIDAD"
 
 #: public/app-priority.php:157
 #: public/app-priority.php:349
+#: public/layouts/task-card.php:211
 msgid "Title"
 msgstr "Título"
 
@@ -739,6 +756,7 @@ msgid "Select tasks to import"
 msgstr "Seleccionar tareas para importar"
 
 #: public/app-priority.php:348
+#: public/layouts/task-card.php:283
 msgid "Column"
 msgstr "Columna"
 
@@ -780,6 +798,7 @@ msgid "P."
 msgstr "P."
 
 #: public/app-tasks.php:177
+#: public/layouts/task-card.php:333
 msgid "Description"
 msgstr "Descripción"
 
@@ -989,3 +1008,47 @@ msgstr "Cerrar Sesión"
 #: public/app-kanban.php:12
 msgid "Error: The board %s does not exist."
 msgstr "Error: El tablero %s no existe."
+
+#: public/layouts/task-card.php:211
+msgid "MAXIMUM PRIORITY"
+msgstr ""
+
+#: public/layouts/task-card.php:212
+msgid "Please provide a title."
+msgstr ""
+
+#: public/layouts/task-card.php:220
+msgid "Maximum Priority"
+msgstr ""
+
+#: public/layouts/task-card.php:225
+msgid "For today"
+msgstr ""
+
+#: public/layouts/task-card.php:261
+msgid "Select Author"
+msgstr ""
+
+#: public/layouts/task-card.php:279
+msgid "To Do"
+msgstr ""
+
+#: public/layouts/task-card.php:292
+msgid "Please select a due date."
+msgstr ""
+
+#: public/layouts/task-card.php:302
+msgid "Assign to"
+msgstr ""
+
+#: public/layouts/task-card.php:337
+msgid "Comments"
+msgstr ""
+
+#: public/layouts/task-card.php:356
+msgid "History"
+msgstr ""
+
+#: public/layouts/task-card.php:362
+msgid "Gantt"
+msgstr ""
