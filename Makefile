@@ -72,6 +72,12 @@ po:
 # Generate .mo files from .po files
 mo:
 	composer make-mo
+
+# Check the untranslated strings
+check-untranslated:
+	composer check-untranslated
+
+# Generate the decker-X.X.X.zip package
 package:
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: No se ha especificado una versión. Usa 'make package VERSION=1.2.3'"; \
@@ -92,24 +98,25 @@ package:
 # Show help with available commands
 help:
 	@echo "Comandos disponibles:"
-	@echo "  up                - Bring up Docker containers in interactive mode"
-	@echo "  upd               - Bring up Docker containers in background mode (daemon)"
-	@echo "  down              - Stop and remove Docker containers"
-	@echo "  pull              - Pull the latest images from the registry"
-	@echo "  lint              - Run the linter to check PHP code style"
-	@echo "  fix               - Automatically fix PHP code style issues"
-	@echo "  test              - Run unit tests"
-	@echo "  clean             - Clean and stop Docker containers, removing volumes and orphan containers"
-	@echo "  phpcs             - Check code style with PHP-CS-Fixer"
-	@echo "  phpcbf            - Automatically fix code style with PHP-CS-Fixer"
-	@echo "  phpunit           - Run unit tests with PHPUnit"
-	@echo "  shell             - Open a shell inside the wordpress container"
-	@echo "  update            - Update Composer dependencies"
-	@echo "  package           - Generate a .zip package"
-	@echo "  help              - Show help with available commands"
-	@echo "  pot               - Generate a .pot file for translations"
-	@echo "  po                - Update .po files from .pot file"
-	@echo "  mo                - Generate .mo files from .po files"
+	@echo "  up                 - Bring up Docker containers in interactive mode"
+	@echo "  upd                - Bring up Docker containers in background mode (daemon)"
+	@echo "  down               - Stop and remove Docker containers"
+	@echo "  pull               - Pull the latest images from the registry"
+	@echo "  lint               - Run the linter to check PHP code style"
+	@echo "  fix                - Automatically fix PHP code style issues"
+	@echo "  test               - Run unit tests"
+	@echo "  clean              - Clean and stop Docker containers, removing volumes and orphan containers"
+	@echo "  phpcs              - Check code style with PHP-CS-Fixer"
+	@echo "  phpcbf             - Automatically fix code style with PHP-CS-Fixer"
+	@echo "  phpunit            - Run unit tests with PHPUnit"
+	@echo "  shell              - Open a shell inside the wordpress container"
+	@echo "  update             - Update Composer dependencies"
+	@echo "  package            - Generate a .zip package"
+	@echo "  help               - Show help with available commands"
+	@echo "  pot                - Generate a .pot file for translations"
+	@echo "  po                 - Update .po files from .pot file"
+	@echo "  mo                 - Generate .mo files from .po files"
+	@echo "  check-untranslated - Check the untranslated strings"
 
-# Establecer la ayuda como el objetivo predeterminado si no se especifica ningún objetivo
+# Set help as the default target if no target is specified
 .DEFAULT_GOAL := help

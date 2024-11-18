@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: ATE Decker 1.9.2\n"
+"Project-Id-Version: ATE Decker 0.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/decker\n"
 "Last-Translator: Ernesto Serrano <ate.educacion@gobiernodecanarias.org>\n"
 "Language-Team: Spanish <es@tp.org.es>\n"
@@ -446,7 +446,7 @@ msgstr "Mostrar Todas las Etiquetas"
 
 #: includes/custom-post-types/class-decker-tasks.php:1618
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: includes/custom-post-types/class-decker-user-extended.php:59
 msgid "Additional Information"
@@ -459,17 +459,17 @@ msgstr "Selecciona tu color favorito."
 #. Plugin URI of the plugin
 #: decker.php
 msgid "https://github.com/ateeducacion/wp-decker"
-msgstr ""
+msgstr "https://github.com/ateeducacion/wp-decker"
 
 #. Description of the plugin
 #: decker.php
 msgid "Decker is a WordPress plugin focused on efficiently and structurally presenting a list of tasks. It is a simple task management plugin that utilizes a Kanban board and a unique priority system."
-msgstr ""
+msgstr "Decker es un complemento de WordPress enfocado en presentar de manera eficiente y estructurada una lista de tareas. Es un complemento de gestión de tareas simple que utiliza un tablero Kanban y un sistema de prioridades único."
 
 #. Author URI of the plugin
 #: decker.php
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
-msgstr ""
+msgstr "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 
 #: admin/class-decker-admin-import.php:80
 msgid "Skip already existing tasks"

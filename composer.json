@@ -30,8 +30,8 @@
         "make-mo": "wp i18n make-mo languages/ languages/",
         "pot-remove-ctime": "sed -i '' '/POT-Creation-Date:/d' languages/decker.pot",
 
-        "untranslated": "msgattrib --untranslated languages/decker-es_ES.po",
-        "untranslated2": "wp i18n make-json languages/decker-es_ES.po languages/ --purge --pretty-print",
+        "untranslated": "msgattrib --untranslated languages/decker-es_ES.po && [ $(msgattrib --untranslated languages/decker-es_ES.po | wc -l) -eq 0 ]",
+        "make-i18n-json": "wp i18n make-json languages/decker-es_ES.po languages/ --purge --pretty-print",
         "check-untranslated": "composer make-pot && composer pot-remove-ctime && composer update-po && composer untranslated"
     },
     "config": {
