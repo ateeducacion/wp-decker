@@ -497,7 +497,7 @@ function deleteComment(commentId) {
 		<!-- Gantt -->
 		<div class="tab-pane" id="gantt-tab">
 			<div class="tab-pane" id="gantt-tab">
-				<p class="text-muted">Under construction...</p>
+				<p class="text-muted"><?php esc_html_e('Under construction...', 'decker'); ?></p>
 			</div>
 		</div>
 
@@ -510,10 +510,10 @@ function deleteComment(commentId) {
 
 		<div class="btn-group mb-2 dropup">
 		    <button type="submit" class="btn btn-primary" id="save-task" disabled>
-				<i class="ri-save-line"></i> Save
+				<i class="ri-save-line"></i> <?php esc_html_e('Save', 'decker'); ?>
 			</button>
 		    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled($disabled || $task_id == 0 ); ?>>
-		        <span class="visually-hidden">Toggle Dropdown</span>
+		        <span class="visually-hidden"><?php esc_html_e('Toggle Dropdown', 'decker'); ?></span>
 		    </button>
 	    	<?php 
 		    	if ($task_id > 0 ) {
