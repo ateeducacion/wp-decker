@@ -395,12 +395,12 @@ msgid "To-Do"
 msgstr "Por Hacer"
 
 #: includes/custom-post-types/class-decker-tasks.php:1038
-#: public/app-kanban.php:119
+#: public/app-kanban.php:118
 msgid "In Progress"
 msgstr "En Progreso"
 
 #: includes/custom-post-types/class-decker-tasks.php:1039
-#: public/app-kanban.php:134
+#: public/app-kanban.php:133
 msgid "Done"
 msgstr "Hecho"
 
@@ -663,41 +663,37 @@ msgstr "Tareas por Usuario"
 msgid "Tasks by Stack"
 msgstr "Tareas por Pila"
 
-#: public/app-kanban.php:12
-msgid "Error: The board <strong>%s</strong> does not exist."
-msgstr "Error: El tablero <strong>%s</strong> no existe."
-
-#: public/app-kanban.php:33
+#: public/app-kanban.php:32
 msgid "Kanban Board"
 msgstr "Tablero Kanban"
 
-#: public/app-kanban.php:66
+#: public/app-kanban.php:65
 #: public/app-upcoming.php:107
 msgid "Search..."
 msgstr "Buscar..."
 
-#: public/app-kanban.php:66
+#: public/app-kanban.php:65
 #: public/app-upcoming.php:107
 msgid "Search"
 msgstr "Buscar"
 
-#: public/app-kanban.php:70
+#: public/app-kanban.php:69
 #: public/app-upcoming.php:111
 msgid "All Users"
 msgstr "Todos los Usuarios"
 
-#: public/app-kanban.php:83
+#: public/app-kanban.php:82
 #: public/app-priority.php:126
 #: public/app-tasks.php:142
 #: public/app-upcoming.php:123
 msgid "Add New"
 msgstr "Agregar Nuevo"
 
-#: public/app-kanban.php:87
+#: public/app-kanban.php:86
 msgid "Fix Order"
 msgstr "Corregir Orden"
 
-#: public/app-kanban.php:105
+#: public/app-kanban.php:104
 msgid "TO-DO"
 msgstr "POR HACER"
 
@@ -988,3 +984,8 @@ msgstr "Importar Tareas"
 #: public/layouts/topbar.php:95
 msgid "Logout"
 msgstr "Cerrar Sesión"
+
+#. translators: %s: Board slug that was not found
+#: public/app-kanban.php:12
+msgid "Error: The board %s does not exist."
+msgstr "Error: El tablero %s no existe."

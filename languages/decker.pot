@@ -502,12 +502,12 @@ msgid "To-Do"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1038
-#: public/app-kanban.php:119
+#: public/app-kanban.php:118
 msgid "In Progress"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1039
-#: public/app-kanban.php:134
+#: public/app-kanban.php:133
 msgid "Done"
 msgstr ""
 
@@ -653,41 +653,42 @@ msgstr ""
 msgid "Tasks by Stack"
 msgstr ""
 
+#. translators: %s: Board slug that was not found
 #: public/app-kanban.php:12
-msgid "Error: The board <strong>%s</strong> does not exist."
+msgid "Error: The board %s does not exist."
 msgstr ""
 
-#: public/app-kanban.php:33
+#: public/app-kanban.php:32
 msgid "Kanban Board"
 msgstr ""
 
-#: public/app-kanban.php:66
+#: public/app-kanban.php:65
 #: public/app-upcoming.php:107
 msgid "Search..."
 msgstr ""
 
-#: public/app-kanban.php:66
+#: public/app-kanban.php:65
 #: public/app-upcoming.php:107
 msgid "Search"
 msgstr ""
 
-#: public/app-kanban.php:70
+#: public/app-kanban.php:69
 #: public/app-upcoming.php:111
 msgid "All Users"
 msgstr ""
 
-#: public/app-kanban.php:83
+#: public/app-kanban.php:82
 #: public/app-priority.php:126
 #: public/app-tasks.php:142
 #: public/app-upcoming.php:123
 msgid "Add New"
 msgstr ""
 
-#: public/app-kanban.php:87
+#: public/app-kanban.php:86
 msgid "Fix Order"
 msgstr ""
 
-#: public/app-kanban.php:105
+#: public/app-kanban.php:104
 msgid "TO-DO"
 msgstr ""
 
