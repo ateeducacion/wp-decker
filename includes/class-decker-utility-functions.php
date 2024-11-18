@@ -129,7 +129,7 @@ class Decker_Utility_Functions {
 	}
 
 	/**
-	 * Muestra un mensaje de error en el área de administración de WordPress.
+	 * Display an error message in the WordPress admin area.
 	 *
 	 * @return void
 	 */
@@ -143,9 +143,9 @@ class Decker_Utility_Functions {
 	}
 
 	/**
-	 * Establece un mensaje de error para mostrar en el área de administración.
+	 * Set an error message to display in the admin area.
 	 *
-	 * @param string $error_msg Mensaje de error a mostrar.
+	 * @param string $error_msg Error message to display.
 	 * @return void
 	 */
 	public static function decker_set_admin_error_notice( $error_msg ) {

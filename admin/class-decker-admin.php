@@ -74,10 +74,10 @@ class Decker_Admin {
 			$admin_bar->add_menu(
 				array(
 					'id'    => 'decker_frontend_link',
-					'title' => '<span class="ab-icon dashicons-welcome-widgets-menus"></span> ' . __( 'Ir al Frontend', 'decker' ),
+					'title' => '<span class="ab-icon dashicons-welcome-widgets-menus"></span> ' . __( 'Go to Frontend', 'decker' ),
 					'href'  => home_url( '/?decker_page=priority' ),
 					'meta'  => array(
-						'title' => __( 'Ir al Frontend', 'decker' ),
+						'title' => __( 'Go to Frontend', 'decker' ),
 						'class' => 'dashicons-before dashicons-welcome-widgets-menus',
 					),
 				)
