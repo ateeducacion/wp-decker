@@ -8,6 +8,9 @@
 // First we need to load the composer autoloader, so we can use WP Mock
 require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
+use Yoast\WPTestUtils\WPIntegration;
+
+
 // Bootstrap WP_Mock to initialize built-in features
 WP_Mock::setUsePatchwork( true );
 WP_Mock::bootstrap();
@@ -68,7 +71,7 @@ WP_Mock::userFunction(
 
 // If your project does not use autoloading via Composer, include your files now
 
-require_once dirname( __DIR__ ) . '/decker.php';
+// require_once dirname( __DIR__ ) . '/decker.php';
 
 // require_once dirname(__DIR__) . '/decker.php';
 
@@ -84,3 +87,8 @@ require_once dirname( __DIR__ ) . '/decker.php';
 
 // Utilizar 'tests_add_filter' para cargar manualmente el plugin.
 // tests_add_filter('muplugins_loaded', '_manually_load_plugin');
+
+
+require_once dirname(__DIR__) . '/vendor/yoast/wp-test-utils/src/WPIntegration/bootstrap-functions.php';
+
+WPIntegration\bootstrap_it();
