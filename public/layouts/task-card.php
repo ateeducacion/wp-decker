@@ -421,7 +421,7 @@ function deleteComment(commentId) {
 			    <br>
 			    <div class="d-flex align-items-center">
 			        <input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> />
-			        <button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>>Upload</button>
+			        <button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_html_e('Upload', 'decker'); ?></button>
 			    </div>
 			</div>
 
