@@ -540,35 +540,22 @@ document.addEventListener('DOMContentLoaded', function() {
 	        $nickname = sanitize_text_field( $card['owner'] );
 	    } elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
 	        $nickname = sanitize_text_field( $card['owner']['uid'] );
-	    } else {
-	        $nickname = '';
 	    }
 
-	    // Obtener el ID del propietario
-	    $owner_obj = get_users( [
-	        'search'         => $nickname,
-	        'search_columns' => [ 'display_name', 'nickname' ],
-	        'number'         => 1,
-	    ] );
-	    $owner = get_current_user_id();
-	    if ( ! empty( $owner_obj ) && is_array( $owner_obj ) ) {
-	        $owner = $owner_obj[0]->ID;
-	    }
+	    $owner = $this->search_user($nickname);
 
 	    // Obtener los IDs de los usuarios asignados
 	    $assigned_users = array();
 	    if ( is_array( $card['assignedUsers'] ) ) {	
 	        foreach ( $card['assignedUsers'] as $user ) {
 	            if ( isset( $user['participant']['uid'] ) ) {
-					$user_obj = get_users( [
-				        'search'         => sanitize_user( $user['participant']['uid'] ),
-				        'search_columns' => [ 'display_name', 'nickname', 'login' ],
-				        'number'         => 1,
-				    ] );
-				    if ( ! empty( $user_obj ) && is_array( $user_obj ) ) {
 
-	                    $assigned_users[] = $user_obj[0]-->ID;
-	                }
+	            	$participant = sanitize_user( $user['participant']['uid'] );
+	            	$participant_id = $this->search_user( $participant );
+
+	            	if ($participant_id) {
+	            		$assigned_users[] = $participant_id;
+	            	}
 	            }
 	        }
 	    }
@@ -671,6 +658,52 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
 
 	/**
+	 * Search for a user by nickname. If no user is found with the specified nickname,
+	 * search by the user login instead.
+	 *
+	 * This function first performs a search for a user whose 'nickname' meta key matches
+	 * the provided string. If no matching user is found, it then searches for a user whose
+	 * login name matches the input string. The function returns the first user found or
+	 * null if no user matches either search criteria.
+	 *
+	 * @param string $nickname The nickname or login to search for.
+	 * @return int|null The ID of the first matching user object or null if no user is found.
+	 */
+	private function search_user(string $nickname) {
+	    // Search for the user by nickname
+	    $users = get_users( array(
+	        'meta_query' => array(
+	            array(
+	                'key'     => 'nickname',
+	                'value'   => $nickname,
+	                'compare' => '='
+	            )
+	        ),
+	        'number' => 1, // Limit the query to one user
+	    ) );
+
+	    // If a user is found, return the first one
+	    if ( ! empty( $users ) && is_array( $users ) ) {
+	        return $users[0]->ID;
+	    }
+
+	    // If no user was found by nickname, search by user login
+	    $users = get_users( array(
+	        'search'         => $nickname,
+	        'search_columns' => array( 'user_login' ),
+	        'number'         => 1, // Limit the query to one user
+	    ) );
+
+	    // Return the first user found or null if no user matches
+	    if ( ! empty( $users ) && is_array( $users ) ) {
+	        return $users[0]->ID;
+	    }
+
+	    return null; // Return null if no user is found in either search
+	}
+
+
+	/**
 	 * Processes and saves a comment in WordPress.
 	 *
 	 * @param array $comment The comment data from NextCloud.
@@ -682,32 +715,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		// Determine the user who made the comment.
 		$user_nickname = sanitize_text_field( $comment['actorId'] );
-		$user_obj = get_users(
-			array(
-				'search' => $user_nickname,
-				'search_columns' => array( 'nickname' ),
-				'number' => 1,
-			)
-		);
 
-		$user_id = ! empty( $user_obj ) && is_array( $user_obj ) ? $user_obj[0]->ID : null;
+		$user_id = $this->search_user($user_nickname);
 
 		// Check if the comment is in the format "hoy" or "hoy-@uuid".
 		if ( preg_match( '/^hoy(\s*-\s*@[\w]+)?$/i', $message, $matches ) ) {
 
 			if ( ! empty( $matches[1] ) ) { // "hoy-@uuid" format.
 				$mentioned_nickname = sanitize_text_field( trim( str_replace( array( '-', '@' ), '', $matches[1] ) ) );
-				$mentioned_user_obj = get_users(
-					array(
-						'search' => $mentioned_nickname,
-						'search_columns' => array( 'nickname' ),
-						'number' => 1,
-					)
-				);
 
-				if ( ! empty( $mentioned_user_obj ) && is_array( $mentioned_user_obj ) ) {
-					$user_id = $mentioned_user_obj[0]->ID;
-				}
+				$user_id = $this->search_user($mentioned_nickname);
 			}
 
 			if ( $user_id ) {

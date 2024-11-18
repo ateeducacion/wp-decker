@@ -88,6 +88,10 @@ function render_comments(array $comments, int $parent_id, int $current_user_id) 
 }
 ?>
 
+<?php 
+
+/* Desactivados parte de comentarios
+TO-DO arreglar
 <script type="text/javascript">
 
 var replyToCommentId = null;
@@ -197,6 +201,7 @@ function deleteComment(commentId) {
 	});
 }
 </script>
+*/?>
 
 <!-- Task card -->
 <form id="task-form" class="needs-validation" target="_self" novalidate>
@@ -388,7 +393,7 @@ function deleteComment(commentId) {
 						<?php esc_html_e('Replying to', 'decker'); ?> <span id="replying-to"></span>
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
-					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e('Write your comment...', 'decker'); ?>" id="comment-text" name="comment-text"></textarea>
+					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e('Write your comment...', 'decker'); ?>" id="comment-text" name="comment-text" disabled></textarea>
 					<div class="invalid-feedback">Please enter a comment.</div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
 						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-send-plane-2 me-1"></i> Send</button>
@@ -900,6 +905,7 @@ if (taskModal) {
             formModal.dataset.listener = 'true';
 
             formModal.addEventListener('submit', function(event) {
+            	event.preventDefault();
                 sendFormByAjax(event);
             });
         }
