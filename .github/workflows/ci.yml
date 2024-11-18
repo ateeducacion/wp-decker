@@ -24,11 +24,20 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Setup WP-CLI
+        uses: godaddy-wordpress/setup-wp-cli@1
+
       # - name: Run code linting
       #   run: make lint
 
       # - name: Run unit tests
       #   run: make test
+
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
+
+      - name: Check untranslated strings
+        run: make check-untranslated
 
       - name: Create package using the Makefile
         run: make package VERSION=6.6.6

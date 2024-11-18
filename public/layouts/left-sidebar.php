@@ -41,7 +41,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	class="button-sm-hover"
 	data-bs-toggle="tooltip"
 	data-bs-placement="right"
-	title="Show Full Sidebar"
+	title="<?php esc_attr_e('Show Full Sidebar', 'decker'); ?>"
   >
 	<i class="ri-checkbox-blank-circle-line align-middle"></i>
   </div>
@@ -57,13 +57,13 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 	<!--- Sidemenu -->
 	<ul class="side-nav">
-	  <li class="side-nav-title">Navigation</li>
+	  <li class="side-nav-title"><?php _e('Navigation', 'decker'); ?></li>
 
 
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'priority' ); ?>">
 		<a href="<?php echo add_query_arg( 'decker_page', 'priority', home_url( '/' ) ); ?>" class="side-nav-link">
 		  <i class="ri-home-4-line"></i>
-		  <span> Priority </span>
+		  <span><?php _e('Priority', 'decker'); ?></span>
 		</a>
 	  </li>
 
@@ -72,14 +72,14 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			<a href="<?php echo add_query_arg( array( 'decker_page' => 'upcoming' ), home_url( '/' ) ); ?>" class="side-nav-link">
 			<i class="ri-inbox-line"></i>
-			  <span> Upcoming Tasks </span>
+			  <span><?php _e('Upcoming Tasks', 'decker'); ?></span>
 			</a>
 	 
 			</a>
 	  </li>
 
 
-	  <li class="side-nav-title">Apps</li>
+	  <li class="side-nav-title"><?php _e('Apps', 'decker'); ?></li>
 
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'tasks' ); ?>">
 		<a
@@ -90,7 +90,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  class="side-nav-link"
 		>
 		  <i class="ri-task-line"></i>
-		  <span> Tasks </span>
+		  <span><?php _e('Tasks', 'decker'); ?></span>
 		  <span class="menu-arrow"></span>
 		</a>
 		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'tasks' ) ? ' show' : ''; ?>" id="sidebarTasks">
@@ -110,7 +110,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 									),
 									home_url( '/' )
 								);
-								?>">Active Tasks</a></li>
+								?>"><?php _e('Active Tasks', 'decker'); ?></a></li>
 			<li class="<?php echo decker_is_active_subpage( 'type', 'my' ); ?>"><span class="badge bg-info float-end"><?php echo esc_html( $my_tasks_count ); ?></span><a href="<?php
 																	echo add_query_arg(
 																		array(
@@ -119,7 +119,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 																		),
 																		home_url( '/' )
 																	);
-																	?>">My Tasks</a></li>
+																	?>"><?php _e('My Tasks', 'decker'); ?></a></li>
 			<li class="<?php echo decker_is_active_subpage( 'type', 'archived' ); ?>"><span class="badge bg-warning float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="<?php
 																	echo add_query_arg(
 																		array(
@@ -128,8 +128,8 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 																		),
 																		home_url( '/' )
 																	);
-																	?>">Archived Tasks</a></li>
-			<li class="<?php echo decker_is_active_subpage( 'type', 'new' ); ?>"><a href="<?php echo add_query_arg( array( 'decker_page' => 'task', 'type' => 'new'), home_url( '/' ) ); ?>">New task</a></li>
+																	?>"><?php _e('Archived Tasks', 'decker'); ?></a></li>
+			<li class="<?php echo decker_is_active_subpage( 'type', 'new' ); ?>"><a href="<?php echo add_query_arg( array( 'decker_page' => 'task', 'type' => 'new'), home_url( '/' ) ); ?>"><?php _e('New task', 'decker'); ?></a></li>
 		  </ul>
 		</div>
 	  </li>
@@ -147,7 +147,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 
 		  <!-- <span class="badge bg-success float-end"></span> -->
-		  <span> Boards </span>
+		  <span><?php _e('Boards', 'decker'); ?></span>
 		  <span class="menu-arrow"></span>
 
 
@@ -183,7 +183,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'analytics' ); ?>">
 		<a href="<?php echo add_query_arg( 'decker_page', 'analytics', home_url( '/' ) ); ?>" class="side-nav-link">
 		  <i class="ri-bar-chart-line"></i>
-		  <span> Analytics </span>
+		  <span><?php _e('Analytics', 'decker'); ?></span>
 		</a>
 	  </li>
 

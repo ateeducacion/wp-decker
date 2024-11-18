@@ -129,7 +129,7 @@ class Decker_Utility_Functions {
 	}
 
 	/**
-	 * Muestra un mensaje de error en el área de administración de WordPress.
+	 * Display an error message in the WordPress admin area.
 	 *
 	 * @return void
 	 */
@@ -143,9 +143,9 @@ class Decker_Utility_Functions {
 	}
 
 	/**
-	 * Establece un mensaje de error para mostrar en el área de administración.
+	 * Set an error message to display in the admin area.
 	 *
-	 * @param string $error_msg Mensaje de error a mostrar.
+	 * @param string $error_msg Error message to display.
 	 * @return void
 	 */
 	public static function decker_set_admin_error_notice( $error_msg ) {
@@ -187,28 +187,38 @@ class Decker_Utility_Functions {
 
 	    // Determine the appropriate relative time string based on the interval
 	    if ( $interval->y > 0 ) {
-	        return $isFuture 
-	            ? sprintf( __( 'in %1$d year%2$s', 'decker' ), $interval->y, $interval->y > 1 ? 's' : '' ) 
+	        return $isFuture
+	            /* translators: 1: number of years, 2: 's' for plural or empty for singular */
+	            ? sprintf( __( 'in %1$d year%2$s', 'decker' ), $interval->y, $interval->y > 1 ? 's' : '' )
+	            /* translators: 1: number of years, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d year%2$s ago', 'decker' ), $interval->y, $interval->y > 1 ? 's' : '' );
 	    } elseif ( $interval->m > 0 ) {
-	        return $isFuture 
-	            ? sprintf( __( 'in %1$d month%2$s', 'decker' ), $interval->m, $interval->m > 1 ? 's' : '' ) 
+	        return $isFuture
+	            /* translators: 1: number of months, 2: 's' for plural or empty for singular */
+	            ? sprintf( __( 'in %1$d month%2$s', 'decker' ), $interval->m, $interval->m > 1 ? 's' : '' )
+	            /* translators: 1: number of months, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d month%2$s ago', 'decker' ), $interval->m, $interval->m > 1 ? 's' : '' );
 	    } elseif ( $interval->d > 0 ) {
-	        return $isFuture 
-	            ? sprintf( __( 'in %1$d day%2$s', 'decker' ), $interval->d, $interval->d > 1 ? 's' : '' ) 
+	        return $isFuture
+	            /* translators: 1: number of days, 2: 's' for plural or empty for singular */
+	            ? sprintf( __( 'in %1$d day%2$s', 'decker' ), $interval->d, $interval->d > 1 ? 's' : '' )
+	            /* translators: 1: number of days, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d day%2$s ago', 'decker' ), $interval->d, $interval->d > 1 ? 's' : '' );
 	    } elseif ( $interval->h > 0 ) {
-	        return $isFuture 
-	            ? sprintf( __( 'in %1$d hour%2$s', 'decker' ), $interval->h, $interval->h > 1 ? 's' : '' ) 
+	        return $isFuture
+	            /* translators: 1: number of hours, 2: 's' for plural or empty for singular */
+	            ? sprintf( __( 'in %1$d hour%2$s', 'decker' ), $interval->h, $interval->h > 1 ? 's' : '' )
+	            /* translators: 1: number of hours, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d hour%2$s ago', 'decker' ), $interval->h, $interval->h > 1 ? 's' : '' );
 	    } elseif ( $interval->i > 0 ) {
-	        return $isFuture 
-	            ? sprintf( __( 'in %1$d minute%2$s', 'decker' ), $interval->i, $interval->i > 1 ? 's' : '' ) 
+	        return $isFuture
+	            /* translators: 1: number of minutes, 2: 's' for plural or empty for singular */
+	            ? sprintf( __( 'in %1$d minute%2$s', 'decker' ), $interval->i, $interval->i > 1 ? 's' : '' )
+	            /* translators: 1: number of minutes, 2: 's' for plural or empty for singular */
 	            : sprintf( __( '%1$d minute%2$s ago', 'decker' ), $interval->i, $interval->i > 1 ? 's' : '' );
 	    } else {
-	        return $isFuture 
-	            ? __( 'in a few seconds', 'decker' ) 
+	        return $isFuture
+	            ? __( 'in a few seconds', 'decker' )
 	            : __( 'a few seconds ago', 'decker' );
 	    }
 	}

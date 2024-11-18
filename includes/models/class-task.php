@@ -43,7 +43,7 @@ class Task {
         if ($post) {
 
             if ('decker_task' !== $post->post_type) {
-                throw new Exception('Invalid post type.');
+                throw new Exception(__('Invalid post type.', 'decker'));
             }
 
             $this->ID = $post->ID;
@@ -267,9 +267,9 @@ class Task {
             home_url('/')
         );
         $priorityBadgeClass = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
-        $priorityLabel = $this->max_priority ? '🔥' : 'Normal';
+        $priorityLabel = $this->max_priority ? __('🔥', 'decker') : __('Normal', 'decker');
         $formatted_duedate = $this->getDuedateAsString();
-        $relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined date</span>';
+        $relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __('Undefined date', 'decker') . '</span>';
 
         if (!empty($this->duedate)) {
             $relative_time = esc_html($this->getRelativeTime());
@@ -280,7 +280,7 @@ class Task {
             <div class="card-body p-3">
                 <span class="float-end badge <?php echo esc_attr($priorityBadgeClass); ?>">
                     <span class="label-to-hide"><?php echo esc_html($priorityLabel); ?></span>
-                    <span class="menu-order label-to-show" style="display: none;">Order: <?php echo esc_html($this->order); ?></span>
+                    <span class="menu-order label-to-show" style="display: none;"><?php _e('Order:', 'decker'); ?> <?php echo esc_html($this->order); ?></span>
                 </span>
 
                 <small class="text-muted relative-time-badge" title="<?php echo esc_attr($formatted_duedate); ?>">
@@ -301,7 +301,7 @@ class Task {
                     </span>
                     <span class="text-nowrap mb-2 d-inline-block">
                         <i class="ri-discuss-line text-muted"></i>
-                        <b><?php echo esc_html(get_comments_number($this->ID)); ?></b> Comments
+                        <b><?php echo esc_html(get_comments_number($this->ID)); ?></b> <?php _e('Comments', 'decker'); ?>
                     </span>
                 </p>
 
@@ -333,7 +333,7 @@ class Task {
         if (!$card) {
             // Add 'Edit' menu item
             $menuItems[] = sprintf(
-                '<a href="%s" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="%d" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>Edit</a>',
+                '<a href="%s" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="%d" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>' . __('Edit', 'decker') . '</a>',
                 esc_url(add_query_arg(
                     ['decker_page' => 'task', 'id' => esc_attr($this->ID)],
                     home_url('/')
@@ -345,14 +345,14 @@ class Task {
         if ( current_user_can( 'manage_options' ) ) { 
             // Add 'Edit in WordPress' menu item
             $menuItems[] = sprintf(
-                '<a href="%s" class="dropdown-item" target="_blank"><i class="ri-wordpress-line me-1"></i>Edit in WordPress</a>',
+                '<a href="%s" class="dropdown-item" target="_blank"><i class="ri-wordpress-line me-1"></i>' . __('Edit in WordPress', 'decker') . '</a>',
                 esc_url(get_edit_post_link($this->ID))
             );
         }
 
         // Add 'Archive' menu item
         $menuItems[] = sprintf(
-            '<a href="javascript:void(0);" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>Archive</a>',
+            '<a href="javascript:void(0);" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __('Archive', 'decker') . '</a>',
             esc_attr($this->ID)
         );
 
@@ -361,14 +361,14 @@ class Task {
             // Add 'Assign to me' and 'Leave' menu items based on assigned users
             $isAssigned = in_array(get_current_user_id(), array_column($this->assigned_users, 'ID'));
             $menuItems[] = sprintf(
-                '<a href="javascript:void(0);" class="dropdown-item assign-to-me" data-task-id="%d" style="%s"><i class="ri-user-add-line me-1"></i>Assign to me</a>',
+                '<a href="javascript:void(0);" class="dropdown-item assign-to-me" data-task-id="%d" style="%s"><i class="ri-user-add-line me-1"></i>' . __('Assign to me', 'decker') . '</a>',
                 esc_attr($this->ID),
                 $isAssigned ? 'display: none;' : ''
             );
 
             // Add 'Leave' menu item
             $menuItems[] = sprintf(
-                '<a href="javascript:void(0);" class="dropdown-item leave-task" data-task-id="%d" style="%s"><i class="ri-logout-circle-line me-1"></i>Leave</a>',
+                '<a href="javascript:void(0);" class="dropdown-item leave-task" data-task-id="%d" style="%s"><i class="ri-logout-circle-line me-1"></i>' . __('Leave', 'decker') . '</a>',
                 esc_attr($this->ID),
                 !$isAssigned ? 'display: none;' : ''
             );
@@ -384,13 +384,13 @@ class Task {
                 }
 
                 $menuItems[] = sprintf(
-                    '<a href="javascript:void(0);" class="dropdown-item mark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-check-line me-1"></i>Mark for today</a>',
+                    '<a href="javascript:void(0);" class="dropdown-item mark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-check-line me-1"></i>' . __('Mark for today', 'decker') . '</a>',
                     esc_attr($this->ID),
                     $isMarkedForToday ? 'display: none;' : ''
                 );
 
                 $menuItems[] = sprintf(
-                    '<a href="javascript:void(0);" class="dropdown-item unmark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-close-line me-1"></i>Unmark for today</a>',
+                    '<a href="javascript:void(0);" class="dropdown-item unmark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-close-line me-1"></i>' . __('Unmark for today', 'decker') . '</a>',
                     esc_attr($this->ID),
                     !$isMarkedForToday ? 'display: none;' : ''
                 );

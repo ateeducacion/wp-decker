@@ -6,7 +6,7 @@ $taskManager = new TaskManager();
 ?>
 
 <head>
-	<title>Tasks | Decker</title>
+	<title><?php _e('Tasks', 'decker'); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -128,18 +128,18 @@ table#tablaTareas td:nth-child(4) {
 							<?php
 								$current_type = isset( $_GET['decker_page'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'tasks';
 
-								$page_title = 'Tasks';
+								$page_title = __('Tasks', 'decker');
 								$class_disabled = '';
 								if ( $current_type === 'active' ) {
-								    $page_title = 'Active Tasks';
+								    $page_title = __('Active Tasks', 'decker');
 								} elseif ( $current_type === 'my' ) {
-								    $page_title = 'My Tasks';
+								    $page_title = __('My Tasks', 'decker');
 								} elseif ( $current_type === 'archived' ) {
-								    $page_title = 'Archived Tasks';
+								    $page_title = __('Archived Tasks', 'decker');
 								    $class_disabled = ' disabled';
 								}
 							?>
-								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr($class_disabled); ?>" data-bs-toggle="modal" data-bs-target="#task-modal">Add New</a></h4>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr($class_disabled); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><?php _e('Add New', 'decker'); ?></a></h4>
 
 
 	
@@ -149,7 +149,7 @@ table#tablaTareas td:nth-child(4) {
 								<div class="d-flex align-items-center">
 									<div id="searchBuilderContainer" class="me-2"></div>
 									<select id="boardFilter" class="form-select">
-										<option value="">All Boards</option>
+										<option value=""><?php _e('All Boards', 'decker'); ?></option>
 										<?php
 											$boards = BoardManager::getAllBoards();
 											foreach ($boards as $board) {
@@ -171,13 +171,13 @@ table#tablaTareas td:nth-child(4) {
 											<table id="tablaTareas" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="tablaTareas_info">
 												<thead>
 													<tr>
-														<th>P.</th>
-														<th>Board</th>
-														<th>Stack</th>
-														<th>Description</th>
-														<th>Tags</th>
-														<th>Assigned Users</th>
-														<th>Remaining Time</th>
+														<th><?php _e('P.', 'decker'); ?></th>
+														<th><?php _e('Board', 'decker'); ?></th>
+														<th><?php _e('Stack', 'decker'); ?></th>
+														<th><?php _e('Description', 'decker'); ?></th>
+														<th><?php _e('Tags', 'decker'); ?></th>
+														<th><?php _e('Assigned Users', 'decker'); ?></th>
+														<th><?php _e('Remaining Time', 'decker'); ?></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -200,7 +200,7 @@ table#tablaTareas td:nth-child(4) {
                                                         echo '<td>';
 
 														if (null === $task->board) {
-														    echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> Undefined board</span>';
+														    echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __('Undefined board', 'decker') . '</span>';
 														} else {														    
 														    echo '<span class="badge rounded-pill" style="background-color: ' . esc_attr($task->board->color) . ';">' . esc_html($task->board->name) . '</span>';
 														}

@@ -3,7 +3,7 @@ include 'layouts/main.php';
 ?>
 
 <head>
-	<title>Tasks Detail | Decker</title>
+	<title><?php _e('Tasks Detail', 'decker'); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 	<?php include 'layouts/head-css.php'; ?>
 </head>
@@ -31,13 +31,13 @@ include 'layouts/main.php';
 								<div class="page-title-right">
 									<ol class="breadcrumb m-0">
 										<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-										<li class="breadcrumb-item"><a href="javascript: void(0);">Tasks</a></li>
-										<li class="breadcrumb-item active">Task Detail</li>
+										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php _e('Tasks', 'decker'); ?></a></li>
+										<li class="breadcrumb-item active"><?php _e('Task Detail', 'decker'); ?></li>
 									</ol>
 								</div>
 							   <?php
 									// Set default title to "New task"
-									$title = 'New task';
+									$title = __('New task', 'decker');
 									$valid_task = true;
 
 									// TODO: Change to use Task class
@@ -47,7 +47,7 @@ include 'layouts/main.php';
 									    if ( $task && 'decker_task' === $task->post_type ) {
 									        $title = $task->post_title;  
 									    } else {
-									        $title = 'Task not found';
+									        $title = __('Task not found', 'decker');
 									        $valid_task = false;
 									    }
 									}

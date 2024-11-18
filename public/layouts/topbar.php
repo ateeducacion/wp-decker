@@ -36,7 +36,7 @@
 
 
 			<li class="d-none d-sm-inline-block">
-				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="Theme Mode">
+				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attr_e('Theme Mode', 'decker'); ?>">
 					<i class="ri-moon-line fs-22"></i>
 				</div>
 			</li>
@@ -64,13 +64,13 @@
 				<div class="dropdown-menu dropdown-menu-end dropdown-menu-animated profile-dropdown">
 					
 					<div class=" dropdown-header noti-title">
-						<h6 class="text-overflow m-0">Welcome !</h6>
+						<h6 class="text-overflow m-0"><?php _e('Welcome !', 'decker'); ?></h6>
 					</div>
 
 					<!-- item-->
 					<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>" class="dropdown-item">
 						<i class="ri-account-circle-line fs-18 align-middle me-1"></i>
-						<span>My Profile</span>
+						<span><?php _e('My Profile', 'decker'); ?></span>
 					</a>
 					<!-- item-->
 
@@ -79,20 +79,20 @@
 					<!-- item-->
 					<a href="<?php echo esc_url( admin_url( 'options-general.php?page=decker_settings' ) ); ?>" class="dropdown-item">
 						<i class="ri-settings-4-line fs-18 align-middle me-1"></i>
-						<span>Decker Settings</span>
+						<span><?php _e('Decker Settings', 'decker'); ?></span>
 					</a>
 
 					<!-- item-->
 					<a href="<?php echo esc_url( admin_url( 'admin.php?import=decker_import' ) ); ?>" class="dropdown-item">
 						<i class="ri-import-line fs-18 align-middle me-1"></i>
-						<span>Import Tasks</span>
+						<span><?php _e('Import Tasks', 'decker'); ?></span>
 					</a>
 
 					<?php } ?>
 					<!-- item-->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">
 						<i class="ri-logout-box-line fs-18 align-middle me-1"></i>
-						<span>Logout</span>
+						<span><?php _e('Logout', 'decker'); ?></span>
 					</a>
 				</div>
 			</li>

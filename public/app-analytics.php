@@ -3,7 +3,7 @@ include 'layouts/main.php';
 ?>
 
 <head>
-	<title>Analytics Dashboard | Decker</title>
+	<title><?php esc_html_e('Analytics Dashboard', 'decker'); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -32,10 +32,10 @@ include 'layouts/main.php';
 								<div class="page-title-right">
 									<ol class="breadcrumb m-0">
 										<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-										<li class="breadcrumb-item active">Analytics</li>
+										<li class="breadcrumb-item active"><?php esc_html_e('Analytics', 'decker'); ?></li>
 									</ol>
 								</div>
-								<h4 class="page-title">Analytics</h4>
+								<h4 class="page-title"><?php esc_html_e('Analytics', 'decker'); ?></h4>
 							</div>
 						</div>
 					</div>     
@@ -47,32 +47,32 @@ include 'layouts/main.php';
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title">Active Tasks</h4>
-									<h2 class="text-primary" id="active-tasks-count"><?php echo wp_count_posts( 'decker_task' )->publish; ?></h2>
+									<h4 class="card-title"><?php esc_html_e('Active Tasks', 'decker'); ?></h4>
+									<h2 class="text-primary" id="active-tasks-count"><?php echo esc_html(wp_count_posts('decker_task')->publish); ?></h2>
 								</div>
 							</div>
 						</div>
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title">Total Users</h4>
-									<h2 class="text-primary" id="total-users-count"><?php echo count_users()['total_users']; ?></h2>
+									<h4 class="card-title"><?php esc_html_e('Total Users', 'decker'); ?></h4>
+									<h2 class="text-primary" id="total-users-count"><?php echo esc_html(count_users()['total_users']); ?></h2>
 								</div>
 							</div>
 						</div>
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title">Archived Tasks</h4>
-									<h2 class="text-primary" id="archived-tasks-count"><?php echo wp_count_posts( 'decker_task' )->archived; ?></h2>
+									<h4 class="card-title"><?php esc_html_e('Archived Tasks', 'decker'); ?></h4>
+									<h2 class="text-primary" id="archived-tasks-count"><?php echo esc_html(wp_count_posts('decker_task')->archived); ?></h2>
 								</div>
 							</div>
 						</div>
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title">Total Boards</h4>
-									<h2 class="text-primary" id="total-boards-count"><?php echo wp_count_terms( 'decker_board' ); ?></h2>
+									<h4 class="card-title"><?php esc_html_e('Total Boards', 'decker'); ?></h4>
+									<h2 class="text-primary" id="total-boards-count"><?php echo esc_html(wp_count_terms('decker_board')); ?></h2>
 								</div>
 							</div>
 						</div>
@@ -87,7 +87,7 @@ include 'layouts/main.php';
 		<div class="col-md-6">
 			<div class="card">
 				<div class="card-body">
-					<h5 class="card-title">Tasks by Board</h5>
+					<h5 class="card-title"><?php esc_html_e('Tasks by Board', 'decker'); ?></h5>
 					<canvas id="chartByBoard" class="chartCanvas"></canvas>
 				</div>
 			</div>
@@ -96,7 +96,7 @@ include 'layouts/main.php';
 		<div class="col-md-6">
 			<div class="card">
 				<div class="card-body">
-					<h5 class="card-title">Tasks by User</h5>
+					<h5 class="card-title"><?php esc_html_e('Tasks by User', 'decker'); ?></h5>
 					<canvas id="chartByUser" class="chartCanvas"></canvas>
 				</div>
 			</div>
@@ -107,7 +107,7 @@ include 'layouts/main.php';
 		<div class="col-md-6 mx-auto">
 			<div class="card">
 				<div class="card-body">
-					<h5 class="card-title">Tasks by Stack</h5>
+					<h5 class="card-title"><?php esc_html_e('Tasks by Stack', 'decker'); ?></h5>
 					<canvas id="chartByStack" class="chartCanvas"></canvas>
 				</div>
 			</div>

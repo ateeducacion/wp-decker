@@ -8,7 +8,7 @@
 			</div>
 			<div class="col-md-6 text-md-end">
 				<a href="https://github.com/ateeducacion/wp-decker/" target="_blank" rel="noopener noreferrer" class="footer-link">
-					<i class="ri-github-fill" aria-hidden="true"></i> <?php echo esc_html(__('Version')) . ': ' . esc_html(DECKER_VERSION); ?>
+					<i class="ri-github-fill" aria-hidden="true"></i> <?php echo esc_html(__('Version', 'decker')) . ': ' . esc_html(DECKER_VERSION); ?>
 				</a>
 			</div>
 		</div>
