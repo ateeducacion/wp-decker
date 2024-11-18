@@ -1158,44 +1158,44 @@ msgstr "Desmarcar para hoy"
 
 #: public/layouts/task-card.php:380
 msgid "No comments yet."
-msgstr ""
+msgstr "No hay comentarios todavía."
 
 #: public/layouts/task-card.php:388
 msgid "Replying to"
-msgstr ""
+msgstr "Respondiendo a"
 
 #: public/layouts/task-card.php:391
 msgid "Write your comment..."
-msgstr ""
+msgstr "Escribe tu comentario..."
 
 #: public/layouts/task-card.php:424
 msgid "Upload"
-msgstr ""
+msgstr "Subir"
 
 #: public/layouts/task-card.php:452
 msgid "Nickname"
-msgstr ""
+msgstr "Apodo"
 
 #: public/layouts/task-card.php:453
 msgid "Date"
-msgstr ""
+msgstr "Fecha"
 
 #: public/layouts/task-card.php:812
 msgid "Delete"
-msgstr ""
+msgstr "Eliminar"
 
 #: public/layouts/task-card.php:1026
 msgid "Server response error."
-msgstr ""
+msgstr "Error en la respuesta del servidor."
 
 #: public/layouts/task-card.php:1027
 msgid "An error occurred while saving the task."
-msgstr ""
+msgstr "Ocurrió un error al guardar la tarea."
 
 #: public/layouts/task-card.php:1032
 msgid "Request error."
-msgstr ""
+msgstr "Error en la solicitud."
 
 #: public/layouts/task-card.php:1033
 msgid "Error saving task."
-msgstr ""
+msgstr "Error al guardar la tarea."
