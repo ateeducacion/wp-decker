@@ -8,9 +8,8 @@ $board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
 $main_board = BoardManager::getBoardBySlug($board_slug);
 
 if (is_null($main_board)) {
-
-	wp_die(sprintf(__('Error: The board <strong>%s</strong> does not exist.', 'decker'), esc_html($board_slug)));
-
+	/* translators: %s: Board slug that was not found */
+	wp_die(sprintf(esc_html__('Error: The board %s does not exist.', 'decker'), '<strong>' . esc_html($board_slug) . '</strong>'));
 }
 
 $taskManager = new TaskManager();
@@ -30,7 +29,7 @@ foreach ( $tasks as $task ) {
 
 ?>
 <head>
-	<title><?php _e('Kanban Board', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e('Kanban Board', 'decker'); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -67,7 +66,7 @@ foreach ( $tasks as $task ) {
 
 											<!-- Select de usuarios -->
 											<select id="boardUserFilter" class="form-select ms-2">
-												<option value=""><?php _e('All Users', 'decker'); ?></option>
+												<option value=""><?php esc_html_e('All Users', 'decker'); ?></option>
 												<?php
 												$users = get_users();
 												foreach ( $users as $user ) {
@@ -80,11 +79,11 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<h4 class="page-title"><?php echo esc_html( $main_board->name ); ?>
-										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task', 'slug' => $board_slug ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php _e('Add New', 'decker'); ?></a>
+										<a href="<?php echo esc_url(add_query_arg( array( 'decker_page' => 'task', 'slug' => $board_slug ), home_url( '/' ) )); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e('Add New', 'decker'); ?></a>
 	
 									<?php if ( current_user_can( 'manage_options' ) ) { ?> 
 									<!-- <span class="label-to-show"> -->
-									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id ); ?>" class="btn btn-danger btn-sm ms-3"><?php _e('Fix Order', 'decker'); ?></a>
+									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id ); ?>" class="btn btn-danger btn-sm ms-3"><?php esc_html_e('Fix Order', 'decker'); ?></a>
     								<!-- </span> -->
 					<!-- 				<span class="label-to-hide">
 									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id  ); ?>" class="btn btn-danger btn-sm ms-3">Fix Order</a>
@@ -102,7 +101,7 @@ foreach ( $tasks as $task ) {
 							<div class="col-12">
 								<div class="board">
 									<div class="tasks" data-plugin="dragula" data-containers='["task-list-to-do", "task-list-in-progress", "task-list-done"]'>
-										<h5 class="mt-0 task-header"><?php _e('TO-DO', 'decker'); ?> (<?php echo count( $columns['to-do'] ); ?>)</h5>
+										<h5 class="mt-0 task-header"><?php esc_html_e('TO-DO', 'decker'); ?> (<?php echo esc_html(count( $columns['to-do'] )); ?>)</h5>
 										
 										<div id="task-list-to-do" class="task-list-items">
 
@@ -116,7 +115,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php _e('In Progress', 'decker'); ?> (<?php echo count( $columns['in-progress'] ); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e('In Progress', 'decker'); ?> (<?php echo esc_html(count( $columns['in-progress'] )); ?>)</h5>
 										
 										<div id="task-list-in-progress" class="task-list-items">
 
@@ -131,7 +130,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php _e('Done', 'decker'); ?> (<?php echo count( $columns['done'] ); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e('Done', 'decker'); ?> (<?php echo esc_html(count( $columns['done'] )); ?>)</h5>
 										<div id="task-list-done" class="task-list-items">
 
 											<?php foreach ( $columns['done'] as $task ) : ?>
