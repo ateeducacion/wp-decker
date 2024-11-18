@@ -601,7 +601,7 @@ function initializeTaskPage() {
             if (fileInput.files.length > 0) {
                 uploadAttachment(fileInput.files[0]);
             } else {
-                alert('Please select a file to upload.');
+                alert(<?php echo wp_json_encode(__('Please select a file to upload.', 'decker')); ?>);
             }
         });
     }
@@ -681,7 +681,7 @@ function initializeTaskPage() {
 	document.querySelectorAll('.archive-task').forEach((element) => {
       element.addEventListener('click', function () {
         var taskId = element.getAttribute('data-task-id');
-        if (confirm('Are you sure you want to archive this task?')) {
+        if (confirm(<?php echo wp_json_encode(__('Are you sure you want to archive this task?', 'decker')); ?>)) {
           fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
             method: 'POST',
             headers: {
@@ -706,7 +706,7 @@ function initializeTaskPage() {
               location.reload();   
 
             } else {
-              alert('Failed to archive task.');
+              alert(<?php echo wp_json_encode(__('Failed to archive task.', 'decker')); ?>);
             }
           })
           .catch(error => console.error('Error:', error));
@@ -780,7 +780,7 @@ function uploadAttachment(file) {
                 // Limpiar el input de archivo
                 document.getElementById('file-input').value = '';
             } else {
-                alert(response.data.message || 'Error uploading attachment.');
+                alert(response.data.message || <?php echo wp_json_encode(__('Error uploading attachment.', 'decker')); ?>);
             }
         } else {
             console.error('Server error.');
@@ -828,7 +828,7 @@ document.addEventListener('click', function(event) {
 });
 
 function deleteAttachment(attachmentId, listItem) {
-    if (!confirm('Are you sure you want to delete this attachment?')) {
+    if (!confirm(<?php echo wp_json_encode(__('Are you sure you want to delete this attachment?', 'decker')); ?>)) {
         return;
     }
 
