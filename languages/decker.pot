@@ -407,7 +407,9 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:193
 #: includes/custom-post-types/class-decker-tasks.php:1035
 #: public/app-priority.php:156
+#: public/app-priority.php:348
 #: public/app-tasks.php:176
+#: public/layouts/task-card.php:283
 msgid "Stack"
 msgstr ""
 
@@ -804,11 +806,6 @@ msgstr ""
 msgid "Select tasks to import"
 msgstr ""
 
-#: public/app-priority.php:348
-#: public/layouts/task-card.php:283
-msgid "Column"
-msgstr ""
-
 #: public/app-priority.php:377
 msgid "There are no tasks from previous days to import."
 msgstr ""
@@ -1026,6 +1023,12 @@ msgstr ""
 msgid "Buy Now"
 msgstr ""
 
+#: public/layouts/task-card.php:77
+#: public/layouts/task-card.php:416
+#: public/layouts/task-card.php:812
+msgid "Delete"
+msgstr ""
+
 #: public/layouts/task-card.php:210
 msgid "Task title"
 msgstr ""
@@ -1136,10 +1139,6 @@ msgstr ""
 
 #: public/layouts/task-card.php:783
 msgid "Error uploading attachment."
-msgstr ""
-
-#: public/layouts/task-card.php:812
-msgid "Delete"
 msgstr ""
 
 #: public/layouts/task-card.php:831

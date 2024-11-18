@@ -345,7 +345,7 @@ if (!$has_today_tasks) {
 						<input type="checkbox" id="selectAllCheckbox" class="">
 					</th>                        
 					<th scope="col"><?php _e('Board', 'decker'); ?></th>
-					<th scope="col"><?php _e('Column', 'decker'); ?></th>
+					<th scope="col"><?php _e('Stack', 'decker'); ?></th>
 					<th scope="col"><?php _e('Title', 'decker'); ?></th>
 				</tr>
 			</thead>

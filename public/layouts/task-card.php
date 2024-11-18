@@ -275,12 +275,12 @@ function deleteComment(commentId) {
 		<!-- Stack -->
 		<div class="col-md-2 mb-2">
 			<div class="form-floating">
-				<select class="form-select" id="task-column" required <?php disabled($disabled); ?>>
+				<select class="form-select" id="task-stack" required <?php disabled($disabled); ?>>
 					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>><?php esc_html_e('To Do', 'decker'); ?></option>
 					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>><?php esc_html_e('In Progress', 'decker'); ?></option>
 					<option value="done" <?php selected( $task->stack, 'done' ); ?>><?php esc_html_e('Done', 'decker'); ?></option>
 				</select>
-				<label for="task-column" class="form-label"><?php esc_html_e('Column', 'decker'); ?></label>
+				<label for="task-stack" class="form-label"><?php esc_html_e('Stack', 'decker'); ?></label>
 			</div>
 		</div>
 
@@ -644,7 +644,7 @@ function initializeTaskPage() {
 
 
 	// Add event listeners to all form inputs
-	const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-column', 'task-author', 'task-today', 'task-max-priority'];
+	const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author', 'task-today', 'task-max-priority'];
 
 	// Iterate and assing listeners
 	inputIds.forEach(function(id) {
@@ -966,7 +966,7 @@ function sendFormByAjax(event) {
             title: document.getElementById('task-title').value,
             due_date: document.getElementById('task-due-date').value,
             board: document.getElementById('task-board').value,
-            stack: document.getElementById('task-column').value,
+            stack: document.getElementById('task-stack').value,
             author: document.getElementById('task-author').value,
             assignees: selectedAssigneesValues,
             labels: selectedLabelsValues,

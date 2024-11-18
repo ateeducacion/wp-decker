@@ -390,9 +390,11 @@ msgstr "Máxima Prioridad"
 #: includes/custom-post-types/class-decker-tasks.php:193
 #: includes/custom-post-types/class-decker-tasks.php:1035
 #: public/app-priority.php:156
+#: public/app-priority.php:348
 #: public/app-tasks.php:176
+#: public/layouts/task-card.php:283
 msgid "Stack"
-msgstr "Pila"
+msgstr "Columna"
 
 #: includes/custom-post-types/class-decker-tasks.php:1037
 msgid "To-Do"
@@ -616,7 +618,7 @@ msgstr "El título es obligatorio."
 
 #: includes/custom-post-types/class-decker-tasks.php:1737
 msgid "The stack is required."
-msgstr "La pila es obligatoria."
+msgstr "La columna es obligatoria."
 
 #: includes/custom-post-types/class-decker-tasks.php:1740
 msgid "The board is required and must be a positive integer."
@@ -678,7 +680,7 @@ msgstr "Tareas por Usuario"
 
 #: public/app-analytics.php:110
 msgid "Tasks by Stack"
-msgstr "Tareas por Pila"
+msgstr "Tareas por Columna"
 
 #: public/app-kanban.php:32
 msgid "Kanban Board"
@@ -755,11 +757,6 @@ msgstr "No hay tareas para hoy."
 #: public/app-priority.php:336
 msgid "Select tasks to import"
 msgstr "Seleccionar tareas para importar"
-
-#: public/app-priority.php:348
-#: public/layouts/task-card.php:283
-msgid "Column"
-msgstr "Columna"
 
 #: public/app-priority.php:377
 msgid "There are no tasks from previous days to import."
@@ -1180,6 +1177,8 @@ msgstr "Apodo"
 msgid "Date"
 msgstr "Fecha"
 
+#: public/layouts/task-card.php:77
+#: public/layouts/task-card.php:416
 #: public/layouts/task-card.php:812
 msgid "Delete"
 msgstr "Eliminar"
