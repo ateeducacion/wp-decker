@@ -33,6 +33,9 @@ jobs:
       # - name: Run unit tests
       #   run: make test
 
+      - name: Install gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
+
       - name: Check untranslated strings
         run: make check-untranslated
 
