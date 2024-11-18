@@ -247,7 +247,7 @@ function register_decker_role() {
     // Create the "Decker User" role if it doesn't exist.
     add_role(
         'decker_role',
-        __( 'Decker User' ),
+        __( 'Decker User', 'decker' ),
         array(
             'read'                   => true,  // Enable reading capability.
             'edit_posts'             => true, // Disallow editing standard posts.
