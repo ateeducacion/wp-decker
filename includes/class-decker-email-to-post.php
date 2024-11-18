@@ -194,10 +194,17 @@ class Decker_Email_To_Post {
 	    // Construir la ruta completa del archivo
 	    $file_path = $upload_dir['path'] . '/' . $obfuscated_name;
 
-	    // Escribir el contenido directamente en el directorio de uploads
-	    if (file_put_contents($file_path, $content) === false) {
-	        return new WP_Error('file_write_error', 'Error al escribir el archivo.');
-	    }
+        // Initialize WordPress Filesystem
+        global $wp_filesystem;
+        if (empty($wp_filesystem)) {
+            require_once(ABSPATH . '/wp-admin/includes/file.php');
+            WP_Filesystem();
+        }
+
+        // Write content using WP_Filesystem
+        if (!$wp_filesystem->put_contents($file_path, $content, FS_CHMOD_FILE)) {
+            return new WP_Error('file_write_error', 'Error al escribir el archivo.');
+        }
 
 	    // Preparar el array de información del adjunto
 	    $attachment = array(
@@ -213,7 +220,7 @@ class Decker_Email_To_Post {
 	    $attachment_id = wp_insert_attachment($attachment, $file_path, $post_id);
 
 	    if (is_wp_error($attachment_id)) {
-	        @unlink($file_path);
+	        wp_delete_file($file_path);
 	        return $attachment_id;
 	    }
 
