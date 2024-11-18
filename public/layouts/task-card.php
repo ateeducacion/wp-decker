@@ -207,7 +207,7 @@ function deleteComment(commentId) {
 		<!-- Title -->
 		<div class="col-md-9 mb-3">
 			<div class="form-floating">
-				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="Título de la tarea" required <?php disabled($disabled); ?>>
+				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="<?php esc_attr_e('Task title', 'decker'); ?>" required <?php disabled($disabled); ?>>
 				<label for="task-title" class="form-label"><?php esc_html_e('Title', 'decker'); ?><span id="high-label" class="badge bg-danger ms-2 d-none"><?php esc_html_e('MAXIMUM PRIORITY', 'decker'); ?></span></label>
 				<div class="invalid-feedback"><?php esc_html_e('Please provide a title.', 'decker'); ?></div>
 			</div>
@@ -287,7 +287,7 @@ function deleteComment(commentId) {
 		<!-- Due date -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="Seleccionar fecha" required <?php disabled($disabled); ?>>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->getDuedateAsString() ); ?>" placeholder="<?php esc_attr_e('Select date', 'decker'); ?>" required <?php disabled($disabled); ?>>
 				<label class="form-label" for="task-due-date"><?php esc_html_e('Due Date', 'decker'); ?></label>
 				<div class="invalid-feedback"><?php esc_html_e('Please select a due date.', 'decker'); ?></div>
 			</div>
