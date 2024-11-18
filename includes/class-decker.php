@@ -313,7 +313,9 @@ function restrict_comment_editing_to_author( $allcaps, $cap, $args ) {
 add_filter( 'map_meta_cap', 'restrict_comment_editing_to_author', 10, 3 );
 
 
-	 * Restrict editing/deleting comments to the 'decker_task' post type.
+/**
+ * Restrict editing/deleting comments to the 'decker_task' post type.
+ */
 function restrict_comment_capabilities_to_decker_task( $caps, $cap, $user_id, $args ) {
     // Verificar si la capacidad es para editar o borrar un comentario.
     if ( in_array( $cap, ['edit_comment', 'delete_comment'] ) && ! empty( $args[0] ) ) {
