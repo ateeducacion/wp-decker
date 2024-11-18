@@ -246,8 +246,8 @@ function deleteComment(commentId) {
 					?>
 
 				</select>
-				<label for="task-board" class="form-label">Board</label>
-				<div class="invalid-feedback">Please select a board.</div>
+				<label for="task-board" class="form-label"><?php esc_html_e('Board', 'decker'); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e('Please select a board.', 'decker'); ?></div>
 
 			</div>
 		</div>
@@ -267,8 +267,8 @@ function deleteComment(commentId) {
 					}
 					?>
 				</select>
-				<label for="task-author" class="form-label">Author</label>
-				<div class="invalid-feedback">Please select an author.</div>				
+				<label for="task-author" class="form-label"><?php esc_html_e('Author', 'decker'); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e('Please select an author.', 'decker'); ?><</div>				
 			</div>
 		</div>
 

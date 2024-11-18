@@ -498,6 +498,7 @@ msgstr ""
 #: public/app-priority.php:155
 #: public/app-priority.php:347
 #: public/app-tasks.php:175
+#: public/layouts/task-card.php:249
 msgid "Board"
 msgstr ""
 
@@ -810,6 +811,7 @@ msgid "Undefined board"
 msgstr ""
 
 #: public/app-upcoming.php:73
+#: public/app-upcoming.php:122
 #: public/layouts/left-sidebar.php:75
 msgid "Upcoming Tasks"
 msgstr ""
@@ -991,8 +993,20 @@ msgstr ""
 msgid "For today"
 msgstr ""
 
+#: public/layouts/task-card.php:250
+msgid "Please select a board."
+msgstr ""
+
 #: public/layouts/task-card.php:261
 msgid "Select Author"
+msgstr ""
+
+#: public/layouts/task-card.php:270
+msgid "Author"
+msgstr ""
+
+#: public/layouts/task-card.php:271
+msgid "Please select an author."
 msgstr ""
 
 #: public/layouts/task-card.php:279

@@ -70,7 +70,7 @@ foreach ( $tasks as $task ) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title><?php _e('Upcoming Tasks', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e('Upcoming Tasks', 'decker'); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -119,7 +119,7 @@ foreach ( $tasks as $task ) {
 										</div>
 
 									</div>
-									<h4 class="page-title">Upcoming Tasks
+									<h4 class="page-title"><?php esc_html_e('Upcoming Tasks', 'decker'); ?>
 										<a href="#" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php _e('Add New', 'decker'); ?></a></h4>
 								</div>
 							</div>

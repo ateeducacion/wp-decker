@@ -373,6 +373,7 @@ msgstr "Adjuntos"
 #: public/app-priority.php:155
 #: public/app-priority.php:347
 #: public/app-tasks.php:175
+#: public/layouts/task-card.php:249
 #, fuzzy
 msgid "Board"
 msgstr "Tablero"
@@ -815,6 +816,7 @@ msgid "Undefined board"
 msgstr "Tablero no definido"
 
 #: public/app-upcoming.php:73
+#: public/app-upcoming.php:122
 #: public/layouts/left-sidebar.php:75
 msgid "Upcoming Tasks"
 msgstr "Próximas Tareas"
@@ -1060,3 +1062,15 @@ msgstr "Título de la tarea"
 #: public/layouts/task-card.php:290
 msgid "Select date"
 msgstr "Seleccionar fecha"
+
+#: public/layouts/task-card.php:250
+msgid "Please select a board."
+msgstr "Por favor, seleccione un tablero"
+
+#: public/layouts/task-card.php:270
+msgid "Author"
+msgstr "Autor"
+
+#: public/layouts/task-card.php:271
+msgid "Please select an author."
+msgstr "Por favor, seleccione un autor"
