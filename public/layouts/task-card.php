@@ -449,8 +449,8 @@ function deleteComment(commentId) {
 			<table id="user-history-table" class="table table-bordered table-striped table-hover table-sm">
 			    <thead>
 			        <tr>
-			            <th>Nickname</th>
-			            <th>Date</th>
+			            <th><?php esc_html_e('Nickname', 'decker'); ?></th>
+			            <th><?php esc_html_e('Date', 'decker'); ?></th>
 			        </tr>
 			    </thead>
 			    <tbody>
@@ -809,7 +809,7 @@ function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle, attac
             ${attachmentFilename} <i class="bi bi-box-arrow-up-right ms-2"></i>
         </a>
         <div>
-            <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"<?php echo $disabled ? ' disabled' : ''; ?>>Delete</button>
+            <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"<?php echo $disabled ? ' disabled' : ''; ?>><?php esc_html_e('Delete', 'decker'); ?></button>
         </div>
     `;
 
