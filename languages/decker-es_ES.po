@@ -1043,6 +1043,7 @@ msgstr "Por favor, seleccione una fecha de vencimiento."
 msgid "Assign to"
 msgstr "Asignar a"
 
+#: includes/models/class-task.php:304
 #: public/layouts/task-card.php:337
 msgid "Comments"
 msgstr "Comentarios"
@@ -1106,3 +1107,51 @@ msgstr "Error al subir el archivo adjunto."
 #: public/layouts/task-card.php:831
 msgid "Are you sure you want to delete this attachment?"
 msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
+
+#: includes/models/class-task.php:46
+msgid "Invalid post type."
+msgstr ""
+
+#: includes/models/class-task.php:270
+msgid "🔥"
+msgstr ""
+
+#: includes/models/class-task.php:270
+msgid "Normal"
+msgstr ""
+
+#: includes/models/class-task.php:272
+msgid "Undefined date"
+msgstr ""
+
+#: includes/models/class-task.php:283
+msgid "Order:"
+msgstr ""
+
+#: includes/models/class-task.php:336
+msgid "Edit"
+msgstr ""
+
+#: includes/models/class-task.php:348
+msgid "Edit in WordPress"
+msgstr ""
+
+#: includes/models/class-task.php:355
+msgid "Archive"
+msgstr ""
+
+#: includes/models/class-task.php:364
+msgid "Assign to me"
+msgstr ""
+
+#: includes/models/class-task.php:371
+msgid "Leave"
+msgstr ""
+
+#: includes/models/class-task.php:387
+msgid "Mark for today"
+msgstr ""
+
+#: includes/models/class-task.php:393
+msgid "Unmark for today"
+msgstr ""
