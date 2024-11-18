@@ -24,13 +24,7 @@
         "phpunit": "vendor/bin/phpunit",
         "test": "phpunit",
         "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/ --colors --warning-severity=0 --extensions=php",
-        "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/ --colors --warning-severity=0 --extensions=php",
-         
-        "phpcompat": "phpcs --standard=PHPCompatibilityWP . --ignore=vendor/,assets/,node_modules/,tests/js/ --colors --runtime-set testVersion 8.1",
-
-        "test1": "         // ./vendor/bin/phpcs -p . --standard=PHPCompatibilityWP --extensions=php --runtime-set testVersion 6.5",
-
- 
+        "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/ --colors --warning-severity=0 --extensions=php", 
         "make-pot": "wp i18n make-pot . languages/decker.pot --domain=decker --exclude=vendor,assets,node_modules,tests --include=**/*.php",
         "update-po": "wp i18n update-po languages/decker.pot languages/decker-es_ES.po",
         "make-mo": "wp i18n make-mo languages/ languages/",
