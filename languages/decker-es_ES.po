@@ -1011,44 +1011,44 @@ msgstr "Error: El tablero %s no existe."
 
 #: public/layouts/task-card.php:211
 msgid "MAXIMUM PRIORITY"
-msgstr ""
+msgstr "MÁXIMA PRIORIDAD"
 
 #: public/layouts/task-card.php:212
 msgid "Please provide a title."
-msgstr ""
+msgstr "Por favor, proporcione un título."
 
 #: public/layouts/task-card.php:220
 msgid "Maximum Priority"
-msgstr ""
+msgstr "Máxima Prioridad"
 
 #: public/layouts/task-card.php:225
 msgid "For today"
-msgstr ""
+msgstr "Para hoy"
 
 #: public/layouts/task-card.php:261
 msgid "Select Author"
-msgstr ""
+msgstr "Seleccionar Autor"
 
 #: public/layouts/task-card.php:279
 msgid "To Do"
-msgstr ""
+msgstr "Por Hacer"
 
 #: public/layouts/task-card.php:292
 msgid "Please select a due date."
-msgstr ""
+msgstr "Por favor, seleccione una fecha de vencimiento."
 
 #: public/layouts/task-card.php:302
 msgid "Assign to"
-msgstr ""
+msgstr "Asignar a"
 
 #: public/layouts/task-card.php:337
 msgid "Comments"
-msgstr ""
+msgstr "Comentarios"
 
 #: public/layouts/task-card.php:356
 msgid "History"
-msgstr ""
+msgstr "Historial"
 
 #: public/layouts/task-card.php:362
 msgid "Gantt"
-msgstr ""
+msgstr "Gantt"
