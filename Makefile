@@ -88,7 +88,7 @@ package:
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '$(VERSION)'/" decker.php
 
 	# Create the ZIP package
-	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "phpunit.xml.dist" "README.txt" "composer.json" "LICENSE.txt" "bin/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot"
+	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "phpunit.xml.dist" "README.txt" "composer.json" "LICENSE.txt" "bin/*" "wp-content/*" "wp/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot"
 
 	# Restore the version in decker.php
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           0.0.0/" decker.php
