@@ -565,8 +565,9 @@ document.addEventListener('DOMContentLoaded', function() {
 				        'search_columns' => [ 'display_name', 'nickname', 'login' ],
 				        'number'         => 1,
 				    ] );
-	                if ( $user_obj ) {
-	                    $assigned_users[] = $user_obj->ID;
+				    if ( ! empty( $user_obj ) && is_array( $user_obj ) ) {
+
+	                    $assigned_users[] = $user_obj[0]-->ID;
 	                }
 	            }
 	        }
