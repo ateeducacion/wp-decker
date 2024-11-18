@@ -1055,8 +1055,8 @@ msgstr "Gantt"
 
 #: public/layouts/task-card.php:210
 msgid "Task title"
-msgstr ""
+msgstr "Título de la tarea"
 
 #: public/layouts/task-card.php:290
 msgid "Select date"
-msgstr ""
+msgstr "Seleccionar fecha"
