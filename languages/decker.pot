@@ -971,6 +971,10 @@ msgstr ""
 msgid "Buy Now"
 msgstr ""
 
+#: public/layouts/task-card.php:210
+msgid "Task title"
+msgstr ""
+
 #: public/layouts/task-card.php:211
 msgid "MAXIMUM PRIORITY"
 msgstr ""
@@ -993,6 +997,10 @@ msgstr ""
 
 #: public/layouts/task-card.php:279
 msgid "To Do"
+msgstr ""
+
+#: public/layouts/task-card.php:290
+msgid "Select date"
 msgstr ""
 
 #: public/layouts/task-card.php:292

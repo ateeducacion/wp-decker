@@ -1052,3 +1052,11 @@ msgstr "Historial"
 #: public/layouts/task-card.php:362
 msgid "Gantt"
 msgstr "Gantt"
+
+#: public/layouts/task-card.php:210
+msgid "Task title"
+msgstr ""
+
+#: public/layouts/task-card.php:290
+msgid "Select date"
+msgstr ""
