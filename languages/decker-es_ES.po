@@ -1110,48 +1110,48 @@ msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 
 #: includes/models/class-task.php:46
 msgid "Invalid post type."
-msgstr ""
+msgstr "Tipo de publicación inválido."
 
 #: includes/models/class-task.php:270
 msgid "🔥"
-msgstr ""
+msgstr "🔥"
 
 #: includes/models/class-task.php:270
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: includes/models/class-task.php:272
 msgid "Undefined date"
-msgstr ""
+msgstr "Fecha no definida"
 
 #: includes/models/class-task.php:283
 msgid "Order:"
-msgstr ""
+msgstr "Orden:"
 
 #: includes/models/class-task.php:336
 msgid "Edit"
-msgstr ""
+msgstr "Editar"
 
 #: includes/models/class-task.php:348
 msgid "Edit in WordPress"
-msgstr ""
+msgstr "Editar en WordPress"
 
 #: includes/models/class-task.php:355
 msgid "Archive"
-msgstr ""
+msgstr "Archivar"
 
 #: includes/models/class-task.php:364
 msgid "Assign to me"
-msgstr ""
+msgstr "Asignarme"
 
 #: includes/models/class-task.php:371
 msgid "Leave"
-msgstr ""
+msgstr "Abandonar"
 
 #: includes/models/class-task.php:387
 msgid "Mark for today"
-msgstr ""
+msgstr "Marcar para hoy"
 
 #: includes/models/class-task.php:393
 msgid "Unmark for today"
-msgstr ""
+msgstr "Desmarcar para hoy"
