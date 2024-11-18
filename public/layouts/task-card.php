@@ -385,10 +385,10 @@ function deleteComment(commentId) {
 			<div class="border rounded mt-4">
 				<div class="comment-area-box">
 					<div id="reply-indicator" class="p-2 bg-light text-secondary d-none">
-						Replying to <span id="replying-to"></span>
+						<?php esc_html_e('Replying to', 'decker'); ?> <span id="replying-to"></span>
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
-					<textarea rows="3" class="form-control border-0 resize-none" placeholder="Write your comment..." id="comment-text" name="comment-text"></textarea>
+					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e('Write your comment...', 'decker'); ?>" id="comment-text" name="comment-text"></textarea>
 					<div class="invalid-feedback">Please enter a comment.</div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
 						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-send-plane-2 me-1"></i> Send</button>
@@ -1023,13 +1023,13 @@ function sendFormByAjax(event) {
                     alert(response.data.message || 'Error al guardar la tarea.');
                 }
             } else {
-                console.error('Error en la respuesta del servidor.');
-                alert('Ocurrió un error al guardar la tarea.');
+                console.error(<?php echo wp_json_encode(__('Server response error.', 'decker')); ?>);
+                alert(<?php echo wp_json_encode(__('An error occurred while saving the task.', 'decker')); ?>);
             }
         };
 
         xhr.onerror = function() {
-            console.error('Error en la solicitud.');
+            console.error(<?php echo wp_json_encode(__('Request error.', 'decker')); ?>);
             alert('Ocurrió un error al guardar la tarea.');
         };
 
