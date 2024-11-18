@@ -1086,6 +1086,30 @@ msgstr ""
 msgid "Gantt"
 msgstr ""
 
+#: public/layouts/task-card.php:380
+msgid "No comments yet."
+msgstr ""
+
+#: public/layouts/task-card.php:388
+msgid "Replying to"
+msgstr ""
+
+#: public/layouts/task-card.php:391
+msgid "Write your comment..."
+msgstr ""
+
+#: public/layouts/task-card.php:424
+msgid "Upload"
+msgstr ""
+
+#: public/layouts/task-card.php:452
+msgid "Nickname"
+msgstr ""
+
+#: public/layouts/task-card.php:453
+msgid "Date"
+msgstr ""
+
 #: public/layouts/task-card.php:500
 msgid "Under construction..."
 msgstr ""
@@ -1114,8 +1138,28 @@ msgstr ""
 msgid "Error uploading attachment."
 msgstr ""
 
+#: public/layouts/task-card.php:812
+msgid "Delete"
+msgstr ""
+
 #: public/layouts/task-card.php:831
 msgid "Are you sure you want to delete this attachment?"
+msgstr ""
+
+#: public/layouts/task-card.php:1026
+msgid "Server response error."
+msgstr ""
+
+#: public/layouts/task-card.php:1027
+msgid "An error occurred while saving the task."
+msgstr ""
+
+#: public/layouts/task-card.php:1032
+msgid "Request error."
+msgstr ""
+
+#: public/layouts/task-card.php:1033
+msgid "Error saving task."
 msgstr ""
 
 #: public/layouts/task-modal.php:6

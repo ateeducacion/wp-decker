@@ -74,7 +74,7 @@ function render_comments(array $comments, int $parent_id, int $current_user_id) 
             
             // Mostrar enlace de eliminar si el comentario pertenece al usuario actual
             if ($comment->user_id == get_current_user_id()) {
-                echo '<a href="javscript:void(0)" onclick="deleteComment('. esc_attr($comment->comment_ID) .');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-delete-bin-line"></i> Delete</a> ';
+                echo '<a href="javscript:void(0)" onclick="deleteComment('. esc_attr($comment->comment_ID) .');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-delete-bin-line"></i> '. esc_html_e('Delete', 'decker') . '</a> ';
             }
             
             echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr($comment->comment_ID) . '"><i class="ri-reply-line"></i> Reply</a>';
@@ -413,7 +413,7 @@ function deleteComment(commentId) {
 			                    <?php echo esc_html( $attachment_title ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
 			                </a>
 			                <div>
-			                    <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>>Delete</button>
+			                    <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_html_e('Delete', 'decker'); ?></button>
 			                </div>
 			            </li>
 			        <?php endforeach; ?>
