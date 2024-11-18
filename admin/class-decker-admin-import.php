@@ -560,7 +560,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	    if ( is_array( $card['assignedUsers'] ) ) {	
 	        foreach ( $card['assignedUsers'] as $user ) {
 	            if ( isset( $user['participant']['uid'] ) ) {
-	                $user_obj = get_user_by( 'login', sanitize_user( $user['participant']['uid'] ) );
+					$user_obj = get_users( [
+				        'search'         => sanitize_user( $user['participant']['uid'] ),
+				        'search_columns' => [ 'display_name', 'nickname', 'login' ],
+				        'number'         => 1,
+				    ] );
 	                if ( $user_obj ) {
 	                    $assigned_users[] = $user_obj->ID;
 	                }
