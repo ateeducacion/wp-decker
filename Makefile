@@ -61,7 +61,13 @@ clean: check-docker
 update: check-docker
 	composer update --no-cache --with-all-dependencies
 
-# Create a package with the specified version
+# Generate a .pot file for translations
+pot:
+	composer make-pot
+
+# Generate .mo files from .po files
+mo:
+	composer make-mo
 package:
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: No se ha especificado una versión. Usa 'make package VERSION=1.2.3'"; \
@@ -97,6 +103,8 @@ help:
 	@echo "  update            - Update Composer dependencies"
 	@echo "  package           - Generate a .zip package"
 	@echo "  help              - Show help with available commands"
+	@echo "  pot               - Generate a .pot file for translations"
+	@echo "  mo                - Generate .mo files from .po files"
 
 # Establecer la ayuda como el objetivo predeterminado si no se especifica ningún objetivo
 .DEFAULT_GOAL := help
