@@ -898,19 +898,40 @@ function togglePriorityLabel(element) {
 taskModal = document.getElementById('task-modal');
 
 if (taskModal) {
-    taskModal.addEventListener('shown.bs.modal', function () {
+
+	taskModal.addEventListener('shown.bs.modal', function () {
         const formModal = taskModal.querySelector('#task-form');
 
         if (formModal && !formModal.dataset.listener) {
+            // El formulario ya está en el DOM, agrega el listener directamente
             formModal.dataset.listener = 'true';
 
             formModal.addEventListener('submit', function(event) {
-            	event.preventDefault();
+                event.preventDefault();
                 sendFormByAjax(event);
             });
-        }
+        } else {
+            // El formulario aún no está en el DOM, configura el MutationObserver
+            const observer = new MutationObserver(function(mutations) {
+                const formModal = taskModal.querySelector('#task-form');
+                if (formModal && !formModal.dataset.listener) {
+                    formModal.dataset.listener = 'true';
 
+                    formModal.addEventListener('submit', function(event) {
+                        event.preventDefault();
+                        sendFormByAjax(event);
+                    });
+
+                    // Deja de observar una vez que el formulario ha sido encontrado
+                    observer.disconnect();
+                }
+            });
+
+            // Configura el observer para monitorear cambios en el modal
+            observer.observe(taskModal, { childList: true, subtree: true });
+        }
     });
+
 
     // TO-DO: Finish this to prevent closing without saving
 	// taskModal.addEventListener('hide.bs.modal', function(event) {
