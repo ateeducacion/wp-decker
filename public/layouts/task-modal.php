@@ -59,8 +59,10 @@ document.addEventListener('DOMContentLoaded', function () {
 				// Insertar el contenido cargado dentro del cuerpo del modal
 				modal.find('.modal-body').html(data);
 
-				initializeTaskPage(); // Call the function when the modal opens
-
+	            // Emitir evento personalizado
+	            const event = new CustomEvent('contentLoaded');
+	            taskModal.dispatchEvent(event);
+	            
 			},
 			error: function() {
 				// Mostrar un mensaje de error si algo falla

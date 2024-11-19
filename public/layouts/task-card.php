@@ -899,38 +899,22 @@ taskModal = document.getElementById('task-modal');
 
 if (taskModal) {
 
-	taskModal.addEventListener('shown.bs.modal', function () {
-        const formModal = taskModal.querySelector('#task-form');
+    taskModal.addEventListener('contentLoaded', function () {
+    const formModal = taskModal.querySelector('#task-form');
 
-        if (formModal && !formModal.dataset.listener) {
-            // El formulario ya está en el DOM, agrega el listener directamente
-            formModal.dataset.listener = 'true';
+    if (formModal && !formModal.dataset.listener) {
+        // El formulario ya está en el DOM, agrega el listener directamente
+        formModal.dataset.listener = 'true';
 
-            formModal.addEventListener('submit', function(event) {
-                event.preventDefault();
-                sendFormByAjax(event);
-            });
-        } else {
-            // El formulario aún no está en el DOM, configura el MutationObserver
-            const observer = new MutationObserver(function(mutations) {
-                const formModal = taskModal.querySelector('#task-form');
-                if (formModal && !formModal.dataset.listener) {
-                    formModal.dataset.listener = 'true';
+        formModal.addEventListener('submit', function(event) {
+            event.preventDefault();
+            sendFormByAjax(event);
+        });
+    }
 
-                    formModal.addEventListener('submit', function(event) {
-                        event.preventDefault();
-                        sendFormByAjax(event);
-                    });
-
-                    // Deja de observar una vez que el formulario ha sido encontrado
-                    observer.disconnect();
-                }
-            });
-
-            // Configura el observer para monitorear cambios en el modal
-            observer.observe(taskModal, { childList: true, subtree: true });
-        }
-    });
+    // Inicializar otras funcionalidades que dependan del contenido cargado
+    initializeTaskPage();
+});
 
 
     // TO-DO: Finish this to prevent closing without saving
