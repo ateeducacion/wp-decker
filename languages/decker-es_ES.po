@@ -304,6 +304,7 @@ msgid "Edit Task"
 msgstr "Editar Tarea"
 
 #: includes/custom-post-types/class-decker-tasks.php:832
+#: includes/models/class-task.php:383
 msgid "View Task"
 msgstr "Ver Tarea"
 
@@ -1131,31 +1132,31 @@ msgstr "Fecha no definida"
 msgid "Order:"
 msgstr "Orden:"
 
-#: includes/models/class-task.php:379
+#: includes/models/class-task.php:392
 msgid "Edit"
 msgstr "Editar"
 
-#: includes/models/class-task.php:391
+#: includes/models/class-task.php:404
 msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
-#: includes/models/class-task.php:398
+#: includes/models/class-task.php:411
 msgid "Archive"
 msgstr "Archivar"
 
-#: includes/models/class-task.php:407
+#: includes/models/class-task.php:420
 msgid "Assign to me"
 msgstr "Asignarme"
 
-#: includes/models/class-task.php:414
+#: includes/models/class-task.php:427
 msgid "Leave"
 msgstr "Abandonar"
 
-#: includes/models/class-task.php:430
+#: includes/models/class-task.php:443
 msgid "Mark for today"
 msgstr "Marcar para hoy"
 
-#: includes/models/class-task.php:436
+#: includes/models/class-task.php:449
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 

@@ -433,6 +433,7 @@ msgid "Edit Task"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:832
+#: includes/models/class-task.php:383
 msgid "View Task"
 msgstr ""
 
@@ -657,31 +658,31 @@ msgstr ""
 msgid "Comments"
 msgstr ""
 
-#: includes/models/class-task.php:379
+#: includes/models/class-task.php:392
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:391
+#: includes/models/class-task.php:404
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:398
+#: includes/models/class-task.php:411
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:407
+#: includes/models/class-task.php:420
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:414
+#: includes/models/class-task.php:427
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:430
+#: includes/models/class-task.php:443
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:436
+#: includes/models/class-task.php:449
 msgid "Unmark for today"
 msgstr ""
 
