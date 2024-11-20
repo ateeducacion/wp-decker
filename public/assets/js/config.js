@@ -66,6 +66,7 @@
   }
 })();
 
+
 document.addEventListener('mousedown', function(event) {
   // Detects if the click was on a link that has data-bs-toggle="modal"
   const link = event.target.closest('a[data-bs-toggle="modal"]');
@@ -84,6 +85,7 @@ document.addEventListener('mousedown', function(event) {
     }
   }
 });
+
 
 let altPressed = false;
 
