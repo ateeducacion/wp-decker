@@ -67,9 +67,11 @@
 })();
 
 
-// Function to copy URL to clipboard
+// Function to copy task URL to clipboard
 function copyTaskUrl() {
-    const taskUrl = window.location.href;
+    const taskId = document.querySelector('.card').dataset.taskId;
+    const baseUrl = window.location.origin;
+    const taskUrl = `${baseUrl}/?decker_page=task&id=${taskId}`;
     navigator.clipboard.writeText(taskUrl).then(function() {
         alert("URL copied to clipboard!");
     }).catch(function() {
