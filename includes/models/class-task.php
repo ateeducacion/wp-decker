@@ -372,11 +372,16 @@ class Task {
      */
      public function renderTaskMenu(bool $card=false): string {
         $menuItems = [];
+        
+        $taskUrl = add_query_arg(
+            ['decker_page' => 'task', 'id' => esc_attr($this->ID)],
+            home_url('/')
+        );
 
         // Add 'Share URL' menu item at the top
         $menuItems[] = sprintf(
-            '<a href="javascript:void(0);" class="dropdown-item" onclick="copyTaskUrl();"><i class="ri-share-line me-1"></i>' . __('Share URL', 'decker') . '</a>'
-        );
+            '<a href="%s" class="dropdown-item"><i class="ri-share-line me-1"></i>' . __('View Task', 'decker') . '</a>'
+        ,esc_url($taskUrl));
 
         // Add divider after Share URL
         $menuItems[] = '<div class="dropdown-divider"></div>';

@@ -66,19 +66,6 @@
   }
 })();
 
-
-// Function to copy task URL to clipboard
-function copyTaskUrl() {
-    const taskId = document.querySelector('.card').dataset.taskId;
-    const baseUrl = window.location.origin;
-    const taskUrl = `${baseUrl}/?decker_page=task&id=${taskId}`;
-    navigator.clipboard.writeText(taskUrl).then(function() {
-        alert("URL copied to clipboard!");
-    }).catch(function() {
-        alert("Error copying URL");
-    });
-}
-
 document.addEventListener('mousedown', function(event) {
   // Detects if the click was on a link that has data-bs-toggle="modal"
   const link = event.target.closest('a[data-bs-toggle="modal"]');
@@ -97,7 +84,6 @@ document.addEventListener('mousedown', function(event) {
     }
   }
 });
-
 
 let altPressed = false;
 
