@@ -74,8 +74,12 @@ class TaskManager {
                     'key' => 'assigned_users',
                     'value' => $user_id,
                     'compare' => 'LIKE'
-                )
-            )
+                ),
+            ),
+            'orderby'     => array(
+                'max_priority' => 'DESC',
+                'menu_order'   => 'ASC',
+            ),
         );
 
         $tasks = $this->getTasks($args);

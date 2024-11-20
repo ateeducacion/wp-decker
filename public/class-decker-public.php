@@ -138,6 +138,9 @@ class Decker_Public {
 				case 'analytics':
 					include plugin_dir_path( __DIR__ ) . 'public/app-analytics.php';
 					break;
+				case 'my-board':
+					include plugin_dir_path( __DIR__ ) . 'public/app-kanban-my.php';
+					break;
 				case 'board':
 					include plugin_dir_path( __DIR__ ) . 'public/app-kanban.php';
 					break;

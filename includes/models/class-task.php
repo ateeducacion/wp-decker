@@ -177,6 +177,38 @@ class Task {
         return false;
     }
 
+    /**
+     * Get a "pastelized" version of a color, making it softer for background usage.
+     *
+     * @param string $color An HTML hex color (e.g., '#ff0000').
+     * 
+     * @return string HTML value of the pastelized color in hex format (e.g., '#ffcccc').
+     */
+    public function pastelizeColor(string $color): string {
+        // Remove '#' if present
+        $color = ltrim($color, '#');
+
+        // Ensure it's a valid 6-character hex color
+        if (strlen($color) !== 6) {
+            return '#cccccc'; // Default fallback to light gray if input is invalid
+        }
+
+        // Convert hex color to RGB values
+        $r = hexdec(substr($color, 0, 2));
+        $g = hexdec(substr($color, 2, 2));
+        $b = hexdec(substr($color, 4, 2));
+
+        // Pastelize by averaging with white (255, 255, 255)
+        $r = round(($r + 255) / 2);
+        $g = round(($g + 255) / 2);
+        $b = round(($b + 255) / 2);
+
+        // Convert back to hex
+        $pastelColor = sprintf('#%02x%02x%02x', $r, $g, $b);
+
+        return $pastelColor;
+    }
+
 
     /**
      * Retrieves a historical record of users and their assigned dates as user objects.
@@ -261,7 +293,7 @@ class Task {
     /**
      * Render the current task card for Kanban.
      */
-    public function renderTaskCard() {
+    public function renderTaskCard( bool $draw_background_color = false ) {
         $taskUrl = add_query_arg(
             ['decker_page' => 'task', 'id' => esc_attr($this->ID)],
             home_url('/')
@@ -275,8 +307,14 @@ class Task {
             $relative_time = esc_html($this->getRelativeTime());
         }
 
+        $card_background_color = "";
+        if ($draw_background_color) {
+            $board_color = $this->pastelizeColor($this->board->color);
+            $card_background_color = 'style="background-color: ' . esc_attr($board_color) . ';"';        
+        }
+
         ?>
-        <div class="card mb-0" data-task-id="<?php echo esc_attr($this->ID); ?>">
+        <div class="card mb-0" data-task-id="<?php echo esc_attr($this->ID); ?>" <?php echo $card_background_color; ?>>
             <div class="card-body p-3">
                 <span class="float-end badge <?php echo esc_attr($priorityBadgeClass); ?>">
                     <span class="label-to-hide"><?php echo esc_html($priorityLabel); ?></span>
@@ -296,8 +334,13 @@ class Task {
 
                 <p class="mb-0">
                     <span class="pe-2 text-nowrap mb-2 d-inline-block">
-                        <i class="ri-briefcase-2-line text-muted"></i>
-                        <?php echo esc_html(get_post_meta($this->ID, 'project', true)); ?>
+                        <i class="ri-briefcase-2-line text-muted"></i>                       
+                        <?php 
+
+                        if ($draw_background_color) {
+                            echo esc_html($this->board->name); 
+                        }
+                        ?>
                     </span>
                     <span class="text-nowrap mb-2 d-inline-block">
                         <i class="ri-discuss-line text-muted"></i>
