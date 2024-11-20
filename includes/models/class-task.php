@@ -373,6 +373,14 @@ class Task {
      public function renderTaskMenu(bool $card=false): string {
         $menuItems = [];
 
+        // Add 'Share URL' menu item at the top
+        $menuItems[] = sprintf(
+            '<a href="javascript:void(0);" class="dropdown-item" onclick="copyTaskUrl();"><i class="ri-share-line me-1"></i>' . __('Share URL', 'decker') . '</a>'
+        );
+
+        // Add divider after Share URL
+        $menuItems[] = '<div class="dropdown-divider"></div>';
+
         if (!$card) {
             // Add 'Edit' menu item
             $menuItems[] = sprintf(

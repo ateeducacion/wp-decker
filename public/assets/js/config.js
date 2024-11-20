@@ -67,6 +67,16 @@
 })();
 
 
+// Function to copy URL to clipboard
+function copyTaskUrl() {
+    const taskUrl = window.location.href;
+    navigator.clipboard.writeText(taskUrl).then(function() {
+        alert("URL copied to clipboard!");
+    }).catch(function() {
+        alert("Error copying URL");
+    });
+}
+
 document.addEventListener('mousedown', function(event) {
   // Detects if the click was on a link that has data-bs-toggle="modal"
   const link = event.target.closest('a[data-bs-toggle="modal"]');
