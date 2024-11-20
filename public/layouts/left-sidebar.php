@@ -79,6 +79,17 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	  </li>
 
 
+	  <li class="side-nav-item <?php echo decker_is_active_page( 'my-board' ); ?>">
+
+
+			<a href="<?php echo add_query_arg( array( 'decker_page' => 'my-board' ), home_url( '/' ) ); ?>" class="side-nav-link">
+			<i class="ri-trello-line"></i>
+			  <span><?php _e('My Board', 'decker'); ?></span>
+			</a>
+	 
+			</a>
+	  </li>
+
 	  <li class="side-nav-title"><?php _e('Apps', 'decker'); ?></li>
 
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'tasks' ); ?>">
