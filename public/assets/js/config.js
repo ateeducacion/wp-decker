@@ -133,7 +133,7 @@ document.addEventListener('keyup', function(event) {
 
 // Función para igualar la altura de las columnas del Kanban
 function equalizeKanbanColumnsHeight() {
-  const columns = document.querySelectorAll('.tasks');
+  const columns = document.querySelectorAll('.task-list-items');
   if (columns.length === 0) return;
 
   // Primero, resetear las alturas
