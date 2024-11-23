@@ -102,26 +102,6 @@ html[data-bs-theme=dark][data-topbar-color=dark] {
   border-style: dashed !important;
 }
 
-
-
-
-
-
-.side-nav {
-    overflow-y: auto;
-    height: 100% !important;
-
-    scrollbar-color: #888 transparent; /* Barra de desplazamiento en color y fondo transparente */
-    scrollbar-width: thin;
-
-}
-
-
-
-
-
-
-
 /* Estilo para los avatares seleccionados */
 .avatar-group-item.selected .rounded-circle {
   position: relative;
