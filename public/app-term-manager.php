@@ -277,7 +277,11 @@ jQuery(document).ready(function($) {
     // Handle delete term
     $('.delete-term').on('click', function(e) {
         e.preventDefault();
-        if (confirm('<?php _e("Are you sure you want to delete this term?", "decker"); ?>')) {
+        const row = $(this).closest('tr');
+        const termSlug = row.find('td:nth-child(2)').text();
+        const userInput = prompt('<?php _e("To confirm deletion, please enter the term slug:", "decker"); ?> ' + termSlug);
+        
+        if (userInput === termSlug) {
             const termId = $(this).data('id');
             const termType = $(this).data('type');
             const form = $('<form method="POST">')
@@ -286,6 +290,8 @@ jQuery(document).ready(function($) {
                 .append($('<input type="hidden" name="action">').val('delete'));
             $('body').append(form);
             form.submit();
+        } else if (userInput !== null) {
+            alert('<?php _e("Incorrect slug. Deletion cancelled.", "decker"); ?>');
         }
     });
 });
