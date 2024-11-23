@@ -193,6 +193,7 @@ if ($type === 'board') {
 						<div class="mb-3">
 							<label for="term-slug" class="form-label"><?php _e('Slug', 'decker'); ?></label>
 							<input type="text" class="form-control" id="term-slug" name="term_slug">
+							<div class="form-text"><?php _e('Leave empty for automatic generation from name', 'decker'); ?></div>
 						</div>
 						<div class="mb-3">
 							<label for="term-color" class="form-label"><?php _e('Color', 'decker'); ?></label>
