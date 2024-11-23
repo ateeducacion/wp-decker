@@ -187,7 +187,7 @@ if ($type === 'board') {
 						<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">
 						<input type="hidden" name="term_id" id="term-id">
 						<div class="mb-3">
-							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?></label>
+							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?> <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
 						</div>
 						<div class="mb-3">
