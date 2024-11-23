@@ -51,37 +51,52 @@ class Decker_Admin_Import {
 	 * Displays the importer's greeting page.
 	 */
 	public function importer_greet() {
-
-		$settings = get_option( 'decker_settings' );
-		$errors   = array();
-
-		// Check if NextCloud settings are configured.
-		if ( empty( $settings['nextcloud_url_base'] ) || empty( $settings['nextcloud_username'] ) || empty( $settings['nextcloud_access_token'] ) ) {
-			$errors[] = esc_html__( 'NextCloud settings are not configured.', 'decker' );
-		}
-
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e( 'Import Decker Tasks from NextCloud', 'decker' ); ?></h2>
-
-			<?php if ( ! empty( $errors ) ) : ?>
-				<div class="notice notice-error">
-					<ul>
-					<?php
-					foreach ( $errors as $error ) :
-						?>
-						<li><?php echo esc_html( $error ); ?></li><?php endforeach; ?></ul>
-				</div>
-			<?php else : ?>
-				<form method="post" id="decker-import-form">
-					<?php wp_nonce_field( 'decker-import' ); ?>
-					<label for="skip-existing">
-						<input type="checkbox" id="skip-existing" name="skip_existing" value="1" checked>
-						<?php esc_html_e( 'Skip already existing tasks', 'decker' ); ?>
-						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
-					</label>
-					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
-				</form>
+			<form method="post" id="decker-import-form">
+				<?php wp_nonce_field( 'decker-import' ); ?>
+				
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="nextcloud_url_base"><?php esc_html_e( 'NextCloud URL Base', 'decker' ); ?></label></th>
+						<td>
+							<input type="url" id="nextcloud_url_base" name="nextcloud_url_base" class="regular-text" required>
+							<p class="description"><?php esc_html_e( 'The base URL of your NextCloud instance', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="nextcloud_username"><?php esc_html_e( 'NextCloud Username', 'decker' ); ?></label></th>
+						<td>
+							<input type="text" id="nextcloud_username" name="nextcloud_username" class="regular-text" required>
+							<p class="description"><?php esc_html_e( 'Your NextCloud username', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="nextcloud_access_token"><?php esc_html_e( 'NextCloud Access Token', 'decker' ); ?></label></th>
+						<td>
+							<input type="password" id="nextcloud_access_token" name="nextcloud_access_token" class="regular-text" required>
+							<p class="description"><?php esc_html_e( 'Your NextCloud access token', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="ignored_board_ids"><?php esc_html_e( 'Ignored Board IDs', 'decker' ); ?></label></th>
+						<td>
+							<input type="text" id="ignored_board_ids" name="ignored_board_ids" class="regular-text">
+							<p class="description"><?php esc_html_e( 'Comma-separated list of board IDs to ignore', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="skip-existing"><?php esc_html_e( 'Skip Existing Tasks', 'decker' ); ?></label></th>
+						<td>
+							<input type="checkbox" id="skip-existing" name="skip_existing" value="1" checked>
+							<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
+			</form>
 				<div id="import-progress" style="display: none;">
 					<h3><?php esc_html_e( 'Import Progress', 'decker' ); ?></h3>
 					<div id="progress-bar" style="width: 100%; background-color: #ccc;">
@@ -117,6 +132,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         formData.append('action', 'decker_start_import');
         formData.append('security', '<?php echo esc_js(wp_create_nonce('decker_import_nonce')); ?>');
+        
+        // Add all form fields
+        formData.append('nextcloud_url_base', document.getElementById('nextcloud_url_base').value);
+        formData.append('nextcloud_username', document.getElementById('nextcloud_username').value);
+        formData.append('nextcloud_access_token', document.getElementById('nextcloud_access_token').value);
+        formData.append('ignored_board_ids', document.getElementById('ignored_board_ids').value);
         formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
         fetch(ajaxurl, {
@@ -263,9 +284,23 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	public function start_import() {
 		check_ajax_referer( 'decker_import_nonce', 'security' );
-	    if (!current_user_can('manage_options')) {
-	        wp_send_json_error('Access denied.');
-	    }
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error('Access denied.');
+		}
+
+		// Get the form data
+		$nextcloud_url_base = sanitize_url($_POST['nextcloud_url_base']);
+		$nextcloud_username = sanitize_text_field($_POST['nextcloud_username']);
+		$nextcloud_access_token = sanitize_text_field($_POST['nextcloud_access_token']);
+		$ignored_board_ids = sanitize_text_field($_POST['ignored_board_ids']);
+
+		// Store temporarily in class properties
+		$this->import_config = array(
+			'nextcloud_url_base' => $nextcloud_url_base,
+			'nextcloud_username' => $nextcloud_username,
+			'nextcloud_access_token' => $nextcloud_access_token,
+			'ignored_board_ids' => $ignored_board_ids
+		);
 
 		$boards = $this->get_nextcloud_boards();
 		if ( $boards ) {
@@ -635,26 +670,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	    }
 
 	    return $task_id;
-	}
-
-	/**
-	 * Imports comments for a task.
-	 *
-	 * @param int $card_id The ID of the card in NextCloud.
-	 * @param int $post_id The ID of the WordPress post.
-	 */
-	private function import_comments( $card_id, $post_id ) {
-
-		$options       = get_option( 'decker_settings', array() );
-		$auth          = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
-		$comments_url  = $options['nextcloud_url_base'] . '/ocs/v2.php/apps/deck/api/v1.0/cards/' . $card_id . '/comments';
-		$comments_data = $this->make_request( $comments_url, $auth );
-
-		if ( isset( $comments_data['ocs']['data'] ) && is_array( $comments_data['ocs']['data'] ) ) {
-			foreach ( $comments_data['ocs']['data'] as $comment ) {
-				$this->process_comment( $comment, $post_id );
-			}
-		}
 	}
 
 	/**
