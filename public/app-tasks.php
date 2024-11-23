@@ -12,6 +12,31 @@ $taskManager = new TaskManager();
 	<?php include 'layouts/head-css.php'; ?>
 
 	<style type="text/css">
+		/* Dropdown menu styles */
+		.dropdown-toggle::after {
+			display: none;
+		}
+		
+		.dropdown-toggle {
+			color: #98a6ad;
+			text-decoration: none;
+		}
+		
+		.dropdown-toggle:hover {
+			color: #323a46;
+		}
+		
+		.dropdown-menu {
+			min-width: 120px;
+		}
+		
+		.dropdown-item {
+			padding: 0.4rem 1.2rem;
+		}
+		
+		.dropdown-item i {
+			font-size: 15px;
+		}
 		
 
 #searchBuilderContainer .dt-button,
@@ -178,6 +203,7 @@ table#tablaTareas td:nth-child(4) {
 														<th><?php _e('Tags', 'decker'); ?></th>
 														<th><?php _e('Assigned Users', 'decker'); ?></th>
 														<th><?php _e('Remaining Time', 'decker'); ?></th>
+														<th class="text-end"><?php _e('Actions', 'decker'); ?></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -222,6 +248,18 @@ table#tablaTareas td:nth-child(4) {
                                                         }
                                                         echo '</div></td>';
                                                         echo '<td>' . esc_html($task->getRelativeTime()) . '</td>';
+                                                        echo '<td class="text-end">
+                                                            <div class="dropdown">
+                                                                <a href="#" class="dropdown-toggle card-drop" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <i class="mdi mdi-dots-horizontal font-18"></i>
+                                                                </a>
+                                                                <div class="dropdown-menu dropdown-menu-end">
+                                                                    <a class="dropdown-item" href="#"><i class="mdi mdi-pencil me-1"></i>' . __('Edit', 'decker') . '</a>
+                                                                    <a class="dropdown-item" href="#"><i class="mdi mdi-archive me-1"></i>' . __('Archive', 'decker') . '</a>
+                                                                    <a class="dropdown-item text-danger" href="#"><i class="mdi mdi-trash-can me-1"></i>' . __('Delete', 'decker') . '</a>
+                                                                </div>
+                                                            </div>
+                                                        </td>';
                                                         echo '</tr>';
                                                     }
 
