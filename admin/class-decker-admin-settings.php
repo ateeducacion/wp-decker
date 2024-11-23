@@ -145,9 +145,6 @@ class Decker_Admin_Settings {
 				}
 			}
 
-			// Delete all Decker options
-			delete_option( 'decker_plugin_cache' );
-
 			wp_redirect(
 				add_query_arg(
 					array(
@@ -320,9 +317,6 @@ class Decker_Admin_Settings {
 	 * Displays admin notices.
 	 */
 	public function admin_notices() {
-		if ( isset( $_GET['decker_cache_cleared'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Decker cache has been cleared.', 'decker' ) . '</p></div>';
-		}
 		if ( isset( $_GET['decker_data_cleared'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'All Decker records have been deleted.', 'decker' ) . '</p></div>';
 		}

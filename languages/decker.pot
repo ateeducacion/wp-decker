@@ -16,7 +16,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: decker.php
 #: admin/class-decker-admin-export.php:61
-#: admin/class-decker-admin-settings.php:186
+#: admin/class-decker-admin-settings.php:182
 msgid "Decker"
 msgstr ""
 
@@ -48,27 +48,55 @@ msgstr ""
 msgid "Import tasks, labels, and boards from NextCloud."
 msgstr ""
 
-#: admin/class-decker-admin-import.php:60
-msgid "NextCloud settings are not configured."
-msgstr ""
-
-#: admin/class-decker-admin-import.php:65
+#: admin/class-decker-admin-import.php:56
 msgid "Import Decker Tasks from NextCloud"
 msgstr ""
 
-#: admin/class-decker-admin-import.php:80
-msgid "Skip already existing tasks"
+#: admin/class-decker-admin-import.php:62
+msgid "NextCloud URL Base"
 msgstr ""
 
-#: admin/class-decker-admin-import.php:81
-msgid "If checked, tasks that already exist in the system will be skipped and not updated."
+#: admin/class-decker-admin-import.php:65
+msgid "The base URL of your NextCloud instance"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:69
+msgid "NextCloud Username"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:72
+msgid "Your NextCloud username"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:76
+msgid "NextCloud Access Token"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:79
+msgid "Your NextCloud access token"
 msgstr ""
 
 #: admin/class-decker-admin-import.php:83
-msgid "Import Now"
+msgid "Ignored Board IDs"
 msgstr ""
 
 #: admin/class-decker-admin-import.php:86
+msgid "Comma-separated list of board IDs to ignore"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:90
+msgid "Skip Existing Tasks"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:93
+msgid "If checked, tasks that already exist in the system will be skipped and not updated."
+msgstr ""
+
+#: admin/class-decker-admin-import.php:98
+msgid "Import Now"
+msgstr ""
+
+#: admin/class-decker-admin-import.php:101
 msgid "Import Progress"
 msgstr ""
 
@@ -88,112 +116,71 @@ msgstr ""
 msgid "Select the color for the alert message."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:185
+#: admin/class-decker-admin-settings.php:181
 #: public/layouts/topbar.php:82
 msgid "Decker Settings"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:203
+#: admin/class-decker-admin-settings.php:199
 msgid "Decker Configuration"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:209
-msgid "Nextcloud URL Base"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:210
-msgid "Nextcloud Username"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:211
-msgid "Nextcloud Access Token"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:212
+#: admin/class-decker-admin-settings.php:205
 msgid "Shared Key"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:213
-msgid "Ignored Boards"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:214
-#: admin/class-decker-admin-settings.php:297
-msgid "Clear Cache"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:215
-#: admin/class-decker-admin-settings.php:308
+#: admin/class-decker-admin-settings.php:206
+#: admin/class-decker-admin-settings.php:246
 msgid "Clear All Data"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:216
+#: admin/class-decker-admin-settings.php:207
 msgid "Log Level"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:217
+#: admin/class-decker-admin-settings.php:208
 msgid "Decker Log"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:218
-#: admin/class-decker-admin-settings.php:354
+#: admin/class-decker-admin-settings.php:209
+#: admin/class-decker-admin-settings.php:292
 msgid "Clear Log"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:219
+#: admin/class-decker-admin-settings.php:210
 msgid "Alert Message"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:220
+#: admin/class-decker-admin-settings.php:211
 msgid "Alert Color"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:221
+#: admin/class-decker-admin-settings.php:212
 msgid "User Profile"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:242
-msgid "Enter your Nextcloud user and access token to configure the Decker plugin."
+#: admin/class-decker-admin-settings.php:233
+msgid "Configure the Decker plugin settings."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:287
-msgid "Enter the IDs of the boards you want to ignore, separated by commas."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:298
-msgid "Click the button to clear Decker cache."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:308
+#: admin/class-decker-admin-settings.php:246
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:309
+#: admin/class-decker-admin-settings.php:247
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:355
+#: admin/class-decker-admin-settings.php:293
 msgid "Click the button to clear the Decker log."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:383
-msgid "Decker cache has been cleared."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:386
+#: admin/class-decker-admin-settings.php:321
 msgid "All Decker records have been deleted."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:389
+#: admin/class-decker-admin-settings.php:324
 msgid "Decker log has been cleared."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:447
-msgid "Invalid URL."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:455
-msgid "Invalid IDs. Must be numbers separated by commas."
 msgstr ""
 
 #: admin/class-decker-admin.php:60
@@ -1119,7 +1106,7 @@ msgstr ""
 
 #: public/layouts/task-card.php:77
 #: public/layouts/task-card.php:421
-#: public/layouts/task-card.php:817
+#: public/layouts/task-card.php:819
 msgid "Delete"
 msgstr ""
 
@@ -1215,39 +1202,39 @@ msgstr ""
 msgid "Toggle Dropdown"
 msgstr ""
 
-#: public/layouts/task-card.php:609
+#: public/layouts/task-card.php:611
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/layouts/task-card.php:689
+#: public/layouts/task-card.php:691
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/layouts/task-card.php:714
+#: public/layouts/task-card.php:716
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/layouts/task-card.php:788
+#: public/layouts/task-card.php:790
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/layouts/task-card.php:836
+#: public/layouts/task-card.php:838
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/layouts/task-card.php:1037
+#: public/layouts/task-card.php:1039
 msgid "Server response error."
 msgstr ""
 
-#: public/layouts/task-card.php:1038
+#: public/layouts/task-card.php:1040
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/layouts/task-card.php:1043
+#: public/layouts/task-card.php:1045
 msgid "Request error."
 msgstr ""
 
-#: public/layouts/task-card.php:1044
+#: public/layouts/task-card.php:1046
 msgid "Error saving task."
 msgstr ""
 
@@ -1271,10 +1258,6 @@ msgstr ""
 msgid "My Profile"
 msgstr ""
 
-#: public/layouts/topbar.php:88
-msgid "Import Tasks"
-msgstr ""
-
-#: public/layouts/topbar.php:95
+#: public/layouts/topbar.php:89
 msgid "Logout"
 msgstr ""
