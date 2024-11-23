@@ -6,12 +6,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $term_type = sanitize_text_field($_POST['term_type']);
     $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : null;
     $term_name = sanitize_text_field($_POST['term_name']);
-    $term_color = sanitize_hex_color($_POST['term_color']);
+    $term_slug = !empty($_POST['term_slug']) ? sanitize_title($_POST['term_slug']) : '';
+    $term_color = sanitize_hex_color_no_hash($_POST['term_color']);
 
     $data = array(
         'name' => $term_name,
-        'color' => $term_color
+        'color' => '#' . $term_color
     );
+
+    if (!empty($term_slug)) {
+        $data['slug'] = $term_slug;
+    }
 
     $result = array('success' => false, 'message' => '');
 
