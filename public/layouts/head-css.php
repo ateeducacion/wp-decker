@@ -14,8 +14,9 @@
 <!-- Theme Config Js -->
 <script src="<?php echo plugins_url( 'assets/js/config.js', __DIR__ ); ?>"></script>
 
+<!-- TO:DO Already loaded in app.min.css, maybe we should fix this -->
 <!-- Boostrap -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> -->
 
 <!-- App css -->
 <link href="<?php echo plugins_url( 'assets/css/app.min.css', __DIR__ ); ?>" rel="stylesheet" type="text/css" id="app-style" />
