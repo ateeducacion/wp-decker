@@ -211,7 +211,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  aria-controls="sidebarUtilities"
 		  class="side-nav-link"
 		>
-		  <i class="ri-list-check-3"></i>
+		  <i class="ri-tools-line"></i>
 				   
 
 
