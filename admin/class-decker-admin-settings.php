@@ -202,15 +202,16 @@ class Decker_Admin_Settings {
 		);
 
 		$fields = array(
+			'alert_color' => __( 'Alert Color', 'decker' ), // Alert color radio buttons
+			'alert_message' => __( 'Alert Message', 'decker' ), // Alert message field
+			'user_profile' => __( 'User Profile', 'decker' ), // User profile dropdown
 			'shared_key' => __( 'Shared Key', 'decker' ),
-			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'log_level' => __( 'Log Level', 'decker' ), // Log level radio buttons
 			'decker_log' => __( 'Decker Log', 'decker' ), // Log field
 			'clear_log_button' => __( 'Clear Log', 'decker' ), // New clear log button
-			'alert_message' => __( 'Alert Message', 'decker' ), // Alert message field
-			'alert_color' => __( 'Alert Color', 'decker' ), // Alert color radio buttons
-			'user_profile' => __( 'User Profile', 'decker' ), // User profile dropdown
+			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
+	
 		);
 
 		foreach ( $fields as $field_id => $field_title ) {
