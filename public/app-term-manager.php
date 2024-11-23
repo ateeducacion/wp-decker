@@ -1,8 +1,26 @@
 <?php
 include 'layouts/main.php';
 
-$labelManager = new LabelManager();
-$labels = $labelManager->getAllLabels();
+// Get the type from URL parameter, default to 'label'
+$type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : 'label';
+
+// Initialize the appropriate manager based on type
+$manager = null;
+$items = [];
+$title = '';
+$addNewText = '';
+
+if ($type === 'board') {
+    $manager = new BoardManager();
+    $items = $manager->getAllBoards();
+    $title = __('Boards', 'decker');
+    $addNewText = __('Add New Board', 'decker');
+} else {
+    $manager = new LabelManager();
+    $items = $manager->getAllLabels();
+    $title = __('Labels', 'decker');
+    $addNewText = __('Add New Label', 'decker');
+}
 
 ?>
 
@@ -39,7 +57,7 @@ $labels = $labelManager->getAllLabels();
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 		
-										<h4 class="page-title"><?php _e('Labels', 'decker'); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#label-modal"><?php _e('Add New Label', 'decker'); ?></a></h4>
+										<h4 class="page-title"><?php echo esc_html($title); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><?php echo esc_html($addNewText); ?></a></h4>
 
 
 								<div class="page-title-right">
@@ -70,25 +88,33 @@ $labels = $labelManager->getAllLabels();
 									<div class="card">
 										<div class="card-body table-responsive">
 
-											<table id="labelsTable" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="labelsTable_info">
+											<table id="termsTable" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="termsTable_info">
 												<thead>
 													<tr>
 														<th><?php _e('Name', 'decker'); ?></th>
 														<th><?php _e('Slug', 'decker'); ?></th>
-														<th><?php _e('Color', 'decker'); ?></th>
+														<?php if ($type === 'label'): ?>
+															<th><?php _e('Color', 'decker'); ?></th>
+														<?php endif; ?>
 														<th><?php _e('Actions', 'decker'); ?></th>
 													</tr>
 												</thead>
 												<tbody>
 													<?php
-													foreach ($labels as $label) {
+													foreach ($items as $item) {
 														echo '<tr>';
-														echo '<td><span class="badge" style="background-color: ' . esc_attr($label->color) . ';">' . esc_html($label->name) . '</span></td>';
-														echo '<td>' . esc_html($label->slug) . '</td>';
-														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr($label->color) . ';"></span> ' . esc_html($label->color) . '</td>';
+														if ($type === 'label') {
+															echo '<td><span class="badge" style="background-color: ' . esc_attr($item->color) . ';">' . esc_html($item->name) . '</span></td>';
+														} else {
+															echo '<td>' . esc_html($item->name) . '</td>';
+														}
+														echo '<td>' . esc_html($item->slug) . '</td>';
+														if ($type === 'label') {
+															echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr($item->color) . ';"></span> ' . esc_html($item->color) . '</td>';
+														}
 														echo '<td>';
-														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-label" data-label-id="' . esc_attr($label->id) . '"><i class="ri-pencil-line"></i></a>';
-														echo '<a href="#" class="btn btn-sm btn-danger delete-label" data-label-id="' . esc_attr($label->id) . '"><i class="ri-delete-bin-line"></i></a>';
+														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr($type) . '" data-id="' . esc_attr($item->id) . '"><i class="ri-pencil-line"></i></a>';
+														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr($type) . '" data-id="' . esc_attr($item->id) . '"><i class="ri-delete-bin-line"></i></a>';
 														echo '</td>';
 														echo '</tr>';
 													}
@@ -133,7 +159,10 @@ $labels = $labelManager->getAllLabels();
 
 <script>
 jQuery(document).ready(function() {
-	new Tablesort(document.getElementById('labelsTable'));
+	new Tablesort(document.getElementById('termsTable'));
+	
+	// Store the current type for use in AJAX calls
+	window.currentTermType = '<?php echo esc_js($type); ?>';
 });
 </script>
 
