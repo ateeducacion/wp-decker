@@ -198,14 +198,29 @@ jQuery(document).ready(function($) {
         const row = $(this).closest('tr');
         const name = row.find('td:first-child .badge').text();
         const slug = row.find('td:nth-child(2)').text();
-        const color = row.find('td:nth-child(3) .color-box').css('background-color');
+        // Convert RGB color to Hex
+        const rgbColor = row.find('td:nth-child(3) .color-box').css('background-color');
+        const rgbToHex = function(rgb) {
+            // If it's already hex, return it
+            if (rgb.startsWith('#')) return rgb;
+            
+            // Convert rgb(r,g,b) to hex
+            const rgbMatch = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (!rgbMatch) return '#000000';
+            
+            const r = parseInt(rgbMatch[1]);
+            const g = parseInt(rgbMatch[2]);
+            const b = parseInt(rgbMatch[3]);
+            
+            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        };
+        
         const id = $(this).data('id');
-
         $('#termModalLabel').text('<?php _e("Edit Term", "decker"); ?>');
         $('#term-id').val(id);
         $('#term-name').val(name);
         $('#term-slug').val(slug);
-        $('#term-color').val(color);
+        $('#term-color').val(rgbToHex(rgbColor));
         termModal.show();
     });
 
