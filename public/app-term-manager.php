@@ -155,6 +155,10 @@ if ($type === 'board') {
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
 						</div>
 						<div class="mb-3">
+							<label for="term-slug" class="form-label"><?php _e('Slug', 'decker'); ?></label>
+							<input type="text" class="form-control" id="term-slug" name="term_slug">
+						</div>
+						<div class="mb-3">
 							<label for="term-color" class="form-label"><?php _e('Color', 'decker'); ?></label>
 							<input type="color" class="form-control" id="term-color" name="term_color">
 						</div>
@@ -208,6 +212,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     $('#term-id').val(response.data.id);
                     $('#term-name').val(response.data.name);
+                    $('#term-slug').val(response.data.slug);
                     $('#term-color').val(response.data.color);
                     termModal.show();
                 } else {
@@ -224,6 +229,7 @@ jQuery(document).ready(function($) {
             type: window.currentTermType,
             term_id: $('#term-id').val(),
             term_name: $('#term-name').val(),
+            term_slug: $('#term-slug').val(),
             term_color: $('#term-color').val(),
             nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
         };
