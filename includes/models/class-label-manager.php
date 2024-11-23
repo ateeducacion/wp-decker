@@ -81,9 +81,15 @@ class LabelManager {
      */
     public static function saveLabel(array $data, ?int $id = null): array {
         $args = array(
-            'name' => sanitize_text_field($data['name']),
-            'slug' => sanitize_title($data['name'])
+            'name' => sanitize_text_field($data['name'])
         );
+
+        // Only generate slug from name if no slug was provided
+        if (isset($data['slug']) && !empty($data['slug'])) {
+            $args['slug'] = sanitize_title($data['slug']);
+        } else {
+            $args['slug'] = sanitize_title($data['name']);
+        }
 
         if ($id) {
             $result = wp_update_term($id, 'decker_label', $args);
