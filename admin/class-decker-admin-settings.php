@@ -206,9 +206,6 @@ class Decker_Admin_Settings {
 		);
 
 		$fields = array(
-			'nextcloud_url_base' => __( 'Nextcloud URL Base', 'decker' ),
-			'nextcloud_username' => __( 'Nextcloud Username', 'decker' ),
-			'nextcloud_access_token' => __( 'Nextcloud Access Token', 'decker' ),
 			'shared_key' => __( 'Shared Key', 'decker' ),
 			'decker_ignored_board_ids' => __( 'Ignored Boards', 'decker' ),
 			'clear_cache_button' => __( 'Clear Cache', 'decker' ),
@@ -239,41 +236,9 @@ class Decker_Admin_Settings {
 	 * Outputs a description for the settings section.
 	 */
 	public function settings_section_callback() {
-		echo '<p>' . esc_html__( 'Enter your Nextcloud user and access token to configure the Decker plugin.', 'decker' ) . '</p>';
+		echo '<p>' . esc_html__( 'Configure the Decker plugin settings.', 'decker' ) . '</p>';
 	}
 
-	/**
-	 * Render Nextcloud URL Base Field
-	 *
-	 * Outputs the HTML for the nextcloud_url_base field.
-	 */
-	public function nextcloud_url_base_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['nextcloud_url_base'] ) ? esc_url( $options['nextcloud_url_base'] ) : '';
-		echo '<input type="text" name="decker_settings[nextcloud_url_base]" value="' . esc_attr( $value ) . '" class="regular-text">';
-	}
-
-	/**
-	 * Render Nextcloud Username Field
-	 *
-	 * Outputs the HTML for the nextcloud_username field.
-	 */
-	public function nextcloud_username_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['nextcloud_username'] ) ? sanitize_text_field( $options['nextcloud_username'] ) : '';
-		echo '<input type="text" name="decker_settings[nextcloud_username]" value="' . esc_attr( $value ) . '" class="regular-text">';
-	}
-
-	/**
-	 * Render Nextcloud Access Token Field
-	 *
-	 * Outputs the HTML for the nextcloud_access_token field.
-	 */
-	public function nextcloud_access_token_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['nextcloud_access_token'] ) ? sanitize_text_field( $options['nextcloud_access_token'] ) : '';
-		echo '<input type="password" name="decker_settings[nextcloud_access_token]" value="' . esc_attr( $value ) . '" class="regular-text">';
-	}
 
 	/**
 	 * Render Ignored Boards Field
@@ -442,13 +407,6 @@ class Decker_Admin_Settings {
 	 * @return array The validated fields.
 	 */
 	public function settings_validate( $input ) {
-	    // Validate Nextcloud URL base
-	    if ( isset( $input['nextcloud_url_base'] ) && ! preg_match( '/\bhttps?:\/\/\S+/i', $input['nextcloud_url_base'] ) ) {
-	        add_settings_error( 'nextcloud_url_base', 'invalid-url', __( 'Invalid URL.', 'decker' ) );
-	        $input['nextcloud_url_base'] = '';
-	    } else {
-	        $input['nextcloud_url_base'] = isset( $input['nextcloud_url_base'] ) ? esc_url_raw( $input['nextcloud_url_base'] ) : '';
-	    }
 
 	    // Validate ignored board IDs
 	    if ( isset( $input['decker_ignored_board_ids'] ) && ! preg_match( '/^(\d+(,\d+)*)?$/', $input['decker_ignored_board_ids'] ) ) {
