@@ -3,6 +3,10 @@ include 'layouts/main.php';
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verify nonce
+    if (!isset($_POST['decker_term_nonce']) || !wp_verify_nonce($_POST['decker_term_nonce'], 'decker_term_action')) {
+        wp_die('Security check failed');
+    }
     $term_type = sanitize_text_field($_POST['term_type']);
     $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     $term_name = sanitize_text_field($_POST['term_name']);
@@ -197,6 +201,7 @@ if ($type === 'board') {
 					<form id="term-form" method="POST">
 						<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">
 						<input type="hidden" name="term_id" id="term-id">
+						<?php wp_nonce_field('decker_term_action', 'decker_term_nonce'); ?>
 						<div class="mb-3">
 							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?> <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
@@ -283,7 +288,8 @@ jQuery(document).ready(function($) {
             const form = $('<form method="POST">')
                 .append($('<input type="hidden" name="term_type">').val(termType))
                 .append($('<input type="hidden" name="term_id">').val(termId))
-                .append($('<input type="hidden" name="action">').val('delete'));
+                .append($('<input type="hidden" name="action">').val('delete'))
+                .append($('<input type="hidden" name="decker_term_nonce">').val('<?php echo wp_create_nonce("decker_term_action"); ?>'));
             $('body').append(form);
             form.submit();
         } else if (userInput !== null) {
