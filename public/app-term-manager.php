@@ -9,6 +9,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $term_type = sanitize_text_field($_POST['term_type']);
     $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+
+    // Check if this is a delete action
+    if (isset($_POST['action']) && $_POST['action'] === 'delete') {
+        $result = array('success' => false, 'message' => '');
+        
+        if ($term_type === 'board') {
+            $result = BoardManager::deleteBoard($term_id);
+        } else {
+            $result = LabelManager::deleteLabel($term_id);
+        }
+
+        wp_redirect(add_query_arg(array(
+            'status' => $result['success'] ? 'success' : 'error',
+            'message' => urlencode($result['message'])
+        )));
+        exit;
+    }
+
+    // If not delete, process normal form submission
     $term_name = sanitize_text_field($_POST['term_name']);
     $term_slug = !empty($_POST['term_slug']) ? sanitize_title($_POST['term_slug']) : '';
     
