@@ -139,6 +139,35 @@ if ($type === 'board') {
 
 	<?php include 'layouts/footer-scripts.php'; ?>
 
+	<!-- Term Modal -->
+	<div class="modal fade" id="term-modal" tabindex="-1" aria-labelledby="termModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="termModalLabel"><?php _e('Add New Term', 'decker'); ?></h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form id="term-form">
+						<input type="hidden" id="term-id" name="term_id">
+						<div class="mb-3">
+							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?></label>
+							<input type="text" class="form-control" id="term-name" name="term_name" required>
+						</div>
+						<div class="mb-3">
+							<label for="term-color" class="form-label"><?php _e('Color', 'decker'); ?></label>
+							<input type="color" class="form-control" id="term-color" name="term_color">
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php _e('Close', 'decker'); ?></button>
+					<button type="button" class="btn btn-primary" id="save-term"><?php _e('Save', 'decker'); ?></button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 </body>
 
