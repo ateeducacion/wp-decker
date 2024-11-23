@@ -170,7 +170,6 @@ class Decker_Admin_Settings {
 		add_action( 'admin_menu', array( $this, 'create_menu' ) );
 		add_action( 'admin_init', array( $this, 'settings_init' ) );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
-		add_action( 'admin_init', array( $this, 'handle_clear_cache' ) );
 		add_action( 'admin_init', array( $this, 'handle_clear_all_data' ) );
 		add_action( 'admin_init', array( $this, 'handle_clear_log' ) );
 	}
@@ -208,7 +207,6 @@ class Decker_Admin_Settings {
 		$fields = array(
 			'shared_key' => __( 'Shared Key', 'decker' ),
 			'decker_ignored_board_ids' => __( 'Ignored Boards', 'decker' ),
-			'clear_cache_button' => __( 'Clear Cache', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'log_level' => __( 'Log Level', 'decker' ), // Log level radio buttons
 			'decker_log' => __( 'Decker Log', 'decker' ), // Log field
@@ -252,16 +250,6 @@ class Decker_Admin_Settings {
 		echo '<p class="description">' . esc_html__( 'Enter the IDs of the boards you want to ignore, separated by commas.', 'decker' ) . '</p>';
 	}
 
-	/**
-	 * Render Clear Cache Button
-	 *
-	 * Outputs the HTML for the clear_cache_button field.
-	 */
-	public function clear_cache_button_render() {
-		wp_nonce_field( 'decker_clear_cache_action', 'decker_clear_cache_nonce', true, true );
-		echo '<input type="submit" name="decker_clear_cache" class="button button-secondary" value="' . esc_attr__( 'Clear Cache', 'decker' ) . '">';
-		echo '<p class="description">' . esc_html__( 'Click the button to clear Decker cache.', 'decker' ) . '</p>';
-	}
 
 	/**
 	 * Render Clear All Data Button
@@ -355,26 +343,6 @@ class Decker_Admin_Settings {
 		}
 	}
 
-	/**
-	 * Handle Clear Cache
-	 *
-	 * Handles the clearing of the cache.
-	 */
-	public function handle_clear_cache() {
-		if ( isset( $_POST['decker_clear_cache'] ) && check_admin_referer( 'decker_clear_cache_action', 'decker_clear_cache_nonce' ) ) {
-			delete_option( 'decker_plugin_cache' );
-			wp_redirect(
-				add_query_arg(
-					array(
-						'page' => 'decker_settings',
-						'decker_cache_cleared' => 'true',
-					),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-	}
 
 	/**
 	 * Handle Clear log
