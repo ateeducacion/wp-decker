@@ -299,7 +299,13 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         const row = $(this).closest('tr');
         const termSlug = row.find('td:nth-child(2)').text();
-        const userInput = prompt('<?php _e("To confirm deletion, please enter the term slug:", "decker"); ?> ' + termSlug);
+
+		let promptMessage = "<?php echo esc_js(__('To confirm deletion, please enter the term slug:', 'decker') ); ?>";
+		if ($(this).data('type') === 'board') {
+		    const warningMessage = "<?php echo esc_js(__('WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board.', 'decker') ); ?>";
+		    promptMessage = warningMessage + '\n\n' + promptMessage
+		}
+		const userInput = prompt(promptMessage + ' ' + termSlug);
         
         if (userInput === termSlug) {
             const termId = $(this).data('id');
