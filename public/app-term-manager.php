@@ -257,7 +257,8 @@ jQuery(document).ready(function($) {
     $('.edit-term').on('click', function(e) {
         e.preventDefault();
         const row = $(this).closest('tr');
-        const name = row.find('td:first-child .badge').text();
+        const nameCell = row.find('td:first-child');
+        const name = nameCell.find('.badge').length ? nameCell.find('.badge').text() : nameCell.text();
         const slug = row.find('td:nth-child(2)').text();
         // Convert RGB color to Hex
         const rgbColor = row.find('td:nth-child(3) .color-box').css('background-color');
