@@ -119,12 +119,12 @@ if ($type === 'board') {
 								<div class="page-title-right">
 
 									<div class="input-group mb-3">
-										<!-- Icono de búsqueda integrado en el campo -->
+										<!-- Search icon integrated in the field -->
 										<span class="input-group-text bg-white border-end-0">
 											<i class="ri-search-line"></i>
 										</span>
 										
-										<!-- Campo de búsqueda con botón de borrar (X) dentro -->
+										<!-- Search field with clear button (X) inside -->
 										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e('Search...', 'decker'); ?>" aria-label="<?php esc_attr_e('Search', 'decker'); ?>">
 
 									</div>
@@ -175,7 +175,7 @@ if ($type === 'board') {
 
 													?>
 													
-													<!-- Add more task rows as needed -->
+													<!-- Additional task rows can be added here -->
 												</tbody>
 											</table>
 
