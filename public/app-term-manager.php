@@ -134,7 +134,13 @@ if ($type === 'board') {
 													<?php
 													foreach ($items as $item) {
 														echo '<tr>';
-														echo '<td><span class="badge" style="background-color: ' . esc_attr($item->color) . ';">' . esc_html($item->name) . '</span></td>';
+														echo '<td>';
+														if (!empty($item->color)) {
+															echo '<span class="badge" style="background-color: ' . esc_attr($item->color) . ';">' . esc_html($item->name) . '</span>';
+														} else {
+															echo esc_html($item->name);
+														}
+														echo '</td>';
 														echo '<td>' . esc_html($item->slug) . '</td>';
 														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr($item->color) . ';"></span> ' . esc_html($item->color) . '</td>';
 														echo '<td>';
