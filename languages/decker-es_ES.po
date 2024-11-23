@@ -182,6 +182,7 @@ msgid "New Action Name"
 msgstr "Nombre de la Nueva Acción"
 
 #: includes/custom-post-types/class-decker-actions.php:46
+#: public/app-term-manager.php:153
 msgid "Actions"
 msgstr "Acciones"
 
@@ -221,6 +222,7 @@ msgid "Update Board"
 msgstr "Actualizar Tablero"
 
 #: includes/custom-post-types/class-decker-boards.php:54
+#: public/app-term-manager.php:78
 msgid "Add New Board"
 msgstr "Agregar Nuevo Tablero"
 
@@ -229,7 +231,9 @@ msgid "New Board Name"
 msgstr "Nombre del Nuevo Tablero"
 
 #: includes/custom-post-types/class-decker-boards.php:56
-#: public/layouts/left-sidebar.php:161
+#: public/app-term-manager.php:77
+#: public/layouts/left-sidebar.php:163
+#: public/layouts/left-sidebar.php:247
 msgid "Boards"
 msgstr "Tableros"
 
@@ -241,6 +245,8 @@ msgstr "Tableros"
 #: includes/custom-post-types/class-decker-labels.php:142
 #: includes/custom-post-types/class-decker-user-extended.php:64
 #: includes/custom-post-types/class-decker-user-extended.php:146
+#: public/app-term-manager.php:152
+#: public/app-term-manager.php:234
 msgid "Color"
 msgstr "Color"
 
@@ -271,6 +277,7 @@ msgid "Update Label"
 msgstr "Actualizar Etiqueta"
 
 #: includes/custom-post-types/class-decker-labels.php:54
+#: public/app-term-manager.php:82
 msgid "Add New Label"
 msgstr "Agregar Nueva Etiqueta"
 
@@ -280,6 +287,8 @@ msgstr "Nombre de la Nueva Etiqueta"
 
 #: includes/custom-post-types/class-decker-labels.php:56
 #: includes/custom-post-types/class-decker-tasks.php:998
+#: public/app-term-manager.php:81
+#: public/layouts/left-sidebar.php:237
 #: public/layouts/task-card.php:321
 msgid "Labels"
 msgstr "Etiquetas"
@@ -649,13 +658,13 @@ msgstr "Panel de Análisis"
 
 #: public/app-analytics.php:35
 #: public/app-analytics.php:38
-#: public/layouts/left-sidebar.php:197
+#: public/layouts/left-sidebar.php:200
 msgid "Analytics"
 msgstr "Análisis"
 
 #: public/app-analytics.php:50
 #: public/app-tasks.php:134
-#: public/layouts/left-sidebar.php:124
+#: public/layouts/left-sidebar.php:125
 msgid "Active Tasks"
 msgstr "Tareas Activas"
 
@@ -665,7 +674,7 @@ msgstr "Usuarios Totales"
 
 #: public/app-analytics.php:66
 #: public/app-tasks.php:138
-#: public/layouts/left-sidebar.php:142
+#: public/layouts/left-sidebar.php:143
 msgid "Archived Tasks"
 msgstr "Tareas Archivadas"
 
@@ -691,12 +700,14 @@ msgstr "Tablero Kanban"
 
 #: public/app-kanban-my.php:55
 #: public/app-kanban.php:65
+#: public/app-term-manager.php:128
 #: public/app-upcoming.php:107
 msgid "Search..."
 msgstr "Buscar..."
 
 #: public/app-kanban-my.php:55
 #: public/app-kanban.php:65
+#: public/app-term-manager.php:128
 #: public/app-upcoming.php:107
 msgid "Search"
 msgstr "Buscar"
@@ -740,6 +751,7 @@ msgstr "Sí"
 
 #: public/app-priority.php:139
 #: public/app-priority.php:337
+#: public/app-term-manager.php:238
 msgid "Close"
 msgstr "Cerrar"
 
@@ -776,7 +788,8 @@ msgstr "Detalle de Tareas"
 #: public/app-task-full.php:34
 #: public/app-tasks.php:9
 #: public/app-tasks.php:131
-#: public/layouts/left-sidebar.php:104
+#: public/app-term-manager.php:88
+#: public/layouts/left-sidebar.php:105
 msgid "Tasks"
 msgstr "Tareas"
 
@@ -785,7 +798,7 @@ msgid "Task Detail"
 msgstr "Detalle de la Tarea"
 
 #: public/app-task-full.php:40
-#: public/layouts/left-sidebar.php:143
+#: public/layouts/left-sidebar.php:144
 msgid "New task"
 msgstr "Nueva tarea"
 
@@ -794,7 +807,7 @@ msgid "Task not found"
 msgstr "Tarea no encontrada"
 
 #: public/app-tasks.php:136
-#: public/layouts/left-sidebar.php:133
+#: public/layouts/left-sidebar.php:134
 msgid "My Tasks"
 msgstr "Mis Tareas"
 
@@ -1084,6 +1097,7 @@ msgstr "Por favor, seleccione un autor"
 msgid "Under construction..."
 msgstr "En construcción..."
 
+#: public/app-term-manager.php:239
 #: public/layouts/task-card.php:518
 msgid "Save"
 msgstr "Guardar"
@@ -1211,3 +1225,66 @@ msgstr "Error al guardar la tarea."
 #: public/layouts/left-sidebar.php:87
 msgid "My Board"
 msgstr "Mi Tablero"
+
+#: includes/models/class-board-manager.php:94
+msgid "Board updated successfully"
+msgstr "Tablero actualizado correctamente"
+
+#: includes/models/class-board-manager.php:94
+msgid "Board created successfully"
+msgstr "Tablero creado correctamente"
+
+#: includes/models/class-board-manager.php:117
+msgid "Board deleted successfully"
+msgstr "Tablero eliminado correctamente"
+
+#: includes/models/class-label-manager.php:114
+msgid "Label updated successfully"
+msgstr "Etiqueta actualizada correctamente"
+
+#: includes/models/class-label-manager.php:114
+msgid "Label created successfully"
+msgstr "Etiqueta creada correctamente"
+
+#: includes/models/class-label-manager.php:136
+msgid "Label deleted successfully"
+msgstr "Etiqueta eliminada correctamente"
+
+#: public/app-term-manager.php:150
+#: public/app-term-manager.php:225
+msgid "Name"
+msgstr "Nombre"
+
+#: public/app-term-manager.php:151
+#: public/app-term-manager.php:229
+msgid "Slug"
+msgstr "Slug"
+
+#: public/app-term-manager.php:216
+#: public/app-term-manager.php:276
+msgid "Add New Term"
+msgstr "Añadir Nuevo Término"
+
+#: public/app-term-manager.php:231
+msgid "Leave empty for automatic generation from name"
+msgstr "Dejar vacío para generación automática desde el nombre"
+
+#: public/app-term-manager.php:289
+msgid "Edit Term"
+msgstr "Editar Término"
+
+#: public/app-term-manager.php:303
+msgid "To confirm deletion, please enter the term slug:"
+msgstr "Para confirmar la eliminación, por favor introduce el slug del término:"
+
+#: public/app-term-manager.php:305
+msgid "WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board."
+msgstr "¡ADVERTENCIA: ¡Eliminar un tablero es peligroso! Todas las tareas asignadas a este tablero se quedarán sin tablero."
+
+#: public/app-term-manager.php:321
+msgid "Incorrect slug. Deletion cancelled."
+msgstr "Slug incorrecto. Eliminación cancelada."
+
+#: public/layouts/left-sidebar.php:219
+msgid "Utilities"
+msgstr "Utilidades"

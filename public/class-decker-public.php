@@ -156,6 +156,10 @@ class Decker_Public {
 				case 'priority':
 					include plugin_dir_path( __DIR__ ) . 'public/app-priority.php';
 					break;
+				case 'term-manager':
+					include plugin_dir_path( __DIR__ ) . 'public/app-term-manager.php';
+					break;
+
 				default:
 					// Default action if no match is found
 					break;

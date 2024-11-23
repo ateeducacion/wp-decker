@@ -92,6 +92,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 	  <li class="side-nav-title"><?php _e('Apps', 'decker'); ?></li>
 
+	  <!-- Tasks -->
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'tasks' ); ?>">
 		<a
 		  data-bs-toggle="collapse"
@@ -145,6 +146,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		</div>
 	  </li>
 
+	  <!-- Boards -->
 	  <li class="side-nav-item" <?php echo decker_is_active_page( 'board' ); ?>>
 		<a
 		  data-bs-toggle="collapse"
@@ -191,12 +193,75 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		</div>
 	  </li>
 
+	  <!-- Analytics -->
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'analytics' ); ?>">
 		<a href="<?php echo add_query_arg( 'decker_page', 'analytics', home_url( '/' ) ); ?>" class="side-nav-link">
 		  <i class="ri-bar-chart-line"></i>
 		  <span><?php _e('Analytics', 'decker'); ?></span>
 		</a>
 	  </li>
+
+
+	  <!-- Utilities -->
+	  <li class="side-nav-item" <?php echo decker_is_active_page( 'utilities' ); ?>>
+		<a
+		  data-bs-toggle="collapse"
+		  href="#sidebarUtilities"
+		  aria-expanded="false"
+		  aria-controls="sidebarUtilities"
+		  class="side-nav-link"
+		>
+		  <i class="ri-tools-line"></i>
+				   
+
+
+		  <!-- <span class="badge bg-success float-end"></span> -->
+		  <span><?php _e('Utilities', 'decker'); ?></span>
+		  <span class="menu-arrow"></span>
+
+
+
+		</a>
+		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'term-manager' ) ? ' show' : ''; ?>" id="sidebarUtilities">
+			<ul class="side-nav-second-level">
+
+
+				<li class="<?php echo decker_is_active_subpage( 'type', 'label' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::getAllLabels() ) ); ?></span><a href="<?php
+					echo add_query_arg(
+						array(
+							'decker_page' => 'term-manager',
+							'type' => 'label',
+						),
+						home_url( '/' )
+					);
+				?>"><?php _e('Labels', 'decker'); ?></a></li>
+
+				<li class="<?php echo decker_is_active_subpage( 'type', 'board' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::getAllBoards() ) ); ?></span><a href="<?php
+					echo add_query_arg(
+						array(
+							'decker_page' => 'term-manager',
+							'type' => 'board',
+						),
+						home_url( '/' )
+					);
+				?>"><?php _e('Boards', 'decker'); ?></a></li>
+
+				<?php /* TO-DO: Add the actions manager
+				<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="<?php
+					echo add_query_arg(
+						array(
+							'decker_page' => 'term-manager',
+							'type' => 'action',
+						),
+						home_url( '/' )
+					);
+				?>"><?php _e('Actions', 'decker'); ?></a></li>
+				*/ ?>
+
+		  </ul>
+		</div>
+	  </li>
+
 
 
 	</ul>
