@@ -148,11 +148,9 @@ if ($type === 'board') {
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<form id="term-form" method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-						<input type="hidden" name="action" value="save_term">
+					<form id="term-form" method="POST">
 						<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">
 						<input type="hidden" name="term_id" id="term-id">
-						<?php wp_nonce_field('term_manager_nonce', 'term_nonce'); ?>
 						<div class="mb-3">
 							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?></label>
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
@@ -224,16 +222,16 @@ jQuery(document).ready(function($) {
         termModal.show();
     });
 
-    // Handle delete form submission
+    // Handle delete term
     $('.delete-term').on('click', function(e) {
         e.preventDefault();
         if (confirm('<?php _e("Are you sure you want to delete this term?", "decker"); ?>')) {
             const termId = $(this).data('id');
-            const form = $('<form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">')
-                .append($('<input type="hidden" name="action" value="delete_term">'))
-                .append($('<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">'))
+            const termType = $(this).data('type');
+            const form = $('<form method="POST">')
+                .append($('<input type="hidden" name="term_type">').val(termType))
                 .append($('<input type="hidden" name="term_id">').val(termId))
-                .append($('<?php wp_nonce_field('term_manager_nonce', 'term_nonce'); ?>'));
+                .append($('<input type="hidden" name="action">').val('delete'));
             $('body').append(form);
             form.submit();
         }
