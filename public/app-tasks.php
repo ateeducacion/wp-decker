@@ -12,6 +12,31 @@ $taskManager = new TaskManager();
 	<?php include 'layouts/head-css.php'; ?>
 
 	<style type="text/css">
+		/* Dropdown menu styles */
+		.dropdown-toggle::after {
+			display: none;
+		}
+		
+		.dropdown-toggle {
+			color: #98a6ad;
+			text-decoration: none;
+		}
+		
+		.dropdown-toggle:hover {
+			color: #323a46;
+		}
+		
+		.dropdown-menu {
+			min-width: 120px;
+		}
+		
+		.dropdown-item {
+			padding: 0.4rem 1.2rem;
+		}
+		
+		.dropdown-item i {
+			font-size: 15px;
+		}
 		
 
 #searchBuilderContainer .dt-button,
@@ -171,13 +196,14 @@ table#tablaTareas td:nth-child(4) {
 											<table id="tablaTareas" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="tablaTareas_info">
 												<thead>
 													<tr>
-														<th><?php _e('P.', 'decker'); ?></th>
-														<th><?php _e('Board', 'decker'); ?></th>
-														<th><?php _e('Stack', 'decker'); ?></th>
-														<th><?php _e('Description', 'decker'); ?></th>
-														<th><?php _e('Tags', 'decker'); ?></th>
-														<th><?php _e('Assigned Users', 'decker'); ?></th>
-														<th><?php _e('Remaining Time', 'decker'); ?></th>
+														<th class="c-priority"><?php _e('P.', 'decker'); ?></th>
+														<th class="c-board"><?php _e('Board', 'decker'); ?></th>
+														<th class="c-stack"><?php _e('Stack', 'decker'); ?></th>
+														<th class="c-description"><?php _e('Description', 'decker'); ?></th>
+														<th class="c-tags"><?php _e('Tags', 'decker'); ?></th>
+														<th class="c-users"><?php _e('Assigned Users', 'decker'); ?></th>
+														<th class="c-time"><?php _e('Remaining Time', 'decker'); ?></th>
+														<th class="c-actions text-end"></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -195,7 +221,7 @@ table#tablaTareas td:nth-child(4) {
                                                     }
 
                                                     foreach ($tasks as $task) {
-                                                        echo '<tr>';
+                                                        echo '<tr class="task">';
                                                         echo '<td>' . ($task->max_priority ? '🔥' : '') . '</td>';
                                                         echo '<td>';
 
@@ -221,7 +247,10 @@ table#tablaTareas td:nth-child(4) {
                                                             echo '</a>';
                                                         }
                                                         echo '</div></td>';
-                                                        echo '<td>' . esc_html($task->getRelativeTime()) . '</td>';
+                                                        echo '<td>' . $task->duedate?->format('Y-m-d H:i:s') . '</td>';
+                                                        echo '<td class="text-end">';
+                                                        echo $task->renderTaskMenu();
+                                                        echo '</td>';
                                                         echo '</tr>';
                                                     }
 
@@ -266,7 +295,8 @@ table#tablaTareas td:nth-child(4) {
 			// Initialize DataTables only if it hasn't been initialized yet
 			tablaElement = jQuery('#tablaTareas').DataTable({
 				language: {
-					url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/en-GB.json',
+					// url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/en-GB.json',
+                    url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json', // Changed to spanish TO-DO: resolve better					
 				},
 				buttons: [
 					{
@@ -290,20 +320,57 @@ table#tablaTareas td:nth-child(4) {
 					columns: [0, 1, 2, 3, 4, 5, 6],
 				},
 				columnDefs: [
-					{
-						searchPanes: {
-							show: false,
-						},
-						targets: [1, 6],
-					},
-				],
+                {
+                    searchPanes: {
+                        show: false,
+                    },
+                    targets: [1, 6], // Columnas para las cuales SearchPanes está deshabilitado
+                },
+                {
+                    targets: 2, // Columna 3
+                    searchBuilder: {
+                        disable: true
+                    }
+                },
+                {
+                    targets: [4, 5, 7], // Columna 7
+                    orderable: false
+                },
+                {
+				    targets: 6, // Columna 6 (Remaining Time)
+				    render: function(data, type, row, meta) {
+				        if(type === 'display') {
+				            // Verificar que la fecha sea válida
+				            if (!data) {
+				                return '';
+				            }
+				            // Formatear la fecha completa para el tooltip
+				            var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
+				            // Generar el texto amigable usando Day.js
+				            var friendlyText = dayjs(data).fromNow();
+				            return '<span title="' + fullDate + '">' + friendlyText + '</span>';
+				        }
+				        return data; // Para 'sort', 'type' y 'filter'
+				    },
+				    type: 'date'
+                },
+            ],
+
+				// columnDefs: [
+				// 	{
+				// 		searchPanes: {
+				// 			show: false,
+				// 		},
+				// 		targets: [1, 6],
+				// 	},
+				// ],
 				lengthMenu: [
 					[25, 50, 100, 200, -1],
 					[25, 50, 100, 200, 'All'],
 				],
 				pageLength: 50,
 				responsive: true,
-				order: [[0, 'desc'], [1, 'asc'], [2, 'asc']], // Ordenar por la primera columna, luego la segunda
+				order: [[0, 'desc']], 
 
 				initComplete: function () {
 					// Move SearchBuilder to the desired location

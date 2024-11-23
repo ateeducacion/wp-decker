@@ -298,7 +298,7 @@ msgid "Search Boards"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-boards.php:51
-#: public/app-tasks.php:152
+#: public/app-tasks.php:177
 msgid "All Boards"
 msgstr ""
 
@@ -386,7 +386,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:1035
 #: public/app-priority.php:156
 #: public/app-priority.php:348
-#: public/app-tasks.php:176
+#: public/app-tasks.php:201
 #: public/layouts/task-card.php:288
 msgid "Stack"
 msgstr ""
@@ -462,7 +462,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:971
 #: public/app-priority.php:158
-#: public/app-tasks.php:179
+#: public/app-tasks.php:204
 msgid "Assigned Users"
 msgstr ""
 
@@ -478,7 +478,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:1007
 #: public/app-priority.php:155
 #: public/app-priority.php:347
-#: public/app-tasks.php:175
+#: public/app-tasks.php:200
 #: public/layouts/task-card.php:254
 msgid "Board"
 msgstr ""
@@ -699,7 +699,7 @@ msgid "Analytics"
 msgstr ""
 
 #: public/app-analytics.php:50
-#: public/app-tasks.php:134
+#: public/app-tasks.php:159
 #: public/layouts/left-sidebar.php:125
 msgid "Active Tasks"
 msgstr ""
@@ -709,7 +709,7 @@ msgid "Total Users"
 msgstr ""
 
 #: public/app-analytics.php:66
-#: public/app-tasks.php:138
+#: public/app-tasks.php:163
 #: public/layouts/left-sidebar.php:143
 msgid "Archived Tasks"
 msgstr ""
@@ -753,7 +753,7 @@ msgstr ""
 #: public/app-kanban-my.php:62
 #: public/app-kanban.php:82
 #: public/app-priority.php:126
-#: public/app-tasks.php:142
+#: public/app-tasks.php:167
 #: public/app-upcoming.php:123
 msgid "Add New"
 msgstr ""
@@ -834,7 +834,7 @@ msgstr ""
 
 #: public/app-task-full.php:34
 #: public/app-tasks.php:9
-#: public/app-tasks.php:131
+#: public/app-tasks.php:156
 #: public/app-term-manager.php:88
 #: public/layouts/left-sidebar.php:105
 msgid "Tasks"
@@ -853,29 +853,29 @@ msgstr ""
 msgid "Task not found"
 msgstr ""
 
-#: public/app-tasks.php:136
+#: public/app-tasks.php:161
 #: public/layouts/left-sidebar.php:134
 msgid "My Tasks"
 msgstr ""
 
-#: public/app-tasks.php:174
+#: public/app-tasks.php:199
 msgid "P."
 msgstr ""
 
-#: public/app-tasks.php:177
+#: public/app-tasks.php:202
 #: public/layouts/task-card.php:338
 msgid "Description"
 msgstr ""
 
-#: public/app-tasks.php:178
+#: public/app-tasks.php:203
 msgid "Tags"
 msgstr ""
 
-#: public/app-tasks.php:180
+#: public/app-tasks.php:205
 msgid "Remaining Time"
 msgstr ""
 
-#: public/app-tasks.php:203
+#: public/app-tasks.php:229
 msgid "Undefined board"
 msgstr ""
 
