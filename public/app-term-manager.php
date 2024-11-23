@@ -148,8 +148,11 @@ if ($type === 'board') {
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<form id="term-form">
-						<input type="hidden" id="term-id" name="term_id">
+					<form id="term-form" method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+						<input type="hidden" name="action" value="save_term">
+						<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">
+						<input type="hidden" name="term_id" id="term-id">
+						<?php wp_nonce_field('term_manager_nonce', 'term_nonce'); ?>
 						<div class="mb-3">
 							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?></label>
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
@@ -162,11 +165,11 @@ if ($type === 'board') {
 							<label for="term-color" class="form-label"><?php _e('Color', 'decker'); ?></label>
 							<input type="color" class="form-control" id="term-color" name="term_color">
 						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php _e('Close', 'decker'); ?></button>
+							<button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i><?php _e('Save', 'decker'); ?></button>
+						</div>
 					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php _e('Close', 'decker'); ?></button>
-					<button type="button" class="btn btn-primary" id="save-term"><i class="ri-save-line me-1"></i><?php _e('Save', 'decker'); ?></button>
 				</div>
 			</div>
 		</div>
@@ -179,9 +182,6 @@ if ($type === 'board') {
 jQuery(document).ready(function($) {
     new Tablesort(document.getElementById('termsTable'));
     
-    // Store the current type for use in AJAX calls
-    window.currentTermType = '<?php echo esc_js($type); ?>';
-
     // Initialize the modal
     const termModal = new bootstrap.Modal(document.getElementById('term-modal'));
     const termForm = document.getElementById('term-form');
@@ -195,84 +195,33 @@ jQuery(document).ready(function($) {
     // Handle edit button click
     $('.edit-term').on('click', function(e) {
         e.preventDefault();
-        const termId = $(this).data('id');
+        const row = $(this).closest('tr');
+        const name = row.find('td:first-child .badge').text();
+        const slug = row.find('td:nth-child(2)').text();
+        const color = row.find('td:nth-child(3) .color-box').css('background-color');
+        const id = $(this).data('id');
+
         $('#termModalLabel').text('<?php _e("Edit Term", "decker"); ?>');
-        
-        // Make AJAX call to get term data
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'get_term_data',
-                term_id: termId,
-                type: window.currentTermType,
-                nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    $('#term-id').val(response.data.id);
-                    $('#term-name').val(response.data.name);
-                    $('#term-slug').val(response.data.slug);
-                    $('#term-color').val(response.data.color);
-                    termModal.show();
-                } else {
-                    alert(response.data.message);
-                }
-            }
-        });
+        $('#term-id').val(id);
+        $('#term-name').val(name);
+        $('#term-slug').val(slug);
+        $('#term-color').val(color);
+        termModal.show();
     });
 
-    // Handle save button click
-    $('#save-term').on('click', function() {
-        const formData = {
-            action: 'save_term',
-            type: window.currentTermType,
-            term_id: $('#term-id').val(),
-            term_name: $('#term-name').val(),
-            term_slug: $('#term-slug').val(),
-            term_color: $('#term-color').val(),
-            nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
-        };
-
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    location.reload(); // Refresh to show changes
-                } else {
-                    alert(response.data.message);
-                }
-            }
-        });
-    });
-
-    // Handle delete button click
+    // Handle delete form submission
     $('.delete-term').on('click', function(e) {
         e.preventDefault();
-        if (!confirm('<?php _e("Are you sure you want to delete this term?", "decker"); ?>')) {
-            return;
+        if (confirm('<?php _e("Are you sure you want to delete this term?", "decker"); ?>')) {
+            const termId = $(this).data('id');
+            const form = $('<form method="POST" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">')
+                .append($('<input type="hidden" name="action" value="delete_term">'))
+                .append($('<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">'))
+                .append($('<input type="hidden" name="term_id">').val(termId))
+                .append($('<?php wp_nonce_field('term_manager_nonce', 'term_nonce'); ?>'));
+            $('body').append(form);
+            form.submit();
         }
-
-        const termId = $(this).data('id');
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'delete_term',
-                term_id: termId,
-                type: window.currentTermType,
-                nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload(); // Refresh to show changes
-                } else {
-                    alert(response.data.message);
-                }
-            }
-        });
     });
 });
 </script>
