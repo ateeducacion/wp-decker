@@ -107,7 +107,6 @@ class Decker_Admin_Import {
 						<ul id="log-messages"></ul>
 					</div>
 				</div>
-			<?php endif; ?>
 		</div>
 
 <script>
