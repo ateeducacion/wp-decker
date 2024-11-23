@@ -537,7 +537,7 @@ function deleteComment(commentId) {
 
 <script type="text/javascript">
 
-var quill;
+var quill = null;
 var assigneesSelect;
 var labelsSelect;
 
@@ -565,21 +565,23 @@ function initializeTaskPage() {
 
 
 	if (document.getElementById('editor')) {
-		quill = new Quill('#editor', {
-			theme: 'snow',
-			readOnly: <?php echo $disabled ? 'true' : 'false'; ?>,
-			modules: {
-				toolbar: [
-					[{ 'header': [1, 2, false] }],
-					['bold', 'italic', 'underline', 'strike'],
-					[{ 'color': [] }, { 'background': [] }],
-					['link', 'blockquote', 'code-block', 'image'],
-					[{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-					[{ 'indent': '-1' }, { 'indent': '+1' }], // Disminuir y aumentar sangría
-					['clean'],
-				]
-			}
-		});
+		if (quill === null) {
+			quill = new Quill('#editor', {
+				theme: 'snow',
+				readOnly: <?php echo $disabled ? 'true' : 'false'; ?>,
+				modules: {
+					toolbar: [
+						[{ 'header': [1, 2, false] }],
+						['bold', 'italic', 'underline', 'strike'],
+						[{ 'color': [] }, { 'background': [] }],
+						['link', 'blockquote', 'code-block', 'image'],
+						[{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+						[{ 'indent': '-1' }, { 'indent': '+1' }], // Disminuir y aumentar sangría
+						['clean'],
+					]
+				}
+			});
+		}
 
 	}
 
