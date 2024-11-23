@@ -67,7 +67,7 @@ class Decker_Email_To_Post {
 	    // Get and validate payload
         $payload = $request->get_json_params();
         if (!isset($payload['rawEmail']) || empty($payload['metadata'])) {
-		    Decker_Utility_Functions::write_log('Invalid email payload', Decker_Utility_Functions::LOG_LEVEL_ERROR);        	
+		    error_log('Invalid email payload' );        	
             return new WP_Error('invalid_payload', 'Invalid email payload', array('status' => 400));
         }
 
@@ -313,15 +313,13 @@ class Decker_Email_To_Post {
                     $task_id
                 );
                 if (is_wp_error($result)) {
-                    Decker_Utility_Functions::write_log(
-                        "Error uploading attachment {$attachment['filename']}: " . $result->get_error_message(),
-                        Decker_Utility_Functions::LOG_LEVEL_ERROR
+                    error_log(
+                        "Error uploading attachment {$attachment['filename']}: " . $result->get_error_message()
                     );
                 }
             } catch (Exception $e) {
-                Decker_Utility_Functions::write_log(
-                    "Exception processing attachment {$attachment['filename']}: " . $e->getMessage(),
-                    Decker_Utility_Functions::LOG_LEVEL_ERROR
+                error_log(
+                    "Exception processing attachment {$attachment['filename']}: " . $e->getMessage()
                 );
             }
         }

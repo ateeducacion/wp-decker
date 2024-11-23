@@ -168,7 +168,6 @@ class Decker_Admin_Settings {
 		add_action( 'admin_init', array( $this, 'settings_init' ) );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_action( 'admin_init', array( $this, 'handle_clear_all_data' ) );
-		add_action( 'admin_init', array( $this, 'handle_clear_log' ) );
 	}
 
 	/**
@@ -206,9 +205,6 @@ class Decker_Admin_Settings {
 			'alert_message' => __( 'Alert Message', 'decker' ), // Alert message field
 			'user_profile' => __( 'User Profile', 'decker' ), // User profile dropdown
 			'shared_key' => __( 'Shared Key', 'decker' ),
-			'log_level' => __( 'Log Level', 'decker' ), // Log level radio buttons
-			'decker_log' => __( 'Decker Log', 'decker' ), // Log field
-			'clear_log_button' => __( 'Clear Log', 'decker' ), // New clear log button
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
 	
@@ -249,53 +245,6 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Render Log Level Field
-	 *
-	 * Outputs the HTML for the log level field.
-	 */
-	public function log_level_render() {
-		$options = get_option( 'decker_settings', array() );
-		$log_level = isset( $options['log_level'] ) ? $options['log_level'] : Decker_Utility_Functions::LOG_LEVEL_ERROR;
-
-		$levels = array(
-			Decker_Utility_Functions::LOG_LEVEL_DEBUG => 'Debug',
-			Decker_Utility_Functions::LOG_LEVEL_INFO => 'Info',
-			Decker_Utility_Functions::LOG_LEVEL_ERROR => 'Error',
-		);
-
-		foreach ( $levels as $value => $label ) {
-			echo '<label style="margin-right: 15px;">';
-			echo '<input type="radio" name="decker_settings[log_level]" value="' . esc_attr( $value ) . '" ' . checked( $log_level, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label>';
-		}
-	}
-
-
-	/**
-	 * Render  Log
-	 *
-	 * Outputs the HTML for the render log field.
-	 */
-	public function decker_log_render() {
-		$log = get_option( 'decker_log', '' );
-		echo '<textarea readonly rows="10" class="large-text">' . esc_textarea( $log ) . '</textarea>';
-	}
-
-
-	/**
-	 * Render Clear Log Button
-	 *
-	 * Outputs the HTML for the clear log field.
-	 */
-	public function clear_log_button_render() {
-		wp_nonce_field( 'decker_clear_log_action', 'decker_clear_log_nonce', true, true );
-		echo '<input type="submit" name="decker_clear_log" class="button button-secondary" value="' . esc_attr__( 'Clear Log', 'decker' ) . '">';
-		echo '<p class="description">' . esc_html__( 'Click the button to clear the Decker log.', 'decker' ) . '</p>';
-	}
-
-
-	/**
 	 * Options Page
 	 *
 	 * Renders the settings page.
@@ -321,33 +270,7 @@ class Decker_Admin_Settings {
 		if ( isset( $_GET['decker_data_cleared'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'All Decker records have been deleted.', 'decker' ) . '</p></div>';
 		}
-		if ( isset( $_GET['decker_log_cleared'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Decker log has been cleared.', 'decker' ) . '</p></div>';
-		}
 	}
-
-
-	/**
-	 * Handle Clear log
-	 *
-	 * Handles the clearing of the log.
-	 */
-	public function handle_clear_log() {
-		if ( isset( $_POST['decker_clear_log'] ) && check_admin_referer( 'decker_clear_log_action', 'decker_clear_log_nonce' ) ) {
-			update_option( 'decker_log', '' ); // Clear the log by setting it to an empty string
-			wp_redirect(
-				add_query_arg(
-					array(
-						'page' => 'decker_settings',
-						'decker_log_cleared' => 'true',
-					),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-	}
-
 
 	/**
 	 * Settings Validation
@@ -362,20 +285,6 @@ class Decker_Admin_Settings {
 
 	    // Validate shared key
 	    $input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
-
-	    // Validate log level
-	    if ( isset( $input['log_level'] ) && ! in_array(
-	        $input['log_level'],
-	        array(
-	            Decker_Utility_Functions::LOG_LEVEL_DEBUG,
-	            Decker_Utility_Functions::LOG_LEVEL_INFO,
-	            Decker_Utility_Functions::LOG_LEVEL_ERROR,
-	        )
-	    ) ) {
-	        $input['log_level'] = Decker_Utility_Functions::LOG_LEVEL_ERROR; // Default to ERROR if invalid
-	    } else {
-	        $input['log_level'] = isset( $input['log_level'] ) ? $input['log_level'] : Decker_Utility_Functions::LOG_LEVEL_ERROR;
-	    }
 
 	    // Validate alert color
 	    $valid_colors = array( 'success', 'danger', 'warning', 'info' );

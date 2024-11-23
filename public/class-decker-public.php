@@ -243,7 +243,6 @@ class Decker_Public {
 
 				if ( strpos( $resource, '.css' ) !== false ) {
 					wp_enqueue_style( $handle, $resource, array(), null );
-					Decker_Utility_Functions::write_log( 'Loading: ' . $resource, Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 
 				} elseif ( strpos( $resource, '.js' ) !== false ) {
 
@@ -252,7 +251,6 @@ class Decker_Public {
 						$deps[] = $last_handle;
 					}
 					wp_enqueue_script( $handle, $resource, $deps, null, true );
-					Decker_Utility_Functions::write_log( 'Loading: ' . $resource, Decker_Utility_Functions::LOG_LEVEL_INFO );
 
 					$last_handle = $handle; // Update last_handle to current script handle
 

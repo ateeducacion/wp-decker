@@ -16,7 +16,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: decker.php
 #: admin/class-decker-admin-export.php:61
-#: admin/class-decker-admin-settings.php:182
+#: admin/class-decker-admin-settings.php:181
 msgid "Decker"
 msgstr ""
 
@@ -116,71 +116,50 @@ msgstr ""
 msgid "Select the color for the alert message."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:181
+#: admin/class-decker-admin-settings.php:180
 #: public/layouts/topbar.php:82
 msgid "Decker Settings"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:199
+#: admin/class-decker-admin-settings.php:198
 msgid "Decker Configuration"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:205
-msgid "Shared Key"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:206
-#: admin/class-decker-admin-settings.php:246
-msgid "Clear All Data"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:207
-msgid "Log Level"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:208
-msgid "Decker Log"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:209
-#: admin/class-decker-admin-settings.php:292
-msgid "Clear Log"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:210
-msgid "Alert Message"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:211
+#: admin/class-decker-admin-settings.php:204
 msgid "Alert Color"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:212
+#: admin/class-decker-admin-settings.php:205
+msgid "Alert Message"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:206
 msgid "User Profile"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:233
+#: admin/class-decker-admin-settings.php:207
+msgid "Shared Key"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:208
+#: admin/class-decker-admin-settings.php:243
+msgid "Clear All Data"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:230
 msgid "Configure the Decker plugin settings."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:246
+#: admin/class-decker-admin-settings.php:243
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:247
+#: admin/class-decker-admin-settings.php:244
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:293
-msgid "Click the button to clear the Decker log."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:321
+#: admin/class-decker-admin-settings.php:271
 msgid "All Decker records have been deleted."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:324
-msgid "Decker log has been cleared."
 msgstr ""
 
 #: admin/class-decker-admin.php:60
@@ -188,69 +167,72 @@ msgid "Settings"
 msgstr ""
 
 #: admin/class-decker-admin.php:77
-#: admin/class-decker-admin.php:80
 msgid "Go to Frontend"
 msgstr ""
 
+#: admin/class-decker-admin.php:80
+msgid "Go to Decker"
+msgstr ""
+
 #. translators: 1: number of years, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:192
+#: includes/class-decker-utility-functions.php:57
 msgid "in %1$d year%2$s"
 msgstr ""
 
 #. translators: 1: number of years, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:194
+#: includes/class-decker-utility-functions.php:59
 msgid "%1$d year%2$s ago"
 msgstr ""
 
 #. translators: 1: number of months, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:198
+#: includes/class-decker-utility-functions.php:63
 msgid "in %1$d month%2$s"
 msgstr ""
 
 #. translators: 1: number of months, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:200
+#: includes/class-decker-utility-functions.php:65
 msgid "%1$d month%2$s ago"
 msgstr ""
 
 #. translators: 1: number of days, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:204
+#: includes/class-decker-utility-functions.php:69
 msgid "in %1$d day%2$s"
 msgstr ""
 
 #. translators: 1: number of days, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:206
+#: includes/class-decker-utility-functions.php:71
 msgid "%1$d day%2$s ago"
 msgstr ""
 
 #. translators: 1: number of hours, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:210
+#: includes/class-decker-utility-functions.php:75
 msgid "in %1$d hour%2$s"
 msgstr ""
 
 #. translators: 1: number of hours, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:212
+#: includes/class-decker-utility-functions.php:77
 msgid "%1$d hour%2$s ago"
 msgstr ""
 
 #. translators: 1: number of minutes, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:216
+#: includes/class-decker-utility-functions.php:81
 msgid "in %1$d minute%2$s"
 msgstr ""
 
 #. translators: 1: number of minutes, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:218
+#: includes/class-decker-utility-functions.php:83
 msgid "%1$d minute%2$s ago"
 msgstr ""
 
-#: includes/class-decker-utility-functions.php:221
+#: includes/class-decker-utility-functions.php:86
 msgid "in a few seconds"
 msgstr ""
 
-#: includes/class-decker-utility-functions.php:222
+#: includes/class-decker-utility-functions.php:87
 msgid "a few seconds ago"
 msgstr ""
 
-#: includes/class-decker.php:250
+#: includes/class-decker.php:236
 msgid "Decker User"
 msgstr ""
 
@@ -581,31 +563,31 @@ msgstr ""
 msgid "Select Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1572
+#: includes/custom-post-types/class-decker-tasks.php:1539
 msgid "Show All Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1573
+#: includes/custom-post-types/class-decker-tasks.php:1540
 msgid "Show All Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1618
+#: includes/custom-post-types/class-decker-tasks.php:1585
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1734
+#: includes/custom-post-types/class-decker-tasks.php:1701
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1737
+#: includes/custom-post-types/class-decker-tasks.php:1704
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1740
+#: includes/custom-post-types/class-decker-tasks.php:1707
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1746
+#: includes/custom-post-types/class-decker-tasks.php:1713
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 

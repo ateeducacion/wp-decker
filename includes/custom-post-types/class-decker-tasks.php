@@ -261,8 +261,8 @@ public function delete_task_attachment() {
 	    $posts = get_posts( $args );
 
 
-	    // Decker_Utility_Functions::write_log( $posts , Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log( "------------" , Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // error_log( $posts  );
+	    // error_log( "------------"  );
 
 
 
@@ -351,7 +351,7 @@ public function delete_task_attachment() {
 		// Verifica si la actualización fue exitosa
 		if (false === $updated) {
 		    // Manejo de error, por ejemplo, registro de error	
-		    Decker_Utility_Functions::write_log( 'Error updating menu_order for task ID ' . $task_id . ': ' . $wpdb->last_error, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		    error_log( 'Error updating menu_order for task ID ' . $task_id . ': ' . $wpdb->last_error );
 		}
 
 		// Reorder tasks in the source stack
@@ -436,7 +436,7 @@ public function delete_task_attachment() {
 
 		if ( $result === false ) {
 		    // Handle error, e.g., log the error
-		    Decker_Utility_Functions::write_log( $wpdb->last_error, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		    error_log( $wpdb->last_error );
 		}
 
 	}
@@ -470,9 +470,9 @@ public function delete_task_attachment() {
 			return;
 		}
 
-	    // Decker_Utility_Functions::write_log( '-------.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log( $new_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	    // Decker_Utility_Functions::write_log( $old_status, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	    // error_log( '-------.' );
+	    // error_log( $new_status );
+	    // error_log( $old_status );
 
 
 
@@ -1358,19 +1358,10 @@ public function display_attachment_meta_box( $post ) {
 		if ( isset( $postarr['menu_order'] ) ) {
 		    // Remove the menu_order field so it won't be saved
 		    unset( $postarr['menu_order'] );
-	        Decker_Utility_Functions::write_log( 'Avoid order modification by user.', Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 		}
 
 	    // Ensure we're working with the correct post type and only on Insert post.
 	    if ( !$update && 'decker_task' === $postarr['post_type'] ) {
-
-	        // Log the function call for debugging.
-	        Decker_Utility_Functions::write_log( 'Function modify_task_order_before_save called.', Decker_Utility_Functions::LOG_LEVEL_DEBUG );
-
-
-	        // Log input data for inspection.
-	        Decker_Utility_Functions::write_log( 'Input $data: ' . print_r( $data, true ), Decker_Utility_Functions::LOG_LEVEL_DEBUG );
-	        Decker_Utility_Functions::write_log( 'Input $postarr: ' . print_r( $postarr, true ), Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 
 	        // Initialize variables.
 	        $board = '';
@@ -1379,44 +1370,23 @@ public function display_attachment_meta_box( $post ) {
 	        // 1. Attempt to retrieve 'decker_board' and 'stack' directly from $postarr.
 	        if ( isset( $postarr['decker_board'] ) ) {
 	            $board = intval( $postarr['decker_board'] );
-	            Decker_Utility_Functions::write_log( "Found 'decker_board' directly in \$postarr: $board", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	        }
 
 	        if ( isset( $postarr['stack'] ) ) {
 	            $stack = sanitize_text_field( $postarr['stack'] );
-	            Decker_Utility_Functions::write_log( "Found 'stack' directly in \$postarr: $stack", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	        }
 
 	        // 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
 	        if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
 	            $board = intval( $postarr['tax_input']['decker_board'][0] );
-
-	            // Decker_Utility_Functions::write_log( "-----" , Decker_Utility_Functions::LOG_LEVEL_INFO );
-
-	            // Decker_Utility_Functions::write_log( $postarr['tax_input']['decker_board'], Decker_Utility_Functions::LOG_LEVEL_INFO );
-
-
-			    // Retrieve the term ID based on the term name.
-			    // $term = get_term( $board, 'decker_board' );
-
-			    // if ( $term && ! is_wp_error( $term ) ) {
-			    //     $board_name = $term->name; // Get the term ID.
-			    //     Decker_Utility_Functions::write_log( "Retrieved term ID for 'decker_board' with ID '$board': $board_name", Decker_Utility_Functions::LOG_LEVEL_INFO );
-			    // } else {
-			    //     Decker_Utility_Functions::write_log( "Failed to retrieve term Name for 'decker_board' with ID '$board'.", Decker_Utility_Functions::LOG_LEVEL_ERROR );
-			    // }
 	        }
 
 	        if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
 	            $stack = sanitize_text_field( $postarr['meta_input']['stack'] );
-	            Decker_Utility_Functions::write_log( "Found 'stack' in 'meta_input': $stack", Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	        }
 
 	        // 3. Validate that both 'board' and 'stack' have been retrieved.
 	        if ( ! empty( $board ) && ! empty( $stack ) ) {
-
-	            // Decker_Utility_Functions::write_log( $board, Decker_Utility_Functions::LOG_LEVEL_INFO );
-	            // Decker_Utility_Functions::write_log( $stack, Decker_Utility_Functions::LOG_LEVEL_INFO );
 
 	            // Calculate the new order value based on 'board' and 'stack'.
 	            $new_order = $this->get_new_task_order( $board, $stack );
@@ -1425,16 +1395,13 @@ public function display_attachment_meta_box( $post ) {
 	            if ( is_numeric( $new_order ) ) {
 	                // Assign the calculated menu_order to the post data.
 	                $data['menu_order'] = intval( $new_order );
-
-	                // Log the new menu_order value.
-	                Decker_Utility_Functions::write_log( "Assigned 'menu_order' = $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_DEBUG );
 	            } else {
 	                // Log an error if the new_order is not numeric.
-	                Decker_Utility_Functions::write_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	                error_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'] );
 	            }
 	        } else {
 	            // Log a warning if either 'board' or 'stack' is missing.
-	            Decker_Utility_Functions::write_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	            error_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'] );
 	        }
 	    }
 
@@ -1657,10 +1624,10 @@ public function display_attachment_meta_box( $post ) {
         $stack = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
         $board = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
       
-		// Decker_Utility_Functions::write_log( "-----", Decker_Utility_Functions::LOG_LEVEL_ERROR );
-		// Decker_Utility_Functions::write_log($_POST['board'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		// error_log( "-----" );
+		// error_log($_POST['board'] );
 
-		// Decker_Utility_Functions::write_log($board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		// error_log($board );
 
 
         $max_priority = isset( $_POST['max_priority'] ) ? boolval( $_POST['max_priority'] ) : false;
@@ -1742,12 +1709,12 @@ public function display_attachment_meta_box( $post ) {
 
 		if ( ! term_exists( $board, 'decker_board' ) ) {		
 
-			Decker_Utility_Functions::write_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
+			error_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.' );
 	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
 
-		// Decker_Utility_Functions::write_log($board, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		// error_log($board );
 
 
 	    // Convertir objetos DateTime a formato string (si no, pasamos null to undefined)

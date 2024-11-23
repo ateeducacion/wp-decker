@@ -22,7 +22,7 @@ msgstr "Área de Tecnología Educativa"
 #. Plugin Name of the plugin
 #: decker.php
 #: admin/class-decker-admin-export.php:61
-#: admin/class-decker-admin-settings.php:182
+#: admin/class-decker-admin-settings.php:181
 msgid "Decker"
 msgstr "Decker"
 
@@ -47,56 +47,31 @@ msgstr "Importar ahora"
 msgid "Import Progress"
 msgstr "En Progreso"
 
-#: admin/class-decker-admin-settings.php:181
+#: admin/class-decker-admin-settings.php:180
 #: public/layouts/topbar.php:82
 msgid "Decker Settings"
 msgstr "Configuración de Decker"
 
-#: admin/class-decker-admin-settings.php:199
+#: admin/class-decker-admin-settings.php:198
 msgid "Decker Configuration"
 msgstr "Configuración de Decker"
 
-#: admin/class-decker-admin-settings.php:206
-#: admin/class-decker-admin-settings.php:246
+#: admin/class-decker-admin-settings.php:208
+#: admin/class-decker-admin-settings.php:243
 msgid "Clear All Data"
 msgstr "Borrar Todos los Datos"
 
-#: admin/class-decker-admin-settings.php:207
-msgid "Log Level"
-msgstr "Nivel de Registro"
-
-#: admin/class-decker-admin-settings.php:208
-#, fuzzy
-msgid "Decker Log"
-msgstr "Decker"
-
-#: admin/class-decker-admin-settings.php:209
-#: admin/class-decker-admin-settings.php:292
-#, fuzzy
-msgid "Clear Log"
-msgstr "Limpiar Log"
-
-#: admin/class-decker-admin-settings.php:246
+#: admin/class-decker-admin-settings.php:243
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr "¿Estás seguro de que deseas eliminar todos los registros de Decker? Esta acción no se puede deshacer."
 
-#: admin/class-decker-admin-settings.php:247
+#: admin/class-decker-admin-settings.php:244
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr "Haz clic en el botón para eliminar todas las etiquetas, tareas y tableros de Decker."
 
-#: admin/class-decker-admin-settings.php:293
-#, fuzzy
-msgid "Click the button to clear the Decker log."
-msgstr "Haz clic en el botón para limpiar el log de Decker."
-
-#: admin/class-decker-admin-settings.php:321
+#: admin/class-decker-admin-settings.php:271
 msgid "All Decker records have been deleted."
 msgstr "Todos los registros de Decker han sido eliminados."
-
-#: admin/class-decker-admin-settings.php:324
-#, fuzzy
-msgid "Decker log has been cleared."
-msgstr "El log de Decker ha sido limpiada."
 
 #: includes/custom-post-types/class-decker-actions.php:38
 msgctxt "taxonomy general name"
@@ -408,15 +383,15 @@ msgstr "Eliminar"
 msgid "Please select a user and date."
 msgstr "Por favor selecciona un usuario y una fecha."
 
-#: includes/custom-post-types/class-decker-tasks.php:1572
+#: includes/custom-post-types/class-decker-tasks.php:1539
 msgid "Show All Boards"
 msgstr "Mostrar Todos los Tableros"
 
-#: includes/custom-post-types/class-decker-tasks.php:1573
+#: includes/custom-post-types/class-decker-tasks.php:1540
 msgid "Show All Labels"
 msgstr "Mostrar Todas las Etiquetas"
 
-#: includes/custom-post-types/class-decker-tasks.php:1618
+#: includes/custom-post-types/class-decker-tasks.php:1585
 msgid "Status"
 msgstr "Estado"
 
@@ -463,19 +438,19 @@ msgstr "Ingrese el mensaje de alerta para mostrar como un banner. Soporta HTML. 
 msgid "Select the color for the alert message."
 msgstr "Seleccione el color para el mensaje de alerta."
 
-#: admin/class-decker-admin-settings.php:205
+#: admin/class-decker-admin-settings.php:207
 msgid "Shared Key"
 msgstr "Clave Compartida"
 
-#: admin/class-decker-admin-settings.php:210
+#: admin/class-decker-admin-settings.php:205
 msgid "Alert Message"
 msgstr "Mensaje de Alerta"
 
-#: admin/class-decker-admin-settings.php:211
+#: admin/class-decker-admin-settings.php:204
 msgid "Alert Color"
 msgstr "Color de Alerta"
 
-#: admin/class-decker-admin-settings.php:212
+#: admin/class-decker-admin-settings.php:206
 msgid "User Profile"
 msgstr "Perfil de Usuario"
 
@@ -483,70 +458,69 @@ msgstr "Perfil de Usuario"
 msgid "Settings"
 msgstr "Configuraciones"
 
-#: admin/class-decker-admin.php:77
 #: admin/class-decker-admin.php:80
-msgid "Go to Frontend"
-msgstr "Ir al Frontend"
+msgid "Go to Decker"
+msgstr "Ir al Decker"
 
 #. translators: 1: number of years, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:192
+#: includes/class-decker-utility-functions.php:57
 msgid "in %1$d year%2$s"
 msgstr "en %1$d año%2$s"
 
 #. translators: 1: number of years, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:194
+#: includes/class-decker-utility-functions.php:59
 msgid "%1$d year%2$s ago"
 msgstr "hace %1$d año%2$s"
 
 #. translators: 1: number of months, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:198
+#: includes/class-decker-utility-functions.php:63
 msgid "in %1$d month%2$s"
 msgstr "en %1$d mes%2$s"
 
 #. translators: 1: number of months, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:200
+#: includes/class-decker-utility-functions.php:65
 msgid "%1$d month%2$s ago"
 msgstr "hace %1$d mes%2$s"
 
 #. translators: 1: number of days, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:204
+#: includes/class-decker-utility-functions.php:69
 msgid "in %1$d day%2$s"
 msgstr "en %1$d día%2$s"
 
 #. translators: 1: number of days, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:206
+#: includes/class-decker-utility-functions.php:71
 msgid "%1$d day%2$s ago"
 msgstr "hace %1$d día%2$s"
 
 #. translators: 1: number of hours, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:210
+#: includes/class-decker-utility-functions.php:75
 msgid "in %1$d hour%2$s"
 msgstr "en %1$d hora%2$s"
 
 #. translators: 1: number of hours, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:212
+#: includes/class-decker-utility-functions.php:77
 msgid "%1$d hour%2$s ago"
 msgstr "hace %1$d hora%2$s"
 
 #. translators: 1: number of minutes, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:216
+#: includes/class-decker-utility-functions.php:81
 msgid "in %1$d minute%2$s"
 msgstr "en %1$d minuto%2$s"
 
 #. translators: 1: number of minutes, 2: 's' for plural or empty for singular
-#: includes/class-decker-utility-functions.php:218
+#: includes/class-decker-utility-functions.php:83
 msgid "%1$d minute%2$s ago"
 msgstr "hace %1$d minuto%2$s"
 
-#: includes/class-decker-utility-functions.php:221
+#: includes/class-decker-utility-functions.php:86
 msgid "in a few seconds"
 msgstr "en unos segundos"
 
-#: includes/class-decker-utility-functions.php:222
+#: includes/class-decker-utility-functions.php:87
 msgid "a few seconds ago"
 msgstr "hace unos segundos"
 
-#: includes/class-decker.php:250
+#: includes/class-decker.php:236
 msgid "Decker User"
 msgstr "Usuario Decker"
 
@@ -571,19 +545,19 @@ msgstr "Agregar Adjuntos"
 msgid "Select Attachments"
 msgstr "Seleccionar Adjuntos"
 
-#: includes/custom-post-types/class-decker-tasks.php:1734
+#: includes/custom-post-types/class-decker-tasks.php:1701
 msgid "The title is required."
 msgstr "El título es obligatorio."
 
-#: includes/custom-post-types/class-decker-tasks.php:1737
+#: includes/custom-post-types/class-decker-tasks.php:1704
 msgid "The stack is required."
 msgstr "La columna es obligatoria."
 
-#: includes/custom-post-types/class-decker-tasks.php:1740
+#: includes/custom-post-types/class-decker-tasks.php:1707
 msgid "The board is required and must be a positive integer."
 msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
-#: includes/custom-post-types/class-decker-tasks.php:1746
+#: includes/custom-post-types/class-decker-tasks.php:1713
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr "El tablero no existe en la taxonomía decker_board."
 
@@ -1268,6 +1242,10 @@ msgstr ""
 msgid "Skip Existing Tasks"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:233
+#: admin/class-decker-admin-settings.php:230
 msgid "Configure the Decker plugin settings."
+msgstr ""
+
+#: admin/class-decker-admin.php:77
+msgid "Go to Frontend"
 msgstr ""

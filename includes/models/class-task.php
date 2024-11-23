@@ -184,7 +184,7 @@ class Task {
      * 
      * @return string HTML value of the pastelized color in hex format (e.g., '#ffcccc').
      */
-    public function pastelizeColor(string $color): string {
+    public function pastelizeColor(?string $color): string {
         // Remove '#' if present
         $color = ltrim($color, '#');
 
@@ -308,7 +308,7 @@ class Task {
         }
 
         $card_background_color = "";
-        if ($draw_background_color) {
+        if ($draw_background_color && $this->board && $this->board->color) {
             $board_color = $this->pastelizeColor($this->board->color);
             $card_background_color = 'style="background-color: ' . esc_attr($board_color) . ';"';        
         }
@@ -337,7 +337,7 @@ class Task {
                         <i class="ri-briefcase-2-line text-muted"></i>                       
                         <?php 
 
-                        if ($draw_background_color) {
+                        if ($draw_background_color && $this->board && $this->board->color) {
                             echo esc_html($this->board->name); 
                         }
                         ?>

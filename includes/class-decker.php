@@ -228,20 +228,6 @@ class Decker {
 	}
 }
 
-/**
- * A temporary function to log messages using the Decker_Utility_Functions class.
- *
- * This function serves as a wrapper to maintain compatibility with existing code
- * that uses the `write_log` function. It forwards the log message to the
- * `Decker_Utility_Functions::write_log` method with a default log level of `LOG_LEVEL_ERROR`.
- *
- * @param string|array $message The message or data to log. If an array or object is passed,
- *                              it will be converted to a string using `print_r`.
- * @return void
- */
-function write_log( $message ) {
-	Decker_Utility_Functions::write_log( $message, Decker_Utility_Functions::LOG_LEVEL_ERROR );
-}
 
 function register_decker_role() {
     // Create the "Decker User" role if it doesn't exist.
