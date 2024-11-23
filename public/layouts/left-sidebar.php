@@ -222,11 +222,11 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 
 		</a>
-		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'board' ) ? ' show' : ''; ?>" id="sidebarUtilities">
+		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'term-manager' ) ? ' show' : ''; ?>" id="sidebarUtilities">
 			<ul class="side-nav-second-level">
 
 
-				<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::getAllLabels() ) ); ?></span><a href="<?php
+				<li class="<?php echo decker_is_active_subpage( 'type', 'label' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::getAllLabels() ) ); ?></span><a href="<?php
 					echo add_query_arg(
 						array(
 							'decker_page' => 'term-manager',
@@ -236,7 +236,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 					);
 				?>"><?php _e('Labels', 'decker'); ?></a></li>
 
-				<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::getAllBoards() ) ); ?></span><a href="<?php
+				<li class="<?php echo decker_is_active_subpage( 'type', 'board' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::getAllBoards() ) ); ?></span><a href="<?php
 					echo add_query_arg(
 						array(
 							'decker_page' => 'term-manager',

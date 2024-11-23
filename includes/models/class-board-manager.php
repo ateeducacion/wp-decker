@@ -103,8 +103,6 @@ class BoardManager {
      */
     public static function deleteBoard(int $id): array {
 
-        print_r($id);
-        die();
         $result = wp_delete_term($id, 'decker_board');
 
         if (is_wp_error($result)) {
