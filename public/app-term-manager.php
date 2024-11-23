@@ -143,11 +143,102 @@ if ($type === 'board') {
 </body>
 
 <script>
-jQuery(document).ready(function() {
-	new Tablesort(document.getElementById('termsTable'));
-	
-	// Store the current type for use in AJAX calls
-	window.currentTermType = '<?php echo esc_js($type); ?>';
+jQuery(document).ready(function($) {
+    new Tablesort(document.getElementById('termsTable'));
+    
+    // Store the current type for use in AJAX calls
+    window.currentTermType = '<?php echo esc_js($type); ?>';
+
+    // Initialize the modal
+    const termModal = new bootstrap.Modal(document.getElementById('term-modal'));
+    const termForm = document.getElementById('term-form');
+
+    // Handle "Add New" button click
+    $('.btn-success').on('click', function() {
+        $('#termModalLabel').text('<?php _e("Add New Term", "decker"); ?>');
+        termForm.reset();
+    });
+
+    // Handle edit button click
+    $('.edit-term').on('click', function(e) {
+        e.preventDefault();
+        const termId = $(this).data('id');
+        $('#termModalLabel').text('<?php _e("Edit Term", "decker"); ?>');
+        
+        // Make AJAX call to get term data
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'get_term_data',
+                term_id: termId,
+                type: window.currentTermType,
+                nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#term-id').val(response.data.id);
+                    $('#term-name').val(response.data.name);
+                    $('#term-color').val(response.data.color);
+                    termModal.show();
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
+
+    // Handle save button click
+    $('#save-term').on('click', function() {
+        const formData = {
+            action: 'save_term',
+            type: window.currentTermType,
+            term_id: $('#term-id').val(),
+            term_name: $('#term-name').val(),
+            term_color: $('#term-color').val(),
+            nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
+        };
+
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Refresh to show changes
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
+
+    // Handle delete button click
+    $('.delete-term').on('click', function(e) {
+        e.preventDefault();
+        if (!confirm('<?php _e("Are you sure you want to delete this term?", "decker"); ?>')) {
+            return;
+        }
+
+        const termId = $(this).data('id');
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'delete_term',
+                term_id: termId,
+                type: window.currentTermType,
+                nonce: '<?php echo wp_create_nonce("term_manager_nonce"); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Refresh to show changes
+                } else {
+                    alert(response.data.message);
+                }
+            }
+        });
+    });
 });
 </script>
 
