@@ -12,7 +12,7 @@ class LabelManager {
     private static ?LabelManager $instance = null;    
     private static array $labels = [];
 
-    public function __construct() {
+    private function __construct() {
         // Load all labels
         $terms = get_terms(
             array(

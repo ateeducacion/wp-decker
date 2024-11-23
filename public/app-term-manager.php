@@ -5,19 +5,16 @@ include 'layouts/main.php';
 $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : 'label';
 
 // Initialize the appropriate manager based on type
-$manager = null;
 $items = [];
 $title = '';
 $addNewText = '';
 
 if ($type === 'board') {
-    $manager = new BoardManager();
-    $items = $manager->getAllBoards();
+    $items = BoardManager::getAllBoards();
     $title = __('Boards', 'decker');
     $addNewText = __('Add New Board', 'decker');
 } else {
-    $manager = new LabelManager();
-    $items = $manager->getAllLabels();
+    $items = LabelManager::getAllLabels();
     $title = __('Labels', 'decker');
     $addNewText = __('Add New Label', 'decker');
 }
@@ -50,10 +47,6 @@ if ($type === 'board') {
 					<div class="row">
 						<div class="col-xxl-12">
 							<!-- start page title -->
-
-
-
-
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 		
@@ -93,9 +86,7 @@ if ($type === 'board') {
 													<tr>
 														<th><?php _e('Name', 'decker'); ?></th>
 														<th><?php _e('Slug', 'decker'); ?></th>
-														<?php if ($type === 'label'): ?>
-															<th><?php _e('Color', 'decker'); ?></th>
-														<?php endif; ?>
+														<th><?php _e('Color', 'decker'); ?></th>
 														<th><?php _e('Actions', 'decker'); ?></th>
 													</tr>
 												</thead>
@@ -103,15 +94,9 @@ if ($type === 'board') {
 													<?php
 													foreach ($items as $item) {
 														echo '<tr>';
-														if ($type === 'label') {
-															echo '<td><span class="badge" style="background-color: ' . esc_attr($item->color) . ';">' . esc_html($item->name) . '</span></td>';
-														} else {
-															echo '<td>' . esc_html($item->name) . '</td>';
-														}
+														echo '<td><span class="badge" style="background-color: ' . esc_attr($item->color) . ';">' . esc_html($item->name) . '</span></td>';
 														echo '<td>' . esc_html($item->slug) . '</td>';
-														if ($type === 'label') {
-															echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr($item->color) . ';"></span> ' . esc_html($item->color) . '</td>';
-														}
+														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr($item->color) . ';"></span> ' . esc_html($item->color) . '</td>';
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr($type) . '" data-id="' . esc_attr($item->id) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr($type) . '" data-id="' . esc_attr($item->id) . '"><i class="ri-delete-bin-line"></i></a>';

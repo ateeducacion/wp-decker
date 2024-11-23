@@ -230,7 +230,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 					echo add_query_arg(
 						array(
 							'decker_page' => 'term-manager',
-							'type' => 'labels',
+							'type' => 'label',
 						),
 						home_url( '/' )
 					);
@@ -240,22 +240,23 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 					echo add_query_arg(
 						array(
 							'decker_page' => 'term-manager',
-							'type' => 'boards',
+							'type' => 'board',
 						),
 						home_url( '/' )
 					);
 				?>"><?php _e('Boards', 'decker'); ?></a></li>
 
-
+				<?php /* TO-DO: Add the actions manager
 				<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="<?php
 					echo add_query_arg(
 						array(
 							'decker_page' => 'term-manager',
-							'type' => 'actions',
+							'type' => 'action',
 						),
 						home_url( '/' )
 					);
 				?>"><?php _e('Actions', 'decker'); ?></a></li>
+				*/ ?>
 
 		  </ul>
 		</div>
