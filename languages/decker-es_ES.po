@@ -1228,63 +1228,63 @@ msgstr "Mi Tablero"
 
 #: includes/models/class-board-manager.php:94
 msgid "Board updated successfully"
-msgstr ""
+msgstr "Tablero actualizado correctamente"
 
 #: includes/models/class-board-manager.php:94
 msgid "Board created successfully"
-msgstr ""
+msgstr "Tablero creado correctamente"
 
 #: includes/models/class-board-manager.php:117
 msgid "Board deleted successfully"
-msgstr ""
+msgstr "Tablero eliminado correctamente"
 
 #: includes/models/class-label-manager.php:114
 msgid "Label updated successfully"
-msgstr ""
+msgstr "Etiqueta actualizada correctamente"
 
 #: includes/models/class-label-manager.php:114
 msgid "Label created successfully"
-msgstr ""
+msgstr "Etiqueta creada correctamente"
 
 #: includes/models/class-label-manager.php:136
 msgid "Label deleted successfully"
-msgstr ""
+msgstr "Etiqueta eliminada correctamente"
 
 #: public/app-term-manager.php:150
 #: public/app-term-manager.php:225
 msgid "Name"
-msgstr ""
+msgstr "Nombre"
 
 #: public/app-term-manager.php:151
 #: public/app-term-manager.php:229
 msgid "Slug"
-msgstr ""
+msgstr "Slug"
 
 #: public/app-term-manager.php:216
 #: public/app-term-manager.php:276
 msgid "Add New Term"
-msgstr ""
+msgstr "Añadir Nuevo Término"
 
 #: public/app-term-manager.php:231
 msgid "Leave empty for automatic generation from name"
-msgstr ""
+msgstr "Dejar vacío para generación automática desde el nombre"
 
 #: public/app-term-manager.php:289
 msgid "Edit Term"
-msgstr ""
+msgstr "Editar Término"
 
 #: public/app-term-manager.php:303
 msgid "To confirm deletion, please enter the term slug:"
-msgstr ""
+msgstr "Para confirmar la eliminación, por favor introduce el slug del término:"
 
 #: public/app-term-manager.php:305
 msgid "WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board."
-msgstr ""
+msgstr "¡ADVERTENCIA: ¡Eliminar un tablero es peligroso! Todas las tareas asignadas a este tablero se quedarán sin tablero."
 
 #: public/app-term-manager.php:321
 msgid "Incorrect slug. Deletion cancelled."
-msgstr ""
+msgstr "Slug incorrecto. Eliminación cancelada."
 
 #: public/layouts/left-sidebar.php:219
 msgid "Utilities"
-msgstr ""
+msgstr "Utilidades"
