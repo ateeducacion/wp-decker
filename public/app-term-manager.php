@@ -38,28 +38,28 @@ $labels = $labelManager->getAllLabels();
 
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
-							
-							<?php
-							?>
-								<h4 class="page-title"><?php _e('Labels', 'decker'); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#label-modal"><?php _e('Add New Label', 'decker'); ?></a></h4>
+		
+										<h4 class="page-title"><?php _e('Labels', 'decker'); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#label-modal"><?php _e('Add New Label', 'decker'); ?></a></h4>
 
 
-	
+								<div class="page-title-right">
+
+									<div class="input-group mb-3">
+										<!-- Icono de búsqueda integrado en el campo -->
+										<span class="input-group-text bg-white border-end-0">
+											<i class="ri-search-line"></i>
+										</span>
+										
+										<!-- Campo de búsqueda con botón de borrar (X) dentro -->
+										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e('Search...', 'decker'); ?>" aria-label="<?php esc_attr_e('Search', 'decker'); ?>">
+
+									</div>
+
+								</div>					
+		
 
 
 
-								<div class="d-flex align-items-center">
-									<div id="searchBuilderContainer" class="me-2"></div>
-									<select id="boardFilter" class="form-select">
-										<option value=""><?php _e('All Boards', 'decker'); ?></option>
-										<?php
-											$boards = BoardManager::getAllBoards();
-											foreach ($boards as $board) {
-											    echo '<option value="' . esc_attr($board->name) . '">' . esc_html($board->name) . '</option>';
-											}
-										?>
-									</select>
-								</div>
 							</div>
 							<!-- end page title -->
 
@@ -130,5 +130,11 @@ $labels = $labelManager->getAllLabels();
 
 
 </body>
+
+<script>
+jQuery(document).ready(function() {
+	new Tablesort(document.getElementById('labelsTable'));
+});
+</script>
 
 </html>
