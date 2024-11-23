@@ -131,7 +131,7 @@ if ($type === 'board') {
 														<th data-sort-default><?php _e('Name', 'decker'); ?></th>
 														<th><?php _e('Slug', 'decker'); ?></th>
 														<th><?php _e('Color', 'decker'); ?></th>
-														<th><?php _e('Actions', 'decker'); ?></th>
+														<th data-sort-method='none'><?php _e('Actions', 'decker'); ?></th>
 													</tr>
 												</thead>
 												<tbody>
