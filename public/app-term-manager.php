@@ -162,7 +162,7 @@ if ($type === 'board') {
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php _e('Close', 'decker'); ?></button>
-					<button type="button" class="btn btn-primary" id="save-term"><?php _e('Save', 'decker'); ?></button>
+					<button type="button" class="btn btn-primary" id="save-term"><i class="ri-save-line me-1"></i><?php _e('Save', 'decker'); ?></button>
 				</div>
 			</div>
 		</div>
