@@ -492,10 +492,10 @@ document.addEventListener('DOMContentLoaded', function() {
 						// Map the stack titles to the corresponding values used in the task creation.
 						$stack_title_map = array(
 							'Completada'   => 'done',
-							'En revisión'  => 'done', // Esta columna desaparece
+							'En revisión'  => 'done', // This column will be removed
 							'En progreso'  => 'in-progress',
 							'Por hacer'    => 'to-do',
-							'Hay que'      => 'to-do', // Assuming "Hay que" is similar to "Por hacer"
+							'Hay que'      => 'to-do', // "Hay que" is equivalent to "to-do"
 						);
 
 						// Determine the correct stack value based on the title.
@@ -543,24 +543,24 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	private function create_task( $card, $board_term, $stack_title, $archived ) {
 
-	    // Determinar el estado del post basado en si está archivado o no
+	    // Determine post status based on whether it's archived or not
 	    $post_status = ! empty( $archived ) && $archived ? 'archived' : 'publish';
 
-	    // Convertir la descripción usando Parsedown
+	    // Convert description using Parsedown
 	    $html_description = $this->Parsedown->text( $card['description'] );
 
-		// Obtener la fecha de vencimiento (duedate)
+		// Get due date
 		$due_date_str = !empty($card['duedate']) ? sanitize_text_field($card['duedate']) : null;
 		$due_date = null;
 		if ($due_date_str) {
 		    try {
 		        $due_date = new DateTime($due_date_str);
 		    } catch (Exception $e) {
-		        error_log('Fecha de vencimiento inválida para la tarea: ' . $card['title']);
+		        error_log('Invalid due date for task: ' . $card['title']);
 		    }
 		}
 
-	    // Determinar el propietario (owner)
+	    // Determine the owner
 	    if ( is_string( $card['owner'] ) ) {
 	        $nickname = sanitize_text_field( $card['owner'] );
 	    } elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	    $owner = $this->search_user($nickname);
 
-	    // Obtener los IDs de los usuarios asignados
+	    // Get assigned users IDs
 	    $assigned_users = array();
 	    if ( is_array( $card['assignedUsers'] ) ) {	
 	        foreach ( $card['assignedUsers'] as $user ) {
@@ -585,18 +585,18 @@ document.addEventListener('DOMContentLoaded', function() {
 	        }
 	    }
 
-	    // Preparar los términos para tax_input
+	    // Prepare terms for tax_input
 	    $tax_input = array();
 
-	    // Asignar la taxonomía 'decker_board' con el ID del board
+	    // Assign 'decker_board' taxonomy with board ID
 	    if ( ! is_wp_error( $board_term ) && isset( $board_term['term_id'] ) ) {
 	        $tax_input['decker_board'] = array( intval( $board_term['term_id'] ) );
 	    } else {
 	        error_log( 'Invalid board term for task creation.' );
-	        // Opcional: asignar un término por defecto o manejar el error de otra manera
+	        // Optional: assign default term or handle error differently
 	    }
 
-	    // Preparar etiquetas como IDs de términos
+	    // Prepare labels as term IDs
 	    $label_ids = array();
 	    if ( is_array( $card['labels'] ) ) {
 	        foreach ( $card['labels'] as $label ) {
@@ -612,20 +612,20 @@ document.addEventListener('DOMContentLoaded', function() {
 	        }
 	    }
 
-	    // Determinar si la tarea tiene máxima prioridad
+	    // Determine if task has maximum priority
 	    $max_priority = false;
 	    if ( is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) {
 	        $max_priority = true;
 	    }
 
-		// Preparar la fecha de creación (createdAt)
+		// Prepare creation date
 		$creation_date = null;
 		if (!empty($card['createdAt']) && is_numeric($card['createdAt'])) {
 		    try {
 		        $creation_date = new DateTime(gmdate('Y-m-d H:i:s', $card['createdAt']));
 		    } catch (Exception $e) {
-		        error_log('Fecha de creación inválida para la tarea: ' . $card['title']);
-		        $creation_date = new DateTime(); // Asignar una fecha por defecto si hay un error
+		        error_log('Invalid creation date for task: ' . $card['title']);
+		        $creation_date = new DateTime(); // Assign default date if there's an error
 		    }
 		}
 
@@ -650,11 +650,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	    );
 
 	    if ( is_wp_error( $task_id ) ) {
-	        error_log( 'Error al crear/actualizar la tarea: ' . $task_id->get_error_message() );
+	        error_log( 'Error creating/updating task: ' . $task_id->get_error_message() );
 	        return 0;
 	    }
 
-	    // Si no está archivada, importar y procesar comentarios
+	    // If not archived, import and process comments
 	    if ( ! $archived ) {
 	        $this->import_comments( $card['id'], $task_id );
 	    }
