@@ -58,7 +58,17 @@ class TaskManager {
      * @return Task[] List of Task objects.
      */
     public function getTasksByStatus(string $status): array {
-        return $this->getTasks(array('post_status' => $status));
+        $args = array(
+            'post_status' => $status,
+            'meta_key'    => 'max_priority', // Define field to use in order
+            'meta_type' => 'BOOL',
+            'orderby'     => array(
+                'max_priority' => 'DESC',
+            ),
+        );
+
+        $tasks = $this->getTasks($args);
+        return $tasks;
     }
 
     /**
@@ -76,6 +86,8 @@ class TaskManager {
                     'compare' => 'LIKE'
                 ),
             ),
+            'meta_key'    => 'max_priority', // Define field to use in order
+            'meta_type' => 'BOOL',
             'orderby'     => array(
                 'max_priority' => 'DESC',
                 'menu_order'   => 'ASC',

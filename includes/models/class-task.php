@@ -314,7 +314,7 @@ class Task {
         }
 
         ?>
-        <div class="card mb-0" data-task-id="<?php echo esc_attr($this->ID); ?>" <?php echo $card_background_color; ?>>
+        <div class="task card mb-0" data-task-id="<?php echo esc_attr($this->ID); ?>" <?php echo $card_background_color; ?>>
             <div class="card-body p-3">
                 <span class="float-end badge <?php echo esc_attr($priorityBadgeClass); ?>">
                     <span class="label-to-hide"><?php echo esc_html($priorityLabel); ?></span>
