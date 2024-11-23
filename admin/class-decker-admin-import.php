@@ -51,37 +51,52 @@ class Decker_Admin_Import {
 	 * Displays the importer's greeting page.
 	 */
 	public function importer_greet() {
-
-		$settings = get_option( 'decker_settings' );
-		$errors   = array();
-
-		// Check if NextCloud settings are configured.
-		if ( empty( $settings['nextcloud_url_base'] ) || empty( $settings['nextcloud_username'] ) || empty( $settings['nextcloud_access_token'] ) ) {
-			$errors[] = esc_html__( 'NextCloud settings are not configured.', 'decker' );
-		}
-
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e( 'Import Decker Tasks from NextCloud', 'decker' ); ?></h2>
-
-			<?php if ( ! empty( $errors ) ) : ?>
-				<div class="notice notice-error">
-					<ul>
-					<?php
-					foreach ( $errors as $error ) :
-						?>
-						<li><?php echo esc_html( $error ); ?></li><?php endforeach; ?></ul>
-				</div>
-			<?php else : ?>
-				<form method="post" id="decker-import-form">
-					<?php wp_nonce_field( 'decker-import' ); ?>
-					<label for="skip-existing">
-						<input type="checkbox" id="skip-existing" name="skip_existing" value="1" checked>
-						<?php esc_html_e( 'Skip already existing tasks', 'decker' ); ?>
-						<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
-					</label>
-					<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
-				</form>
+			<form method="post" id="decker-import-form">
+				<?php wp_nonce_field( 'decker-import' ); ?>
+				
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="nextcloud_url_base"><?php esc_html_e( 'NextCloud URL Base', 'decker' ); ?></label></th>
+						<td>
+							<input type="url" id="nextcloud_url_base" name="nextcloud_url_base" class="regular-text" required>
+							<p class="description"><?php esc_html_e( 'The base URL of your NextCloud instance', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="nextcloud_username"><?php esc_html_e( 'NextCloud Username', 'decker' ); ?></label></th>
+						<td>
+							<input type="text" id="nextcloud_username" name="nextcloud_username" class="regular-text" required>
+							<p class="description"><?php esc_html_e( 'Your NextCloud username', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="nextcloud_access_token"><?php esc_html_e( 'NextCloud Access Token', 'decker' ); ?></label></th>
+						<td>
+							<input type="text" id="nextcloud_access_token" name="nextcloud_access_token" class="regular-text" required>
+							<p class="description"><?php esc_html_e( 'Your NextCloud access token', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="ignored_board_ids"><?php esc_html_e( 'Ignored Board IDs', 'decker' ); ?></label></th>
+						<td>
+							<input type="text" id="ignored_board_ids" name="ignored_board_ids" class="regular-text">
+							<p class="description"><?php esc_html_e( 'Comma-separated list of board IDs to ignore', 'decker' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="skip-existing"><?php esc_html_e( 'Skip Existing Tasks', 'decker' ); ?></label></th>
+						<td>
+							<input type="checkbox" id="skip-existing" name="skip_existing" value="1" checked>
+							<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
+						</td>
+					</tr>
+				</table>
+				
+				<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
+			</form>
 				<div id="import-progress" style="display: none;">
 					<h3><?php esc_html_e( 'Import Progress', 'decker' ); ?></h3>
 					<div id="progress-bar" style="width: 100%; background-color: #ccc;">
@@ -92,7 +107,6 @@ class Decker_Admin_Import {
 						<ul id="log-messages"></ul>
 					</div>
 				</div>
-			<?php endif; ?>
 		</div>
 
 <script>
@@ -117,6 +131,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         formData.append('action', 'decker_start_import');
         formData.append('security', '<?php echo esc_js(wp_create_nonce('decker_import_nonce')); ?>');
+        
+        // Add all form fields
+        formData.append('nextcloud_url_base', document.getElementById('nextcloud_url_base').value);
+        formData.append('nextcloud_username', document.getElementById('nextcloud_username').value);
+        formData.append('nextcloud_access_token', document.getElementById('nextcloud_access_token').value);
+        formData.append('ignored_board_ids', document.getElementById('ignored_board_ids').value);
         formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
         fetch(ajaxurl, {
@@ -263,9 +283,23 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	public function start_import() {
 		check_ajax_referer( 'decker_import_nonce', 'security' );
-	    if (!current_user_can('manage_options')) {
-	        wp_send_json_error('Access denied.');
-	    }
+		if (!current_user_can('manage_options')) {
+			wp_send_json_error('Access denied.');
+		}
+
+		// Get the form data
+		$nextcloud_url_base = sanitize_url($_POST['nextcloud_url_base']);
+		$nextcloud_username = sanitize_text_field($_POST['nextcloud_username']);
+		$nextcloud_access_token = sanitize_text_field($_POST['nextcloud_access_token']);
+		$ignored_board_ids = sanitize_text_field($_POST['ignored_board_ids']);
+
+		// Store temporarily in class properties
+		$this->import_config = array(
+			'nextcloud_url_base' => $nextcloud_url_base,
+			'nextcloud_username' => $nextcloud_username,
+			'nextcloud_access_token' => $nextcloud_access_token,
+			'ignored_board_ids' => $ignored_board_ids
+		);
 
 		$boards = $this->get_nextcloud_boards();
 		if ( $boards ) {
@@ -296,19 +330,19 @@ document.addEventListener('DOMContentLoaded', function() {
 			if ( ! empty( $board['title'] ) ) {
 
 		        if ( is_numeric( $board['title'] ) ) {
-		            Decker_Utility_Functions::write_log( 'Skipped board with numeric title: ' . $board['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		            error_log( 'Skipped board with numeric title: ' . $board['id'] );
 		            wp_send_json_error( 'Skipped board with invalid title.' );
 		            return;
 		        }
 
 				$board_term = $this->maybe_create_term( $board['title'], 'decker_board', $board['color'] );
 				if ( is_wp_error( $board_term ) ) {
-					Decker_Utility_Functions::write_log( 'Error creating board term for board ID: ' . $board['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+					error_log( 'Error creating board term for board ID: ' . $board['id'] );
 					wp_send_json_error( 'Failed to create board term.' );
 					return;
 				}
 			} else {
-		        Decker_Utility_Functions::write_log( 'Skipped board with empty title: ' . $board['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+		        error_log( 'Skipped board with empty title: ' . $board['id'] );
 		        wp_send_json_error( 'Skipped board with empty title.' );
 		        return;
 			}
@@ -346,7 +380,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	    // Si el término ya existe y su nombre coincide con otro ID de board, manejar el conflicto.
 	    if ( $existing_term && is_numeric( $title ) && intval( $title ) !== $existing_term['term_id'] ) {
-	        Decker_Utility_Functions::write_log( 'Conflict: Term name matches another board ID: ' . $title, Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	        error_log( 'Conflict: Term name matches another board ID: ' . $title );
 	        return new WP_Error( 'term_conflict', 'Term name matches another board ID.' );
 	    }
 
@@ -354,8 +388,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	    if ( is_numeric( $title ) ) {
 	        // Opcional: Agregar un prefijo para evitar conflictos.
 	        $title = $taxonomy . '-' . $title;
-
-	        Decker_Utility_Functions::write_log( 'Adjusted term title to avoid numeric conflict: ' . $title, Decker_Utility_Functions::LOG_LEVEL_INFO );
 	    }
 
 	    // Si el término no existe, crearlo.
@@ -375,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	        );
 
 	        if ( is_wp_error( $term ) ) {
-	            Decker_Utility_Functions::write_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	            error_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message() );
 	            return $term;
 	        }
 
@@ -411,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			foreach ( $board['labels'] as $label ) {
 				$label_term = $this->maybe_create_term( $label['title'], 'decker_label', $label['color'] );
 				if ( is_wp_error( $label_term ) ) {
-					Decker_Utility_Functions::write_log( 'Error creating label term: ' . $label['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+					error_log( 'Error creating label term: ' . $label['title'] );
 					return false;
 				}
 				$label_count++;
@@ -422,16 +454,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		$auth       = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
 		$stacks_url = $options['nextcloud_url_base'] . "/index.php/apps/deck/api/v1.0/boards/{$board['id']}/stacks" . $archived_suffix;
 
-		Decker_Utility_Functions::write_log( 'Requesting stacks from URL: ' . $stacks_url, Decker_Utility_Functions::LOG_LEVEL_DEBUG );
-
 		$stacks = $this->make_request( $stacks_url, $auth );
 
 		if ( ! is_array( $stacks ) || empty( $stacks ) ) {
-			Decker_Utility_Functions::write_log( 'Failed to retrieve stacks for board ID: ' . $board['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+			error_log( 'Failed to retrieve stacks for board ID: ' . $board['id'] );
 			return false;
 		}
-
-		Decker_Utility_Functions::write_log( 'Stacks retrieved successfully.', Decker_Utility_Functions::LOG_LEVEL_INFO );
 
 		// Sort stacks by the 'order' field before processing
 		usort(
@@ -459,15 +487,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
 					if ( empty( $existing_task ) ) {
 
-						Decker_Utility_Functions::write_log( 'Creating task for card ID: ' . $card['id'], Decker_Utility_Functions::LOG_LEVEL_DEBUG );
+						error_log( 'Creating task for card ID: ' . $card['id'] );
 
 						// Map the stack titles to the corresponding values used in the task creation.
 						$stack_title_map = array(
 							'Completada'   => 'done',
-							'En revisión'  => 'done', // Esta columna desaparece
+							'En revisión'  => 'done', // This column will be removed
 							'En progreso'  => 'in-progress',
 							'Por hacer'    => 'to-do',
-							'Hay que'      => 'to-do', // Assuming "Hay que" is similar to "Por hacer"
+							'Hay que'      => 'to-do', // "Hay que" is equivalent to "to-do"
 						);
 
 						// Determine the correct stack value based on the title.
@@ -476,11 +504,9 @@ document.addEventListener('DOMContentLoaded', function() {
 						$post_id = $this->create_task( $card, $board_term, $stack_title, $archived );
 
 						if ( is_wp_error( $post_id ) ) {
-							Decker_Utility_Functions::write_log( 'Error creating task for card ID: ' . $card['id'], Decker_Utility_Functions::LOG_LEVEL_ERROR );
+							error_log( 'Error creating task for card ID: ' . $card['id'] );
 							return false;
 						}
-
-						Decker_Utility_Functions::write_log( 'Task created successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 						$task_count++;
 					} elseif ( !$skip_existing ) {
 						// Update the existing task.
@@ -492,7 +518,6 @@ document.addEventListener('DOMContentLoaded', function() {
 								'post_content' => $this->Parsedown->text( $card['description'] ),
 							)
 						);
-						Decker_Utility_Functions::write_log( 'Task updated successfully with ID: ' . $post_id, Decker_Utility_Functions::LOG_LEVEL_INFO );
 					}
 
 					usleep( 100 ); // Little sleep to not be banned by nextcloud
@@ -518,24 +543,24 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	private function create_task( $card, $board_term, $stack_title, $archived ) {
 
-	    // Determinar el estado del post basado en si está archivado o no
+	    // Determine post status based on whether it's archived or not
 	    $post_status = ! empty( $archived ) && $archived ? 'archived' : 'publish';
 
-	    // Convertir la descripción usando Parsedown
+	    // Convert description using Parsedown
 	    $html_description = $this->Parsedown->text( $card['description'] );
 
-		// Obtener la fecha de vencimiento (duedate)
+		// Get due date
 		$due_date_str = !empty($card['duedate']) ? sanitize_text_field($card['duedate']) : null;
 		$due_date = null;
 		if ($due_date_str) {
 		    try {
 		        $due_date = new DateTime($due_date_str);
 		    } catch (Exception $e) {
-		        Decker_Utility_Functions::write_log('Fecha de vencimiento inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
+		        error_log('Invalid due date for task: ' . $card['title']);
 		    }
 		}
 
-	    // Determinar el propietario (owner)
+	    // Determine the owner
 	    if ( is_string( $card['owner'] ) ) {
 	        $nickname = sanitize_text_field( $card['owner'] );
 	    } elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
@@ -544,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	    $owner = $this->search_user($nickname);
 
-	    // Obtener los IDs de los usuarios asignados
+	    // Get assigned users IDs
 	    $assigned_users = array();
 	    if ( is_array( $card['assignedUsers'] ) ) {	
 	        foreach ( $card['assignedUsers'] as $user ) {
@@ -560,18 +585,18 @@ document.addEventListener('DOMContentLoaded', function() {
 	        }
 	    }
 
-	    // Preparar los términos para tax_input
+	    // Prepare terms for tax_input
 	    $tax_input = array();
 
-	    // Asignar la taxonomía 'decker_board' con el ID del board
+	    // Assign 'decker_board' taxonomy with board ID
 	    if ( ! is_wp_error( $board_term ) && isset( $board_term['term_id'] ) ) {
 	        $tax_input['decker_board'] = array( intval( $board_term['term_id'] ) );
 	    } else {
-	        Decker_Utility_Functions::write_log( 'Invalid board term for task creation.', Decker_Utility_Functions::LOG_LEVEL_ERROR );
-	        // Opcional: asignar un término por defecto o manejar el error de otra manera
+	        error_log( 'Invalid board term for task creation.' );
+	        // Optional: assign default term or handle error differently
 	    }
 
-	    // Preparar etiquetas como IDs de términos
+	    // Prepare labels as term IDs
 	    $label_ids = array();
 	    if ( is_array( $card['labels'] ) ) {
 	        foreach ( $card['labels'] as $label ) {
@@ -587,20 +612,20 @@ document.addEventListener('DOMContentLoaded', function() {
 	        }
 	    }
 
-	    // Determinar si la tarea tiene máxima prioridad
+	    // Determine if task has maximum priority
 	    $max_priority = false;
 	    if ( is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) {
 	        $max_priority = true;
 	    }
 
-		// Preparar la fecha de creación (createdAt)
+		// Prepare creation date
 		$creation_date = null;
 		if (!empty($card['createdAt']) && is_numeric($card['createdAt'])) {
 		    try {
 		        $creation_date = new DateTime(gmdate('Y-m-d H:i:s', $card['createdAt']));
 		    } catch (Exception $e) {
-		        Decker_Utility_Functions::write_log('Fecha de creación inválida para la tarea: ' . $card['title'], Decker_Utility_Functions::LOG_LEVEL_ERROR);
-		        $creation_date = new DateTime(); // Asignar una fecha por defecto si hay un error
+		        error_log('Invalid creation date for task: ' . $card['title']);
+		        $creation_date = new DateTime(); // Assign default date if there's an error
 		    }
 		}
 
@@ -625,11 +650,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	    );
 
 	    if ( is_wp_error( $task_id ) ) {
-	        Decker_Utility_Functions::write_log( 'Error al crear/actualizar la tarea: ' . $task_id->get_error_message(), Decker_Utility_Functions::LOG_LEVEL_ERROR );
+	        error_log( 'Error creating/updating task: ' . $task_id->get_error_message() );
 	        return 0;
 	    }
 
-	    // Si no está archivada, importar y procesar comentarios
+	    // If not archived, import and process comments
 	    if ( ! $archived ) {
 	        $this->import_comments( $card['id'], $task_id );
 	    }

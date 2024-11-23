@@ -145,9 +145,6 @@ class Decker_Admin_Settings {
 				}
 			}
 
-			// Delete all Decker options
-			delete_option( 'decker_plugin_cache' );
-
 			wp_redirect(
 				add_query_arg(
 					array(
@@ -170,9 +167,7 @@ class Decker_Admin_Settings {
 		add_action( 'admin_menu', array( $this, 'create_menu' ) );
 		add_action( 'admin_init', array( $this, 'settings_init' ) );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
-		add_action( 'admin_init', array( $this, 'handle_clear_cache' ) );
 		add_action( 'admin_init', array( $this, 'handle_clear_all_data' ) );
-		add_action( 'admin_init', array( $this, 'handle_clear_log' ) );
 	}
 
 	/**
@@ -206,20 +201,13 @@ class Decker_Admin_Settings {
 		);
 
 		$fields = array(
-			'nextcloud_url_base' => __( 'Nextcloud URL Base', 'decker' ),
-			'nextcloud_username' => __( 'Nextcloud Username', 'decker' ),
-			'nextcloud_access_token' => __( 'Nextcloud Access Token', 'decker' ),
-			'shared_key' => __( 'Shared Key', 'decker' ),
-			'decker_ignored_board_ids' => __( 'Ignored Boards', 'decker' ),
-			'clear_cache_button' => __( 'Clear Cache', 'decker' ),
-			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
-			'log_level' => __( 'Log Level', 'decker' ), // Log level radio buttons
-			'decker_log' => __( 'Decker Log', 'decker' ), // Log field
-			'clear_log_button' => __( 'Clear Log', 'decker' ), // New clear log button
-			'alert_message' => __( 'Alert Message', 'decker' ), // Alert message field
 			'alert_color' => __( 'Alert Color', 'decker' ), // Alert color radio buttons
+			'alert_message' => __( 'Alert Message', 'decker' ), // Alert message field
 			'user_profile' => __( 'User Profile', 'decker' ), // User profile dropdown
+			'shared_key' => __( 'Shared Key', 'decker' ),
+			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
+	
 		);
 
 		foreach ( $fields as $field_id => $field_title ) {
@@ -239,64 +227,11 @@ class Decker_Admin_Settings {
 	 * Outputs a description for the settings section.
 	 */
 	public function settings_section_callback() {
-		echo '<p>' . esc_html__( 'Enter your Nextcloud user and access token to configure the Decker plugin.', 'decker' ) . '</p>';
+		echo '<p>' . esc_html__( 'Configure the Decker plugin settings.', 'decker' ) . '</p>';
 	}
 
-	/**
-	 * Render Nextcloud URL Base Field
-	 *
-	 * Outputs the HTML for the nextcloud_url_base field.
-	 */
-	public function nextcloud_url_base_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['nextcloud_url_base'] ) ? esc_url( $options['nextcloud_url_base'] ) : '';
-		echo '<input type="text" name="decker_settings[nextcloud_url_base]" value="' . esc_attr( $value ) . '" class="regular-text">';
-	}
 
-	/**
-	 * Render Nextcloud Username Field
-	 *
-	 * Outputs the HTML for the nextcloud_username field.
-	 */
-	public function nextcloud_username_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['nextcloud_username'] ) ? sanitize_text_field( $options['nextcloud_username'] ) : '';
-		echo '<input type="text" name="decker_settings[nextcloud_username]" value="' . esc_attr( $value ) . '" class="regular-text">';
-	}
 
-	/**
-	 * Render Nextcloud Access Token Field
-	 *
-	 * Outputs the HTML for the nextcloud_access_token field.
-	 */
-	public function nextcloud_access_token_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['nextcloud_access_token'] ) ? sanitize_text_field( $options['nextcloud_access_token'] ) : '';
-		echo '<input type="password" name="decker_settings[nextcloud_access_token]" value="' . esc_attr( $value ) . '" class="regular-text">';
-	}
-
-	/**
-	 * Render Ignored Boards Field
-	 *
-	 * Outputs the HTML for the decker_ignored_board_ids field.
-	 */
-	public function decker_ignored_board_ids_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['decker_ignored_board_ids'] ) ? sanitize_text_field( $options['decker_ignored_board_ids'] ) : '';
-		echo '<input type="text" name="decker_settings[decker_ignored_board_ids]" value="' . esc_attr( $value ) . '" class="regular-text">';
-		echo '<p class="description">' . esc_html__( 'Enter the IDs of the boards you want to ignore, separated by commas.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Clear Cache Button
-	 *
-	 * Outputs the HTML for the clear_cache_button field.
-	 */
-	public function clear_cache_button_render() {
-		wp_nonce_field( 'decker_clear_cache_action', 'decker_clear_cache_nonce', true, true );
-		echo '<input type="submit" name="decker_clear_cache" class="button button-secondary" value="' . esc_attr__( 'Clear Cache', 'decker' ) . '">';
-		echo '<p class="description">' . esc_html__( 'Click the button to clear Decker cache.', 'decker' ) . '</p>';
-	}
 
 	/**
 	 * Render Clear All Data Button
@@ -308,53 +243,6 @@ class Decker_Admin_Settings {
 		echo '<input type="submit" name="decker_clear_all_data" class="button button-secondary" style="background-color: red; color: white;" value="' . esc_attr__( 'Clear All Data', 'decker' ) . '" onclick="return confirm(\'' . esc_js( __( 'Are you sure you want to delete all Decker records? This action cannot be undone.', 'decker' ) ) . '\');">';
 		echo '<p class="description">' . esc_html__( 'Click the button to delete all Decker labels, tasks, and boards.', 'decker' ) . '</p>';
 	}
-
-	/**
-	 * Render Log Level Field
-	 *
-	 * Outputs the HTML for the log level field.
-	 */
-	public function log_level_render() {
-		$options = get_option( 'decker_settings', array() );
-		$log_level = isset( $options['log_level'] ) ? $options['log_level'] : Decker_Utility_Functions::LOG_LEVEL_ERROR;
-
-		$levels = array(
-			Decker_Utility_Functions::LOG_LEVEL_DEBUG => 'Debug',
-			Decker_Utility_Functions::LOG_LEVEL_INFO => 'Info',
-			Decker_Utility_Functions::LOG_LEVEL_ERROR => 'Error',
-		);
-
-		foreach ( $levels as $value => $label ) {
-			echo '<label style="margin-right: 15px;">';
-			echo '<input type="radio" name="decker_settings[log_level]" value="' . esc_attr( $value ) . '" ' . checked( $log_level, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label>';
-		}
-	}
-
-
-	/**
-	 * Render  Log
-	 *
-	 * Outputs the HTML for the render log field.
-	 */
-	public function decker_log_render() {
-		$log = get_option( 'decker_log', '' );
-		echo '<textarea readonly rows="10" class="large-text">' . esc_textarea( $log ) . '</textarea>';
-	}
-
-
-	/**
-	 * Render Clear Log Button
-	 *
-	 * Outputs the HTML for the clear log field.
-	 */
-	public function clear_log_button_render() {
-		wp_nonce_field( 'decker_clear_log_action', 'decker_clear_log_nonce', true, true );
-		echo '<input type="submit" name="decker_clear_log" class="button button-secondary" value="' . esc_attr__( 'Clear Log', 'decker' ) . '">';
-		echo '<p class="description">' . esc_html__( 'Click the button to clear the Decker log.', 'decker' ) . '</p>';
-	}
-
 
 	/**
 	 * Options Page
@@ -379,59 +267,10 @@ class Decker_Admin_Settings {
 	 * Displays admin notices.
 	 */
 	public function admin_notices() {
-		if ( isset( $_GET['decker_cache_cleared'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Decker cache has been cleared.', 'decker' ) . '</p></div>';
-		}
 		if ( isset( $_GET['decker_data_cleared'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'All Decker records have been deleted.', 'decker' ) . '</p></div>';
 		}
-		if ( isset( $_GET['decker_log_cleared'] ) ) {
-			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Decker log has been cleared.', 'decker' ) . '</p></div>';
-		}
 	}
-
-	/**
-	 * Handle Clear Cache
-	 *
-	 * Handles the clearing of the cache.
-	 */
-	public function handle_clear_cache() {
-		if ( isset( $_POST['decker_clear_cache'] ) && check_admin_referer( 'decker_clear_cache_action', 'decker_clear_cache_nonce' ) ) {
-			delete_option( 'decker_plugin_cache' );
-			wp_redirect(
-				add_query_arg(
-					array(
-						'page' => 'decker_settings',
-						'decker_cache_cleared' => 'true',
-					),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-	}
-
-	/**
-	 * Handle Clear log
-	 *
-	 * Handles the clearing of the log.
-	 */
-	public function handle_clear_log() {
-		if ( isset( $_POST['decker_clear_log'] ) && check_admin_referer( 'decker_clear_log_action', 'decker_clear_log_nonce' ) ) {
-			update_option( 'decker_log', '' ); // Clear the log by setting it to an empty string
-			wp_redirect(
-				add_query_arg(
-					array(
-						'page' => 'decker_settings',
-						'decker_log_cleared' => 'true',
-					),
-					admin_url( 'options-general.php' )
-				)
-			);
-			exit;
-		}
-	}
-
 
 	/**
 	 * Settings Validation
@@ -442,38 +281,10 @@ class Decker_Admin_Settings {
 	 * @return array The validated fields.
 	 */
 	public function settings_validate( $input ) {
-	    // Validate Nextcloud URL base
-	    if ( isset( $input['nextcloud_url_base'] ) && ! preg_match( '/\bhttps?:\/\/\S+/i', $input['nextcloud_url_base'] ) ) {
-	        add_settings_error( 'nextcloud_url_base', 'invalid-url', __( 'Invalid URL.', 'decker' ) );
-	        $input['nextcloud_url_base'] = '';
-	    } else {
-	        $input['nextcloud_url_base'] = isset( $input['nextcloud_url_base'] ) ? esc_url_raw( $input['nextcloud_url_base'] ) : '';
-	    }
 
-	    // Validate ignored board IDs
-	    if ( isset( $input['decker_ignored_board_ids'] ) && ! preg_match( '/^(\d+(,\d+)*)?$/', $input['decker_ignored_board_ids'] ) ) {
-	        add_settings_error( 'decker_ignored_board_ids', 'invalid-ids', __( 'Invalid IDs. Must be numbers separated by commas.', 'decker' ) );
-	        $input['decker_ignored_board_ids'] = '';
-	    } else {
-	        $input['decker_ignored_board_ids'] = isset( $input['decker_ignored_board_ids'] ) ? sanitize_text_field( $input['decker_ignored_board_ids'] ) : '';
-	    }
 
 	    // Validate shared key
 	    $input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
-
-	    // Validate log level
-	    if ( isset( $input['log_level'] ) && ! in_array(
-	        $input['log_level'],
-	        array(
-	            Decker_Utility_Functions::LOG_LEVEL_DEBUG,
-	            Decker_Utility_Functions::LOG_LEVEL_INFO,
-	            Decker_Utility_Functions::LOG_LEVEL_ERROR,
-	        )
-	    ) ) {
-	        $input['log_level'] = Decker_Utility_Functions::LOG_LEVEL_ERROR; // Default to ERROR if invalid
-	    } else {
-	        $input['log_level'] = isset( $input['log_level'] ) ? $input['log_level'] : Decker_Utility_Functions::LOG_LEVEL_ERROR;
-	    }
 
 	    // Validate alert color
 	    $valid_colors = array( 'success', 'danger', 'warning', 'info' );

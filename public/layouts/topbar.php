@@ -82,12 +82,6 @@
 						<span><?php _e('Decker Settings', 'decker'); ?></span>
 					</a>
 
-					<!-- item-->
-					<a href="<?php echo esc_url( admin_url( 'admin.php?import=decker_import' ) ); ?>" class="dropdown-item">
-						<i class="ri-import-line fs-18 align-middle me-1"></i>
-						<span><?php _e('Import Tasks', 'decker'); ?></span>
-					</a>
-
 					<?php } ?>
 					<!-- item-->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">

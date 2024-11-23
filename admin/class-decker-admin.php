@@ -77,7 +77,7 @@ class Decker_Admin {
 					'title' => '<span class="ab-icon dashicons-welcome-widgets-menus"></span> ' . __( 'Go to Frontend', 'decker' ),
 					'href'  => home_url( '/?decker_page=priority' ),
 					'meta'  => array(
-						'title' => __( 'Go to Frontend', 'decker' ),
+						'title' => __( 'Go to Decker', 'decker' ),
 						'class' => 'dashicons-before dashicons-welcome-widgets-menus',
 					),
 				)
