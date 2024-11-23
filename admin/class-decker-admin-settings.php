@@ -206,7 +206,6 @@ class Decker_Admin_Settings {
 
 		$fields = array(
 			'shared_key' => __( 'Shared Key', 'decker' ),
-			'decker_ignored_board_ids' => __( 'Ignored Boards', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'log_level' => __( 'Log Level', 'decker' ), // Log level radio buttons
 			'decker_log' => __( 'Decker Log', 'decker' ), // Log field
@@ -238,17 +237,6 @@ class Decker_Admin_Settings {
 	}
 
 
-	/**
-	 * Render Ignored Boards Field
-	 *
-	 * Outputs the HTML for the decker_ignored_board_ids field.
-	 */
-	public function decker_ignored_board_ids_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['decker_ignored_board_ids'] ) ? sanitize_text_field( $options['decker_ignored_board_ids'] ) : '';
-		echo '<input type="text" name="decker_settings[decker_ignored_board_ids]" value="' . esc_attr( $value ) . '" class="regular-text">';
-		echo '<p class="description">' . esc_html__( 'Enter the IDs of the boards you want to ignore, separated by commas.', 'decker' ) . '</p>';
-	}
 
 
 	/**
@@ -376,13 +364,6 @@ class Decker_Admin_Settings {
 	 */
 	public function settings_validate( $input ) {
 
-	    // Validate ignored board IDs
-	    if ( isset( $input['decker_ignored_board_ids'] ) && ! preg_match( '/^(\d+(,\d+)*)?$/', $input['decker_ignored_board_ids'] ) ) {
-	        add_settings_error( 'decker_ignored_board_ids', 'invalid-ids', __( 'Invalid IDs. Must be numbers separated by commas.', 'decker' ) );
-	        $input['decker_ignored_board_ids'] = '';
-	    } else {
-	        $input['decker_ignored_board_ids'] = isset( $input['decker_ignored_board_ids'] ) ? sanitize_text_field( $input['decker_ignored_board_ids'] ) : '';
-	    }
 
 	    // Validate shared key
 	    $input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
