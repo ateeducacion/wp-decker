@@ -76,10 +76,10 @@ class LabelManager {
      * Save a label.
      *
      * @param array $data Label data including name and color.
-     * @param int|null $id Label ID for updates, null for new labels.
+     * @param int $id Label ID for updates 0 for new labels.
      * @return array Response array with success status and message.
      */
-    public static function saveLabel(array $data, ?int $id = null): array {
+    public static function saveLabel(array $data, int $id): array {
         $args = array(
             'name' => sanitize_text_field($data['name'])
         );
@@ -104,8 +104,10 @@ class LabelManager {
             );
         }
 
-        $term_id = $id ?? $result['term_id'];
-        update_term_meta($term_id, 'term-color', sanitize_hex_color($data['color']));
+        // Reasign $id (because it's new on create)
+        $id = $result['term_id'];
+
+        update_term_meta($id, 'term-color', sanitize_hex_color($data['color']));
 
         return array(
             'success' => true,

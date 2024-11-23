@@ -4,19 +4,15 @@ include 'layouts/main.php';
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $term_type = sanitize_text_field($_POST['term_type']);
-    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : null;
+    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
     $term_name = sanitize_text_field($_POST['term_name']);
     $term_slug = !empty($_POST['term_slug']) ? sanitize_title($_POST['term_slug']) : '';
     
     $data = array(
-        'name' => $term_name
+        'name' => $term_name,
     );
 
-    // Only add color if it's not empty
-    if (!empty($_POST['term_color'])) {
-        $term_color = sanitize_hex_color_no_hash($_POST['term_color']);
-        $data['color'] = '#' . $term_color;
-    }
+    $data['color'] = sanitize_hex_color($_POST['term_color']);
 
     if (!empty($term_slug)) {
         $data['slug'] = $term_slug;
@@ -264,29 +260,13 @@ jQuery(document).ready(function($) {
         const nameCell = row.find('td:first-child');
         const name = nameCell.find('.badge').length ? nameCell.find('.badge').text() : nameCell.text();
         const slug = row.find('td:nth-child(2)').text();
-        // Convert RGB color to Hex
-        const rgbColor = row.find('td:nth-child(3) .color-box').css('background-color');
-        const rgbToHex = function(rgb) {
-            // If it's already hex, return it
-            if (rgb.startsWith('#')) return rgb;
-            
-            // Convert rgb(r,g,b) to hex
-            const rgbMatch = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-            if (!rgbMatch) return '#000000';
-            
-            const r = parseInt(rgbMatch[1]);
-            const g = parseInt(rgbMatch[2]);
-            const b = parseInt(rgbMatch[3]);
-            
-            return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        };
-        
+        const hexColor = row.find('td:nth-child(3)').text().trim();
         const id = $(this).data('id');
         $('#termModalLabel').text('<?php _e("Edit Term", "decker"); ?>');
         $('#term-id').val(id);
         $('#term-name').val(name);
         $('#term-slug').val(slug);
-        $('#term-color').val(rgbToHex(rgbColor));
+        $('#term-color').val(hexColor);
         termModal.show();
     });
 
