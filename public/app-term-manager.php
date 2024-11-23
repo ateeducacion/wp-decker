@@ -1,5 +1,40 @@
-<?php
+<?php 
 include 'layouts/main.php';
+
+// Process form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $term_type = sanitize_text_field($_POST['term_type']);
+    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : null;
+    $term_name = sanitize_text_field($_POST['term_name']);
+    $term_color = sanitize_hex_color($_POST['term_color']);
+
+    $data = array(
+        'name' => $term_name,
+        'color' => $term_color
+    );
+
+    $result = array('success' => false, 'message' => '');
+
+    if ($term_type === 'board') {
+        $result = BoardManager::saveBoard($data, $term_id);
+    } else {
+        $result = LabelManager::saveLabel($data, $term_id);
+    }
+
+    if ($result['success']) {
+        wp_redirect(add_query_arg(array(
+            'status' => 'success',
+            'message' => urlencode($result['message'])
+        )));
+        exit;
+    } else {
+        wp_redirect(add_query_arg(array(
+            'status' => 'error',
+            'message' => urlencode($result['message'])
+        )));
+        exit;
+    }
+}
 
 // Get the type from URL parameter, default to 'label'
 $type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : 'label';
