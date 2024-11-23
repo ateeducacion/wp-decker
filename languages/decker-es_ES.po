@@ -1208,44 +1208,44 @@ msgstr "Utilidades"
 
 #: admin/class-decker-admin-import.php:62
 msgid "NextCloud URL Base"
-msgstr ""
+msgstr "URL Base de NextCloud"
 
 #: admin/class-decker-admin-import.php:65
 msgid "The base URL of your NextCloud instance"
-msgstr ""
+msgstr "La URL base de tu instancia de NextCloud"
 
 #: admin/class-decker-admin-import.php:69
 msgid "NextCloud Username"
-msgstr ""
+msgstr "Usuario de NextCloud"
 
 #: admin/class-decker-admin-import.php:72
 msgid "Your NextCloud username"
-msgstr ""
+msgstr "Tu nombre de usuario de NextCloud"
 
 #: admin/class-decker-admin-import.php:76
 msgid "NextCloud Access Token"
-msgstr ""
+msgstr "Token de Acceso de NextCloud"
 
 #: admin/class-decker-admin-import.php:79
 msgid "Your NextCloud access token"
-msgstr ""
+msgstr "Tu token de acceso de NextCloud"
 
 #: admin/class-decker-admin-import.php:83
 msgid "Ignored Board IDs"
-msgstr ""
+msgstr "IDs de Tableros Ignorados"
 
 #: admin/class-decker-admin-import.php:86
 msgid "Comma-separated list of board IDs to ignore"
-msgstr ""
+msgstr "Lista de IDs de tableros a ignorar, separados por comas"
 
 #: admin/class-decker-admin-import.php:90
 msgid "Skip Existing Tasks"
-msgstr ""
+msgstr "Omitir Tareas Existentes"
 
 #: admin/class-decker-admin-settings.php:230
 msgid "Configure the Decker plugin settings."
-msgstr ""
+msgstr "Configura los ajustes del plugin Decker."
 
 #: admin/class-decker-admin.php:77
 msgid "Go to Frontend"
-msgstr ""
+msgstr "Ir al Frontend"
