@@ -302,6 +302,7 @@ msgid "New Action Name"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-actions.php:46
+#: public/app-term-manager.php:153
 msgid "Actions"
 msgstr ""
 
@@ -341,6 +342,7 @@ msgid "Update Board"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-boards.php:54
+#: public/app-term-manager.php:78
 msgid "Add New Board"
 msgstr ""
 
@@ -349,7 +351,9 @@ msgid "New Board Name"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-boards.php:56
-#: public/layouts/left-sidebar.php:161
+#: public/app-term-manager.php:77
+#: public/layouts/left-sidebar.php:163
+#: public/layouts/left-sidebar.php:247
 msgid "Boards"
 msgstr ""
 
@@ -361,6 +365,8 @@ msgstr ""
 #: includes/custom-post-types/class-decker-labels.php:142
 #: includes/custom-post-types/class-decker-user-extended.php:64
 #: includes/custom-post-types/class-decker-user-extended.php:146
+#: public/app-term-manager.php:152
+#: public/app-term-manager.php:234
 msgid "Color"
 msgstr ""
 
@@ -391,6 +397,7 @@ msgid "Update Label"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-labels.php:54
+#: public/app-term-manager.php:82
 msgid "Add New Label"
 msgstr ""
 
@@ -400,6 +407,8 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-labels.php:56
 #: includes/custom-post-types/class-decker-tasks.php:998
+#: public/app-term-manager.php:81
+#: public/layouts/left-sidebar.php:237
 #: public/layouts/task-card.php:321
 msgid "Labels"
 msgstr ""
@@ -633,6 +642,30 @@ msgstr ""
 msgid "Select your default board."
 msgstr ""
 
+#: includes/models/class-board-manager.php:94
+msgid "Board updated successfully"
+msgstr ""
+
+#: includes/models/class-board-manager.php:94
+msgid "Board created successfully"
+msgstr ""
+
+#: includes/models/class-board-manager.php:117
+msgid "Board deleted successfully"
+msgstr ""
+
+#: includes/models/class-label-manager.php:114
+msgid "Label updated successfully"
+msgstr ""
+
+#: includes/models/class-label-manager.php:114
+msgid "Label created successfully"
+msgstr ""
+
+#: includes/models/class-label-manager.php:136
+msgid "Label deleted successfully"
+msgstr ""
+
 #: includes/models/class-task.php:46
 msgid "Invalid post type."
 msgstr ""
@@ -692,13 +725,13 @@ msgstr ""
 
 #: public/app-analytics.php:35
 #: public/app-analytics.php:38
-#: public/layouts/left-sidebar.php:197
+#: public/layouts/left-sidebar.php:200
 msgid "Analytics"
 msgstr ""
 
 #: public/app-analytics.php:50
 #: public/app-tasks.php:134
-#: public/layouts/left-sidebar.php:124
+#: public/layouts/left-sidebar.php:125
 msgid "Active Tasks"
 msgstr ""
 
@@ -708,7 +741,7 @@ msgstr ""
 
 #: public/app-analytics.php:66
 #: public/app-tasks.php:138
-#: public/layouts/left-sidebar.php:142
+#: public/layouts/left-sidebar.php:143
 msgid "Archived Tasks"
 msgstr ""
 
@@ -736,12 +769,14 @@ msgstr ""
 
 #: public/app-kanban-my.php:55
 #: public/app-kanban.php:65
+#: public/app-term-manager.php:128
 #: public/app-upcoming.php:107
 msgid "Search..."
 msgstr ""
 
 #: public/app-kanban-my.php:55
 #: public/app-kanban.php:65
+#: public/app-term-manager.php:128
 #: public/app-upcoming.php:107
 msgid "Search"
 msgstr ""
@@ -794,6 +829,7 @@ msgstr ""
 
 #: public/app-priority.php:139
 #: public/app-priority.php:337
+#: public/app-term-manager.php:238
 msgid "Close"
 msgstr ""
 
@@ -830,7 +866,8 @@ msgstr ""
 #: public/app-task-full.php:34
 #: public/app-tasks.php:9
 #: public/app-tasks.php:131
-#: public/layouts/left-sidebar.php:104
+#: public/app-term-manager.php:88
+#: public/layouts/left-sidebar.php:105
 msgid "Tasks"
 msgstr ""
 
@@ -839,7 +876,7 @@ msgid "Task Detail"
 msgstr ""
 
 #: public/app-task-full.php:40
-#: public/layouts/left-sidebar.php:143
+#: public/layouts/left-sidebar.php:144
 msgid "New task"
 msgstr ""
 
@@ -848,7 +885,7 @@ msgid "Task not found"
 msgstr ""
 
 #: public/app-tasks.php:136
-#: public/layouts/left-sidebar.php:133
+#: public/layouts/left-sidebar.php:134
 msgid "My Tasks"
 msgstr ""
 
@@ -871,6 +908,46 @@ msgstr ""
 
 #: public/app-tasks.php:203
 msgid "Undefined board"
+msgstr ""
+
+#: public/app-term-manager.php:150
+#: public/app-term-manager.php:225
+msgid "Name"
+msgstr ""
+
+#: public/app-term-manager.php:151
+#: public/app-term-manager.php:229
+msgid "Slug"
+msgstr ""
+
+#: public/app-term-manager.php:216
+#: public/app-term-manager.php:276
+msgid "Add New Term"
+msgstr ""
+
+#: public/app-term-manager.php:231
+msgid "Leave empty for automatic generation from name"
+msgstr ""
+
+#: public/app-term-manager.php:239
+#: public/layouts/task-card.php:518
+msgid "Save"
+msgstr ""
+
+#: public/app-term-manager.php:289
+msgid "Edit Term"
+msgstr ""
+
+#: public/app-term-manager.php:303
+msgid "To confirm deletion, please enter the term slug:"
+msgstr ""
+
+#: public/app-term-manager.php:305
+msgid "WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board."
+msgstr ""
+
+#: public/app-term-manager.php:321
+msgid "Incorrect slug. Deletion cancelled."
 msgstr ""
 
 #: public/app-upcoming.php:73
@@ -913,6 +990,10 @@ msgstr ""
 
 #: public/layouts/left-sidebar.php:93
 msgid "Apps"
+msgstr ""
+
+#: public/layouts/left-sidebar.php:219
+msgid "Utilities"
 msgstr ""
 
 #: public/layouts/right-sidebar.php:3
@@ -1128,10 +1209,6 @@ msgstr ""
 
 #: public/layouts/task-card.php:505
 msgid "Under construction..."
-msgstr ""
-
-#: public/layouts/task-card.php:518
-msgid "Save"
 msgstr ""
 
 #: public/layouts/task-card.php:521
