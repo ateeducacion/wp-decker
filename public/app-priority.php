@@ -152,7 +152,7 @@ if (!$has_today_tasks) {
 							<table id="priority-table" class="table table-striped table-responsive">
 								<thead>
 									<tr>
-										<th style="width: 10%;"><?php _e('Board', 'decker'); ?></th>
+										<th data-sort-default style="width: 10%;"><?php _e('Board', 'decker'); ?></th>
 										<th class="d-none d-md-table-cell" style="width: 10%;"><?php _e('Stack', 'decker'); ?></th>
 										<th style="width: auto;"><?php _e('Title', 'decker'); ?></th>
 										<th style="width: 15%;" data-sort-method='none'><?php _e('Assigned Users', 'decker'); ?></th>

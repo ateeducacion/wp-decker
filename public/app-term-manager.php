@@ -124,7 +124,7 @@ if ($type === 'board') {
 											<table id="termsTable" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="termsTable_info">
 												<thead>
 													<tr>
-														<th><?php _e('Name', 'decker'); ?></th>
+														<th data-sort-default><?php _e('Name', 'decker'); ?></th>
 														<th><?php _e('Slug', 'decker'); ?></th>
 														<th><?php _e('Color', 'decker'); ?></th>
 														<th><?php _e('Actions', 'decker'); ?></th>
