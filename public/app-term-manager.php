@@ -215,6 +215,22 @@ if ($type === 'board') {
 jQuery(document).ready(function($) {
     new Tablesort(document.getElementById('termsTable'));
     
+    // Handle search functionality
+    $('#searchInput').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        $('#termsTable tbody tr').each(function() {
+            const name = $(this).find('td:first-child').text().toLowerCase();
+            const slug = $(this).find('td:nth-child(2)').text().toLowerCase();
+            const color = $(this).find('td:nth-child(3)').text().toLowerCase();
+            
+            if (name.includes(searchText) || slug.includes(searchText) || color.includes(searchText)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
     // Initialize the modal
     const termModal = new bootstrap.Modal(document.getElementById('term-modal'));
     const termForm = document.getElementById('term-form');
