@@ -39,7 +39,7 @@ class Decker_Public {
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
 		// Not yet used
-		// add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'init', array( $this, 'decker_add_rewrite_rules' ) );
 		add_filter( 'query_vars', array( $this, 'decker_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'decker_template_redirect' ) );
@@ -175,9 +175,13 @@ class Decker_Public {
 	 */
 	public function enqueue_scripts() {
 
-		if ( get_query_var( 'decker' ) ) {
+		$decker_page = get_query_var( 'decker_page' );
+
+		if ( $decker_page ) {
 
 			$resources = array(
+
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
 
 				// jQuery.
 				// 'https://code.jquery.com/jquery-3.7.1.min.js',
@@ -186,38 +190,53 @@ class Decker_Public {
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
 
-				// Datatables.net.
-				'https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css',
-				'https://cdn.datatables.net/2.0.8/js/dataTables.min.js',
-				'https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js',
+				// Remix Icons
+				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css',
 
-				// Datatables.net Buttons extension.
-				'https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css',
-				'https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js',
-				'https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js',
-				'https://cdn.datatables.net/buttons/3.0.2/js/buttons.colVis.min.js',
-				'https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js',
-				'https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js',
+				// Tablesort 
+				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
 
-				// Datatables.net Responsive extension.
-				'https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css',
-				'https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js',
-				'https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js',
+				// Simplebar
+				'https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.js',
 
-				// Datatables.net SearchBuilder extension.
-				'https://cdn.datatables.net/searchbuilder/1.7.1/css/searchBuilder.bootstrap5.min.css',
-				'https://cdn.datatables.net/searchbuilder/1.7.1/js/dataTables.searchBuilder.min.js',
-				'https://cdn.datatables.net/searchbuilder/1.7.1/js/searchBuilder.bootstrap5.min.js',
+				// Day.js
+				'https://unpkg.com/dayjs/dayjs.min.js',
+				'https://unpkg.com/dayjs/plugin/relativeTime.js',
+				'https://unpkg.com/dayjs/locale/es.js',
 
-				// Datatables.net SearchPanes extension.
-				'https://cdn.datatables.net/searchpanes/2.3.1/css/searchPanes.bootstrap5.min.css',
-				'https://cdn.datatables.net/searchpanes/2.3.1/js/dataTables.searchPanes.min.js',
-				'https://cdn.datatables.net/searchpanes/2.3.1/js/searchPanes.bootstrap5.min.js',
 
-				// Datatables.net Select extension.
-				'https://cdn.datatables.net/select/2.0.3/css/select.bootstrap5.min.css',
-				'https://cdn.datatables.net/select/2.0.3/js/dataTables.select.min.js',
-				'https://cdn.datatables.net/select/2.0.3/js/select.bootstrap5.min.js',
+				// // Datatables.net.
+				// 'https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css',
+				// 'https://cdn.datatables.net/2.0.8/js/dataTables.min.js',
+				// 'https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js',
+
+				// // Datatables.net Buttons extension.
+				// 'https://cdn.datatables.net/buttons/3.0.2/css/buttons.bootstrap5.min.css',
+				// 'https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js',
+				// 'https://cdn.datatables.net/buttons/3.0.2/js/buttons.bootstrap5.min.js',
+				// 'https://cdn.datatables.net/buttons/3.0.2/js/buttons.colVis.min.js',
+				// 'https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js',
+				// 'https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js',
+
+				// // Datatables.net Responsive extension.
+				// 'https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.min.css',
+				// 'https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.min.js',
+				// 'https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.min.js',
+
+				// // Datatables.net SearchBuilder extension.
+				// 'https://cdn.datatables.net/searchbuilder/1.7.1/css/searchBuilder.bootstrap5.min.css',
+				// 'https://cdn.datatables.net/searchbuilder/1.7.1/js/dataTables.searchBuilder.min.js',
+				// 'https://cdn.datatables.net/searchbuilder/1.7.1/js/searchBuilder.bootstrap5.min.js',
+
+				// // Datatables.net SearchPanes extension.
+				// 'https://cdn.datatables.net/searchpanes/2.3.1/css/searchPanes.bootstrap5.min.css',
+				// 'https://cdn.datatables.net/searchpanes/2.3.1/js/dataTables.searchPanes.min.js',
+				// 'https://cdn.datatables.net/searchpanes/2.3.1/js/searchPanes.bootstrap5.min.js',
+
+				// // Datatables.net Select extension.
+				// 'https://cdn.datatables.net/select/2.0.3/css/select.bootstrap5.min.css',
+				// 'https://cdn.datatables.net/select/2.0.3/js/dataTables.select.min.js',
+				// 'https://cdn.datatables.net/select/2.0.3/js/select.bootstrap5.min.js',
 
 				// Font awesome
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
@@ -228,11 +247,45 @@ class Decker_Public {
 				// SortableJS
 				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
 
+
+				// Quill
+				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
+				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
+
+				// Choices.js
+				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js',
+				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css',
+
 				// Custom files.
+
+
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
+				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.min.css',
+
 				// plugin_dir_url( __FILE__ ) . 'js/decker-public.js',
 				// plugin_dir_url( __FILE__ ) . 'css/decker-public.css',
 
+
 			);
+
+
+			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page
+
+				// Datatables JS CDN
+				$resources[] = 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js';
+				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
+				$resources[] = 'https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js';
+				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js';
+				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js';
+				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js';
+
+				$resources[] = 'https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css';
+				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/css/searchBuilder.dataTables.min.css';
+				$resources[] = 'https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css';
+				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css';
+
+			}
+
 
 			$last_handle = '';
 
@@ -261,6 +314,15 @@ class Decker_Public {
 			if ( ! ( $current_user instanceof WP_User ) ) {
 				return; // No está autenticado ningún usuario.
 			}
+
+
+			// Enqueue Custom Inline Script for userId
+			wp_add_inline_script(
+				'config-js',
+				'const userId = ' . get_current_user_id() . ';',
+				'before'
+			);
+
 
 			// Localize the script with new data.
 			$script_data = array(

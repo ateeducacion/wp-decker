@@ -298,6 +298,13 @@ table#tablaTareas td:nth-child(4) {
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
+
+	// Extend Day.js with relativeTime plugin
+	dayjs.extend(dayjs_plugin_relativeTime);
+
+	// Set locale to Spanish
+	dayjs.locale('es');
+
 	function setupAllTasksTable() {
 		if (!$.fn.DataTable.isDataTable('#tablaTareas')) {
 			// Initialize DataTables only if it hasn't been initialized yet
