@@ -58,24 +58,24 @@ class Decker_User_Extended {
 		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
 
 		?>
-		<h3><?php esc_html_e( 'Additional Information', 'decker' ); ?></h3>
+		<h3><?php esc_htmlesc_html_e( 'Additional Information', 'decker' ); ?></h3>
 
 		<table class="form-table">
 			<!-- Color Picker Field -->
 			<tr>
-				<th><label for="decker_color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
+				<th><label for="decker_color"><?php esc_htmlesc_html_e( 'Color', 'decker' ); ?></label></th>
 				<td>
 					<input type="text" name="decker_color" id="decker_color" value="<?php echo esc_attr( get_the_author_meta( 'decker_color', $user->ID ) ); ?>" class="regular-text" />
 					<br />
-					<span class="description"><?php esc_html_e( 'Select your favorite color.', 'decker' ); ?></span>
+					<span class="description"><?php esc_htmlesc_html_e( 'Select your favorite color.', 'decker' ); ?></span>
 				</td>
 			</tr>
 			<!-- Default Board Select Box -->
 			<tr>
-				<th><label for="decker_default_board"><?php esc_html_e( 'Default Board', 'decker' ); ?></label></th>
+				<th><label for="decker_default_board"><?php esc_htmlesc_html_e( 'Default Board', 'decker' ); ?></label></th>
 				<td>
 					<select name="decker_default_board" id="decker_default_board">
-						<option value=""><?php esc_html_e( 'Select a board', 'decker' ); ?></option>
+						<option value=""><?php esc_htmlesc_html_e( 'Select a board', 'decker' ); ?></option>
 						<?php
 						if ( ! empty( $boards ) && ! is_wp_error( $boards ) ) {
 							foreach ( $boards as $board ) {
@@ -90,7 +90,7 @@ class Decker_User_Extended {
 						?>
 					</select>
 					<br />
-					<span class="description"><?php esc_html_e( 'Select your default board.', 'decker' ); ?></span>
+					<span class="description"><?php esc_htmlesc_html_e( 'Select your default board.', 'decker' ); ?></span>
 				</td>
 			</tr>
 

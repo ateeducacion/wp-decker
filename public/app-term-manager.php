@@ -103,7 +103,7 @@ if ( 'board' === $type ) {
 ?>
 
 <head>
-	<title><?php _e( 'Tasks', 'decker' ); ?> | Decker</title>
+	<title><?php esc_html_e( 'Tasks', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -143,7 +143,7 @@ if ( 'board' === $type ) {
 										</span>
 										
 										<!-- Search field with clear button (X) inside -->
-										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
+										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attresc_html_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attresc_html_e( 'Search', 'decker' ); ?>">
 
 									</div>
 
@@ -165,10 +165,10 @@ if ( 'board' === $type ) {
 											<table id="termsTable" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="termsTable_info">
 												<thead>
 													<tr>
-														<th data-sort-default><?php _e( 'Name', 'decker' ); ?></th>
-														<th><?php _e( 'Slug', 'decker' ); ?></th>
-														<th><?php _e( 'Color', 'decker' ); ?></th>
-														<th data-sort-method='none'><?php _e( 'Actions', 'decker' ); ?></th>
+														<th data-sort-default><?php esc_html_e( 'Name', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Slug', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Color', 'decker' ); ?></th>
+														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -231,7 +231,7 @@ if ( 'board' === $type ) {
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title" id="termModalLabel"><?php _e( 'Add New Term', 'decker' ); ?></h5>
+					<h5 class="modal-title" id="termModalLabel"><?php esc_html_e( 'Add New Term', 'decker' ); ?></h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
@@ -240,21 +240,21 @@ if ( 'board' === $type ) {
 						<input type="hidden" name="term_id" id="term-id">
 						<?php wp_nonce_field( 'decker_term_action', 'decker_term_nonce' ); ?>
 						<div class="mb-3">
-							<label for="term-name" class="form-label"><?php _e( 'Name', 'decker' ); ?> <span class="text-danger">*</span></label>
+							<label for="term-name" class="form-label"><?php esc_html_e( 'Name', 'decker' ); ?> <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
 						</div>
 						<div class="mb-3">
-							<label for="term-slug" class="form-label"><?php _e( 'Slug', 'decker' ); ?></label>
+							<label for="term-slug" class="form-label"><?php esc_html_e( 'Slug', 'decker' ); ?></label>
 							<input type="text" class="form-control" id="term-slug" name="term_slug">
-							<div class="form-text"><?php _e( 'Leave empty for automatic generation from name', 'decker' ); ?></div>
+							<div class="form-text"><?php esc_html_e( 'Leave empty for automatic generation from name', 'decker' ); ?></div>
 						</div>
 						<div class="mb-3">
-							<label for="term-color" class="form-label"><?php _e( 'Color', 'decker' ); ?></label>
+							<label for="term-color" class="form-label"><?php esc_html_e( 'Color', 'decker' ); ?></label>
 							<input type="color" class="form-control" id="term-color" name="term_color">
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php _e( 'Close', 'decker' ); ?></button>
-							<button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i><?php _e( 'Save', 'decker' ); ?></button>
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
+							<button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i><?php esc_html_e( 'Save', 'decker' ); ?></button>
 						</div>
 					</form>
 				</div>
@@ -291,7 +291,7 @@ jQuery(document).ready(function($) {
 
 	// Handle "Add New" button click
 	$('.btn-success').on('click', function() {
-		$('#termModalLabel').text('<?php _e( 'Add New Term', 'decker' ); ?>');
+		$('#termModalLabel').text('<?php esc_html_e( 'Add New Term', 'decker' ); ?>');
 		termForm.reset();
 	});
 
@@ -304,7 +304,7 @@ jQuery(document).ready(function($) {
 		const slug = row.find('td:nth-child(2)').text();
 		const hexColor = row.find('td:nth-child(3)').text().trim();
 		const id = $(this).data('id');
-		$('#termModalLabel').text('<?php _e( 'Edit Term', 'decker' ); ?>');
+		$('#termModalLabel').text('<?php esc_html_e( 'Edit Term', 'decker' ); ?>');
 		$('#term-id').val(id);
 		$('#term-name').val(name);
 		$('#term-slug').val(slug);
@@ -336,7 +336,7 @@ jQuery(document).ready(function($) {
 			$('body').append(form);
 			form.submit();
 		} else if (userInput !== null) {
-			alert('<?php _e( 'Incorrect slug. Deletion cancelled.', 'decker' ); ?>');
+			alert('<?php esc_html_e( 'Incorrect slug. Deletion cancelled.', 'decker' ); ?>');
 		}
 	});
 });

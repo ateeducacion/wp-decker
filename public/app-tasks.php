@@ -6,7 +6,7 @@ $taskManager = new TaskManager();
 ?>
 
 <head>
-	<title><?php _e( 'Tasks', 'decker' ); ?> | Decker</title>
+	<title><?php esc_html_e( 'Tasks', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -164,7 +164,7 @@ table#tablaTareas td:nth-child(4) {
 								$class_disabled = ' disabled';
 							}
 							?>
-								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><?php _e( 'Add New', 'decker' ); ?></a></h4>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
 
 
 	
@@ -174,7 +174,7 @@ table#tablaTareas td:nth-child(4) {
 								<div class="d-flex align-items-center">
 									<div id="searchBuilderContainer" class="me-2"></div>
 									<select id="boardFilter" class="form-select">
-										<option value=""><?php _e( 'All Boards', 'decker' ); ?></option>
+										<option value=""><?php esc_html_e( 'All Boards', 'decker' ); ?></option>
 										<?php
 										$boards = BoardManager::getAllBoards();
 										foreach ( $boards as $board ) {
@@ -196,13 +196,13 @@ table#tablaTareas td:nth-child(4) {
 											<table id="tablaTareas" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="tablaTareas_info">
 												<thead>
 													<tr>
-														<th class="c-priority"><?php _e( 'P.', 'decker' ); ?></th>
-														<th class="c-board"><?php _e( 'Board', 'decker' ); ?></th>
-														<th class="c-stack"><?php _e( 'Stack', 'decker' ); ?></th>
-														<th class="c-description"><?php _e( 'Description', 'decker' ); ?></th>
-														<th class="c-tags"><?php _e( 'Tags', 'decker' ); ?></th>
-														<th class="c-users"><?php _e( 'Assigned Users', 'decker' ); ?></th>
-														<th class="c-time"><?php _e( 'Remaining Time', 'decker' ); ?></th>
+														<th class="c-priority"><?php esc_html_e( 'P.', 'decker' ); ?></th>
+														<th class="c-board"><?php esc_html_e( 'Board', 'decker' ); ?></th>
+														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
+														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
+														<th class="c-users"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
+														<th class="c-time"><?php esc_html_e( 'Remaining Time', 'decker' ); ?></th>
 														<th class="c-actions text-end"></th>
 													</tr>
 												</thead>

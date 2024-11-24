@@ -36,7 +36,7 @@
 
 
 			<li class="d-none d-sm-inline-block">
-				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attr_e( 'Theme Mode', 'decker' ); ?>">
+				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attresc_html_e( 'Theme Mode', 'decker' ); ?>">
 					<i class="ri-moon-line fs-22"></i>
 				</div>
 			</li>
@@ -64,13 +64,13 @@
 				<div class="dropdown-menu dropdown-menu-end dropdown-menu-animated profile-dropdown">
 					
 					<div class=" dropdown-header noti-title">
-						<h6 class="text-overflow m-0"><?php _e( 'Welcome !', 'decker' ); ?></h6>
+						<h6 class="text-overflow m-0"><?php esc_html_e( 'Welcome !', 'decker' ); ?></h6>
 					</div>
 
 					<!-- item-->
 					<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>" class="dropdown-item">
 						<i class="ri-account-circle-line fs-18 align-middle me-1"></i>
-						<span><?php _e( 'My Profile', 'decker' ); ?></span>
+						<span><?php esc_html_e( 'My Profile', 'decker' ); ?></span>
 					</a>
 					<!-- item-->
 
@@ -79,14 +79,14 @@
 					<!-- item-->
 					<a href="<?php echo esc_url( admin_url( 'options-general.php?page=decker_settings' ) ); ?>" class="dropdown-item">
 						<i class="ri-settings-4-line fs-18 align-middle me-1"></i>
-						<span><?php _e( 'Decker Settings', 'decker' ); ?></span>
+						<span><?php esc_html_e( 'Decker Settings', 'decker' ); ?></span>
 					</a>
 
 					<?php } ?>
 					<!-- item-->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">
 						<i class="ri-logout-box-line fs-18 align-middle me-1"></i>
-						<span><?php _e( 'Logout', 'decker' ); ?></span>
+						<span><?php esc_html_e( 'Logout', 'decker' ); ?></span>
 					</a>
 				</div>
 			</li>

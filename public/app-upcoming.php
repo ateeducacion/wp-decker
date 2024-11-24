@@ -70,7 +70,7 @@ foreach ( $tasks as $task ) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title><?php esc_html_e( 'Upcoming Tasks', 'decker' ); ?> | Decker</title>
+	<title><?php esc_htmlesc_html_e( 'Upcoming Tasks', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -104,11 +104,11 @@ foreach ( $tasks as $task ) {
 											</span>
 											
 											<!-- Campo de búsqueda con botón de borrar (X) dentro -->
-											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
+											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attresc_html_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attresc_html_e( 'Search', 'decker' ); ?>">
 
 											<!-- Select de usuarios -->
 											<select id="boardUserFilter" class="form-select ms-2">
-												<option value=""><?php _e( 'All Users', 'decker' ); ?></option>
+												<option value=""><?php esc_html_e( 'All Users', 'decker' ); ?></option>
 												<?php
 												$users = get_users();
 												foreach ( $users as $user ) {
@@ -119,8 +119,8 @@ foreach ( $tasks as $task ) {
 										</div>
 
 									</div>
-									<h4 class="page-title"><?php esc_html_e( 'Upcoming Tasks', 'decker' ); ?>
-										<a href="#" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php _e( 'Add New', 'decker' ); ?></a></h4>
+									<h4 class="page-title"><?php esc_htmlesc_html_e( 'Upcoming Tasks', 'decker' ); ?>
+										<a href="#" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
 								</div>
 							</div>
 						</div>     
@@ -132,7 +132,7 @@ foreach ( $tasks as $task ) {
 							<div class="col-12">
 								<div class="board">
 									<div class="tasks">
-										<h5 class="mt-0 task-header"><?php _e( 'DELAYED', 'decker' ); ?> (<?php echo count( $columns['delayed'] ); ?>)</h5>
+										<h5 class="mt-0 task-header"><?php esc_html_e( 'DELAYED', 'decker' ); ?> (<?php echo count( $columns['delayed'] ); ?>)</h5>
 										
 										<div id="task-list-delayed" class="task-list-items">
 
@@ -146,7 +146,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php _e( 'Today', 'decker' ); ?> (<?php echo count( $columns['today'] ); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e( 'Today', 'decker' ); ?> (<?php echo count( $columns['today'] ); ?>)</h5>
 										
 										<div id="task-list-today" class="task-list-items">
 
@@ -161,7 +161,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php _e( 'Tomorrow', 'decker' ); ?> (<?php echo count( $columns['tomorrow'] ); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e( 'Tomorrow', 'decker' ); ?> (<?php echo count( $columns['tomorrow'] ); ?>)</h5>
 										<div id="task-list-tomorrow" class="task-list-items">
 
 											<?php foreach ( $columns['tomorrow'] as $task ) : ?>
@@ -174,7 +174,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php _e( 'Next 7 Days', 'decker' ); ?> (<?php echo count( $columns['next-7-days'] ); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e( 'Next 7 Days', 'decker' ); ?> (<?php echo count( $columns['next-7-days'] ); ?>)</h5>
 										<div id="task-list-next-7-days" class="task-list-items">
 
 											<?php foreach ( $columns['next-7-days'] as $task ) : ?>

@@ -48,7 +48,7 @@
 
 - Use the plugin's slug as the text domain (e.g., `decker`).
 - Wrap all user-facing text in translation functions like `__()`.
-- Use WordPress translation functions like `__()`, `_e()`, `_n()`, and `_x()` for all user-facing strings.
+- Use WordPress translation functions like `__()`, `esc_html_e()`, `_n()`, and `_x()` for all user-facing strings.
 
 ## Code Documentation
 - Ensure that all classes, methods, and functions are well-documented with PHPDoc.

@@ -319,7 +319,7 @@ class Task {
 			<div class="card-body p-3">
 				<span class="float-end badge <?php echo esc_attr( $priorityBadgeClass ); ?>">
 					<span class="label-to-hide"><?php echo esc_html( $priorityLabel ); ?></span>
-					<span class="menu-order label-to-show" style="display: none;"><?php _e( 'Order:', 'decker' ); ?> <?php echo esc_html( $this->order ); ?></span>
+					<span class="menu-order label-to-show" style="display: none;"><?php esc_html_e( 'Order:', 'decker' ); ?> <?php echo esc_html( $this->order ); ?></span>
 				</span>
 
 				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
@@ -345,7 +345,7 @@ class Task {
 					</span>
 					<span class="text-nowrap mb-2 d-inline-block">
 						<i class="ri-discuss-line text-muted"></i>
-						<b><?php echo esc_html( get_comments_number( $this->ID ) ); ?></b> <?php _e( 'Comments', 'decker' ); ?>
+						<b><?php echo esc_html( get_comments_number( $this->ID ) ); ?></b> <?php esc_html_e( 'Comments', 'decker' ); ?>
 					</span>
 				</p>
 

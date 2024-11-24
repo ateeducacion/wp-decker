@@ -82,7 +82,7 @@ class Decker_Labels {
 	public function add_color_field() {
 		?>
 		<div class="form-field term-color-wrap">
-			<label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label>
+			<label for="term-color"><?php esc_htmlesc_html_e( 'Color', 'decker' ); ?></label>
 			<input name="term-color" id="term-color" type="color" value="">
 		</div>
 		<?php
@@ -98,7 +98,7 @@ class Decker_Labels {
 		$color   = get_term_meta( $term_id, 'term-color', true );
 		?>
 		<tr class="form-field term-color-wrap">
-			<th scope="row"><label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
+			<th scope="row"><label for="term-color"><?php esc_htmlesc_html_e( 'Color', 'decker' ); ?></label></th>
 			<td>
 				<input name="term-color" id="term-color" type="color" value="<?php echo esc_attr( $color ) ? esc_attr( $color ) : ''; ?>">
 			</td>

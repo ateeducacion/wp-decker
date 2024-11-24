@@ -3,7 +3,7 @@ include 'layouts/main.php';
 ?>
 
 <head>
-	<title><?php _e( 'Tasks Detail', 'decker' ); ?> | Decker</title>
+	<title><?php esc_html_e( 'Tasks Detail', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 	<?php include 'layouts/head-css.php'; ?>
 </head>
@@ -31,8 +31,8 @@ include 'layouts/main.php';
 								<div class="page-title-right">
 									<ol class="breadcrumb m-0">
 										<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php _e( 'Tasks', 'decker' ); ?></a></li>
-										<li class="breadcrumb-item active"><?php _e( 'Task Detail', 'decker' ); ?></li>
+										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php esc_html_e( 'Tasks', 'decker' ); ?></a></li>
+										<li class="breadcrumb-item active"><?php esc_html_e( 'Task Detail', 'decker' ); ?></li>
 									</ol>
 								</div>
 							   <?php

@@ -58,7 +58,7 @@ class Decker_Admin_Export {
 			<p>
 				<label>
 					<input type="radio" name="content" value="decker" />
-					<?php esc_html_e( 'Decker', 'decker' ); ?>
+					<?php esc_htmlesc_html_e( 'Decker', 'decker' ); ?>
 				</label>
 			</p>
 		</fieldset>
