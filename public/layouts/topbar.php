@@ -63,15 +63,15 @@ defined( 'ABSPATH' ) || exit;
 
 			<li class="dropdown">
 				<a class="nav-link dropdown-toggle arrow-none nav-user px-2" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-					<?php
-					$current_user = wp_get_current_user();
-					?>
+				<?php
+					$user = wp_get_current_user();
+				?>
 					<span class="account-user-avatar">
-						<img src="<?php echo esc_url( get_avatar_url( $current_user->ID ) ); ?>" alt="user-image" width="32" class="rounded-circle">
+						<img src="<?php echo esc_url( get_avatar_url( $user->ID ) ); ?>" alt="user-image" width="32" class="rounded-circle">
 					</span>
 					<span class="d-lg-flex flex-column gap-1 d-none">
-						<h5 class="my-0"><?php echo esc_html( $current_user->display_name ); ?></h5>
-						<h6 class="my-0 fw-normal"><?php echo esc_html( $current_user->user_email ); ?></h6>
+						<h5 class="my-0"><?php echo esc_html( $user->display_name ); ?></h5>
+						<h6 class="my-0 fw-normal"><?php echo esc_html( $user->user_email ); ?></h6>
 					</span>
 				</a>
 				<div class="dropdown-menu dropdown-menu-end dropdown-menu-animated profile-dropdown">
