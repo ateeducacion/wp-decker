@@ -131,7 +131,7 @@ class Decker_Public {
 
 			// Verify user permissions.
 			if ( ! current_user_can( 'decker_role' ) && ! is_super_admin() ) {
-				die( __( 'You do not have permission to view this page.', 'decker' ) );
+				die( esc_attr_e( 'You do not have permission to view this page.', 'decker' ) );
 			}
 
 			switch ( $decker_page ) {
