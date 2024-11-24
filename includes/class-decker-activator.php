@@ -26,7 +26,7 @@ class Decker_Activator {
 	 */
 	public static function activate() {
 		// Establecer la estructura de enlaces permanentes
-		if ( get_option( 'permalink_structure' ) !== '/%postname%/' ) {
+		if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
 			update_option( 'permalink_structure', '/%postname%/' );
 		}
 		flush_rewrite_rules();

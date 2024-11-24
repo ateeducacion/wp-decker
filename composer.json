@@ -10,7 +10,8 @@
         "phpcompatibility/phpcompatibility-wp": "^2.1.5",
         "yoast/phpunit-polyfills": ">=1.1.2",
         "wp-phpunit/wp-phpunit": "^6.7",
-        "dingo-d/wp-pest": "^1.6.1"
+        "dingo-d/wp-pest": "^1.6.1",
+        "friendsofphp/php-cs-fixer": "^3.64"
     },
     "scripts": {
         "post-install-cmd": [
@@ -25,6 +26,7 @@
         "test": "phpunit",
         "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php",
         "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php", 
+        "php-cs-fixer": "php-cs-fixer fix --config=.php-cs-fixer.php",
         "make-pot": "wp i18n make-pot . languages/decker.pot --domain=decker --exclude=vendor,assets,node_modules,tests,wp,wp-content --include=**/*.php",
         "update-po": "wp i18n update-po languages/decker.pot languages/decker-es_ES.po",
         "make-mo": "wp i18n make-mo languages/ languages/",

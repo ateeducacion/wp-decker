@@ -54,8 +54,8 @@ class TestDeckerBoards extends TestCase {
 	 */
 	public function test_customize_columns() {
 		$decker_boards = new Decker_Boards();
-		$columns = array(
-			'name' => 'Name',
+		$columns       = array(
+			'name'        => 'Name',
 			'description' => 'Description',
 		);
 		$customized_columns = $decker_boards->customize_columns( $columns );

@@ -1,9 +1,9 @@
 <?php
 include 'layouts/main.php';
 
-$current_date = new DateTime();
-$tomorrow_date = ( new DateTime() )->modify( '+1 day' );
-$next_7_days_date = ( new DateTime() )->modify( '+7 days' );
+$current_date      = new DateTime();
+$tomorrow_date     = ( new DateTime() )->modify( '+1 day' );
+$next_7_days_date  = ( new DateTime() )->modify( '+7 days' );
 $one_year_ago_date = ( new DateTime() )->modify( '-1 year' );
 
 $taskManager = new TaskManager();
@@ -23,15 +23,15 @@ $yesterday_end = ( clone $current_date )->modify( '-1 day' )->setTime( 23, 59, 5
 
 // Today
 $today_start = clone $current_date; // Today at 00:00:00
-$today_end = ( clone $current_date )->setTime( 23, 59, 59 );
+$today_end   = ( clone $current_date )->setTime( 23, 59, 59 );
 
 // Tomorrow
 $tomorrow_start = ( clone $current_date )->modify( '+1 day' ); // Tomorrow at 00:00:00
-$tomorrow_end = ( clone $tomorrow_start )->setTime( 23, 59, 59 );
+$tomorrow_end   = ( clone $tomorrow_start )->setTime( 23, 59, 59 );
 
 // Next 7 Days (Day after tomorrow to seven days ahead)
 $next_7_days_start = ( clone $current_date )->modify( '+2 days' ); // Day after tomorrow at 00:00:00
-$next_7_days_end = ( clone $current_date )->modify( '+7 days' )->setTime( 23, 59, 59 );
+$next_7_days_end   = ( clone $current_date )->modify( '+7 days' )->setTime( 23, 59, 59 );
 
 // Initialize columns with empty arrays
 $columns = array(

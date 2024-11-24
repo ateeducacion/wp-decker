@@ -10,7 +10,6 @@ require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 
 use Yoast\WPTestUtils\WPIntegration;
 
-
 // Bootstrap WP_Mock to initialize built-in features
 WP_Mock::setUsePatchwork( true );
 WP_Mock::bootstrap();

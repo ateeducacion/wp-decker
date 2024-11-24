@@ -90,7 +90,7 @@ class TestAdminSettings extends TestCase {
 		$this->assertEquals( $input, $result );
 
 		$input['nextcloud_url_base'] = 'invalid-url';
-		$result = $settings->settings_validate( $input );
+		$result                      = $settings->settings_validate( $input );
 		$this->assertEquals( '', $result['nextcloud_url_base'] );
 	}
 

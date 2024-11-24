@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			),
 		);
 
-		if ( $method !== 'GET' && $data ) {
+		if ( 'GET' !== $method && $data ) {
 			$args['body'] = wp_json_encode( $data );
 		}
 
@@ -288,17 +288,17 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 
 		// Get the form data
-		$nextcloud_url_base = sanitize_url( $_POST['nextcloud_url_base'] );
-		$nextcloud_username = sanitize_text_field( $_POST['nextcloud_username'] );
+		$nextcloud_url_base     = sanitize_url( $_POST['nextcloud_url_base'] );
+		$nextcloud_username     = sanitize_text_field( $_POST['nextcloud_username'] );
 		$nextcloud_access_token = sanitize_text_field( $_POST['nextcloud_access_token'] );
-		$ignored_board_ids = sanitize_text_field( $_POST['ignored_board_ids'] );
+		$ignored_board_ids      = sanitize_text_field( $_POST['ignored_board_ids'] );
 
 		// Store temporarily in class properties
 		$this->import_config = array(
-			'nextcloud_url_base' => $nextcloud_url_base,
-			'nextcloud_username' => $nextcloud_username,
+			'nextcloud_url_base'     => $nextcloud_url_base,
+			'nextcloud_username'     => $nextcloud_username,
 			'nextcloud_access_token' => $nextcloud_access_token,
-			'ignored_board_ids' => $ignored_board_ids,
+			'ignored_board_ids'      => $ignored_board_ids,
 		);
 
 		$boards = $this->get_nextcloud_boards();
@@ -319,9 +319,9 @@ document.addEventListener('DOMContentLoaded', function() {
 			wp_send_json_error( 'Access denied.' );
 		}
 
-		$skip_existing = isset( $_POST['skip_existing'] ) && $_POST['skip_existing'] == 1;
-		$board = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
-		$options    = get_option( 'decker_settings', array() );
+		$skip_existing     = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'];
+		$board             = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
+		$options           = get_option( 'decker_settings', array() );
 		$ignored_board_ids = explode( ',', $options['decker_ignored_board_ids'] );
 
 		if ( ! in_array( $board['id'], $ignored_board_ids, true ) ) {
@@ -349,14 +349,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 			// Import the regular tasks.
 			$import_result = $this->import_labels_and_tasks( $board, $board_term );
-			if ( $import_result === false ) {
+			if ( false === $import_result ) {
 				wp_send_json_error( 'Failed to import tasks.' );
 				return;
 			}
 
 			// Import the archived tasks.
 			$import_result = $this->import_labels_and_tasks( $board, $board_term, true );
-			if ( $import_result === false ) {
+			if ( false === $import_result ) {
 				wp_send_json_error( 'Failed to import archived tasks.' );
 				return;
 			}
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		if ( ! $existing_term ) {
 			$sanitized_color = '';
 			if ( $color ) {
-				$sanitized_color = sanitize_hex_color( strpos( $color, '#' ) === 0 ? $color : '#' . $color );
+				$sanitized_color = sanitize_hex_color( 0 === strpos( $color, '#' ) ? $color : '#' . $color );
 			}
 
 			// Insertar el término
@@ -430,9 +430,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * @return array|false An array with counts of labels and tasks, or false on failure.
 	 */
 	private function import_labels_and_tasks( $board, $board_term, $archived = false ) {
-		$skip_existing = isset( $_POST['skip_existing'] ) && $_POST['skip_existing'] == 1;
-		$label_count = 0;
-		$task_count  = 0;
+		$skip_existing = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'];
+		$label_count   = 0;
+		$task_count    = 0;
 
 		$archived_suffix = '';
 		if ( $archived ) {
@@ -476,11 +476,11 @@ document.addEventListener('DOMContentLoaded', function() {
 				foreach ( $stack['cards'] as $card ) {
 					$existing_task = get_posts(
 						array(
-							'meta_key'   => 'id_nextcloud_card',
-							'meta_value' => $card['id'],
-							'post_type'  => 'decker_task',
-							'post_status' => 'any',
-							'fields'      => 'ids', // Only retrieve IDs for performance optimization
+							'meta_key'       => 'id_nextcloud_card',
+							'meta_value'     => $card['id'],
+							'post_type'      => 'decker_task',
+							'post_status'    => 'any',
+							'fields'         => 'ids', // Only retrieve IDs for performance optimization
 							'posts_per_page' => 1,
 						)
 					);
@@ -491,11 +491,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 						// Map the stack titles to the corresponding values used in the task creation.
 						$stack_title_map = array(
-							'Completada'   => 'done',
-							'En revisión'  => 'done', // This column will be removed
-							'En progreso'  => 'in-progress',
-							'Por hacer'    => 'to-do',
-							'Hay que'      => 'to-do', // "Hay que" is equivalent to "to-do"
+							'Completada'  => 'done',
+							'En revisión' => 'done', // This column will be removed
+							'En progreso' => 'in-progress',
+							'Por hacer'   => 'to-do',
+							'Hay que'     => 'to-do', // "Hay que" is equivalent to "to-do"
 						);
 
 						// Determine the correct stack value based on the title.
@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		return array(
 			'labels' => $label_count,
-			'tasks' => $task_count,
+			'tasks'  => $task_count,
 		);
 	}
 
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		// Get due date
 		$due_date_str = ! empty( $card['duedate'] ) ? sanitize_text_field( $card['duedate'] ) : null;
-		$due_date = null;
+		$due_date     = null;
 		if ( $due_date_str ) {
 			try {
 				$due_date = new DateTime( $due_date_str );
@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			foreach ( $card['assignedUsers'] as $user ) {
 				if ( isset( $user['participant']['uid'] ) ) {
 
-					$participant = sanitize_user( $user['participant']['uid'] );
+					$participant    = sanitize_user( $user['participant']['uid'] );
 					$participant_id = $this->search_user( $participant );
 
 					if ( $participant_id ) {
@@ -739,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * @param int   $post_id The ID of the WordPress post.
 	 */
 	private function process_comment( $comment, $post_id ) {
-		$message = trim( $comment['message'] );
+		$message             = trim( $comment['message'] );
 		$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true ) ?: array();
 
 		// Determine the user who made the comment.
@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				if ( ! $exists ) {
 					$user_date_relations[] = array(
 						'user_id' => $user_id,
-						'date' => $date,
+						'date'    => $date,
 					);
 					update_post_meta( $post_id, '_user_date_relations', $user_date_relations );
 				}
@@ -783,15 +783,15 @@ document.addEventListener('DOMContentLoaded', function() {
 			// Add the comment as a regular WordPress comment.
 			wp_insert_comment(
 				array(
-					'comment_post_ID'      => $post_id,
-					'comment_author'       => $comment['actorDisplayName'],
-					'comment_content'      => $message,
-					'comment_type'         => '',
-					'user_id'              => $user_id ?: 0,
-					'comment_author_IP'    => '',
-					'comment_agent'        => 'NextCloud API',
-					'comment_date'         => $comment['creationDateTime'],
-					'comment_approved'     => 1,
+					'comment_post_ID'   => $post_id,
+					'comment_author'    => $comment['actorDisplayName'],
+					'comment_content'   => $message,
+					'comment_type'      => '',
+					'user_id'           => $user_id ?: 0,
+					'comment_author_IP' => '',
+					'comment_agent'     => 'NextCloud API',
+					'comment_date'      => $comment['creationDateTime'],
+					'comment_approved'  => 1,
 				)
 			);
 		}

@@ -1,4 +1,5 @@
 <?php
+
 use PHPUnit\Framework\TestCase;
 use WP_Mock as M;
 
@@ -17,7 +18,7 @@ class TestDeckerEmailToPost extends TestCase {
 		M::userFunction(
 			'get_option',
 			array(
-				'args' => array( 'decker_settings', array() ),
+				'args'   => array( 'decker_settings', array() ),
 				'return' => array( 'shared_key' => 'RANDOM_VALUE_FOR_TEST' ),
 			)
 		);
@@ -25,7 +26,7 @@ class TestDeckerEmailToPost extends TestCase {
 		M::userFunction(
 			'get_user_by',
 			array(
-				'args' => array( 'email', 'user1@example.com' ),
+				'args'   => array( 'email', 'user1@example.com' ),
 				'return' => (object) array( 'ID' => 1 ),
 			)
 		);
@@ -47,12 +48,12 @@ class TestDeckerEmailToPost extends TestCase {
 		$request->set_param( 'shared_key', 'RANDOM_VALUE_FOR_TEST' );
 		$request->set_json_params(
 			array(
-				'from' => 'user1@example.com',
-				'to' => array( 'user2@example.com', 'user1@example.com' ),
+				'from'    => 'user1@example.com',
+				'to'      => array( 'user2@example.com', 'user1@example.com' ),
 				'subject' => 'Test Email Subject',
-				'body' => 'This is a test email body',
+				'body'    => 'This is a test email body',
 				'headers' => array(
-					'subject' => 'Test Email Subject',
+					'subject'      => 'Test Email Subject',
 					'content-type' => 'text/plain',
 				),
 			)

@@ -13,14 +13,14 @@ if ( is_null( $main_board ) ) {
 }
 
 $taskManager = new TaskManager();
-$tasks = $taskManager->getTasksByBoard( $main_board );
+$tasks       = $taskManager->getTasksByBoard( $main_board );
 
 
 // Dividir las tareas en columnas
 $columns = array(
-	'to-do' => array(),
+	'to-do'       => array(),
 	'in-progress' => array(),
-	'done' => array(),
+	'done'        => array(),
 );
 
 foreach ( $tasks as $task ) {
@@ -85,7 +85,7 @@ foreach ( $tasks as $task ) {
 											add_query_arg(
 												array(
 													'decker_page' => 'task',
-													'slug' => $board_slug,
+													'slug'        => $board_slug,
 												),
 												home_url( '/' )
 											)

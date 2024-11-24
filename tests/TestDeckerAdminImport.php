@@ -45,7 +45,7 @@ class TestDeckerAdminImport extends TestCase {
 					echo wp_json_encode(
 						array(
 							'success' => true,
-							'data' => $data,
+							'data'    => $data,
 						)
 					);
 				},
@@ -59,7 +59,7 @@ class TestDeckerAdminImport extends TestCase {
 					echo wp_json_encode(
 						array(
 							'success' => false,
-							'data' => $data,
+							'data'    => $data,
 						)
 					);
 				},
@@ -75,9 +75,9 @@ class TestDeckerAdminImport extends TestCase {
 		$this->importer->method( 'make_request' )->willReturn(
 			array(
 				array(
-					'id' => 1,
-					'title' => 'Test Board 1',
-					'color' => 'FF5733',
+					'id'     => 1,
+					'title'  => 'Test Board 1',
+					'color'  => 'FF5733',
 					'labels' => array(
 						array(
 							'title' => 'Label 1',
@@ -90,9 +90,9 @@ class TestDeckerAdminImport extends TestCase {
 					),
 				),
 				array(
-					'id' => 2,
-					'title' => 'Test Board 2',
-					'color' => '3357FF',
+					'id'     => 2,
+					'title'  => 'Test Board 2',
+					'color'  => '3357FF',
 					'labels' => array(
 						array(
 							'title' => 'Label 3',

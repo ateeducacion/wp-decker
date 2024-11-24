@@ -1,4 +1,5 @@
 <?php
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -32,13 +33,13 @@ class TaskManager {
 	 */
 	public function getTasks( array $args = array() ): array {
 		$default_args = array(
-			'post_type' => 'decker_task',
+			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
 		);
 		$query_args = array_merge( $default_args, $args );
-		$posts = get_posts( $query_args );
-		$tasks = array();
+		$posts      = get_posts( $query_args );
+		$tasks      = array();
 
 		foreach ( $posts as $post ) {
 			try {
@@ -61,7 +62,7 @@ class TaskManager {
 		$args = array(
 			'post_status' => $status,
 			'meta_key'    => 'max_priority', // Define field to use in order
-			'meta_type' => 'BOOL',
+			'meta_type'   => 'BOOL',
 			'orderby'     => array(
 				'max_priority' => 'DESC',
 			),
@@ -81,14 +82,14 @@ class TaskManager {
 		$args = array(
 			'meta_query' => array(
 				array(
-					'key' => 'assigned_users',
-					'value' => $user_id,
+					'key'     => 'assigned_users',
+					'value'   => $user_id,
 					'compare' => 'LIKE',
 				),
 			),
-			'meta_key'    => 'max_priority', // Define field to use in order
+			'meta_key'  => 'max_priority', // Define field to use in order
 			'meta_type' => 'BOOL',
-			'orderby'     => array(
+			'orderby'   => array(
 				'max_priority' => 'DESC',
 				'menu_order'   => 'ASC',
 			),
@@ -127,8 +128,8 @@ class TaskManager {
 		$args = array(
 			'meta_query' => array(
 				array(
-					'key' => 'stack',
-					'value' => $stack,
+					'key'     => 'stack',
+					'value'   => $stack,
 					'compare' => '=',
 				),
 			),
@@ -147,7 +148,7 @@ class TaskManager {
 	public function getTasksByBoard( Board $board ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
-			'post_status'    => 'publish',
+			'post_status' => 'publish',
 			'tax_query'   => array(
 				array(
 					'taxonomy' => 'decker_board',
@@ -155,9 +156,9 @@ class TaskManager {
 					'terms'    => $board->slug,
 				),
 			),
-			'meta_key'    => 'max_priority', // Define field to use in order
+			'meta_key'  => 'max_priority', // Define field to use in order
 			'meta_type' => 'BOOL',
-			'orderby'     => array(
+			'orderby'   => array(
 				'max_priority' => 'DESC',
 				'menu_order'   => 'ASC',
 			),
@@ -174,20 +175,20 @@ class TaskManager {
 	 */
 	public function hasUserTodayTasks(): bool {
 		$user_id = get_current_user_id();
-		$args = array(
-			'post_type' => 'decker_task',
+		$args    = array(
+			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
-			'fields' => 'ids', // Only retrieve IDs for performance optimization
-			'meta_query' => array(
+			'fields'      => 'ids', // Only retrieve IDs for performance optimization
+			'meta_query'  => array(
 				'relation' => 'AND',
 				array(
-					'key' => 'assigned_users',
-					'value' => $user_id,
+					'key'     => 'assigned_users',
+					'value'   => $user_id,
 					'compare' => 'LIKE',
 				),
 				array(
-					'key' => '_user_date_relations',
+					'key'     => '_user_date_relations',
 					'compare' => 'EXISTS', // Only include tasks where the meta key exists
 				),
 			),
@@ -205,9 +206,7 @@ class TaskManager {
 			if ( is_array( $user_date_relations ) ) {
 				foreach ( $user_date_relations as $relation ) {
 					if (
-						isset( $relation['user_id'], $relation['date'] ) &&
-						$relation['user_id'] == $user_id &&
-						$relation['date'] == $today
+						isset( $relation['user_id'], $relation['date'] ) && $relation['user_id'] == $user_id && $relation['date'] == $today
 					) {
 						return true;
 					}
@@ -266,7 +265,7 @@ class TaskManager {
 	 * @return Task[] List of Task objects within the specified time range.
 	 */
 	public function getUserTasksMarkedForTodayForPreviousDays( int $user_id, int $days ): array {
-		$args    = array(
+		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
@@ -307,9 +306,7 @@ class TaskManager {
 						if ( isset( $relation['user_id'], $relation['date'] ) && $relation['user_id'] == $user_id ) {
 							$relation_date = DateTime::createFromFormat( 'Y-m-d', $relation['date'] );
 							if (
-								$relation_date &&
-								$relation_date >= $start_date &&
-								$relation_date <= $today
+								$relation_date && $relation_date >= $start_date && $relation_date <= $today
 							) {
 								$tasks[] = new Task( $post_id );
 								break; // No need to check more dates for this task

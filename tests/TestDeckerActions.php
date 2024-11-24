@@ -51,8 +51,8 @@ class TestDeckerActions extends TestCase {
 	 */
 	public function test_customize_columns() {
 		$decker_actions = new Decker_Actions();
-		$columns = array(
-			'name' => 'Name',
+		$columns        = array(
+			'name'        => 'Name',
 			'description' => 'Description',
 		);
 		$customized_columns = $decker_actions->customize_columns( $columns );

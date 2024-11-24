@@ -27,7 +27,7 @@
 </script>
 
 
-<?php if ( $decker_page == 'tasks' ) { // Only load datatables.net on tasks page ?>
+<?php if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page ?>
 
 <!-- Datatables JS CDN -->
 <script type="text/javascript" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>

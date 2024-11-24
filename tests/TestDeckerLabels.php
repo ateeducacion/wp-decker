@@ -54,8 +54,8 @@ class TestDeckerLabels extends TestCase {
 	 */
 	public function test_customize_columns() {
 		$decker_labels = new Decker_Labels();
-		$columns = array(
-			'name' => 'Name',
+		$columns       = array(
+			'name'        => 'Name',
 			'description' => 'Description',
 		);
 		$customized_columns = $decker_labels->customize_columns( $columns );

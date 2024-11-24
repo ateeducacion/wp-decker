@@ -2,10 +2,10 @@
 
 require_once 'includes/class-decker-email-parser.php';
 
-$rawEmail = file_get_contents( 'tests/mail1.txt' ); // Load your raw email content
+$rawEmail    = file_get_contents( 'tests/mail1.txt' ); // Load your raw email content
 $emailParser = new Decker_Email_Parser( $rawEmail );
 
-$headers = $emailParser->getHeaders();
+$headers     = $emailParser->getHeaders();
 $htmlContent = $emailParser->getHtmlPart();
 $textContent = $emailParser->getTextPart();
 $attachments = $emailParser->getAttachments();
@@ -21,7 +21,7 @@ echo "Text Content:\n$textContent\n";
 // Process attachments
 foreach ( $attachments as $attachment ) {
 	$filename = $attachment['filename'];
-	$content = $attachment['content'];
+	$content  = $attachment['content'];
 	$mimetype = $attachment['mimetype'];
 
 	// Save attachment to a file

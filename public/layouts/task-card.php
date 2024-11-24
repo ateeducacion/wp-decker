@@ -41,7 +41,7 @@ if ( isset( $_GET['slug'] ) ) {
 }
 
 $disabled = false;
-if ( $task_id > 0 && $task->status == 'archived' ) {
+if ( $task_id > 0 && 'archived' == $task->status ) {
 	$disabled = true;
 }
 
@@ -53,9 +53,9 @@ if ( $task_id > 0 ) {
 	$comments = get_comments(
 		array(
 			'post_id' => $task_id,
-			'status' => 'approve',
+			'status'  => 'approve',
 			'orderby' => 'comment_date_gmt',
-			'order' => 'ASC',
+			'order'   => 'ASC',
 		)
 	);
 
@@ -325,7 +325,7 @@ function deleteComment(commentId) {
 			<label for="task-labels" class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
 			<select class="form-select" id="task-labels" multiple <?php disabled( $disabled ); ?>>
 				<?php
-					$labels = LabelManager::getAllLabels();
+				$labels = LabelManager::getAllLabels();
 				foreach ( $labels as $label ) {
 					$selected = in_array( $label->id, array_column( $task->labels, 'id' ) ) ? 'selected' : '';
 					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . $selected . '>' . esc_html( $label->name ) . '</option>';
@@ -343,32 +343,32 @@ function deleteComment(commentId) {
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( $task_id === 0 ) ? ' disabled' : ''; ?>" <?php disabled( $task_id === 0 ); ?>><?php esc_html_e( 'Comments', 'decker' ); ?>
+			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Comments', 'decker' ); ?>
 			   <span class="badge bg-light text-dark" id="comment-count"><?php echo count( $comments ); ?></span>
 
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( $task_id === 0 ) ? ' disabled' : ''; ?>" <?php disabled( $task_id === 0 ); ?>><?php esc_html_e( 'Attachments', 'decker' ); ?> 
+			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Attachments', 'decker' ); ?> 
 
 			<?php
-				// Obtener los adjuntos asociados con la tarea
+			// Obtener los adjuntos asociados con la tarea
 
-				$attachments = get_attached_media( '', $task_id );
-				// $attachments = is_array( $attachments ) ? $attachments : array();
+			$attachments = get_attached_media( '', $task_id );
+			// $attachments = is_array( $attachments ) ? $attachments : array();
 
 			?>
 			<span class="badge bg-light text-dark" id="attachment-count"><?php echo count( $attachments ); ?></span>
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( $task_id === 0 ) ? ' disabled' : ''; ?>" <?php disabled( $task_id === 0 ); ?>><?php esc_html_e( 'History', 'decker' ); ?>
+			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'History', 'decker' ); ?>
 
 			<!-- <span class="badge bg-light text-dark">0</span> -->
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( $task_id === 0 ) ? ' disabled' : ''; ?>" <?php disabled( $task_id === 0 ); ?>><?php esc_html_e( 'Gantt', 'decker' ); ?></a>
+			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Gantt', 'decker' ); ?></a>
 		</li>
 	</ul>
 
@@ -413,8 +413,8 @@ function deleteComment(commentId) {
 					<?php
 					foreach ( $attachments as $attachment ) :
 
-						$attachment_url = $attachment->guid;
-						$file_extension = pathinfo( $attachment_url, PATHINFO_EXTENSION );
+						$attachment_url   = $attachment->guid;
+						$file_extension   = pathinfo( $attachment_url, PATHINFO_EXTENSION );
 						$attachment_title = $attachment->post_title . '.' . $file_extension;
 
 						?>
@@ -466,13 +466,13 @@ function deleteComment(commentId) {
 				<tbody>
 					<?php
 					$history = $task->get_user_history_with_objects();
-					$timelineData = array();
+					$timelineData                = array();
 					foreach ( $history as $record ) {
-						$user = $record['user'];
-						$avatar = get_avatar( $user->ID, 32 ); // Get WordPress avatar
-						$nickname = esc_html( $user->nickname );
+						$user      = $record['user'];
+						$avatar    = get_avatar( $user->ID, 32 ); // Get WordPress avatar
+						$nickname  = esc_html( $user->nickname );
 						$full_name = esc_attr( $user->first_name . ' ' . $user->last_name ); // Assuming first and last name exist
-						$date = esc_html( $record['date'] );
+						$date      = esc_html( $record['date'] );
 
 						echo '<tr>';
 						echo '<td title="' . $full_name . '">' . $avatar . ' ' . $nickname . '</td>';
@@ -483,7 +483,7 @@ function deleteComment(commentId) {
 						// Prepare data for the Timeline Chart
 						$timelineData[] = array(
 							'nickname' => $nickname,
-							'date' => $record['date'],
+							'date'     => $record['date'],
 						);
 
 					}
@@ -522,7 +522,7 @@ function deleteComment(commentId) {
 			<button type="submit" class="btn btn-primary" id="save-task" disabled>
 				<i class="ri-save-line"></i> <?php esc_html_e( 'Save', 'decker' ); ?>
 			</button>
-			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( $disabled || $task_id == 0 ); ?>>
+			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( $disabled || 0 == $task_id ); ?>>
 				<span class="visually-hidden"><?php esc_html_e( 'Toggle Dropdown', 'decker' ); ?></span>
 			</button>
 			<?php

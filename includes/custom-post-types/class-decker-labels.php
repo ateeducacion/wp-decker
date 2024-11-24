@@ -45,30 +45,30 @@ class Decker_Labels {
 	 */
 	public function register_taxonomy() {
 		$labels = array(
-			'name'              => _x( 'Labels', 'taxonomy general name', 'decker' ),
-			'singular_name'     => _x( 'Label', 'taxonomy singular name', 'decker' ),
-			'search_items'      => __( 'Search Labels', 'decker' ),
-			'all_items'         => __( 'All Labels', 'decker' ),
-			'edit_item'         => __( 'Edit Label', 'decker' ),
-			'update_item'       => __( 'Update Label', 'decker' ),
-			'add_new_item'      => __( 'Add New Label', 'decker' ),
-			'new_item_name'     => __( 'New Label Name', 'decker' ),
-			'menu_name'         => __( 'Labels', 'decker' ),
+			'name'          => _x( 'Labels', 'taxonomy general name', 'decker' ),
+			'singular_name' => _x( 'Label', 'taxonomy singular name', 'decker' ),
+			'search_items'  => __( 'Search Labels', 'decker' ),
+			'all_items'     => __( 'All Labels', 'decker' ),
+			'edit_item'     => __( 'Edit Label', 'decker' ),
+			'update_item'   => __( 'Update Label', 'decker' ),
+			'add_new_item'  => __( 'Add New Label', 'decker' ),
+			'new_item_name' => __( 'New Label Name', 'decker' ),
+			'menu_name'     => __( 'Labels', 'decker' ),
 		);
 
 		$args = array(
-			'labels'            => $labels,
-			'hierarchical'      => false,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'show_tagcloud'     => false,
+			'labels'             => $labels,
+			'hierarchical'       => false,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
-			'rewrite'           => array( 'slug' => 'decker_label' ),
-			'show_in_rest'      => false,
-			'rest_base'         => 'labels',
-			'can_export'        => true,
-			'capabilities' => array(
+			'rewrite'            => array( 'slug' => 'decker_label' ),
+			'show_in_rest'       => false,
+			'rest_base'          => 'labels',
+			'can_export'         => true,
+			'capabilities'       => array(
 				'assign_terms' => 'read',
 			),
 		);
@@ -95,7 +95,7 @@ class Decker_Labels {
 	 */
 	public function edit_color_field( $term ) {
 		$term_id = $term->term_id;
-		$color = get_term_meta( $term_id, 'term-color', true );
+		$color   = get_term_meta( $term_id, 'term-color', true );
 		?>
 		<tr class="form-field term-color-wrap">
 			<th scope="row"><label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
@@ -138,7 +138,7 @@ class Decker_Labels {
 		$new_columns = array();
 		foreach ( $columns as $key => $value ) {
 			if ( 'name' === $key ) {
-				$new_columns[ $key ] = $value;
+				$new_columns[ $key ]  = $value;
 				$new_columns['color'] = __( 'Color', 'decker' );
 			} else {
 				$new_columns[ $key ] = $value;
@@ -157,7 +157,7 @@ class Decker_Labels {
 	 */
 	public function add_column_content( $content, $column_name, $term_id ) {
 		if ( 'color' === $column_name ) {
-			$color = get_term_meta( $term_id, 'term-color', true );
+			$color   = get_term_meta( $term_id, 'term-color', true );
 			$content = '<span style="display:inline-block;width:20px;height:20px;background-color:' . esc_attr( $color ) . ';"></span>';
 		}
 		return $content;
@@ -168,4 +168,3 @@ class Decker_Labels {
 if ( class_exists( 'Decker_Labels' ) ) {
 	new Decker_Labels();
 }
-

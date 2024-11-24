@@ -35,30 +35,30 @@ class Decker_Actions {
 	 */
 	public function register_taxonomy() {
 		$labels = array(
-			'name'              => _x( 'Actions', 'taxonomy general name', 'decker' ),
-			'singular_name'     => _x( 'Action', 'taxonomy singular name', 'decker' ),
-			'search_items'      => __( 'Search Actions', 'decker' ),
-			'all_items'         => __( 'All Actions', 'decker' ),
-			'edit_item'         => __( 'Edit Action', 'decker' ),
-			'update_item'       => __( 'Update Action', 'decker' ),
-			'add_new_item'      => __( 'Add New Action', 'decker' ),
-			'new_item_name'     => __( 'New Action Name', 'decker' ),
-			'menu_name'         => __( 'Actions', 'decker' ),
+			'name'          => _x( 'Actions', 'taxonomy general name', 'decker' ),
+			'singular_name' => _x( 'Action', 'taxonomy singular name', 'decker' ),
+			'search_items'  => __( 'Search Actions', 'decker' ),
+			'all_items'     => __( 'All Actions', 'decker' ),
+			'edit_item'     => __( 'Edit Action', 'decker' ),
+			'update_item'   => __( 'Update Action', 'decker' ),
+			'add_new_item'  => __( 'Add New Action', 'decker' ),
+			'new_item_name' => __( 'New Action Name', 'decker' ),
+			'menu_name'     => __( 'Actions', 'decker' ),
 		);
 
 		$args = array(
-			'labels'            => $labels,
-			'hierarchical'      => true,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'show_tagcloud'     => false,
+			'labels'             => $labels,
+			'hierarchical'       => true,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
-			'rewrite'           => array( 'slug' => 'decker_action' ),
-			'show_in_rest'      => true, // Enable REST API.
-			'rest_base'         => 'actions', // Base name in REST API.
-			'can_export'        => true,
-			'capabilities' => array(
+			'rewrite'            => array( 'slug' => 'decker_action' ),
+			'show_in_rest'       => true, // Enable REST API.
+			'rest_base'          => 'actions', // Base name in REST API.
+			'can_export'         => true,
+			'capabilities'       => array(
 				'assign_terms' => 'read',
 			),
 		);
@@ -133,7 +133,7 @@ class Decker_Actions {
 	 * @return mixed The result to send to the client.
 	 */
 	public function restrict_rest_access( $result, $server, $request ) {
-		if ( strpos( $request->get_route(), '/wp/v2/actions' ) !== false ) {
+		if ( false !== strpos( $request->get_route(), '/wp/v2/actions' ) ) {
 			if ( ! is_user_logged_in() ) {
 				return new WP_Error( 'rest_forbidden', __( 'You are not authorized to access this resource.', 'decker' ), array( 'status' => 401 ) );
 			}

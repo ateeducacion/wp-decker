@@ -1,4 +1,5 @@
 <?php
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -9,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Handles operations related to tasks.
  */
 class TaskController {
+
 	private TaskManager $taskManager;
 
 	/**
@@ -66,18 +68,18 @@ class TaskController {
 	 * @param array $data The form data.
 	 */
 	public function handleTaskFormSubmission( array $data ): void {
-		$title = sanitize_text_field( $data['title'] );
+		$title   = sanitize_text_field( $data['title'] );
 		$content = sanitize_textarea_field( $data['content'] );
-		$status = sanitize_text_field( $data['status'] ?? 'publish' );
+		$status  = sanitize_text_field( $data['status'] ?? 'publish' );
 		$task_id = intval( $data['task_id'] ?? 0 );
 
 		if ( $task_id > 0 ) {
 			// Update existing task
 			$task = $this->taskManager->getTask( $task_id );
 			if ( $task ) {
-				$task->title = $title;
+				$task->title   = $title;
 				$task->content = $content;
-				$task->status = $status;
+				$task->status  = $status;
 				$task->save();
 				echo '<p>Task updated successfully.</p>';
 			} else {

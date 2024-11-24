@@ -2,22 +2,22 @@
 include 'layouts/main.php';
 
 // Process form submission
-if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
+if ( 'POST' === $_SERVER['REQUEST_METHOD'] ) {
 	// Verify nonce
 	if ( ! isset( $_POST['decker_term_nonce'] ) || ! wp_verify_nonce( $_POST['decker_term_nonce'], 'decker_term_action' ) ) {
 		wp_die( 'Security check failed' );
 	}
 	$term_type = sanitize_text_field( $_POST['term_type'] );
-	$term_id = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0;
+	$term_id   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0;
 
 	// Check if this is a delete action
-	if ( isset( $_POST['action'] ) && $_POST['action'] === 'delete' ) {
+	if ( isset( $_POST['action'] ) && 'delete' === $_POST['action'] ) {
 		$result = array(
 			'success' => false,
 			'message' => '',
 		);
 
-		if ( $term_type === 'board' ) {
+		if ( 'board' === $term_type ) {
 			$result = BoardManager::deleteBoard( $term_id );
 		} else {
 			$result = LabelManager::deleteLabel( $term_id );
@@ -26,7 +26,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 		wp_redirect(
 			add_query_arg(
 				array(
-					'status' => $result['success'] ? 'success' : 'error',
+					'status'  => $result['success'] ? 'success' : 'error',
 					'message' => urlencode( $result['message'] ),
 				)
 			)
@@ -53,7 +53,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 		'message' => '',
 	);
 
-	if ( $term_type === 'board' ) {
+	if ( 'board' === $term_type ) {
 		$result = BoardManager::saveBoard( $data, $term_id );
 	} else {
 		$result = LabelManager::saveLabel( $data, $term_id );
@@ -63,7 +63,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 		wp_redirect(
 			add_query_arg(
 				array(
-					'status' => 'success',
+					'status'  => 'success',
 					'message' => urlencode( $result['message'] ),
 				)
 			)
@@ -73,7 +73,7 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 		wp_redirect(
 			add_query_arg(
 				array(
-					'status' => 'error',
+					'status'  => 'error',
 					'message' => urlencode( $result['message'] ),
 				)
 			)
@@ -86,17 +86,17 @@ if ( $_SERVER['REQUEST_METHOD'] === 'POST' ) {
 $type = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : 'label';
 
 // Initialize the appropriate manager based on type
-$items = array();
-$title = '';
+$items      = array();
+$title      = '';
 $addNewText = '';
 
-if ( $type === 'board' ) {
-	$items = BoardManager::getAllBoards();
-	$title = __( 'Boards', 'decker' );
+if ( 'board' === $type ) {
+	$items      = BoardManager::getAllBoards();
+	$title      = __( 'Boards', 'decker' );
 	$addNewText = __( 'Add New Board', 'decker' );
 } else {
-	$items = LabelManager::getAllLabels();
-	$title = __( 'Labels', 'decker' );
+	$items      = LabelManager::getAllLabels();
+	$title      = __( 'Labels', 'decker' );
 	$addNewText = __( 'Add New Label', 'decker' );
 }
 

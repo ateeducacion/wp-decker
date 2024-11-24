@@ -1,4 +1,5 @@
 <?php
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -9,14 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Provides functionalities to manage boards using a Singleton pattern.
  */
 class BoardManager {
+
 	private static ?BoardManager $instance = null;
-	private static array $boards = array();
+	private static array $boards           = array();
 
 	private function __construct() {
 		// Load all boards
 		$terms = get_terms(
 			array(
-				'taxonomy' => 'decker_board',
+				'taxonomy'   => 'decker_board',
 				'hide_empty' => false,
 			)
 		);
@@ -34,7 +36,7 @@ class BoardManager {
 	 * @return Board|null The board object or null if not found.
 	 */
 	public static function getBoardBySlug( string $slug ): ?Board {
-		if ( self::$instance === null ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return self::$boards[ $slug ] ?? null;
@@ -46,19 +48,19 @@ class BoardManager {
 	 * @return array List of all Board objects.
 	 */
 	public static function getAllBoards(): array {
-		if ( self::$instance === null ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
 		return array_values( self::$boards );
 	}
 
-	  /**
-	   * Save a board.
-	   *
-	   * @param array $data Board data including name and color.
-	   * @param int   $id Board ID for updates 0 for new boards.
-	   * @return array Response array with success status and message.
-	   */
+	/**
+	 * Save a board.
+	 *
+	 * @param array $data Board data including name and color.
+	 * @param int   $id Board ID for updates 0 for new boards.
+	 * @return array Response array with success status and message.
+	 */
 	public static function saveBoard( array $data, int $id ): array {
 		$args = array(
 			'name' => sanitize_text_field( $data['name'] ),

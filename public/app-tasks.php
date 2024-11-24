@@ -153,14 +153,14 @@ table#tablaTareas td:nth-child(4) {
 							<?php
 								$current_type = isset( $_GET['decker_page'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'tasks';
 
-								$page_title = __( 'Tasks', 'decker' );
-								$class_disabled = '';
-							if ( $current_type === 'active' ) {
+							$page_title     = __( 'Tasks', 'decker' );
+							$class_disabled = '';
+							if ( 'active' === $current_type ) {
 								$page_title = __( 'Active Tasks', 'decker' );
-							} elseif ( $current_type === 'my' ) {
+							} elseif ( 'my' === $current_type ) {
 								$page_title = __( 'My Tasks', 'decker' );
-							} elseif ( $current_type === 'archived' ) {
-								$page_title = __( 'Archived Tasks', 'decker' );
+							} elseif ( 'archived' === $current_type ) {
+								$page_title     = __( 'Archived Tasks', 'decker' );
 								$class_disabled = ' disabled';
 							}
 							?>
@@ -176,7 +176,7 @@ table#tablaTareas td:nth-child(4) {
 									<select id="boardFilter" class="form-select">
 										<option value=""><?php _e( 'All Boards', 'decker' ); ?></option>
 										<?php
-											$boards = BoardManager::getAllBoards();
+										$boards = BoardManager::getAllBoards();
 										foreach ( $boards as $board ) {
 											echo '<option value="' . esc_attr( $board->name ) . '">' . esc_html( $board->name ) . '</option>';
 										}
@@ -212,9 +212,9 @@ table#tablaTareas td:nth-child(4) {
 
 													$tasks = array();
 
-													if ( $type === 'archived' ) {
+													if ( 'archived' === $type ) {
 														$tasks = $taskManager->getTasksByStatus( 'archived' );
-													} elseif ( $type === 'my' ) {
+													} elseif ( 'my' === $type ) {
 														$tasks = $taskManager->getTasksByUser( get_current_user_id() );
 													} else {
 														$tasks = $taskManager->getTasksByStatus( 'publish' );
@@ -236,7 +236,7 @@ table#tablaTareas td:nth-child(4) {
 															add_query_arg(
 																array(
 																	'decker_page' => 'task',
-																	'id' => $task->ID,
+																	'id'          => $task->ID,
 																),
 																home_url( '/' )
 															)

@@ -149,30 +149,30 @@ include 'layouts/main.php';
 		<?php
 
 		// Obtener datos de tareas por tablero y colores
-		$boards = BoardManager::getAllBoards();
+		$boards           = BoardManager::getAllBoards();
 		$tasks_by_board_and_stack = array();
-		$board_labels = array();
-		$board_colors = array();
+		$board_labels             = array();
+		$board_colors             = array();
 
 		// Obtener todos los posts de tipo decker_task de una sola vez
 		// TO-DO use the TaskManager
 		$all_tasks = get_posts(
 			array(
-				'post_type' => 'decker_task',
+				'post_type'   => 'decker_task',
 				'numberposts' => -1,
 				'post_status' => 'publish',
-				'meta_query' => array(
+				'meta_query'  => array(
 					'relation' => 'OR',
 					array(
-						'key' => 'stack',
+						'key'   => 'stack',
 						'value' => 'to-do',
 					),
 					array(
-						'key' => 'stack',
+						'key'   => 'stack',
 						'value' => 'in-progress',
 					),
 					array(
-						'key' => 'stack',
+						'key'   => 'stack',
 						'value' => 'done',
 					),
 				),
@@ -181,17 +181,17 @@ include 'layouts/main.php';
 
 		// Procesar tareas por tablero y stack
 		foreach ( $boards as $board ) {
-			$board_labels[] = $board->name;
-			$board_colors[] = $board->color;
+			$board_labels[]                           = $board->name;
+			$board_colors[]                           = $board->color;
 			$tasks_by_board_and_stack[ $board->name ] = array(
-				'to-do' => 0,
+				'to-do'       => 0,
 				'in-progress' => 0,
-				'done' => 0,
+				'done'        => 0,
 			);
 
 			foreach ( $all_tasks as $task ) {
 				$task_boards = wp_get_post_terms( $task->ID, 'decker_board', array( 'fields' => 'ids' ) );
-				$task_stack = get_post_meta( $task->ID, 'stack', true );
+				$task_stack  = get_post_meta( $task->ID, 'stack', true );
 
 				if ( in_array( $board->id, $task_boards ) ) {
 					$tasks_by_board_and_stack[ $board->name ][ $task_stack ]++;
@@ -200,20 +200,20 @@ include 'layouts/main.php';
 		}
 
 		// Obtener datos de tareas por usuario
-		$users = get_users();
+		$users                   = get_users();
 		$tasks_by_user_and_stack = array();
-		$user_labels = array();
+		$user_labels             = array();
 		foreach ( $users as $user ) {
-			$user_labels[] = $user->display_name;
+			$user_labels[]                                  = $user->display_name;
 			$tasks_by_user_and_stack[ $user->display_name ] = array(
-				'to-do' => 0,
+				'to-do'       => 0,
 				'in-progress' => 0,
-				'done' => 0,
+				'done'        => 0,
 			);
 
 			foreach ( $all_tasks as $task ) {
 				$assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
-				$task_stack = get_post_meta( $task->ID, 'stack', true );
+				$task_stack     = get_post_meta( $task->ID, 'stack', true );
 
 				if ( is_array( $assigned_users ) && in_array( $user->ID, $assigned_users ) ) {
 					$tasks_by_user_and_stack[ $user->display_name ][ $task_stack ]++;
@@ -223,9 +223,9 @@ include 'layouts/main.php';
 
 		// Obtener datos de tareas por stack
 		$tasks_by_stack = array(
-			'to-do' => 0,
+			'to-do'       => 0,
 			'in-progress' => 0,
-			'done' => 0,
+			'done'        => 0,
 		);
 		foreach ( $all_tasks as $task ) {
 			$task_stack = get_post_meta( $task->ID, 'stack', true );

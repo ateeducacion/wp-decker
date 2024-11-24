@@ -6,9 +6,9 @@ class Decker_Email_Parser {
 
 	private $rawEmail;
 	private $parsed = array(
-		'headers' => array(),
-		'html' => '',
-		'text' => '',
+		'headers'     => array(),
+		'html'        => '',
+		'text'        => '',
 		'attachments' => array(),
 	);
 
@@ -36,7 +36,7 @@ class Decker_Email_Parser {
 		$contentType = $this->parsed['headers']['Content-Type'] ?? 'text/plain';
 
 		// Check for multipart content
-		if ( strpos( $contentType, 'multipart/' ) !== false ) {
+		if ( false !== strpos( $contentType, 'multipart/' ) ) {
 			// Extract boundary
 			$boundary = $this->getBoundary( $contentType );
 			if ( $boundary ) {
@@ -45,9 +45,9 @@ class Decker_Email_Parser {
 			}
 		} else {
 			// Single part email
-			$encoding = $this->parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
+			$encoding       = $this->parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
 			$decodedContent = $this->decodeContent( $bodySection, $encoding );
-			if ( strpos( $contentType, 'text/html' ) !== false ) {
+			if ( false !== strpos( $contentType, 'text/html' ) ) {
 				$this->parsed['html'] .= $decodedContent;
 			} else {
 				$this->parsed['text'] .= $decodedContent;
@@ -68,13 +68,13 @@ class Decker_Email_Parser {
 		foreach ( $parts as $part ) {
 			// Split headers and content
 			list($headerSection, $bodyContent) = $this->splitHeadersAndBody( $part );
-			$headers = $this->parseHeaders( $headerSection );
+			$headers                           = $this->parseHeaders( $headerSection );
 
 			// Get content type and encoding
 			$contentType = $headers['Content-Type'] ?? 'text/plain';
-			$encoding = $headers['Content-Transfer-Encoding'] ?? '7bit';
+			$encoding    = $headers['Content-Transfer-Encoding'] ?? '7bit';
 
-			if ( strpos( $contentType, 'multipart/' ) !== false ) {
+			if ( false !== strpos( $contentType, 'multipart/' ) ) {
 				// Nested multipart
 				$subBoundary = $this->getBoundary( $contentType );
 				if ( $subBoundary ) {
@@ -85,26 +85,26 @@ class Decker_Email_Parser {
 				$decodedContent = $this->decodeContent( $bodyContent, $encoding );
 
 				// Handle content based on type
-				if ( strpos( $contentType, 'text/html' ) !== false ) {
+				if ( false !== strpos( $contentType, 'text/html' ) ) {
 					$this->parsed['html'] .= $decodedContent;
-				} elseif ( strpos( $contentType, 'text/plain' ) !== false ) {
+				} elseif ( false !== strpos( $contentType, 'text/plain' ) ) {
 					$this->parsed['text'] .= $decodedContent;
-				} elseif ( isset( $headers['Content-Disposition'] ) && strpos( $headers['Content-Disposition'], 'attachment' ) !== false ) {
+				} elseif ( isset( $headers['Content-Disposition'] ) && false !== strpos( $headers['Content-Disposition'], 'attachment' ) ) {
 					// Handle attachment
 					$filename = $this->getFilename( $headers );
 					if ( $filename ) {
 						$this->parsed['attachments'][] = array(
 							'filename' => $filename,
-							'content' => $decodedContent,
+							'content'  => $decodedContent,
 							'mimetype' => $contentType,
 						);
 					}
-				} elseif ( strpos( $contentType, 'image/' ) !== false || strpos( $contentType, 'application/' ) !== false ) {
+				} elseif ( false !== strpos( $contentType, 'image/' ) || false !== strpos( $contentType, 'application/' ) ) {
 					// Embedded content
-					$filename = $this->getFilename( $headers ) ?? $this->generateFilename( $contentType );
+					$filename                      = $this->getFilename( $headers ) ?? $this->generateFilename( $contentType );
 					$this->parsed['attachments'][] = array(
 						'filename' => $filename,
-						'content' => $decodedContent,
+						'content'  => $decodedContent,
 						'mimetype' => $contentType,
 					);
 				}
@@ -133,8 +133,8 @@ class Decker_Email_Parser {
 	 * @return array Associative array of headers.
 	 */
 	private function parseHeaders( $headerText ) {
-		$headers = array();
-		$lines = preg_split( "/\r?\n/", $headerText );
+		$headers       = array();
+		$lines         = preg_split( "/\r?\n/", $headerText );
 		$currentHeader = '';
 
 		foreach ( $lines as $line ) {
@@ -143,8 +143,8 @@ class Decker_Email_Parser {
 				$headers[ $currentHeader ] .= ' ' . trim( $line );
 			} else {
 				$parts = explode( ':', $line, 2 );
-				if ( count( $parts ) == 2 ) {
-					$currentHeader = trim( $parts[0] );
+				if ( 2 == count( $parts ) ) {
+					$currentHeader             = trim( $parts[0] );
 					$headers[ $currentHeader ] = trim( $parts[1] );
 				}
 			}
@@ -175,12 +175,12 @@ class Decker_Email_Parser {
 	 */
 	private function splitBodyByBoundary( $body, $boundary ) {
 		$boundary = preg_quote( $boundary, '/' );
-		$pattern = "/--$boundary(?:--)?\r?\n/";
-		$parts = preg_split( $pattern, $body );
+		$pattern  = "/--$boundary(?:--)?\r?\n/";
+		$parts    = preg_split( $pattern, $body );
 		return array_filter(
 			$parts,
 			function ( $part ) {
-				return trim( $part ) !== '';
+				return '' !== trim( $part );
 			}
 		);
 	}

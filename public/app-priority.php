@@ -6,7 +6,7 @@ include 'layouts/main.php';
 if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
 	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
 
-	$today = gmdate( 'Y-m-d' );
+	$today           = gmdate( 'Y-m-d' );
 	$current_user_id = get_current_user_id();
 
 	foreach ( $task_ids as $task_id ) {
@@ -23,7 +23,7 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 }
 
 $previous_tasks = array();
-$taskManager = new TaskManager();
+$taskManager    = new TaskManager();
 
 // Verificar si hay tareas para hoy
 $has_today_tasks = $taskManager->hasUserTodayTasks();
@@ -32,7 +32,7 @@ $has_today_tasks = $taskManager->hasUserTodayTasks();
 if ( ! $has_today_tasks ) {
 
 	$current_user_id = get_current_user_id();
-	$days_to_load = ( gmdate( 'N' ) == 1 ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
+	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
 
 	$previous_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays( $current_user_id, $days_to_load );
 }
@@ -164,8 +164,8 @@ if ( ! $has_today_tasks ) {
 									$args = array(
 										'meta_query' => array(
 											array(
-												'key' => 'max_priority',
-												'value' => '1',
+												'key'     => 'max_priority',
+												'value'   => '1',
 												'compare' => '=',
 											),
 										),
@@ -192,7 +192,7 @@ if ( ! $has_today_tasks ) {
 													add_query_arg(
 														array(
 															'decker_page' => 'task',
-															'id' => esc_attr( $task->ID ),
+															'id'          => esc_attr( $task->ID ),
 														),
 														home_url( '/' )
 													)
@@ -233,28 +233,28 @@ if ( ! $has_today_tasks ) {
 
 						<?php
 						$today = gmdate( 'Y-m-d' );
-						$options = get_option( 'decker_settings', array() );
-						$selected_role = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
-						$users = get_users(
+						$options                       = get_option( 'decker_settings', array() );
+						$selected_role                 = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
+						$users                         = get_users(
 							array(
 								'role__in' => array( $selected_role, 'administrator' ),
-								'orderby' => 'display_name',
+								'orderby'  => 'display_name',
 							)
 						);
-						$today = gmdate( 'Y-m-d' );
+						$today           = gmdate( 'Y-m-d' );
 						$current_user_id = get_current_user_id();
 						foreach ( $users as $user ) {
 							$card_class = ( $user->ID === $current_user_id ) ? 'card border-primary border' : 'card';
-							$args = array(
+							$args       = array(
 								'meta_query' => array(
 									array(
-										'key' => '_user_date_relations',
-										'value' => sprintf( ':"%s"', $today ),
+										'key'     => '_user_date_relations',
+										'value'   => sprintf( ':"%s"', $today ),
 										'compare' => 'LIKE',
 									),
 									array(
-										'key' => 'assigned_users',
-										'value' => $user->ID,
+										'key'     => 'assigned_users',
+										'value'   => $user->ID,
 										'compare' => 'LIKE',
 									),
 								),
@@ -294,7 +294,7 @@ if ( ! $has_today_tasks ) {
 																	add_query_arg(
 																		array(
 																			'decker_page' => 'task',
-																			'id' => esc_attr( $task->ID ),
+																			'id'          => esc_attr( $task->ID ),
 																		),
 																		home_url( '/' )
 																	)
@@ -373,10 +373,10 @@ if ( ! $has_today_tasks ) {
 					<tr class="task-row" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
 						<?php
 							$board_color = 'red';
-							$board_name = 'Unassigned';
+						$board_name                      = 'Unassigned';
 						if ( $task->board ) {
 							$board_color = $task->board->color;
-							$board_name = $task->board->name;
+							$board_name  = $task->board->name;
 						}
 						?>
 

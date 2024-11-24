@@ -43,7 +43,7 @@ class Decker_Admin {
 	 */
 	public function __construct( $plugin_name, $version ) {
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->version     = $version;
 
 		$this->load_dependencies();
 		add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 100 );

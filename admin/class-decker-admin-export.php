@@ -84,15 +84,15 @@ class Decker_Admin_Export {
 	private function create_backup() {
 		$custom_post_types = $this->get_custom_post_types();
 		$custom_taxonomies = $this->get_custom_taxonomies();
-		$data = array();
+		$data              = array();
 
 		foreach ( $custom_post_types as $post_type ) {
-			$posts = $this->export_post_type( $post_type );
+			$posts              = $this->export_post_type( $post_type );
 			$data[ $post_type ] = $posts;
 		}
 
 		foreach ( $custom_taxonomies as $taxonomy ) {
-			$terms = $this->export_taxonomy_terms( $taxonomy );
+			$terms             = $this->export_taxonomy_terms( $taxonomy );
 			$data[ $taxonomy ] = $terms;
 		}
 
@@ -104,7 +104,7 @@ class Decker_Admin_Export {
 		header( 'Content-Type: application/json' );
 		header( 'Content-Disposition: attachment; filename=' . $filename );
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo $json_data;
 		exit;
 	}
@@ -130,13 +130,13 @@ class Decker_Admin_Export {
 			while ( $query->have_posts() ) {
 				$query->the_post();
 				$posts[] = array(
-					'ID'           => get_the_ID(),
-					'post_title'   => get_the_title(),
-					'post_content' => get_the_content(),
-					'post_meta'    => get_post_meta( get_the_ID() ),
-					'decker_board'       => wp_get_object_terms( get_the_ID(), 'decker_board' ),
-					'decker_label'       => wp_get_object_terms( get_the_ID(), 'decker_label' ),
-					'decker_action'      => wp_get_object_terms( get_the_ID(), 'decker_action' ),
+					'ID'            => get_the_ID(),
+					'post_title'    => get_the_title(),
+					'post_content'  => get_the_content(),
+					'post_meta'     => get_post_meta( get_the_ID() ),
+					'decker_board'  => wp_get_object_terms( get_the_ID(), 'decker_board' ),
+					'decker_label'  => wp_get_object_terms( get_the_ID(), 'decker_label' ),
+					'decker_action' => wp_get_object_terms( get_the_ID(), 'decker_action' ),
 				);
 			}
 			wp_reset_postdata();
@@ -163,19 +163,19 @@ class Decker_Admin_Export {
 		$exported_terms = array();
 
 		foreach ( $terms as $term ) {
-			$term_meta = get_term_meta( $term->term_id );
+			$term_meta        = get_term_meta( $term->term_id );
 			$exported_terms[] = array(
-				'term_id'      => $term->term_id,
-				'name'         => $term->name,
-				'slug'         => $term->slug,
-				'description'  => $term->description,
-				'term_group'   => $term->term_group,
+				'term_id'          => $term->term_id,
+				'name'             => $term->name,
+				'slug'             => $term->slug,
+				'description'      => $term->description,
+				'term_group'       => $term->term_group,
 				'term_taxonomy_id' => $term->term_taxonomy_id,
-				'taxonomy'     => $term->taxonomy,
-				'parent'       => $term->parent,
-				'count'        => $term->count,
-				'filter'       => $term->filter,
-				'term_meta'    => $term_meta,
+				'taxonomy'         => $term->taxonomy,
+				'parent'           => $term->parent,
+				'count'            => $term->count,
+				'filter'           => $term->filter,
+				'term_meta'        => $term_meta,
 			);
 		}
 

@@ -105,21 +105,21 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  <span><?php _e( 'Tasks', 'decker' ); ?></span>
 		  <span class="menu-arrow"></span>
 		</a>
-		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'tasks' ) ? ' show' : ''; ?>" id="sidebarTasks">
+		<div class="collapse<?php echo ( 'tasks' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarTasks">
 		  <ul class="side-nav-second-level">
 			<?php
 			$active_tasks_count = wp_count_posts( 'decker_task' )->publish;
-			$taskManager = new taskManager();
-			$my_tasks = $taskManager->getTasksByUser( get_current_user_id() );
-			$my_tasks_count = count( $my_tasks );
-			$archived_tasks_count = wp_count_posts( 'decker_task' )->archived;
+			$taskManager                    = new taskManager();
+			$my_tasks                       = $taskManager->getTasksByUser( get_current_user_id() );
+			$my_tasks_count                 = count( $my_tasks );
+			$archived_tasks_count           = wp_count_posts( 'decker_task' )->archived;
 			?>
 			<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="
 								  <?php
 									echo add_query_arg(
 										array(
 											'decker_page' => 'tasks',
-											'type' => 'active',
+											'type'        => 'active',
 										),
 										home_url( '/' )
 									);
@@ -127,32 +127,32 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 								"><?php _e( 'Active Tasks', 'decker' ); ?></a></li>
 			<li class="<?php echo decker_is_active_subpage( 'type', 'my' ); ?>"><span class="badge bg-info float-end"><?php echo esc_html( $my_tasks_count ); ?></span><a href="
 								  <?php
-																	echo add_query_arg(
-																		array(
-																			'decker_page' => 'tasks',
-																			'type' => 'my',
-																		),
-																		home_url( '/' )
-																	);
-																	?>
+									echo add_query_arg(
+										array(
+											'decker_page' => 'tasks',
+											'type'        => 'my',
+										),
+										home_url( '/' )
+									);
+									?>
 																	"><?php _e( 'My Tasks', 'decker' ); ?></a></li>
 			<li class="<?php echo decker_is_active_subpage( 'type', 'archived' ); ?>"><span class="badge bg-warning float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="
 								  <?php
-																	echo add_query_arg(
-																		array(
-																			'decker_page' => 'tasks',
-																			'type' => 'archived',
-																		),
-																		home_url( '/' )
-																	);
-																	?>
+									echo add_query_arg(
+										array(
+											'decker_page' => 'tasks',
+											'type'        => 'archived',
+										),
+										home_url( '/' )
+									);
+									?>
 																	"><?php _e( 'Archived Tasks', 'decker' ); ?></a></li>
 			<li class="<?php echo decker_is_active_subpage( 'type', 'new' ); ?>"><a href="
 								  <?php
 									echo add_query_arg(
 										array(
 											'decker_page' => 'task',
-											'type' => 'new',
+											'type'        => 'new',
 										),
 										home_url( '/' )
 									);
@@ -182,7 +182,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 
 		</a>
-		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'board' ) ? ' show' : ''; ?>" id="sidebarBoards">
+		<div class="collapse<?php echo ( 'board' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarBoards">
 		  <ul class="side-nav-second-level">
 
 			<?php
@@ -190,14 +190,14 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 				// Obtener el slug del board desde la URL
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
 
-				$boards = BoardManager::getAllBoards();
+			$boards = BoardManager::getAllBoards();
 			foreach ( $boards as $board ) {
 
 				echo '<li class="' . decker_is_active_subpage( 'slug', $board->slug ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
 					add_query_arg(
 						array(
 							'decker_page' => 'board',
-							'slug' => $board->slug,
+							'slug'        => $board->slug,
 						),
 						home_url( '/' )
 					)
@@ -238,7 +238,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 
 		</a>
-		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'term-manager' ) ? ' show' : ''; ?>" id="sidebarUtilities">
+		<div class="collapse<?php echo ( 'term-manager' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarUtilities">
 			<ul class="side-nav-second-level">
 
 
@@ -247,7 +247,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 										echo add_query_arg(
 											array(
 												'decker_page' => 'term-manager',
-												'type' => 'label',
+												'type'        => 'label',
 											),
 											home_url( '/' )
 										);
@@ -259,7 +259,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 										echo add_query_arg(
 											array(
 												'decker_page' => 'term-manager',
-												'type' => 'board',
+												'type'        => 'board',
 											),
 											home_url( '/' )
 										);

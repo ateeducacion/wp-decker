@@ -40,7 +40,7 @@ class TestDecker extends TestCase {
 		WP_Mock::userFunction(
 			'is_plugin_active',
 			array(
-				'args' => array( 'decker/decker.php' ),
+				'args'   => array( 'decker/decker.php' ),
 				'return' => true,
 			)
 		);
@@ -55,7 +55,7 @@ class TestDecker extends TestCase {
 		WP_Mock::userFunction(
 			'post_type_exists',
 			array(
-				'args' => array( 'decker_task' ),
+				'args'   => array( 'decker_task' ),
 				'return' => true,
 			)
 		);

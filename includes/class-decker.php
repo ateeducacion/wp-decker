@@ -234,12 +234,12 @@ function register_decker_role() {
 		'decker_role',
 		__( 'Decker User', 'decker' ),
 		array(
-			'read'                   => true,  // Enable reading capability.
-			'edit_posts'             => true, // Disallow editing standard posts.
-			'delete_posts'           => false, // Disallow deleting posts.
-			'upload_files'           => true,  // Allow file and image uploads.
-			'delete_attachments'     => true,  // Allow deleting attachments.
-			'manage_decker_tasks'    => true,  // Allow editing 'decker_task' posts and terms.
+			'read'                => true,  // Enable reading capability.
+			'edit_posts'          => true, // Disallow editing standard posts.
+			'delete_posts'        => false, // Disallow deleting posts.
+			'upload_files'        => true,  // Allow file and image uploads.
+			'delete_attachments'  => true,  // Allow deleting attachments.
+			'manage_decker_tasks' => true,  // Allow editing 'decker_task' posts and terms.
 			// 'publish_decker_tasks'   => true,  // Allow publishing 'decker_task' posts.
 			// 'delete_decker_tasks'    => false,  // Disallow deleting 'decker_task' posts.
 			// 'edit_others_decker_tasks' => true, // Allow editing others' 'decker_task' posts.
@@ -312,7 +312,7 @@ function restrict_comment_capabilities_to_decker_task( $caps, $cap, $user_id, $a
 			$post = get_post( $comment->comment_post_ID );
 
 			// Verificar si el post está asociado al tipo 'decker_task'.
-			if ( $post && $post->post_type === 'decker_task' ) {
+			if ( $post && 'decker_task' === $post->post_type ) {
 				// Permitir que los usuarios editen/borrar solo sus propios comentarios.
 				if ( $comment->user_id != $user_id ) {
 					$caps[] = 'do_not_allow';

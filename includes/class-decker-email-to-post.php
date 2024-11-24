@@ -18,7 +18,7 @@ class Decker_Email_To_Post {
 		add_action( 'rest_api_init', array( $this, 'register_endpoint' ) );
 
 		// Retrieve options and set the shared key.
-		$options = get_option( 'decker_settings', array() );
+		$options          = get_option( 'decker_settings', array() );
 		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 	}
 
@@ -30,8 +30,8 @@ class Decker_Email_To_Post {
 			'decker/v1',
 			'/email-to-post',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'process_email' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'process_email' ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -80,12 +80,12 @@ class Decker_Email_To_Post {
 
 			// Extract email content
 			$email_data = array(
-				'from' => $payload['metadata']['from'],
-				'to' => $payload['metadata']['to'],
-				'cc' => $payload['metadata']['cc'],
-				'bcc' => $payload['metadata']['bcc'],
-				'subject' => $payload['metadata']['subject'],
-				'body' => $message->getBody(),
+				'from'        => $payload['metadata']['from'],
+				'to'          => $payload['metadata']['to'],
+				'cc'          => $payload['metadata']['cc'],
+				'bcc'         => $payload['metadata']['bcc'],
+				'subject'     => $payload['metadata']['subject'],
+				'body'        => $message->getBody(),
 				'attachments' => $message->getAttachments(),
 			);
 
@@ -120,7 +120,7 @@ class Decker_Email_To_Post {
 
 			return rest_ensure_response(
 				array(
-					'status' => 'success',
+					'status'  => 'success',
 					'task_id' => $task_id,
 				)
 			);
@@ -137,7 +137,7 @@ class Decker_Email_To_Post {
 	 * @return bool True if the sender is valid, false otherwise.
 	 */
 	private function validate_sender( $email ) {
-		return get_user_by( 'email', $email ) !== false;
+		return false !== get_user_by( 'email', $email );
 	}
 
 	/**
@@ -180,8 +180,8 @@ class Decker_Email_To_Post {
 
 		// Crear un nombre de archivo único
 		$original_filename = sanitize_file_name( $filename );
-		$extension = pathinfo( $filename, PATHINFO_EXTENSION );
-		$upload_dir = wp_upload_dir();
+		$extension         = pathinfo( $filename, PATHINFO_EXTENSION );
+		$upload_dir        = wp_upload_dir();
 
 		// Generar nombre único para el archivo usando la función nativa de WordPress
 		$obfuscated_name = wp_unique_filename(
@@ -234,9 +234,7 @@ class Decker_Email_To_Post {
 	}
 
 	private function validate_authorization( $auth_header ) {
-		return $auth_header &&
-			   strpos( $auth_header, 'Bearer ' ) === 0 &&
-			   hash_equals( $this->shared_key, substr( $auth_header, 7 ) );
+		return $auth_header && 0 === strpos( $auth_header, 'Bearer ' ) && hash_equals( $this->shared_key, substr( $auth_header, 7 ) );
 	}
 
 	private function get_author( $email ) {
@@ -252,9 +250,9 @@ class Decker_Email_To_Post {
 		$assigned_users = array();
 
 		// Add users from 'TO', 'CC' and 'BCC' fields if they exist in WordPress
-		$to_addresses = ! empty( $email_data['to'] ) ? $email_data['to'] : array();
-		$cc_addresses = ! empty( $email_data['cc'] ) ? $email_data['cc'] : array();
-		$bcc_addresses = ! empty( $email_data['bcc'] ) ? $email_data['bcc'] : array();
+		$to_addresses    = ! empty( $email_data['to'] ) ? $email_data['to'] : array();
+		$cc_addresses    = ! empty( $email_data['cc'] ) ? $email_data['cc'] : array();
+		$bcc_addresses   = ! empty( $email_data['bcc'] ) ? $email_data['bcc'] : array();
 		$emails_to_check = array_merge( (array) $to_addresses, (array) $cc_addresses, (array) $bcc_addresses );
 
 		foreach ( $emails_to_check as $email ) {

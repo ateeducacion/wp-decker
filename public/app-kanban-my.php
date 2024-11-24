@@ -1,16 +1,16 @@
 <?php
 include 'layouts/main.php';
 
-$user_id = get_current_user_id();
+$user_id     = get_current_user_id();
 $taskManager = new TaskManager();
-$tasks = $taskManager->getTasksByUser( $user_id );
+$tasks       = $taskManager->getTasksByUser( $user_id );
 
 
 // Dividir las tareas en columnas
 $columns = array(
-	'to-do' => array(),
+	'to-do'       => array(),
 	'in-progress' => array(),
-	'done' => array(),
+	'done'        => array(),
 );
 
 foreach ( $tasks as $task ) {

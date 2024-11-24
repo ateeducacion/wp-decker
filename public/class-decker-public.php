@@ -37,7 +37,7 @@ class Decker_Public {
 	public function __construct( $plugin_name, $version ) {
 
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->version     = $version;
 		// Not yet used
 		// add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'init', array( $this, 'decker_add_rewrite_rules' ) );
@@ -100,7 +100,7 @@ class Decker_Public {
 	/**
 	 * Add custom query vars.
 	 */
-	function decker_query_vars( $vars ) {
+	public function decker_query_vars( $vars ) {
 		$vars[] = 'decker_page';
 		$vars[] = 'board_slug';
 		return $vars;
@@ -173,7 +173,7 @@ class Decker_Public {
 	/**
 	 * Register the JavaScript and stylesheets for the public-facing side of the site.
 	 */
-	function enqueue_scripts() {
+	public function enqueue_scripts() {
 
 		if ( get_query_var( 'decker' ) ) {
 
@@ -241,10 +241,10 @@ class Decker_Public {
 			foreach ( $resources as $resource ) {
 				$handle = sanitize_title( basename( $resource, '.' . pathinfo( $resource, PATHINFO_EXTENSION ) ) );
 
-				if ( strpos( $resource, '.css' ) !== false ) {
+				if ( false !== strpos( $resource, '.css' ) ) {
 					wp_enqueue_style( $handle, $resource, array(), null );
 
-				} elseif ( strpos( $resource, '.js' ) !== false ) {
+				} elseif ( false !== strpos( $resource, '.js' ) ) {
 
 					$deps = array();
 					if ( $last_handle ) {
@@ -264,8 +264,8 @@ class Decker_Public {
 
 			// Localize the script with new data.
 			$script_data = array(
-				'display_name'              => $current_user->display_name,
-				'nickname'                  => $current_user->nickname,
+				'display_name' => $current_user->display_name,
+				'nickname'     => $current_user->nickname,
 
 			);
 

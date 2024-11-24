@@ -57,7 +57,7 @@ class Decker_Admin_Settings {
 	 * Outputs the HTML for the user_profile field.
 	 */
 	public function user_profile_render() {
-		$options = get_option( 'decker_settings', array() );
+		$options       = get_option( 'decker_settings', array() );
 		$selected_role = isset( $options['user_profile'] ) ? $options['user_profile'] : 'decker_role';
 
 		$roles = wp_roles()->get_names();
@@ -77,7 +77,7 @@ class Decker_Admin_Settings {
 	 */
 	public function alert_message_render() {
 		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['alert_message'] ) ? wp_kses_post( $options['alert_message'] ) : '';
+		$value   = isset( $options['alert_message'] ) ? wp_kses_post( $options['alert_message'] ) : '';
 		echo '<textarea name="decker_settings[alert_message]" class="large-text" rows="5">' . esc_textarea( $value ) . '</textarea>';
 		echo '<p class="description">' . esc_html__( 'Enter the alert message to display as a banner. Supports HTML. Leave empty to hide.', 'decker' ) . '</p>';
 	}
@@ -89,13 +89,13 @@ class Decker_Admin_Settings {
 	 */
 	public function alert_color_render() {
 		$options = get_option( 'decker_settings', array() );
-		$color = isset( $options['alert_color'] ) ? $options['alert_color'] : 'info';
+		$color   = isset( $options['alert_color'] ) ? $options['alert_color'] : 'info';
 
 		$colors = array(
 			'success' => 'Success',
-			'danger' => 'Danger',
+			'danger'  => 'Danger',
 			'warning' => 'Warning',
-			'info' => 'Info',
+			'info'    => 'Info',
 		);
 
 		foreach ( $colors as $value => $label ) {
@@ -135,7 +135,7 @@ class Decker_Admin_Settings {
 			foreach ( $taxonomies as $taxonomy ) {
 				$terms = get_terms(
 					array(
-						'taxonomy' => $taxonomy,
+						'taxonomy'   => $taxonomy,
 						'hide_empty' => false,
 					)
 				);
@@ -147,7 +147,7 @@ class Decker_Admin_Settings {
 			wp_redirect(
 				add_query_arg(
 					array(
-						'page' => 'decker_settings',
+						'page'                => 'decker_settings',
 						'decker_data_cleared' => 'true',
 					),
 					admin_url( 'options-general.php' )
@@ -200,10 +200,10 @@ class Decker_Admin_Settings {
 		);
 
 		$fields = array(
-			'alert_color' => __( 'Alert Color', 'decker' ), // Alert color radio buttons
-			'alert_message' => __( 'Alert Message', 'decker' ), // Alert message field
-			'user_profile' => __( 'User Profile', 'decker' ), // User profile dropdown
-			'shared_key' => __( 'Shared Key', 'decker' ),
+			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons
+			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field
+			'user_profile'          => __( 'User Profile', 'decker' ), // User profile dropdown
+			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
 		);
