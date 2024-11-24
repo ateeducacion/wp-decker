@@ -23,10 +23,10 @@ function include_wp_load( $max_levels = 10 ) {
 			require_once $dir . '/wp-load.php';
 			return true;
 		}
-		// Move up one level in the directory structure
+		// Move up one level in the directory structure.
 		$parent_dir = dirname( $dir );
 		if ( $parent_dir === $dir ) {
-			// Reached the root directory of the file system
+			// Reached the root directory of the file system.
 			break;
 		}
 		$dir = $parent_dir;
@@ -56,12 +56,12 @@ if ( $task_id && 'archived' == $task->status ) {
 	$disabled = true;
 }
 
-$comments = array();
+$task_comments = array();
 
 if ( $task_id ) {
 
-	// Obtener comentarios asociados al task_id
-	$comments = get_comments(
+	// Obtener comentarios asociados al task_id.
+	$task_comments = get_comments(
 		array(
 			'post_id' => $task_id,
 			'status'  => 'approve',
@@ -73,20 +73,32 @@ if ( $task_id ) {
 }
 
 /**
- * Función para organizar comentarios en estructura jerárquica
+ * Organizes and renders comments in a hierarchical structure.
+ *
+ * This function processes an array of comments, organizing them
+ * into a nested structure based on their parent ID. It also allows
+ * for specific handling of comments based on the current user's ID.
+ *
+ * @param array $task_comments        An array of comment objects or arrays,
+ *                               each containing information about a comment.
+ * @param int   $parent_id       The ID of the parent comment. Use 0 for top-level comments.
+ * @param int   $current_user_id The ID of the currently logged-in user.
+ *                               Used to customize rendering for the user.
+ *
+ * @return void
  */
-function render_comments( array $comments, int $parent_id, int $current_user_id ) {
-	foreach ( $comments as $comment ) {
+function render_comments( array $task_comments, int $parent_id, int $current_user_id ) {
+	foreach ( $task_comments as $comment ) {
 		if ( $comment->comment_parent == $parent_id ) {
-			// Obtener respuestas recursivamente
+			// Obtener respuestas recursivamente.
 			echo '<div class="d-flex align-items-start mb-2" style="margin-left:' . ( $comment->comment_parent ? '20px' : '0' ) . ';">';
 			echo '<img class="me-2 rounded-circle" src="' . esc_url( get_avatar_url( $comment->user_id, array( 'size' => 48 ) ) ) . '" alt="Avatar" height="32" />';
 			echo '<div class="w-100">';
 			echo '<h5 class="mt-0">' . esc_html( $comment->comment_author ) . ' <small class="text-muted float-end">' . esc_html( get_comment_date( '', $comment ) ) . '</small></h5>';
 			echo wp_kses_post( apply_filters( 'the_content', $comment->comment_content ) );
 
-			// Mostrar enlace de eliminar si el comentario pertenece al usuario actual
-			if ( $comment->user_id == get_current_user_id() ) {
+			// Mostrar enlace de eliminar si el comentario pertenece al usuario actual.
+			if ( get_current_user_id() == $comment->user_id ) {
 				echo '<a href="javscript:void(0)" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_html_e( 'Delete', 'decker' ) . '</a> ';
 			}
 
@@ -94,15 +106,14 @@ function render_comments( array $comments, int $parent_id, int $current_user_id 
 			echo '</div>';
 			echo '</div>';
 
-			// Llamada recursiva para renderizar respuestas
-			render_comments( $comments, $comment->comment_ID, $current_user_id );
+			// Llamada recursiva para renderizar respuestas.
+			render_comments( $task_comments, $comment->comment_ID, $current_user_id );
 		}
 	}
 }
 ?>
 
 <?php
-
 /*
  Desactivados parte de comentarios
 TO-DO arreglar
@@ -192,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 });
 
-// Borrar comentario
+// Borrar comentario.
 function deleteComment(commentId) {
 	if (!confirm('Are you sure you want to delete this comment?')) {
 		return;
@@ -344,7 +355,7 @@ function deleteComment(commentId) {
 	</div>
 
 
-	<!-- Pestañas: Descripción, Comentarios y Adjuntos -->
+	<!-- Tabs: Description, Commetns and Attachments -->
 	<ul class="nav nav-tabs nav-bordered mb-3">
 		<li class="nav-item">
 			<a href="#description-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link active"><?php esc_html_e( 'Description', 'decker' ); ?>
@@ -352,7 +363,7 @@ function deleteComment(commentId) {
 		</li>
 		<li class="nav-item">
 			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Comments', 'decker' ); ?>
-			   <span class="badge bg-light text-dark" id="comment-count"><?php echo count( $comments ); ?></span>
+			   <span class="badge bg-light text-dark" id="comment-count"><?php echo count( $task_comments ); ?></span>
 
 			</a>
 		</li>
@@ -360,10 +371,9 @@ function deleteComment(commentId) {
 			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Attachments', 'decker' ); ?> 
 
 			<?php
-			// Obtener los adjuntos asociados con la tarea
+			// Obtener los adjuntos asociados con la tarea.
 
 			$attachments = get_attached_media( '', $task_id );
-			// $attachments = is_array( $attachments ) ? $attachments : array();
 
 			?>
 			<span class="badge bg-light text-dark" id="attachment-count"><?php echo count( $attachments ); ?></span>
@@ -381,18 +391,18 @@ function deleteComment(commentId) {
 	</ul>
 
 	<div class="tab-content">
-		<!-- Descripción (Editor Quill) -->
+		<!-- Description (Quill Editor) -->
 		<div class="tab-pane show active" id="description-tab">
 			<div id="editor" style="height: 200px;"><?php echo wp_kses_post( $task->description ); ?></div>
 		</div>
 
-		<!-- Comentarios -->
+		<!-- Comments -->
 		<div class="tab-pane" id="comments-tab">
 			<div id="comments-list">
 				<?php
 				if ( $task_id ) {
-					if ( $comments ) {
-						render_comments( $comments, 0, get_current_user_id() );
+					if ( $task_comments ) {
+						render_comments( $task_comments, 0, get_current_user_id() );
 					} else {
 						echo '<p>' . esc_html__( 'No comments yet.', 'decker' ) . '</p>';
 					}
@@ -415,7 +425,7 @@ function deleteComment(commentId) {
 
 		</div>
 
-			<!-- Adjuntos -->
+			<!-- Attachments -->
 			<div class="tab-pane" id="attachments-tab">
 				<ul class="list-group mt-3" id="attachments-list">
 					<?php
@@ -443,25 +453,7 @@ function deleteComment(commentId) {
 				</div>
 			</div>
 
-		
-		<!-- Adjuntos
-		<div class="tab-pane" id="attachments-tab">
-		<ul class="list-group mt-3">
-				<li class="list-group-item d-flex justify-content-between align-items-center"><a href="#">
-					file-2.pdf <i class="bi bi-box-arrow-up-right ms-2"></i></a>
-					<div>
-						<button class="btn btn-sm btn-danger me-2">Delete</button>
-					</div>
-				</li>
-			</ul>
-			<br>
-			<div class="d-flex align-items-center">
-				<input type="file" id="file-input" class="form-control me-2" />
-				<button class="btn btn-sm btn-success" id="upload-file">Upload</button>
-			</div> 
-		</div> -->
-
-		<!-- Historial -->
+		<!-- History -->
 		<div class="tab-pane" id="history-tab">
 
 			<table id="user-history-table" class="table table-bordered table-striped table-hover table-sm">
@@ -477,9 +469,9 @@ function deleteComment(commentId) {
 					$timeline_data                = array();
 					foreach ( $history as $record ) {
 						$user      = $record['user'];
-						$avatar    = get_avatar( $user->ID, 32 ); // Get WordPress avatar
+						$avatar    = get_avatar( $user->ID, 32 ); // Get WordPress avatar.
 						$nickname  = esc_html( $user->nickname );
-						$full_name = esc_attr( $user->first_name . ' ' . $user->last_name ); // Assuming first and last name exist
+						$full_name = esc_attr( $user->first_name . ' ' . $user->last_name ); // Assuming first and last name exist.
 						$date      = esc_html( $record['date'] );
 
 						echo '<tr>';
@@ -488,7 +480,7 @@ function deleteComment(commentId) {
 						echo '</tr>';
 
 
-						// Prepare data for the Timeline Chart
+						// Prepare data for the Timeline Chart.
 						$timeline_data[] = array(
 							'nickname' => esc_html( $nickname ),
 							'date'     => $record['date'],
@@ -496,9 +488,9 @@ function deleteComment(commentId) {
 
 					}
 
-					// Convert PHP array to JSON for use in JavaScript
+					// Convert PHP array to JSON for use in JavaScript.
 					$timeline_data_json = wp_json_encode( $timeline_data );
-					// TO-DO: use this to draw the gantt
+					// TO-DO: use this to draw the gantt.
 
 					?>
 				</tbody>

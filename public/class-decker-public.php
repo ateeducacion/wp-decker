@@ -13,6 +13,9 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Class Decker_Public
+ */
 class Decker_Public {
 
 	/**
@@ -41,45 +44,11 @@ class Decker_Public {
 
 		$this->plugin_name = $plugin_name;
 		$this->version     = $version;
-		// Not yet used
+		// Not yet used.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'init', array( $this, 'decker_add_rewrite_rules' ) );
 		add_filter( 'query_vars', array( $this, 'decker_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'decker_template_redirect' ) );
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-	}
-
-	/**
-	 * Register REST API routes for boards and tasks.
-	 */
-	public function register_rest_routes() {
-		register_rest_route(
-			'decker/v1',
-			'/board/(?P<slug>[a-zA-Z0-9-]+)',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'get_board' ),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/task/(?P<slug>[a-zA-Z0-9-]+)',
-			array(
-				'methods'  => 'GET',
-				'callback' => array( $this, 'get_task' ),
-			)
-		);
-	}
-
-	// Define the callback functions for the REST API routes here.
-	// For example:
-	public function get_board( $request ) {
-		// Logic to retrieve board by slug.
-	}
-
-	public function get_task( $request ) {
-		// Logic to retrieve task by slug.
 	}
 
 	/**
@@ -164,7 +133,7 @@ class Decker_Public {
 					break;
 
 				default:
-					// Default action if no match is found
+					// Default action if no match is found.
 					break;
 			}
 
@@ -182,34 +151,30 @@ class Decker_Public {
 
 		if ( $decker_page ) {
 
-			// Registra el script principal.
-			// wp_register_script( 'config-js', plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js', array(), null, true );
-
 			$resources = array(
 
+				// Registra el script principal.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
-
-				// jQuery.
-				// 'https://code.jquery.com/jquery-3.7.1.min.js',
 
 				// Bootstrap 5.
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
 
-				// Remix Icons
+				// Remix Icons.
 				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css',
 
-				// Tablesort
+				// Tablesort.
 				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
 
-				// Simplebar
+				// Simplebar.
 				'https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.js',
 
-				// Day.js
+				// Day.js.
 				'https://unpkg.com/dayjs/dayjs.min.js',
 				'https://unpkg.com/dayjs/plugin/relativeTime.js',
 				'https://unpkg.com/dayjs/locale/es.js',
 
+				/*
 				// // Datatables.net.
 				// 'https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css',
 				// 'https://cdn.datatables.net/2.0.8/js/dataTables.min.js',
@@ -242,18 +207,19 @@ class Decker_Public {
 				// 'https://cdn.datatables.net/select/2.0.3/css/select.bootstrap5.min.css',
 				// 'https://cdn.datatables.net/select/2.0.3/js/dataTables.select.min.js',
 				// 'https://cdn.datatables.net/select/2.0.3/js/select.bootstrap5.min.js',
+				*/
 
-				// Font awesome
+				// Font awesome.
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
 
-				// SortableJS
+				// SortableJS.
 				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
 
-				// Quill
+				// Quill.
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
 
-				// Choices.js
+				// Choices.js.
 				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js',
 				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css',
 
@@ -263,7 +229,7 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.min.css',
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
-				// plugin_dir_url( __FILE__ ) . 'css/decker-public.css',
+				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
 
 			);
 
@@ -273,13 +239,13 @@ class Decker_Public {
 			}
 
 			if ( 'board' == $decker_page ) {
-				// dragula
+				// dragula.
 				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js';
 			}
 
-			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page
+			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
 
-				// Datatables JS CDN
+				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
 				$resources[] = 'https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js';
@@ -312,7 +278,7 @@ class Decker_Public {
 					}
 					wp_enqueue_script( $handle, $resource, $deps, null, true );
 
-					$last_handle = $handle; // Update last_handle to current script handle
+					$last_handle = $handle; // Update last_handle to current script handle.
 
 				}
 			}
@@ -324,7 +290,7 @@ class Decker_Public {
 
 			// Agrega inline script para el usuario actual.
 			wp_add_inline_script(
-				'config', // The handle of the config.js file
+				'config', // The handle of the config.js file.
 				'const userId = ' . get_current_user_id() . ';',
 				'before'
 			);

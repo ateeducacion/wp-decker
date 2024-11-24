@@ -156,14 +156,14 @@ include 'layouts/main.php';
 	<script>
 		<?php
 
-		// Obtener datos de tareas por tablero y colores
+		// Obtener datos de tareas por tablero y colores.
 		$boards           = BoardManager::getAllBoards();
 		$tasks_by_board_and_stack = array();
 		$board_labels             = array();
 		$board_colors             = array();
 
-		// Obtener todos los posts de tipo decker_task de una sola vez
-		// TO-DO use the TaskManager
+		// Obtener todos los posts de tipo decker_task de una sola vez.
+		// TO-DO use the TaskManager.
 		$all_tasks = get_posts(
 			array(
 				'post_type'   => 'decker_task',
@@ -293,7 +293,7 @@ include 'layouts/main.php';
 			}]
 		};
 
-		// Initialize charts
+		// Initialize charts.
 		const ctx1 = document.getElementById('chartByBoard').getContext('2d');
 		const chartByBoard = new Chart(ctx1, {
 			type: 'bar',

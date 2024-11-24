@@ -8,6 +8,9 @@
  * @subpackage Decker/includes
  */
 
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Fired during plugin deactivation.
  *

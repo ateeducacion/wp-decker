@@ -1,10 +1,14 @@
 <?php
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Class to parse emails and extract content and attachments.
  */
 class Decker_Email_Parser {
 
-	private $rawEmail;
+	private $raw_email;
 	private $parsed = array(
 		'headers'     => array(),
 		'html'        => '',
@@ -15,10 +19,10 @@ class Decker_Email_Parser {
 	/**
 	 * Initializes the class with raw email content.
 	 *
-	 * @param string $rawEmail The raw email content as a string.
+	 * @param string $raw_email The raw email content as a string.
 	 */
-	public function __construct( $rawEmail ) {
-		$this->rawEmail = $rawEmail;
+	public function __construct( $raw_email ) {
+		$this->raw_email = $raw_email;
 		$this->parseEmail();
 	}
 
@@ -27,30 +31,30 @@ class Decker_Email_Parser {
 	 */
 	private function parseEmail() {
 		// Split headers and body
-		list($headerSection, $bodySection) = $this->splitHeadersAndBody( $this->rawEmail );
+		list($header_section, $bodySection) = $this->splitHeadersAndBody( $this->raw_email );
 
 		// Parse headers
-		$this->parsed['headers'] = $this->parseHeaders( $headerSection );
+		$this->parsed['headers'] = $this->parseHeaders( $header_section );
 
 		// Determine content type
-		$contentType = $this->parsed['headers']['Content-Type'] ?? 'text/plain';
+		$content_type = $this->parsed['headers']['Content-Type'] ?? 'text/plain';
 
 		// Check for multipart content
-		if ( false !== strpos( $contentType, 'multipart/' ) ) {
+		if ( false !== strpos( $content_type, 'multipart/' ) ) {
 			// Extract boundary
-			$boundary = $this->getBoundary( $contentType );
+			$boundary = $this->getBoundary( $content_type );
 			if ( $boundary ) {
 				// Parse multipart content
-				$this->parseMultipart( $bodySection, $boundary, $contentType );
+				$this->parseMultipart( $bodySection, $boundary, $content_type );
 			}
 		} else {
 			// Single part email
 			$encoding       = $this->parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
-			$decodedContent = $this->decodeContent( $bodySection, $encoding );
-			if ( false !== strpos( $contentType, 'text/html' ) ) {
-				$this->parsed['html'] .= $decodedContent;
+			$decoded_content = $this->decodeContent( $bodySection, $encoding );
+			if ( false !== strpos( $content_type, 'text/html' ) ) {
+				$this->parsed['html'] .= $decoded_content;
 			} else {
-				$this->parsed['text'] .= $decodedContent;
+				$this->parsed['text'] .= $decoded_content;
 			}
 		}
 	}
@@ -60,52 +64,52 @@ class Decker_Email_Parser {
 	 *
 	 * @param string $body The body content.
 	 * @param string $boundary The boundary string.
-	 * @param string $parentContentType The content type of the parent part.
+	 * @param string $parent_content_type The content type of the parent part.
 	 */
-	private function parseMultipart( $body, $boundary, $parentContentType ) {
+	private function parseMultipart( $body, $boundary, $parent_content_type ) {
 		// Split body into parts
 		$parts = $this->splitBodyByBoundary( $body, $boundary );
 		foreach ( $parts as $part ) {
 			// Split headers and content
-			list($headerSection, $bodyContent) = $this->splitHeadersAndBody( $part );
-			$headers                           = $this->parseHeaders( $headerSection );
+			list($header_section, $body_content) = $this->splitHeadersAndBody( $part );
+			$headers                           = $this->parseHeaders( $header_section );
 
 			// Get content type and encoding
-			$contentType = $headers['Content-Type'] ?? 'text/plain';
+			$content_type = $headers['Content-Type'] ?? 'text/plain';
 			$encoding    = $headers['Content-Transfer-Encoding'] ?? '7bit';
 
-			if ( false !== strpos( $contentType, 'multipart/' ) ) {
+			if ( false !== strpos( $content_type, 'multipart/' ) ) {
 				// Nested multipart
-				$subBoundary = $this->getBoundary( $contentType );
-				if ( $subBoundary ) {
-					$this->parseMultipart( $bodyContent, $subBoundary, $contentType );
+				$sub_boundary = $this->getBoundary( $content_type );
+				if ( $sub_boundary ) {
+					$this->parseMultipart( $body_content, $sub_boundary, $content_type );
 				}
 			} else {
 				// Decode content
-				$decodedContent = $this->decodeContent( $bodyContent, $encoding );
+				$decoded_content = $this->decodeContent( $body_content, $encoding );
 
 				// Handle content based on type
-				if ( false !== strpos( $contentType, 'text/html' ) ) {
-					$this->parsed['html'] .= $decodedContent;
-				} elseif ( false !== strpos( $contentType, 'text/plain' ) ) {
-					$this->parsed['text'] .= $decodedContent;
+				if ( false !== strpos( $content_type, 'text/html' ) ) {
+					$this->parsed['html'] .= $decoded_content;
+				} elseif ( false !== strpos( $content_type, 'text/plain' ) ) {
+					$this->parsed['text'] .= $decoded_content;
 				} elseif ( isset( $headers['Content-Disposition'] ) && false !== strpos( $headers['Content-Disposition'], 'attachment' ) ) {
 					// Handle attachment
 					$filename = $this->getFilename( $headers );
 					if ( $filename ) {
 						$this->parsed['attachments'][] = array(
 							'filename' => $filename,
-							'content'  => $decodedContent,
-							'mimetype' => $contentType,
+							'content'  => $decoded_content,
+							'mimetype' => $content_type,
 						);
 					}
-				} elseif ( false !== strpos( $contentType, 'image/' ) || false !== strpos( $contentType, 'application/' ) ) {
+				} elseif ( false !== strpos( $content_type, 'image/' ) || false !== strpos( $content_type, 'application/' ) ) {
 					// Embedded content
-					$filename                      = $this->getFilename( $headers ) ?? $this->generateFilename( $contentType );
+					$filename                      = $this->getFilename( $headers ) ?? $this->generateFilename( $content_type );
 					$this->parsed['attachments'][] = array(
 						'filename' => $filename,
-						'content'  => $decodedContent,
-						'mimetype' => $contentType,
+						'content'  => $decoded_content,
+						'mimetype' => $content_type,
 					);
 				}
 			}
@@ -115,11 +119,11 @@ class Decker_Email_Parser {
 	/**
 	 * Splits raw email into headers and body.
 	 *
-	 * @param string $rawEmail The raw email content.
+	 * @param string $raw_email The raw email content.
 	 * @return array An array containing headers and body.
 	 */
-	private function splitHeadersAndBody( $rawEmail ) {
-		$parts = preg_split( "/\r?\n\r?\n/", $rawEmail, 2 );
+	private function splitHeadersAndBody( $raw_email ) {
+		$parts = preg_split( "/\r?\n\r?\n/", $raw_email, 2 );
 		return array(
 			$parts[0] ?? '',
 			$parts[1] ?? '',
@@ -129,23 +133,23 @@ class Decker_Email_Parser {
 	/**
 	 * Parses email headers into an associative array.
 	 *
-	 * @param string $headerText The header section of the email.
+	 * @param string $header_text The header section of the email.
 	 * @return array Associative array of headers.
 	 */
-	private function parseHeaders( $headerText ) {
+	private function parseHeaders( $header_text ) {
 		$headers       = array();
-		$lines         = preg_split( "/\r?\n/", $headerText );
-		$currentHeader = '';
+		$lines         = preg_split( "/\r?\n/", $header_text );
+		$current_header = '';
 
 		foreach ( $lines as $line ) {
 			if ( preg_match( '/^\s+/', $line ) ) {
 				// Continuation of previous header
-				$headers[ $currentHeader ] .= ' ' . trim( $line );
+				$headers[ $current_header ] .= ' ' . trim( $line );
 			} else {
 				$parts = explode( ':', $line, 2 );
 				if ( 2 == count( $parts ) ) {
-					$currentHeader             = trim( $parts[0] );
-					$headers[ $currentHeader ] = trim( $parts[1] );
+					$current_header             = trim( $parts[0] );
+					$headers[ $current_header ] = trim( $parts[1] );
 				}
 			}
 		}
@@ -156,11 +160,11 @@ class Decker_Email_Parser {
 	/**
 	 * Extracts the boundary string from the Content-Type header.
 	 *
-	 * @param string $contentType The Content-Type header value.
+	 * @param string $content_type The Content-Type header value.
 	 * @return string|null The boundary string or null if not found.
 	 */
-	private function getBoundary( $contentType ) {
-		if ( preg_match( '/boundary="?([^";]+)"?/i', $contentType, $matches ) ) {
+	private function getBoundary( $content_type ) {
+		if ( preg_match( '/boundary="?([^";]+)"?/i', $content_type, $matches ) ) {
 			return $matches[1];
 		}
 		return null;
@@ -229,11 +233,11 @@ class Decker_Email_Parser {
 	/**
 	 * Generates a filename based on the content type.
 	 *
-	 * @param string $contentType The content type.
+	 * @param string $content_type The content type.
 	 * @return string A generated filename.
 	 */
-	private function generateFilename( $contentType ) {
-		$extension = explode( '/', $contentType )[1] ?? 'dat';
+	private function generateFilename( $content_type ) {
+		$extension = explode( '/', $content_type )[1] ?? 'dat';
 		return 'attachment_' . uniqid() . '.' . $extension;
 	}
 

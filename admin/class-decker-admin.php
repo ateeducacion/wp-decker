@@ -7,6 +7,9 @@
  * @subpackage Decker/admin
  */
 
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The admin-specific functionality of the plugin.
  *

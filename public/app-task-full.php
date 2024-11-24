@@ -47,24 +47,24 @@ include 'layouts/main.php';
 									</ol>
 								</div>
 							   <?php
-									// Set default title to "New task"
-									$title = __( 'New task', 'decker' );
+									// Set default title to "New task".
+									$task_title = __( 'New task', 'decker' );
 								$valid_task                                = true;
 
-								// TODO: Change to use Task class
+								// TODO: Change to use Task class.
 								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 								if ( $task_id ) {
 									$task = get_post( $task_id );
 									if ( $task && 'decker_task' === $task->post_type ) {
-										$title = $task->post_title;
+										$task_title = $task->post_title;
 									} else {
-										$title      = __( 'Task not found', 'decker' );
+										$task_title      = __( 'Task not found', 'decker' );
 										$valid_task = false;
 									}
 								}
 								?>
 
-								<h4 class="page-title"><?php echo esc_html( $title ); ?></h4>
+								<h4 class="page-title"><?php echo esc_html( $task_title ); ?></h4>
 
 							</div>
 						</div>

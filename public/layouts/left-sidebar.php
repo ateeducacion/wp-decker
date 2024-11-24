@@ -32,7 +32,7 @@ function decker_is_active_page( $page ) {
 /**
  * Determina si la subpágina actual de Decker coincide con la proporcionada.
  *
- * @param string $get_parameter The GET parameter to check
+ * @param string $get_parameter The GET parameter to check.
  * @param string $page El valor de `decker_page` a verificar.
  * @return string 'menuitem-active' if it matches, otherwise an empty string.
  */
@@ -215,7 +215,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			<?php
 
-				// Obtener el slug del board desde la URL
+				// Obtener el slug del board desde la URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
 
 			$boards = BoardManager::getAllBoards();

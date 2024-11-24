@@ -8,9 +8,8 @@
  * @subpackage Decker/admin
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
-}
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Decker_Admin_Export Class
