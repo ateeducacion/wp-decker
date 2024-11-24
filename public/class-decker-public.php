@@ -244,8 +244,6 @@ class Decker_Public {
 				// Font awesome
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
 
-				// Chart.js.
-				'https://cdn.jsdelivr.net/npm/chart.js',
 
 				// SortableJS
 				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
@@ -267,6 +265,11 @@ class Decker_Public {
 				// plugin_dir_url( __FILE__ ) . 'css/decker-public.css',
 
 			);
+
+			if ( 'analytics' == $decker_page ) {
+				// Chart.js.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/chart.js';
+			}
 
 			if ( 'board' == $decker_page ) {
 				// dragula

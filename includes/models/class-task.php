@@ -44,7 +44,7 @@ class Task {
 		if ( $post ) {
 
 			if ( 'decker_task' !== $post->post_type ) {
-				throw new Exception( __( 'Invalid post type.', 'decker' ) );
+				throw new Exception( esc_attr_e( 'Invalid post type.', 'decker' ) );
 			}
 
 			$this->ID          = $post->ID;

@@ -255,7 +255,7 @@ table#tablaTareas td:nth-child(4) {
 															echo '</a>';
 														}
 														echo '</div></td>';
-														echo '<td>' . $task->duedate?->format( 'Y-m-d H:i:s' ) . '</td>';
+														echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
 														echo '<td class="text-end">';
 														echo $task->render_task_menu();
 														echo '</td>';

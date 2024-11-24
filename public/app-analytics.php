@@ -141,9 +141,6 @@ include 'layouts/main.php';
 
 	<?php include 'layouts/footer-scripts.php'; ?>
 
- <!-- Chart.js -->
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 	<!-- Custom Script for Dashboard -->
 	<script>
 		<?php
