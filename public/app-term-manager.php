@@ -332,7 +332,7 @@ jQuery(document).ready(function($) {
 				.append($('<input type="hidden" name="term_type">').val(termType))
 				.append($('<input type="hidden" name="term_id">').val(termId))
 				.append($('<input type="hidden" name="action">').val('delete'))
-				.append($('<input type="hidden" name="decker_term_nonce">').val('<?php echo wp_create_nonce( 'decker_term_action' ); ?>'));
+				.append($('<input type="hidden" name="decker_term_nonce">').val('<?php echo esc_attr( wp_create_nonce( 'decker_term_action' ) ); ?>'));
 			$('body').append(form);
 			form.submit();
 		} else if (userInput !== null) {

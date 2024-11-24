@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+					'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
 				},
 				body: JSON.stringify(commentData),
 				credentials: 'same-origin' // Importante para incluir cookies de sesión)
@@ -191,7 +191,7 @@ function deleteComment(commentId) {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
-			'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
 		}
 	})
 	.then(response => response.json())
@@ -695,7 +695,7 @@ function initializeTaskPage() {
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'application/json',
-			  'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
 			},
 			body: JSON.stringify({ status: 'archived' })
 		  })
@@ -775,10 +775,10 @@ function uploadAttachment(file) {
 	formData.append('action', 'upload_task_attachment');
 	formData.append('task_id', <?php echo wp_json_encode( $task_id ); ?>);
 	formData.append('attachment', file);
-	formData.append('nonce', '<?php echo wp_create_nonce( 'upload_attachment_nonce' ); ?>');
+	formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'upload_attachment_nonce' )); ?>');
 
 	var xhr = new XMLHttpRequest();
-	xhr.open('POST', '<?php echo admin_url( 'admin-ajax.php' ); ?>', true);
+	xhr.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', true);
 
 	xhr.onload = function() {
 		if (xhr.status >= 200 && xhr.status < 400) {
@@ -845,10 +845,10 @@ function deleteAttachment(attachmentId, listItem) {
 	formData.append('action', 'delete_task_attachment');
 	formData.append('task_id', <?php echo wp_json_encode( $task_id ); ?>);
 	formData.append('attachment_id', attachmentId);
-	formData.append('nonce', '<?php echo wp_create_nonce( 'delete_attachment_nonce' ); ?>');
+	formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'delete_attachment_nonce' )); ?>');
 
 	var xhr = new XMLHttpRequest();
-	xhr.open('POST', '<?php echo admin_url( 'admin-ajax.php' ); ?>', true);
+	xhr.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', true);
 
 	xhr.onload = function() {
 		if (xhr.status >= 200 && xhr.status < 400) {
@@ -976,7 +976,7 @@ function sendFormByAjax(event) {
 		// Recopila los datos del formulario
 		const formData = {
 			action: 'save_decker_task',
-			nonce: '<?php echo wp_create_nonce( 'save_decker_task_nonce' ); ?>',
+			nonce: '<?php echo esc_attr( wp_create_nonce( 'save_decker_task_nonce' )); ?>',
 			task_id: document.querySelector('input[name="task_id"]').value,
 			title: document.getElementById('task-title').value,
 			due_date: document.getElementById('task-due-date').value,
@@ -991,7 +991,7 @@ function sendFormByAjax(event) {
 
 		// Envía la solicitud AJAX
 		const xhr = new XMLHttpRequest();
-		xhr.open('POST', '<?php echo admin_url( 'admin-ajax.php' ); ?>', true);
+		xhr.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', true);
 		xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
 		xhr.onload = function() {

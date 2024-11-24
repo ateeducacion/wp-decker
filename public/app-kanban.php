@@ -233,7 +233,7 @@ foreach ( $tasks as $task ) {
 						method: 'PUT',
 						headers: {
 							'Content-Type': 'application/json',
-							'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+							'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 						},
 						body: JSON.stringify({
 							task_id: taskId,
@@ -261,7 +261,7 @@ foreach ( $tasks as $task ) {
 						method: 'PUT',
 						headers: {
 							'Content-Type': 'application/json',
-							'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
+							'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 						},
 						body: JSON.stringify({
 							task_id: taskId,

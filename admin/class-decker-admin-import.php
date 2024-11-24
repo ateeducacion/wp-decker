@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		<?php
 		$options = get_option( 'decker_settings', array() );
 		?>
-	const ignoredBoardIds = '<?php echo esc_js( $options['decker_ignored_board_ids'] ); ?>'.split(',').map(id => id.trim());
+	const ignoredBoardIds = '<?php echo esc_attr( $options['decker_ignored_board_ids'] ); ?>'.split(',').map(id => id.trim());
 
 	form.addEventListener('submit', function(event) {
 		event.preventDefault(); // Prevent form submission
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		const formData = new FormData(form);
 		formData.append('action', 'decker_start_import');
-		formData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
+		formData.append('security', '<?php echo esc_attr( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
 		
 		// Add all form fields
 		formData.append('nextcloud_url_base', document.getElementById('nextcloud_url_base').value);
@@ -183,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		const boardData = new FormData();
 		boardData.append('action', 'decker_import_board');
-		boardData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
+		boardData.append('security', '<?php echo esc_attr( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
 		boardData.append('board', JSON.stringify(currentBoard));
 		boardData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 

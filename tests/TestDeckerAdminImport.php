@@ -106,7 +106,7 @@ class TestDeckerAdminImport extends TestCase {
 
 	public function test_start_import_success() {
 		// Simulate the behavior of the start_import function
-		$_POST['security'] = wp_create_nonce( 'decker_import_nonce' );
+		$_POST['security'] = esc_attr( wp_create_nonce( 'decker_import_nonce' ) );
 
 		// Simulate the AJAX request
 		$this->importer->start_import();
@@ -124,7 +124,7 @@ class TestDeckerAdminImport extends TestCase {
 		$this->importer->method( 'make_request' )->willReturn( null );
 
 		// Simulate the behavior of the start_import function
-		$_POST['security'] = wp_create_nonce( 'decker_import_nonce' );
+		$_POST['security'] = esc_attr( wp_create_nonce( 'decker_import_nonce' ) );
 
 		// Simulate the AJAX request
 		$this->importer->start_import();
