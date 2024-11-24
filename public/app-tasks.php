@@ -306,7 +306,7 @@ table#tablaTareas td:nth-child(4) {
 	dayjs.locale('es');
 
 	function setupAllTasksTable() {
-		if (!$.fn.DataTable.isDataTable('#tablaTareas')) {
+		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
 			// Initialize DataTables only if it hasn't been initialized yet
 			tablaElement = jQuery('#tablaTareas').DataTable({
 				language: {
@@ -389,8 +389,8 @@ table#tablaTareas td:nth-child(4) {
 
 				initComplete: function () {
 					// Move SearchBuilder to the desired location
-					var searchBuilderButton = $('.dt-buttons .dt-button');
-					$('#searchBuilderContainer').append(searchBuilderButton);
+					var searchBuilderButton = jQuery('.dt-buttons .dt-button');
+					jQuery('#searchBuilderContainer').append(searchBuilderButton);
 				}
 			});
 
