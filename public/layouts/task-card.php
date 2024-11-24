@@ -41,13 +41,13 @@ if ( isset( $_GET['slug'] ) ) {
 }
 
 $disabled = false;
-if ( $task_id > 0 && 'archived' == $task->status ) {
+if ( $task_id && 'archived' == $task->status ) {
 	$disabled = true;
 }
 
 $comments = array();
 
-if ( $task_id > 0 ) {
+if ( $task_id ) {
 
 	// Obtener comentarios asociados al task_id
 	$comments = get_comments(
@@ -243,7 +243,7 @@ function deleteComment(commentId) {
 		<div class="col-md-4 mb-3">
 			<div class="form-floating">
 				<?php // TODO: Allow changing the board. ?>
-				<select class="form-select" id="task-board" required <?php disabled( $disabled || $task_id > 0 ); ?>>
+				<select class="form-select" id="task-board" required <?php disabled( $disabled || $task_id ); ?>>
 					<option value="" disabled selected><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 					<?php
 
@@ -271,8 +271,7 @@ function deleteComment(commentId) {
 					<?php
 					$users = get_users();
 					foreach ( $users as $user ) {
-						$selected = ( $user->ID == $task->author ) ? 'selected' : '';
-						echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
+						echo '<option value="' . esc_attr( $user->ID ) . '" ' . selected( $user->ID , $task->author ) . '>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
@@ -312,8 +311,7 @@ function deleteComment(commentId) {
 				<select class="form-select" id="task-assignees" multiple <?php disabled( $disabled ); ?>>
 					<?php
 					foreach ( $users as $user ) {
-						$selected = in_array( $user->ID, array_column( $task->assigned_users, 'ID' ) ) ? 'selected' : '';
-						echo '<option value="' . esc_attr( $user->ID ) . '" ' . $selected . '>' . esc_html( $user->display_name ) . '</option>';
+						echo '<option value="' . esc_attr( $user->ID ) . '" ' . selected( in_array( $user->ID, array_column( $task->assigned_users, 'ID' ) ) ) . '>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
@@ -327,8 +325,7 @@ function deleteComment(commentId) {
 				<?php
 				$labels = LabelManager::getAllLabels();
 				foreach ( $labels as $label ) {
-					$selected = in_array( $label->id, array_column( $task->labels, 'id' ) ) ? 'selected' : '';
-					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . $selected . '>' . esc_html( $label->name ) . '</option>';
+					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) )) . '>' . esc_html( $label->name ) . '</option>';
 				}
 				?>
 			</select>
@@ -382,7 +379,7 @@ function deleteComment(commentId) {
 		<div class="tab-pane" id="comments-tab">
 			<div id="comments-list">
 				<?php
-				if ( $task_id > 0 ) {
+				if ( $task_id ) {
 					if ( $comments ) {
 						render_comments( $comments, 0, get_current_user_id() );
 					} else {
@@ -475,14 +472,14 @@ function deleteComment(commentId) {
 						$date      = esc_html( $record['date'] );
 
 						echo '<tr>';
-						echo '<td title="' . $full_name . '">' . $avatar . ' ' . $nickname . '</td>';
-						echo '<td>' . $date . '</td>';
+						echo '<td title="' . esc_html( $full_name ) . '">' . esc_html( $avatar ) . ' ' . esc_html( $nickname ) . '</td>';
+						echo '<td>' . esc_html( $date ) . '</td>';
 						echo '</tr>';
 
 
 						// Prepare data for the Timeline Chart
 						$timelineData[] = array(
-							'nickname' => $nickname,
+							'nickname' => esc_html( $nickname ),
 							'date'     => $record['date'],
 						);
 
@@ -526,7 +523,7 @@ function deleteComment(commentId) {
 				<span class="visually-hidden"><?php esc_html_e( 'Toggle Dropdown', 'decker' ); ?></span>
 			</button>
 			<?php
-			if ( $task_id > 0 ) {
+			if ( $task_id ) {
 				echo $task->render_task_menu( true );
 			}
 			?>

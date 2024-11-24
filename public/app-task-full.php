@@ -42,7 +42,7 @@ include 'layouts/main.php';
 
 								// TODO: Change to use Task class
 								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
-								if ( $task_id > 0 ) {
+								if ( $task_id ) {
 									$task = get_post( $task_id );
 									if ( $task && 'decker_task' === $task->post_type ) {
 										$title = $task->post_title;

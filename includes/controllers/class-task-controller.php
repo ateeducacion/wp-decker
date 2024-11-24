@@ -73,7 +73,7 @@ class TaskController {
 		$status  = sanitize_text_field( $data['status'] ?? 'publish' );
 		$task_id = intval( $data['task_id'] ?? 0 );
 
-		if ( $task_id > 0 ) {
+		if ( $task_id ) {
 			// Update existing task
 			$task = $this->taskManager->get_task( $task_id );
 			if ( $task ) {
