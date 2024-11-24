@@ -26,7 +26,7 @@ class Decker_Admin_Settings {
 		$this->define_hooks();
 	}
 
-	/*
+	/**
 	 * Render Shared Key Field
 	 *
 	 * Outputs the HTML for the shared_key field, generating it only if it does not exist or does not meet the criteria.
@@ -34,10 +34,10 @@ class Decker_Admin_Settings {
 	public function shared_key_render() {
 		$options = get_option( 'decker_settings', array() );
 
-		// Generate a new shared key (UUID) only if it does not exist or does not meet criteria
+		// Generate a new shared key (UUID) only if it does not exist or does not meet criteria.
 		if ( empty( $options['shared_key'] ) ) {
 			$options['shared_key'] = wp_generate_uuid4();
-			// Save the newly generated UUID back to the options
+			// Save the newly generated UUID back to the options.
 			update_option( 'decker_settings', $options );
 		}
 
@@ -51,7 +51,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Render User Profile Field
+	 * Render User Profile Field.
 	 *
 	 * Outputs the HTML for the user_profile field.
 	 */
@@ -70,7 +70,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Render Alert Message Field
+	 * Render Alert Message Field.
 	 *
 	 * Outputs the HTML for the alert_message field.
 	 */
@@ -82,7 +82,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Render Alert Color Field
+	 * Render Alert Color Field.
 	 *
 	 * Outputs the HTML for the alert_color field.
 	 */
@@ -107,14 +107,14 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Handle Clear All Data
+	 * Handle Clear All Data.
 	 *
 	 * Handles the clearing of all Decker data.
 	 */
 	public function handle_clear_all_data() {
 		if ( isset( $_POST['decker_clear_all_data'] ) && check_admin_referer( 'decker_clear_all_data_action', 'decker_clear_all_data_nonce' ) ) {
 
-			// Delete all Decker custom post types and taxonomies
+			// Delete all Decker custom post types and taxonomies.
 			$custom_post_types = array( 'decker_task' );
 			foreach ( $custom_post_types as $post_type ) {
 				$posts = get_posts(
@@ -129,7 +129,7 @@ class Decker_Admin_Settings {
 				}
 			}
 
-			// Delete all Decker taxonomies
+			// Delete all Decker taxonomies.
 			$taxonomies = array( 'decker_board', 'decker_label' );
 			foreach ( $taxonomies as $taxonomy ) {
 				$terms = get_terms(
@@ -157,7 +157,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Define Hooks
+	 * Define Hooks.
 	 *
 	 * Registers all the hooks related to the settings page.
 	 */
@@ -169,7 +169,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Create Menu
+	 * Create Menu.
 	 *
 	 * Adds the settings page to the admin menu.
 	 */
@@ -184,7 +184,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Settings Initialization
+	 * Settings Initialization.
 	 *
 	 * Registers settings and adds settings sections and fields.
 	 */
@@ -199,9 +199,9 @@ class Decker_Admin_Settings {
 		);
 
 		$fields = array(
-			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons
-			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field
-			'user_profile'          => __( 'User Profile', 'decker' ), // User profile dropdown
+			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons.
+			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field.
+			'user_profile'          => __( 'User Profile', 'decker' ), // User profile dropdown.
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
@@ -219,7 +219,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Settings Section Callback
+	 * Settings Section Callback.
 	 *
 	 * Outputs a description for the settings section.
 	 */
@@ -231,7 +231,7 @@ class Decker_Admin_Settings {
 
 
 	/**
-	 * Render Clear All Data Button
+	 * Render Clear All Data Button.
 	 *
 	 * Outputs the HTML for the clear_all_data_button field.
 	 */
@@ -242,7 +242,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Options Page
+	 * Options Page.
 	 *
 	 * Renders the settings page.
 	 */
@@ -259,7 +259,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Admin Notices
+	 * Admin Notices.
 	 *
 	 * Displays admin notices.
 	 */
@@ -270,7 +270,7 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Settings Validation
+	 * Settings Validation.
 	 *
 	 * Validates the settings fields.
 	 *
@@ -279,26 +279,26 @@ class Decker_Admin_Settings {
 	 */
 	public function settings_validate( $input ) {
 
-		// Validate shared key
+		// Validate shared key.
 		$input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
 
-		// Validate alert color
+		// Validate alert color.
 		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
 		if ( isset( $input['alert_color'] ) && ! in_array( $input['alert_color'], $valid_colors ) ) {
-			$input['alert_color'] = 'info'; // Default to info if invalid
+			$input['alert_color'] = 'info'; // Default to info if invalid.
 		} else {
 			$input['alert_color'] = isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
 		}
 
-		// Validate user profile
+		// Validate user profile.
 		$roles = wp_roles()->get_names();
 		if ( isset( $input['user_profile'] ) && ! array_key_exists( $input['user_profile'], $roles ) ) {
-			$input['user_profile'] = 'decker_role'; // Default to decker_role if invalid
+			$input['user_profile'] = 'decker_role'; // Default to decker_role if invalid.
 		} else {
 			$input['user_profile'] = isset( $input['user_profile'] ) ? $input['user_profile'] : 'decker_role';
 		}
 
-		// Validate alert message
+		// Validate alert message.
 		$input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
 
 		return $input;

@@ -143,15 +143,15 @@ class Decker_Email_To_Post {
 	/**
 	 * Parses raw email content with support for multipart and different encodings
 	 */
-	private function parse_email( $rawEmail ) {
+	private function parse_email( $raw_email ) {
 
 		// Parse raw email
 		require_once __DIR__ . '/class-decker-email-parser.php';
 
 		// Debug: Log the first part of the raw email
-		// error_log("First 1000 chars of raw email: " . substr($rawEmail, 0, 1000));
+		// error_log("First 1000 chars of raw email: " . substr($raw_email, 0, 1000));
 
-		$message = new Decker_Email_Parser( $rawEmail );
+		$message = new Decker_Email_Parser( $raw_email );
 
 		return $message;
 	}

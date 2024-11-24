@@ -30,25 +30,25 @@ class Decker_Email_Parser {
 	 * Parses the raw email content.
 	 */
 	private function parseEmail() {
-		// Split headers and body
+		// Split headers and body.
 		list($header_section, $bodySection) = $this->splitHeadersAndBody( $this->raw_email );
 
-		// Parse headers
+		// Parse headers.
 		$this->parsed['headers'] = $this->parseHeaders( $header_section );
 
-		// Determine content type
+		// Determine content type.
 		$content_type = $this->parsed['headers']['Content-Type'] ?? 'text/plain';
 
-		// Check for multipart content
+		// Check for multipart content.
 		if ( false !== strpos( $content_type, 'multipart/' ) ) {
-			// Extract boundary
+			// Extract boundary.
 			$boundary = $this->getBoundary( $content_type );
 			if ( $boundary ) {
-				// Parse multipart content
+				// Parse multipart content.
 				$this->parseMultipart( $bodySection, $boundary, $content_type );
 			}
 		} else {
-			// Single part email
+			// Single part email.
 			$encoding       = $this->parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
 			$decoded_content = $this->decodeContent( $bodySection, $encoding );
 			if ( false !== strpos( $content_type, 'text/html' ) ) {
@@ -67,34 +67,34 @@ class Decker_Email_Parser {
 	 * @param string $parent_content_type The content type of the parent part.
 	 */
 	private function parseMultipart( $body, $boundary, $parent_content_type ) {
-		// Split body into parts
+		// Split body into parts.
 		$parts = $this->splitBodyByBoundary( $body, $boundary );
 		foreach ( $parts as $part ) {
-			// Split headers and content
+			// Split headers and content.
 			list($header_section, $body_content) = $this->splitHeadersAndBody( $part );
 			$headers                           = $this->parseHeaders( $header_section );
 
-			// Get content type and encoding
+			// Get content type and encoding.
 			$content_type = $headers['Content-Type'] ?? 'text/plain';
 			$encoding    = $headers['Content-Transfer-Encoding'] ?? '7bit';
 
 			if ( false !== strpos( $content_type, 'multipart/' ) ) {
-				// Nested multipart
+				// Nested multipart.
 				$sub_boundary = $this->getBoundary( $content_type );
 				if ( $sub_boundary ) {
 					$this->parseMultipart( $body_content, $sub_boundary, $content_type );
 				}
 			} else {
-				// Decode content
+				// Decode content.
 				$decoded_content = $this->decodeContent( $body_content, $encoding );
 
-				// Handle content based on type
+				// Handle content based on type.
 				if ( false !== strpos( $content_type, 'text/html' ) ) {
 					$this->parsed['html'] .= $decoded_content;
 				} elseif ( false !== strpos( $content_type, 'text/plain' ) ) {
 					$this->parsed['text'] .= $decoded_content;
 				} elseif ( isset( $headers['Content-Disposition'] ) && false !== strpos( $headers['Content-Disposition'], 'attachment' ) ) {
-					// Handle attachment
+					// Handle attachment.
 					$filename = $this->getFilename( $headers );
 					if ( $filename ) {
 						$this->parsed['attachments'][] = array(
@@ -269,24 +269,24 @@ class Decker_Email_Parser {
 	}
 
 	public function getBody() {
-		// Try to get HTML content first
+		// Try to get HTML content first.
 		$html_content = $this->getHtmlPart();
 		if ( ! empty( $html_content ) ) {
 			return $this->sanitize_html_content( $html_content );
 		}
 
-		// Fall back to text content
+		// Fall back to text content.
 		$text_content = $this->getTextPart();
 		if ( ! empty( $text_content ) ) {
 			return wp_kses_post( nl2br( $text_content ) );
 		}
 
-		// If both are empty, return a empty message
+		// If both are empty, return a empty message.
 		return '';
 	}
 
 	private function sanitize_html_content( $html ) {
-		// Basic sanitization while preserving most HTML formatting
+		// Basic sanitization while preserving most HTML formatting.
 		return wp_kses_post( $html );
 	}
 
