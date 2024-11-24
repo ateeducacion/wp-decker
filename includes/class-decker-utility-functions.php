@@ -23,7 +23,7 @@ class Decker_Utility_Functions {
 	 * @param DateTime|null $dueDate The due date as a DateTime object. Null if no due date.
 	 * @return string The relative time string (e.g., "in 2 days", "3 months ago").
 	 */
-	public static function getRelativeTime( ?DateTime $dueDate ): string {
+	public static function get_relative_time( ?DateTime $dueDate ): string {
 		// Return an empty string if no due date is provided
 		if ( empty( $dueDate ) ) {
 			return '';

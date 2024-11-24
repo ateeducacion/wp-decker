@@ -6,9 +6,9 @@ $tomorrow_date     = ( new DateTime() )->modify( '+1 day' );
 $next_7_days_date  = ( new DateTime() )->modify( '+7 days' );
 $one_year_ago_date = ( new DateTime() )->modify( '-1 year' );
 
-$taskManager = new TaskManager();
+$task_manager = new TaskManager();
 
-$tasks = $taskManager->getUpcomingTasksByDate( $one_year_ago_date, $next_7_days_date ); // TODO: Change this to a function getTaskByDate(from, until)
+$tasks = $task_manager->getUpcomingTasksByDate( $one_year_ago_date, $next_7_days_date ); // TODO: Change this to a function getTaskByDate(from, until)
 
 // Set the timezone to ensure consistency
 date_default_timezone_set( 'UTC' ); // Change to your preferred timezone
@@ -138,7 +138,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['delayed'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -152,7 +152,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['today'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 
@@ -166,7 +166,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['tomorrow'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -179,7 +179,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['next-7-days'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											

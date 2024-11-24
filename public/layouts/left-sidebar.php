@@ -109,8 +109,8 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  <ul class="side-nav-second-level">
 			<?php
 			$active_tasks_count = wp_count_posts( 'decker_task' )->publish;
-			$taskManager                    = new taskManager();
-			$my_tasks                       = $taskManager->getTasksByUser( get_current_user_id() );
+			$task_manager                    = new taskManager();
+			$my_tasks                       = $task_manager->get_tasks_by_user( get_current_user_id() );
 			$my_tasks_count                 = count( $my_tasks );
 			$archived_tasks_count           = wp_count_posts( 'decker_task' )->archived;
 			?>

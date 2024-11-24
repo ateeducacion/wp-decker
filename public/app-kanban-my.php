@@ -2,8 +2,8 @@
 include 'layouts/main.php';
 
 $user_id     = get_current_user_id();
-$taskManager = new TaskManager();
-$tasks       = $taskManager->getTasksByUser( $user_id );
+$task_manager = new TaskManager();
+$tasks       = $task_manager->get_tasks_by_user( $user_id );
 
 
 // Dividir las tareas en columnas
@@ -78,7 +78,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['to-do'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard( true ); ?>
+												<?php $task->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -92,7 +92,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['in-progress'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard( true ); ?>
+												<?php $task->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 
@@ -106,7 +106,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['done'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard( true ); ?>
+												<?php $task->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											

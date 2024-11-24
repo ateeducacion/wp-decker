@@ -17,7 +17,7 @@ class TaskManager {
 	 * @param int $id The ID of the task.
 	 * @return Task|null The Task object or null if not found.
 	 */
-	public function getTask( int $id ): ?Task {
+	public function get_task( int $id ): ?Task {
 		try {
 			return new Task( $id );
 		} catch ( Exception $e ) {
@@ -31,7 +31,7 @@ class TaskManager {
 	 * @param array $args Query arguments for WP_Query.
 	 * @return Task[] List of Task objects.
 	 */
-	public function getTasks( array $args = array() ): array {
+	public function get_tasks( array $args = array() ): array {
 		$default_args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -58,7 +58,7 @@ class TaskManager {
 	 * @param string $status The status to filter by (e.g., 'publish', 'draft').
 	 * @return Task[] List of Task objects.
 	 */
-	public function getTasksByStatus( string $status ): array {
+	public function get_tasks_by_status( string $status ): array {
 		$args = array(
 			'post_status' => $status,
 			'meta_key'    => 'max_priority', // Define field to use in order
@@ -68,7 +68,7 @@ class TaskManager {
 			),
 		);
 
-		$tasks = $this->getTasks( $args );
+		$tasks = $this->get_tasks( $args );
 		return $tasks;
 	}
 
@@ -78,7 +78,7 @@ class TaskManager {
 	 * @param int $user_id The user ID to filter tasks by.
 	 * @return Task[] List of Task objects.
 	 */
-	public function getTasksByUser( int $user_id ): array {
+	public function get_tasks_by_user( int $user_id ): array {
 		$args = array(
 			'meta_query' => array(
 				array(
@@ -95,7 +95,7 @@ class TaskManager {
 			),
 		);
 
-		$tasks = $this->getTasks( $args );
+		$tasks = $this->get_tasks( $args );
 
 		// Additional filtering to ensure only tasks assigned to the user are returned.
 		// Filtering serialized data with a LIKE or REGEXP can lead to false positives due to serialization quirks.
@@ -124,7 +124,7 @@ class TaskManager {
 	 * @param string $stack The stack to filter tasks by.
 	 * @return Task[] List of Task objects.
 	 */
-	public function getTasksByStack( string $stack ): array {
+	public function get_tasks_by_stack( string $stack ): array {
 		$args = array(
 			'meta_query' => array(
 				array(
@@ -134,7 +134,7 @@ class TaskManager {
 				),
 			),
 		);
-		return $this->getTasks( $args );
+		return $this->get_tasks( $args );
 	}
 
 
@@ -145,7 +145,7 @@ class TaskManager {
 	 * @param Board $board The board to filter tasks by.
 	 * @return Task[] List of Task objects.
 	 */
-	public function getTasksByBoard( Board $board ): array {
+	public function get_tasks_by_board( Board $board ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -164,7 +164,7 @@ class TaskManager {
 			),
 			'numberposts' => -1,
 		);
-		return $this->getTasks( $args );
+		return $this->get_tasks( $args );
 	}
 
 
@@ -173,7 +173,7 @@ class TaskManager {
 	 *
 	 * @return bool True if the user has tasks for today, false otherwise.
 	 */
-	public function hasUserTodayTasks(): bool {
+	public function has_user_today_tasks(): bool {
 		$user_id = get_current_user_id();
 		$args    = array(
 			'post_type'   => 'decker_task',
@@ -251,7 +251,7 @@ class TaskManager {
 				),
 			),
 		);
-		return $this->getTasks( $args );
+		return $this->get_tasks( $args );
 	}
 
 	/**

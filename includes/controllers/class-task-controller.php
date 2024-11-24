@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class TaskController {
 
-	private TaskManager $taskManager;
+	private TaskManager $task_manager;
 
 	/**
 	 * TaskController constructor.
@@ -24,7 +24,7 @@ class TaskController {
 	 * Displays all tasks.
 	 */
 	public function displayAllTasks(): void {
-		$tasks = $this->taskManager->getTasks();
+		$tasks = $this->taskManager->get_tasks();
 		if ( empty( $tasks ) ) {
 			echo '<p>No tasks found.</p>';
 			return;
@@ -47,7 +47,7 @@ class TaskController {
 	 * @param int $id The ID of the task to display.
 	 */
 	public function displayTask( int $id ): void {
-		$task = $this->taskManager->getTask( $id );
+		$task = $this->taskManager->get_task( $id );
 		if ( ! $task ) {
 			echo '<p>Task not found.</p>';
 			return;
@@ -75,7 +75,7 @@ class TaskController {
 
 		if ( $task_id > 0 ) {
 			// Update existing task
-			$task = $this->taskManager->getTask( $task_id );
+			$task = $this->taskManager->get_task( $task_id );
 			if ( $task ) {
 				$task->title   = $title;
 				$task->content = $content;

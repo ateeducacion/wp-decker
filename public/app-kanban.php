@@ -12,8 +12,8 @@ if ( is_null( $main_board ) ) {
 	wp_die( sprintf( esc_html__( 'Error: The board %s does not exist.', 'decker' ), '<strong>' . esc_html( $board_slug ) . '</strong>' ) );
 }
 
-$taskManager = new TaskManager();
-$tasks       = $taskManager->getTasksByBoard( $main_board );
+$task_manager = new TaskManager();
+$tasks       = $task_manager->get_tasks_by_board( $main_board );
 
 
 // Dividir las tareas en columnas
@@ -119,7 +119,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['to-do'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -133,7 +133,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['in-progress'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 
@@ -147,7 +147,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['done'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(); ?>
+												<?php $task->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											

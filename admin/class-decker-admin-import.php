@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Decker_Admin_Import {
 
-	private $Parsedown;
+	private $parsedown;
 
 	/**
 	 * Constructor

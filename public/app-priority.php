@@ -23,10 +23,10 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 }
 
 $previous_tasks = array();
-$taskManager    = new TaskManager();
+$task_manager    = new TaskManager();
 
 // Verificar si hay tareas para hoy
-$has_today_tasks = $taskManager->hasUserTodayTasks();
+$has_today_tasks = $task_manager->has_user_today_tasks();
 
 // Si no hay tareas para hoy, cargar las tareas de días previos
 if ( ! $has_today_tasks ) {
@@ -34,7 +34,7 @@ if ( ! $has_today_tasks ) {
 	$current_user_id = get_current_user_id();
 	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
 
-	$previous_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays( $current_user_id, $days_to_load );
+	$previous_tasks = $task_manager->getUserTasksMarkedForTodayForPreviousDays( $current_user_id, $days_to_load );
 }
 
 ?>
@@ -170,7 +170,7 @@ if ( ! $has_today_tasks ) {
 											),
 										),
 									);
-									$tasks = $taskManager->getTasks( $args );
+									$tasks = $task_manager->get_tasks( $args );
 									foreach ( $tasks as $task ) {
 
 										$board = __( 'No board assigned', 'decker' );
@@ -259,7 +259,7 @@ if ( ! $has_today_tasks ) {
 									),
 								),
 							);
-							$user_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays( $user->ID, 0 );
+							$user_tasks = $task_manager->getUserTasksMarkedForTodayForPreviousDays( $user->ID, 0 );
 							?>
 							<div class="col-xl-6">
 								<div class="<?php echo esc_attr( $card_class ); ?>">

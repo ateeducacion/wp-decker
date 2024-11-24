@@ -183,7 +183,7 @@ class Task {
 	 *
 	 * @return string HTML value of the pastelized color in hex format (e.g., '#ffcccc').
 	 */
-	public function pastelizeColor( ?string $color ): string {
+	public function pastelize_color( ?string $color ): string {
 		// Remove '#' if present
 		$color = ltrim( $color, '#' );
 
@@ -263,11 +263,11 @@ class Task {
 		}
 	}
 
-	public function getRelativeTime(): string {
-		return Decker_Utility_Functions::getRelativeTime( $this->duedate );
+	public function get_relative_time(): string {
+		return Decker_Utility_Functions::get_relative_time( $this->duedate );
 	}
 
-	public function getDuedateAsString(): string {
+	public function get_duedate_as_string(): string {
 
 		// Initialize $duedate to an empty string
 		$duedate = '';
@@ -291,7 +291,7 @@ class Task {
 	/**
 	 * Render the current task card for Kanban.
 	 */
-	public function renderTaskCard( bool $draw_background_color = false ) {
+	public function render_task_card( bool $draw_background_color = false ) {
 		$taskUrl = add_query_arg(
 			array(
 				'decker_page' => 'task',
@@ -301,16 +301,16 @@ class Task {
 		);
 		$priorityBadgeClass = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
 		$priorityLabel      = $this->max_priority ? __( '🔥', 'decker' ) : __( 'Normal', 'decker' );
-		$formatted_duedate  = $this->getDuedateAsString();
+		$formatted_duedate  = $this->get_duedate_as_string();
 		$relative_time      = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined date', 'decker' ) . '</span>';
 
 		if ( ! empty( $this->duedate ) ) {
-			$relative_time = esc_html( $this->getRelativeTime() );
+			$relative_time = esc_html( $this->get_relative_time() );
 		}
 
 		$card_background_color = '';
 		if ( $draw_background_color && $this->board && $this->board->color ) {
-			$board_color           = $this->pastelizeColor( $this->board->color );
+			$board_color           = $this->pastelize_color( $this->board->color );
 			$card_background_color = 'style="background-color: ' . esc_attr( $board_color ) . ';"';
 		}
 
@@ -349,7 +349,7 @@ class Task {
 					</span>
 				</p>
 
-				<?php echo $this->renderTaskMenu(); ?>
+				<?php echo $this->render_task_menu(); ?>
 
 				<div class="avatar-group mt-2">
 					<?php foreach ( $this->assigned_users as $user_info ) : ?>
@@ -370,7 +370,7 @@ class Task {
 	/**
 	 * Render the task card contextual menu.
 	 */
-	public function renderTaskMenu( bool $card = false ): string {
+	public function render_task_menu( bool $card = false ): string {
 		$menuItems = array();
 
 		$taskUrl = add_query_arg(

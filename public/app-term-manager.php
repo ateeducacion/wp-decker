@@ -88,16 +88,16 @@ $type = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : 'label';
 // Initialize the appropriate manager based on type
 $items      = array();
 $title      = '';
-$addNewText = '';
+$add_new_text = '';
 
 if ( 'board' === $type ) {
 	$items      = BoardManager::getAllBoards();
 	$title      = __( 'Boards', 'decker' );
-	$addNewText = __( 'Add New Board', 'decker' );
+	$add_new_text = __( 'Add New Board', 'decker' );
 } else {
 	$items      = LabelManager::getAllLabels();
 	$title      = __( 'Labels', 'decker' );
-	$addNewText = __( 'Add New Label', 'decker' );
+	$add_new_text = __( 'Add New Label', 'decker' );
 }
 
 ?>
@@ -131,7 +131,7 @@ if ( 'board' === $type ) {
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 		
-										<h4 class="page-title"><?php echo esc_html( $title ); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><?php echo esc_html( $addNewText ); ?></a></h4>
+										<h4 class="page-title"><?php echo esc_html( $title ); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><?php echo esc_html( $add_new_text ); ?></a></h4>
 
 
 								<div class="page-title-right">

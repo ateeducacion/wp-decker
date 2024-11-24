@@ -1,7 +1,7 @@
 <?php
 include 'layouts/main.php';
 
-$taskManager = new TaskManager();
+$task_manager = new TaskManager();
 
 ?>
 
@@ -213,11 +213,11 @@ table#tablaTareas td:nth-child(4) {
 													$tasks = array();
 
 													if ( 'archived' === $type ) {
-														$tasks = $taskManager->getTasksByStatus( 'archived' );
+														$tasks = $task_manager->get_tasks_by_status( 'archived' );
 													} elseif ( 'my' === $type ) {
-														$tasks = $taskManager->getTasksByUser( get_current_user_id() );
+														$tasks = $task_manager->get_tasks_by_user( get_current_user_id() );
 													} else {
-														$tasks = $taskManager->getTasksByStatus( 'publish' );
+														$tasks = $task_manager->get_tasks_by_status( 'publish' );
 													}
 
 													foreach ( $tasks as $task ) {
@@ -257,7 +257,7 @@ table#tablaTareas td:nth-child(4) {
 														echo '</div></td>';
 														echo '<td>' . $task->duedate?->format( 'Y-m-d H:i:s' ) . '</td>';
 														echo '<td class="text-end">';
-														echo $task->renderTaskMenu();
+														echo $task->render_task_menu();
 														echo '</td>';
 														echo '</tr>';
 													}
