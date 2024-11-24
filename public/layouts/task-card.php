@@ -474,7 +474,7 @@ function deleteComment(commentId) {
 				<tbody>
 					<?php
 					$history = $task->get_user_history_with_objects();
-					$timelineData                = array();
+					$timeline_data                = array();
 					foreach ( $history as $record ) {
 						$user      = $record['user'];
 						$avatar    = get_avatar( $user->ID, 32 ); // Get WordPress avatar
@@ -489,7 +489,7 @@ function deleteComment(commentId) {
 
 
 						// Prepare data for the Timeline Chart
-						$timelineData[] = array(
+						$timeline_data[] = array(
 							'nickname' => esc_html( $nickname ),
 							'date'     => $record['date'],
 						);
@@ -497,19 +497,13 @@ function deleteComment(commentId) {
 					}
 
 					// Convert PHP array to JSON for use in JavaScript
-					$timelineDataJson = wp_json_encode( $timelineData );
-
+					$timeline_data_json = wp_json_encode( $timeline_data );
+					// TO-DO: use this to draw the gantt
 
 					?>
 				</tbody>
 			</table>
 
-
-
-<!-- 			<ul class="list-group">
-				<li class="list-group-item">User 1 completed the task on 09/01/2023</li>
-				<li class="list-group-item">User 2 reviewed the task on 09/02/2023</li>
-			</ul> -->
 		</div>
 
 		<!-- Gantt -->
