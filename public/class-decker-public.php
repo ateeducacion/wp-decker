@@ -193,7 +193,7 @@ class Decker_Public {
 				// Remix Icons
 				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css',
 
-				// Tablesort 
+				// Tablesort
 				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
 
 				// Simplebar
@@ -203,7 +203,6 @@ class Decker_Public {
 				'https://unpkg.com/dayjs/dayjs.min.js',
 				'https://unpkg.com/dayjs/plugin/relativeTime.js',
 				'https://unpkg.com/dayjs/locale/es.js',
-
 
 				// // Datatables.net.
 				// 'https://cdn.datatables.net/2.0.8/css/dataTables.bootstrap5.min.css',
@@ -247,7 +246,6 @@ class Decker_Public {
 				// SortableJS
 				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
 
-
 				// Quill
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
@@ -258,16 +256,13 @@ class Decker_Public {
 
 				// Custom files.
 
-
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.min.css',
 
 				// plugin_dir_url( __FILE__ ) . 'js/decker-public.js',
 				// plugin_dir_url( __FILE__ ) . 'css/decker-public.css',
 
-
 			);
-
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page
 
@@ -285,7 +280,6 @@ class Decker_Public {
 				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css';
 
 			}
-
 
 			$last_handle = '';
 
@@ -315,14 +309,12 @@ class Decker_Public {
 				return; // No está autenticado ningún usuario.
 			}
 
-
 			// Enqueue Custom Inline Script for userId
 			wp_add_inline_script(
 				'config-js',
 				'const userId = ' . get_current_user_id() . ';',
 				'before'
 			);
-
 
 			// Localize the script with new data.
 			$script_data = array(

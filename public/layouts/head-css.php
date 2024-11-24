@@ -3,5 +3,3 @@
 
 show_admin_bar( false );
 wp_head();
-
-?>

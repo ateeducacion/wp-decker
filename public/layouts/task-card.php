@@ -271,7 +271,7 @@ function deleteComment(commentId) {
 					<?php
 					$users = get_users();
 					foreach ( $users as $user ) {
-						echo '<option value="' . esc_attr( $user->ID ) . '" ' . selected( $user->ID , $task->author ) . '>' . esc_html( $user->display_name ) . '</option>';
+						echo '<option value="' . esc_attr( $user->ID ) . '" ' . selected( $user->ID, $task->author ) . '>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
@@ -325,7 +325,7 @@ function deleteComment(commentId) {
 				<?php
 				$labels = LabelManager::getAllLabels();
 				foreach ( $labels as $label ) {
-					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) )) . '>' . esc_html( $label->name ) . '</option>';
+					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) ) ) . '>' . esc_html( $label->name ) . '</option>';
 				}
 				?>
 			</select>
@@ -695,7 +695,7 @@ function initializeTaskPage() {
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'application/json',
-			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 			},
 			body: JSON.stringify({ status: 'archived' })
 		  })
@@ -775,7 +775,7 @@ function uploadAttachment(file) {
 	formData.append('action', 'upload_task_attachment');
 	formData.append('task_id', <?php echo wp_json_encode( $task_id ); ?>);
 	formData.append('attachment', file);
-	formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'upload_attachment_nonce' )); ?>');
+	formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'upload_attachment_nonce' ) ); ?>');
 
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', true);
@@ -845,7 +845,7 @@ function deleteAttachment(attachmentId, listItem) {
 	formData.append('action', 'delete_task_attachment');
 	formData.append('task_id', <?php echo wp_json_encode( $task_id ); ?>);
 	formData.append('attachment_id', attachmentId);
-	formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'delete_attachment_nonce' )); ?>');
+	formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'delete_attachment_nonce' ) ); ?>');
 
 	var xhr = new XMLHttpRequest();
 	xhr.open('POST', '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', true);
@@ -976,7 +976,7 @@ function sendFormByAjax(event) {
 		// Recopila los datos del formulario
 		const formData = {
 			action: 'save_decker_task',
-			nonce: '<?php echo esc_attr( wp_create_nonce( 'save_decker_task_nonce' )); ?>',
+			nonce: '<?php echo esc_attr( wp_create_nonce( 'save_decker_task_nonce' ) ); ?>',
 			task_id: document.querySelector('input[name="task_id"]').value,
 			title: document.getElementById('task-title').value,
 			due_date: document.getElementById('task-due-date').value,

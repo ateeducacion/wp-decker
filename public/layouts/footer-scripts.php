@@ -32,7 +32,7 @@
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'application/json',
-			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 			},
 			body: JSON.stringify({ status: 'archived' })
 		  })
@@ -74,7 +74,7 @@
 			  method: 'POST',
 			  headers: {
 				'Content-Type': 'application/json',
-				'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+				'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 			  }
 			})
 			.then(response => {
@@ -110,7 +110,7 @@ function handleAssignToMe(element) {
 	method: 'POST',
 	headers: {
 	  'Content-Type': 'application/json',
-	  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+	  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 	},
 	body: JSON.stringify({ user_id: userId })
   })
@@ -149,7 +149,7 @@ function handleLeaveTask(element) {
 	method: 'POST',
 	headers: {
 	  'Content-Type': 'application/json',
-	  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+	  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 	},
 	body: JSON.stringify({ user_id: userId })
   })
@@ -195,7 +195,7 @@ function toggleMarkForToday(taskId, shouldMark, element) {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
-			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 		},
 		body: JSON.stringify({ 
 			user_id: userId, 
