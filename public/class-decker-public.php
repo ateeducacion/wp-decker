@@ -179,6 +179,10 @@ class Decker_Public {
 
 		if ( $decker_page ) {
 
+			// Registra el script principal.
+			// wp_register_script( 'config-js', plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js', array(), null, true );
+
+
 			$resources = array(
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
@@ -259,7 +263,7 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.min.css',
 
-				// plugin_dir_url( __FILE__ ) . 'js/decker-public.js',
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
 				// plugin_dir_url( __FILE__ ) . 'css/decker-public.css',
 
 			);
@@ -314,15 +318,16 @@ class Decker_Public {
 				return; // No está autenticado ningún usuario.
 			}
 
-			// Enqueue Custom Inline Script for userId
+			// Agrega inline script para el usuario actual.
 			wp_add_inline_script(
-				'config-js',
+				'config', // The handle of the config.js file
 				'const userId = ' . get_current_user_id() . ';',
 				'before'
 			);
 
 			// Localize the script with new data.
 			$script_data = array(
+				'userId'	   => get_current_user_id(),
 				'display_name' => $current_user->display_name,
 				'nickname'     => $current_user->nickname,
 
