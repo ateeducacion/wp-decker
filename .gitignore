@@ -34,6 +34,7 @@ sftp-config.json
 # /phpunit.xml.dist
 .phpunit.result.cache
 /behat.yml
+.php-cs-fixer.cache
 
 decker/
 .aider*
