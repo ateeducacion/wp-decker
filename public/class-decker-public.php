@@ -182,7 +182,6 @@ class Decker_Public {
 			// Registra el script principal.
 			// wp_register_script( 'config-js', plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js', array(), null, true );
 
-
 			$resources = array(
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
@@ -243,7 +242,6 @@ class Decker_Public {
 
 				// Font awesome
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
-
 
 				// SortableJS
 				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
@@ -330,7 +328,7 @@ class Decker_Public {
 
 			// Localize the script with new data.
 			$script_data = array(
-				'userId'	   => get_current_user_id(),
+				'userId'       => get_current_user_id(),
 				'display_name' => $current_user->display_name,
 				'nickname'     => $current_user->nickname,
 

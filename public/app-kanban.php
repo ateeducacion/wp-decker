@@ -219,7 +219,7 @@ foreach ( $tasks as $task ) {
 					console.error('Task ID is undefined');
 					return;
 				}
-				const boardId = <?php echo esc_attr( $main_board->id); ?>;
+				const boardId = <?php echo esc_attr( $main_board->id ); ?>;
 				const newOrder = Array.from(target.children).indexOf(el) + 1;
 
 				const sourceStack = source.id.replace('task-list-', '');

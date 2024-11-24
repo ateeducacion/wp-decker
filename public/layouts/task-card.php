@@ -372,7 +372,7 @@ function deleteComment(commentId) {
 	<div class="tab-content">
 		<!-- Descripción (Editor Quill) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor" style="height: 200px;"><?php echo wp_kses_post($task->description); ?></div>
+			<div id="editor" style="height: 200px;"><?php echo wp_kses_post( $task->description ); ?></div>
 		</div>
 
 		<!-- Comentarios -->
