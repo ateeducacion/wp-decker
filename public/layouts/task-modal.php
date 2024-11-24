@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		modal.find('.modal-body').html('');
 
 		var taskId = jQuery(e.relatedTarget).data('task-id'); // Obtener el ID de la tarea si se proporciona
-		var url = '<?php echo plugins_url( 'layouts/task-card.php', __DIR__ ); ?>';
+		var url = '<?php echo esc_url( plugins_url( 'layouts/task-card.php', __DIR__ ) ); ?>';
 
 		if (taskId) {
 			url += '?id=' + taskId; // Añadir el ID de la tarea a la URL si existe

@@ -182,9 +182,6 @@ foreach ( $tasks as $task ) {
 
 		<?php include 'layouts/footer-scripts.php'; ?>
 
-		<!-- dragula js-->
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js'></script>
-
 
 		<!-- Start dragula -->
 		<script type="text/javascript">
@@ -222,7 +219,7 @@ foreach ( $tasks as $task ) {
 					console.error('Task ID is undefined');
 					return;
 				}
-				const boardId = <?php echo $main_board->id; ?>;
+				const boardId = <?php echo esc_attr( $main_board->id); ?>;
 				const newOrder = Array.from(target.children).indexOf(el) + 1;
 
 				const sourceStack = source.id.replace('task-list-', '');

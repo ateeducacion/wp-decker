@@ -264,6 +264,11 @@ class Decker_Public {
 
 			);
 
+			if ( 'board' == $decker_page ) {
+				// dragula
+				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js';
+			}
+
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page
 
 				// Datatables JS CDN

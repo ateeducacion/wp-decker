@@ -199,7 +199,7 @@ function toggleMarkForToday(taskId, shouldMark, element) {
 		},
 		body: JSON.stringify({ 
 			user_id: userId, 
-			date: '<?php echo gmdate( 'Y-m-d' ); ?>' 
+			date: '<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>' 
 		})
 	})
 	.then(response => {

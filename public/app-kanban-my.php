@@ -141,9 +141,6 @@ foreach ( $tasks as $task ) {
 
 		<?php include 'layouts/footer-scripts.php'; ?>
 
-		<!-- dragula js-->
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js'></script>
-
 		<script>
 			document.addEventListener('DOMContentLoaded', function () {
 				const searchInput = document.getElementById('searchInput');

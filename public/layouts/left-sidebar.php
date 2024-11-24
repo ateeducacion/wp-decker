@@ -208,7 +208,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 			$boards = BoardManager::getAllBoards();
 			foreach ( $boards as $board ) {
 
-				echo '<li class="' . decker_is_active_subpage( 'slug', $board->slug ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
+				echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
 					esc_url(
 						add_query_arg(
 							array(
