@@ -10,9 +10,6 @@ $task_manager = new TaskManager();
 
 $tasks = $task_manager->getUpcomingTasksByDate( $one_year_ago_date, $next_7_days_date ); // TODO: Change this to a function getTaskByDate(from, until)
 
-// Set the timezone to ensure consistency
-date_default_timezone_set( 'UTC' ); // Change to your preferred timezone
-
 // Initialize DateTime objects for current date and specific ranges
 
 // Current date at 00:00:00

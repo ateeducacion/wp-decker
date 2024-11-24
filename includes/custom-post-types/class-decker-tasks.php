@@ -1225,7 +1225,7 @@ class Decker_Tasks {
 			<!-- Date Selection -->
 			<p>
 				<label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
-				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( date( 'Y-m-d' ) ); ?>">
+				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>">
 			</p>
 			
 			<!-- Add Relation Button -->

@@ -3,7 +3,7 @@
 		<div class="row align-items-center">
 			<div class="col-md-6">
 				<p class="mb-0">
-					<?php echo gmdate( 'Y' ); ?> &copy; <?php echo esc_html( get_bloginfo( 'description' ) ); ?>
+					<?php echo esc_attr( gmdate( 'Y' ) ); ?> &copy; <?php echo esc_html( get_bloginfo( 'description' ) ); ?>
 				</p>
 			</div>
 			<div class="col-md-6 text-md-end">
