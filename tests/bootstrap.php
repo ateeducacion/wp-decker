@@ -89,6 +89,6 @@ WP_Mock::userFunction(
 // tests_add_filter('muplugins_loaded', '_manually_load_plugin');
 
 
-require_once dirname(__DIR__) . '/vendor/yoast/wp-test-utils/src/WPIntegration/bootstrap-functions.php';
+require_once dirname( __DIR__ ) . '/vendor/yoast/wp-test-utils/src/WPIntegration/bootstrap-functions.php';
 
 WPIntegration\bootstrap_it();

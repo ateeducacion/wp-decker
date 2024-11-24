@@ -112,116 +112,116 @@ class Decker_Admin_Import {
 <script>
 // JavaScript for managing import progress and log display	
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('decker-import-form');
-    const progressContainer = document.getElementById('import-progress');
-    const progressBar = document.getElementById('progress');
-    const progressText = document.getElementById('progress-text');
-    const logContainer = document.getElementById('log-container');
-    const logMessages = document.getElementById('log-messages');
-    const maxRetries = 4;  // Maximum number of retries
-    <?php
-        $options = get_option('decker_settings', array());
-    ?>
-    const ignoredBoardIds = '<?php echo esc_js($options['decker_ignored_board_ids']); ?>'.split(',').map(id => id.trim());
+	const form = document.getElementById('decker-import-form');
+	const progressContainer = document.getElementById('import-progress');
+	const progressBar = document.getElementById('progress');
+	const progressText = document.getElementById('progress-text');
+	const logContainer = document.getElementById('log-container');
+	const logMessages = document.getElementById('log-messages');
+	const maxRetries = 4;  // Maximum number of retries
+		<?php
+		$options = get_option( 'decker_settings', array() );
+		?>
+	const ignoredBoardIds = '<?php echo esc_js( $options['decker_ignored_board_ids'] ); ?>'.split(',').map(id => id.trim());
 
-    form.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent form submission
-        progressContainer.style.display = 'block';
+	form.addEventListener('submit', function(event) {
+		event.preventDefault(); // Prevent form submission
+		progressContainer.style.display = 'block';
 
-        const formData = new FormData(form);
-        formData.append('action', 'decker_start_import');
-        formData.append('security', '<?php echo esc_js(wp_create_nonce('decker_import_nonce')); ?>');
-        
-        // Add all form fields
-        formData.append('nextcloud_url_base', document.getElementById('nextcloud_url_base').value);
-        formData.append('nextcloud_username', document.getElementById('nextcloud_username').value);
-        formData.append('nextcloud_access_token', document.getElementById('nextcloud_access_token').value);
-        formData.append('ignored_board_ids', document.getElementById('ignored_board_ids').value);
-        formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
+		const formData = new FormData(form);
+		formData.append('action', 'decker_start_import');
+		formData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
+		
+		// Add all form fields
+		formData.append('nextcloud_url_base', document.getElementById('nextcloud_url_base').value);
+		formData.append('nextcloud_username', document.getElementById('nextcloud_username').value);
+		formData.append('nextcloud_access_token', document.getElementById('nextcloud_access_token').value);
+		formData.append('ignored_board_ids', document.getElementById('ignored_board_ids').value);
+		formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
-        fetch(ajaxurl, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(importData => {
-            if (importData.success) {
-                const totalBoards = importData.data.length;
+		fetch(ajaxurl, {
+			method: 'POST',
+			body: formData
+		})
+		.then(response => response.json())
+		.then(importData => {
+			if (importData.success) {
+				const totalBoards = importData.data.length;
 
-                let importedBoards = 0;
+				let importedBoards = 0;
 
-                // // TODO: Just for DEBUG importing just two boards
+				// // TODO: Just for DEBUG importing just two boards
 				// if (importedBoards > 1) {
 				// 	console.log("Stopped import")
 				// 	return;
-        		// }
+				// }
 
-                // Filter boards that are not ignored
-                const boardsToProcess = importData.data.filter(board => !ignoredBoardIds.includes(board.id.toString()));
+				// Filter boards that are not ignored
+				const boardsToProcess = importData.data.filter(board => !ignoredBoardIds.includes(board.id.toString()));
 
-                // Start the board import process
-                processBoards(boardsToProcess, importedBoards, totalBoards);
-            } else {
-                logMessages.innerHTML += `<li style="color: red;">Error starting import: ${importData.data}</li>`;
-            }
-        })
-        .catch(error => {
-            logMessages.innerHTML += `<li style="color: red;">Error starting import: ${error.message}</li>`;
-        });
-    });
+				// Start the board import process
+				processBoards(boardsToProcess, importedBoards, totalBoards);
+			} else {
+				logMessages.innerHTML += `<li style="color: red;">Error starting import: ${importData.data}</li>`;
+			}
+		})
+		.catch(error => {
+			logMessages.innerHTML += `<li style="color: red;">Error starting import: ${error.message}</li>`;
+		});
+	});
 
-    function processBoards(boards, importedBoards, totalBoards) {
-        if (boards.length === 0) {
-            progressBar.style.width = '100%';
-            progressText.textContent = 'Import completed!';
-            logMessages.innerHTML += `<li>Import completed successfully.</li>`;
-            return;
-        }
+	function processBoards(boards, importedBoards, totalBoards) {
+		if (boards.length === 0) {
+			progressBar.style.width = '100%';
+			progressText.textContent = 'Import completed!';
+			logMessages.innerHTML += `<li>Import completed successfully.</li>`;
+			return;
+		}
 
-        const currentBoard = boards.shift();
-        const boardId = currentBoard.id.toString();
+		const currentBoard = boards.shift();
+		const boardId = currentBoard.id.toString();
 
-        const boardData = new FormData();
-        boardData.append('action', 'decker_import_board');
-        boardData.append('security', '<?php echo esc_js(wp_create_nonce('decker_import_nonce')); ?>');
-        boardData.append('board', JSON.stringify(currentBoard));
-        boardData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
+		const boardData = new FormData();
+		boardData.append('action', 'decker_import_board');
+		boardData.append('security', '<?php echo esc_js( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
+		boardData.append('board', JSON.stringify(currentBoard));
+		boardData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
 
-        fetch(ajaxurl, {
-            method: 'POST',
-            body: boardData
-        })
-        .then(response => response.text())
-        .then(responseText => {
-            try {
-                const boardResponse = JSON.parse(responseText);
-                if (boardResponse.success) {
-                    importedBoards++;
-                    const progress = (importedBoards / totalBoards) * 100;
-                    progressBar.style.width = progress + '%';
-                    progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
-                    logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
-                } else {
-                    logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
-                }
-            } catch (error) {
-                // Display the content that caused the JSON.parse() failure
-                console.error('Received response:', error.message);
-                console.error(error.message);
-                console.error('Received response:', responseText);
-                logMessages.innerHTML += `<li style="color: red;">Failed to parse response for board ID: ${boardId}. Retrying...</li>`;
-            }
-            // Process the next board
-            setTimeout(() => {
-                processBoards(boards, importedBoards, totalBoards);
-            }, 500); // Add a small delay if necessary
-        })
-        .catch(error => {
-            logMessages.innerHTML += `<li style="color: red;">Failed to import board with ID: ${boardId}. Error: ${error.message}</li>`;
-            // Process the next board
-            processBoards(boards, importedBoards, totalBoards);
-        });
-    }
+		fetch(ajaxurl, {
+			method: 'POST',
+			body: boardData
+		})
+		.then(response => response.text())
+		.then(responseText => {
+			try {
+				const boardResponse = JSON.parse(responseText);
+				if (boardResponse.success) {
+					importedBoards++;
+					const progress = (importedBoards / totalBoards) * 100;
+					progressBar.style.width = progress + '%';
+					progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
+					logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
+				} else {
+					logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
+				}
+			} catch (error) {
+				// Display the content that caused the JSON.parse() failure
+				console.error('Received response:', error.message);
+				console.error(error.message);
+				console.error('Received response:', responseText);
+				logMessages.innerHTML += `<li style="color: red;">Failed to parse response for board ID: ${boardId}. Retrying...</li>`;
+			}
+			// Process the next board
+			setTimeout(() => {
+				processBoards(boards, importedBoards, totalBoards);
+			}, 500); // Add a small delay if necessary
+		})
+		.catch(error => {
+			logMessages.innerHTML += `<li style="color: red;">Failed to import board with ID: ${boardId}. Error: ${error.message}</li>`;
+			// Process the next board
+			processBoards(boards, importedBoards, totalBoards);
+		});
+	}
 });
 
 
@@ -283,22 +283,22 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	public function start_import() {
 		check_ajax_referer( 'decker_import_nonce', 'security' );
-		if (!current_user_can('manage_options')) {
-			wp_send_json_error('Access denied.');
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Access denied.' );
 		}
 
 		// Get the form data
-		$nextcloud_url_base = sanitize_url($_POST['nextcloud_url_base']);
-		$nextcloud_username = sanitize_text_field($_POST['nextcloud_username']);
-		$nextcloud_access_token = sanitize_text_field($_POST['nextcloud_access_token']);
-		$ignored_board_ids = sanitize_text_field($_POST['ignored_board_ids']);
+		$nextcloud_url_base = sanitize_url( $_POST['nextcloud_url_base'] );
+		$nextcloud_username = sanitize_text_field( $_POST['nextcloud_username'] );
+		$nextcloud_access_token = sanitize_text_field( $_POST['nextcloud_access_token'] );
+		$ignored_board_ids = sanitize_text_field( $_POST['ignored_board_ids'] );
 
 		// Store temporarily in class properties
 		$this->import_config = array(
 			'nextcloud_url_base' => $nextcloud_url_base,
 			'nextcloud_username' => $nextcloud_username,
 			'nextcloud_access_token' => $nextcloud_access_token,
-			'ignored_board_ids' => $ignored_board_ids
+			'ignored_board_ids' => $ignored_board_ids,
 		);
 
 		$boards = $this->get_nextcloud_boards();
@@ -315,9 +315,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	public function import_board() {
 		check_ajax_referer( 'decker_import_nonce', 'security' );
 		check_ajax_referer( 'decker_import_nonce', 'security' );
-	    if (!current_user_can('manage_options')) {
-	        wp_send_json_error('Access denied.');
-	    }
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Access denied.' );
+		}
 
 		$skip_existing = isset( $_POST['skip_existing'] ) && $_POST['skip_existing'] == 1;
 		$board = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
@@ -329,11 +329,11 @@ document.addEventListener('DOMContentLoaded', function() {
 			$board_term = null;
 			if ( ! empty( $board['title'] ) ) {
 
-		        if ( is_numeric( $board['title'] ) ) {
-		            error_log( 'Skipped board with numeric title: ' . $board['id'] );
-		            wp_send_json_error( 'Skipped board with invalid title.' );
-		            return;
-		        }
+				if ( is_numeric( $board['title'] ) ) {
+					error_log( 'Skipped board with numeric title: ' . $board['id'] );
+					wp_send_json_error( 'Skipped board with invalid title.' );
+					return;
+				}
 
 				$board_term = $this->maybe_create_term( $board['title'], 'decker_board', $board['color'] );
 				if ( is_wp_error( $board_term ) ) {
@@ -342,9 +342,9 @@ document.addEventListener('DOMContentLoaded', function() {
 					return;
 				}
 			} else {
-		        error_log( 'Skipped board with empty title: ' . $board['id'] );
-		        wp_send_json_error( 'Skipped board with empty title.' );
-		        return;
+				error_log( 'Skipped board with empty title: ' . $board['id'] );
+				wp_send_json_error( 'Skipped board with empty title.' );
+				return;
 			}
 
 			// Import the regular tasks.
@@ -376,49 +376,49 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * @return array|false|WP_Error The term array, false on failure, or WP_Error on error.
 	 */
 	private function maybe_create_term( $title, $taxonomy, $color ) {
-	    $existing_term = term_exists( $title, $taxonomy );
+		$existing_term = term_exists( $title, $taxonomy );
 
-	    // Si el término ya existe y su nombre coincide con otro ID de board, manejar el conflicto.
-	    if ( $existing_term && is_numeric( $title ) && intval( $title ) !== $existing_term['term_id'] ) {
-	        error_log( 'Conflict: Term name matches another board ID: ' . $title );
-	        return new WP_Error( 'term_conflict', 'Term name matches another board ID.' );
-	    }
+		// Si el término ya existe y su nombre coincide con otro ID de board, manejar el conflicto.
+		if ( $existing_term && is_numeric( $title ) && intval( $title ) !== $existing_term['term_id'] ) {
+			error_log( 'Conflict: Term name matches another board ID: ' . $title );
+			return new WP_Error( 'term_conflict', 'Term name matches another board ID.' );
+		}
 
-	    // Si el título es numérico, manejalo adecuadamente.
-	    if ( is_numeric( $title ) ) {
-	        // Opcional: Agregar un prefijo para evitar conflictos.
-	        $title = $taxonomy . '-' . $title;
-	    }
+		// Si el título es numérico, manejalo adecuadamente.
+		if ( is_numeric( $title ) ) {
+			// Opcional: Agregar un prefijo para evitar conflictos.
+			$title = $taxonomy . '-' . $title;
+		}
 
-	    // Si el término no existe, crearlo.
-	    if ( ! $existing_term ) {
-	        $sanitized_color = '';
-	        if ( $color ) {
-	            $sanitized_color = sanitize_hex_color( strpos( $color, '#' ) === 0 ? $color : '#' . $color );
-	        }
+		// Si el término no existe, crearlo.
+		if ( ! $existing_term ) {
+			$sanitized_color = '';
+			if ( $color ) {
+				$sanitized_color = sanitize_hex_color( strpos( $color, '#' ) === 0 ? $color : '#' . $color );
+			}
 
-	        // Insertar el término
-	        $term = wp_insert_term(
-	            $title,
-	            $taxonomy,
-	            array(
-	                'slug' => sanitize_title( $title ),
-	            )
-	        );
+			// Insertar el término
+			$term = wp_insert_term(
+				$title,
+				$taxonomy,
+				array(
+					'slug' => sanitize_title( $title ),
+				)
+			);
 
-	        if ( is_wp_error( $term ) ) {
-	            error_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message() );
-	            return $term;
-	        }
+			if ( is_wp_error( $term ) ) {
+				error_log( 'Error creating term: ' . $title . ' in taxonomy: ' . $taxonomy . '. Error: ' . $term->get_error_message() );
+				return $term;
+			}
 
-	        // Añadir metadatos para el color si se creó correctamente
-	        if ( $sanitized_color ) {
-	            add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
-	        }
-	        return $term;
-	    }
+			// Añadir metadatos para el color si se creó correctamente
+			if ( $sanitized_color ) {
+				add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
+			}
+			return $term;
+		}
 
-	    return $existing_term;
+		return $existing_term;
 	}
 
 	/**
@@ -480,8 +480,8 @@ document.addEventListener('DOMContentLoaded', function() {
 							'meta_value' => $card['id'],
 							'post_type'  => 'decker_task',
 							'post_status' => 'any',
-						    'fields' 	  => 'ids', // Only retrieve IDs for performance optimization
-						    'posts_per_page' => 1,
+							'fields'      => 'ids', // Only retrieve IDs for performance optimization
+							'posts_per_page' => 1,
 						)
 					);
 
@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
 							return false;
 						}
 						$task_count++;
-					} elseif ( !$skip_existing ) {
+					} elseif ( ! $skip_existing ) {
 						// Update the existing task.
 						$post_id = $existing_task[0];
 						wp_update_post(
@@ -543,123 +543,123 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	private function create_task( $card, $board_term, $stack_title, $archived ) {
 
-	    // Determine post status based on whether it's archived or not
-	    $post_status = ! empty( $archived ) && $archived ? 'archived' : 'publish';
+		// Determine post status based on whether it's archived or not
+		$post_status = ! empty( $archived ) && $archived ? 'archived' : 'publish';
 
-	    // Convert description using Parsedown
-	    $html_description = $this->Parsedown->text( $card['description'] );
+		// Convert description using Parsedown
+		$html_description = $this->Parsedown->text( $card['description'] );
 
 		// Get due date
-		$due_date_str = !empty($card['duedate']) ? sanitize_text_field($card['duedate']) : null;
+		$due_date_str = ! empty( $card['duedate'] ) ? sanitize_text_field( $card['duedate'] ) : null;
 		$due_date = null;
-		if ($due_date_str) {
-		    try {
-		        $due_date = new DateTime($due_date_str);
-		    } catch (Exception $e) {
-		        error_log('Invalid due date for task: ' . $card['title']);
-		    }
+		if ( $due_date_str ) {
+			try {
+				$due_date = new DateTime( $due_date_str );
+			} catch ( Exception $e ) {
+				error_log( 'Invalid due date for task: ' . $card['title'] );
+			}
 		}
 
-	    // Determine the owner
-	    if ( is_string( $card['owner'] ) ) {
-	        $nickname = sanitize_text_field( $card['owner'] );
-	    } elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
-	        $nickname = sanitize_text_field( $card['owner']['uid'] );
-	    }
+		// Determine the owner
+		if ( is_string( $card['owner'] ) ) {
+			$nickname = sanitize_text_field( $card['owner'] );
+		} elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
+			$nickname = sanitize_text_field( $card['owner']['uid'] );
+		}
 
-	    $owner = $this->search_user($nickname);
+		$owner = $this->search_user( $nickname );
 
-	    // Get assigned users IDs
-	    $assigned_users = array();
-	    if ( is_array( $card['assignedUsers'] ) ) {	
-	        foreach ( $card['assignedUsers'] as $user ) {
-	            if ( isset( $user['participant']['uid'] ) ) {
+		// Get assigned users IDs
+		$assigned_users = array();
+		if ( is_array( $card['assignedUsers'] ) ) {
+			foreach ( $card['assignedUsers'] as $user ) {
+				if ( isset( $user['participant']['uid'] ) ) {
 
-	            	$participant = sanitize_user( $user['participant']['uid'] );
-	            	$participant_id = $this->search_user( $participant );
+					$participant = sanitize_user( $user['participant']['uid'] );
+					$participant_id = $this->search_user( $participant );
 
-	            	if ($participant_id) {
-	            		$assigned_users[] = $participant_id;
-	            	}
-	            }
-	        }
-	    }
+					if ( $participant_id ) {
+						$assigned_users[] = $participant_id;
+					}
+				}
+			}
+		}
 
-	    // Prepare terms for tax_input
-	    $tax_input = array();
+		// Prepare terms for tax_input
+		$tax_input = array();
 
-	    // Assign 'decker_board' taxonomy with board ID
-	    if ( ! is_wp_error( $board_term ) && isset( $board_term['term_id'] ) ) {
-	        $tax_input['decker_board'] = array( intval( $board_term['term_id'] ) );
-	    } else {
-	        error_log( 'Invalid board term for task creation.' );
-	        // Optional: assign default term or handle error differently
-	    }
+		// Assign 'decker_board' taxonomy with board ID
+		if ( ! is_wp_error( $board_term ) && isset( $board_term['term_id'] ) ) {
+			$tax_input['decker_board'] = array( intval( $board_term['term_id'] ) );
+		} else {
+			error_log( 'Invalid board term for task creation.' );
+			// Optional: assign default term or handle error differently
+		}
 
-	    // Prepare labels as term IDs
-	    $label_ids = array();
-	    if ( is_array( $card['labels'] ) ) {
-	        foreach ( $card['labels'] as $label ) {
-	            if ( isset( $label['title'] ) ) {
-	                $label_term = term_exists( sanitize_text_field( $label['title'] ), 'decker_label' );
-	                if ( ! is_wp_error( $label_term ) && $label_term ) {
-	                    $label_ids[] = intval( $label_term['term_id'] );
-	                }
-	            }
-	        }
-	        if ( ! empty( $label_ids ) ) {
-	            $tax_input['decker_label'] = $label_ids;
-	        }
-	    }
+		// Prepare labels as term IDs
+		$label_ids = array();
+		if ( is_array( $card['labels'] ) ) {
+			foreach ( $card['labels'] as $label ) {
+				if ( isset( $label['title'] ) ) {
+					$label_term = term_exists( sanitize_text_field( $label['title'] ), 'decker_label' );
+					if ( ! is_wp_error( $label_term ) && $label_term ) {
+						$label_ids[] = intval( $label_term['term_id'] );
+					}
+				}
+			}
+			if ( ! empty( $label_ids ) ) {
+				$tax_input['decker_label'] = $label_ids;
+			}
+		}
 
-	    // Determine if task has maximum priority
-	    $max_priority = false;
-	    if ( is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) {
-	        $max_priority = true;
-	    }
+		// Determine if task has maximum priority
+		$max_priority = false;
+		if ( is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) {
+			$max_priority = true;
+		}
 
 		// Prepare creation date
 		$creation_date = null;
-		if (!empty($card['createdAt']) && is_numeric($card['createdAt'])) {
-		    try {
-		        $creation_date = new DateTime(gmdate('Y-m-d H:i:s', $card['createdAt']));
-		    } catch (Exception $e) {
-		        error_log('Invalid creation date for task: ' . $card['title']);
-		        $creation_date = new DateTime(); // Assign default date if there's an error
-		    }
+		if ( ! empty( $card['createdAt'] ) && is_numeric( $card['createdAt'] ) ) {
+			try {
+				$creation_date = new DateTime( gmdate( 'Y-m-d H:i:s', $card['createdAt'] ) );
+			} catch ( Exception $e ) {
+				error_log( 'Invalid creation date for task: ' . $card['title'] );
+				$creation_date = new DateTime(); // Assign default date if there's an error
+			}
 		}
 
-	    // id_nextcloud_card
-	    $id_nextcloud_card = isset( $card['id'] ) ? intval( $card['id'] ) : 0;
+		// id_nextcloud_card
+		$id_nextcloud_card = isset( $card['id'] ) ? intval( $card['id'] ) : 0;
 
-	    // Llamar a la función común para crear o actualizar la tarea
-	    $task_id = Decker_Tasks::create_or_update_task(
-	        0, // 0 indica que es una nueva tarea
-	        trim( $card['title'] ),
-	        $html_description,
-	        sanitize_text_field( $stack_title ),
-	        intval( $board_term['term_id'] ),
-	        $max_priority,
-	        $due_date,
-	        intval( $owner ),
-	        $assigned_users,
-	        $label_ids,
-	        $creation_date,
-	        $archived,
-	        $id_nextcloud_card
-	    );
+		// Llamar a la función común para crear o actualizar la tarea
+		$task_id = Decker_Tasks::create_or_update_task(
+			0, // 0 indica que es una nueva tarea
+			trim( $card['title'] ),
+			$html_description,
+			sanitize_text_field( $stack_title ),
+			intval( $board_term['term_id'] ),
+			$max_priority,
+			$due_date,
+			intval( $owner ),
+			$assigned_users,
+			$label_ids,
+			$creation_date,
+			$archived,
+			$id_nextcloud_card
+		);
 
-	    if ( is_wp_error( $task_id ) ) {
-	        error_log( 'Error creating/updating task: ' . $task_id->get_error_message() );
-	        return 0;
-	    }
+		if ( is_wp_error( $task_id ) ) {
+			error_log( 'Error creating/updating task: ' . $task_id->get_error_message() );
+			return 0;
+		}
 
-	    // If not archived, import and process comments
-	    if ( ! $archived ) {
-	        $this->import_comments( $card['id'], $task_id );
-	    }
+		// If not archived, import and process comments
+		if ( ! $archived ) {
+			$this->import_comments( $card['id'], $task_id );
+		}
 
-	    return $task_id;
+		return $task_id;
 	}
 
 	/**
@@ -694,37 +694,41 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * @param string $nickname The nickname or login to search for.
 	 * @return int|null The ID of the first matching user object or null if no user is found.
 	 */
-	private function search_user(string $nickname) {
-	    // Search for the user by nickname
-	    $users = get_users( array(
-	        'meta_query' => array(
-	            array(
-	                'key'     => 'nickname',
-	                'value'   => $nickname,
-	                'compare' => '='
-	            )
-	        ),
-	        'number' => 1, // Limit the query to one user
-	    ) );
+	private function search_user( string $nickname ) {
+		// Search for the user by nickname
+		$users = get_users(
+			array(
+				'meta_query' => array(
+					array(
+						'key'     => 'nickname',
+						'value'   => $nickname,
+						'compare' => '=',
+					),
+				),
+				'number' => 1, // Limit the query to one user
+			)
+		);
 
-	    // If a user is found, return the first one
-	    if ( ! empty( $users ) && is_array( $users ) ) {
-	        return $users[0]->ID;
-	    }
+		// If a user is found, return the first one
+		if ( ! empty( $users ) && is_array( $users ) ) {
+			return $users[0]->ID;
+		}
 
-	    // If no user was found by nickname, search by user login
-	    $users = get_users( array(
-	        'search'         => $nickname,
-	        'search_columns' => array( 'user_login' ),
-	        'number'         => 1, // Limit the query to one user
-	    ) );
+		// If no user was found by nickname, search by user login
+		$users = get_users(
+			array(
+				'search'         => $nickname,
+				'search_columns' => array( 'user_login' ),
+				'number'         => 1, // Limit the query to one user
+			)
+		);
 
-	    // Return the first user found or null if no user matches
-	    if ( ! empty( $users ) && is_array( $users ) ) {
-	        return $users[0]->ID;
-	    }
+		// Return the first user found or null if no user matches
+		if ( ! empty( $users ) && is_array( $users ) ) {
+			return $users[0]->ID;
+		}
 
-	    return null; // Return null if no user is found in either search
+		return null; // Return null if no user is found in either search
 	}
 
 
@@ -741,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		// Determine the user who made the comment.
 		$user_nickname = sanitize_text_field( $comment['actorId'] );
 
-		$user_id = $this->search_user($user_nickname);
+		$user_id = $this->search_user( $user_nickname );
 
 		// Check if the comment is in the format "hoy" or "hoy-@uuid".
 		if ( preg_match( '/^hoy(\s*-\s*@[\w]+)?$/i', $message, $matches ) ) {
@@ -749,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			if ( ! empty( $matches[1] ) ) { // "hoy-@uuid" format.
 				$mentioned_nickname = sanitize_text_field( trim( str_replace( array( '-', '@' ), '', $matches[1] ) ) );
 
-				$user_id = $this->search_user($mentioned_nickname);
+				$user_id = $this->search_user( $mentioned_nickname );
 			}
 
 			if ( $user_id ) {

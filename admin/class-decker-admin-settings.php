@@ -33,23 +33,22 @@ class Decker_Admin_Settings {
 	 * Outputs the HTML for the shared_key field, generating it only if it does not exist or does not meet the criteria.
 	 */
 	public function shared_key_render() {
-	    $options = get_option( 'decker_settings', array() );
+		$options = get_option( 'decker_settings', array() );
 
-	    // Generate a new shared key (UUID) only if it does not exist or does not meet criteria
-	    if ( empty( $options['shared_key'] ) ) {
-	        $options['shared_key'] = wp_generate_uuid4();
-	        // Save the newly generated UUID back to the options
-	        update_option( 'decker_settings', $options );
-	    }
+		// Generate a new shared key (UUID) only if it does not exist or does not meet criteria
+		if ( empty( $options['shared_key'] ) ) {
+			$options['shared_key'] = wp_generate_uuid4();
+			// Save the newly generated UUID back to the options
+			update_option( 'decker_settings', $options );
+		}
 
-	    $value = sanitize_text_field( $options['shared_key'] );
-	    echo '<input type="text" name="decker_settings[shared_key]" pattern=".{8,}" value="' . esc_attr( $value ) . '" class="regular-text" pattern="" title="The key must be at least 8 characters long and include letters, numbers, and symbols." required>';
+		$value = sanitize_text_field( $options['shared_key'] );
+		echo '<input type="text" name="decker_settings[shared_key]" pattern=".{8,}" value="' . esc_attr( $value ) . '" class="regular-text" pattern="" title="The key must be at least 8 characters long and include letters, numbers, and symbols." required>';
 		echo '<p class="description">' . esc_html__( 'Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:', 'decker' ) . '</p>';
 		echo '<pre style="background: #f5f5f5; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">';
 		echo 'POST ' . esc_url( get_site_url() ) . '/wp-json/decker/v1/email-to-post';
 		echo "\nHeader: Authorization: Bearer YOUR_SHARED_KEY";
 		echo '</pre>';
-
 	}
 
 	/**
@@ -207,7 +206,6 @@ class Decker_Admin_Settings {
 			'shared_key' => __( 'Shared Key', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
-	
 		);
 
 		foreach ( $fields as $field_id => $field_title ) {
@@ -282,29 +280,28 @@ class Decker_Admin_Settings {
 	 */
 	public function settings_validate( $input ) {
 
+		// Validate shared key
+		$input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
 
-	    // Validate shared key
-	    $input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
+		// Validate alert color
+		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
+		if ( isset( $input['alert_color'] ) && ! in_array( $input['alert_color'], $valid_colors ) ) {
+			$input['alert_color'] = 'info'; // Default to info if invalid
+		} else {
+			$input['alert_color'] = isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
+		}
 
-	    // Validate alert color
-	    $valid_colors = array( 'success', 'danger', 'warning', 'info' );
-	    if ( isset( $input['alert_color'] ) && ! in_array( $input['alert_color'], $valid_colors ) ) {
-	        $input['alert_color'] = 'info'; // Default to info if invalid
-	    } else {
-	        $input['alert_color'] = isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
-	    }
+		// Validate user profile
+		$roles = wp_roles()->get_names();
+		if ( isset( $input['user_profile'] ) && ! array_key_exists( $input['user_profile'], $roles ) ) {
+			$input['user_profile'] = 'decker_role'; // Default to decker_role if invalid
+		} else {
+			$input['user_profile'] = isset( $input['user_profile'] ) ? $input['user_profile'] : 'decker_role';
+		}
 
-	    // Validate user profile
-	    $roles = wp_roles()->get_names();
-	    if ( isset( $input['user_profile'] ) && ! array_key_exists( $input['user_profile'], $roles ) ) {
-	        $input['user_profile'] = 'decker_role'; // Default to decker_role if invalid
-	    } else {
-	        $input['user_profile'] = isset( $input['user_profile'] ) ? $input['user_profile'] : 'decker_role';
-	    }
+		// Validate alert message
+		$input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
 
-	    // Validate alert message
-	    $input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
-
-	    return $input;
+		return $input;
 	}
 }

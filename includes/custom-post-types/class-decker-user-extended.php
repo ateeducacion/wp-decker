@@ -47,10 +47,12 @@ class Decker_User_Extended {
 		wp_enqueue_style( 'wp-color-picker' );
 
 		// Retrieve all boards for the select box.
-		$boards = get_terms( array(
-			'taxonomy'   => 'decker_board',
-			'hide_empty' => false,
-		) );
+		$boards = get_terms(
+			array(
+				'taxonomy'   => 'decker_board',
+				'hide_empty' => false,
+			)
+		);
 
 		// Retrieve the user's selected default board.
 		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
@@ -133,7 +135,6 @@ class Decker_User_Extended {
 			$decker_default_board = intval( $_POST['decker_default_board'] );
 			update_user_meta( $user_id, 'decker_default_board', $decker_default_board );
 		}
-
 	}
 
 	/**
@@ -166,7 +167,6 @@ class Decker_User_Extended {
 		}
 		return $value;
 	}
-
 }
 
 // Instantiate the class.

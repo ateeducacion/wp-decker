@@ -114,20 +114,20 @@ class Decker_Public {
 
 		if ( $decker_page ) {
 			// Verify if user is logged in.
-		    if ( ! is_user_logged_in() ) {
-		        // Retrieve and sanitize the current request URI.
-		        $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+			if ( ! is_user_logged_in() ) {
+				// Retrieve and sanitize the current request URI.
+				$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
-		        // Build the full redirect URL, respecting the site's protocol and maintaining query arguments.
-		        $redirect_url = home_url( $request_uri );
+				// Build the full redirect URL, respecting the site's protocol and maintaining query arguments.
+				$redirect_url = home_url( $request_uri );
 
-		        // Get the login URL with the redirect URL as a parameter.
-		        $login_url = wp_login_url( $redirect_url );
+				// Get the login URL with the redirect URL as a parameter.
+				$login_url = wp_login_url( $redirect_url );
 
-		        // Safely redirect the user to the login page.
-		        wp_safe_redirect( $login_url );
-		        exit;
-		    }
+				// Safely redirect the user to the login page.
+				wp_safe_redirect( $login_url );
+				exit;
+			}
 
 			// Verify user permissions.
 			if ( ! current_user_can( 'decker_role' ) && ! is_super_admin() ) {

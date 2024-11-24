@@ -69,8 +69,8 @@ class Decker_Labels {
 			'rest_base'         => 'labels',
 			'can_export'        => true,
 			'capabilities' => array(
-			    'assign_terms' => 'read',
-			),		
+				'assign_terms' => 'read',
+			),
 		);
 
 		register_taxonomy( 'decker_label', array( 'decker_task', 'decker_board' ), $args );

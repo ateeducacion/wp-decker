@@ -3,7 +3,7 @@
 	<div class="modal-dialog modal-dialog-centered modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h4 class="modal-title" id="NewTaskModalLabel"><?php _e('Task', 'decker'); ?></h4>
+				<h4 class="modal-title" id="NewTaskModalLabel"><?php _e( 'Task', 'decker' ); ?></h4>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
@@ -59,14 +59,14 @@ document.addEventListener('DOMContentLoaded', function () {
 				// Insertar el contenido cargado dentro del cuerpo del modal
 				modal.find('.modal-body').html(data);
 
-	            // Emitir evento personalizado
-	            const event = new CustomEvent('contentLoaded');
-	            taskModal.dispatchEvent(event);
-	            
+				// Emitir evento personalizado
+				const event = new CustomEvent('contentLoaded');
+				taskModal.dispatchEvent(event);
+				
 			},
 			error: function() {
 				// Mostrar un mensaje de error si algo falla
-				modal.find('.modal-body').html('<p><?php _e('Error loading content. Please try again.', 'decker'); ?></p>');
+				modal.find('.modal-body').html('<p><?php _e( 'Error loading content. Please try again.', 'decker' ); ?></p>');
 			}
 		});
 	});

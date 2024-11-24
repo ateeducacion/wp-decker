@@ -59,8 +59,8 @@ class Decker_Actions {
 			'rest_base'         => 'actions', // Base name in REST API.
 			'can_export'        => true,
 			'capabilities' => array(
-			    'assign_terms' => 'read',
-			),			
+				'assign_terms' => 'read',
+			),
 		);
 
 		register_taxonomy( 'decker_action', array( 'decker_task' ), $args );

@@ -69,13 +69,13 @@ class Decker_Boards {
 			'rest_base'         => 'boards',
 			'can_export'        => true,
 			'capabilities' => array(
-			    'assign_terms' => 'read',
+				'assign_terms' => 'read',
 			),
 		);
 
 		// function allow_all_to_assign_decker_boards( $allcaps, $caps, $args, $user ) {
-		//     $allcaps['assign_decker_boards'] = true;
-		//     return $allcaps;
+		// $allcaps['assign_decker_boards'] = true;
+		// return $allcaps;
 		// }
 		// add_filter( 'user_has_cap', 'allow_all_to_assign_decker_boards', 10, 4 );
 

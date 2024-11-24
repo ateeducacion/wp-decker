@@ -10,17 +10,17 @@
  * @return string 'active' si coincide, de lo contrario, una cadena vacía.
  */
 function decker_is_active_page( $page ) {
-    if ( isset( $_GET['decker_page'] ) && sanitize_text_field( $_GET['decker_page'] ) === $page ) {
-        return 'menuitem-active';
-    }
-    return '';
+	if ( isset( $_GET['decker_page'] ) && sanitize_text_field( $_GET['decker_page'] ) === $page ) {
+		return 'menuitem-active';
+	}
+	return '';
 }
 
 function decker_is_active_subpage( $get_parameter, $page ) {
-    if ( isset( $_GET[$get_parameter] ) && sanitize_text_field( $_GET[$get_parameter] ) === $page ) {
-        return 'active';
-    }
-    return '';
+	if ( isset( $_GET[ $get_parameter ] ) && sanitize_text_field( $_GET[ $get_parameter ] ) === $page ) {
+		return 'active';
+	}
+	return '';
 }
 
 ?>
@@ -41,7 +41,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	class="button-sm-hover"
 	data-bs-toggle="tooltip"
 	data-bs-placement="right"
-	title="<?php esc_attr_e('Show Full Sidebar', 'decker'); ?>"
+	title="<?php esc_attr_e( 'Show Full Sidebar', 'decker' ); ?>"
   >
 	<i class="ri-checkbox-blank-circle-line align-middle"></i>
   </div>
@@ -57,13 +57,13 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 	<!--- Sidemenu -->
 	<ul class="side-nav">
-	  <li class="side-nav-title"><?php _e('Navigation', 'decker'); ?></li>
+	  <li class="side-nav-title"><?php _e( 'Navigation', 'decker' ); ?></li>
 
 
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'priority' ); ?>">
 		<a href="<?php echo add_query_arg( 'decker_page', 'priority', home_url( '/' ) ); ?>" class="side-nav-link">
 		  <i class="ri-home-4-line"></i>
-		  <span><?php _e('Priority', 'decker'); ?></span>
+		  <span><?php _e( 'Priority', 'decker' ); ?></span>
 		</a>
 	  </li>
 
@@ -72,7 +72,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			<a href="<?php echo add_query_arg( array( 'decker_page' => 'upcoming' ), home_url( '/' ) ); ?>" class="side-nav-link">
 			<i class="ri-inbox-line"></i>
-			  <span><?php _e('Upcoming Tasks', 'decker'); ?></span>
+			  <span><?php _e( 'Upcoming Tasks', 'decker' ); ?></span>
 			</a>
 	 
 			</a>
@@ -84,13 +84,13 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			<a href="<?php echo add_query_arg( array( 'decker_page' => 'my-board' ), home_url( '/' ) ); ?>" class="side-nav-link">
 			<i class="ri-trello-line"></i>
-			  <span><?php _e('My Board', 'decker'); ?></span>
+			  <span><?php _e( 'My Board', 'decker' ); ?></span>
 			</a>
 	 
 			</a>
 	  </li>
 
-	  <li class="side-nav-title"><?php _e('Apps', 'decker'); ?></li>
+	  <li class="side-nav-title"><?php _e( 'Apps', 'decker' ); ?></li>
 
 	  <!-- Tasks -->
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'tasks' ); ?>">
@@ -102,28 +102,31 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  class="side-nav-link"
 		>
 		  <i class="ri-task-line"></i>
-		  <span><?php _e('Tasks', 'decker'); ?></span>
+		  <span><?php _e( 'Tasks', 'decker' ); ?></span>
 		  <span class="menu-arrow"></span>
 		</a>
 		<div class="collapse<?php echo ( get_query_var( 'decker_page' ) === 'tasks' ) ? ' show' : ''; ?>" id="sidebarTasks">
 		  <ul class="side-nav-second-level">
 			<?php
 			$active_tasks_count = wp_count_posts( 'decker_task' )->publish;
-      $taskManager = new taskManager();
-      $my_tasks = $taskManager->getTasksByUser(get_current_user_id());
-      $my_tasks_count = count($my_tasks);
+			$taskManager = new taskManager();
+			$my_tasks = $taskManager->getTasksByUser( get_current_user_id() );
+			$my_tasks_count = count( $my_tasks );
 			$archived_tasks_count = wp_count_posts( 'decker_task' )->archived;
 			?>
-			<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="<?php
-								echo add_query_arg(
-									array(
-										'decker_page' => 'tasks',
-										'type' => 'active',
-									),
-									home_url( '/' )
-								);
-								?>"><?php _e('Active Tasks', 'decker'); ?></a></li>
-			<li class="<?php echo decker_is_active_subpage( 'type', 'my' ); ?>"><span class="badge bg-info float-end"><?php echo esc_html( $my_tasks_count ); ?></span><a href="<?php
+			<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="
+								  <?php
+									echo add_query_arg(
+										array(
+											'decker_page' => 'tasks',
+											'type' => 'active',
+										),
+										home_url( '/' )
+									);
+									?>
+								"><?php _e( 'Active Tasks', 'decker' ); ?></a></li>
+			<li class="<?php echo decker_is_active_subpage( 'type', 'my' ); ?>"><span class="badge bg-info float-end"><?php echo esc_html( $my_tasks_count ); ?></span><a href="
+								  <?php
 																	echo add_query_arg(
 																		array(
 																			'decker_page' => 'tasks',
@@ -131,8 +134,10 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 																		),
 																		home_url( '/' )
 																	);
-																	?>"><?php _e('My Tasks', 'decker'); ?></a></li>
-			<li class="<?php echo decker_is_active_subpage( 'type', 'archived' ); ?>"><span class="badge bg-warning float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="<?php
+																	?>
+																	"><?php _e( 'My Tasks', 'decker' ); ?></a></li>
+			<li class="<?php echo decker_is_active_subpage( 'type', 'archived' ); ?>"><span class="badge bg-warning float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="
+								  <?php
 																	echo add_query_arg(
 																		array(
 																			'decker_page' => 'tasks',
@@ -140,8 +145,19 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 																		),
 																		home_url( '/' )
 																	);
-																	?>"><?php _e('Archived Tasks', 'decker'); ?></a></li>
-			<li class="<?php echo decker_is_active_subpage( 'type', 'new' ); ?>"><a href="<?php echo add_query_arg( array( 'decker_page' => 'task', 'type' => 'new'), home_url( '/' ) ); ?>"><?php _e('New task', 'decker'); ?></a></li>
+																	?>
+																	"><?php _e( 'Archived Tasks', 'decker' ); ?></a></li>
+			<li class="<?php echo decker_is_active_subpage( 'type', 'new' ); ?>"><a href="
+								  <?php
+									echo add_query_arg(
+										array(
+											'decker_page' => 'task',
+											'type' => 'new',
+										),
+										home_url( '/' )
+									);
+									?>
+			"><?php _e( 'New task', 'decker' ); ?></a></li>
 		  </ul>
 		</div>
 	  </li>
@@ -160,7 +176,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 
 		  <!-- <span class="badge bg-success float-end"></span> -->
-		  <span><?php _e('Boards', 'decker'); ?></span>
+		  <span><?php _e( 'Boards', 'decker' ); ?></span>
 		  <span class="menu-arrow"></span>
 
 
@@ -175,18 +191,18 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
 
 				$boards = BoardManager::getAllBoards();
-				foreach ( $boards as $board ) {
+			foreach ( $boards as $board ) {
 
-					echo '<li class="' . decker_is_active_subpage( 'slug', $board->slug ) .'"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
-						add_query_arg(
-							array(
-								'decker_page' => 'board',
-								'slug' => $board->slug,
-							),
-							home_url( '/' )
-						)
-					) . '">' . esc_html( $board->name ) . '</a></li>';
-				}
+				echo '<li class="' . decker_is_active_subpage( 'slug', $board->slug ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
+					add_query_arg(
+						array(
+							'decker_page' => 'board',
+							'slug' => $board->slug,
+						),
+						home_url( '/' )
+					)
+				) . '">' . esc_html( $board->name ) . '</a></li>';
+			}
 			?>
 
 		  </ul>
@@ -197,7 +213,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	  <li class="side-nav-item <?php echo decker_is_active_page( 'analytics' ); ?>">
 		<a href="<?php echo add_query_arg( 'decker_page', 'analytics', home_url( '/' ) ); ?>" class="side-nav-link">
 		  <i class="ri-bar-chart-line"></i>
-		  <span><?php _e('Analytics', 'decker'); ?></span>
+		  <span><?php _e( 'Analytics', 'decker' ); ?></span>
 		</a>
 	  </li>
 
@@ -216,7 +232,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 
 		  <!-- <span class="badge bg-success float-end"></span> -->
-		  <span><?php _e('Utilities', 'decker'); ?></span>
+		  <span><?php _e( 'Utilities', 'decker' ); ?></span>
 		  <span class="menu-arrow"></span>
 
 
@@ -226,27 +242,33 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 			<ul class="side-nav-second-level">
 
 
-				<li class="<?php echo decker_is_active_subpage( 'type', 'label' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::getAllLabels() ) ); ?></span><a href="<?php
-					echo add_query_arg(
-						array(
-							'decker_page' => 'term-manager',
-							'type' => 'label',
-						),
-						home_url( '/' )
-					);
-				?>"><?php _e('Labels', 'decker'); ?></a></li>
+				<li class="<?php echo decker_is_active_subpage( 'type', 'label' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::getAllLabels() ) ); ?></span><a href="
+									  <?php
+										echo add_query_arg(
+											array(
+												'decker_page' => 'term-manager',
+												'type' => 'label',
+											),
+											home_url( '/' )
+										);
+										?>
+				"><?php _e( 'Labels', 'decker' ); ?></a></li>
 
-				<li class="<?php echo decker_is_active_subpage( 'type', 'board' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::getAllBoards() ) ); ?></span><a href="<?php
-					echo add_query_arg(
-						array(
-							'decker_page' => 'term-manager',
-							'type' => 'board',
-						),
-						home_url( '/' )
-					);
-				?>"><?php _e('Boards', 'decker'); ?></a></li>
+				<li class="<?php echo decker_is_active_subpage( 'type', 'board' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::getAllBoards() ) ); ?></span><a href="
+									  <?php
+										echo add_query_arg(
+											array(
+												'decker_page' => 'term-manager',
+												'type' => 'board',
+											),
+											home_url( '/' )
+										);
+										?>
+				"><?php _e( 'Boards', 'decker' ); ?></a></li>
 
-				<?php /* TO-DO: Add the actions manager
+				<?php
+				/*
+				TO-DO: Add the actions manager
 				<li class="<?php echo decker_is_active_subpage( 'type', 'active' ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="<?php
 					echo add_query_arg(
 						array(
@@ -256,7 +278,8 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 						home_url( '/' )
 					);
 				?>"><?php _e('Actions', 'decker'); ?></a></li>
-				*/ ?>
+				*/
+				?>
 
 		  </ul>
 		</div>
