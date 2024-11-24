@@ -1,4 +1,15 @@
 <?php
+/**
+ * File app-task-full
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 ?>
 

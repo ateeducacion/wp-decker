@@ -1,4 +1,15 @@
 <?php
+/**
+ * File app-kanban-my
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 
 $user_id     = get_current_user_id();
@@ -6,7 +17,7 @@ $task_manager = new TaskManager();
 $tasks       = $task_manager->get_tasks_by_user( $user_id );
 
 
-// Dividir las tareas en columnas
+// Dividir las tareas en columnas.
 $columns = array(
 	'to-do'       => array(),
 	'in-progress' => array(),

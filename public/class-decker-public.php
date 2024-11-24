@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The public-facing functionality of the plugin.
  *
@@ -10,6 +9,10 @@
  * @subpackage Decker/public
  * @author     Área de Tecnología Educativa <ate.educacion@gobiernodecanarias.org>
  */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 class Decker_Public {
 
 	/**

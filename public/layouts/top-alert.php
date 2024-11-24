@@ -1,4 +1,15 @@
 <?php
+/**
+ * File top-alert
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 $options       = get_option( 'decker_settings', array() );
 $alert_message = isset( $options['alert_message'] ) ? $options['alert_message'] : '';
 $alert_color   = isset( $options['alert_color'] ) ? $options['alert_color'] : 'info';

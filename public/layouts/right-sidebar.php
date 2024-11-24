@@ -1,3 +1,16 @@
+<?php
+/**
+ * File right-sidebar
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+?>
 <div class="offcanvas offcanvas-end" tabindex="-1" id="theme-settings-offcanvas">
 	<div class="d-flex align-items-center bg-primary p-3 offcanvas-header">
 		<h5 class="text-white m-0"><?php esc_html_e( 'Theme Settings', 'decker' ); ?></h5>

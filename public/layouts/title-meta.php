@@ -1,3 +1,16 @@
+<?php
+/**
+ * File title-meta
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+?>
 <meta charset="utf-8" />
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">

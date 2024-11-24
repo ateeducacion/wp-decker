@@ -1,3 +1,16 @@
+<?php
+/**
+ * File footer
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+?>
 <footer class="footer">
 	<div class="container-fluid py-3">
 		<div class="row align-items-center">

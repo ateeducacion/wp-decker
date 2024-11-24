@@ -1,5 +1,16 @@
 <?php
 /**
+ * File task-card
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+/**
  * Function to find and include wp-load.php dynamically.
  *
  * @param int $max_levels Maximum number of directory levels to traverse upward.

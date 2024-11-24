@@ -1,3 +1,16 @@
+<?php
+/**
+ * File topbar
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+?>
 <div class="navbar-custom">
 	<div class="topbar container-fluid">
 		<div class="d-flex align-items-center gap-lg-2 gap-1">

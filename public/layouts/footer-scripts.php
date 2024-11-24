@@ -1,4 +1,16 @@
+<?php
+/**
+ * File footer-scripts
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+?>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
 

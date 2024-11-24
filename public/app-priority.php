@@ -1,12 +1,24 @@
 <?php
+/**
+ * File app-priority
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 
+$nonce = filter_input( INPUT_POST, 'import_tasks_nonce', FILTER_SANITIZE_STRING );
+if ( $nonce && wp_verify_nonce( $nonce, 'import_tasks' ) ) {
+	// Sanitize task_ids as integer array.
+	$raw_task_ids = filter_input( INPUT_POST, 'task_ids', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+	$task_ids = array_map( 'intval', $raw_task_ids ? $raw_task_ids : array() );
 
-
-if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
-	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
-
-	$today           = gmdate( 'Y-m-d' );
+	$today = gmdate( 'Y-m-d' );
 	$current_user_id = get_current_user_id();
 
 	foreach ( $task_ids as $task_id ) {
@@ -14,25 +26,26 @@ if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_ta
 		$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
 	}
 
-	// Redirigir para evitar reenvío de formulario
-	wp_redirect( esc_url( $_SERVER['REQUEST_URI'] ) );
+	// Sanitizar y verificar REQUEST_URI antes de redirigir.
+	$redirect_url = '';
+	if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+		$redirect_url = esc_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
+	}
+	wp_redirect( $redirect_url );
 	exit;
-
-
-
 }
 
-$previous_tasks = array();
+$previous_tasks  = array();
 $task_manager    = new TaskManager();
 
-// Verificar si hay tareas para hoy
+// Verificar si hay tareas para hoy.
 $has_today_tasks = $task_manager->has_user_today_tasks();
 
-// Si no hay tareas para hoy, cargar las tareas de días previos
+// Si no hay tareas para hoy, cargar las tareas de días previos.
 if ( ! $has_today_tasks ) {
 
 	$current_user_id = get_current_user_id();
-	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
+	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
 
 	$previous_tasks = $task_manager->getUserTasksMarkedForTodayForPreviousDays( $current_user_id, $days_to_load );
 }
@@ -51,7 +64,6 @@ if ( ! $has_today_tasks ) {
 	display: inline-block;
 	padding: 0.5em 0.75em;
 	font-size: 0.75em;
-/*    font-weight: 700;*/
 	line-height: 1;
 	color: #fff;
 	text-align: center;
@@ -160,7 +172,7 @@ if ( ! $has_today_tasks ) {
 								</thead>
 								<tbody id="priority-id-table">
 									<?php
-									// Obtener tareas con max_priority
+									// Obtener tareas con max_priority.
 									$args = array(
 										'meta_query' => array(
 											array(
@@ -279,7 +291,7 @@ if ( ! $has_today_tasks ) {
 												<tbody>
 												<?php
 												foreach ( $user_tasks as $task ) {
-													// Ensuring the board is displayed as intended without directly modifying the board property
+													// Ensuring the board is displayed as intended without directly modifying the board property.
 													$board_display = '';
 													if ( ! empty( $task->board ) ) {
 														$board_display = '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $task->board->color ) . ';">' . esc_html( $task->board->name ) . '</span>';
@@ -349,7 +361,7 @@ if ( ! $has_today_tasks ) {
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
 	<div class="modal-content">
-	  <form method="post" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ); ?>">
+	  <form method="post" action="<?php echo esc_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ); ?>">
 		<div class="modal-header">
 		  <h5 class="modal-title" id="taskModalLabel"><?php esc_html_e( 'Select tasks to import', 'decker' ); ?></h5>
 		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>

@@ -1,4 +1,15 @@
 <?php
+/**
+ * File app-analytics
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 ?>
 
@@ -176,7 +187,7 @@ include 'layouts/main.php';
 			)
 		);
 
-		// Procesar tareas por tablero y stack
+		// Procesar tareas por tablero y stack.
 		foreach ( $boards as $board ) {
 			$board_labels[]                           = $board->name;
 			$board_colors[]                           = $board->color;
@@ -196,7 +207,7 @@ include 'layouts/main.php';
 			}
 		}
 
-		// Obtener datos de tareas por usuario
+		// Obtener datos de tareas por usuario.
 		$users                   = get_users();
 		$tasks_by_user_and_stack = array();
 		$user_labels             = array();
@@ -218,7 +229,7 @@ include 'layouts/main.php';
 			}
 		}
 
-		// Obtener datos de tareas por stack
+		// Obtener datos de tareas por stack.
 		$tasks_by_stack = array(
 			'to-do'       => 0,
 			'in-progress' => 0,
