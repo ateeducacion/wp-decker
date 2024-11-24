@@ -72,7 +72,7 @@ function render_comments( array $comments, int $parent_id, int $current_user_id 
 			echo '<img class="me-2 rounded-circle" src="' . esc_url( get_avatar_url( $comment->user_id, array( 'size' => 48 ) ) ) . '" alt="Avatar" height="32" />';
 			echo '<div class="w-100">';
 			echo '<h5 class="mt-0">' . esc_html( $comment->comment_author ) . ' <small class="text-muted float-end">' . esc_html( get_comment_date( '', $comment ) ) . '</small></h5>';
-			echo apply_filters( 'the_content', $comment->comment_content );
+			echo wp_kses_post( apply_filters( 'the_content', $comment->comment_content ) );
 
 			// Mostrar enlace de eliminar si el comentario pertenece al usuario actual
 			if ( $comment->user_id == get_current_user_id() ) {
@@ -372,7 +372,7 @@ function deleteComment(commentId) {
 	<div class="tab-content">
 		<!-- Descripción (Editor Quill) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor" style="height: 200px;"><?php echo $task->description; ?></div>
+			<div id="editor" style="height: 200px;"><?php echo wp_kses_post($task->description); ?></div>
 		</div>
 
 		<!-- Comentarios -->
