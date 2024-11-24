@@ -76,7 +76,7 @@ function render_comments( array $comments, int $parent_id, int $current_user_id 
 
 			// Mostrar enlace de eliminar si el comentario pertenece al usuario actual
 			if ( $comment->user_id == get_current_user_id() ) {
-				echo '<a href="javscript:void(0)" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_htmlesc_html_e( 'Delete', 'decker' ) . '</a> ';
+				echo '<a href="javscript:void(0)" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_html_e( 'Delete', 'decker' ) . '</a> ';
 			}
 
 			echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>';
@@ -216,9 +216,9 @@ function deleteComment(commentId) {
 		<!-- Title -->
 		<div class="col-md-9 mb-3">
 			<div class="form-floating">
-				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="<?php esc_attresc_html_e( 'Task title', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
-				<label for="task-title" class="form-label"><?php esc_htmlesc_html_e( 'Title', 'decker' ); ?><span id="high-label" class="badge bg-danger ms-2 d-none"><?php esc_htmlesc_html_e( 'MAXIMUM PRIORITY', 'decker' ); ?></span></label>
-				<div class="invalid-feedback"><?php esc_htmlesc_html_e( 'Please provide a title.', 'decker' ); ?></div>
+				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="<?php esc_attr_e( 'Task title', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
+				<label for="task-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?><span id="high-label" class="badge bg-danger ms-2 d-none"><?php esc_html_e( 'MAXIMUM PRIORITY', 'decker' ); ?></span></label>
+				<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
 			</div>
 		</div>
 
@@ -226,12 +226,12 @@ function deleteComment(commentId) {
 		<div class="col-md-3 mb-2 d-flex flex-column align-items-start">
 			<div class="form-check form-switch mb-2">
 				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled( $disabled ); ?>>
-				<label class="form-check-label" for="task-max-priority"><?php esc_htmlesc_html_e( 'Maximum Priority', 'decker' ); ?></label>
+				<label class="form-check-label" for="task-max-priority"><?php esc_html_e( 'Maximum Priority', 'decker' ); ?></label>
 			</div>
 			<div class="form-check form-switch">
 				<input class="form-check-input" type="checkbox" id="task-today" 
 				   <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled( $disabled ); ?>>
-				<label class="form-check-label" for="task-today"><?php esc_htmlesc_html_e( 'For today', 'decker' ); ?></label>
+				<label class="form-check-label" for="task-today"><?php esc_html_e( 'For today', 'decker' ); ?></label>
 			</div>
 		</div>
 
@@ -244,7 +244,7 @@ function deleteComment(commentId) {
 			<div class="form-floating">
 				<?php // TODO: Allow changing the board. ?>
 				<select class="form-select" id="task-board" required <?php disabled( $disabled || $task_id > 0 ); ?>>
-					<option value="" disabled selected><?php esc_htmlesc_html_e( 'Select Board', 'decker' ); ?></option>
+					<option value="" disabled selected><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 					<?php
 
 						$boards = BoardManager::getAllBoards();
@@ -255,8 +255,8 @@ function deleteComment(commentId) {
 					?>
 
 				</select>
-				<label for="task-board" class="form-label"><?php esc_htmlesc_html_e( 'Board', 'decker' ); ?></label>
-				<div class="invalid-feedback"><?php esc_htmlesc_html_e( 'Please select a board.', 'decker' ); ?></div>
+				<label for="task-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
 
 			</div>
 		</div>
@@ -267,7 +267,7 @@ function deleteComment(commentId) {
 			<div class="form-floating">
 				<!-- Author always disabled -->
 				<select class="form-select" id="task-author" required <?php disabled( true ); ?>>
-					<option value="" disabled selected><?php esc_htmlesc_html_e( 'Select Author', 'decker' ); ?></option>
+					<option value="" disabled selected><?php esc_html_e( 'Select Author', 'decker' ); ?></option>
 					<?php
 					$users = get_users();
 					foreach ( $users as $user ) {
@@ -276,8 +276,8 @@ function deleteComment(commentId) {
 					}
 					?>
 				</select>
-				<label for="task-author" class="form-label"><?php esc_htmlesc_html_e( 'Author', 'decker' ); ?></label>
-				<div class="invalid-feedback"><?php esc_htmlesc_html_e( 'Please select an author.', 'decker' ); ?><</div>				
+				<label for="task-author" class="form-label"><?php esc_html_e( 'Author', 'decker' ); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e( 'Please select an author.', 'decker' ); ?><</div>				
 			</div>
 		</div>
 
@@ -285,20 +285,20 @@ function deleteComment(commentId) {
 		<div class="col-md-2 mb-2">
 			<div class="form-floating">
 				<select class="form-select" id="task-stack" required <?php disabled( $disabled ); ?>>
-					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>><?php esc_htmlesc_html_e( 'To Do', 'decker' ); ?></option>
-					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>><?php esc_htmlesc_html_e( 'In Progress', 'decker' ); ?></option>
-					<option value="done" <?php selected( $task->stack, 'done' ); ?>><?php esc_htmlesc_html_e( 'Done', 'decker' ); ?></option>
+					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>><?php esc_html_e( 'To Do', 'decker' ); ?></option>
+					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>><?php esc_html_e( 'In Progress', 'decker' ); ?></option>
+					<option value="done" <?php selected( $task->stack, 'done' ); ?>><?php esc_html_e( 'Done', 'decker' ); ?></option>
 				</select>
-				<label for="task-stack" class="form-label"><?php esc_htmlesc_html_e( 'Stack', 'decker' ); ?></label>
+				<label for="task-stack" class="form-label"><?php esc_html_e( 'Stack', 'decker' ); ?></label>
 			</div>
 		</div>
 
 		<!-- Due date -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_duedate_as_string() ); ?>" placeholder="<?php esc_attresc_html_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
-				<label class="form-label" for="task-due-date"><?php esc_htmlesc_html_e( 'Due Date', 'decker' ); ?></label>
-				<div class="invalid-feedback"><?php esc_htmlesc_html_e( 'Please select a due date.', 'decker' ); ?></div>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_duedate_as_string() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
+				<label class="form-label" for="task-due-date"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e( 'Please select a due date.', 'decker' ); ?></div>
 			</div>
 		</div>
 
@@ -308,7 +308,7 @@ function deleteComment(commentId) {
 	<!-- Asignados y Etiquetas con ejemplos preseleccionados -->
 	<div class="row">
 		<div class="mb-3">
-			<label for="task-assignees" class="form-label"><?php esc_htmlesc_html_e( 'Assign to', 'decker' ); ?></label>
+			<label for="task-assignees" class="form-label"><?php esc_html_e( 'Assign to', 'decker' ); ?></label>
 				<select class="form-select" id="task-assignees" multiple <?php disabled( $disabled ); ?>>
 					<?php
 					foreach ( $users as $user ) {
@@ -322,7 +322,7 @@ function deleteComment(commentId) {
 	<div class="row">
 
 		<div class="mb-3">
-			<label for="task-labels" class="form-label"><?php esc_htmlesc_html_e( 'Labels', 'decker' ); ?></label>
+			<label for="task-labels" class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
 			<select class="form-select" id="task-labels" multiple <?php disabled( $disabled ); ?>>
 				<?php
 				$labels = LabelManager::getAllLabels();
@@ -339,17 +339,17 @@ function deleteComment(commentId) {
 	<!-- Pestañas: Descripción, Comentarios y Adjuntos -->
 	<ul class="nav nav-tabs nav-bordered mb-3">
 		<li class="nav-item">
-			<a href="#description-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link active"><?php esc_htmlesc_html_e( 'Description', 'decker' ); ?>
+			<a href="#description-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link active"><?php esc_html_e( 'Description', 'decker' ); ?>
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_htmlesc_html_e( 'Comments', 'decker' ); ?>
+			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Comments', 'decker' ); ?>
 			   <span class="badge bg-light text-dark" id="comment-count"><?php echo count( $comments ); ?></span>
 
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_htmlesc_html_e( 'Attachments', 'decker' ); ?> 
+			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Attachments', 'decker' ); ?> 
 
 			<?php
 			// Obtener los adjuntos asociados con la tarea
@@ -362,13 +362,13 @@ function deleteComment(commentId) {
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_htmlesc_html_e( 'History', 'decker' ); ?>
+			<a href="#history-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'History', 'decker' ); ?>
 
 			<!-- <span class="badge bg-light text-dark">0</span> -->
 			</a>
 		</li>
 		<li class="nav-item">
-			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_htmlesc_html_e( 'Gantt', 'decker' ); ?></a>
+			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Gantt', 'decker' ); ?></a>
 		</li>
 	</ul>
 
@@ -394,10 +394,10 @@ function deleteComment(commentId) {
 			<div class="border rounded mt-4">
 				<div class="comment-area-box">
 					<div id="reply-indicator" class="p-2 bg-light text-secondary d-none">
-						<?php esc_htmlesc_html_e( 'Replying to', 'decker' ); ?> <span id="replying-to"></span>
+						<?php esc_html_e( 'Replying to', 'decker' ); ?> <span id="replying-to"></span>
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
-					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attresc_html_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text" disabled></textarea>
+					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text" disabled></textarea>
 					<div class="invalid-feedback">Please enter a comment.</div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
 						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-send-plane-2 me-1"></i> Send</button>
@@ -423,7 +423,7 @@ function deleteComment(commentId) {
 								<?php echo esc_html( $attachment_title ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
 							</a>
 							<div>
-								<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_htmlesc_html_e( 'Delete', 'decker' ); ?></button>
+								<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_html_e( 'Delete', 'decker' ); ?></button>
 							</div>
 						</li>
 					<?php endforeach; ?>
@@ -431,7 +431,7 @@ function deleteComment(commentId) {
 				<br>
 				<div class="d-flex align-items-center">
 					<input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> />
-					<button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_htmlesc_html_e( 'Upload', 'decker' ); ?></button>
+					<button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_html_e( 'Upload', 'decker' ); ?></button>
 				</div>
 			</div>
 
@@ -459,8 +459,8 @@ function deleteComment(commentId) {
 			<table id="user-history-table" class="table table-bordered table-striped table-hover table-sm">
 				<thead>
 					<tr>
-						<th><?php esc_htmlesc_html_e( 'Nickname', 'decker' ); ?></th>
-						<th><?php esc_htmlesc_html_e( 'Date', 'decker' ); ?></th>
+						<th><?php esc_html_e( 'Nickname', 'decker' ); ?></th>
+						<th><?php esc_html_e( 'Date', 'decker' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -507,7 +507,7 @@ function deleteComment(commentId) {
 		<!-- Gantt -->
 		<div class="tab-pane" id="gantt-tab">
 			<div class="tab-pane" id="gantt-tab">
-				<p class="text-muted"><?php esc_htmlesc_html_e( 'Under construction...', 'decker' ); ?></p>
+				<p class="text-muted"><?php esc_html_e( 'Under construction...', 'decker' ); ?></p>
 			</div>
 		</div>
 
@@ -520,10 +520,10 @@ function deleteComment(commentId) {
 
 		<div class="btn-group mb-2 dropup">
 			<button type="submit" class="btn btn-primary" id="save-task" disabled>
-				<i class="ri-save-line"></i> <?php esc_htmlesc_html_e( 'Save', 'decker' ); ?>
+				<i class="ri-save-line"></i> <?php esc_html_e( 'Save', 'decker' ); ?>
 			</button>
 			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( $disabled || 0 == $task_id ); ?>>
-				<span class="visually-hidden"><?php esc_htmlesc_html_e( 'Toggle Dropdown', 'decker' ); ?></span>
+				<span class="visually-hidden"><?php esc_html_e( 'Toggle Dropdown', 'decker' ); ?></span>
 			</button>
 			<?php
 			if ( $task_id > 0 ) {
@@ -821,7 +821,7 @@ function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle, attac
 			${attachmentFilename} <i class="bi bi-box-arrow-up-right ms-2"></i>
 		</a>
 		<div>
-			<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"<?php echo $disabled ? ' disabled' : ''; ?>><?php esc_htmlesc_html_e( 'Delete', 'decker' ); ?></button>
+			<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"<?php echo $disabled ? ' disabled' : ''; ?>><?php esc_html_e( 'Delete', 'decker' ); ?></button>
 		</div>
 	`;
 

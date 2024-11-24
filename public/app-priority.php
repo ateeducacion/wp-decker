@@ -136,7 +136,7 @@ if ( ! $has_today_tasks ) {
 		<i class="ri-alert-fill"></i>
 		<?php esc_html_e( 'You have no tasks defined for today. Do you want to import those from the previous day?', 'decker' ); ?>
 		<button type="button" class="import-today btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal"><?php esc_html_e( 'Yes', 'decker' ); ?></button>
-		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php esc_attresc_html_e( 'Close', 'decker' ); ?>"></button>
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
 	</div>
 <?php } ?>
 
@@ -352,7 +352,7 @@ if ( ! $has_today_tasks ) {
 	  <form method="post" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ); ?>">
 		<div class="modal-header">
 		  <h5 class="modal-title" id="taskModalLabel"><?php esc_html_e( 'Select tasks to import', 'decker' ); ?></h5>
-		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attresc_html_e( 'Close', 'decker' ); ?>"></button>
+		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
 		</div>
 		<div class="modal-body">
 		  <!-- Aquí se insertarán dinámicamente las tareas con checkboxes -->

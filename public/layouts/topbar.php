@@ -36,7 +36,7 @@
 
 
 			<li class="d-none d-sm-inline-block">
-				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attresc_html_e( 'Theme Mode', 'decker' ); ?>">
+				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attr_e( 'Theme Mode', 'decker' ); ?>">
 					<i class="ri-moon-line fs-22"></i>
 				</div>
 			</li>

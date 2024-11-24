@@ -143,7 +143,7 @@ if ( 'board' === $type ) {
 										</span>
 										
 										<!-- Search field with clear button (X) inside -->
-										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attresc_html_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attresc_html_e( 'Search', 'decker' ); ?>">
+										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
 									</div>
 

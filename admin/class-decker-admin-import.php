@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Decker_Admin_Import {
 
-	private $parsedown;
+	private $_parsedown;
 
 	/**
 	 * Constructor
@@ -29,7 +29,7 @@ class Decker_Admin_Import {
 	 * Initializes the class and hooks.
 	 */
 	public function __construct() {
-		$this->Parsedown = new Parsedown();
+		$this->_parsedown = new Parsedown();
 		add_action( 'admin_init', array( $this, 'register_importer' ) );
 		add_action( 'wp_ajax_decker_start_import', array( $this, 'start_import' ) );
 		add_action( 'wp_ajax_decker_import_board', array( $this, 'import_board' ) );
@@ -53,44 +53,44 @@ class Decker_Admin_Import {
 	public function importer_greet() {
 		?>
 		<div class="wrap">
-			<h2><?php esc_htmlesc_html_e( 'Import Decker Tasks from NextCloud', 'decker' ); ?></h2>
+			<h2><?php esc_html_e( 'Import Decker Tasks from NextCloud', 'decker' ); ?></h2>
 			<form method="post" id="decker-import-form">
 				<?php wp_nonce_field( 'decker-import' ); ?>
 				
 				<table class="form-table">
 					<tr>
-						<th scope="row"><label for="nextcloud_url_base"><?php esc_htmlesc_html_e( 'NextCloud URL Base', 'decker' ); ?></label></th>
+						<th scope="row"><label for="nextcloud_url_base"><?php esc_html_e( 'NextCloud URL Base', 'decker' ); ?></label></th>
 						<td>
 							<input type="url" id="nextcloud_url_base" name="nextcloud_url_base" class="regular-text" required>
-							<p class="description"><?php esc_htmlesc_html_e( 'The base URL of your NextCloud instance', 'decker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'The base URL of your NextCloud instance', 'decker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="nextcloud_username"><?php esc_htmlesc_html_e( 'NextCloud Username', 'decker' ); ?></label></th>
+						<th scope="row"><label for="nextcloud_username"><?php esc_html_e( 'NextCloud Username', 'decker' ); ?></label></th>
 						<td>
 							<input type="text" id="nextcloud_username" name="nextcloud_username" class="regular-text" required>
-							<p class="description"><?php esc_htmlesc_html_e( 'Your NextCloud username', 'decker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Your NextCloud username', 'decker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="nextcloud_access_token"><?php esc_htmlesc_html_e( 'NextCloud Access Token', 'decker' ); ?></label></th>
+						<th scope="row"><label for="nextcloud_access_token"><?php esc_html_e( 'NextCloud Access Token', 'decker' ); ?></label></th>
 						<td>
 							<input type="text" id="nextcloud_access_token" name="nextcloud_access_token" class="regular-text" required>
-							<p class="description"><?php esc_htmlesc_html_e( 'Your NextCloud access token', 'decker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Your NextCloud access token', 'decker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="ignored_board_ids"><?php esc_htmlesc_html_e( 'Ignored Board IDs', 'decker' ); ?></label></th>
+						<th scope="row"><label for="ignored_board_ids"><?php esc_html_e( 'Ignored Board IDs', 'decker' ); ?></label></th>
 						<td>
 							<input type="text" id="ignored_board_ids" name="ignored_board_ids" class="regular-text">
-							<p class="description"><?php esc_htmlesc_html_e( 'Comma-separated list of board IDs to ignore', 'decker' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Comma-separated list of board IDs to ignore', 'decker' ); ?></p>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="skip-existing"><?php esc_htmlesc_html_e( 'Skip Existing Tasks', 'decker' ); ?></label></th>
+						<th scope="row"><label for="skip-existing"><?php esc_html_e( 'Skip Existing Tasks', 'decker' ); ?></label></th>
 						<td>
 							<input type="checkbox" id="skip-existing" name="skip_existing" value="1" checked>
-							<span class="description"><?php esc_htmlesc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
+							<span class="description"><?php esc_html_e( 'If checked, tasks that already exist in the system will be skipped and not updated.', 'decker' ); ?></span>
 						</td>
 					</tr>
 				</table>
@@ -98,7 +98,7 @@ class Decker_Admin_Import {
 				<?php submit_button( esc_html__( 'Import Now', 'decker' ) ); ?>
 			</form>
 				<div id="import-progress" style="display: none;">
-					<h3><?php esc_htmlesc_html_e( 'Import Progress', 'decker' ); ?></h3>
+					<h3><?php esc_html_e( 'Import Progress', 'decker' ); ?></h3>
 					<div id="progress-bar" style="width: 100%; background-color: #ccc;">
 						<div id="progress" style="width: 0%; height: 30px; background-color: #4caf50;"></div>
 					</div>

@@ -41,7 +41,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	class="button-sm-hover"
 	data-bs-toggle="tooltip"
 	data-bs-placement="right"
-	title="<?php esc_attresc_html_e( 'Show Full Sidebar', 'decker' ); ?>"
+	title="<?php esc_attr_e( 'Show Full Sidebar', 'decker' ); ?>"
   >
 	<i class="ri-checkbox-blank-circle-line align-middle"></i>
   </div>

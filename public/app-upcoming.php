@@ -70,7 +70,7 @@ foreach ( $tasks as $task ) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title><?php esc_htmlesc_html_e( 'Upcoming Tasks', 'decker' ); ?> | Decker</title>
+	<title><?php esc_html_e( 'Upcoming Tasks', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -104,7 +104,7 @@ foreach ( $tasks as $task ) {
 											</span>
 											
 											<!-- Campo de búsqueda con botón de borrar (X) dentro -->
-											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attresc_html_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attresc_html_e( 'Search', 'decker' ); ?>">
+											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
 											<!-- Select de usuarios -->
 											<select id="boardUserFilter" class="form-select ms-2">
@@ -119,7 +119,7 @@ foreach ( $tasks as $task ) {
 										</div>
 
 									</div>
-									<h4 class="page-title"><?php esc_htmlesc_html_e( 'Upcoming Tasks', 'decker' ); ?>
+									<h4 class="page-title"><?php esc_html_e( 'Upcoming Tasks', 'decker' ); ?>
 										<a href="#" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
 								</div>
 							</div>

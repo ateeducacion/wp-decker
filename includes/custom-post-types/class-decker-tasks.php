@@ -1092,23 +1092,23 @@ class Decker_Tasks {
 		$id_nextcloud_card = get_post_meta( $post->ID, 'id_nextcloud_card', true );
 		?>
 		<p>
-			<label for="duedate"><?php esc_htmlesc_html_e( 'Due Date', 'decker' ); ?></label>
+			<label for="duedate"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
 			<input type="date" name="duedate" value="<?php echo esc_attr( $duedate ); ?>" class="widefat">
 		</p>
 		<p>
-			<label for="max_priority"><?php esc_htmlesc_html_e( 'Max Priority', 'decker' ); ?></label>
+			<label for="max_priority"><?php esc_html_e( 'Max Priority', 'decker' ); ?></label>
 			<input type="checkbox" name="max_priority" value="1" <?php checked( '1', $max_priority ); ?> class="widefat">
 		</p>
 		<p>
-			<label for="stack"><?php esc_htmlesc_html_e( 'Stack', 'decker' ); ?></label>
+			<label for="stack"><?php esc_html_e( 'Stack', 'decker' ); ?></label>
 			<select name="stack" class="widefat">
-				<option value="to-do" <?php selected( 'to-do', $stack ); ?>><?php esc_htmlesc_html_e( 'To-Do', 'decker' ); ?></option>
-				<option value="in-progress" <?php selected( 'in-progress', $stack ); ?>><?php esc_htmlesc_html_e( 'In Progress', 'decker' ); ?></option>
-				<option value="done" <?php selected( 'done', $stack ); ?>><?php esc_htmlesc_html_e( 'Done', 'decker' ); ?></option>
+				<option value="to-do" <?php selected( 'to-do', $stack ); ?>><?php esc_html_e( 'To-Do', 'decker' ); ?></option>
+				<option value="in-progress" <?php selected( 'in-progress', $stack ); ?>><?php esc_html_e( 'In Progress', 'decker' ); ?></option>
+				<option value="done" <?php selected( 'done', $stack ); ?>><?php esc_html_e( 'Done', 'decker' ); ?></option>
 			</select>
 		</p>
 		<p>
-			<label for="id_nextcloud_card"><?php esc_htmlesc_html_e( 'Nextcloud Card ID', 'decker' ); ?></label>
+			<label for="id_nextcloud_card"><?php esc_html_e( 'Nextcloud Card ID', 'decker' ); ?></label>
 			<input type="number" name="id_nextcloud_card" value="<?php echo esc_attr( $id_nextcloud_card ); ?>" class="widefat">
 		</p>
 		<?php
@@ -1160,7 +1160,7 @@ class Decker_Tasks {
 		$assigned_board = ! empty( $assigned_board ) ? $assigned_board[0] : '';
 		?>
 		<select name="decker_board" id="decker_board" class="widefat">
-			<option value=""><?php esc_htmlesc_html_e( 'Select Board', 'decker' ); ?></option>
+			<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 			<?php foreach ( $terms as $term ) { ?>
 				<option value="<?php echo esc_attr( $term->term_id ); ?>" <?php selected( $assigned_board, $term->term_id ); ?>>
 					<?php echo esc_html( $term->name ); ?>
@@ -1211,9 +1211,9 @@ class Decker_Tasks {
 		<div id="user-date-meta-box">
 			<!-- User Selection -->
 			<p>
-				<label for="assigned_user"><?php esc_htmlesc_html_e( 'Assign User:', 'decker' ); ?></label>
+				<label for="assigned_user"><?php esc_html_e( 'Assign User:', 'decker' ); ?></label>
 				<select id="assigned_user" class="widefat">
-					<option value=""><?php esc_htmlesc_html_e( '-- Select User --', 'decker' ); ?></option>
+					<option value=""><?php esc_html_e( '-- Select User --', 'decker' ); ?></option>
 					<?php foreach ( $users as $user ) { ?>
 						<option value="<?php echo esc_attr( $user->ID ); ?>">
 							<?php echo esc_html( $user->display_name ); ?>
@@ -1224,13 +1224,13 @@ class Decker_Tasks {
 			
 			<!-- Date Selection -->
 			<p>
-				<label for="assigned_date"><?php esc_htmlesc_html_e( 'Assign Date:', 'decker' ); ?></label>
+				<label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
 				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( date( 'Y-m-d' ) ); ?>">
 			</p>
 			
 			<!-- Add Relation Button -->
 			<p>
-				<button type="button" class="button" id="add-user-date-relation"><?php esc_htmlesc_html_e( 'Add Relation', 'decker' ); ?></button>
+				<button type="button" class="button" id="add-user-date-relation"><?php esc_html_e( 'Add Relation', 'decker' ); ?></button>
 			</p>
 			
 			<!-- Relations List -->
@@ -1244,7 +1244,7 @@ class Decker_Tasks {
 					?>
 					<li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
 						<?php echo esc_html( $display_name ) . ' - ' . esc_html( $date ); ?>
-						<button type="button" class="button remove-relation"><?php esc_htmlesc_html_e( 'Remove', 'decker' ); ?></button>
+						<button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
 					</li>
 				<?php } ?>
 			</ul>
@@ -1344,7 +1344,7 @@ class Decker_Tasks {
 	<div id="attachments-meta-box">
 		<!-- Button to open the media library modal -->
 		<p>
-			<button type="button" class="button" id="add-attachments"><?php esc_htmlesc_html_e( 'Add Attachments', 'decker' ); ?></button>
+			<button type="button" class="button" id="add-attachments"><?php esc_html_e( 'Add Attachments', 'decker' ); ?></button>
 		</p>
 		
 		<!-- List of attached media -->
@@ -1360,7 +1360,7 @@ class Decker_Tasks {
 				<li data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
 					<a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $file_name ); ?></a>
  
-					<button type="button" class="button remove-attachment"><?php esc_htmlesc_html_e( 'Remove', 'decker' ); ?></button>
+					<button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
 					<!-- Hidden input to store attachment IDs -->
 					<input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attachment->ID ); ?>">
 				</li>
