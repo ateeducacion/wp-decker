@@ -315,7 +315,7 @@ class Task {
 		}
 
 		?>
-		<div class="task card mb-0" data-task-id="<?php echo esc_attr( $this->ID ); ?>" <?php echo $card_background_color; ?>>
+		<div class="task card mb-0" data-task-id="<?php echo esc_attr( $this->ID ); ?>" <?php echo wp_kses_post( $card_background_color ); ?>>
 			<div class="card-body p-3">
 				<span class="float-end badge <?php echo esc_attr( $priorityBadgeClass ); ?>">
 					<span class="label-to-hide"><?php echo esc_html( $priorityLabel ); ?></span>
@@ -349,7 +349,7 @@ class Task {
 					</span>
 				</p>
 
-				<?php echo $this->render_task_menu(); ?>
+				<?php echo  wp_kses_post( $this->render_task_menu() ); ?>
 
 				<div class="avatar-group mt-2">
 					<?php foreach ( $this->assigned_users as $user_info ) : ?>

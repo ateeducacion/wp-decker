@@ -226,7 +226,7 @@ table#tablaTareas td:nth-child(4) {
 														echo '<td>';
 
 														if ( null === $task->board ) {
-															echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined board', 'decker' ) . '</span>';
+															echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . esc_attr( 'Undefined board', 'decker' ) . '</span>';
 														} else {
 															echo '<span class="badge rounded-pill" style="background-color: ' . esc_attr( $task->board->color ) . ';">' . esc_html( $task->board->name ) . '</span>';
 														}
@@ -257,7 +257,7 @@ table#tablaTareas td:nth-child(4) {
 														echo '</div></td>';
 														echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
 														echo '<td class="text-end">';
-														echo $task->render_task_menu();
+														echo wp_kses_post( $task->render_task_menu() );
 														echo '</td>';
 														echo '</tr>';
 													}

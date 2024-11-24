@@ -524,7 +524,7 @@ function deleteComment(commentId) {
 			</button>
 			<?php
 			if ( $task_id ) {
-				echo $task->render_task_menu( true );
+				echo wp_kses_post( $task->render_task_menu( true ) );
 			}
 			?>
 
