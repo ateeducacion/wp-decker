@@ -7,20 +7,27 @@
  * Determina si la página actual de Decker coincide con la proporcionada.
  *
  * @param string $page El valor de `decker_page` a verificar.
- * @return string 'active' si coincide, de lo contrario, una cadena vacía.
+ * @return string Escaped 'menuitem-active' if it matches, otherwise an empty string.
  */
 function decker_is_active_page( $page ) {
 	if ( isset( $_GET['decker_page'] ) && sanitize_text_field( $_GET['decker_page'] ) === $page ) {
-		return 'menuitem-active';
+		return esc_attr('menuitem-active');
 	}
-	return '';
+	return esc_attr('');
 }
 
+/**
+ * Determina si la página actual de Decker coincide con la proporcionada.
+ *
+ * @param string $get_parameter The GET parameter to check
+ * @param string $page El valor de `decker_page` a verificar.
+ * @return string Escaped 'active' if it matches, otherwise an empty string.
+ */
 function decker_is_active_subpage( $get_parameter, $page ) {
 	if ( isset( $_GET[ $get_parameter ] ) && sanitize_text_field( $_GET[ $get_parameter ] ) === $page ) {
-		return 'active';
+		return esc_attr('active');
 	}
-	return '';
+	return esc_attr('');
 }
 
 ?>
