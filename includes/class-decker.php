@@ -129,8 +129,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label-manager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task-manager.php';
 
-		require_once plugin_dir_path( __DIR__ ) . 'includes/controllers/class-task-controller.php';
-
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
