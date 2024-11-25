@@ -25,3 +25,10 @@ jobs:
           files: decker-${{ env.RELEASE_TAG }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: Deploy to WordPress
+      #   uses: 10up/action-wordpress-plugin-deploy@v2.2.2
+      #   with:
+      #     plugin_slug: decker
+      #     svn_username: ${{ secrets.WP_SVN_USERNAME }}
+      #     svn_password: ${{ secrets.WP_SVN_PASSWORD }}
