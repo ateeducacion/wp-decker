@@ -83,17 +83,19 @@ package:
 		echo "Error: No se ha especificado una versión. Usa 'make package VERSION=1.2.3'"; \
 		exit 1; \
 	fi
-	# Update the version in decker.php
+	# Update the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           $(VERSION)/" decker.php
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '$(VERSION)'/" decker.php
+	$(SED_INPLACE) "s/^Stable tag:.*/ * Stable tag: $(VERSION)/" readme.txt
+
 
 	# Create the ZIP package
 	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "phpunit.xml.dist" "README.txt" "composer.json" "LICENSE.txt" "bin/*" "wp-content/*" "wp/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot"
 
-	# Restore the version in decker.php
+	# Restore the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           0.0.0/" decker.php
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '0.0.0'/" decker.php
-
+	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: 0.0.0/" readme.txt
 
 # Show help with available commands
 help:
