@@ -1,4 +1,15 @@
 <?php
+/**
+ * File class-decker-admin-import
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 require_once 'vendor/parsedown/Parsedown.php';
 
 /**
@@ -20,6 +31,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class Decker_Admin_Import {
 
+	/**
+	 * The parsedown instance.
+	 *
+	 * @var Parsedown.
+	 */
 	private $_parsedown;
 
 	/**
@@ -286,13 +302,13 @@ document.addEventListener('DOMContentLoaded', function() {
 			wp_send_json_error( 'Access denied.' );
 		}
 
-		// Get the form data
-		$nextcloud_url_base     = sanitize_url( $_POST['nextcloud_url_base'] );
-		$nextcloud_username     = sanitize_text_field( $_POST['nextcloud_username'] );
-		$nextcloud_access_token = sanitize_text_field( $_POST['nextcloud_access_token'] );
-		$ignored_board_ids      = sanitize_text_field( $_POST['ignored_board_ids'] );
+		// Get the form data.
+		$nextcloud_url_base     = isset( $_POST['nextcloud_url_base'] ) ? sanitize_url( wp_unslash( $_POST['nextcloud_url_base'] ) ) : '';
+		$nextcloud_username     = isset( $_POST['nextcloud_username'] ) ? sanitize_text_field( wp_unslash( $_POST['nextcloud_username'] ) ) : '';
+		$nextcloud_access_token = isset( $_POST['nextcloud_access_token'] ) ? sanitize_text_field( wp_unslash( $_POST['nextcloud_access_token'] ) ) : '';
+		$ignored_board_ids      = isset( $_POST['ignored_board_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['ignored_board_ids'] ) ) : '';
 
-		// Store temporarily in class properties
+		// Store temporarily in class properties.
 		$this->import_config = array(
 			'nextcloud_url_base'     => $nextcloud_url_base,
 			'nextcloud_username'     => $nextcloud_username,
@@ -319,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 
 		$skip_existing     = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'];
-		$board             = json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true );
+		$board             = isset( $_POST['board'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true ) : array();
 		$options           = get_option( 'decker_settings', array() );
 		$ignored_board_ids = explode( ',', $options['decker_ignored_board_ids'] );
 
@@ -396,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				$sanitized_color = sanitize_hex_color( 0 === strpos( $color, '#' ) ? $color : '#' . $color );
 			}
 
-			// Insertar el término
+			// Insertar el término.
 			$term = wp_insert_term(
 				$title,
 				$taxonomy,
@@ -410,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				return $term;
 			}
 
-			// Añadir metadatos para el color si se creó correctamente
+			// Añadir metadatos para el color si se creó correctamente.
 			if ( $sanitized_color ) {
 				add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
 			}
@@ -460,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			return false;
 		}
 
-		// Sort stacks by the 'order' field before processing
+		// Sort stacks by the 'order' field before processing.
 		usort(
 			$stacks,
 			function ( $a, $b ) {
@@ -479,7 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
 							'meta_value'     => $card['id'],
 							'post_type'      => 'decker_task',
 							'post_status'    => 'any',
-							'fields'         => 'ids', // Only retrieve IDs for performance optimization
+							'fields'         => 'ids', // Only retrieve IDs for performance optimization.
 							'posts_per_page' => 1,
 						)
 					);
@@ -491,10 +507,10 @@ document.addEventListener('DOMContentLoaded', function() {
 						// Map the stack titles to the corresponding values used in the task creation.
 						$stack_title_map = array(
 							'Completada'  => 'done',
-							'En revisión' => 'done', // This column will be removed
+							'En revisión' => 'done', // This column will be removed.
 							'En progreso' => 'in-progress',
 							'Por hacer'   => 'to-do',
-							'Hay que'     => 'to-do', // "Hay que" is equivalent to "to-do"
+							'Hay que'     => 'to-do', // "Hay que" is equivalent to "to-do".
 						);
 
 						// Determine the correct stack value based on the title.
@@ -514,12 +530,12 @@ document.addEventListener('DOMContentLoaded', function() {
 							array(
 								'ID'           => $post_id,
 								'post_title'   => trim( $card['title'] ),
-								'post_content' => $this->Parsedown->text( $card['description'] ),
+								'post_content' => $this->_parsedown->text( $card['description'] ),
 							)
 						);
 					}
 
-					usleep( 100 ); // Little sleep to not be banned by nextcloud
+					usleep( 100 ); // Little sleep to not be banned by nextcloud.
 
 				}
 			}
@@ -542,13 +558,13 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	private function create_task( $card, $board_term, $stack_title, $archived ) {
 
-		// Determine post status based on whether it's archived or not
+		// Determine post status based on whether it's archived or not.
 		$post_status = ! empty( $archived ) && $archived ? 'archived' : 'publish';
 
-		// Convert description using Parsedown
-		$html_description = $this->Parsedown->text( $card['description'] );
+		// Convert description using Parsedown.
+		$html_description = $this->_parsedown->text( $card['description'] );
 
-		// Get due date
+		// Get due date.
 		$due_date_str = ! empty( $card['duedate'] ) ? sanitize_text_field( $card['duedate'] ) : null;
 		$due_date     = null;
 		if ( $due_date_str ) {
@@ -559,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 
-		// Determine the owner
+		// Determine the owner.
 		if ( is_string( $card['owner'] ) ) {
 			$nickname = sanitize_text_field( $card['owner'] );
 		} elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
@@ -568,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		$owner = $this->search_user( $nickname );
 
-		// Get assigned users IDs
+		// Get assigned users IDs.
 		$assigned_users = array();
 		if ( is_array( $card['assignedUsers'] ) ) {
 			foreach ( $card['assignedUsers'] as $user ) {
@@ -584,18 +600,18 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 
-		// Prepare terms for tax_input
+		// Prepare terms for tax_input.
 		$tax_input = array();
 
-		// Assign 'decker_board' taxonomy with board ID
+		// Assign 'decker_board' taxonomy with board ID.
 		if ( ! is_wp_error( $board_term ) && isset( $board_term['term_id'] ) ) {
 			$tax_input['decker_board'] = array( intval( $board_term['term_id'] ) );
 		} else {
 			error_log( 'Invalid board term for task creation.' );
-			// Optional: assign default term or handle error differently
+			// Optional: assign default term or handle error differently.
 		}
 
-		// Prepare labels as term IDs
+		// Prepare labels as term IDs.
 		$label_ids = array();
 		if ( is_array( $card['labels'] ) ) {
 			foreach ( $card['labels'] as $label ) {
@@ -611,29 +627,29 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 
-		// Determine if task has maximum priority
+		// Determine if task has maximum priority.
 		$max_priority = false;
 		if ( is_array( $card['labels'] ) && in_array( 'PRIORIDAD MÁXIMA 🔥🧨', array_column( $card['labels'], 'title' ), true ) ) {
 			$max_priority = true;
 		}
 
-		// Prepare creation date
+		// Prepare creation date.
 		$creation_date = null;
 		if ( ! empty( $card['createdAt'] ) && is_numeric( $card['createdAt'] ) ) {
 			try {
 				$creation_date = new DateTime( gmdate( 'Y-m-d H:i:s', $card['createdAt'] ) );
 			} catch ( Exception $e ) {
 				error_log( 'Invalid creation date for task: ' . $card['title'] );
-				$creation_date = new DateTime(); // Assign default date if there's an error
+				$creation_date = new DateTime(); // Assign default date if there's an error.
 			}
 		}
 
-		// id_nextcloud_card
+		// id_nextcloud_card.
 		$id_nextcloud_card = isset( $card['id'] ) ? intval( $card['id'] ) : 0;
 
-		// Llamar a la función común para crear o actualizar la tarea
+		// Call our common funcition to create task.
 		$task_id = Decker_Tasks::create_or_update_task(
-			0, // 0 indica que es una nueva tarea
+			0, // 0 indicates a new task.
 			trim( $card['title'] ),
 			$html_description,
 			sanitize_text_field( $stack_title ),
@@ -653,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			return 0;
 		}
 
-		// If not archived, import and process comments
+		// If not archived, import and process comments.
 		if ( ! $archived ) {
 			$this->import_comments( $card['id'], $task_id );
 		}
@@ -694,7 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * @return int|null The ID of the first matching user object or null if no user is found.
 	 */
 	private function search_user( string $nickname ) {
-		// Search for the user by nickname
+		// Search for the user by nickname.
 		$users = get_users(
 			array(
 				'meta_query' => array(
@@ -704,30 +720,30 @@ document.addEventListener('DOMContentLoaded', function() {
 						'compare' => '=',
 					),
 				),
-				'number' => 1, // Limit the query to one user
+				'number' => 1, // Limit the query to one user.
 			)
 		);
 
-		// If a user is found, return the first one
+		// If a user is found, return the first one.
 		if ( ! empty( $users ) && is_array( $users ) ) {
 			return $users[0]->ID;
 		}
 
-		// If no user was found by nickname, search by user login
+		// If no user was found by nickname, search by user login.
 		$users = get_users(
 			array(
 				'search'         => $nickname,
 				'search_columns' => array( 'user_login' ),
-				'number'         => 1, // Limit the query to one user
+				'number'         => 1, // Limit the query to one user.
 			)
 		);
 
-		// Return the first user found or null if no user matches
+		// Return the first user found or null if no user matches.
 		if ( ! empty( $users ) && is_array( $users ) ) {
 			return $users[0]->ID;
 		}
 
-		return null; // Return null if no user is found in either search
+		return null; // Return null if no user is found in either search.
 	}
 
 
@@ -739,7 +755,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	private function process_comment( $comment, $post_id ) {
 		$message             = trim( $comment['message'] );
-		$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true ) ?: array();
+		$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
+		$user_date_relations = $user_date_relations ? $user_date_relations : array();
 
 		// Determine the user who made the comment.
 		$user_nickname = sanitize_text_field( $comment['actorId'] );
@@ -786,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					'comment_author'    => $comment['actorDisplayName'],
 					'comment_content'   => $message,
 					'comment_type'      => '',
-					'user_id'           => $user_id ?: 0,
+					'user_id'           => $user_id,
 					'comment_author_IP' => '',
 					'comment_agent'     => 'NextCloud API',
 					'comment_date'      => $comment['creationDateTime'],
