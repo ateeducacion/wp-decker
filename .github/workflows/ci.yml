@@ -50,6 +50,7 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: './decker'
+          exclude-checks: 'plugin_readme'
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

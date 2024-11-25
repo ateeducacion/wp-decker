@@ -86,7 +86,7 @@ package:
 	# Update the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           $(VERSION)/" decker.php
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '$(VERSION)'/" decker.php
-	$(SED_INPLACE) "s/^Stable tag:.*/ * Stable tag: $(VERSION)/" readme.txt
+	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: $(VERSION)/" readme.txt
 
 
 	# Create the ZIP package

@@ -4,7 +4,7 @@ Tags: ate, tasks, board, kanban
 Requires at least: 6.1
 Tested up to: 6.7
 Requires PHP: 8.4
- * Stable tag: 7.7.7
+Stable tag: 0.0.0
 License: GPL-3.0
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
