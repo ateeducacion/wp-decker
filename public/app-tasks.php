@@ -179,7 +179,7 @@ table#tablaTareas td:nth-child(4) {
 									<select id="boardFilter" class="form-select">
 										<option value=""><?php esc_html_e( 'All Boards', 'decker' ); ?></option>
 										<?php
-										$boards = BoardManager::getAllBoards();
+										$boards = BoardManager::get_all_boards();
 										foreach ( $boards as $board ) {
 											echo '<option value="' . esc_attr( $board->name ) . '">' . esc_html( $board->name ) . '</option>';
 										}

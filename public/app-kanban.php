@@ -16,7 +16,7 @@ include 'layouts/main.php';
 $board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
 // Retrieve the Board based on the slug.
-$main_board = BoardManager::getBoardBySlug( $board_slug );
+$main_board = BoardManager::get_board_by_slug( $board_slug );
 
 if ( is_null( $main_board ) ) {
 	/* translators: %s: Board slug that was not found */

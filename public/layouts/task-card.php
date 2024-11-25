@@ -269,7 +269,7 @@ function deleteComment(commentId) {
 					<option value="" disabled selected><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 					<?php
 
-						$boards = BoardManager::getAllBoards();
+						$boards = BoardManager::get_all_boards();
 
 					foreach ( $boards as $board ) {
 						echo '<option value="' . esc_attr( $board->id ) . '" ' . selected( $task->board && $task->board->id == $board->id ) . ' ' . selected( $board_slug, $board->slug ) . '>' . esc_html( $board->name ) . '</option>';
@@ -345,7 +345,7 @@ function deleteComment(commentId) {
 			<label for="task-labels" class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
 			<select class="form-select" id="task-labels" multiple <?php disabled( $disabled ); ?>>
 				<?php
-				$labels = LabelManager::getAllLabels();
+				$labels = LabelManager::get_all_labels();
 				foreach ( $labels as $label ) {
 					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) ) ) . '>' . esc_html( $label->name ) . '</option>';
 				}

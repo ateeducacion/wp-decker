@@ -31,9 +31,9 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 		);
 
 		if ( 'board' === $term_type ) {
-			$result = BoardManager::deleteBoard( $term_id );
+			$result = BoardManager::delete_board( $term_id );
 		} else {
-			$result = LabelManager::deleteLabel( $term_id );
+			$result = LabelManager::delete_label( $term_id );
 		}
 
 		wp_redirect(
@@ -69,9 +69,9 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 	);
 
 	if ( 'board' === $term_type ) {
-		$result = BoardManager::saveBoard( $data, $term_id );
+		$result = BoardManager::save_board( $data, $term_id );
 	} else {
-		$result = LabelManager::saveLabel( $data, $term_id );
+		$result = LabelManager::save_label( $data, $term_id );
 	}
 
 	if ( $result['success'] ) {
@@ -106,11 +106,11 @@ $page_title      = '';
 $add_new_text = '';
 
 if ( 'board' === $selected_type ) {
-	$items      = BoardManager::getAllBoards();
+	$items      = BoardManager::get_all_boards();
 	$page_title      = __( 'Boards', 'decker' );
 	$add_new_text = __( 'Add New Board', 'decker' );
 } else {
-	$items      = LabelManager::getAllLabels();
+	$items      = LabelManager::get_all_labels();
 	$page_title      = __( 'Labels', 'decker' );
 	$add_new_text = __( 'Add New Label', 'decker' );
 }

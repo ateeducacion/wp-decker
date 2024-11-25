@@ -157,7 +157,7 @@ include 'layouts/main.php';
 		<?php
 
 		// Obtener datos de tareas por tablero y colores.
-		$boards           = BoardManager::getAllBoards();
+		$boards           = BoardManager::get_all_boards();
 		$tasks_by_board_and_stack = array();
 		$board_labels             = array();
 		$board_colors             = array();

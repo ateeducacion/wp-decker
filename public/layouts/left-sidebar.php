@@ -218,7 +218,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 				// Obtener el slug del board desde la URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
-			$boards = BoardManager::getAllBoards();
+			$boards = BoardManager::get_all_boards();
 			foreach ( $boards as $board ) {
 
 				echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
@@ -272,7 +272,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 			<ul class="side-nav-second-level">
 
 
-				<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'label' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::getAllLabels() ) ); ?></span><a href="
+				<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'label' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( LabelManager::get_all_labels() ) ); ?></span><a href="
 									  <?php
 										echo esc_url(
 											add_query_arg(
@@ -286,7 +286,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 										?>
 				"><?php esc_html_e( 'Labels', 'decker' ); ?></a></li>
 
-				<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'board' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::getAllBoards() ) ); ?></span><a href="
+				<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'board' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::get_all_boards() ) ); ?></span><a href="
 									  <?php
 										echo esc_url(
 											add_query_arg(

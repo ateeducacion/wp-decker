@@ -10,7 +10,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Class Decker_Tasks
+ * Class Decker_Tasks.
  *
  * Handles the Custom Post Type and its metaboxes for tasks in the Decker plugin.
  */
@@ -26,7 +26,7 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Define Hooks
+	 * Define Hooks.
 	 *
 	 * Registers all the hooks related to the decker_task custom post type.
 	 */
@@ -69,6 +69,15 @@ class Decker_Tasks {
 	}
 
 
+	/**
+	 * Handles the upload of an attachment to a task.
+	 *
+	 * Validates permissions, checks for required data, and processes the file upload
+	 * using WordPress media handling functions. Assigns the uploaded file to the specified task.
+	 *
+	 * @throws WP_Error If the user does not have permission to upload files, if the task ID or file is invalid,
+	 *                  or if the upload fails.
+	 */
 	public function upload_task_attachment() {
 		check_ajax_referer( 'upload_attachment_nonce', 'nonce' );
 
@@ -121,7 +130,15 @@ class Decker_Tasks {
 		);
 	}
 
-
+	/**
+	 * Handles the deletion of an attachment from a task.
+	 *
+	 * Validates permissions and checks for required data. Deletes the specified attachment
+	 * from the WordPress Media Library and disassociates it from the task.
+	 *
+	 * @throws WP_Error If the user does not have permission to delete attachments, or if the task ID
+	 *                  or attachment ID is invalid.
+	 */
 	public function delete_task_attachment() {
 		check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
 
@@ -210,7 +227,7 @@ class Decker_Tasks {
 	 */
 	public function remove_row_actions( $actions, $post ) {
 		if ( 'decker_task' === $post->post_type ) {
-			return array(); // Remove all actions
+			return array(); // Remove all actions.
 		}
 		return $actions;
 	}
@@ -220,12 +237,12 @@ class Decker_Tasks {
 	 *
 	 * This function retrieves the maximum menu_order value for tasks in the specified board and stack and returns the next incremented value.
 	 *
-	 * @param string $board_term_id The board to calculate the order for.
+	 * @param int    $board_term_id The board to calculate the order for.
 	 * @param string $stack The stack to calculate the order for.
 	 * @return int The new order value.
 	 */
 	private function get_new_task_order( int $board_term_id, string $stack ) {
-		// Query arguments to find posts in the specified stack
+		// Query arguments to find posts in the specified stack.
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -249,7 +266,7 @@ class Decker_Tasks {
 			'fields'         => 'ids',
 		);
 
-		// Get the posts
+		// Get the posts.
 		$posts = get_posts( $args );
 
 		// If a post exists, get its menu_order and increment it.
@@ -267,7 +284,7 @@ class Decker_Tasks {
 	 */
 	public function remove_add_new_link() {
 		global $submenu;
-		// Remove the "Add New" submenu link
+		// Remove the "Add New" submenu link.
 		if ( isset( $submenu['edit.php?post_type=decker_task'] ) ) {
 			foreach ( $submenu['edit.php?post_type=decker_task'] as $key => $item ) {
 				// Busca la entrada "Añadir nueva entrada".
@@ -325,7 +342,7 @@ class Decker_Tasks {
 			);
 		}
 
-		// Update the stack and the order
+		// Update the stack and the order.
 		if ( $source_stack != $target_stack ) {
 			update_post_meta( $task_id, 'stack', $target_stack );
 		}
@@ -1294,7 +1311,17 @@ class Decker_Tasks {
 		<?php
 	}
 
-
+	/**
+	 * Displays the attachment meta box for the 'decker_task' post type.
+	 *
+	 * This meta box allows users to view, add, and remove attachments for a specific task.
+	 * The attachments are displayed as a list with options to remove them, and users can
+	 * add new attachments via the WordPress media library modal.
+	 *
+	 * @param WP_Post $post The current post object for which the meta box is displayed.
+	 *
+	 * @return void Outputs the HTML and JavaScript for managing attachments.
+	 */
 	public function display_attachment_meta_box( $post ) {
 		// Retrieve existing attachments linked to post.
 		$attachments = get_attached_media( '', $post->ID );
@@ -1339,7 +1366,7 @@ class Decker_Tasks {
 				frame.open();
 				return;
 			}
-			// Create a new media frame
+			// Create a new media frame.
 			frame = wp.media({
 				title: '<?php echo esc_js( __( 'Select Attachments', 'decker' ) ); ?>',
 				button: {
@@ -1377,11 +1404,19 @@ class Decker_Tasks {
 
 
 	/**
-	 * Modify the menu_order before the post is saved.
+	 * Modifies the `menu_order` of a task before it is saved.
 	 *
-	 * @param array $data The data to be saved for the post.
-	 * @param array $postarr The post array containing data input.
-	 * @return array The modified data array.
+	 * Prevents direct user modification of the `menu_order` field and calculates
+	 * the appropriate value based on the `decker_board` and `stack` fields. This is
+	 * applied only when a new task is being created.
+	 *
+	 * @param array $data                The sanitized data to be saved for the post.
+	 * @param array $postarr             The original post array containing input data.
+	 * @param array $unsanitized_postarr The unsanitized post array.
+	 * @param bool  $update              Whether the post is being updated (true) or created (false).
+	 * @return array The modified data array with the updated `menu_order`.
+	 *
+	 * @throws WP_Error Logs warnings or errors in the error log if required fields are missing or invalid.
 	 */
 	public function modify_task_order_before_save( array $data, array $postarr, array $unsanitized_postarr, bool $update ) {
 
@@ -1493,14 +1528,19 @@ class Decker_Tasks {
 			}
 		}
 
-		// Save assigned users
+		// Save assigned users.
 		if ( isset( $_POST['assigned_users'] ) ) {
 			$assigned_users = array_map( 'intval', wp_unslash( $_POST['assigned_users'] ) );
 			update_post_meta( $post_id, 'assigned_users', $assigned_users );
 		}
 
+		/* $relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();*/
+
 		// Save user date relations.
-		$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();
+		$relations = isset( $_POST['user_date_relations'] )
+			? json_decode( wp_unslash( $_POST['user_date_relations'] ), true )
+			: array();
+
 		update_post_meta( $post_id, '_user_date_relations', $relations );
 	}
 
@@ -1525,7 +1565,7 @@ class Decker_Tasks {
 			?>
 			<script type="text/javascript">
 				document.addEventListener('DOMContentLoaded', function() {
-					// Disable the menu_order field
+					// Disable the menu_order field.
 					var menuOrderField = document.getElementById('menu_order');
 					if (menuOrderField) {
 						menuOrderField.disabled = true;
@@ -1607,6 +1647,14 @@ class Decker_Tasks {
 		return $current_status;
 	}
 
+	/**
+	 * Changes the title of the publish meta box for the 'decker_task' post type.
+	 *
+	 * Updates the title of the publish meta box to "Status" using JavaScript
+	 * when editing or creating a task of the 'decker_task' post type.
+	 *
+	 * @return void Outputs a script to modify the meta box title dynamically.
+	 */
 	public function change_publish_meta_box_title() {
 		global $post_type;
 		if ( 'decker_task' === $post_type ) {
@@ -1643,40 +1691,51 @@ class Decker_Tasks {
 		}
 	}
 
+	/**
+	 * Handles the creation or update of a Decker task via AJAX.
+	 *
+	 * This method processes form data sent via an AJAX request, validates and sanitizes
+	 * the input, and either creates a new task or updates an existing one. It returns a JSON
+	 * response indicating success or failure.
+	 *
+	 * @return void Outputs a JSON response indicating the result of the operation.
+	 *
+	 * @throws WP_Error If any validation or task creation/updating fails, an error is logged or returned.
+	 */
 	public function handle_save_decker_task() {
 		// Verificar el nonce de seguridad.
 		check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
 
-		// Obtener y sanitizar los datos del formulario.
-		$ID          = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$title       = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
-		$description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
-		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
-		$board       = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
+		// Retrieve and sanitize form data.
+		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
+		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
+		$description = isset( $_POST['description'] ) ? wp_kses_post( wp_unslash( $_POST['description'] ) ) : '';
+		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '';
+		$board       = isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0;
 
-		$max_priority = isset( $_POST['max_priority'] ) ? boolval( $_POST['max_priority'] ) : false;
+		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
 
 		try {
-			$duedate = isset( $_POST['due_date'] ) ? new DateTime( sanitize_text_field( $_POST['due_date'] ) ) : new DateTime();
+			$duedate = isset( $_POST['due_date'] ) ? new DateTime( sanitize_text_field( wp_unslash( $_POST['due_date'] ) ) ) : new DateTime();
 		} catch ( Exception $e ) {
 			$duedate = new DateTime(); // Default value if conversion fails.
 		}
 
-		$author = isset( $_POST['author'] ) ? intval( $_POST['author'] ) : get_current_user_id();
+		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
 
-		$assigned_users = is_string( $_POST['assignees'] )
-			? array_map( 'intval', explode( ',', $_POST['assignees'] ) )
-			: ( is_array( $_POST['assignees'] ) ? array_map( 'intval', $_POST['assignees'] ) : array() );
+		$assigned_users = isset( $_POST['assignees'] ) && is_string( wp_unslash( $_POST['assignees'] ) )
+			? array_map( 'intval', explode( ',', wp_unslash( $_POST['assignees'] ) ) )
+			: ( is_array( wp_unslash( $_POST['assignees'] ) ) ? array_map( 'intval', wp_unslash( $_POST['assignees'] ) ) : array() );
 
-		$labels = is_string( $_POST['labels'] )
-			? array_map( 'intval', explode( ',', $_POST['labels'] ) )
-			: ( is_array( $_POST['labels'] ) ? array_map( 'intval', $_POST['labels'] ) : array() );
+		$labels = isset( $_POST['labels'] ) && is_string( wp_unslash( $_POST['labels'] ) )
+			? array_map( 'intval', explode( ',', wp_unslash( $_POST['labels'] ) ) )
+			: ( is_array( wp_unslash( $_POST['labels'] ) ) ? array_map( 'intval', wp_unslash( $_POST['labels'] ) ) : array() );
 
 		$creation_date = new DateTime(); // O ajusta según corresponda.
 
 		// Llamar a la función común para crear o actualizar la tarea.
 		$result = self::create_or_update_task(
-			$ID,
+			$id,
 			$title,
 			$description,
 			$stack,
@@ -1705,9 +1764,30 @@ class Decker_Tasks {
 		wp_die(); // Finalizar correctamente.
 	}
 
-
+	/**
+	 * Creates or updates a task in the Decker system.
+	 *
+	 * This method handles validation, taxonomy assignments, and metadata management
+	 * for tasks. It can either create a new task or update an existing one.
+	 *
+	 * @param int           $id                 The ID of the task to update, or 0 to create a new task.
+	 * @param string        $title              The title of the task.
+	 * @param string        $description        The description of the task.
+	 * @param string        $stack              The stack name (e.g., 'to-do', 'in-progress').
+	 * @param int           $board              The ID of the board associated with the task.
+	 * @param bool          $max_priority       Whether the task has maximum priority.
+	 * @param DateTime|null $duedate        The due date of the task, or null if not set.
+	 * @param int           $author             The ID of the author of the task.
+	 * @param array         $assigned_users     An array of user IDs assigned to the task.
+	 * @param array         $labels             An array of label IDs associated with the task.
+	 * @param DateTime      $creation_date      The creation date of the task.
+	 * @param bool          $archived           Whether the task is archived. Default is false.
+	 * @param int           $id_nextcloud_card  The NextCloud card ID associated with the task. Default is 0.
+	 *
+	 * @return int|WP_Error The ID of the created or updated task on success, or a WP_Error object on failure.
+	 */
 	public static function create_or_update_task(
-		int $ID,
+		int $id,
 		string $title,
 		string $description,
 		string $stack,
@@ -1772,7 +1852,7 @@ class Decker_Tasks {
 			'assigned_users'    => $assigned_users,
 		);
 
-		// Preparar los datos del post
+		// Preparar los datos del post.
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $title ),
 			'post_content' => wp_kses_post( $description ),
@@ -1785,9 +1865,9 @@ class Decker_Tasks {
 		);
 
 		// Determinar si es una actualización o creación.
-		if ( $ID > 0 ) {
+		if ( $id > 0 ) {
 			// Actualizar el post existente.
-			$post_data['ID'] = $ID;
+			$post_data['ID'] = $id;
 			$task_id         = wp_update_post( $post_data );
 
 			if ( is_wp_error( $task_id ) ) {

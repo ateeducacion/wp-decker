@@ -223,6 +223,14 @@ class Task {
 		return $users;
 	}
 
+	/**
+	 * Checks if the current user is assigned to the task.
+	 *
+	 * Iterates through the list of assigned users and compares their IDs
+	 * with the current user's ID to determine if the user is assigned.
+	 *
+	 * @return bool True if the current user is assigned, false otherwise.
+	 */
 	public function is_current_user_assigned_to_task() {
 
 		$current_user_id = get_current_user_id();
@@ -237,6 +245,14 @@ class Task {
 		return false;
 	}
 
+	/**
+	 * Checks if the current user is assigned to the task for today.
+	 *
+	 * Uses the current user's ID and task metadata to determine if the user
+	 * is specifically assigned to the task for today.
+	 *
+	 * @return bool True if the current user is assigned for today, false otherwise.
+	 */
 	public function is_current_user_today_assigned() {
 		return $this->is_today_assigned( get_current_user_id(), $this->meta );
 	}
@@ -352,7 +368,7 @@ class Task {
 	 */
 	public function unassign_user( int $user_id ): void {
 		$key = array_search( $user_id, $this->assigned_users );
-		if ( $key !== false ) {
+		if ( $key ) {
 			unset( $this->assigned_users[ $key ] );
 			update_post_meta( $this->ID, 'assigned_users', $this->assigned_users );
 		}
@@ -373,7 +389,6 @@ class Task {
 	 * Checks if the 'duedate' property is a DateTime object or a string
 	 * and formats it as 'Y-m-d'. Returns an empty string if 'duedate' is not set.
 	 *
-	 * @param bool $draw_background_color Whether to include background color styling. Defaults to false.
 	 * @return string The formatted due date as 'Y-m-d', or an empty string if not set.
 	 */
 	public function get_duedate_as_string(): string {
@@ -399,6 +414,8 @@ class Task {
 
 	/**
 	 * Render the current task card for Kanban.
+	 *
+	 * @param bool $draw_background_color Whether to include background color styling. Defaults to false.
 	 */
 	public function render_task_card( bool $draw_background_color = false ) {
 		$task_url = add_query_arg(
@@ -478,6 +495,8 @@ class Task {
 
 	/**
 	 * Render the task card contextual menu.
+	 *
+	 * @param bool $card The menu is being drawed in a card. Defaults to false.
 	 */
 	public function render_task_menu( bool $card = false ): string {
 		$menu_items = array();
