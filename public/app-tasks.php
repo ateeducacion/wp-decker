@@ -155,32 +155,24 @@ table#tablaTareas td:nth-child(4) {
 						<div class="col-xxl-12">
 							<!-- start page title -->
 
-
-
-
-
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 							
 							<?php
-								$current_type = isset( $_GET['decker_page'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'tasks';
 
-							$page_title     = __( 'Tasks', 'decker' );
-							$class_disabled = '';
-							if ( 'active' === $current_type ) {
+								$selected_type = isset( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'all';
+
+								$page_title     = __( 'Tasks', 'decker' );
+								$class_disabled = '';
+							if ( 'active' === $selected_type ) {
 								$page_title = __( 'Active Tasks', 'decker' );
-							} elseif ( 'my' === $current_type ) {
+							} elseif ( 'my' === $selected_type ) {
 								$page_title = __( 'My Tasks', 'decker' );
-							} elseif ( 'archived' === $current_type ) {
+							} elseif ( 'archived' === $selected_type ) {
 								$page_title     = __( 'Archived Tasks', 'decker' );
 								$class_disabled = ' disabled';
 							}
 							?>
 								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
-
-
-	
-
-
 
 								<div class="d-flex align-items-center">
 									<div id="searchBuilderContainer" class="me-2"></div>
@@ -218,63 +210,62 @@ table#tablaTareas td:nth-child(4) {
 													</tr>
 												</thead>
 												<tbody>
-													<?php
-													$type = isset( $_GET['type'] ) ? sanitize_text_field( $_GET['type'] ) : 'all';
+												<?php
 
 													$tasks = array();
 
-													if ( 'archived' === $type ) {
-														$tasks = $task_manager->get_tasks_by_status( 'archived' );
-													} elseif ( 'my' === $type ) {
-														$tasks = $task_manager->get_tasks_by_user( get_current_user_id() );
+												if ( 'archived' === $selected_type ) {
+													$tasks = $task_manager->get_tasks_by_status( 'archived' );
+												} elseif ( 'my' === $selected_type ) {
+													$tasks = $task_manager->get_tasks_by_user( get_current_user_id() );
+												} else {
+													$tasks = $task_manager->get_tasks_by_status( 'publish' );
+												}
+
+												foreach ( $tasks as $task ) {
+													echo '<tr class="task">';
+													echo '<td>' . ( $task->max_priority ? '🔥' : '' ) . '</td>';
+													echo '<td>';
+
+													if ( null === $task->board ) {
+														echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . esc_attr( 'Undefined board', 'decker' ) . '</span>';
 													} else {
-														$tasks = $task_manager->get_tasks_by_status( 'publish' );
+														echo '<span class="badge rounded-pill" style="background-color: ' . esc_attr( $task->board->color ) . ';">' . esc_html( $task->board->name ) . '</span>';
 													}
-
-													foreach ( $tasks as $task ) {
-														echo '<tr class="task">';
-														echo '<td>' . ( $task->max_priority ? '🔥' : '' ) . '</td>';
-														echo '<td>';
-
-														if ( null === $task->board ) {
-															echo '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . esc_attr( 'Undefined board', 'decker' ) . '</span>';
-														} else {
-															echo '<span class="badge rounded-pill" style="background-color: ' . esc_attr( $task->board->color ) . ';">' . esc_html( $task->board->name ) . '</span>';
-														}
-														echo '</td>';
-														echo '<td>' . esc_html( $task->stack ) . '</td>';
-														echo '<td><a href="' . esc_url(
-															add_query_arg(
-																array(
-																	'decker_page' => 'task',
-																	'id'          => $task->ID,
-																),
-																home_url( '/' )
-															)
-														) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr( $task->ID ) . '">' . esc_html( $task->title ) . '</a></td>';
-														echo '<td>';
-														foreach ( $task->labels as $label ) {
-															echo '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span> ';
-														}
-														echo '</td>';
-														echo '<td><div class="avatar-group">';
-
-														foreach ( $task->assigned_users as $user ) {
-															$today_class = $user->today ? ' today' : '';
-															echo '<a href="javascript: void(0);" class="avatar-group-item' . esc_attr( $today_class ) . '" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $user->display_name ) . '" data-bs-original-title="' . esc_attr( $user->display_name ) . '">';
-															echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '" alt="" class="rounded-circle avatar-xs">';
-															echo '</a>';
-														}
-														echo '</div></td>';
-														echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
-														echo '<td class="text-end">';
-														echo wp_kses_post( $task->render_task_menu() );
-														echo '</td>';
-														echo '</tr>';
+													echo '</td>';
+													echo '<td>' . esc_html( $task->stack ) . '</td>';
+													echo '<td><a href="' . esc_url(
+														add_query_arg(
+															array(
+																'decker_page' => 'task',
+																'id'          => $task->ID,
+															),
+															home_url( '/' )
+														)
+													) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr( $task->ID ) . '">' . esc_html( $task->title ) . '</a></td>';
+													echo '<td>';
+													foreach ( $task->labels as $label ) {
+														echo '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span> ';
 													}
+													echo '</td>';
+													echo '<td><div class="avatar-group">';
 
-													?>
-													
+													foreach ( $task->assigned_users as $user ) {
+														$today_class = $user->today ? ' today' : '';
+														echo '<a href="javascript: void(0);" class="avatar-group-item' . esc_attr( $today_class ) . '" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $user->display_name ) . '" data-bs-original-title="' . esc_attr( $user->display_name ) . '">';
+														echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '" alt="" class="rounded-circle avatar-xs">';
+														echo '</a>';
+													}
+													echo '</div></td>';
+													echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
+													echo '<td class="text-end">';
+													echo wp_kses_post( $task->render_task_menu() );
+													echo '</td>';
+													echo '</tr>';
+												}
+
+												?>
+									
 													<!-- Add more task rows as needed -->
 												</tbody>
 											</table>

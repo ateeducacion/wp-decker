@@ -12,27 +12,30 @@ defined( 'ABSPATH' ) || exit;
 
 include 'layouts/main.php';
 
-$nonce = filter_input( INPUT_POST, 'import_tasks_nonce', FILTER_SANITIZE_STRING );
-if ( $nonce && wp_verify_nonce( $nonce, 'import_tasks' ) ) {
-	// Sanitize task_ids as integer array.
-	$raw_task_ids = filter_input( INPUT_POST, 'task_ids', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
-	$task_ids = array_map( 'intval', $raw_task_ids ? $raw_task_ids : array() );
 
-	$today = gmdate( 'Y-m-d' );
-	$current_user_id = get_current_user_id();
+if ( isset( $_POST['import_tasks_nonce'] ) ) {
+	$import_tasks_nonce = sanitize_text_field( wp_unslash( $_POST['import_tasks_nonce'] ) );
+	if ( wp_verify_nonce( $import_tasks_nonce, 'import_tasks' ) ) {
 
-	foreach ( $task_ids as $task_id ) {
-		$decker_tasks = new Decker_Tasks();
-		$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
+		// Sanitize and validate task IDs.
+		$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', wp_unslash( $_POST['task_ids'] ) ) : array();
+
+		$today = gmdate( 'Y-m-d' );
+		$current_user_id = get_current_user_id();
+
+		// Mark task for today.
+		foreach ( $task_ids as $task_id ) {
+			$decker_tasks = new Decker_Tasks();
+			$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
+		}
+
+		// Redirect to avoid form resubmission.
+		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+			$redirect_url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+			wp_redirect( esc_url( $redirect_url ) );
+			exit;
+		}
 	}
-
-	// Sanitizar y verificar REQUEST_URI antes de redirigir.
-	$redirect_url = '';
-	if ( isset( $_SERVER['REQUEST_URI'] ) ) {
-		$redirect_url = esc_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) );
-	}
-	wp_redirect( $redirect_url );
-	exit;
 }
 
 $previous_tasks  = array();

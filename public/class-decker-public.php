@@ -71,6 +71,8 @@ class Decker_Public {
 
 	/**
 	 * Add custom query vars.
+	 *
+	 * @param arry $vars  the wp $vars array.
 	 */
 	public function decker_query_vars( $vars ) {
 		$vars[] = 'decker_page';

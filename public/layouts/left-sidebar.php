@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  * @return string 'menuitem-active' if it matches, otherwise an empty string.
  */
 function decker_is_active_page( $page ) {
-	if ( isset( $_GET['decker_page'] ) && sanitize_text_field( $_GET['decker_page'] ) === $page ) {
+	if ( isset( $_GET['decker_page'] ) && sanitize_text_field( wp_unslash( $_GET['decker_page'] ) ) === $page ) {
 		return 'menuitem-active';
 	}
 	return '';
@@ -37,7 +37,7 @@ function decker_is_active_page( $page ) {
  * @return string 'menuitem-active' if it matches, otherwise an empty string.
  */
 function decker_is_active_subpage( $get_parameter, $page ) {
-	if ( isset( $_GET[ $get_parameter ] ) && sanitize_text_field( $_GET[ $get_parameter ] ) === $page ) {
+	if ( isset( $_GET[ $get_parameter ] ) && sanitize_text_field( wp_unslash( $_GET[ $get_parameter ] ) ) === $page ) {
 		return 'active';
 	}
 	return '';
@@ -216,7 +216,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 			<?php
 
 				// Obtener el slug del board desde la URL.
-				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
+				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
 			$boards = BoardManager::getAllBoards();
 			foreach ( $boards as $board ) {

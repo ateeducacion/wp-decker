@@ -1,5 +1,8 @@
 <?php
 /**
+ *
+ * Decker is a WordPress plugin focused on efficiently and structurally presenting a list of tasks.
+ *
  * @link              https://github.com/ateeducacion/wp-decker
  * @package           Decker
  *

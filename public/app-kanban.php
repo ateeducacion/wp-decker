@@ -12,10 +12,10 @@ defined( 'ABSPATH' ) || exit;
 
 include 'layouts/main.php';
 
-// Obtener el slug del board desde la URL
-$board_slug = isset( $_GET['slug'] ) ? sanitize_title( $_GET['slug'] ) : '';
+// Obtener el slug del board desde la URL.
+$board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
-// Retrieve the Board based on the slug
+// Retrieve the Board based on the slug.
 $main_board = BoardManager::getBoardBySlug( $board_slug );
 
 if ( is_null( $main_board ) ) {
@@ -27,7 +27,7 @@ $task_manager = new TaskManager();
 $tasks       = $task_manager->get_tasks_by_board( $main_board );
 
 
-// Dividir las tareas en columnas
+// Dividir las tareas en columnas.
 $columns = array(
 	'to-do'       => array(),
 	'in-progress' => array(),

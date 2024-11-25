@@ -48,7 +48,7 @@ $task = new Task( $task_id );
 
 $board_slug = '';
 if ( isset( $_GET['slug'] ) ) {
-	$board_slug = $_GET['slug'];
+	$board_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
 }
 
 $disabled = false;
