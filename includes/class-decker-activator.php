@@ -23,12 +23,12 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Activator {
 
 	/**
-	 * Short Description. (use period)
+	 * Short Description. (use period).
 	 *
 	 * Long Description.
 	 */
 	public static function activate() {
-		// Establecer la estructura de enlaces permanentes
+		// Establecer la estructura de enlaces permanentes.
 		if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
 			update_option( 'permalink_structure', '/%postname%/' );
 		}

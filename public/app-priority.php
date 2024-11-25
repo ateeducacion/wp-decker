@@ -50,7 +50,7 @@ if ( ! $has_today_tasks ) {
 	$current_user_id = get_current_user_id();
 	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
 
-	$previous_tasks = $task_manager->getUserTasksMarkedForTodayForPreviousDays( $current_user_id, $days_to_load );
+	$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $current_user_id, $days_to_load );
 }
 
 ?>
@@ -274,7 +274,7 @@ if ( ! $has_today_tasks ) {
 									),
 								),
 							);
-							$user_tasks = $task_manager->getUserTasksMarkedForTodayForPreviousDays( $user->ID, 0 );
+							$user_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $user->ID, 0 );
 							?>
 							<div class="col-xl-6">
 								<div class="<?php echo esc_attr( $card_class ); ?>">

@@ -1,4 +1,11 @@
 <?php
+/**
+ * File class-board
+ *
+ * @package    Decker
+ * @subpackage Decker/includes/models
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -10,9 +17,32 @@ defined( 'ABSPATH' ) || exit;
  */
 class Board {
 
+	/**
+	 * The ID of the board.
+	 *
+	 * @var int
+	 */
 	public int $id;
+
+	/**
+	 * The name of the board.
+	 *
+	 * @var string
+	 */
 	public string $name;
+
+	/**
+	 * The slug of the board.
+	 *
+	 * @var string
+	 */
 	public string $slug;
+
+	/**
+	 * The color associated with the board, or null if not set.
+	 *
+	 * @var string|null
+	 */
 	public ?string $color;
 
 	/**
@@ -26,7 +56,10 @@ class Board {
 			$this->id    = $term->term_id;
 			$this->name  = $term->name;
 			$this->slug  = $term->slug;
-			$this->color = get_term_meta( $term->term_id, 'term-color', true ) ?: null;
+
+			// Avoid short ternaries by using a complete ternary expression.
+			$color = get_term_meta( $term->term_id, 'term-color', true );
+			$this->color = $color ? $color : null;
 		} else {
 			throw new Exception( 'Invalid board term.' );
 		}

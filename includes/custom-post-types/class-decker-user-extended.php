@@ -114,9 +114,10 @@ class Decker_User_Extended {
 
 		check_admin_referer( 'update-user_' . $user_id );
 
+		/*
 		// TODO: Verify nonce for security (optional but recommended).
 		// Uncomment the following lines if you add a nonce field in the form.
-		/*
+
 		if ( ! isset( $_POST['decker_user_extended_nonce'] ) ||
 			 ! wp_verify_nonce( $_POST['decker_user_extended_nonce'], 'decker_user_extended' ) ) {
 			return false;

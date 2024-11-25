@@ -1,8 +1,14 @@
 <?php
+/**
+ * File class-board-manager
+ *
+ * @package    Decker
+ * @subpackage Decker/includes/models
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
-}
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class BoardManager
@@ -15,7 +21,7 @@ class BoardManager {
 	private static array $boards           = array();
 
 	private function __construct() {
-		// Load all boards
+		// Load all boards.
 		$terms = get_terms(
 			array(
 				'taxonomy'   => 'decker_board',
@@ -66,7 +72,7 @@ class BoardManager {
 			'name' => sanitize_text_field( $data['name'] ),
 		);
 
-		// Only generate slug from name if no slug was provided
+		// Only generate slug from name if no slug was provided.
 		if ( isset( $data['slug'] ) && ! empty( $data['slug'] ) ) {
 			$args['slug'] = sanitize_title( $data['slug'] );
 		} else {
@@ -86,7 +92,7 @@ class BoardManager {
 			);
 		}
 
-		// Reasign $id (because it's new on create)
+		// Reasign $id (because it's new on create).
 		$id = $result['term_id'];
 
 		update_term_meta( $id, 'term-color', sanitize_hex_color( $data['color'] ) );

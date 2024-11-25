@@ -1,4 +1,11 @@
 <?php
+/**
+ * File class-task
+ *
+ * @package    Decker
+ * @subpackage Decker/includes/models
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -10,25 +17,112 @@ defined( 'ABSPATH' ) || exit;
  */
 class Task {
 
-	public int $ID             = 0;
-	public string $title       = '';
+	/**
+	 * The ID of the task.
+	 *
+	 * @var int
+	 */
+	public int $ID = 0;
+
+	/**
+	 * The title of the task.
+	 *
+	 * @var string
+	 */
+	public string $title = '';
+
+	/**
+	 * The description of the task.
+	 *
+	 * @var string
+	 */
 	public string $description = '';
+
+	/**
+	 * The status of the task (e.g., 'to-do', 'in-progress', 'done').
+	 *
+	 * @var string
+	 */
 	public string $status;
-	public ?string $stack        = 'to-do';
-	public bool $max_priority    = false;
-	public ?DateTime $duedate    = null;
+
+	/**
+	 * The stack the task belongs to (default is 'to-do').
+	 *
+	 * @var string|null
+	 */
+	public ?string $stack = 'to-do';
+
+	/**
+	 * Whether the task has maximum priority.
+	 *
+	 * @var bool
+	 */
+	public bool $max_priority = false;
+
+	/**
+	 * The due date of the task, or null if not set.
+	 *
+	 * @var DateTime|null
+	 */
+	public ?DateTime $duedate = null;
+
+	/**
+	 * An array of user IDs assigned to the task.
+	 *
+	 * @var array
+	 */
 	public array $assigned_users = array();
+
+	/**
+	 * The ID of the user who created the task.
+	 *
+	 * @var int
+	 */
 	public int $author;
-	public int $order         = 0;
-	public ?Board $board      = null;
-	public array $labels      = array();
+
+	/**
+	 * The order of the task within its stack.
+	 *
+	 * @var int
+	 */
+	public int $order = 0;
+
+	/**
+	 * The board the task is associated with, or null if not set.
+	 *
+	 * @var Board|null
+	 */
+	public ?Board $board = null;
+
+	/**
+	 * An array of labels associated with the task.
+	 *
+	 * @var array
+	 */
+	public array $labels = array();
+
+	/**
+	 * An array of attachments associated with the task.
+	 *
+	 * @var array
+	 */
 	public array $attachments = array();
-	public array $meta        = array();
+
+	/**
+	 * An array of custom metadata associated with the task.
+	 *
+	 * @var array
+	 */
+	public array $meta = array();
 
 	/**
 	 * Task constructor.
 	 *
-	 * @param int|WP_Post $input The ID of the task or a WP_Post object.
+	 * Initializes the task object from an ID or WP_Post object.
+	 *
+	 * @param int|WP_Post|null $input The ID of the task or a WP_Post object.
+	 *                                Null if creating a new task.
+	 * @throws Exception If the input is not a valid ID or WP_Post object.
 	 */
 	public function __construct( $input = null ) {
 
@@ -37,7 +131,7 @@ class Task {
 		} elseif ( is_int( $input ) && $input > 0 ) {
 			$post = get_post( $input );
 		} else {
-			$this->author = get_current_user_id(); // Default author
+			$this->author = get_current_user_id(); // Default author.
 			$post         = false;
 		}
 
@@ -54,22 +148,22 @@ class Task {
 			$this->author      = $post->post_author;
 			$this->order       = (int) $post->menu_order;
 
-			// Load all metadata once
+			// Load all metadata once.
 			$meta = get_post_meta( $this->ID );
 
-			// Use the meta array directly
+			// Use the meta array directly.
 			$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;
 			$this->max_priority = isset( $meta['max_priority'][0] ) && '1' === $meta['max_priority'][0];
 
-			// Convert duedate to a DateTime object if set
+			// Convert duedate to a DateTime object if set.
 			$this->duedate = isset( $meta['duedate'][0] ) ? new DateTime( $meta['duedate'][0] ) : null;
 
 			$this->attachments = isset( $meta['attachments'] ) ? (array) $meta['attachments'] : array();
-			$this->meta        = $meta; // Store all meta in case you need it later
+			$this->meta        = $meta; // Store all meta in case you need it later.
 
 			$this->assigned_users = $this->get_users( $meta );
 
-			// Load taxonomies
+			// Load taxonomies.
 			$this->board  = $this->get_board();
 			$this->labels = $this->get_labels();
 
@@ -120,7 +214,7 @@ class Task {
 			foreach ( $user_ids as $user_id ) {
 				$user = get_userdata( $user_id );
 				if ( $user ) {
-					// Add custom `today` property
+					// Add custom `today` property.
 					$user->today = $this->is_today_assigned( $user_id, $meta );
 					$users[]     = $user;
 				}
@@ -162,7 +256,7 @@ class Task {
 
 			if ( $user_date_relations && is_array( $user_date_relations ) ) {
 
-				$today = ( new DateTime() )->format( 'Y-m-d' ); // Get today's date in 'Y-m-d' format
+				$today = ( new DateTime() )->format( 'Y-m-d' ); // Get today's date in 'Y-m-d' format.
 
 				foreach ( $user_date_relations as $relation ) {
 
@@ -184,28 +278,28 @@ class Task {
 	 * @return string HTML value of the pastelized color in hex format (e.g., '#ffcccc').
 	 */
 	public function pastelize_color( ?string $color ): string {
-		// Remove '#' if present
+		// Remove '#' if present.
 		$color = ltrim( $color, '#' );
 
-		// Ensure it's a valid 6-character hex color
+		// Ensure it's a valid 6-character hex color.
 		if ( 6 !== strlen( $color ) ) {
-			return '#cccccc'; // Default fallback to light gray if input is invalid
+			return '#cccccc'; // Default fallback to light gray if input is invalid.
 		}
 
-		// Convert hex color to RGB values
+		// Convert hex color to RGB values.
 		$r = hexdec( substr( $color, 0, 2 ) );
 		$g = hexdec( substr( $color, 2, 2 ) );
 		$b = hexdec( substr( $color, 4, 2 ) );
 
-		// Pastelize by averaging with white (255, 255, 255)
+		// Pastelize by averaging with white (255, 255, 255).
 		$r = round( ( $r + 255 ) / 2 );
 		$g = round( ( $g + 255 ) / 2 );
 		$b = round( ( $b + 255 ) / 2 );
 
-		// Convert back to hex
-		$pastelColor = sprintf( '#%02x%02x%02x', $r, $g, $b );
+		// Convert back to hex.
+		$pastel_color = sprintf( '#%02x%02x%02x', $r, $g, $b );
 
-		return $pastelColor;
+		return $pastel_color;
 	}
 
 
@@ -223,7 +317,7 @@ class Task {
 			if ( $user_date_relations && is_array( $user_date_relations ) ) {
 				foreach ( $user_date_relations as $relation ) {
 					if ( isset( $relation['user_id'], $relation['date'] ) ) {
-						// Retrieve WordPress user object
+						// Retrieve WordPress user object.
 						$user = get_userdata( $relation['user_id'] );
 						if ( $user ) {
 							$history[] = array(
@@ -257,27 +351,42 @@ class Task {
 	 * @param int $user_id The user ID.
 	 */
 	public function unassign_user( int $user_id ): void {
-		if ( ( $key = array_search( $user_id, $this->assigned_users ) ) !== false ) {
+		$key = array_search( $user_id, $this->assigned_users );
+		if ( $key !== false ) {
 			unset( $this->assigned_users[ $key ] );
 			update_post_meta( $this->ID, 'assigned_users', $this->assigned_users );
 		}
 	}
 
+	/**
+	 * Retrieves the relative time for the task's due date.
+	 *
+	 * @return string The relative time as a human-readable string.
+	 */
 	public function get_relative_time(): string {
 		return Decker_Utility_Functions::get_relative_time( $this->duedate );
 	}
 
+	/**
+	 * Converts the due date of the task to a formatted string.
+	 *
+	 * Checks if the 'duedate' property is a DateTime object or a string
+	 * and formats it as 'Y-m-d'. Returns an empty string if 'duedate' is not set.
+	 *
+	 * @param bool $draw_background_color Whether to include background color styling. Defaults to false.
+	 * @return string The formatted due date as 'Y-m-d', or an empty string if not set.
+	 */
 	public function get_duedate_as_string(): string {
 
-		// Initialize $duedate to an empty string
+		// Initialize $duedate to an empty string.
 		$duedate = '';
 
-		// Check if 'duedate' property exists and is a DateTime object
+		// Check if 'duedate' property exists and is a DateTime object.
 		if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
-			// Format the DateTime object to 'Y-m-d'
+			// Format the DateTime object to 'Y-m-d'.
 			$duedate = $this->duedate->format( 'Y-m-d' );
 		} elseif ( isset( $this->duedate ) && is_string( $this->duedate ) ) {
-			// If 'duedate' is a string, attempt to parse it to 'Y-m-d'
+			// If 'duedate' is a string, attempt to parse it to 'Y-m-d'.
 			$date = date_create( $this->duedate );
 			if ( $date ) {
 				$duedate = $date->format( 'Y-m-d' );
@@ -292,15 +401,15 @@ class Task {
 	 * Render the current task card for Kanban.
 	 */
 	public function render_task_card( bool $draw_background_color = false ) {
-		$taskUrl = add_query_arg(
+		$task_url = add_query_arg(
 			array(
 				'decker_page' => 'task',
 				'id'          => esc_attr( $this->ID ),
 			),
 			home_url( '/' )
 		);
-		$priorityBadgeClass = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
-		$priorityLabel      = $this->max_priority ? __( '🔥', 'decker' ) : __( 'Normal', 'decker' );
+		$priority_badge_class = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
+		$priority_label      = $this->max_priority ? __( '🔥', 'decker' ) : __( 'Normal', 'decker' );
 		$formatted_duedate  = $this->get_duedate_as_string();
 		$relative_time      = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined date', 'decker' ) . '</span>';
 
@@ -317,8 +426,8 @@ class Task {
 		?>
 		<div class="task card mb-0" data-task-id="<?php echo esc_attr( $this->ID ); ?>" <?php echo wp_kses_post( $card_background_color ); ?>>
 			<div class="card-body p-3">
-				<span class="float-end badge <?php echo esc_attr( $priorityBadgeClass ); ?>">
-					<span class="label-to-hide"><?php echo esc_html( $priorityLabel ); ?></span>
+				<span class="float-end badge <?php echo esc_attr( $priority_badge_class ); ?>">
+					<span class="label-to-hide"><?php echo esc_html( $priority_label ); ?></span>
 					<span class="menu-order label-to-show" style="display: none;"><?php esc_html_e( 'Order:', 'decker' ); ?> <?php echo esc_html( $this->order ); ?></span>
 				</span>
 
@@ -328,7 +437,7 @@ class Task {
 				</small>
 
 				<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $this->ID ); ?>">
-					<a href="<?php echo esc_url( $taskUrl ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="text-body" data-task-id="<?php echo esc_attr( $this->ID ); ?>">
+					<a href="<?php echo esc_url( $task_url ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="text-body" data-task-id="<?php echo esc_attr( $this->ID ); ?>">
 						<?php echo esc_html( $this->title ); ?>
 					</a>
 				</h5>
@@ -371,9 +480,9 @@ class Task {
 	 * Render the task card contextual menu.
 	 */
 	public function render_task_menu( bool $card = false ): string {
-		$menuItems = array();
+		$menu_items = array();
 
-		$taskUrl = add_query_arg(
+		$task_url = add_query_arg(
 			array(
 				'decker_page' => 'task',
 				'id'          => esc_attr( $this->ID ),
@@ -381,18 +490,18 @@ class Task {
 			home_url( '/' )
 		);
 
-		// Add 'Share URL' menu item at the top
-		$menuItems[] = sprintf(
+		// Add 'Share URL' menu item at the top.
+		$menu_items[] = sprintf(
 			'<a href="%s" class="dropdown-item"><i class="ri-share-line me-1"></i>' . __( 'View Task', 'decker' ) . '</a>',
-			esc_url( $taskUrl )
+			esc_url( $task_url )
 		);
 
-		// Add divider after Share URL
-		$menuItems[] = '<div class="dropdown-divider"></div>';
+		// Add divider after Share URL.
+		$menu_items[] = '<div class="dropdown-divider"></div>';
 
 		if ( ! $card ) {
-			// Add 'Edit' menu item
-			$menuItems[] = sprintf(
+			// Add 'Edit' menu item.
+			$menu_items[] = sprintf(
 				'<a href="%s" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="%d" class="dropdown-item"><i class="ri-edit-box-line me-1"></i>' . __( 'Edit', 'decker' ) . '</a>',
 				esc_url(
 					add_query_arg(
@@ -408,62 +517,62 @@ class Task {
 		}
 
 		if ( current_user_can( 'manage_options' ) ) {
-			// Add 'Edit in WordPress' menu item
-			$menuItems[] = sprintf(
+			// Add 'Edit in WordPress' menu item.
+			$menu_items[] = sprintf(
 				'<a href="%s" class="dropdown-item" target="_blank"><i class="ri-wordpress-line me-1"></i>' . __( 'Edit in WordPress', 'decker' ) . '</a>',
 				esc_url( get_edit_post_link( $this->ID ) )
 			);
 		}
 
-		// Add 'Archive' menu item
-		$menuItems[] = sprintf(
+		// Add 'Archive' menu item.
+		$menu_items[] = sprintf(
 			'<a href="javascript:void(0);" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
 			esc_attr( $this->ID )
 		);
 
 		if ( ! $card ) {
 
-			// Add 'Assign to me' and 'Leave' menu items based on assigned users
-			$isAssigned  = in_array( get_current_user_id(), array_column( $this->assigned_users, 'ID' ) );
-			$menuItems[] = sprintf(
+			// Add 'Assign to me' and 'Leave' menu items based on assigned users.
+			$is_assigned  = in_array( get_current_user_id(), array_column( $this->assigned_users, 'ID' ) );
+			$menu_items[] = sprintf(
 				'<a href="javascript:void(0);" class="dropdown-item assign-to-me" data-task-id="%d" style="%s"><i class="ri-user-add-line me-1"></i>' . __( 'Assign to me', 'decker' ) . '</a>',
 				esc_attr( $this->ID ),
-				$isAssigned ? 'display: none;' : ''
+				$is_assigned ? 'display: none;' : ''
 			);
 
-			// Add 'Leave' menu item
-			$menuItems[] = sprintf(
+			// Add 'Leave' menu item.
+			$menu_items[] = sprintf(
 				'<a href="javascript:void(0);" class="dropdown-item leave-task" data-task-id="%d" style="%s"><i class="ri-logout-circle-line me-1"></i>' . __( 'Leave', 'decker' ) . '</a>',
 				esc_attr( $this->ID ),
-				! $isAssigned ? 'display: none;' : ''
+				! $is_assigned ? 'display: none;' : ''
 			);
 
-			// Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag
-			if ( $isAssigned ) {
-				$isMarkedForToday = false;
+			// Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag.
+			if ( $is_assigned ) {
+				$is_marked_for_today = false;
 				foreach ( $this->assigned_users as $user ) {
-					if ( $user->ID == get_current_user_id() && ! empty( $user->today ) ) {
-						$isMarkedForToday = true;
+					if ( get_current_user_id() == $user->ID && ! empty( $user->today ) ) {
+						$is_marked_for_today = true;
 						break;
 					}
 				}
 
-				$menuItems[] = sprintf(
+				$menu_items[] = sprintf(
 					'<a href="javascript:void(0);" class="dropdown-item mark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-check-line me-1"></i>' . __( 'Mark for today', 'decker' ) . '</a>',
 					esc_attr( $this->ID ),
-					$isMarkedForToday ? 'display: none;' : ''
+					$is_marked_for_today ? 'display: none;' : ''
 				);
 
-				$menuItems[] = sprintf(
+				$menu_items[] = sprintf(
 					'<a href="javascript:void(0);" class="dropdown-item unmark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-close-line me-1"></i>' . __( 'Unmark for today', 'decker' ) . '</a>',
 					esc_attr( $this->ID ),
-					! $isMarkedForToday ? 'display: none;' : ''
+					! $is_marked_for_today ? 'display: none;' : ''
 				);
 			}
 		}
 
 		if ( ! $card ) {
-			// Generate dropdown HTML for card
+			// Generate dropdown HTML for card.
 			return sprintf(
 				'<div class="dropdown float-end mt-2">
                     <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
@@ -471,7 +580,7 @@ class Task {
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">%s</div>
                 </div>',
-				implode( '', $menuItems )
+				implode( '', $menu_items )
 			);
 
 		} else {
@@ -481,7 +590,7 @@ class Task {
                     
                     <div class="dropdown-menu dropdown-menu-end">%s</div>
                 </div>',
-				implode( '', $menuItems )
+				implode( '', $menu_items )
 			);
 
 		}

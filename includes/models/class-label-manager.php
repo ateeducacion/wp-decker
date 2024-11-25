@@ -1,4 +1,11 @@
 <?php
+/**
+ * File class-label-manager
+ *
+ * @package    Decker
+ * @subpackage Decker/includes/models
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;

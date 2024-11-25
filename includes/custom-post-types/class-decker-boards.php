@@ -72,12 +72,6 @@ class Decker_Boards {
 			),
 		);
 
-		// function allow_all_to_assign_decker_boards( $allcaps, $caps, $args, $user ) {
-		// $allcaps['assign_decker_boards'] = true;
-		// return $allcaps;
-		// }
-		// add_filter( 'user_has_cap', 'allow_all_to_assign_decker_boards', 10, 4 );
-
 		register_taxonomy( 'decker_board', array( 'decker_task' ), $args );
 	}
 

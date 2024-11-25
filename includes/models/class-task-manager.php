@@ -1,4 +1,11 @@
 <?php
+/**
+ * File class-task-manager
+ *
+ * @package    Decker
+ * @subpackage Decker/includes/models
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
@@ -44,7 +51,8 @@ class TaskManager {
 			try {
 				$tasks[] = new Task( $post );
 			} catch ( Exception $e ) {
-				// Log or handle the error if needed
+				// Log or handle the error if needed.
+				error_log( "Can't initialize Task from post: " . $post->ID );
 			}
 		}
 
@@ -60,7 +68,7 @@ class TaskManager {
 	public function get_tasks_by_status( string $status ): array {
 		$args = array(
 			'post_status' => $status,
-			'meta_key'    => 'max_priority', // Define field to use in order
+			'meta_key'    => 'max_priority', // Define field to use in order.
 			'meta_type'   => 'BOOL',
 			'orderby'     => array(
 				'max_priority' => 'DESC',
@@ -86,7 +94,7 @@ class TaskManager {
 					'compare' => 'LIKE',
 				),
 			),
-			'meta_key'  => 'max_priority', // Define field to use in order
+			'meta_key'  => 'max_priority', // Define field to use in order.
 			'meta_type' => 'BOOL',
 			'orderby'   => array(
 				'max_priority' => 'DESC',
@@ -99,13 +107,13 @@ class TaskManager {
 		// Additional filtering to ensure only tasks assigned to the user are returned.
 		// Filtering serialized data with a LIKE or REGEXP can lead to false positives due to serialization quirks.
 		// This extra step ensures we accurately check for the assigned user.
-		$filteredTasks = array_filter(
+		$filtered_tasks = array_filter(
 			$tasks,
 			function ( $task ) use ( $user_id ) {
 				if ( is_array( $task->assigned_users ) ) {
-					foreach ( $task->assigned_users as $assignedUser ) {
+					foreach ( $task->assigned_users as $assigned_user ) {
 						// Compare the user ID directly.
-						if ( (int) $assignedUser->ID === $user_id ) {
+						if ( (int) $assigned_user->ID === $user_id ) {
 							return true;
 						}
 					}
@@ -114,7 +122,7 @@ class TaskManager {
 			}
 		);
 
-		return $filteredTasks;
+		return $filtered_tasks;
 	}
 
 	/**
@@ -155,7 +163,7 @@ class TaskManager {
 					'terms'    => $board->slug,
 				),
 			),
-			'meta_key'  => 'max_priority', // Define field to use in order
+			'meta_key'  => 'max_priority', // Define field to use in order.
 			'meta_type' => 'BOOL',
 			'orderby'   => array(
 				'max_priority' => 'DESC',
@@ -178,7 +186,7 @@ class TaskManager {
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
-			'fields'      => 'ids', // Only retrieve IDs for performance optimization
+			'fields'      => 'ids', // Only retrieve IDs for performance optimization.
 			'meta_query'  => array(
 				'relation' => 'AND',
 				array(
@@ -188,7 +196,7 @@ class TaskManager {
 				),
 				array(
 					'key'     => '_user_date_relations',
-					'compare' => 'EXISTS', // Only include tasks where the meta key exists
+					'compare' => 'EXISTS', // Only include tasks where the meta key exists.
 				),
 			),
 		);
@@ -227,7 +235,7 @@ class TaskManager {
 	 * @param DateTime $until The end date of the range to filter tasks by.
 	 * @return Task[] List of Task objects that meet the specified criteria.
 	 */
-	public function getUpcomingTasksByDate( DateTime $from, DateTime $until ): array {
+	public function get_upcoming_tasks_by_date( DateTime $from, DateTime $until ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -263,12 +271,12 @@ class TaskManager {
 	 * @param int $days Number of days to look back from today. Pass 0 to get tasks for today only.
 	 * @return Task[] List of Task objects within the specified time range.
 	 */
-	public function getUserTasksMarkedForTodayForPreviousDays( int $user_id, int $days ): array {
+	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
-			'fields'      => 'ids', // Only retrieve IDs for performance optimization
+			'fields'      => 'ids', // Only retrieve IDs for performance optimization.
 			'meta_query'  => array(
 				'relation' => 'AND',
 				array(
@@ -308,7 +316,7 @@ class TaskManager {
 								$relation_date && $relation_date >= $start_date && $relation_date <= $today
 							) {
 								$tasks[] = new Task( $post_id );
-								break; // No need to check more dates for this task
+								break; // No need to check more dates for this task.
 							}
 						}
 					}
