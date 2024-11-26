@@ -79,6 +79,7 @@ class Decker_Labels {
 	 * Add color field in the add new term form.
 	 */
 	public function add_color_field() {
+		wp_nonce_field( 'decker_label_color_action', 'decker_label_color_nonce' );
 		?>
 		<div class="form-field term-color-wrap">
 			<label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label>
@@ -93,6 +94,8 @@ class Decker_Labels {
 	 * @param WP_Term $term The current term object.
 	 */
 	public function edit_color_field( $term ) {
+		wp_nonce_field( 'decker_label_color_action', 'decker_label_color_nonce' );
+
 		$term_id = $term->term_id;
 		$color   = get_term_meta( $term_id, 'term-color', true );
 		?>
@@ -111,6 +114,20 @@ class Decker_Labels {
 	 * @param int $term_id The term ID.
 	 */
 	public function save_color_meta( $term_id ) {
+
+		// Check if nonce is set and verified.
+		if ( ! isset( $_POST['decker_label_color_nonce'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_label_color_nonce'] ) );
+			if ( ! wp_verify_nonce( $nonce, 'decker_label_color_action' ) ) {
+				return;
+			}
+		}
+
+		// Check user capabilities.
+		if ( ! current_user_can( 'edit_term', $term_id ) ) {
+			return;
+		}
+
 		if ( isset( $_POST['term-color'] ) ) {
 			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
 			update_term_meta( $term_id, 'term-color', $term_color );
