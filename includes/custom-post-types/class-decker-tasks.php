@@ -1068,6 +1068,9 @@ class Decker_Tasks {
 		$max_priority      = get_post_meta( $post->ID, 'max_priority', true );
 		$stack             = get_post_meta( $post->ID, 'stack', true );
 		$id_nextcloud_card = get_post_meta( $post->ID, 'id_nextcloud_card', true );
+
+		wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
+
 		?>
 		<p>
 			<label for="duedate"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
@@ -1483,11 +1486,24 @@ class Decker_Tasks {
 	 */
 	public function save_meta( $post_id ) {
 
+		// Check if nonce is set and verified.
+		if ( ! isset( $_POST['decker_task_nonce'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_task_nonce'] ) );
+			if ( ! wp_verify_nonce( $nonce, 'save_decker_task' ) ) {
+				return;
+			}
+		}
+
 		// Check autosave and post type.
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return $post_id;
 		}
 		if ( ! isset( $_POST['post_type'] ) || 'decker_task' !== $_POST['post_type'] ) {
+			return $post_id;
+		}
+
+		// Check the user's permissions.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return $post_id;
 		}
 
@@ -1498,7 +1514,8 @@ class Decker_Tasks {
 
 		// Save task details.
 		if ( isset( $_POST['duedate'] ) ) {
-			update_post_meta( $post_id, 'duedate', sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) );
+			$duedate = sanitize_text_field( wp_unslash( $_POST['duedate'] ) );
+			update_post_meta( $post_id, 'duedate', $duedate );
 		}
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		update_post_meta( $post_id, 'max_priority', $max_priority );
@@ -1534,12 +1551,21 @@ class Decker_Tasks {
 			update_post_meta( $post_id, 'assigned_users', $assigned_users );
 		}
 
-		/* $relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();*/
-
 		// Save user date relations.
-		$relations = isset( $_POST['user_date_relations'] )
-			? json_decode( wp_unslash( $_POST['user_date_relations'] ), true )
-			: array();
+		$relations = array();
+
+		if ( isset( $_POST['user_date_relations'] ) ) {
+			// Eliminar las barras invertidas añadidas por WordPress.
+			$relations_json = sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) );
+
+			// Decodificar el JSON utilizando la función de WordPress.
+			$decoded_relations = wp_json_decode( $relations_json, true );
+
+			// Verificar que la decodificación haya retornado un array válido.
+			if ( is_array( $decoded_relations ) ) {
+				$relations = $decoded_relations;
+			}
+		}
 
 		update_post_meta( $post_id, '_user_date_relations', $relations );
 	}
@@ -1715,21 +1741,43 @@ class Decker_Tasks {
 
 		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
 
+		$duedate_raw = isset( $_POST['duedate'] ) ? sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) : '';
+
 		try {
-			$duedate = isset( $_POST['due_date'] ) ? new DateTime( sanitize_text_field( wp_unslash( $_POST['due_date'] ) ) ) : new DateTime();
+			$duedate = new DateTime( $duedate_raw );
 		} catch ( Exception $e ) {
 			$duedate = new DateTime(); // Default value if conversion fails.
 		}
 
 		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
 
-		$assigned_users = isset( $_POST['assignees'] ) && is_string( wp_unslash( $_POST['assignees'] ) )
-			? array_map( 'intval', explode( ',', wp_unslash( $_POST['assignees'] ) ) )
-			: ( is_array( wp_unslash( $_POST['assignees'] ) ) ? array_map( 'intval', wp_unslash( $_POST['assignees'] ) ) : array() );
+		// Manejar 'assignees'.
+		$assigned_users = array();
 
-		$labels = isset( $_POST['labels'] ) && is_string( wp_unslash( $_POST['labels'] ) )
-			? array_map( 'intval', explode( ',', wp_unslash( $_POST['labels'] ) ) )
-			: ( is_array( wp_unslash( $_POST['labels'] ) ) ? array_map( 'intval', wp_unslash( $_POST['labels'] ) ) : array() );
+		if ( isset( $_POST['assignees'] ) ) {
+			// Eliminar las barras invertidas añadidas por WordPress.
+			$assignees_raw = sanitize_text_field( wp_unslash( $_POST['assignees'] ) );
+
+			if ( is_string( $assignees_raw ) ) {
+				$assigned_users = array_map( 'absint', explode( ',', $assignees_raw ) );
+			} elseif ( is_array( $assignees_raw ) ) {
+				$assigned_users = array_map( 'absint', $assignees_raw );
+			}
+		}
+
+		// Manejar 'labels'.
+		$labels = array();
+
+		if ( isset( $_POST['labels'] ) ) {
+			// Eliminar las barras invertidas añadidas por WordPress.
+			$labels_raw = sanitize_text_field( wp_unslash( $_POST['labels'] ) );
+
+			if ( is_string( $labels_raw ) ) {
+				$labels = array_map( 'absint', explode( ',', $labels_raw ) );
+			} elseif ( is_array( $labels_raw ) ) {
+				$labels = array_map( 'absint', $labels_raw );
+			}
+		}
 
 		$creation_date = new DateTime(); // O ajusta según corresponda.
 
