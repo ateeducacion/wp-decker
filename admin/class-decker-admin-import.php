@@ -328,8 +328,17 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * Imports a single board from NextCloud.
 	 */
 	public function import_board() {
+
 		check_ajax_referer( 'decker_import_nonce', 'security' );
-		check_ajax_referer( 'decker_import_nonce', 'security' );
+
+		$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : null;
+
+		// Additional nonce verification.
+		if ( ! wp_verify_nonce( $nonce, 'decker_import_nonce' ) ) {
+			wp_send_json_error( 'Invalid nonce.' );
+			exit;
+		}
+
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Access denied.' );
 		}
@@ -363,14 +372,14 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 
 			// Import the regular tasks.
-			$import_result = $this->import_labels_and_tasks( $board, $board_term );
+			$import_result = $this->import_labels_and_tasks( $board, $board_term, $skip_existing );
 			if ( false === $import_result ) {
 				wp_send_json_error( 'Failed to import tasks.' );
 				return;
 			}
 
 			// Import the archived tasks.
-			$import_result = $this->import_labels_and_tasks( $board, $board_term, true );
+			$import_result = $this->import_labels_and_tasks( $board, $board_term, $skip_existing, true );
 			if ( false === $import_result ) {
 				wp_send_json_error( 'Failed to import archived tasks.' );
 				return;
@@ -441,11 +450,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	 *
 	 * @param array $board The board data.
 	 * @param array $board_term The board term array.
+	 * @param bool  $skip_existing Whether to skip existing tasks.
 	 * @param bool  $archived Whether to import archived tasks.
 	 * @return array|false An array with counts of labels and tasks, or false on failure.
 	 */
-	private function import_labels_and_tasks( $board, $board_term, $archived = false ) {
-		$skip_existing = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'];
+	private function import_labels_and_tasks( $board, $board_term, bool $skip_existing, bool $archived = false ) {
 		$label_count   = 0;
 		$task_count    = 0;
 
