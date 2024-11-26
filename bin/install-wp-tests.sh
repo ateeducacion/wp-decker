@@ -176,6 +176,6 @@ install_db() {
 	fi
 }
 
-# install_wp
+install_wp
 install_test_suite
-# install_db
+install_db

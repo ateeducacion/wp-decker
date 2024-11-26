@@ -5,24 +5,24 @@
  * @package Decker
  */
 
-// // First we need to load the composer autoloader, so we can use WP Mock
-// require_once dirname( __DIR__ ) . '/vendor/autoload.php';
+$_tests_dir = getenv( 'WP_TESTS_DIR' );
 
-// $_tests_dir = getenv( 'WP_TESTS_DIR' );
+if ( ! $_tests_dir ) {
+    $_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
+}
 
-// if ( ! $_tests_dir ) {
-//     $_tests_dir = 'wordpress-develop/tests/phpunit';
-// }
+// Forward custom PHPUnit Polyfills autoloader file for WP < 5.7.0.
+if ( ! defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
+    define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', dirname( __DIR__ ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php' );
+}
 
-// require_once $_tests_dir . '/includes/functions.php';
+require_once $_tests_dir . '/includes/functions.php';
 
-// // Carga tu plugin
-// tests_add_filter( 'muplugins_loaded', function() {
-//     require dirname( dirname( __FILE__ ) ) . '/decker.php';
-// } );
+tests_add_filter( 'muplugins_loaded', function() {
+    require dirname( dirname( __FILE__ ) ) . '/decker.php';
+} );
 
-// require $_tests_dir . '/includes/bootstrap.php';
-
+require $_tests_dir . '/includes/bootstrap.php';
 
 use VCR\VCR;
 use function WP_CLI\Utils\load_dependencies;
