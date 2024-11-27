@@ -221,6 +221,7 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
         
         // Clean up nonces
         unset($_POST['decker_task_nonce']);
+        unset($_POST['decker_board_nonce']);
         unset($_POST['decker_board_color_nonce']);
         
         $board_id = $this->factory->term->create([
