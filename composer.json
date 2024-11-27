@@ -11,9 +11,7 @@
         "yoast/phpunit-polyfills": "^3.0",
         "wp-phpunit/wp-phpunit": "^6.7",
         "friendsofphp/php-cs-fixer": "^3.64",
-        "johnpbloch/wordpress-core": "^6.7",
-        "wp-cli/wp-cli": "^2.11",
-        "php-vcr/php-vcr": "^1.8"
+        "wp-cli/wp-cli": "^2.11"
     },
     "scripts": {
         "post-install-cmd": [
@@ -26,7 +24,7 @@
         ],
         "phpunit": "vendor/bin/phpunit",
         "test": "phpunit",
-        "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php",
+        "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/,tests/ --colors --warning-severity=0 --extensions=php",
         "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php", 
         "php-cs-fixer": "php-cs-fixer fix --config=.php-cs-fixer.php",
         "make-pot": "wp i18n make-pot . languages/decker.pot --domain=decker --exclude=vendor,assets,node_modules,tests,wp,wp-content --include=**/*.php",

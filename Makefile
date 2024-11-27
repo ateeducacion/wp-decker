@@ -12,25 +12,14 @@ endif
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
 
-
-wp-env:
-	npm run wp-env start
-
-# Bring up Docker containers in interactive mode
+# Bring up Docker containers
 up: check-docker
-	docker compose up
+	npx wp-env start --update
 
-# Bring up Docker containers in background mode (daemon)
-upd: check-docker
-	docker compose up -d	
 
 # Stop and remove Docker containers
 down: check-docker
-	docker compose down
-
-# Pull the latest images from the registry
-pull: check-docker
-	docker compose pull
+	npx wp-env stop
 
 # Run the linter to check PHP code style
 lint: phpcs
@@ -40,7 +29,7 @@ fix: phpcbf
 
 # Run unit tests with PHPUnit
 test:
-	npm run test:unit
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
 
 # Check code style with PHP-CS-Fixer
 phpcs:
