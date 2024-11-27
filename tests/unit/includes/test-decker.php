@@ -99,6 +99,9 @@ class Test_Decker extends WP_UnitTestCase {
 	}
 
 	public function test_comment_capabilities() {
+		// Set up nonce
+		$_POST['decker_task_nonce'] = wp_create_nonce('save_decker_task');
+
 		// Create a test task and comment
 		$task = $this->factory->post->create(
 			array(
@@ -147,6 +150,7 @@ class Test_Decker extends WP_UnitTestCase {
 	public function tear_down() {
 		// Clean up
 		wp_delete_user( $this->admin_user_id );
+		unset($_POST['decker_task_nonce']);
 		parent::tear_down();
 	}
 }
