@@ -44,7 +44,10 @@ jobs:
           plugins: '["."]'
 
       - name: Run unit tests
-        run: make test
+        # run: make test
+        # run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
+        # run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
+        run: npx wp-env run tests-cli pwd
 
       - name: Stop wp-env
         if: always()
