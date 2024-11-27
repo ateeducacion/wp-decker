@@ -27,7 +27,7 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 
 	public function test_constructor() {
 		$this->assertInstanceOf( Decker_Admin::class, $this->admin );
-		$this->assertEquals( 10, has_action( 'admin_bar_menu', array( $this->admin, 'add_admin_bar_link' ) ) );
+		$this->assertEquals( 100, has_action( 'admin_bar_menu', array( $this->admin, 'add_admin_bar_link' ) ) );
 		$this->assertEquals( 10, has_filter( 'plugin_action_links_' . plugin_basename( DECKER_PLUGIN_FILE ), array( $this->admin, 'add_settings_link' ) ) );
 	}
 
@@ -64,24 +64,31 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 	}
 
 	public function test_enqueue_styles() {
-		// Test non-matching hook
-		$this->admin->enqueue_styles( 'wrong_hook' );
-		$this->assertFalse( wp_style_is( 'decker', 'enqueued' ) );
+	    // Limpia cualquier enqueued style previo
+	    wp_dequeue_style( 'decker' );
 
-		// Test matching hook
-		$this->admin->enqueue_styles( 'settings_page_decker_settings' );
-		$this->assertTrue( wp_style_is( 'decker', 'registered' ) );
+	    // Test con hook no coincidente
+	    $this->admin->enqueue_styles( 'wrong_hook' );
+	    $this->assertFalse( wp_style_is( 'decker', 'enqueued' ) );
+
+	    // Test con hook coincidente
+	    $this->admin->enqueue_styles( 'settings_page_decker_settings' );
+	    $this->assertTrue( wp_style_is( 'decker', 'enqueued' ) );
 	}
 
 	public function test_enqueue_scripts() {
-		// Test non-matching hook
-		$this->admin->enqueue_scripts( 'wrong_hook' );
-		$this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
+	    // Limpia cualquier enqueued script previo
+	    wp_dequeue_script( 'decker' );
 
-		// Test matching hook
-		$this->admin->enqueue_scripts( 'settings_page_decker_settings' );
-		$this->assertTrue( wp_script_is( 'decker', 'registered' ) );
+	    // Test con hook no coincidente
+	    $this->admin->enqueue_scripts( 'wrong_hook' );
+	    $this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
+
+	    // Test con hook coincidente
+	    $this->admin->enqueue_scripts( 'settings_page_decker_settings' );
+	    $this->assertTrue( wp_script_is( 'decker', 'enqueued' ) );
 	}
+
 
 	public function test_load_dependencies() {
 		$reflection = new ReflectionClass( $this->admin );
