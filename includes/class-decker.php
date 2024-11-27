@@ -27,6 +27,16 @@
 class Decker {
 
 	/**
+	 * The loader that's responsible for maintaining and registering all hooks that power
+	 * the plugin.
+	 *
+	 * @access   protected
+	 * @var      Decker_Loader    $loader    Maintains and registers all hooks for the plugin.
+	 */
+	protected $loader;
+
+
+	/**
 	 * The unique identifier of this plugin.
 	 *
 	 * @access   protected
