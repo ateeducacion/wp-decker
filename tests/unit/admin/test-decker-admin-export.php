@@ -212,22 +212,26 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
         $_POST['decker_board_nonce'] = wp_create_nonce('decker_board_nonce');
         $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
         
-        // Create test data
+        // Create test task
         $task_id = $this->factory->post->create([
             'post_type' => 'decker_task',
             'post_title' => 'Test Export Task',
             'post_content' => 'Test Content'
+        ]);
+
+        // Create test board with proper nonces
+        $_POST['decker_board_nonce'] = wp_create_nonce('decker_board_nonce');
+        $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
+        
+        $board_id = $this->factory->term->create([
+            'taxonomy' => 'decker_board',
+            'name' => 'Test Board'
         ]);
         
         // Clean up nonces
         unset($_POST['decker_task_nonce']);
         unset($_POST['decker_board_nonce']);
         unset($_POST['decker_board_color_nonce']);
-        
-        $board_id = $this->factory->term->create([
-            'taxonomy' => 'decker_board',
-            'name' => 'Test Board'
-        ]);
 
         // Capture output
         ob_start();
