@@ -9,43 +9,59 @@ class Test_Decker_Tasks extends WP_UnitTestCase {
 
     protected $post_type = 'decker_task';
 
+    protected $decker_tasks;
+
     public function set_up() {
         parent::set_up();
+        
+        // Create an admin user for tests
+        $this->admin_user = $this->factory->user->create(array('role' => 'administrator'));
+        wp_set_current_user($this->admin_user);
 
-        // Carga la clase Decker_Tasks si no está cargada
-        if ( ! class_exists( 'Decker_Tasks' ) ) {
-            require_once plugin_dir_path( __FILE__ ) . '/path-to-decker-tasks-class.php'; // Ajusta la ruta según tu estructura
-        }
+        // Register post type and taxonomies
+        register_post_type('decker_task');
+        register_taxonomy('decker_board', 'decker_task');
+        register_taxonomy('decker_label', 'decker_task');
 
-        // Instancia la clase si no está ya instanciada
-        if ( ! class_exists( 'Decker_Tasks' ) || ! isset( $GLOBALS['decker_tasks'] ) ) {
-            $GLOBALS['decker_tasks'] = new Decker_Tasks();
-        }
+        // Instance the class
+        $this->decker_tasks = new Decker_Tasks();
 
-        // Asegura que los hooks se ejecuten
-        do_action( 'init' );
+        // Set up nonces
+        $_POST['decker_task_nonce'] = wp_create_nonce('save_decker_task');
+        $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_action');
+        $_POST['decker_label_color_nonce'] = wp_create_nonce('decker_label_color_action');
+
+        // Ensure hooks are executed
+        do_action('init');
     }
 
     public function tear_down() {
-        // Limpia los posts creados durante las pruebas
-        $posts = get_posts( array( 'post_type' => $this->post_type, 'numberposts' => -1 ) );
-        foreach ( $posts as $post ) {
-            wp_delete_post( $post->ID, true );
+        parent::tear_down();
+        
+        // Clean up posts
+        $posts = get_posts(['post_type' => $this->post_type, 'numberposts' => -1]);
+        foreach ($posts as $post) {
+            wp_delete_post($post->ID, true);
         }
 
-        // Limpia los términos de taxonomía creados durante las pruebas
-        $taxonomies = array( 'decker_board', 'decker_label' );
-        foreach ( $taxonomies as $taxonomy ) {
-            $terms = get_terms( array(
-                'taxonomy'   => $taxonomy,
-                'hide_empty' => false,
-            ) );
-            foreach ( $terms as $term ) {
-                wp_delete_term( $term->term_id, $taxonomy );
+        // Clean up taxonomies
+        foreach (['decker_board', 'decker_label'] as $taxonomy) {
+            $terms = get_terms(['taxonomy' => $taxonomy, 'hide_empty' => false]);
+            if (!is_wp_error($terms)) {
+                foreach ($terms as $term) {
+                    wp_delete_term($term->term_id, $taxonomy);
+                }
             }
         }
 
-        parent::tear_down();
+        // Clean up nonces
+        unset($_POST['decker_task_nonce']);
+        unset($_POST['decker_board_color_nonce']);
+        unset($_POST['decker_label_color_nonce']);
+        
+        // Reset REST server
+        global $wp_rest_server;
+        $wp_rest_server = null;
     }
 
     /**
@@ -99,13 +115,22 @@ class Test_Decker_Tasks extends WP_UnitTestCase {
      */
     public function test_metaboxes_added() {
         global $wp_meta_boxes;
-
-        $this->assertArrayHasKey( 'decker_task_meta_box', $wp_meta_boxes[ $this->post_type ]['normal']['high'], 'Task Meta Box should be added' );
-        $this->assertArrayHasKey( 'decker_users_meta_box', $wp_meta_boxes[ $this->post_type ]['side']['default'], 'Users Meta Box should be added' );
-        $this->assertArrayHasKey( 'user_date_meta_box', $wp_meta_boxes[ $this->post_type ]['normal']['high'], 'User-Date Meta Box should be added' );
-        $this->assertArrayHasKey( 'attachment_meta_box', $wp_meta_boxes[ $this->post_type ]['normal']['high'], 'Attachment Meta Box should be added' );
-        $this->assertArrayHasKey( 'decker_labels_meta_box', $wp_meta_boxes[ $this->post_type ]['side']['default'], 'Labels Meta Box should be added' );
-        $this->assertArrayHasKey( 'decker_board_meta_box', $wp_meta_boxes[ $this->post_type ]['side']['default'], 'Board Meta Box should be added' );
+        
+        // Set up the global post variable
+        global $post;
+        $post = $this->factory->post->create_and_get(['post_type' => $this->post_type]);
+        
+        // Trigger add_meta_boxes action
+        do_action('add_meta_boxes', $this->post_type, $post);
+        
+        // Now check if metaboxes were added
+        $this->assertNotNull($wp_meta_boxes[$this->post_type]);
+        $this->assertArrayHasKey('decker_task_meta_box', $wp_meta_boxes[$this->post_type]['normal']['high']);
+        $this->assertArrayHasKey('decker_users_meta_box', $wp_meta_boxes[$this->post_type]['side']['default']);
+        $this->assertArrayHasKey('user_date_meta_box', $wp_meta_boxes[$this->post_type]['normal']['high']);
+        $this->assertArrayHasKey('attachment_meta_box', $wp_meta_boxes[$this->post_type]['normal']['high']);
+        $this->assertArrayHasKey('decker_labels_meta_box', $wp_meta_boxes[$this->post_type]['side']['default']);
+        $this->assertArrayHasKey('decker_board_meta_box', $wp_meta_boxes[$this->post_type]['side']['default']);
     }
 
     /**
