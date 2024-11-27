@@ -30,14 +30,32 @@ jobs:
       - name: Run code linting
         run: make lint
 
-      # - name: Run unit tests
-      #   run: make test
 
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install -y gettext
 
       - name: Check untranslated strings
         run: make check-untranslated
+
+
+      - name: Setup wp-env
+        uses: godaddy-wordpress/setup-wp-env@v1
+        with:
+          wp-env-config: .wp-env.json
+
+      - name: Start wp-env
+        run: wp-env start &
+
+      - name: Wait wp-env to start
+        run: sleep 30
+
+      - name: Run unit tests
+        run: make test
+
+
+      - name: Stop wp-env
+        if: always()
+        run: wp-env stop
 
       - name: Create package using the Makefile
         run: make package VERSION=6.6.6
