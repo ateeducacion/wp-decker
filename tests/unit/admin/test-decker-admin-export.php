@@ -138,7 +138,7 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
      */
     public function test_export_taxonomy_terms() {
         // Set up nonce
-        $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
+        $_POST['decker_board_nonce'] = wp_create_nonce('decker_board_nonce');
         
         // Create a test term
         $term_id = $this->factory->term->create(array(
@@ -149,7 +149,7 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
         ));
         
         // Clean up nonce
-        unset($_POST['decker_board_color_nonce']);
+        unset($_POST['decker_board_nonce']);
 
         // Add some term meta
         add_term_meta($term_id, 'test_term_meta', 'test_value');
@@ -187,16 +187,17 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
     public function test_process_export($content, $should_export) {
         $_GET['content'] = $content;
         
-        if ($should_export) {
-            // For valid export, we'll verify the headers are set
-            $this->expectOutputRegex('/decker_backup_\d{4}-\d{2}-\d{2}\.json/');
-        }
-        
+        ob_start();
         $this->export_instance->process_export(array());
+        $output = ob_get_clean();
         
-        if (!$should_export) {
-            // For invalid export, verify no output
-            $this->expectOutputString('');
+        if ($should_export) {
+            $this->assertNotEmpty($output);
+            $this->assertJson($output);
+            $data = json_decode($output, true);
+            $this->assertIsArray($data);
+        } else {
+            $this->assertEmpty($output);
         }
     }
 
