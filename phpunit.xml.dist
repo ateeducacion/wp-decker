@@ -1,19 +1,16 @@
+<?xml version="1.0"?>
 <phpunit
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/9.5/phpunit.xsd"
-    bootstrap="./tests/bootstrap.php"
-    colors="true">
-    <testsuites>
-        <testsuite name="UserAccessManager Test Suite">
-            <directory suffix=".php">./tests</directory>
-        </testsuite>
-    </testsuites>
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory suffix=".php">./src</directory>
-        </include>
-        <report>
-            <html outputDirectory="./tmp/coverage"/>
-        </report>
-    </coverage>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  bootstrap="tests/bootstrap.php"
+  backupGlobals="false"
+  colors="true"
+  xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd">
+  <php>
+    <env name="WORDPRESS_TABLE_PREFIX" value="wp_"/>
+  </php>
+  <testsuites>
+    <testsuite name="default">
+      <directory prefix="test-" suffix=".php">tests/</directory>
+    </testsuite>
+  </testsuites>
 </phpunit>

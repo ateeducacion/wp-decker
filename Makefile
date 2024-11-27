@@ -12,6 +12,10 @@ endif
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
 
+
+wp-env:
+	npm run wp-env start
+
 # Bring up Docker containers in interactive mode
 up: check-docker
 	docker compose up
@@ -35,7 +39,8 @@ lint: phpcs
 fix: phpcbf
 
 # Run unit tests with PHPUnit
-test: phpunit
+test:
+	npm run test:unit
 
 # Check code style with PHP-CS-Fixer
 phpcs:
@@ -44,10 +49,6 @@ phpcs:
 # Automatically fix code style with PHP-CS-Fixer
 phpcbf:
 	composer --no-cache phpcbf
-
-# Run unit tests with PHPUnit
-phpunit:
-	composer --no-cache phpunit
 
 # Open a shell inside the wordpress container
 shell: check-docker
@@ -72,6 +73,15 @@ po:
 # Generate .mo files from .po files
 mo:
 	composer make-mo
+
+wp-env-update:
+	wp-env start --update
+
+wp-env-composer:
+	npm run wp-env run cli composer install
+
+wp-env-test:
+	npm run wp-env run tests-cli phpunit
 
 # Check the untranslated strings
 check-untranslated:
@@ -110,7 +120,6 @@ help:
 	@echo "  clean              - Clean and stop Docker containers, removing volumes and orphan containers"
 	@echo "  phpcs              - Check code style with PHP-CS-Fixer"
 	@echo "  phpcbf             - Automatically fix code style with PHP-CS-Fixer"
-	@echo "  phpunit            - Run unit tests with PHPUnit"
 	@echo "  shell              - Open a shell inside the wordpress container"
 	@echo "  update             - Update Composer dependencies"
 	@echo "  package            - Generate a .zip package"

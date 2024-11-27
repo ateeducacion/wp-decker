@@ -45,27 +45,6 @@ services:
       - wordpress:/var/www/html
       - ./:/var/www/html/wp-content/plugins/decker
 
-  phpunit:
-    image: wordpressdevelop/phpunit
-    volumes:
-      - ./:/var/www/html
-    # working_dir: /app
-    command: phpunit
-
-  # tests:
-  #   image: php:7.4-cli
-  #   depends_on:
-  #     - mariadb
-  #   volumes:
-  #     - ./:/var/www/html/wp-content/plugins/decker
-  #   working_dir: /var/www/html/wp-content/plugins/decker
-  #   environment:
-  #     - WORDPRESS_DB_NAME=wordpress_test
-  #     - WORDPRESS_DB_USER=wordpress
-  #     - WORDPRESS_DB_PASSWORD=wordpress
-  #     - WORDPRESS_DB_HOST=mariadb
-  #   command: bash -c "composer install && ./bin/install-wp-tests.sh wordpress_test wordpress wordpress mariadb latest && ./vendor/bin/phpunit"
-
 
 volumes:
   mariadb: null
