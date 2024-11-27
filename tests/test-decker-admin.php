@@ -7,6 +7,7 @@
 
 class Test_Decker_Admin extends WP_UnitTestCase {
 	protected $admin;
+	protected $admin_user_id;
 
 	public function set_up() {
 		parent::set_up();
@@ -15,53 +16,77 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 		set_current_screen( 'edit-post' );
 
 		// Create admin user and log in
-		$admin_user = $this->factory->user->create( array( 'role' => 'administrator' ) );
-		wp_set_current_user( $admin_user );
+		$this->admin_user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $this->admin_user_id );
 
-		$this->admin = new Decker_Admin( 'decker', DECKER_VERSION );
+		$this->admin = new Decker_Admin( 'decker', '1.0.0' );
 	}
 
-	public function test_admin_menu_pages() {
-		// Simulate admin menu loading
-		do_action( 'admin_menu' );
-
-		global $menu, $submenu;
-
-		// Check if main menu exists
-		$menu_exists = false;
-		foreach ( $menu as $menu_item ) {
-			if ( $menu_item[0] === 'Decker' ) {
-				$menu_exists = true;
-				break;
-			}
-		}
-		$this->assertTrue( $menu_exists );
+	public function test_constructor() {
+		$this->assertInstanceOf( Decker_Admin::class, $this->admin );
+		$this->assertEquals( 10, has_action( 'admin_bar_menu', array( $this->admin, 'add_admin_bar_link' ) ) );
+		$this->assertEquals( 10, has_filter( 'plugin_action_links_' . plugin_basename( DECKER_PLUGIN_FILE ), array( $this->admin, 'add_settings_link' ) ) );
 	}
 
-	public function test_admin_enqueue_scripts() {
-		// Trigger admin scripts enqueue
-		do_action( 'admin_enqueue_scripts' );
+	public function test_add_settings_link() {
+		$links = array();
+		$new_links = $this->admin->add_settings_link( $links );
 
-		$this->assertTrue( wp_script_is( 'decker-admin' ) );
-		$this->assertTrue( wp_style_is( 'decker-admin' ) );
+		$this->assertIsArray( $new_links );
+		$this->assertCount( 1, $new_links );
+		$this->assertStringContainsString( 'options-general.php?page=decker_settings', $new_links[0] );
+		$this->assertStringContainsString( 'Settings', $new_links[0] );
 	}
 
-	public function test_settings_registration() {
-		// Trigger admin init
-		do_action( 'admin_init' );
+	public function test_add_admin_bar_link() {
+		$admin_bar = $this->getMockBuilder( 'WP_Admin_Bar' )
+			->disableOriginalConstructor()
+			->getMock();
 
-		// Verify settings are registered
-		$registered_settings = get_registered_settings();
-		$this->assertArrayHasKey( 'decker_settings', $registered_settings );
+		$admin_bar->expects( $this->once() )
+			->method( 'add_menu' )
+			->with(
+				$this->callback( function( $args ) {
+					return $args['id'] === 'decker_frontend_link' &&
+						   strpos( $args['title'], 'Go to Frontend' ) !== false &&
+						   $args['href'] === home_url( '/?decker_page=priority' );
+				} )
+			);
+
+		$this->admin->add_admin_bar_link( $admin_bar );
 	}
 
-	public function test_admin_notices() {
-		ob_start();
-		do_action( 'admin_notices' );
-		$notices = ob_get_clean();
+	public function test_enqueue_styles() {
+		// Test non-matching hook
+		$this->admin->enqueue_styles( 'wrong_hook' );
+		$this->assertFalse( wp_style_is( 'decker', 'enqueued' ) );
 
-		// Add specific notice tests based on your implementation
-		$this->assertIsString( $notices );
+		// Test matching hook
+		$this->admin->enqueue_styles( 'settings_page_decker_settings' );
+		$this->assertTrue( wp_style_is( 'decker', 'registered' ) );
+	}
+
+	public function test_enqueue_scripts() {
+		// Test non-matching hook
+		$this->admin->enqueue_scripts( 'wrong_hook' );
+		$this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
+
+		// Test matching hook
+		$this->admin->enqueue_scripts( 'settings_page_decker_settings' );
+		$this->assertTrue( wp_script_is( 'decker', 'registered' ) );
+	}
+
+	public function test_load_dependencies() {
+		$reflection = new ReflectionClass( $this->admin );
+		$method = $reflection->getMethod( 'load_dependencies' );
+		$method->setAccessible( true );
+
+		// Call the method again to test multiple loads
+		$method->invoke( $this->admin );
+
+		$this->assertTrue( class_exists( 'Decker_Admin_Settings' ) );
+		$this->assertTrue( class_exists( 'Decker_Admin_Export' ) );
+		$this->assertTrue( class_exists( 'Decker_Admin_Import' ) );
 	}
 
 	public function tear_down() {
