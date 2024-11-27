@@ -39,12 +39,15 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 	}
 
 	public function test_add_admin_bar_link() {
+		// Create a mock that matches WP_Admin_Bar's actual structure
 		$admin_bar = $this->getMockBuilder( 'WP_Admin_Bar' )
 			->disableOriginalConstructor()
+			->addMethods(['add_node'])
 			->getMock();
 
+		// Set up expectations for add_node method
 		$admin_bar->expects( $this->once() )
-			->method( 'add_menu' )
+			->method( 'add_node' )
 			->with(
 				$this->callback( function( $args ) {
 					return $args['id'] === 'decker_frontend_link' &&
@@ -53,6 +56,7 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 				} )
 			);
 
+		// Test with admin capabilities
 		$this->admin->add_admin_bar_link( $admin_bar );
 	}
 
