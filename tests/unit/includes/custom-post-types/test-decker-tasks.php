@@ -189,13 +189,13 @@ class Test_Decker_Tasks extends WP_UnitTestCase {
      */
     public function test_rest_routes_registered() {
         global $wp_rest_server;
-
-        // Asegura que el servidor REST esté inicializado
-        if ( ! isset( $wp_rest_server ) ) {
-            $wp_rest_server = new WP_REST_Server();
-            $wp_rest_server->init();
-            do_action( 'rest_api_init' );
-        }
+        
+        // Set up REST server
+        $wp_rest_server = new WP_REST_Server();
+        $GLOBALS['wp_rest_server'] = $wp_rest_server;
+        
+        // Initialize REST API
+        do_action('rest_api_init');
 
         $routes = $wp_rest_server->get_routes();
 
