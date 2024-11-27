@@ -44,18 +44,7 @@ jobs:
           plugins: '["."]'
 
       - name: Run unit tests
-        # run: make test
-        # run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
-        # run: |
-          # npx wp-env run tests-cli pwd
-          # npx wp-env run tests-cli env
-          # npx wp-env run tests-cli ls -al
-          # npx wp-env run tests-cli ls -al wp-content/plugins
-
-      - name: Stop wp-env
-        if: always()
-        run: wp-env stop
 
       - name: Create package using the Makefile
         run: make package VERSION=6.6.6
