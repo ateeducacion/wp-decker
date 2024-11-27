@@ -5,6 +5,8 @@
  * @package Decker
  */
 
+require_once dirname(__FILE__) . '/stubs/class-wp-admin-bar.php';
+
 class Test_Decker_Admin extends WP_UnitTestCase {
 	protected $admin;
 	protected $admin_user_id;
