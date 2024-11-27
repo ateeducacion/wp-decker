@@ -102,12 +102,18 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
      * Test export post type functionality
      */
     public function test_export_post_type() {
+        // Set up nonce
+        $_POST['decker_task_nonce'] = wp_create_nonce('decker_task_nonce');
+        
         // Create a test post
         $post_id = $this->factory->post->create(array(
             'post_type' => 'decker_task',
             'post_title' => 'Test Task',
             'post_content' => 'Test Content'
         ));
+        
+        // Clean up nonce
+        unset($_POST['decker_task_nonce']);
 
         // Add some test meta
         add_post_meta($post_id, 'test_meta_key', 'test_meta_value');
@@ -131,6 +137,9 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
      * Test taxonomy terms export functionality
      */
     public function test_export_taxonomy_terms() {
+        // Set up nonce
+        $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
+        
         // Create a test term
         $term_id = $this->factory->term->create(array(
             'taxonomy' => 'decker_board',
@@ -138,6 +147,9 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
             'slug' => 'test-board',
             'description' => 'Test Description'
         ));
+        
+        // Clean up nonce
+        unset($_POST['decker_board_color_nonce']);
 
         // Add some term meta
         add_term_meta($term_id, 'test_term_meta', 'test_value');
@@ -175,31 +187,37 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
     public function test_process_export($content, $should_export) {
         $_GET['content'] = $content;
         
-        $mock = $this->getMockBuilder(Decker_Admin_Export::class)
-                     ->setMethods(['create_backup'])
-                     ->getMock();
-        
         if ($should_export) {
-            $mock->expects($this->once())
-                 ->method('create_backup');
-        } else {
-            $mock->expects($this->never())
-                 ->method('create_backup');
+            // For valid export, we'll verify the headers are set
+            $this->expectOutputRegex('/decker_backup_\d{4}-\d{2}-\d{2}\.json/');
         }
-             
-        $mock->process_export(array());
+        
+        $this->export_instance->process_export(array());
+        
+        if (!$should_export) {
+            // For invalid export, verify no output
+            $this->expectOutputString('');
+        }
     }
 
     /**
      * Test export file contents
      */
     public function test_export_file_contents() {
+        // Set up nonce
+        $_POST['decker_task_nonce'] = wp_create_nonce('decker_task_nonce');
+        $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
+        
         // Create test data
         $task_id = $this->factory->post->create([
             'post_type' => 'decker_task',
             'post_title' => 'Test Export Task',
             'post_content' => 'Test Content'
         ]);
+        
+        // Clean up nonces
+        unset($_POST['decker_task_nonce']);
+        unset($_POST['decker_board_color_nonce']);
         
         $board_id = $this->factory->term->create([
             'taxonomy' => 'decker_board',
