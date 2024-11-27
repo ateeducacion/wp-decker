@@ -7,5 +7,5 @@
 
 
 class Test_Decker_Admin_Import extends WP_UnitTestCase {
-	
+
 }

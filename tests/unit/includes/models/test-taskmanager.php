@@ -7,5 +7,5 @@
 
 
 class Test_Decker_TaskManager extends WP_UnitTestCase {
-	
+
 }

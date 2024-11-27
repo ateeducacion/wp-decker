@@ -71,8 +71,8 @@ class Decker_Admin_Export {
 	 */
 	public function process_export( $args ) {
 		if ( isset( $_GET['content'] ) && 'decker' === $_GET['content'] ) {
-			// Create the backup and return JSON
-			echo $this->create_backup();
+			// Create the backup and return JSON.
+			echo wp_json_encode( $this->create_backup() );
 		}
 	}
 
@@ -94,8 +94,8 @@ class Decker_Admin_Export {
 			$data[ $taxonomy ] = $terms;
 		}
 
-		// Convert the data to JSON and return it
-		return wp_json_encode($data);
+		// return the data.
+		return $data;
 	}
 
 	/**

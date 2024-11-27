@@ -7,5 +7,5 @@
 
 
 class Test_Decker_LabelManager extends WP_UnitTestCase {
-	
+
 }

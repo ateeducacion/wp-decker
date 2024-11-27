@@ -7,5 +7,5 @@
 
 
 class Test_Decker_Email_To_Post extends WP_UnitTestCase {
-	
+
 }

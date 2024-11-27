@@ -7,5 +7,5 @@
 
 
 class Test_Decker_Board extends WP_UnitTestCase {
-	
+
 }

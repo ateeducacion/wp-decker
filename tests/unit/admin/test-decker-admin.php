@@ -45,18 +45,20 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 		// Create a mock that matches WP_Admin_Bar's actual structure
 		$admin_bar = $this->getMockBuilder( 'WP_Admin_Bar' )
 			->disableOriginalConstructor()
-			->onlyMethods(['add_node'])
+			->onlyMethods( array( 'add_node' ) )
 			->getMock();
 
 		// Set up expectations for add_node method
 		$admin_bar->expects( $this->once() )
 			->method( 'add_node' )
 			->with(
-				$this->callback( function( $args ) {
-					return $args['id'] === 'decker_frontend_link' &&
-						   strpos( $args['title'], 'Go to Frontend' ) !== false &&
-						   $args['href'] === home_url( '/?decker_page=priority' );
-				} )
+				$this->callback(
+					function ( $args ) {
+						return $args['id'] === 'decker_frontend_link' &&
+						  strpos( $args['title'], 'Go to Frontend' ) !== false &&
+						  $args['href'] === home_url( '/?decker_page=priority' );
+					}
+				)
 			);
 
 		// Test with admin capabilities
@@ -64,29 +66,29 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 	}
 
 	public function test_enqueue_styles() {
-	    // Limpia cualquier enqueued style previo
-	    wp_dequeue_style( 'decker' );
+		// Limpia cualquier enqueued style previo
+		wp_dequeue_style( 'decker' );
 
-	    // Test con hook no coincidente
-	    $this->admin->enqueue_styles( 'wrong_hook' );
-	    $this->assertFalse( wp_style_is( 'decker', 'enqueued' ) );
+		// Test con hook no coincidente
+		$this->admin->enqueue_styles( 'wrong_hook' );
+		$this->assertFalse( wp_style_is( 'decker', 'enqueued' ) );
 
-	    // Test con hook coincidente
-	    $this->admin->enqueue_styles( 'settings_page_decker_settings' );
-	    $this->assertTrue( wp_style_is( 'decker', 'enqueued' ) );
+		// Test con hook coincidente
+		$this->admin->enqueue_styles( 'settings_page_decker_settings' );
+		$this->assertTrue( wp_style_is( 'decker', 'enqueued' ) );
 	}
 
 	public function test_enqueue_scripts() {
-	    // Limpia cualquier enqueued script previo
-	    wp_dequeue_script( 'decker' );
+		// Limpia cualquier enqueued script previo
+		wp_dequeue_script( 'decker' );
 
-	    // Test con hook no coincidente
-	    $this->admin->enqueue_scripts( 'wrong_hook' );
-	    $this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
+		// Test con hook no coincidente
+		$this->admin->enqueue_scripts( 'wrong_hook' );
+		$this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
 
-	    // Test con hook coincidente
-	    $this->admin->enqueue_scripts( 'settings_page_decker_settings' );
-	    $this->assertTrue( wp_script_is( 'decker', 'enqueued' ) );
+		// Test con hook coincidente
+		$this->admin->enqueue_scripts( 'settings_page_decker_settings' );
+		$this->assertTrue( wp_script_is( 'decker', 'enqueued' ) );
 	}
 
 
