@@ -31,6 +31,10 @@ class Test_Decker_Boards extends WP_UnitTestCase {
 	}
 
 	public function test_create_terms() {
+		// Set up nonces
+		$_POST['decker_label_color_nonce'] = wp_create_nonce('decker_label_color_action');
+		$_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_action');
+
 		// Test Label taxonomy
 		$label = wp_insert_term( 'Important', 'decker_label' );
 		$this->assertNotWPError( $label );
@@ -40,9 +44,18 @@ class Test_Decker_Boards extends WP_UnitTestCase {
 		$board = wp_insert_term( 'Sprint 1', 'decker_board' );
 		$this->assertNotWPError( $board );
 		$this->assertIsArray( $board );
+
+		// Clean up nonces
+		unset($_POST['decker_label_color_nonce']);
+		unset($_POST['decker_board_color_nonce']);
 	}
 
 	public function test_assign_terms_to_task() {
+		// Set up nonces
+		$_POST['decker_task_nonce'] = wp_create_nonce('decker_task_action');
+		$_POST['decker_label_color_nonce'] = wp_create_nonce('decker_label_color_action');
+		$_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_action');
+
 		// Create a task
 		$task_id = wp_insert_post(
 			array(
@@ -67,6 +80,11 @@ class Test_Decker_Boards extends WP_UnitTestCase {
 		$this->assertCount( 1, $task_boards );
 		$this->assertEquals( 'Priority', $task_labels[0]->name );
 		$this->assertEquals( 'Backlog', $task_boards[0]->name );
+
+		// Clean up nonces
+		unset($_POST['decker_task_nonce']);
+		unset($_POST['decker_label_color_nonce']);
+		unset($_POST['decker_board_color_nonce']);
 	}
 	
 }
