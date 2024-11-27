@@ -71,9 +71,8 @@ class Decker_Admin_Export {
 	 */
 	public function process_export( $args ) {
 		if ( isset( $_GET['content'] ) && 'decker' === $_GET['content'] ) {
-			// Create the backup and download it.
-			$this->create_backup();
-			exit;
+			// Create the backup and return JSON
+			echo $this->create_backup();
 		}
 	}
 
@@ -95,17 +94,8 @@ class Decker_Admin_Export {
 			$data[ $taxonomy ] = $terms;
 		}
 
-		// Convert the data to JSON.
-		$json_data = wp_json_encode( $data );
-
-		// Prepare the JSON file for download.
-		$filename = 'decker_backup_' . gmdate( 'Y-m-d' ) . '.json';
-		header( 'Content-Type: application/json' );
-		header( 'Content-Disposition: attachment; filename=' . $filename );
-
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo $json_data;
-		exit;
+		// Convert the data to JSON and return it
+		return wp_json_encode($data);
 	}
 
 	/**

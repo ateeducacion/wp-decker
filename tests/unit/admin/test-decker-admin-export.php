@@ -137,8 +137,9 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
      * Test taxonomy terms export functionality
      */
     public function test_export_taxonomy_terms() {
-        // Set up nonce
+        // Set up nonces for board creation
         $_POST['decker_board_nonce'] = wp_create_nonce('decker_board_nonce');
+        $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
         
         // Create a test term
         $term_id = $this->factory->term->create(array(
@@ -148,8 +149,9 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
             'description' => 'Test Description'
         ));
         
-        // Clean up nonce
+        // Clean up nonces
         unset($_POST['decker_board_nonce']);
+        unset($_POST['decker_board_color_nonce']);
 
         // Add some term meta
         add_term_meta($term_id, 'test_term_meta', 'test_value');
@@ -205,8 +207,9 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
      * Test export file contents
      */
     public function test_export_file_contents() {
-        // Set up nonce
+        // Set up nonces
         $_POST['decker_task_nonce'] = wp_create_nonce('decker_task_nonce');
+        $_POST['decker_board_nonce'] = wp_create_nonce('decker_board_nonce');
         $_POST['decker_board_color_nonce'] = wp_create_nonce('decker_board_color_nonce');
         
         // Create test data
