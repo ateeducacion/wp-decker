@@ -50,6 +50,8 @@ jobs:
         run: |
           npx wp-env run tests-cli pwd
           npx wp-env run tests-cli env
+          npx wp-env run tests-cli ls -al
+          npx wp-env run tests-cli ls -al wp-content/plugins
 
       - name: Stop wp-env
         if: always()
