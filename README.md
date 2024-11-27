@@ -30,4 +30,4 @@ For development, you can bring up a local WordPress environment with the plugin 
 make up
 ```
 
-This command will start a Dockerized WordPress instance accessible at [http://localhost:8080](http://localhost:8080) with the default admin username `admin` and password `PLEASE_CHANGEME`. 
+This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`. 
