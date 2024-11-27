@@ -41,7 +41,7 @@ jobs:
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
         with:
-          wp-env-config: .wp-env.json
+          plugins: "."
 
       - name: Run unit tests
         run: make test
