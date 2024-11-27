@@ -20,24 +20,55 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
     }
 
     /**
-     * Test constructor hooks
+     * Data provider for hook testing
      */
-    public function test_constructor_hooks() {
-        $this->assertEquals(10, has_action('export_filters', array($this->export_instance, 'add_export_option')));
-        $this->assertEquals(10, has_action('export_wp', array($this->export_instance, 'process_export')));
+    public function provide_expected_hooks() {
+        return [
+            'export_filters' => ['export_filters', 'add_export_option', 10],
+            'export_wp' => ['export_wp', 'process_export', 10]
+        ];
+    }
+
+    /**
+     * Test constructor hooks
+     * @dataProvider provide_expected_hooks
+     */
+    public function test_constructor_hooks($hook, $callback, $priority) {
+        $this->assertEquals(
+            $priority, 
+            has_action($hook, array($this->export_instance, $callback)),
+            "Hook '$hook' not properly registered"
+        );
+    }
+
+    /**
+     * Data provider for custom post types
+     */
+    public function provide_expected_post_types() {
+        return [
+            'decker_task' => ['decker_task', true],
+            'invalid_type' => ['invalid_post_type', false],
+            'post' => ['post', false]
+        ];
     }
 
     /**
      * Test custom post types getter
+     * @dataProvider provide_expected_post_types
      */
-    public function test_get_custom_post_types() {
+    public function test_get_custom_post_types($post_type, $should_exist) {
         $reflection = new ReflectionClass($this->export_instance);
         $method = $reflection->getMethod('get_custom_post_types');
         $method->setAccessible(true);
 
         $post_types = $method->invoke($this->export_instance);
-        $this->assertIsArray($post_types);
-        $this->assertContains('decker_task', $post_types);
+        
+        $this->assertIsArray($post_types, 'Post types should be returned as array');
+        if ($should_exist) {
+            $this->assertContains($post_type, $post_types, "Post type '$post_type' should exist");
+        } else {
+            $this->assertNotContains($post_type, $post_types, "Post type '$post_type' should not exist");
+        }
     }
 
     /**
@@ -127,20 +158,74 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
     }
 
     /**
-     * Test process export with mock data
+     * Data provider for export process testing
      */
-    public function test_process_export() {
-        $_GET['content'] = 'decker';
+    public function provide_export_scenarios() {
+        return [
+            'valid_decker_export' => ['decker', true],
+            'invalid_content' => ['invalid', false],
+            'empty_content' => ['', false],
+        ];
+    }
+
+    /**
+     * Test process export with various scenarios
+     * @dataProvider provide_export_scenarios
+     */
+    public function test_process_export($content, $should_export) {
+        $_GET['content'] = $content;
         
-        // Mock the create_backup method
         $mock = $this->getMockBuilder(Decker_Admin_Export::class)
                      ->setMethods(['create_backup'])
                      ->getMock();
         
-        $mock->expects($this->once())
-             ->method('create_backup');
+        if ($should_export) {
+            $mock->expects($this->once())
+                 ->method('create_backup');
+        } else {
+            $mock->expects($this->never())
+                 ->method('create_backup');
+        }
              
         $mock->process_export(array());
+    }
+
+    /**
+     * Test export file contents
+     */
+    public function test_export_file_contents() {
+        // Create test data
+        $task_id = $this->factory->post->create([
+            'post_type' => 'decker_task',
+            'post_title' => 'Test Export Task',
+            'post_content' => 'Test Content'
+        ]);
+        
+        $board_id = $this->factory->term->create([
+            'taxonomy' => 'decker_board',
+            'name' => 'Test Board'
+        ]);
+
+        // Capture output
+        ob_start();
+        $this->export_instance->process_export([]);
+        $output = ob_get_clean();
+
+        if (!empty($output)) {
+            $exported_data = json_decode($output, true);
+            
+            $this->assertIsArray($exported_data);
+            $this->assertArrayHasKey('decker_task', $exported_data);
+            $this->assertArrayHasKey('decker_board', $exported_data);
+            
+            // Verify task data
+            $exported_task = current($exported_data['decker_task']);
+            $this->assertEquals('Test Export Task', $exported_task['post_title']);
+            
+            // Verify board data
+            $exported_board = current($exported_data['decker_board']);
+            $this->assertEquals('Test Board', $exported_board['name']);
+        }
     }
 
     /**
@@ -148,15 +233,37 @@ class Test_Decker_Admin_Export extends WP_UnitTestCase {
      */
     public function tearDown(): void {
         parent::tearDown();
+        global $wp_filter;
+        
         // Clean up created posts and terms
-        $posts = get_posts(array('post_type' => 'decker_task', 'numberposts' => -1));
+        $posts = get_posts(array(
+            'post_type' => 'decker_task',
+            'numberposts' => -1,
+            'post_status' => 'any'
+        ));
         foreach ($posts as $post) {
             wp_delete_post($post->ID, true);
         }
         
-        $terms = get_terms(array('taxonomy' => 'decker_board', 'hide_empty' => false));
-        foreach ($terms as $term) {
-            wp_delete_term($term->term_id, 'decker_board');
+        // Clean up all custom taxonomies
+        foreach (['decker_board', 'decker_action', 'decker_label'] as $taxonomy) {
+            $terms = get_terms(array(
+                'taxonomy' => $taxonomy,
+                'hide_empty' => false
+            ));
+            if (!is_wp_error($terms)) {
+                foreach ($terms as $term) {
+                    wp_delete_term($term->term_id, $taxonomy);
+                }
+            }
+        }
+
+        // Reset $_GET
+        unset($_GET['content']);
+        
+        // Clean up added filters/actions
+        foreach (['export_filters', 'export_wp'] as $hook) {
+            remove_all_actions($hook);
         }
     }
 }
