@@ -38,20 +38,13 @@ jobs:
         run: make check-untranslated
 
 
-      - name: Setup wp-env
+      - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
         with:
           wp-env-config: .wp-env.json
 
-      - name: Start wp-env
-        run: wp-env start &
-
-      - name: Wait wp-env to start
-        run: sleep 30
-
       - name: Run unit tests
         run: make test
-
 
       - name: Stop wp-env
         if: always()
