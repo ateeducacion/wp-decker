@@ -5,7 +5,8 @@
  * @package Decker
  */
 
-require_once dirname(__FILE__) . '/stubs/class-wp-admin-bar.php';
+require_once ABSPATH . 'wp-includes/class-wp-admin-bar.php';
+
 
 class Test_Decker_Admin extends WP_UnitTestCase {
 	protected $admin;
@@ -44,7 +45,7 @@ class Test_Decker_Admin extends WP_UnitTestCase {
 		// Create a mock that matches WP_Admin_Bar's actual structure
 		$admin_bar = $this->getMockBuilder( 'WP_Admin_Bar' )
 			->disableOriginalConstructor()
-			->addMethods(['add_node'])
+			->onlyMethods(['add_node'])
 			->getMock();
 
 		// Set up expectations for add_node method
