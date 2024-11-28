@@ -7,9 +7,6 @@
  * @author     ATE <ate.educacion@gobiernodecanarias.org>
  */
 
-// Exit if accessed directly.
-defined( 'ABSPATH' ) || exit;
-
 /**
  * Function to find and include wp-load.php dynamically.
  *
@@ -35,8 +32,18 @@ function include_wp_load( $max_levels = 10 ) {
 }
 
 // Attempt to include wp-load.php, required when we are loading the task-card in a Bootstrap modal.
-if ( ! include_wp_load() ) {
-	exit( 'Error: wp-load.php not found.' );
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! include_wp_load() ) { // Usa tu función include_wp_load().
+		exit( 'Error: Unauthorized access.' );
+	}
+}
+
+if ( ! defined( 'DECKER_TASK' ) ) {
+	// Sanitize and verify the nonce.
+	$nonce = isset( $_GET['nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['nonce'] ) ) : '';
+	if ( ! wp_verify_nonce( $nonce, 'decker_task_card' ) ) {
+		exit( 'Unauthorized request.' );
+	}
 }
 
 

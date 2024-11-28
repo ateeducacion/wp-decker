@@ -78,6 +78,7 @@ include 'layouts/main.php';
 								<div class="card-body">
 								<?php
 								if ( $valid_task ) {
+									define( 'DECKER_TASK', true );
 									include 'layouts/task-card.php';
 								}
 								?>

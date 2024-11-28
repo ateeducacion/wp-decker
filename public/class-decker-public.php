@@ -155,7 +155,7 @@ class Decker_Public {
 
 			$resources = array(
 
-				// Registra el script principal.
+				// Register the main theme config script.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
 
 				// Bootstrap 5.
@@ -233,6 +233,8 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
 
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
+
 			);
 
 			if ( 'analytics' == $decker_page ) {
@@ -285,10 +287,16 @@ class Decker_Public {
 				}
 			}
 
-			$current_user = wp_get_current_user();
-			if ( ! ( $current_user instanceof WP_User ) ) {
-				return; // No está autenticado ningún usuario.
-			}
+			wp_localize_script(
+				'task-modal', // task-modal script handle.
+				'jsdata',
+				array(
+					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
+					'url'          => esc_url( plugins_url( 'public/layouts/task-card.php', __DIR__ ) ),
+					'errorMessage' => esc_html__( 'Error loading content. Please try again.', 'decker' ),
+					'nonce'        => wp_create_nonce( 'decker_task_card' ),
+				)
+			);
 
 			// Agrega inline script para el usuario actual.
 			wp_add_inline_script(

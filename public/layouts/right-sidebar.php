@@ -181,7 +181,7 @@ defined( 'ABSPATH' ) || exit;
 				<button type="button" class="btn btn-light w-100" id="reset-layout"><?php esc_html_e( 'Reset', 'decker' ); ?></button>
 			</div>
 			<div class="col-6">
-				<a href="#" role="button" class="btn btn-primary w-100"><?php esc_html_e( 'Buy Now', 'decker' ); ?></a>
+				<a href="#" role="button" class="btn btn-primary w-100"><?php esc_html_e( 'Send', 'decker' ); ?></a>
 			</div>
 		</div>
 	</div>

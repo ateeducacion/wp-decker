@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 ?>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
 
 
   // Asignar eventos para "Assign to me"
