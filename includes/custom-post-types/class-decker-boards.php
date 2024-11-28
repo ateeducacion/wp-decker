@@ -79,7 +79,7 @@ class Decker_Boards {
 	 * Add color field to add term form.
 	 */
 	public function add_color_field() {
-		wp_nonce_field( 'decker_board_color_action', 'decker_board_color_nonce' );
+		wp_nonce_field( 'decker_term_action', 'decker_term_nonce' );
 		?>
 		<div class="form-field term-color-wrap">
 			<label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label>
@@ -94,7 +94,7 @@ class Decker_Boards {
 	 * @param WP_Term $term The current term object.
 	 */
 	public function edit_color_field( $term ) {
-		wp_nonce_field( 'decker_board_color_action', 'decker_board_color_nonce' );
+		wp_nonce_field( 'decker_term_action', 'decker_term_nonce' );
 
 		$term_id = $term->term_id;
 		$color   = get_term_meta( $term_id, 'term-color', true );
@@ -116,9 +116,9 @@ class Decker_Boards {
 	public function save_color_meta( $term_id ) {
 
 		// Check if nonce is set and verified.
-		if ( ! isset( $_POST['decker_board_color_nonce'] ) ) {
-			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_board_color_nonce'] ) );
-			if ( ! wp_verify_nonce( $nonce, 'decker_board_color_action' ) ) {
+		if ( ! isset( $_POST['decker_term_nonce'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
+			if ( ! wp_verify_nonce( $nonce, 'decker_term_action' ) ) {
 				return;
 			}
 		}

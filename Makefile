@@ -31,6 +31,9 @@ fix: phpcbf
 test:
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
 
+logs:
+	npx wp-env logs
+
 # Check code style with PHP-CS-Fixer
 phpcs:
 	composer --no-cache phpcs

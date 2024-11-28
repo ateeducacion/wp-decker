@@ -10,13 +10,13 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-include 'layouts/main.php';
+
 
 // Process form submission.
 
 if ( isset( $_POST['decker_term_nonce'] ) ) {
 	$decker_term_nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
-	if ( wp_verify_nonce( $import_tasks_nonce, 'import_tasks' ) ) {
+	if ( wp_verify_nonce( $decker_term_nonce, 'import_tasks' ) ) {
 		wp_die( 'Security check failed' );
 	}
 
@@ -44,7 +44,9 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 				)
 			)
 		);
+
 		exit;
+
 	}
 
 	// If not delete, process normal form submission.
@@ -96,6 +98,9 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 		exit;
 	}
 }
+
+
+include 'layouts/main.php';
 
 // Get the type from URL parameter, default to 'label'.
 $selected_type = isset( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'label';
