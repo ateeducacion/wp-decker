@@ -6,6 +6,7 @@
  * @subpackage Decker/public
  * @author     ATE <ate.educacion@gobiernodecanarias.org>
  */
+
 // Exit if accessed directly.
 ?>
 <!DOCTYPE html>
