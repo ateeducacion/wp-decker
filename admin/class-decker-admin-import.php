@@ -2,9 +2,9 @@
 /**
  * File class-decker-admin-import
  *
+ * @link       https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/
  * @package    Decker
- * @subpackage Decker/public
- * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ * @subpackage Decker/admin
  */
 
 // Exit if accessed directly.
@@ -19,15 +19,6 @@ require_once 'vendor/parsedown/Parsedown.php';
  *
  * @package    Decker
  * @subpackage Decker/admin
- */
-
-// Exit if accessed directly.
-defined( 'ABSPATH' ) || exit;
-
-/**
- * Class Decker_Admin_Import
- *
- * Manages the import process for tasks, labels, and boards from NextCloud.
  */
 class Decker_Admin_Import {
 
@@ -70,7 +61,7 @@ class Decker_Admin_Import {
 		<div class="wrap">
 			<h2><?php esc_html_e( 'Import Decker Tasks from NextCloud', 'decker' ); ?></h2>
 			<form method="post" id="decker-import-form">
-				<?php wp_nonce_field( 'decker-import' ); ?>
+				<?php wp_nonce_field( 'decker-import', 'decker_import_nonce_field' ); ?>
 				
 				<table class="form-table">
 					<tr>
@@ -125,7 +116,7 @@ class Decker_Admin_Import {
 		</div>
 
 <script>
-// JavaScript for managing import progress and log display	
+// JavaScript for managing import progress and log display    
 document.addEventListener('DOMContentLoaded', function() {
 	const form = document.getElementById('decker-import-form');
 	const progressContainer = document.getElementById('import-progress');
@@ -134,48 +125,51 @@ document.addEventListener('DOMContentLoaded', function() {
 	const logContainer = document.getElementById('log-container');
 	const logMessages = document.getElementById('log-messages');
 	const maxRetries = 4;  // Maximum number of retries
-		<?php
-		$options = get_option( 'decker_settings', array() );
-		?>
-	const ignoredBoardIds = '<?php echo esc_attr( $options['decker_ignored_board_ids'] ); ?>'.split(',').map(id => id.trim());
 
 	form.addEventListener('submit', function(event) {
 		event.preventDefault(); // Prevent form submission
 		progressContainer.style.display = 'block';
 
 		const formData = new FormData(form);
-		formData.append('action', 'decker_start_import');
-		formData.append('security', '<?php echo esc_attr( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
-		
-		// Add all form fields
-		formData.append('nextcloud_url_base', document.getElementById('nextcloud_url_base').value);
-		formData.append('nextcloud_username', document.getElementById('nextcloud_username').value);
-		formData.append('nextcloud_access_token', document.getElementById('nextcloud_access_token').value);
-		formData.append('ignored_board_ids', document.getElementById('ignored_board_ids').value);
-		formData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
+		const nonce = '<?php echo esc_attr( wp_create_nonce( 'decker_import_nonce' ) ); ?>';
+
+		const settings = {
+			nextcloud_url_base: document.getElementById('nextcloud_url_base').value,
+			nextcloud_username: document.getElementById('nextcloud_username').value,
+			nextcloud_access_token: document.getElementById('nextcloud_access_token').value,
+			ignored_board_ids: document.getElementById('ignored_board_ids').value,
+			skip_existing: document.getElementById('skip-existing').checked ? 1 : 0,
+			security: nonce
+		};
 
 		fetch(ajaxurl, {
 			method: 'POST',
-			body: formData
+			credentials: 'same-origin',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest'
+			},
+			body: new URLSearchParams({
+				action: 'decker_start_import',
+				security: settings.security,
+				nextcloud_url_base: settings.nextcloud_url_base,
+				nextcloud_username: settings.nextcloud_username,
+				nextcloud_access_token: settings.nextcloud_access_token,
+				ignored_board_ids: settings.ignored_board_ids,
+				skip_existing: settings.skip_existing
+			})
 		})
 		.then(response => response.json())
 		.then(importData => {
 			if (importData.success) {
 				const totalBoards = importData.data.length;
-
 				let importedBoards = 0;
 
-				// // TODO: Just for DEBUG importing just two boards
-				// if (importedBoards > 1) {
-				// 	console.log("Stopped import")
-				// 	return;
-				// }
-
 				// Filter boards that are not ignored
+				const ignoredBoardIds = settings.ignored_board_ids.split(',').map(id => id.trim());
 				const boardsToProcess = importData.data.filter(board => !ignoredBoardIds.includes(board.id.toString()));
 
 				// Start the board import process
-				processBoards(boardsToProcess, importedBoards, totalBoards);
+				processBoards(boardsToProcess, importedBoards, boardsToProcess.length, settings);
 			} else {
 				logMessages.innerHTML += `<li style="color: red;">Error starting import: ${importData.data}</li>`;
 			}
@@ -185,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	});
 
-	function processBoards(boards, importedBoards, totalBoards) {
+	function processBoards(boards, importedBoards, totalBoards, settings) {
 		if (boards.length === 0) {
 			progressBar.style.width = '100%';
 			progressText.textContent = 'Import completed!';
@@ -196,51 +190,48 @@ document.addEventListener('DOMContentLoaded', function() {
 		const currentBoard = boards.shift();
 		const boardId = currentBoard.id.toString();
 
-		const boardData = new FormData();
-		boardData.append('action', 'decker_import_board');
-		boardData.append('security', '<?php echo esc_attr( wp_create_nonce( 'decker_import_nonce' ) ); ?>');
-		boardData.append('board', JSON.stringify(currentBoard));
-		boardData.append('skip_existing', document.getElementById('skip-existing').checked ? 1 : 0);
+		const boardData = new URLSearchParams({
+			action: 'decker_import_board',
+			security: settings.security,
+			board: JSON.stringify(currentBoard),
+			skip_existing: settings.skip_existing,
+			nextcloud_url_base: settings.nextcloud_url_base,
+			nextcloud_username: settings.nextcloud_username,
+			nextcloud_access_token: settings.nextcloud_access_token,
+			ignored_board_ids: settings.ignored_board_ids
+		});
 
 		fetch(ajaxurl, {
 			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest'
+			},
 			body: boardData
 		})
-		.then(response => response.text())
-		.then(responseText => {
-			try {
-				const boardResponse = JSON.parse(responseText);
-				if (boardResponse.success) {
-					importedBoards++;
-					const progress = (importedBoards / totalBoards) * 100;
-					progressBar.style.width = progress + '%';
-					progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
-					logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
-				} else {
-					logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${boardResponse.data}</li>`;
-				}
-			} catch (error) {
-				// Display the content that caused the JSON.parse() failure
-				console.error('Received response:', error.message);
-				console.error(error.message);
-				console.error('Received response:', responseText);
-				logMessages.innerHTML += `<li style="color: red;">Failed to parse response for board ID: ${boardId}. Retrying...</li>`;
+		.then(response => response.json())
+		.then(responseData => {
+			if (responseData.success) {
+				importedBoards++;
+				const progress = (importedBoards / totalBoards) * 100;
+				progressBar.style.width = progress + '%';
+				progressText.textContent = `Imported ${importedBoards} of ${totalBoards} boards...`;
+				logMessages.innerHTML += `<li>Imported board with ID: ${boardId}</li>`;
+			} else {
+				logMessages.innerHTML += `<li style="color: red;">Error importing board with ID: ${boardId} - ${responseData.data}</li>`;
 			}
 			// Process the next board
 			setTimeout(() => {
-				processBoards(boards, importedBoards, totalBoards);
+				processBoards(boards, importedBoards, totalBoards, settings);
 			}, 500); // Add a small delay if necessary
 		})
 		.catch(error => {
 			logMessages.innerHTML += `<li style="color: red;">Failed to import board with ID: ${boardId}. Error: ${error.message}</li>`;
 			// Process the next board
-			processBoards(boards, importedBoards, totalBoards);
+			processBoards(boards, importedBoards, totalBoards, settings);
 		});
 	}
 });
-
-
-
 </script>
 
 		<?php
@@ -249,12 +240,12 @@ document.addEventListener('DOMContentLoaded', function() {
 	/**
 	 * Retrieves the list of boards from NextCloud.
 	 *
+	 * @param array $config The import configuration settings.
 	 * @return array|null The list of boards or null on failure.
 	 */
-	private function get_nextcloud_boards() {
-		$options    = get_option( 'decker_settings', array() );
-		$auth       = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
-		$boards_url = $options['nextcloud_url_base'] . '/index.php/apps/deck/api/v1.0/boards?details=true';
+	private function get_nextcloud_boards( $config ) {
+		$auth       = base64_encode( $config['nextcloud_username'] . ':' . $config['nextcloud_access_token'] );
+		$boards_url = rtrim( $config['nextcloud_url_base'], '/' ) . '/index.php/apps/deck/api/v1.0/boards?details=true';
 
 		return $this->make_request( $boards_url, $auth );
 	}
@@ -298,27 +289,34 @@ document.addEventListener('DOMContentLoaded', function() {
 	 */
 	public function start_import() {
 		check_ajax_referer( 'decker_import_nonce', 'security' );
+
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Access denied.' );
 		}
 
 		// Get the form data.
-		$nextcloud_url_base     = isset( $_POST['nextcloud_url_base'] ) ? sanitize_url( wp_unslash( $_POST['nextcloud_url_base'] ) ) : '';
+		$nextcloud_url_base     = isset( $_POST['nextcloud_url_base'] ) ? esc_url_raw( wp_unslash( $_POST['nextcloud_url_base'] ) ) : '';
 		$nextcloud_username     = isset( $_POST['nextcloud_username'] ) ? sanitize_text_field( wp_unslash( $_POST['nextcloud_username'] ) ) : '';
 		$nextcloud_access_token = isset( $_POST['nextcloud_access_token'] ) ? sanitize_text_field( wp_unslash( $_POST['nextcloud_access_token'] ) ) : '';
 		$ignored_board_ids      = isset( $_POST['ignored_board_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['ignored_board_ids'] ) ) : '';
+		$skip_existing          = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'] ? true : false;
 
-		// Store temporarily in class properties.
-		$this->import_config = array(
+		// Validate required fields.
+		if ( empty( $nextcloud_url_base ) || empty( $nextcloud_username ) || empty( $nextcloud_access_token ) ) {
+			wp_send_json_error( 'Missing required fields.' );
+		}
+
+		$config = array(
 			'nextcloud_url_base'     => $nextcloud_url_base,
 			'nextcloud_username'     => $nextcloud_username,
 			'nextcloud_access_token' => $nextcloud_access_token,
 			'ignored_board_ids'      => $ignored_board_ids,
+			'skip_existing'          => $skip_existing,
 		);
 
-		$boards = $this->get_nextcloud_boards();
-		if ( $boards ) {
-			wp_send_json_success( $boards );
+		$boards = $this->get_nextcloud_boards( $config );
+		if ( $boards && isset( $boards['ocs']['data'] ) ) {
+			wp_send_json_success( $boards['ocs']['data'] );
 		} else {
 			wp_send_json_error( 'Failed to retrieve boards from NextCloud.' );
 		}
@@ -328,67 +326,82 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * Imports a single board from NextCloud.
 	 */
 	public function import_board() {
-
 		check_ajax_referer( 'decker_import_nonce', 'security' );
-
-		$nonce = isset( $_POST['security'] ) ? sanitize_text_field( wp_unslash( $_POST['security'] ) ) : null;
-
-		// Additional nonce verification.
-		if ( ! wp_verify_nonce( $nonce, 'decker_import_nonce' ) ) {
-			wp_send_json_error( 'Invalid nonce.' );
-			exit;
-		}
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( 'Access denied.' );
 		}
 
-		$skip_existing     = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'];
-		$board             = isset( $_POST['board'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true ) : array();
-		$options           = get_option( 'decker_settings', array() );
-		$ignored_board_ids = explode( ',', $options['decker_ignored_board_ids'] );
+		// Get the settings from the AJAX request.
+		$nextcloud_url_base     = isset( $_POST['nextcloud_url_base'] ) ? esc_url_raw( wp_unslash( $_POST['nextcloud_url_base'] ) ) : '';
+		$nextcloud_username     = isset( $_POST['nextcloud_username'] ) ? sanitize_text_field( wp_unslash( $_POST['nextcloud_username'] ) ) : '';
+		$nextcloud_access_token = isset( $_POST['nextcloud_access_token'] ) ? sanitize_text_field( wp_unslash( $_POST['nextcloud_access_token'] ) ) : '';
+		$ignored_board_ids      = isset( $_POST['ignored_board_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['ignored_board_ids'] ) ) : '';
+		$skip_existing          = isset( $_POST['skip_existing'] ) && 1 == $_POST['skip_existing'] ? true : false;
 
-		if ( ! in_array( $board['id'], $ignored_board_ids, true ) ) {
+		// Validate required fields.
+		if ( empty( $nextcloud_url_base ) || empty( $nextcloud_username ) || empty( $nextcloud_access_token ) ) {
+			wp_send_json_error( 'Missing required settings.' );
+		}
 
-			$board_term = null;
-			if ( ! empty( $board['title'] ) ) {
+		$config = array(
+			'nextcloud_url_base'     => $nextcloud_url_base,
+			'nextcloud_username'     => $nextcloud_username,
+			'nextcloud_access_token' => $nextcloud_access_token,
+			'ignored_board_ids'      => $ignored_board_ids,
+			'skip_existing'          => $skip_existing,
+		);
 
-				if ( is_numeric( $board['title'] ) ) {
-					error_log( 'Skipped board with numeric title: ' . $board['id'] );
-					wp_send_json_error( 'Skipped board with invalid title.' );
-					return;
-				}
+		// Get the board data.
+		$board = isset( $_POST['board'] ) ? json_decode( sanitize_text_field( wp_unslash( $_POST['board'] ) ), true ) : array();
 
-				$board_term = $this->maybe_create_term( $board['title'], 'decker_board', $board['color'] );
-				if ( is_wp_error( $board_term ) ) {
-					error_log( 'Error creating board term for board ID: ' . $board['id'] );
-					wp_send_json_error( 'Failed to create board term.' );
-					return;
-				}
-			} else {
-				error_log( 'Skipped board with empty title: ' . $board['id'] );
-				wp_send_json_error( 'Skipped board with empty title.' );
-				return;
-			}
+		if ( empty( $board ) || ! is_array( $board ) ) {
+			wp_send_json_error( 'Invalid board data.' );
+		}
 
-			// Import the regular tasks.
-			$import_result = $this->import_labels_and_tasks( $board, $board_term, $skip_existing );
-			if ( false === $import_result ) {
-				wp_send_json_error( 'Failed to import tasks.' );
-				return;
-			}
-
-			// Import the archived tasks.
-			$import_result = $this->import_labels_and_tasks( $board, $board_term, $skip_existing, true );
-			if ( false === $import_result ) {
-				wp_send_json_error( 'Failed to import archived tasks.' );
-				return;
-			}
-
-			wp_send_json_success( 'Board imported successfully.' );
-		} else {
+		// Check if the board is ignored.
+		$ignored_board_ids_array = array_map( 'trim', explode( ',', $config['ignored_board_ids'] ) );
+		if ( in_array( $board['id'], $ignored_board_ids_array, true ) ) {
 			wp_send_json_error( 'Board is ignored.' );
 		}
+
+		// Create or retrieve the board term.
+		$board_term = null;
+		if ( ! empty( $board['title'] ) ) {
+
+			if ( is_numeric( $board['title'] ) ) {
+				error_log( 'Skipped board with numeric title: ' . $board['id'] );
+				wp_send_json_error( 'Skipped board with invalid title.' );
+				return;
+			}
+
+			$board_term = $this->maybe_create_term( $board['title'], 'decker_board', $board['color'] );
+			if ( is_wp_error( $board_term ) ) {
+				error_log( 'Error creating board term for board ID: ' . $board['id'] );
+				wp_send_json_error( 'Failed to create board term.' );
+				return;
+			}
+		} else {
+			error_log( 'Skipped board with empty title: ' . $board['id'] );
+			wp_send_json_error( 'Skipped board with empty title.' );
+			return;
+		}
+
+		// Import the regular tasks.
+		$import_result = $this->import_labels_and_tasks( $board, $board_term, $config );
+		if ( false === $import_result ) {
+			wp_send_json_error( 'Failed to import tasks.' );
+			return;
+		}
+
+		// Import the archived tasks.
+		$import_result = $this->import_labels_and_tasks( $board, $board_term, $config, true );
+		if ( false === $import_result ) {
+			wp_send_json_error( 'Failed to import archived tasks.' );
+			return;
+		}
+
+		wp_send_json_success( 'Board imported successfully.' );
 	}
 
 	/**
@@ -402,26 +415,25 @@ document.addEventListener('DOMContentLoaded', function() {
 	private function maybe_create_term( $title, $taxonomy, $color ) {
 		$existing_term = term_exists( $title, $taxonomy );
 
-		// Si el término ya existe y su nombre coincide con otro ID de board, manejar el conflicto.
+		// If the term exists and the title is numeric, handle conflict.
 		if ( $existing_term && is_numeric( $title ) && intval( $title ) !== $existing_term['term_id'] ) {
 			error_log( 'Conflict: Term name matches another board ID: ' . $title );
 			return new WP_Error( 'term_conflict', 'Term name matches another board ID.' );
 		}
 
-		// Si el título es numérico, manejalo adecuadamente.
+		// If the title is numeric, prepend taxonomy to avoid conflicts.
 		if ( is_numeric( $title ) ) {
-			// Opcional: Agregar un prefijo para evitar conflictos.
 			$title = $taxonomy . '-' . $title;
 		}
 
-		// Si el término no existe, crearlo.
+		// If the term does not exist, create it.
 		if ( ! $existing_term ) {
 			$sanitized_color = '';
 			if ( $color ) {
 				$sanitized_color = sanitize_hex_color( 0 === strpos( $color, '#' ) ? $color : '#' . $color );
 			}
 
-			// Insertar el término.
+			// Insert the term.
 			$term = wp_insert_term(
 				$title,
 				$taxonomy,
@@ -435,7 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				return $term;
 			}
 
-			// Añadir metadatos para el color si se creó correctamente.
+			// Add metadata for the color if created successfully.
 			if ( $sanitized_color ) {
 				add_term_meta( $term['term_id'], 'term-color', $sanitized_color, true );
 			}
@@ -450,11 +462,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	 *
 	 * @param array $board The board data.
 	 * @param array $board_term The board term array.
-	 * @param bool  $skip_existing Whether to skip existing tasks.
+	 * @param array $config The import configuration settings.
 	 * @param bool  $archived Whether to import archived tasks.
 	 * @return array|false An array with counts of labels and tasks, or false on failure.
 	 */
-	private function import_labels_and_tasks( $board, $board_term, bool $skip_existing, bool $archived = false ) {
+	private function import_labels_and_tasks( $board, $board_term, $config, $archived = false ) {
 		$label_count   = 0;
 		$task_count    = 0;
 
@@ -474,9 +486,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 
-		$options    = get_option( 'decker_settings', array() );
-		$auth       = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
-		$stacks_url = $options['nextcloud_url_base'] . "/index.php/apps/deck/api/v1.0/boards/{$board['id']}/stacks" . $archived_suffix;
+		$auth       = base64_encode( $config['nextcloud_username'] . ':' . $config['nextcloud_access_token'] );
+		$stacks_url = rtrim( $config['nextcloud_url_base'], '/' ) . "/index.php/apps/deck/api/v1.0/boards/{$board['id']}/stacks" . $archived_suffix;
 
 		$stacks = $this->make_request( $stacks_url, $auth );
 
@@ -525,14 +536,14 @@ document.addEventListener('DOMContentLoaded', function() {
 						// Determine the correct stack value based on the title.
 						$stack_title = isset( $stack_title_map[ $stack['title'] ] ) ? $stack_title_map[ $stack['title'] ] : $stack['title'];
 
-						$post_id = $this->create_task( $card, $board_term, $stack_title, $archived );
+						$post_id = $this->create_task( $card, $board_term, $stack_title, $archived, $config );
 
 						if ( is_wp_error( $post_id ) ) {
 							error_log( 'Error creating task for card ID: ' . $card['id'] );
 							return false;
 						}
 						$task_count++;
-					} elseif ( ! $skip_existing ) {
+					} elseif ( ! $config['skip_existing'] ) {
 						// Update the existing task.
 						$post_id = $existing_task[0];
 						wp_update_post(
@@ -544,8 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
 						);
 					}
 
-					usleep( 100 ); // Little sleep to not be banned by nextcloud.
-
+					usleep( 100 ); // Little sleep to not be banned by NextCloud.
 				}
 			}
 		}
@@ -563,12 +573,13 @@ document.addEventListener('DOMContentLoaded', function() {
 	 * @param array  $board_term The term array for the board.
 	 * @param string $stack_title The title of the stack the card belongs to.
 	 * @param bool   $archived Whether the task is archived.
+	 * @param array  $config The import configuration settings.
 	 * @return int|WP_Error The post ID on success, WP_Error on failure.
 	 */
-	private function create_task( $card, $board_term, $stack_title, $archived ) {
+	private function create_task( $card, $board_term, $stack_title, $archived, $config ) {
 
 		// Determine post status based on whether it's archived or not.
-		$post_status = ! empty( $archived ) && $archived ? 'archived' : 'publish';
+		$post_status = ( ! empty( $archived ) && $archived ) ? 'archived' : 'publish';
 
 		// Convert description using Parsedown.
 		$html_description = $this->_parsedown->text( $card['description'] );
@@ -589,6 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			$nickname = sanitize_text_field( $card['owner'] );
 		} elseif ( is_array( $card['owner'] ) && isset( $card['owner']['uid'] ) ) {
 			$nickname = sanitize_text_field( $card['owner']['uid'] );
+		} else {
+			$nickname = '';
 		}
 
 		$owner = $this->search_user( $nickname );
@@ -656,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		// id_nextcloud_card.
 		$id_nextcloud_card = isset( $card['id'] ) ? intval( $card['id'] ) : 0;
 
-		// Call our common funcition to create task.
+		// Call our common function to create task.
 		$task_id = Decker_Tasks::create_or_update_task(
 			0, // 0 indicates a new task.
 			trim( $card['title'] ),
@@ -680,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 		// If not archived, import and process comments.
 		if ( ! $archived ) {
-			$this->import_comments( $card['id'], $task_id );
+			$this->import_comments( $card['id'], $task_id, $config );
 		}
 
 		return $task_id;
@@ -689,19 +702,19 @@ document.addEventListener('DOMContentLoaded', function() {
 	/**
 	 * Imports comments for a task.
 	 *
-	 * @param int $card_id The ID of the card in NextCloud.
-	 * @param int $post_id The ID of the WordPress post.
+	 * @param int   $card_id The ID of the card in NextCloud.
+	 * @param int   $post_id The ID of the WordPress post.
+	 * @param array $config  The import configuration settings.
 	 */
-	private function import_comments( $card_id, $post_id ) {
+	private function import_comments( $card_id, $post_id, $config ) {
 
-		$options       = get_option( 'decker_settings', array() );
-		$auth          = base64_encode( $options['nextcloud_username'] . ':' . $options['nextcloud_access_token'] );
-		$comments_url  = $options['nextcloud_url_base'] . '/ocs/v2.php/apps/deck/api/v1.0/cards/' . $card_id . '/comments';
+		$auth          = base64_encode( $config['nextcloud_username'] . ':' . $config['nextcloud_access_token'] );
+		$comments_url  = rtrim( $config['nextcloud_url_base'], '/' ) . '/ocs/v2.php/apps/deck/api/v1.0/cards/' . $card_id . '/comments';
 		$comments_data = $this->make_request( $comments_url, $auth );
 
 		if ( isset( $comments_data['ocs']['data'] ) && is_array( $comments_data['ocs']['data'] ) ) {
 			foreach ( $comments_data['ocs']['data'] as $comment ) {
-				$this->process_comment( $comment, $post_id );
+				$this->process_comment( $comment, $post_id, $config );
 			}
 		}
 	}
@@ -709,11 +722,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	/**
 	 * Search for a user by nickname. If no user is found with the specified nickname,
 	 * search by the user login instead.
-	 *
-	 * This function first performs a search for a user whose 'nickname' meta key matches
-	 * the provided string. If no matching user is found, it then searches for a user whose
-	 * login name matches the input string. The function returns the first user found or
-	 * null if no user matches either search criteria.
 	 *
 	 * @param string $nickname The nickname or login to search for.
 	 * @return int|null The ID of the first matching user object or null if no user is found.
@@ -755,14 +763,14 @@ document.addEventListener('DOMContentLoaded', function() {
 		return null; // Return null if no user is found in either search.
 	}
 
-
 	/**
 	 * Processes and saves a comment in WordPress.
 	 *
 	 * @param array $comment The comment data from NextCloud.
 	 * @param int   $post_id The ID of the WordPress post.
+	 * @param array $config  The import configuration settings.
 	 */
-	private function process_comment( $comment, $post_id ) {
+	private function process_comment( $comment, $post_id, $config ) {
 		$message             = trim( $comment['message'] );
 		$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
 		$user_date_relations = $user_date_relations ? $user_date_relations : array();
@@ -816,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					'comment_author_IP' => '',
 					'comment_agent'     => 'NextCloud API',
 					'comment_date'      => $comment['creationDateTime'],
+					'comment_date_gmt'  => get_gmt_from_date( $comment['creationDateTime'] ),
 					'comment_approved'  => 1,
 				)
 			);

@@ -68,6 +68,5 @@ class Test_Decker_Boards extends WP_UnitTestCase {
 		// Clean up nonces
 		unset( $_POST['decker_task_nonce'] );
 		unset( $_POST['decker_term_nonce'] );
-
 	}
 }

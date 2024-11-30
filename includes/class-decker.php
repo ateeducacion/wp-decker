@@ -144,10 +144,6 @@ class Decker {
 	 * Register all hooks related to roles, capabilities, and restrictions.
 	 */
 	private function register_hooks() {
-		$this->loader->add_action( 'init', $this, 'register_role' );
-		$this->loader->add_action( 'init', $this, 'add_custom_caps_to_role' );
-		$this->loader->add_action( 'init', $this, 'add_caps_to_admin' );
-
 		$this->loader->add_filter( 'map_meta_cap', $this, 'restrict_comment_editing_to_author', 10, 3 );
 		$this->loader->add_filter( 'map_meta_cap', $this, 'restrict_comment_capabilities_to_decker_task', 10, 4 );
 	}
@@ -192,50 +188,6 @@ class Decker {
 		$plugin_public = new Decker_Public( $this->get_plugin_name(), $this->get_version() );
 	}
 
-
-	/**
-	 * Create the "Decker User" role if it doesn't exist.
-	 */
-	public function register_role() {
-		add_role(
-			'decker_role',
-			__( 'Decker User', 'decker' ),
-			array(
-				'read'                => true,
-				'edit_posts'          => true,
-				'delete_posts'        => false,
-				'upload_files'        => true,
-				'delete_attachments'  => true,
-				'manage_decker_tasks' => true,
-			)
-		);
-	}
-
-	/**
-	 * Add custom capabilities to the "Decker User" role.
-	 */
-	public function add_custom_caps_to_role() {
-		$role = get_role( 'decker_role' );
-
-		if ( $role ) {
-			$role->add_cap( 'upload_files' );
-			$role->add_cap( 'delete_attachments' );
-			$role->add_cap( 'manage_decker_tasks' );
-			$role->add_cap( 'edit_comments' );
-			$role->add_cap( 'delete_comments' );
-		}
-	}
-
-	/**
-	 * Add custom capabilities to the administrator role.
-	 */
-	public function add_caps_to_admin() {
-		$admin_role = get_role( 'administrator' );
-
-		if ( $admin_role ) {
-			$admin_role->add_cap( 'manage_decker_tasks' );
-		}
-	}
 
 	/**
 	 * Restrict comment editing/deleting to the comment's author.

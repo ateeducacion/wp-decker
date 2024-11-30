@@ -18,6 +18,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Decker_Utility_Functions {
 
 	/**
+	 * Check if the current user has at least the required role.
+	 *
+	 * @return bool True if the user has the required role or higher, false otherwise.
+	 */
+	public static function current_user_can_minimum_role() {
+
+		// Get the saved user profile role from plugin options, default to 'editor'.
+		$options       = get_option( 'decker_settings', array() );
+		$role = isset( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
+
+		// Get all roles in order of hierarchy.
+		$roles = wp_roles()->roles;
+
+		// Get the index of the required role in the hierarchy.
+		$role_index = array_keys( $roles );
+		$required_index = array_search( $role, $role_index );
+
+		// Check the current user's role.
+		foreach ( wp_get_current_user()->roles as $user_role ) {
+			$user_index = array_search( $user_role, $role_index );
+			if ( false !== $user_index && $user_index <= $required_index ) {
+				return true; // User has the required role or higher.
+			}
+		}
+
+		return false; // User does not meet the minimum role.
+	}
+
+	/**
 	 * Get the relative time string based on the due date.
 	 *
 	 * @param DateTime|null $due_date The due date as a DateTime object. Null if no due date.

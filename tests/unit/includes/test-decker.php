@@ -50,18 +50,6 @@ class Test_Decker extends WP_UnitTestCase {
 		$this->assertIsArray( $actions );
 		$this->assertNotEmpty( $actions );
 
-		// Verify specific actions are registered
-		$this->assertContains(
-			array(
-				'hook' => 'init',
-				'component' => $this->decker,
-				'callback' => 'register_role',
-				'priority' => 10,
-				'accepted_args' => 1,
-			),
-			$actions
-		);
-
 		// Test filters registration
 		$this->assertIsArray( $filters );
 
@@ -76,26 +64,6 @@ class Test_Decker extends WP_UnitTestCase {
 			),
 			$filters
 		);
-	}
-
-	public function test_role_registration() {
-		// Test role creation
-		$this->decker->register_role();
-		$role = get_role( 'decker_role' );
-
-		$this->assertNotNull( $role );
-		$this->assertTrue( $role->has_cap( 'read' ) );
-		$this->assertTrue( $role->has_cap( 'edit_posts' ) );
-		$this->assertFalse( $role->has_cap( 'delete_posts' ) );
-		$this->assertTrue( $role->has_cap( 'upload_files' ) );
-	}
-
-	public function test_admin_capabilities() {
-		// Test admin capabilities
-		$this->decker->add_caps_to_admin();
-		$admin_role = get_role( 'administrator' );
-
-		$this->assertTrue( $admin_role->has_cap( 'manage_decker_tasks' ) );
 	}
 
 	public function test_comment_capabilities() {
@@ -127,7 +95,7 @@ class Test_Decker extends WP_UnitTestCase {
 		$this->assertFalse( $caps['edit_comment'] );
 
 		// Test with different user
-		$other_user_id = $this->factory->user->create( array( 'role' => 'decker_role' ) );
+		$other_user_id = $this->factory->user->create( array( 'role' => 'suscriber' ) );
 		$caps = $this->decker->restrict_comment_editing_to_author(
 			array( 'edit_comment' => true ),
 			array( 'edit_comment' ),

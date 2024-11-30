@@ -104,8 +104,14 @@ class Decker_Public {
 			}
 
 			// Verify user permissions.
-			if ( ! current_user_can( 'decker_role' ) && ! is_super_admin() ) {
-				die( esc_attr_e( 'You do not have permission to view this page.', 'decker' ) );
+
+			// Get the saved user profile role from plugin options, default to 'editor'.
+			$options       = get_option( 'decker_settings', array() );
+			$required_role = isset( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
+
+			// Check if the current user has at least the required role.
+			if ( ! Decker_Utility_Functions::current_user_can_minimum_role( $required_role ) ) {
+				wp_die( esc_attr_e( 'You do not have permission to view this page.', 'decker' ) );
 			}
 
 			switch ( $decker_page ) {
@@ -302,15 +308,12 @@ class Decker_Public {
 			wp_add_inline_script(
 				'config', // The handle of the config.js file.
 				'const userId = ' . get_current_user_id() . ';',
-				'before'
+				'before',
 			);
 
 			// Localize the script with new data.
 			$script_data = array(
 				'userId'       => get_current_user_id(),
-				'display_name' => $current_user->display_name,
-				'nickname'     => $current_user->nickname,
-
 			);
 
 			wp_localize_script( 'decker-public', 'deckerData', $script_data );

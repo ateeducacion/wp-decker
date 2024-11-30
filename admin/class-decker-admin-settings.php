@@ -53,21 +53,37 @@ class Decker_Admin_Settings {
 	/**
 	 * Render User Profile Field.
 	 *
-	 * Outputs the HTML for the user_profile field.
+	 * Outputs the HTML for the minimum_user_profile field, displaying only roles with edit permissions.
 	 */
-	public function user_profile_render() {
+	public function minimum_user_profile_render() {
+		// Get saved plugin options.
 		$options       = get_option( 'decker_settings', array() );
-		$selected_role = isset( $options['user_profile'] ) ? $options['user_profile'] : 'decker_role';
 
-		$roles = wp_roles()->get_names();
+		// Default to 'editor' if no user profile is selected.
+		$selected_role = isset( $options['minimum_user_profile'] ) && ! empty( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
 
-		echo '<select name="decker_settings[user_profile]" id="user_profile">';
-		foreach ( $roles as $role_value => $role_name ) {
-			echo '<option value="' . esc_attr( $role_value ) . '" ' . selected( $selected_role, $role_value, false ) . '>' . esc_html( $role_name ) . '</option>';
+		// Retrieve all registered roles in WordPress.
+		$roles = wp_roles()->roles;
+
+		// Filter roles to include only those with 'edit_posts' capability.
+		$editable_roles = array_filter(
+			$roles,
+			function ( $role ) {
+				return isset( $role['capabilities']['edit_posts'] ) && $role['capabilities']['edit_posts'];
+			}
+		);
+
+		// Render the select dropdown for user profiles.
+		echo '<select name="decker_settings[minimum_user_profile]" id="minimum_user_profile">';
+		foreach ( $editable_roles as $role_value => $role_data ) {
+			echo '<option value="' . esc_attr( $role_value ) . '" ' . selected( $selected_role, $role_value, false ) . '>' . esc_html( $role_data['name'] ) . '</option>';
 		}
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Select the user profile to be used by the plugin. Administrators will also have access.', 'decker' ) . '</p>';
+
+		// Add a description below the dropdown.
+		echo '<p class="description">' . esc_html__( 'Select the minimum user profile that can use Decker.', 'decker' ) . '</p>';
 	}
+
 
 	/**
 	 * Render Alert Message Field.
@@ -201,7 +217,7 @@ class Decker_Admin_Settings {
 		$fields = array(
 			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons.
 			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field.
-			'user_profile'          => __( 'User Profile', 'decker' ), // User profile dropdown.
+			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 
@@ -292,10 +308,10 @@ class Decker_Admin_Settings {
 
 		// Validate user profile.
 		$roles = wp_roles()->get_names();
-		if ( isset( $input['user_profile'] ) && ! array_key_exists( $input['user_profile'], $roles ) ) {
-			$input['user_profile'] = 'decker_role'; // Default to decker_role if invalid.
+		if ( isset( $input['minimum_user_profile'] ) && ! array_key_exists( $input['minimum_user_profile'], $roles ) ) {
+			$input['minimum_user_profile'] = 'editor'; // Default to editor if invalid.
 		} else {
-			$input['user_profile'] = isset( $input['user_profile'] ) ? $input['user_profile'] : 'decker_role';
+			$input['minimum_user_profile'] = isset( $input['minimum_user_profile'] ) ? $input['minimum_user_profile'] : 'editor';
 		}
 
 		// Validate alert message.

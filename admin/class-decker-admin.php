@@ -72,7 +72,8 @@ class Decker_Admin {
 	 */
 	public function add_admin_bar_link( $admin_bar ) {
 
-		if ( current_user_can( 'decker_role' ) || is_super_admin() ) {
+		// Check if the current user has at least the required role.
+		if ( Decker_Utility_Functions::current_user_can_minimum_role() || is_super_admin() ) {
 
 			$admin_bar->add_menu(
 				array(
@@ -87,8 +88,6 @@ class Decker_Admin {
 			);
 		}
 	}
-
-
 
 	/**
 	 * Load the required dependencies for this class.
