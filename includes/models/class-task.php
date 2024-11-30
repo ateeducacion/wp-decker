@@ -431,7 +431,8 @@ class Task {
 		$relative_time      = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined date', 'decker' ) . '</span>';
 
 		if ( ! empty( $this->duedate ) ) {
-			$relative_time = esc_html( $this->get_relative_time() );
+			// $relative_time = esc_html( $this->get_relative_time() );
+			$relative_time = $formatted_duedate;
 		}
 
 		$card_background_color = '';

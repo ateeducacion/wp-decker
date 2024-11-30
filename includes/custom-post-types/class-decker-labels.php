@@ -34,9 +34,14 @@ class Decker_Labels {
 		add_action( 'decker_label_edit_form_fields', array( $this, 'edit_color_field' ), 10, 2 );
 		add_action( 'created_decker_label', array( $this, 'save_color_meta' ), 10, 2 );
 		add_action( 'edited_decker_label', array( $this, 'save_color_meta' ), 10, 2 );
+
 		add_action( 'admin_head', array( $this, 'hide_description' ) );
 		add_filter( 'manage_edit-decker_label_columns', array( $this, 'customize_columns' ) );
 		add_filter( 'manage_decker_label_custom_column', array( $this, 'add_column_content' ), 10, 3 );
+
+		// Enforce capability checks.
+		add_filter( 'pre_insert_term', array( $this, 'prevent_term_creation' ), 10, 2 );
+		add_action( 'pre_delete_term', array( $this, 'prevent_term_deletion' ), 10, 2 );
 	}
 
 	/**
@@ -68,11 +73,14 @@ class Decker_Labels {
 			'rest_base'          => 'labels',
 			'can_export'         => true,
 			'capabilities'       => array(
-				'assign_terms' => 'read',
+				'manage_terms' => 'edit_posts',
+				'edit_terms'   => 'edit_posts',
+				'delete_terms' => 'edit_posts',
+				'assign_terms' => 'edit_posts',
 			),
 		);
 
-		register_taxonomy( 'decker_label', array( 'decker_task', 'decker_board' ), $args );
+		register_taxonomy( 'decker_label', array( 'decker_task' ), $args );
 	}
 
 	/**
@@ -116,11 +124,13 @@ class Decker_Labels {
 	public function save_color_meta( $term_id ) {
 
 		// Check if nonce is set and verified.
-		if ( ! isset( $_POST['decker_term_nonce'] ) ) {
+		if ( isset( $_POST['decker_term_nonce'] ) ) {
 			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
 			if ( ! wp_verify_nonce( $nonce, 'decker_term_action' ) ) {
 				return;
 			}
+		} else {
+			return;
 		}
 
 		// Check user capabilities.
@@ -132,6 +142,44 @@ class Decker_Labels {
 			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
 			update_term_meta( $term_id, 'term-color', $term_color );
 		}
+	}
+
+	/**
+	 * Prevent term creation for users without permissions.
+	 *
+	 * @param string $term   The term name.
+	 * @param string $taxonomy The taxonomy slug.
+	 * @return string|WP_Error Term name or WP_Error on failure.
+	 */
+	public function prevent_term_creation( $term, $taxonomy ) {
+		if ( 'decker_label' !== $taxonomy ) {
+			return $term;
+		}
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return new WP_Error( 'term_creation_blocked', 'You do not have permission to create terms.' );
+		}
+
+		return $term;
+	}
+
+	/**
+	 * Prevent term deletion for users without permissions.
+	 *
+	 * @param string $term    The term slug.
+	 * @param string $taxonomy The taxonomy slug.
+	 * @return true|WP_Error True on success, or WP_Error on failure.
+	 */
+	public function prevent_term_deletion( $term, $taxonomy ) {
+		if ( 'decker_label' !== $taxonomy ) {
+			return true;
+		}
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( 'You do not have permission to delete terms.' );
+		}
+
+		return true;
 	}
 
 	/**

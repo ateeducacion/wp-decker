@@ -103,14 +103,8 @@ class Decker_Public {
 				exit;
 			}
 
-			// Verify user permissions.
-
-			// Get the saved user profile role from plugin options, default to 'editor'.
-			$options       = get_option( 'decker_settings', array() );
-			$required_role = isset( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
-
 			// Check if the current user has at least the required role.
-			if ( ! Decker_Utility_Functions::current_user_can_minimum_role( $required_role ) ) {
+			if ( ! Decker_Utility_Functions::current_user_has_at_least_minimum_role() ) {
 				wp_die( esc_attr_e( 'You do not have permission to view this page.', 'decker' ) );
 			}
 

@@ -34,9 +34,15 @@ class Decker_Boards {
 		add_action( 'decker_board_edit_form_fields', array( $this, 'edit_color_field' ), 10, 2 );
 		add_action( 'created_decker_board', array( $this, 'save_color_meta' ), 10, 2 );
 		add_action( 'edited_decker_board', array( $this, 'save_color_meta' ), 10, 2 );
+		add_action( 'delete_term', array( $this, 'decker_handle_board_deletion' ), 10, 3 );
+
 		add_action( 'admin_head', array( $this, 'hide_description' ) );
 		add_filter( 'manage_edit-decker_board_columns', array( $this, 'customize_columns' ) );
 		add_filter( 'manage_decker_board_custom_column', array( $this, 'add_column_content' ), 10, 3 );
+
+		// Enforce capability checks.
+		add_filter( 'pre_insert_term', array( $this, 'prevent_term_creation' ), 10, 2 );
+		add_action( 'pre_delete_term', array( $this, 'prevent_term_deletion' ), 10, 2 );
 	}
 
 	/**
@@ -68,7 +74,10 @@ class Decker_Boards {
 			'rest_base'          => 'boards',
 			'can_export'         => true,
 			'capabilities'       => array(
-				'assign_terms' => 'read',
+				'manage_terms' => 'edit_posts',
+				'edit_terms'   => 'edit_posts',
+				'delete_terms' => 'edit_posts',
+				'assign_terms' => 'edit_posts',
 			),
 		);
 
@@ -114,13 +123,14 @@ class Decker_Boards {
 	 * @param int $term_id The term ID.
 	 */
 	public function save_color_meta( $term_id ) {
-
 		// Check if nonce is set and verified.
-		if ( ! isset( $_POST['decker_term_nonce'] ) ) {
+		if ( isset( $_POST['decker_term_nonce'] ) ) {
 			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
 			if ( ! wp_verify_nonce( $nonce, 'decker_term_action' ) ) {
 				return;
 			}
+		} else {
+			return;
 		}
 
 		// Check user capabilities.
@@ -133,6 +143,86 @@ class Decker_Boards {
 			update_term_meta( $term_id, 'term-color', $term_color );
 		}
 	}
+
+	/**
+	 * Handle the deletion of a term in the 'decker_board' taxonomy.
+	 *
+	 * This function ensures that when a board is deleted, any users who have
+	 * this board set as their default will have the 'decker_default_board'
+	 * user meta removed.
+	 *
+	 * @param int    $term_id  The ID of the term being deleted.
+	 * @param int    $tt_id    The term taxonomy ID (not used here).
+	 * @param string $taxonomy The taxonomy slug.
+	 */
+	public function decker_handle_board_deletion( $term_id, $tt_id, $taxonomy ) {
+
+		// Ensure the taxonomy is 'decker_board'.
+		if ( 'decker_board' !== $taxonomy ) {
+			return;
+		}
+
+		// Sanitize the term ID.
+		$term_id = intval( $term_id );
+
+		// Retrieve all users who have this board as their default.
+		$users = get_users(
+			array(
+				'meta_key'   => 'decker_default_board',
+				'meta_value' => $term_id,
+				'fields'     => 'ID',
+			)
+		);
+
+		// If there are no users, exit early.
+		if ( empty( $users ) ) {
+			return;
+		}
+
+		// Remove the 'decker_default_board' user meta for each user.
+		foreach ( $users as $user_id ) {
+			delete_user_meta( $user_id, 'decker_default_board' );
+		}
+	}
+
+	/**
+	 * Prevent term creation for users without permissions.
+	 *
+	 * @param string $term   The term name.
+	 * @param string $taxonomy The taxonomy slug.
+	 * @return string|WP_Error Term name or WP_Error on failure.
+	 */
+	public function prevent_term_creation( $term, $taxonomy ) {
+		if ( 'decker_board' !== $taxonomy ) {
+			return $term;
+		}
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return new WP_Error( 'term_creation_blocked', 'You do not have permission to create terms.' );
+		}
+
+		return $term;
+	}
+
+	/**
+	 * Prevent term deletion for users without permissions.
+	 *
+	 * @param string $term    The term slug.
+	 * @param string $taxonomy The taxonomy slug.
+	 * @return true|WP_Error True on success, or WP_Error on failure.
+	 */
+	public function prevent_term_deletion( $term, $taxonomy ) {
+		if ( 'decker_board' !== $taxonomy ) {
+			return true;
+		}
+
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			wp_die( 'You do not have permission to delete terms.' );
+		}
+
+		return true;
+	}
+
 
 	/**
 	 * Hide description field in term forms.
