@@ -1,3 +1,8 @@
 .wrapper {
     margin-top: -32px;
 }
+
+.navbar-custom .dropdown a span.d-lg-flex h5,
+.navbar-custom .dropdown a span.d-lg-flex h6 {
+    text-transform: none;
+}

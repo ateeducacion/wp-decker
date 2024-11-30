@@ -75,13 +75,11 @@ class Test_Decker_Tasks extends WP_UnitTestCase {
 	 * Test that boards and labels can be assigned to a task.
 	 */
 	public function test_assign_boards_and_labels_to_task() {
-		// Create terms for boards and labels.
-
-		// error_log( print_r( wp_insert_term( 'Board 1', 'decker_board' ), true ) );
 
 		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
 		wp_set_current_user( $editor->ID );
 
+		// Create terms for boards and labels.
 		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
 		$label_id = wp_insert_term( 'Label 1', 'decker_label' )['term_id'];
 
