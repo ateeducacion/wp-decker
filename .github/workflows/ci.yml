@@ -48,7 +48,7 @@ jobs:
 
       - name: Run Plugin Check
         run: |
-          npx wp-env run cli wp plugin check decker --exclude-checks=plugin_readme
+          npx wp-env run cli wp plugin check wp-decker --exclude-checks=plugin_readme
 
       - name: Run unit tests
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
