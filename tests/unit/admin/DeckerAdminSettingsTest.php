@@ -21,6 +21,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		parent::set_up();
 		// Instantiate the Decker_Admin_Settings class.
 		$this->admin_settings = new Decker_Admin_Settings();
+
+		remove_action( 'admin_init', array( $this->admin_settings, 'handle_clear_all_data' ) );
+
 	}
 
 	/**
@@ -138,17 +141,21 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$_POST['decker_clear_all_data'] = '1';
 		$_POST['decker_clear_all_data_nonce'] = wp_create_nonce( 'decker_clear_all_data_action' );
 
+		// Ensur that $_REQUEST has the same values.
+		$_REQUEST['decker_clear_all_data'] = $_POST['decker_clear_all_data'];
+		$_REQUEST['decker_clear_all_data_nonce'] = $_POST['decker_clear_all_data_nonce'];
+
+	    // Set the request method.
+	    $_SERVER['REQUEST_METHOD'] = 'POST';
+
 		// Capture the redirect to prevent actual redirection during tests.
-		remove_all_actions( 'wp_redirect' );
-		add_filter(
-			'wp_redirect',
-			function ( $location ) {
-				return $location;
-			}
-		);
+        add_filter( 'wp_redirect', array( $this, 'filter_wp_redirect' ), 10, 1 );
 
 		// Run the method.
 		$this->admin_settings->handle_clear_all_data();
+
+		// Remove the filter.
+	    remove_filter( 'wp_redirect', array( $this, 'filter_wp_redirect' ), 10, 1 );
 
 		// Assert that the post is deleted.
 		$this->assertNull( get_post( $post_id ), 'Post should be deleted.' );
@@ -189,4 +196,15 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Reset any global variables or options if necessary.
 		delete_option( 'decker_settings' );
 	}
+
+    /**
+     * Callback para filtrar wp_redirect durante las pruebas.
+     *
+     * @param string $location URL to go.
+     * @return false to prevent redirect.
+     */
+    public function filter_wp_redirect( $location ) {
+        return false; // Prevent redirect.
+    }
+
 }
