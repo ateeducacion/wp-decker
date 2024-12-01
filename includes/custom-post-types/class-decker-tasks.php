@@ -1488,10 +1488,12 @@ class Decker_Tasks {
 
 		// Check if nonce is set and verified.
 		if ( ! isset( $_POST['decker_task_nonce'] ) ) {
-			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_task_nonce'] ) );
-			if ( ! wp_verify_nonce( $nonce, 'save_decker_task' ) ) {
-				return;
-			}
+			return; // Exit if the nonce is not set.
+		}
+
+		$nonce = sanitize_text_field( wp_unslash( $_POST['decker_task_nonce'] ) );
+		if ( ! wp_verify_nonce( $nonce, 'save_decker_task' ) ) {
+			return; // Exit if the nonce verification fails.
 		}
 
 		// Check autosave and post type.
