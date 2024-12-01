@@ -340,7 +340,7 @@ function deleteComment(commentId) {
 				<select class="form-select" id="task-assignees" multiple <?php disabled( $disabled ); ?>>
 					<?php
 					foreach ( $users as $user ) {
-						echo '<option value="' . esc_attr( $user->ID ) . '" ' . selected( in_array( $user->ID, array_column( $task->assigned_users, 'ID' ) ) ) . '>' . esc_html( $user->display_name ) . '</option>';
+						echo '<option value="' . esc_attr( $user->ID ) . '" ' . disabled( !user_can( $user->ID, 'edit_posts' ) ) . selected( in_array( $user->ID, array_column( $task->assigned_users, 'ID' ) ) ) . '>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
@@ -593,7 +593,11 @@ function initializeTaskPage() {
 
 	// Inicializar Choices.js para los selectores de asignados y etiquetas
 	if (document.getElementById('task-assignees')) {
-		assigneesSelect = new Choices('#task-assignees', { removeItemButton: true});
+		assigneesSelect = new Choices('#task-assignees', { 
+			removeItemButton: true,
+			searchEnabled: false,
+			shouldSort: true,
+		});
 	
 		// TODO: Agregar el evento de cambio para los asignados
 		assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
@@ -602,7 +606,12 @@ function initializeTaskPage() {
 
 
 	if (document.getElementById('task-labels')) {
-		labelsSelect = new Choices('#task-labels', { removeItemButton: true, allowHTML: true });
+		labelsSelect = new Choices('#task-labels', { 
+			removeItemButton: true, 
+			allowHTML: true,
+			searchEnabled: true,
+			shouldSort: true,
+		});
 	}
 
 

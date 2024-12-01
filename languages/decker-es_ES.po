@@ -294,7 +294,7 @@ msgstr "Detalles de la Tarea"
 #: public/app-tasks.php:207
 #, fuzzy
 msgid "Assigned Users"
-msgstr "Asignar Usuarios"
+msgstr "Usuarios asignados"
 
 #: includes/custom-post-types/class-decker-tasks.php:1026
 msgid "Task User and Date"
