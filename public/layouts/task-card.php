@@ -296,7 +296,7 @@ function deleteComment(commentId) {
 			<div class="form-floating">
 				<!-- Author always disabled -->
 				<select class="form-select" id="task-author" required 
-					<?php disabled( ! current_user_can( 'edit_posts' ) ); // Disable the select if the current user cannot edit posts. ?>>
+					<?php disabled( $disabled || ! current_user_can( 'edit_posts' ) ); // Disable the select if the current user cannot edit posts. ?>>
 					<option value="" disabled selected><?php esc_html_e( 'Select Author', 'decker' ); ?></option>
 					<?php
 					$users = get_users();
@@ -595,9 +595,9 @@ function initializeTaskPage() {
 				readOnly: <?php echo $disabled ? 'true' : 'false'; ?>,
 				modules: {
 					toolbar: [
-						[{ 'header': [1, 2, false] }],
+						// [{ 'header': [1, 2, false] }],
 						['bold', 'italic', 'underline', 'strike'],
-						[{ 'color': [] }, { 'background': [] }],
+						// [{ 'color': [] }, { 'background': [] }],
 						['link', 'blockquote', 'code-block'],
 						[{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
 						[{ 'indent': '-1' }, { 'indent': '+1' }], // Disminuir y aumentar sangría
