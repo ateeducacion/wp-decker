@@ -168,7 +168,7 @@ class Decker_Admin_Settings {
 					admin_url( 'options-general.php' )
 				)
 			);
-			// exit;
+			wp_die();
 		}
 	}
 
