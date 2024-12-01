@@ -5,26 +5,21 @@ document.addEventListener('DOMContentLoaded', function () {
         var modal = jQuery(this);
         modal.find('.modal-body').html('<p>' + jsdata.errorMessage + '</p>');
 
-        var taskId = jQuery(e.relatedTarget).data('task-id');
+        var taskId = jQuery(e.relatedTarget).data('task-id'); // Can be 0 (new task).
         var url = jsdata.url;
 
-        if (taskId) {
-            url += '?id=' + taskId;
-            url += '&nocache=' + new Date().getTime();
-        } else {
-            // Obtener los parámetros de,,,, la URL actual
-            const params = new URLSearchParams(window.location.search);
-            const boardSlug = params.get('slug');
-            if (boardSlug) {
-                url += '?slug=' + boardSlug; // Añadir el slug de la tarea a la URL si existe
-            }
-
-        }
+        const params = new URLSearchParams(window.location.search);
+        const boardSlug = params.get('slug'); // If exists.
 
         jQuery.ajax({
             url: url,
             type: 'GET',
-            data: { nonce: jsdata.nonce },
+            data: { 
+                id: taskId,
+                slug: boardSlug,
+                nonce: jsdata.nonce,
+                nocache: new Date().getTime()
+            },
             success: function (data) {
                 modal.find('.modal-body').html(data);
 
