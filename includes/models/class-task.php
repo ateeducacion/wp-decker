@@ -480,7 +480,7 @@ class Task {
 
 				<div class="avatar-group mt-2">
 					<?php foreach ( $this->assigned_users as $user_info ) : ?>
-						<a href="javascript:void(0);" class="avatar-group-item <?php echo $user_info->today ? ' today' : ''; ?>"
+						<a href="#" class="avatar-group-item <?php echo $user_info->today ? ' today' : ''; ?>"
 						   data-bs-toggle="tooltip" data-bs-placement="top"
 						   title="<?php echo esc_attr( $user_info->display_name ); ?>">
 							<img src="<?php echo esc_url( get_avatar_url( $user_info->ID ) ); ?>" alt=""
@@ -510,14 +510,17 @@ class Task {
 			home_url( '/' )
 		);
 
+		/*
+		TO-DO: Study if this is useful, we can use the next option to get the link
 		// Add 'Share URL' menu item at the top.
-		$menu_items[] = sprintf(
-			'<a href="%s" class="dropdown-item"><i class="ri-share-line me-1"></i>' . __( 'View Task', 'decker' ) . '</a>',
-			esc_url( $task_url )
-		);
+		// $menu_items[] = sprintf(
+		//  '<a href="%s" class="dropdown-item"><i class="ri-share-line me-1"></i>' . __( 'View Task', 'decker' ) . '</a>',
+		//  esc_url( $task_url )
+		// );
 
-		// Add divider after Share URL.
-		$menu_items[] = '<div class="dropdown-divider"></div>';
+		// // Add divider after Share URL.
+		// $menu_items[] = '<div class="dropdown-divider"></div>';
+		*/
 
 		if ( ! $card ) {
 			// Add 'Edit' menu item.
@@ -546,7 +549,7 @@ class Task {
 
 		// Add 'Archive' menu item.
 		$menu_items[] = sprintf(
-			'<a href="javascript:void(0);" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
+			'<a href="#" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
 			esc_attr( $this->ID )
 		);
 
@@ -555,62 +558,58 @@ class Task {
 			// Add 'Assign to me' and 'Leave' menu items based on assigned users.
 			$is_assigned  = in_array( get_current_user_id(), array_column( $this->assigned_users, 'ID' ) );
 			$menu_items[] = sprintf(
-				'<a href="javascript:void(0);" class="dropdown-item assign-to-me" data-task-id="%d" style="%s"><i class="ri-user-add-line me-1"></i>' . __( 'Assign to me', 'decker' ) . '</a>',
+				'<a href="#" class="dropdown-item assign-to-me %s" data-task-id="%d"><i class="ri-user-add-line me-1"></i>' . __( 'Assign to me', 'decker' ) . '</a>',
+				$is_assigned ? 'hidden' : '',
 				esc_attr( $this->ID ),
-				$is_assigned ? 'display: none;' : ''
 			);
 
 			// Add 'Leave' menu item.
 			$menu_items[] = sprintf(
-				'<a href="javascript:void(0);" class="dropdown-item leave-task" data-task-id="%d" style="%s"><i class="ri-logout-circle-line me-1"></i>' . __( 'Leave', 'decker' ) . '</a>',
+				'<a href="#" class="dropdown-item leave-task %s" data-task-id="%d"><i class="ri-logout-circle-line me-1"></i>' . __( 'Leave', 'decker' ) . '</a>',
+				! $is_assigned ? 'hidden' : '',
 				esc_attr( $this->ID ),
-				! $is_assigned ? 'display: none;' : ''
 			);
 
 			// Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag.
-			if ( $is_assigned ) {
-				$is_marked_for_today = false;
-				foreach ( $this->assigned_users as $user ) {
-					if ( get_current_user_id() == $user->ID && ! empty( $user->today ) ) {
-						$is_marked_for_today = true;
-						break;
-					}
+			$is_marked_for_today = false;
+			foreach ( $this->assigned_users as $user ) {
+				if ( get_current_user_id() == $user->ID && ! empty( $user->today ) ) {
+					$is_marked_for_today = true;
+					break;
 				}
-
-				$menu_items[] = sprintf(
-					'<a href="javascript:void(0);" class="dropdown-item mark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-check-line me-1"></i>' . __( 'Mark for today', 'decker' ) . '</a>',
-					esc_attr( $this->ID ),
-					$is_marked_for_today ? 'display: none;' : ''
-				);
-
-				$menu_items[] = sprintf(
-					'<a href="javascript:void(0);" class="dropdown-item unmark-for-today" data-task-id="%d" style="%s"><i class="ri-calendar-close-line me-1"></i>' . __( 'Unmark for today', 'decker' ) . '</a>',
-					esc_attr( $this->ID ),
-					! $is_marked_for_today ? 'display: none;' : ''
-				);
 			}
+
+			$menu_items[] = sprintf(
+				'<a href="#" class="dropdown-item mark-for-today %s" data-task-id="%d"><i class="ri-calendar-check-line me-1"></i>' . __( 'Mark for today', 'decker' ) . '</a>',
+				! $is_assigned || $is_marked_for_today ? 'hidden' : '',
+				esc_attr( $this->ID ),
+			);
+
+			$menu_items[] = sprintf(
+				'<a href="#" class="dropdown-item unmark-for-today %s" data-task-id="%d"><i class="ri-calendar-close-line me-1"></i>' . __( 'Unmark for today', 'decker' ) . '</a>',
+				! $is_marked_for_today ? 'hidden' : '',
+				esc_attr( $this->ID ),
+			);
+
 		}
 
 		if ( ! $card ) {
 			// Generate dropdown HTML for card.
-			echo sprintf(
+			printf(
 				'<div class="dropdown float-end mt-2">
-                    <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="ri-more-2-fill fs-18"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end">%s</div>
-                </div>',
-				implode( '', $menu_items )
+		            <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
+		                <i class="ri-more-2-fill fs-18"></i>
+		            </a>
+		            <div class="dropdown-menu dropdown-menu-end">%s</div>
+		        </div>',
+				wp_kses_post( implode( '', $menu_items ) )
 			);
-
 		} else {
-
-			echo sprintf(
+			printf(
 				'<div class="dropdown float-end mt-2">
-                    
-                    <div class="dropdown-menu dropdown-menu-end">%s</div>
-                </div>',
-				implode( '', $menu_items )
+		            <div class="dropdown-menu dropdown-menu-end">%s</div>
+		        </div>',
+				wp_kses_post( implode( '', $menu_items ) )
 			);
 
 		}

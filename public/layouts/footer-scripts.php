@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Asignar eventos para "Assign to me"
   document.querySelectorAll('.assign-to-me').forEach((element) => {
 	element.addEventListener('click', function (event) {
+		event.preventDefault();
 	  handleAssignToMe(event.currentTarget);
 	});
   });
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Asignar eventos para "Leave task"
   document.querySelectorAll('.leave-task').forEach((element) => {
 	element.addEventListener('click', function (event) {
+		event.preventDefault();
 	  handleLeaveTask(event.currentTarget);
 	});
   });
@@ -32,43 +34,45 @@ document.addEventListener('DOMContentLoaded', function () {
   // Asignar eventos para "Mark for today" y "Unmark for today"
   document.querySelectorAll('.mark-for-today, .unmark-for-today').forEach((element) => {
 	element.addEventListener('click', function (event) {
+		event.preventDefault();
 	  handleToggleMarkForToday(event.currentTarget);
 	});
   });    
 
 	document.querySelectorAll('.archive-task').forEach((element) => {
-	  element.addEventListener('click', function () {
-		var taskId = element.getAttribute('data-task-id');
-		if (confirm('Are you sure you want to archive this task?')) {
-		  fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
-			method: 'POST',
-			headers: {
-			  'Content-Type': 'application/json',
-			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
-			},
-			body: JSON.stringify({ status: 'archived' })
-		  })
-		  .then(response => {
-			if (!response.ok) {
-			  throw new Error('Network response was not ok');
+	  element.addEventListener('click', function (event) {
+		  event.preventDefault();
+			var taskId = element.getAttribute('data-task-id');
+			if (confirm('Are you sure you want to archive this task?')) {
+			  fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
+				method: 'POST',
+				headers: {
+				  'Content-Type': 'application/json',
+				  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+				},
+				body: JSON.stringify({ status: 'archived' })
+			  })
+			  .then(response => {
+				if (!response.ok) {
+				  throw new Error('Network response was not ok');
+				}
+				return response.json();
+			  })
+			  .then(data => {
+				if (data.success) {
+
+				  // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
+				  // element.closest('.task').remove();
+
+				  // Reload the page if the request was successful
+				  location.reload();   
+
+				} else {
+				  alert('Failed to archive task.');
+				}
+			  })
+			  .catch(error => console.error('Error:', error));
 			}
-			return response.json();
-		  })
-		  .then(data => {
-			if (data.success) {
-
-			  // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
-			  // element.closest('.task').remove();
-
-			  // Reload the page if the request was successful
-			  location.reload();   
-
-			} else {
-			  alert('Failed to archive task.');
-			}
-		  })
-		  .catch(error => console.error('Error:', error));
-		}
 	  });
 	});
 
@@ -76,7 +80,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Add event listener for "Fix Order" button
 	const fixOrderButton = document.getElementById('fix-order-btn');
 	if (fixOrderButton) {
-	  fixOrderButton.addEventListener('click', function () {
+	  fixOrderButton.addEventListener('click', function (event) {
+		  event.preventDefault();
 
 	  if (confirm('Are you sure you want to fix the order?')) {
 
@@ -146,8 +151,12 @@ function handleAssignToMe(element) {
 	  avatarGroup.appendChild(newAvatar);
 
 	  // Alternar opciones del menú
-	  element.style.display = 'none';
-	  taskCard.querySelector('.leave-task').style.display = 'block';
+	element.classList.add('hidden');
+	taskCard.querySelector('.leave-task').classList.remove('hidden');
+	taskCard.querySelector('.mark-for-today').classList.remove('hidden');
+
+	  // element.style.display = 'none';
+	  // taskCard.querySelector('.leave-task').style.display = 'block';
 	} else {
 	  alert('Failed to assign user to task.');
 	}
@@ -181,10 +190,15 @@ function handleLeaveTask(element) {
 	  }
 
 	  // Alternar opciones del menú
-	  element.style.display = 'none';
-	  taskCard.querySelector('.assign-to-me').style.display = 'block';
-	  taskCard.querySelector('.mark-for-today').style.display = 'none';
-	  taskCard.querySelector('.unmark-for-today').style.display = 'none';
+	element.classList.add('hidden');
+	taskCard.querySelector('.assign-to-me').classList.remove('hidden');
+	taskCard.querySelector('.mark-for-today').classList.add('hidden');
+	taskCard.querySelector('.unmark-for-today').classList.add('hidden');
+
+	  // element.style.display = 'none';
+	  // taskCard.querySelector('.assign-to-me').style.display = 'block';
+	  // taskCard.querySelector('.mark-for-today').style.display = 'none';
+	  // taskCard.querySelector('.unmark-for-today').style.display = 'none';
 	} else {
 	  alert('Failed to leave the task.');
 	}
@@ -229,18 +243,28 @@ function toggleMarkForToday(taskId, shouldMark, element) {
 			const closestAvatar = card.querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
 			
 			if (shouldMark) {
-				markElement.style.display = 'none';
-				unmarkElement.style.display = 'block';
-				if (closestAvatar) {
-					closestAvatar.classList.add('today');
-				}
+		markElement.classList.add('hidden');
+		unmarkElement.classList.remove('hidden');
+		if (closestAvatar) {
+			closestAvatar.classList.add('today');
+		}
+				// markElement.style.display = 'none';
+				// unmarkElement.style.display = 'block';
+				// if (closestAvatar) {
+				// 	closestAvatar.classList.add('today');
+				// }
 				console.log('Task marked for today.');
 			} else {
-				unmarkElement.style.display = 'none';
-				markElement.style.display = 'block';
-				if (closestAvatar) {
-					closestAvatar.classList.remove('today');
-				}
+		unmarkElement.classList.add('hidden');
+		markElement.classList.remove('hidden');
+		if (closestAvatar) {
+			closestAvatar.classList.remove('today');
+		}
+				// unmarkElement.style.display = 'none';
+				// markElement.style.display = 'block';
+				// if (closestAvatar) {
+				// 	closestAvatar.classList.remove('today');
+				// }
 				console.log('Task unmarked for today.');
 			}
 		} else {

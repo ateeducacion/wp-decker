@@ -1,3 +1,7 @@
+.hidden {
+    display: none;
+}
+
 .wrapper {
     margin-top: -32px;
 }
