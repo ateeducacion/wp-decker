@@ -46,9 +46,16 @@ jobs:
       - name: Install Plugin Check in wp-env
         run: npx wp-env run cli wp plugin install plugin-check --activate
 
+      - name: Create Plugin ZIP Archive
+        run: composer archive --format=zip --dir=. --file=decker
+
+      - name: Install Plugin from ZIP
+        run: |
+          npx wp-env run cli wp plugin install decker.zip --activate
+
       - name: Run Plugin Check
         run: |
-          npx wp-env run cli wp plugin check wp-decker --exclude-checks=plugin_readme
+          npx wp-env run cli wp plugin check decker --exclude-checks=plugin_readme
 
       - name: Run unit tests
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
@@ -65,12 +72,6 @@ jobs:
       #   with:
       #     build-dir: './decker'
       #     exclude-checks: 'plugin_readme'
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker Image
-        run: make upd
 
 
 
