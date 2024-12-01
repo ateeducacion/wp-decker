@@ -476,7 +476,7 @@ class Task {
 					</span>
 				</p>
 
-				<?php echo wp_kses_post( $this->render_task_menu() ); ?>
+				<?php $this->render_task_menu(); ?>
 
 				<div class="avatar-group mt-2">
 					<?php foreach ( $this->assigned_users as $user_info ) : ?>
@@ -499,7 +499,7 @@ class Task {
 	 *
 	 * @param bool $card The menu is being drawed in a card. Defaults to false.
 	 */
-	public function render_task_menu( bool $card = false ): string {
+	public function render_task_menu( bool $card = false ): void {
 		$menu_items = array();
 
 		$task_url = add_query_arg(
@@ -593,7 +593,7 @@ class Task {
 
 		if ( ! $card ) {
 			// Generate dropdown HTML for card.
-			return sprintf(
+			echo sprintf(
 				'<div class="dropdown float-end mt-2">
                     <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="ri-more-2-fill fs-18"></i>
@@ -605,7 +605,7 @@ class Task {
 
 		} else {
 
-			return sprintf(
+			echo sprintf(
 				'<div class="dropdown float-end mt-2">
                     
                     <div class="dropdown-menu dropdown-menu-end">%s</div>

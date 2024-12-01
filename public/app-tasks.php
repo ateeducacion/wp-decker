@@ -259,7 +259,7 @@ table#tablaTareas td:nth-child(4) {
 													echo '</div></td>';
 													echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
 													echo '<td class="text-end">';
-													echo wp_kses_post( $task->render_task_menu() );
+													$task->render_task_menu();
 													echo '</td>';
 													echo '</tr>';
 												}
