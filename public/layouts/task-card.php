@@ -295,12 +295,16 @@ function deleteComment(commentId) {
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
 				<!-- Author always disabled -->
-				<select class="form-select" id="task-author" required <?php disabled( true ); ?>>
+				<select class="form-select" id="task-author" required 
+					<?php disabled( ! current_user_can( 'edit_posts' ) ); // Disable the select if the current user cannot edit posts. ?>>
 					<option value="" disabled selected><?php esc_html_e( 'Select Author', 'decker' ); ?></option>
 					<?php
 					$users = get_users();
 					foreach ( $users as $user ) {
-						echo '<option value="' . esc_attr( $user->ID ) . '" ' . selected( $user->ID, $task->author ) . '>' . esc_html( $user->display_name ) . '</option>';
+						echo '<option value="' . esc_attr( $user->ID ) . '" '
+							. selected( $user->ID, $task->author, false ) . ' '
+							. disabled( ! user_can( $user->ID, 'edit_posts' ), true, false ) . // Disable the option if the user cannot edit posts.
+							'>' . esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
@@ -339,8 +343,22 @@ function deleteComment(commentId) {
 			<label for="task-assignees" class="form-label"><?php esc_html_e( 'Assign to', 'decker' ); ?></label>
 				<select class="form-select" id="task-assignees" multiple <?php disabled( $disabled ); ?>>
 					<?php
+
 					foreach ( $users as $user ) {
-						echo '<option value="' . esc_attr( $user->ID ) . '" ' . disabled( !user_can( $user->ID, 'edit_posts' ) ) . selected( in_array( $user->ID, array_column( $task->assigned_users, 'ID' ) ) ) . '>' . esc_html( $user->display_name ) . '</option>';
+						$is_disabled = ! user_can( $user->ID, 'edit_posts' );
+						$class = $is_disabled ? 'class="no-edit-capability"' : '';
+
+						// Verify if the suser is on the assignees list.
+						$is_selected = in_array( $user->ID, array_column( $task->assigned_users, 'ID' ) );
+
+
+						echo '<option value="' . esc_attr( $user->ID ) . '" '
+							. wp_kses_post( $class ) . ' '
+							. disabled( $is_disabled, true, false ) . ' ' // Add "disabled" if needed.
+							. selected( $is_selected, true, false ) . '>' // Add "selected" if needed.
+							. esc_html( $user->display_name )
+							. '</option>';
+
 					}
 					?>
 				</select>
@@ -400,7 +418,7 @@ function deleteComment(commentId) {
 	<div class="tab-content">
 		<!-- Description (Quill Editor) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor" style="height: 200px;"><?php echo wp_kses_post( $task->description ); ?></div>
+			<div id="editor" style="height: 200px;"><?php echo Decker_Utility_Functions::sanitize_html_content( $task->description ); ?></div>
 		</div>
 
 		<!-- Comments -->
@@ -482,7 +500,7 @@ function deleteComment(commentId) {
 						$date      = esc_html( $record['date'] );
 
 						echo '<tr>';
-						echo '<td title="' . esc_html( $full_name ) . '">' . esc_html( $avatar ) . ' ' . esc_html( $nickname ) . '</td>';
+						echo '<td title="' . esc_attr( $full_name ) . '">' . wp_kses_post( $avatar ) . ' ' . esc_html( $nickname ) . '</td>';
 						echo '<td>' . esc_html( $date ) . '</td>';
 						echo '</tr>';
 
@@ -580,7 +598,7 @@ function initializeTaskPage() {
 						[{ 'header': [1, 2, false] }],
 						['bold', 'italic', 'underline', 'strike'],
 						[{ 'color': [] }, { 'background': [] }],
-						['link', 'blockquote', 'code-block', 'image'],
+						['link', 'blockquote', 'code-block'],
 						[{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
 						[{ 'indent': '-1' }, { 'indent': '+1' }], // Disminuir y aumentar sangría
 						['clean'],
@@ -595,7 +613,8 @@ function initializeTaskPage() {
 	if (document.getElementById('task-assignees')) {
 		assigneesSelect = new Choices('#task-assignees', { 
 			removeItemButton: true,
-			searchEnabled: false,
+			allowHTML: true,
+			searchEnabled: true,
 			shouldSort: true,
 		});
 	

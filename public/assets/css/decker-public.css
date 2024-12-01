@@ -6,3 +6,17 @@
 .navbar-custom .dropdown a span.d-lg-flex h6 {
     text-transform: none;
 }
+
+
+/* Style for Choice.js disabled items */
+div.choices__item[aria-disabled="true"] {
+    color: red; /* Cambia el color del texto a rojo */
+    background-color: #f8d7da; /* Fondo rojo claro */
+    border: 1px solid #f5c6cb; /* Borde a juego */
+    font-weight: bold; /* Opcional: Resaltar más */
+}
+
+/* Hide disabled options from the Choice.js dropdown */
+div.choices__list--dropdown .choices__item[aria-disabled="true"] {
+    display: none;
+}
