@@ -40,16 +40,14 @@ jobs:
       - name: Create Plugin ZIP Archive
         run: |
           composer archive --format=zip --dir=. --file=decker
-          mkdir tmp-build
-          unzip decker.zip -d tmp-build
-          mv tmp-build/* tmp-build/decker
-          ls -la tmp-build
-          ls -la tmp-build/decker
+          mkdir decker
+          unzip decker.zip -d decker
+          ls -la decker
 
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: './tmp-build/decker'
+          build-dir: './decker'
 
 
       - name: Setup & start wp-env
