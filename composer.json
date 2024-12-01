@@ -1,16 +1,15 @@
 {    
     "require": {
-        "erusev/parsedown": "*"
+        "erusev/parsedown": ">=1.7.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "*",
-        "10up/wp_mock": "*",
-        "squizlabs/php_codesniffer": "*",
-        "wp-coding-standards/wpcs": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
+        "phpunit/phpunit": "*",
+        "squizlabs/php_codesniffer": "*",
+        "wp-cli/i18n-command": "*",
+        "wp-coding-standards/wpcs": "*",
         "yoast/phpunit-polyfills": "*",
-        "wp-phpunit/wp-phpunit": "*",
-        "wp-cli/i18n-command": "*"
+        "yoast/wp-test-utils": "*"
     },
     "scripts": {
         "post-install-cmd": [

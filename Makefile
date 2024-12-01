@@ -29,7 +29,9 @@ fix: phpcbf
 
 # Run unit tests with PHPUnit
 test:
+# 	npx wp-env run tests-cli composer update -W
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
+# 	npx wp-env run tests-cli phpunit -c wp-content/plugins/decker/phpunit.xml.dist
 
 logs:
 	npx wp-env logs
