@@ -51,26 +51,25 @@ class Decker_Utility_Functions {
 	}
 
 	/**
-	 * Sanitize HTML content to allow only simple and safe HTML elements.
+	 * Retur the allowed only simple and safe HTML elements.
 	 *
 	 * This function allows basic formatting tags such as paragraphs, bold, italics,
 	 * lists, tables, links, and spans with specific classes and data attributes.
 	 * It excludes potentially dangerous elements like images, embeds, iframes, and scripts.
 	 *
-	 * @param string $content The HTML content to sanitize.
-	 * @return string The sanitized HTML content.
+	 * @return array The allowrd tags array.
 	 */
-	public static function sanitize_html_content( $content ) {
+	public static function get_allowed_tags() {
 
 		// Define the allowed CSS tags.
-	    $allowed_css_properties = array(
-	        'background-color',
-	        'color',
-	        'font-size',
-	        'font-family',
-	        'font-weight',
-	        'text-decoration',
-	    );
+		$allowed_css_properties = array(
+			'background-color',
+			'color',
+			'font-size',
+			'font-family',
+			'font-weight',
+			'text-decoration',
+		);
 
 		// Define the allowed HTML tags and their permitted attributes.
 		$allowed_tags = array(
@@ -124,9 +123,7 @@ class Decker_Utility_Functions {
 			// Add more basic tags if needed.
 		);
 
-		// First, sanitize the content using wp_kses with the defined allowed tags.
-		$sanitized_content = wp_kses( $content, $allowed_tags );
-
-		return $sanitized_content;
+		// Return the defined allowed tags.
+		return $allowed_tags;
 	}
 }

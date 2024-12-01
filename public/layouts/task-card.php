@@ -418,7 +418,7 @@ function deleteComment(commentId) {
 	<div class="tab-content">
 		<!-- Description (Quill Editor) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor" style="height: 200px;"><?php echo Decker_Utility_Functions::sanitize_html_content( $task->description ); ?></div>
+			<div id="editor" style="height: 200px;"><?php echo wp_kses( $task->description, Decker_Utility_Functions::get_allowed_tags() ); ?></div>
 		</div>
 
 		<!-- Comments -->

@@ -1555,22 +1555,21 @@ class Decker_Tasks {
 		$relations = array();
 
 		if ( isset( $_POST['user_date_relations'] ) ) {
-		    // Remove slashes added by WordPress.
-		    $relations_json = sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) );
+			// Remove slashes added by WordPress.
+			$relations_json = sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) );
 
-		    // Decode the JSON using PHP's json_decode function.
-		    $decoded_relations = json_decode( $relations_json, true );
+			// Decode the JSON using PHP's json_decode function.
+			$decoded_relations = json_decode( $relations_json, true );
 
-		    // Verify that the decoding returned a valid array.
-		    if ( is_array( $decoded_relations ) ) {
-		        $relations = $decoded_relations;
-		    } else {
-		        // Handle JSON decoding errors if necessary.
-		        // You can log the error or display a message.
-		        error_log( 'JSON decoding failed: ' . json_last_error_msg() );
-		    }
+			// Verify that the decoding returned a valid array.
+			if ( is_array( $decoded_relations ) ) {
+				$relations = $decoded_relations;
+			} else {
+				// Handle JSON decoding errors if necessary.
+				// You can log the error or display a message.
+				error_log( 'JSON decoding failed: ' . json_last_error_msg() );
+			}
 		}
-
 
 		update_post_meta( $post_id, '_user_date_relations', $relations );
 	}
@@ -1740,7 +1739,7 @@ class Decker_Tasks {
 		// Retrieve and sanitize form data.
 		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
 		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-		$description = isset( $_POST['description'] ) ? Decker_Utility_Functions::sanitize_html_content( wp_unslash( $_POST['description'] ) ) : '';
+		$description = isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'], Decker_Utility_Functions::get_allowed_tags() ) ) : '';
 		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '';
 		$board       = isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0;
 
@@ -1908,7 +1907,7 @@ class Decker_Tasks {
 		// Preparar los datos del post.
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $title ),
-			'post_content' => Decker_Utility_Functions::sanitize_html_content( $description ),
+			'post_content' => wp_kses( $description, Decker_Utility_Functions::get_allowed_tags() ),
 			'post_status'  => $archived ? 'archived' : 'publish',
 			'post_type'    => 'decker_task',
 			'post_date'    => $creation_date_str,
