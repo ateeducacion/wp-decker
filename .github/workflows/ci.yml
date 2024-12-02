@@ -56,5 +56,12 @@ jobs:
       - name: Run unit tests
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
 
+      # - name: Run plugin check
+      #   run: make check
+
+
       - name: Run plugin check
-        run: make check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: '.'
+          exclude-checks: 'image_functions'
