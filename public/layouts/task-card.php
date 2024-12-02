@@ -636,7 +636,7 @@ function initializeTaskPage() {
 						msg: "<?php esc_attr_e( 'Edit the content in HTML format', 'decker' ); ?>", //Custom message to display in the editor, default: Edit HTML here, when you click "OK" the quill editor's contents will be replaced
 						okText: "<?php esc_attr_e( 'OK', 'decker' ); ?>", // Text to display in the OK button, default: Ok,
 						cancelText: "<?php esc_attr_e( 'Cancel', 'decker' ); ?>", // Text to display in the cancel button, default: Cancel
-
+						closeOnClickOverlay: false,
 					},   				
 				}
 			});
