@@ -161,13 +161,13 @@ if (defined('WP_CLI') && WP_CLI) {
                     // Asignar etiquetas aleatorias (0 a 3 etiquetas)
                     $num_labels = rand(0, 3);
                     if ($num_labels > 0 && !empty($labels)) {
-                        $assigned_labels = wp_rand_elements($labels, $num_labels);
+                        $assigned_labels = $this->wp_rand_elements($labels, $num_labels);
                         wp_set_object_terms($post_id, $assigned_labels, 'decker_label');
                     }
 
                     // Asignar usuarios aleatorios (1 a 3 usuarios)
                     $num_users = rand(1, 3);
-                    $assigned_users = wp_rand_elements($user_ids, $num_users);
+                    $assigned_users = $this->wp_rand_elements($user_ids, $num_users);
                     update_post_meta($post_id, 'assigned_users', $assigned_users);
 
                     WP_CLI::success("Task '$post_title' created and assigned to board '{$board->name}'.");
