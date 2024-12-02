@@ -66,21 +66,11 @@ nav:
     - FAQ: faq.md
 
 markdown_extensions:
-  - pymdownx.highlight:
-      use_pygments: true
-      pygments_lang_class: true
-      pygments_style: monokai
-  - pymdownx.superfences
-  - pymdownx.details
-  - pymdownx.critic
-  - pymdownx.betterem
   - admonition
   - codehilite
 
 plugins:
   - search
-  - minify:
-      minify_html: true
 
 validation:
   omitted_files: warn
