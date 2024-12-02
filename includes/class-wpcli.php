@@ -51,6 +51,11 @@ if (defined('WP_CLI') && WP_CLI) {
          *
          */
         public function create_sample_data() {
+            // Temporarily elevate permissions
+            $current_user = wp_get_current_user();
+            $old_user = $current_user;
+            wp_set_current_user(1); // Switch to admin user (ID 1)
+            
             WP_CLI::log("Starting sample data creation...");
 
             // 1. Create labels
@@ -170,6 +175,9 @@ if (defined('WP_CLI') && WP_CLI) {
             }
 
             WP_CLI::success("Sample data created successfully!");
+            
+            // Restore original user
+            wp_set_current_user($old_user->ID);
         }
 
         /**
