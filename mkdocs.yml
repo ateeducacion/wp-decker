@@ -1,0 +1,78 @@
+site_name: Decker
+site_description: A WordPress plugin that provides a Kanban board interface with a unique priority system for managing tasks
+
+site_author: ATE
+repo_url: https://github.com/ateeducacion/wp-decker
+edit_uri: edit/main/docs/
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ateeducacion/wp-decker
+
+theme:
+  name: material
+  repo_branch: main
+  highlightjs: true
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.follow
+    - header.autohide
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: pink
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+  footer:
+    text: "Decker - A project by Área de Tecnología Educativa (ATE)"
+
+nav:
+  - Home: index.md
+  - User Guide: user-guide.md
+  - Getting Started:
+    - Installation: installation.md
+    - Configuration: configuration.md
+  - Development:
+    - Contributing: contributing.md
+    - Development Guide: development.md
+  - Reference:
+    - API Reference: api-reference.md
+    - FAQ: faq.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+
+plugins:
+  - search
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn

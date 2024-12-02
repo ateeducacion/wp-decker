@@ -45,13 +45,3 @@ Yes, the plugin independant, Nextcloud is only to oneway import.
 2. **Settings Panel**  
    Configure plugin preferences.
 
-== Changelog ==
-
-= 1.0.0 =  
-* Initial release.
-
-== Upgrade Notice ==
-
-= 1.0.0 =  
-This is the first release of ATE Decker. Ensure your WordPress site meets the minimum requirements before installation.
-
