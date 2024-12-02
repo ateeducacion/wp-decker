@@ -24,8 +24,8 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Setup WP-CLI
-        uses: godaddy-wordpress/setup-wp-cli@1
+      # - name: Setup WP-CLI
+      #   uses: godaddy-wordpress/setup-wp-cli@1
 
       - name: Run code linting
         run: make lint
@@ -63,5 +63,5 @@ jobs:
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: '.'
+          # build-dir: '.'
           exclude-checks: 'image_functions'
