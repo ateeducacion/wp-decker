@@ -58,7 +58,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$term_slug = sanitize_title( $term_name );
 				$term_color = $this->generate_random_color();
 
-				// Verificar si la etiqueta ya existe.
+				// Check if the label already exists.
 				$existing_term = term_exists( $term_slug, 'decker_label' );
 				if ( $existing_term ) {
 					WP_CLI::warning( "Label '$term_name' already exists. Skipping..." );
@@ -79,7 +79,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 					continue;
 				}
 
-				// Añadir meta 'term-color'.
+				// Add 'term-color' meta.
 				add_term_meta( $term['term_id'], 'term-color', $term_color, true );
 				WP_CLI::success( "Label '$term_name' created with color $term_color." );
 				$labels[] = $term['term_id'];
@@ -93,7 +93,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				$term_slug = sanitize_title( $term_name );
 				$term_color = $this->generate_random_color();
 
-				// Verificar si el tablero ya existe.
+				// Check if the board already exists.
 				$existing_term = term_exists( $term_slug, 'decker_board' );
 				if ( $existing_term ) {
 					WP_CLI::warning( "Board '$term_name' already exists. Skipping..." );
@@ -225,9 +225,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 
 		/**
-		 * Genera un valor booleano aleatorio basado en una probabilidad.
+		 * Generates a random boolean value based on a probability.
 		 *
-		 * @param float $true_probability Probabilidad de que retorne true (entre 0 y 1).
+		 * @param float $true_probability Probability of returning true (between 0 and 1).
 		 * @return bool
 		 */
 		private function random_boolean( $true_probability = 0.5 ) {
@@ -235,11 +235,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		/**
-		 * Genera una fecha aleatoria entre dos fechas dadas.
+		 * Generates a random date between two given dates.
 		 *
-		 * @param string $start Fecha de inicio (formato reconocido por strtotime).
-		 * @param string $end Fecha de fin (formato reconocido por strtotime).
-		 * @return DateTime Fecha generada aleatoriamente.
+		 * @param string $start Start date (format recognized by strtotime).
+		 * @param string $end End date (format recognized by strtotime).
+		 * @return DateTime Randomly generated date.
 		 */
 		private function random_date( $start, $end ) {
 			$min = strtotime( $start );
@@ -249,9 +249,9 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 
 		/**
-		 * Selecciona un stack aleatorio.
+		 * Selects a random stack.
 		 *
-		 * @return string Uno de los valores: 'to-do', 'in-progress', 'done'.
+		 * @return string One of these values: 'to-do', 'in-progress', 'done'.
 		 */
 		private function random_stack() {
 			$stacks = array( 'to-do', 'in-progress', 'done' );
