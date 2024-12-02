@@ -1,5 +1,10 @@
 <?php
-// Decker_WPCLI.php
+/**
+ * WP-CLI commands for the Decker plugin.
+ *
+ * @package Decker
+ * @subpackage Decker/includes
+ */
 if (defined('WP_CLI') && WP_CLI) {
 
     /**
