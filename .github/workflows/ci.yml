@@ -69,3 +69,4 @@ jobs:
         with:
           # build-dir: '.'
           exclude-checks: 'image_functions'
+          slug: 'decker'
