@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      # - name: Setup WP-CLI
-      #   uses: godaddy-wordpress/setup-wp-cli@1
-
       - name: Run code linting
         run: make lint
 
@@ -61,17 +58,3 @@ jobs:
       - name: Run unit tests
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
 
-
-      # - name: Install plugin check
-      #   run: npx wp-env run cli wp plugin install plugin-check --activate
-
-      # - name: Run plugin check
-      #   run: make check
-
-
-      # - name: Run plugin check
-      #   uses: wordpress/plugin-check-action@v1
-      #   with:
-      #     # build-dir: '.'
-      #     exclude-checks: 'image_functions'
-      #     slug: 'decker'

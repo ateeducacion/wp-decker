@@ -29,8 +29,6 @@ fix: phpcbf
 
 check:
 	npx wp-env run cli wp plugin install plugin-check --activate
-	set -e
-# 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=image_functions,file_type
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type
 
 # Run unit tests with PHPUnit
@@ -114,6 +112,7 @@ help:
 	@echo "  pull               - Pull the latest images from the registry"
 	@echo "  lint               - Run the linter to check PHP code style"
 	@echo "  fix                - Automatically fix PHP code style issues"
+	@echo "  check              - Run WordPress plugin-check tests"
 	@echo "  test               - Run unit tests"
 	@echo "  clean              - Clean and stop Docker containers, removing volumes and orphan containers"
 	@echo "  phpcs              - Check code style with PHP-CS-Fixer"
