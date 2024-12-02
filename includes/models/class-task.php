@@ -380,7 +380,7 @@ class Task {
 	 * @return string The relative time as a human-readable string.
 	 */
 	public function get_relative_time(): string {
-		return Decker_Utility_Functions::get_relative_time( $this->duedate );
+		return Decker::get_relative_time( $this->duedate );
 	}
 
 	/**

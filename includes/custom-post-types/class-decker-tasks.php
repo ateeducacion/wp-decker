@@ -1741,7 +1741,7 @@ class Decker_Tasks {
 		// Retrieve and sanitize form data.
 		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
 		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-		$description = isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker_Utility_Functions::get_allowed_tags() ) : '';
+		$description = isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '';
 		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '';
 		$board       = isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0;
 
@@ -1909,7 +1909,7 @@ class Decker_Tasks {
 		// Preparar los datos del post.
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $title ),
-			'post_content' => wp_kses( $description, Decker_Utility_Functions::get_allowed_tags() ),
+			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
 			'post_status'  => $archived ? 'archived' : 'publish',
 			'post_type'    => 'decker_task',
 			'post_date'    => $creation_date_str,

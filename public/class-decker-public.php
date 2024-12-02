@@ -88,7 +88,7 @@ class Decker_Public {
 			}
 
 			// Check if the current user has at least the required role.
-			if ( ! Decker_Utility_Functions::current_user_has_at_least_minimum_role() ) {
+			if ( ! Decker::current_user_has_at_least_minimum_role() ) {
 				$this->deny_access();
 			}
 

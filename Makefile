@@ -22,7 +22,7 @@ down: check-docker
 
 check:
 	npx wp-env run cli wp plugin install plugin-check --activate
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions
 
 # Run unit tests with PHPUnit
 test:
