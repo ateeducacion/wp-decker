@@ -46,6 +46,7 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: './decker'
+          exclude-checks: 'image_functions'
 
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1

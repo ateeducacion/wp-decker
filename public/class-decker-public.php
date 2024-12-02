@@ -225,7 +225,7 @@ class Decker_Public {
 				$handle = sanitize_title( basename( $resource, '.' . pathinfo( $resource, PATHINFO_EXTENSION ) ) );
 
 				if ( false !== strpos( $resource, '.css' ) ) {
-					wp_enqueue_style( $handle, $resource, array(), null );
+					wp_enqueue_style( $handle, $resource, array(), DECKER_VERSION );
 
 				} elseif ( false !== strpos( $resource, '.js' ) ) {
 
@@ -233,7 +233,7 @@ class Decker_Public {
 					if ( $last_handle ) {
 						$deps[] = $last_handle;
 					}
-					wp_enqueue_script( $handle, $resource, $deps, null, true );
+					wp_enqueue_script( $handle, $resource, $deps, DECKER_VERSION, true );
 
 					$last_handle = $handle; // Update last_handle to current script handle.
 

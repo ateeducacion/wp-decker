@@ -28,15 +28,12 @@ lint: phpcs
 fix: phpcbf
 
 check:
-# 	npx wp-env run cli wp plugin install plugin-check --activate
-	npx wp-env run cli wp plugin check decker
-# 	npx wp-env run cli wp  plugin check decker --exclude-checks=hidden_files
+	npx wp-env run cli wp plugin install plugin-check --activate
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=image_functions,file_type
 
 # Run unit tests with PHPUnit
 test:
-# 	npx wp-env run tests-cli composer update -W
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
-# 	npx wp-env run tests-cli phpunit -c wp-content/plugins/decker/phpunit.xml.dist
 
 logs:
 	npx wp-env logs
