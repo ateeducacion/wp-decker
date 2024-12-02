@@ -79,6 +79,11 @@ add_action( 'upgrader_process_complete', 'decker_update_handler', 10, 2 );
  */
 require plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
 
+
+if (defined('WP_CLI') && WP_CLI) {
+    require_once plugin_dir_path(__FILE__) . 'includes/class-wpcli.php';
+}
+
 /**
  * Begins execution of the plugin.
  *
