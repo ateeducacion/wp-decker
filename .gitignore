@@ -2,6 +2,7 @@
 /node_modules/
 /vendor/
 /composer.lock
+/package-lock.json
 *.log
 *.sql
 *.sql.gz
@@ -34,6 +35,7 @@ sftp-config.json
 # /phpunit.xml.dist
 .phpunit.result.cache
 /behat.yml
+.php-cs-fixer.cache
 
 decker/
 .aider*
@@ -41,3 +43,4 @@ decker/
 
 wp/
 wp-content/
+wordpress-develop/

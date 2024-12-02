@@ -1,9 +1,20 @@
 <?php
+/**
+ * File app-task-full
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 ?>
 
 <head>
-	<title><?php _e('Tasks Detail', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e( 'Tasks Detail', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 	<?php include 'layouts/head-css.php'; ?>
 </head>
@@ -31,29 +42,29 @@ include 'layouts/main.php';
 								<div class="page-title-right">
 									<ol class="breadcrumb m-0">
 										<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php _e('Tasks', 'decker'); ?></a></li>
-										<li class="breadcrumb-item active"><?php _e('Task Detail', 'decker'); ?></li>
+										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php esc_html_e( 'Tasks', 'decker' ); ?></a></li>
+										<li class="breadcrumb-item active"><?php esc_html_e( 'Task Detail', 'decker' ); ?></li>
 									</ol>
 								</div>
 							   <?php
-									// Set default title to "New task"
-									$title = __('New task', 'decker');
-									$valid_task = true;
+									// Set default title to "New task".
+									$task_title = __( 'New task', 'decker' );
+								$valid_task                                = true;
 
-									// TODO: Change to use Task class
-									$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
-									if ( $task_id > 0 ) {
-									    $task = get_post( $task_id );
-									    if ( $task && 'decker_task' === $task->post_type ) {
-									        $title = $task->post_title;  
-									    } else {
-									        $title = __('Task not found', 'decker');
-									        $valid_task = false;
-									    }
+								// TODO: Change to use Task class.
+								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+								if ( $task_id ) {
+									$task = get_post( $task_id );
+									if ( $task && 'decker_task' === $task->post_type ) {
+										$task_title = $task->post_title;
+									} else {
+										$task_title      = __( 'Task not found', 'decker' );
+										$valid_task = false;
 									}
+								}
 								?>
 
-								<h4 class="page-title"><?php echo esc_html( $title ); ?></h4>
+								<h4 class="page-title"><?php echo esc_html( $task_title ); ?></h4>
 
 							</div>
 						</div>
@@ -65,11 +76,12 @@ include 'layouts/main.php';
 							
 							<div id="task-card" class="card d-block">
 								<div class="card-body">
-								<?php 
-									if ($valid_task) {
-										include 'layouts/task-card.php';
-									}
-									?>
+								<?php
+								if ( $valid_task ) {
+									define( 'DECKER_TASK', true );
+									include 'layouts/task-card.php';
+								}
+								?>
 								</div>
 							</div>
 

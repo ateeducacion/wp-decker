@@ -121,3 +121,7 @@ html[data-bs-theme=dark][data-topbar-color=dark] {
 .today {
   box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
 }
+
+.wrapper {
+    margin-top: -32px;
+}

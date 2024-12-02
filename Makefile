@@ -12,50 +12,32 @@ endif
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
 
-# Bring up Docker containers in interactive mode
+# Bring up Docker containers
 up: check-docker
-	docker compose up
-
-# Bring up Docker containers in background mode (daemon)
-upd: check-docker
-	docker compose up -d	
+	npx wp-env start --update
 
 # Stop and remove Docker containers
 down: check-docker
-	docker compose down
+	npx wp-env stop
 
-# Pull the latest images from the registry
-pull: check-docker
-	docker compose pull
-
-# Run the linter to check PHP code style
-lint: phpcs
-
-# Automatically fix PHP code style issues
-fix: phpcbf
+check:
+	npx wp-env run cli wp plugin install plugin-check --activate
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions
 
 # Run unit tests with PHPUnit
-test: phpunit
+test:
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
+
+logs:
+	npx wp-env logs
 
 # Check code style with PHP-CS-Fixer
-phpcs:
+lint:
 	composer --no-cache phpcs
 
 # Automatically fix code style with PHP-CS-Fixer
-phpcbf:
+fix:
 	composer --no-cache phpcbf
-
-# Run unit tests with PHPUnit
-phpunit:
-	composer --no-cache phpunit
-
-# Open a shell inside the wordpress container
-shell: check-docker
-	docker compose exec wordpress sh
-
-# Clean and stop Docker containers, removing volumes and orphan containers
-clean: check-docker
-	docker compose down -v --remove-orphans
 
 # Update Composer dependencies
 update: check-docker
@@ -83,33 +65,29 @@ package:
 		echo "Error: No se ha especificado una versión. Usa 'make package VERSION=1.2.3'"; \
 		exit 1; \
 	fi
-	# Update the version in decker.php
+	# Update the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           $(VERSION)/" decker.php
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '$(VERSION)'/" decker.php
+	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: $(VERSION)/" readme.txt
 
 	# Create the ZIP package
-	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "phpunit.xml.dist" "README.txt" "composer.json" "LICENSE.txt" "bin/*" "wp-content/*" "wp/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot"
+	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "node_modules/*" "phpunit.xml.dist" "composer.json" "LICENSE.txt" "bin/*" "wp-content/*" "wp/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot" ".gitattributes" ".gitignore" ".php-cs-fixer.php" ".stylelintrc" ".wp-env.json" ".distignore"  ".editorconfig" ".env" "CODE_OF_CONDUCT.md" "package.json" "package-lock.json" "renovate.json"
 
-	# Restore the version in decker.php
+	# Restore the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           0.0.0/" decker.php
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '0.0.0'/" decker.php
-
+	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: 0.0.0/" readme.txt
 
 # Show help with available commands
 help:
 	@echo "Comandos disponibles:"
 	@echo "  up                 - Bring up Docker containers in interactive mode"
-	@echo "  upd                - Bring up Docker containers in background mode (daemon)"
 	@echo "  down               - Stop and remove Docker containers"
-	@echo "  pull               - Pull the latest images from the registry"
-	@echo "  lint               - Run the linter to check PHP code style"
-	@echo "  fix                - Automatically fix PHP code style issues"
+	@echo "  logs               - Show the docker container logs"
+	@echo "  lint               - Check code style with PHP-CS-Fixer"
+	@echo "  fix                - Automatically fix code style with PHP-CS-Fixer"
+	@echo "  check              - Run WordPress plugin-check tests"
 	@echo "  test               - Run unit tests"
-	@echo "  clean              - Clean and stop Docker containers, removing volumes and orphan containers"
-	@echo "  phpcs              - Check code style with PHP-CS-Fixer"
-	@echo "  phpcbf             - Automatically fix code style with PHP-CS-Fixer"
-	@echo "  phpunit            - Run unit tests with PHPUnit"
-	@echo "  shell              - Open a shell inside the wordpress container"
 	@echo "  update             - Update Composer dependencies"
 	@echo "  package            - Generate a .zip package"
 	@echo "  help               - Show help with available commands"

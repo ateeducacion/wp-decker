@@ -7,6 +7,9 @@
  * @subpackage Decker/admin
  */
 
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The admin-specific functionality of the plugin.
  *
@@ -43,7 +46,7 @@ class Decker_Admin {
 	 */
 	public function __construct( $plugin_name, $version ) {
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
+		$this->version     = $version;
 
 		$this->load_dependencies();
 		add_action( 'admin_bar_menu', array( $this, 'add_admin_bar_link' ), 100 );
@@ -69,12 +72,13 @@ class Decker_Admin {
 	 */
 	public function add_admin_bar_link( $admin_bar ) {
 
-		if ( current_user_can( 'decker_role' ) || is_super_admin() ) {
+		// Check if the current user has at least the required role.
+		if ( Decker::current_user_has_at_least_minimum_role() ) {
 
 			$admin_bar->add_menu(
 				array(
 					'id'    => 'decker_frontend_link',
-					'title' => '<span class="ab-icon dashicons-welcome-widgets-menus"></span> ' . __( 'Go to Frontend', 'decker' ),
+					'title' => '<span class="ab-icon dashicons-welcome-widgets-menus"></span> ' . __( 'Go to Decker', 'decker' ),
 					'href'  => home_url( '/?decker_page=priority' ),
 					'meta'  => array(
 						'title' => __( 'Go to Decker', 'decker' ),
@@ -84,8 +88,6 @@ class Decker_Admin {
 			);
 		}
 	}
-
-
 
 	/**
 	 * Load the required dependencies for this class.

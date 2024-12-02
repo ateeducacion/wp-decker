@@ -1,91 +1,129 @@
-<?php 
-include 'layouts/main.php';
+<?php
+/**
+ * File app-term-manager
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
-// Process form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verify nonce
-    if (!isset($_POST['decker_term_nonce']) || !wp_verify_nonce($_POST['decker_term_nonce'], 'decker_term_action')) {
-        wp_die('Security check failed');
-    }
-    $term_type = sanitize_text_field($_POST['term_type']);
-    $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
-    // Check if this is a delete action
-    if (isset($_POST['action']) && $_POST['action'] === 'delete') {
-        $result = array('success' => false, 'message' => '');
-        
-        if ($term_type === 'board') {
-            $result = BoardManager::deleteBoard($term_id);
-        } else {
-            $result = LabelManager::deleteLabel($term_id);
-        }
 
-        wp_redirect(add_query_arg(array(
-            'status' => $result['success'] ? 'success' : 'error',
-            'message' => urlencode($result['message'])
-        )));
-        exit;
-    }
 
-    // If not delete, process normal form submission
-    $term_name = sanitize_text_field($_POST['term_name']);
-    $term_slug = !empty($_POST['term_slug']) ? sanitize_title($_POST['term_slug']) : '';
-    
-    $data = array(
-        'name' => $term_name,
-    );
+// Process form submission.
 
-    $data['color'] = sanitize_hex_color($_POST['term_color']);
+if ( isset( $_POST['decker_term_nonce'] ) ) {
+	$decker_term_nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
+	if ( wp_verify_nonce( $decker_term_nonce, 'import_tasks' ) ) {
+		wp_die( 'Security check failed' );
+	}
 
-    if (!empty($term_slug)) {
-        $data['slug'] = $term_slug;
-    }
+	$term_type = isset( $_POST['term_type'] ) ? sanitize_text_field( wp_unslash( $_POST['term_type'] ) ) : 'board';
+	$term_id   = isset( $_POST['term_id'] ) ? intval( $_POST['term_id'] ) : 0;
 
-    $result = array('success' => false, 'message' => '');
+	// Check if this is a delete action.
+	if ( isset( $_POST['action'] ) && 'delete' === $_POST['action'] ) {
+		$result = array(
+			'success' => false,
+			'message' => '',
+		);
 
-    if ($term_type === 'board') {
-        $result = BoardManager::saveBoard($data, $term_id);
-    } else {
-        $result = LabelManager::saveLabel($data, $term_id);
-    }
+		if ( 'board' === $term_type ) {
+			$result = BoardManager::delete_board( $term_id );
+		} else {
+			$result = LabelManager::delete_label( $term_id );
+		}
 
-    if ($result['success']) {
-        wp_redirect(add_query_arg(array(
-            'status' => 'success',
-            'message' => urlencode($result['message'])
-        )));
-        exit;
-    } else {
-        wp_redirect(add_query_arg(array(
-            'status' => 'error',
-            'message' => urlencode($result['message'])
-        )));
-        exit;
-    }
+		wp_redirect(
+			add_query_arg(
+				array(
+					'status'  => $result['success'] ? 'success' : 'error',
+					'message' => urlencode( $result['message'] ),
+				)
+			)
+		);
+
+		exit;
+
+	}
+
+	// If not delete, process normal form submission.
+	$term_name = isset( $_POST['term_name'] ) ? sanitize_text_field( wp_unslash( $_POST['term_name'] ) ) : '';
+	$term_slug = isset( $_POST['term_slug'] ) ? sanitize_title( wp_unslash( $_POST['term_slug'] ) ) : '';
+
+
+	$data = array(
+		'name' => $term_name,
+	);
+
+	$data['color'] = isset( $_POST['term_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['term_color'] ) ) : '';
+
+
+	if ( ! empty( $term_slug ) ) {
+		$data['slug'] = $term_slug;
+	}
+
+	$result = array(
+		'success' => false,
+		'message' => '',
+	);
+
+	if ( 'board' === $term_type ) {
+		$result = BoardManager::save_board( $data, $term_id );
+	} else {
+		$result = LabelManager::save_label( $data, $term_id );
+	}
+
+	if ( $result['success'] ) {
+		wp_redirect(
+			add_query_arg(
+				array(
+					'status'  => 'success',
+					'message' => urlencode( $result['message'] ),
+				)
+			)
+		);
+		exit;
+	} else {
+		wp_redirect(
+			add_query_arg(
+				array(
+					'status'  => 'error',
+					'message' => urlencode( $result['message'] ),
+				)
+			)
+		);
+		exit;
+	}
 }
 
-// Get the type from URL parameter, default to 'label'
-$type = isset($_GET['type']) ? sanitize_text_field($_GET['type']) : 'label';
 
-// Initialize the appropriate manager based on type
-$items = [];
-$title = '';
-$addNewText = '';
+include 'layouts/main.php';
 
-if ($type === 'board') {
-    $items = BoardManager::getAllBoards();
-    $title = __('Boards', 'decker');
-    $addNewText = __('Add New Board', 'decker');
+// Get the type from URL parameter, default to 'label'.
+$selected_type = isset( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : 'label';
+
+// Initialize the appropriate manager based on type.
+$items      = array();
+$page_title      = '';
+$add_new_text = '';
+
+if ( 'board' === $selected_type ) {
+	$items      = BoardManager::get_all_boards();
+	$page_title      = __( 'Boards', 'decker' );
+	$add_new_text = __( 'Add New Board', 'decker' );
 } else {
-    $items = LabelManager::getAllLabels();
-    $title = __('Labels', 'decker');
-    $addNewText = __('Add New Label', 'decker');
+	$items      = LabelManager::get_all_labels();
+	$page_title      = __( 'Labels', 'decker' );
+	$add_new_text = __( 'Add New Label', 'decker' );
 }
 
 ?>
 
 <head>
-	<title><?php _e('Tasks', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e( 'Tasks', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -113,7 +151,7 @@ if ($type === 'board') {
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 		
-										<h4 class="page-title"><?php echo esc_html($title); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><?php echo esc_html($addNewText); ?></a></h4>
+										<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><?php echo esc_html( $add_new_text ); ?></a></h4>
 
 
 								<div class="page-title-right">
@@ -125,7 +163,7 @@ if ($type === 'board') {
 										</span>
 										
 										<!-- Search field with clear button (X) inside -->
-										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e('Search...', 'decker'); ?>" aria-label="<?php esc_attr_e('Search', 'decker'); ?>">
+										<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
 									</div>
 
@@ -147,28 +185,28 @@ if ($type === 'board') {
 											<table id="termsTable" class="table table-striped table-bordered dataTable no-footer dt-responsive nowrap w-100" aria-describedby="termsTable_info">
 												<thead>
 													<tr>
-														<th data-sort-default><?php _e('Name', 'decker'); ?></th>
-														<th><?php _e('Slug', 'decker'); ?></th>
-														<th><?php _e('Color', 'decker'); ?></th>
-														<th data-sort-method='none'><?php _e('Actions', 'decker'); ?></th>
+														<th data-sort-default><?php esc_html_e( 'Name', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Slug', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Color', 'decker' ); ?></th>
+														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
 												<tbody>
 													<?php
-													foreach ($items as $item) {
+													foreach ( $items as $item ) {
 														echo '<tr>';
 														echo '<td>';
-														if (!empty($item->color)) {
-															echo '<span class="badge" style="background-color: ' . esc_attr($item->color) . ';">' . esc_html($item->name) . '</span>';
+														if ( ! empty( $item->color ) ) {
+															echo '<span class="badge" style="background-color: ' . esc_attr( $item->color ) . ';">' . esc_html( $item->name ) . '</span>';
 														} else {
-															echo esc_html($item->name);
+															echo esc_html( $item->name );
 														}
 														echo '</td>';
-														echo '<td>' . esc_html($item->slug) . '</td>';
-														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr($item->color) . ';"></span> ' . esc_html($item->color) . '</td>';
+														echo '<td>' . esc_html( $item->slug ) . '</td>';
+														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
 														echo '<td>';
-														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr($type) . '" data-id="' . esc_attr($item->id) . '"><i class="ri-pencil-line"></i></a>';
-														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr($type) . '" data-id="' . esc_attr($item->id) . '"><i class="ri-delete-bin-line"></i></a>';
+														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
+														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';
 														echo '</td>';
 														echo '</tr>';
 													}
@@ -213,30 +251,30 @@ if ($type === 'board') {
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title" id="termModalLabel"><?php _e('Add New Term', 'decker'); ?></h5>
+					<h5 class="modal-title" id="termModalLabel"><?php esc_html_e( 'Add New Term', 'decker' ); ?></h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
 					<form id="term-form" method="POST">
-						<input type="hidden" name="term_type" value="<?php echo esc_attr($type); ?>">
+						<input type="hidden" name="term_type" value="<?php echo esc_attr( $selected_type ); ?>">
 						<input type="hidden" name="term_id" id="term-id">
-						<?php wp_nonce_field('decker_term_action', 'decker_term_nonce'); ?>
+						<?php wp_nonce_field( 'decker_term_action', 'decker_term_nonce' ); ?>
 						<div class="mb-3">
-							<label for="term-name" class="form-label"><?php _e('Name', 'decker'); ?> <span class="text-danger">*</span></label>
+							<label for="term-name" class="form-label"><?php esc_html_e( 'Name', 'decker' ); ?> <span class="text-danger">*</span></label>
 							<input type="text" class="form-control" id="term-name" name="term_name" required>
 						</div>
 						<div class="mb-3">
-							<label for="term-slug" class="form-label"><?php _e('Slug', 'decker'); ?></label>
+							<label for="term-slug" class="form-label"><?php esc_html_e( 'Slug', 'decker' ); ?></label>
 							<input type="text" class="form-control" id="term-slug" name="term_slug">
-							<div class="form-text"><?php _e('Leave empty for automatic generation from name', 'decker'); ?></div>
+							<div class="form-text"><?php esc_html_e( 'Leave empty for automatic generation from name', 'decker' ); ?></div>
 						</div>
 						<div class="mb-3">
-							<label for="term-color" class="form-label"><?php _e('Color', 'decker'); ?></label>
+							<label for="term-color" class="form-label"><?php esc_html_e( 'Color', 'decker' ); ?></label>
 							<input type="color" class="form-control" id="term-color" name="term_color">
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php _e('Close', 'decker'); ?></button>
-							<button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i><?php _e('Save', 'decker'); ?></button>
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
+							<button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i><?php esc_html_e( 'Save', 'decker' ); ?></button>
 						</div>
 					</form>
 				</div>
@@ -249,78 +287,78 @@ if ($type === 'board') {
 
 <script>
 jQuery(document).ready(function($) {
-    new Tablesort(document.getElementById('termsTable'));
-    
-    // Handle search functionality
-    $('#searchInput').on('keyup', function() {
-        const searchText = $(this).val().toLowerCase();
-        $('#termsTable tbody tr').each(function() {
-            const name = $(this).find('td:first-child').text().toLowerCase();
-            const slug = $(this).find('td:nth-child(2)').text().toLowerCase();
-            const color = $(this).find('td:nth-child(3)').text().toLowerCase();
-            
-            if (name.includes(searchText) || slug.includes(searchText) || color.includes(searchText)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    });
+	new Tablesort(document.getElementById('termsTable'));
+	
+	// Handle search functionality.
+	$('#searchInput').on('keyup', function() {
+		const searchText = $(this).val().toLowerCase();
+		$('#termsTable tbody tr').each(function() {
+			const name = $(this).find('td:first-child').text().toLowerCase();
+			const slug = $(this).find('td:nth-child(2)').text().toLowerCase();
+			const color = $(this).find('td:nth-child(3)').text().toLowerCase();
+			
+			if (name.includes(searchText) || slug.includes(searchText) || color.includes(searchText)) {
+				$(this).show();
+			} else {
+				$(this).hide();
+			}
+		});
+	});
 
-    // Initialize the modal
-    const termModal = new bootstrap.Modal(document.getElementById('term-modal'));
-    const termForm = document.getElementById('term-form');
+	// Initialize the modal.
+	const termModal = new bootstrap.Modal(document.getElementById('term-modal'));
+	const termForm = document.getElementById('term-form');
 
-    // Handle "Add New" button click
-    $('.btn-success').on('click', function() {
-        $('#termModalLabel').text('<?php _e("Add New Term", "decker"); ?>');
-        termForm.reset();
-    });
+	// Handle "Add New" button click.
+	$('.btn-success').on('click', function() {
+		$('#termModalLabel').text('<?php esc_html_e( 'Add New Term', 'decker' ); ?>');
+		termForm.reset();
+	});
 
-    // Handle edit button click
-    $('.edit-term').on('click', function(e) {
-        e.preventDefault();
-        const row = $(this).closest('tr');
-        const nameCell = row.find('td:first-child');
-        const name = nameCell.find('.badge').length ? nameCell.find('.badge').text() : nameCell.text();
-        const slug = row.find('td:nth-child(2)').text();
-        const hexColor = row.find('td:nth-child(3)').text().trim();
-        const id = $(this).data('id');
-        $('#termModalLabel').text('<?php _e("Edit Term", "decker"); ?>');
-        $('#term-id').val(id);
-        $('#term-name').val(name);
-        $('#term-slug').val(slug);
-        $('#term-color').val(hexColor);
-        termModal.show();
-    });
+	// Handle edit button click.
+	$('.edit-term').on('click', function(e) {
+		e.preventDefault();
+		const row = $(this).closest('tr');
+		const nameCell = row.find('td:first-child');
+		const name = nameCell.find('.badge').length ? nameCell.find('.badge').text() : nameCell.text();
+		const slug = row.find('td:nth-child(2)').text();
+		const hexColor = row.find('td:nth-child(3)').text().trim();
+		const id = $(this).data('id');
+		$('#termModalLabel').text('<?php esc_html_e( 'Edit Term', 'decker' ); ?>');
+		$('#term-id').val(id);
+		$('#term-name').val(name);
+		$('#term-slug').val(slug);
+		$('#term-color').val(hexColor);
+		termModal.show();
+	});
 
-    // Handle delete term
-    $('.delete-term').on('click', function(e) {
-        e.preventDefault();
-        const row = $(this).closest('tr');
-        const termSlug = row.find('td:nth-child(2)').text();
+	// Handle delete term.
+	$('.delete-term').on('click', function(e) {
+		e.preventDefault();
+		const row = $(this).closest('tr');
+		const termSlug = row.find('td:nth-child(2)').text();
 
-		let promptMessage = "<?php echo esc_js(__('To confirm deletion, please enter the term slug:', 'decker') ); ?>";
+		let promptMessage = "<?php echo esc_js( __( 'To confirm deletion, please enter the term slug:', 'decker' ) ); ?>";
 		if ($(this).data('type') === 'board') {
-		    const warningMessage = "<?php echo esc_js(__('WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board.', 'decker') ); ?>";
-		    promptMessage = warningMessage + '\n\n' + promptMessage
+			const warningMessage = "<?php echo esc_js( __( 'WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board.', 'decker' ) ); ?>";
+			promptMessage = warningMessage + '\n\n' + promptMessage
 		}
 		const userInput = prompt(promptMessage + ' ' + termSlug);
-        
-        if (userInput === termSlug) {
-            const termId = $(this).data('id');
-            const termType = $(this).data('type');
-            const form = $('<form method="POST">')
-                .append($('<input type="hidden" name="term_type">').val(termType))
-                .append($('<input type="hidden" name="term_id">').val(termId))
-                .append($('<input type="hidden" name="action">').val('delete'))
-                .append($('<input type="hidden" name="decker_term_nonce">').val('<?php echo wp_create_nonce("decker_term_action"); ?>'));
-            $('body').append(form);
-            form.submit();
-        } else if (userInput !== null) {
-            alert('<?php _e("Incorrect slug. Deletion cancelled.", "decker"); ?>');
-        }
-    });
+		
+		if (userInput === termSlug) {
+			const termId = $(this).data('id');
+			const termType = $(this).data('type');
+			const form = $('<form method="POST">')
+				.append($('<input type="hidden" name="term_type">').val(termType))
+				.append($('<input type="hidden" name="term_id">').val(termId))
+				.append($('<input type="hidden" name="action">').val('delete'))
+				.append($('<input type="hidden" name="decker_term_nonce">').val('<?php echo esc_attr( wp_create_nonce( 'decker_term_action' ) ); ?>'));
+			$('body').append(form);
+			form.submit();
+		} else if (userInput !== null) {
+			alert('<?php esc_html_e( 'Incorrect slug. Deletion cancelled.', 'decker' ); ?>');
+		}
+	});
 });
 </script>
 

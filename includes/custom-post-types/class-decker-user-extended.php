@@ -5,9 +5,8 @@
  * @package Decker
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
-}
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Class Decker_User_Extended
@@ -47,10 +46,12 @@ class Decker_User_Extended {
 		wp_enqueue_style( 'wp-color-picker' );
 
 		// Retrieve all boards for the select box.
-		$boards = get_terms( array(
-			'taxonomy'   => 'decker_board',
-			'hide_empty' => false,
-		) );
+		$boards = get_terms(
+			array(
+				'taxonomy'   => 'decker_board',
+				'hide_empty' => false,
+			)
+		);
 
 		// Retrieve the user's selected default board.
 		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
@@ -113,9 +114,10 @@ class Decker_User_Extended {
 
 		check_admin_referer( 'update-user_' . $user_id );
 
+		/*
 		// TODO: Verify nonce for security (optional but recommended).
 		// Uncomment the following lines if you add a nonce field in the form.
-		/*
+
 		if ( ! isset( $_POST['decker_user_extended_nonce'] ) ||
 			 ! wp_verify_nonce( $_POST['decker_user_extended_nonce'], 'decker_user_extended' ) ) {
 			return false;
@@ -133,7 +135,6 @@ class Decker_User_Extended {
 			$decker_default_board = intval( $_POST['decker_default_board'] );
 			update_user_meta( $user_id, 'decker_default_board', $decker_default_board );
 		}
-
 	}
 
 	/**
@@ -166,7 +167,6 @@ class Decker_User_Extended {
 		}
 		return $value;
 	}
-
 }
 
 // Instantiate the class.

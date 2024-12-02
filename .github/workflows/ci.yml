@@ -24,14 +24,8 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Setup WP-CLI
-        uses: godaddy-wordpress/setup-wp-cli@1
-
-      # - name: Run code linting
-      #   run: make lint
-
-      # - name: Run unit tests
-      #   run: make test
+      - name: Run code linting
+        run: make lint
 
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install -y gettext
@@ -39,23 +33,28 @@ jobs:
       - name: Check untranslated strings
         run: make check-untranslated
 
-      - name: Create package using the Makefile
-        run: make package VERSION=6.6.6
-
-      - name: Extract ZIP file
+      - name: Create Plugin ZIP Archive
         run: |
-          unzip decker-6.6.6.zip -d decker
+          composer archive --format=zip --dir=. --file=decker
+          mkdir decker
+          unzip decker.zip -d decker
 
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: './decker'
+          exclude-checks: 'image_functions'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Uninstall plugin decker
+        run: |
+          npx wp-env run cli wp plugin deactivate decker
+          npx wp-env run cli wp plugin uninstall decker
 
-      - name: Build Docker Image
-        run: make upd
+      - name: Setup & start wp-env
+        uses: godaddy-wordpress/setup-wp-env@v1
+        with:
+          plugins: '["."]'
 
-
+      - name: Run unit tests
+        run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
 

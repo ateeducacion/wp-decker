@@ -35,6 +35,7 @@ class Decker {
 	 */
 	protected $loader;
 
+
 	/**
 	 * The unique identifier of this plugin.
 	 *
@@ -59,15 +60,11 @@ class Decker {
 	 * the public-facing side of the site.
 	 */
 	public function __construct() {
-		if ( defined( 'DECKER_VERSION' ) ) {
-			$this->version = DECKER_VERSION;
-		} else {
-			$this->version = '1.0.0';
-		}
+		$this->version = DECKER_VERSION;
 		$this->plugin_name = 'decker';
 
 		$this->load_dependencies();
-		$this->define_settings_constants();
+		$this->register_hooks();
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
@@ -103,11 +100,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-i18n.php';
 
 		/**
-		 * The class responsible for utility functions.
-		 */
-		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-utility-functions.php';
-
-		/**
 		 * The classes responsible for defining the custom-post-types.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
@@ -116,21 +108,18 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-labels.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 
-
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
 
 		/**
 		 * The class responsible for defining the MVC.
 		 */
-	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
-	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
-	
-	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board-manager.php';
-	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label-manager.php';
-	    require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task-manager.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
 
-	    require_once plugin_dir_path( __DIR__ ) . 'includes/controllers/class-task-controller.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
@@ -147,9 +136,11 @@ class Decker {
 	}
 
 	/**
-	 * Define plugin settings constants.
+	 * Register all hooks related to roles, capabilities, and restrictions.
 	 */
-	private function define_settings_constants() {
+	private function register_hooks() {
+		$this->loader->add_filter( 'map_meta_cap', $this, 'restrict_comment_editing_to_author', 10, 3 );
+		$this->loader->add_filter( 'map_meta_cap', $this, 'restrict_comment_capabilities_to_decker_task', 10, 4 );
 	}
 
 	/**
@@ -192,6 +183,54 @@ class Decker {
 		$plugin_public = new Decker_Public( $this->get_plugin_name(), $this->get_version() );
 	}
 
+
+	/**
+	 * Restrict comment editing/deleting to the comment's author.
+	 *
+	 * @param array $allcaps Capabilities for the current user.
+	 * @param array $cap     Requested capability.
+	 * @param array $args    Additional arguments.
+	 * @return array Updated capabilities.
+	 */
+	public function restrict_comment_editing_to_author( $allcaps, $cap, $args ) {
+		if ( in_array( $cap[0], array( 'edit_comment', 'delete_comment' ), true ) ) {
+			$comment = get_comment( $args[2] );
+
+			if ( isset( $comment->user_id ) && get_current_user_id() !== $comment->user_id ) {
+				$allcaps[ $cap[0] ] = false;
+			}
+		}
+
+		return $allcaps;
+	}
+
+	/**
+	 * Restrict comment editing/deleting to the 'decker_task' post type.
+	 *
+	 * @param array  $caps    User's actual capabilities.
+	 * @param string $cap     Capability name.
+	 * @param int    $user_id User ID.
+	 * @param array  $args    Additional arguments.
+	 * @return array Updated capabilities.
+	 */
+	public function restrict_comment_capabilities_to_decker_task( $caps, $cap, $user_id, $args ) {
+		if ( in_array( $cap, array( 'edit_comment', 'delete_comment' ), true ) && ! empty( $args[0] ) ) {
+			$comment = get_comment( $args[0] );
+
+			if ( $comment ) {
+				$post = get_post( $comment->comment_post_ID );
+
+				if ( $post && 'decker_task' === $post->post_type && $comment->user_id !== $user_id ) {
+					$caps[] = 'do_not_allow';
+				}
+			}
+		}
+
+		return $caps;
+	}
+
+
+
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
 	 */
@@ -210,15 +249,6 @@ class Decker {
 	}
 
 	/**
-	 * The reference to the class that orchestrates the hooks with the plugin.
-	 *
-	 * @return    Decker_Loader    Orchestrates the hooks of the plugin.
-	 */
-	public function get_loader() {
-		return $this->loader;
-	}
-
-	/**
 	 * Retrieve the version number of the plugin.
 	 *
 	 * @return    string    The version number of the plugin.
@@ -226,105 +256,115 @@ class Decker {
 	public function get_version() {
 		return $this->version;
 	}
+
+
+	/**
+	 * Check if the current user has at least the required role.
+	 *
+	 * @return bool True if the user has the required role or higher, false otherwise.
+	 */
+	public static function current_user_has_at_least_minimum_role() {
+		// Get the saved user profile role from plugin options, default to 'editor'.
+		$options = get_option( 'decker_settings', array() );
+		$required_role = isset( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
+
+		// WordPress role hierarchy, ordered from lowest to highest.
+		$role_hierarchy = array( 'subscriber', 'contributor', 'author', 'editor', 'administrator' );
+
+		// Determine the index of the required role.
+		$required_index = array_search( $required_role, $role_hierarchy );
+
+		if ( false === $required_index ) {
+			// Invalid role in settings, fallback to the default.
+			return false;
+		}
+
+		// Check each role of the current user.
+		foreach ( wp_get_current_user()->roles as $user_role ) {
+			$user_index = array_search( $user_role, $role_hierarchy );
+
+			if ( false !== $user_index && $user_index >= $required_index ) {
+				return true; // User has the required role or higher.
+			}
+		}
+
+		return false; // User does not meet the minimum role requirement.
+	}
+
+	/**
+	 * Retur the allowed only simple and safe HTML elements.
+	 *
+	 * This function allows basic formatting tags such as paragraphs, bold, italics,
+	 * lists, tables, links, and spans with specific classes and data attributes.
+	 * It excludes potentially dangerous elements like images, embeds, iframes, and scripts.
+	 *
+	 * @return array The allowrd tags array.
+	 */
+	public static function get_allowed_tags() {
+
+		// Define the allowed CSS tags.
+		$allowed_css_properties = array(
+			'background-color',
+			'color',
+			'font-size',
+			'font-family',
+			'font-weight',
+			'text-decoration',
+		);
+
+		// Define the allowed HTML tags and their permitted attributes.
+		$allowed_tags = array(
+			'p' => array(
+				'class' => array(),
+				'style' => $allowed_css_properties,
+			),
+			'br' => array(),
+			'strong' => array(),
+			'b' => array(),
+			'em' => array(),
+			's' => array(),
+			'u' => array(),
+			'ul' => array(),
+			'ol' => array(),
+			'li' => array(
+				'data-list' => array(),
+			),
+			'table' => array(
+				'style' => $allowed_css_properties,
+				'border' => array(),
+				'cellpadding' => array(),
+				'cellspacing' => array(),
+			),
+			'thead' => array(),
+			'tbody' => array(),
+			'tr' => array(),
+			'th' => array(
+				'style' => $allowed_css_properties,
+				'colspan' => array(),
+				'rowspan' => array(),
+			),
+			'td' => array(
+				'style' => $allowed_css_properties,
+				'colspan' => array(),
+				'rowspan' => array(),
+			),
+			'a' => array(
+				'href' => array(),
+				'title' => array(),
+				'target' => array(),
+				'rel' => array(),
+			),
+			'span' => array(
+				'class' => array(),
+				'style' => $allowed_css_properties,
+			),
+			'blockquote' => array(),
+			'code' => array(),
+			'pre' => array(),
+			// Add more basic tags if needed.
+		);
+
+		// Return the defined allowed tags.
+		return $allowed_tags;
+	}
 }
-
-
-function register_decker_role() {
-    // Create the "Decker User" role if it doesn't exist.
-    add_role(
-        'decker_role',
-        __( 'Decker User', 'decker' ),
-        array(
-            'read'                   => true,  // Enable reading capability.
-            'edit_posts'             => true, // Disallow editing standard posts.
-            'delete_posts'           => false, // Disallow deleting posts.
-            'upload_files'           => true,  // Allow file and image uploads.
-			'delete_attachments'     => true,  // Allow deleting attachments.            
-            'manage_decker_tasks'    => true,  // Allow editing 'decker_task' posts and terms.
-            // 'publish_decker_tasks'   => true,  // Allow publishing 'decker_task' posts.
-            // 'delete_decker_tasks'    => false,  // Disallow deleting 'decker_task' posts.
-            // 'edit_others_decker_tasks' => true, // Allow editing others' 'decker_task' posts.
-        )
-    );
-}
-add_action( 'init', 'register_decker_role' );
-
-// Ensure that custom capabilities for the 'decker_task' post type are added to the role.
-function add_custom_caps_to_decker_role() {
-    // Get the "Decker User" role.
-    $role = get_role( 'decker_role' );
-
-    if ( $role ) {
-        // Add custom capabilities related to the 'decker_task' custom post type.
-    	$role->add_cap( 'upload_files');
-        $role->add_cap( 'delete_attachments' );      
-        $role->add_cap( 'manage_decker_tasks' );
-
-        // Add capabilities for comments (only their own).
-        $role->add_cap( 'read' ); // Allow reading in general if needed.
-        $role->add_cap( 'edit_comments' ); // Allow editing comments in general.
-        $role->add_cap( 'delete_comments' ); // Allow deleting comments in general.
-        $role->add_cap( 'publish_comments' ); // Permite publicar comentarios.
-
-    }
-}
-add_action( 'init', 'add_custom_caps_to_decker_role' );
-
-function add_capabilities_to_admin() {
-    // Get the administrator role.
-    $admin_role = get_role( 'administrator' );
-
-    if ( $admin_role ) {
-        // Add the generic capability for managing 'decker_task'.
-        $admin_role->add_cap( 'manage_decker_tasks' );
-    }
-}
-add_action( 'init', 'add_capabilities_to_admin' );
-
-// Filter to restrict editing and deleting of comments to the comment's author.
-function restrict_comment_editing_to_author( $allcaps, $cap, $args ) {
-    // Check if the current capability is 'edit_comment' or 'delete_comment'.
-    if ( in_array( $cap[0], ['edit_comment', 'delete_comment'] ) ) {
-        // Get the comment object.
-        $comment = get_comment( $args[2] );
-        
-        // Only allow editing/deleting if the current user is the author of the comment.
-        if ( isset( $comment->user_id ) && $comment->user_id !== get_current_user_id() ) {
-            $allcaps[$cap[0]] = false;
-        }
-    }
-
-    return $allcaps;
-}
-add_filter( 'map_meta_cap', 'restrict_comment_editing_to_author', 10, 3 );
-
-
-/**
- * Restrict editing/deleting comments to the 'decker_task' post type.
- */
-function restrict_comment_capabilities_to_decker_task( $caps, $cap, $user_id, $args ) {
-    // Verificar si la capacidad es para editar o borrar un comentario.
-    if ( in_array( $cap, ['edit_comment', 'delete_comment'] ) && ! empty( $args[0] ) ) {
-        // Obtener el comentario.
-        $comment = get_comment( $args[0] );
-
-        if ( $comment ) {
-            // Obtener el post asociado al comentario.
-            $post = get_post( $comment->comment_post_ID );
-
-            // Verificar si el post está asociado al tipo 'decker_task'.
-            if ( $post && $post->post_type === 'decker_task' ) {
-                // Permitir que los usuarios editen/borrar solo sus propios comentarios.
-                if ( $comment->user_id != $user_id ) {
-                    $caps[] = 'do_not_allow';
-                }
-            } else {
-                // Si el comentario no pertenece al tipo 'decker_task', denegar el permiso.
-                $caps[] = 'do_not_allow';
-            }
-        }
-    }
-
-    return $caps;
-}
-add_filter( 'map_meta_cap', 'restrict_comment_capabilities_to_decker_task', 10, 4 );

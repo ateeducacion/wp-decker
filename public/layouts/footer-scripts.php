@@ -1,253 +1,120 @@
-<!-- Vendor js -->
-<script
-  src="https://code.jquery.com/jquery-3.7.1.min.js"
-  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-  crossorigin="anonymous"></script>
+<?php
+/**
+ * File footer-scripts
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js" integrity="sha512-F/gIMdDfda6OD2rnzt/Iyp2V9JLHlFQ+EUyixDg9+rkwjqgW1snpkpx7FD5FV1+gG2fmFj7I3r6ReQDUidHelA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.js"></script>
-
-
-<!-- Day.js -->
-<script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
-<script src="https://unpkg.com/dayjs/plugin/relativeTime.js"></script>
-<script src="https://unpkg.com/dayjs/locale/es.js"></script>
-
+?>
 <script>
-    // Extend Day.js with relativeTime plugin
-    dayjs.extend(dayjs_plugin_relativeTime);
-
-    // Set locale to Spanish
-    dayjs.locale('es');
-</script>
-
-
-<?php if ($decker_page == 'tasks' ) { // Only load datatables.net on tasks page ?>
-
-<!-- Datatables JS CDN -->
-<script type="text/javascript" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
-<?php } ?>
-
-<!-- Quill -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js" integrity="sha512-1nmY9t9/Iq3JU1fGf0OpNCn6uXMmwC1XYX9a6547vnfcjCY1KvU9TE5e8jHQvXBoEH7hcKLIbbOjneZ8HCeNLA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-<!-- marked -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> -->
-
-<!-- Choices.js -->
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
-
-<!-- App js -->
-<script src="<?php echo plugins_url( '../assets/js/app.js', __FILE__ ); ?>"></script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
 
 
   // Asignar eventos para "Assign to me"
   document.querySelectorAll('.assign-to-me').forEach((element) => {
-    element.addEventListener('click', function (event) {
-      handleAssignToMe(event.currentTarget);
-    });
+	element.addEventListener('click', function (event) {
+		event.preventDefault();
+	  handleAssignToMe(event.currentTarget);
+	});
   });
 
   // Asignar eventos para "Leave task"
   document.querySelectorAll('.leave-task').forEach((element) => {
-    element.addEventListener('click', function (event) {
-      handleLeaveTask(event.currentTarget);
-    });
+	element.addEventListener('click', function (event) {
+		event.preventDefault();
+	  handleLeaveTask(event.currentTarget);
+	});
   });
 
   // Asignar eventos para "Mark for today" y "Unmark for today"
   document.querySelectorAll('.mark-for-today, .unmark-for-today').forEach((element) => {
-    element.addEventListener('click', function (event) {
-      handleToggleMarkForToday(event.currentTarget);
-    });
+	element.addEventListener('click', function (event) {
+		event.preventDefault();
+	  handleToggleMarkForToday(event.currentTarget);
+	});
   });    
 
+	document.querySelectorAll('.archive-task').forEach((element) => {
+	  element.addEventListener('click', function (event) {
+		  event.preventDefault();
+			var taskId = element.getAttribute('data-task-id');
+			if (confirm('Are you sure you want to archive this task?')) {
+			  fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
+				method: 'POST',
+				headers: {
+				  'Content-Type': 'application/json',
+				  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+				},
+				body: JSON.stringify({ status: 'archived' })
+			  })
+			  .then(response => {
+				if (!response.ok) {
+				  throw new Error('Network response was not ok');
+				}
+				return response.json();
+			  })
+			  .then(data => {
+				if (data.success) {
+
+				  // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
+				  // element.closest('.task').remove();
+
+				  // Reload the page if the request was successful
+				  location.reload();   
+
+				} else {
+				  alert('Failed to archive task.');
+				}
+			  })
+			  .catch(error => console.error('Error:', error));
+			}
+	  });
+	});
 
 
+	// Add event listener for "Fix Order" button
+	const fixOrderButton = document.getElementById('fix-order-btn');
+	if (fixOrderButton) {
+	  fixOrderButton.addEventListener('click', function (event) {
+		  event.preventDefault();
 
+	  if (confirm('Are you sure you want to fix the order?')) {
 
-    // document.querySelectorAll('.assign-to-me').forEach((element) => {
-    //   element.addEventListener('click', function () {
-    //     var taskId = element.getAttribute('data-task-id');
-    //     fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/assign', {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-    //       },
-    //       body: JSON.stringify({ user_id: userId })
-    //     })
-    //     .then(response => {
-    //       if (!response.ok) {
-    //         throw new Error('Network response was not ok');
-    //       }
-    //       return response.json();
-    //     })
-    //     .then(data => {
-    //       if (data.success) {
-    //         const taskCard = element.closest('.task');
-    //         const avatarGroup = taskCard.querySelector('.avatar-group');
-    //         const newAvatar = document.createElement('a');
-    //         newAvatar.href = 'javascript: void(0);';
-    //         newAvatar.className = 'avatar-group-item';
-    //         newAvatar.setAttribute('data-bs-toggle', 'tooltip');
-    //         newAvatar.setAttribute('data-bs-placement', 'top');
-    //         newAvatar.setAttribute('data-bs-original-title', '<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>');
-    //         newAvatar.innerHTML = `<img src="<?php echo esc_url( get_avatar_url( get_current_user_id() ) ); ?>" alt="" class="rounded-circle avatar-xs">`;
-    //         avatarGroup.appendChild(newAvatar);
+		  const boardId = fixOrderButton.getAttribute('data-board-id');
+		  if (boardId) {
+			fetch('<?php echo esc_url( rest_url( 'decker/v1/fix-order/' ) ); ?>' + encodeURIComponent(boardId), {
+			  method: 'POST',
+			  headers: {
+				'Content-Type': 'application/json',
+				'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+			  }
+			})
+			.then(response => {
+			  if (!response.ok) {
+				throw new Error('Network response was not ok');
+			  }
+			  return response.json();
+			})
+			.then(data => {
+			  if (data.success) {
+				alert(data.message);
+				// Reload the page if the request was successful
+				location.reload();              
+			  }
+			})
+			.catch(error => console.error('Error:', error));
+		  } else {
+			console.error('Board ID not found.');
+		  }
 
-    //         // Toggle menu options
-    //         element.style.display = 'none';
-    //         taskCard.querySelector('.leave-task').style.display = 'block';
-    //       } else {
-    //         alert('Failed to assign user to task.');
-    //       }
-    //     })
-    //     .catch(error => console.error('Error:', error));
-    //   });
-    // });
-
-    // document.querySelectorAll('.leave-task').forEach((element) => {
-    //   element.addEventListener('click', function () {
-    //     var taskId = element.getAttribute('data-task-id');
-    //     fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/leave', {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-    //       },
-    //       body: JSON.stringify({ user_id: userId })
-    //     })
-    //     .then(response => {
-    //       if (!response.ok) {
-    //         throw new Error('Network response was not ok');
-    //       }
-    //       return response.json();
-    //     })
-    //     .then(data => {
-    //       if (data.success) {
-    //         const taskCard = element.closest('.task');
-    //         const avatarGroup = taskCard.querySelector('.avatar-group');
-    //         const userAvatar = avatarGroup.querySelector(`a[data-bs-original-title="<?php echo esc_attr( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
-    //         if (userAvatar) {
-    //           userAvatar.remove();
-    //         }
-
-    //         // Toggle menu options
-    //         element.style.display = 'none';
-    //         taskCard.querySelector('.assign-to-me').style.display = 'block';
-    //         taskCard.querySelector('.mark-for-today').style.display = 'none';
-    //         taskCard.querySelector('.unmark-for-today').style.display = 'none';
-    //       } else {
-    //         alert('Failed to leave the task.');
-    //       }
-    //     })
-    //     .catch(error => console.error('Error:', error));
-    //   });
-    // });
-
-
-    
-
-
-    // document.querySelectorAll('.mark-for-today, .unmark-for-today').forEach((element) => {
-    //     element.addEventListener('click', function () {
-    //         var taskId = element.getAttribute('data-task-id');
-    //         var shouldMark = element.classList.contains('mark-for-today');
-    //         toggleMarkForToday(taskId, shouldMark);
-    //     });
-    // });
-
-
-    document.querySelectorAll('.archive-task').forEach((element) => {
-      element.addEventListener('click', function () {
-        var taskId = element.getAttribute('data-task-id');
-        if (confirm('Are you sure you want to archive this task?')) {
-          fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-            },
-            body: JSON.stringify({ status: 'archived' })
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.json();
-          })
-          .then(data => {
-            if (data.success) {
-
-              // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
-              // element.closest('.task').remove();
-
-              // Reload the page if the request was successful
-              location.reload();   
-
-            } else {
-              alert('Failed to archive task.');
-            }
-          })
-          .catch(error => console.error('Error:', error));
-        }
-      });
-    });
-
-
-    // Add event listener for "Fix Order" button
-    const fixOrderButton = document.getElementById('fix-order-btn');
-    if (fixOrderButton) {
-      fixOrderButton.addEventListener('click', function () {
-
-      if (confirm('Are you sure you want to fix the order?')) {
-
-          const boardId = fixOrderButton.getAttribute('data-board-id');
-          if (boardId) {
-            fetch('<?php echo esc_url( rest_url( 'decker/v1/fix-order/' ) ); ?>' + encodeURIComponent(boardId), {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-              }
-            })
-            .then(response => {
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
-              return response.json();
-            })
-            .then(data => {
-              if (data.success) {
-                alert(data.message);
-                // Reload the page if the request was successful
-                location.reload();              
-              }
-            })
-            .catch(error => console.error('Error:', error));
-          } else {
-            console.error('Board ID not found.');
-          }
-
-        }
-      });
-    }
+		}
+	  });
+	}
 
 
 
@@ -257,38 +124,42 @@
 function handleAssignToMe(element) {
   var taskId = element.getAttribute('data-task-id');
   fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/assign', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-    },
-    body: JSON.stringify({ user_id: userId })
+	method: 'POST',
+	headers: {
+	  'Content-Type': 'application/json',
+	  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+	},
+	body: JSON.stringify({ user_id: userId })
   })
   .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
+	if (!response.ok) {
+	  throw new Error('Network response was not ok');
+	}
+	return response.json();
   })
   .then(data => {
-    if (data.success) {
-      const taskCard = element.closest('.task');
-      const avatarGroup = taskCard.querySelector('.avatar-group');
-      const newAvatar = document.createElement('a');
-      newAvatar.href = 'javascript: void(0);';
-      newAvatar.className = 'avatar-group-item';
-      newAvatar.setAttribute('data-bs-toggle', 'tooltip');
-      newAvatar.setAttribute('data-bs-placement', 'top');
-      newAvatar.setAttribute('data-bs-original-title', '<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>');
-      newAvatar.innerHTML = `<img src="<?php echo esc_url( get_avatar_url( get_current_user_id() ) ); ?>" alt="" class="rounded-circle avatar-xs">`;
-      avatarGroup.appendChild(newAvatar);
+	if (data.success) {
+	  const taskCard = element.closest('.task');
+	  const avatarGroup = taskCard.querySelector('.avatar-group');
+	  const newAvatar = document.createElement('a');
+	  newAvatar.href = 'javascript: void(0);';
+	  newAvatar.className = 'avatar-group-item';
+	  newAvatar.setAttribute('data-bs-toggle', 'tooltip');
+	  newAvatar.setAttribute('data-bs-placement', 'top');
+	  newAvatar.setAttribute('data-bs-original-title', '<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>');
+	  newAvatar.innerHTML = `<img src="<?php echo esc_url( get_avatar_url( get_current_user_id() ) ); ?>" alt="" class="rounded-circle avatar-xs">`;
+	  avatarGroup.appendChild(newAvatar);
 
-      // Alternar opciones del menú
-      element.style.display = 'none';
-      taskCard.querySelector('.leave-task').style.display = 'block';
-    } else {
-      alert('Failed to assign user to task.');
-    }
+	  // Alternar opciones del menú
+	element.classList.add('hidden');
+	taskCard.querySelector('.leave-task').classList.remove('hidden');
+	taskCard.querySelector('.mark-for-today').classList.remove('hidden');
+
+	  // element.style.display = 'none';
+	  // taskCard.querySelector('.leave-task').style.display = 'block';
+	} else {
+	  alert('Failed to assign user to task.');
+	}
   })
   .catch(error => console.error('Error:', error));
 }
@@ -296,36 +167,41 @@ function handleAssignToMe(element) {
 function handleLeaveTask(element) {
   var taskId = element.getAttribute('data-task-id');
   fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/leave', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-    },
-    body: JSON.stringify({ user_id: userId })
+	method: 'POST',
+	headers: {
+	  'Content-Type': 'application/json',
+	  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+	},
+	body: JSON.stringify({ user_id: userId })
   })
   .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
+	if (!response.ok) {
+	  throw new Error('Network response was not ok');
+	}
+	return response.json();
   })
   .then(data => {
-    if (data.success) {
-      const taskCard = element.closest('.task');
-      const avatarGroup = taskCard.querySelector('.avatar-group');
-      const userAvatar = avatarGroup.querySelector(`a[data-bs-original-title="<?php echo esc_attr( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
-      if (userAvatar) {
-        userAvatar.remove();
-      }
+	if (data.success) {
+	  const taskCard = element.closest('.task');
+	  const avatarGroup = taskCard.querySelector('.avatar-group');
+	  const userAvatar = avatarGroup.querySelector(`a[data-bs-original-title="<?php echo esc_attr( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
+	  if (userAvatar) {
+		userAvatar.remove();
+	  }
 
-      // Alternar opciones del menú
-      element.style.display = 'none';
-      taskCard.querySelector('.assign-to-me').style.display = 'block';
-      taskCard.querySelector('.mark-for-today').style.display = 'none';
-      taskCard.querySelector('.unmark-for-today').style.display = 'none';
-    } else {
-      alert('Failed to leave the task.');
-    }
+	  // Alternar opciones del menú
+	element.classList.add('hidden');
+	taskCard.querySelector('.assign-to-me').classList.remove('hidden');
+	taskCard.querySelector('.mark-for-today').classList.add('hidden');
+	taskCard.querySelector('.unmark-for-today').classList.add('hidden');
+
+	  // element.style.display = 'none';
+	  // taskCard.querySelector('.assign-to-me').style.display = 'block';
+	  // taskCard.querySelector('.mark-for-today').style.display = 'none';
+	  // taskCard.querySelector('.unmark-for-today').style.display = 'none';
+	} else {
+	  alert('Failed to leave the task.');
+	}
   })
   .catch(error => console.error('Error:', error));
 }
@@ -338,108 +214,64 @@ function handleToggleMarkForToday(element) {
 
 
 function toggleMarkForToday(taskId, shouldMark, element) {
-    const action = shouldMark ? 'mark_relation' : 'unmark_relation';
-    const url = '<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/' + action;
+	const action = shouldMark ? 'mark_relation' : 'unmark_relation';
+	const url = '<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/' + action;
 
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-        },
-        body: JSON.stringify({ 
-            user_id: userId, 
-            date: '<?php echo gmdate( 'Y-m-d' ); ?>' 
-        })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('La respuesta de la red no fue satisfactoria.');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Actualiza la interfaz de usuario según la acción
-            const card = element.closest('.task');
-            const markElement = card.querySelector('.mark-for-today');
-            const unmarkElement = card.querySelector('.unmark-for-today');
-            const closestAvatar = card.querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
-            
-            if (shouldMark) {
-                markElement.style.display = 'none';
-                unmarkElement.style.display = 'block';
-                if (closestAvatar) {
-                    closestAvatar.classList.add('today');
-                }
-                console.log('Tarea marcada para hoy.');
-            } else {
-                unmarkElement.style.display = 'none';
-                markElement.style.display = 'block';
-                if (closestAvatar) {
-                    closestAvatar.classList.remove('today');
-                }
-                console.log('Tarea desmarcada para hoy.');
-            }
-        } else {
-            alert(data.data.message || `Error al ${shouldMark ? 'marcar' : 'desmarcar'} la tarea para hoy.`);
-        }
-    })
-    .catch(error => console.error('Error:', error));
+	fetch(url, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+		},
+		body: JSON.stringify({ 
+			user_id: userId, 
+			date: '<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>' 
+		})
+	})
+	.then(response => {
+		if (!response.ok) {
+			throw new Error('Network response was not ok.');
+		}
+		return response.json();
+	})
+	.then(data => {
+		if (data.success) {
+			// Actualiza la interfaz de usuario según la acción
+			const card = element.closest('.task');
+			const markElement = card.querySelector('.mark-for-today');
+			const unmarkElement = card.querySelector('.unmark-for-today');
+			const closestAvatar = card.querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
+			
+			if (shouldMark) {
+		markElement.classList.add('hidden');
+		unmarkElement.classList.remove('hidden');
+		if (closestAvatar) {
+			closestAvatar.classList.add('today');
+		}
+				// markElement.style.display = 'none';
+				// unmarkElement.style.display = 'block';
+				// if (closestAvatar) {
+				// 	closestAvatar.classList.add('today');
+				// }
+				console.log('Task marked for today.');
+			} else {
+		unmarkElement.classList.add('hidden');
+		markElement.classList.remove('hidden');
+		if (closestAvatar) {
+			closestAvatar.classList.remove('today');
+		}
+				// unmarkElement.style.display = 'none';
+				// markElement.style.display = 'block';
+				// if (closestAvatar) {
+				// 	closestAvatar.classList.remove('today');
+				// }
+				console.log('Task unmarked for today.');
+			}
+		} else {
+			alert(data.data.message || `Error ${shouldMark ? 'marking' : 'unmakring'} task for today.`);
+		}
+	})
+	.catch(error => console.error('Error:', error));
 }
-
-
-
-// // Función para marcar o desmarcar una tarea para hoy
-// function toggleMarkForToday(taskId, shouldMark) {
-//     const action = shouldMark ? 'mark_relation' : 'unmark_relation';
-//     const url = '<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/' + action;
-
-//     fetch(url, {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//             'X-WP-Nonce': '<?php echo wp_create_nonce( 'wp_rest' ); ?>'
-//         },
-//         body: JSON.stringify({ 
-//             user_id: userId, 
-//             date: '<?php echo gmdate( 'Y-m-d' ); ?>' 
-//         })
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error('La respuesta de la red no fue satisfactoria.');
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         if (data.success) {
-//             // Actualiza la interfaz de usuario según la acción
-//             const card = document.querySelector(`[data-task-id="${taskId}"]`).closest('.task');
-//             const markElement = card.querySelector('.mark-for-today');
-//             const unmarkElement = card.querySelector('.unmark-for-today');
-//             const closestAvatar = card.querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
-            
-//             if (shouldMark) {
-//                 markElement.style.display = 'none';
-//                 unmarkElement.style.display = 'block';
-//                 if (closestAvatar) {
-//                     closestAvatar.classList.add('today');
-//                 }
-//                 console.log('Tarea marcada para hoy.');
-//             } else {
-//                 unmarkElement.style.display = 'none';
-//                 markElement.style.display = 'block';
-//                 if (closestAvatar) {
-//                     closestAvatar.classList.remove('today');
-//                 }
-//                 console.log('Tarea desmarcada para hoy.');
-//             }
-//         } else {
-//             alert(data.data.message || `Error al ${shouldMark ? 'marcar' : 'desmarcar'} la tarea para hoy.`);
-//         }
-//     })
-//     .catch(error => console.error('Error:', error));
-// }
 
 </script>

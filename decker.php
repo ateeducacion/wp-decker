@@ -1,5 +1,8 @@
 <?php
 /**
+ *
+ * Decker is a WordPress plugin focused on efficiently and structurally presenting a list of tasks.
+ *
  * @link              https://github.com/ateeducacion/wp-decker
  * @package           Decker
  *
@@ -26,30 +29,60 @@ define( 'DECKER_PLUGIN_FILE', __FILE__ );
 
 /**
  * The code that runs during plugin activation.
- * This action is documented in includes/class-decker-activator.php
  */
 function activate_decker() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-activator.php';
-	Decker_Activator::activate();
+	// Set the permalink structure.
+	if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
+		update_option( 'permalink_structure', '/%postname%/' );
+	}
+
+	flush_rewrite_rules();
 }
 
 /**
  * The code that runs during plugin deactivation.
- * This action is documented in includes/class-decker-deactivator.php
  */
 function deactivate_decker() {
-	require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-deactivator.php';
-	Decker_Deactivator::deactivate();
+
+	flush_rewrite_rules();
+}
+
+/**
+ * Plugin Update Handler
+ *
+ * @param WP_Upgrader $upgrader_object Upgrader object.
+ * @param array       $options         Upgrade options.
+ */
+function decker_update_handler( $upgrader_object, $options ) {
+	// Check if the update is for your specific plugin.
+	if ( 'update' === $options['action'] && 'plugin' === $options['type'] ) {
+		$plugins_updated = $options['plugins'];
+
+		// Replace with your plugin's base name (typically folder/main-plugin-file.php).
+		$plugin_file = plugin_basename( __FILE__ );
+
+		// Check if your plugin is in the list of updated plugins.
+		if ( in_array( $plugin_file, $plugins_updated ) ) {
+			// Perform update-specific tasks.
+			flush_rewrite_rules();
+		}
+	}
 }
 
 register_activation_hook( __FILE__, 'activate_decker' );
 register_deactivation_hook( __FILE__, 'deactivate_decker' );
+add_action( 'upgrader_process_complete', 'decker_update_handler', 10, 2 );
 
 /**
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
 require plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
+
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-wpcli.php';
+}
 
 /**
  * Begins execution of the plugin.

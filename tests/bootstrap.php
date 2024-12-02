@@ -1,94 +1,54 @@
 <?php
 /**
- * PHPUnit bootstrap file
+ * PHPUnit bootstrap file.
  *
- * @package Decker
+ * @package Starter_Plugin
  */
 
-// First we need to load the composer autoloader, so we can use WP Mock
-require_once dirname( __DIR__ ) . '/vendor/autoload.php';
+$_tests_dir = getenv( 'WP_TESTS_DIR' );
 
-use Yoast\WPTestUtils\WPIntegration;
+// Forward custom PHPUnit Polyfills configuration to PHPUnit bootstrap file.
+$_phpunit_polyfills_path = getenv( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' );
+if ( false !== $_phpunit_polyfills_path ) {
+	define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', $_phpunit_polyfills_path );
+}
 
-
-// Bootstrap WP_Mock to initialize built-in features
-WP_Mock::setUsePatchwork( true );
-WP_Mock::bootstrap();
-
-
-// Simular funciones de WordPress necesarias para el entorno de pruebas
-WP_Mock::userFunction(
-	'get_option',
-	array(
-		'return' => 'default_value',
-	)
-);
-
-WP_Mock::userFunction(
-	'update_option',
-	array(
-		'return' => true,
-	)
-);
-
-WP_Mock::userFunction(
-	'add_option',
-	array(
-		'return' => true,
-	)
-);
-
-WP_Mock::userFunction(
-	'plugin_dir_path',
-	array(
-		'return' => function ( $file ) {
-			return dirname( $file ) . '/';
-		},
-	)
-);
-
-WP_Mock::userFunction(
-	'register_activation_hook',
-	array(
-		'return' => true,
-	)
-);
-
-WP_Mock::userFunction(
-	'register_deactivation_hook',
-	array(
-		'return' => true,
-	)
-);
-
-WP_Mock::userFunction(
-	'has_action',
-	array(
-		'return' => true,
-	)
-);
+require 'vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 
 
-// If your project does not use autoloading via Composer, include your files now
-
-// require_once dirname( __DIR__ ) . '/decker.php';
-
-// require_once dirname(__DIR__) . '/decker.php';
-
-
-
-/**
- * Manualmente cargar el plugin.
- */
-// function _manually_load_plugin() {
-// require dirname( __DIR__ ) . '/decker.php';
+// Verificar si existe la biblioteca PHPUnit Polyfills.
+// if ( ! class_exists( '\Yoast\PHPUnitPolyfills\Autoload' ) ) {
+// Intentar cargarlo desde Composer.
+// if ( file_exists( dirname( __DIR__ ) . '/../../../vendor/yoast/phpunit-polyfills/autoload.php' ) ) {
+// require_once dirname( __DIR__ ) . '/../../../vendor/yoast/phpunit-polyfills/autoload.php';
+// } elseif ( defined( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' ) ) {
+// require_once WP_TESTS_PHPUNIT_POLYFILLS_PATH . '/autoload.php';
+// } else {
+// echo "Error: PHPUnit Polyfills no está disponible. Verifica la instalación.\n";
+// exit( 1 );
+// }
 // }
 
+// // Forward custom PHPUnit Polyfills configuration to PHPUnit bootstrap file.
+// $_phpunit_polyfills_path = getenv( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH' );
+// if ( false !== $_phpunit_polyfills_path ) {
+// define( 'WP_TESTS_PHPUNIT_POLYFILLS_PATH', $_phpunit_polyfills_path );
+// }
 
-// Utilizar 'tests_add_filter' para cargar manualmente el plugin.
-// tests_add_filter('muplugins_loaded', '_manually_load_plugin');
+// require '/home/enesto/.composer/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 
 
-require_once dirname(__DIR__) . '/vendor/yoast/wp-test-utils/src/WPIntegration/bootstrap-functions.php';
+// Give access to tests_add_filter() function.
+require_once "{$_tests_dir}/includes/functions.php";
 
-WPIntegration\bootstrap_it();
+/**
+ * Manually load the plugin being tested.
+ */
+function _manually_load_plugin() {
+	require dirname( __DIR__ ) . '/decker.php';
+}
+
+tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
+
+// Start up the WP testing environment.
+require "{$_tests_dir}/includes/bootstrap.php";

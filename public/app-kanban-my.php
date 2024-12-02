@@ -1,16 +1,27 @@
 <?php
+/**
+ * File app-kanban-my
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 
-$user_id = get_current_user_id();
-$taskManager = new TaskManager();
-$tasks = $taskManager->getTasksByUser($user_id);
+$user_id     = get_current_user_id();
+$task_manager = new TaskManager();
+$tasks       = $task_manager->get_tasks_by_user( $user_id );
 
 
-// Dividir las tareas en columnas
+// Dividir las tareas en columnas.
 $columns = array(
-	'to-do' => array(),
+	'to-do'       => array(),
 	'in-progress' => array(),
-	'done' => array(),
+	'done'        => array(),
 );
 
 foreach ( $tasks as $task ) {
@@ -19,7 +30,7 @@ foreach ( $tasks as $task ) {
 
 ?>
 <head>
-	<title><?php esc_html_e('My Board', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e( 'My Board', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -52,14 +63,14 @@ foreach ( $tasks as $task ) {
 											</span>
 											
 											<!-- Campo de búsqueda con botón de borrar (X) dentro -->
-											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e('Search...', 'decker'); ?>" aria-label="<?php esc_attr_e('Search', 'decker'); ?>">
+											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
 										</div>
 
 									</div>
 
-									<h4 class="page-title"><?php echo esc_html_e( "My Board", "decker" ); ?>
-										<a href="<?php echo esc_url(add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) )); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e('Add New', 'decker'); ?></a>
+									<h4 class="page-title"><?php echo esc_html_e( 'My Board', 'decker' ); ?>
+										<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a>
 									</h4>
 								</div>
 							</div>
@@ -72,13 +83,13 @@ foreach ( $tasks as $task ) {
 							<div class="col-12">
 								<div class="board">
 									<div class="tasks" data-plugin="dragula" data-containers='["task-list-to-do", "task-list-in-progress", "task-list-done"]'>
-										<h5 class="mt-0 task-header"><?php esc_html_e('TO-DO', 'decker'); ?> (<?php echo esc_html(count( $columns['to-do'] )); ?>)</h5>
+										<h5 class="mt-0 task-header"><?php esc_html_e( 'TO-DO', 'decker' ); ?> (<?php echo esc_html( count( $columns['to-do'] ) ); ?>)</h5>
 										
 										<div id="task-list-to-do" class="task-list-items">
 
 											<?php foreach ( $columns['to-do'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(true); ?>
+												<?php $task->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -86,13 +97,13 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e('In Progress', 'decker'); ?> (<?php echo esc_html(count( $columns['in-progress'] )); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e( 'In Progress', 'decker' ); ?> (<?php echo esc_html( count( $columns['in-progress'] ) ); ?>)</h5>
 										
 										<div id="task-list-in-progress" class="task-list-items">
 
 											<?php foreach ( $columns['in-progress'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(true); ?>
+												<?php $task->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 
@@ -101,12 +112,12 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e('Done', 'decker'); ?> (<?php echo esc_html(count( $columns['done'] )); ?>)</h5>
+										<h5 class="mt-0 task-header text-uppercase"><?php esc_html_e( 'Done', 'decker' ); ?> (<?php echo esc_html( count( $columns['done'] ) ); ?>)</h5>
 										<div id="task-list-done" class="task-list-items">
 
 											<?php foreach ( $columns['done'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->renderTaskCard(true); ?>
+												<?php $task->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -140,9 +151,6 @@ foreach ( $tasks as $task ) {
 		<?php include 'layouts/task-modal.php'; ?>
 
 		<?php include 'layouts/footer-scripts.php'; ?>
-
-		<!-- dragula js-->
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js'></script>
 
 		<script>
 			document.addEventListener('DOMContentLoaded', function () {

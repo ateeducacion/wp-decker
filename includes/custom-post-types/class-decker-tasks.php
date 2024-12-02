@@ -6,12 +6,11 @@
  * @subpackage Decker/includes
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit; // Exit if accessed directly.
-}
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
 /**
- * Class Decker_Tasks
+ * Class Decker_Tasks.
  *
  * Handles the Custom Post Type and its metaboxes for tasks in the Decker plugin.
  */
@@ -24,11 +23,10 @@ class Decker_Tasks {
 	 */
 	public function __construct() {
 		$this->define_hooks();
-
 	}
 
 	/**
-	 * Define Hooks
+	 * Define Hooks.
 	 *
 	 * Registers all the hooks related to the decker_task custom post type.
 	 */
@@ -40,8 +38,7 @@ class Decker_Tasks {
 		add_action( 'transition_post_status', array( $this, 'handle_task_status_change' ), 10, 3 );
 
 		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
-        add_action( 'admin_head', array( $this, 'disable_menu_order_field' ) );
-
+		add_action( 'admin_head', array( $this, 'disable_menu_order_field' ) );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( $this, 'save_meta' ) );
@@ -53,7 +50,6 @@ class Decker_Tasks {
 		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		// add_action( 'admin_post_save_decker_task', array( $this, 'handle_save_task' ) );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -63,95 +59,109 @@ class Decker_Tasks {
 
 		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
 
-
 		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 
+		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
-		add_action('admin_menu', array($this, 'remove_add_new_link'));
-
-
-		add_action( 'wp_ajax_upload_task_attachment', array($this, 'upload_task_attachment' ) );
-		add_action( 'wp_ajax_delete_task_attachment', array($this, 'delete_task_attachment' ) );
-
-
+		add_action( 'wp_ajax_upload_task_attachment', array( $this, 'upload_task_attachment' ) );
+		add_action( 'wp_ajax_delete_task_attachment', array( $this, 'delete_task_attachment' ) );
 	}
 
 
-public function upload_task_attachment() {
-    check_ajax_referer( 'upload_attachment_nonce', 'nonce' );
+	/**
+	 * Handles the upload of an attachment to a task.
+	 *
+	 * Validates permissions, checks for required data, and processes the file upload
+	 * using WordPress media handling functions. Assigns the uploaded file to the specified task.
+	 *
+	 * @throws WP_Error If the user does not have permission to upload files, if the task ID or file is invalid,
+	 *                  or if the upload fails.
+	 */
+	public function upload_task_attachment() {
+		check_ajax_referer( 'upload_attachment_nonce', 'nonce' );
 
-    // Verificar permisos y datos necesarios
-    if ( ! current_user_can( 'upload_files' ) ) {
-        wp_send_json_error( array( 'message' => 'You do not have permission to upload files.' ) );
-    }
+		// Verificar permisos y datos necesarios.
+		if ( ! current_user_can( 'upload_files' ) ) {
+			wp_send_json_error( array( 'message' => 'You do not have permission to upload files.' ) );
+		}
 
-    $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
 
-    if ( ! $task_id ) {
-        wp_send_json_error( array( 'message' => 'Invalid task ID.' ) );
-    }
+		if ( ! $task_id ) {
+			wp_send_json_error( array( 'message' => 'Invalid task ID.' ) );
+		}
 
-    if ( empty( $_FILES['attachment'] ) ) {
-        wp_send_json_error( array( 'message' => 'No file uploaded.' ) );
-    }
+		if ( empty( $_FILES['attachment'] ) ) {
+			wp_send_json_error( array( 'message' => 'No file uploaded.' ) );
+		}
 
-    // Manejar la subida del archivo con un callback personalizado
-    require_once ABSPATH . 'wp-admin/includes/file.php';
-    require_once ABSPATH . 'wp-admin/includes/media.php';
-    require_once ABSPATH . 'wp-admin/includes/image.php';
+		// Manejar la subida del archivo con un callback personalizado.
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/image.php';
 
-    // Generar nombre ofuscado para el archivo usando la función nativa de WordPress
-    $overrides = array(
-    	'test_form' => false,
-        'unique_filename_callback' => function($dir, $name, $ext) {
-            return wp_generate_uuid4() . $ext;
-        }
-    );
+		// Generar nombre ofuscado para el archivo usando la función nativa de WordPress.
+		$overrides = array(
+			'test_form'                => false,
+			'unique_filename_callback' => function ( $dir, $name, $ext ) {
+				return wp_generate_uuid4() . $ext;
+			},
+		);
 
-    $attachment_id = media_handle_upload( 'attachment', $task_id, array(), $overrides );
+		$attachment_id = media_handle_upload( 'attachment', $task_id, array(), $overrides );
 
-    if ( is_wp_error( $attachment_id ) ) {
-        wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
-    }
+		if ( is_wp_error( $attachment_id ) ) {
+			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
+		}
 
-    $attachment_url = wp_get_attachment_url( $attachment_id );
-    $attachment_title = get_the_title( $attachment_id );
-	$attachment_extension = pathinfo($attachment_url, PATHINFO_EXTENSION);
+		$attachment_url       = wp_get_attachment_url( $attachment_id );
+		$attachment_title     = get_the_title( $attachment_id );
+		$attachment_extension = pathinfo( $attachment_url, PATHINFO_EXTENSION );
 
-    wp_send_json_success( array(
-        'message' => 'Attachment uploaded successfully.',
-        'attachment_id' => $attachment_id,
-        'attachment_url' => $attachment_url,
-        'attachment_title' => $attachment_title,
-        'attachment_extension' => $attachment_extension,
-    ) );
-}
+		wp_send_json_success(
+			array(
+				'message'              => 'Attachment uploaded successfully.',
+				'attachment_id'        => $attachment_id,
+				'attachment_url'       => $attachment_url,
+				'attachment_title'     => $attachment_title,
+				'attachment_extension' => $attachment_extension,
+			)
+		);
+	}
 
+	/**
+	 * Handles the deletion of an attachment from a task.
+	 *
+	 * Validates permissions and checks for required data. Deletes the specified attachment
+	 * from the WordPress Media Library and disassociates it from the task.
+	 *
+	 * @throws WP_Error If the user does not have permission to delete attachments, or if the task ID
+	 *                  or attachment ID is invalid.
+	 */
+	public function delete_task_attachment() {
+		check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
 
-public function delete_task_attachment() {
-    check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
+		if ( ! current_user_can( 'delete_attachments' ) ) {
+			wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
+		}
 
-    if ( ! current_user_can( 'delete_attachments' ) ) {
-        wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
-    }
+		$task_id       = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$attachment_id = isset( $_POST['attachment_id'] ) ? intval( $_POST['attachment_id'] ) : 0;
 
-    $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-    $attachment_id = isset( $_POST['attachment_id'] ) ? intval( $_POST['attachment_id'] ) : 0;
+		if ( ! $task_id || ! $attachment_id ) {
+			wp_send_json_error( array( 'message' => 'Invalid task ID or attachment ID.' ) );
+		}
 
-    if ( ! $task_id || ! $attachment_id ) {
-        wp_send_json_error( array( 'message' => 'Invalid task ID or attachment ID.' ) );
-    }
+		$result = wp_delete_attachment( $attachment_id, true );
 
-	$result = wp_delete_attachment( $attachment_id, true );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => 'Attachment not found in task.' ) );
 
-	if ( is_wp_error( $result ) ) {        
-	    wp_send_json_error( array( 'message' => 'Attachment not found in task.' ) );
-
-    } else {
-	    wp_send_json_success( array( 'message' => 'Attachment deleted successfully.' ) );
-    }
-}
+		} else {
+			wp_send_json_success( array( 'message' => 'Attachment deleted successfully.' ) );
+		}
+	}
 
 
 
@@ -172,14 +182,14 @@ public function delete_task_attachment() {
 	 * @param WP_Query $query The current query object.
 	 */
 	public function custom_order_by_stack( $query ) {
-	    if ( ! is_admin() || ! $query->is_main_query() ) {
-	        return;
-	    }
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
 
-	    if ( 'decker_task' === $query->get( 'post_type' ) && 'stack' === $query->get( 'orderby' ) ) {
-	        $query->set( 'meta_key', 'stack' );
-	        $query->set( 'orderby', 'meta_value' );
-	    }
+		if ( 'decker_task' === $query->get( 'post_type' ) && 'stack' === $query->get( 'orderby' ) ) {
+			$query->set( 'meta_key', 'stack' );
+			$query->set( 'orderby', 'meta_value' );
+		}
 	}
 
 	/**
@@ -189,7 +199,7 @@ public function delete_task_attachment() {
 	 * @return array Modified columns.
 	 */
 	public function add_custom_columns( $columns ) {
-		unset( $columns['date'] ); // Remove the date column if needed
+		unset( $columns['date'] ); // Remove the date column if needed.
 		$columns['stack'] = __( 'Stack', 'decker' );
 		return $columns;
 	}
@@ -217,7 +227,7 @@ public function delete_task_attachment() {
 	 */
 	public function remove_row_actions( $actions, $post ) {
 		if ( 'decker_task' === $post->post_type ) {
-			return array(); // Remove all actions
+			return array(); // Remove all actions.
 		}
 		return $actions;
 	}
@@ -225,70 +235,63 @@ public function delete_task_attachment() {
 	/**
 	 * Get the new order for a task in a specific stack.
 	 *
-	 * This function retrieves the maximum menu_order value for tasks in the specified board and stack
-	 * and returns the next incremented value.
+	 * This function retrieves the maximum menu_order value for tasks in the specified board and stack and returns the next incremented value.
 	 *
-	 * @param string $board_term_id The board to calculate the order for.
+	 * @param int    $board_term_id The board to calculate the order for.
 	 * @param string $stack The stack to calculate the order for.
 	 * @return int The new order value.
 	 */
-	private function get_new_task_order(int $board_term_id, string $stack ) {
-	    // Query arguments to find posts in the specified stack
-	    $args = array(
-	        'post_type'      => 'decker_task',
-	        'post_status'    => 'publish',
-		    'tax_query'      => array(
-		        array(
-		            'taxonomy' => 'decker_board',
-		            'field'    => 'term_id',
-		            'terms'    => $board_term_id,
-		        ),
-		    ),
-		    'meta_query'     => array(
-		        array(
-		            'key'     => 'stack',
-		            'value'   => $stack,
-		            'compare' => '='
-		        ),
-		    ),
-	        'orderby'        => 'menu_order',
-	        'order'          => 'DESC',
-	        'posts_per_page' => 1,
-	        'fields'         => 'ids',
-	    );
+	private function get_new_task_order( int $board_term_id, string $stack ) {
+		// Query arguments to find posts in the specified stack.
+		$args = array(
+			'post_type'   => 'decker_task',
+			'post_status' => 'publish',
+			'tax_query'   => array(
+				array(
+					'taxonomy' => 'decker_board',
+					'field'    => 'term_id',
+					'terms'    => $board_term_id,
+				),
+			),
+			'meta_query' => array(
+				array(
+					'key'     => 'stack',
+					'value'   => $stack,
+					'compare' => '=',
+				),
+			),
+			'orderby'        => 'menu_order',
+			'order'          => 'DESC',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+		);
 
-	    // Get the posts
-	    $posts = get_posts( $args );
+		// Get the posts.
+		$posts = get_posts( $args );
 
+		// If a post exists, get its menu_order and increment it.
+		if ( ! empty( $posts ) ) {
+			$max_order = intval( get_post_field( 'menu_order', $posts[0] ) );
+			return $max_order + 1;
+		}
 
-	    // error_log( $posts  );
-	    // error_log( "------------"  );
-
-
-
-	    // If a post exists, get its menu_order and increment it
-	    if ( ! empty( $posts ) ) {
-	        $max_order = intval( get_post_field( 'menu_order', $posts[0] ) );
-	        return $max_order + 1;
-	    }
-
-	    // If no posts exist, start with order 1
-	    return 1;
+		// If no posts exist, start with order 1.
+		return 1;
 	}
 
 	/**
 	 * Remove 'Add New' button for decker_task post type.
 	 */
 	public function remove_add_new_link() {
-	    global $submenu;
-	    // Remove the "Add New" submenu link
-		if (isset($submenu['edit.php?post_type=decker_task'])) {
-		    foreach ($submenu['edit.php?post_type=decker_task'] as $key => $item) {
-		        // Busca la entrada "Añadir nueva entrada"
-		        if ($item[2] === 'post-new.php?post_type=decker_task') {
-		            unset($submenu['edit.php?post_type=decker_task'][$key]);
-		        }
-		    }
+		global $submenu;
+		// Remove the "Add New" submenu link.
+		if ( isset( $submenu['edit.php?post_type=decker_task'] ) ) {
+			foreach ( $submenu['edit.php?post_type=decker_task'] as $key => $item ) {
+				// Busca la entrada "Añadir nueva entrada".
+				if ( 'post-new.php?post_type=decker_task' === $item[2] ) {
+					unset( $submenu['edit.php?post_type=decker_task'][ $key ] );
+				}
+			}
 		}
 	}
 
@@ -299,66 +302,82 @@ public function delete_task_attachment() {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function update_task_stack_and_order( $request ) {
-		$task_id    = $request['id'];
-		// $new_stack  = $request->get_param( 'stack' );
-		// $new_order  = $request->get_param( 'order' );
-		$board_id = $request->get_param('board_id');
-	    $source_stack = $request->get_param('source_stack');
-	    $target_stack = $request->get_param('target_stack');
-	    $source_order = $request->get_param('source_order');
-	    $target_order = $request->get_param('target_order');
+		$task_id = $request['id'];
+		$board_id     = $request->get_param( 'board_id' );
+		$source_stack = $request->get_param( 'source_stack' );
+		$target_stack = $request->get_param( 'target_stack' );
+		$source_order = $request->get_param( 'source_order' );
+		$target_order = $request->get_param( 'target_order' );
 
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
 		if ( ! in_array( $source_stack, $valid_stacks ) || ! in_array( $target_stack, $valid_stacks ) ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid stack value.' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Invalid stack value.',
+				),
+				400
+			);
 		}
 
-		if (!$task_id || !$source_order || !$target_order ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
+		if ( ! $task_id || ! $source_order || ! $target_order ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Invalid parameters.',
+				),
+				400
+			);
 		}
 
 		$task = get_post( $task_id );
 		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Task not found.' ), 404 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Task not found.',
+				),
+				404
+			);
 		}
 
-		// Update the stack and the order
-		if ($source_stack != $target_stack) {
+		// Update the stack and the order.
+		if ( $source_stack != $target_stack ) {
 			update_post_meta( $task_id, 'stack', $target_stack );
 		}
 
 		global $wpdb;
 
-	 	$final_order = $target_order;
-		if ($target_order > $source_order) {
-			$final_order = $target_order+1;
+		$final_order = $target_order;
+		if ( $target_order > $source_order ) {
+			$final_order = $target_order + 1;
 		}
 
-		// Realiza la actualización usando SQL directamente
+		// Realiza la actualización usando SQL directamente.
 		$updated = $wpdb->update(
-		    $wpdb->posts, // La tabla de posts de WordPress
-		    array(
-		        'menu_order' => $final_order,
-		        'post_modified' => current_time('mysql'),
-		        'post_modified_gmt' => current_time('mysql', 1)
-		    ),
-		    array('ID' => $task_id), // La condición para encontrar la fila correcta
-		    array('%d', '%s', '%s'), // Los tipos de datos de los valores: entero y cadenas
-		    array('%d')  // El tipo de datos de la condición (entero)
+			$wpdb->posts, // La tabla de posts de WordPress.
+			array(
+				'menu_order'        => $final_order,
+				'post_modified'     => current_time( 'mysql' ),
+				'post_modified_gmt' => current_time( 'mysql', 1 ),
+			),
+			array( 'ID' => $task_id ), // La condición para encontrar la fila correcta.
+			array( '%d', '%s', '%s' ), // Los tipos de datos de los valores: entero y cadenas.
+			array( '%d' )  // El tipo de datos de la condición (entero).
 		);
 
-		// Verifica si la actualización fue exitosa
-		if (false === $updated) {
-		    // Manejo de error, por ejemplo, registro de error	
-		    error_log( 'Error updating menu_order for task ID ' . $task_id . ': ' . $wpdb->last_error );
+		// Verifica si la actualización fue exitosa.
+		if ( false === $updated ) {
+			// Manejo de error, por ejemplo, registro de error.
+			error_log( 'Error updating menu_order for task ID ' . $task_id . ': ' . $wpdb->last_error );
 		}
 
-		// Reorder tasks in the source stack
-		if ($source_stack !== $target_stack) {
+		// Reorder tasks in the source stack.
+		if ( $source_stack !== $target_stack ) {
 			$result = $this->reorder_tasks_in_stack( $board_id, $source_stack );
 		}
-		// Reorder tasks in the target stack
+		// Reorder tasks in the target stack.
 		$result = $this->reorder_tasks_in_stack( $board_id, $target_stack );
 
 		if ( is_wp_error( $result ) ) {
@@ -378,19 +397,20 @@ public function delete_task_attachment() {
 	/**
 	 * Reorder tasks within a stack and board after a task is deleted.
 	 *
-	 * @param int $board_term_id The board term ID.
+	 * @param int    $board_term_id The board term ID.
 	 * @param string $stack The stack to reorder.
-	 * @param int $exclude_post_id Task to exclude.
+	 * @param int    $exclude_post_id Task to exclude.
 	 */
 	private function reorder_tasks_in_stack( int $board_term_id, string $stack, int $exclude_post_id = 0 ) {
-	    global $wpdb;
+		global $wpdb;
 
-		// This is the autoincrement value
-	    $wpdb->query( "SET @rownum := 0" );
+		// This is the autoincrement value.
+		$wpdb->query( 'SET @rownum := 0' );
 
-	    // Perform the UPDATE in a single statement
-	    $result = $wpdb->query(
-	        $wpdb->prepare("
+		// Perform the UPDATE in a single statement.
+		$result = $wpdb->query(
+			$wpdb->prepare(
+				"
 				UPDATE {$wpdb->posts} p
 			    INNER JOIN (
 			        SELECT
@@ -428,17 +448,16 @@ public function delete_task_attachment() {
 			        ) AS t
 			    ) AS ordered_tasks ON p.ID = ordered_tasks.ID
 			    SET p.menu_order = ordered_tasks.new_menu_order;",
-	            $stack,
-	            $board_term_id,
-	            $exclude_post_id
-	        )
-	    );
+				$stack,
+				$board_term_id,
+				$exclude_post_id
+			)
+		);
 
-		if ( $result === false ) {
-		    // Handle error, e.g., log the error
-		    error_log( $wpdb->last_error );
+		if ( false === $result ) {
+			// Handle error, e.g., log the error.
+			error_log( $wpdb->last_error );
 		}
-
 	}
 
 	/**
@@ -447,15 +466,15 @@ public function delete_task_attachment() {
 	 * @param int $post_id The ID of the post being deleted.
 	 */
 	public function handle_task_deletion( $post_id ) {
-	    if ( 'decker_task' !== get_post_type( $post_id ) ) {
-	        return;
-	    }
+		if ( 'decker_task' !== get_post_type( $post_id ) ) {
+			return;
+		}
 
-	    $board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
-	    $stack = get_post_meta( $post_id, 'stack', true );
-	    if ( $board_term_id >0 && $stack ) {
-	        $this->reorder_tasks_in_stack( $board_term_id, $stack, $post_id);
-	    }
+		$board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
+		$stack         = get_post_meta( $post_id, 'stack', true );
+		if ( $board_term_id > 0 && $stack ) {
+			$this->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
+		}
 	}
 
 	/**
@@ -466,28 +485,20 @@ public function delete_task_attachment() {
 	 * @param WP_Post $post The post object.
 	 */
 	public function handle_task_status_change( $new_status, $old_status, $post ) {
-		if ( $post->post_type !== 'decker_task' ) {
+		if ( 'decker_task' !== $post->post_type ) {
 			return;
 		}
 
-	    // error_log( '-------.' );
-	    // error_log( $new_status );
-	    // error_log( $old_status );
-
-
-
-		if ( $new_status === 'archived' && $old_status === 'publish' ) {
-		    // $board_term_id = get_post_meta( $post->ID, 'decker_board', true );
-
+		if ( 'archived' === $new_status && 'publish' === $old_status ) {
 
 			$board_term_id = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
 			$board_term_id = ! empty( $board_term_id ) ? $board_term_id[0] : 0;
 
 			$stack = get_post_meta( $post->ID, 'stack', true );
 
-		    if ( $board_term_id >0 && $stack ) {
-		        $this->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID);
-		    }
+			if ( $board_term_id > 0 && $stack ) {
+				$this->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
+			}
 		}
 	}
 
@@ -500,10 +511,16 @@ public function delete_task_attachment() {
 	public function mark_user_date_relation( $request ) {
 		$task_id = $request['id'];
 		$user_id = $request->get_param( 'user_id' );
-		$date = $request->get_param( 'date' );
+		$date    = $request->get_param( 'date' );
 
 		if ( ! $task_id || ! $user_id || ! $date ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Invalid parameters.',
+				),
+				400
+			);
 		}
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
@@ -511,7 +528,13 @@ public function delete_task_attachment() {
 
 		$this->add_user_date_relation( $task_id, $user_id, $date );
 
-		return new WP_REST_Response( array( 'success' => true, 'message' => 'Relation marked successfully.' ), 200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => 'Relation marked successfully.',
+			),
+			200
+		);
 	}
 
 	/**
@@ -523,10 +546,16 @@ public function delete_task_attachment() {
 	public function unmark_user_date_relation( $request ) {
 		$task_id = $request['id'];
 		$user_id = $request->get_param( 'user_id' );
-		$date = $request->get_param( 'date' );
+		$date    = $request->get_param( 'date' );
 
 		if ( ! $task_id || ! $user_id || ! $date ) {
-			return new WP_REST_Response( array( 'success' => false, 'message' => 'Invalid parameters.' ), 400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Invalid parameters.',
+				),
+				400
+			);
 		}
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
@@ -541,7 +570,13 @@ public function delete_task_attachment() {
 
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 
-		return new WP_REST_Response( array( 'success' => true, 'message' => 'Relation unmarked successfully.' ), 200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => 'Relation unmarked successfully.',
+			),
+			200
+		);
 	}
 
 	/**
@@ -553,8 +588,8 @@ public function delete_task_attachment() {
 			'decker/v1',
 			'/tasks/(?P<id>\d+)/mark_relation',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'mark_user_date_relation' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'mark_user_date_relation' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -565,8 +600,8 @@ public function delete_task_attachment() {
 			'decker/v1',
 			'/tasks/(?P<id>\d+)/unmark_relation',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'unmark_user_date_relation' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'unmark_user_date_relation' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -577,8 +612,8 @@ public function delete_task_attachment() {
 			'decker/v1',
 			'/tasks/(?P<id>\d+)/order',
 			array(
-				'methods'  => 'PUT',
-				'callback' => array( $this, 'update_task_stack_and_order' ),
+				'methods'             => 'PUT',
+				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -589,8 +624,8 @@ public function delete_task_attachment() {
 			'decker/v1',
 			'/tasks/(?P<id>\d+)/stack',
 			array(
-				'methods'  => 'PUT',
-				'callback' => array( $this, 'update_task_stack_and_order' ),
+				'methods'             => 'PUT',
+				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -601,8 +636,8 @@ public function delete_task_attachment() {
 			'decker/v1',
 			'/tasks/(?P<id>\d+)/leave',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'remove_user_from_task' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'remove_user_from_task' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -613,8 +648,8 @@ public function delete_task_attachment() {
 			'decker/v1',
 			'/tasks/(?P<id>\d+)/assign',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'assign_user_to_task' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'assign_user_to_task' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -622,30 +657,28 @@ public function delete_task_attachment() {
 		);
 
 		register_rest_route(
-		    'decker/v1',
-		    '/tasks/(?P<id>\d+)/archive',
-		    array(
-		        'methods'             => 'POST',
-		        'callback'            => array( $this, 'archive_task' ),
-		        'permission_callback' => function () {
-		            return current_user_can( 'read' );
-		        },
-		    )
+			'decker/v1',
+			'/tasks/(?P<id>\d+)/archive',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'archive_task' ),
+				'permission_callback' => function () {
+					return current_user_can( 'read' );
+				},
+			)
 		);
 
 		register_rest_route(
-		    'decker/v1',
-		    '/fix-order/(?P<board_id>\d+)',
-		    array(
-		        'methods'  => 'POST',
-		        'callback' => array( $this, 'handle_fix_order' ),
-		        'permission_callback' => function () {
-		            return current_user_can( 'manage_options' );
-		        },
-		    )
+			'decker/v1',
+			'/fix-order/(?P<board_id>\d+)',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_fix_order' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
 		);
-
-
 	}
 
 	/**
@@ -659,18 +692,24 @@ public function delete_task_attachment() {
 		$user_id = $request->get_param( 'user_id' );
 
 		if ( ! $task_id || ! $user_id ) {
-			return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'Invalid parameters.' ), 
-			400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Invalid parameters.',
+				),
+				400
+			);
 		}
 
 		$task = get_post( $task_id );
 		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'Task not found.' ), 
-			404 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Task not found.',
+				),
+				404
+			);
 		}
 
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
@@ -683,10 +722,13 @@ public function delete_task_attachment() {
 			update_post_meta( $task_id, 'assigned_users', $assigned_users );
 		}
 
-		return new WP_REST_Response( array(
-	        	'success' => true,
-            	'message' => 'User assigned successfully.' ), 
-		200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => 'User assigned successfully.',
+			),
+			200
+		);
 	}
 
 	/**
@@ -700,18 +742,24 @@ public function delete_task_attachment() {
 		$user_id = $request->get_param( 'user_id' );
 
 		if ( ! $task_id || ! $user_id ) {
-			return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'Invalid parameters.' ), 
-			400 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Invalid parameters.',
+				),
+				400
+			);
 		}
 
 		$task = get_post( $task_id );
 		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'Task not found.' ), 
-			404 );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Task not found.',
+				),
+				404
+			);
 		}
 
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
@@ -720,10 +768,13 @@ public function delete_task_attachment() {
 			update_post_meta( $task_id, 'assigned_users', $assigned_users );
 		}
 
-		return new WP_REST_Response( array(
-	        	'success' => true,
-            	'message' => 'User removed successfully.' ), 
-		200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => 'User removed successfully.',
+			),
+			200
+		);
 	}
 	/**
 	 * Add a user-date relation for a task.
@@ -738,7 +789,7 @@ public function delete_task_attachment() {
 
 		$relations[] = array(
 			'user_id' => $user_id,
-			'date' => $date,
+			'date'    => $date,
 		);
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
@@ -750,41 +801,56 @@ public function delete_task_attachment() {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function archive_task( $request ) {
-	    $task_id = $request['id'];
+		$task_id = $request['id'];
 
-	    // Validar el ID de la tarea
-	    if ( ! $task_id ) {
-	        return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'ID de tarea inválido.' ), 
-	        400 );
-	    }
+		// Validar el ID de la tarea.
+		if ( ! $task_id ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'ID de tarea inválido.',
+				),
+				400
+			);
+		}
 
-	    $task = get_post( $task_id );
-	    if ( ! $task || 'decker_task' !== $task->post_type ) {
-	        return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'Tarea no encontrada.' ),
-	        404 );
-	    }
+		$task = get_post( $task_id );
+		if ( ! $task || 'decker_task' !== $task->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Tarea no encontrada.',
+				),
+				404
+			);
+		}
 
-	    // Actualizar el estado de la tarea a 'archived'
-	    $updated = wp_update_post( array(
-	        'ID'          => $task_id,
-	        'post_status' => 'archived',
-	    ), true );
+		// Actualizar el estado de la tarea a 'archived'.
+		$updated = wp_update_post(
+			array(
+				'ID'          => $task_id,
+				'post_status' => 'archived',
+			),
+			true
+		);
 
-	    if ( is_wp_error( $updated ) ) {
-	        return new WP_REST_Response( array(
-	        	'success' => false,
-            	'message' => 'Error al archivar la tarea.' ), 
-	        500 );
-	    }
+		if ( is_wp_error( $updated ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Error al archivar la tarea.',
+				),
+				500
+			);
+		}
 
-	    return new WP_REST_Response( array(
-	        	'success' => true,
-            	'message' => 'Tarea archivada exitosamente.' ), 
-	  	200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => 'Tarea archivada exitosamente.',
+			),
+			200
+		);
 	}
 
 	/**
@@ -794,24 +860,30 @@ public function delete_task_attachment() {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function handle_fix_order( $request ) {
-	    $board_id = intval( $request['board_id'] );
+		$board_id = intval( $request['board_id'] );
 
-	    if ( $board_id <= 0 ) {
-	        return new WP_REST_Response( array(
-	            'message' => 'Invalid board ID.'
-	        ), 400 );
-	    }
+		if ( $board_id <= 0 ) {
+			return new WP_REST_Response(
+				array(
+					'message' => 'Invalid board ID.',
+				),
+				400
+			);
+		}
 
-	    $stacks = array( 'to-do', 'in-progress', 'done' );
+		$stacks = array( 'to-do', 'in-progress', 'done' );
 
-	    foreach ( $stacks as $stack ) {
-	        $this->reorder_tasks_in_stack( $board_id, $stack );
-	    }
+		foreach ( $stacks as $stack ) {
+			$this->reorder_tasks_in_stack( $board_id, $stack );
+		}
 
-	    return new WP_REST_Response( array(
-	        'success' => true,
-	        'message' => 'Tasks reordered successfully for board ' . $board_id . '.'
-	    ), 200 );
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => 'Tasks reordered successfully for board ' . $board_id . '.',
+			),
+			200
+		);
 	}
 
 
@@ -821,13 +893,9 @@ public function delete_task_attachment() {
 	 */
 	public function register_post_type() {
 		$labels = array(
-			'name'               => _x( 'Tasks', 'post type general name', 'decker' ),
-			'singular_name'      => _x( 'Task', 'post type singular name', 'decker' ),
-			'menu_name'          => _x( 'Decker', 'admin menu', 'decker' ),
-			// 'name_admin_bar'     => _x( 'Task', 'add new on admin bar', 'decker' ),
-			// 'add_new'            => _x( 'Add New', 'task', 'decker' ),
-			// 'add_new_item'       => __( 'Add New Task', 'decker' ),
-			// 'new_item'           => __( 'New Task', 'decker' ),
+			'name'          => _x( 'Tasks', 'post type general name', 'decker' ),
+			'singular_name' => _x( 'Task', 'post type singular name', 'decker' ),
+			'menu_name'     => _x( 'Decker', 'admin menu', 'decker' ),
 			'edit_item'          => __( 'Edit Task', 'decker' ),
 			'view_item'          => __( 'View Task', 'decker' ),
 			'all_items'          => __( 'All Tasks', 'decker' ),
@@ -859,10 +927,10 @@ public function delete_task_attachment() {
 				'excerpt',
 				'page-attributes',
 			),
-			'taxonomies'         => array( 'decker_board', 'decker_label' ),
-			'show_in_rest'       => false,
-			'rest_base'          => 'tasks',
-			'can_export'         => true,
+			'taxonomies'   => array( 'decker_board', 'decker_label' ),
+			'show_in_rest' => false,
+			'rest_base'    => 'tasks',
+			'can_export'   => true,
 		);
 
 		register_post_type( 'decker_task', $args );
@@ -882,7 +950,7 @@ public function delete_task_attachment() {
 				'show_in_admin_all_list'    => false,
 				'show_in_admin_status_list' => true,
 				/* translators: %s: Number of items */
-				'label_count'               => _n_noop( 'Archived <span class="count">(%s)</span>', 'Archived <span class="count">(%s)</span>', 'decker' ),
+				'label_count' => _n_noop( 'Archived <span class="count">(%s)</span>', 'Archived <span class="count">(%s)</span>', 'decker' ),
 			)
 		);
 	}
@@ -893,11 +961,11 @@ public function delete_task_attachment() {
 	public function append_post_status_list() {
 		global $post;
 		$complete = '';
-		$label = '';
+		$label    = '';
 		if ( 'decker_task' === $post->post_type ) {
 			if ( 'archived' === $post->post_status ) {
 				$complete = ' selected="selected"';
-				$label = '<span id="post-status-display"> ' . esc_html__( 'Archived', 'decker' ) . '</span>';
+				$label    = '<span id="post-status-display"> ' . esc_html__( 'Archived', 'decker' ) . '</span>';
 			}
 			echo '<script>
 			jQuery(document).ready(function($){
@@ -919,34 +987,12 @@ public function delete_task_attachment() {
 	 */
 	public function filter_tasks_by_status( $query ) {
 		global $pagenow;
-	    $post_type = isset( $_GET['post_type'] ) ? sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) : '';
+		$post_type = isset( $_GET['post_type'] ) ? sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) : '';
 
 		if ( 'edit.php' === $pagenow && 'decker_task' === $post_type && ! isset( $_GET['post_status'] ) ) {
 			$query->set( 'post_status', 'publish' );
 		}
 	}
-
-	// /**
-	//  * Display custom post states.
-	//  *
-	//  * @param array $statuses The current post states.
-	//  * @return array The modified post states.
-	//  */
-	// public function display_post_states( $statuses ) {
-	// 	global $post;
-
-	// 	if ( 'decker_task' == $post->post_type ) {
-	// 		if ( 'archived' == $post->post_status ) {
-	// 			$statuses['archived'] = __( 'Archived', 'decker' );
-	// 		}
-
-	// 		if ( 'draft' == $post->post_status ) {
-	// 			$statuses['draft'] = __( 'Custom Draft State', 'decker' );
-	// 		}
-	// 	}
-
-	// 	return $statuses;
-	// }
 
 	/**
 	 * Add metaboxes for the decker_task post type.
@@ -1018,10 +1064,13 @@ public function delete_task_attachment() {
 	 * @param WP_Post $post The current post object.
 	 */
 	public function display_meta_box( $post ) {
-		$duedate = get_post_meta( $post->ID, 'duedate', true );
-		$max_priority = get_post_meta( $post->ID, 'max_priority', true );
-		$stack = get_post_meta( $post->ID, 'stack', true );
+		$duedate           = get_post_meta( $post->ID, 'duedate', true );
+		$max_priority      = get_post_meta( $post->ID, 'max_priority', true );
+		$stack             = get_post_meta( $post->ID, 'stack', true );
 		$id_nextcloud_card = get_post_meta( $post->ID, 'id_nextcloud_card', true );
+
+		wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
+
 		?>
 		<p>
 			<label for="duedate"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
@@ -1054,7 +1103,7 @@ public function delete_task_attachment() {
 	public function display_labels_meta_box( $post ) {
 		$terms = get_terms(
 			array(
-				'taxonomy' => 'decker_label',
+				'taxonomy'   => 'decker_label',
 				'hide_empty' => false,
 			)
 		);
@@ -1084,7 +1133,7 @@ public function delete_task_attachment() {
 	public function display_board_meta_box( $post ) {
 		$terms = get_terms(
 			array(
-				'taxonomy' => 'decker_board',
+				'taxonomy'   => 'decker_board',
 				'hide_empty' => false,
 			)
 		);
@@ -1109,7 +1158,7 @@ public function delete_task_attachment() {
 	 * @param WP_Post $post The current post object.
 	 */
 	public function display_users_meta_box( $post ) {
-		$users = get_users( array( 'orderby' => 'display_name' ) );
+		$users          = get_users( array( 'orderby' => 'display_name' ) );
 		$assigned_users = get_post_meta( $post->ID, 'assigned_users', true );
 		?>
 		<div id="assigned-users" class="categorydiv">
@@ -1133,279 +1182,299 @@ public function delete_task_attachment() {
 	 * @param WP_Post $post The current post object.
 	 */
 	public function display_user_date_meta_box( $post ) {
-	    // Retrieve existing relations from post meta; initialize as empty array if none exist
-	    $relations = get_post_meta( $post->ID, '_user_date_relations', true );
-	    $relations = is_array( $relations ) ? $relations : array();
+		// Retrieve existing relations from post meta; initialize as empty array if none exist.
+		$relations = get_post_meta( $post->ID, '_user_date_relations', true );
+		$relations = is_array( $relations ) ? $relations : array();
 
-	    // Retrieve all users to populate the select dropdown
-	    $users = get_users();
-	    ?>
-	    <div id="user-date-meta-box">
-	        <!-- User Selection -->
-	        <p>
-	            <label for="assigned_user"><?php esc_html_e( 'Assign User:', 'decker' ); ?></label>
-	            <select id="assigned_user" class="widefat">
-	                <option value=""><?php esc_html_e( '-- Select User --', 'decker' ); ?></option>
-	                <?php foreach ( $users as $user ) { ?>
-	                    <option value="<?php echo esc_attr( $user->ID ); ?>">
-	                        <?php echo esc_html( $user->display_name ); ?>
-	                    </option>
-	                <?php } ?>
-	            </select>
-	        </p>
-	        
-	        <!-- Date Selection -->
-	        <p>
-	            <label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
-	            <input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( date( 'Y-m-d' ) ); ?>">
-	        </p>
-	        
-	        <!-- Add Relation Button -->
-	        <p>
-	            <button type="button" class="button" id="add-user-date-relation"><?php esc_html_e( 'Add Relation', 'decker' ); ?></button>
-	        </p>
-	        
-	        <!-- Relations List -->
-	        <ul id="user-date-relations-list">
-	            <?php foreach ( $relations as $relation ) { 
-	                // Safely retrieve user data
-	                $user = get_userdata( $relation['user_id'] );
-	                $display_name = $user ? esc_html( $user->display_name ) : esc_html__( 'Unknown User', 'decker' );
-	                $date = esc_html( $relation['date'] );
-	                ?>
-	                <li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
-	                    <?php echo esc_html($display_name) . ' - ' . esc_html($date); ?>
-	                    <button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
-	                </li>
-	            <?php } ?>
-	        </ul>
-	    </div>
-	    
-	    <!-- Inline JavaScript for Meta Box Functionality -->
-	    <script>
-	    document.addEventListener('DOMContentLoaded', function () {
-	        const addBtn = document.getElementById('add-user-date-relation');
-	        const userSelect = document.getElementById('assigned_user');
-	        const dateInput = document.getElementById('assigned_date');
-	        const relationsList = document.getElementById('user-date-relations-list');
+		// Retrieve all users to populate the select dropdown.
+		$users = get_users();
+		?>
+		<div id="user-date-meta-box">
+			<!-- User Selection -->
+			<p>
+				<label for="assigned_user"><?php esc_html_e( 'Assign User:', 'decker' ); ?></label>
+				<select id="assigned_user" class="widefat">
+					<option value=""><?php esc_html_e( '-- Select User --', 'decker' ); ?></option>
+					<?php foreach ( $users as $user ) { ?>
+						<option value="<?php echo esc_attr( $user->ID ); ?>">
+							<?php echo esc_html( $user->display_name ); ?>
+						</option>
+					<?php } ?>
+				</select>
+			</p>
+			
+			<!-- Date Selection -->
+			<p>
+				<label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
+				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>">
+			</p>
+			
+			<!-- Add Relation Button -->
+			<p>
+				<button type="button" class="button" id="add-user-date-relation"><?php esc_html_e( 'Add Relation', 'decker' ); ?></button>
+			</p>
+			
+			<!-- Relations List -->
+			<ul id="user-date-relations-list">
+				<?php
+				foreach ( $relations as $relation ) {
+					// Safely retrieve user data.
+					$user         = get_userdata( $relation['user_id'] );
+					$display_name = $user ? esc_html( $user->display_name ) : esc_html__( 'Unknown User', 'decker' );
+					$date         = esc_html( $relation['date'] );
+					?>
+					<li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
+						<?php echo esc_html( $display_name ) . ' - ' . esc_html( $date ); ?>
+						<button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
+					</li>
+				<?php } ?>
+			</ul>
+		</div>
+		
+		<!-- Inline JavaScript for Meta Box Functionality -->
+		<script>
+		document.addEventListener('DOMContentLoaded', function () {
+			const addBtn = document.getElementById('add-user-date-relation');
+			const userSelect = document.getElementById('assigned_user');
+			const dateInput = document.getElementById('assigned_date');
+			const relationsList = document.getElementById('user-date-relations-list');
 
-	        // Add Relation Button Click Event
-	        addBtn.addEventListener('click', function () {
-	            const userId = userSelect.value;
-	            const userName = userSelect.options[userSelect.selectedIndex].text;
-	            const date = dateInput.value;
+			// Add Relation Button Click Event
+			addBtn.addEventListener('click', function () {
+				const userId = userSelect.value;
+				const userName = userSelect.options[userSelect.selectedIndex].text;
+				const date = dateInput.value;
 
-	            // Validate user selection and date input
-	            if (!userId || !date) {
-	                alert('<?php echo esc_js( __( "Please select a user and date.", "decker" ) ); ?>');
-	                return;
-	            }
+				// Validate user selection and date input.
+				if (!userId || !date) {
+					alert('<?php echo esc_js( __( 'Please select a user and date.', 'decker' ) ); ?>');
+					return;
+				}
 
-	            // Check if the user is already added with the same date
-	            const existing = Array.from(relationsList.children).some(item => 
-	                item.getAttribute('data-user-id') === userId && item.getAttribute('data-date') === date
-	            );
-	            if (existing) {
-	                alert('<?php echo esc_js( __( "This user and date combination already exists.", "decker" ) ); ?>');
-	                return;
-	            }
+				// Check if the user is already added with the same date.
+				const existing = Array.from(relationsList.children).some(item => 
+					item.getAttribute('data-user-id') === userId && item.getAttribute('data-date') === date
+				);
+				if (existing) {
+					alert('<?php echo esc_js( __( 'This user and date combination already exists.', 'decker' ) ); ?>');
+					return;
+				}
 
-	            // Create a new list item for the relation
-	            const listItem = document.createElement('li');
-	            listItem.setAttribute('data-user-id', userId);
-	            listItem.setAttribute('data-date', date);
-	            listItem.innerHTML = `
-	                ${userName} - ${date} 
-	                <button type="button" class="button remove-relation"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>
-	            `;
-	            relationsList.appendChild(listItem);
+				// Create a new list item for the relation.
+				const listItem = document.createElement('li');
+				listItem.setAttribute('data-user-id', userId);
+				listItem.setAttribute('data-date', date);
+				listItem.innerHTML = `
+					${userName} - ${date} 
+					<button type="button" class="button remove-relation"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>
+				`;
+				relationsList.appendChild(listItem);
 
-	            // Add event listener to the remove button
-	            listItem.querySelector('.remove-relation').addEventListener('click', function () {
-	                listItem.remove();
-	            });
+				// Add event listener to the remove button.
+				listItem.querySelector('.remove-relation').addEventListener('click', function () {
+					listItem.remove();
+				});
 
-	            // Reset the select and date input
-	            userSelect.value = '';
-	            dateInput.value = '';
-	        });
+				// Reset the select and date input.
+				userSelect.value = '';
+				dateInput.value = '';
+			});
 
-	        // Add event listeners to existing remove buttons
-	        document.querySelectorAll('.remove-relation').forEach(button => {
-	            button.addEventListener('click', function () {
-	                button.parentElement.remove();
-	            });
-	        });
+			// Add event listeners to existing remove buttons
+			document.querySelectorAll('.remove-relation').forEach(button => {
+				button.addEventListener('click', function () {
+					button.parentElement.remove();
+				});
+			});
 
-	        // Add hidden fields to the form when saving the post
-	        document.getElementById('post').addEventListener('submit', function () {
-	            // Remove any existing hidden inputs to prevent duplicates
-	            const existingInput = document.querySelector('input[name="user_date_relations"]');
-	            if (existingInput) {
-	                existingInput.remove();
-	            }
+			// Add hidden fields to the form when saving the post.
+			document.getElementById('post').addEventListener('submit', function () {
+				// Remove any existing hidden inputs to prevent duplicates.
+				const existingInput = document.querySelector('input[name="user_date_relations"]');
+				if (existingInput) {
+					existingInput.remove();
+				}
 
-	            const relations = [];
-	            document.querySelectorAll('#user-date-relations-list li').forEach(item => {
-	                relations.push({
-	                    user_id: item.getAttribute('data-user-id'),
-	                    date: item.getAttribute('data-date')
-	                });
-	            });
+				const relations = [];
+				document.querySelectorAll('#user-date-relations-list li').forEach(item => {
+					relations.push({
+						user_id: item.getAttribute('data-user-id'),
+						date: item.getAttribute('data-date')
+					});
+				});
 
-	            const hiddenInput = document.createElement('input');
-	            hiddenInput.type = 'hidden';
-	            hiddenInput.name = 'user_date_relations';
-	            hiddenInput.value = JSON.stringify(relations);
-	            this.appendChild(hiddenInput);
-	        });
-	    });
-	    </script>
-	    <?php
+				const hiddenInput = document.createElement('input');
+				hiddenInput.type = 'hidden';
+				hiddenInput.name = 'user_date_relations';
+				hiddenInput.value = JSON.stringify(relations);
+				this.appendChild(hiddenInput);
+			});
+		});
+		</script>
+		<?php
 	}
 
+	/**
+	 * Displays the attachment meta box for the 'decker_task' post type.
+	 *
+	 * This meta box allows users to view, add, and remove attachments for a specific task.
+	 * The attachments are displayed as a list with options to remove them, and users can
+	 * add new attachments via the WordPress media library modal.
+	 *
+	 * @param WP_Post $post The current post object for which the meta box is displayed.
+	 *
+	 * @return void Outputs the HTML and JavaScript for managing attachments.
+	 */
+	public function display_attachment_meta_box( $post ) {
+		// Retrieve existing attachments linked to post.
+		$attachments = get_attached_media( '', $post->ID );
 
-public function display_attachment_meta_box( $post ) {
-    // Retrieve existing attachments linked to post.
-    $attachments = get_attached_media( '', $post->ID );		
+		// Include the nonce field for security.
+		wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
+		?>
+	<div id="attachments-meta-box">
+		<!-- Button to open the media library modal -->
+		<p>
+			<button type="button" class="button" id="add-attachments"><?php esc_html_e( 'Add Attachments', 'decker' ); ?></button>
+		</p>
+		
+		<!-- List of attached media -->
+		<ul id="attachments-list">
+			<?php
+			foreach ( $attachments as $attachment ) :
+				$attachment_url   = $attachment->guid;
+				$attachment_title = $attachment->post_title;
+				$file_extension   = pathinfo( $attachment_url, PATHINFO_EXTENSION );
+				$file_name        = $attachment->post_title . '.' . $file_extension;
 
-    // Include the nonce field for security
-    wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
-    ?>
-    <div id="attachments-meta-box">
-        <!-- Button to open the media library modal -->
-        <p>
-            <button type="button" class="button" id="add-attachments"><?php esc_html_e( 'Add Attachments', 'decker' ); ?></button>
-        </p>
-        
-        <!-- List of attached media -->
-        <ul id="attachments-list">
-            <?php foreach ( $attachments as $attachment ) : 
-                $attachment_url = $attachment->guid;
-                $attachment_title = $attachment->post_title;
-	            $file_extension = pathinfo($attachment_url, PATHINFO_EXTENSION);
-	            $file_name = $attachment->post_title . '.' . $file_extension;
-
-                ?>
-                <li data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
-                    <a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $file_name ); ?></a>
+				?>
+				<li data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
+					<a href="<?php echo esc_url( $attachment_url ); ?>" target="_blank"><?php echo esc_html( $file_name ); ?></a>
  
-                    <button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
-                    <!-- Hidden input to store attachment IDs -->
-                    <input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attachment->ID ); ?>">
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-    <!-- JavaScript to handle the media library modal -->
-    <script>
-    jQuery(document).ready(function($){
-        var frame;
-        jQuery('#add-attachments').on('click', function(e){
-            e.preventDefault();
-            // If the media frame already exists, reopen it.
-            if ( frame ) {
-                frame.open();
-                return;
-            }
-            // Create a new media frame
-            frame = wp.media({
-                title: '<?php echo esc_js( __( 'Select Attachments', 'decker' ) ); ?>',
-                button: {
-                    text: '<?php echo esc_js( __( 'Add Attachments', 'decker' ) ); ?>',
-                },
-                multiple: true // Set to true to allow multiple files to be selected
-            });
-            // When an attachment is selected, run a callback.
-            frame.on( 'select', function() {
-                var attachments = frame.state().get('selection').toJSON();
-                attachments.forEach(function(attachment){
-                    // Append the selected attachments to the list
-                    jQuery('#attachments-list').append(
-                        '<li data-attachment-id="' + attachment.id + '">' +
-                            '<a href="' + attachment.url + '" target="_blank">' + attachment.title + '</a> ' +
-                            '<button type="button" class="button remove-attachment"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>' +
-                            '<input type="hidden" name="attachments[]" value="' + attachment.id + '">' +
-                        '</li>'
-                    );
-                });
-            });
-            // Finally, open the modal
-            frame.open();
-        });
-        // Handle removal of attachments
-        jQuery('#attachments-list').on('click', '.remove-attachment', function(){
-            jQuery(this).closest('li').remove();
-        });
-    });
-    </script>
-    <?php
-}
+					<button type="button" class="button remove-attachment"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
+					<!-- Hidden input to store attachment IDs -->
+					<input type="hidden" name="attachments[]" value="<?php echo esc_attr( $attachment->ID ); ?>">
+				</li>
+			<?php endforeach; ?>
+		</ul>
+	</div>
+	<!-- JavaScript to handle the media library modal -->
+	<script>
+	jQuery(document).ready(function($){
+		var frame;
+		jQuery('#add-attachments').on('click', function(e){
+			e.preventDefault();
+			// If the media frame already exists, reopen it.
+			if ( frame ) {
+				frame.open();
+				return;
+			}
+			// Create a new media frame.
+			frame = wp.media({
+				title: '<?php echo esc_js( __( 'Select Attachments', 'decker' ) ); ?>',
+				button: {
+					text: '<?php echo esc_js( __( 'Add Attachments', 'decker' ) ); ?>',
+				},
+				multiple: true // Set to true to allow multiple files to be selected.
+			});
+			// When an attachment is selected, run a callback.
+			frame.on( 'select', function() {
+				var attachments = frame.state().get('selection').toJSON();
+				attachments.forEach(function(attachment){
+					// Append the selected attachments to the list.
+					jQuery('#attachments-list').append(
+						'<li data-attachment-id="' + attachment.id + '">' +
+							'<a href="' + attachment.url + '" target="_blank">' + attachment.title + '</a> ' +
+							'<button type="button" class="button remove-attachment"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>' +
+							'<input type="hidden" name="attachments[]" value="' + attachment.id + '">' +
+						'</li>'
+					);
+				});
+			});
+			// Finally, open the modal.
+			frame.open();
+		});
+		// Handle removal of attachments.
+		jQuery('#attachments-list').on('click', '.remove-attachment', function(){
+			jQuery(this).closest('li').remove();
+		});
+	});
+	</script>
+		<?php
+	}
 
 
 
 
 	/**
-	 * Modify the menu_order before the post is saved.
+	 * Modifies the `menu_order` of a task before it is saved.
 	 *
-	 * @param array $data The data to be saved for the post.
-	 * @param array $postarr The post array containing data input.
-	 * @return array The modified data array.
+	 * Prevents direct user modification of the `menu_order` field and calculates
+	 * the appropriate value based on the `decker_board` and `stack` fields. This is
+	 * applied only when a new task is being created.
+	 *
+	 * @param array $data                The sanitized data to be saved for the post.
+	 * @param array $postarr             The original post array containing input data.
+	 * @param array $unsanitized_postarr The unsanitized post array.
+	 * @param bool  $update              Whether the post is being updated (true) or created (false).
+	 * @return array The modified data array with the updated `menu_order`.
+	 *
+	 * @throws WP_Error Logs warnings or errors in the error log if required fields are missing or invalid.
 	 */
-	public function modify_task_order_before_save(array $data, array $postarr, array $unsanitized_postarr, bool $update ) {
+	public function modify_task_order_before_save( array $data, array $postarr, array $unsanitized_postarr, bool $update ) {
 
-		// Prevent the user from directly modifying the menu_order
+		// Prevent the user from directly modifying the menu_order.
 		if ( isset( $postarr['menu_order'] ) ) {
-		    // Remove the menu_order field so it won't be saved
-		    unset( $postarr['menu_order'] );
+			// Remove the menu_order field so it won't be saved.
+			unset( $postarr['menu_order'] );
 		}
 
-	    // Ensure we're working with the correct post type and only on Insert post.
-	    if ( !$update && 'decker_task' === $postarr['post_type'] ) {
+		// Ensure we're working with the correct post type and only on Insert post.
+		if ( ! $update && 'decker_task' === $postarr['post_type'] ) {
 
-	        // Initialize variables.
-	        $board = '';
-	        $stack = '';
+			// Initialize variables.
+			$board = '';
+			$stack = '';
 
-	        // 1. Attempt to retrieve 'decker_board' and 'stack' directly from $postarr.
-	        if ( isset( $postarr['decker_board'] ) ) {
-	            $board = intval( $postarr['decker_board'] );
-	        }
+			// 1. Attempt to retrieve 'decker_board' and 'stack' directly from $postarr.
+			if ( isset( $postarr['decker_board'] ) ) {
+				$board = intval( $postarr['decker_board'] );
+			}
 
-	        if ( isset( $postarr['stack'] ) ) {
-	            $stack = sanitize_text_field( $postarr['stack'] );
-	        }
+			if ( isset( $postarr['stack'] ) ) {
+				$stack = sanitize_text_field( $postarr['stack'] );
+			}
 
-	        // 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
-	        if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
-	            $board = intval( $postarr['tax_input']['decker_board'][0] );
-	        }
+			// 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
+			if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
+				$board = intval( $postarr['tax_input']['decker_board'][0] );
+			}
 
-	        if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
-	            $stack = sanitize_text_field( $postarr['meta_input']['stack'] );
-	        }
+			if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
+				$stack = sanitize_text_field( $postarr['meta_input']['stack'] );
+			}
 
-	        // 3. Validate that both 'board' and 'stack' have been retrieved.
-	        if ( ! empty( $board ) && ! empty( $stack ) ) {
+			// 3. Validate that both 'board' and 'stack' have been retrieved.
+			if ( ! empty( $board ) && ! empty( $stack ) ) {
 
-	            // Calculate the new order value based on 'board' and 'stack'.
-	            $new_order = $this->get_new_task_order( $board, $stack );
+				// Calculate the new order value based on 'board' and 'stack'.
+				$new_order = $this->get_new_task_order( $board, $stack );
 
-	            // Ensure that the new order is a valid number.
-	            if ( is_numeric( $new_order ) ) {
-	                // Assign the calculated menu_order to the post data.
-	                $data['menu_order'] = intval( $new_order );
-	            } else {
-	                // Log an error if the new_order is not numeric.
-	                error_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'] );
-	            }
-	        } else {
-	            // Log a warning if either 'board' or 'stack' is missing.
-	            error_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'] );
-	        }
-	    }
+				// Ensure that the new order is a valid number.
+				if ( is_numeric( $new_order ) ) {
+					// Assign the calculated menu_order to the post data.
+					$data['menu_order'] = intval( $new_order );
+				} else {
+					// Log an error if the new_order is not numeric.
+					error_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'] );
+				}
+			} else {
+				// Log a warning if either 'board' or 'stack' is missing.
+				error_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'] );
+			}
+		}
 
-	    return $data;
+		return $data;
 	}
 
 
@@ -1417,6 +1486,16 @@ public function display_attachment_meta_box( $post ) {
 	 */
 	public function save_meta( $post_id ) {
 
+		// Check if nonce is set and verified.
+		if ( ! isset( $_POST['decker_task_nonce'] ) ) {
+			return; // Exit if the nonce is not set.
+		}
+
+		$nonce = sanitize_text_field( wp_unslash( $_POST['decker_task_nonce'] ) );
+		if ( ! wp_verify_nonce( $nonce, 'save_decker_task' ) ) {
+			return; // Exit if the nonce verification fails.
+		}
+
 		// Check autosave and post type.
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return $post_id;
@@ -1425,14 +1504,20 @@ public function display_attachment_meta_box( $post ) {
 			return $post_id;
 		}
 
-		// Prevent changes if the task is archived
+		// Check the user's permissions.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return $post_id;
+		}
+
+		// Prevent changes if the task is archived.
 		if ( 'archived' === get_post_status( $post_id ) ) {
 			return $post_id;
 		}
 
 		// Save task details.
 		if ( isset( $_POST['duedate'] ) ) {
-			update_post_meta( $post_id, 'duedate', sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) );
+			$duedate = sanitize_text_field( wp_unslash( $_POST['duedate'] ) );
+			update_post_meta( $post_id, 'duedate', $duedate );
 		}
 		$max_priority = isset( $_POST['max_priority'] ) ? '1' : '';
 		update_post_meta( $post_id, 'max_priority', $max_priority );
@@ -1444,7 +1529,7 @@ public function display_attachment_meta_box( $post ) {
 			update_post_meta( $post_id, 'id_nextcloud_card', sanitize_text_field( wp_unslash( $_POST['id_nextcloud_card'] ) ) );
 		}
 		if ( isset( $_POST['decker_labels'] ) ) {
-			$labels = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_labels'] ) );
+			$labels      = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_labels'] ) );
 			$label_slugs = array();
 			foreach ( $labels as $label_id ) {
 				$term = get_term( $label_id, 'decker_label' );
@@ -1455,23 +1540,40 @@ public function display_attachment_meta_box( $post ) {
 			wp_set_post_terms( $post_id, $label_slugs, 'decker_label' );
 		}
 		if ( isset( $_POST['decker_board'] ) ) {
-			$board_id = sanitize_text_field( wp_unslash( $_POST['decker_board'] ) );
+			$board_id   = sanitize_text_field( wp_unslash( $_POST['decker_board'] ) );
 			$board_term = get_term( $board_id, 'decker_board' );
 			if ( $board_term && ! is_wp_error( $board_term ) ) {
 				wp_set_post_terms( $post_id, array( $board_term->slug ), 'decker_board' );
 			}
 		}
 
-		// Save assigned users
+		// Save assigned users.
 		if ( isset( $_POST['assigned_users'] ) ) {
-		    $assigned_users = array_map( 'intval', wp_unslash( $_POST['assigned_users'] ) );
-		    update_post_meta( $post_id, 'assigned_users', $assigned_users );
+			$assigned_users = array_map( 'intval', wp_unslash( $_POST['assigned_users'] ) );
+			update_post_meta( $post_id, 'assigned_users', $assigned_users );
 		}
 
 		// Save user date relations.
-    	$relations = isset( $_POST['user_date_relations'] ) ? json_decode( stripslashes( wp_unslash( $_POST['user_date_relations'] ) ), true ) : array();
-	    update_post_meta( $post_id, '_user_date_relations', $relations );
+		$relations = array();
 
+		if ( isset( $_POST['user_date_relations'] ) ) {
+			// Remove slashes added by WordPress.
+			$relations_json = sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) );
+
+			// Decode the JSON using PHP's json_decode function.
+			$decoded_relations = json_decode( $relations_json, true );
+
+			// Verify that the decoding returned a valid array.
+			if ( is_array( $decoded_relations ) ) {
+				$relations = $decoded_relations;
+			} else {
+				// Handle JSON decoding errors if necessary.
+				// You can log the error or display a message.
+				error_log( 'JSON decoding failed: ' . json_last_error_msg() );
+			}
+		}
+
+		update_post_meta( $post_id, '_user_date_relations', $relations );
 	}
 
 	/**
@@ -1490,20 +1592,20 @@ public function display_attachment_meta_box( $post ) {
 	 * Disables the menu_order field in the admin interface for decker_task.
 	 */
 	public function disable_menu_order_field() {
-	    $screen = get_current_screen();
-	    if ( $screen && 'decker_task' === $screen->post_type && 'post' === $screen->base ) {
-	        ?>
-	        <script type="text/javascript">
-	            document.addEventListener('DOMContentLoaded', function() {
-	                // Disable the menu_order field
-	                var menuOrderField = document.getElementById('menu_order');
-	                if (menuOrderField) {
-	                    menuOrderField.disabled = true;
-	                }
-	            });
-	        </script>
-	        <?php
-	    }
+		$screen = get_current_screen();
+		if ( $screen && 'decker_task' === $screen->post_type && 'post' === $screen->base ) {
+			?>
+			<script type="text/javascript">
+				document.addEventListener('DOMContentLoaded', function() {
+					// Disable the menu_order field.
+					var menuOrderField = document.getElementById('menu_order');
+					if (menuOrderField) {
+						menuOrderField.disabled = true;
+					}
+				});
+			</script>
+			<?php
+		}
 	}
 
 	/**
@@ -1548,7 +1650,7 @@ public function display_attachment_meta_box( $post ) {
 	 * @param string $label    The label for the dropdown.
 	 */
 	private function add_taxonomy_filter( $taxonomy, $label ) {
-		$selected = isset( $_GET[ $taxonomy ] ) ? sanitize_text_field( wp_unslash( $_GET[ $taxonomy ] ) ) : '';
+		$selected      = isset( $_GET[ $taxonomy ] ) ? sanitize_text_field( wp_unslash( $_GET[ $taxonomy ] ) ) : '';
 		$info_taxonomy = get_taxonomy( $taxonomy );
 		wp_dropdown_categories(
 			array(
@@ -1577,9 +1679,17 @@ public function display_attachment_meta_box( $post ) {
 		return $current_status;
 	}
 
-	function change_publish_meta_box_title() {
+	/**
+	 * Changes the title of the publish meta box for the 'decker_task' post type.
+	 *
+	 * Updates the title of the publish meta box to "Status" using JavaScript
+	 * when editing or creating a task of the 'decker_task' post type.
+	 *
+	 * @return void Outputs a script to modify the meta box title dynamically.
+	 */
+	public function change_publish_meta_box_title() {
 		global $post_type;
-		if ( $post_type === 'decker_task' ) {
+		if ( 'decker_task' === $post_type ) {
 			echo '<script>
 	            jQuery(document).ready(function($) {
 	                jQuery("#submitdiv .hndle").text("' . esc_html__( 'Status', 'decker' ) . '");
@@ -1613,181 +1723,221 @@ public function display_attachment_meta_box( $post ) {
 		}
 	}
 
-    public function handle_save_decker_task() {
-        // Verificar el nonce de seguridad
-        check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
+	/**
+	 * Handles the creation or update of a Decker task via AJAX.
+	 *
+	 * This method processes form data sent via an AJAX request, validates and sanitizes
+	 * the input, and either creates a new task or updates an existing one. It returns a JSON
+	 * response indicating success or failure.
+	 *
+	 * @return void Outputs a JSON response indicating the result of the operation.
+	 *
+	 * @throws WP_Error If any validation or task creation/updating fails, an error is logged or returned.
+	 */
+	public function handle_save_decker_task() {
+		// Verificar el nonce de seguridad.
+		check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
 
-        // Obtener y sanitizar los datos del formulario
-        $ID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-        $title = isset( $_POST['title'] ) ? sanitize_text_field( $_POST['title'] ) : '';
-        $description = isset( $_POST['description'] ) ? wp_kses_post( $_POST['description'] ) : '';
-        $stack = isset( $_POST['stack'] ) ? sanitize_text_field( $_POST['stack'] ) : '';
-        $board = isset( $_POST['board'] ) ? intval( $_POST['board'] ) : 0;
-      
-		// error_log( "-----" );
-		// error_log($_POST['board'] );
+		// Retrieve and sanitize form data.
+		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
+		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
+		$description = isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '';
+		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '';
+		$board       = isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0;
 
-		// error_log($board );
+		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
 
+		$duedate_raw = isset( $_POST['duedate'] ) ? sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) : '';
 
-        $max_priority = isset( $_POST['max_priority'] ) ? boolval( $_POST['max_priority'] ) : false;
-              
 		try {
-		    $duedate = isset( $_POST['due_date'] ) ? new DateTime( sanitize_text_field( $_POST['due_date'] ) ) : new DateTime();
+			$duedate = new DateTime( $duedate_raw );
 		} catch ( Exception $e ) {
-		    $duedate = new DateTime(); // Default value if conversion fails
+			$duedate = new DateTime(); // Default value if conversion fails.
 		}
 
-        $author = isset( $_POST['author'] ) ? intval( $_POST['author'] ) : get_current_user_id();
-                
+		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
 
-		$assigned_users = is_string($_POST['assignees'])
-		    ? array_map('intval', explode(',', $_POST['assignees']))
-		    : (is_array($_POST['assignees']) ? array_map('intval', $_POST['assignees']) : []);
+		// Manejar 'assignees'.
+		$assigned_users = array();
 
-		$labels = is_string($_POST['labels'])
-		    ? array_map('intval', explode(',', $_POST['labels']))
-		    : (is_array($_POST['labels']) ? array_map('intval', $_POST['labels']) : []);
+		if ( isset( $_POST['assignees'] ) ) {
+			// Eliminar las barras invertidas añadidas por WordPress.
+			$assignees_raw = sanitize_text_field( wp_unslash( $_POST['assignees'] ) );
 
-
-        $creation_date = new DateTime(); // O ajusta según corresponda
-
-        // Llamar a la función común para crear o actualizar la tarea
-        $result = self::create_or_update_task(
-            $ID,
-            $title,
-            $description,
-            $stack,
-            $board,
-            $max_priority,
-            $duedate,
-            $author,
-            $assigned_users,
-            $labels,
-            $creation_date,
-            false,
-            0,
-        );
-
-        if ( is_wp_error( $result ) ) {
-            wp_send_json_error( [ 'message' => $result->get_error_message() ] );
-        } else {
-            wp_send_json_success( [ 'message' => 'Tarea guardada exitosamente.', 'task_id' => $result ] );
-        }
-
-        wp_die(); // Finalizar correctamente
-    }
-
-
-	public static function create_or_update_task(
-	    int $ID,
-	    string $title,
-	    string $description,
-	    string $stack,
-	    int $board,
-	    bool $max_priority,
-	    ?DateTime $duedate,
-	    int $author,
-	    array $assigned_users,
-	    array $labels,
-	    DateTime $creation_date,
-	    bool $archived = false,
-	    int $id_nextcloud_card = 0
-	) {
-
-
-	    // Validate required fields
-	    if ( empty( $title ) ) {
-	        return new WP_Error( 'missing_field', __( 'The title is required.', 'decker' ) );
-	    }
-	    if ( empty( $stack ) ) {
-	        return new WP_Error( 'missing_field', __( 'The stack is required.', 'decker' ) );
-	    }
-	    if ( $board <= 0 ) {
-	        return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
-	    }
-
-		if ( ! term_exists( $board, 'decker_board' ) ) {		
-
-			error_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.' );
-	        return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
+			if ( is_string( $assignees_raw ) ) {
+				$assigned_users = array_map( 'absint', explode( ',', $assignees_raw ) );
+			} elseif ( is_array( $assignees_raw ) ) {
+				$assigned_users = array_map( 'absint', $assignees_raw );
+			}
 		}
 
+		// Manejar 'labels'.
+		$labels = array();
 
-		// error_log($board );
+		if ( isset( $_POST['labels'] ) ) {
+			// Eliminar las barras invertidas añadidas por WordPress.
+			$labels_raw = sanitize_text_field( wp_unslash( $_POST['labels'] ) );
 
-
-	    // Convertir objetos DateTime a formato string (si no, pasamos null to undefined)
-	    $duedate_str = $duedate ? $duedate->format('Y-m-d') : null;
-	    $creation_date_str = $creation_date->format('Y-m-d H:i:s');
-
-	    // Preparar los términos para tax_input
-	    $tax_input = array();
-
-	    // Asignar la taxonomía 'decker_board' con el ID del board
-	    if ( $board > 0 ) {
-	        $tax_input['decker_board'] = array( $board );
-	    }
-
-	    // Incluir etiquetas en tax_input si las hay
-	    if ( ! empty( $labels ) ) {
-	        // Asegúrate de que $labels contiene IDs de términos válidos
-	        $tax_input['decker_label'] = array_map( 'intval', $labels );
-	    }
-
-		if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
-		    if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
-		        $assigned_users = wp_list_pluck( $assigned_users, 'ID' );
-		    }
+			if ( is_string( $labels_raw ) ) {
+				$labels = array_map( 'absint', explode( ',', $labels_raw ) );
+			} elseif ( is_array( $labels_raw ) ) {
+				$labels = array_map( 'absint', $labels_raw );
+			}
 		}
 
+		$creation_date = new DateTime(); // O ajusta según corresponda.
 
+		// Llamar a la función común para crear o actualizar la tarea.
+		$result = self::create_or_update_task(
+			$id,
+			$title,
+			$description,
+			$stack,
+			$board,
+			$max_priority,
+			$duedate,
+			$author,
+			$assigned_users,
+			$labels,
+			$creation_date,
+			false,
+			0,
+		);
 
-	    // Preparar los metadatos personalizados
-	    $meta_input = array(
-	        'id_nextcloud_card' => $id_nextcloud_card,
-	        'stack'             => sanitize_text_field( $stack ),
-	        'duedate'           => $duedate_str,
-	        'max_priority'      => $max_priority ? '1' : '0',
-	        'assigned_users'    => $assigned_users,
-	    );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
+		} else {
+			wp_send_json_success(
+				array(
+					'message' => 'Tarea guardada exitosamente.',
+					'task_id' => $result,
+				)
+			);
+		}
 
-	    // Preparar los datos del post
-	    $post_data = array(
-	        'post_title'    => sanitize_text_field( $title ),
-	        'post_content'  => wp_kses_post( $description ),
-	        'post_status'   => $archived ? 'archived' : 'publish',
-	        'post_type'     => 'decker_task',
-	        'post_date'     => $creation_date_str,
-	        'post_author'   => $author,
-	        'meta_input'    => $meta_input,
-	        'tax_input'     => $tax_input,
-	    );
-
-
-
-	    // Determinar si es una actualización o creación
-	    if ( $ID > 0 ) {
-	        // Actualizar el post existente
-	        $post_data['ID'] = $ID;
-	        $task_id = wp_update_post( $post_data );
-
-	        if ( is_wp_error( $task_id ) ) {
-	            return $task_id; // Retornar el error para manejarlo externamente
-	        }
-	    } else {
-	        // Crear un nuevo post
-	        $task_id = wp_insert_post( $post_data );
-	        if ( is_wp_error( $task_id ) ) {
-	            return $task_id; // Retornar el error para manejarlo externamente
-	        }
-	    }
-
-	    // Retornar el ID de la tarea creada o actualizada
-	    return $task_id;
+		wp_die(); // Finalizar correctamente.
 	}
 
+	/**
+	 * Creates or updates a task in the Decker system.
+	 *
+	 * This method handles validation, taxonomy assignments, and metadata management
+	 * for tasks. It can either create a new task or update an existing one.
+	 *
+	 * @param int           $id                 The ID of the task to update, or 0 to create a new task.
+	 * @param string        $title              The title of the task.
+	 * @param string        $description        The description of the task.
+	 * @param string        $stack              The stack name (e.g., 'to-do', 'in-progress').
+	 * @param int           $board              The ID of the board associated with the task.
+	 * @param bool          $max_priority       Whether the task has maximum priority.
+	 * @param DateTime|null $duedate        The due date of the task, or null if not set.
+	 * @param int           $author             The ID of the author of the task.
+	 * @param array         $assigned_users     An array of user IDs assigned to the task.
+	 * @param array         $labels             An array of label IDs associated with the task.
+	 * @param DateTime      $creation_date      The creation date of the task.
+	 * @param bool          $archived           Whether the task is archived. Default is false.
+	 * @param int           $id_nextcloud_card  The NextCloud card ID associated with the task. Default is 0.
+	 *
+	 * @return int|WP_Error The ID of the created or updated task on success, or a WP_Error object on failure.
+	 */
+	public static function create_or_update_task(
+		int $id,
+		string $title,
+		string $description,
+		string $stack,
+		int $board,
+		bool $max_priority,
+		?DateTime $duedate,
+		int $author,
+		array $assigned_users,
+		array $labels,
+		DateTime $creation_date,
+		bool $archived = false,
+		int $id_nextcloud_card = 0
+	) {
 
+		// Validate required fields.
+		if ( empty( $title ) ) {
+			return new WP_Error( 'missing_field', __( 'The title is required.', 'decker' ) );
+		}
+		if ( empty( $stack ) ) {
+			return new WP_Error( 'missing_field', __( 'The stack is required.', 'decker' ) );
+		}
+		if ( $board <= 0 ) {
+			return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
+		}
+
+		if ( ! term_exists( $board, 'decker_board' ) ) {
+
+			error_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.' );
+			return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
+		}
+
+		// Convertir objetos DateTime a formato string (si no, pasamos null to undefined).
+		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+		$creation_date_str = $creation_date->format( 'Y-m-d H:i:s' );
+
+		// Preparar los términos para tax_input.
+		$tax_input = array();
+
+		// Asignar la taxonomía 'decker_board' con el ID del board.
+		if ( $board > 0 ) {
+			$tax_input['decker_board'] = array( $board );
+		}
+
+		// Incluir etiquetas en tax_input si las hay.
+		if ( ! empty( $labels ) ) {
+			// Asegúrate de que $labels contiene IDs de términos válidos.
+			$tax_input['decker_label'] = array_map( 'intval', $labels );
+		}
+
+		if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
+			if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
+				$assigned_users = wp_list_pluck( $assigned_users, 'ID' );
+			}
+		}
+
+		// Preparar los metadatos personalizados.
+		$meta_input = array(
+			'id_nextcloud_card' => $id_nextcloud_card,
+			'stack'             => sanitize_text_field( $stack ),
+			'duedate'           => $duedate_str,
+			'max_priority'      => $max_priority ? '1' : '0',
+			'assigned_users'    => $assigned_users,
+		);
+
+		// Preparar los datos del post.
+		$post_data = array(
+			'post_title'   => sanitize_text_field( $title ),
+			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
+			'post_status'  => $archived ? 'archived' : 'publish',
+			'post_type'    => 'decker_task',
+			'post_date'    => $creation_date_str,
+			'post_author'  => $author,
+			'meta_input'   => $meta_input,
+			'tax_input'    => $tax_input,
+		);
+
+		// Determinar si es una actualización o creación.
+		if ( $id > 0 ) {
+			// Actualizar el post existente.
+			$post_data['ID'] = $id;
+			$task_id         = wp_update_post( $post_data );
+
+			if ( is_wp_error( $task_id ) ) {
+				return $task_id; // Retornar el error para manejarlo externamente.
+			}
+		} else {
+			// Crear un nuevo post.
+			$task_id = wp_insert_post( $post_data );
+			if ( is_wp_error( $task_id ) ) {
+				return $task_id; // Retornar el error para manejarlo externamente.
+			}
+		}
+
+		// Retornar el ID de la tarea creada o actualizada.
+		return $task_id;
+	}
 }
 
 // Instantiate the class.

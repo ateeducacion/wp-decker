@@ -1,9 +1,20 @@
 <?php
+/**
+ * File app-analytics
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 ?>
 
 <head>
-	<title><?php esc_html_e('Analytics Dashboard', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e( 'Analytics Dashboard', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -32,10 +43,10 @@ include 'layouts/main.php';
 								<div class="page-title-right">
 									<ol class="breadcrumb m-0">
 										<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-										<li class="breadcrumb-item active"><?php esc_html_e('Analytics', 'decker'); ?></li>
+										<li class="breadcrumb-item active"><?php esc_html_e( 'Analytics', 'decker' ); ?></li>
 									</ol>
 								</div>
-								<h4 class="page-title"><?php esc_html_e('Analytics', 'decker'); ?></h4>
+								<h4 class="page-title"><?php esc_html_e( 'Analytics', 'decker' ); ?></h4>
 							</div>
 						</div>
 					</div>     
@@ -47,32 +58,32 @@ include 'layouts/main.php';
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title"><?php esc_html_e('Active Tasks', 'decker'); ?></h4>
-									<h2 class="text-primary" id="active-tasks-count"><?php echo esc_html(wp_count_posts('decker_task')->publish); ?></h2>
+									<h4 class="card-title"><?php esc_html_e( 'Active Tasks', 'decker' ); ?></h4>
+									<h2 class="text-primary" id="active-tasks-count"><?php echo esc_html( wp_count_posts( 'decker_task' )->publish ); ?></h2>
 								</div>
 							</div>
 						</div>
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title"><?php esc_html_e('Total Users', 'decker'); ?></h4>
-									<h2 class="text-primary" id="total-users-count"><?php echo esc_html(count_users()['total_users']); ?></h2>
+									<h4 class="card-title"><?php esc_html_e( 'Total Users', 'decker' ); ?></h4>
+									<h2 class="text-primary" id="total-users-count"><?php echo esc_html( count_users()['total_users'] ); ?></h2>
 								</div>
 							</div>
 						</div>
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title"><?php esc_html_e('Archived Tasks', 'decker'); ?></h4>
-									<h2 class="text-primary" id="archived-tasks-count"><?php echo esc_html(wp_count_posts('decker_task')->archived); ?></h2>
+									<h4 class="card-title"><?php esc_html_e( 'Archived Tasks', 'decker' ); ?></h4>
+									<h2 class="text-primary" id="archived-tasks-count"><?php echo esc_html( wp_count_posts( 'decker_task' )->archived ); ?></h2>
 								</div>
 							</div>
 						</div>
 						<div class="col-lg-3 col-md-6">
 							<div class="card">
 								<div class="card-body">
-									<h4 class="card-title"><?php esc_html_e('Total Boards', 'decker'); ?></h4>
-									<h2 class="text-primary" id="total-boards-count"><?php echo esc_html(wp_count_terms('decker_board')); ?></h2>
+									<h4 class="card-title"><?php esc_html_e( 'Total Boards', 'decker' ); ?></h4>
+									<h2 class="text-primary" id="total-boards-count"><?php echo esc_html( wp_count_terms( 'decker_board' ) ); ?></h2>
 								</div>
 							</div>
 						</div>
@@ -87,7 +98,7 @@ include 'layouts/main.php';
 		<div class="col-md-6">
 			<div class="card">
 				<div class="card-body">
-					<h5 class="card-title"><?php esc_html_e('Tasks by Board', 'decker'); ?></h5>
+					<h5 class="card-title"><?php esc_html_e( 'Tasks by Board', 'decker' ); ?></h5>
 					<canvas id="chartByBoard" class="chartCanvas"></canvas>
 				</div>
 			</div>
@@ -96,7 +107,7 @@ include 'layouts/main.php';
 		<div class="col-md-6">
 			<div class="card">
 				<div class="card-body">
-					<h5 class="card-title"><?php esc_html_e('Tasks by User', 'decker'); ?></h5>
+					<h5 class="card-title"><?php esc_html_e( 'Tasks by User', 'decker' ); ?></h5>
 					<canvas id="chartByUser" class="chartCanvas"></canvas>
 				</div>
 			</div>
@@ -107,7 +118,7 @@ include 'layouts/main.php';
 		<div class="col-md-6 mx-auto">
 			<div class="card">
 				<div class="card-body">
-					<h5 class="card-title"><?php esc_html_e('Tasks by Stack', 'decker'); ?></h5>
+					<h5 class="card-title"><?php esc_html_e( 'Tasks by Stack', 'decker' ); ?></h5>
 					<canvas id="chartByStack" class="chartCanvas"></canvas>
 				</div>
 			</div>
@@ -141,57 +152,54 @@ include 'layouts/main.php';
 
 	<?php include 'layouts/footer-scripts.php'; ?>
 
- <!-- Chart.js -->
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 	<!-- Custom Script for Dashboard -->
 	<script>
 		<?php
 
-		// Obtener datos de tareas por tablero y colores
-		$boards = BoardManager::getAllBoards(); 
+		// Obtener datos de tareas por tablero y colores.
+		$boards           = BoardManager::get_all_boards();
 		$tasks_by_board_and_stack = array();
-		$board_labels = array();
-		$board_colors = array();
+		$board_labels             = array();
+		$board_colors             = array();
 
-		// Obtener todos los posts de tipo decker_task de una sola vez
-		// TO-DO use the TaskManager
+		// Obtener todos los posts de tipo decker_task de una sola vez.
+		// TO-DO use the TaskManager.
 		$all_tasks = get_posts(
 			array(
-				'post_type' => 'decker_task',
+				'post_type'   => 'decker_task',
 				'numberposts' => -1,
 				'post_status' => 'publish',
-				'meta_query' => array(
+				'meta_query'  => array(
 					'relation' => 'OR',
 					array(
-						'key' => 'stack',
+						'key'   => 'stack',
 						'value' => 'to-do',
 					),
 					array(
-						'key' => 'stack',
+						'key'   => 'stack',
 						'value' => 'in-progress',
 					),
 					array(
-						'key' => 'stack',
+						'key'   => 'stack',
 						'value' => 'done',
 					),
 				),
 			)
 		);
 
-		// Procesar tareas por tablero y stack
+		// Procesar tareas por tablero y stack.
 		foreach ( $boards as $board ) {
-			$board_labels[] = $board->name;
-			$board_colors[] = $board->color;
+			$board_labels[]                           = $board->name;
+			$board_colors[]                           = $board->color;
 			$tasks_by_board_and_stack[ $board->name ] = array(
-				'to-do' => 0,
+				'to-do'       => 0,
 				'in-progress' => 0,
-				'done' => 0,
+				'done'        => 0,
 			);
 
 			foreach ( $all_tasks as $task ) {
 				$task_boards = wp_get_post_terms( $task->ID, 'decker_board', array( 'fields' => 'ids' ) );
-				$task_stack = get_post_meta( $task->ID, 'stack', true );
+				$task_stack  = get_post_meta( $task->ID, 'stack', true );
 
 				if ( in_array( $board->id, $task_boards ) ) {
 					$tasks_by_board_and_stack[ $board->name ][ $task_stack ]++;
@@ -199,21 +207,21 @@ include 'layouts/main.php';
 			}
 		}
 
-		// Obtener datos de tareas por usuario
-		$users = get_users();
+		// Obtener datos de tareas por usuario.
+		$users                   = get_users();
 		$tasks_by_user_and_stack = array();
-		$user_labels = array();
+		$user_labels             = array();
 		foreach ( $users as $user ) {
-			$user_labels[] = $user->display_name;
+			$user_labels[]                                  = $user->display_name;
 			$tasks_by_user_and_stack[ $user->display_name ] = array(
-				'to-do' => 0,
+				'to-do'       => 0,
 				'in-progress' => 0,
-				'done' => 0,
+				'done'        => 0,
 			);
 
 			foreach ( $all_tasks as $task ) {
 				$assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
-				$task_stack = get_post_meta( $task->ID, 'stack', true );
+				$task_stack     = get_post_meta( $task->ID, 'stack', true );
 
 				if ( is_array( $assigned_users ) && in_array( $user->ID, $assigned_users ) ) {
 					$tasks_by_user_and_stack[ $user->display_name ][ $task_stack ]++;
@@ -221,11 +229,11 @@ include 'layouts/main.php';
 			}
 		}
 
-		// Obtener datos de tareas por stack
+		// Obtener datos de tareas por stack.
 		$tasks_by_stack = array(
-			'to-do' => 0,
+			'to-do'       => 0,
 			'in-progress' => 0,
-			'done' => 0,
+			'done'        => 0,
 		);
 		foreach ( $all_tasks as $task ) {
 			$task_stack = get_post_meta( $task->ID, 'stack', true );
@@ -285,7 +293,7 @@ include 'layouts/main.php';
 			}]
 		};
 
-		// Initialize charts
+		// Initialize charts.
 		const ctx1 = document.getElementById('chartByBoard').getContext('2d');
 		const chartByBoard = new Chart(ctx1, {
 			type: 'bar',

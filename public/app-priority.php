@@ -1,46 +1,62 @@
 <?php
+/**
+ * File app-priority
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 include 'layouts/main.php';
 
 
+if ( isset( $_POST['import_tasks_nonce'] ) ) {
+	$import_tasks_nonce = sanitize_text_field( wp_unslash( $_POST['import_tasks_nonce'] ) );
+	if ( wp_verify_nonce( $import_tasks_nonce, 'import_tasks' ) ) {
 
-if ( isset( $_POST['import_tasks_nonce'] ) && wp_verify_nonce( $_POST['import_tasks_nonce'], 'import_tasks' ) ) {
-	$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', $_POST['task_ids'] ) : array();
+		// Sanitize and validate task IDs.
+		$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', wp_unslash( $_POST['task_ids'] ) ) : array();
 
-	$today = gmdate( 'Y-m-d' );
-	$current_user_id = get_current_user_id();
+		$today = gmdate( 'Y-m-d' );
+		$current_user_id = get_current_user_id();
 
-	foreach ( $task_ids as $task_id ) {
-		$decker_tasks = new Decker_Tasks();
-		$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
+		// Mark task for today.
+		foreach ( $task_ids as $task_id ) {
+			$decker_tasks = new Decker_Tasks();
+			$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
+		}
+
+		// Redirect to avoid form resubmission.
+		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
+			$redirect_url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+			wp_redirect( esc_url( $redirect_url ) );
+			exit;
+		}
 	}
-
-	// Redirigir para evitar reenvío de formulario
-	wp_redirect( esc_url( $_SERVER['REQUEST_URI'] ) );
-	exit;
-
-
-
 }
 
-$previous_tasks = array();
-$taskManager = new TaskManager();
+$previous_tasks  = array();
+$task_manager    = new TaskManager();
 
-// Verificar si hay tareas para hoy
-$has_today_tasks = $taskManager->hasUserTodayTasks();
+// Verificar si hay tareas para hoy.
+$has_today_tasks = $task_manager->has_user_today_tasks();
 
-// Si no hay tareas para hoy, cargar las tareas de días previos
-if (!$has_today_tasks) {
+// Si no hay tareas para hoy, cargar las tareas de días previos.
+if ( ! $has_today_tasks ) {
 
 	$current_user_id = get_current_user_id();
-    $days_to_load = (gmdate('N') == 1) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos
+	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
 
-    $previous_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays($current_user_id, $days_to_load);
+	$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $current_user_id, $days_to_load );
 }
 
 ?>
 <head>
 
-	<title><?php _e('Priority', 'decker'); ?> | Decker</title>
+	<title><?php esc_html_e( 'Priority', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 
 	<?php include 'layouts/head-css.php'; ?>
@@ -51,7 +67,6 @@ if (!$has_today_tasks) {
 	display: inline-block;
 	padding: 0.5em 0.75em;
 	font-size: 0.75em;
-/*    font-weight: 700;*/
 	line-height: 1;
 	color: #fff;
 	text-align: center;
@@ -119,11 +134,11 @@ if (!$has_today_tasks) {
 									<div class="page-title-right">
 										<ol class="breadcrumb m-0">
 											<li class="breadcrumb-item"><a href="javascript: void(0);">Decker</a></li>
-											<li class="breadcrumb-item active"><?php _e('Priority', 'decker'); ?></li>
+											<li class="breadcrumb-item active"><?php esc_html_e( 'Priority', 'decker' ); ?></li>
 										</ol>
 									</div>
-									<h4 class="page-title"><?php _e('Priority', 'decker'); ?>
-										<a href="<?php echo add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php _e('Add New', 'decker'); ?></a></h4>
+									<h4 class="page-title"><?php esc_html_e( 'Priority', 'decker' ); ?>
+										<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
 								</div>
 							</div>
 						</div>     
@@ -131,12 +146,12 @@ if (!$has_today_tasks) {
 
 <?php include 'layouts/top-alert.php'; ?>
 
-<?php if (!$has_today_tasks) { ?>
+<?php if ( ! $has_today_tasks ) { ?>
 	<div id="alert-import-today-1" class="alert-import-today alert alert-warning alert-dismissible fade show" role="alert">
 		<i class="ri-alert-fill"></i>
-		<?php _e('You have no tasks defined for today. Do you want to import those from the previous day?', 'decker'); ?>
-		<button type="button" class="import-today btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal"><?php _e('Yes', 'decker'); ?></button>
-		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php esc_attr_e('Close', 'decker'); ?>"></button>
+		<?php esc_html_e( 'You have no tasks defined for today. Do you want to import those from the previous day?', 'decker' ); ?>
+		<button type="button" class="import-today btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#taskModal"><?php esc_html_e( 'Yes', 'decker' ); ?></button>
+		<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
 	</div>
 <?php } ?>
 
@@ -144,7 +159,7 @@ if (!$has_today_tasks) {
 						<div class="col-lg-12">
 							<div class="card">
 								<div class="d-flex card-header justify-content-between align-items-center">
-									<h4 class="header-title"><?php _e('MAX PRIORITY', 'decker'); ?> 🔥</h4>
+									<h4 class="header-title"><?php esc_html_e( 'MAX PRIORITY', 'decker' ); ?> 🔥</h4>
 								</div>
 
 							<div class="table-responsive">
@@ -152,61 +167,73 @@ if (!$has_today_tasks) {
 							<table id="priority-table" class="table table-striped table-responsive">
 								<thead>
 									<tr>
-										<th data-sort-default style="width: 10%;"><?php _e('Board', 'decker'); ?></th>
-										<th class="d-none d-md-table-cell" style="width: 10%;"><?php _e('Stack', 'decker'); ?></th>
-										<th style="width: auto;"><?php _e('Title', 'decker'); ?></th>
-										<th style="width: 15%;" data-sort-method='none'><?php _e('Assigned Users', 'decker'); ?></th>
+										<th data-sort-default style="width: 10%;"><?php esc_html_e( 'Board', 'decker' ); ?></th>
+										<th class="d-none d-md-table-cell" style="width: 10%;"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+										<th style="width: auto;"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+										<th style="width: 15%;" data-sort-method='none'><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
 									</tr>
 								</thead>
 								<tbody id="priority-id-table">
 									<?php
-									// Obtener tareas con max_priority
+									// Obtener tareas con max_priority.
 									$args = array(
 										'meta_query' => array(
 											array(
-												'key' => 'max_priority',
-												'value' => '1',
+												'key'     => 'max_priority',
+												'value'   => '1',
 												'compare' => '=',
 											),
 										),
 									);
-									$tasks = $taskManager->getTasks($args);
-									foreach ($tasks as $task) {
+									$tasks = $task_manager->get_tasks( $args );
+									foreach ( $tasks as $task ) {
 
-									    $board = __('No board assigned', 'decker');
-									    if ($task->board) {
-									        $board = sprintf(
-									            '<span class="custom-badge overflow-visible" style="background-color: %s;">%s</span>',
-									            esc_attr($task->board->color),
-									            esc_html($task->board->name)
-									        );
-									    }
-									    ?>
-									    <tr>
-									        <td><?php echo $board; ?></td>
-									        <td class="d-none d-md-table-cell"><?php echo esc_html($task->stack); ?></td>
-									        <td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr($task->title); ?>">
-									            <a href="<?php echo esc_url(add_query_arg(['decker_page' => 'task', 'id' => esc_attr($task->ID)], home_url('/'))); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr($task->ID); ?>">
-									                <?php echo esc_html($task->title); ?>
-									            </a>
-									        </td>
-									        <td>
-									            <div class="avatar-group mt-2">
-									                <?php
-									                $today = gmdate('Y-m-d');
-									                foreach ($task->assigned_users as $user_info) {
-									                    $today_class = $user_info->today ? 'today' : '';
-									                    ?>
-									                    <a href="javascript: void(0);" class="avatar-group-item <?php echo esc_attr($today_class); ?>" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="<?php echo esc_attr($user_info->display_name); ?>" data-bs-original-title="<?php echo esc_attr($user_info->display_name); ?>">
-									                        <img src="<?php echo esc_url(get_avatar_url($user_info->ID)); ?>" alt="" class="rounded-circle avatar-xs">
-									                    </a>
-									                    <?php
-									                }
-									                ?>
-									            </div>
-									        </td>
-									    </tr>
-									    <?php
+										$board = __( 'No board assigned', 'decker' );
+										if ( $task->board ) {
+											$board = sprintf(
+												'<span class="custom-badge overflow-visible" style="background-color: %s;">%s</span>',
+												esc_attr( $task->board->color ),
+												esc_html( $task->board->name )
+											);
+										}
+										?>
+										<tr>
+											<td><?php echo wp_kses_post( $board ); ?></td>
+											<td class="d-none d-md-table-cell"><?php echo esc_html( $task->stack ); ?></td>
+											<td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr( $task->title ); ?>">
+												<a href="
+												<?php
+												echo esc_url(
+													add_query_arg(
+														array(
+															'decker_page' => 'task',
+															'id'          => esc_attr( $task->ID ),
+														),
+														home_url( '/' )
+													)
+												);
+												?>
+															" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+													<?php echo esc_html( $task->title ); ?>
+												</a>
+											</td>
+											<td>
+												<div class="avatar-group mt-2">
+													<?php
+													$today = gmdate( 'Y-m-d' );
+													foreach ( $task->assigned_users as $user_info ) {
+														$today_class = $user_info->today ? 'today' : '';
+														?>
+														<a href="javascript: void(0);" class="avatar-group-item <?php echo esc_attr( $today_class ); ?>" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="<?php echo esc_attr( $user_info->display_name ); ?>" data-bs-original-title="<?php echo esc_attr( $user_info->display_name ); ?>">
+															<img src="<?php echo esc_url( get_avatar_url( $user_info->ID ) ); ?>" alt="" class="rounded-circle avatar-xs">
+														</a>
+														<?php
+													}
+													?>
+												</div>
+											</td>
+										</tr>
+										<?php
 									}
 									?>
 								</tbody>
@@ -221,36 +248,36 @@ if (!$has_today_tasks) {
 
 						<?php
 						$today = gmdate( 'Y-m-d' );
-						$options = get_option( 'decker_settings', array() );
-						$selected_role = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
-						$users = get_users(
+						$options                       = get_option( 'decker_settings', array() );
+						$selected_role                 = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
+						$users                         = get_users(
 							array(
 								'role__in' => array( $selected_role, 'administrator' ),
-								'orderby' => 'display_name',
+								'orderby'  => 'display_name',
 							)
 						);
-						$today = gmdate( 'Y-m-d' );
+						$today           = gmdate( 'Y-m-d' );
 						$current_user_id = get_current_user_id();
 						foreach ( $users as $user ) {
 							$card_class = ( $user->ID === $current_user_id ) ? 'card border-primary border' : 'card';
-							$args = array(
+							$args       = array(
 								'meta_query' => array(
 									array(
-										'key' => '_user_date_relations',
-										'value' => sprintf( ':"%s"', $today ),
+										'key'     => '_user_date_relations',
+										'value'   => sprintf( ':"%s"', $today ),
 										'compare' => 'LIKE',
 									),
 									array(
-										'key' => 'assigned_users',
-										'value' => $user->ID,
+										'key'     => 'assigned_users',
+										'value'   => $user->ID,
 										'compare' => 'LIKE',
 									),
 								),
 							);
-							$user_tasks = $taskManager->getUserTasksMarkedForTodayForPreviousDays($user->ID, 0);
-						?>
+							$user_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $user->ID, 0 );
+							?>
 							<div class="col-xl-6">
-								<div class="<?php echo esc_attr($card_class); ?>">
+								<div class="<?php echo esc_attr( $card_class ); ?>">
 									<div class="d-flex card-header justify-content-between align-items-center">
 										<h4 class="header-title"><?php echo esc_html( $user->display_name ); ?></h4>
 										<img src="<?php echo esc_url( get_avatar_url( $user->ID ) ); ?>" class="rounded-circle avatar-xs hoverZoomLink" alt="<?php echo esc_attr( $user->display_name ); ?>">
@@ -266,34 +293,40 @@ if (!$has_today_tasks) {
 												</thead>
 												<tbody>
 												<?php
-													foreach ($user_tasks as $task) {
-													    // Ensuring the board is displayed as intended without directly modifying the board property
-													    $board_display = '';
-													    if (!empty($task->board)) {
-													        $board_display = '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr($task->board->color) . ';">' . esc_html($task->board->name) . '</span>';
-													    }
-												?>
-													    <tr>
-													        <td><?php echo $board_display; ?></td>
-													        <td>
-													            <a href="<?php echo esc_url(add_query_arg(
-													                array(
-													                    'decker_page' => 'task',
-													                    'id' => esc_attr($task->ID),
-													                ),
-													                home_url('/')
-													            )); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr($task->ID); ?>">
-													                <?php echo esc_html($task->title); ?>
-													            </a>
-													        </td>
-													    </tr>
-													    <?php
+												foreach ( $user_tasks as $task ) {
+													// Ensuring the board is displayed as intended without directly modifying the board property.
+													$board_display = '';
+													if ( ! empty( $task->board ) ) {
+														$board_display = '<span class="custom-badge overflow-visible" style="background-color: ' . esc_attr( $task->board->color ) . ';">' . esc_html( $task->board->name ) . '</span>';
 													}
-													if (empty($user_tasks)) {
-												?>
-													    <tr>
-													        <td colspan="2"><?php _e('No tasks for today.', 'decker'); ?></td>
-													    </tr>
+													?>
+														<tr>
+															<td><?php echo wp_kses_post( $board_display ); ?></td>
+															<td>
+																<a href="
+																<?php
+																echo esc_url(
+																	add_query_arg(
+																		array(
+																			'decker_page' => 'task',
+																			'id'          => esc_attr( $task->ID ),
+																		),
+																		home_url( '/' )
+																	)
+																);
+																?>
+																" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+																	<?php echo esc_html( $task->title ); ?>
+																</a>
+															</td>
+														</tr>
+														<?php
+												}
+												if ( empty( $user_tasks ) ) {
+													?>
+														<tr>
+															<td colspan="2"><?php esc_html_e( 'No tasks for today.', 'decker' ); ?></td>
+														</tr>
 												<?php } ?>
 
 												</tbody>
@@ -331,10 +364,10 @@ if (!$has_today_tasks) {
 <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
 	<div class="modal-content">
-	  <form method="post" action="<?php echo esc_url( $_SERVER['REQUEST_URI'] ); ?>">
+	  <form method="post" action="<?php echo esc_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) ); ?>">
 		<div class="modal-header">
-		  <h5 class="modal-title" id="taskModalLabel"><?php _e('Select tasks to import', 'decker'); ?></h5>
-		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e('Close', 'decker'); ?>"></button>
+		  <h5 class="modal-title" id="taskModalLabel"><?php esc_html_e( 'Select tasks to import', 'decker' ); ?></h5>
+		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
 		</div>
 		<div class="modal-body">
 		  <!-- Aquí se insertarán dinámicamente las tareas con checkboxes -->
@@ -344,38 +377,38 @@ if (!$has_today_tasks) {
 					<th scope="col" style="width: 50px;">
 						<input type="checkbox" id="selectAllCheckbox" class="">
 					</th>                        
-					<th scope="col"><?php _e('Board', 'decker'); ?></th>
-					<th scope="col"><?php _e('Stack', 'decker'); ?></th>
-					<th scope="col"><?php _e('Title', 'decker'); ?></th>
+					<th scope="col"><?php esc_html_e( 'Board', 'decker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Title', 'decker' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
-			<?php if (!$has_today_tasks) : ?>
-			    <?php foreach ($previous_tasks as $task) : ?>
-			        <tr class="task-row" data-task-id="<?php echo esc_attr($task->ID); ?>">
-			        	<?php
-			        		$board_color = "red";
-			        		$board_name = "Unassigned";
-	        		     	if ($task->board) {
-	        		     		$board_color = $task->board->color;
-	        		     		$board_name = $task->board->name;
-	                    	}
-	                    ?>
+			<?php if ( ! $has_today_tasks ) : ?>
+				<?php foreach ( $previous_tasks as $task ) : ?>
+					<tr class="task-row" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+						<?php
+							$board_color = 'red';
+						$board_name                      = 'Unassigned';
+						if ( $task->board ) {
+							$board_color = $task->board->color;
+							$board_name  = $task->board->name;
+						}
+						?>
 
-			            <td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr($task->ID); ?>"></td>
-			            <td>
-			                <span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr($board_color); ?>;">
-			                    <?php echo esc_html($board_name); ?>
-			                </span>
-			            </td>
-			            <td><?php echo esc_html($task->stack); ?></td>
-			            <td><?php echo esc_html($task->title); ?></td>
-			        </tr>
-			    <?php endforeach; ?>
+						<td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( $task->ID ); ?>"></td>
+						<td>
+							<span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr( $board_color ); ?>;">
+								<?php echo esc_html( $board_name ); ?>
+							</span>
+						</td>
+						<td><?php echo esc_html( $task->stack ); ?></td>
+						<td><?php echo esc_html( $task->title ); ?></td>
+					</tr>
+				<?php endforeach; ?>
 			<?php else : ?>
-			    <tr>
-			        <td colspan="4"><?php _e('There are no tasks from previous days to import.', 'decker'); ?></td>
-			    </tr>
+				<tr>
+					<td colspan="4"><?php esc_html_e( 'There are no tasks from previous days to import.', 'decker' ); ?></td>
+				</tr>
 			<?php endif; ?>
 			</tbody>
 		  </table>
