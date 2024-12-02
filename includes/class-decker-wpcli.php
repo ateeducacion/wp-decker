@@ -215,9 +215,6 @@ if (defined('WP_CLI') && WP_CLI) {
     // Registrar el comando principal que agrupa los subcomandos
     WP_CLI::add_command('decker', 'Decker_WPCLI');
 }
-<?php
-// Decker_WPCLI.php
-if (defined('WP_CLI') && WP_CLI) {
 
     /**
      * Custom WP-CLI commands for Decker Plugin.
