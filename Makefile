@@ -29,7 +29,9 @@ fix: phpcbf
 
 check:
 	npx wp-env run cli wp plugin install plugin-check --activate
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=image_functions,file_type
+	set -e
+# 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=image_functions,file_type
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type
 
 # Run unit tests with PHPUnit
 test:
