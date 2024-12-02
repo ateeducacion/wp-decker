@@ -55,7 +55,7 @@ class DeckerAdminTest extends WP_UnitTestCase {
 				$this->callback(
 					function ( $args ) {
 						return $args['id'] === 'decker_frontend_link' &&
-						  strpos( $args['title'], 'Go to Frontend' ) !== false &&
+						  strpos( $args['title'], 'Go to Decker' ) !== false &&
 						  $args['href'] === home_url( '/?decker_page=priority' );
 					}
 				)

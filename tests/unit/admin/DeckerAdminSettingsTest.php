@@ -19,8 +19,8 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	 */
 	public function set_up(): void {
 		parent::set_up();
-		// Instantiate the Decker_Admin_Settings class.
-		$this->admin_settings = new Decker_Admin_Settings();
+        // Instantiate the Decker_Admin_Settings mock class.
+		$this->admin_settings = new Decker_Admin_Settings_Test_Mock();
 
 		remove_action( 'admin_init', array( $this->admin_settings, 'handle_clear_all_data' ) );
 	}
@@ -147,23 +147,20 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Set the request method.
 		$_SERVER['REQUEST_METHOD'] = 'POST';
 
-		// Capture the redirect to prevent actual redirection during tests.
-		add_filter( 'wp_redirect', array( $this, 'filter_wp_redirect' ), 10, 1 );
-		add_filter( 'wp_die_handler', array( $this, 'get_f_wp_die_handler' ) );
+      	// Execute the method.
+        $this->admin_settings->handle_clear_all_data();
 
-		try {
-			// Run the method.
-			$this->admin_settings->handle_clear_all_data();
-		} catch ( Exception $e ) {
-			// Optionally, assert the exception message or handle it.
-			$this->assertStringContainsString( '', $e->getMessage() );
-		}
+        // Verify that the redirection was performed correctly.
+        $expected_url = add_query_arg(
+            array(
+                'page'                => 'decker_settings',
+                'decker_data_cleared' => 'true',
+            ),
+            admin_url( 'options-general.php' )
+        );
+        $this->assertEquals( $expected_url, $this->admin_settings->redirect_url );
 
-		// Remove the filter.
-		remove_filter( 'wp_redirect', array( $this, 'filter_wp_redirect' ), 10, 1 );
-		remove_filter( 'wp_die_handler', array( $this, 'get_f_wp_die_handler' ) );
-
-		// Assert that the post is deleted.
+        // Verify that the post has been deleted.
 		$this->assertNull( get_post( $post_id ), 'Post should be deleted.' );
 
 		// Assert that the term is deleted.
@@ -203,34 +200,27 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		delete_option( 'decker_settings' );
 	}
 
-	/**
-	 * Callback para filtrar wp_redirect durante las pruebas.
-	 *
-	 * @param string $location URL to go.
-	 * @return false to prevent redirect.
-	 */
-	public function filter_wp_redirect( $location ) {
-		return false; // Prevent redirect.
-	}
+}
 
-	/**
-	 * Returns the wp_die handler for testing.
-	 *
-	 * @return callable
-	 */
-	public function get_f_wp_die_handler() {
-		return array( $this, 'wp_die_handler' );
-	}
+/**
+ * Mock Class for Decker_Admin_Settings to Override Redirect Behavior.
+ */
+class Decker_Admin_Settings_Test_Mock extends Decker_Admin_Settings {
+    /**
+     * Redirect URL captured during tests.
+     *
+     * @var string|null
+     */
+    public $redirect_url = null;
 
-	/**
-	 * Custom wp_die handler for testing.
-	 *
-	 * @param string $message The message passed to wp_die().
-	 * @param string $title   The title passed to wp_die().
-	 * @param array  $args    Additional arguments passed to wp_die().
-	 */
-	public function wp_die_handler( $message, $title = '', $args = array() ) {
-		// For testing purposes, you can throw an exception or handle it as needed.
-		throw new Exception( $message );
-	}
+    /**
+     * Override the redirect_and_exit method to prevent exiting during tests.
+     *
+     * @param string $url URL to redirect to.
+     */
+    protected function redirect_and_exit( $url ) {
+        $this->redirect_url = $url;
+        // Do not call exit to allow the test to continue.
+    }
+
 }
