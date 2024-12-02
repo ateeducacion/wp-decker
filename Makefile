@@ -27,6 +27,11 @@ lint: phpcs
 # Automatically fix PHP code style issues
 fix: phpcbf
 
+check:
+# 	npx wp-env run cli wp plugin install plugin-check --activate
+	npx wp-env run cli wp plugin check decker
+# 	npx wp-env run cli wp  plugin check decker --exclude-checks=hidden_files
+
 # Run unit tests with PHPUnit
 test:
 # 	npx wp-env run tests-cli composer update -W
