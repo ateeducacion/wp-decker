@@ -19,7 +19,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	 */
 	public function set_up(): void {
 		parent::set_up();
-        // Instantiate the Decker_Admin_Settings mock class.
+		// Instantiate the Decker_Admin_Settings mock class.
 		$this->admin_settings = new Decker_Admin_Settings_Test_Mock();
 
 		remove_action( 'admin_init', array( $this->admin_settings, 'handle_clear_all_data' ) );
@@ -147,20 +147,20 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Set the request method.
 		$_SERVER['REQUEST_METHOD'] = 'POST';
 
-      	// Execute the method.
-        $this->admin_settings->handle_clear_all_data();
+		// Execute the method.
+		$this->admin_settings->handle_clear_all_data();
 
-        // Verify that the redirection was performed correctly.
-        $expected_url = add_query_arg(
-            array(
-                'page'                => 'decker_settings',
-                'decker_data_cleared' => 'true',
-            ),
-            admin_url( 'options-general.php' )
-        );
-        $this->assertEquals( $expected_url, $this->admin_settings->redirect_url );
+		// Verify that the redirection was performed correctly.
+		$expected_url = add_query_arg(
+			array(
+				'page'                => 'decker_settings',
+				'decker_data_cleared' => 'true',
+			),
+			admin_url( 'options-general.php' )
+		);
+		$this->assertEquals( $expected_url, $this->admin_settings->redirect_url );
 
-        // Verify that the post has been deleted.
+		// Verify that the post has been deleted.
 		$this->assertNull( get_post( $post_id ), 'Post should be deleted.' );
 
 		// Assert that the term is deleted.
@@ -199,28 +199,26 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Reset any global variables or options if necessary.
 		delete_option( 'decker_settings' );
 	}
-
 }
 
 /**
  * Mock Class for Decker_Admin_Settings to Override Redirect Behavior.
  */
 class Decker_Admin_Settings_Test_Mock extends Decker_Admin_Settings {
-    /**
-     * Redirect URL captured during tests.
-     *
-     * @var string|null
-     */
-    public $redirect_url = null;
+	/**
+	 * Redirect URL captured during tests.
+	 *
+	 * @var string|null
+	 */
+	public $redirect_url = null;
 
-    /**
-     * Override the redirect_and_exit method to prevent exiting during tests.
-     *
-     * @param string $url URL to redirect to.
-     */
-    protected function redirect_and_exit( $url ) {
-        $this->redirect_url = $url;
-        // Do not call exit to allow the test to continue.
-    }
-
+	/**
+	 * Override the redirect_and_exit method to prevent exiting during tests.
+	 *
+	 * @param string $url URL to redirect to.
+	 */
+	protected function redirect_and_exit( $url ) {
+		$this->redirect_url = $url;
+		// Do not call exit to allow the test to continue.
+	}
 }

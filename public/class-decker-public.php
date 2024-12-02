@@ -174,9 +174,16 @@ class Decker_Public {
 				// SortableJS.
 				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
 
+				/*
+				// Highlight.
+				'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js',
+				'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/default.min.css',
+				*/
+
 				// Quill.
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
+				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
 
 				// Choices.js.
 				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js',

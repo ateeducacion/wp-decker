@@ -24,3 +24,8 @@ div.choices__item[aria-disabled="true"] {
 div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     display: none;
 }
+
+
+.ql-fullscreen::before {
+    content: '⛶'; /* Fullscreen symbol */
+}

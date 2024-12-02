@@ -106,7 +106,8 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 
 			// Mostrar enlace de eliminar si el comentario pertenece al usuario actual.
 			if ( get_current_user_id() == $comment->user_id ) {
-				echo '<a href="javscript:void(0)" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_html_e( 'Delete', 'decker' ) . '</a> ';
+				echo '<a href="javascript:void(0);" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_html__( 'Delete', 'decker' ) . '</a> ';
+
 			}
 
 			echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>';
@@ -418,7 +419,9 @@ function deleteComment(commentId) {
 	<div class="tab-content">
 		<!-- Description (Quill Editor) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor" style="height: 200px;"><?php echo wp_kses( $task->description, Decker::get_allowed_tags() ); ?></div>
+			<div id="editor-container">
+				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task->description, Decker::get_allowed_tags() ); ?></div>
+			</div>
 		</div>
 
 		<!-- Comments -->
@@ -590,19 +593,51 @@ function initializeTaskPage() {
 
 	if (document.getElementById('editor')) {
 		if (quill === null) {
+
+			// Register the HTML Edit Button module
+			Quill.register('modules/htmlEditButton', htmlEditButton);
+
 			quill = new Quill('#editor', {
 				theme: 'snow',
 				readOnly: <?php echo $disabled ? 'true' : 'false'; ?>,
 				modules: {
-					toolbar: [
-						// [{ 'header': [1, 2, false] }],
-						['bold', 'italic', 'underline', 'strike'],
-						// [{ 'color': [] }, { 'background': [] }],
-						['link', 'blockquote', 'code-block'],
-						[{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-						[{ 'indent': '-1' }, { 'indent': '+1' }], // Disminuir y aumentar sangría
-						['clean'],
-					]
+					toolbar: { 
+						container: [
+							// [{ 'header': [1, 2, false] }],
+							['bold', 'italic', 'underline', 'strike'],
+							// [{ 'color': [] }, { 'background': [] }],
+							['link', 'blockquote', 'code-block'],
+							[{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+							[{ 'indent': '-1' }, { 'indent': '+1' }], // Disminuir y aumentar sangría.
+							['clean'],
+							// Add the new buttons.
+							['fullscreen'], // Full-screen button.
+							// The HTML edit button will be added automatically.
+						],
+						handlers: {
+							'fullscreen': function() {
+								var editorContainer = document.getElementById('editor-container');
+								if (!document.fullscreenElement) {
+									editor.style.height = '500px'
+									editorContainer.requestFullscreen().catch(err => {
+										alert('Error attempting to enable full-screen mode: ' + err.message);
+									});
+								} else {
+									document.exitFullscreen();
+									editor.style.height = '100px'; // restore the original height.
+								}
+							}
+						}
+					},	
+					htmlEditButton: {
+						// Optional configuration for the HTML Edit Button
+						syntax: false, // Enable syntax highlighting if you have highlight.js included
+						buttonTitle: "<?php esc_attr_e( 'Show HTML source', 'decker' ); ?>",
+						msg: "<?php esc_attr_e( 'Edit the content in HTML format', 'decker' ); ?>", //Custom message to display in the editor, default: Edit HTML here, when you click "OK" the quill editor's contents will be replaced
+						okText: "<?php esc_attr_e( 'OK', 'decker' ); ?>", // Text to display in the OK button, default: Ok,
+						cancelText: "<?php esc_attr_e( 'Cancel', 'decker' ); ?>", // Text to display in the cancel button, default: Cancel
+
+					},   				
 				}
 			});
 		}
@@ -1072,6 +1107,7 @@ function sendFormByAjax(event) {
 			} else {
 				console.error(<?php echo wp_json_encode( __( 'Server response error.', 'decker' ) ); ?>);
 				alert(<?php echo wp_json_encode( __( 'An error occurred while saving the task.', 'decker' ) ); ?>);
+
 			}
 		};
 

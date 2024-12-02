@@ -159,31 +159,31 @@ class Decker_Admin_Settings {
 				}
 			}
 
-            // Redirect and terminate execution.
-            $redirect_url = add_query_arg(
-                array(
-                    'page'                => 'decker_settings',
-                    'decker_data_cleared' => 'true',
-                ),
-                admin_url( 'options-general.php' )
-            );
+			// Redirect and terminate execution.
+			$redirect_url = add_query_arg(
+				array(
+					'page'                => 'decker_settings',
+					'decker_data_cleared' => 'true',
+				),
+				admin_url( 'options-general.php' )
+			);
 
-            $this->redirect_and_exit( $redirect_url );
+			$this->redirect_and_exit( $redirect_url );
 
 		}
 	}
 
-    /**
-     * Redirect and Exit.
-     *
-     * Handles the redirection and termination of execution.
-     *
-     * @param string $url URL to redirect to.
-     */
-    protected function redirect_and_exit( $url ) {
-        wp_redirect( $url );
-        exit;
-    }
+	/**
+	 * Redirect and Exit.
+	 *
+	 * Handles the redirection and termination of execution.
+	 *
+	 * @param string $url URL to redirect to.
+	 */
+	protected function redirect_and_exit( $url ) {
+		wp_redirect( $url );
+		exit;
+	}
 
 	/**
 	 * Define Hooks.
