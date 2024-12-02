@@ -30,7 +30,6 @@ jobs:
       - name: Run code linting
         run: make lint
 
-
       - name: Install gettext
         run: sudo apt-get update && sudo apt-get install -y gettext
 
@@ -42,49 +41,18 @@ jobs:
           composer archive --format=zip --dir=. --file=decker
           mkdir decker
           unzip decker.zip -d decker
-          ls -la decker
 
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
         with:
           build-dir: './decker'
 
-
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
         with:
           plugins: '["."]'
 
-      # - name: Install Plugin Check in wp-env
-      #   run: npx wp-env run cli wp plugin install plugin-check --activate
-
-
-
-      # - name: Install Plugin from ZIP
-      #   run: |
-      #     npx wp-env run cli wp plugin install decker.zip --activate
-
-      # - name: Run Plugin Check
-      #   run: |
-      #     npx wp-env run cli wp plugin check decker --exclude-checks=plugin_readme
-
       - name: Run unit tests
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
-
-      # - name: Create package using the Makefile
-      #   run: make package VERSION=6.6.6
-
-      # - name: Extract ZIP file
-      #   run: |
-      #     unzip decker-6.6.6.zip -d decker
-
-      # - name: Run plugin check
-      #   uses: wordpress/plugin-check-action@v1
-      #   with:
-      #     build-dir: './decker'
-      #     exclude-checks: 'plugin_readme'
-
-
-
 
 

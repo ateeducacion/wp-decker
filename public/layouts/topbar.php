@@ -20,10 +20,25 @@ defined( 'ABSPATH' ) || exit;
 				
 				<a href="index.php" class="logo-light">
 					<span class="logo-lg">
-						<img src="<?php echo esc_url( plugins_url( 'assets/images/logo.png', __DIR__ ) ); ?>" alt="logo">
+						<!-- <img src="<?php // echo esc_url( plugins_url( 'assets/images/logo.png', __DIR__ ) );. ?>" alt="logo"> -->
+						<img src="<?php echo wp_kses_post( plugins_url( 'assets/images/logo.png', __DIR__ ) ); ?>" alt="logo">
+
+
+
+
 					</span>
 					<span class="logo-sm">
-						<img src="<?php echo esc_url( plugins_url( 'assets/images/logo-sm.png', __DIR__ ) ); ?>" alt="small logo">
+						<?php
+						echo Decker_Utility_Functions::plugin_get_image_html(
+							plugins_url( 'assets/images/logo-sm.png', __DIR__ ),
+							'Logo',
+							'',
+							'200',
+							'50'
+						);
+						?>
+
+						<!-- <img src="<?php // echo esc_url( plugins_url( 'assets/images/logo-sm.png', __DIR__ ) );. ?>" alt="small logo"> -->
 					</span>
 				</a>
 

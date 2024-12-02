@@ -126,4 +126,52 @@ class Decker_Utility_Functions {
 		// Return the defined allowed tags.
 		return $allowed_tags;
 	}
+
+	/**
+	 * Generates HTML for an image with proper sanitization and optional attributes.
+	 *
+	 * This function is designed to output images that are part of the plugin's assets
+	 * without requiring them to be added to the WordPress media library. It ensures
+	 * compliance with WordPress standards for sanitization, accessibility, and responsive design.
+	 *
+	 * @param string $src    The URL of the image.
+	 * @param string $alt    Optional. The alt text for the image. Default is an empty string.
+	 * @param string $class  Optional. CSS classes to add to the image tag. Default is an empty string.
+	 * @param string $width  Optional. The width of the image in pixels. Default is an empty string.
+	 * @param string $height Optional. The height of the image in pixels. Default is an empty string.
+	 *
+	 * @return string The HTML for the image tag.
+	 */
+	public static function plugin_get_image_html( $src, $alt = '', $class = '', $width = '', $height = '' ) {
+		$alt   = esc_attr( $alt );
+		$class = esc_attr( $class );
+		$src   = esc_url( $src );
+
+		// If you have different image sizes, you can define them here
+		// and generate srcset and sizes attributes accordingly.
+		$srcset = '';
+		$sizes  = '';
+
+		$html = '<img src="' . $src . '" alt="' . $alt . '" class="' . $class . '"';
+
+		if ( $width ) {
+			$html .= ' width="' . esc_attr( $width ) . '"';
+		}
+
+		if ( $height ) {
+			$html .= ' height="' . esc_attr( $height ) . '"';
+		}
+
+		if ( $srcset ) {
+			$html .= ' srcset="' . esc_attr( $srcset ) . '"';
+		}
+
+		if ( $sizes ) {
+			$html .= ' sizes="' . esc_attr( $sizes ) . '"';
+		}
+
+		$html .= ' />';
+
+		return $html;
+	}
 }
