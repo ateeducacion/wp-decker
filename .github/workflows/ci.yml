@@ -36,17 +36,20 @@ jobs:
       - name: Check untranslated strings
         run: make check-untranslated
 
-      # - name: Create Plugin ZIP Archive
-      #   run: |
-      #     composer archive --format=zip --dir=. --file=decker
-      #     mkdir decker
-      #     unzip decker.zip -d decker
+      - name: Create Plugin ZIP Archive
+        run: |
+          composer archive --format=zip --dir=. --file=decker
+          mkdir decker
+          unzip decker.zip -d decker
 
-      # - name: Run plugin check
-      #   uses: wordpress/plugin-check-action@v1
-      #   with:
-      #     build-dir: './decker'
-      #     exclude-checks: 'image_functions'
+      - name: Run plugin check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: './decker'
+          exclude-checks: 'image_functions'
+
+      - name: Uninstall plugin decker
+        run: npx wp-env run cli wp plugin uninstall decker
 
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
@@ -57,16 +60,16 @@ jobs:
         run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
 
 
-      - name: Install plugin check
-        run: npx wp-env run cli wp plugin install plugin-check --activate
+      # - name: Install plugin check
+      #   run: npx wp-env run cli wp plugin install plugin-check --activate
 
       # - name: Run plugin check
       #   run: make check
 
 
-      - name: Run plugin check
-        uses: wordpress/plugin-check-action@v1
-        with:
-          # build-dir: '.'
-          exclude-checks: 'image_functions'
-          slug: 'decker'
+      # - name: Run plugin check
+      #   uses: wordpress/plugin-check-action@v1
+      #   with:
+      #     # build-dir: '.'
+      #     exclude-checks: 'image_functions'
+      #     slug: 'decker'
