@@ -1,29 +1,37 @@
-# Decker
+# Decker Documentation
 
-**Decker** is a WordPress plugin developed for internal use at the Área de Tecnología Educativa (ATE). Its main goal is to efficiently present a task list with a simple Kanban board interface and unique priority system.
+**Decker** is a WordPress plugin that provides a powerful Kanban board interface with a unique priority system for managing tasks. Designed for efficient task management, it offers an intuitive interface for organizing and tracking work items.
 
-### Key Features
+## Overview
 
-- **Import from Nextcloud Deck through API**: Imports boards and cards from Nextcloud.
-- **Customization**: Adjustable settings available in the WordPress admin panel.
-- **Multisite Support**: Fully compatible with WordPress multisite installations.
-- **WordPress Coding Standards Compliance**: Adheres to [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards) for quality and security.
-- **Continuous Integration Pipeline**: Set up for automated code verification and release generation on GitLab.
+Decker transforms your WordPress installation into a task management powerhouse with these core features:
 
-## Installation
+- **Interactive Kanban Board**: Drag-and-drop interface for managing tasks across different stages
+- **Priority System**: Unique priority management system for better task organization
+- **Task Management**: Comprehensive task editing and tracking capabilities
+- **WordPress Integration**: Seamlessly integrates with your WordPress admin interface
+- **User-Friendly**: Intuitive interface requiring minimal training
 
-1. **Download the latest release** from the [GitHub Releases page](https://github.com/ateeducacion/wp-decker/releases).
-2. Upload the downloaded ZIP file to your WordPress site via **Plugins > Add New > Upload Plugin**.
-3. Activate the plugin through the 'Plugins' menu in WordPress.
-4. Configure the plugin under 'Settings' by providing the necessary Nextcloud API details.
+## Quick Links
 
-## Development
+- [User Guide](user-guide.md)
+- [Installation](installation.md)
+- [Configuration](configuration.md)
+- [Development](development.md)
+- [API Reference](api-reference.md)
 
-For development, you can bring up a local WordPress environment with the plugin pre-installed by using the following command:
+## Getting Started
 
-```bash
-make up
-```
+1. Install the plugin through WordPress plugin manager or manual upload
+2. Activate the plugin in WordPress admin panel
+3. Configure basic settings under Decker Settings
+4. Start creating your first board and adding tasks
 
-This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`. 
+## Support
+
+For support, please visit our [GitHub Issues](https://github.com/ateeducacion/wp-decker/issues) page or contact the development team at ATE.
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](contributing.md) for details on how to submit pull requests, report issues, and contribute to development.
 
