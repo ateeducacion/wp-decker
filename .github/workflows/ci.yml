@@ -49,7 +49,9 @@ jobs:
           exclude-checks: 'image_functions'
 
       - name: Uninstall plugin decker
-        run: npx wp-env run cli wp plugin uninstall decker
+        run: |
+          npx wp-env run cli wp plugin deactivate decker
+          npx wp-env run cli wp plugin uninstall decker
 
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
