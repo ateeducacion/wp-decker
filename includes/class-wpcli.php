@@ -37,13 +37,13 @@ if (defined('WP_CLI') && WP_CLI) {
          */
         public function do_something() {
             WP_CLI::log("Doing something...");
-            // Tu lógica aquí
+            // Your logic here
         }
 
         /**
-         * Crear datos de prueba para Decker Plugin.
+         * Create sample data for Decker Plugin.
          *
-         * Este comando crea 10 etiquetas, 5 tableros y 2 tareas por cada tablero.
+         * This command creates 10 labels, 5 boards and 2 tasks per board.
          *
          * ## EXAMPLES
          *
@@ -51,20 +51,20 @@ if (defined('WP_CLI') && WP_CLI) {
          *
          */
         public function create_sample_data() {
-            WP_CLI::log("Iniciando la creación de datos de prueba...");
+            WP_CLI::log("Starting sample data creation...");
 
-            // 1. Crear etiquetas
-            WP_CLI::log("Creando etiquetas...");
+            // 1. Create labels
+            WP_CLI::log("Creating labels...");
             $labels = [];
             for ($i = 1; $i <= 10; $i++) {
-                $term_name = "Etiqueta $i";
+                $term_name = "Label $i";
                 $term_slug = sanitize_title($term_name);
                 $term_color = $this->generate_random_color();
 
                 // Verificar si la etiqueta ya existe
                 $existing_term = term_exists($term_slug, 'decker_label');
                 if ($existing_term) {
-                    WP_CLI::warning("La etiqueta '$term_name' ya existe. Saltando...");
+                    WP_CLI::warning("Label '$term_name' already exists. Skipping...");
                     $labels[] = $existing_term['term_id'];
                     continue;
                 }
@@ -74,28 +74,28 @@ if (defined('WP_CLI') && WP_CLI) {
                 ]);
 
                 if (is_wp_error($term)) {
-                    WP_CLI::warning("Error al crear la etiqueta '$term_name': " . $term->get_error_message());
+                    WP_CLI::warning("Error creating label '$term_name': " . $term->get_error_message());
                     continue;
                 }
 
                 // Añadir meta 'term_color'
                 add_term_meta($term['term_id'], 'term_color', $term_color, true);
-                WP_CLI::success("Etiqueta '$term_name' creada con color $term_color.");
+                WP_CLI::success("Label '$term_name' created with color $term_color.");
                 $labels[] = $term['term_id'];
             }
 
-            // 2. Crear tableros
-            WP_CLI::log("Creando tableros...");
+            // 2. Create boards
+            WP_CLI::log("Creating boards...");
             $boards = [];
             for ($i = 1; $i <= 5; $i++) {
-                $term_name = "Tablero $i";
+                $term_name = "Board $i";
                 $term_slug = sanitize_title($term_name);
                 $term_color = $this->generate_random_color();
 
                 // Verificar si el tablero ya existe
                 $existing_term = term_exists($term_slug, 'decker_board');
                 if ($existing_term) {
-                    WP_CLI::warning("El tablero '$term_name' ya existe. Saltando...");
+                    WP_CLI::warning("Board '$term_name' already exists. Skipping...");
                     $boards[] = $existing_term['term_id'];
                     continue;
                 }
@@ -105,37 +105,37 @@ if (defined('WP_CLI') && WP_CLI) {
                 ]);
 
                 if (is_wp_error($term)) {
-                    WP_CLI::warning("Error al crear el tablero '$term_name': " . $term->get_error_message());
+                    WP_CLI::warning("Error creating board '$term_name': " . $term->get_error_message());
                     continue;
                 }
 
                 // Añadir meta 'term_color'
                 add_term_meta($term['term_id'], 'term_color', $term_color, true);
-                WP_CLI::success("Tablero '$term_name' creado con color $term_color.");
+                WP_CLI::success("Board '$term_name' created with color $term_color.");
                 $boards[] = $term['term_id'];
             }
 
-            // 3. Obtener todos los usuarios
-            WP_CLI::log("Obteniendo usuarios...");
+            // 3. Get all users
+            WP_CLI::log("Getting users...");
             $users = get_users(['fields' => ['ID']]);
             if (empty($users)) {
-                WP_CLI::error("No hay usuarios disponibles para asignar a las tareas.");
+                WP_CLI::error("No users available to assign to tasks.");
                 return;
             }
             $user_ids = wp_list_pluck($users, 'ID');
 
-            // 4. Crear tareas
-            WP_CLI::log("Creando tareas...");
+            // 4. Create tasks
+            WP_CLI::log("Creating tasks...");
             foreach ($boards as $board_id) {
                 $board = get_term($board_id, 'decker_board');
                 if (is_wp_error($board)) {
-                    WP_CLI::warning("No se pudo obtener el tablero con ID $board_id. Saltando...");
+                    WP_CLI::warning("Could not get board with ID $board_id. Skipping...");
                     continue;
                 }
 
                 for ($j = 1; $j <= 2; $j++) {
-                    $post_title = "Tarea $j para {$board->name}";
-                    $post_content = "Contenido de la tarea $j para el tablero {$board->name}.";
+                    $post_title = "Task $j for {$board->name}";
+                    $post_content = "Content for task $j in board {$board->name}.";
 
                     // Crear la tarea
                     $post_id = wp_insert_post([
@@ -146,7 +146,7 @@ if (defined('WP_CLI') && WP_CLI) {
                     ]);
 
                     if (is_wp_error($post_id)) {
-                        WP_CLI::warning("Error al crear la tarea '$post_title': " . $post_id->get_error_message());
+                        WP_CLI::warning("Error creating task '$post_title': " . $post_id->get_error_message());
                         continue;
                     }
 
@@ -165,28 +165,28 @@ if (defined('WP_CLI') && WP_CLI) {
                     $assigned_users = wp_rand_elements($user_ids, $num_users);
                     update_post_meta($post_id, 'assigned_users', $assigned_users);
 
-                    WP_CLI::success("Tarea '$post_title' creada y asignada al tablero '{$board->name}'.");
+                    WP_CLI::success("Task '$post_title' created and assigned to board '{$board->name}'.");
                 }
             }
 
-            WP_CLI::success("¡Datos de prueba creados exitosamente!");
+            WP_CLI::success("Sample data created successfully!");
         }
 
         /**
-         * Genera un color hexadecimal aleatorio.
+         * Generates a random hexadecimal color.
          *
-         * @return string Color en formato hexadecimal (e.g., #a3f4c1).
+         * @return string Color in hexadecimal format (e.g., #a3f4c1).
          */
         private function generate_random_color() {
             return sprintf('#%06X', mt_rand(0, 0xFFFFFF));
         }
 
         /**
-         * Selecciona elementos aleatorios de un array.
+         * Selects random elements from an array.
          *
-         * @param array $array Array del cual seleccionar elementos.
-         * @param int   $number Número de elementos a seleccionar.
-         * @return array Elementos seleccionados.
+         * @param array $array Array to select elements from.
+         * @param int   $number Number of elements to select.
+         * @return array Selected elements.
          */
         private function wp_rand_elements($array, $number) {
             if ($number >= count($array)) {
