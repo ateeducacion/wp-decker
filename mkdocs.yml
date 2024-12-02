@@ -1,0 +1,79 @@
+site_name: Decker
+site_description: Decker is a WordPress plugin developed for internal use at the Área de Tecnología Educativa (ATE).
+
+site_author: ATE
+repo_url: https://github.com/ateeducacion/wp-decker
+edit_uri: edit/main/docs/
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ateeducacion/wp-decker
+
+theme:
+  name: material
+  repo_branch: main
+  highlightjs: true
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.tooltips
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.follow
+    - header.autohide
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: pink
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to system preference
+  footer:
+    text: "Decker - A project by ATE"
+
+nav:
+  - Home: index.md
+  - API Reference: api.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      use_pygments: true
+      pygments_lang_class: true
+      pygments_style: monokai
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.critic
+  - pymdownx.betterem
+  - admonition
+  - codehilite
+
+plugins:
+  - search
+  - minify:
+      minify_html: true
+
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
