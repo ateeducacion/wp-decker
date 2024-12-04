@@ -32,43 +32,43 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Create test users
 		$user1_id = $this->factory->user->create();
 		$user2_id = $this->factory->user->create();
-		
+
 		$input = array(
-			'ignored_users' => "{$user1_id},{$user2_id}"
+			'ignored_users' => "{$user1_id},{$user2_id}",
 		);
 
-		$validated = $this->admin_settings->settings_validate($input);
+		$validated = $this->admin_settings->settings_validate( $input );
 
-		$this->assertEquals("{$user1_id},{$user2_id}", $validated['ignored_users']);
+		$this->assertEquals( "{$user1_id},{$user2_id}", $validated['ignored_users'] );
 	}
 
 	public function test_settings_validate_with_empty_ignored_users() {
 		$input = array(
-			'ignored_users' => ''
+			'ignored_users' => '',
 		);
 
-		$validated = $this->admin_settings->settings_validate($input);
+		$validated = $this->admin_settings->settings_validate( $input );
 
-		$this->assertEquals('', $validated['ignored_users']);
+		$this->assertEquals( '', $validated['ignored_users'] );
 	}
 
 	public function test_settings_validate_with_invalid_ignored_users() {
 		// Create one valid user
 		$valid_user_id = $this->factory->user->create();
-		
+
 		$input = array(
-			'ignored_users' => "999999,{$valid_user_id},invalid"
+			'ignored_users' => "999999,{$valid_user_id},invalid",
 		);
 
-		$validated = $this->admin_settings->settings_validate($input);
+		$validated = $this->admin_settings->settings_validate( $input );
 
 		// Should only keep the valid user ID
-		$this->assertEquals("{$valid_user_id}", $validated['ignored_users']);
+		$this->assertEquals( "{$valid_user_id}", $validated['ignored_users'] );
 
 		// Check if invalid IDs were stored in transient
-		$invalid_ids = get_transient('decker_invalid_user_ids');
-		$this->assertNotFalse($invalid_ids);
-		$this->assertEquals(['999999'], $invalid_ids);
+		$invalid_ids = get_transient( 'decker_invalid_user_ids' );
+		$this->assertNotFalse( $invalid_ids );
+		$this->assertEquals( array( '999999' ), $invalid_ids );
 	}
 
 	public function test_settings_validate_with_valid_input() {
