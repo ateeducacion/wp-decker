@@ -300,7 +300,17 @@ function deleteComment(commentId) {
 					<?php disabled( $disabled || ! current_user_can( 'edit_posts' ) ); // Disable the select if the current user cannot edit posts. ?>>
 					<option value="" disabled selected><?php esc_html_e( 'Select Author', 'decker' ); ?></option>
 					<?php
-					$users = get_users();
+					// Get ignored users from settings.
+					$options       = get_option( 'decker_settings', array() );
+					$ignored_users = isset( $options['ignored_users'] ) ? array_map( 'intval', explode( ',', $options['ignored_users'] ) ) : array();
+
+					$users = get_users(
+						array(
+							'orderby'  => 'display_name',
+							'exclude'  => $ignored_users,
+						)
+					);
+
 					foreach ( $users as $user ) {
 						echo '<option value="' . esc_attr( $user->ID ) . '" '
 							. selected( $user->ID, $task->author, false ) . ' '
