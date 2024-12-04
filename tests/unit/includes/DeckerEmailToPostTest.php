@@ -51,16 +51,16 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
     	$request = new WP_REST_Request('POST', $this->endpoint);
     	$response = rest_get_server()->dispatch($request);
 
-    	$this->assertEquals(403, $response->get_status());
+    	$this->assertEquals(401, $response->get_status());
 	}
 
-	// public function test_endpoint_requires_valid_payload() {
-	// $request = new WP_REST_Request('POST', $this->endpoint);
-	// $request->add_header('Authorization', 'Bearer ' . $this->shared_key);
-	// $response = rest_get_server()->dispatch($request);
+	public function test_endpoint_requires_valid_payload() {
+		$request = new WP_REST_Request('POST', $this->endpoint);
+		$request->add_header('Authorization', 'Bearer ' . $this->shared_key);
+		$response = rest_get_server()->dispatch($request);
 
-	// $this->assertEquals(400, $response->get_status());
-	// }
+		$this->assertEquals(400, $response->get_status());
+	}
 
 	public function test_creates_task_from_valid_email() {
 		// Set default board for user
