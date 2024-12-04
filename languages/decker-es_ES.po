@@ -1198,16 +1198,16 @@ msgstr "Cancelar"
 
 #: admin/class-decker-admin-settings.php:236
 msgid "Ignored Users"
-msgstr ""
+msgstr "Usuarios Ignorados"
 
 #: admin/class-decker-admin-settings.php:276
 msgid "Please enter comma-separated user IDs (numbers only)"
-msgstr ""
+msgstr "Por favor, introduzca IDs de usuario separados por comas (solo números)"
 
 #: admin/class-decker-admin-settings.php:277
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
-msgstr ""
+msgstr "Introduzca IDs de usuario separados por comas para ignorar de la funcionalidad de Decker."
 
 #: admin/class-decker-admin-settings.php:322
 msgid "The following user IDs were invalid and have been removed: %s"
-msgstr ""
+msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s"
