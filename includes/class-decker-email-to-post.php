@@ -82,34 +82,24 @@ class Decker_Email_To_Post {
 	 */
 	public function get_body( Erseco\Message $message ): string {
 
-		// print_r($message);
+		// Attempt to get the parts of the message.
+		$parts = $message->getParts();
 
-	    // Attempt to get the parts of the message.
-	    $parts = $message->getParts();
+		if ( count( $parts ) > 0 ) {
+			$content = $parts[0]->getContent();
+			$content_type = $parts[0]->getContentType();
 
-	    if (count($parts) > 0) {
-	        $content = $parts[0]->getContent();
-	        $contentType = $parts[0]->getContentType();
+			if ( str_starts_with( strtolower( $content_type ), 'text/plain;' ) ) {
+				// Convert plain text to HTML for better readability.
+				return wp_kses_post( nl2br( esc_html( $content ) ) );
+			} else {
+				// Sanitize and return the HTML content.
+				return wp_kses_post( $content );
+			}
+		}
 
-	        if (str_starts_with(strtolower($contentType), 'text/plain;')) {
-	            // Convert plain text to HTML for better readability.
-	            return wp_kses_post(nl2br(esc_html($content)));
-	        } else {
-	            // Sanitize and return the HTML content.
-	            return wp_kses_post($content);
-	        }
-
-
-	    } else {
-
-
-	    	error_log("ERRORAZOOOOOOO");
-
-	    }
-
-	    // If no parts are available, return an empty string.
-	    return '';
-
+		// If no parts are available, return an empty string.
+		return '';
 	}
 
 	/**
@@ -128,16 +118,11 @@ class Decker_Email_To_Post {
 
 		try {
 
+			// Decode the base64-encoded email content.
+			$raw_email = base64_decode( $payload['rawEmail'] );
+
 			// Parse email.
-
-			require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/MimeMailParser.php';
-			// $message = new Erseco\Message( $payload['rawEmail'] );
-
-
-			$message = Erseco\Message::fromString($payload['rawEmail']);
-			print_r($message->getParts());
-
-			error_log( '------------dfsdfIIIIIIIIIIIIIIIIIII------' );
+			$message = $this->parse_email( $raw_email );
 
 			if ( is_wp_error( $message ) ) {
 				return $message;
@@ -192,8 +177,6 @@ class Decker_Email_To_Post {
 
 		} catch ( Exception $e ) {
 
-			error_log( $e->getMessage() );
-
 			return new WP_Error( 'processing_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -217,7 +200,8 @@ class Decker_Email_To_Post {
 	private function parse_email( $raw_email ) {
 
 		// Parse raw email.
-
+		require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/MimeMailParser.php';
+		$message = new Erseco\Message( $raw_email );
 
 		return $message;
 	}
@@ -404,20 +388,25 @@ class Decker_Email_To_Post {
 	private function upload_task_attachments( $attachments, $task_id ) {
 		foreach ( $attachments as $attachment ) {
 			try {
+				$filename = $attachment->getFilename();
+				$content  = $attachment->getContent();
+				$mimetype = $attachment->getContentType();
+
 				$result = $this->upload_attachment(
-					$attachment['filename'],
-					$attachment['content'],
-					$attachment['mimetype'],
+					$filename,
+					$content,
+					$mimetype,
 					$task_id
 				);
+
 				if ( is_wp_error( $result ) ) {
 					error_log(
-						"Error uploading attachment {$attachment['filename']}: " . $result->get_error_message()
+						"Error uploading attachment {$filename}: " . $result->get_error_message()
 					);
 				}
 			} catch ( Exception $e ) {
 				error_log(
-					"Exception processing attachment {$attachment['filename']}: " . $e->getMessage()
+					"Exception processing attachment {$attachment->getFilename()}: " . $e->getMessage()
 				);
 			}
 		}

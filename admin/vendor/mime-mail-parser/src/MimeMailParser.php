@@ -44,23 +44,7 @@ class Message implements \JsonSerializable
     {
         $this->message = $message;
 
-        // error_log($message);
-
         $this->parse($ignoreSignature);
-
-
-
-        var_dump("aqui si llega--------");
-
-
-        // $this->parse($ignoreSignature);
-
-        var_dump("aqui no llega--------");
-
-        var_dump('Parsed message parts: ' . print_r($this->getParts(), true));
-
-
-
     }
 
     /**

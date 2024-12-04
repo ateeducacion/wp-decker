@@ -110,7 +110,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
 
 		// Load email content from fixture
-		$email_content = $this->get_fixture_content( 'raw_email_from_zimbra.eml' );
+		$email_content = $this->get_fixture_content( 'raw_email_from_gmail.eml' );
 
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
@@ -132,17 +132,6 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 
 		$response = rest_get_server()->dispatch( $request );
 
-		// // // Depuración: Imprimir el estado de la respuesta
-
-		// error_log( '------------------------------' );
-		// //  // var_dump($request);
-
-		// // // Depuración: Imprimir el estado de la respuesta
-		// //  var_dump($response->get_status());
-
-		// //  // Depuración: Imprimir los datos de la respuesta
-		// //  var_dump($response->get_data());
-
 		$this->assertEquals( 200, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertArrayHasKey( 'task_id', $data );
@@ -150,10 +139,8 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		// Verify task was created correctly
 		$task = get_post( $data['task_id'] );
 
-		// var_dump( $task );
-
 		$this->assertEquals( 'Test Task', $task->post_title );
-		$this->assertEquals( 'This is a test task', trim( $task->post_content ) );
+		$this->assertEquals( 'this is a mail from gmail', trim( $task->post_content ) );
 		$this->assertEquals( $this->user->ID, $task->post_author );
 	}
 
@@ -163,7 +150,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
 
 		// Load email content from fixture
-		$email_content = $this->get_fixture_content( 'raw_email_from_gmail.eml' );
+		$email_content = $this->get_fixture_content( 'Test_Full.eml' );
 
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
@@ -185,17 +172,6 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 
 		$response = rest_get_server()->dispatch( $request );
 
-		// // // Depuración: Imprimir el estado de la respuesta
-
-		// error_log( '------------------------------' );
-		// //  // var_dump($request);
-
-		// // // Depuración: Imprimir el estado de la respuesta
-		// //  var_dump($response->get_status());
-
-		// //  // Depuración: Imprimir los datos de la respuesta
-		// //  var_dump($response->get_data());
-
 		$this->assertEquals( 200, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertArrayHasKey( 'task_id', $data );
@@ -203,10 +179,8 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		// Verify task was created correctly
 		$task = get_post( $data['task_id'] );
 
-		// var_dump( $task );
-
 		$this->assertEquals( 'Test Full Task', $task->post_title );
-		// $this->assertEquals( 'This is a test task', trim( $task->post_content ) );
+		$this->assertStringContainsString( 'Les comentamos la incidencia con la que nos encontramos con Decker', trim( $task->post_content ) );
 		$this->assertEquals( $this->user->ID, $task->post_author );
 	}
 
@@ -215,7 +189,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
 
 		// Load email content from fixture
-		$email_content = $this->get_fixture_content( 'raw_email_from_zimbra_attachments.eml' );
+		$email_content = $this->get_fixture_content( 'Test_Attachment.eml' );
 
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
@@ -258,7 +232,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 
 		$attachment = array_shift( $attachments );
 		$this->assertEquals( 'text/plain', $attachment->post_mime_type );
-		$this->assertStringContainsString( 'test.txt', $attachment->post_title );
+		$this->assertStringContainsString( 'test', $attachment->post_title );
 	}
 
 	/**
