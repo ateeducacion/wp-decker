@@ -57,14 +57,14 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		$request = new WP_REST_Request('POST', $this->endpoint);
 		$response = rest_get_server()->dispatch($request);
 
- // Depuración: Imprimir el estado de la respuesta
-    var_dump($response->get_status());
+        // Depuración: Imprimir el estado de la respuesta
+        var_dump($response->get_status());
 
-    // Depuración: Imprimir los datos de la respuesta
-    var_dump($response->get_data());
+	    // Depuración: Imprimir los datos de la respuesta
+	    var_dump($response->get_data());
 
 
-		$this->assertEquals(404, $response->get_status());
+		$this->assertEquals(403, $response->get_status());
 		$data = $response->get_data();
 		$this->assertEquals('rest_forbidden', $data['code']);
 	}
@@ -75,6 +75,10 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		$response = rest_get_server()->dispatch($request);
 
 		$this->assertEquals(400, $response->get_status());
+
+		$data = $response->get_data();
+		$this->assertEquals('invalid_payload', $data['code']);
+
 	}
 
 	public function test_creates_task_from_valid_email() {
