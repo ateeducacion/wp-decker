@@ -188,6 +188,11 @@ msgstr ""
 msgid "Go to Decker"
 msgstr ""
 
+#: includes/class-decker-email-to-post.php:50
+#: includes/class-decker-email-to-post.php:55
+msgid "Access denied"
+msgstr ""
+
 #: includes/custom-post-types/class-decker-actions.php:37
 msgctxt "taxonomy general name"
 msgid "Actions"

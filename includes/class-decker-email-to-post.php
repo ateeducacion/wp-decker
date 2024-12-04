@@ -47,12 +47,12 @@ class Decker_Email_To_Post {
 		$auth_header = $request->get_header( 'authorization' );
 
 		if ( ! $auth_header ) {
-			return new WP_Error( 'rest_forbidden', __( 'Access denied' ), array( 'status' => 403 ) );
+			return new WP_Error( 'rest_forbidden', __( 'Access denied', 'decker' ), array( 'status' => 403 ) );
 		}
 
 		if ( ! $this->validate_authorization( $auth_header ) ) {
 
-			return new WP_Error( 'rest_forbidden', __( 'Access denied' ), array( 'status' => 403 ) );
+			return new WP_Error( 'rest_forbidden', __( 'Access denied', 'decker' ), array( 'status' => 403 ) );
 		}
 
 		return true;

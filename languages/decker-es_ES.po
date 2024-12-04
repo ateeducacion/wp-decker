@@ -1212,3 +1212,8 @@ msgstr "Introduzca IDs de usuario separados por comas para ignorar de la funcion
 #: admin/class-decker-admin-settings.php:323
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s"
+
+#: includes/class-decker-email-to-post.php:50
+#: includes/class-decker-email-to-post.php:55
+msgid "Access denied"
+msgstr "Acceso denegado"
