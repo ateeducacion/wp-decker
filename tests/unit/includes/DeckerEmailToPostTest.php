@@ -19,8 +19,14 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		$this->server = $wp_rest_server = new WP_REST_Server();
 		do_action( 'rest_api_init' );
 
-		// Create instance of our controller class
+		// Create instance of our controller class and register routes
 		$this->controller = new Decker_Email_To_Post();
+		$this->controller->register_endpoint();
+
+		// Flush rewrite rules
+		global $wp_rewrite;
+		$wp_rewrite->init();
+		$wp_rewrite->flush_rules();
 
 		// Create test user
 		$this->user = $this->factory->user->create_and_get(
