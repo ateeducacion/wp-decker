@@ -348,8 +348,13 @@ class Decker_Admin_Settings {
 		// Validate alert message.
 		$input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
 
-		// Validate ignored users
-		if (isset($input['ignored_users'])) {
+		// Initialize ignored_users if not set
+		if (!isset($input['ignored_users'])) {
+			$input['ignored_users'] = '';
+		}
+
+		// Validate ignored users if not empty
+		if (!empty($input['ignored_users'])) {
 			$user_ids = array_map('trim', explode(',', $input['ignored_users']));
 			$valid_user_ids = array();
 			
@@ -359,9 +364,7 @@ class Decker_Admin_Settings {
 				}
 			}
 			
-			$input['ignored_users'] = implode(',', $valid_user_ids);
-		} else {
-			$input['ignored_users'] = '';
+			$input['ignored_users'] = !empty($valid_user_ids) ? implode(',', $valid_user_ids) : '';
 		}
 
 		return $input;

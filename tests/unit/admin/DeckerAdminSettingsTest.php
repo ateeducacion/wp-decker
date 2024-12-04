@@ -42,6 +42,16 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$this->assertEquals("{$user1_id},{$user2_id}", $validated['ignored_users']);
 	}
 
+	public function test_settings_validate_with_empty_ignored_users() {
+		$input = array(
+			'ignored_users' => ''
+		);
+
+		$validated = $this->admin_settings->settings_validate($input);
+
+		$this->assertEquals('', $validated['ignored_users']);
+	}
+
 	public function test_settings_validate_with_invalid_ignored_users() {
 		// Create one valid user
 		$valid_user_id = $this->factory->user->create();
