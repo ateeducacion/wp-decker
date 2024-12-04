@@ -57,19 +57,19 @@ msgid "Decker Configuration"
 msgstr "Configuración de Decker"
 
 #: admin/class-decker-admin-settings.php:235
-#: admin/class-decker-admin-settings.php:269
+#: admin/class-decker-admin-settings.php:287
 msgid "Clear All Data"
 msgstr "Borrar Todos los Datos"
 
-#: admin/class-decker-admin-settings.php:269
+#: admin/class-decker-admin-settings.php:287
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr "¿Estás seguro de que deseas eliminar todos los registros de Decker? Esta acción no se puede deshacer."
 
-#: admin/class-decker-admin-settings.php:270
+#: admin/class-decker-admin-settings.php:288
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr "Haz clic en el botón para eliminar todas las etiquetas, tareas y tableros de Decker."
 
-#: admin/class-decker-admin-settings.php:297
+#: admin/class-decker-admin-settings.php:315
 msgid "All Decker records have been deleted."
 msgstr "Todos los registros de Decker han sido eliminados."
 
@@ -842,7 +842,7 @@ msgstr "Restablecer"
 msgid "Task"
 msgstr "Tarea"
 
-#: public/class-decker-public.php:257
+#: public/class-decker-public.php:256
 msgid "Error loading content. Please try again."
 msgstr "Error al cargar el contenido. Por favor, inténtelo de nuevo."
 
@@ -1164,7 +1164,7 @@ msgstr "Lista de IDs de tableros a ignorar, separados por comas"
 msgid "Skip Existing Tasks"
 msgstr "Omitir Tareas Existentes"
 
-#: admin/class-decker-admin-settings.php:256
+#: admin/class-decker-admin-settings.php:257
 msgid "Configure the Decker plugin settings."
 msgstr "Configura los ajustes del plugin Decker."
 
@@ -1195,3 +1195,19 @@ msgstr "Aceptar"
 #: public/layouts/task-card.php:638
 msgid "Cancel"
 msgstr "Cancelar"
+
+#: admin/class-decker-admin-settings.php:236
+msgid "Ignored Users"
+msgstr "Usuarios Ignorados"
+
+#: admin/class-decker-admin-settings.php:276
+msgid "Please enter comma-separated user IDs (numbers only)"
+msgstr "Por favor, introduzca IDs de usuario separados por comas (solo números)"
+
+#: admin/class-decker-admin-settings.php:277
+msgid "Enter comma-separated user IDs to ignore from Decker functionality."
+msgstr "Introduzca IDs de usuario separados por comas para ignorar de la funcionalidad de Decker."
+
+#: admin/class-decker-admin-settings.php:322
+msgid "The following user IDs were invalid and have been removed: %s"
+msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s"

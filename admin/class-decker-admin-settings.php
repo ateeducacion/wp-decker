@@ -233,6 +233,7 @@ class Decker_Admin_Settings {
 			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
+			'ignored_users'         => __( 'Ignored Users', 'decker' ),
 
 		);
 
@@ -258,6 +259,23 @@ class Decker_Admin_Settings {
 
 
 
+
+	/**
+	 * Render Clear All Data Button.
+	 *
+	 * Outputs the HTML for the clear_all_data_button field.
+	 */
+	/**
+	 * Render Ignored Users Field.
+	 *
+	 * Outputs the HTML for the ignored_users field.
+	 */
+	public function ignored_users_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value = isset( $options['ignored_users'] ) ? sanitize_text_field( $options['ignored_users'] ) : '';
+		echo '<input type="text" name="decker_settings[ignored_users]" class="regular-text" value="' . esc_attr( $value ) . '" pattern="^[0-9]+(,[0-9]+)*$" title="' . esc_attr__( 'Please enter comma-separated user IDs (numbers only)', 'decker' ) . '">';
+		echo '<p class="description">' . esc_html__( 'Enter comma-separated user IDs to ignore from Decker functionality.', 'decker' ) . '</p>';
+	}
 
 	/**
 	 * Render Clear All Data Button.
@@ -296,6 +314,18 @@ class Decker_Admin_Settings {
 		if ( isset( $_GET['decker_data_cleared'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'All Decker records have been deleted.', 'decker' ) . '</p></div>';
 		}
+
+		$invalid_user_ids = get_transient( 'decker_invalid_user_ids' );
+		if ( false !== $invalid_user_ids ) {
+			echo '<div class="notice notice-warning is-dismissible"><p>' .
+				sprintf(
+					// Translators: %s is a list of invalid user IDs that have been removed.
+					esc_html__( 'The following user IDs were invalid and have been removed: %s', 'decker' ),
+					esc_html( implode( ', ', $invalid_user_ids ) )
+				) .
+				'</p></div>';
+			delete_transient( 'decker_invalid_user_ids' );
+		}
 	}
 
 	/**
@@ -329,6 +359,35 @@ class Decker_Admin_Settings {
 
 		// Validate alert message.
 		$input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
+
+		// Initialize ignored_users if not set.
+		if ( ! isset( $input['ignored_users'] ) ) {
+			$input['ignored_users'] = '';
+		}
+
+		// Validate ignored users if not empty.
+		if ( ! empty( $input['ignored_users'] ) ) {
+			$user_ids = array_map( 'trim', explode( ',', $input['ignored_users'] ) );
+			$valid_user_ids = array();
+			$invalid_user_ids = array();
+
+			foreach ( $user_ids as $user_id ) {
+				if ( is_numeric( $user_id ) ) {
+					if ( get_user_by( 'id', $user_id ) ) {
+						$valid_user_ids[] = $user_id;
+					} else {
+						$invalid_user_ids[] = $user_id;
+					}
+				}
+			}
+
+			$input['ignored_users'] = ! empty( $valid_user_ids ) ? implode( ',', $valid_user_ids ) : '';
+
+			// Set transient if there were invalid IDs.
+			if ( ! empty( $invalid_user_ids ) ) {
+				set_transient( 'decker_invalid_user_ids', $invalid_user_ids, 45 );
+			}
+		}
 
 		return $input;
 	}

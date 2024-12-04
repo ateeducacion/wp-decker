@@ -250,10 +250,14 @@ if ( ! $has_today_tasks ) {
 						$today = gmdate( 'Y-m-d' );
 						$options                       = get_option( 'decker_settings', array() );
 						$selected_role                 = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
-						$users                         = get_users(
+						// Get ignored users from settings.
+						$ignored_users = isset( $options['ignored_users'] ) ? array_map( 'intval', explode( ',', $options['ignored_users'] ) ) : array();
+
+						$users = get_users(
 							array(
 								'role__in' => array( $selected_role, 'administrator' ),
 								'orderby'  => 'display_name',
+								'exclude'  => $ignored_users,
 							)
 						);
 						$today           = gmdate( 'Y-m-d' );

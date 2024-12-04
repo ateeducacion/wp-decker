@@ -142,24 +142,40 @@ msgid "Shared Key"
 msgstr ""
 
 #: admin/class-decker-admin-settings.php:235
-#: admin/class-decker-admin-settings.php:269
+#: admin/class-decker-admin-settings.php:287
 msgid "Clear All Data"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:256
+#: admin/class-decker-admin-settings.php:236
+msgid "Ignored Users"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:257
 msgid "Configure the Decker plugin settings."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:269
+#: admin/class-decker-admin-settings.php:276
+msgid "Please enter comma-separated user IDs (numbers only)"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:277
+msgid "Enter comma-separated user IDs to ignore from Decker functionality."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:287
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:270
+#: admin/class-decker-admin-settings.php:288
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:297
+#: admin/class-decker-admin-settings.php:315
 msgid "All Decker records have been deleted."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:322
+msgid "The following user IDs were invalid and have been removed: %s"
 msgstr ""
 
 #: admin/class-decker-admin.php:63
@@ -875,7 +891,7 @@ msgstr ""
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:257
+#: public/class-decker-public.php:256
 msgid "Error loading content. Please try again."
 msgstr ""
 
