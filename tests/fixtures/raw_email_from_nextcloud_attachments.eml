@@ -1,6 +1,6 @@
 Received: from smtp-lp.gobiernodecanarias.org (93.188.136.122)
         by cloudflare-email.net (unknown) id 3FoVU98s0agE
-        for <taskwp@canarias.win>; Wed, 04 Dec 2024 15:50:28 +0000
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:50:28 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
 	b=BAfCV+bV5Y5CYeNi8VnP5Udkw4elQh9fPlGo3998O6oc7uVBiW/7KOHRMSovfPW1TIYUAq8nO
 	p1y/GB+q6mIZ54LYjVo+mVWjEBpdGbDMwua6VrB22bDRA0c0PmifOCAzt23E4L/mG7JiX5heaKV
@@ -20,42 +20,42 @@ ARC-Message-Signature: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; c=rela
 ARC-Authentication-Results: i=1; mx.cloudflare.net;
 	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
-	spf=pass (mx.cloudflare.net: domain of esercol@gobiernodecanarias.org designates 93.188.136.122 as permitted sender) smtp.mailfrom=esercol@gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
 	arc=none smtp.remote-ip=93.188.136.122
-Received-SPF: pass (mx.cloudflare.net: domain of esercol@gobiernodecanarias.org designates 93.188.136.122 as permitted sender)
-	receiver=mx.cloudflare.net; client-ip=93.188.136.122; envelope-from="esercol@gobiernodecanarias.org"; helo=smtp-lp.gobiernodecanarias.org;
+Received-SPF: pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=93.188.136.122; envelope-from="test2@example.com"; helo=smtp-lp.gobiernodecanarias.org;
 Authentication-Results: mx.cloudflare.net;
 	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
-	spf=pass (mx.cloudflare.net: domain of esercol@gobiernodecanarias.org designates 93.188.136.122 as permitted sender) smtp.mailfrom=esercol@gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
 	arc=none smtp.remote-ip=93.188.136.122
 Received: from atletico-sc11e.gobiernodecanarias.net (atletico-sc11e.gobiernodecanarias.net [10.141.38.174])
 	by smtp-lp.gobiernodecanarias.org (Postfix) with ESMTP id 1FAE54949E1C
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:50:27 +0000 (WET)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:50:27 +0000 (WET)
 DMARC-Filter: OpenDMARC Filter v1.4.1 smtp-lp.gobiernodecanarias.org 1FAE54949E1C
 Authentication-Results: smtp-lp.gobiernodecanarias.org; dmarc=none (p=none dis=none) header.from=gobiernodecanarias.org
 Authentication-Results: smtp-lp.gobiernodecanarias.org; spf=fail smtp.mailfrom=gobiernodecanarias.org
 DKIM-Filter: OpenDKIM Filter v2.11.0 smtp-lp.gobiernodecanarias.org 1FAE54949E1C
 Received: from atletico-sc11e.gobiernodecanarias.net (unknown [127.0.0.1])
 	by DDEI (Postfix) with ESMTP id BBE3DDC543E
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:48:26 +0000 (GMT)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:48:26 +0000 (GMT)
 Received: from atletico-sc11e.gobiernodecanarias.net (unknown [127.0.0.1])
 	by DDEI (Postfix) with ESMTP id A5FE6DC5387
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:48:26 +0000 (GMT)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:48:26 +0000 (GMT)
 X-TM-AS-ERS: 10.141.157.138-127.5.254.253
 X-TM-AS-SMTP: 1.0 YWxtZW5kcm9zMi5nb2JpZXJub2RlY2FuYXJpYXMub3Jn ZXNlcmNvbEBnb
 	2JpZXJub2RlY2FuYXJpYXMub3Jn
 X-DDEI-TLS-USAGE: Unused
 Received: from almendros2.gobiernodecanarias.org (unknown [10.141.157.138])
 	by atletico-sc11e.gobiernodecanarias.net (Postfix) with ESMTP
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:48:26 +0000 (GMT)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:48:26 +0000 (GMT)
 Received: from nube.canariaseducacion.org (unknown [172.17.255.7])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
 	by almendros2.gobiernodecanarias.org (Postfix) with ESMTPSA id 93BDB10EEA15
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:48:26 +0000 (WET)
-From: ERNESTO SERRANO COLLADO <esercol@gobiernodecanarias.org>
-To: taskwp@canarias.win
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:48:26 +0000 (WET)
+From: Test User 3 <test3@example.com>
+To: receiver@example.com
 Cc: 
 Subject: this is a mail from nextcloud with attachments
 Message-ID: <20241204154824.Horde.QdPs8go6L4CQxP7H2XzWfkC@nube.canariaseducacion.org>

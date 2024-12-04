@@ -1,0 +1,14 @@
+/.distignore            export-ignore
+/.editorconfig          export-ignore
+/.env                   export-ignore
+/.github/               export-ignore
+/.php-cs-fixer.dist.php export-ignore
+/docs/                  export-ignore
+/mkdocs.yml             export-ignore
+/tests/                 export-ignore
+/vendor/                export-ignore
+composer.lock           export-ignore
+phpunit.xml             export-ignore
+README.md               export-ignore
+renovate.json           export-ignore
+test.php                export-ignore

@@ -110,7 +110,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
 
 		// Load email content from fixture
-		$email_content = $this->get_fixture_content( 'Test_Task.eml' );
+		$email_content = $this->get_fixture_content( 'raw_email_from_zimbra.eml' );
 
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
@@ -134,7 +134,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 
 		// // // Depuración: Imprimir el estado de la respuesta
 
-		error_log( '------------------------------' );
+		// error_log( '------------------------------' );
 		// //  // var_dump($request);
 
 		// // // Depuración: Imprimir el estado de la respuesta
@@ -150,10 +150,10 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		// Verify task was created correctly
 		$task = get_post( $data['task_id'] );
 
-		var_dump( $task );
+		// var_dump( $task );
 
 		$this->assertEquals( 'Test Task', $task->post_title );
-		// $this->assertEquals( 'This is a test task', trim( $task->post_content ) );
+		$this->assertEquals( 'This is a test task', trim( $task->post_content ) );
 		$this->assertEquals( $this->user->ID, $task->post_author );
 	}
 
@@ -163,7 +163,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
 
 		// Load email content from fixture
-		$email_content = $this->get_fixture_content( 'Test_Full.eml' );
+		$email_content = $this->get_fixture_content( 'raw_email_from_gmail.eml' );
 
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
@@ -187,7 +187,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 
 		// // // Depuración: Imprimir el estado de la respuesta
 
-		error_log( '------------------------------' );
+		// error_log( '------------------------------' );
 		// //  // var_dump($request);
 
 		// // // Depuración: Imprimir el estado de la respuesta
@@ -203,7 +203,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		// Verify task was created correctly
 		$task = get_post( $data['task_id'] );
 
-		var_dump( $task );
+		// var_dump( $task );
 
 		$this->assertEquals( 'Test Full Task', $task->post_title );
 		// $this->assertEquals( 'This is a test task', trim( $task->post_content ) );
@@ -215,7 +215,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
 
 		// Load email content from fixture
-		$email_content = $this->get_fixture_content( 'Test_Attachment.eml' );
+		$email_content = $this->get_fixture_content( 'raw_email_from_zimbra_attachments.eml' );
 
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
@@ -248,7 +248,7 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 		// Verify task was created correctly
 		$task = get_post( $data['task_id'] );
 
-		var_dump( $task );
+		// var_dump( $task );
 
 		$this->assertEquals( 'Task with Attachment', $task->post_title );
 

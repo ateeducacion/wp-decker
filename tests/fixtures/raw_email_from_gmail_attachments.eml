@@ -1,6 +1,6 @@
 Received: from mail-ej1-x631.google.com (2a00:1450:4864:20::631)
         by cloudflare-email.net (unknown) id 7vnOu3lgdcgI
-        for <taskwp@canarias.win>; Wed, 04 Dec 2024 15:47:43 +0000
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:47:43 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
 	b=hWCmdjrgL3SPAeK44tBIKIfBLCzVxYt9gcc+Pe56tjdoTzX/US4EenA06t0olMvPi6+/wqahK
 	vMtz4d1PkzYkkysdldyLrqiJYUcgHQS6DoTszhUCzbhxge/vZOuqkQkk8WM6kyB6V1JBQ0xIX6V
@@ -21,18 +21,18 @@ ARC-Authentication-Results: i=1; mx.cloudflare.net;
 	dkim=pass header.d=gmail.com header.s=20230601 header.b=frpvQZb1;
 	dmarc=pass header.from=gmail.com policy.dmarc=none;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@mail-ej1-x631.google.com) smtp.helo=mail-ej1-x631.google.com;
-	spf=pass (mx.cloudflare.net: domain of erseco@gmail.com designates 2a00:1450:4864:20::631 as permitted sender) smtp.mailfrom=erseco@gmail.com;
+	spf=pass (mx.cloudflare.net: domain of test1@example.com designates 2a00:1450:4864:20::631 as permitted sender) smtp.mailfrom=test1@example.com;
 	arc=none smtp.remote-ip=2a00:1450:4864:20::631
-Received-SPF: pass (mx.cloudflare.net: domain of erseco@gmail.com designates 2a00:1450:4864:20::631 as permitted sender)
-	receiver=mx.cloudflare.net; client-ip=2a00:1450:4864:20::631; envelope-from="erseco@gmail.com"; helo=mail-ej1-x631.google.com;
+Received-SPF: pass (mx.cloudflare.net: domain of test1@example.com designates 2a00:1450:4864:20::631 as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=2a00:1450:4864:20::631; envelope-from="test1@example.com"; helo=mail-ej1-x631.google.com;
 Authentication-Results: mx.cloudflare.net;
 	dkim=pass header.d=gmail.com header.s=20230601 header.b=frpvQZb1;
 	dmarc=pass header.from=gmail.com policy.dmarc=none;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@mail-ej1-x631.google.com) smtp.helo=mail-ej1-x631.google.com;
-	spf=pass (mx.cloudflare.net: domain of erseco@gmail.com designates 2a00:1450:4864:20::631 as permitted sender) smtp.mailfrom=erseco@gmail.com;
+	spf=pass (mx.cloudflare.net: domain of test1@example.com designates 2a00:1450:4864:20::631 as permitted sender) smtp.mailfrom=test1@example.com;
 	arc=none smtp.remote-ip=2a00:1450:4864:20::631
 Received: by mail-ej1-x631.google.com with SMTP id a640c23a62f3a-aa549d9dffdso1090046366b.2
-        for <taskwp@canarias.win>; Wed, 04 Dec 2024 07:47:43 -0800 (PST)
+        for <receiver@example.com>; Wed, 04 Dec 2024 07:47:43 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1733327262; x=1733932062; darn=canarias.win;
         h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
@@ -65,11 +65,11 @@ X-Received: by 2002:a17:906:3d32:b0:aa6:1917:42e3 with SMTP id
  a640c23a62f3a-aa6191743eemr57629966b.57.1733327262034; Wed, 04 Dec 2024
  07:47:42 -0800 (PST)
 MIME-Version: 1.0
-From: Ernesto <erseco@gmail.com>
+From: Test User 1 <test1@example.com>
 Date: Wed, 4 Dec 2024 15:47:13 +0000
 Message-ID: <CA+7vVz2MD0-gZgxNL2JSwSLRWV6=fHhMwsGCz=4ChGC+GSjh_w@mail.gmail.com>
 Subject: test from gmail with attachments
-To: taskwp@canarias.win
+To: receiver@example.com
 Content-Type: multipart/mixed; boundary="000000000000bc04e2062873b35b"
 
 --000000000000bc04e2062873b35b

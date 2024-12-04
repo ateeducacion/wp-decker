@@ -1,6 +1,6 @@
 Received: from mail-ej1-x62c.google.com (2a00:1450:4864:20::62c)
         by cloudflare-email.net (unknown) id fEYa9RMRH0WB
-        for <taskwp@canarias.win>; Wed, 04 Dec 2024 15:35:04 +0000
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:35:04 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
 	b=bclFwS/eVEi2jwaVaDnGeQgAm6N1m4dHD/gMQC3qHkW3AQTQILLp/Si7Nos/rSm1xQi9KmshD
 	vEWMVUkhFGA+jx67WGLsQ+W+HQpIZZjNl/A29dUAYKxqshjavX/BqI/Svi6ixmne4K5gLAKzRaB
@@ -21,18 +21,18 @@ ARC-Authentication-Results: i=1; mx.cloudflare.net;
 	dkim=pass header.d=gmail.com header.s=20230601 header.b=OxNkGuSN;
 	dmarc=pass header.from=gmail.com policy.dmarc=none;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@mail-ej1-x62c.google.com) smtp.helo=mail-ej1-x62c.google.com;
-	spf=pass (mx.cloudflare.net: domain of erseco@gmail.com designates 2a00:1450:4864:20::62c as permitted sender) smtp.mailfrom=erseco@gmail.com;
+	spf=pass (mx.cloudflare.net: domain of test1@example.com designates 2a00:1450:4864:20::62c as permitted sender) smtp.mailfrom=test1@example.com;
 	arc=none smtp.remote-ip=2a00:1450:4864:20::62c
-Received-SPF: pass (mx.cloudflare.net: domain of erseco@gmail.com designates 2a00:1450:4864:20::62c as permitted sender)
-	receiver=mx.cloudflare.net; client-ip=2a00:1450:4864:20::62c; envelope-from="erseco@gmail.com"; helo=mail-ej1-x62c.google.com;
+Received-SPF: pass (mx.cloudflare.net: domain of test1@example.com designates 2a00:1450:4864:20::62c as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=2a00:1450:4864:20::62c; envelope-from="test1@example.com"; helo=mail-ej1-x62c.google.com;
 Authentication-Results: mx.cloudflare.net;
 	dkim=pass header.d=gmail.com header.s=20230601 header.b=OxNkGuSN;
 	dmarc=pass header.from=gmail.com policy.dmarc=none;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@mail-ej1-x62c.google.com) smtp.helo=mail-ej1-x62c.google.com;
-	spf=pass (mx.cloudflare.net: domain of erseco@gmail.com designates 2a00:1450:4864:20::62c as permitted sender) smtp.mailfrom=erseco@gmail.com;
+	spf=pass (mx.cloudflare.net: domain of test1@example.com designates 2a00:1450:4864:20::62c as permitted sender) smtp.mailfrom=test1@example.com;
 	arc=none smtp.remote-ip=2a00:1450:4864:20::62c
 Received: by mail-ej1-x62c.google.com with SMTP id a640c23a62f3a-aa55da18f89so1033519166b.0
-        for <taskwp@canarias.win>; Wed, 04 Dec 2024 07:35:04 -0800 (PST)
+        for <receiver@example.com>; Wed, 04 Dec 2024 07:35:04 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=gmail.com; s=20230601; t=1733326504; x=1733931304; darn=canarias.win;
         h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
@@ -65,11 +65,11 @@ X-Received: by 2002:a17:907:368a:b0:a9e:c947:8c5e with SMTP id
  a640c23a62f3a-aa5f7f3c4c7mr642278066b.57.1733326504158; Wed, 04 Dec 2024
  07:35:04 -0800 (PST)
 MIME-Version: 1.0
-From: Ernesto <erseco@gmail.com>
+From: Test User 1 <test1@example.com>
 Date: Wed, 4 Dec 2024 15:34:38 +0000
 Message-ID: <CA+7vVz36DwsdbzoRus_xujDUM_iZ4dY7bLJ8eG1bCXXX38Sn9Q@mail.gmail.com>
 Subject: test from gmail
-To: taskwp@canarias.win
+To: receiver@example.com
 Content-Type: multipart/alternative; boundary="0000000000008f6e3a06287386f8"
 
 --0000000000008f6e3a06287386f8
@@ -81,16 +81,6 @@ this is a mail from gmail
 Content-Type: text/html; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-<div dir=3D"ltr"><div class=3D"gmail-gs" style=3D"margin:0px;min-width:0px;=
-padding:0px 0px 20px;width:initial;font-family:&quot;Google Sans&quot;,Robo=
-to,RobotoDraft,Helvetica,Arial,sans-serif;font-size:medium"><div class=3D"g=
-mail-"><div id=3D"gmail-:9v" class=3D"gmail-ii gmail-gt" style=3D"direction=
-:ltr;margin:8px 0px 0px;padding:0px;font-size:0.875rem;overflow-x:hidden"><=
-div id=3D"gmail-:h0" class=3D"gmail-a3s gmail-aiL" style=3D"direction:ltr;f=
-ont-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alte=
-rnates:normal;font-size-adjust:none;font-kerning:auto;font-feature-settings=
-:normal;font-stretch:normal;font-size:small;line-height:1.5;font-family:Ari=
-al,Helvetica,sans-serif;overflow:auto hidden"><div dir=3D"ltr">this is a ma=
-il from gmail</div></div></div></div></div></div>
+<div><strong>this is a mail from gmail</strong></div>
 
 --0000000000008f6e3a06287386f8--

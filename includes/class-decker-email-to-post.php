@@ -75,6 +75,44 @@ class Decker_Email_To_Post {
 	}
 
 	/**
+	 * Gets the body of the email.
+	 *
+	 * @param Erseco\Message $message The Message instance.
+	 * @return string The sanitized email body.
+	 */
+	public function get_body( Erseco\Message $message ): string {
+
+		// print_r($message);
+
+	    // Attempt to get the parts of the message.
+	    $parts = $message->getParts();
+
+	    if (count($parts) > 0) {
+	        $content = $parts[0]->getContent();
+	        $contentType = $parts[0]->getContentType();
+
+	        if (str_starts_with(strtolower($contentType), 'text/plain;')) {
+	            // Convert plain text to HTML for better readability.
+	            return wp_kses_post(nl2br(esc_html($content)));
+	        } else {
+	            // Sanitize and return the HTML content.
+	            return wp_kses_post($content);
+	        }
+
+
+	    } else {
+
+
+	    	error_log("ERRORAZOOOOOOO");
+
+	    }
+
+	    // If no parts are available, return an empty string.
+	    return '';
+
+	}
+
+	/**
 	 * Callback to process the received email and create a post.
 	 *
 	 * @param WP_REST_Request $request The REST request data.
@@ -91,7 +129,16 @@ class Decker_Email_To_Post {
 		try {
 
 			// Parse email.
-			$message = $this->parse_email( $payload['rawEmail'] );
+
+			require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/MimeMailParser.php';
+			// $message = new Erseco\Message( $payload['rawEmail'] );
+
+
+			$message = Erseco\Message::fromString($payload['rawEmail']);
+			print_r($message->getParts());
+
+			error_log( '------------dfsdfIIIIIIIIIIIIIIIIIII------' );
+
 			if ( is_wp_error( $message ) ) {
 				return $message;
 			}
@@ -103,8 +150,8 @@ class Decker_Email_To_Post {
 				'cc'          => $payload['metadata']['cc'],
 				'bcc'         => $payload['metadata']['bcc'],
 				'subject'     => $payload['metadata']['subject'],
-				'body'        => $message->get_body(),
-				'attachments' => $message->get_attachments(),
+				'body'        => $this->get_body( $message ),
+				'attachments' => $message->getAttachments(),
 			);
 
 			// Validate sender.
@@ -128,7 +175,7 @@ class Decker_Email_To_Post {
 			}
 
 			// Handle attachments.
-			$attachments = $message->get_attachments();
+			$attachments = $message->getAttachments();
 			if ( ! empty( $attachments ) ) {
 				$this->upload_task_attachments( $attachments, $task_id );
 			}
@@ -144,6 +191,9 @@ class Decker_Email_To_Post {
 			);
 
 		} catch ( Exception $e ) {
+
+			error_log( $e->getMessage() );
+
 			return new WP_Error( 'processing_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -162,14 +212,12 @@ class Decker_Email_To_Post {
 	 * Parses raw email content with support for multipart and different encodings.
 	 *
 	 * @param string $raw_email The raw e-mail data.
-	 * @return Decker_Email_Parser.
+	 * @return Message.
 	 */
 	private function parse_email( $raw_email ) {
 
 		// Parse raw email.
-		require_once __DIR__ . '/class-decker-email-parser.php';
 
-		$message = new Decker_Email_Parser( $raw_email );
 
 		return $message;
 	}

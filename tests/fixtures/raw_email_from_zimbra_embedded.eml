@@ -1,6 +1,6 @@
 Received: from smtp-lp.gobiernodecanarias.org (93.188.136.122)
         by cloudflare-email.net (unknown) id 9vttwSnJc3XF
-        for <taskwp@canarias.win>; Wed, 04 Dec 2024 15:46:11 +0000
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:46:11 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
 	b=bKBhaZPzaqgKEWDZ00AB9jnXhf6PsRTNr17L3hqt7r9pGF2Ns1AufmALiRpiisV0KbAasXOUm
 	i3M61iPu7LOtohZFaU/LQszG7NdjVoKEN1KahvsPbbAP1S+W/XNkBllSlWPCY2JK669OmUtCue/
@@ -20,62 +20,62 @@ ARC-Message-Signature: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; c=rela
 ARC-Authentication-Results: i=1; mx.cloudflare.net;
 	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
-	spf=pass (mx.cloudflare.net: domain of esercol@gobiernodecanarias.org designates 93.188.136.122 as permitted sender) smtp.mailfrom=esercol@gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
 	arc=none smtp.remote-ip=93.188.136.122
-Received-SPF: pass (mx.cloudflare.net: domain of esercol@gobiernodecanarias.org designates 93.188.136.122 as permitted sender)
-	receiver=mx.cloudflare.net; client-ip=93.188.136.122; envelope-from="esercol@gobiernodecanarias.org"; helo=smtp-lp.gobiernodecanarias.org;
+Received-SPF: pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=93.188.136.122; envelope-from="test2@example.com"; helo=smtp-lp.gobiernodecanarias.org;
 Authentication-Results: mx.cloudflare.net;
 	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
 	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
-	spf=pass (mx.cloudflare.net: domain of esercol@gobiernodecanarias.org designates 93.188.136.122 as permitted sender) smtp.mailfrom=esercol@gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
 	arc=none smtp.remote-ip=93.188.136.122
 Received: from atletico-sc02e.gobiernodecanarias.net (unknown [93.188.142.4])
 	by smtp-lp.gobiernodecanarias.org (Postfix) with ESMTP id C468FBDA0B8
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:10 +0000 (WET)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:10 +0000 (WET)
 DMARC-Filter: OpenDMARC Filter v1.4.1 smtp-lp.gobiernodecanarias.org C468FBDA0B8
 Authentication-Results: smtp-lp.gobiernodecanarias.org; dmarc=none (p=none dis=none) header.from=gobiernodecanarias.org
 Authentication-Results: smtp-lp.gobiernodecanarias.org; spf=fail smtp.mailfrom=gobiernodecanarias.org
 DKIM-Filter: OpenDKIM Filter v2.11.0 smtp-lp.gobiernodecanarias.org C468FBDA0B8
 Received: from atletico-sc02e.gobiernodecanarias.net (unknown [127.0.0.1])
 	by DDEI (Postfix) with ESMTP id D082E661D5
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:09 +0000 (GMT)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:09 +0000 (GMT)
 Received: from atletico-sc02e.gobiernodecanarias.net (unknown [127.0.0.1])
 	by DDEI (Postfix) with ESMTP id B6C9D61083
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:09 +0000 (GMT)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:09 +0000 (GMT)
 X-TM-AS-ERS: 10.140.139.21-127.5.254.253
 X-TM-AS-SMTP: 1.0 bWFudGlsbG8zLmdvYmllcm5vZGVjYW5hcmlhcy5vcmc= ZXNlcmNvbEBnb
 	2JpZXJub2RlY2FuYXJpYXMub3Jn
 X-DDEI-TLS-USAGE: Unused
 Received: from mantillo3.gobiernodecanarias.org (unknown [10.140.139.21])
 	by atletico-sc02e.gobiernodecanarias.net (Postfix) with ESMTP
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:09 +0000 (GMT)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:09 +0000 (GMT)
 Received: from fino7.gobiernodecanarias.net (unknown [10.140.42.102])
 	(using TLSv1.2 with cipher ADH-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
 	by mantillo3.gobiernodecanarias.org (Postfix) with ESMTPS id 59D6932A7A44
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:09 +0000 (WET)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:09 +0000 (WET)
 Received: from localhost (localhost.localdomain [127.0.0.1])
 	by fino7.gobiernodecanarias.net (Postfix) with ESMTP id 96861108B7FB
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:09 +0000 (WET)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:09 +0000 (WET)
 Received: from fino7.gobiernodecanarias.net ([127.0.0.1])
  by localhost (fino7.gobiernodecanarias.net [127.0.0.1]) (amavis, port 10032)
- with ESMTP id jNjHSEW1pKFO for <taskwp@canarias.win>;
+ with ESMTP id jNjHSEW1pKFO for <receiver@example.com>;
  Wed,  4 Dec 2024 15:46:08 +0000 (WET)
 Received: from localhost (localhost.localdomain [127.0.0.1])
 	by fino7.gobiernodecanarias.net (Postfix) with ESMTP id CDB05109A0D6
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:08 +0000 (WET)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:08 +0000 (WET)
 X-Virus-Scanned: amavis at fino7.gobiernodecanarias.net
 Received: from fino7.gobiernodecanarias.net ([127.0.0.1])
  by localhost (fino7.gobiernodecanarias.net [127.0.0.1]) (amavis, port 10026)
- with ESMTP id 0gh1_hK0XIIU for <taskwp@canarias.win>;
+ with ESMTP id 0gh1_hK0XIIU for <receiver@example.com>;
  Wed,  4 Dec 2024 15:46:08 +0000 (WET)
 Received: from eulalia1.gobiernodecanarias.net (eulalia1.gobiernodecanarias.net [10.140.42.73])
 	by fino7.gobiernodecanarias.net (Postfix) with ESMTP id A9D2E108B7FB
-	for <taskwp@canarias.win>; Wed,  4 Dec 2024 15:46:08 +0000 (WET)
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:46:08 +0000 (WET)
 Date: Wed, 4 Dec 2024 15:46:08 +0000 (WET)
-From: Ernesto Serrano <esercol@gobiernodecanarias.org>
-To: taskwp <taskwp@canarias.win>
-Message-ID: <1668376403.21716085.1733327168667.JavaMail.zimbra@gobiernodecanarias.org>
+From: Test User 2 <test2@example.com>
+To: taskwp <receiver@example.com>
+Message-ID: <1668376403.21716085.1733327168667.JavaMail.zimbra@example.com>
 Subject: test from zimbra with embedded image
 MIME-Version: 1.0
 Content-Type: multipart/alternative; 
