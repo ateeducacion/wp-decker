@@ -273,7 +273,7 @@ class Decker_Admin_Settings {
 	public function ignored_users_render() {
 		$options = get_option('decker_settings', array());
 		$value = isset($options['ignored_users']) ? sanitize_text_field($options['ignored_users']) : '';
-		echo '<input type="text" name="decker_settings[ignored_users]" class="regular-text" value="' . esc_attr($value) . '">';
+		echo '<input type="text" name="decker_settings[ignored_users]" class="regular-text" value="' . esc_attr($value) . '" pattern="^[0-9]+(,[0-9]+)*$" title="' . esc_attr__('Please enter comma-separated user IDs (numbers only)', 'decker') . '">';
 		echo '<p class="description">' . esc_html__('Enter comma-separated user IDs to ignore from Decker functionality.', 'decker') . '</p>';
 	}
 
