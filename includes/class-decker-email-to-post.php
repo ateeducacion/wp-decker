@@ -44,16 +44,6 @@ class Decker_Email_To_Post {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'process_email' ),
 				'permission_callback' => array( $this, 'check_permission' ),
-				'args'               => array(
-					'rawEmail'  => array(
-						'required' => true,
-						'type'     => 'string',
-					),
-					'metadata'  => array(
-						'required' => true,
-						'type'     => 'object',
-					),
-				),
 			)
 		);
 	}
@@ -93,13 +83,7 @@ class Decker_Email_To_Post {
 	 */
 	public function process_email( WP_REST_Request $request ) {
 
-		// Validate authorization.
-		$auth_header = $request->get_header( 'authorization' );
-		if ( ! $this->validate_authorization( $auth_header ) ) {
-			return new WP_Error( 'forbidden', 'Access denied', array( 'status' => 403 ) );
-		}
-
-		// Get and validate payload.
+		// Get and validate payload
 		$payload = $request->get_json_params();
 		if ( ! isset( $payload['rawEmail'] ) || empty( $payload['metadata'] ) ) {
 			error_log( 'Invalid email payload' );
