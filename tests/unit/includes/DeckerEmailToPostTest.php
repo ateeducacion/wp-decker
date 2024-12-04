@@ -13,6 +13,16 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 
     public function setUp(): void {
         parent::setUp();
+
+        // Initialize the REST API
+        global $wp_rest_server;
+        $this->server = $wp_rest_server = new WP_REST_Server;
+        do_action('rest_api_init');
+        
+        // Flush rewrite rules
+        global $wp_rewrite;
+        $wp_rewrite->init();
+        $wp_rewrite->flush_rules();
         
         // Create test user
         $this->user = $this->factory->user->create_and_get([
