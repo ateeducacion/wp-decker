@@ -41,9 +41,19 @@ class Decker_Email_To_Post {
 			'decker/v1',
 			'/email-to-post',
 			array(
-				'methods'             => 'POST',
+				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'process_email' ),
 				'permission_callback' => array( $this, 'check_permission' ),
+				'args'               => array(
+					'rawEmail'  => array(
+						'required' => true,
+						'type'     => 'string',
+					),
+					'metadata'  => array(
+						'required' => true,
+						'type'     => 'object',
+					),
+				),
 			)
 		);
 	}
