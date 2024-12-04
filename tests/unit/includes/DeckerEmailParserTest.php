@@ -96,10 +96,15 @@ class DeckerEmailParserTest extends WP_UnitTestCase {
         $email[] = "Content-Type: multipart/mixed; boundary=\"{$boundary}\"";
         $email[] = "";
         $email[] = "--{$boundary}";
+        $email[] = "Content-Type: multipart/alternative; boundary=\"alt-{$boundary}\"";
+        $email[] = "";
+        $email[] = "--alt-{$boundary}";
         $email[] = "Content-Type: text/plain; charset=UTF-8";
         $email[] = "Content-Transfer-Encoding: 7bit";
         $email[] = "";
         $email[] = "Main email body";
+        $email[] = "";
+        $email[] = "--alt-{$boundary}--";
         $email[] = "";
         $email[] = "--{$boundary}";
         $email[] = "Content-Type: text/plain; charset=UTF-8; name=\"dynamic.txt\"";
