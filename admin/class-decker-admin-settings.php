@@ -233,6 +233,7 @@ class Decker_Admin_Settings {
 			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
+			'ignored_users'         => __( 'Ignored Users', 'decker' ),
 
 		);
 
@@ -258,6 +259,23 @@ class Decker_Admin_Settings {
 
 
 
+
+	/**
+	 * Render Clear All Data Button.
+	 *
+	 * Outputs the HTML for the clear_all_data_button field.
+	 */
+	/**
+	 * Render Ignored Users Field.
+	 *
+	 * Outputs the HTML for the ignored_users field.
+	 */
+	public function ignored_users_render() {
+		$options = get_option('decker_settings', array());
+		$value = isset($options['ignored_users']) ? sanitize_text_field($options['ignored_users']) : '';
+		echo '<input type="text" name="decker_settings[ignored_users]" class="regular-text" value="' . esc_attr($value) . '">';
+		echo '<p class="description">' . esc_html__('Enter comma-separated user IDs to ignore from Decker functionality.', 'decker') . '</p>';
+	}
 
 	/**
 	 * Render Clear All Data Button.
@@ -329,6 +347,22 @@ class Decker_Admin_Settings {
 
 		// Validate alert message.
 		$input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
+
+		// Validate ignored users
+		if (isset($input['ignored_users'])) {
+			$user_ids = array_map('trim', explode(',', $input['ignored_users']));
+			$valid_user_ids = array();
+			
+			foreach ($user_ids as $user_id) {
+				if (is_numeric($user_id) && get_user_by('id', $user_id)) {
+					$valid_user_ids[] = $user_id;
+				}
+			}
+			
+			$input['ignored_users'] = implode(',', $valid_user_ids);
+		} else {
+			$input['ignored_users'] = '';
+		}
 
 		return $input;
 	}
