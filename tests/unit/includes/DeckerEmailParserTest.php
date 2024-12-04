@@ -133,6 +133,84 @@ class DeckerEmailParserTest extends WP_UnitTestCase {
     }
 
     /**
+     * Test parsing an email with PDF and JPG attachments from fixture files
+     */
+    public function test_parse_multiple_file_attachments() {
+        // Create a multipart email with multiple attachments
+        $boundary = "------------" . md5(uniqid());
+        
+        // Read fixture files
+        $pdf_content = file_get_contents(__DIR__ . '/../../fixtures/sample-1.pdf');
+        $jpg_content = file_get_contents(__DIR__ . '/../../fixtures/sample-2.jpg');
+        
+        $pdf_b64 = base64_encode($pdf_content);
+        $jpg_b64 = base64_encode($jpg_content);
+        
+        $email = [];
+        $email[] = "From: sender@example.com";
+        $email[] = "To: recipient@example.com";
+        $email[] = "Subject: Email with PDF and JPG Attachments";
+        $email[] = "Content-Type: multipart/mixed; boundary=\"{$boundary}\"";
+        $email[] = "";
+        $email[] = "--{$boundary}";
+        $email[] = "Content-Type: text/plain; charset=UTF-8";
+        $email[] = "Content-Transfer-Encoding: 7bit";
+        $email[] = "";
+        $email[] = "Email with PDF and JPG attachments";
+        $email[] = "";
+        
+        // Add PDF attachment
+        $email[] = "--{$boundary}";
+        $email[] = "Content-Type: application/pdf; name=\"sample-1.pdf\"";
+        $email[] = "Content-Transfer-Encoding: base64";
+        $email[] = "Content-Disposition: attachment; filename=\"sample-1.pdf\"";
+        $email[] = "";
+        $email[] = chunk_split($pdf_b64);
+        
+        // Add JPG attachment
+        $email[] = "--{$boundary}";
+        $email[] = "Content-Type: image/jpeg; name=\"sample-2.jpg\"";
+        $email[] = "Content-Transfer-Encoding: base64";
+        $email[] = "Content-Disposition: attachment; filename=\"sample-2.jpg\"";
+        $email[] = "";
+        $email[] = chunk_split($jpg_b64);
+        
+        $email[] = "--{$boundary}--";
+
+        $raw_email = implode("\r\n", $email);
+        
+        $parser = new Decker_Email_Parser($raw_email);
+        
+        // Test basic email parts
+        $headers = $parser->get_headers();
+        $this->assertEquals('sender@example.com', $headers['From']);
+        $this->assertEquals('Email with PDF and JPG Attachments', $headers['Subject']);
+        
+        // Test text content
+        $this->assertEquals('Email with PDF and JPG attachments', trim($parser->get_text_part()));
+        
+        // Test attachments
+        $attachments = $parser->get_attachments();
+        $this->assertCount(2, $attachments);
+        
+        // Verify PDF attachment
+        $pdf_attachment = array_filter($attachments, function($a) {
+            return $a['filename'] === 'sample-1.pdf';
+        });
+        $pdf_attachment = reset($pdf_attachment);
+        $this->assertEquals('application/pdf', $pdf_attachment['mimetype']);
+        $this->assertEquals($pdf_content, base64_decode($pdf_attachment['content']));
+        
+        // Verify JPG attachment
+        $jpg_attachment = array_filter($attachments, function($a) {
+            return $a['filename'] === 'sample-2.jpg';
+        });
+        $jpg_attachment = reset($jpg_attachment);
+        $this->assertEquals('image/jpeg', $jpg_attachment['mimetype']);
+        $this->assertEquals($jpg_content, base64_decode($jpg_attachment['content']));
+    }
+
+    /**
      * Helper method to retrieve fixture content
      */
     private function get_fixture_content(string $filename): string {
