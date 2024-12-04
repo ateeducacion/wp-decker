@@ -1,0 +1,140 @@
+Return-Path: <test@example.com>
+Received: from fino8.gobiernodecanarias.net (LHLO
+ fino8.gobiernodecanarias.net) (10.140.42.87) by
+ eulalia1.gobiernodecanarias.net with LMTP; Mon, 21 Oct 2024 11:24:32 +0100
+ (WEST)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by fino8.gobiernodecanarias.net (Postfix) with ESMTP id F41602182E43
+	for <test2@example.com>; Mon, 21 Oct 2024 11:24:31 +0100 (WEST)
+X-Spam-Flag: NO
+X-Spam-Score: -2.105
+X-Spam-Level:
+X-Spam-Status: No, score=-2.105 required=6.6 tests=[ALL_TRUSTED=-1,
+ BAYES_00=-1.9, HELO_NO_DOMAIN=0.001, HTML_MESSAGE=0.001, RDNS_NONE=0.793]
+ autolearn=no autolearn_force=no
+Received: from fino8.gobiernodecanarias.net ([127.0.0.1])
+ by localhost (fino8.gobiernodecanarias.net [127.0.0.1]) (amavis, port 10032)
+ with ESMTP id nimaC_OOsZc8; Mon, 21 Oct 2024 11:24:29 +0100 (WEST)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by fino8.gobiernodecanarias.net (Postfix) with ESMTP id A8A5E2007180;
+	Mon, 21 Oct 2024 11:24:29 +0100 (WEST)
+X-Virus-Scanned: amavis at fino8.gobiernodecanarias.net
+Received: from fino8.gobiernodecanarias.net ([127.0.0.1])
+ by localhost (fino8.gobiernodecanarias.net [127.0.0.1]) (amavis, port 10026)
+ with ESMTP id iZhRLZsxflON; Mon, 21 Oct 2024 11:24:29 +0100 (WEST)
+Received: from alumno-sc05e.gobiernodecanarias.net (alumno-sc05e.gobiernodecanarias.net [10.140.42.68])
+	by fino8.gobiernodecanarias.net (Postfix) with ESMTP id 8EAED2182E26;
+	Mon, 21 Oct 2024 11:24:29 +0100 (WEST)
+Date: Mon, 21 Oct 2024 11:24:29 +0100 (WEST)
+From: =?utf-8?Q?=C3=81REA_DE_TECNOLOG=C3=8DA?= EDUCATIVA <test@example.com>
+To: Decker <decker@example.com>
+Cc: OTHER TEST USER <test2@example.com>
+Message-ID: <1985712126.9722965.1729506269549.JavaMail.zimbra@gobiernodecanarias.org>
+In-Reply-To: <54032229.9433607.1729501798477.JavaMail.zimbra@gobiernodecanarias.org>
+References: <54032229.9433607.1729501798477.JavaMail.zimbra@gobiernodecanarias.org>
+Subject: Fwd: Test Mail Subject
+MIME-Version: 1.0
+Content-Type: multipart/alternative; 
+	boundary="=_37d87a7f-2ccd-4e93-8909-f17600d4748b"
+X-Originating-IP: [10.141.106.32]
+X-Mailer: Zimbra 9.0.0_GA_4653 (ZimbraWebClient - FF115 (Win)/9.0.0_GA_4597)
+Thread-Topic: Test Mail Subject
+Thread-Index: 9HyMp+551EpwkOUdMiZa8yQ7kFhbQmi2Q7MX
+
+--=_37d87a7f-2ccd-4e93-8909-f17600d4748b
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+
+
+De: "test" <test@example.com>=20
+Para: "Test User" <test@example.com>=20
+Enviados: Lunes, 21 de Octubre 2024 10:09:58=20
+Asunto: Test Mail Subject=20
+
+Buenos d=C3=ADas,=20
+
+Esperamos que se encuentren bien.=20
+
+Les comentamos la incidencia con la que nos encontramos con Decker.=20
+
+Desde que puedan, =C2=BFpodr=C3=ADan subsanar esta incidencia?=20
+
+Disculpen y gracias de antemano.=20
+
+Un saludo=20
+--=20
+
+
+Firma del correo=20
+
+--=_37d87a7f-2ccd-4e93-8909-f17600d4748b
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><div style=3D"font-family: arial, helvetica, sans-serif; font-s=
+ize: 13pt; color: #000000"><div><br data-mce-bogus=3D"1"></div><hr id=3D"zw=
+chr" data-marker=3D"__DIVIDER__"><div data-marker=3D"__HEADERS__"><b>De: </=
+b>"PROMOCI=C3=93N DE LA SALUD Y LA EDUCACI=C3=93N EMOCIONAL" &lt;prosalud.e=
+ducacion@gobiernodecanarias.org&gt;<br><b>Para: </b>"Test User" &lt;ate=
+.educacion@gobiernodecanarias.org&gt;<br><b>Enviados: </b>Lunes, 21 de Octu=
+bre 2024 10:09:58<br><b>Asunto: </b>Incidencia Plan de Frutas al descargar =
+la tabla datos<br></div><div><br></div><div data-marker=3D"__QUOTED_TEXT__"=
+><div id=3D"zimbraEditorContainer" style=3D"font-family:'arial' , 'helvetic=
+a' , sans-serif;font-size:12pt;color:#000000" class=3D"1"><div>Buenos d=C3=
+=ADas,</div><br><div>Esperamos que se encuentren bien.</div><br><div>Les co=
+mentamos la incidencia con la que nos encontramos con el Plan de Frutas.</d=
+iv><br><div>A la hora de descargar la tabla con las opciones se=C3=B1aladas=
+ por los centros educativos, nos aparecen datos de otro proyecto, no corres=
+pondi=C3=A9ndose con lo que nos aparecen en pantalla. Es decir, les ped=C3=
+=ADamos el n=C3=BAmero de alumnado y aparecen en la pantalla, pero cuando d=
+escargamos la tabla en formato csv nos salen los datos, entendemos de otro =
+proyecto.</div><br><div>Desde que puedan, =C2=BFpodr=C3=ADan subsanar esta =
+incidencia?</div><br><div>Disculpen y gracias de antemano.</div><br><div>Un=
+ saludo</div><div><div>--<br><img src=3D"https://ecorreo.gobiernodecanarias=
+.org/home/prosalud.educacion@gobiernodecanarias.org/Briefcase/Nuevo logo pi=
+e firma.png" data-mce-src=3D"https://ecorreo.gobiernodecanarias.org/home/pr=
+osalud.educacion@gobiernodecanarias.org/Briefcase/Nuevo logo pie firma.png"=
+><br><br>Programa Escuela y Salud. =C3=81rea Salud Escolar y Estilos de Vid=
+a Saludable.</div><div>Servicio de Innovaci=C3=B3n Educativa.<br>Direcci=C3=
+=B3n General de Ordenaci=C3=B3n de Ense=C3=B1anzas, Inclusi=C3=B3n e Innova=
+ci=C3=B3n.<br>Consejer=C3=ADa de Educaci=C3=B3n, Formaci=C3=B3n Profesional=
+, Actividad F=C3=ADsica y Deportes. Gobierno de Canarias<br><br>C. Irene Me=
+lo Rodr=C3=ADguez &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &=
+nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;=
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbs=
+p; Lourdes Santana Rosario<br>Avda. Buenos Aires, 5. &nbsp; &nbsp; &nbsp; &=
+nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;=
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbs=
+p; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;C/ Granadera Canaria n=
+=C2=BA 2. <br>Edificio Tres de Mayo - 4=C2=AA planta &nbsp; &nbsp; &nbsp; &=
+nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;=
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Edifi=
+cio Granadera Canaria =E2=80=93 1=C2=AA planta &nbsp; &nbsp; &nbsp; &nbsp; =
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp=
+; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br>38071 Santa Cruz de =
+Tenerife &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nb=
+sp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &=
+nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;35071 Las Palmas de Gran Canaria<br=
+>Tel=C3=A9fono: 922423597 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; =
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp=
+; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nb=
+sp; &nbsp; &nbsp; &nbsp; &nbsp;Tel=C3=A9fonos: 666444333<br>Web: <a href=3D=
+"http://www.gobiernodecanarias.org/educacion/web/" rel=3D"nofollow noopener=
+ noreferrer nofollow noopener noreferrer" target=3D"_blank">http://www.gobi=
+ernodecanarias.org/educacion/web/</a>&nbsp;<br></div><br><div><div style=3D=
+"line-height:inherit">Este email es confidencial y previsto solamente para =
+el uso de la persona a quien se dirige. Si usted no es el destinatario prev=
+isto, esto es debido a un error, por lo que cualquier uso, difusi=C3=B3n, e=
+xpedici=C3=B3n, impresi=C3=B3n, o copiado de este email est=C3=A1 prohibido=
+ conforme al C=C3=B3digo Penal. Si usted ha recibido este email, por error,=
+ por favor notif=C3=ADquelo a la direcci=C3=B3n <a href=3D"mailto:errorres.=
+educacion@gobiernode" rel=3D"nofollow noopener noreferrer nofollow noopener=
+ noreferrer" target=3D"_blank">errores.mailcorreo@gobiernodecanarias.org</a=
+><span class=3D"Object" id=3D"OBJ_PREFIX_DWT602_ZmEmailObjectHandler" style=
+=3D"line-height:inherit;color:rgb( 0 , 90 , 149 )"><span class=3D"Object" i=
+d=3D"OBJ_PREFIX_DWT617_ZmEmailObjectHandler" style=3D"line-height:inherit">=
+</span></span></div><div style=3D"line-height:inherit">Antes de imprimir es=
+te email, piense si es realmente necesario: el Medio Ambiente es cosa de to=
+dos.</div></div></div></div><br></div></div></body></html>
+--=_37d87a7f-2ccd-4e93-8909-f17600d4748b--

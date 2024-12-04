@@ -1,0 +1,50 @@
+{
+    "name": "erseco/mime-mail-parser",
+    "description": "Parse emails without the mailparse extension",
+    "keywords": [
+        "erseco",
+        "php",
+        "mime",
+        "mail",
+        "email",
+        "email parser"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ernesto Serrano",
+            "email": "info@ernesto.es",
+            "role": "Developer"
+        }
+    ],
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test-with-warnings": "vendor/bin/pest --display-warnings",
+        "lint": "phpcs . --ignore=vendor/,assets/,node_modules/,tests/js/,tester.php --colors --warning-severity=0 --extensions=php",
+        "fix": "phpcbf . --ignore=vendor/,assets/,node_modules/,tests/js/,tester.php --colors --warning-severity=0 --extensions=php"
+    },
+    "autoload": {
+        "psr-4": {
+            "Erseco\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Erseco\\MimeMailParser\\Tests\\": "tests"
+        }
+    },
+    "require": {
+        "php": "^8.0"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "require-dev": {
+        "pestphp/pest": "*",
+        "phpunit/phpunit": "*",
+        "squizlabs/php_codesniffer": "*"
+    }
+}

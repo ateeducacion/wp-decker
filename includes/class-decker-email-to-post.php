@@ -16,21 +16,10 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Email_To_Post {
 
 	/**
-	 * Shared key for securing the endpoint.
-	 *
-	 * @var string
-	 */
-	private string $shared_key;
-
-	/**
 	 * Initializes the class and registers the endpoint.
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_endpoint' ) );
-
-		// Retrieve options and set the shared key.
-		$options          = get_option( 'decker_settings', array() );
-		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 	}
 
 	/**
@@ -41,11 +30,32 @@ class Decker_Email_To_Post {
 			'decker/v1',
 			'/email-to-post',
 			array(
-				'methods'             => 'POST',
+				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'process_email' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
+	}
+
+	/**
+	 * Check if the request has valid authorization.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 * @return bool Whether the request has valid authorization.
+	 */
+	public function check_permission( $request ) {
+		$auth_header = $request->get_header( 'authorization' );
+
+		if ( ! $auth_header ) {
+			return new WP_Error( 'rest_forbidden', __( 'Access denied', 'decker' ), array( 'status' => 403 ) );
+		}
+
+		if ( ! $this->validate_authorization( $auth_header ) ) {
+
+			return new WP_Error( 'rest_forbidden', __( 'Access denied', 'decker' ), array( 'status' => 403 ) );
+		}
+
+		return true;
 	}
 
 	/**
@@ -65,6 +75,34 @@ class Decker_Email_To_Post {
 	}
 
 	/**
+	 * Gets the body of the email.
+	 *
+	 * @param Erseco\Message $message The Message instance.
+	 * @return string The sanitized email body.
+	 */
+	public function get_body( Erseco\Message $message ): string {
+
+		// Attempt to get the parts of the message.
+		$parts = $message->getParts();
+
+		if ( count( $parts ) > 0 ) {
+			$content = $parts[0]->getContent();
+			$content_type = $parts[0]->getContentType();
+
+			if ( str_starts_with( strtolower( $content_type ), 'text/plain;' ) ) {
+				// Convert plain text to HTML for better readability.
+				return wp_kses_post( nl2br( esc_html( $content ) ) );
+			} else {
+				// Sanitize and return the HTML content.
+				return wp_kses_post( $content );
+			}
+		}
+
+		// If no parts are available, return an empty string.
+		return '';
+	}
+
+	/**
 	 * Callback to process the received email and create a post.
 	 *
 	 * @param WP_REST_Request $request The REST request data.
@@ -72,23 +110,20 @@ class Decker_Email_To_Post {
 	 */
 	public function process_email( WP_REST_Request $request ) {
 
-		// Validate authorization.
-		$auth_header = $request->get_header( 'authorization' );
-		if ( ! $this->validate_authorization( $auth_header ) ) {
-			return new WP_Error( 'forbidden', 'Access denied', array( 'status' => 403 ) );
-		}
-
 		// Get and validate payload.
 		$payload = $request->get_json_params();
 		if ( ! isset( $payload['rawEmail'] ) || empty( $payload['metadata'] ) ) {
-			error_log( 'Invalid email payload' );
 			return new WP_Error( 'invalid_payload', 'Invalid email payload', array( 'status' => 400 ) );
 		}
 
 		try {
 
+			// Decode the base64-encoded email content.
+			$raw_email = base64_decode( $payload['rawEmail'] );
+
 			// Parse email.
-			$message = $this->parse_email( $payload['rawEmail'] );
+			$message = $this->parse_email( $raw_email );
+
 			if ( is_wp_error( $message ) ) {
 				return $message;
 			}
@@ -100,8 +135,8 @@ class Decker_Email_To_Post {
 				'cc'          => $payload['metadata']['cc'],
 				'bcc'         => $payload['metadata']['bcc'],
 				'subject'     => $payload['metadata']['subject'],
-				'body'        => $message->get_body(),
-				'attachments' => $message->get_attachments(),
+				'body'        => $this->get_body( $message ),
+				'attachments' => $message->getAttachments(),
 			);
 
 			// Validate sender.
@@ -125,7 +160,7 @@ class Decker_Email_To_Post {
 			}
 
 			// Handle attachments.
-			$attachments = $message->get_attachments();
+			$attachments = $message->getAttachments();
 			if ( ! empty( $attachments ) ) {
 				$this->upload_task_attachments( $attachments, $task_id );
 			}
@@ -141,6 +176,7 @@ class Decker_Email_To_Post {
 			);
 
 		} catch ( Exception $e ) {
+
 			return new WP_Error( 'processing_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
 	}
@@ -159,14 +195,13 @@ class Decker_Email_To_Post {
 	 * Parses raw email content with support for multipart and different encodings.
 	 *
 	 * @param string $raw_email The raw e-mail data.
-	 * @return Decker_Email_Parser.
+	 * @return Message.
 	 */
 	private function parse_email( $raw_email ) {
 
 		// Parse raw email.
-		require_once __DIR__ . '/class-decker-email-parser.php';
-
-		$message = new Decker_Email_Parser( $raw_email );
+		require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/MimeMailParser.php';
+		$message = new Erseco\Message( $raw_email );
 
 		return $message;
 	}
@@ -255,7 +290,12 @@ class Decker_Email_To_Post {
 	 * @return bool True if the authorization is valid, false otherwise.
 	 */
 	private function validate_authorization( $auth_header ) {
-		return $auth_header && 0 === strpos( $auth_header, 'Bearer ' ) && hash_equals( $this->shared_key, substr( $auth_header, 7 ) );
+
+		// Retrieve options and set the shared key.
+		$options = get_option( 'decker_settings', array() );
+		$shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : 'error';
+
+		return $auth_header && 0 === strpos( $auth_header, 'Bearer ' ) && hash_equals( $shared_key, substr( $auth_header, 7 ) );
 	}
 
 	/**
@@ -348,20 +388,25 @@ class Decker_Email_To_Post {
 	private function upload_task_attachments( $attachments, $task_id ) {
 		foreach ( $attachments as $attachment ) {
 			try {
+				$filename = $attachment->getFilename();
+				$content  = $attachment->getContent();
+				$mimetype = $attachment->getContentType();
+
 				$result = $this->upload_attachment(
-					$attachment['filename'],
-					$attachment['content'],
-					$attachment['mimetype'],
+					$filename,
+					$content,
+					$mimetype,
 					$task_id
 				);
+
 				if ( is_wp_error( $result ) ) {
 					error_log(
-						"Error uploading attachment {$attachment['filename']}: " . $result->get_error_message()
+						"Error uploading attachment {$filename}: " . $result->get_error_message()
 					);
 				}
 			} catch ( Exception $e ) {
 				error_log(
-					"Exception processing attachment {$attachment['filename']}: " . $e->getMessage()
+					"Exception processing attachment {$attachment->getFilename()}: " . $e->getMessage()
 				);
 			}
 		}

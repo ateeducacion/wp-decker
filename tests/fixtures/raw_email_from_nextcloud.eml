@@ -1,0 +1,77 @@
+Received: from smtp-lp.gobiernodecanarias.org (93.188.136.122)
+        by cloudflare-email.net (unknown) id 9x1eeuVTvWJv
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:35:32 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
+	b=AMqhSvKGARKQenyDhOKXgzAJ0qIjPauBIL3vTy5O8UXlZdfucrJOQ1nErmZUBWU2xXW7TsCDQ
+	RYXwb+du6vqUq3kIw2zXmYs6vEKEdOHZeIODiVp/c9cHFRlJUNkmSZAPCG4vOVhGeCcQP5GNj1Y
+	wSAydrj0p2d66FKF1JrErY4y3d6++58CfaXCSc9FLfAM+Ww2aCrn75SaSespUJ3UEeh4gWNMg1l
+	ujKeS5ILE811BtMcx3Z97LjMxAUrSXavySd2BdAjxx917vE/n07Zb7BtnKrDykiFuqMVNvqY9uO
+	yPuUafSoQBaWuQi1wgr73/xZxQVJro4g7dhQoY7nJ5RA==;
+ARC-Message-Signature: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; c=relaxed/relaxed;
+	h=Date:Subject:Cc:To:From:reply-to:resent-date:resent-from:resent-to
+	:resent-cc:in-reply-to:references:list-id:list-help:list-unsubscribe
+	:list-subscribe:list-post:list-owner:list-archive; t=1733326533;
+	x=1733931333; bh=K0z82PWNwYp/63tjbpfjsPriKnWhL0IpwTPw24O3CJg=; b=VJGguxcTv1
+	lRaiIQ2+J64jDYiGuJ97pxNeN3iGhz313YLFJf/vDZgPtYWJGq4mVm0EFT/3vmv571DZUvjmDMJ
+	vnZlQtvbxk+tqTFpXlUCMKT33EKKmKp4cZB+DJ8lY9zueyvESNSZgVud6iCz3JcGZuIVZ+irgeg
+	NJepsiWLV7gCaGJoEILO/howMRE42FER5W8Dn/qp+zi20hgIGXlXntiMwkLNmPpcfeKkyVHvdXt
+	wTO+7sDh2Vs35xNbjCR+lNFOwDnAUuDMlUDvOw9hzXqj+lt0kapXzeOM389NyU01xfviNWgqaMD
+	lB7lvwlS/SVapt62/TFCe0d/RZ6DvHOQ==;
+ARC-Authentication-Results: i=1; mx.cloudflare.net;
+	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
+	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
+	arc=none smtp.remote-ip=93.188.136.122
+Received-SPF: pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=93.188.136.122; envelope-from="test2@example.com"; helo=smtp-lp.gobiernodecanarias.org;
+Authentication-Results: mx.cloudflare.net;
+	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
+	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
+	arc=none smtp.remote-ip=93.188.136.122
+Received: from atletico-sc07e.gobiernodecanarias.net (atletico-sc07e.gobiernodecanarias.net [10.141.38.173])
+	by smtp-lp.gobiernodecanarias.org (Postfix) with ESMTP id 4D179BD76C9
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:35:31 +0000 (WET)
+DMARC-Filter: OpenDMARC Filter v1.4.1 smtp-lp.gobiernodecanarias.org 4D179BD76C9
+Authentication-Results: smtp-lp.gobiernodecanarias.org; dmarc=none (p=none dis=none) header.from=gobiernodecanarias.org
+Authentication-Results: smtp-lp.gobiernodecanarias.org; spf=fail smtp.mailfrom=gobiernodecanarias.org
+DKIM-Filter: OpenDKIM Filter v2.11.0 smtp-lp.gobiernodecanarias.org 4D179BD76C9
+Received: from atletico-sc07e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id D140B1570A4C
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:35:30 +0000 (GMT)
+Received: from atletico-sc07e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id C4E331570A44
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:35:30 +0000 (GMT)
+X-TM-AS-ERS: 10.141.157.135-127.5.254.253
+X-TM-AS-SMTP: 1.0 YWxtZW5kcm9zNC5nb2JpZXJub2RlY2FuYXJpYXMub3Jn ZXNlcmNvbEBnb
+	2JpZXJub2RlY2FuYXJpYXMub3Jn
+X-DDEI-TLS-USAGE: Unused
+Received: from almendros4.gobiernodecanarias.org (unknown [10.141.157.135])
+	by atletico-sc07e.gobiernodecanarias.net (Postfix) with ESMTP
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:35:30 +0000 (GMT)
+Received: from nube.canariaseducacion.org (unknown [172.17.255.36])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by almendros4.gobiernodecanarias.org (Postfix) with ESMTPSA id B37CC31631B3
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:35:30 +0000 (WET)
+From: Test User 3 <test3@example.com>
+To: receiver@example.com
+Cc: 
+Subject: test from nextcloud
+Message-ID: <20241204153529.Horde.JHLqc7MYIwiED6VY_8T1wGJ@nube.canariaseducacion.org>
+User-Agent: Horde Application Framework 5
+Date: Wed, 04 Dec 2024 15:35:29 +0000
+Content-Type: text/plain; charset=utf-8
+MIME-Version: 1.0
+X-TMASE-Version: DDEI-5.1-9.1.1004-28838.000
+X-TMASE-Result: 10--17.590200-10.000000
+X-TMASE-MatchedRID: j/zB0RmkkV2v3jwDULq3pMAhlN6tWajTSh4WkDzxuv6OYcolvJCWkIib
+	Ry0jkXIZ585VzGMOFzCIxtV/pB/tzNvteQQ2MnYQx31cjK61GW3T8Br+kcMAoSct2HlctHlOgbp
+	DZEvyA78AWCVW9LbLvz4Cii3pSpSYxEHRux+uk8irEHfaj14ZyVVoEXK0hBS3
+X-TMASE-SNAP-Result: 1.821001.0001-0-1-22:0,33:0,34:1,35:0,36:0,37:0,40:0-0
+X-TMASE-INERTIA: 0-0;;;;
+X-TMASE-XGENCLOUD: da41c7bf-815b-4fe5-bc95-2fe9a0b82f04-0-0-200-0
+X-TM-AS-Result: 
+	No--17.590-7.0-31-10;No--17.590-5.0-31-10;No--17.590-4.5-31-10
+
+this is a mail from nextcloud mail

@@ -1,0 +1,155 @@
+Received: from smtp-tf.gobiernodecanarias.org (93.188.137.42)
+        by cloudflare-email.net (unknown) id 1kI4NJB754z8
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:44:05 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
+	b=FyaqF5HRTfQeOdmJGTw/eV1LmGxH7uZKOoAuktTyM/fgT2BTlMhZ8HQWJtsgaUlpgc6Xff7Hc
+	xK3auyn6LIyJR7J1ChJlo9lhTo5L8lZzNfrklVQ/VjoTVXjgSKnVsptDOJlfYqjlFunu7IRop0v
+	UlvlHjnfyOe/OkhpQICFeNY5e5LU0uPWeEroP3ETPc6lE7DJrskF5OVKOzSIm9YgQmIdEY8oOvv
+	gKo1rWgyGIkOOxWnNSQguIruKHtCUtsWEh9aKPfGt6HcDVK++PgsMZwrmQLe8MHqIvjdHUNHEjA
+	2CdoCPcOCo5mrTJBvrQWw5/fj9Wxf/HaKlhpASSnZ1BQ==;
+ARC-Message-Signature: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; c=relaxed/relaxed;
+	h=Subject:To:From:Date:reply-to:cc:resent-date:resent-from:resent-to
+	:resent-cc:in-reply-to:references:list-id:list-help:list-unsubscribe
+	:list-subscribe:list-post:list-owner:list-archive; t=1733327046;
+	x=1733931846; bh=5ih17jTQDingkIC0gZ8/3WaS+Co584qYeZIFxbjug6M=; b=Txu1ysljsi
+	PRpFf/Sdwn8hYL1TX8WN7kG66V4JBb2g+wWAhLq9HWi+CNG2+ZRPZjJnvNL8EqhhSn7Vn4olG6H
+	q9LX49EF9KP2LP9lcUN8cN+AGcTAj//ZjBtFtuSIOFjgw5XugatF+gOctUWqnS2TVLFEVGLk5qX
+	bkM0F7LcUV71736Q/0DDGBmdQBh7imqlUwa8NBtGUx3gXoo3j5u1pqr0qdHjvw/8eO5PS+ixEZZ
+	InJauw3vm+cKneMHaZt44nbbk96JLPUrmyee6sFDik0TkLHWsKVXMrZ1AGnHl+pKJ4BUOFXon/l
+	S/ojzXbeUveMhhnujwIFm+LAVm5kbkMA==;
+ARC-Authentication-Results: i=1; mx.cloudflare.net;
+	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
+	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-tf.gobiernodecanarias.org) smtp.helo=smtp-tf.gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.137.42 as permitted sender) smtp.mailfrom=test2@example.com;
+	arc=none smtp.remote-ip=93.188.137.42
+Received-SPF: pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.137.42 as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=93.188.137.42; envelope-from="test2@example.com"; helo=smtp-tf.gobiernodecanarias.org;
+Authentication-Results: mx.cloudflare.net;
+	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
+	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-tf.gobiernodecanarias.org) smtp.helo=smtp-tf.gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.137.42 as permitted sender) smtp.mailfrom=test2@example.com;
+	arc=none smtp.remote-ip=93.188.137.42
+Received: from atletico-sc02e.gobiernodecanarias.net (atletico-sc02e.gobiernodecanarias.net [10.140.6.244])
+	by smtp-tf.gobiernodecanarias.org (Postfix) with ESMTP id 2FBC940E4710
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:04 +0000 (WET)
+DMARC-Filter: OpenDMARC Filter v1.4.1 smtp-tf.gobiernodecanarias.org 2FBC940E4710
+Authentication-Results: smtp-tf.gobiernodecanarias.org; dmarc=none (p=none dis=none) header.from=gobiernodecanarias.org
+Authentication-Results: smtp-tf.gobiernodecanarias.org; spf=fail smtp.mailfrom=gobiernodecanarias.org
+DKIM-Filter: OpenDKIM Filter v2.11.0 smtp-tf.gobiernodecanarias.org 2FBC940E4710
+Received: from atletico-sc02e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id DE31F661D5
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:03 +0000 (GMT)
+Received: from atletico-sc02e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id D06FC61083
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:03 +0000 (GMT)
+X-TM-AS-ERS: 10.140.139.21-127.5.254.253
+X-TM-AS-SMTP: 1.0 bWFudGlsbG8zLmdvYmllcm5vZGVjYW5hcmlhcy5vcmc= ZXNlcmNvbEBnb
+	2JpZXJub2RlY2FuYXJpYXMub3Jn
+X-DDEI-TLS-USAGE: Unused
+Received: from mantillo3.gobiernodecanarias.org (unknown [10.140.139.21])
+	by atletico-sc02e.gobiernodecanarias.net (Postfix) with ESMTP
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:03 +0000 (GMT)
+Received: from fino7.gobiernodecanarias.net (unknown [10.140.42.102])
+	(using TLSv1.2 with cipher ADH-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by mantillo3.gobiernodecanarias.org (Postfix) with ESMTPS id 7670C32A7A44
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:03 +0000 (WET)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by fino7.gobiernodecanarias.net (Postfix) with ESMTP id B43EC108B7FB
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:03 +0000 (WET)
+Received: from fino7.gobiernodecanarias.net ([127.0.0.1])
+ by localhost (fino7.gobiernodecanarias.net [127.0.0.1]) (amavis, port 10032)
+ with ESMTP id pBjzUHJw0l8Y for <receiver@example.com>;
+ Wed,  4 Dec 2024 15:44:03 +0000 (WET)
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by fino7.gobiernodecanarias.net (Postfix) with ESMTP id 08B77102FE58
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:03 +0000 (WET)
+X-Virus-Scanned: amavis at fino7.gobiernodecanarias.net
+Received: from fino7.gobiernodecanarias.net ([127.0.0.1])
+ by localhost (fino7.gobiernodecanarias.net [127.0.0.1]) (amavis, port 10026)
+ with ESMTP id sY6rWoRr48iS for <receiver@example.com>;
+ Wed,  4 Dec 2024 15:44:02 +0000 (WET)
+Received: from eulalia1.gobiernodecanarias.net (eulalia1.gobiernodecanarias.net [10.140.42.73])
+	by fino7.gobiernodecanarias.net (Postfix) with ESMTP id E1F2A108B7FB
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:44:02 +0000 (WET)
+Date: Wed, 4 Dec 2024 15:44:02 +0000 (WET)
+From: Test User 2 <test2@example.com>
+To: taskwp <receiver@example.com>
+Message-ID: <1472093869.21715193.1733327042887.JavaMail.zimbra@gobiernodecanarias.org>
+Subject: test from zimbra
+MIME-Version: 1.0
+Content-Type: multipart/alternative; 
+	boundary="=_8ed808b7-e49d-4b98-81b1-3e62febadf08"
+X-Originating-IP: [5.224.196.34]
+X-Mailer: Zimbra 9.0.0_GA_4653 (ZimbraWebClient - GC131 (Mac)/9.0.0_GA_4597)
+Thread-Index: tNoLO0S+cp48jjptHDCMFBfR2RsqXQ==
+Thread-Topic: test from zimbra
+X-TMASE-Version: DDEI-5.1-9.1.1004-28838.000
+X-TMASE-Result: 10--51.480200-10.000000
+X-TMASE-MatchedRID: crM38Tf/FMjhDIPoza400/Bl8VW8Ojc8HLc/AajiCF65u1op1ZT/Wmut
+	Op3ybuKIvcJqpATew29onKzSHrHTfDAZni+zgLfpQ51oEONhvo7cLmuNF4CtG6ykbCfeXUlGBsq
+	/FFIFgfG6zTbsK1SGHWk9Mad0rHZ4flp7ibUP0qRrLISi3ARXbSBYphXuZz1MBL91xwkLDa+sAB
+	ChiV+Z1JIJIjz2fYAdQTNGiN4Eo7BM9bmgd4RLjmydW+TfDRcvKSMp5SMxUnbY64Nby4+iNHzIY
+	7d2+Tz9T9Ky9AjL+3L3SJvEvhvPoH6PI+j+VGAhW4+m/GeeEeDEW9yWmeI48y+PrAd8gbHJv/7x
+	dLQjXSJIzmq/rICeNhzei9Xgoa5RHvYNMYi1Zcz/voIzhn8wZvVBouXe3cjpRuBOZ/izFDSaQIb
+	CWIWia5soi2XrUn/JlR1cT9YafQWzaNHaMrC6TbXwHj/AmsmGavP8b9lJtWolCGssfkpInQ==
+X-TMASE-SNAP-Result: 1.821001.0001-0-1-22:0,33:0,34:0-0
+X-TMASE-INERTIA: 0-0;;;;
+X-TMASE-XGENCLOUD: 36c6b171-a123-40ee-97a5-04dff16a761a-0-0-200-0
+X-TM-AS-Result: 
+	No--51.480-7.0-31-10;No--51.480-5.0-31-10;No--51.480-4.5-31-10
+
+--=_8ed808b7-e49d-4b98-81b1-3e62febadf08
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+this is a mail from zimbra=20
+
+--=20
+Jhon Smith=20
+Phone.: 666 555 444=20
+
+Este email es confidencial y previsto solamente para el uso de la persona a=
+ quien se dirige. Si usted no es el destinatario previsto, esto es debido a=
+ un error, por lo que cualquier uso, difusi=C3=B3n, expedici=C3=B3n, impres=
+i=C3=B3n, o copiado de este email est=C3=A1 prohibido conforme al C=C3=B3di=
+go Penal. Si usted ha recibido este email por error, por favor notif=C3=ADq=
+uelo a la direcci=C3=B3n [ mailto:test2@example.com | esercol@=
+gobiernodecanarias.org ] .=20
+Antes de imprimir este email, piense si es realmente necesario: el Medio Am=
+biente es cosa de todos.=20
+
+--=_8ed808b7-e49d-4b98-81b1-3e62febadf08
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><div style=3D"font-family: arial, helvetica, sans-serif; font-s=
+ize: 12pt; color: #000000"><div>this is a mail from zimbra</div><div><br></=
+div><div data-marker=3D"__SIG_POST__">--</div><div><div style=3D""><font fa=
+ce=3D"helvetica"><span style=3D"font-size: 12px;">Jhon Smith</span></font><=
+/div><div style=3D"color:#202124;font-family:'arial' , 'helvetica' , sans-s=
+erif;font-size:small"><div><span style=3D"color:#000000;font-family:'helvet=
+ica'"><span style=3D"font-size:12px">Phone.: 666 555 444&nbsp;<br><br></spa=
+n></span><div><div><font color=3D"#000000" face=3D"helvetica"><span style=
+=3D"font-size:12px">Este email es confidencial y previsto solamente para el=
+ uso de la persona a quien&nbsp;</span></font><span style=3D"font-size:12px=
+;color:rgb( 0 , 0 , 0 );font-family:'helvetica'">se dirige. Si usted no es =
+el destinatario previsto, esto es debido a un error, por lo&nbsp;</span><sp=
+an style=3D"font-size:12px;color:rgb( 0 , 0 , 0 );font-family:'helvetica'">=
+que cualquier uso, difusi=C3=B3n, expedici=C3=B3n, impresi=C3=B3n, o copiad=
+o de este email est=C3=A1&nbsp;</span><span style=3D"font-size:12px;color:r=
+gb( 0 , 0 , 0 );font-family:'helvetica'">prohibido conforme al C=C3=B3digo =
+Penal. Si usted ha recibido este email por error, por&nbsp;</span><span sty=
+le=3D"font-size:12px;color:rgb( 0 , 0 , 0 );font-family:'helvetica'">favor =
+notif=C3=ADquelo a la direcci=C3=B3n </span><a href=3D"mailto:esercol@gobie=
+rnodecanarias.org" style=3D"font-size:12px;font-family:'helvetica'" rel=3D"=
+nofollow noopener noreferrer nofollow noopener noreferrer" target=3D"_blank=
+">test2@example.com</a><span style=3D"font-size:12px;color:rgb=
+( 0 , 0 , 0 );font-family:'helvetica'">.</span></div><div><font color=3D"#0=
+00000" face=3D"helvetica"><span style=3D"font-size:12px">Antes de imprimir =
+este email, piense si es realmente necesario: el Medio Ambiente&nbsp;</span=
+></font><span style=3D"font-size:12px;color:rgb( 0 , 0 , 0 );font-family:'h=
+elvetica'">es cosa de todos.</span></div></div></div></div><div id=3D"gtx-t=
+rans"><div class=3D"gtx-trans-icon"></div></div></div></div></body></html>
+--=_8ed808b7-e49d-4b98-81b1-3e62febadf08--
+

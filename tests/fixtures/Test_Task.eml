@@ -1,0 +1,111 @@
+Delivered-To: decker@example.com
+Received: by 2002:a05:7208:d20c:b0:92:1e78:a3cf with SMTP id c12csp151729rbd;
+        Wed, 4 Dec 2024 04:19:27 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IGbgaYgSSeM8Du5X6aF2GoOvYjrnCe6aKdxaBvN6wK9ZXNA9P9Q7brJH2SY2zbFDVCdudX/
+X-Received: by 2002:a05:6000:2b0d:b0:385:e9c0:c069 with SMTP id ffacd0b85a97d-385fd433373mr3868307f8f.57.1733314766891;
+        Wed, 04 Dec 2024 04:19:26 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1733314766; cv=none;
+        d=google.com; s=arc-20240605;
+        b=QDf2JzK5imDdk6pKRyeheKpB2XTEoeBjtwOqXpUnOmflq4UVxALHEyjdvn/3LeQtya
+         XQZGMV5g248EJhdix4qJIrFGxYAFrZGZUA0Lcms1Zl8bfeKW+KWZTxr/Q7d/7Ml54R5X
+         g6dPz4OyUs/0/u7Mpr2kVUY5X84pu49v2o2n+FYRMwZnRneHIvl8pgdieAnCbRINdRjN
+         EdaQRyCUkFLz0TfvKvWmRMUfYbEFRHQV6dikZXnpK4uyvCWj1vf4dJaZanQr7WFdnLsW
+         UOvWdL44374iu1ykU8B312AyszFjr7hMLmLc1B6/z04TSKvhf4kz1w8ugQVMylRswbg5
+         xsuw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:mime-version:dkim-filter
+         :dmarc-filter;
+        bh=lvp9gxkHyffzS8iVp2dXiawotMwFyKZPkDAZkVBS0qQ=;
+        fh=EOZ64xtd8HVlPctH0mAGcJfeh44UyuMnLFZJztqvjqg=;
+        b=jDpQptsI2VUeUdbj3sDn9iODXGzlOMsqz0GZ18b20dOCV8BgbNd+HgF/PxQOwQJ/c4
+         DtlBKwY8ZAE1R1sVWIZwo5J1RGXo21/vpeI0bBG4jfxzOsq1uog/5GA+dOB0NLppnG71
+         rFeTfxXgVerSypor2+RUOXb5KbZlXLTnOmIVGn0HnYwM+av6RJK+Tiot+LkHPooWgtkr
+         nBWf4GCoqT43gEEENttjAgaY/Q4w/D2a12+e+TtHJ4WK30Qfhm3DxQzw12L4NF8nCAy9
+         X6PhW+GnB3oevRkjcwPA14dKtKHPEyFt/rp88C8zfG7XjBaLI3Fx4NPQLuDnGjY0IaHg
+         SOLg==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       spf=pass (google.com: domain of test@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test@example.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=gobiernodecanarias.org
+Return-Path: <test@example.com>
+Received: from smtp-lp.gobiernodecanarias.org (smtp-lp.gobiernodecanarias.org. [93.188.136.122])
+        by mx.google.com with ESMTP id ffacd0b85a97d-385db7d61e9si7416789f8f.21.2024.12.04.04.19.26
+        for <decker@example.com>;
+        Wed, 04 Dec 2024 04:19:26 -0800 (PST)
+Received-SPF: pass (google.com: domain of test@example.com designates 93.188.136.122 as permitted sender) client-ip=93.188.136.122;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of test@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test@example.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=gobiernodecanarias.org
+Received: from atletico-sc02e.gobiernodecanarias.net (unknown [93.188.142.4])
+	by smtp-lp.gobiernodecanarias.org (Postfix) with ESMTP id 673FE1FC7ABA
+	for <decker@example.com>; Wed,  4 Dec 2024 12:19:26 +0000 (WET)
+DMARC-Filter: OpenDMARC Filter v1.4.1 smtp-lp.gobiernodecanarias.org 673FE1FC7ABA
+Authentication-Results: smtp-lp.gobiernodecanarias.org; dmarc=none (p=none dis=none) header.from=gobiernodecanarias.org
+Authentication-Results: smtp-lp.gobiernodecanarias.org; spf=fail smtp.mailfrom=gobiernodecanarias.org
+DKIM-Filter: OpenDKIM Filter v2.11.0 smtp-lp.gobiernodecanarias.org 673FE1FC7ABA
+Received: from atletico-sc02e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id 1F083790E0
+	for <decker@example.com>; Wed,  4 Dec 2024 12:19:26 +0000 (GMT)
+Received: from atletico-sc02e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id C43AB7903D
+	for <decker@example.com>; Wed,  4 Dec 2024 12:19:25 +0000 (GMT)
+X-TM-AS-ERS: 209.85.208.48-127.9.11.1
+X-TM-AS-SMTP: 1.0 bWFudGlsbG8xLmdvYmllcm5vZGVjYW5hcmlhcy5vcmc= ZXNlcmNvbEBnb
+	2JpZXJub2RlY2FuYXJpYXMub3Jn
+X-TM-DDEI-Authentication-Results:spf=fail (Sender IP is 209.85.208.48) smtp.
+	mailfrom=test@example.com
+X-DDEI-TLS-USAGE: Unused
+Received: from mantillo1.gobiernodecanarias.org (unknown [10.140.139.23])
+	by atletico-sc02e.gobiernodecanarias.net (Postfix) with ESMTP
+	for <decker@example.com>; Wed,  4 Dec 2024 12:19:25 +0000 (GMT)
+Received: from me.openexo.com (unknown [10.141.106.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by mantillo1.gobiernodecanarias.org (Postfix) with ESMTPSA id B438913CA56F
+	for <decker@example.com>; Wed,  4 Dec 2024 12:19:25 +0000 (WET)
+Received: from me.openexo.com ([127.0.0.1]) by me.openexo.com with ESMTP;
+	Wed, 04 Dec 2024 12:19:08 +0000 (WET)
+Received: from mail-ed1-f48.google.com ([209.85.208.48]) by me.openexo.com with
+	ESMTP;
+	(version=TLS1.3 cipher=TLS_AES_128_GCM_SHA256);
+	Wed, 04 Dec 2024 12:19:24 +0000 (UTC)
+Received: by mail-ed1-f48.google.com with SMTP id 4fb4d7f45d1cf-5d0bdeb0419so5826307a12.1
+        for <decker@example.com>; Wed, 04 Dec 2024 04:19:24 -0800 (PST)
+X-Gm-Message-State: AOJu0Yw/+vhJ7hr6l+OjxZT/2rLoh1vygnEneQxICqNk8tWLuErgLult
+	sw7OVa9/zTq6kkLwWuSLDPFmKRRXgnbPk1UW+/0JtZg74U7VuEHgknBcsItZMfmN4J8+H5r/dpx
+	w41w21P6xXDOyDY4fFyuDXawPU20=
+X-Received: by 2002:a05:6402:34d4:b0:5d0:ac78:57 with SMTP id
+ 4fb4d7f45d1cf-5d10cb9a204mr4203501a12.30.1733314763454; Wed, 04 Dec 2024
+ 04:19:23 -0800 (PST)
+MIME-Version: 1.0
+From: Decker <test@example.com>
+Date: Wed, 4 Dec 2024 12:19:12 +0000
+X-Gmail-Original-Message-ID: <CANqSyMA9nowHXxM=hTFsEYmGjwhoaNph3sGy_qNogWwE0haaZg@mail.gmail.com>
+Message-ID: <CANqSyMA9nowHXxM=hTFsEYmGjwhoaNph3sGy_qNogWwE0haaZg@mail.gmail.com>
+Subject: Test Task
+To: Decker <decker@example.com>
+Content-Type: multipart/alternative; boundary="000000000000c29c3c062870ca3d"
+X-TMASE-Version: DDEI-5.1-9.1.1004-28836.007
+X-TMASE-Result: 10--22.706900-10.000000
+X-TMASE-MatchedRID: 2VFQ+pr717yMWPnQjYTmSrHFVEA/5VBNVlfRWmx2KnOqh5pv1eDPz22c
+	GRBBb/0+0tauKowiYlzdlak27ZJzYX7vQbj1Rh/zlxnSJwunsOprDXTVtI+WYBRFJJyf5BJenCG
+	S1WQEGtCmQCXKbYPicSSVEqzRipHmliRT3m11sx5rIGEeV+5Hymes9V1P6R/zPgKKLelKlJggbh
+	iVsIMQKxZ5+8y352uC
+X-TMASE-SNAP-Result: 1.821001.0001-0-1-22:0,33:0,34:0-0
+X-TMASE-INERTIA: 0-0;;;;
+X-TMASE-XGENCLOUD: ab63677c-b142-4864-a7bd-61ac74c8e41d-0-0-200-0
+X-TM-AS-Result: 
+	No--22.707-7.0-31-10;No--22.707-5.0-31-10;No--22.707-4.5-31-10
+
+--000000000000c29c3c062870ca3d
+Content-Type: text/plain; charset="UTF-8"
+
+This is a test task
+
+--000000000000c29c3c062870ca3d
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">This is a test task</div>
+
+--000000000000c29c3c062870ca3d--
+
