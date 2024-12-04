@@ -16,21 +16,10 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Email_To_Post {
 
 	/**
-	 * Shared key for securing the endpoint.
-	 *
-	 * @var string
-	 */
-	private string $shared_key;
-
-	/**
 	 * Initializes the class and registers the endpoint.
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_endpoint' ) );
-
-		// Retrieve options and set the shared key.
-		$options          = get_option( 'decker_settings', array() );
-		$this->shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 	}
 
 	/**
@@ -57,12 +46,13 @@ class Decker_Email_To_Post {
 	public function check_permission( $request ) {
 		$auth_header = $request->get_header( 'authorization' );
 
-        if (!$auth_header) {
-            return new WP_Error('rest_forbidden', __('Access denied'), array('status' => 403));
-        }
+		if ( ! $auth_header ) {
+			return new WP_Error( 'rest_forbidden', __( 'Access denied' ), array( 'status' => 403 ) );
+		}
 
 		if ( ! $this->validate_authorization( $auth_header ) ) {
-            return new WP_Error('rest_forbidden', __('Access denied'), array('status' => 403));
+
+			return new WP_Error( 'rest_forbidden', __( 'Access denied' ), array( 'status' => 403 ) );
 		}
 
 		return true;
@@ -92,10 +82,9 @@ class Decker_Email_To_Post {
 	 */
 	public function process_email( WP_REST_Request $request ) {
 
-		// Get and validate payload
+		// Get and validate payload.
 		$payload = $request->get_json_params();
 		if ( ! isset( $payload['rawEmail'] ) || empty( $payload['metadata'] ) ) {
-			error_log( 'Invalid email payload' );
 			return new WP_Error( 'invalid_payload', 'Invalid email payload', array( 'status' => 400 ) );
 		}
 
@@ -269,7 +258,12 @@ class Decker_Email_To_Post {
 	 * @return bool True if the authorization is valid, false otherwise.
 	 */
 	private function validate_authorization( $auth_header ) {
-		return $auth_header && 0 === strpos( $auth_header, 'Bearer ' ) && hash_equals( $this->shared_key, substr( $auth_header, 7 ) );
+
+		// Retrieve options and set the shared key.
+		$options = get_option( 'decker_settings', array() );
+		$shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : 'error';
+
+		return $auth_header && 0 === strpos( $auth_header, 'Bearer ' ) && hash_equals( $shared_key, substr( $auth_header, 7 ) );
 	}
 
 	/**
