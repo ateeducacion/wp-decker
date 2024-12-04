@@ -1,9 +1,12 @@
 <?php
 /**
- * Class Test_Decker_Email_Parser
+ * Class DeckerEmailParserTest
  *
  * @package Decker
  */
+
+// Use __DIR__ to construct the correct path to the parser class
+require_once(__DIR__ . '/../../../includes/class-decker-email-parser.php');
 
 class DeckerEmailParserTest extends WP_UnitTestCase {
 
