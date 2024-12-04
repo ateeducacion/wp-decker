@@ -48,10 +48,12 @@ class DeckerEmailToPostTest extends WP_UnitTestCase {
 	}
 
 	public function test_endpoint_requires_authorization() {
-    	$request = new WP_REST_Request('POST', $this->endpoint);
-    	$response = rest_get_server()->dispatch($request);
+		$request = new WP_REST_Request('POST', $this->endpoint);
+		$response = rest_get_server()->dispatch($request);
 
-    	$this->assertEquals(401, $response->get_status());
+		$this->assertEquals(403, $response->get_status());
+		$data = $response->get_data();
+		$this->assertEquals('rest_forbidden', $data['code']);
 	}
 
 	public function test_endpoint_requires_valid_payload() {
