@@ -314,6 +314,17 @@ class Decker_Admin_Settings {
 		if ( isset( $_GET['decker_data_cleared'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'All Decker records have been deleted.', 'decker' ) . '</p></div>';
 		}
+
+		$invalid_user_ids = get_transient('decker_invalid_user_ids');
+		if ($invalid_user_ids !== false) {
+			echo '<div class="notice notice-warning is-dismissible"><p>' . 
+				sprintf(
+					esc_html__('The following user IDs were invalid and have been removed: %s', 'decker'),
+					esc_html(implode(', ', $invalid_user_ids))
+				) . 
+				'</p></div>';
+			delete_transient('decker_invalid_user_ids');
+		}
 	}
 
 	/**
@@ -357,14 +368,24 @@ class Decker_Admin_Settings {
 		if (!empty($input['ignored_users'])) {
 			$user_ids = array_map('trim', explode(',', $input['ignored_users']));
 			$valid_user_ids = array();
+			$invalid_user_ids = array();
 			
 			foreach ($user_ids as $user_id) {
-				if (is_numeric($user_id) && get_user_by('id', $user_id)) {
-					$valid_user_ids[] = $user_id;
+				if (is_numeric($user_id)) {
+					if (get_user_by('id', $user_id)) {
+						$valid_user_ids[] = $user_id;
+					} else {
+						$invalid_user_ids[] = $user_id;
+					}
 				}
 			}
 			
 			$input['ignored_users'] = !empty($valid_user_ids) ? implode(',', $valid_user_ids) : '';
+
+			// Set transient if there were invalid IDs
+			if (!empty($invalid_user_ids)) {
+				set_transient('decker_invalid_user_ids', $invalid_user_ids, 45);
+			}
 		}
 
 		return $input;

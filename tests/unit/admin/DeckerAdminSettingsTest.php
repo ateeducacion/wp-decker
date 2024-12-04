@@ -64,6 +64,11 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		// Should only keep the valid user ID
 		$this->assertEquals("{$valid_user_id}", $validated['ignored_users']);
+
+		// Check if invalid IDs were stored in transient
+		$invalid_ids = get_transient('decker_invalid_user_ids');
+		$this->assertNotFalse($invalid_ids);
+		$this->assertEquals(['999999'], $invalid_ids);
 	}
 
 	public function test_settings_validate_with_valid_input() {
