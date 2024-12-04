@@ -43,9 +43,20 @@ class Decker_Email_To_Post {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'process_email' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
+	}
+
+	/**
+	 * Check if the request has valid authorization.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 * @return bool Whether the request has valid authorization.
+	 */
+	public function check_permission( $request ) {
+		$auth_header = $request->get_header( 'authorization' );
+		return $this->validate_authorization( $auth_header );
 	}
 
 	/**
