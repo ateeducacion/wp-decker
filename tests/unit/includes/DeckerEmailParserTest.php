@@ -81,6 +81,58 @@ class DeckerEmailParserTest extends WP_UnitTestCase {
     }
 
     /**
+     * Test parsing an email with a dynamically generated attachment
+     */
+    public function test_parse_dynamic_attachment() {
+        // Create a multipart email with attachment
+        $boundary = "------------" . md5(uniqid());
+        $attachment_content = "Dynamic test content";
+        $attachment_b64 = base64_encode($attachment_content);
+        
+        $email = [];
+        $email[] = "From: sender@example.com";
+        $email[] = "To: recipient@example.com";
+        $email[] = "Subject: Email with Dynamic Attachment";
+        $email[] = "Content-Type: multipart/mixed; boundary=\"{$boundary}\"";
+        $email[] = "";
+        $email[] = "--{$boundary}";
+        $email[] = "Content-Type: text/plain; charset=UTF-8";
+        $email[] = "Content-Transfer-Encoding: 7bit";
+        $email[] = "";
+        $email[] = "Main email body";
+        $email[] = "";
+        $email[] = "--{$boundary}";
+        $email[] = "Content-Type: text/plain; charset=UTF-8; name=\"dynamic.txt\"";
+        $email[] = "Content-Transfer-Encoding: base64";
+        $email[] = "Content-Disposition: attachment; filename=\"dynamic.txt\"";
+        $email[] = "";
+        $email[] = $attachment_b64;
+        $email[] = "";
+        $email[] = "--{$boundary}--";
+
+        $raw_email = implode("\r\n", $email);
+        
+        $parser = new Decker_Email_Parser($raw_email);
+        
+        // Test basic email parts
+        $headers = $parser->get_headers();
+        $this->assertEquals('sender@example.com', $headers['From']);
+        $this->assertEquals('Email with Dynamic Attachment', $headers['Subject']);
+        
+        // Test text content
+        $this->assertEquals('Main email body', trim($parser->get_text_part()));
+        
+        // Test attachment
+        $attachments = $parser->get_attachments();
+        $this->assertCount(1, $attachments);
+        
+        $attachment = $attachments[0];
+        $this->assertEquals('dynamic.txt', $attachment['filename']);
+        $this->assertEquals('text/plain', $attachment['mimetype']);
+        $this->assertEquals($attachment_content, base64_decode(trim($attachment['content'])));
+    }
+
+    /**
      * Helper method to retrieve fixture content
      */
     private function get_fixture_content(string $filename): string {
