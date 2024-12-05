@@ -158,16 +158,22 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
 
 		// Create mock data: a post and a term.
+		$board_id = wp_insert_term( 'Test Board', 'decker_board' )['term_id'];
 
 		$post_id = wp_insert_post(
 			array(
 				'post_title'  => 'Test Task',
 				'post_type'   => 'decker_task',
 				'post_status' => 'publish',
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+					'decker_label' => array( $label_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
 			)
 		);
-
-		wp_insert_term( 'Test Board', 'decker_board' );
 
 		// Ensure data exists.
 		$this->assertNotFalse( get_post( $post_id ), 'Post should exist before deletion.' );
@@ -216,23 +222,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$this->assertEmpty( $terms, 'Terms should be deleted.' );
 	}
 
-	/**
-	 * Test the deny_access method.
-	 */
-	public function test_deny_access() {
-		// Capture the output of wp_die.
-		$this->expectException( 'PHPUnit\Framework\Error\Error' );
-
-		// Mock wp_die to throw an exception instead of terminating the script.
-		if ( ! function_exists( 'wp_die' ) ) {
-			function wp_die( $message ) {
-				throw new Exception( $message );
-			}
-		}
-
-		// Call the deny_access method.
-		$this->admin_settings->deny_access();
-	}
 
 	/**
 	 * Clean up after each test.

@@ -91,6 +91,15 @@ class LabelManager {
 				return $label;
 			}
 		}
+
+		// If not found, try to load the label using another method.
+		$term = get_term( $id, 'decker_label' ); // Replace 'taxonomy' with the correct taxonomy slug.
+		if ( $term && ! is_wp_error( $term ) ) {
+			$label = new Label( $term );
+			self::$labels[] = $label; // Cache the newly created label.
+			return $label;
+		}
+
 		return null;
 	}
 
@@ -102,6 +111,12 @@ class LabelManager {
 	 * @return array Response array with success status and message.
 	 */
 	public static function save_label( array $data, int $id ): array {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You do not have permission to manage labels', 'decker' ),
+			);
+		}
 		$args = array(
 			'name' => sanitize_text_field( $data['name'] ),
 		);
@@ -144,6 +159,12 @@ class LabelManager {
 	 * @return array Response array with success status and message.
 	 */
 	public static function delete_label( int $id ): array {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You do not have permission to delete labels', 'decker' ),
+			);
+		}
 		$result = wp_delete_term( $id, 'decker_label' );
 
 		if ( is_wp_error( $result ) ) {
@@ -157,5 +178,13 @@ class LabelManager {
 			'success' => true,
 			'message' => __( 'Label deleted successfully', 'decker' ),
 		);
+	}
+
+	/**
+	 * Resets the LabelManager instance and labels (for testing purposes).
+	 */
+	public static function reset_instance() {
+		self::$instance = null;
+		self::$labels = array();
 	}
 }

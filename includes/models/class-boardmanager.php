@@ -125,6 +125,13 @@ class BoardManager {
 	 */
 	public static function delete_board( int $id ): array {
 
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You do not have permission to delete boards', 'decker' ),
+			);
+		}
+
 		$result = wp_delete_term( $id, 'decker_board' );
 
 		if ( is_wp_error( $result ) ) {
