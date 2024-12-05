@@ -1,198 +1,279 @@
 <?php
 /**
- * Class Test_Decker_Tasks_Integration
+ * Class DeckerTasksIntegrationTest
  *
  * @package Decker
  */
 
 class DeckerTasksIntegrationTest extends WP_UnitTestCase {
+    private $editor;
+    private $board_id;
+    private $label_ids;
+    private $assignee_ids;
 
-	private $editor;
+    /**
+     * Set up before each test.
+     */
+    public function set_up() {
+        parent::set_up();
 
-	/**
-	 * Set up before each test.
-	 */
-	public function set_up() {
-		parent::set_up();
+        // Ensure that post types and taxonomies are registered
+        do_action('init');
 
-		// Ensure that post types and taxonomies are registered.
-		do_action( 'init' );
+        // Create an editor user
+        $this->editor = self::factory()->user->create([
+            'role' => 'editor',
+        ]);
 
-		// Create an editor user
-		$this->editor = self::factory()->user->create(
-			array(
-				'role' => 'editor',
-			)
-		);
-	}
+        // Create test users for assignments
+        $this->assignee_ids = [
+            self::factory()->user->create(['role' => 'author']),
+            self::factory()->user->create(['role' => 'author']),
+        ];
 
-	/**
-	 * Clean up after each test.
-	 */
-	public function tear_down() {
-		wp_delete_user( $this->editor );
-		parent::tear_down();
-	}
+        // Create a test board
+        $board_term = wp_insert_term('Test Board', 'decker_board');
+        $this->board_id = $board_term['term_id'];
 
-	/**
-	 * Test that an editor can create a task.
-	 */
-	public function test_editor_can_create_task() {
-		wp_set_current_user( $this->editor );
+        // Create test labels
+        $this->label_ids = [
+            wp_insert_term('Label 1', 'decker_label')['term_id'],
+            wp_insert_term('Label 2', 'decker_label')['term_id'],
+        ];
 
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+        // Set current user as editor
+        wp_set_current_user($this->editor);
+    }
 
-		// Create a task.
-		$task_id = wp_insert_post(
-			array(
-				'post_title'   => 'Test Task',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
-			)
-		);
+    /**
+     * Clean up after each test.
+     */
+    public function tear_down() {
+        // Clean up users
+        wp_delete_user($this->editor);
+        foreach ($this->assignee_ids as $user_id) {
+            wp_delete_user($user_id);
+        }
 
-		$this->assertNotWPError( $task_id, 'The task should be created successfully.' );
-		$this->assertEquals( 'Test Task', get_post( $task_id )->post_title, 'The task title should match.' );
-	}
+        // Clean up terms
+        wp_delete_term($this->board_id, 'decker_board');
+        foreach ($this->label_ids as $label_id) {
+            wp_delete_term($label_id, 'decker_label');
+        }
 
-	/**
-	 * Test that boards and labels can be assigned to a task.
-	 */
-	public function test_assign_boards_and_labels_to_task() {
+        parent::tear_down();
+    }
 
-		wp_set_current_user( $this->editor );
+    /**
+     * Simulate AJAX task creation
+     */
+    private function simulate_ajax_save($data) {
+        $_POST = array_merge([
+            'action' => 'save_decker_task',
+            'nonce' => wp_create_nonce('save_decker_task_nonce'),
+        ], $data);
 
-		// Create terms for boards and labels.
-		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
-		$label_id = wp_insert_term( 'Label 1', 'decker_label' )['term_id'];
+        try {
+            do_action('wp_ajax_save_decker_task');
+        } catch (WPAjaxDieContinueException $e) {
+            unset($_POST['action']);
+            unset($_POST['nonce']);
+        }
+    }
 
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+    /**
+     * Test creating a new task via AJAX
+     */
+    public function test_create_task() {
+        $task_data = [
+            'task_id' => '',
+            'title' => 'New Test Task',
+            'due_date' => '2024-12-31',
+            'board' => $this->board_id,
+            'stack' => 'to-do',
+            'author' => $this->editor,
+            'assignees' => $this->assignee_ids,
+            'labels' => $this->label_ids,
+            'description' => '<p>Test description</p>',
+            'max_priority' => 1,
+        ];
 
-		// Create a task and assign the terms.
-		$task_id = wp_insert_post(
-			array(
-				'post_title'   => 'Task with Terms',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-					'decker_label' => array( $label_id ),
-				),
-			)
-		);
+        $this->simulate_ajax_save($task_data);
 
-		$this->assertNotWPError( $task_id, 'The task should be created successfully.' );
+        // Get the last created task
+        $tasks = get_posts([
+            'post_type' => 'decker_task',
+            'posts_per_page' => 1,
+            'orderby' => 'ID',
+            'order' => 'DESC',
+        ]);
 
-		// Verify terms are assigned.
-		$assigned_boards = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
-		$assigned_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
+        $this->assertCount(1, $tasks, 'Task should be created');
+        $task = $tasks[0];
 
-		$this->assertContains( $board_id, $assigned_boards, 'The board should be assigned to the task.' );
-		$this->assertContains( $label_id, $assigned_labels, 'The label should be assigned to the task.' );
-	}
+        // Verify task properties
+        $this->assertEquals($task_data['title'], $task->post_title);
+        $this->assertEquals($task_data['description'], $task->post_content);
+        
+        // Verify taxonomy assignments
+        $assigned_board = wp_get_post_terms($task->ID, 'decker_board', ['fields' => 'ids']);
+        $this->assertEquals([$this->board_id], $assigned_board);
 
-	/**
-	 * Test that tasks are ordered correctly when created, archived, or deleted.
-	 */
-	public function test_task_ordering() {
+        $assigned_labels = wp_get_post_terms($task->ID, 'decker_label', ['fields' => 'ids']);
+        sort($assigned_labels);
+        sort($this->label_ids);
+        $this->assertEquals($this->label_ids, $assigned_labels);
 
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+        // Verify meta data
+        $this->assertEquals($task_data['stack'], get_post_meta($task->ID, 'stack', true));
+        $this->assertEquals($task_data['due_date'], get_post_meta($task->ID, 'due_date', true));
+        $this->assertEquals(1, get_post_meta($task->ID, 'max_priority', true));
 
-		// Create tasks with different menu orders.
-		$task1_id = wp_insert_post(
-			array(
-				'post_title'   => 'Task 1',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'menu_order'   => 1,
-			)
-		);
+        // Verify assignees
+        $assigned_users = get_post_meta($task->ID, 'assigned_users', true);
+        sort($assigned_users);
+        sort($task_data['assignees']);
+        $this->assertEquals($task_data['assignees'], $assigned_users);
+    }
 
-		$task2_id = wp_insert_post(
-			array(
-				'post_title'   => 'Task 2',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'menu_order'   => 2,
-			)
-		);
+    /**
+     * Test updating an existing task
+     */
+    public function test_update_task() {
+        // First create a task
+        $task_id = wp_insert_post([
+            'post_title' => 'Original Title',
+            'post_type' => 'decker_task',
+            'post_status' => 'publish',
+        ]);
 
-		// Verify order.
-		$tasks = get_posts(
-			array(
-				'post_type'   => 'decker_task',
-				'orderby'     => 'menu_order',
-				'order'       => 'ASC',
-				'fields'      => 'ids',
-			)
-		);
+        // Update task data
+        $update_data = [
+            'task_id' => $task_id,
+            'title' => 'Updated Title',
+            'stack' => 'in-progress',
+            'board' => $this->board_id,
+            'labels' => [$this->label_ids[0]], // Only assign one label
+            'assignees' => [$this->assignee_ids[0]], // Only assign one user
+            'description' => '<p>Updated description</p>',
+            'max_priority' => 0,
+        ];
 
-		$this->assertEquals( array( $task1_id, $task2_id ), $tasks, 'Tasks should be ordered by menu_order.' );
+        $this->simulate_ajax_save($update_data);
 
-		// Delete a task and verify order.
-		wp_delete_post( $task1_id );
-		$tasks = get_posts(
-			array(
-				'post_type'   => 'decker_task',
-				'orderby'     => 'menu_order',
-				'order'       => 'ASC',
-				'fields'      => 'ids',
-			)
-		);
+        // Verify updates
+        $updated_task = get_post($task_id);
+        $this->assertEquals($update_data['title'], $updated_task->post_title);
+        $this->assertEquals($update_data['description'], $updated_task->post_content);
+        $this->assertEquals($update_data['stack'], get_post_meta($task_id, 'stack', true));
+        
+        // Verify updated taxonomies
+        $updated_labels = wp_get_post_terms($task_id, 'decker_label', ['fields' => 'ids']);
+        $this->assertEquals($update_data['labels'], $updated_labels);
 
-		$this->assertEquals( array( $task2_id ), $tasks, 'Remaining tasks should be ordered correctly after deletion.' );
-	}
+        // Verify updated assignees
+        $updated_assignees = get_post_meta($task_id, 'assigned_users', true);
+        $this->assertEquals($update_data['assignees'], $updated_assignees);
+    }
 
-	/**
-	 * Test that a user-date relation can be created and removed.
-	 */
-	public function test_user_date_relation() {
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+    /**
+     * Test task ordering within stacks
+     */
+    public function test_task_ordering() {
+        // Create multiple tasks in the same stack
+        $tasks = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $tasks[] = wp_insert_post([
+                'post_title' => "Task $i",
+                'post_type' => 'decker_task',
+                'post_status' => 'publish',
+                'menu_order' => $i,
+                'meta_input' => [
+                    'stack' => 'to-do',
+                ],
+            ]);
+        }
 
-		// Create a task.
-		$task_id = wp_insert_post(
-			array(
-				'post_title'  => 'Task with Relation',
-				'post_type'   => 'decker_task',
-				'post_status' => 'publish',
-			)
-		);
+        // Verify initial order
+        $ordered_tasks = get_posts([
+            'post_type' => 'decker_task',
+            'meta_key' => 'stack',
+            'meta_value' => 'to-do',
+            'orderby' => 'menu_order',
+            'order' => 'ASC',
+            'fields' => 'ids',
+        ]);
 
-		$this->assertNotWPError( $task_id, 'Task creation failed.' );
+        $this->assertEquals($tasks, $ordered_tasks, 'Tasks should maintain their order');
 
-		// Create user and date for relation.
-		$user_id = $this->factory->user->create();
-		$date = '2024-11-30';
+        // Move middle task to a different stack
+        $update_data = [
+            'task_id' => $tasks[1],
+            'stack' => 'in-progress',
+        ];
 
-		// Add a user-date relation.
-		$relation = array(
-			array(
-				'user_id' => $user_id,
-				'date'    => $date,
-			),
-		);
+        $this->simulate_ajax_save($update_data);
 
-		update_post_meta( $task_id, '_user_date_relations', $relation );
+        // Verify to-do stack reordering
+        $todo_tasks = get_posts([
+            'post_type' => 'decker_task',
+            'meta_key' => 'stack',
+            'meta_value' => 'to-do',
+            'orderby' => 'menu_order',
+            'order' => 'ASC',
+            'fields' => 'ids',
+        ]);
 
-		// Verify the relation exists.
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$this->assertIsArray( $relations, 'The relation should be an array.' );
-		$this->assertNotEmpty( $relations, 'The relation should exist.' );
-		$this->assertEquals( $user_id, $relations[0]['user_id'], 'The user ID should match.' );
-		$this->assertEquals( $date, $relations[0]['date'], 'The date should match.' );
+        $this->assertEquals([$tasks[0], $tasks[2]], $todo_tasks, 'Remaining tasks should maintain relative order');
 
-		// Remove the relation.
-		delete_post_meta( $task_id, '_user_date_relations' );
+        // Verify task in new stack
+        $in_progress_tasks = get_posts([
+            'post_type' => 'decker_task',
+            'meta_key' => 'stack',
+            'meta_value' => 'in-progress',
+            'fields' => 'ids',
+        ]);
 
-		// Verify the relation has been removed.
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$this->assertEmpty( $relations, 'The relation should be removed.' );
-	}
+        $this->assertEquals([$tasks[1]], $in_progress_tasks, 'Task should be in new stack');
+    }
+
+    /**
+     * Test deleting tasks
+     */
+    public function test_delete_tasks() {
+        // Create tasks in different stacks
+        $task_ids = [];
+        $stacks = ['to-do', 'in-progress', 'done'];
+        
+        foreach ($stacks as $i => $stack) {
+            $task_ids[$stack] = wp_insert_post([
+                'post_title' => "Task in $stack",
+                'post_type' => 'decker_task',
+                'post_status' => 'publish',
+                'menu_order' => $i + 1,
+                'meta_input' => [
+                    'stack' => $stack,
+                ],
+            ]);
+        }
+
+        // Delete task from in-progress
+        wp_delete_post($task_ids['in-progress'], true);
+
+        // Verify remaining tasks and their order
+        foreach (['to-do', 'done'] as $stack) {
+            $remaining_tasks = get_posts([
+                'post_type' => 'decker_task',
+                'meta_key' => 'stack',
+                'meta_value' => $stack,
+                'fields' => 'ids',
+            ]);
+
+            $this->assertEquals([$task_ids[$stack]], $remaining_tasks, "Task in $stack should remain");
+        }
+
+        // Verify deleted task
+        $deleted_task = get_post($task_ids['in-progress']);
+        $this->assertNull($deleted_task, 'Task should be completely deleted');
+    }
 }
