@@ -92,6 +92,12 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
     /**
      * Clean up after each test.
      */
+    private $ajax_response = null;
+    
+    public function capture_ajax_response() {
+        $this->ajax_response = json_decode(ob_get_clean(), true);
+    }
+    
     public function tear_down() {
         // Clean up users
         wp_delete_user($this->editor);
@@ -114,29 +120,25 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
     private function simulate_ajax_save($data) {
         error_log('Simulating AJAX save with data: ' . print_r($data, true));
         
-        // Verify the action is hooked
-        global $wp_filter;
-        error_log('Checking if save_decker_task action exists: ' . (isset($wp_filter['wp_ajax_save_decker_task']) ? 'yes' : 'no'));
-        if (isset($wp_filter['wp_ajax_save_decker_task'])) {
-            error_log('Hooks attached to save_decker_task: ' . print_r($wp_filter['wp_ajax_save_decker_task'], true));
-        }
-        
+        // Setup the AJAX request environment
         $_POST = array_merge([
             'action' => 'save_decker_task',
-            'nonce' => wp_create_nonce('save_decker_task_nonce'),
+            '_ajax_nonce' => wp_create_nonce('save_decker_task'),
         ], $data);
-
+        
+        $_REQUEST = $_POST;
+        
+        // Set up the AJAX action handler
+        add_action('wp_ajax_save_decker_task', [$this, 'capture_ajax_response']);
+        $this->ajax_response = null;
+        
         try {
-            error_log('About to trigger wp_ajax_save_decker_task action');
             do_action('wp_ajax_save_decker_task');
-            error_log('Action completed without exceptions');
+            error_log('AJAX action completed, response: ' . print_r($this->ajax_response, true));
+            return $this->ajax_response;
         } catch (WPAjaxDieContinueException $e) {
             error_log('Caught expected WPAjaxDieContinueException');
-            unset($_POST['action']);
-            unset($_POST['nonce']);
-        } catch (Exception $e) {
-            error_log('Caught unexpected exception: ' . $e->getMessage());
-            throw $e;
+            return $this->ajax_response;
         }
     }
 
@@ -167,9 +169,14 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
             'max_priority' => 1,
         ];
 
-        $this->simulate_ajax_save($task_data);
-
-        // Get the last created task
+        $response = $this->simulate_ajax_save($task_data);
+        
+        $this->assertNotNull($response, 'AJAX response should not be null');
+        $this->assertArrayHasKey('success', $response, 'AJAX response should have success key');
+        $this->assertTrue($response['success'], 'AJAX request should succeed');
+        $this->assertArrayHasKey('task_id', $response, 'AJAX response should include task ID');
+        
+        // Verify the created task
         $tasks = get_posts([
             'post_type' => 'decker_task',
             'posts_per_page' => 1,
