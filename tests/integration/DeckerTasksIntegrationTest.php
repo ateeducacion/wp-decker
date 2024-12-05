@@ -138,17 +138,25 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
         ], $data);
         $_REQUEST = $_POST;
         
-        // Remove any existing handlers
-        remove_all_actions('wp_ajax_save_decker_task');
+        // Buffer output
+        ob_start();
         
-        // Add our response capture handler
-        add_action('wp_ajax_save_decker_task', [$this, 'capture_ajax_response']);
+        try {
+            // Call the AJAX handler directly
+            do_action('wp_ajax_save_decker_task');
+        } catch (WPAjaxDieContinueException $e) {
+            // Expected
+        }
         
-        // Trigger the AJAX action and capture response
-        $this->capture_ajax_response();
+        // Get the response
+        $response = ob_get_clean();
+        
+        // Parse JSON response
+        $this->ajax_response = json_decode($response, true);
         
         if ($this->ajax_response === null) {
-            throw new Exception('Failed to capture AJAX response');
+            error_log('Failed to parse AJAX response: ' . $response);
+            throw new Exception('Failed to parse AJAX response');
         }
         
         return $this->ajax_response;
