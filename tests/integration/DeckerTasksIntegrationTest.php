@@ -22,6 +22,16 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 
         // Ensure that post types and taxonomies are registered
         do_action('init');
+        
+        // Verify taxonomies are registered
+        if (!taxonomy_exists('decker_board')) {
+            error_log('decker_board taxonomy does not exist!');
+            throw new Exception('decker_board taxonomy is not registered');
+        }
+        if (!taxonomy_exists('decker_label')) {
+            error_log('decker_label taxonomy does not exist!');
+            throw new Exception('decker_label taxonomy is not registered');
+        }
 
         // Create an editor user
         $this->editor = self::factory()->user->create([
@@ -32,6 +42,8 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
         wp_set_current_user($this->editor);
         
         error_log('Setting up DeckerTasksIntegrationTest with editor ID: ' . $this->editor);
+        error_log('Current user ID: ' . get_current_user_id());
+        error_log('User capabilities: ' . print_r(get_userdata($this->editor)->allcaps, true));
 
         // Create test users for assignments
         $this->assignee_ids = [
@@ -42,8 +54,11 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
         // Create a test board
         $board_term = wp_insert_term('Test Board', 'decker_board');
         if (is_wp_error($board_term)) {
+            error_log('Failed to create board term: ' . $board_term->get_error_message());
+            error_log('Error data: ' . print_r($board_term->get_error_data(), true));
             throw new Exception('Failed to create test board: ' . $board_term->get_error_message());
         }
+        error_log('Successfully created board term with ID: ' . $board_term['term_id']);
         $this->board_id = $board_term['term_id'];
 
         // Create test labels
