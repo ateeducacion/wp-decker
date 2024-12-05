@@ -95,7 +95,15 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
     private $ajax_response = null;
     
     public function capture_ajax_response() {
-        $this->ajax_response = json_decode(ob_get_clean(), true);
+        ob_start();
+        try {
+            do_action('wp_ajax_save_decker_task');
+        } catch (WPAjaxDieContinueException $e) {
+            // Expected exception
+        }
+        $output = ob_get_clean();
+        $this->ajax_response = json_decode($output, true);
+        error_log('AJAX Response captured: ' . print_r($this->ajax_response, true));
     }
     
     public function tear_down() {
@@ -120,26 +128,30 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
     private function simulate_ajax_save($data) {
         error_log('Simulating AJAX save with data: ' . print_r($data, true));
         
+        // Reset any previous response
+        $this->ajax_response = null;
+        
         // Setup the AJAX request environment
         $_POST = array_merge([
             'action' => 'save_decker_task',
             '_ajax_nonce' => wp_create_nonce('save_decker_task'),
         ], $data);
-        
         $_REQUEST = $_POST;
         
-        // Set up the AJAX action handler
-        add_action('wp_ajax_save_decker_task', [$this, 'capture_ajax_response']);
-        $this->ajax_response = null;
+        // Remove any existing handlers
+        remove_all_actions('wp_ajax_save_decker_task');
         
-        try {
-            do_action('wp_ajax_save_decker_task');
-            error_log('AJAX action completed, response: ' . print_r($this->ajax_response, true));
-            return $this->ajax_response;
-        } catch (WPAjaxDieContinueException $e) {
-            error_log('Caught expected WPAjaxDieContinueException');
-            return $this->ajax_response;
+        // Add our response capture handler
+        add_action('wp_ajax_save_decker_task', [$this, 'capture_ajax_response']);
+        
+        // Trigger the AJAX action and capture response
+        $this->capture_ajax_response();
+        
+        if ($this->ajax_response === null) {
+            throw new Exception('Failed to capture AJAX response');
         }
+        
+        return $this->ajax_response;
     }
 
     /**
