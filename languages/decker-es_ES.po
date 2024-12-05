@@ -475,19 +475,19 @@ msgstr "Agregar Adjuntos"
 msgid "Select Attachments"
 msgstr "Seleccionar Adjuntos"
 
-#: includes/custom-post-types/class-decker-tasks.php:1861
+#: includes/custom-post-types/class-decker-tasks.php:1860
 msgid "The title is required."
 msgstr "El título es obligatorio."
 
-#: includes/custom-post-types/class-decker-tasks.php:1864
+#: includes/custom-post-types/class-decker-tasks.php:1863
 msgid "The stack is required."
 msgstr "La columna es obligatoria."
 
-#: includes/custom-post-types/class-decker-tasks.php:1867
+#: includes/custom-post-types/class-decker-tasks.php:1866
 msgid "The board is required and must be a positive integer."
 msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
-#: includes/custom-post-types/class-decker-tasks.php:1873
+#: includes/custom-post-types/class-decker-tasks.php:1872
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr "El tablero no existe en la taxonomía decker_board."
 
@@ -899,7 +899,7 @@ msgstr "Por favor, seleccione una fecha de vencimiento."
 msgid "Assign to"
 msgstr "Asignar a"
 
-#: includes/models/class-task.php:475
+#: includes/models/class-task.php:516
 #: public/layouts/task-card.php:401
 msgid "Comments"
 msgstr "Comentarios"
@@ -969,47 +969,47 @@ msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 msgid "Invalid post type."
 msgstr "Tipo de publicación inválido."
 
-#: includes/models/class-task.php:429
+#: includes/models/class-task.php:470
 msgid "🔥"
 msgstr "🔥"
 
-#: includes/models/class-task.php:429
+#: includes/models/class-task.php:470
 msgid "Normal"
 msgstr "Normal"
 
-#: includes/models/class-task.php:431
+#: includes/models/class-task.php:472
 msgid "Undefined date"
 msgstr "Fecha no definida"
 
-#: includes/models/class-task.php:449
+#: includes/models/class-task.php:490
 msgid "Order:"
 msgstr "Orden:"
 
-#: includes/models/class-task.php:528
+#: includes/models/class-task.php:569
 msgid "Edit"
 msgstr "Editar"
 
-#: includes/models/class-task.php:545
+#: includes/models/class-task.php:586
 msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
-#: includes/models/class-task.php:552
+#: includes/models/class-task.php:593
 msgid "Archive"
 msgstr "Archivar"
 
-#: includes/models/class-task.php:561
+#: includes/models/class-task.php:602
 msgid "Assign to me"
 msgstr "Asignarme"
 
-#: includes/models/class-task.php:568
+#: includes/models/class-task.php:609
 msgid "Leave"
 msgstr "Abandonar"
 
-#: includes/models/class-task.php:583
+#: includes/models/class-task.php:624
 msgid "Mark for today"
 msgstr "Marcar para hoy"
 
-#: includes/models/class-task.php:589
+#: includes/models/class-task.php:630
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 
@@ -1073,19 +1073,19 @@ msgstr "Tablero actualizado correctamente"
 msgid "Board created successfully"
 msgstr "Tablero creado correctamente"
 
-#: includes/models/class-boardmanager.php:139
+#: includes/models/class-boardmanager.php:146
 msgid "Board deleted successfully"
 msgstr "Tablero eliminado correctamente"
 
-#: includes/models/class-labelmanager.php:136
+#: includes/models/class-labelmanager.php:151
 msgid "Label updated successfully"
 msgstr "Etiqueta actualizada correctamente"
 
-#: includes/models/class-labelmanager.php:136
+#: includes/models/class-labelmanager.php:151
 msgid "Label created successfully"
 msgstr "Etiqueta creada correctamente"
 
-#: includes/models/class-labelmanager.php:158
+#: includes/models/class-labelmanager.php:179
 msgid "Label deleted successfully"
 msgstr "Etiqueta eliminada correctamente"
 
@@ -1217,3 +1217,15 @@ msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s
 #: includes/class-decker-email-to-post.php:55
 msgid "Access denied"
 msgstr "Acceso denegado"
+
+#: includes/models/class-boardmanager.php:131
+msgid "You do not have permission to delete boards"
+msgstr "No tienes permiso para borrar tableros"
+
+#: includes/models/class-labelmanager.php:117
+msgid "You do not have permission to manage labels"
+msgstr "No tienes permiso para gestionar etiquetas"
+
+#: includes/models/class-labelmanager.php:165
+msgid "You do not have permission to delete labels"
+msgstr "No tienes permiso para borrar etiquetas"

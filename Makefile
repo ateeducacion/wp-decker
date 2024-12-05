@@ -28,6 +28,9 @@ check:
 test:
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
 
+test-verbose:
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose
+
 logs:
 	npx wp-env logs
 

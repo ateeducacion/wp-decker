@@ -249,7 +249,7 @@ if ( ! $has_today_tasks ) {
 						<?php
 						$today = gmdate( 'Y-m-d' );
 						$options                       = get_option( 'decker_settings', array() );
-						$selected_role                 = isset( $options['user_profile'] ) ? $options['user_profile'] : 'administrator';
+						$selected_role                 = isset( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
 						// Get ignored users from settings.
 						$ignored_users = isset( $options['ignored_users'] ) ? array_map( 'intval', explode( ',', $options['ignored_users'] ) ) : array();
 

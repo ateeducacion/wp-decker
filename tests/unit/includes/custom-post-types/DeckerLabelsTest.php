@@ -7,6 +7,9 @@
 
 class DeckerLabelsTest extends WP_UnitTestCase {
 
+	private $editor;
+	private $subscriber;
+
 	/**
 	 * Set up before each test.
 	 */
@@ -16,21 +19,16 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure that taxonomies are registered.
 		do_action( 'init' );
 
-		// Create user roles for testing.
-		add_role(
-			'test_editor',
-			'Test Editor',
+		// Create users for testing
+		$this->editor = self::factory()->user->create(
 			array(
-				'read'       => true,
-				'edit_posts' => true, // Grants permission to manage terms.
+				'role' => 'editor',
 			)
 		);
 
-		add_role(
-			'test_subscriber',
-			'Test Subscriber',
+		$this->subscriber = self::factory()->user->create(
 			array(
-				'read' => true,
+				'role' => 'subscriber',
 			)
 		);
 	}
@@ -39,10 +37,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 	 * Clean up after each test.
 	 */
 	public function tear_down() {
-		// Remove roles created for testing.
-		remove_role( 'test_editor' );
-		remove_role( 'test_subscriber' );
-
+		wp_delete_user( $this->editor );
+		wp_delete_user( $this->subscriber );
 		parent::tear_down();
 	}
 
@@ -70,12 +66,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
-		// Create a user with the 'test_editor' role.
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login.
-		wp_set_current_user( $editor->ID );
+		// Set current user as editor
+		wp_set_current_user( $this->editor );
 
 		// Create a term.
 		$term_name = 'Sprint 1';
@@ -99,12 +91,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
-		// Create a user with the 'test_subscriber' role
-		$subscriber = $this->factory->user->create_and_get( array( 'role' => 'test_subscriber' ) );
-		$this->assertNotNull( $subscriber, 'The subscriber user should be created correctly.' );
-
-		// Simulate the subscriber user login
-		wp_set_current_user( $subscriber->ID );
+		// Set current user as subscriber
+		wp_set_current_user( $this->subscriber );
 
 		// Attempt to create a term
 		$term_name = 'Sprint 2';
@@ -125,12 +113,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
-		// Create a user with the 'test_editor' role
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
+		// Set current user as editor
+		wp_set_current_user( $this->editor );
 
 		// Create a term
 		$term_name = 'Sprint 3';
@@ -161,12 +145,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
-		// Create a user with the 'test_editor' role to create the term
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
+		// Set current user as editor
+		wp_set_current_user( $this->editor );
 
 		// Create a term
 		$term_name = 'Sprint 4';
@@ -178,12 +158,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Clean up
 		wp_set_current_user( 0 );
 
-		// Create a user with the 'test_subscriber' role
-		$subscriber = $this->factory->user->create_and_get( array( 'role' => 'test_subscriber' ) );
-		$this->assertNotNull( $subscriber, 'The subscriber user should be created correctly.' );
-
-		// Simulate the subscriber user login
-		wp_set_current_user( $subscriber->ID );
+		// Set current user as subscriber
+		wp_set_current_user( $this->subscriber );
 
 		// Expect wp_die to be called.
 		$this->expectException( 'WPDieException' );
@@ -213,12 +189,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
-		// Create a user with the 'test_editor' role
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
+		// Set current user as editor
+		wp_set_current_user( $this->editor );
 
 		$terms = array( 'Label A', 'Label B', 'Label C' );
 		$term_ids = array();
@@ -252,12 +224,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 	 * Tests that only users with edit permissions can save color metadata.
 	 */
 	public function test_editor_can_save_color_meta() {
-		// Create a user with the 'test_editor' role
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
+		// Set current user as editor
+		wp_set_current_user( $this->editor );
 
 		// Create a term with color
 		$term_name = 'Sprint 5';
@@ -287,12 +255,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
-		// Create a user with the 'test_editor' role to create the term
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
+		// Set current user as editor
+		wp_set_current_user( $this->editor );
 
 		// Create a term
 		$term_name = 'Sprint 6';
@@ -309,12 +273,8 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		unset( $_POST['decker_term_nonce'] );
 		unset( $_POST['term-color'] );
 
-		// Create a user with the 'test_subscriber' role
-		$subscriber = $this->factory->user->create_and_get( array( 'role' => 'test_subscriber' ) );
-		$this->assertNotNull( $subscriber, 'The subscriber user should be created correctly.' );
-
-		// Simulate the subscriber user login
-		wp_set_current_user( $subscriber->ID );
+		// Set current user as subscriber
+		wp_set_current_user( $this->subscriber );
 
 		// Attempt to update the term's color
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );

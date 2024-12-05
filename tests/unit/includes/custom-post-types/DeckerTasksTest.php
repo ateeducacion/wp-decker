@@ -7,6 +7,8 @@
 
 class DeckerTasksTest extends WP_UnitTestCase {
 
+	private $editor;
+
 	/**
 	 * Set up before each test.
 	 */
@@ -16,21 +18,10 @@ class DeckerTasksTest extends WP_UnitTestCase {
 		// Ensure that post types and taxonomies are registered.
 		do_action( 'init' );
 
-		// Create roles for testing.
-		add_role(
-			'test_editor',
-			'Test Editor',
+		// Create an editor user
+		$this->editor = self::factory()->user->create(
 			array(
-				'read'       => true,
-				'edit_posts' => true,
-			)
-		);
-
-		add_role(
-			'test_subscriber',
-			'Test Subscriber',
-			array(
-				'read' => true,
+				'role' => 'editor',
 			)
 		);
 	}
@@ -39,9 +30,7 @@ class DeckerTasksTest extends WP_UnitTestCase {
 	 * Clean up after each test.
 	 */
 	public function tear_down() {
-		remove_role( 'test_editor' );
-		remove_role( 'test_subscriber' );
-
+		wp_delete_user( $this->editor );
 		parent::tear_down();
 	}
 
@@ -49,11 +38,13 @@ class DeckerTasksTest extends WP_UnitTestCase {
 	 * Test that an editor can create a task.
 	 */
 	public function test_editor_can_create_task() {
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		wp_set_current_user( $editor->ID );
+		wp_set_current_user( $this->editor );
 
 		// Ensure 'save_decker_task' matches your plugin action.
 		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+
+		// Create terms for boards and labels.
+		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
 
 		// Create a task.
 		$task_id = wp_insert_post(
@@ -61,6 +52,9 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'post_title'   => 'Test Task',
 				'post_type'    => 'decker_task',
 				'post_status'  => 'publish',
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
 				'meta_input'   => array(
 					'stack' => 'to-do',
 				),
@@ -76,8 +70,7 @@ class DeckerTasksTest extends WP_UnitTestCase {
 	 */
 	public function test_assign_boards_and_labels_to_task() {
 
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		wp_set_current_user( $editor->ID );
+		wp_set_current_user( $this->editor );
 
 		// Create terms for boards and labels.
 		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
@@ -95,6 +88,9 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'tax_input'    => array(
 					'decker_board' => array( $board_id ),
 					'decker_label' => array( $label_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
 				),
 			)
 		);
@@ -117,6 +113,11 @@ class DeckerTasksTest extends WP_UnitTestCase {
 		// Ensure 'save_decker_task' matches your plugin action.
 		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
 
+		wp_set_current_user( $this->editor );
+
+		// Create terms for boards and labels.
+		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
+
 		// Create tasks with different menu orders.
 		$task1_id = wp_insert_post(
 			array(
@@ -124,6 +125,12 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'post_type'    => 'decker_task',
 				'post_status'  => 'publish',
 				'menu_order'   => 1,
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
 			)
 		);
 
@@ -133,6 +140,12 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'post_type'    => 'decker_task',
 				'post_status'  => 'publish',
 				'menu_order'   => 2,
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
 			)
 		);
 
@@ -166,8 +179,14 @@ class DeckerTasksTest extends WP_UnitTestCase {
 	 * Test that a user-date relation can be created and removed.
 	 */
 	public function test_user_date_relation() {
+
+		wp_set_current_user( $this->editor );
+
 		// Ensure 'save_decker_task' matches your plugin action.
 		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+
+		// Create terms for boards and labels.
+		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
 
 		// Create a task.
 		$task_id = wp_insert_post(
@@ -175,6 +194,12 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'post_title'  => 'Task with Relation',
 				'post_type'   => 'decker_task',
 				'post_status' => 'publish',
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
 			)
 		);
 

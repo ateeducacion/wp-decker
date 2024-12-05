@@ -591,7 +591,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'mark_user_date_relation' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -603,7 +603,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'unmark_user_date_relation' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -615,7 +615,7 @@ class Decker_Tasks {
 				'methods'             => 'PUT',
 				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -627,7 +627,7 @@ class Decker_Tasks {
 				'methods'             => 'PUT',
 				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -639,7 +639,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'remove_user_from_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -651,7 +651,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'assign_user_to_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -663,7 +663,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'archive_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit' );
 				},
 			)
 		);
@@ -1806,16 +1806,15 @@ class Decker_Tasks {
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-		} else {
-			wp_send_json_success(
-				array(
-					'message' => 'Tarea guardada exitosamente.',
-					'task_id' => $result,
-				)
-			);
+			return;
 		}
 
-		wp_die(); // Finalizar correctamente.
+		wp_send_json_success(
+			array(
+				'message' => 'Tarea guardada exitosamente.',
+				'task_id' => $result,
+			)
+		);
 	}
 
 	/**
