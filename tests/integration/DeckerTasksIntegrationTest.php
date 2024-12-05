@@ -63,17 +63,30 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 
         // Create test labels
         $this->label_ids = [];
-        $label1 = wp_insert_term('Label 1', 'decker_label');
-        $label2 = wp_insert_term('Label 2', 'decker_label');
         
-        if (is_wp_error($label1) || is_wp_error($label2)) {
-            throw new Exception('Failed to create test labels');
+        error_log('Attempting to create Label 1...');
+        $label1 = wp_insert_term('Label 1', 'decker_label');
+        if (is_wp_error($label1)) {
+            error_log('Failed to create Label 1: ' . $label1->get_error_message());
+            error_log('Error data: ' . print_r($label1->get_error_data(), true));
+            throw new Exception('Failed to create Label 1: ' . $label1->get_error_message());
         }
+        error_log('Successfully created Label 1 with ID: ' . $label1['term_id']);
+        
+        error_log('Attempting to create Label 2...');
+        $label2 = wp_insert_term('Label 2', 'decker_label');
+        if (is_wp_error($label2)) {
+            error_log('Failed to create Label 2: ' . $label2->get_error_message());
+            error_log('Error data: ' . print_r($label2->get_error_data(), true));
+            throw new Exception('Failed to create Label 2: ' . $label2->get_error_message());
+        }
+        error_log('Successfully created Label 2 with ID: ' . $label2['term_id']);
         
         $this->label_ids = [
             $label1['term_id'],
             $label2['term_id']
         ];
+        error_log('Label IDs array populated: ' . print_r($this->label_ids, true));
     }
 
     /**
