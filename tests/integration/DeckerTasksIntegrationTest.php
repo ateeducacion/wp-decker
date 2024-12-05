@@ -33,12 +33,23 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 
         // Create a test board
         $board_term = wp_insert_term('Test Board', 'decker_board');
+        if (is_wp_error($board_term)) {
+            throw new Exception('Failed to create test board: ' . $board_term->get_error_message());
+        }
         $this->board_id = $board_term['term_id'];
 
         // Create test labels
+        $this->label_ids = [];
+        $label1 = wp_insert_term('Label 1', 'decker_label');
+        $label2 = wp_insert_term('Label 2', 'decker_label');
+        
+        if (is_wp_error($label1) || is_wp_error($label2)) {
+            throw new Exception('Failed to create test labels');
+        }
+        
         $this->label_ids = [
-            wp_insert_term('Label 1', 'decker_label')['term_id'],
-            wp_insert_term('Label 2', 'decker_label')['term_id'],
+            $label1['term_id'],
+            $label2['term_id']
         ];
 
         // Set current user as editor
