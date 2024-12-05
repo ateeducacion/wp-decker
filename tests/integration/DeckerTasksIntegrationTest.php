@@ -5,6 +5,9 @@
  * @package Decker
  */
 
+/**
+ * @group decker
+ */
 class DeckerTasksIntegrationTest extends WP_UnitTestCase {
     private $editor;
     private $board_id;
@@ -27,6 +30,8 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 
         // Set current user as editor right away
         wp_set_current_user($this->editor);
+        
+        error_log('Setting up DeckerTasksIntegrationTest with editor ID: ' . $this->editor);
 
         // Create test users for assignments
         $this->assignee_ids = [
