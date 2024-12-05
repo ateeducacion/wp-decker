@@ -25,6 +25,9 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
             'role' => 'editor',
         ]);
 
+        // Set current user as editor right away
+        wp_set_current_user($this->editor);
+
         // Create test users for assignments
         $this->assignee_ids = [
             self::factory()->user->create(['role' => 'author']),
@@ -51,9 +54,6 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
             $label1['term_id'],
             $label2['term_id']
         ];
-
-        // Set current user as editor
-        wp_set_current_user($this->editor);
     }
 
     /**
