@@ -67,14 +67,26 @@ class DeckerTest extends WP_UnitTestCase {
 	}
 
 	public function test_comment_capabilities() {
+
+		wp_set_current_user( $this->admin_user_id );
+
 		// Set up nonce
 		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+
+		// Create terms for boards and labels.
+		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
 
 		// Create a test task and comment
 		$task = $this->factory->post->create(
 			array(
 				'post_type' => 'decker_task',
 				'post_author' => $this->admin_user_id,
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
 			)
 		);
 
@@ -154,19 +166,19 @@ class DeckerTest extends WP_UnitTestCase {
 		// Test administrator.
 		wp_set_current_user( $admin );
 		$current_user_roles = wp_get_current_user()->roles;
-		error_log( 'Current user roles (administrator): ' . implode( ', ', $current_user_roles ) );
+		// error_log( 'Current user roles (administrator): ' . implode( ', ', $current_user_roles ) );
 		$this->assertTrue( Decker::current_user_has_at_least_minimum_role(), 'Administrator should have editor access.' );
 
 		// Test editor.
 		wp_set_current_user( $editor );
 		$current_user_roles = wp_get_current_user()->roles;
-		error_log( 'Current user roles (editor): ' . implode( ', ', $current_user_roles ) );
+		// error_log( 'Current user roles (editor): ' . implode( ', ', $current_user_roles ) );
 		$this->assertTrue( Decker::current_user_has_at_least_minimum_role(), 'Editor should have editor access.' );
 
 		// Test subscriber.
 		wp_set_current_user( $subscriber );
 		$current_user_roles = wp_get_current_user()->roles;
-		error_log( 'Current user roles (subscriber): ' . implode( ', ', $current_user_roles ) );
+		// error_log( 'Current user roles (subscriber): ' . implode( ', ', $current_user_roles ) );
 		$this->assertFalse( Decker::current_user_has_at_least_minimum_role(), 'Subscriber should not have editor access.' );
 
 		// Cleanup.

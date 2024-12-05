@@ -531,19 +531,19 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1861
+#: includes/custom-post-types/class-decker-tasks.php:1860
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1864
+#: includes/custom-post-types/class-decker-tasks.php:1863
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1867
+#: includes/custom-post-types/class-decker-tasks.php:1866
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1873
+#: includes/custom-post-types/class-decker-tasks.php:1872
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
@@ -607,52 +607,52 @@ msgstr ""
 msgid "Invalid post type."
 msgstr ""
 
-#: includes/models/class-task.php:429
+#: includes/models/class-task.php:470
 msgid "🔥"
 msgstr ""
 
-#: includes/models/class-task.php:429
+#: includes/models/class-task.php:470
 msgid "Normal"
 msgstr ""
 
-#: includes/models/class-task.php:431
+#: includes/models/class-task.php:472
 msgid "Undefined date"
 msgstr ""
 
-#: includes/models/class-task.php:449
+#: includes/models/class-task.php:490
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:475
+#: includes/models/class-task.php:516
 #: public/layouts/task-card.php:401
 msgid "Comments"
 msgstr ""
 
-#: includes/models/class-task.php:528
+#: includes/models/class-task.php:569
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:545
+#: includes/models/class-task.php:586
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:552
+#: includes/models/class-task.php:593
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:561
+#: includes/models/class-task.php:602
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:568
+#: includes/models/class-task.php:609
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:583
+#: includes/models/class-task.php:624
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:589
+#: includes/models/class-task.php:630
 msgid "Unmark for today"
 msgstr ""
 
