@@ -112,6 +112,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      * Simulate AJAX task creation
      */
     private function simulate_ajax_save($data) {
+        error_log('Simulating AJAX save with data: ' . print_r($data, true));
         $_POST = array_merge([
             'action' => 'save_decker_task',
             'nonce' => wp_create_nonce('save_decker_task_nonce'),
@@ -129,6 +130,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      * Test creating a new task via AJAX
      */
     public function test_create_task() {
+        error_log('Starting test_create_task');
         $task_data = [
             'task_id' => '',
             'title' => 'New Test Task',
@@ -184,6 +186,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      * Test updating an existing task
      */
     public function test_update_task() {
+        error_log('Starting test_update_task');
         // First create a task
         $task_id = wp_insert_post([
             'post_title' => 'Original Title',
@@ -224,6 +227,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      * Test task ordering within stacks
      */
     public function test_task_ordering() {
+        error_log('Starting test_task_ordering');
         // Create multiple tasks in the same stack
         $tasks = [];
         for ($i = 1; $i <= 3; $i++) {
@@ -285,6 +289,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      * Test deleting tasks
      */
     public function test_delete_tasks() {
+        error_log('Starting test_delete_tasks');
         // Create tasks in different stacks
         $task_ids = [];
         $stacks = ['to-do', 'in-progress', 'done'];
