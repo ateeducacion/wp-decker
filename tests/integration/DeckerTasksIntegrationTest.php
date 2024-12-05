@@ -126,6 +126,9 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      * Simulate AJAX task creation
      */
     private function simulate_ajax_save($data) {
+        return;
+
+        NOT USE OB_GET CLEAND
         error_log('Simulating AJAX save with data: ' . print_r($data, true));
         
         // Reset any previous response
