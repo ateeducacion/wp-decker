@@ -9,8 +9,15 @@ class DeckerLabelManagerTest extends WP_UnitTestCase {
     private $test_label_id;
     private $test_label_data;
 
+    private $editor;
+
     public function setUp(): void {
         parent::setUp();
+        
+        // Create an editor user
+        $this->editor = self::factory()->user->create(array(
+            'role' => 'editor'
+        ));
         
         // Create a test label
         $this->test_label_data = [
@@ -27,6 +34,7 @@ class DeckerLabelManagerTest extends WP_UnitTestCase {
     public function tearDown(): void {
         // Clean up test data
         wp_delete_term($this->test_label_id, 'decker_label');
+        wp_delete_user($this->editor->ID);
         parent::tearDown();
     }
 
@@ -56,7 +64,34 @@ class DeckerLabelManagerTest extends WP_UnitTestCase {
         $this->assertInstanceOf(Label::class, $labels[0]);
     }
 
+    public function test_save_label_without_permission() {
+        // Ensure no user is logged in
+        wp_set_current_user(0);
+        
+        $new_label_data = [
+            'name' => 'New Test Label',
+            'slug' => 'new-test-label',
+            'color' => '#00ff00'
+        ];
+        
+        $result = LabelManager::save_label($new_label_data, 0);
+        
+        $this->assertFalse($result['success']);
+        $this->assertEquals('You do not have permission to manage labels', $result['message']);
+    }
+
+    public function test_delete_label_without_permission() {
+        // Ensure no user is logged in
+        wp_set_current_user(0);
+        
+        $result = LabelManager::delete_label($this->test_label_id);
+        
+        $this->assertFalse($result['success']);
+        $this->assertEquals('You do not have permission to delete labels', $result['message']);
+    }
+
     public function test_save_label_create() {
+        wp_set_current_user($this->editor->ID);
         $new_label_data = [
             'name' => 'New Test Label',
             'slug' => 'new-test-label',
@@ -78,6 +113,7 @@ class DeckerLabelManagerTest extends WP_UnitTestCase {
     }
 
     public function test_save_label_update() {
+        wp_set_current_user($this->editor->ID);
         $updated_data = [
             'name' => 'Updated Test Label',
             'slug' => 'updated-test-label',
@@ -96,6 +132,7 @@ class DeckerLabelManagerTest extends WP_UnitTestCase {
     }
 
     public function test_delete_label() {
+        wp_set_current_user($this->editor->ID);
         $result = LabelManager::delete_label($this->test_label_id);
         
         $this->assertTrue($result['success']);
