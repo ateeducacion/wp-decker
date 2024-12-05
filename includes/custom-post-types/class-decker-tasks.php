@@ -1815,7 +1815,7 @@ class Decker_Tasks {
 			);
 		}
 
-		wp_die(); // Finalizar correctamente.
+		// wp_die(); // Finalizar correctamente.
 	}
 
 	/**
