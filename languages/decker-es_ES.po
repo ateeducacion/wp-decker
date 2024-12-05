@@ -1073,19 +1073,19 @@ msgstr "Tablero actualizado correctamente"
 msgid "Board created successfully"
 msgstr "Tablero creado correctamente"
 
-#: includes/models/class-boardmanager.php:139
+#: includes/models/class-boardmanager.php:146
 msgid "Board deleted successfully"
 msgstr "Tablero eliminado correctamente"
 
-#: includes/models/class-labelmanager.php:136
+#: includes/models/class-labelmanager.php:151
 msgid "Label updated successfully"
 msgstr "Etiqueta actualizada correctamente"
 
-#: includes/models/class-labelmanager.php:136
+#: includes/models/class-labelmanager.php:151
 msgid "Label created successfully"
 msgstr "Etiqueta creada correctamente"
 
-#: includes/models/class-labelmanager.php:158
+#: includes/models/class-labelmanager.php:179
 msgid "Label deleted successfully"
 msgstr "Etiqueta eliminada correctamente"
 
@@ -1217,3 +1217,15 @@ msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s
 #: includes/class-decker-email-to-post.php:55
 msgid "Access denied"
 msgstr "Acceso denegado"
+
+#: includes/models/class-boardmanager.php:131
+msgid "You do not have permission to delete boards"
+msgstr "No tienes permiso para borrar tableros"
+
+#: includes/models/class-labelmanager.php:117
+msgid "You do not have permission to manage labels"
+msgstr "No tienes permiso para gestionar etiquetas"
+
+#: includes/models/class-labelmanager.php:165
+msgid "You do not have permission to delete labels"
+msgstr "No tienes permiso para borrar etiquetas"

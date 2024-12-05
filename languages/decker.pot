@@ -575,19 +575,31 @@ msgstr ""
 msgid "Board created successfully"
 msgstr ""
 
-#: includes/models/class-boardmanager.php:139
+#: includes/models/class-boardmanager.php:131
+msgid "You do not have permission to delete boards"
+msgstr ""
+
+#: includes/models/class-boardmanager.php:146
 msgid "Board deleted successfully"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:136
+#: includes/models/class-labelmanager.php:117
+msgid "You do not have permission to manage labels"
+msgstr ""
+
+#: includes/models/class-labelmanager.php:151
 msgid "Label updated successfully"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:136
+#: includes/models/class-labelmanager.php:151
 msgid "Label created successfully"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:158
+#: includes/models/class-labelmanager.php:165
+msgid "You do not have permission to delete labels"
+msgstr ""
+
+#: includes/models/class-labelmanager.php:179
 msgid "Label deleted successfully"
 msgstr ""
 
