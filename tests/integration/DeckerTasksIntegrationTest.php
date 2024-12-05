@@ -113,16 +113,30 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      */
     private function simulate_ajax_save($data) {
         error_log('Simulating AJAX save with data: ' . print_r($data, true));
+        
+        // Verify the action is hooked
+        global $wp_filter;
+        error_log('Checking if save_decker_task action exists: ' . (isset($wp_filter['wp_ajax_save_decker_task']) ? 'yes' : 'no'));
+        if (isset($wp_filter['wp_ajax_save_decker_task'])) {
+            error_log('Hooks attached to save_decker_task: ' . print_r($wp_filter['wp_ajax_save_decker_task'], true));
+        }
+        
         $_POST = array_merge([
             'action' => 'save_decker_task',
             'nonce' => wp_create_nonce('save_decker_task_nonce'),
         ], $data);
 
         try {
+            error_log('About to trigger wp_ajax_save_decker_task action');
             do_action('wp_ajax_save_decker_task');
+            error_log('Action completed without exceptions');
         } catch (WPAjaxDieContinueException $e) {
+            error_log('Caught expected WPAjaxDieContinueException');
             unset($_POST['action']);
             unset($_POST['nonce']);
+        } catch (Exception $e) {
+            error_log('Caught unexpected exception: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -131,6 +145,15 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
      */
     public function test_create_task() {
         error_log('Starting test_create_task');
+        
+        // Verify post type is registered
+        $post_types = get_post_types(['name' => 'decker_task'], 'objects');
+        error_log('Registered post types: ' . print_r($post_types, true));
+        
+        if (!post_type_exists('decker_task')) {
+            throw new Exception('decker_task post type is not registered');
+        }
+        
         $task_data = [
             'task_id' => '',
             'title' => 'New Test Task',
