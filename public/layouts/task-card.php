@@ -229,25 +229,42 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Borrar comentario.
 function deleteComment(commentId) {
-	if (!confirm('Are you sure you want to delete this comment?')) {
-		return;
-	}
+    if (!confirm('<?php esc_html_e('Are you sure you want to delete this comment?', 'decker'); ?>')) {
+        return;
+    }
 
-	fetch(`/wp-json/wp/v2/comments/${commentId}`, {
-		method: 'DELETE',
-		headers: {
-			'Content-Type': 'application/json',
-			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
-		}
-	})
-	.then(response => response.json())
-	.then(data => {
-		if (data.status == 'trash') {
-			alert('Comment deleted.');
-		} else {
-			alert('Failed to delete comment.');
-		}
-	});
+    fetch(`/wp-json/wp/v2/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status == 'trash') {
+            // Find and remove the comment element
+            const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`).closest('.d-flex');
+            if (commentElement) {
+                commentElement.remove();
+                
+                // Update comment count
+                const commentCount = document.getElementById('comment-count');
+                if (commentCount) {
+                    const currentCount = parseInt(commentCount.textContent);
+                    if (!isNaN(currentCount)) {
+                        commentCount.textContent = currentCount - 1;
+                    }
+                }
+            }
+        } else {
+            alert('<?php esc_html_e('Failed to delete comment.', 'decker'); ?>');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('<?php esc_html_e('Error deleting comment.', 'decker'); ?>');
+    });
 }
 
 	// Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
