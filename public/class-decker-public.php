@@ -253,6 +253,7 @@ class Decker_Public {
 				array(
 					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
 					'url'          => esc_url( plugins_url( 'public/layouts/task-card.php', __DIR__ ) ),
+					'loadingMessage' => esc_html__( 'Loading content. Please wait.', 'decker' ),
 					'errorMessage' => esc_html__( 'Error loading content. Please try again.', 'decker' ),
 					'nonce'        => wp_create_nonce( 'decker_task_card' ),
 				)

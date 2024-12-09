@@ -910,6 +910,10 @@ msgid "You do not have permission to view this page."
 msgstr ""
 
 #: public/class-decker-public.php:256
+msgid "Loading content. Please wait."
+msgstr ""
+
+#: public/class-decker-public.php:257
 msgid "Error loading content. Please try again."
 msgstr ""
 

@@ -842,7 +842,7 @@ msgstr "Restablecer"
 msgid "Task"
 msgstr "Tarea"
 
-#: public/class-decker-public.php:256
+#: public/class-decker-public.php:257
 msgid "Error loading content. Please try again."
 msgstr "Error al cargar el contenido. Por favor, inténtelo de nuevo."
 
@@ -1229,3 +1229,7 @@ msgstr "No tienes permiso para gestionar etiquetas"
 #: includes/models/class-labelmanager.php:165
 msgid "You do not have permission to delete labels"
 msgstr "No tienes permiso para borrar etiquetas"
+
+#: public/class-decker-public.php:256
+msgid "Loading content. Please wait."
+msgstr "Cargando contenido. Por favor, espere."
