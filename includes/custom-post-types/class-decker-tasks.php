@@ -1945,13 +1945,10 @@ class Decker_Tasks {
 	 */
 	public function handle_task_comment_ajax() {
 
-
 		// Verify nonce.
 		if ( ! check_ajax_referer( 'task_comment_nonce', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'decker' ) ) );
 		}
-
-
 
 		// Get and validate data.
 		$task_id = isset( $_POST['task_id'] ) ? absint( $_POST['task_id'] ) : 0;
@@ -1962,9 +1959,6 @@ class Decker_Tasks {
 			wp_send_json_error( array( 'message' => __( 'Invalid comment data.', 'decker' ) ) );
 
 		}
-
-
-
 
 		// Use wp_handle_comment_submission() which handles all validation and filtering.
 		$commentdata = array(
@@ -1977,28 +1971,12 @@ class Decker_Tasks {
 			// 'comment_type' => 'comment',
 		);
 
-				error_log("content---------------------");
-
-		error_log(print_r($content, true));
-
-				error_log("end content---------------------");
-
-
-
 		// Let WordPress handle the comment submission.
 		$comment = wp_handle_comment_submission( $commentdata );
-
-
-				error_log("entremedias---------------------");
-
-		error_log(print_r($comment, true));
-
 
 		if ( is_wp_error( $comment ) ) {
 			wp_send_json_error( array( 'message' => $comment->get_error_message() ) );
 		}
-
-
 
 		// Prepare response data using WordPress functions.
 		$response = array(
@@ -2009,9 +1987,6 @@ class Decker_Tasks {
 			'date' => get_comment_date( get_option( 'date_format' ), $comment ),
 			'avatar_url' => get_avatar_url( $comment->user_id, array( 'size' => 48 ) ),
 		);
-
-		error_log("Adios---------------------");
-
 
 		wp_send_json_success( $response );
 	}
