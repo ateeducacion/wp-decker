@@ -484,9 +484,9 @@ function deleteComment(commentId) {
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
 					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text"></textarea>
-					<div class="invalid-feedback">Please enter a comment.</div>
+					<div class="invalid-feedback"><?php esc_html_e( 'Please enter a comment.', 'decker'; ?></div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
-						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-chat-1-line me-1"></i> Comment</button>
+						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-chat-1-line me-1"></i> <?php esc_attr_e( 'Comment', 'decker' ); ?></button>
 					</div>
 				</div>
 			</div>
