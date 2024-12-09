@@ -110,7 +110,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 
 			}
 
-			echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>';
+			// echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>';
 			echo '</div>';
 			echo '</div>';
 
@@ -242,7 +242,7 @@ function deleteComment(commentId) {
 	})
 	.then(response => response.json())
 	.then(data => {
-		if (data.deleted) {
+		if (data.status == 'trash') {
 			alert('Comment deleted.');
 		} else {
 			alert('Failed to delete comment.');
@@ -484,7 +484,7 @@ function deleteComment(commentId) {
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
 					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text"></textarea>
-					<div class="invalid-feedback"><?php esc_html_e( 'Please enter a comment.', 'decker'; ?></div>
+					<div class="invalid-feedback"><?php esc_html_e( 'Please enter a comment.', 'decker'); ?></div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
 						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-chat-1-line me-1"></i> <?php esc_attr_e( 'Comment', 'decker' ); ?></button>
 					</div>
