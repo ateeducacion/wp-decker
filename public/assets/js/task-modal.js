@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     jQuery('#task-modal').on('show.bs.modal', function (e) {
         var modal = jQuery(this);
-        modal.find('.modal-body').html('<p>' + jsdata.errorMessage + '</p>');
+        modal.find('.modal-body').html('<p>' + jsdata.loadingMessage + '</p>');
 
         var taskId = jQuery(e.relatedTarget).data('task-id'); // Can be 0 (new task).
         var url = jsdata.url;

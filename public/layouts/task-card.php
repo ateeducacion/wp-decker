@@ -110,7 +110,8 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 
 			}
 
-			echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>';
+			/* echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>'; */
+
 			echo '</div>';
 			echo '</div>';
 
@@ -121,99 +122,125 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 }
 ?>
 
-<?php
-/*
- Desactivados parte de comentarios
-TO-DO arreglar
 <script type="text/javascript">
-
+// Start of comment part
 var replyToCommentId = null;
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
 
-	if (document.getElementById('submit-comment')) {
-		document.getElementById('submit-comment').addEventListener('click', function() {
-			const commentText = document.getElementById('comment-text').value;
+
+	 initializeSendComments();
+	
+});
+
+function initializeSendComments() {
+
+	const commentTextArea = document.getElementById('comment-text');
+	const submitButton = document.getElementById('submit-comment');
+	
+	if (commentTextArea && submitButton) {
+		// Enable/disable submit button based on textarea content
+		commentTextArea.addEventListener('input', function() {
+			submitButton.disabled = this.value.trim() === '';
+		});
+
+		// Handle comment submission
+		submitButton.addEventListener('click', function() {
+			const commentText = commentTextArea.value;
 			const taskId = <?php echo wp_json_encode( $task_id ); ?>;
 			const parentId = replyToCommentId;
 
 			if (commentText.trim() === '') {
-				alert('Please enter a comment.');
 				return;
 			}
 
-			// Mostrar indicador de carga
-			const submitButton = document.getElementById('submit-comment');
+			// Show loading state
 			submitButton.disabled = true;
-			submitButton.textContent = 'Sending...';
+			submitButton.innerHTML = '<i class="ri-loader-2-line ri-spin me-1"></i> Sending...';
 
-			// Preparar los datos del comentario
-			const commentData = {
-				post: taskId,
-				content: commentText,
-				author: <?php echo get_current_user_id(); ?>, // Añadir el ID del usuario actual
-			};
+			const formData = new FormData();
+			formData.append('action', 'add_task_comment');
+			formData.append('task_id', taskId);
+			formData.append('comment_content', commentText);
+			formData.append('parent_id', parentId || 0);
+			formData.append('nonce', '<?php echo esc_attr( wp_create_nonce( 'task_comment_nonce' ) ); ?>');
 
-			// Añadir parentId solo si existe (para respuestas)
-			if (parentId) {
-				commentData.parent = parentId;
-			}
-
-
-			fetch('/wp-json/wp/v2/comments', {
+			fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
-				},
-				body: JSON.stringify(commentData),
-				credentials: 'same-origin' // Importante para incluir cookies de sesión)
+				body: formData,
+				credentials: 'same-origin'
 			})
-			.then(response => {
-				if (!response.ok) {
-					submitButton.disabled = false;
-					if (response.status === 409) {
-						throw new Error('Mensaje duplicado');
-					} else {
-
-						throw new Error('Error en la respuesta: ' + response.status);
-					}
-				}
-
-				return response.json();
-			})
+			.then(response => response.json())
 			.then(data => {
-				if (data.id) {
-					// Éxito - limpiar el formulario
-					document.getElementById('comment-text').value = '';
-					replyToCommentId = null;
+				if (data.success) {
+					// Clear form
+					commentTextArea.value = '';
+					if (replyToCommentId) {
+						document.getElementById('reply-indicator').classList.add('d-none');
+						replyToCommentId = null;
+					}
 
-					// Opcional: actualizar la lista de comentarios
-					// Puedes añadir aquí código para actualizar la UI
+					// Add new comment to the list
+					const commentsList = document.getElementById('comments-list');
+					const newComment = document.createElement('div');
+					newComment.className = 'd-flex align-items-start mb-2';
+					if (parentId) {
+						newComment.style.marginLeft = '20px';
+					}
+					
+					newComment.innerHTML = `
+						<img class="me-2 rounded-circle" src="${data.data.avatar_url}" alt="Avatar" height="32" />
+						<div class="w-100">
+							<h5 class="mt-0">${data.data.author} <small class="text-muted float-end">${data.data.date}</small></h5>
+							${data.data.content}
+							<br />
+							<a href="javascript:void(0);" onclick="deleteComment(${data.data.comment_id});" 
+							   class="text-muted d-inline-block mt-2 comment-delete" 
+							   data-comment-id="${data.data.comment_id}">
+								<i class="ri-delete-bin-line"></i> Delete
+							</a>
+							<!--<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" 
+							   data-comment-id="${data.data.comment_id}">
+								<i class="ri-reply-line"></i> Reply
+							</a>-->
+						</div>
+					`;
+					
+					if (parentId) {
+						// Find parent comment and append after it.
+						const parentComment = document.querySelector(`[data-comment-id="${parentId}"]`).closest('.d-flex');
+						parentComment.after(newComment);
+					} else {
+						// Append to main comments list.
+						commentsList.appendChild(newComment);
+					}
 
-					submitButton.disabled = true;
-
-					// alert('Comentario añadido exitosamente.');
+					// Update comment count.
+					const commentCount = document.getElementById('comment-count');
+					if (commentCount) {
+						commentCount.textContent = parseInt(commentCount.textContent) + 1;
+					}
 				} else {
-					throw new Error('No se recibió ID del comentario');
+					alert(data.message || 'Error adding comment.');
 				}
 			})
 			.catch(error => {
 				console.error('Error:', error);
-				alert('Error al añadir el comentario: ' + error.message);
+				alert('Error adding comment. Please try again.');
 			})
 			.finally(() => {
-				// Restaurar el botón
-
-				submitButton.textContent = 'Send';
+				// Reset button state
+				submitButton.disabled = commentTextArea.value.trim() === '';
+				submitButton.innerHTML = '<i class="ri-chat-1-line me-1"></i> Comment';
 			});
 		});
 	}
-});
+
+}
 
 // Borrar comentario.
 function deleteComment(commentId) {
-	if (!confirm('Are you sure you want to delete this comment?')) {
+	if (!confirm('<?php esc_html_e( 'Are you sure you want to delete this comment?', 'decker' ); ?>')) {
 		return;
 	}
 
@@ -221,21 +248,52 @@ function deleteComment(commentId) {
 		method: 'DELETE',
 		headers: {
 			'Content-Type': 'application/json',
-			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' )); ?>'
+			'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
 		}
 	})
 	.then(response => response.json())
 	.then(data => {
-		if (data.deleted) {
-			alert('Comment deleted.');
+		if (data.status == 'trash') {
+			// Find and remove the comment element
+			const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`).closest('.d-flex');
+			if (commentElement) {
+				commentElement.remove();
+				
+				// Update comment count
+				const commentCount = document.getElementById('comment-count');
+				if (commentCount) {
+					const currentCount = parseInt(commentCount.textContent);
+					if (!isNaN(currentCount)) {
+						commentCount.textContent = currentCount - 1;
+					}
+				}
+			}
 		} else {
-			alert('Failed to delete comment.');
+			alert('<?php esc_html_e( 'Failed to delete comment.', 'decker' ); ?>');
 		}
+	})
+	.catch(error => {
+		console.error('Error:', error);
+		alert('<?php esc_html_e( 'Error deleting comment.', 'decker' ); ?>');
 	});
 }
+
+	// Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
+	const commentText = document.getElementById('comment-text');
+	const submitCommentButton = document.getElementById('submit-comment');
+
+	if (commentText) {
+		commentText.addEventListener('input', function() {
+			if (commentText.value.trim() !== '') {
+				submitCommentButton.disabled = false;
+			} else {
+				submitCommentButton.disabled = true;
+			}
+		});
+	}
+
+// End of comment part
 </script>
-*/
-?>
 
 <!-- Task card -->
 <form id="task-form" class="needs-validation" target="_self" novalidate>
@@ -453,10 +511,10 @@ function deleteComment(commentId) {
 						<?php esc_html_e( 'Replying to', 'decker' ); ?> <span id="replying-to"></span>
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
-					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text" disabled></textarea>
-					<div class="invalid-feedback">Please enter a comment.</div>
+					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text"></textarea>
+					<div class="invalid-feedback"><?php esc_html_e( 'Please enter a comment.', 'decker' ); ?></div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
-						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-send-plane-2 me-1"></i> Send</button>
+						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-chat-1-line me-1"></i> <?php esc_attr_e( 'Comment', 'decker' ); ?></button>
 					</div>
 				</div>
 			</div>
@@ -995,6 +1053,7 @@ if (taskModal) {
 
 	// Inicializar otras funcionalidades que dependan del contenido cargado
 	initializeTaskPage();
+	initializeSendComments();
 });
 
 
@@ -1098,7 +1157,8 @@ function sendFormByAjax(event) {
 						}
 
 
-					  // TO-DO: Maybe will be better just close de the modal and update the the card, but we reload just for better debuggin
+					  // TO-DO: Maybe will be better just close de the modal and update the the card.
+					  // but we reload just for better debugging.
 					  // element.closest('.card').remove();
 
 					  // Reload the page if the request was successful
@@ -1133,21 +1193,5 @@ function sendFormByAjax(event) {
 		xhr.send(encodedData);
 	// });
 }
-
-	// Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
-	// const commentText = document.getElementById('comment-text');
-	// const submitCommentButton = document.getElementById('submit-comment');
-
-	// if (commentText) {
-	//     commentText.addEventListener('input', function() {
-	//         if (commentText.value.trim() !== '') {
-	//             submitCommentButton.disabled = false;
-	//         } else {
-	//             submitCommentButton.disabled = true;
-	//         }
-	//     });
-	// }
-
-
 
 </script>
