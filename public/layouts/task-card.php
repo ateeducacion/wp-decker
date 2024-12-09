@@ -121,12 +121,8 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 }
 ?>
 
-<?php
-/*
- Desactivados parte de comentarios
-TO-DO arreglar
 <script type="text/javascript">
-
+// Start of comment part
 var replyToCommentId = null;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -233,9 +229,23 @@ function deleteComment(commentId) {
 		}
 	});
 }
+
+	// Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
+	const commentText = document.getElementById('comment-text');
+	const submitCommentButton = document.getElementById('submit-comment');
+
+	if (commentText) {
+	    commentText.addEventListener('input', function() {
+	        if (commentText.value.trim() !== '') {
+	            submitCommentButton.disabled = false;
+	        } else {
+	            submitCommentButton.disabled = true;
+	        }
+	    });
+	}
+
+// End of comment part
 </script>
-*/
-?>
 
 <!-- Task card -->
 <form id="task-form" class="needs-validation" target="_self" novalidate>
@@ -453,10 +463,10 @@ function deleteComment(commentId) {
 						<?php esc_html_e( 'Replying to', 'decker' ); ?> <span id="replying-to"></span>
 						<button type="button" class="btn-close float-end" id="cancel-reply"></button>
 					</div>
-					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text" disabled></textarea>
+					<textarea rows="3" class="form-control border-0 resize-none" placeholder="<?php esc_attr_e( 'Write your comment...', 'decker' ); ?>" id="comment-text" name="comment-text"></textarea>
 					<div class="invalid-feedback">Please enter a comment.</div>
 					<div class="p-2 bg-light d-flex justify-content-between align-items-center" id="comment-actions">
-						<button type="button" class="btn btn-sm btn-success" id="submit-comment" disabled><i class="ri-send-plane-2 me-1"></i> Send</button>
+						<button type="button" class="btn btn-sm btn-success" id="submit-comment"><i class="ri-send-plane-2 me-1"></i> Send</button>
 					</div>
 				</div>
 			</div>
@@ -1133,21 +1143,5 @@ function sendFormByAjax(event) {
 		xhr.send(encodedData);
 	// });
 }
-
-	// Opcional: Habilitar el botón de enviar cuando se completa el textarea de comentarios
-	// const commentText = document.getElementById('comment-text');
-	// const submitCommentButton = document.getElementById('submit-comment');
-
-	// if (commentText) {
-	//     commentText.addEventListener('input', function() {
-	//         if (commentText.value.trim() !== '') {
-	//             submitCommentButton.disabled = false;
-	//         } else {
-	//             submitCommentButton.disabled = true;
-	//         }
-	//     });
-	// }
-
-
 
 </script>
