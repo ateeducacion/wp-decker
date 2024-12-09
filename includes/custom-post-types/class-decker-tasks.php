@@ -1944,10 +1944,14 @@ class Decker_Tasks {
 	 * Handle AJAX comment submission for tasks using WordPress native functions.
 	 */
 	public function handle_task_comment_ajax() {
+
+
 		// Verify nonce.
 		if ( ! check_ajax_referer( 'task_comment_nonce', 'nonce', false ) ) {
 			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'decker' ) ) );
 		}
+
+
 
 		// Get and validate data.
 		$task_id = isset( $_POST['task_id'] ) ? absint( $_POST['task_id'] ) : 0;
@@ -1956,25 +1960,45 @@ class Decker_Tasks {
 
 		if ( ! $task_id || ! $content ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid comment data.', 'decker' ) ) );
+
 		}
+
+
+
 
 		// Use wp_handle_comment_submission() which handles all validation and filtering.
 		$commentdata = array(
 			'comment_post_ID' => $task_id,
 			'comment_parent' => $parent_id,
-			'comment_content' => $content,
-			'comment_author' => wp_get_current_user()->display_name,
-			'comment_author_email' => wp_get_current_user()->user_email,
-			'comment_author_url' => wp_get_current_user()->user_url,
-			'comment_type' => 'comment',
+			'comment' => $content,
+			'author' => wp_get_current_user()->display_name,
+			'email' => wp_get_current_user()->user_email,
+			'url' => wp_get_current_user()->user_url,
+			// 'comment_type' => 'comment',
 		);
+
+				error_log("content---------------------");
+
+		error_log(print_r($content, true));
+
+				error_log("end content---------------------");
+
+
 
 		// Let WordPress handle the comment submission.
 		$comment = wp_handle_comment_submission( $commentdata );
 
+
+				error_log("entremedias---------------------");
+
+		error_log(print_r($comment, true));
+
+
 		if ( is_wp_error( $comment ) ) {
 			wp_send_json_error( array( 'message' => $comment->get_error_message() ) );
 		}
+
+
 
 		// Prepare response data using WordPress functions.
 		$response = array(
@@ -1985,6 +2009,9 @@ class Decker_Tasks {
 			'date' => get_comment_date( get_option( 'date_format' ), $comment ),
 			'avatar_url' => get_avatar_url( $comment->user_id, array( 'size' => 48 ) ),
 		);
+
+		error_log("Adios---------------------");
+
 
 		wp_send_json_success( $response );
 	}
