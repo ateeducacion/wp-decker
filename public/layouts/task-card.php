@@ -127,6 +127,14 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 var replyToCommentId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+
+
+	 initializeSendComments();
+	
+});
+
+function initializeSendComments() {
+
 	const commentTextArea = document.getElementById('comment-text');
 	const submitButton = document.getElementById('submit-comment');
 	
@@ -181,19 +189,20 @@ document.addEventListener('DOMContentLoaded', function() {
 					}
 					
 					newComment.innerHTML = `
-						<img class="me-2 rounded-circle" src="${data.avatar_url}" alt="Avatar" height="32" />
+						<img class="me-2 rounded-circle" src="${data.data.avatar_url}" alt="Avatar" height="32" />
 						<div class="w-100">
-							<h5 class="mt-0">${data.author} <small class="text-muted float-end">${data.date}</small></h5>
-							${data.content}
-							<a href="javascript:void(0);" onclick="deleteComment(${data.comment_id});" 
+							<h5 class="mt-0">${data.data.author} <small class="text-muted float-end">${data.data.date}</small></h5>
+							${data.data.content}
+							<br />
+							<a href="javascript:void(0);" onclick="deleteComment(${data.data.comment_id});" 
 							   class="text-muted d-inline-block mt-2 comment-delete" 
-							   data-comment-id="${data.comment_id}">
+							   data-comment-id="${data.data.comment_id}">
 								<i class="ri-delete-bin-line"></i> Delete
 							</a>
-							<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" 
-							   data-comment-id="${data.comment_id}">
+							<!--<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" 
+							   data-comment-id="${data.data.comment_id}">
 								<i class="ri-reply-line"></i> Reply
-							</a>
+							</a>-->
 						</div>
 					`;
 					
@@ -226,7 +235,8 @@ document.addEventListener('DOMContentLoaded', function() {
 			});
 		});
 	}
-});
+
+}
 
 // Borrar comentario.
 function deleteComment(commentId) {
@@ -1043,6 +1053,7 @@ if (taskModal) {
 
 	// Inicializar otras funcionalidades que dependan del contenido cargado
 	initializeTaskPage();
+	initializeSendComments();
 });
 
 

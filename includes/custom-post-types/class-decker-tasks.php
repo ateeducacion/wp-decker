@@ -1982,7 +1982,7 @@ class Decker_Tasks {
 		$response = array(
 			'success' => true,
 			'comment_id' => $comment->comment_ID,
-			'content' => apply_filters( 'comment_text', $comment->comment_content ),
+			'content' => apply_filters( 'comment', $comment->comment_content ),
 			'author' => get_comment_author( $comment ),
 			'date' => get_comment_date( get_option( 'date_format' ), $comment ),
 			'avatar_url' => get_avatar_url( $comment->user_id, array( 'size' => 48 ) ),
