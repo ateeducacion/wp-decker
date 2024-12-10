@@ -593,7 +593,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'mark_user_date_relation' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
@@ -605,7 +605,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'unmark_user_date_relation' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
@@ -617,7 +617,7 @@ class Decker_Tasks {
 				'methods'             => 'PUT',
 				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
@@ -629,7 +629,7 @@ class Decker_Tasks {
 				'methods'             => 'PUT',
 				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
@@ -641,7 +641,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'remove_user_from_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
@@ -653,7 +653,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'assign_user_to_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
@@ -665,7 +665,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'archive_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'edit' );
+					return current_user_can( 'read' );
 				},
 			)
 		);
