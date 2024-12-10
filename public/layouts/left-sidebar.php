@@ -248,7 +248,14 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 	  </li>
 
 
+	  <?php
+
+		if ( current_user_can( 'manage_options' ) ) {
+
+			?>
+
 	  <!-- Utilities -->
+
 	  <li class="side-nav-item" <?php echo esc_attr( decker_is_active_page( 'utilities' ) ); ?>>
 		<a
 		  data-bs-toggle="collapse"
@@ -287,7 +294,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 				"><?php esc_html_e( 'Labels', 'decker' ); ?></a></li>
 
 				<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'board' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( count( BoardManager::get_all_boards() ) ); ?></span><a href="
-									  <?php
+										<?php
 										echo esc_url(
 											add_query_arg(
 												array(
@@ -300,10 +307,10 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 										?>
 				"><?php esc_html_e( 'Boards', 'decker' ); ?></a></li>
 
-				<?php
-				/*
-				TO-DO: Add the actions manager
-				<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'active' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="<?php
+				  <?php
+					/*
+					TO-DO: Add the actions manager
+					<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'active' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="<?php
 					echo esc_url( esc_url( add_query_arg(
 						array(
 							'decker_page' => 'term-manager',
@@ -311,14 +318,18 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 						),
 						home_url( '/' ) )
 					);
-				?>"><?php esc_html_e('Actions', 'decker'); ?></a></li>
-				*/
-				?>
+					?>"><?php esc_html_e('Actions', 'decker'); ?></a></li>
+					*/
+					?>
 
 		  </ul>
 		</div>
 	  </li>
+			<?php
 
+		}
+
+		?>
 
 
 	</ul>
