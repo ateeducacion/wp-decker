@@ -1,14 +1,12 @@
 {
   "$schema": "https://playground.wordpress.net/blueprint-schema.json",
-  "name": "Decker WordPress Blueprint",
-  "description": "A Decker WordPress Playground setup",
-  "language": "es_ES",
   "preferredVersions": {
     "php": "latest",
     "wp": "latest"
   },
   "siteOptions": {
-    "blogname": "WordPress Playground Decker Demo"
+    "blogname": "WordPress Playground Decker Demo",
+    "locale": "es_ES"
   },
   "plugins": [
     "https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip"
