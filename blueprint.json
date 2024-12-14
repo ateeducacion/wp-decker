@@ -5,8 +5,7 @@
     "wp": "latest"
   },
   "siteOptions": {
-    "blogname": "WordPress Playground Decker Demo",
-    "language": "es_ES"
+    "blogname": "WordPress Playground Decker Demo"
   },
   "steps": [
     {
