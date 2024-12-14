@@ -188,6 +188,14 @@ msgstr ""
 msgid "Go to Decker"
 msgstr ""
 
+#: includes/class-decker-demo-data.php:32
+msgid "Warning"
+msgstr ""
+
+#: includes/class-decker-demo-data.php:32
+msgid "You are running this site with demo data."
+msgstr ""
+
 #: includes/class-decker-email-to-post.php:50
 #: includes/class-decker-email-to-post.php:55
 msgid "Access denied"
@@ -279,7 +287,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-boards.php:61
 #: public/app-term-manager.php:115
 #: public/layouts/left-sidebar.php:207
-#: public/layouts/left-sidebar.php:301
+#: public/layouts/left-sidebar.php:308
 msgid "Boards"
 msgstr ""
 
@@ -334,8 +342,8 @@ msgstr ""
 #: includes/custom-post-types/class-decker-labels.php:60
 #: includes/custom-post-types/class-decker-tasks.php:1046
 #: public/app-term-manager.php:119
-#: public/layouts/left-sidebar.php:287
-#: public/layouts/task-card.php:429
+#: public/layouts/left-sidebar.php:294
+#: public/layouts/task-card.php:439
 msgid "Labels"
 msgstr ""
 
@@ -344,7 +352,7 @@ msgstr ""
 #: public/app-priority.php:171
 #: public/app-priority.php:385
 #: public/app-tasks.php:204
-#: public/layouts/task-card.php:383
+#: public/layouts/task-card.php:393
 msgid "Stack"
 msgstr ""
 
@@ -427,7 +435,7 @@ msgid "Task User and Date"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1037
-#: public/layouts/task-card.php:455
+#: public/layouts/task-card.php:465
 msgid "Attachments"
 msgstr ""
 
@@ -435,12 +443,12 @@ msgstr ""
 #: public/app-priority.php:170
 #: public/app-priority.php:384
 #: public/app-tasks.php:203
-#: public/layouts/task-card.php:336
+#: public/layouts/task-card.php:346
 msgid "Board"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1078
-#: public/layouts/task-card.php:391
+#: public/layouts/task-card.php:401
 msgid "Due Date"
 msgstr ""
 
@@ -455,14 +463,14 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:1089
 #: public/app-kanban-my.php:100
 #: public/app-kanban.php:141
-#: public/layouts/task-card.php:380
+#: public/layouts/task-card.php:390
 msgid "In Progress"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1090
 #: public/app-kanban-my.php:115
 #: public/app-kanban.php:156
-#: public/layouts/task-card.php:381
+#: public/layouts/task-card.php:391
 msgid "Done"
 msgstr ""
 
@@ -471,7 +479,7 @@ msgid "Nextcloud Card ID"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1146
-#: public/layouts/task-card.php:325
+#: public/layouts/task-card.php:335
 msgid "Select Board"
 msgstr ""
 
@@ -547,11 +555,11 @@ msgstr ""
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1949
+#: includes/custom-post-types/class-decker-tasks.php:1950
 msgid "Security check failed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1958
+#: includes/custom-post-types/class-decker-tasks.php:1959
 msgid "Invalid comment data."
 msgstr ""
 
@@ -632,7 +640,7 @@ msgid "Order:"
 msgstr ""
 
 #: includes/models/class-task.php:516
-#: public/layouts/task-card.php:449
+#: public/layouts/task-card.php:459
 msgid "Comments"
 msgstr ""
 
@@ -784,7 +792,7 @@ msgstr ""
 
 #: public/app-priority.php:172
 #: public/app-priority.php:386
-#: public/layouts/task-card.php:298
+#: public/layouts/task-card.php:308
 msgid "Title"
 msgstr ""
 
@@ -839,7 +847,7 @@ msgid "P."
 msgstr ""
 
 #: public/app-tasks.php:205
-#: public/layouts/task-card.php:445
+#: public/layouts/task-card.php:455
 msgid "Description"
 msgstr ""
 
@@ -871,7 +879,7 @@ msgid "Leave empty for automatic generation from name"
 msgstr ""
 
 #: public/app-term-manager.php:277
-#: public/layouts/task-card.php:603
+#: public/layouts/task-card.php:613
 msgid "Save"
 msgstr ""
 
@@ -941,7 +949,7 @@ msgstr ""
 msgid "Apps"
 msgstr ""
 
-#: public/layouts/left-sidebar.php:265
+#: public/layouts/left-sidebar.php:272
 msgid "Utilities"
 msgstr ""
 
@@ -1067,172 +1075,172 @@ msgid "Send"
 msgstr ""
 
 #: public/layouts/task-card.php:109
-#: public/layouts/task-card.php:530
-#: public/layouts/task-card.php:946
+#: public/layouts/task-card.php:540
+#: public/layouts/task-card.php:956
 msgid "Delete"
 msgstr ""
 
-#: public/layouts/task-card.php:233
+#: public/layouts/task-card.php:243
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/layouts/task-card.php:262
+#: public/layouts/task-card.php:272
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/layouts/task-card.php:267
+#: public/layouts/task-card.php:277
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/layouts/task-card.php:297
+#: public/layouts/task-card.php:307
 msgid "Task title"
 msgstr ""
 
-#: public/layouts/task-card.php:298
+#: public/layouts/task-card.php:308
 msgid "MAXIMUM PRIORITY"
 msgstr ""
 
-#: public/layouts/task-card.php:299
+#: public/layouts/task-card.php:309
 msgid "Please provide a title."
 msgstr ""
 
-#: public/layouts/task-card.php:307
+#: public/layouts/task-card.php:317
 msgid "Maximum Priority"
 msgstr ""
 
-#: public/layouts/task-card.php:312
+#: public/layouts/task-card.php:322
 msgid "For today"
 msgstr ""
 
-#: public/layouts/task-card.php:337
+#: public/layouts/task-card.php:347
 msgid "Please select a board."
 msgstr ""
 
-#: public/layouts/task-card.php:349
+#: public/layouts/task-card.php:359
 msgid "Select Author"
 msgstr ""
 
-#: public/layouts/task-card.php:370
+#: public/layouts/task-card.php:380
 msgid "Author"
 msgstr ""
 
-#: public/layouts/task-card.php:371
+#: public/layouts/task-card.php:381
 msgid "Please select an author."
 msgstr ""
 
-#: public/layouts/task-card.php:379
+#: public/layouts/task-card.php:389
 msgid "To Do"
 msgstr ""
 
-#: public/layouts/task-card.php:390
+#: public/layouts/task-card.php:400
 msgid "Select date"
 msgstr ""
 
-#: public/layouts/task-card.php:392
+#: public/layouts/task-card.php:402
 msgid "Please select a due date."
 msgstr ""
 
-#: public/layouts/task-card.php:402
+#: public/layouts/task-card.php:412
 msgid "Assign to"
 msgstr ""
 
-#: public/layouts/task-card.php:467
+#: public/layouts/task-card.php:477
 msgid "History"
 msgstr ""
 
-#: public/layouts/task-card.php:473
+#: public/layouts/task-card.php:483
 msgid "Gantt"
 msgstr ""
 
-#: public/layouts/task-card.php:493
+#: public/layouts/task-card.php:503
 msgid "No comments yet."
 msgstr ""
 
-#: public/layouts/task-card.php:501
+#: public/layouts/task-card.php:511
 msgid "Replying to"
 msgstr ""
 
-#: public/layouts/task-card.php:504
+#: public/layouts/task-card.php:514
 msgid "Write your comment..."
 msgstr ""
 
-#: public/layouts/task-card.php:505
+#: public/layouts/task-card.php:515
 msgid "Please enter a comment."
 msgstr ""
 
-#: public/layouts/task-card.php:507
+#: public/layouts/task-card.php:517
 msgid "Comment"
 msgstr ""
 
-#: public/layouts/task-card.php:538
+#: public/layouts/task-card.php:548
 msgid "Upload"
 msgstr ""
 
-#: public/layouts/task-card.php:548
+#: public/layouts/task-card.php:558
 msgid "Nickname"
 msgstr ""
 
-#: public/layouts/task-card.php:549
+#: public/layouts/task-card.php:559
 msgid "Date"
 msgstr ""
 
-#: public/layouts/task-card.php:590
+#: public/layouts/task-card.php:600
 msgid "Under construction..."
 msgstr ""
 
-#: public/layouts/task-card.php:606
+#: public/layouts/task-card.php:616
 msgid "Toggle Dropdown"
 msgstr ""
 
-#: public/layouts/task-card.php:693
+#: public/layouts/task-card.php:703
 msgid "Show HTML source"
 msgstr ""
 
-#: public/layouts/task-card.php:694
+#: public/layouts/task-card.php:704
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/layouts/task-card.php:695
+#: public/layouts/task-card.php:705
 msgid "OK"
 msgstr ""
 
-#: public/layouts/task-card.php:696
+#: public/layouts/task-card.php:706
 msgid "Cancel"
 msgstr ""
 
-#: public/layouts/task-card.php:738
+#: public/layouts/task-card.php:748
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/layouts/task-card.php:818
+#: public/layouts/task-card.php:828
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/layouts/task-card.php:843
+#: public/layouts/task-card.php:853
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/layouts/task-card.php:917
+#: public/layouts/task-card.php:927
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/layouts/task-card.php:965
+#: public/layouts/task-card.php:975
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/layouts/task-card.php:1167
+#: public/layouts/task-card.php:1178
 msgid "Server response error."
 msgstr ""
 
-#: public/layouts/task-card.php:1168
+#: public/layouts/task-card.php:1179
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/layouts/task-card.php:1174
+#: public/layouts/task-card.php:1185
 msgid "Request error."
 msgstr ""
 
-#: public/layouts/task-card.php:1175
+#: public/layouts/task-card.php:1186
 msgid "Error saving task."
 msgstr ""
 

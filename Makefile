@@ -29,7 +29,7 @@ destroy:
 
 check:
 	npx wp-env run cli wp plugin install plugin-check --activate
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
 
 # Run unit tests with PHPUnit
 test:

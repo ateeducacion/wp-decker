@@ -68,9 +68,9 @@ class Decker {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
-		
-		// Hook demo data creation to init
-		add_action('init', array($this, 'create_demo_data'));
+
+		// Hook demo data creation to init.
+		add_action( 'init', array( $this, 'maybe_create_demo_data' ) );
 	}
 
 	/**
@@ -373,10 +373,8 @@ class Decker {
 
 	/**
 	 * Create demo data if the version is 0.0.0
-	 *
 	 */
-	public function create_demo_data() {
-
+	public function maybe_create_demo_data() {
 
 		// If we're in development version and there are no tasks, create sample data.
 		if ( defined( 'DECKER_VERSION' ) && DECKER_VERSION === '0.0.0' ) {
@@ -394,6 +392,5 @@ class Decker {
 				$demo_data->create_sample_data();
 			}
 		}
-
 	}
 }

@@ -29,7 +29,7 @@ class Decker_Demo_Data {
 		// Set up alert settings for demo data.
 		$options = get_option( 'decker_settings', array() );
 		$options['alert_color'] = 'danger';
-		$options['alert_message'] = '<strong>' . __('Attention', 'decker') . ':</strong> ' . __('You are running this site with demo data.', 'decker');
+		$options['alert_message'] = '<strong>' . __( 'Warning', 'decker' ) . ':</strong> ' . __( 'You are running this site with demo data.', 'decker' );
 		update_option( 'decker_settings', $options );
 
 		// Restore original user.
