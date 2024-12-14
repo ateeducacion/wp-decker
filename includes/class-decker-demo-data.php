@@ -239,14 +239,15 @@ class Decker_Demo_Data {
 	 */
 	private function custom_rand( $min = 0, $max = PHP_INT_MAX ) {
 
-		// Use wp_rand .
-		$base_random = wp_rand( $min, $max );
+		// Fallback in case wp_rand() doesn't work correctly.
+		$base_random = function_exists( 'wp_rand' ) ? wp_rand( $min, $max ) : mt_rand( $min, $max );
 
-		// Add extra randomness based on time and hashing.
+		// Add extra randomness using a hash-based approach.
 		$seed = microtime( true ) . uniqid( '', true );
-		$hash = md5( $seed . $base_random );
+		$hash = hash( 'sha256', $seed . $base_random );
 		$extra_random = hexdec( substr( $hash, 0, 8 ) );
 
+		// Ensure the result falls within the range.
 		return $min + ( $extra_random % ( $max - $min + 1 ) );
 	}
 }
