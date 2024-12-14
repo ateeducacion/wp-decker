@@ -20,6 +20,10 @@ Decker transforms your WordPress installation into a task management powerhouse 
 - [Development](development.md)
 - [API Reference](api-reference.md)
 
+## Try it Online
+
+You can try Decker without installing it using [WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/main/blueprint.json). This will give you a temporary WordPress installation with Decker pre-installed and configured.
+
 ## Getting Started
 
 1. Install the plugin through WordPress plugin manager or manual upload
