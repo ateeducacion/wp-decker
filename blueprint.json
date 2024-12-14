@@ -5,8 +5,7 @@
     "wp": "latest"
   },
   "siteOptions": {
-    "blogname": "WordPress Playground Decker Demo",
-    "language": "es_ES"
+    "blogname": "WordPress Playground Decker Demo"
   },
   "plugins": [
     "https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip"
@@ -15,6 +14,14 @@
     {
       "step": "setSiteLanguage",
       "language": "es_ES"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once('/wordpress/wp-load.php'); wp_insert_user(array('user_login' => 'test_user_1', 'user_email' => 'test1@example.com', 'user_pass' => wp_generate_password(), 'role' => 'editor')); ?>"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require_once('/wordpress/wp-load.php'); wp_insert_user(array('user_login' => 'test_user_2', 'user_email' => 'test2@example.com', 'user_pass' => wp_generate_password(), 'role' => 'editor')); ?>"
     },
     {
       "step": "runPHP",
