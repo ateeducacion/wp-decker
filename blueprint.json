@@ -26,8 +26,15 @@
     },
     {
       "step": "installPlugin",
-      "url": "https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip",
-      "activate": true
+      "pluginZipFile": {
+        "resource": "url",
+        "url": "https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip"
+      },
+      "options": {
+        "activate": true
+      }
+
+
     }
   ],
   "features": {
