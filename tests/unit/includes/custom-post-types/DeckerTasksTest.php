@@ -47,10 +47,9 @@ class DeckerTasksTest extends WP_UnitTestCase {
 		$result = wp_insert_term( 'Board TEST 1', 'decker_board' );
 
 		if ( is_wp_error( $result ) ) {
-		    error_log( 'Error inserting term: ' . $result->get_error_message() );
-		    $this->fail( 'wp_insert_term failed: ' . $result->get_error_message() );
+			error_log( 'Error inserting term: ' . $result->get_error_message() );
+			$this->fail( 'wp_insert_term failed: ' . $result->get_error_message() );
 		}
-
 
 		$board_id = $result['term_id'];
 
@@ -126,8 +125,8 @@ class DeckerTasksTest extends WP_UnitTestCase {
 		// Create terms for boards and labels.
 		$result = wp_insert_term( 'Board TEST ORDER 1', 'decker_board' );
 		if ( is_wp_error( $result ) ) {
-		    error_log( 'Error inserting term: ' . $result->get_error_message() );
-		    $this->fail( 'wp_insert_term failed: ' . $result->get_error_message() );
+			error_log( 'Error inserting term: ' . $result->get_error_message() );
+			$this->fail( 'wp_insert_term failed: ' . $result->get_error_message() );
 		}
 		$board_id = $result['term_id'];
 
@@ -138,12 +137,12 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'post_type'    => 'decker_task',
 				'post_status'  => 'publish',
 				'menu_order'   => 1,
-	            'tax_input'    => array(
-	                'decker_board' => array( $board_id ),
-	            ),
-	            'meta_input'   => array(
-	                'stack' => 'to-do',
-	            ),
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
 			)
 		);
 
@@ -169,20 +168,20 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'orderby'     => 'menu_order',
 				'order'       => 'ASC',
 				'fields'      => 'ids',
-	            'tax_query'   => array(
-	                array(
-	                    'taxonomy' => 'decker_board',
-	                    'field'    => 'term_id',
-	                    'terms'    => $board_id,
-	                ),
-	            ),
-	            'meta_query'  => array(
-	                array(
-	                    'key'     => 'stack',
-	                    'value'   => 'to-do',
-	                    'compare' => '=',
-	                ),
-	            ),
+				'tax_query'   => array(
+					array(
+						'taxonomy' => 'decker_board',
+						'field'    => 'term_id',
+						'terms'    => $board_id,
+					),
+				),
+				'meta_query'  => array(
+					array(
+						'key'     => 'stack',
+						'value'   => 'to-do',
+						'compare' => '=',
+					),
+				),
 			)
 		);
 
@@ -196,20 +195,20 @@ class DeckerTasksTest extends WP_UnitTestCase {
 				'orderby'     => 'menu_order',
 				'order'       => 'ASC',
 				'fields'      => 'ids',
-	            'tax_query'   => array(
-	                array(
-	                    'taxonomy' => 'decker_board',
-	                    'field'    => 'term_id',
-	                    'terms'    => $board_id,
-	                ),
-	            ),	
-	            'meta_query'  => array(
-	                array(
-	                    'key'     => 'stack',
-	                    'value'   => 'to-do',
-	                    'compare' => '=',
-	                ),
-	            ),	            			
+				'tax_query'   => array(
+					array(
+						'taxonomy' => 'decker_board',
+						'field'    => 'term_id',
+						'terms'    => $board_id,
+					),
+				),
+				'meta_query'  => array(
+					array(
+						'key'     => 'stack',
+						'value'   => 'to-do',
+						'compare' => '=',
+					),
+				),
 			)
 		);
 

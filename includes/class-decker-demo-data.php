@@ -130,13 +130,13 @@ class Decker_Demo_Data {
 				$post_content = "Content for task $j in board {$board->name}.";
 
 				// Assign random labels (0 to 3 labels).
-				$num_labels = wp_rand( 0, 3 );
+				$num_labels = custom_rand( 0, 3 );
 				$assigned_labels = ( $num_labels > 0 && ! empty( $labels ) )
 					? $this->wp_rand_elements( $labels, $num_labels )
 					: array();
 
 				// Assign random users (1 to 3 users).
-				$num_users = wp_rand( 1, 3 );
+				$num_users = custom_rand( 1, 3 );
 				$assigned_users = $this->wp_rand_elements( $user_ids, $num_users );
 
 				// Generate additional fields.
@@ -171,7 +171,7 @@ class Decker_Demo_Data {
 	 * @return string Color in hexadecimal format (e.g., #a3f4c1).
 	 */
 	private function generate_random_color() {
-		return sprintf( '#%06X', wp_rand( 0, 0xFFFFFF ) );
+		return sprintf( '#%06X', custom_rand( 0, 0xFFFFFF ) );
 	}
 
 	/**
@@ -203,7 +203,7 @@ class Decker_Demo_Data {
 	 * @return bool
 	 */
 	private function random_boolean( $true_probability = 0.5 ) {
-		return ( wp_rand() / mt_getrandmax() ) < $true_probability;
+		return ( custom_rand() / mt_getrandmax() ) < $true_probability;
 	}
 
 	/**
@@ -216,7 +216,7 @@ class Decker_Demo_Data {
 	private function random_date( $start, $end ) {
 		$min = strtotime( $start );
 		$max = strtotime( $end );
-		$timestamp = wp_rand( $min, $max );
+		$timestamp = custom_rand( $min, $max );
 		return ( new DateTime() )->setTimestamp( $timestamp );
 	}
 
@@ -228,5 +228,16 @@ class Decker_Demo_Data {
 	private function random_stack() {
 		$stacks = array( 'to-do', 'in-progress', 'done' );
 		return $stacks[ array_rand( $stacks ) ];
+	}
+
+	/**
+	 * Custom random number generator for WordPress Playground.
+	 *
+	 * @param int $min Minimum value.
+	 * @param int $max Maximum value.
+	 * @return int Random number between $min and $max.
+	 */
+	private function custom_rand( $min = 0, $max = PHP_INT_MAX ) {
+		return rand( $min, $max );
 	}
 }
