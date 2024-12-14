@@ -47,7 +47,7 @@ if ( ! defined( 'DECKER_TASK' ) ) {
 }
 
 
-// Initialize variables from URL parameters for new tasks
+// Initialize variables from URL parameters for new tasks.
 $task_id = 0;
 $board_slug = '';
 $initial_title = '';
@@ -56,33 +56,33 @@ $initial_stack = 'to-do';
 $initial_max_priority = false;
 
 if ( isset( $_GET['id'] ) ) {
-    $task_id = intval( $_GET['id'] );
+	$task_id = intval( $_GET['id'] );
 }
 
-// Handle URL parameters for new task creation
-if ( isset( $_GET['type'] ) && $_GET['type'] === 'new' ) {
-    if ( isset( $_GET['title'] ) ) {
-        $initial_title = sanitize_text_field( wp_unslash( $_GET['title'] ) );
-    }
-    if ( isset( $_GET['description'] ) ) {
-        $initial_description = wp_kses( wp_unslash( $_GET['description'] ), Decker::get_allowed_tags() );
-    }
-    if ( isset( $_GET['board'] ) ) {
-        $board_slug = sanitize_text_field( wp_unslash( $_GET['board'] ) );
-    }
-    if ( isset( $_GET['stack'] ) ) {
-        $initial_stack = sanitize_text_field( wp_unslash( $_GET['stack'] ) );
-    }
-    if ( isset( $_GET['maximum_priority'] ) && $_GET['maximum_priority'] === '1' ) {
-        $initial_max_priority = true;
-    }
+// Handle URL parameters for new task creation.
+if ( isset( $_GET['type'] ) && 'new' === $_GET['type'] ) {
+	if ( isset( $_GET['title'] ) ) {
+		$initial_title = sanitize_text_field( wp_unslash( $_GET['title'] ) );
+	}
+	if ( isset( $_GET['description'] ) ) {
+		$initial_description = wp_kses( wp_unslash( $_GET['description'] ), Decker::get_allowed_tags() );
+	}
+	if ( isset( $_GET['board'] ) ) {
+		$board_slug = sanitize_text_field( wp_unslash( $_GET['board'] ) );
+	}
+	if ( isset( $_GET['stack'] ) ) {
+		$initial_stack = sanitize_text_field( wp_unslash( $_GET['stack'] ) );
+	}
+	if ( isset( $_GET['maximum_priority'] ) && '1' === $_GET['maximum_priority'] ) {
+		$initial_max_priority = true;
+	}
 }
 
 $task = new Task( $task_id );
 
-// If no board_slug from new task parameters, try to get it from GET
+// If no board_slug from new task parameters, try to get it from GET.
 if ( empty( $board_slug ) && isset( $_GET['slug'] ) ) {
-    $board_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
+	$board_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
 }
 
 $disabled = false;
