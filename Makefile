@@ -20,6 +20,13 @@ up: check-docker
 down: check-docker
 	npx wp-env stop
 
+clean:
+	npx wp-env clean all
+
+destroy:
+	npx wp-env destroy
+
+
 check:
 	npx wp-env run cli wp plugin install plugin-check --activate
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions
