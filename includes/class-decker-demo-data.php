@@ -238,6 +238,15 @@ class Decker_Demo_Data {
 	 * @return int Random number between $min and $max.
 	 */
 	private function custom_rand( $min = 0, $max = PHP_INT_MAX ) {
-		return rand( $min, $max );
+
+		// Use wp_rand .
+		$base_random = wp_rand( $min, $max );
+
+		// Add extra randomness based on time and hashing.
+		$seed = microtime( true ) . uniqid( '', true );
+		$hash = md5( $seed . $base_random );
+		$extra_random = hexdec( substr( $hash, 0, 8 ) );
+
+		return $min + ( $extra_random % ( $max - $min + 1 ) );
 	}
 }
