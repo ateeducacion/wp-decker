@@ -13,7 +13,7 @@
 
 Try Decker instantly in your browser using WordPress Playground! The demo includes sample data to help you explore the features. Note that all changes will be lost when you close the browser window, as everything runs locally in your browser.
 
-[Launch Demo →](https://playground.wordpress.net/?plugin=https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip&language=en_US&url=%2F%3Fdecker_page%3Dpriority)
+[Launch Demo →](https://playground.wordpress.net/?plugin=https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip&language=es_ES&url=%2F%3Fdecker_page%3Dpriority)
 
 ### Key Features
 
