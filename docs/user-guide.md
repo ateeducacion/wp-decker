@@ -15,13 +15,37 @@ The board is divided into columns representing different stages of task progress
 ### Managing Tasks
 
 #### Creating Tasks
-1. Click the "+" button in any column
-2. Fill in the task details:
-   - Title (required)
-   - Description
-   - Priority level
-   - Due date
-   - Assignee
+
+There are two ways to create tasks:
+
+1. Through the Interface:
+   - Click the "+" button in any column
+   - Fill in the task details:
+     - Title (required)
+     - Description
+     - Priority level
+     - Due date
+     - Assignee
+
+2. Using URL Parameters:
+   You can create pre-filled tasks by using URL parameters. This is useful for integrations or bookmarks.
+   
+   Base URL format:
+   ```
+   /?decker_page=task&type=new&[parameters]
+   ```
+   
+   Available parameters:
+   - title: Task title
+   - description: Task description
+   - board: Board slug identifier
+   - stack: Task status (to-do, in-progress, done)
+   - maximum_priority: Set to 1 for maximum priority
+   
+   Example URL:
+   ```
+   /?decker_page=task&type=new&title=Bug%20Fix&description=Fix%20the%20login%20issue&board=board-1&stack=in-progress&maximum_priority=1
+   ```
 
 #### Priority System
 Decker uses a unique priority system:
