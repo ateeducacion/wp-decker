@@ -68,6 +68,9 @@ class Decker {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
+
+		// Hook demo data creation to init.
+		add_action( 'init', array( $this, 'maybe_create_demo_data' ) );
 	}
 
 	/**
@@ -366,5 +369,28 @@ class Decker {
 
 		// Return the defined allowed tags.
 		return $allowed_tags;
+	}
+
+	/**
+	 * Create demo data if the version is 0.0.0
+	 */
+	public function maybe_create_demo_data() {
+
+		// If we're in development version and there are no tasks, create sample data.
+		if ( defined( 'DECKER_VERSION' ) && DECKER_VERSION === '0.0.0' ) {
+			$args = array(
+				'post_type' => 'decker_task',
+				'posts_per_page' => 1,
+				'post_status' => 'any',
+			);
+
+			$query = new WP_Query( $args );
+
+			if ( ! $query->have_posts() ) {
+				require_once plugin_dir_path( __FILE__ ) . 'class-decker-demo-data.php';
+				$demo_data = new Decker_Demo_Data();
+				$demo_data->create_sample_data();
+			}
+		}
 	}
 }

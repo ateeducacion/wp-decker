@@ -1,11 +1,19 @@
 # Decker
 
 ![WordPress Version](https://img.shields.io/badge/WordPress-6.1-blue)
-![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.0-8892bf)
+![Language](https://img.shields.io/badge/Language-PHP-orange)
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
-
+![Downloads](https://img.shields.io/github/downloads/ateeducacion/wp-decker/total)
+![Last Commit](https://img.shields.io/github/last-commit/ateeducacion/wp-decker)
+![Open Issues](https://img.shields.io/github/issues/ateeducacion/wp-decker)
 
 **Decker** is a WordPress plugin developed for internal use at the Área de Tecnología Educativa (ATE). Its main goal is to efficiently present a task list with a simple Kanban board interface and unique priority system.
+
+## Demo
+
+Try Decker instantly in your browser using WordPress Playground! The demo includes sample data to help you explore the features. Note that all changes will be lost when you close the browser window, as everything runs locally in your browser.
+
+[Launch Demo →](https://playground.wordpress.net/?plugin=https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip&language=en_US&url=%2F%3Fdecker_page%3Dpriority)
 
 ### Key Features
 
