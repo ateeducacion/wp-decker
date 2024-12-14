@@ -43,6 +43,12 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 *     wp decker create_sample_data
 		 */
 		public function create_sample_data() {
+			// Check if we're running on a development version
+			if ( defined('DECKER_VERSION') && DECKER_VERSION !== '0.0.0' ) {
+				WP_CLI::warning( 'You are adding sample data to a non-development version of Decker (v' . DECKER_VERSION . ')' );
+				WP_CLI::confirm( 'Do you want to continue?' );
+			}
+
 			WP_CLI::log( 'Starting sample data creation...' );
 			
 			$demo_data = new Decker_Demo_Data();
