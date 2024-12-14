@@ -239,6 +239,8 @@ class Decker_Demo_Data {
 	 */
 	private function custom_rand( $min = 0, $max = PHP_INT_MAX ) {
 
+		return wp_rand( $min, $max );
+
 		// Fallback in case wp_rand() doesn't work correctly.
 		$base_random = function_exists( 'wp_rand' ) ? wp_rand( $min, $max ) : mt_rand( $min, $max );
 
