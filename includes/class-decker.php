@@ -68,7 +68,9 @@ class Decker {
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
-		$this->create_demo_data();
+		
+		// Hook demo data creation to init
+		add_action('init', array($this, 'create_demo_data'));
 	}
 
 	/**
