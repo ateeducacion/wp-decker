@@ -26,11 +26,11 @@ class Decker_Demo_Data {
 		$boards = $this->create_boards();
 		$this->create_tasks( $boards, $labels );
 
-		// Set up alert settings for demo data
-		$options = get_option('decker_settings', array());
+		// Set up alert settings for demo data.
+		$options = get_option( 'decker_settings', array() );
 		$options['alert_color'] = 'danger';
 		$options['alert_message'] = '<strong>Atención:</strong> Está ejecutando este sitio con datos de demostración.';
-		update_option('decker_settings', $options);
+		update_option( 'decker_settings', $options );
 
 		// Restore original user.
 		wp_set_current_user( $old_user->ID );
@@ -131,8 +131,8 @@ class Decker_Demo_Data {
 
 				// Assign random labels (0 to 3 labels).
 				$num_labels = wp_rand( 0, 3 );
-				$assigned_labels = ($num_labels > 0 && ! empty( $labels )) 
-					? $this->wp_rand_elements( $labels, $num_labels ) 
+				$assigned_labels = ( $num_labels > 0 && ! empty( $labels ) )
+					? $this->wp_rand_elements( $labels, $num_labels )
 					: array();
 
 				// Assign random users (1 to 3 users).

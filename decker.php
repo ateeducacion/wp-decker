@@ -92,22 +92,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
  * not affect the page life cycle.
  */
 function run_decker() {
-	// If we're in development version and there are no tasks, create sample data
-	if ( defined('DECKER_VERSION') && DECKER_VERSION === '0.0.0' ) {
-		$args = array(
-			'post_type' => 'decker_task',
-			'posts_per_page' => 1,
-			'post_status' => 'any'
-		);
-		
-		$query = new WP_Query( $args );
-		
-		if ( ! $query->have_posts() ) {
-			require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-demo-data.php';
-			$demo_data = new Decker_Demo_Data();
-			$demo_data->create_sample_data();
-		}
-	}
 
 	$plugin = new Decker();
 	$plugin->run();
