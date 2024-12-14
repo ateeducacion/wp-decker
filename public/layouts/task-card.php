@@ -47,15 +47,42 @@ if ( ! defined( 'DECKER_TASK' ) ) {
 }
 
 
+// Initialize variables from URL parameters for new tasks
 $task_id = 0;
+$board_slug = '';
+$initial_title = '';
+$initial_description = '';
+$initial_stack = 'to-do';
+$initial_max_priority = false;
+
 if ( isset( $_GET['id'] ) ) {
-	$task_id = intval( $_GET['id'] );
+    $task_id = intval( $_GET['id'] );
 }
+
+// Handle URL parameters for new task creation
+if ( isset( $_GET['type'] ) && $_GET['type'] === 'new' ) {
+    if ( isset( $_GET['title'] ) ) {
+        $initial_title = sanitize_text_field( wp_unslash( $_GET['title'] ) );
+    }
+    if ( isset( $_GET['description'] ) ) {
+        $initial_description = wp_kses( wp_unslash( $_GET['description'] ), Decker::get_allowed_tags() );
+    }
+    if ( isset( $_GET['board'] ) ) {
+        $board_slug = sanitize_text_field( wp_unslash( $_GET['board'] ) );
+    }
+    if ( isset( $_GET['stack'] ) ) {
+        $initial_stack = sanitize_text_field( wp_unslash( $_GET['stack'] ) );
+    }
+    if ( isset( $_GET['maximum_priority'] ) && $_GET['maximum_priority'] === '1' ) {
+        $initial_max_priority = true;
+    }
+}
+
 $task = new Task( $task_id );
 
-$board_slug = '';
-if ( isset( $_GET['slug'] ) ) {
-	$board_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
+// If no board_slug from new task parameters, try to get it from GET
+if ( empty( $board_slug ) && isset( $_GET['slug'] ) ) {
+    $board_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
 }
 
 $disabled = false;
@@ -304,7 +331,7 @@ function deleteComment(commentId) {
 		<!-- Title -->
 		<div class="col-md-9 mb-3">
 			<div class="form-floating">
-				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task->title ); ?>" placeholder="<?php esc_attr_e( 'Task title', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
+				<input type="text" class="form-control" id="task-title" value="<?php echo esc_attr( $task_id ? $task->title : $initial_title ); ?>" placeholder="<?php esc_attr_e( 'Task title', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
 				<label for="task-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?><span id="high-label" class="badge bg-danger ms-2 d-none"><?php esc_html_e( 'MAXIMUM PRIORITY', 'decker' ); ?></span></label>
 				<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
 			</div>
@@ -313,7 +340,7 @@ function deleteComment(commentId) {
 		<!-- Maximum priority and For today -->
 		<div class="col-md-3 mb-2 d-flex flex-column align-items-start">
 			<div class="form-check form-switch mb-2">
-				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task->max_priority ); ?> <?php disabled( $disabled ); ?>>
+				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task_id ? $task->max_priority : $initial_max_priority ); ?> <?php disabled( $disabled ); ?>>
 				<label class="form-check-label" for="task-max-priority"><?php esc_html_e( 'Maximum Priority', 'decker' ); ?></label>
 			</div>
 			<div class="form-check form-switch">
@@ -386,9 +413,9 @@ function deleteComment(commentId) {
 		<div class="col-md-2 mb-2">
 			<div class="form-floating">
 				<select class="form-select" id="task-stack" required <?php disabled( $disabled ); ?>>
-					<option value="to-do" <?php selected( $task->stack, 'to-do' ); ?>><?php esc_html_e( 'To Do', 'decker' ); ?></option>
-					<option value="in-progress" <?php selected( $task->stack, 'in-progress' ); ?>><?php esc_html_e( 'In Progress', 'decker' ); ?></option>
-					<option value="done" <?php selected( $task->stack, 'done' ); ?>><?php esc_html_e( 'Done', 'decker' ); ?></option>
+					<option value="to-do" <?php selected( $task_id ? $task->stack : $initial_stack, 'to-do' ); ?>><?php esc_html_e( 'To Do', 'decker' ); ?></option>
+					<option value="in-progress" <?php selected( $task_id ? $task->stack : $initial_stack, 'in-progress' ); ?>><?php esc_html_e( 'In Progress', 'decker' ); ?></option>
+					<option value="done" <?php selected( $task_id ? $task->stack : $initial_stack, 'done' ); ?>><?php esc_html_e( 'Done', 'decker' ); ?></option>
 				</select>
 				<label for="task-stack" class="form-label"><?php esc_html_e( 'Stack', 'decker' ); ?></label>
 			</div>
@@ -488,7 +515,7 @@ function deleteComment(commentId) {
 		<!-- Description (Quill Editor) -->
 		<div class="tab-pane show active" id="description-tab">
 			<div id="editor-container">
-				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task->description, Decker::get_allowed_tags() ); ?></div>
+				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
 			</div>
 		</div>
 
