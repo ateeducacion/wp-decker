@@ -26,6 +26,12 @@ class Decker_Demo_Data {
 		$boards = $this->create_boards();
 		$this->create_tasks( $boards, $labels );
 
+		// Set up alert settings for demo data
+		$options = get_option('decker_settings', array());
+		$options['alert_color'] = 'danger';
+		$options['alert_message'] = '<strong>Atención:</strong> Está ejecutando este sitio con datos de demostración.';
+		update_option('decker_settings', $options);
+
 		// Restore original user.
 		wp_set_current_user( $old_user->ID );
 	}
