@@ -27,9 +27,13 @@ destroy:
 	npx wp-env destroy
 
 
-check:
+check-plugin:
 	npx wp-env run cli wp plugin install plugin-check --activate
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+
+check: fix lint check-plugin test check-untranslated mo
+
+check-all: check
 
 # Run unit tests with PHPUnit
 test:
@@ -94,17 +98,19 @@ help:
 	@echo "  up                 - Bring up Docker containers in interactive mode"
 	@echo "  down               - Stop and remove Docker containers"
 	@echo "  logs               - Show the docker container logs"
-	@echo "  lint               - Check code style with PHP-CS-Fixer"
 	@echo "  fix                - Automatically fix code style with PHP-CS-Fixer"
-	@echo "  check              - Run WordPress plugin-check tests"
+	@echo "  lint               - Check code style with PHP-CS-Fixer"
+	@echo "  check-plugin       - Run WordPress plugin-check tests"
 	@echo "  test               - Run unit tests"
+	@echo "  check-untranslated - Check the untranslated strings"
+	@echo "  check/check-all    - Run fix, lint, check-pugin, test, check-untraslated, mo"
 	@echo "  update             - Update Composer dependencies"
 	@echo "  package            - Generate a .zip package"
 	@echo "  help               - Show help with available commands"
 	@echo "  pot                - Generate a .pot file for translations"
 	@echo "  po                 - Update .po files from .pot file"
 	@echo "  mo                 - Generate .mo files from .po files"
-	@echo "  check-untranslated - Check the untranslated strings"
+
 
 # Set help as the default target if no target is specified
 .DEFAULT_GOAL := help
