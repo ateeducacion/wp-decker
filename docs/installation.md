@@ -1,5 +1,9 @@
 # Installation Guide
 
+## Try Before Installing
+
+Want to test Decker before installing? Try our demo on [WordPress Playground](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/main/blueprint.json). This gives you a temporary WordPress environment with Decker pre-installed and ready to use.
+
 ## System Requirements
 
 - WordPress 5.0 or higher
