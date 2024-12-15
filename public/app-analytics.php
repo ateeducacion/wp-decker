@@ -123,6 +123,16 @@ include 'layouts/main.php';
 				</div>
 			</div>
 		</div>
+		<!-- Card for chartByStack -->
+		<div class="col-md-6 mx-auto">
+			<div class="card">
+				<div class="card-body">
+					<h5 class="card-title"><?php esc_html_e( 'Tasks by Stack from current User', 'decker' ); ?></h5>
+					<canvas id="chartUser" class="chartCanvas"></canvas>
+				</div>
+			</div>
+		</div>
+
 	</div>
 </div>
 
@@ -239,6 +249,42 @@ include 'layouts/main.php';
 			$task_stack = get_post_meta( $task->ID, 'stack', true );
 			$tasks_by_stack[ $task_stack ]++;
 		}
+
+		// Convertir los datos a un array numérico para Chart.js.
+		$tasks_by_stack_array = array(
+			$tasks_by_stack['to-do'],
+			$tasks_by_stack['in-progress'],
+			$tasks_by_stack['done'],
+		);
+
+
+		// Obtener datos de tareas por estado del usuario actual.
+		$current_user_id = get_current_user_id();
+		$user_tasks_by_state = array(
+			'to-do'       => 0,
+			'in-progress' => 0,
+			'done'        => 0,
+		);
+
+		foreach ( $all_tasks as $task ) {
+			// Cambiar a 'assigned_users' y verificar si el usuario actual está asignado.
+			$assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
+			if ( is_array( $assigned_users ) && in_array( $current_user_id, $assigned_users ) ) {
+				$task_state = get_post_meta( $task->ID, 'stack', true ); // Reutilizamos 'stack' para los estados.
+				if ( isset( $user_tasks_by_state[ $task_state ] ) ) {
+					$user_tasks_by_state[ $task_state ]++;
+				}
+			}
+		}
+
+		// Convertir los datos a un array numérico para Chart.js.
+		$user_tasks_by_state_array = array(
+			$user_tasks_by_state['to-do'],
+			$user_tasks_by_state['in-progress'],
+			$user_tasks_by_state['done'],
+		);
+
+
 		?>
 
 		// Datos para las gráficas
@@ -288,10 +334,20 @@ include 'layouts/main.php';
 			labels: ['To Do', 'In Progress', 'Done'],
 			datasets: [{
 				label: 'Tasks by Stack',
-				data: <?php echo wp_json_encode( $tasks_by_stack ); ?>,
+				data: <?php echo wp_json_encode( $tasks_by_stack_array ); ?>,
 				backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56']
 			}]
 		};
+
+		const userStackData = {
+			labels: ['To Do', 'In Progress', 'Done'],
+			datasets: [{
+				label: 'My Tasks by State',
+				data: <?php echo json_encode( $user_tasks_by_state_array ); ?>,
+				backgroundColor: ['#ff9f40', '#4bc0c0', '#9966ff']
+			}]
+		};
+
 
 		// Initialize charts.
 		const ctx1 = document.getElementById('chartByBoard').getContext('2d');
@@ -306,6 +362,9 @@ include 'layouts/main.php';
 					},
 					y: {
 						stacked: true,
+						   ticks: {
+							autoSkip: false, // Asegura que no se omitan etiquetas.
+						},
 					},
 				},
 			},
@@ -323,6 +382,9 @@ include 'layouts/main.php';
 					},
 					y: {
 						stacked: true,
+						   ticks: {
+							autoSkip: false, // Asegura que no se omitan etiquetas.
+						},
 					},
 				},
 			},
@@ -332,7 +394,34 @@ include 'layouts/main.php';
 		const chartByStack = new Chart(ctx3, {
 			type: 'doughnut',
 			data: stackData,
+			options: {
+				responsive: true,
+				plugins: {
+					legend: {
+						display: true,
+						position: 'top'
+					}
+				}
+			}
 		});
+
+
+		const ctx4 = document.getElementById('chartUser').getContext('2d');
+		const chartUser = new Chart(ctx4, {
+			type: 'doughnut',
+			data: userStackData,
+			options: {
+				responsive: true,
+				plugins: {
+					legend: {
+						display: true,
+						position: 'top'
+					}
+				}
+			}
+		});
+
+
 	</script>
 </body>
 </html>
