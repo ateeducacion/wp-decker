@@ -175,7 +175,7 @@ if ( ! $has_today_tasks ) {
 								</thead>
 								<tbody id="priority-id-table">
 									<?php
-									// Obtener tareas con max_priority.
+									// Get task with max_priority.
 									$args = array(
 										'meta_query' => array(
 											array(
@@ -186,6 +186,18 @@ if ( ! $has_today_tasks ) {
 										),
 									);
 									$tasks = $task_manager->get_tasks( $args );
+
+									// Pre-sort the taks by board name, to avoid flickering on page.
+									usort(
+										$tasks,
+										function ( $a, $b ) {
+											$a_board = $a->board ? $a->board->name : '';
+											$b_board = $b->board ? $b->board->name : '';
+											return strcmp( $a_board, $b_board );
+										}
+									);
+
+
 									foreach ( $tasks as $task ) {
 
 										$board = __( 'No board assigned', 'decker' );
