@@ -6,374 +6,213 @@
  */
 
 class DeckerAdminExportTest extends WP_UnitTestCase {
-    /**
-     * @var Decker_Admin_Export
-     */
-    private $export_instance;
+	/**
+	 * @var Decker_Admin_Export
+	 */
+	private $export_instance;
 
-    /**
-     * @var int Admin user ID
-     */
-    private $admin_user_id;
+	/**
+	 * @var int $admin_user_id Admin user ID
+	 */
+	private $admin_user_id;
 
-    /**
-     * Set up test environment
-     */
-    public function set_up(): void {
-        parent::set_up();
-        
-        // Create and set admin user
-        $this->admin_user_id = $this->factory->user->create([
-            'role' => 'administrator'
-        ]);
-        wp_set_current_user($this->admin_user_id);
-        
-        $this->export_instance = new Decker_Admin_Export();
-    }
-	// /**
-	// * @var Decker_Admin_Export
-	// */
-	// private $export_instance;
+	/**
+	 * Set up test environment
+	 *
+	 * @return void
+	 */
+	public function set_up(): void {
+		parent::set_up();
 
-	// /**
-	// * Set up test environment
-	// */
-	// public function set_up(): void {
-	// parent::set_up();
-	// $this->export_instance = new Decker_Admin_Export();
-	// }
+		// Create and set admin user.
+		$this->admin_user_id = $this->factory->user->create(
+			array(
+				'role' => 'administrator',
+			)
+		);
+		wp_set_current_user( $this->admin_user_id );
 
-	// /**
-	// * Data provider for hook testing
-	// */
-	// public function provide_expected_hooks() {
-	// return array(
-	// 'export_filters' => array( 'export_filters', 'add_export_option', 10 ),
-	// 'export_wp' => array( 'export_wp', 'process_export', 10 ),
-	// );
-	// }
+		$this->export_instance = new Decker_Admin_Export();
 
-	// /**
-	// * Test constructor hooks
-	// *
-	// * @dataProvider provide_expected_hooks
-	// */
-	// public function test_constructor_hooks( $hook, $callback, $priority ) {
-	// $this->assertEquals(
-	// $priority,
-	// has_action( $hook, array( $this->export_instance, $callback ) ),
-	// "Hook '$hook' not properly registered"
-	// );
-	// }
+		// Delete all terms from decker_board before running tests to ensure a clean environment.
+		$existing_terms = get_terms(
+			array(
+				'taxonomy'   => 'decker_board',
+				'hide_empty' => false,
+			)
+		);
 
-	// /**
-	// * Data provider for custom post types
-	// */
-	// public function provide_expected_post_types() {
-	// return array(
-	// 'decker_task' => array( 'decker_task', true ),
-	// 'invalid_type' => array( 'invalid_post_type', false ),
-	// 'post' => array( 'post', false ),
-	// );
-	// }
+		if ( ! is_wp_error( $existing_terms ) && ! empty( $existing_terms ) ) {
+			foreach ( $existing_terms as $term ) {
+				wp_delete_term( $term->term_id, 'decker_board' );
+			}
+		}
+	}
 
-	// /**
-	// * Test custom post types getter
-	// *
-	// * @dataProvider provide_expected_post_types
-	// */
-	// public function test_get_custom_post_types( $post_type, $should_exist ) {
-	// $reflection = new ReflectionClass( $this->export_instance );
-	// $method = $reflection->getMethod( 'get_custom_post_types' );
-	// $method->setAccessible( true );
+	/**
+	 * Test export post type functionality
+	 *
+	 * @return void
+	 */
+	public function test_export_post_type() {
 
-	// $post_types = $method->invoke( $this->export_instance );
+		// Ensure 'save_decker_task' matches your plugin action.
+		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
 
-	// $this->assertIsArray( $post_types, 'Post types should be returned as array' );
-	// if ( $should_exist ) {
-	// $this->assertContains( $post_type, $post_types, "Post type '$post_type' should exist" );
-	// } else {
-	// $this->assertNotContains( $post_type, $post_types, "Post type '$post_type' should not exist" );
-	// }
-	// }
+		// Create terms for boards and labels.
+		$result = wp_insert_term( 'Board TEST 1', 'decker_board' );
 
-	// /**
-	// * Test custom taxonomies getter
-	// */
-	// public function test_get_custom_taxonomies() {
-	// $reflection = new ReflectionClass( $this->export_instance );
-	// $method = $reflection->getMethod( 'get_custom_taxonomies' );
-	// $method->setAccessible( true );
+		if ( is_wp_error( $result ) ) {
+			error_log( 'Error inserting term: ' . $result->get_error_message() );
+			$this->fail( 'wp_insert_term failed: ' . $result->get_error_message() );
+		}
 
-	// $taxonomies = $method->invoke( $this->export_instance );
-	// $this->assertIsArray( $taxonomies );
-	// $this->assertContains( 'decker_board', $taxonomies );
-	// $this->assertContains( 'decker_action', $taxonomies );
-	// $this->assertContains( 'decker_label', $taxonomies );
-	// }
+		$board_id = $result['term_id'];
 
-	// /**
-	// * Test export option HTML output
-	// */
-	// public function test_add_export_option() {
-	// ob_start();
-	// $this->export_instance->add_export_option();
-	// $output = ob_get_clean();
+		// Create a test post.
+		$post_id = $this->factory->post->create(
+			array(
+				'post_type'    => 'decker_task',
+				'post_title'   => 'Test Task',
+				'post_content' => 'Test Content',
+				'post_status'  => 'publish',
+				'tax_input'    => array(
+					'decker_board' => array( $board_id ),
+				),
+				'meta_input'   => array(
+					'stack' => 'to-do',
+				),
+			)
+		);
 
-	// $this->assertStringContainsString( '<input type="radio" name="content" value="decker"', $output );
-	// $this->assertStringContainsString( 'Decker', $output );
-	// }
+		// Add test meta data.
+		add_post_meta( $post_id, 'priority', 'high' );
+		add_post_meta( $post_id, 'due_date', '2024-12-20' );
 
-    /**
-     * Test export post type functionality
-     */
-    public function test_export_post_type() {
-        // Create a test post
-        $post_id = $this->factory->post->create([
-            'post_type' => 'decker_task',
-            'post_title' => 'Test Task',
-            'post_content' => 'Test Content',
-            'post_status' => 'publish'
-        ]);
+		// Create and assign a board.
+		$board_term = wp_insert_term( 'Test Board', 'decker_board' );
+		if ( is_wp_error( $board_term ) ) {
+			$this->fail( 'Failed to create board term: ' . $board_term->get_error_message() );
+		}
+		wp_set_object_terms( $post_id, array( $board_term['term_id'] ), 'decker_board' );
 
-        // Add test meta data
-        add_post_meta($post_id, 'priority', 'high');
-        add_post_meta($post_id, 'due_date', '2024-12-20');
+		// Create and assign a label.
+		$label_term = wp_insert_term( 'Test Label', 'decker_label' );
+		if ( is_wp_error( $label_term ) ) {
+			$this->fail( 'Failed to create label term: ' . $label_term->get_error_message() );
+		}
+		wp_set_object_terms( $post_id, array( $label_term['term_id'] ), 'decker_label' );
 
-        // Create and assign a board
-        $board_term = wp_insert_term('Test Board', 'decker_board');
-        wp_set_object_terms($post_id, [$board_term['term_id']], 'decker_board');
+		// Export the post type directly (without reflection).
+		$exported_posts = $this->export_instance->export_post_type( 'decker_task' );
 
-        // Create and assign a label
-        $label_term = wp_insert_term('Test Label', 'decker_label');
-        wp_set_object_terms($post_id, [$label_term['term_id']], 'decker_label');
+		// Assertions.
+		$this->assertIsArray( $exported_posts, 'Exported posts should be an array.' );
+		$this->assertCount( 1, $exported_posts, 'There should be exactly one exported post.' );
 
-        // Use reflection to access private method
-        $reflection = new ReflectionClass($this->export_instance);
-        $method = $reflection->getMethod('export_post_type');
-        $method->setAccessible(true);
+		$exported_post = $exported_posts[0];
 
-        // Export the post type
-        $exported_posts = $method->invoke($this->export_instance, 'decker_task');
+		// Check basic post data.
+		$this->assertEquals( $post_id, $exported_post['ID'], 'Post ID does not match.' );
+		$this->assertEquals( 'Test Task', $exported_post['post_title'], 'Post title does not match.' );
+		$this->assertEquals( 'Test Content', $exported_post['post_content'], 'Post content does not match.' );
 
-        // Assertions
-        $this->assertIsArray($exported_posts);
-        $this->assertCount(1, $exported_posts);
+		// Check meta data.
+		$this->assertArrayHasKey( 'post_meta', $exported_post, 'Exported post should have post_meta.' );
+		$this->assertEquals( 'high', $exported_post['post_meta']['priority'][0], 'Post meta priority does not match.' );
+		$this->assertEquals( '2024-12-20', $exported_post['post_meta']['due_date'][0], 'Post meta due_date does not match.' );
 
-        $exported_post = $exported_posts[0];
-        
-        // Check basic post data
-        $this->assertEquals($post_id, $exported_post['ID']);
-        $this->assertEquals('Test Task', $exported_post['post_title']);
-        $this->assertEquals('Test Content', $exported_post['post_content']);
+		// Check taxonomies.
+		$this->assertArrayHasKey( 'decker_board', $exported_post, 'Exported post should have decker_board taxonomy.' );
+		$this->assertNotEmpty( $exported_post['decker_board'], 'Exported post should have at least one decker_board term.' );
+		$this->assertInstanceOf( WP_Term::class, $exported_post['decker_board'][0], 'decker_board term should be a WP_Term instance.' );
+		$this->assertEquals( 'Test Board', $exported_post['decker_board'][0]->name, 'Board term name does not match.' );
 
-        // Check meta data
-        $this->assertArrayHasKey('post_meta', $exported_post);
-        $this->assertEquals('high', $exported_post['post_meta']['priority'][0]);
-        $this->assertEquals('2024-12-20', $exported_post['post_meta']['due_date'][0]);
+		$this->assertArrayHasKey( 'decker_label', $exported_post, 'Exported post should have decker_label taxonomy.' );
+		$this->assertNotEmpty( $exported_post['decker_label'], 'Exported post should have at least one decker_label term.' );
+		$this->assertInstanceOf( WP_Term::class, $exported_post['decker_label'][0], 'decker_label term should be a WP_Term instance.' );
+		$this->assertEquals( 'Test Label', $exported_post['decker_label'][0]->name, 'Label term name does not match.' );
+	}
 
-        // Check taxonomies
-        $this->assertNotEmpty($exported_post['decker_board']);
-        $this->assertEquals('Test Board', $exported_post['decker_board'][0]->name);
-        
-        $this->assertNotEmpty($exported_post['decker_label']);
-        $this->assertEquals('Test Label', $exported_post['decker_label'][0]->name);
-    }
+	/**
+	 * Test taxonomy terms export functionality
+	 *
+	 * @return void
+	 */
+	public function test_export_taxonomy_terms() {
+		// Create a test board term.
+		$board_term_id = $this->factory->term->create(
+			array(
+				'taxonomy'   => 'decker_board',
+				'name'       => 'Test Board',
+				'description' => 'Test Board Description',
+				'slug'       => 'test-board',
+			)
+		);
 
-    /**
-     * Test taxonomy terms export functionality
-     */
-    public function test_export_taxonomy_terms() {
-        // Create a test board term using factory
-        $board_term = $this->factory->term->create_and_get([
-            'taxonomy' => 'decker_board',
-            'name' => 'Test Board',
-            'description' => 'Test Board Description',
-            'slug' => 'test-board'
-        ]);
-        
-        // Add board meta
-        add_term_meta($board_term['term_id'], 'board_color', '#FF5733');
-        add_term_meta($board_term['term_id'], 'board_order', '1');
+		$board_term = get_term( $board_term_id, 'decker_board' );
+		$this->assertNotWPError( $board_term, 'Failed to retrieve board term.' );
 
-        // Create a child board using factory
-        $child_board = $this->factory->term->create_and_get([
-            'taxonomy' => 'decker_board',
-            'name' => 'Child Board',
-            'description' => 'Child Board Description',
-            'parent' => $board_term->term_id
-        ]);
+		// Add board meta.
+		add_term_meta( $board_term->term_id, 'board_color', '#FF5733' );
+		add_term_meta( $board_term->term_id, 'board_order', '1' );
 
-        // Use reflection to access private method
-        $reflection = new ReflectionClass($this->export_instance);
-        $method = $reflection->getMethod('export_taxonomy_terms');
-        $method->setAccessible(true);
+		// Create a child board.
+		$child_board_id = $this->factory->term->create(
+			array(
+				'taxonomy'   => 'decker_board',
+				'name'       => 'Child Board',
+				'description' => 'Child Board Description',
+				'slug'       => 'child-board',
+				'parent'     => $board_term->term_id,
+			)
+		);
 
-        // Export the taxonomy terms
-        $exported_terms = $method->invoke($this->export_instance, 'decker_board');
+		$child_board = get_term( $child_board_id, 'decker_board' );
+		$this->assertNotWPError( $child_board, 'Failed to retrieve child board term.' );
 
-        // Assertions
-        $this->assertIsArray($exported_terms);
-        $this->assertCount(2, $exported_terms);
+		// Export the taxonomy terms directly (without reflection).
+		$exported_terms = $this->export_instance->export_taxonomy_terms( 'decker_board' );
 
-        // Find parent board in exported terms
-        $parent_term = array_filter($exported_terms, function($term) use ($board_term) {
-            return $term['term_id'] === $board_term['term_id'];
-        });
-        $parent_term = reset($parent_term);
+		// Assertions.
+		$this->assertIsArray( $exported_terms, 'Exported terms should be an array.' );
+		$this->assertCount( 2, $exported_terms, 'There should be exactly two exported terms.' );
 
-        // Check basic term data
-        $this->assertEquals($board_term->term_id, $parent_term['term_id']);
-        $this->assertEquals('Test Board', $parent_term['name']);
-        $this->assertEquals('test-board', $parent_term['slug']);
-        $this->assertEquals('Test Board Description', $parent_term['description']);
+		// Locate parent board term.
+		$parent_term = null;
+		foreach ( $exported_terms as $term ) {
+			// $this->assertInstanceOf(WP_Term::class, $term, 'Each exported term should be a WP_Term instance.');
+			if ( $term['term_id'] === $board_term->term_id ) {
+				$parent_term = $term;
+				break;
+			}
+		}
+		$this->assertNotNull( $parent_term, 'Parent term not found in exported terms.' );
 
-        // Check term meta
-        $this->assertArrayHasKey('term_meta', $parent_term);
-        $this->assertEquals('#FF5733', $parent_term['term_meta']['board_color'][0]);
-        $this->assertEquals('1', $parent_term['term_meta']['board_order'][0]);
+		// Check basic term data.
+		$this->assertEquals( $board_term->term_id, $parent_term['term_id'], 'Parent term ID does not match.' );
+		$this->assertEquals( 'Test Board', $parent_term['name'], 'Parent term name does not match.' );
+		$this->assertEquals( 'test-board', $parent_term['slug'], 'Parent term slug does not match.' );
+		$this->assertEquals( 'Test Board Description', $parent_term['description'], 'Parent term description does not match.' );
 
-        // Find child board in exported terms
-        $child_term = array_filter($exported_terms, function($term) use ($child_board) {
-            return $term['term_id'] === $child_board['term_id'];
-        });
-        $child_term = reset($child_term);
+		// Check term meta.
+		// $this->assertTrue(property_exists($parent_term, 'term_meta'), 'Parent term should have term_meta property.');
+		$this->assertEquals( '#FF5733', $parent_term['term_meta']['board_color'][0], 'Parent term meta board_color does not match.' );
+		$this->assertEquals( '1', $parent_term['term_meta']['board_order'][0], 'Parent term meta board_order does not match.' );
 
-        // Check child term data
-        $this->assertEquals($child_board->term_id, $child_term['term_id']);
-        $this->assertEquals('Child Board', $child_term['name']);
-        $this->assertEquals($board_term->term_id, $child_term['parent']);
-    }
+		// Locate child board term.
+		$child_term = null;
+		foreach ( $exported_terms as $term ) {
+			if ( $term['term_id'] === $child_board->term_id ) {
+				$child_term = $term;
+				break;
+			}
+		}
+		$this->assertNotNull( $child_term, 'Child term not found in exported terms.' );
 
-	// /**
-	// * Data provider for export process testing
-	// */
-	// public function provide_export_scenarios() {
-	// return array(
-	// 'valid_decker_export' => array( 'decker', true ),
-	// 'invalid_content' => array( 'invalid', false ),
-	// 'empty_content' => array( '', false ),
-	// );
-	// }
-
-	// /**
-	// * Test process export with various scenarios
-	// *
-	// * @dataProvider provide_export_scenarios
-	// */
-	// public function test_process_export( $content, $should_export ) {
-	// $_GET['content'] = $content;
-
-	// ob_start();
-	// $this->export_instance->process_export( array() );
-	// $output = ob_get_clean();
-
-	// if ( $should_export ) {
-	// $this->assertNotEmpty( $output );
-	// $this->assertJson( $output );
-	// $data = json_decode( $output, true );
-	// $this->assertIsArray( $data );
-	// } else {
-	// $this->assertEmpty( $output );
-	// }
-	// }
-
-	// /**
-	// * Test export file contents
-	// */
-	// public function test_export_file_contents() {
-	// Set up nonces
-	// $_POST['decker_task_nonce'] = wp_create_nonce( 'decker_task_nonce' );
-	// $_POST['decker_board_nonce'] = wp_create_nonce( 'decker_board_nonce' );
-	// $_POST['decker_board_color_nonce'] = wp_create_nonce( 'decker_board_color_nonce' );
-
-	// Create test task
-	// $task_id = $this->factory->post->create(
-	// array(
-	// 'post_type' => 'decker_task',
-	// 'post_title' => 'Test Export Task',
-	// 'post_content' => 'Test Content',
-	// )
-	// );
-
-	// Create test board with proper nonces
-	// $_POST['decker_board_nonce'] = wp_create_nonce( 'decker_board_nonce' );
-	// $_POST['decker_board_color_nonce'] = wp_create_nonce( 'decker_board_color_nonce' );
-
-	// $board_id = $this->factory->term->create(
-	// array(
-	// 'taxonomy' => 'decker_board',
-	// 'name' => 'Test Board',
-	// )
-	// );
-
-	// Clean up nonces
-	// unset( $_POST['decker_task_nonce'] );
-	// unset( $_POST['decker_board_nonce'] );
-	// unset( $_POST['decker_board_color_nonce'] );
-
-	// Capture output
-	// ob_start();
-	// $this->export_instance->process_export( array() );
-	// $output = ob_get_clean();
-
-	// if ( ! empty( $output ) ) {
-	// $exported_data = json_decode( $output, true );
-
-	// $this->assertIsArray( $exported_data );
-	// $this->assertArrayHasKey( 'decker_task', $exported_data );
-	// $this->assertArrayHasKey( 'decker_board', $exported_data );
-
-	// Verify task data
-	// $exported_task = current( $exported_data['decker_task'] );
-	// $this->assertEquals( 'Test Export Task', $exported_task['post_title'] );
-
-	// Verify board data
-	// $exported_board = current( $exported_data['decker_board'] );
-	// $this->assertEquals( 'Test Board', $exported_board['name'] );
-	// }
-	// }
-
-	// /**
-	// * Clean up after each test
-	// */
-	// public function tear_down(): void {
-	// parent::tear_down();
-	// global $wp_filter;
-
-	// Clean up created posts and terms
-	// $posts = get_posts(
-	// array(
-	// 'post_type' => 'decker_task',
-	// 'numberposts' => -1,
-	// 'post_status' => 'any',
-	// )
-	// );
-	// foreach ( $posts as $post ) {
-	// wp_delete_post( $post->ID, true );
-	// }
-
-	// Clean up all custom taxonomies
-	// foreach ( array( 'decker_board', 'decker_action', 'decker_label' ) as $taxonomy ) {
-	// $terms = get_terms(
-	// array(
-	// 'taxonomy' => $taxonomy,
-	// 'hide_empty' => false,
-	// )
-	// );
-	// if ( ! is_wp_error( $terms ) ) {
-	// foreach ( $terms as $term ) {
-	// wp_delete_term( $term->term_id, $taxonomy );
-	// }
-	// }
-	// }
-
-	// Reset $_GET
-	// unset( $_GET['content'] );
-
-	// Clean up added filters/actions
-	// foreach ( array( 'export_filters', 'export_wp' ) as $hook ) {
-	// remove_all_actions( $hook );
-	// }
-	// }
+		// Check child term data.
+		$this->assertEquals( $child_board->term_id, $child_term['term_id'], 'Child term ID does not match.' );
+		$this->assertEquals( 'Child Board', $child_term['name'], 'Child term name does not match.' );
+		$this->assertEquals( $board_term->term_id, $child_term['parent'], 'Child term parent does not match.' );
+	}
 }
