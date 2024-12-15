@@ -12,10 +12,22 @@ class DeckerAdminExportTest extends WP_UnitTestCase {
     private $export_instance;
 
     /**
+     * @var int Admin user ID
+     */
+    private $admin_user_id;
+
+    /**
      * Set up test environment
      */
     public function set_up(): void {
         parent::set_up();
+        
+        // Create and set admin user
+        $this->admin_user_id = $this->factory->user->create([
+            'role' => 'administrator'
+        ]);
+        wp_set_current_user($this->admin_user_id);
+        
         $this->export_instance = new Decker_Admin_Export();
     }
 	// /**
@@ -172,8 +184,10 @@ class DeckerAdminExportTest extends WP_UnitTestCase {
      * Test taxonomy terms export functionality
      */
     public function test_export_taxonomy_terms() {
-        // Create a test board term
-        $board_term = wp_insert_term('Test Board', 'decker_board', [
+        // Create a test board term using factory
+        $board_term = $this->factory->term->create_and_get([
+            'taxonomy' => 'decker_board',
+            'name' => 'Test Board',
             'description' => 'Test Board Description',
             'slug' => 'test-board'
         ]);
@@ -182,10 +196,12 @@ class DeckerAdminExportTest extends WP_UnitTestCase {
         add_term_meta($board_term['term_id'], 'board_color', '#FF5733');
         add_term_meta($board_term['term_id'], 'board_order', '1');
 
-        // Create a child board
-        $child_board = wp_insert_term('Child Board', 'decker_board', [
+        // Create a child board using factory
+        $child_board = $this->factory->term->create_and_get([
+            'taxonomy' => 'decker_board',
+            'name' => 'Child Board',
             'description' => 'Child Board Description',
-            'parent' => $board_term['term_id']
+            'parent' => $board_term->term_id
         ]);
 
         // Use reflection to access private method
@@ -207,7 +223,7 @@ class DeckerAdminExportTest extends WP_UnitTestCase {
         $parent_term = reset($parent_term);
 
         // Check basic term data
-        $this->assertEquals($board_term['term_id'], $parent_term['term_id']);
+        $this->assertEquals($board_term->term_id, $parent_term['term_id']);
         $this->assertEquals('Test Board', $parent_term['name']);
         $this->assertEquals('test-board', $parent_term['slug']);
         $this->assertEquals('Test Board Description', $parent_term['description']);
