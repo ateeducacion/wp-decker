@@ -343,7 +343,7 @@ include 'layouts/main.php';
 			labels: ['To Do', 'In Progress', 'Done'],
 			datasets: [{
 				label: 'My Tasks by State',
-				data: <?php echo json_encode( $user_tasks_by_state_array ); ?>,
+				data: <?php echo wp_json_encode( $user_tasks_by_state_array ); ?>,
 				backgroundColor: ['#ff9f40', '#4bc0c0', '#9966ff']
 			}]
 		};
