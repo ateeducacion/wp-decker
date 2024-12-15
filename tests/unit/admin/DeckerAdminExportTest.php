@@ -240,9 +240,9 @@ class DeckerAdminExportTest extends WP_UnitTestCase {
         $child_term = reset($child_term);
 
         // Check child term data
-        $this->assertEquals($child_board['term_id'], $child_term['term_id']);
+        $this->assertEquals($child_board->term_id, $child_term['term_id']);
         $this->assertEquals('Child Board', $child_term['name']);
-        $this->assertEquals($board_term['term_id'], $child_term['parent']);
+        $this->assertEquals($board_term->term_id, $child_term['parent']);
     }
 
 	// /**
