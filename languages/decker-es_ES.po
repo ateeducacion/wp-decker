@@ -306,7 +306,7 @@ msgstr "Adjuntos"
 
 #: includes/custom-post-types/class-decker-tasks.php:1055
 #: public/app-priority.php:170
-#: public/app-priority.php:384
+#: public/app-priority.php:396
 #: public/app-tasks.php:203
 #: public/layouts/task-card.php:373
 #, fuzzy
@@ -325,7 +325,7 @@ msgstr "Máxima Prioridad"
 #: includes/custom-post-types/class-decker-tasks.php:205
 #: includes/custom-post-types/class-decker-tasks.php:1086
 #: public/app-priority.php:171
-#: public/app-priority.php:385
+#: public/app-priority.php:397
 #: public/app-tasks.php:204
 #: public/layouts/task-card.php:420
 msgid "Stack"
@@ -601,7 +601,7 @@ msgid "Yes"
 msgstr "Sí"
 
 #: public/app-priority.php:154
-#: public/app-priority.php:374
+#: public/app-priority.php:386
 #: public/app-term-manager.php:276
 msgid "Close"
 msgstr "Cerrar"
@@ -611,24 +611,24 @@ msgid "MAX PRIORITY"
 msgstr "MÁXIMA PRIORIDAD"
 
 #: public/app-priority.php:172
-#: public/app-priority.php:386
+#: public/app-priority.php:398
 #: public/layouts/task-card.php:335
 msgid "Title"
 msgstr "Título"
 
-#: public/app-priority.php:191
+#: public/app-priority.php:203
 msgid "No board assigned"
 msgstr "Ningún tablero asignado"
 
-#: public/app-priority.php:332
+#: public/app-priority.php:344
 msgid "No tasks for today."
 msgstr "No hay tareas para hoy."
 
-#: public/app-priority.php:373
+#: public/app-priority.php:385
 msgid "Select tasks to import"
 msgstr "Seleccionar tareas para importar"
 
-#: public/app-priority.php:414
+#: public/app-priority.php:426
 msgid "There are no tasks from previous days to import."
 msgstr "No hay tareas de días anteriores para importar."
 
