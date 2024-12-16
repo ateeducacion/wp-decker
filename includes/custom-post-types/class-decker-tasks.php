@@ -1748,8 +1748,13 @@ class Decker_Tasks {
 	 * @throws WP_Error If any validation or task creation/updating fails, an error is logged or returned.
 	 */
 	public function handle_save_decker_task() {
-		// Verificar el nonce de seguridad.
-		check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
+
+		$send_response = apply_filters( 'decker_save_task_send_response', true );
+
+		// Security nonce check.
+		if ( $send_response ) {
+			check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
+		}
 
 		// Retrieve and sanitize form data.
 		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
@@ -1821,23 +1826,28 @@ class Decker_Tasks {
 
 		// Set today.
 		if ( $mark_for_today ) {
-			$this->add_user_date_relation( $author, $result );
+			$this->add_user_date_relation( get_current_user_id(), $result );
 		} else {
-			$this->remove_user_date_relation( $author, $result );
+			$this->remove_user_date_relation( get_current_user_id(), $result );
 		}
 
-		wp_send_json_success(
-			array(
-				'message' => 'Tarea guardada exitosamente.',
-				'task_id' => $result,
-			)
+		$result_data = array(
+			'success' => ! is_wp_error( $result ),
+			'message' => is_wp_error( $result ) ? $result->get_error_message() : 'Tarea guardada exitosamente.',
+			'task_id' => $result,
 		);
+
+		if ( $send_response ) {
+			wp_send_json_success( $result_data );
+		}
+
+		return $result_data;
 	}
 
 	/**
 	 * Creates or updates a task in the Decker system.
 	 *
-	 * This method handles validation, taxonomy assignments, and metadata management
+	 * This method handles validation, taxonomy assignments, and metadata management.
 	 * for tasks. It can either create a new task or update an existing one.
 	 *
 	 * @param int           $id                 The ID of the task to update, or 0 to create a new task.
