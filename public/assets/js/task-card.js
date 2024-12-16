@@ -19,8 +19,8 @@
     // Función para inicializar el envío de comentarios dentro del contexto dado
     function initializeSendComments(context) {
         // Comprobar si ya se ha inicializado en este contexto
-        if (context.dataset.sendCommentsInitialized === 'true') return;
-        context.dataset.sendCommentsInitialized = 'true';
+        if ( context.dataset && context.dataset.sendCommentsInitialized === 'true') return;
+        if ( context.dataset) context.dataset.sendCommentsInitialized = 'true';
 
         const commentTextArea = context.querySelector('#comment-text');
         const submitButton = context.querySelector('#submit-comment');
@@ -545,6 +545,7 @@
             labels: selectedLabelsValues,
             description: quill.root.innerHTML,
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
+            mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
         };
 
         // Envía la solicitud AJAX
@@ -557,17 +558,17 @@
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
                     const taskTodayElement = form.querySelector('#task-today');
-                    if (taskTodayElement && !taskTodayElement.disabled) {
-                        // Obtiene el estado actual de 'today' y lo convierte a booleano
-                        let markForToday = taskTodayElement.checked;
-                        let taskIdResponse = response.data.task_id;
+                    // if (taskTodayElement && !taskTodayElement.disabled) {
+                    //     // Obtiene el estado actual de 'today' y lo convierte a booleano
+                    //     let markForToday = taskTodayElement.checked;
+                    //     let taskIdResponse = response.data.task_id;
 
-                        // Llama a la función para marcar o desmarcar (invierte el estado actual)
-                        toggleMarkForToday(taskIdResponse, markForToday);
+                    //     // Llama a la función para marcar o desmarcar (invierte el estado actual)
+                    //     toggleMarkForToday(taskIdResponse, markForToday);
 
-                        // Actualiza el valor del elemento
-                        // taskTodayElement.value = (!today).toString();
-                    }
+                    //     // Actualiza el valor del elemento
+                    //     // taskTodayElement.value = (!today).toString();
+                    // }
 
                     const modalElement = document.querySelector('.task-modal.show'); // Selecciona el modal abierto, o null si no está en un modal
                     if (modalElement) {
@@ -615,12 +616,12 @@
         }
     }
 
-    // Función para manejar la marca "today" en la tarea
-    function toggleMarkForToday(taskId, markForToday) {
-        // Implementa la lógica necesaria según tus requerimientos
-        console.log(`Task ID: ${taskId}, Mark for Today: ${markForToday}`);
-        // Por ejemplo, podrías actualizar el estado en la interfaz sin recargar
-    }
+    // // Función para manejar la marca "today" en la tarea
+    // function toggleMarkForToday(taskId, markForToday) {
+    //     // Implementa la lógica necesaria según tus requerimientos
+    //     console.log(`Task ID: ${taskId}, Mark for Today: ${markForToday}`);
+    //     // Por ejemplo, podrías actualizar el estado en la interfaz sin recargar
+    // }
 
     // Exportar funciones globalmente para que puedan ser llamadas desde HTML
     window.initializeSendComments = initializeSendComments;
@@ -634,8 +635,8 @@
         // Verificar si existe el formulario de tarea directamente en la página
         const taskForm = document.querySelector('#task-form');
         if (taskForm && !taskForm.closest('.task-modal')) { // Asegurarse de que no está dentro de un modal
-            initializeSendComments(document);
             initializeTaskPage(document);
+            initializeSendComments(document);
         }
     });
 

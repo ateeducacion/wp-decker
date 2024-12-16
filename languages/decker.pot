@@ -340,7 +340,7 @@ msgid "New Label Name"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-labels.php:60
-#: includes/custom-post-types/class-decker-tasks.php:1046
+#: includes/custom-post-types/class-decker-tasks.php:1057
 #: public/app-term-manager.php:119
 #: public/layouts/left-sidebar.php:294
 #: public/layouts/task-card.php:293
@@ -348,218 +348,218 @@ msgid "Labels"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:205
-#: includes/custom-post-types/class-decker-tasks.php:1086
+#: includes/custom-post-types/class-decker-tasks.php:1097
 #: public/app-priority.php:171
-#: public/app-priority.php:397
+#: public/app-priority.php:403
 #: public/app-tasks.php:204
 #: public/layouts/task-card.php:247
 msgid "Stack"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:898
+#: includes/custom-post-types/class-decker-tasks.php:909
 msgctxt "post type general name"
 msgid "Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:899
+#: includes/custom-post-types/class-decker-tasks.php:910
 msgctxt "post type singular name"
 msgid "Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:900
+#: includes/custom-post-types/class-decker-tasks.php:911
 msgctxt "admin menu"
 msgid "Decker"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:901
+#: includes/custom-post-types/class-decker-tasks.php:912
 msgid "Edit Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:902
+#: includes/custom-post-types/class-decker-tasks.php:913
 msgid "View Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:903
+#: includes/custom-post-types/class-decker-tasks.php:914
 msgid "All Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:904
+#: includes/custom-post-types/class-decker-tasks.php:915
 msgid "Search Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:905
+#: includes/custom-post-types/class-decker-tasks.php:916
 msgid "Parent Tasks:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:906
+#: includes/custom-post-types/class-decker-tasks.php:917
 msgid "No tasks found."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:907
+#: includes/custom-post-types/class-decker-tasks.php:918
 msgid "No tasks found in Trash."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:949
+#: includes/custom-post-types/class-decker-tasks.php:960
 msgctxt "post status"
 msgid "Archived"
 msgstr ""
 
 #. translators: %s: Number of items
-#: includes/custom-post-types/class-decker-tasks.php:955
+#: includes/custom-post-types/class-decker-tasks.php:966
 msgid "Archived <span class=\"count\">(%s)</span>"
 msgid_plural "Archived <span class=\"count\">(%s)</span>"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/custom-post-types/class-decker-tasks.php:970
-#: includes/custom-post-types/class-decker-tasks.php:974
+#: includes/custom-post-types/class-decker-tasks.php:981
+#: includes/custom-post-types/class-decker-tasks.php:985
 msgid "Archived"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:976
+#: includes/custom-post-types/class-decker-tasks.php:987
 msgid "Archivado"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1010
+#: includes/custom-post-types/class-decker-tasks.php:1021
 msgid "Task Details"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1019
+#: includes/custom-post-types/class-decker-tasks.php:1030
 #: public/app-priority.php:173
 #: public/app-tasks.php:207
 msgid "Assigned Users"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1028
+#: includes/custom-post-types/class-decker-tasks.php:1039
 msgid "Task User and Date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1037
+#: includes/custom-post-types/class-decker-tasks.php:1048
 #: public/layouts/task-card.php:319
 msgid "Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1055
+#: includes/custom-post-types/class-decker-tasks.php:1066
 #: public/app-priority.php:170
-#: public/app-priority.php:396
+#: public/app-priority.php:402
 #: public/app-tasks.php:203
 #: public/layouts/task-card.php:200
 msgid "Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1078
+#: includes/custom-post-types/class-decker-tasks.php:1089
 #: public/layouts/task-card.php:255
 msgid "Due Date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1082
+#: includes/custom-post-types/class-decker-tasks.php:1093
 msgid "Max Priority"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1088
+#: includes/custom-post-types/class-decker-tasks.php:1099
 msgid "To-Do"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1089
+#: includes/custom-post-types/class-decker-tasks.php:1100
 #: public/app-kanban-my.php:100
 #: public/app-kanban.php:141
 #: public/layouts/task-card.php:244
 msgid "In Progress"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1090
+#: includes/custom-post-types/class-decker-tasks.php:1101
 #: public/app-kanban-my.php:115
 #: public/app-kanban.php:156
 #: public/layouts/task-card.php:245
 msgid "Done"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1094
+#: includes/custom-post-types/class-decker-tasks.php:1105
 msgid "Nextcloud Card ID"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1146
+#: includes/custom-post-types/class-decker-tasks.php:1157
 #: public/layouts/task-card.php:189
 msgid "Select Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1197
+#: includes/custom-post-types/class-decker-tasks.php:1208
 msgid "Assign User:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1199
+#: includes/custom-post-types/class-decker-tasks.php:1210
 msgid "-- Select User --"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1210
+#: includes/custom-post-types/class-decker-tasks.php:1221
 msgid "Assign Date:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1216
+#: includes/custom-post-types/class-decker-tasks.php:1227
 msgid "Add Relation"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1225
+#: includes/custom-post-types/class-decker-tasks.php:1236
 msgid "Unknown User"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1230
-#: includes/custom-post-types/class-decker-tasks.php:1271
-#: includes/custom-post-types/class-decker-tasks.php:1356
-#: includes/custom-post-types/class-decker-tasks.php:1390
+#: includes/custom-post-types/class-decker-tasks.php:1241
+#: includes/custom-post-types/class-decker-tasks.php:1282
+#: includes/custom-post-types/class-decker-tasks.php:1367
+#: includes/custom-post-types/class-decker-tasks.php:1401
 msgid "Remove"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1252
+#: includes/custom-post-types/class-decker-tasks.php:1263
 msgid "Please select a user and date."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1261
+#: includes/custom-post-types/class-decker-tasks.php:1272
 msgid "This user and date combination already exists."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1340
-#: includes/custom-post-types/class-decker-tasks.php:1378
+#: includes/custom-post-types/class-decker-tasks.php:1351
+#: includes/custom-post-types/class-decker-tasks.php:1389
 msgid "Add Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1376
+#: includes/custom-post-types/class-decker-tasks.php:1387
 msgid "Select Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1643
+#: includes/custom-post-types/class-decker-tasks.php:1654
 msgid "Show All Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1644
+#: includes/custom-post-types/class-decker-tasks.php:1655
 msgid "Show All Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1697
+#: includes/custom-post-types/class-decker-tasks.php:1708
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1862
+#: includes/custom-post-types/class-decker-tasks.php:1877
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1865
+#: includes/custom-post-types/class-decker-tasks.php:1880
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1868
+#: includes/custom-post-types/class-decker-tasks.php:1883
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1874
+#: includes/custom-post-types/class-decker-tasks.php:1889
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1950
+#: includes/custom-post-types/class-decker-tasks.php:1965
 msgid "Security check failed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1959
+#: includes/custom-post-types/class-decker-tasks.php:1974
 msgid "Invalid comment data."
 msgstr ""
 
@@ -785,7 +785,7 @@ msgid "Yes"
 msgstr ""
 
 #: public/app-priority.php:154
-#: public/app-priority.php:386
+#: public/app-priority.php:392
 #: public/app-term-manager.php:276
 msgid "Close"
 msgstr ""
@@ -795,24 +795,24 @@ msgid "MAX PRIORITY"
 msgstr ""
 
 #: public/app-priority.php:172
-#: public/app-priority.php:398
+#: public/app-priority.php:404
 #: public/layouts/task-card.php:162
 msgid "Title"
 msgstr ""
 
-#: public/app-priority.php:203
+#: public/app-priority.php:209
 msgid "No board assigned"
 msgstr ""
 
-#: public/app-priority.php:344
+#: public/app-priority.php:350
 msgid "No tasks for today."
 msgstr ""
 
-#: public/app-priority.php:385
+#: public/app-priority.php:391
 msgid "Select tasks to import"
 msgstr ""
 
-#: public/app-priority.php:426
+#: public/app-priority.php:432
 msgid "There are no tasks from previous days to import."
 msgstr ""
 
