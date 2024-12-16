@@ -20,8 +20,10 @@ up: check-docker
 down: check-docker
 	npx wp-env stop
 
+# Clean the environments, the same that running "npx wp-env clean all"
 clean:
-	npx wp-env clean all
+	npx wp-env clean development
+	npx wp-env clean tests
 
 destroy:
 	npx wp-env destroy
@@ -36,8 +38,9 @@ check: fix lint check-plugin test check-untranslated mo
 check-all: check
 
 # Run unit tests with PHPUnit
+tests: test
 test:
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox
 
 test-verbose:
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose

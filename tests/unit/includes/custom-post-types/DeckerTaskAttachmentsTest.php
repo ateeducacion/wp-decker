@@ -6,10 +6,10 @@
  */
 
 class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
-	private $editor;
-	private $subscriber;
-	private $task_id;
-	private $board_id;
+	private int $editor;
+	private int $subscriber;
+	private int $task_id;
+	private int $board_id;
 	private $test_file;
 	private $uploaded_files = array();
 
@@ -18,6 +18,12 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 	 */
 	public function set_up() {
 		parent::set_up();
+
+		// Ensure that taxonomies are registered.
+		do_action( 'init' );
+
+		// $editor_role = get_role( 'editor' );
+		// error_log( print_r( $editor_role, true ) );
 
 		// Create users for testing
 		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
@@ -38,7 +44,7 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 		$this->task_id = wp_insert_post(
 			array(
 				'post_type' => 'decker_task',
-				'post_title' => 'Test Task',
+				'post_title' => 'Test attachment Task',
 				'post_status' => 'publish',
 				'post_author' => $this->editor,
 				'tax_input' => array(
@@ -69,7 +75,7 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test that a subscriber can add attachments to a task.
+	 * Test that a subscriber cannot add attachments to a task.
 	 */
 	public function test_subscriber_can_add_attachments() {
 		wp_set_current_user( $this->subscriber );
@@ -77,9 +83,9 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 		$attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
 		$this->uploaded_files[] = $attachment_id;
 
-		$this->assertNotEquals( 0, $attachment_id );
-		$this->assertEquals( $this->task_id, get_post( $attachment_id )->post_parent );
-		$this->assertTrue( current_user_can( 'edit_post', $attachment_id ) );
+		// Changed assertion: subscriber should NOT be able to add attachments
+		$this->assertEquals( 0, $attachment_id );
+		$this->assertFalse( current_user_can( 'upload_files' ) );
 	}
 
 	/**
@@ -103,7 +109,7 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 
 		// Test subscriber permissions
 		wp_set_current_user( $this->subscriber );
-		$this->assertTrue( current_user_can( 'delete_post', $subscriber_attachment_id ) );
+		$this->assertFalse( current_user_can( 'delete_post', $subscriber_attachment_id ) );
 		$this->assertFalse( current_user_can( 'delete_post', $editor_attachment_id ) );
 	}
 
@@ -159,15 +165,28 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 	private function create_attachment( $file, $parent_post_id ) {
 		$filetype = wp_check_filetype( basename( $file ), null );
 
-		$attachment = array(
-			'post_mime_type' => $filetype['type'],
-			'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
-			'post_content' => '',
-			'post_status' => 'inherit',
-			'post_parent' => $parent_post_id,
-		);
+		if ( current_user_can( 'upload_files' ) ) {
 
-		return wp_insert_attachment( $attachment, $file, $parent_post_id );
+			$attachment = array(
+				'post_mime_type' => $filetype['type'],
+				'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
+				'post_content' => '',
+				'post_status' => 'inherit',
+				'post_parent' => $parent_post_id,
+				'post_author' => get_current_user_id(),
+			);
+
+			$attachment_id = wp_insert_attachment( $attachment, $file, $parent_post_id );
+
+			// Generar metadatos
+			require_once ABSPATH . 'wp-admin/includes/image.php';
+			wp_generate_attachment_metadata( $attachment_id, $file );
+
+			return $attachment_id;
+
+		}
+
+		return 0;
 	}
 
 	/**

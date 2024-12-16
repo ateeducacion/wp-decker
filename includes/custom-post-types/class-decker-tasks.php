@@ -144,7 +144,7 @@ class Decker_Tasks {
 	public function delete_task_attachment() {
 		check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'delete_attachments' ) ) {
+		if ( ! current_user_can( 'delete_posts' ) ) {
 			wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
 		}
 

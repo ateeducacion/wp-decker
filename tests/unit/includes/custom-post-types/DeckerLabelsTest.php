@@ -7,8 +7,8 @@
 
 class DeckerLabelsTest extends WP_UnitTestCase {
 
-	private $editor;
-	private $subscriber;
+	private int $editor;
+	private int $subscriber;
 
 	/**
 	 * Set up before each test.

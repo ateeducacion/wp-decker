@@ -28,18 +28,6 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->editor );
 	}
 
-	public function tear_down() {
-
-		foreach ( $this->created_posts as $post_id ) {
-			wp_delete_post( $post_id, true ); // true to delete permanently
-		}
-
-		// Clean array for next test
-		$this->created_posts = array();
-
-		parent::tear_down();
-	}
-
 	public function test_create_data() {
 
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
@@ -206,5 +194,17 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 		$this->created_posts[] = $task_id;
 
 		return $task_id;
+	}
+
+	public function tear_down() {
+
+		foreach ( $this->created_posts as $post_id ) {
+			wp_delete_post( $post_id, true ); // true to delete permanently
+		}
+
+		// Clean array for next test
+		$this->created_posts = array();
+
+		parent::tear_down();
 	}
 }

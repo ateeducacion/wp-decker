@@ -14,7 +14,7 @@ class DeckerAdminExportTest extends WP_UnitTestCase {
 	/**
 	 * @var int $admin_user_id Admin user ID
 	 */
-	private $admin_user_id;
+	private int $admin_user_id;
 
 	/**
 	 * Set up test environment

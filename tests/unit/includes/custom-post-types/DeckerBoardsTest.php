@@ -8,6 +8,13 @@
 class DeckerBoardsTest extends WP_UnitTestCase {
 
 	/**
+	 * Users for testing.
+	 */
+	private int $editor;
+	private int $subscriber;
+	private int $administrator;
+
+	/**
 	 * Set up before each test.
 	 */
 	public function set_up() {
@@ -16,32 +23,27 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 		// Ensure that taxonomies are registered.
 		do_action( 'init' );
 
-		// Create user roles for testing.
-		add_role(
-			'test_editor',
-			'Test Editor',
-			array(
-				'read'       => true,
-				'edit_posts' => true, // Grants permission to manage terms.
-			)
-		);
-
-		add_role(
-			'test_subscriber',
-			'Test Subscriber',
-			array(
-				'read' => true,
-			)
-		);
+		// Create users with default WordPress roles for testing.
+		$this->editor = $this->factory->user->create( array( 'role' => 'editor' ) );
+		$this->subscriber = $this->factory->user->create( array( 'role' => 'subscriber' ) );
+		$this->administrator = $this->factory->user->create( array( 'role' => 'administrator' ) );
 	}
+
 
 	/**
 	 * Clean up after each test.
 	 */
 	public function tear_down() {
-		// Remove roles created for testing.
-		remove_role( 'test_editor' );
-		remove_role( 'test_subscriber' );
+		// Delete users created for testing.
+		if ( $this->editor ) {
+			wp_delete_user( $this->editor );
+		}
+		if ( $this->subscriber ) {
+			wp_delete_user( $this->subscriber );
+		}
+		if ( $this->administrator ) {
+			wp_delete_user( $this->administrator );
+		}
 
 		parent::tear_down();
 	}
@@ -63,19 +65,10 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests that a user with permissions can create terms.
+	 * Tests that an editor can create terms.
 	 */
 	public function test_editor_can_create_terms() {
-
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a user with the 'test_editor' role.
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login.
-		wp_set_current_user( $editor->ID );
+		wp_set_current_user( $this->editor );
 
 		// Create a term.
 		$term_name = 'Sprint 1';
@@ -87,33 +80,22 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'term_id', $term, 'The term should have an ID.' );
 		$this->assertEquals( $term_name, get_term( $term['term_id'], 'decker_board' )->name, 'The term name should match.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
 	}
 
 	/**
-	 * Tests that a user without permissions cannot create terms.
+	 * Tests that a subscriber cannot create terms.
 	 */
 	public function test_subscriber_cannot_create_terms() {
+		wp_set_current_user( $this->subscriber );
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a user with the 'test_subscriber' role
-		$subscriber = $this->factory->user->create_and_get( array( 'role' => 'test_subscriber' ) );
-		$this->assertNotNull( $subscriber, 'The subscriber user should be created correctly.' );
-
-		// Simulate the subscriber user login
-		wp_set_current_user( $subscriber->ID );
-
-		// Attempt to create a term
+		// Attempt to create a term.
 		$term_name = 'Sprint 2';
 		$term = wp_insert_term( $term_name, 'decker_board' );
 
-		// Verify that creation fails
+		// Verify that creation fails.
 		$this->assertWPError( $term, 'The term should not be created by a subscriber.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
 	}
 
@@ -121,16 +103,10 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	 * Tests that a user with permissions can delete terms.
 	 */
 	public function test_editor_can_delete_terms() {
+		wp_set_current_user( $this->editor );
 
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a user with the 'test_editor' role
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
 
 		// Create a term
 		$term_name = 'Sprint 3';
@@ -154,71 +130,67 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests that a user without permissions cannot delete terms.
+	 * Tests that an administrator can delete terms.
+	 */
+	public function test_administrator_can_delete_terms() {
+		wp_set_current_user( $this->administrator );
+
+		// Create a term.
+		$term_name = 'Sprint 3';
+		$term = wp_insert_term( $term_name, 'decker_board' );
+		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+
+		$term_id = $term['term_id'];
+
+		// Delete the term.
+		$result = wp_delete_term( $term_id, 'decker_board' );
+
+		// Verify that deletion was successful.
+		$this->assertTrue( $result, 'The term should be deleted successfully.' );
+		$this->assertNull( get_term( $term_id, 'decker_board' ), 'The term should not exist after being deleted.' );
+
+		wp_set_current_user( 0 );
+	}
+
+	/**
+	 * Tests that a subscriber cannot delete terms.
 	 */
 	public function test_subscriber_cannot_delete_terms() {
+		wp_set_current_user( $this->administrator );
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a user with the 'test_editor' role to create the term
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
-
-		// Create a term
+		// Create a term.
 		$term_name = 'Sprint 4';
 		$term = wp_insert_term( $term_name, 'decker_board' );
 		$this->assertNotWPError( $term, 'The term should be created without errors.' );
 
 		$term_id = $term['term_id'];
 
-		// Clean up
-		wp_set_current_user( 0 );
+		wp_set_current_user( $this->subscriber );
 
-		// Create a user with the 'test_subscriber' role
-		$subscriber = $this->factory->user->create_and_get( array( 'role' => 'test_subscriber' ) );
-		$this->assertNotNull( $subscriber, 'The subscriber user should be created correctly.' );
-
-		// Simulate the subscriber user login
-		wp_set_current_user( $subscriber->ID );
-
-		// Expect wp_die to be called.
-		$this->expectException( 'WPDieException' );
+		// Expect the WPDieException to be thrown.
+		$this->expectException( WPDieException::class );
 		$this->expectExceptionMessage( 'You do not have permission to delete terms.' );
 
-		// Attempt to delete the term
+		// Attempt to delete the term.
 		$result = wp_delete_term( $term_id, 'decker_board' );
 
-		// $this->expectException( Exception::class );
-		// $this->expectExceptionMessage( 'You do not have permission to delete this term.' );
+		// Verify that the term still exists after the exception is thrown.
+		$this->assertNotNull( get_term( $term_id, 'decker_board' ), 'The term should still exist because deletion is not allowed.' );
 
-		// Verify that the term still exists
-		$this->assertNotNull( get_term( $term_id, 'decker_board' ), 'The term should exist because it was not deleted.' );
+		// Verify that deletion fails.
+		$this->assertFalse( $result, 'The term should not be deleted by a subscriber.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
-
-		// Delete the term to avoid leaving residual data
-		wp_delete_term( $term_id, 'decker_board' );
 	}
 
 	/**
 	 * Tests the creation and deletion of multiple terms.
 	 */
 	public function test_create_and_delete_multiple_terms() {
+		wp_set_current_user( $this->editor );
 
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a user with the 'test_editor' role
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
 
 		$terms = array( 'Board A', 'Board B', 'Board C' );
 		$term_ids = array();
@@ -252,12 +224,7 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	 * Tests that only users with edit permissions can save color metadata.
 	 */
 	public function test_editor_can_save_color_meta() {
-		// Create a user with the 'test_editor' role
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
+		wp_set_current_user( $this->editor );
 
 		// Create a term with color
 		$term_name = 'Sprint 5';
@@ -283,16 +250,10 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	 * Tests that users without permissions cannot save color metadata.
 	 */
 	public function test_subscriber_cannot_save_color_meta() {
+		wp_set_current_user( $this->editor );
 
 		// Ensure 'decker_term_action' matches your plugin action.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a user with the 'test_editor' role to create the term
-		$editor = $this->factory->user->create_and_get( array( 'role' => 'test_editor' ) );
-		$this->assertNotNull( $editor, 'The editor user should be created correctly.' );
-
-		// Simulate the editor user login
-		wp_set_current_user( $editor->ID );
 
 		// Create a term
 		$term_name = 'Sprint 6';
@@ -309,12 +270,8 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 		unset( $_POST['decker_term_nonce'] );
 		unset( $_POST['term-color'] );
 
-		// Create a user with the 'test_subscriber' role
-		$subscriber = $this->factory->user->create_and_get( array( 'role' => 'test_subscriber' ) );
-		$this->assertNotNull( $subscriber, 'The subscriber user should be created correctly.' );
-
 		// Simulate the subscriber user login
-		wp_set_current_user( $subscriber->ID );
+		wp_set_current_user( $this->subscriber );
 
 		// Attempt to update the term's color
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
