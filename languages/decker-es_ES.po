@@ -475,19 +475,19 @@ msgstr "Agregar Adjuntos"
 msgid "Select Attachments"
 msgstr "Seleccionar Adjuntos"
 
-#: includes/custom-post-types/class-decker-tasks.php:1877
+#: includes/custom-post-types/class-decker-tasks.php:1887
 msgid "The title is required."
 msgstr "El título es obligatorio."
 
-#: includes/custom-post-types/class-decker-tasks.php:1880
+#: includes/custom-post-types/class-decker-tasks.php:1890
 msgid "The stack is required."
 msgstr "La columna es obligatoria."
 
-#: includes/custom-post-types/class-decker-tasks.php:1883
+#: includes/custom-post-types/class-decker-tasks.php:1893
 msgid "The board is required and must be a positive integer."
 msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
-#: includes/custom-post-types/class-decker-tasks.php:1889
+#: includes/custom-post-types/class-decker-tasks.php:1899
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr "El tablero no existe en la taxonomía decker_board."
 
@@ -1234,11 +1234,11 @@ msgstr "No tienes permiso para borrar etiquetas"
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
-#: includes/custom-post-types/class-decker-tasks.php:1965
+#: includes/custom-post-types/class-decker-tasks.php:1975
 msgid "Security check failed."
 msgstr "Error de comprobación."
 
-#: includes/custom-post-types/class-decker-tasks.php:1974
+#: includes/custom-post-types/class-decker-tasks.php:1984
 msgid "Invalid comment data."
 msgstr "Datos de comentario inválidos."
 

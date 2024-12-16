@@ -539,27 +539,27 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1877
+#: includes/custom-post-types/class-decker-tasks.php:1887
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1880
+#: includes/custom-post-types/class-decker-tasks.php:1890
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1883
+#: includes/custom-post-types/class-decker-tasks.php:1893
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1889
+#: includes/custom-post-types/class-decker-tasks.php:1899
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1965
+#: includes/custom-post-types/class-decker-tasks.php:1975
 msgid "Security check failed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1974
+#: includes/custom-post-types/class-decker-tasks.php:1984
 msgid "Invalid comment data."
 msgstr ""
 
