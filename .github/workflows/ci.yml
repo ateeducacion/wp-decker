@@ -38,14 +38,14 @@ jobs:
           make package VERSION=6.6.6
           unzip decker-6.6.6.zip -d decker
 
-      - name: Run plugin check
-        uses: wordpress/plugin-check-action@v1
-        with:
-          build-dir: './decker'
-          exclude-checks: 'image_functions'
-        env:
-          WP_DEBUG: 'true'
-          WP_DEBUG_LOG: 'true'
+      # - name: Run plugin check
+      #   uses: wordpress/plugin-check-action@v1
+      #   with:
+      #     build-dir: './decker'
+      #     exclude-checks: 'image_functions'
+      #   env:
+      #     WP_DEBUG: 'true'
+      #     WP_DEBUG_LOG: 'true'
 
 
       - name: Run plugin check
