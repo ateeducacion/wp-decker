@@ -39,24 +39,27 @@ jobs:
       #     make package VERSION=6.6.6
       #     unzip decker-6.6.6.zip -d decker
 
-      - name: Run plugin check
-        uses: wordpress/plugin-check-action@v1
-        with:
-      #     build-dir: './decker'
-          exclude-checks: 'file_type,image_functions'
-          exclude-directories: tests
+      # - name: Run plugin check
+      #   uses: wordpress/plugin-check-action@v1
+      #   with:
+      # #     build-dir: './decker'
+      #     exclude-checks: 'file_type,image_functions'
+      #     exclude-directories: tests
 
       # Install wp-env globally
-      # - name: Install wp-env
-      #   run: npm install @wordpress/env
+      - name: Setup wp-env
+        run: npm -g --no-fund i @wordpress/env
 
-      # # Setup wp-env environment
-      # - name: Setup & start wp-env
-      #   run: make up
+      # Start wp-env environment
+      - name: Start wp-env
+        run: make up
 
-      # # Run plugin check
-      # - name: Run plugin check
-      #   run: make check-plugin
+      - name: Run plugin check
+        run: make check-plugin
+
+
+      - name: Run unit tests
+        run: make test
 
       # - name: Uninstall plugin decker
       #   run: |
@@ -69,8 +72,6 @@ jobs:
       #     plugins: '["."]'
 
 
-      - name: Run unit tests
-        run: make test
 
 
       # - name: Create Plugin ZIP Archive
