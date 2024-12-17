@@ -71,7 +71,7 @@ class DeckerTasksArchiveTest extends WP_UnitTestCase {
 		$request->set_param( 'user_id', $this->user_id );
 		$request->set_url_params( array( 'id' => $this->task_id ) ); // Explicitly set 'id' parameter
 
-		$response = $task_instance->archive_task( $request );
+		$response = $task_instance->archive_task_callback( $request );
 
 		if ( $response->get_status() !== 200 ) {
 			$this->fail( 'REST API response error: ' . json_encode( $response->get_data() ) );
