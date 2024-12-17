@@ -41,14 +41,15 @@ jobs:
 
       # Setup wp-env environment
       - name: Setup & start wp-env
-        run: |
-          npx wp-env start
-          npx wp-env run cli wp plugin install plugin-check --activate
+        # run: |
+          #npx wp-env start
+        run: make up
 
       # Run plugin check
       - name: Run plugin check
-        run: |
-          npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+        # run: |
+          #npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+        run: make check-plugin
 
         env:
           WP_DEBUG: 'true'
@@ -110,5 +111,5 @@ jobs:
       #     npx wp-env run cli wp plugin-check --exclude-checks=image_functions
 
       - name: Run unit tests
-        run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
-
+        # run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
+        run: make test
