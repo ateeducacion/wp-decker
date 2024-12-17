@@ -322,9 +322,9 @@ table#tablaTareas td:nth-child(4) {
 						config: {
 							depthLimit: 2,
 							searchBuilder: {
-								columns: [0, 1, 2, 3, 4, 5],
+								columns: [1, 2, 3, 4, 5],
 							},
-							columns: [0, 1, 2, 3, 4, 5],
+							columns: [1, 2, 3, 4, 5],
 						},
 					},
 					{
@@ -333,46 +333,56 @@ table#tablaTareas td:nth-child(4) {
 					},
 				],
 				dom: '<"ms-2"l><"d-flex justify-content-between align-items-center"<"me-2"B>f>rtip', // Ajustar layout
-				// select: true,
-				searchBuilder: {
-					columns: [0, 1, 2, 3, 4, 5, 6],
-				},
 				columnDefs: [
-				{
-					searchPanes: {
-						show: false,
+					{
+						searchPanes: {
+							show: false,
+						},
+						targets: [1, 6], // Columnas para las cuales SearchPanes está deshabilitado
 					},
-					targets: [1, 6], // Columnas para las cuales SearchPanes está deshabilitado
-				},
-				{
-					targets: 2, // Columna 3
-					searchBuilder: {
-						disable: true
-					}
-				},
-				{
-					targets: [4, 5, 7], // Columna 7
-					orderable: false
-				},
-				{
-					targets: 6, // Columna 6 (Remaining Time)
-					render: function(data, type, row, meta) {
-						if(type === 'display') {
-							// Verificar que la fecha sea válida
-							if (!data) {
-								return '';
-							}
-							// Formatear la fecha completa para el tooltip
-							var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
-							// Generar el texto amigable usando Day.js
-							var friendlyText = dayjs(data).fromNow();
-							return '<span title="' + fullDate + '">' + friendlyText + '</span>';
+					{
+						targets: 2, // Columna 3
+						searchBuilder: {
+							disable: true
 						}
-						return data; // Para 'sort', 'type' y 'filter'
 					},
-					type: 'date'
-				},
-			],
+					{
+						targets: [4, 5, 7], // Columna 7
+						orderable: false
+					},
+					{
+						targets: 6, // Columna 6 (Remaining Time)
+						render: function(data, type, row, meta) {
+							if(type === 'display') {
+								// Verificar que la fecha sea válida
+								if (!data) {
+									return '';
+								}
+								// Formatear la fecha completa para el tooltip
+								var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
+								// Generar el texto amigable usando Day.js
+								var friendlyText = dayjs(data).fromNow();
+								return '<span title="' + fullDate + '">' + friendlyText + '</span>';
+							}
+							return data; // Para 'sort', 'type' y 'filter'
+						},
+						type: 'date'
+					},
+{
+	targets: 5, // Índice de la columna "Assigned Users"
+	render: function(data, type, row) {
+		if (type === 'filter' || type === 'search' || type === 'sort') {
+			// Procesar el contenido HTML y extraer los valores de los <span>
+			var tempDiv = document.createElement('div');
+			tempDiv.innerHTML = data; // Convierte la celda HTML en un DOM manipulable
+			var userSpans = tempDiv.querySelectorAll('span.d-none');
+			return Array.from(userSpans).map(span => span.textContent.trim()).join(' '); // Retorna valores separados por espacios
+		}
+		// Para la visualización en la tabla
+		return data;
+	}
+}		
+				],
 
 				// columnDefs: [
 				// 	{

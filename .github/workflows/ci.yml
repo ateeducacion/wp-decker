@@ -33,21 +33,21 @@ jobs:
       - name: Check untranslated strings
         run: make check-untranslated
 
-      # - name: Setup & start wp-env
-      #   uses: godaddy-wordpress/setup-wp-env@v1
+      - name: Setup & start wp-env
+        uses: godaddy-wordpress/setup-wp-env@v1
       #   with:
       #     # plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
       #     plugins: '["."]'
 
       # Install wp-env globally
-      - name: Install wp-env
-        run: npm install @wordpress/env
+      # - name: Install wp-env
+      #   run: npm install @wordpress/env
 
-      # Setup wp-env environment
-      - name: Setup & start wp-env
-        # run: |
-          #npx wp-env start
-        run: make up
+      # # Setup wp-env environment
+      # - name: Setup & start wp-env
+      #   # run: |
+      #     #npx wp-env start
+      #   run: make up
 
       # Run plugin check
       - name: Run plugin check
