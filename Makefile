@@ -30,7 +30,7 @@ destroy:
 
 
 check-plugin:
-	npx wp-env run cli wp plugin is-installed plugin-check || npx wp-env run cli wp plugin install plugin-check --activate
+	npx wp-env run cli wp plugin install plugin-check --activate
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
 
 check: fix lint check-plugin test check-untranslated mo
