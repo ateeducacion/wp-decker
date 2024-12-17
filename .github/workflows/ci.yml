@@ -37,12 +37,12 @@ jobs:
         run: |
           composer archive --format=zip --dir=. --file=decker
           mkdir decker
-          unzip decker.zip -d decker
+          unzip decker.zip -d decker2
 
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
         with:
-          build-dir: './decker'
+          build-dir: './decker2'
           exclude-checks: 'image_functions'
         env:
           WP_DEBUG: 'true'
