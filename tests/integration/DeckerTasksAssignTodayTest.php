@@ -148,6 +148,8 @@ class DeckerTasksAssignTodayTest extends WP_UnitTestCase {
 			'stack'          => 'to-do',
 			'board'          => self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) ),
 			'mark_for_today' => true,
+			'max_priority'   => true,
+			'due_date'       => '1983-02-04',
 			'nonce'          => $nonce,
 		);
 
@@ -159,6 +161,19 @@ class DeckerTasksAssignTodayTest extends WP_UnitTestCase {
 
 		$this->assertTrue( $response_data['success'] );
 		$this->assertEquals( 'Tarea guardada exitosamente.', $response_data['message'] );
+
+		$post = get_post( $this->task_id );
+		$this->assertEquals( 'Test Task', $post->post_title, 'Task title mismatch.' );
+		$this->assertEquals( 'Task Description', $post->post_content, 'Task description mismatch.' );
+
+		$due_date = get_post_meta( $this->task_id, 'duedate', true );
+		$this->assertEquals( '1983-02-04', $due_date, 'Task duedate mismatch.' );
+
+		$max_priority = get_post_meta( $this->task_id, 'max_priority', true );
+		$this->assertEquals( 1, $max_priority, 'Task max_priority mismatch.' );
+
+		$stack = get_post_meta( $this->task_id, 'stack', true );
+		$this->assertEquals( 'to-do', $stack, 'Task stack mismatch.' );
 
 		// Verify relation is added.
 		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );

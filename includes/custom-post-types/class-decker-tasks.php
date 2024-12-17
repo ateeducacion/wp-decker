@@ -781,7 +781,8 @@ class Decker_Tasks {
 			'user_id' => $user_id,
 			'date'    => $date->format( 'Y-m-d' ),
 		);
-		update_post_meta( $task_id, '_user_date_relations', $relations );
+
+		$result = update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
 
 	/**
@@ -1826,9 +1827,9 @@ class Decker_Tasks {
 
 		// Set today.
 		if ( $mark_for_today ) {
-			$this->add_user_date_relation( get_current_user_id(), $result );
+			$this->add_user_date_relation( $result, get_current_user_id() );
 		} else {
-			$this->remove_user_date_relation( get_current_user_id(), $result );
+			$this->remove_user_date_relation( $result, get_current_user_id() );
 		}
 
 		$result_data = array(
