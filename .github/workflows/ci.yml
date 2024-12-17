@@ -44,6 +44,9 @@ jobs:
         with:
           build-dir: './decker'
           exclude-checks: 'image_functions'
+        env:
+          WP_DEBUG: 'true'
+          WP_DEBUG_LOG: 'true'
 
       - name: Uninstall plugin decker
         run: |
