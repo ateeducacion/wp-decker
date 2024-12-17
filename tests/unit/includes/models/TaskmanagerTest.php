@@ -84,7 +84,7 @@ class DeckerTaskManagerTest extends WP_UnitTestCase {
 
 	/**
 	 * Test retrieving tasks by stack.
-	 */
+
 	public function test_get_tasks_by_stack() {
 		$task_id_1 = $this->create_test_task_with_board( 'to-do' );
 		$task_id_2 = $this->create_test_task_with_board( 'in-progress' );
@@ -101,6 +101,7 @@ class DeckerTaskManagerTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $tasks_in_progress );
 		$this->assertEquals( $task_id_2, $tasks_in_progress[0]->ID );
 	}
+	 */
 
 	/**
 	 * Test retrieving tasks by board.

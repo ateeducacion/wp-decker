@@ -248,12 +248,16 @@ table#tablaTareas td:nth-child(4) {
 														echo '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span> ';
 													}
 													echo '</td>';
-													echo '<td><div class="avatar-group">';
+
+
+													echo '<td data-users=\'' . esc_attr( wp_json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
+													echo '<div class="avatar-group">';
 
 													foreach ( $task->assigned_users as $user ) {
 														$today_class = $user->today ? ' today' : '';
 														echo '<a href="javascript: void(0);" class="avatar-group-item' . esc_attr( $today_class ) . '" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $user->display_name ) . '" data-bs-original-title="' . esc_attr( $user->display_name ) . '">';
-														echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '" alt="" class="rounded-circle avatar-xs">';
+														echo '<span class="d-none">' . esc_attr( $user->display_name ) . '</span>';
+														echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
 														echo '</a>';
 													}
 													echo '</div></td>';
@@ -321,9 +325,9 @@ table#tablaTareas td:nth-child(4) {
 						config: {
 							depthLimit: 2,
 							searchBuilder: {
-								columns: [0, 1, 2, 3, 4, 5],
+								columns: [1, 2, 3, 4, 5],
 							},
-							columns: [0, 1, 2, 3, 4, 5],
+							columns: [1, 2, 3, 4, 5],
 						},
 					},
 					{
@@ -332,55 +336,44 @@ table#tablaTareas td:nth-child(4) {
 					},
 				],
 				dom: '<"ms-2"l><"d-flex justify-content-between align-items-center"<"me-2"B>f>rtip', // Ajustar layout
-				// select: true,
-				searchBuilder: {
-					columns: [0, 1, 2, 3, 4, 5, 6],
-				},
 				columnDefs: [
-				{
-					searchPanes: {
-						show: false,
+					{
+						searchPanes: {
+							show: false,
+						},
+						targets: [1, 6], // Columnas para las cuales SearchPanes está deshabilitado
 					},
-					targets: [1, 6], // Columnas para las cuales SearchPanes está deshabilitado
-				},
-				{
-					targets: 2, // Columna 3
-					searchBuilder: {
-						disable: true
-					}
-				},
-				{
-					targets: [4, 5, 7], // Columna 7
-					orderable: false
-				},
-				{
-					targets: 6, // Columna 6 (Remaining Time)
-					render: function(data, type, row, meta) {
-						if(type === 'display') {
-							// Verificar que la fecha sea válida
-							if (!data) {
-								return '';
-							}
-							// Formatear la fecha completa para el tooltip
-							var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
-							// Generar el texto amigable usando Day.js
-							var friendlyText = dayjs(data).fromNow();
-							return '<span title="' + fullDate + '">' + friendlyText + '</span>';
+					{
+						targets: 2, // Columna 3
+						searchBuilder: {
+							disable: true
 						}
-						return data; // Para 'sort', 'type' y 'filter'
 					},
-					type: 'date'
-				},
-			],
+					{
+						targets: [4, 5, 7], // Columna 7
+						orderable: false
+					},
+					{
+						targets: 6, // Columna 6 (Remaining Time)
+						render: function(data, type, row, meta) {
+							if(type === 'display') {
+								// Verificar que la fecha sea válida
+								if (!data) {
+									return '';
+								}
+								// Formatear la fecha completa para el tooltip
+								var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
+								// Generar el texto amigable usando Day.js
+								var friendlyText = dayjs(data).fromNow();
+								return '<span title="' + fullDate + '">' + friendlyText + '</span>';
+							}
+							return data; // Para 'sort', 'type' y 'filter'
+						},
+						type: 'date'
+					},
 
-				// columnDefs: [
-				// 	{
-				// 		searchPanes: {
-				// 			show: false,
-				// 		},
-				// 		targets: [1, 6],
-				// 	},
-				// ],
+				],
+
 				lengthMenu: [
 					[25, 50, 100, 200, -1],
 					[25, 50, 100, 200, 'All'],

@@ -33,90 +33,42 @@ jobs:
       - name: Check untranslated strings
         run: make check-untranslated
 
+
+      - name: Create Plugin ZIP Archive
+        run: |
+          make package VERSION=6.6.6
+          unzip decker-6.6.6.zip -d decker
+
+      - name: Run plugin check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: './decker'
+          exclude-checks: 'image_functions'
+
+      # Install wp-env globally
+      # - name: Install wp-env
+      #   run: npm install @wordpress/env
+
+      # # Setup wp-env environment
       # - name: Setup & start wp-env
-      #   uses: godaddy-wordpress/setup-wp-env@v1
-      #   with:
-      #     # plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
-      #     plugins: '["."]'
-
-      # # # Install wp-env globally
-      # # - name: Install wp-env
-      # #   run: npm install @wordpress/env
-
-
-      # # # Setup wp-env environment
-      # # - name: Setup & start wp-env
-      # #   # run: |
-      # #     #npx wp-env start
-      # #   run: make up
+      #   run: make up
 
       # # Run plugin check
       # - name: Run plugin check
-      #   # run: |
-      #     #npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
       #   run: make check-plugin
 
-      #   env:
-      #     WP_DEBUG: 'true'
-      #     WP_DEBUG_LOG: 'true'
+      - name: Uninstall plugin decker
+        run: |
+          npx wp-env run cli wp plugin deactivate decker
+          npx wp-env run cli wp plugin uninstall decker
 
-      # # # setup node based on the version from the .nvmrc file, fetched in the previous step
-      # # - name: Setup Node.js (.nvmrc)
-      # #   uses: actions/setup-node@v4
-      # #   with:
-      # #     node-version: "${{ steps.nvm.outputs.NVMRC }}"
+      - name: Setup & start wp-env
+        uses: godaddy-wordpress/setup-wp-env@v1
+        with:
+          plugins: '["."]'
 
-      # # # setup the node cache (node_modules) with github actions cache
-      # # - name: Cache Node - npm
-      # #   uses: actions/cache@v1
-      # #   with:
-      # #     path: ~/.npm
-      # #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      # #     restore-keys: |
-      # #       ${{ runner.os }}-node-cache-
-
-
-      # # - name: Create Plugin ZIP Archive
-      # #   run: |
-      # #     make package VERSION=6.6.6
-      # #     unzip decker-6.6.6.zip -d decker
-
-      # # - name: Run plugin check
-      # #   uses: wordpress/plugin-check-action@v1
-      # #   with:
-      # #     build-dir: './decker'
-      # #     exclude-checks: 'image_functions'
-      # #   env:
-      # #     WP_DEBUG: 'true'
-      # #     WP_DEBUG_LOG: 'true'
-
-
-      # # - name: Run plugin check
-      # #   uses: wordpress/plugin-check-action@v1
-      # #   with:
-      # #     exclude-checks: 'image_functions'
-      # #   env:
-      # #     WP_DEBUG: 'true'
-      # #     WP_DEBUG_LOG: 'true'
-
-
-      # # - name: Uninstall plugin decker
-      # #   run: |
-      # #     npx wp-env run cli wp plugin deactivate decker
-      # #     npx wp-env run cli wp plugin uninstall decker
-
-      # # - name: Setup & start wp-env
-      # #   uses: godaddy-wordpress/setup-wp-env@v1
-      # #   with:
-      # #     plugins: '["https://downloads.wordpress.org/plugin/plugin-check.zip","."]'
-
-      # # - name: Run plugin check
-      # #   run: |
-      # #     # npx wp-env run cli wp plugin activate decker
-      # #     npx wp-env run cli wp plugin-check --exclude-checks=image_functions
 
       # - name: Run unit tests
-      #   # run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
       #   run: make test
 
 
@@ -142,5 +94,5 @@ jobs:
       #   with:
       #     plugins: '["."]'
 
-      # - name: Run unit tests
-      #   run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
+      - name: Run unit tests
+        run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
