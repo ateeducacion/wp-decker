@@ -31,8 +31,8 @@ destroy:
 	npx wp-env destroy
 
 check-plugin: up
-	npx wp-env run cli wp plugin install plugin-check --activate --colors=always
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --colors=always
+	npx wp-env run cli wp plugin install plugin-check --activate --color
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
 
 check: fix lint check-plugin test check-untranslated mo
 
