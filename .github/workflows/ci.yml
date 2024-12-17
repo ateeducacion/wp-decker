@@ -65,11 +65,11 @@ jobs:
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
         with:
-          plugins: '["."]'
+          plugins: '[plugin-check,"."]'
 
       - name: Run plugin check
         run: |
-          npx wp-env run cli wp plugin activate decker
+          # npx wp-env run cli wp plugin activate decker
           npx wp-env run cli wp plugin-check --exclude-checks=image_functions
 
       - name: Run unit tests
