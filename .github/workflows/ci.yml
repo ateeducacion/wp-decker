@@ -65,7 +65,7 @@ jobs:
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
         with:
-          plugins: '[plugin-check,"."]'
+          plugins: '["plugin-check","."]'
 
       - name: Run plugin check
         run: |
