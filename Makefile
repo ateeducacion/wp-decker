@@ -31,8 +31,8 @@ destroy:
 	npx wp-env destroy
 
 check-plugin: up
-	npx wp-env run cli wp plugin install plugin-check --activate
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+	npx wp-env run cli wp plugin install plugin-check --activate --colors=always
+	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --colors=always
 
 check: fix lint check-plugin test check-untranslated mo
 
@@ -44,7 +44,7 @@ test: up
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
 test-verbose: up
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=alwaysma
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=always
 
 logs:
 	npx wp-env logs
