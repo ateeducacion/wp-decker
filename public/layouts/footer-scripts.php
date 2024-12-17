@@ -39,41 +39,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
   });    
 
+
 	document.querySelectorAll('.archive-task').forEach((element) => {
-	  element.addEventListener('click', function (event) {
-		  event.preventDefault();
-			var taskId = element.getAttribute('data-task-id');
-			if (confirm('Are you sure you want to archive this task?')) {
-			  fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
-				method: 'POST',
-				headers: {
-				  'Content-Type': 'application/json',
-				  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
-				},
-				body: JSON.stringify({ status: 'archived' })
-			  })
-			  .then(response => {
-				if (!response.ok) {
-				  throw new Error('Network response was not ok');
-				}
-				return response.json();
-			  })
-			  .then(data => {
-				if (data.success) {
 
-				  // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
-				  // element.closest('.task').remove();
+	  element.removeEventListener('click', archiveTaskHandler);
+	  element.addEventListener('click', archiveTaskHandler);
 
-				  // Reload the page if the request was successful
-				  location.reload();   
-
-				} else {
-				  alert('Failed to archive task.');
-				}
-			  })
-			  .catch(error => console.error('Error:', error));
-			}
-	  });
 	});
 
 
@@ -120,6 +91,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
   });
 
+
+function archiveTaskHandler(event) {
+	  event.preventDefault();
+	  const element = event.currentTarget;
+		var taskId = element.getAttribute('data-task-id');
+		if (confirm('Are you sure you want to archive this task?')) {
+		  fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/archive', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'application/json',
+			  'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+			},
+			body: JSON.stringify({ status: 'archived' })
+		  })
+		  .then(response => {
+			if (!response.ok) {
+			  throw new Error('Network response was not ok');
+			}
+			return response.json();
+		  })
+		  .then(data => {
+			if (data.success) {
+
+			  // TO-DO: Maybe will be better just remove the card, but we reload just for better debuggin
+			  // element.closest('.task').remove();
+
+			  // Reload the page if the request was successful
+			  location.reload();   
+
+			} else {
+			  alert('Failed to archive task.');
+			}
+		  })
+		  .catch(error => console.error('Error:', error));
+		}
+
+}
 
 function handleAssignToMe(element) {
   var taskId = element.getAttribute('data-task-id');

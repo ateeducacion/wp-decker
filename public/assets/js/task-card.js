@@ -306,39 +306,15 @@
         }
         if (labelsSelect) {
             labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
-        }
+        }        
 
-        // Manejo de archivado de tareas
-        context.querySelectorAll('.archive-task').forEach((element) => {
-            element.addEventListener('click', function () {
-                var taskIdToArchive = element.getAttribute('data-task-id');
-                if (confirm(strings.confirm_archive_task)) {
-                    fetch(`${restUrl}decker/v1/tasks/${encodeURIComponent(taskIdToArchive)}/archive`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-WP-Nonce': nonces.wp_rest_nonce
-                        },
-                        body: JSON.stringify({ status: 'archived' })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.success) {
-                            // Recargar la página si la solicitud fue exitosa
-                            location.reload();   
-                        } else {
-                            alert(strings.failed_archive_task);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                }
-            });
+        document.querySelectorAll('.archive-task').forEach((element) => {
+
+          element.removeEventListener('click', archiveTaskHandler);
+          element.addEventListener('click', archiveTaskHandler);
+
         });
+
     }
 
     // Función para manejar cambios en el checkbox "task-today"
@@ -557,19 +533,6 @@
             if (xhr.status >= 200 && xhr.status < 400) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
-                    const taskTodayElement = form.querySelector('#task-today');
-                    // if (taskTodayElement && !taskTodayElement.disabled) {
-                    //     // Obtiene el estado actual de 'today' y lo convierte a booleano
-                    //     let markForToday = taskTodayElement.checked;
-                    //     let taskIdResponse = response.data.task_id;
-
-                    //     // Llama a la función para marcar o desmarcar (invierte el estado actual)
-                    //     toggleMarkForToday(taskIdResponse, markForToday);
-
-                    //     // Actualiza el valor del elemento
-                    //     // taskTodayElement.value = (!today).toString();
-                    // }
-
                     const modalElement = document.querySelector('.task-modal.show'); // Selecciona el modal abierto, o null si no está en un modal
                     if (modalElement) {
                         var modalInstance = bootstrap.Modal.getInstance(modalElement);
@@ -615,13 +578,6 @@
             return null;
         }
     }
-
-    // // Función para manejar la marca "today" en la tarea
-    // function toggleMarkForToday(taskId, markForToday) {
-    //     // Implementa la lógica necesaria según tus requerimientos
-    //     console.log(`Task ID: ${taskId}, Mark for Today: ${markForToday}`);
-    //     // Por ejemplo, podrías actualizar el estado en la interfaz sin recargar
-    // }
 
     // Exportar funciones globalmente para que puedan ser llamadas desde HTML
     window.initializeSendComments = initializeSendComments;

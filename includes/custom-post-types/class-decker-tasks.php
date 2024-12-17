@@ -648,7 +648,7 @@ class Decker_Tasks {
 			'/tasks/(?P<id>\d+)/archive',
 			array(
 				'methods'             => 'POST',
-				'callback'            => array( $this, 'archive_task' ),
+				'callback'            => array( $this, 'archive_task_callback' ),
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
@@ -814,7 +814,7 @@ class Decker_Tasks {
 	 * @param WP_REST_Request $request The REST request.
 	 * @return WP_REST_Response The REST response.
 	 */
-	public function archive_task( $request ) {
+	public function archive_task_callback( $request ) {
 		$task_id = $request['id'];
 
 		// Validar el ID de la tarea.
@@ -834,6 +834,7 @@ class Decker_Tasks {
 				array(
 					'success' => false,
 					'message' => 'Tarea no encontrada.',
+					'task_id' => $task_id,
 				),
 				404
 			);
@@ -853,6 +854,7 @@ class Decker_Tasks {
 				array(
 					'success' => false,
 					'message' => 'Error al archivar la tarea.',
+					'task_id' => $task_id,
 				),
 				500
 			);
@@ -862,6 +864,7 @@ class Decker_Tasks {
 			array(
 				'success' => true,
 				'message' => 'Tarea archivada exitosamente.',
+				'task_id' => $task_id,
 			),
 			200
 		);
