@@ -12,6 +12,7 @@ class DeckerTaskManagerTest extends WP_UnitTestCase {
 	 */
 	protected $task_manager;
 
+	private $created_tasks = array();
 	/**
 	 * @var int
 	 */
@@ -63,6 +64,8 @@ class DeckerTaskManagerTest extends WP_UnitTestCase {
 		if ( is_wp_error( $task_id ) ) {
 			return $task_id;
 		}
+
+		$this->created_tasks[] = $task_id;
 
 		return $task_id;
 	}
@@ -145,5 +148,18 @@ class DeckerTaskManagerTest extends WP_UnitTestCase {
 		$this->assertIsArray( $tasks );
 		$this->assertCount( 1, $tasks );
 		$this->assertEquals( $task_id, $tasks[0]->ID );
+	}
+
+
+	public function tear_down() {
+
+		foreach ( $this->created_tasks as $post_id ) {
+			wp_delete_post( $post_id, true ); // true to delete permanently
+		}
+
+		// Clean array for next test
+		$this->created_tasks = array();
+
+		parent::tear_down();
 	}
 }
