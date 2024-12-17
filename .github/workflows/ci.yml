@@ -35,8 +35,8 @@ jobs:
 
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
-        with:
-          plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
+        # with:
+        #   plugins: '[".""https://downloads.wordpress.org/plugin/plugin-check.zip"]'
 
 
       # # Install wp-env globally
