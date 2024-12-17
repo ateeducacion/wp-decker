@@ -250,7 +250,7 @@ table#tablaTareas td:nth-child(4) {
 													echo '</td>';
 
 
-													echo '<td data-users=\'' . esc_attr( json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
+													echo '<td data-users=\'' . esc_attr( wp_json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
 													echo '<div class="avatar-group">';
 
 													foreach ( $task->assigned_users as $user ) {
