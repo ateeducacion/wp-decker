@@ -39,22 +39,21 @@ jobs:
       #     # plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
       #     plugins: '["."]'
 
-      # # # Install wp-env globally
-      # # - name: Install wp-env
-      # #   run: npm install @wordpress/env
+      # Install wp-env globally
+      - name: Install wp-env
+        run: npm install @wordpress/env
 
+      # Setup wp-env environment
+      - name: Setup & start wp-env
+        # run: |
+          #npx wp-env start
+        run: make up
 
-      # # # Setup wp-env environment
-      # # - name: Setup & start wp-env
-      # #   # run: |
-      # #     #npx wp-env start
-      # #   run: make up
-
-      # # Run plugin check
-      # - name: Run plugin check
-      #   # run: |
-      #     #npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
-      #   run: make check-plugin
+      # Run plugin check
+      - name: Run plugin check
+        # run: |
+          #npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+        run: make check-plugin
 
       #   env:
       #     WP_DEBUG: 'true'
@@ -142,5 +141,5 @@ jobs:
       #   with:
       #     plugins: '["."]'
 
-      # - name: Run unit tests
-      #   run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
+      - name: Run unit tests
+        run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
