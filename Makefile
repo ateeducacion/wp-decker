@@ -41,21 +41,21 @@ check-all: check
 # Run unit tests with PHPUnit
 tests: test
 test: up
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
 test-verbose: up
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=alwaysma
 
 logs:
 	npx wp-env logs
 
 # Check code style with PHP-CS-Fixer
 lint:
-	composer --no-cache phpcs
+	composer --no-cache phpcs --colors=always
 
 # Automatically fix code style with PHP-CS-Fixer
 fix:
-	composer --no-cache phpcbf
+	composer --no-cache phpcbf --colors=always
 
 # Update Composer dependencies
 update: check-docker
