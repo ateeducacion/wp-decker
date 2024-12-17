@@ -28,16 +28,16 @@ jobs:
         run: make lint
 
       - name: Install gettext
-        run: sudo apt-get update && sudo apt-get install -y gettext
+        run: sudo apt-get install -y gettext
 
       - name: Check untranslated strings
         run: make check-untranslated
 
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
-        # with:
-        #   plugins: '[".""https://downloads.wordpress.org/plugin/plugin-check.zip"]'
-
+        with:
+          # plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
+          plugins: '["."]'
 
       # # Install wp-env globally
       # - name: Install wp-env
