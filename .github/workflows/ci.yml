@@ -41,7 +41,7 @@ jobs:
 
       - name: Run plugin check
         uses: wordpress/plugin-check-action@v1
-      #   with:
+        with:
       #     build-dir: './decker'
           exclude-checks: 'file_type,image_functions'
           exclude-directories: tests
