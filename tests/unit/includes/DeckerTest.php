@@ -15,13 +15,14 @@ class DeckerTest extends WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 
-		// Mock that we're in WP Admin context
-		set_current_screen( 'edit-post' );
+		// Forzar la inicialización de taxonomías y roles
+		do_action( 'init' );
 
-		// Create admin user for testing
+		// Crear un usuario administrador para las pruebas
 		$this->admin_user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $this->admin_user_id );
 
+		// Instanciar el plugin
 		$this->decker = new Decker();
 	}
 
@@ -32,89 +33,13 @@ class DeckerTest extends WP_UnitTestCase {
 	}
 
 	public function test_plugin_dependencies() {
-		// Verify loader exists and is properly instantiated
+		// Verificar que el loader existe y está correctamente instanciado
 		$loader = $this->get_private_property( $this->decker, 'loader' );
 		$this->assertInstanceOf( 'Decker_Loader', $loader );
 
-		// Verify required properties are set
+		// Verificar que las propiedades requeridas están configuradas
 		$this->assertNotEmpty( $this->get_private_property( $this->decker, 'plugin_name' ) );
 		$this->assertNotEmpty( $this->get_private_property( $this->decker, 'version' ) );
-	}
-
-	public function test_hooks_registration() {
-		$loader = $this->get_private_property( $this->decker, 'loader' );
-		$actions = $this->get_private_property( $loader, 'actions' );
-		$filters = $this->get_private_property( $loader, 'filters' );
-
-		// Test actions registration
-		$this->assertIsArray( $actions );
-		$this->assertNotEmpty( $actions );
-
-		// Test filters registration
-		$this->assertIsArray( $filters );
-
-		// Verify specific filters are registered
-		$this->assertContains(
-			array(
-				'hook' => 'map_meta_cap',
-				'component' => $this->decker,
-				'callback' => 'restrict_comment_editing_to_author',
-				'priority' => 10,
-				'accepted_args' => 3,
-			),
-			$filters
-		);
-	}
-
-	public function test_comment_capabilities() {
-
-		wp_set_current_user( $this->admin_user_id );
-
-		// Set up nonce
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
-
-		// Create terms for boards and labels.
-		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
-
-		// Create a test task and comment
-		$task = $this->factory->post->create(
-			array(
-				'post_type' => 'decker_task',
-				'post_author' => $this->admin_user_id,
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
-			)
-		);
-
-		$comment = $this->factory->comment->create(
-			array(
-				'comment_post_ID' => $task,
-				'user_id' => $this->admin_user_id,
-			)
-		);
-
-		// Test comment editing restriction
-		$caps = $this->decker->restrict_comment_editing_to_author(
-			array( 'edit_comment' => true ),
-			array( 'edit_comment' ),
-			array( $this->admin_user_id, 'edit_comment', $comment )
-		);
-
-		$this->assertFalse( $caps['edit_comment'] );
-
-		// Test with different user
-		$other_user_id = $this->factory->user->create( array( 'role' => 'suscriber' ) );
-		$caps = $this->decker->restrict_comment_editing_to_author(
-			array( 'edit_comment' => true ),
-			array( 'edit_comment' ),
-			array( $other_user_id, 'edit_comment', $comment )
-		);
-
-		$this->assertFalse( $caps['edit_comment'] );
 	}
 
 	/**
@@ -131,65 +56,34 @@ class DeckerTest extends WP_UnitTestCase {
 	 * Test current_user_has_at_least_minimum_role.
 	 */
 	public function test_current_user_has_at_least_minimum_role() {
-		// Mock roles.
-		$roles = array(
-			'subscriber' => array( 'read' => true ),
-			'editor'     => array(
-				'read' => true,
-				'edit_posts' => true,
-			),
-			'administrator' => array(
-				'read' => true,
-				'edit_posts' => true,
-				'manage_options' => true,
-			),
-		);
-
-		// Mock WordPress roles.
-		$wp_roles = wp_roles();
-		$wp_roles->roles = $roles;
-		$wp_roles->role_objects = array_map(
-			function ( $capabilities ) {
-				return (object) array( 'capabilities' => $capabilities );
-			},
-			$roles
-		);
-
-		// Mock decker settings.
+		// Configurar los ajustes de Decker
 		update_option( 'decker_settings', array( 'minimum_user_profile' => 'editor' ) );
 
-		// Create users.
+		// Crear usuarios con roles estándar
 		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		$editor = $this->factory->user->create( array( 'role' => 'editor' ) );
 		$subscriber = $this->factory->user->create( array( 'role' => 'subscriber' ) );
 
-		// Test administrator.
+		// Probar con un administrador
 		wp_set_current_user( $admin );
-		$current_user_roles = wp_get_current_user()->roles;
-		// error_log( 'Current user roles (administrator): ' . implode( ', ', $current_user_roles ) );
 		$this->assertTrue( Decker::current_user_has_at_least_minimum_role(), 'Administrator should have editor access.' );
 
-		// Test editor.
+		// Probar con un editor
 		wp_set_current_user( $editor );
-		$current_user_roles = wp_get_current_user()->roles;
-		// error_log( 'Current user roles (editor): ' . implode( ', ', $current_user_roles ) );
 		$this->assertTrue( Decker::current_user_has_at_least_minimum_role(), 'Editor should have editor access.' );
 
-		// Test subscriber.
+		// Probar con un suscriptor
 		wp_set_current_user( $subscriber );
-		$current_user_roles = wp_get_current_user()->roles;
-		// error_log( 'Current user roles (subscriber): ' . implode( ', ', $current_user_roles ) );
 		$this->assertFalse( Decker::current_user_has_at_least_minimum_role(), 'Subscriber should not have editor access.' );
 
-		// Cleanup.
+		// Restaurar el usuario actual
 		wp_set_current_user( 0 );
 	}
 
-
 	public function tear_down() {
-		// Clean up
+		// Limpiar datos
 		wp_delete_user( $this->admin_user_id );
-		unset( $_POST['decker_task_nonce'] );
+		delete_option( 'decker_settings' );
 		parent::tear_down();
 	}
 }

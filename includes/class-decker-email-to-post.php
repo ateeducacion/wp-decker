@@ -370,10 +370,7 @@ class Decker_Email_To_Post {
 			$due_date,
 			$author->ID,
 			$assigned_users,
-			array(),
-			new DateTime(),
-			false,
-			0
+			array()
 		);
 
 		return $task_id;

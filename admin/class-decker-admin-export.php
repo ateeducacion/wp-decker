@@ -104,7 +104,7 @@ class Decker_Admin_Export {
 	 * @param string $post_type The post type to export.
 	 * @return array Exported posts.
 	 */
-	private function export_post_type( $post_type ) {
+	public function export_post_type( $post_type ) {
 		$posts = array();
 
 		$query = new WP_Query(
@@ -140,7 +140,7 @@ class Decker_Admin_Export {
 	 * @param string $taxonomy The taxonomy to export.
 	 * @return array Exported terms.
 	 */
-	private function export_taxonomy_terms( $taxonomy ) {
+	public function export_taxonomy_terms( $taxonomy ) {
 		$terms = get_terms(
 			array(
 				'taxonomy'   => $taxonomy,

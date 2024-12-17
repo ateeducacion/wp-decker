@@ -4,14 +4,14 @@
  *
  * @package    Decker
  * @subpackage Decker/public
- * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ * @author     ATE
  */
 
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 ?>
 <!--  Add new task modal -->
-<div class="modal fade task-modal-content" id="task-modal" tabindex="-1" role="dialog" aria-labelledby="NewTaskModalLabel" aria-hidden="true">
+<div class="modal fade task-modal" id="task-modal" tabindex="-1" role="dialog" aria-labelledby="NewTaskModalLabel">
 	<div class="modal-dialog modal-dialog-centered modal-lg">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="modal-body">
 				<div id="task-modal-content">
-					<!-- Aquí se cargará el contenido dinámico desde modal.php -->
+					<!-- Aquí se cargará el contenido dinámico desde task-card.php -->
 				</div>
 			</div>
 		</div><!-- /.modal-content -->

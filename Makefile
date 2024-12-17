@@ -20,15 +20,15 @@ up: check-docker
 down: check-docker
 	npx wp-env stop
 
+# Clean the environments, the same that running "npx wp-env clean all"
 clean:
-	npx wp-env clean all
+	npx wp-env clean development
+	npx wp-env clean tests
 
 destroy:
 	npx wp-env destroy
 
-
 check-plugin:
-	npx wp-env run cli wp plugin install plugin-check --activate
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
 
 check: fix lint check-plugin test check-untranslated mo
@@ -36,8 +36,9 @@ check: fix lint check-plugin test check-untranslated mo
 check-all: check
 
 # Run unit tests with PHPUnit
+tests: test
 test:
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox
 
 test-verbose:
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose
@@ -85,7 +86,7 @@ package:
 	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: $(VERSION)/" readme.txt
 
 	# Create the ZIP package
-	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "node_modules/*" "phpunit.xml.dist" "composer.json" "LICENSE.txt" "bin/*" "wp-content/*" "wp/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot" ".gitattributes" ".gitignore" ".php-cs-fixer.php" ".stylelintrc" ".wp-env.json" ".distignore"  ".editorconfig" ".env" "CODE_OF_CONDUCT.md" "package.json" "package-lock.json" "renovate.json"
+	composer archive --format=zip --file="decker-$(VERSION)"
 
 	# Restore the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           0.0.0/" decker.php

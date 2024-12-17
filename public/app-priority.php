@@ -187,6 +187,13 @@ if ( ! $has_today_tasks ) {
 									);
 									$tasks = $task_manager->get_tasks( $args );
 
+									/*
+									// Commmented.
+									echo "<pre>";
+									print_r($tasks);
+									echo "</pre>";
+									*/
+
 									// Pre-sort the taks by board name, to avoid flickering on page.
 									usort(
 										$tasks,
@@ -196,7 +203,6 @@ if ( ! $has_today_tasks ) {
 											return strcmp( $a_board, $b_board );
 										}
 									);
-
 
 									foreach ( $tasks as $task ) {
 

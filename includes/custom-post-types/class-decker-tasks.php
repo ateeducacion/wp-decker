@@ -144,7 +144,7 @@ class Decker_Tasks {
 	public function delete_task_attachment() {
 		check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
 
-		if ( ! current_user_can( 'delete_attachments' ) ) {
+		if ( ! current_user_can( 'delete_posts' ) ) {
 			wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
 		}
 
@@ -513,9 +513,8 @@ class Decker_Tasks {
 	public function mark_user_date_relation( $request ) {
 		$task_id = $request['id'];
 		$user_id = $request->get_param( 'user_id' );
-		$date    = $request->get_param( 'date' );
 
-		if ( ! $task_id || ! $user_id || ! $date ) {
+		if ( ! $task_id || ! $user_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -525,10 +524,7 @@ class Decker_Tasks {
 			);
 		}
 
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		$this->add_user_date_relation( $task_id, $user_id, $date );
+		$this->add_user_date_relation( $task_id, $user_id );
 
 		return new WP_REST_Response(
 			array(
@@ -548,9 +544,8 @@ class Decker_Tasks {
 	public function unmark_user_date_relation( $request ) {
 		$task_id = $request['id'];
 		$user_id = $request->get_param( 'user_id' );
-		$date    = $request->get_param( 'date' );
 
-		if ( ! $task_id || ! $user_id || ! $date ) {
+		if ( ! $task_id || ! $user_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -560,17 +555,7 @@ class Decker_Tasks {
 			);
 		}
 
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		foreach ( $relations as $key => $relation ) {
-			if ( $relation['user_id'] == $user_id && $relation['date'] == $date ) {
-				unset( $relations[ $key ] );
-				break;
-			}
-		}
-
-		update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->remove_user_date_relation( $task_id, $user_id );
 
 		return new WP_REST_Response(
 			array(
@@ -778,21 +763,48 @@ class Decker_Tasks {
 			200
 		);
 	}
+
 	/**
 	 * Add a user-date relation for a task.
 	 *
-	 * @param int    $task_id The task ID.
-	 * @param int    $user_id The user ID.
-	 * @param string $date The date to mark.
+	 * @param int $task_id The task ID.
+	 * @param int $user_id The user ID.
 	 */
-	public function add_user_date_relation( $task_id, $user_id, $date ) {
+	public function add_user_date_relation( int $task_id, int $user_id ) {
+
+		$date = new DateTime(); // Fecha y hora actuales.
+
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();
 
 		$relations[] = array(
 			'user_id' => $user_id,
-			'date'    => $date,
+			'date'    => $date->format( 'Y-m-d' ),
 		);
+
+		$result = update_post_meta( $task_id, '_user_date_relations', $relations );
+	}
+
+	/**
+	 * Remove a user-date relation for a task.
+	 *
+	 * @param int $task_id The task ID.
+	 * @param int $user_id The user ID.
+	 */
+	public function remove_user_date_relation( int $task_id, int $user_id ) {
+
+		$date = new DateTime(); // Fecha y hora actuales.
+
+		$relations = get_post_meta( $task_id, '_user_date_relations', true );
+		$relations = $relations ? $relations : array();
+
+		foreach ( $relations as $key => $relation ) {
+			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
+				unset( $relations[ $key ] );
+				break;
+			}
+		}
+
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
 
@@ -1737,8 +1749,13 @@ class Decker_Tasks {
 	 * @throws WP_Error If any validation or task creation/updating fails, an error is logged or returned.
 	 */
 	public function handle_save_decker_task() {
-		// Verificar el nonce de seguridad.
-		check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
+
+		$send_response = apply_filters( 'decker_save_task_send_response', true );
+
+		// Security nonce check.
+		if ( $send_response ) {
+			check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
+		}
 
 		// Retrieve and sanitize form data.
 		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
@@ -1749,7 +1766,9 @@ class Decker_Tasks {
 
 		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
 
-		$duedate_raw = isset( $_POST['duedate'] ) ? sanitize_text_field( wp_unslash( $_POST['duedate'] ) ) : '';
+		$duedate_raw = isset( $_POST['due_date'] ) ? sanitize_text_field( wp_unslash( $_POST['due_date'] ) ) : '';
+
+		$mark_for_today = isset( $_POST['mark_for_today'] ) ? boolval( wp_unslash( $_POST['mark_for_today'] ) ) : false;
 
 		try {
 			$duedate = new DateTime( $duedate_raw );
@@ -1787,8 +1806,6 @@ class Decker_Tasks {
 			}
 		}
 
-		$creation_date = new DateTime(); // O ajusta según corresponda.
-
 		// Llamar a la función común para crear o actualizar la tarea.
 		$result = self::create_or_update_task(
 			$id,
@@ -1800,10 +1817,7 @@ class Decker_Tasks {
 			$duedate,
 			$author,
 			$assigned_users,
-			$labels,
-			$creation_date,
-			false,
-			0,
+			$labels
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -1811,18 +1825,30 @@ class Decker_Tasks {
 			return;
 		}
 
-		wp_send_json_success(
-			array(
-				'message' => 'Tarea guardada exitosamente.',
-				'task_id' => $result,
-			)
+		// Set today.
+		if ( $mark_for_today ) {
+			$this->add_user_date_relation( $result, get_current_user_id() );
+		} else {
+			$this->remove_user_date_relation( $result, get_current_user_id() );
+		}
+
+		$result_data = array(
+			'success' => ! is_wp_error( $result ),
+			'message' => is_wp_error( $result ) ? $result->get_error_message() : 'Tarea guardada exitosamente.',
+			'task_id' => $result,
 		);
+
+		if ( $send_response ) {
+			wp_send_json_success( $result_data );
+		}
+
+		return $result_data;
 	}
 
 	/**
 	 * Creates or updates a task in the Decker system.
 	 *
-	 * This method handles validation, taxonomy assignments, and metadata management
+	 * This method handles validation, taxonomy assignments, and metadata management.
 	 * for tasks. It can either create a new task or update an existing one.
 	 *
 	 * @param int           $id                 The ID of the task to update, or 0 to create a new task.
@@ -1835,7 +1861,7 @@ class Decker_Tasks {
 	 * @param int           $author             The ID of the author of the task.
 	 * @param array         $assigned_users     An array of user IDs assigned to the task.
 	 * @param array         $labels             An array of label IDs associated with the task.
-	 * @param DateTime      $creation_date      The creation date of the task.
+	 * @param DateTime      $creation_date      The creation date of the task. Default is null.
 	 * @param bool          $archived           Whether the task is archived. Default is false.
 	 * @param int           $id_nextcloud_card  The NextCloud card ID associated with the task. Default is 0.
 	 *
@@ -1852,7 +1878,7 @@ class Decker_Tasks {
 		int $author,
 		array $assigned_users,
 		array $labels,
-		DateTime $creation_date,
+		?DateTime $creation_date = null,
 		bool $archived = false,
 		int $id_nextcloud_card = 0
 	) {
@@ -1876,7 +1902,6 @@ class Decker_Tasks {
 
 		// Convertir objetos DateTime a formato string (si no, pasamos null to undefined).
 		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
-		$creation_date_str = $creation_date->format( 'Y-m-d H:i:s' );
 
 		// Preparar los términos para tax_input.
 		$tax_input = array();
@@ -1913,27 +1938,28 @@ class Decker_Tasks {
 			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
 			'post_status'  => $archived ? 'archived' : 'publish',
 			'post_type'    => 'decker_task',
-			'post_date'    => $creation_date_str,
 			'post_author'  => $author,
 			'meta_input'   => $meta_input,
 			'tax_input'    => $tax_input,
 		);
+
+		// Solo establece `post_date` si se proporciona `creation_date`.
+		if ( $creation_date ) {
+			$post_data['post_date'] = $creation_date->format( 'Y-m-d H:i:s' );
+		}
 
 		// Determinar si es una actualización o creación.
 		if ( $id > 0 ) {
 			// Actualizar el post existente.
 			$post_data['ID'] = $id;
 			$task_id         = wp_update_post( $post_data );
-
-			if ( is_wp_error( $task_id ) ) {
-				return $task_id; // Retornar el error para manejarlo externamente.
-			}
 		} else {
 			// Crear un nuevo post.
 			$task_id = wp_insert_post( $post_data );
-			if ( is_wp_error( $task_id ) ) {
-				return $task_id; // Retornar el error para manejarlo externamente.
-			}
+		}
+
+		if ( is_wp_error( $task_id ) ) {
+			return $task_id; // Retornar el error para manejarlo externamente.
 		}
 
 		// Retornar el ID de la tarea creada o actualizada.

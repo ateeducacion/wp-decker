@@ -64,7 +64,6 @@ class Decker {
 		$this->plugin_name = 'decker';
 
 		$this->load_dependencies();
-		$this->register_hooks();
 		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
@@ -139,14 +138,6 @@ class Decker {
 	}
 
 	/**
-	 * Register all hooks related to roles, capabilities, and restrictions.
-	 */
-	private function register_hooks() {
-		$this->loader->add_filter( 'map_meta_cap', $this, 'restrict_comment_editing_to_author', 10, 3 );
-		$this->loader->add_filter( 'map_meta_cap', $this, 'restrict_comment_capabilities_to_decker_task', 10, 4 );
-	}
-
-	/**
 	 * Define the locale for this plugin for internationalization.
 	 *
 	 * Uses the Decker_i18n class in order to set the domain and to register the hook
@@ -185,54 +176,6 @@ class Decker {
 
 		$plugin_public = new Decker_Public( $this->get_plugin_name(), $this->get_version() );
 	}
-
-
-	/**
-	 * Restrict comment editing/deleting to the comment's author.
-	 *
-	 * @param array $allcaps Capabilities for the current user.
-	 * @param array $cap     Requested capability.
-	 * @param array $args    Additional arguments.
-	 * @return array Updated capabilities.
-	 */
-	public function restrict_comment_editing_to_author( $allcaps, $cap, $args ) {
-		if ( in_array( $cap[0], array( 'edit_comment', 'delete_comment' ), true ) ) {
-			$comment = get_comment( $args[2] );
-
-			if ( isset( $comment->user_id ) && get_current_user_id() !== $comment->user_id ) {
-				$allcaps[ $cap[0] ] = false;
-			}
-		}
-
-		return $allcaps;
-	}
-
-	/**
-	 * Restrict comment editing/deleting to the 'decker_task' post type.
-	 *
-	 * @param array  $caps    User's actual capabilities.
-	 * @param string $cap     Capability name.
-	 * @param int    $user_id User ID.
-	 * @param array  $args    Additional arguments.
-	 * @return array Updated capabilities.
-	 */
-	public function restrict_comment_capabilities_to_decker_task( $caps, $cap, $user_id, $args ) {
-		if ( in_array( $cap, array( 'edit_comment', 'delete_comment' ), true ) && ! empty( $args[0] ) ) {
-			$comment = get_comment( $args[0] );
-
-			if ( $comment ) {
-				$post = get_post( $comment->comment_post_ID );
-
-				if ( $post && 'decker_task' === $post->post_type && $comment->user_id !== $user_id ) {
-					$caps[] = 'do_not_allow';
-				}
-			}
-		}
-
-		return $caps;
-	}
-
-
 
 	/**
 	 * Run the loader to execute all of the hooks with WordPress.
@@ -375,6 +318,12 @@ class Decker {
 	 * Create demo data if the version is 0.0.0
 	 */
 	public function maybe_create_demo_data() {
+
+		// Check if we are in wp-env-test environment (PHPUNIT).
+		if ( defined( 'WP_TESTS_DOMAIN' ) && WP_TESTS_DOMAIN === 'localhost:8889' ) {
+			// If we're in test environment, skip demo data creation.
+			return;
+		}
 
 		// If we're in development version and there are no tasks, create sample data.
 		if ( defined( 'DECKER_VERSION' ) && DECKER_VERSION === '0.0.0' ) {
