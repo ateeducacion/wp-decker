@@ -30,10 +30,12 @@ clean:
 destroy:
 	npx wp-env destroy
 
+# Pass the wp plugin-check
 check-plugin: up
 	npx wp-env run cli wp plugin install plugin-check --activate --color
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
 
+# Combined check for lint, tests, untranslated, and more
 check: fix lint check-plugin test check-untranslated mo
 
 check-all: check
@@ -98,7 +100,7 @@ package:
 
 # Show help with available commands
 help:
-	@echo "Comandos disponibles:"
+	@echo "Available commands:"
 	@echo "  up                 - Bring up Docker containers in interactive mode"
 	@echo "  down               - Stop and remove Docker containers"
 	@echo "  logs               - Show the docker container logs"
@@ -110,6 +112,8 @@ help:
 	@echo "  check/check-all    - Run fix, lint, check-pugin, test, check-untraslated, mo"
 	@echo "  update             - Update Composer dependencies"
 	@echo "  package            - Generate a .zip package"
+	@echo "  destroy            - Destroy the WordPress environment"
+	@echo "  clean              - Clean up WordPress environment"
 	@echo "  help               - Show help with available commands"
 	@echo "  pot                - Generate a .pot file for translations"
 	@echo "  po                 - Update .po files from .pot file"
