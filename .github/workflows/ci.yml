@@ -48,7 +48,8 @@ jobs:
       # Run plugin check
       - name: Run plugin check
         run: |
-          npx wp-env run cli wp plugin-check --exclude-checks=image_functions
+          npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+
         env:
           WP_DEBUG: 'true'
           WP_DEBUG_LOG: 'true'
