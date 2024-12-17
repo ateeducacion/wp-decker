@@ -68,8 +68,8 @@ jobs:
           plugins: '["."]'
 
 
-      - name: Run unit tests
-        run: make test
+      # - name: Run unit tests
+      #   run: make test
 
 
       # - name: Create Plugin ZIP Archive
@@ -94,5 +94,5 @@ jobs:
       #   with:
       #     plugins: '["."]'
 
-      # - name: Run unit tests
-      #   run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
+      - name: Run unit tests
+        run: npx wp-env run tests-cli --env-cwd=wp-content/plugins/wp-decker ./vendor/bin/phpunit
