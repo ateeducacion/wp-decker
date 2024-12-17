@@ -27,4 +27,4 @@ renovate.json              export-ignore
 sftp-config.json           export-ignore
 test.php                   export-ignore
 tests/                     export-ignore
-vendor/                    export-ignore
+/vendor/                   export-ignore
