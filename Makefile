@@ -88,7 +88,7 @@ package:
 	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: $(VERSION)/" readme.txt
 
 	# Create the ZIP package
-	zip -r "decker-$(VERSION).zip" . -x ".*" "*/.*" "*.git*" "*.DS_Store" "Thumbs.db" ".github/*" "CHANGELOG.md" "README.md" "LICENSE.md" "sftp-config.json" "*.zip" "Makefile" ".gitlab-ci.yml" ".prettierrc" ".eslintrc" "docker-compose.yml" "vendor/*" "tests/*" "node_modules/*" "phpunit.xml.dist" "composer.json" "LICENSE.txt" "bin/*" "wp-content/*" "wp/*" "composer.lock" "CONVENTIONS.md" "*.po" "*.pot" ".gitattributes" ".gitignore" ".php-cs-fixer.php" ".stylelintrc" ".wp-env.json" ".distignore"  ".editorconfig" ".env" "CODE_OF_CONDUCT.md" "package.json" "package-lock.json" "renovate.json"
+	composer archive --format=zip --file="decker-$(VERSION)"
 
 	# Restore the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           0.0.0/" decker.php

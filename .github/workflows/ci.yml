@@ -36,7 +36,7 @@ jobs:
       - name: Create Plugin ZIP Archive
         run: |
           make package VERSION=6.6.6
-          mkdir decker
+          #mkdir decker
           unzip decker-6.6.6.zip -d decker
           # composer archive --format=zip --dir=. --file=decker
           # mkdir decker

@@ -1,27 +1,30 @@
-.gitattributes     export-ignore
-.gitignore         export-ignore
-.php-cs-fixer.php  export-ignore
-.stylelintrc       export-ignore
-.wp-env.json       export-ignore
-/.distignore       export-ignore
-/.editorconfig     export-ignore
-/.env              export-ignore
-/.github/          export-ignore
-/docs/             export-ignore
-/mkdocs.yml        export-ignore
-/node_modules/     export-ignore
-/tests/            export-ignore
-/vendor/           export-ignore
-CODE_OF_CONDUCT.md export-ignore
-composer.json      export-ignore
-composer.lock      export-ignore
-CONVENTIONS.md     export-ignore
-Makefile           export-ignore
-package-lock.json  export-ignore
-package.json       export-ignore
-phpunit.xml        export-ignore
-phpunit.xml.dist   export-ignore
-README.md          export-ignore
-renovate.json      export-ignore
-sftp-config.json   export-ignore
-test.php           export-ignore
+# Exclude hidden files and directories
+.*                         export-ignore
+
+# Exclude .po and .pot language files
+languages/*.po             export-ignore
+languages/*.pot            export-ignore
+
+# Exclude development files
+blueprint.json             export-ignore
+CHANGELOG.md               export-ignore
+CODE_OF_CONDUCT.md         export-ignore
+composer.json              export-ignore
+composer.lock              export-ignore
+CONVENTIONS.md             export-ignore
+docker-compose.yml         export-ignore
+docs/                      export-ignore
+Makefile                   export-ignore
+mkdocs.yml                 export-ignore	
+node_modules/              export-ignore
+package-lock.json          export-ignore
+package.json               export-ignore
+phpunit.xml.dist           export-ignore
+phpunit.xml.dist           export-ignore
+README.md                  export-ignore
+README.md                  export-ignore
+renovate.json              export-ignore
+sftp-config.json           export-ignore
+test.php                   export-ignore
+tests/                     export-ignore
+vendor/                    export-ignore
