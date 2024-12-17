@@ -31,19 +31,19 @@ define( 'DECKER_PLUGIN_FILE', __FILE__ );
  * The code that runs during plugin activation.
  */
 function activate_decker() {
-	// Set the permalink structure.
+	// Configurar la estructura de los permalinks si es necesario.
 	if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
 		update_option( 'permalink_structure', '/%postname%/' );
 	}
 
-	flush_rewrite_rules();
+	// En vez de llamar flush_rewrite_rules() aquí, establecemos una opción.
+	update_option( 'decker_flush_rewrites', true );
 }
 
 /**
  * The code that runs during plugin deactivation.
  */
 function deactivate_decker() {
-
 	flush_rewrite_rules();
 }
 
