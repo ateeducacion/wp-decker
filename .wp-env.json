@@ -1,6 +1,5 @@
 {
-    "plugins": [
-        ".",
-        "https://downloads.wordpress.org/plugin/plugin-check.zip"
-    ]
+    "mappings": {
+        "wp-content/plugins/decker": "./"
+    }
 }

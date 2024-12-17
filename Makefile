@@ -14,7 +14,9 @@ check-docker:
 
 # Bring up Docker containers
 up: check-docker
-	npx wp-env start --update
+	npx wp-env start
+	npx wp-env run cli wp plugin activate decker
+
 
 # Stop and remove Docker containers
 down: check-docker
@@ -28,7 +30,8 @@ clean:
 destroy:
 	npx wp-env destroy
 
-check-plugin:
+check-plugin: up
+	npx wp-env run cli wp plugin install plugin-check --activate
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
 
 check: fix lint check-plugin test check-untranslated mo
@@ -37,10 +40,10 @@ check-all: check
 
 # Run unit tests with PHPUnit
 tests: test
-test:
+test: up
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox
 
-test-verbose:
+test-verbose: up
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose
 
 logs:
