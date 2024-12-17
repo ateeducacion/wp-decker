@@ -35,9 +35,9 @@ jobs:
 
       - name: Setup & start wp-env
         uses: godaddy-wordpress/setup-wp-env@v1
-      #   with:
-      #     # plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
-      #     plugins: '["."]'
+        with:
+          plugins: '[".","https://downloads.wordpress.org/plugin/plugin-check.zip"]'
+          # plugins: '["."]'
 
       # Install wp-env globally
       # - name: Install wp-env
@@ -51,8 +51,7 @@ jobs:
 
       # Run plugin check
       - name: Run plugin check
-        # run: |
-          #npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
+        # run: npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings
         run: make check-plugin
 
       #   env:

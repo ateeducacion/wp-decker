@@ -248,7 +248,10 @@ table#tablaTareas td:nth-child(4) {
 														echo '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span> ';
 													}
 													echo '</td>';
-													echo '<td><div class="avatar-group">';
+
+
+													echo '<td data-users=\'' . esc_attr( json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
+													echo '<div class="avatar-group">';
 
 													foreach ( $task->assigned_users as $user ) {
 														$today_class = $user->today ? ' today' : '';
@@ -368,30 +371,9 @@ table#tablaTareas td:nth-child(4) {
 						},
 						type: 'date'
 					},
-{
-	targets: 5, // Índice de la columna "Assigned Users"
-	render: function(data, type, row) {
-		if (type === 'filter' || type === 'search' || type === 'sort') {
-			// Procesar el contenido HTML y extraer los valores de los <span>
-			var tempDiv = document.createElement('div');
-			tempDiv.innerHTML = data; // Convierte la celda HTML en un DOM manipulable
-			var userSpans = tempDiv.querySelectorAll('span.d-none');
-			return Array.from(userSpans).map(span => span.textContent.trim()).join(' '); // Retorna valores separados por espacios
-		}
-		// Para la visualización en la tabla
-		return data;
-	}
-}		
+
 				],
 
-				// columnDefs: [
-				// 	{
-				// 		searchPanes: {
-				// 			show: false,
-				// 		},
-				// 		targets: [1, 6],
-				// 	},
-				// ],
 				lengthMenu: [
 					[25, 50, 100, 200, -1],
 					[25, 50, 100, 200, 'All'],
