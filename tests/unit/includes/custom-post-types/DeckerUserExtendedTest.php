@@ -100,6 +100,113 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test default email notification settings.
+	 */
+	public function test_default_email_notification_settings() {
+		$user_id = $this->factory->user->create();
+		$email_notifications = get_user_meta( $user_id, 'decker_email_notifications', true );
+
+		$this->assertEmpty( $email_notifications, 'Email notification settings should be empty by default.' );
+
+		// Ensure defaults are applied when retrieved.
+		$default_settings = array(
+			'task_assigned'   => '1',
+			'task_completed'  => '1',
+			'task_commented'  => '1',
+		);
+		$email_notifications = wp_parse_args( $email_notifications, $default_settings );
+
+		$this->assertEquals( $default_settings, $email_notifications, 'Default email settings should be applied.' );
+	}
+
+	/**
+	 * Test saving email notification settings.
+	 */
+	public function test_save_email_notification_settings() {
+		$user_id = $this->factory->user->create();
+
+		// Simulate saving settings.
+		$settings = array(
+			'task_assigned'   => '0',
+			'task_completed'  => '1',
+			'task_commented'  => '0',
+		);
+
+		update_user_meta( $user_id, 'decker_email_notifications', $settings );
+
+		$saved_settings = get_user_meta( $user_id, 'decker_email_notifications', true );
+		$this->assertEquals( $settings, $saved_settings, 'Failed to save email notification settings.' );
+	}
+
+	/**
+	 * Test sanitization of email notification settings.
+	 */
+	public function test_sanitize_email_notification_settings() {
+
+		// Enable global email notifications.
+		update_option( 'decker_settings', array( 'allow_email_notifications' => '1' ) );
+
+		$user_id = $this->factory->user->create();
+
+		// Simulate invalid settings.
+		$invalid_settings = array(
+			'task_assigned'   => 'invalid',
+			'task_completed'  => '1',
+			'task_commented'  => null,
+		);
+
+		// Set the POST data to simulate saving invalid settings.
+		$_POST['decker_email_notifications'] = $invalid_settings;
+
+		// Call the method to save the settings.
+		$this->decker_user_extended->save_custom_user_profile_fields( $user_id );
+
+		// Retrieve the saved settings.
+		$saved_settings = get_user_meta( $user_id, 'decker_email_notifications', true );
+
+		// Verify that invalid values are sanitized.
+		$this->assertEquals(
+			array(
+				'task_assigned'   => '0',
+				'task_completed'  => '1',
+				'task_commented'  => '0',
+			),
+			$saved_settings,
+			'Failed to sanitize invalid email notification settings.'
+		);
+
+		// Ensure the result is always an array.
+		$this->assertIsArray( $saved_settings, 'Email notification settings should always be an array.' );
+	}
+
+
+
+	/**
+	 * Test email notification fields visibility based on global setting.
+	 */
+	public function test_email_notification_fields_visibility() {
+		$user_id = $this->factory->user->create();
+
+		// Case 1: Global setting enabled.
+		update_option( 'decker_settings', array( 'allow_email_notifications' => '1' ) );
+		ob_start();
+		$this->decker_user_extended->add_custom_user_profile_fields( get_userdata( $user_id ) );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'Notify me when a task is assigned to me', $output, 'Email notification fields should be visible when global setting is enabled.' );
+
+		// Case 2: Global setting disabled.
+		update_option( 'decker_settings', array( 'allow_email_notifications' => '0' ) );
+		ob_start();
+		$this->decker_user_extended->add_custom_user_profile_fields( get_userdata( $user_id ) );
+		$output = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'Notify me when a task is assigned to me', $output, 'Email notification fields should not be visible when global setting is disabled.' );
+	}
+
+
+
+	/**
 	 * Tear down the test environment.
 	 */
 	public function tear_down(): void {

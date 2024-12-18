@@ -16,7 +16,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: decker.php
 #: admin/class-decker-admin-export.php:60
-#: admin/class-decker-admin-settings.php:208
+#: admin/class-decker-admin-settings.php:224
 msgid "Decker"
 msgstr ""
 
@@ -104,78 +104,91 @@ msgstr ""
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:84
+#: admin/class-decker-admin-settings.php:64
+msgid "Enable email notifications for all plugin events."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:66
+msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:100
 msgid "Select the minimum user profile that can use Decker."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:97
+#: admin/class-decker-admin-settings.php:113
 msgid "Enter the alert message to display as a banner. Supports HTML. Leave empty to hide."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:122
+#: admin/class-decker-admin-settings.php:138
 msgid "Select the color for the alert message."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:207
+#: admin/class-decker-admin-settings.php:223
+#: includes/custom-post-types/class-decker-user-extended.php:60
 #: public/layouts/topbar.php:94
 msgid "Decker Settings"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:225
+#: admin/class-decker-admin-settings.php:241
 msgid "Decker Configuration"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:231
+#: admin/class-decker-admin-settings.php:247
 msgid "Alert Color"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:232
+#: admin/class-decker-admin-settings.php:248
 msgid "Alert Message"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:233
+#: admin/class-decker-admin-settings.php:249
 msgid "Minimum User Profile"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:234
+#: admin/class-decker-admin-settings.php:250
 msgid "Shared Key"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:235
-#: admin/class-decker-admin-settings.php:287
+#: admin/class-decker-admin-settings.php:251
+msgid "Allow Email Notifications"
+msgstr ""
+
+#: admin/class-decker-admin-settings.php:252
+#: admin/class-decker-admin-settings.php:304
 msgid "Clear All Data"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:236
+#: admin/class-decker-admin-settings.php:253
 msgid "Ignored Users"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:257
+#: admin/class-decker-admin-settings.php:274
 msgid "Configure the Decker plugin settings."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:276
+#: admin/class-decker-admin-settings.php:293
 msgid "Please enter comma-separated user IDs (numbers only)"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:277
+#: admin/class-decker-admin-settings.php:294
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:287
+#: admin/class-decker-admin-settings.php:304
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:288
+#: admin/class-decker-admin-settings.php:305
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:315
+#: admin/class-decker-admin-settings.php:332
 msgid "All Decker records have been deleted."
 msgstr ""
 
 #. Translators: %s is a list of invalid user IDs that have been removed.
-#: admin/class-decker-admin-settings.php:323
+#: admin/class-decker-admin-settings.php:340
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr ""
 
@@ -298,7 +311,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-labels.php:111
 #: includes/custom-post-types/class-decker-labels.php:206
 #: includes/custom-post-types/class-decker-user-extended.php:65
-#: includes/custom-post-types/class-decker-user-extended.php:147
+#: includes/custom-post-types/class-decker-user-extended.php:209
 #: public/app-term-manager.php:190
 #: public/app-term-manager.php:272
 msgid "Color"
@@ -340,7 +353,7 @@ msgid "New Label Name"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-labels.php:60
-#: includes/custom-post-types/class-decker-tasks.php:1061
+#: includes/custom-post-types/class-decker-tasks.php:1077
 #: public/app-term-manager.php:119
 #: public/layouts/left-sidebar.php:294
 #: public/layouts/task-card.php:293
@@ -348,7 +361,7 @@ msgid "Labels"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:205
-#: includes/custom-post-types/class-decker-tasks.php:1101
+#: includes/custom-post-types/class-decker-tasks.php:1117
 #: public/app-priority.php:171
 #: public/app-priority.php:403
 #: public/app-tasks.php:204
@@ -356,90 +369,90 @@ msgstr ""
 msgid "Stack"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:913
+#: includes/custom-post-types/class-decker-tasks.php:929
 msgctxt "post type general name"
 msgid "Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:914
+#: includes/custom-post-types/class-decker-tasks.php:930
 msgctxt "post type singular name"
 msgid "Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:915
+#: includes/custom-post-types/class-decker-tasks.php:931
 msgctxt "admin menu"
 msgid "Decker"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:916
+#: includes/custom-post-types/class-decker-tasks.php:932
 msgid "Edit Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:917
+#: includes/custom-post-types/class-decker-tasks.php:933
 msgid "View Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:918
+#: includes/custom-post-types/class-decker-tasks.php:934
 msgid "All Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:919
+#: includes/custom-post-types/class-decker-tasks.php:935
 msgid "Search Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:920
+#: includes/custom-post-types/class-decker-tasks.php:936
 msgid "Parent Tasks:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:921
+#: includes/custom-post-types/class-decker-tasks.php:937
 msgid "No tasks found."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:922
+#: includes/custom-post-types/class-decker-tasks.php:938
 msgid "No tasks found in Trash."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:964
+#: includes/custom-post-types/class-decker-tasks.php:980
 msgctxt "post status"
 msgid "Archived"
 msgstr ""
 
 #. translators: %s: Number of items
-#: includes/custom-post-types/class-decker-tasks.php:970
+#: includes/custom-post-types/class-decker-tasks.php:986
 msgid "Archived <span class=\"count\">(%s)</span>"
 msgid_plural "Archived <span class=\"count\">(%s)</span>"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/custom-post-types/class-decker-tasks.php:985
-#: includes/custom-post-types/class-decker-tasks.php:989
+#: includes/custom-post-types/class-decker-tasks.php:1001
+#: includes/custom-post-types/class-decker-tasks.php:1005
 msgid "Archived"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:991
+#: includes/custom-post-types/class-decker-tasks.php:1007
 msgid "Archivado"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1025
+#: includes/custom-post-types/class-decker-tasks.php:1041
 msgid "Task Details"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1034
+#: includes/custom-post-types/class-decker-tasks.php:1050
 #: public/app-priority.php:173
 #: public/app-tasks.php:207
 msgid "Assigned Users"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1043
+#: includes/custom-post-types/class-decker-tasks.php:1059
 msgid "Task User and Date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1052
+#: includes/custom-post-types/class-decker-tasks.php:1068
 #: public/layouts/task-card.php:319
 msgid "Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1070
+#: includes/custom-post-types/class-decker-tasks.php:1086
 #: public/app-priority.php:170
 #: public/app-priority.php:402
 #: public/app-tasks.php:203
@@ -447,124 +460,120 @@ msgstr ""
 msgid "Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1093
+#: includes/custom-post-types/class-decker-tasks.php:1109
 #: public/layouts/task-card.php:255
 msgid "Due Date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1097
+#: includes/custom-post-types/class-decker-tasks.php:1113
 msgid "Max Priority"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1103
+#: includes/custom-post-types/class-decker-tasks.php:1119
 msgid "To-Do"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1104
+#: includes/custom-post-types/class-decker-tasks.php:1120
 #: public/app-kanban-my.php:100
 #: public/app-kanban.php:141
 #: public/layouts/task-card.php:244
 msgid "In Progress"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1105
+#: includes/custom-post-types/class-decker-tasks.php:1121
 #: public/app-kanban-my.php:115
 #: public/app-kanban.php:156
 #: public/layouts/task-card.php:245
 msgid "Done"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1109
+#: includes/custom-post-types/class-decker-tasks.php:1125
 msgid "Nextcloud Card ID"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1161
+#: includes/custom-post-types/class-decker-tasks.php:1177
 #: public/layouts/task-card.php:189
 msgid "Select Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1212
+#: includes/custom-post-types/class-decker-tasks.php:1228
 msgid "Assign User:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1214
+#: includes/custom-post-types/class-decker-tasks.php:1230
 msgid "-- Select User --"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1225
+#: includes/custom-post-types/class-decker-tasks.php:1241
 msgid "Assign Date:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1231
+#: includes/custom-post-types/class-decker-tasks.php:1247
 msgid "Add Relation"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1240
+#: includes/custom-post-types/class-decker-tasks.php:1256
 msgid "Unknown User"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1245
-#: includes/custom-post-types/class-decker-tasks.php:1286
-#: includes/custom-post-types/class-decker-tasks.php:1371
-#: includes/custom-post-types/class-decker-tasks.php:1405
+#: includes/custom-post-types/class-decker-tasks.php:1261
+#: includes/custom-post-types/class-decker-tasks.php:1302
+#: includes/custom-post-types/class-decker-tasks.php:1387
+#: includes/custom-post-types/class-decker-tasks.php:1421
 msgid "Remove"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1267
+#: includes/custom-post-types/class-decker-tasks.php:1283
 msgid "Please select a user and date."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1276
+#: includes/custom-post-types/class-decker-tasks.php:1292
 msgid "This user and date combination already exists."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1355
-#: includes/custom-post-types/class-decker-tasks.php:1393
+#: includes/custom-post-types/class-decker-tasks.php:1371
+#: includes/custom-post-types/class-decker-tasks.php:1409
 msgid "Add Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1391
+#: includes/custom-post-types/class-decker-tasks.php:1407
 msgid "Select Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1658
+#: includes/custom-post-types/class-decker-tasks.php:1676
 msgid "Show All Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1659
+#: includes/custom-post-types/class-decker-tasks.php:1677
 msgid "Show All Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1712
+#: includes/custom-post-types/class-decker-tasks.php:1730
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1891
+#: includes/custom-post-types/class-decker-tasks.php:1909
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1894
+#: includes/custom-post-types/class-decker-tasks.php:1912
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1897
+#: includes/custom-post-types/class-decker-tasks.php:1915
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1903
+#: includes/custom-post-types/class-decker-tasks.php:1921
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1979
+#: includes/custom-post-types/class-decker-tasks.php:2043
 msgid "Security check failed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1988
+#: includes/custom-post-types/class-decker-tasks.php:2052
 msgid "Invalid comment data."
-msgstr ""
-
-#: includes/custom-post-types/class-decker-user-extended.php:60
-msgid "Additional Information"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-user-extended.php:69
@@ -581,6 +590,22 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-user-extended.php:92
 msgid "Select your default board."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:114
+msgid "Email Notifications"
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:118
+msgid "Notify me when a task is assigned to me."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:123
+msgid "Notify me when a task assigned to me is completed."
+msgstr ""
+
+#: includes/custom-post-types/class-decker-user-extended.php:128
+msgid "Notify me when someone comments on a task I am assigned to."
 msgstr ""
 
 #: includes/models/class-boardmanager.php:116
@@ -623,52 +648,52 @@ msgstr ""
 msgid "Invalid post type."
 msgstr ""
 
-#: includes/models/class-task.php:470
+#: includes/models/class-task.php:405
 msgid "🔥"
 msgstr ""
 
-#: includes/models/class-task.php:470
+#: includes/models/class-task.php:405
 msgid "Normal"
 msgstr ""
 
-#: includes/models/class-task.php:472
+#: includes/models/class-task.php:407
 msgid "Undefined date"
 msgstr ""
 
-#: includes/models/class-task.php:490
+#: includes/models/class-task.php:425
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:516
+#: includes/models/class-task.php:451
 #: public/layouts/task-card.php:313
 msgid "Comments"
 msgstr ""
 
-#: includes/models/class-task.php:569
+#: includes/models/class-task.php:504
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:586
+#: includes/models/class-task.php:521
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:593
+#: includes/models/class-task.php:528
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:602
+#: includes/models/class-task.php:537
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:609
+#: includes/models/class-task.php:544
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:624
+#: includes/models/class-task.php:559
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:630
+#: includes/models/class-task.php:565
 msgid "Unmark for today"
 msgstr ""
 

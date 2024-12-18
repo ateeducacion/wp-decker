@@ -57,7 +57,7 @@ class Decker_User_Extended {
 		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
 
 		?>
-		<h3><?php esc_html_e( 'Additional Information', 'decker' ); ?></h3>
+		<h3><?php esc_html_e( 'Decker Settings', 'decker' ); ?></h3>
 
 		<table class="form-table">
 			<!-- Color Picker Field -->
@@ -92,7 +92,46 @@ class Decker_User_Extended {
 					<span class="description"><?php esc_html_e( 'Select your default board.', 'decker' ); ?></span>
 				</td>
 			</tr>
+			<?php
+				// Check if email notifications are enabled globally.
+				$global_settings = get_option( 'decker_settings', array() );
+				$allow_email_notifications = isset( $global_settings['allow_email_notifications'] ) && '1' === $global_settings['allow_email_notifications'];
 
+			if ( $allow_email_notifications ) {
+
+				// Retrieve user-specific email settings or default values.
+				$email_notifications = get_user_meta( $user->ID, 'decker_email_notifications', true );
+				$default_settings = array(
+					'task_assigned'   => '1',
+					'task_completed'  => '1',
+					'task_commented'  => '1',
+				);
+				$email_notifications = wp_parse_args( $email_notifications, $default_settings );
+
+				?>
+			<!-- Email Notifications -->
+			<tr>
+				<th><?php esc_html_e( 'Email Notifications', 'decker' ); ?></th>
+				<td>
+					<label>
+						<input type="checkbox" name="decker_email_notifications[task_assigned]" value="1" <?php checked( $email_notifications['task_assigned'], '1' ); ?>>
+					<?php esc_html_e( 'Notify me when a task is assigned to me.', 'decker' ); ?>
+					</label>
+					<br>
+					<label>
+						<input type="checkbox" name="decker_email_notifications[task_completed]" value="1" <?php checked( $email_notifications['task_completed'], '1' ); ?>>
+					<?php esc_html_e( 'Notify me when a task assigned to me is completed.', 'decker' ); ?>
+					</label>
+					<br>
+					<label>
+						<input type="checkbox" name="decker_email_notifications[task_commented]" value="1" <?php checked( $email_notifications['task_commented'], '1' ); ?>>
+					<?php esc_html_e( 'Notify me when someone comments on a task I am assigned to.', 'decker' ); ?>
+					</label>
+				</td>
+			</tr>
+				<?php
+			}
+			?>
 		</table>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
@@ -135,6 +174,29 @@ class Decker_User_Extended {
 			$decker_default_board = intval( $_POST['decker_default_board'] );
 			update_user_meta( $user_id, 'decker_default_board', $decker_default_board );
 		}
+
+		// Default settings for email notifications.
+		$default_settings = array(
+			'task_assigned'   => '0',
+			'task_completed'  => '0',
+			'task_commented'  => '0',
+		);
+
+		// Sanitize and save email notification settings.
+		if ( isset( $_POST['decker_email_notifications'] ) ) {
+			$email_notifications = array_map(
+				function ( $value ) {
+					return '1' === $value ? '1' : '0'; // Ensure only '1' or '0' are saved.
+				},
+				wp_parse_args( sanitize_text_field( wp_unslash( $_POST['decker_email_notifications'] ) ), $default_settings )
+			);
+		} else {
+			// Use default settings if no data is provided.
+			$email_notifications = $default_settings;
+		}
+
+		// Ensure a valid array is always saved.
+		update_user_meta( $user_id, 'decker_email_notifications', (array) $email_notifications );
 	}
 
 	/**

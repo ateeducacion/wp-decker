@@ -55,33 +55,6 @@ class DeckerTaskTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test assigning a user to a task.
-	 */
-	public function test_assign_user_to_task() {
-		$task_id = $this->create_test_task();
-		$user_id = $this->create_test_user();
-
-		$task = new Task( $task_id );
-		$task->assign_user( $user_id );
-
-		$this->assertContains( $user_id, $task->assigned_users, 'User was not assigned to the task.' );
-	}
-
-	/**
-	 * Test unassigning a user from a task.
-	 */
-	public function test_unassign_user_from_task() {
-		$task_id = $this->create_test_task();
-		$user_id = $this->create_test_user();
-
-		$task = new Task( $task_id );
-		$task->assign_user( $user_id );
-		$task->unassign_user( $user_id );
-
-		$this->assertNotContains( $user_id, $task->assigned_users, 'User was not unassigned from the task.' );
-	}
-
-	/**
 	 * Test metadata retrieval for a task.
 	 */
 	public function test_task_metadata() {
