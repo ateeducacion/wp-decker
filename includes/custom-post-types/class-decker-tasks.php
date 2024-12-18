@@ -1955,10 +1955,6 @@ class Decker_Tasks {
 			// Comparar los usuarios nuevos con los previamente asignados.
 			$new_users = array_diff( $assigned_users, $previous_assigned_users );
 
-			error_log( 'Assigned users: ' . print_r( $assigned_users, true ) );
-			error_log( 'Previous users: ' . print_r( $previous_assigned_users, true ) );
-			error_log( 'New users: ' . print_r( $new_users, true ) );
-
 		}
 
 		// Preparar los metadatos personalizados.

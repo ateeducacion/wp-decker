@@ -183,17 +183,19 @@ class Decker_User_Extended {
 		);
 
 		// Sanitize and save email notification settings.
-		if ( isset( $_POST['decker_email_notifications'] ) ) {
-			$email_notifications = array_map(
-				function ( $value ) {
-					return '1' === $value ? '1' : '0'; // Ensure only '1' or '0' are saved.
-				},
-				wp_parse_args( sanitize_text_field( wp_unslash( $_POST['decker_email_notifications'] ) ), $default_settings )
-			);
+		if ( ! empty( $_POST['decker_email_notifications'] ) && is_array( $_POST['decker_email_notifications'] ) ) {
+			$sanitized = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_email_notifications'] ) );
+			$email_notifications = wp_parse_args( $sanitized, $default_settings );
 		} else {
-			// Use default settings if no data is provided.
 			$email_notifications = $default_settings;
 		}
+
+		$email_notifications = array_map(
+			function ( $value ) {
+				return '1' === $value ? '1' : '0';
+			},
+			$email_notifications
+		);
 
 		// Ensure a valid array is always saved.
 		update_user_meta( $user_id, 'decker_email_notifications', (array) $email_notifications );

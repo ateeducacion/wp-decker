@@ -478,20 +478,6 @@ class HooksTest extends WP_UnitTestCase {
 		$existing_users = array( $this->user_id );
 		$new_users = array( $user_2, $user_3 );
 
-		add_action(
-			'decker_user_assigned',
-			function ( $task_id, $user_id ) use ( &$hook_called, $new_users ) {
-
-				error_log( 'Assigned user: ' . $user_id );
-				error_log( 'New users: ' . print_r( $new_users, true ) );
-
-				$this->assertTrue( in_array( $user_id, $new_users ), 'The hook was called for a user that was not newly assigned.' );
-				$hook_called++;
-			},
-			10,
-			2
-		);
-
 		// Data for creating a new task.
 		$title       = 'Task with Multiple Users';
 		$description = 'This task is assigned to multiple users.';
@@ -514,6 +500,18 @@ class HooksTest extends WP_UnitTestCase {
 			$author,
 			array( $author ),
 			$labels
+		);
+
+		// Set it after the creation and before the update
+		add_action(
+			'decker_user_assigned',
+			function ( $task_id, $user_id ) use ( &$hook_called, $new_users ) {
+
+				$this->assertTrue( in_array( $user_id, $new_users ), 'The hook was called for a user that was not newly assigned.' );
+				$hook_called++;
+			},
+			10,
+			2
 		);
 
 		// Modify the task to add new users.
