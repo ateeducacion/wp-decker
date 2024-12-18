@@ -171,7 +171,7 @@ msgstr "Tableros"
 #: includes/custom-post-types/class-decker-labels.php:111
 #: includes/custom-post-types/class-decker-labels.php:206
 #: includes/custom-post-types/class-decker-user-extended.php:65
-#: includes/custom-post-types/class-decker-user-extended.php:209
+#: includes/custom-post-types/class-decker-user-extended.php:211
 #: public/app-term-manager.php:190
 #: public/app-term-manager.php:272
 msgid "Color"
@@ -1231,11 +1231,11 @@ msgstr "No tienes permiso para borrar etiquetas"
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
-#: includes/custom-post-types/class-decker-tasks.php:2043
+#: includes/custom-post-types/class-decker-tasks.php:2039
 msgid "Security check failed."
 msgstr "Error de comprobación."
 
-#: includes/custom-post-types/class-decker-tasks.php:2052
+#: includes/custom-post-types/class-decker-tasks.php:2048
 msgid "Invalid comment data."
 msgstr "Datos de comentario inválidos."
 
