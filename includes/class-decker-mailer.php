@@ -69,7 +69,7 @@ class Decker_Mailer {
                 </div>
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; color: #666666; font-size: 12px; text-align: center;">
-                    <p>Este correo ha sido enviado automáticamente por Decker</p>
+                    <p><?php esc_html_e('This email was automatically sent by Decker', 'decker'); ?></p>
                 </div>
             </div>
         </body>
