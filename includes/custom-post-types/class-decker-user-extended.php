@@ -175,30 +175,26 @@ class Decker_User_Extended {
 			update_user_meta( $user_id, 'decker_default_board', $decker_default_board );
 		}
 
-		// Default settings for email notifications.
-		$default_settings = array(
-			'task_assigned'   => '0',
-			'task_completed'  => '0',
-			'task_commented'  => '0',
-		);
-
-		// Sanitize and save email notification settings.
+		// Save email notifications.
 		if ( ! empty( $_POST['decker_email_notifications'] ) && is_array( $_POST['decker_email_notifications'] ) ) {
-			$sanitized = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_email_notifications'] ) );
-			$email_notifications = wp_parse_args( $sanitized, $default_settings );
-		} else {
-			$email_notifications = $default_settings;
+
+			// Default settings.
+			$notifications = array(
+				'task_assigned'  => '0',
+				'task_completed' => '0',
+				'task_commented' => '0',
+			);
+
+			$sanitized_input = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_email_notifications'] ) );
+
+			foreach ( $notifications as $key => $default ) {
+				$notifications[ $key ] =
+					isset( $sanitized_input[ $key ] ) ? '1' : '0';
+			}
+
+			update_user_meta( $user_id, 'decker_email_notifications', $notifications );
+
 		}
-
-		$email_notifications = array_map(
-			function ( $value ) {
-				return '1' === $value ? '1' : '0';
-			},
-			$email_notifications
-		);
-
-		// Ensure a valid array is always saved.
-		update_user_meta( $user_id, 'decker_email_notifications', (array) $email_notifications );
 	}
 
 	/**

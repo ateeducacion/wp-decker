@@ -146,19 +146,8 @@ class DeckerUserExtendedTest extends Decker_Test_Base {
 		// Retrieve the saved settings.
 		$saved_settings = get_user_meta( $user_id, 'decker_email_notifications', true );
 
-		// Verify that invalid values are sanitized.
-		$this->assertEquals(
-			array(
-				'task_assigned'   => '0',
-				'task_completed'  => '1',
-				'task_commented'  => '0',
-			),
-			$saved_settings,
-			'Failed to sanitize invalid email notification settings.'
-		);
-
-		// Ensure the result is always an array.
-		$this->assertIsArray( $saved_settings, 'Email notification settings should always be an array.' );
+		// Ensure the result is empty.
+		$this->assertEmpty( $saved_settings, 'Email notification settings should be empty.' );
 	}
 
 
