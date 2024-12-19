@@ -18,31 +18,41 @@ class DeckerTaskCommentsTest extends Decker_Test_Base {
 	public function set_up() {
 		parent::set_up();
 
-		// Create users for testing
+		// Create users for testing using WordPress factory
 		$this->administrator = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
-		// Create a board for the task
+		// Create a board using our custom factory
 		wp_set_current_user( $this->administrator );
-		$board = wp_insert_term( 'Test Board', 'decker_board' );
-		$this->board_id = $board['term_id'];
-
-		// Create a test task
-		$this->task_id = wp_insert_post(
+		$board_result = self::factory()->board->create(
 			array(
-				'post_type' => 'decker_task',
-				'post_title' => 'Test Task',
-				'post_status' => 'publish',
-				'post_author' => $this->administrator,
-				'tax_input' => array(
-					'decker_board' => array( $this->board_id ),
-				),
-				'meta_input' => array(
-					'stack' => 'to-do',
-				),
+				'name' => 'Test Comments Board',
+				'color' => '#ff5733',
 			)
 		);
+
+		// Verify board creation was successful
+		if ( is_wp_error( $board_result ) ) {
+			$this->fail( 'Failed to create board: ' . $board_result->get_error_message() );
+		}
+		$this->board_id = $board_result;
+
+		// Create a test task using our custom factory
+		$task_result = self::factory()->task->create(
+			array(
+				'post_title' => 'Test Comments Task',
+				'post_author' => $this->administrator,
+				'board' => $this->board_id,
+				'stack' => 'to-do',
+			)
+		);
+
+		// Verify task creation was successful
+		if ( is_wp_error( $task_result ) ) {
+			$this->fail( 'Failed to create task: ' . $task_result->get_error_message() );
+		}
+		$this->task_id = $task_result;
 	}
 
 	/**
@@ -58,15 +68,15 @@ class DeckerTaskCommentsTest extends Decker_Test_Base {
 		foreach ( $roles as $role => $user_id ) {
 			wp_set_current_user( $user_id );
 
-			// Create a comment
-			$comment_data = array(
-				'comment_post_ID' => $this->task_id,
-				'comment_content' => "Test comment from $role",
-				'user_id'         => $user_id,
-				'comment_type'    => 'decker_task_comment',
+			// Create a comment using WordPress factory
+			$comment_id = self::factory()->comment->create(
+				array(
+					'comment_post_ID' => $this->task_id,
+					'comment_content' => "Test comment from $role",
+					'user_id'         => $user_id,
+					'comment_type'    => 'decker_task_comment',
+				)
 			);
-
-			$comment_id = wp_insert_comment( $comment_data );
 
 			$this->assertNotEquals( 0, $comment_id, "Failed to create comment for role: $role" );
 			$this->assertNotFalse( $comment_id, "Failed to create comment for role: $role" );
