@@ -2,14 +2,30 @@
 
 This guide covers everything you need to know to develop with or contribute to Decker.
 
-## Quick Start
+## Development Environment Setup
+
+### Prerequisites
+
+Before you begin development, ensure you have:
+
+- Node.js and npm installed
+- Docker installed and running
+- Composer for PHP dependencies
+
+### Quick Start
 
 1. Clone the repository:
 ```bash
 git clone https://github.com/ateeducacion/wp-decker.git
 ```
 
-2. Start the development environment:
+2. Install dependencies:
+```bash
+npm install @wordpress/env
+composer install
+```
+
+3. Start the development environment:
 ```bash
 make up
 ```
@@ -17,6 +33,41 @@ make up
 This will start a Dockerized WordPress instance at http://localhost:8888 with:
 - Username: admin
 - Password: password
+
+### Available Make Commands
+
+The project includes a comprehensive Makefile with commands for development:
+
+- `make up` - Start the WordPress environment
+- `make down` - Stop the environment
+- `make test` - Run PHPUnit tests
+- `make lint` - Check code style with PHP_CodeSniffer
+- `make fix` - Automatically fix code style issues
+- `make check` - Run all checks (lint, tests, plugin-check)
+- `make package VERSION=X.X.X` - Create a release package
+- `make clean` - Clean up the environment
+- `make pot` - Generate translation template
+- `make help` - Show all available commands
+
+### Testing
+
+The project uses PHPUnit for testing. Run tests with:
+```bash
+make test
+```
+
+For verbose test output:
+```bash
+make test-verbose
+```
+
+### Code Style
+
+We follow WordPress Coding Standards. Check and fix code style with:
+```bash
+make lint  # Check code style
+make fix   # Fix code style issues
+```
 
 ## Hooks Reference
 
