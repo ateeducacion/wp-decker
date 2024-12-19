@@ -151,29 +151,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		wp_set_current_user( $administrator->ID );
 
 		// Create terms for boards and labels.
-		$board_id = wp_insert_term( 'Board 1', 'decker_board' )['term_id'];
-		$label_id = wp_insert_term( 'Label 1', 'decker_label' )['term_id'];
-
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
-
-		// Create mock data: a post and a term.
-		$board_id = wp_insert_term( 'Test Board', 'decker_board' )['term_id'];
-
-		$post_id = wp_insert_post(
-			array(
-				'post_title'  => 'Test Task',
-				'post_type'   => 'decker_task',
-				'post_status' => 'publish',
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-					'decker_label' => array( $label_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
-			)
-		);
+		$board_id = $this->factory->board->create();
+		$label_id = $this->factory->label->create();
+		$post_id = $this->factory->task->create();
 
 		// Ensure data exists.
 		$this->assertNotFalse( get_post( $post_id ), 'Post should exist before deletion.' );

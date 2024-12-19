@@ -38,43 +38,24 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		// Create a board term for the tasks.
 		wp_set_current_user( $this->editor );
 
-		$this->board = self::factory()->term->create_and_get(
+		$this->board = self::factory()->board->create_and_get(
 			array(
-				'taxonomy' => 'decker_board',
 				'name'     => 'Test Board',
 				'slug'     => 'test-board',
 			)
 		);
 	}
 
-	protected function create_test_task_with_board( string $stack = 'to-do' ): int {
-		$task_id = Decker_Tasks::create_or_update_task(
-			0, // Create a new task.
-			'Test Task',
-			'Test Task Description',
-			$stack,
-			$this->board->term_id,
-			false,
-			null,
-			get_current_user_id(),
-			array(),
-			array(),
-		);
-
-		if ( is_wp_error( $task_id ) ) {
-			return $task_id;
-		}
-
-		$this->created_tasks[] = $task_id;
-
-		return $task_id;
-	}
-
 	/**
 	 * Test retrieving a task by ID.
 	 */
 	public function test_get_task_by_id() {
-		$task_id = $this->create_test_task_with_board();
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Test Task',
+				'board' => $this->board->term_id,
+			)
+		);
 
 		$task = $this->task_manager->get_task( $task_id );
 
@@ -86,8 +67,19 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 	 * Test retrieving tasks by stack.
 	 */
 	public function test_get_tasks_by_stack() {
-		$task_id_1 = $this->create_test_task_with_board( 'to-do' );
-		$task_id_2 = $this->create_test_task_with_board( 'in-progress' );
+
+		$task_id_1 = self::factory()->task->create(
+			array(
+				'stack' => 'to-do',
+				'board' => $this->board->term_id,
+			)
+		);
+		$task_id_2 = self::factory()->task->create(
+			array(
+				'stack' => 'in-progress',
+				'board' => $this->board->term_id,
+			)
+		);
 
 		$tasks_to_do = $this->task_manager->get_tasks_by_stack( 'to-do' );
 
@@ -106,7 +98,11 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 	 * Test retrieving tasks by board.
 	 */
 	public function test_get_tasks_by_board() {
-		$task_id = $this->create_test_task_with_board();
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
 
 		$board = BoardManager::get_board_by_slug( $this->board->slug );
 
@@ -121,7 +117,11 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 	 * Test retrieving tasks assigned to a specific user.
 	 */
 	public function test_get_tasks_by_user() {
-		$task_id = $this->create_test_task_with_board();
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
 
 		update_post_meta( $task_id, 'assigned_users', array( $this->editor ) );
 
@@ -136,7 +136,11 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 	 * Test retrieving upcoming tasks by date.
 	 */
 	public function test_get_upcoming_tasks_by_date() {
-		$task_id = $this->create_test_task_with_board();
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
 
 		$from  = new DateTime( '-1 day' );
 		$until = new DateTime( '+1 day' );

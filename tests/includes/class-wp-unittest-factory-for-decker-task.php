@@ -72,8 +72,25 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 
 		// Resolve generator sequences into actual values.
 		foreach ( $merged as $key => $value ) {
+			// Check if value is an object that has a generate() method.
 			if ( $value instanceof WP_UnitTest_Generator ) {
 				$merged[ $key ] = $value->generate();
+			}
+		}
+
+		// Manejar 'duedate' para asegurarse de que es un objeto DateTime o null.
+		if ( isset( $merged['duedate'] ) ) {
+			if ( is_string( $merged['duedate'] ) && ! empty( $merged['duedate'] ) ) {
+				try {
+					$merged['duedate'] = new DateTime( $merged['duedate'] );
+				} catch ( Exception $e ) {
+					// Si la fecha es inválida, establecer en null.
+					$merged['duedate'] = null;
+				}
+			} elseif ( $merged['duedate'] instanceof DateTime ) {
+				// Ya es un objeto DateTime, no se requiere acción.
+			} else {
+				$merged['duedate'] = null;
 			}
 		}
 
@@ -92,7 +109,6 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 		$args = $this->merge_args( $args );
 
 		// Extract required arguments. Make sure they're sanitized or handled properly.
-
 		$args['duedate']        = isset( $args['duedate'] ) ? $args['duedate'] : null;
 		$args['assigned_users'] = isset( $args['assigned_users'] ) && is_array( $args['assigned_users'] ) ? $args['assigned_users'] : array();
 		$args['labels']         = isset( $args['labels'] ) && is_array( $args['labels'] ) ? $args['labels'] : array();
@@ -142,12 +158,17 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 			return new WP_Error( 'invalid_task', 'Invalid decker_task ID provided.' );
 		}
 
+		$post = get_post( $task_id );
+
 		// Merge existing meta with provided fields.
 		$current_meta = array(
+			'post_title'     => $post->post_title,
+			'post_content'   => $post->post_content,
 			'stack'          => get_post_meta( $task_id, 'stack', true ),
 			'board'          => 0,
 			'max_priority'   => get_post_meta( $task_id, 'max_priority', true ),
 			'duedate'        => get_post_meta( $task_id, 'duedate', true ),
+			'author'         => (int) $post->post_author,
 			'assigned_users' => get_post_meta( $task_id, 'assigned_users', true ),
 			'labels'         => wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) ),
 		);

@@ -7,7 +7,6 @@
 
 class DeckerLabelManagerTest extends Decker_Test_Base {
 	private $test_label_id;
-	private $test_label_data;
 	private $editor;
 
 	public function setUp(): void {
@@ -25,22 +24,18 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 
 		wp_set_current_user( $this->editor );
 
-		// Create a test label
-		$this->test_label_data = array(
-			'name' => 'Test Label',
-			'slug' => 'test-label',
-			'color' => '#ff0000',
+		$result = $this->factory->label->create(
+			array(
+				'name' => 'Test Label',
+				'slug' => 'test-label',
+				'color' => '#ff0000',
+			)
 		);
-
-		$result = wp_insert_term( 'Test Label', 'decker_label', array( 'slug' => 'test-label' ) );
-		// $this->test_label_id = $result['term_id'];
-		// update_term_meta($this->test_label_id, 'term-color', '#ff0000');
 
 		if ( is_wp_error( $result ) ) {
 			var_dump( $result->get_error_message() );
 		} else {
-			$this->test_label_id = $result['term_id'];
-			update_term_meta( $this->test_label_id, 'term-color', '#ff0000' );
+			$this->test_label_id = $result;
 		}
 	}
 
