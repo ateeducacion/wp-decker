@@ -96,6 +96,11 @@ defined( 'ABSPATH' ) || exit;
 
 					<?php } ?>
 					<!-- item-->
+					<a href="https://ateeducacion.github.io/wp-decker/" class="dropdown-item" target="_blank">
+						<i class="ri-question-line fs-18 align-middle me-1"></i>
+						<span><?php esc_html_e( 'Help', 'decker' ); ?></span>
+					</a>
+					<!-- item-->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">
 						<i class="ri-logout-box-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'Logout', 'decker' ); ?></span>
