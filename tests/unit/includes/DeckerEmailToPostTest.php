@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerEmailToPostTest extends WP_UnitTestCase {
+class DeckerEmailToPostTest extends Decker_Test_Base {
 	private $user;
 	private $board;
 	private $shared_key;

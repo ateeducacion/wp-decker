@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerTaskCommentsTest extends WP_UnitTestCase {
+class DeckerTaskCommentsTest extends Decker_Test_Base {
 	private $administrator;
 	private $editor;
 	private $subscriber;

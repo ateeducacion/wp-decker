@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
+class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	private int $editor;
 	private int $subscriber;
 	private int $task_id;

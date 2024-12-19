@@ -8,7 +8,7 @@
 /**
  * HooksTest test case.
  */
-class HooksTest extends WP_UnitTestCase {
+class HooksTest extends Decker_Test_Base {
 
 	private $user_id;
 	private $task_id;
