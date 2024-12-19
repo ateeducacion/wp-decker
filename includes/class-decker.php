@@ -126,6 +126,7 @@ class Decker {
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
 
 		/**
 		 * The class responsible for defining the MVC.
@@ -196,6 +197,9 @@ class Decker {
 	 * Run the loader to execute all of the hooks with WordPress.
 	 */
 	public function run() {
+		// Initialize notification handler
+		new Decker_Notification_Handler();
+		
 		$this->loader->run();
 	}
 
