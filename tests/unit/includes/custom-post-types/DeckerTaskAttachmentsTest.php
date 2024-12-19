@@ -175,7 +175,7 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 		}
 
 		$filetype = wp_check_filetype( basename( $file ), null );
-		
+
 		return self::factory()->attachment->create(
 			array(
 				'file' => $file,

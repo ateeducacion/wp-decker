@@ -7,196 +7,151 @@
 
 class DeckerTasksTest extends Decker_Test_Base {
 
-    /**
-     * Test users and objects.
-     */
-    private $editor;
-    private $board_id;
-    private $task_id;
-    private $label_id;
+	/**
+	 * Test users and objects.
+	 */
+	private $editor;
+	private $board_id;
+	private $task_id;
+	private $label_id;
 
-    /**
-     * Set up before each test.
-     */
-    public function set_up() {
-        parent::set_up();
+	/**
+	 * Set up before each test.
+	 */
+	public function set_up() {
+		parent::set_up();
 
-        // Ensure that post types and taxonomies are registered
-        do_action( 'init' );
+		// Ensure that post types and taxonomies are registered
+		do_action( 'init' );
 
-        // Create an editor user using WordPress factory
-        $this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
-        wp_set_current_user( $this->editor );
+		// Create an editor user using WordPress factory
+		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $this->editor );
 
-        // Create a board using our custom factory
-        $board_result = self::factory()->board->create(
-            array(
-                'name' => 'Test Tasks Board',
-                'color' => '#ff5733',
-            )
-        );
+		// Create a board using our custom factory
+		$this->board_id = self::factory()->board->create();
 
-        // Verify board creation was successful
-        if ( is_wp_error( $board_result ) ) {
-            $this->fail( 'Failed to create board: ' . $board_result->get_error_message() );
-        }
-        $this->board_id = $board_result;
+		// Create a test label using our custom factory
+		$this->label_id = self::factory()->label->create();
+	}
 
-        // Create a test label using our custom factory
-        $label_result = self::factory()->label->create(
-            array(
-                'name' => 'Test Label',
-                'color' => '#33ff57',
-            )
-        );
+	/**
+	 * Clean up after each test.
+	 */
+	public function tear_down() {
+		if ( $this->task_id ) {
+			wp_delete_post( $this->task_id, true );
+		}
+		if ( $this->board_id ) {
+			wp_delete_term( $this->board_id, 'decker_board' );
+		}
+		wp_delete_user( $this->editor );
+		parent::tear_down();
+	}
 
-        // Verify label creation was successful
-        if ( is_wp_error( $label_result ) ) {
-            $this->fail( 'Failed to create label: ' . $label_result->get_error_message() );
-        }
-        $this->label_id = $label_result;
-    }
+	/**
+	 * Test that an editor can create a task using our custom factory.
+	 */
+	public function test_editor_can_create_task() {
+		wp_set_current_user( $this->editor );
 
-    /**
-     * Clean up after each test.
-     */
-    public function tear_down() {
-        if ( $this->task_id ) {
-            wp_delete_post( $this->task_id, true );
-        }
-        if ( $this->board_id ) {
-            wp_delete_term( $this->board_id, 'decker_board' );
-        }
-        wp_delete_user( $this->editor );
-        parent::tear_down();
-    }
+		// Create a task using our custom factory with all available fields
+		$task_result = self::factory()->task->create(
+			array(
+				'post_title' => 'Test Task',
+				'post_content' => 'Task description',
+				'post_author' => $this->editor,
+				'board' => $this->board_id,
+				'stack' => 'to-do',
+				'max_priority' => false,
+				'duedate' => null,
+				'assigned_users' => array( $this->editor ),
+				'labels' => array( $this->label_id ),
+			)
+		);
 
-    /**
-     * Test that an editor can create a task using our custom factory.
-     */
-    public function test_editor_can_create_task() {
-        wp_set_current_user( $this->editor );
+		// Verify task creation was successful
+		$this->assertNotWPError( $task_result, 'The task should be created successfully.' );
+		$this->task_id = $task_result;
 
-        // Create a task using our custom factory with all available fields
-        $task_result = self::factory()->task->create(
-            array(
-                'post_title' => 'Test Task',
-                'post_content' => 'Task description',
-                'post_author' => $this->editor,
-                'board' => $this->board_id,
-                'stack' => 'to-do',
-                'max_priority' => false,
-                'duedate' => null,
-                'assigned_users' => array($this->editor),
-                'labels' => array($this->label_id),
-            )
-        );
+		// Verify basic task properties
+		$task = get_post( $this->task_id );
+		$this->assertEquals( 'Test Task', $task->post_title, 'The task title should match.' );
+		$this->assertEquals( 'Task description', $task->post_content, 'The task description should match.' );
+		$this->assertEquals( $this->editor, $task->post_author, 'The task author should match.' );
 
-        // Verify task creation was successful
-        $this->assertNotWPError( $task_result, 'The task should be created successfully.' );
-        $this->task_id = $task_result;
+		// Verify taxonomy assignments
+		$assigned_boards = wp_get_post_terms( $this->task_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$this->assertContains( $this->board_id, $assigned_boards, 'The board should be assigned to the task.' );
 
-        // Verify basic task properties
-        $task = get_post( $this->task_id );
-        $this->assertEquals( 'Test Task', $task->post_title, 'The task title should match.' );
-        $this->assertEquals( 'Task description', $task->post_content, 'The task description should match.' );
-        $this->assertEquals( $this->editor, $task->post_author, 'The task author should match.' );
-        
-        // Verify taxonomy assignments
-        $assigned_boards = wp_get_post_terms( $this->task_id, 'decker_board', array( 'fields' => 'ids' ) );
-        $this->assertContains( $this->board_id, $assigned_boards, 'The board should be assigned to the task.' );
-        
-        $assigned_labels = wp_get_post_terms( $this->task_id, 'decker_label', array( 'fields' => 'ids' ) );
-        $this->assertContains( $this->label_id, $assigned_labels, 'The label should be assigned to the task.' );
-        
-        // Verify meta fields
-        $stack = get_post_meta( $this->task_id, 'stack', true );
-        $this->assertEquals( 'to-do', $stack, 'The stack should be set to to-do.' );
-        
-        $assigned_users = get_post_meta( $this->task_id, 'assigned_users', true );
-        $this->assertContains( $this->editor, $assigned_users, 'The editor should be assigned to the task.' );
-    }
+		$assigned_labels = wp_get_post_terms( $this->task_id, 'decker_label', array( 'fields' => 'ids' ) );
+		$this->assertContains( $this->label_id, $assigned_labels, 'The label should be assigned to the task.' );
 
-    /**
-     * Test that tasks can be assigned to multiple boards and labels.
-     */
-    public function test_assign_multiple_boards_and_labels_to_task() {
-        wp_set_current_user( $this->editor );
+		// Verify meta fields
+		$stack = get_post_meta( $this->task_id, 'stack', true );
+		$this->assertEquals( 'to-do', $stack, 'The stack should be set to to-do.' );
 
-        // Create additional boards using our custom factory
-        $board_ids = array($this->board_id);
-        for ($i = 0; $i < 2; $i++) {
-            $board_result = self::factory()->board->create(
-                array(
-                    'name' => "Additional Board {$i}",
-                    'color' => '#' . dechex(mt_rand(0, 0xFFFFFF)),
-                )
-            );
-            $this->assertNotWPError( $board_result, "Failed to create additional board {$i}" );
-            $board_ids[] = $board_result;
-        }
+		$assigned_users = get_post_meta( $this->task_id, 'assigned_users', true );
+		$this->assertContains( $this->editor, $assigned_users, 'The editor should be assigned to the task.' );
+	}
 
-        // Create additional labels using our custom factory
-        $label_ids = array($this->label_id);
-        for ($i = 0; $i < 2; $i++) {
-            $label_result = self::factory()->label->create(
-                array(
-                    'name' => "Additional Label {$i}",
-                    'color' => '#' . dechex(mt_rand(0, 0xFFFFFF)),
-                )
-            );
-            $this->assertNotWPError( $label_result, "Failed to create additional label {$i}" );
-            $label_ids[] = $label_result;
-        }
+	/**
+	 * Test that tasks can be assigned to multiple boards and labels.
+	 */
+	public function test_assign_multiple_boards_and_labels_to_task() {
+		wp_set_current_user( $this->editor );
 
-        // Create a task with multiple boards and labels using our custom factory
-        $task_result = self::factory()->task->create(
-            array(
-                'post_title' => 'Task with Multiple Terms',
-                'post_content' => 'Task with multiple boards and labels',
-                'post_author' => $this->editor,
-                'board' => $board_ids[0], // Primary board
-                'stack' => 'to-do',
-                'labels' => $label_ids,
-            )
-        );
+		// Create additional boards using our custom factory
+		$board_ids = array( $this->board_id );
+		for ( $i = 0; $i < 2; $i++ ) {
+			$board_ids[] = self::factory()->board->create();
+		}
 
-        $this->assertNotWPError( $task_result, 'The task should be created successfully.' );
-        $task_id = $task_result;
+		// Create additional labels using our custom factory
+		$label_ids = array( $this->label_id );
+		for ( $i = 0; $i < 2; $i++ ) {
+			$label_ids[]  = self::factory()->label->create();
+		}
 
-        // Verify terms are assigned
-        $assigned_boards = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
-        $assigned_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
+		// Create a task with multiple boards and labels using our custom factory
+		$task_result = self::factory()->task->create(
+			array(
+				'post_title' => 'Task with Multiple Terms',
+				'post_content' => 'Task with multiple boards and labels',
+				'post_author' => $this->editor,
+				'board' => $board_ids[0], // Primary board
+				'stack' => 'to-do',
+				'labels' => $label_ids,
+			)
+		);
 
-        // Verify primary board assignment
-        $this->assertContains( $board_ids[0], $assigned_boards, 'The primary board should be assigned to the task.' );
+		$this->assertNotWPError( $task_result, 'The task should be created successfully.' );
+		$task_id = $task_result;
 
-        // Verify all labels are assigned
-        foreach ($label_ids as $label_id) {
-            $this->assertContains( $label_id, $assigned_labels, "Label {$label_id} should be assigned to the task." );
-        }
+		// Verify terms are assigned
+		$assigned_boards = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$assigned_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
 
-        // Verify the number of assigned terms
-        $this->assertCount( count($label_ids), $assigned_labels, 'All labels should be assigned to the task.' );
-    }
+		// Verify primary board assignment
+		$this->assertContains( $board_ids[0], $assigned_boards, 'The primary board should be assigned to the task.' );
+
+		// Verify all labels are assigned
+		foreach ( $label_ids as $label_id ) {
+			$this->assertContains( $label_id, $assigned_labels, "Label {$label_id} should be assigned to the task." );
+		}
+
+		// Verify the number of assigned terms
+		$this->assertCount( count( $label_ids ), $assigned_labels, 'All labels should be assigned to the task.' );
+	}
 
 	/**
 	 * Test that tasks are ordered correctly when created, archived, or deleted.
 	 */
 	public function test_task_ordering() {
 
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
-
 		wp_set_current_user( $this->editor );
 
-		// Create terms for boards and labels.
-		$result = wp_insert_term( 'Board TEST ORDER 1', 'decker_board' );
-		if ( is_wp_error( $result ) ) {
-			error_log( 'Error inserting term: ' . $result->get_error_message() );
-			$this->fail( 'wp_insert_term failed: ' . $result->get_error_message() );
-		}
-		$board_id = $result['term_id'];
+		$board_id = self::factory()->board->create();
 
 		// Create tasks with different menu orders.
 		$task1_id = wp_insert_post(
@@ -290,11 +245,8 @@ class DeckerTasksTest extends Decker_Test_Base {
 
 		wp_set_current_user( $this->editor );
 
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
-
 		// Create terms for boards and labels.
-		$board_id = wp_insert_term( 'Board TEST 1', 'decker_board' )['term_id'];
+		$board_id = self::factory()->board->create();
 
 		// Create a task.
 		$task_id = wp_insert_post(

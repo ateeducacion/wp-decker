@@ -91,6 +91,7 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 		$args['duedate']        = isset( $args['duedate'] ) ? $args['duedate'] : null;
 		$args['assigned_users'] = isset( $args['assigned_users'] ) && is_array( $args['assigned_users'] ) ? $args['assigned_users'] : array();
 		$args['labels']         = isset( $args['labels'] ) && is_array( $args['labels'] ) ? $args['labels'] : array();
+		$args['author']         = $args['post_author'];
 
 		// Si 'board' no está definido o es 0, crear uno nuevo usando la factoría.
 		if ( empty( $args['board'] ) ) {

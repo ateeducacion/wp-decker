@@ -64,25 +64,6 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		$this->assertTrue( in_array( 'decker_task', (array) $board_object->object_type ), 'decker_board should be associated with decker_task.' );
 	}
 
-	// /**
-	// * Tests that an editor can create terms.
-	// */
-	// public function test_editor_can_create_terms() {
-	// wp_set_current_user( $this->editor );
-
-	// Create a term.
-	// $term_name = 'Sprint 1';
-	// $term = wp_insert_term( $term_name, 'decker_board' );
-
-	// Verify that the term was created successfully.
-	// $this->assertNotWPError( $term, 'The term should be created without errors.' );
-	// $this->assertIsArray( $term, 'The term should be an array.' );
-	// $this->assertArrayHasKey( 'term_id', $term, 'The term should have an ID.' );
-	// $this->assertEquals( $term_name, get_term( $term['term_id'], 'decker_board' )->name, 'The term name should match.' );
-
-	// wp_set_current_user( 0 );
-	// }
-
 	/**
 	 * Tests that an editor can create terms using the factory.
 	 */
@@ -251,23 +232,19 @@ class DeckerBoardsTest extends Decker_Test_Base {
 	public function test_editor_can_save_color_meta() {
 		wp_set_current_user( $this->editor );
 
-		// Create a term with color
-		$term_name = 'Sprint 5';
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#ff0000';
-
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
-
-		$term_id = $term['term_id'];
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name'  => 'Sprint 5',
+				'color' => '#ff0000',
+			)
+		);
 
 		// Verify that the color has been saved correctly
 		$color = get_term_meta( $term_id, 'term-color', true );
 		$this->assertEquals( '#ff0000', $color, 'The term color should be #ff0000.' );
 
 		// Clean up
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
 		wp_set_current_user( 0 );
 	}
 
@@ -296,10 +273,6 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		// Switch to subscriber user
 		wp_set_current_user( $this->subscriber );
 
-		// Attempt to update the term's color
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#0000ff';
-
 		// Simulate editing the term via factory update
 		$updated_term_id = self::factory()->board->update_object(
 			$term_id,
@@ -319,8 +292,6 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		$this->assertEquals( '#00ff00', $color, 'The term color should not have changed for a subscriber.' );
 
 		// Clean up
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
 		wp_set_current_user( 0 );
 	}
 }

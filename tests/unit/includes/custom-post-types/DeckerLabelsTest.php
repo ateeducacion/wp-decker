@@ -170,9 +170,6 @@ class DeckerLabelsTest extends Decker_Test_Base {
 	 */
 	public function test_create_and_delete_multiple_terms() {
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
 		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
@@ -213,24 +210,23 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
-		// Create a term with color
-		$term_name = 'Sprint 5';
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#ff0000';
-
-		$term = self::factory()->label->create_and_get( array( 'name' => $term_name ) );
+		$term = self::factory()->label->create_and_get();
 
 		$this->assertNotWPError( $term, 'The term should be created without errors.' );
 
-		$term_id = $term['term_id'];
+		// Simulate editing the term via factory update
+		$updated_term_id = self::factory()->label->update_object(
+			$term->term_id,
+			array(
+				'color' => '#ff0000',
+			)
+		);
 
 		// Verify that the color has been saved correctly
-		$color = get_term_meta( $term_id, 'term-color', true );
+		$color = get_term_meta( $term->term_id, 'term-color', true );
 		$this->assertEquals( '#ff0000', $color, 'The term color should be #ff0000.' );
 
 		// Clean up
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
 		wp_set_current_user( 0 );
 	}
 
@@ -238,9 +234,6 @@ class DeckerLabelsTest extends Decker_Test_Base {
 	 * Tests that users without permissions cannot save color metadata.
 	 */
 	public function test_subscriber_cannot_save_color_meta() {
-
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 
 		// Set current user as editor
 		wp_set_current_user( $this->editor );
@@ -282,8 +275,6 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		$this->assertEquals( '#00ff00', $color, 'The term color should not have changed for a subscriber.' );
 
 		// Clean up
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
 		wp_set_current_user( 0 );
 	}
 }
