@@ -11,7 +11,6 @@
 class HooksTest extends Decker_Test_Base {
 
 	private $user_id;
-	private $task_id;
 	private $decker_tasks;
 
 	/**
@@ -51,7 +50,7 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		$this->task_id = self::factory()->task->create(
+		$task_id = self::factory()->task->create(
 			array(
 				'stack' => 'in-progress',
 				'assigned_users' => array( $this->user_id ),
@@ -59,15 +58,15 @@ class HooksTest extends Decker_Test_Base {
 		);
 
 		// Simulate editing the task via factory update
-		$this->task_id = self::factory()->task->update_object(
-			$this->task_id,
+		$task_id = self::factory()->task->update_object(
+			$task_id,
 			array(
 				'stack' => 'done',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
 
-		$new_stack = get_post_meta( $this->task_id, 'stack', true );
+		$new_stack = get_post_meta( $task_id, 'stack', true );
 		$this->assertEquals( 'done', $new_stack, 'The task was not marked as completed properly after create_or_update_task().' );
 
 		$this->assertEquals( 1, $hook_called, 'The decker_task_completed hook should have been called once via create_or_update_task().' );
@@ -78,6 +77,14 @@ class HooksTest extends Decker_Test_Base {
 	 */
 	public function test_stack_transition_hook_via_create_or_update_task() {
 		$hook_called = 0;
+
+		$task_id = self::factory()->task->create(
+			array(
+				'stack' => 'to-do',
+				'assigned_users' => array( $this->user_id ),
+			)
+		);
+
 		add_action(
 			'decker_stack_transition',
 			function ( $task_id, $old_stack, $new_stack ) use ( &$hook_called ) {
@@ -94,23 +101,16 @@ class HooksTest extends Decker_Test_Base {
 			3
 		);
 
-		$this->task_id = self::factory()->task->create(
-			array(
-				'stack' => 'to-do',
-				'assigned_users' => array( $this->user_id ),
-			)
-		);
-
 		// Simulate editing the task via factory update
-		$this->task_id = self::factory()->task->update_object(
-			$this->task_id,
+		$task_id = self::factory()->task->update_object(
+			$task_id,
 			array(
 				'stack' => 'in-progress',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
 
-		$new_stack = get_post_meta( $this->task_id, 'stack', true );
+		$new_stack = get_post_meta( $task_id, 'stack', true );
 		$this->assertEquals( 'in-progress', $new_stack, 'The task did not transition to the new stack properly after create_or_update_task().' );
 
 		$this->assertEquals( 1, $hook_called, 'The decker_stack_transition hook should have been called once via create_or_update_task().' );
@@ -137,15 +137,15 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		$this->task_id = self::factory()->task->create(
+		$task_id = self::factory()->task->create(
 			array(
 				'stack' => 'done',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
 
-		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $this->task_id . '/stack' );
-		$request->set_param( 'id', $this->task_id );
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task_id . '/stack' );
+		$request->set_param( 'id', $task_id );
 		$request->set_param( 'board_id', self::factory()->board->create() );
 		$request->set_param( 'source_stack', 'to-do' );
 		$request->set_param( 'target_stack', 'done' );
@@ -181,7 +181,7 @@ class HooksTest extends Decker_Test_Base {
 			1
 		);
 
-		$this->task_id = self::factory()->task->create(
+		$task_id = self::factory()->task->create(
 			array(
 				'stack' => 'to-do',
 				'assigned_users' => array( $this->user_id ),
@@ -189,8 +189,8 @@ class HooksTest extends Decker_Test_Base {
 		);
 
 		// Verify the task was created successfully.
-		$this->assertNotWPError( $this->task_id, 'Failed to create a new task.' );
-		$this->assertTrue( get_post( $this->task_id ) instanceof WP_Post, 'The created task is not a valid post object.' );
+		$this->assertNotWPError( $task_id, 'Failed to create a new task.' );
+		$this->assertTrue( get_post( $task_id ) instanceof WP_Post, 'The created task is not a valid post object.' );
 
 		// Verify the hook was called.
 		$this->assertEquals( 1, $hook_called, 'The decker_task_created hook should have been called once.' );
@@ -217,34 +217,15 @@ class HooksTest extends Decker_Test_Base {
 			3
 		);
 
-		// Call create_or_update_task() from the plugin.
-		// First, get current values:
-		$title       = 'Title';
-		$description = 'Description';
-		$stack       = 'done';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$assigned_users = array( $this->user_id );
-		$labels         = array();
-
-		// This call should trigger the hooks internally if your logic is implemented as discussed.
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		$task_id = self::factory()->task->create(
+			array(
+				'stack' => 'done',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
-		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $this->task_id . '/stack' );
-		$request->set_param( 'id', $this->task_id );
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task_id . '/stack' );
+		$request->set_param( 'id', $task_id );
 		$request->set_param( 'board_id', self::factory()->board->create() );
 		$request->set_param( 'source_stack', 'to-do' );
 		$request->set_param( 'target_stack', 'in-progress' );
@@ -282,35 +263,17 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		// First, get current values:
-		$title       = 'Title';
-		$description = 'Description';
-		$stack       = 'done';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$assigned_users = array( $this->user_id );
-		$labels         = array();
-
-		// This call should trigger the hooks internally if your logic is implemented as discussed.
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		$task_id = self::factory()->task->create(
+			array(
+				'stack' => 'done',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
 		// Simulate assigning a user to the task via REST API.
 		$task_instance = new Decker_Tasks();
-		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/assign' );
-		$request->set_param( 'id', $this->task_id );
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $task_id . '/assign' );
+		$request->set_param( 'id', $task_id );
 		$request->set_param( 'user_id', $this->user_id );
 
 		$response = $task_instance->assign_user_to_task( $request );
@@ -320,7 +283,7 @@ class HooksTest extends Decker_Test_Base {
 		$this->assertTrue( $response->get_data()['success'], 'User assignment was not successful.' );
 
 		// Verify the user is now assigned to the task.
-		$assigned_users = get_post_meta( $this->task_id, 'assigned_users', true );
+		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
 		$this->assertIsArray( $assigned_users, 'Assigned users should be an array.' );
 		$this->assertContains( $this->user_id, $assigned_users, 'User was not assigned to the task.' );
 
@@ -340,6 +303,14 @@ class HooksTest extends Decker_Test_Base {
 		$user_3 = self::factory()->user->create( array( 'role' => 'author' ) );
 		$assigned_users = array( $this->user_id, $user_2, $user_3 );
 
+		// Create the task.
+		$task_id = self::factory()->task->create(
+			array(
+				'stack' => 'to-do',
+				'assigned_users' => array( $this->user_id ),
+			)
+		);
+
 		add_action(
 			'decker_user_assigned',
 			function ( $task_id, $user_id ) use ( &$hook_called, $assigned_users ) {
@@ -355,36 +326,20 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		// Data for creating a new task.
-		$title       = 'Task with Multiple Users';
-		$description = 'This task is assigned to multiple users.';
-		$stack       = 'to-do';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$labels         = array();
-
-		// Call create_or_update_task() to create a new task.
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0, // Pass 0 to create a new task.
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		// Update the task to add two new uses.
+		$task_id = self::factory()->task->update_object(
+			$task_id,
+			array(
+				'assigned_users' => $assigned_users,
+			)
 		);
 
 		// Verify the task was created successfully.
-		$this->assertNotWPError( $this->task_id, 'Failed to create a new task.' );
-		$this->assertTrue( get_post( $this->task_id ) instanceof WP_Post, 'The created task is not a valid post object.' );
+		$this->assertNotWPError( $task_id, 'Failed to create a new task.' );
+		$this->assertTrue( get_post( $task_id ) instanceof WP_Post, 'The created task is not a valid post object.' );
 
 		// Verify all hooks were called once for each user.
-		$this->assertEquals( count( $assigned_users ), $hook_called, 'The decker_user_assigned hook should have been called once for each user.' );
+		$this->assertEquals( 2, $hook_called, 'The decker_user_assigned hook should have been called once for each new user.' );
 	}
 
 	/**
@@ -399,28 +354,11 @@ class HooksTest extends Decker_Test_Base {
 		$existing_users = array( $this->user_id );
 		$new_users = array( $user_2, $user_3 );
 
-		// Data for creating a new task.
-		$title       = 'Task with Multiple Users';
-		$description = 'This task is assigned to multiple users.';
-		$stack       = 'to-do';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$labels         = array();
-
-		// Call create_or_update_task() to create a new task.
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0, // Pass 0 to create a new task.
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			array( $author ),
-			$labels
+		$task_id = self::factory()->task->create(
+			array(
+				'stack' => 'to-do',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
 		// Set it after the creation and before the update
@@ -435,36 +373,20 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		// Modify the task to add new users.
-		$title        = 'New Task';
-		$description  = 'This is a new task created for testing.';
-		$stack        = 'to-do';
-		$board        = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$labels       = array();
-
 		$all_users = array_merge( $existing_users, $new_users );
 
 		$this->assertEquals( $all_users, array( $this->user_id, $user_2, $user_3 ), 'User array does not match expected values.' );
 
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			$this->task_id,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$all_users,
-			$labels
+		$task_id = self::factory()->task->update_object(
+			$task_id,
+			array(
+				'assigned_users' => $all_users,
+			)
 		);
 
 		// Verify the task was updated successfully.
-		$this->assertNotWPError( $this->task_id, 'Failed to update the task.' );
-		$this->assertTrue( get_post( $this->task_id ) instanceof WP_Post, 'The updated task is not a valid post object.' );
+		$this->assertNotWPError( $task_id, 'Failed to update the task.' );
+		$this->assertTrue( get_post( $task_id ) instanceof WP_Post, 'The updated task is not a valid post object.' );
 
 		// Verify the hook was called only for the new users.
 		$this->assertEquals( count( $new_users ), $hook_called, 'The decker_user_assigned hook should have been called once for each new user.' );
@@ -478,6 +400,5 @@ class HooksTest extends Decker_Test_Base {
 		remove_all_actions( 'decker_stack_transition' );
 		remove_all_actions( 'decker_user_assigned' );
 		remove_all_actions( 'decker_task_updated' );
-		wp_delete_post( $this->task_id, true );
 	}
 }
