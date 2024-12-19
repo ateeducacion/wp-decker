@@ -61,6 +61,7 @@ class DeckerTasksTest extends Decker_Test_Base {
 				'post_title' => 'Test Task',
 				'post_content' => 'Task description',
 				'post_author' => $this->editor,
+				'author' => $this->editor,
 				'board' => $this->board_id,
 				'stack' => 'to-do',
 				'max_priority' => false,
@@ -154,33 +155,16 @@ class DeckerTasksTest extends Decker_Test_Base {
 		$board_id = self::factory()->board->create();
 
 		// Create tasks with different menu orders.
-		$task1_id = wp_insert_post(
+
+		$task1_id = self::factory()->task->create(
 			array(
-				'post_title'   => 'Task 1',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'menu_order'   => 1,
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
+				'board' => $board_id,
 			)
 		);
 
-		$task2_id = wp_insert_post(
+		$task2_id = self::factory()->task->create(
 			array(
-				'post_title'   => 'Task 2',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'menu_order'   => 2,
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
+				'board' => $board_id,
 			)
 		);
 
@@ -245,23 +229,8 @@ class DeckerTasksTest extends Decker_Test_Base {
 
 		wp_set_current_user( $this->editor );
 
-		// Create terms for boards and labels.
-		$board_id = self::factory()->board->create();
-
 		// Create a task.
-		$task_id = wp_insert_post(
-			array(
-				'post_title'  => 'Task with Relation',
-				'post_type'   => 'decker_task',
-				'post_status' => 'publish',
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
-			)
-		);
+		$task_id = self::factory()->task->create();
 
 		$this->assertNotWPError( $task_id, 'Task creation failed.' );
 

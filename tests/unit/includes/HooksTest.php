@@ -51,43 +51,20 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		// Call create_or_update_task() from the plugin.
-		// First, get current values:
-		$title       = 'Title';
-		$description = 'Description';
-		$stack       = 'in-progress';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$assigned_users = array( $this->user_id );
-		$labels         = array();
-
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		$this->task_id = self::factory()->task->create(
+			array(
+				'stack' => 'in-progress',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
-		// This call should trigger the hooks internally if your logic is implemented as discussed.
-		$this->task_id = Decker_Tasks::create_or_update_task(
+		// Simulate editing the task via factory update
+		$this->task_id = self::factory()->task->update_object(
 			$this->task_id,
-			$title,
-			$description,
-			'done',
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+			array(
+				'stack' => 'done',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
 		$new_stack = get_post_meta( $this->task_id, 'stack', true );
@@ -117,39 +94,20 @@ class HooksTest extends Decker_Test_Base {
 			3
 		);
 
-		$title       = 'Title';
-		$description = 'Description';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$assigned_users = array( $this->user_id );
-		$labels         = array();
-
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$title,
-			$description,
-			'to-do',
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		$this->task_id = self::factory()->task->create(
+			array(
+				'stack' => 'to-do',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
-		$this->task_id = Decker_Tasks::create_or_update_task(
+		// Simulate editing the task via factory update
+		$this->task_id = self::factory()->task->update_object(
 			$this->task_id,
-			$title,
-			$description,
-			'in-progress',
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+			array(
+				'stack' => 'in-progress',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
 		$new_stack = get_post_meta( $this->task_id, 'stack', true );
@@ -179,30 +137,11 @@ class HooksTest extends Decker_Test_Base {
 			2
 		);
 
-		// Call create_or_update_task() from the plugin.
-		// First, get current values:
-		$title       = 'Title';
-		$description = 'Description';
-		$stack       = 'done';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$assigned_users = array( $this->user_id );
-		$labels         = array();
-
-		// This call should trigger the hooks internally if your logic is implemented as discussed.
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		$this->task_id = self::factory()->task->create(
+			array(
+				'stack' => 'done',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
 		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $this->task_id . '/stack' );
@@ -242,29 +181,11 @@ class HooksTest extends Decker_Test_Base {
 			1
 		);
 
-		// Data for creating a new task.
-		$title       = 'New Task';
-		$description = 'This is a new task created for testing.';
-		$stack       = 'to-do';
-		$board       = self::factory()->board->create();
-		$max_priority = false;
-		$duedate      = null;
-		$author       = $this->user_id;
-		$assigned_users = array();
-		$labels         = array();
-
-		// Call create_or_update_task() to create a new task.
-		$this->task_id = Decker_Tasks::create_or_update_task(
-			0, // Pass 0 to create a new task.
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+		$this->task_id = self::factory()->task->create(
+			array(
+				'stack' => 'to-do',
+				'assigned_users' => array( $this->user_id ),
+			)
 		);
 
 		// Verify the task was created successfully.

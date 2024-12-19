@@ -23,20 +23,25 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 	public function __construct( $factory = null ) {
 		parent::__construct( $factory );
 
-		// Define default generation.
-		$this->default_generation_definitions = array(
-			// Title and description use sequences to avoid collisions.
-			'post_title'   => new WP_UnitTest_Generator_Sequence( 'Task title %s' ),
-			'post_content' => new WP_UnitTest_Generator_Sequence( 'Task description %s' ),
-			// Default stack and board can be set here, or passed in tests.
-			'stack'        => 'to-do',
-			'board'        => 0, // You can set a default board, or set it in your tests.
-			'max_priority' => false,
-			// 'duedate'      => null,
-			'author'       => 1, // default to user ID 1 (admin)
-			// 'assigned_users' => array(),
-			// 'labels'       => array(),
-			'post_type'    => 'decker_task',
+		// Extend parent's default generation definitions.
+		$this->default_generation_definitions = array_merge(
+			$this->default_generation_definitions, // Inherit parent definitions.
+			array(
+				// Custom definitions for decker_task.
+				// Title and description use sequences to avoid collisions.
+				'post_title'   => new WP_UnitTest_Generator_Sequence( 'Task title %s' ),
+				'post_content' => new WP_UnitTest_Generator_Sequence( 'Task description %s' ),
+				'post_author'  => 1, // default to user ID 1 (admin)
+				// Default stack and board can be set here, or passed in tests.
+				'stack'        => 'to-do',
+				'board'        => 0, // You can set a default board, or set it in your tests.
+				'max_priority' => false,
+				// 'duedate'      => null,
+				'author'       => 1, // default to user ID 1 (admin)
+				// 'assigned_users' => array(),
+				// 'labels'       => array(),
+				'post_type'    => 'decker_task',
+			)
 		);
 	}
 
@@ -91,7 +96,6 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 		$args['duedate']        = isset( $args['duedate'] ) ? $args['duedate'] : null;
 		$args['assigned_users'] = isset( $args['assigned_users'] ) && is_array( $args['assigned_users'] ) ? $args['assigned_users'] : array();
 		$args['labels']         = isset( $args['labels'] ) && is_array( $args['labels'] ) ? $args['labels'] : array();
-		$args['author']         = $args['post_author'];
 
 		// Si 'board' no está definido o es 0, crear uno nuevo usando la factoría.
 		if ( empty( $args['board'] ) ) {

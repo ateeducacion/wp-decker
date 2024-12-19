@@ -32,10 +32,7 @@ class DeckerUserExtendedTest extends Decker_Test_Base {
 	public function test_create_users_and_assign_color_and_board() {
 
 		// Create 'decker_board' terms.
-		$board_ids = array();
-		for ( $i = 1; $i <= 2; $i++ ) {
-			$board_ids[] = self::factory()->board->create();
-		}
+		$board_ids = self::factory()->board->create_many( 2 );
 
 		$this->assertCount( 2, $board_ids, 'Failed to create the correct number of decker_board terms.' );
 
