@@ -59,7 +59,6 @@ nav:
     - Installation: installation.md
     - Configuration: configuration.md
   - Development: development.md
-  - FAQ: faq.md
 
 markdown_extensions:
   - admonition
