@@ -54,10 +54,10 @@ theme:
 
 nav:
   - Home: index.md
-  - User Guide: user-guide.md
   - Getting Started:
     - Installation: installation.md
     - Configuration: configuration.md
+  - User Guide: user-guide.md
   - Development: development.md
 
 markdown_extensions:
