@@ -242,44 +242,37 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
-		// Create a term
-		$term_name = 'Sprint 6';
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#00ff00';
+		// Create a term using the factory
+		$term_id = self::factory()->label->create(
+			array(
+				'name'  => 'Sprint 6',
+				'color' => '#00ff00',
+			)
+		);
 
-		$term = wp_insert_term( $term_name, 'decker_label' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Verify that the term was created with the correct metadata
+		$this->assertNotWPError( $term_id, 'The term should be created without errors.' );
+		$term = get_term( $term_id, 'decker_label' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should be a valid WP_Term object.' );
+		$color = get_term_meta( $term_id, 'term-color', true );
+		$this->assertEquals( '#00ff00', $color, 'The term color should match the initial value.' );
 
-		$term_id = $term['term_id'];
-
-		// Clean up
-		wp_set_current_user( 0 );
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
-
-		// Set current user as subscriber
+		// Switch to subscriber user
 		wp_set_current_user( $this->subscriber );
 
-		// Attempt to update the term's color
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#0000ff';
-
-		// Simulate editing the term
-		$result = wp_update_term(
+		// Attempt to update the term's color via factory update
+		$updated_term_id = self::factory()->label->update_object(
 			$term_id,
-			'decker_label',
 			array(
-				'name'        => $term_name,
-				'description' => '',
-				'slug'        => '',
-				'meta'        => array( 'term-color' => '#0000ff' ),
+				'color' => '#0000ff',
 			)
 		);
 
 		// Verify that the update fails
-		// Note: wp_update_term does not directly check permissions, so this test may need adjustments
-		// depending on how capabilities are handled in your implementation.
-		// For a more accurate test, you should simulate user actions in the admin form.
+		// In this case, we need to check permissions outside the factory logic
+		if ( current_user_can( 'edit_terms', $term_id ) ) {
+			$this->fail( 'A subscriber should not be able to edit terms.' );
+		}
 
 		// Verify that the color has not changed
 		$color = get_term_meta( $term_id, 'term-color', true );
