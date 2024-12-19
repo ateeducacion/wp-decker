@@ -1294,5 +1294,9 @@ msgid "My Profile"
 msgstr ""
 
 #: public/layouts/topbar.php:101
+msgid "Help"
+msgstr ""
+
+#: public/layouts/topbar.php:106
 msgid "Logout"
 msgstr ""

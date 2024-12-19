@@ -855,7 +855,7 @@ msgstr "¡Bienvenido!"
 msgid "My Profile"
 msgstr "Mi Perfil"
 
-#: public/layouts/topbar.php:101
+#: public/layouts/topbar.php:106
 msgid "Logout"
 msgstr "Cerrar Sesión"
 
@@ -1302,3 +1302,7 @@ msgstr "Notificarme cuando se complete una tarea asignada a mí."
 #: includes/custom-post-types/class-decker-user-extended.php:128
 msgid "Notify me when someone comments on a task I am assigned to."
 msgstr "Notificarme cuando alguien comente en una tarea que tengo asignada."
+
+#: public/layouts/topbar.php:101
+msgid "Help"
+msgstr "Ayuda"
