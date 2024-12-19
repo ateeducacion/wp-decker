@@ -144,17 +144,22 @@ class DeckerBoardsTest extends Decker_Test_Base {
 	public function test_administrator_can_delete_terms() {
 		wp_set_current_user( $this->administrator );
 
-		// Create a term.
-		$term_name = 'Sprint 3';
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Sprint 3',
+				'color' => '#33ff57'
+			)
+		);
 
-		$term_id = $term['term_id'];
+		// Verify the term exists
+		$term = get_term( $term_id, 'decker_board' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should exist before deletion.' );
 
-		// Delete the term.
+		// Delete the term
 		$result = wp_delete_term( $term_id, 'decker_board' );
 
-		// Verify that deletion was successful.
+		// Verify that deletion was successful
 		$this->assertTrue( $result, 'The term should be deleted successfully.' );
 		$this->assertNull( get_term( $term_id, 'decker_board' ), 'The term should not exist after being deleted.' );
 
@@ -167,12 +172,17 @@ class DeckerBoardsTest extends Decker_Test_Base {
 	public function test_subscriber_cannot_delete_terms() {
 		wp_set_current_user( $this->administrator );
 
-		// Create a term.
-		$term_name = 'Sprint 4';
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Sprint 4',
+				'color' => '#5733ff'
+			)
+		);
 
-		$term_id = $term['term_id'];
+		// Verify the term exists
+		$term = get_term( $term_id, 'decker_board' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should exist before attempted deletion.' );
 
 		wp_set_current_user( $this->subscriber );
 
