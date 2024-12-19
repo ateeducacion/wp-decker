@@ -11,7 +11,7 @@
  * A factory that uses Decker_Tasks::create_or_update_task() for creating and updating decker_task posts.
  * It integrates with the WordPress Core unit test factories.
  */
-class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Thing {
+class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 
 	/**
 	 * Constructor
@@ -32,10 +32,11 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Thing 
 			'stack'        => 'to-do',
 			'board'        => 0, // You can set a default board, or set it in your tests.
 			'max_priority' => false,
-			'duedate'      => null,
+			// 'duedate'      => null,
 			'author'       => 1, // default to user ID 1 (admin)
-			'assigned_users' => array(),
-			'labels'       => array(),
+			// 'assigned_users' => array(),
+			// 'labels'       => array(),
+			'post_type'    => 'decker_task',
 		);
 	}
 
@@ -53,6 +54,26 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Thing 
 		return false;
 	}
 
+	/**
+	 * Merges provided args with defaults and resolves generator sequences.
+	 *
+	 * @param array $args Provided arguments.
+	 * @return array Merged and resolved arguments.
+	 */
+	protected function merge_args( $args ) {
+		// Merge defaults with provided args.
+
+		$merged = array_merge( $this->default_generation_definitions, $args );
+
+		// Resolve generator sequences into actual values.
+		foreach ( $merged as $key => $value ) {
+			if ( $value instanceof WP_UnitTest_Generator ) {
+				$merged[ $key ] = $value->generate();
+			}
+		}
+
+		return $merged;
+	}
 
 	/**
 	 * Creates a decker_task using Decker_Tasks::create_or_update_task().
@@ -61,29 +82,41 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Thing 
 	 * @return int|WP_Error The created task ID or WP_Error on failure.
 	 */
 	public function create_object( $args ) {
+
+		// Merge defaults with provided args using the merge_args method.
+		$args = $this->merge_args( $args );
+
 		// Extract required arguments. Make sure they're sanitized or handled properly.
-		$title          = isset( $args['post_title'] ) ? $args['post_title'] : 'Default Task Title';
-		$description    = isset( $args['post_content'] ) ? $args['post_content'] : 'Default description';
-		$stack          = isset( $args['stack'] ) ? $args['stack'] : 'to-do';
-		$board          = isset( $args['board'] ) ? (int) $args['board'] : 0;
-		$max_priority   = isset( $args['max_priority'] ) ? (bool) $args['max_priority'] : false;
-		$duedate        = isset( $args['duedate'] ) ? $args['duedate'] : null;
-		$author         = isset( $args['author'] ) ? (int) $args['author'] : 1;
-		$assigned_users = isset( $args['assigned_users'] ) && is_array( $args['assigned_users'] ) ? $args['assigned_users'] : array();
-		$labels         = isset( $args['labels'] ) && is_array( $args['labels'] ) ? $args['labels'] : array();
+
+		$args['duedate']        = isset( $args['duedate'] ) ? $args['duedate'] : null;
+		$args['assigned_users'] = isset( $args['assigned_users'] ) && is_array( $args['assigned_users'] ) ? $args['assigned_users'] : array();
+		$args['labels']         = isset( $args['labels'] ) && is_array( $args['labels'] ) ? $args['labels'] : array();
+
+		// Si 'board' no está definido o es 0, crear uno nuevo usando la factoría.
+		if ( empty( $args['board'] ) ) {
+			if ( ! isset( $this->factory->board ) ) {
+				return new WP_Error( 'missing_factory', 'La factoría para "board" no está registrada.' );
+			}
+			$args['board'] = $this->factory->board->create(); // Crear un nuevo board.
+		}
+
+		// Asegurarse de que 'board' es un ID válido.
+		if ( ! is_int( $args['board'] ) || $args['board'] <= 0 ) {
+			return new WP_Error( 'invalid_board', 'El ID del board proporcionado no es válido.' );
+		}
 
 		// Use the method from the plugin.
 		$task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+			0, // 0 indica que es una creación nueva.
+			$args['post_title'],
+			$args['post_content'],
+			$args['stack'],
+			$args['board'],
+			$args['max_priority'],
+			$args['duedate'],
+			$args['author'],
+			$args['assigned_users'],
+			$args['labels']
 		);
 
 		return $task_id;
@@ -104,36 +137,89 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Thing 
 			return new WP_Error( 'invalid_task', 'Invalid decker_task ID provided.' );
 		}
 
-		// Fill arguments from existing post meta if not provided.
-		$title          = isset( $fields['post_title'] ) ? $fields['post_title'] : $existing_post->post_title;
-		$description    = isset( $fields['post_content'] ) ? $fields['post_content'] : $existing_post->post_content;
-		$stack          = isset( $fields['stack'] ) ? $fields['stack'] : get_post_meta( $task_id, 'stack', true );
-		$board_terms    = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
-		$board          = isset( $fields['board'] ) ? (int) $fields['board'] : ( ( ! empty( $board_terms ) ) ? (int) $board_terms[0] : 0 );
-		$max_priority   = isset( $fields['max_priority'] ) ? (bool) $fields['max_priority'] : (bool) get_post_meta( $task_id, 'max_priority', true );
-		$existing_duedate = get_post_meta( $task_id, 'duedate', true );
-		$duedate        = array_key_exists( 'duedate', $fields ) ? $fields['duedate'] : ( ! empty( $existing_duedate ) ? new DateTime( $existing_duedate ) : null );
-		$author         = isset( $fields['author'] ) ? (int) $fields['author'] : (int) $existing_post->post_author;
-		$assigned_users = isset( $fields['assigned_users'] ) && is_array( $fields['assigned_users'] ) ? $fields['assigned_users'] : get_post_meta( $task_id, 'assigned_users', true );
-		$assigned_users = is_array( $assigned_users ) ? $assigned_users : array();
+		// Merge existing meta with provided fields.
+		$current_meta = array(
+			'stack'          => get_post_meta( $task_id, 'stack', true ),
+			'board'          => 0,
+			'max_priority'   => get_post_meta( $task_id, 'max_priority', true ),
+			'duedate'        => get_post_meta( $task_id, 'duedate', true ),
+			'assigned_users' => get_post_meta( $task_id, 'assigned_users', true ),
+			'labels'         => wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) ),
+		);
 
-		$existing_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
-		$labels          = isset( $fields['labels'] ) && is_array( $fields['labels'] ) ? $fields['labels'] : $existing_labels;
+		// Obtener el board actual si existe.
+		$board_terms = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
+		if ( ! empty( $board_terms ) ) {
+			$current_meta['board'] = (int) $board_terms[0];
+		}
 
-		// Update task using the plugin's method.
+		// Fusionar los campos proporcionados con los metadatos actuales usando merge_args.
+		$args = $this->merge_args( array_merge( $current_meta, $fields ) );
+
+		// Si 'board' está presente y es 0, crear uno nuevo usando la factoría.
+		if ( isset( $args['board'] ) && empty( $args['board'] ) ) {
+			if ( ! isset( $this->factory->board ) ) {
+				return new WP_Error( 'missing_factory', 'La factoría para "board" no está registrada.' );
+			}
+			$args['board'] = $this->factory->board->create(); // Crear un nuevo board.
+		}
+
+		// Asegurarse de que 'board' es un ID válido.
+		if ( ! is_int( $args['board'] ) || $args['board'] <= 0 ) {
+			return new WP_Error( 'invalid_board', 'El ID del board proporcionado no es válido.' );
+		}
+
+		// Si 'board' ha cambiado, actualizar la relación de términos.
+		if ( isset( $fields['board'] ) ) {
+			wp_set_object_terms( $task_id, (int) $args['board'], 'decker_board', false );
+		}
+
+		// Usar el método del plugin para actualizar la tarea.
 		$updated_id = Decker_Tasks::create_or_update_task(
 			$task_id,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$assigned_users,
-			$labels
+			$args['post_title'],
+			$args['post_content'],
+			$args['stack'],
+			$args['board'],
+			$args['max_priority'],
+			$args['duedate'],
+			$args['author'],
+			$args['assigned_users'],
+			$args['labels']
 		);
 
 		return $updated_id;
+
+		// // Fill arguments from existing post meta if not provided.
+		// $title          = isset( $fields['post_title'] ) ? $fields['post_title'] : $existing_post->post_title;
+		// $description    = isset( $fields['post_content'] ) ? $fields['post_content'] : $existing_post->post_content;
+		// $stack          = isset( $fields['stack'] ) ? $fields['stack'] : get_post_meta( $task_id, 'stack', true );
+		// $board_terms    = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
+		// $board          = isset( $fields['board'] ) ? (int) $fields['board'] : ( ( ! empty( $board_terms ) ) ? (int) $board_terms[0] : 0 );
+		// $max_priority   = isset( $fields['max_priority'] ) ? (bool) $fields['max_priority'] : (bool) get_post_meta( $task_id, 'max_priority', true );
+		// $existing_duedate = get_post_meta( $task_id, 'duedate', true );
+		// $duedate        = array_key_exists( 'duedate', $fields ) ? $fields['duedate'] : ( ! empty( $existing_duedate ) ? new DateTime( $existing_duedate ) : null );
+		// $author         = isset( $fields['author'] ) ? (int) $fields['author'] : (int) $existing_post->post_author;
+		// $assigned_users = isset( $fields['assigned_users'] ) && is_array( $fields['assigned_users'] ) ? $fields['assigned_users'] : get_post_meta( $task_id, 'assigned_users', true );
+		// $assigned_users = is_array( $assigned_users ) ? $assigned_users : array();
+
+		// $existing_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
+		// $labels          = isset( $fields['labels'] ) && is_array( $fields['labels'] ) ? $fields['labels'] : $existing_labels;
+
+		// // Update task using the plugin's method.
+		// $updated_id = Decker_Tasks::create_or_update_task(
+		// $task_id,
+		// $title,
+		// $description,
+		// $stack,
+		// $board,
+		// $max_priority,
+		// $duedate,
+		// $author,
+		// $assigned_users,
+		// $labels
+		// );
+
+		// return $updated_id;
 	}
 }

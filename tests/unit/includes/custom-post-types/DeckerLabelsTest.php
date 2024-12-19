@@ -68,7 +68,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		$term_id = self::factory()->label->create(
 			array(
 				'name' => 'Sprint 1',
-				'color' => '#ff5733'
+				'color' => '#ff5733',
 			)
 		);
 
@@ -94,7 +94,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		$term = self::factory()->label->create_and_get(
 			array(
 				'name' => 'Sprint 2',
-				'color' => '#33ff57'
+				'color' => '#33ff57',
 			)
 		);
 
@@ -114,7 +114,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		$term_id = self::factory()->label->create(
 			array(
 				'name' => 'Sprint 3',
-				'color' => '#33ff57'
+				'color' => '#33ff57',
 			)
 		);
 
@@ -142,7 +142,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		$term_id = self::factory()->label->create(
 			array(
 				'name' => 'Sprint 4',
-				'color' => '#5733ff'
+				'color' => '#5733ff',
 			)
 		);
 

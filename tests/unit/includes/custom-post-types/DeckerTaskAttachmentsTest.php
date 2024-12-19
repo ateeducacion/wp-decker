@@ -34,7 +34,7 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 		$board_result = self::factory()->board->create(
 			array(
 				'name' => 'DeckerTaskAttachmentsTest Board',
-				'color' => '#ff5733'
+				'color' => '#ff5733',
 			)
 		);
 
@@ -50,7 +50,7 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 				'post_title' => 'Test attachment Task',
 				'post_author' => $this->editor,
 				'board' => $this->board_id,
-				'stack' => 'to-do'
+				'stack' => 'to-do',
 			)
 		);
 

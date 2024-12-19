@@ -93,7 +93,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		$term_id = self::factory()->board->create(
 			array(
 				'name' => 'Sprint 1',
-				'color' => '#ff5733'
+				'color' => '#ff5733',
 			)
 		);
 
@@ -157,7 +157,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		$term_id = self::factory()->board->create(
 			array(
 				'name' => 'Sprint 3',
-				'color' => '#33ff57'
+				'color' => '#33ff57',
 			)
 		);
 
@@ -185,7 +185,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		$term_id = self::factory()->board->create(
 			array(
 				'name' => 'Sprint 4',
-				'color' => '#5733ff'
+				'color' => '#5733ff',
 			)
 		);
 
