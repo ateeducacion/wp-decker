@@ -19,11 +19,7 @@ class DeckerTasksTest extends WP_UnitTestCase {
 		do_action( 'init' );
 
 		// Create an editor user
-		$this->editor = self::factory()->user->create(
-			array(
-				'role' => 'editor',
-			)
-		);
+		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
 	}
 
 	/**
