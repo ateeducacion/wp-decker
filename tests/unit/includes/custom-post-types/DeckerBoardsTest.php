@@ -89,13 +89,22 @@ class DeckerBoardsTest extends Decker_Test_Base {
 	public function test_editor_can_create_terms() {
 		wp_set_current_user( $this->editor );
 
-		// Create a term using the factory.
-		$term_id = self::factory()->board->create( array( 'name' => 'Sprint 1' ) );
+		// Create a term using the factory with color
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Sprint 1',
+				'color' => '#ff5733'
+			)
+		);
 
-		// Verify that the term was created successfully.
+		// Verify that the term was created successfully
 		$term = get_term( $term_id, 'decker_board' );
 		$this->assertInstanceOf( WP_Term::class, $term, 'The term should be a valid WP_Term object.' );
 		$this->assertEquals( 'Sprint 1', $term->name, 'The term name should match.' );
+
+		// Verify the color meta was saved
+		$color = get_term_meta( $term_id, 'term-color', true );
+		$this->assertEquals( '#ff5733', $color, 'The term color should match.' );
 
 		wp_set_current_user( 0 );
 	}
