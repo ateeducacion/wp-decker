@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerTaskManagerTest extends WP_UnitTestCase {
+class DeckerTaskManagerTest extends Decker_Test_Base {
 
 	/**
 	 * @var TaskManager

@@ -27,7 +27,7 @@ class HooksTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_id );
 
 		// Create a board and a task.
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board_id = self::factory()->board->create();
 	}
 
 	/**
@@ -56,7 +56,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'Title';
 		$description = 'Description';
 		$stack       = 'in-progress';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -119,7 +119,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$title       = 'Title';
 		$description = 'Description';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -184,7 +184,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'Title';
 		$description = 'Description';
 		$stack       = 'done';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -207,7 +207,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $this->task_id . '/stack' );
 		$request->set_param( 'id', $this->task_id );
-		$request->set_param( 'board_id', self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) ) );
+		$request->set_param( 'board_id', self::factory()->board->create() );
 		$request->set_param( 'source_stack', 'to-do' );
 		$request->set_param( 'target_stack', 'done' );
 		$request->set_param( 'source_order', 1 );
@@ -246,7 +246,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'New Task';
 		$description = 'This is a new task created for testing.';
 		$stack       = 'to-do';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -301,7 +301,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'Title';
 		$description = 'Description';
 		$stack       = 'done';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -324,7 +324,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $this->task_id . '/stack' );
 		$request->set_param( 'id', $this->task_id );
-		$request->set_param( 'board_id', self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) ) );
+		$request->set_param( 'board_id', self::factory()->board->create() );
 		$request->set_param( 'source_stack', 'to-do' );
 		$request->set_param( 'target_stack', 'in-progress' );
 		$request->set_param( 'source_order', 1 );
@@ -365,7 +365,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'Title';
 		$description = 'Description';
 		$stack       = 'done';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -438,7 +438,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'Task with Multiple Users';
 		$description = 'This task is assigned to multiple users.';
 		$stack       = 'to-do';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -482,7 +482,7 @@ class HooksTest extends Decker_Test_Base {
 		$title       = 'Task with Multiple Users';
 		$description = 'This task is assigned to multiple users.';
 		$stack       = 'to-do';
-		$board       = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board       = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;
@@ -518,7 +518,7 @@ class HooksTest extends Decker_Test_Base {
 		$title        = 'New Task';
 		$description  = 'This is a new task created for testing.';
 		$stack        = 'to-do';
-		$board        = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board        = self::factory()->board->create();
 		$max_priority = false;
 		$duedate      = null;
 		$author       = $this->user_id;

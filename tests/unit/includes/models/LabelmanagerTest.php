@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerLabelManagerTest extends WP_UnitTestCase {
+class DeckerLabelManagerTest extends Decker_Test_Base {
 	private $test_label_id;
 	private $test_label_data;
 	private $editor;

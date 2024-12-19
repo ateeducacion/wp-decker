@@ -6,8 +6,8 @@
  */
 
 class DeckerEmailToPostTest extends Decker_Test_Base {
-	private $user;
-	private $board;
+	private $user_id;
+	private $board_id;
 	private $shared_key;
 
 	private $endpoint = '/decker/v1/email-to-post';
@@ -29,13 +29,8 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		// Trigger the rest_api_init action to register routes
 		do_action( 'rest_api_init' );
 
-		// // Flush rewrite rules
-		// global $wp_rewrite;
-		// $wp_rewrite->init();
-		// $wp_rewrite->flush_rules();
-
 		// Create test user
-		$this->user = $this->factory->user->create_and_get(
+		$this->user_id = $this->factory->user->create(
 			array(
 				'role' => 'administrator',
 				'user_email' => 'test@example.com',
@@ -43,11 +38,8 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		);
 
 		// Create test board
-		wp_set_current_user( $this->user->ID );
-		$this->board = wp_insert_term( 'Test Board', 'decker_board' );
-		if ( is_wp_error( $this->board ) ) {
-			$this->fail( 'Failed to create test board: ' . $this->board->get_error_message() );
-		}
+		wp_set_current_user( $this->user_id );
+		$this->board_id = self::factory()->board->create();
 	}
 
 	public function test_endpoint_requires_authorization() {
@@ -107,7 +99,7 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 
 	public function test_creates_task_from_valid_email() {
 		// Set default board for user
-		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
 
 		// Load email content from fixture
 		$email_content = $this->get_fixture_content( 'raw_email_from_gmail.eml' );
@@ -141,13 +133,13 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 
 		$this->assertEquals( 'Test Task', $task->post_title );
 		$this->assertEquals( 'this is a mail from gmail', trim( $task->post_content ) );
-		$this->assertEquals( $this->user->ID, $task->post_author );
+		$this->assertEquals( $this->user_id, $task->post_author );
 	}
 
 
 	public function test_creates_task_from_another_valid_email() {
 		// Set default board for user
-		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
 
 		// Load email content from fixture
 		$email_content = $this->get_fixture_content( 'Test_Full.eml' );
@@ -181,12 +173,12 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 
 		$this->assertEquals( 'Test Full Task', $task->post_title );
 		$this->assertStringContainsString( 'Les comentamos la incidencia con la que nos encontramos con Decker', trim( $task->post_content ) );
-		$this->assertEquals( $this->user->ID, $task->post_author );
+		$this->assertEquals( $this->user_id, $task->post_author );
 	}
 
 
 	public function test_creates_task_with_attachment() {
-		update_user_meta( $this->user->ID, 'decker_default_board', $this->board['term_id'] );
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
 
 		// Load email content from fixture
 		$email_content = $this->get_fixture_content( 'Test_Attachment.eml' );
@@ -254,11 +246,11 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 	public function tearDown(): void {
 		// Clean up
 
-		wp_set_current_user( $this->user->ID );
-		wp_delete_term( $this->board['term_id'], 'decker_board' );
+		wp_set_current_user( $this->user_id );
+		wp_delete_term( $this->board_id, 'decker_board' );
 
-		delete_user_meta( $this->user->ID, 'decker_default_board' );
-		wp_delete_user( $this->user->ID );
+		delete_user_meta( $this->user_id, 'decker_default_board' );
+		wp_delete_user( $this->user_id );
 
 		delete_option( 'decker_settings' );
 

@@ -6,7 +6,7 @@
  */
 
 
-class DeckerTaskTest extends WP_UnitTestCase {
+class DeckerTaskTest extends Decker_Test_Base {
 
 	private $editor;
 
@@ -103,8 +103,8 @@ class DeckerTaskTest extends WP_UnitTestCase {
 
 		// $board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
 		$label_ids = array(
-			self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) ),
-			self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) ),
+			self::factory()->label->create(),
+			self::factory()->label->create(),
 		);
 
 		$task_id = $this->create_test_task( 'Task with Board and Labels', '', array(), $label_ids );

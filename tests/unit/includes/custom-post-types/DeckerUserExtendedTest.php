@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerUserExtendedTest extends WP_UnitTestCase {
+class DeckerUserExtendedTest extends Decker_Test_Base {
 
 	/**
 	 * Instance of Decker_User_Extended.
@@ -23,12 +23,7 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 		$editor_id = $this->factory->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $editor_id );
 
-		// Ensure the Decker_User_Extended class is available.
-		if ( class_exists( 'Decker_User_Extended' ) ) {
-			$this->decker_user_extended = new Decker_User_Extended();
-		} else {
-			$this->fail( 'The Decker_User_Extended class does not exist.' );
-		}
+		$this->decker_user_extended = new Decker_User_Extended();
 	}
 
 	/**
@@ -36,16 +31,10 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 	 */
 	public function test_create_users_and_assign_color_and_board() {
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
 		// Create 'decker_board' terms.
 		$board_ids = array();
 		for ( $i = 1; $i <= 2; $i++ ) {
-			$term = wp_insert_term( "Board {$i}", 'decker_board' );
-			if ( ! is_wp_error( $term ) ) {
-				$board_ids[] = $term['term_id'];
-			}
+			$board_ids[] = self::factory()->board->create();
 		}
 
 		$this->assertCount( 2, $board_ids, 'Failed to create the correct number of decker_board terms.' );
@@ -76,23 +65,19 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 	 */
 	public function test_delete_decker_board_and_remove_user_meta() {
 
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' ); // Ensure 'decker_term_action' matches your plugin action.
-
 		// Create a 'decker_board' term.
-		$term = wp_insert_term( 'Board to Delete', 'decker_board' );
-		$this->assertFalse( is_wp_error( $term ), 'Failed to create decker_board term.' );
-		$term_id = $term['term_id'];
+		$board_id = self::factory()->board->create();
 
 		// Create a user and assign the board to be deleted.
 		$user_id = $this->factory->user->create();
-		update_user_meta( $user_id, 'decker_default_board', $term_id );
+		update_user_meta( $user_id, 'decker_default_board', $board_id );
 
 		// Verify that the meta is assigned.
 		$saved_board = get_user_meta( $user_id, 'decker_default_board', true );
-		$this->assertEquals( $term_id, $saved_board, 'Failed to assign the board to the user.' );
+		$this->assertEquals( $board_id, $saved_board, 'Failed to assign the board to the user.' );
 
 		// Delete the 'decker_board' term.
-		wp_delete_term( $term_id, 'decker_board' );
+		wp_delete_term( $board_id, 'decker_board' );
 
 		// Verify that the meta has been removed.
 		$deleted_board = get_user_meta( $user_id, 'decker_default_board', true );

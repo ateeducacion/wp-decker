@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerBoardManagerTest extends WP_UnitTestCase {
+class DeckerBoardManagerTest extends Decker_Test_Base {
 	private $test_board_id;
 	private $test_board_data;
 	private $editor;
