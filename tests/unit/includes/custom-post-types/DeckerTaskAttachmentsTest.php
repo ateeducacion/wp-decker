@@ -31,15 +31,21 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 
 		// Create a board using the factory
 		wp_set_current_user( $this->editor );
-		$this->board_id = self::factory()->board->create(
+		$board_result = self::factory()->board->create(
 			array(
 				'name' => 'DeckerTaskAttachmentsTest Board',
 				'color' => '#ff5733'
 			)
 		);
 
+		// Verify board creation was successful
+		if ( is_wp_error( $board_result ) ) {
+			$this->fail( 'Failed to create board: ' . $board_result->get_error_message() );
+		}
+		$this->board_id = $board_result;
+
 		// Create a test task using the factory
-		$this->task_id = self::factory()->task->create(
+		$task_result = self::factory()->task->create(
 			array(
 				'post_title' => 'Test attachment Task',
 				'post_author' => $this->editor,
