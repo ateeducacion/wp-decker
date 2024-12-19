@@ -29,30 +29,22 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
-		// Create a board for the task
+		// Create a board using the factory
 		wp_set_current_user( $this->editor );
-		$board = wp_insert_term( 'DeckerTaskAttachmentsTest Board', 'decker_board' );
-
-		if ( is_wp_error( $board ) ) {
-			error_log( 'Error inserting term: ' . $board->get_error_message() );
-			$this->fail( 'wp_insert_term failed: ' . $board->get_error_message() );
-		}
-
-		$this->board_id = $board['term_id'];
-
-		// Create a test task
-		$this->task_id = wp_insert_post(
+		$this->board_id = self::factory()->board->create(
 			array(
-				'post_type' => 'decker_task',
+				'name' => 'DeckerTaskAttachmentsTest Board',
+				'color' => '#ff5733'
+			)
+		);
+
+		// Create a test task using the factory
+		$this->task_id = self::factory()->task->create(
+			array(
 				'post_title' => 'Test attachment Task',
-				'post_status' => 'publish',
 				'post_author' => $this->editor,
-				'tax_input' => array(
-					'decker_board' => array( $this->board_id ),
-				),
-				'meta_input' => array(
-					'stack' => 'to-do',
-				),
+				'board' => $this->board_id,
+				'stack' => 'to-do'
 			)
 		);
 
