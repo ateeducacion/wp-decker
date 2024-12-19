@@ -54,6 +54,12 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 			)
 		);
 
+		// Verify task creation was successful
+		if ( is_wp_error( $task_result ) ) {
+			$this->fail( 'Failed to create task: ' . $task_result->get_error_message() );
+		}
+		$this->task_id = $task_result;
+
 		// Create a test file
 		$this->test_file = wp_upload_bits( 'test.txt', null, 'test content' );
 	}
