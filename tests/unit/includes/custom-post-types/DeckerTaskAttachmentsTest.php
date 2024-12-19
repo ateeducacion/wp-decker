@@ -60,8 +60,11 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 		}
 		$this->task_id = $task_result;
 
-		// Create a test file
+		// Create a test file using WordPress's upload functionality
 		$this->test_file = wp_upload_bits( 'test.txt', null, 'test content' );
+		if ( $this->test_file['error'] ) {
+			$this->fail( 'Failed to create test file: ' . $this->test_file['error'] );
+		}
 	}
 
 	/**
@@ -164,33 +167,24 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Helper function to create an attachment.
+	 * Helper function to create an attachment using WordPress factory.
 	 */
 	private function create_attachment( $file, $parent_post_id ) {
-		$filetype = wp_check_filetype( basename( $file ), null );
-
-		if ( current_user_can( 'upload_files' ) ) {
-
-			$attachment = array(
-				'post_mime_type' => $filetype['type'],
-				'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
-				'post_content' => '',
-				'post_status' => 'inherit',
-				'post_parent' => $parent_post_id,
-				'post_author' => get_current_user_id(),
-			);
-
-			$attachment_id = wp_insert_attachment( $attachment, $file, $parent_post_id );
-
-			// Generar metadatos
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-			wp_generate_attachment_metadata( $attachment_id, $file );
-
-			return $attachment_id;
-
+		if ( ! current_user_can( 'upload_files' ) ) {
+			return 0;
 		}
 
-		return 0;
+		$filetype = wp_check_filetype( basename( $file ), null );
+		
+		return self::factory()->attachment->create(
+			array(
+				'file' => $file,
+				'post_mime_type' => $filetype['type'],
+				'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
+				'post_parent' => $parent_post_id,
+				'post_author' => get_current_user_id(),
+			)
+		);
 	}
 
 	/**
