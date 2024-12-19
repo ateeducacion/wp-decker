@@ -171,7 +171,7 @@ msgstr "Tableros"
 #: includes/custom-post-types/class-decker-labels.php:111
 #: includes/custom-post-types/class-decker-labels.php:206
 #: includes/custom-post-types/class-decker-user-extended.php:65
-#: includes/custom-post-types/class-decker-user-extended.php:211
+#: includes/custom-post-types/class-decker-user-extended.php:207
 #: public/app-term-manager.php:190
 #: public/app-term-manager.php:272
 msgid "Color"
