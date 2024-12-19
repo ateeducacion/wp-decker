@@ -63,6 +63,7 @@ nav:
     - Development Guide: development.md
   - Reference:
     - API Reference: api-reference.md
+    - Hooks: hooks.md
     - FAQ: faq.md
 
 markdown_extensions:
