@@ -181,11 +181,13 @@ class DeckerLabelsTest extends Decker_Test_Base {
 
 		// Create multiple terms
 		foreach ( $terms as $term_name ) {
-			$term = wp_insert_term( $term_name, 'decker_label' );
+			$term = self::factory()->label->create_and_get( array( 'name' => $term_name ) );
+
 			$this->assertNotWPError( $term, "The term '{$term_name}' should be created without errors." );
-			$this->assertIsArray( $term, "The term '{$term_name}' should be an array." );
-			$this->assertArrayHasKey( 'term_id', $term, "The term '{$term_name}' should have an ID." );
-			$term_ids[] = $term['term_id'];
+			$this->assertInstanceOf( WP_Term::class, $term, 'The term should be a valid WP_Term object.' );
+			$this->assertGreaterThan( 0, $term->term_id, 'The term name should match.' );
+
+			$term_ids[] = $term->term_id;
 		}
 
 		// Verify that all terms exist
@@ -216,7 +218,8 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 		$_POST['term-color'] = '#ff0000';
 
-		$term = wp_insert_term( $term_name, 'decker_label' );
+		$term = self::factory()->label->create_and_get( array( 'name' => $term_name ) );
+
 		$this->assertNotWPError( $term, 'The term should be created without errors.' );
 
 		$term_id = $term['term_id'];
