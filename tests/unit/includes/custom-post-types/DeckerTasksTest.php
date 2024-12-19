@@ -85,45 +85,53 @@ class DeckerTasksTest extends Decker_Test_Base {
         $this->assertEquals( 'to-do', $stack, 'The stack should be set to to-do.' );
     }
 
-	/**
-	 * Test that boards and labels can be assigned to a task.
-	 */
-	public function test_assign_boards_and_labels_to_task() {
+    /**
+     * Test that boards and labels can be assigned to a task.
+     */
+    public function test_assign_boards_and_labels_to_task() {
+        wp_set_current_user( $this->editor );
 
-		wp_set_current_user( $this->editor );
+        // Create a board using our custom factory
+        $board_result = self::factory()->board->create(
+            array(
+                'name' => 'Test Board for Labels',
+                'color' => '#ff5733',
+            )
+        );
+        $this->assertNotWPError( $board_result, 'Failed to create board' );
+        $board_id = $board_result;
 
-		// Create terms for boards and labels.
-		$board_id = wp_insert_term( 'Board TEST 1', 'decker_board' )['term_id'];
-		$label_id = wp_insert_term( 'Label TEST 1', 'decker_label' )['term_id'];
+        // Create a label using our custom factory
+        $label_result = self::factory()->label->create(
+            array(
+                'name' => 'Test Label',
+                'color' => '#33ff57',
+            )
+        );
+        $this->assertNotWPError( $label_result, 'Failed to create label' );
+        $label_id = $label_result;
 
-		// Ensure 'save_decker_task' matches your plugin action.
-		$_POST['decker_task_nonce'] = wp_create_nonce( 'save_decker_task' );
+        // Create a task with the board and label using our custom factory
+        $task_result = self::factory()->task->create(
+            array(
+                'post_title' => 'Task with Terms',
+                'post_author' => $this->editor,
+                'board' => $board_id,
+                'stack' => 'to-do',
+                'labels' => array( $label_id ),
+            )
+        );
 
-		// Create a task and assign the terms.
-		$task_id = wp_insert_post(
-			array(
-				'post_title'   => 'Task with Terms',
-				'post_type'    => 'decker_task',
-				'post_status'  => 'publish',
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-					'decker_label' => array( $label_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
-			)
-		);
+        $this->assertNotWPError( $task_result, 'The task should be created successfully.' );
+        $task_id = $task_result;
 
-		$this->assertNotWPError( $task_id, 'The task should be created successfully.' );
+        // Verify terms are assigned
+        $assigned_boards = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
+        $assigned_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
 
-		// Verify terms are assigned.
-		$assigned_boards = wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
-		$assigned_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
-
-		$this->assertContains( $board_id, $assigned_boards, 'The board should be assigned to the task.' );
-		$this->assertContains( $label_id, $assigned_labels, 'The label should be assigned to the task.' );
-	}
+        $this->assertContains( $board_id, $assigned_boards, 'The board should be assigned to the task.' );
+        $this->assertContains( $label_id, $assigned_labels, 'The label should be assigned to the task.' );
+    }
 
 	/**
 	 * Test that tasks are ordered correctly when created, archived, or deleted.
