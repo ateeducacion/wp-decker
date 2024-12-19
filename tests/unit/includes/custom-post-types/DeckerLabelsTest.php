@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerLabelsTest extends WP_UnitTestCase {
+class DeckerLabelsTest extends Decker_Test_Base {
 
 	private int $editor;
 	private int $subscriber;
@@ -62,24 +62,25 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 	 * Tests that a user with permissions can create terms.
 	 */
 	public function test_editor_can_create_terms() {
-
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
-		// Create a term.
-		$term_name = 'Sprint 1';
-		$term = wp_insert_term( $term_name, 'decker_label' );
+		// Create a term using the factory with color
+		$term_id = self::factory()->label->create(
+			array(
+				'name' => 'Sprint 1',
+				'color' => '#ff5733'
+			)
+		);
 
-		// Verify that the term was created successfully.
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
-		$this->assertIsArray( $term, 'The term should be an array.' );
-		$this->assertArrayHasKey( 'term_id', $term, 'The term should have an ID.' );
-		$this->assertEquals( $term_name, get_term( $term['term_id'], 'decker_label' )->name, 'The term name should match.' );
+		// Verify that the term was created successfully
+		$term = get_term( $term_id, 'decker_label' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should be a valid WP_Term object.' );
+		$this->assertEquals( 'Sprint 1', $term->name, 'The term name should match.' );
 
-		// Clean up
+		// Verify the color meta was saved
+		$color = get_term_meta( $term_id, 'term-color', true );
+		$this->assertEquals( '#ff5733', $color, 'The term color should match.' );
+
 		wp_set_current_user( 0 );
 	}
 
@@ -87,21 +88,19 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 	 * Tests that a user without permissions cannot create terms.
 	 */
 	public function test_subscriber_cannot_create_terms() {
-
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Set current user as subscriber
 		wp_set_current_user( $this->subscriber );
 
-		// Attempt to create a term
-		$term_name = 'Sprint 2';
-		$term = wp_insert_term( $term_name, 'decker_label' );
+		// Attempt to create a term using the factory
+		$term = self::factory()->label->create_and_get(
+			array(
+				'name' => 'Sprint 2',
+				'color' => '#33ff57'
+			)
+		);
 
 		// Verify that creation fails
 		$this->assertWPError( $term, 'The term should not be created by a subscriber.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
 	}
 
@@ -109,22 +108,19 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 	 * Tests that a user with permissions can delete terms.
 	 */
 	public function test_editor_can_delete_terms() {
-
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
-		// Create a term
-		$term_name = 'Sprint 3';
-		$term = wp_insert_term( $term_name, 'decker_label' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Create a term using the factory
+		$term_id = self::factory()->label->create(
+			array(
+				'name' => 'Sprint 3',
+				'color' => '#33ff57'
+			)
+		);
 
-		$term_id = $term['term_id'];
-
-		// Verify that the term exists
-		$this->assertNotNull( get_term( $term_id, 'decker_label' ), 'The term should exist before being deleted.' );
+		// Verify the term exists
+		$term = get_term( $term_id, 'decker_label' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should exist before deletion.' );
 
 		// Delete the term
 		$result = wp_delete_term( $term_id, 'decker_label' );
@@ -133,7 +129,6 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 		$this->assertTrue( $result, 'The term should be deleted successfully.' );
 		$this->assertNull( get_term( $term_id, 'decker_label' ), 'The term should not exist after being deleted.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
 	}
 
@@ -141,44 +136,33 @@ class DeckerLabelsTest extends WP_UnitTestCase {
 	 * Tests that a user without permissions cannot delete terms.
 	 */
 	public function test_subscriber_cannot_delete_terms() {
-
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
-		// Create a term
-		$term_name = 'Sprint 4';
-		$term = wp_insert_term( $term_name, 'decker_label' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Create a term using the factory
+		$term_id = self::factory()->label->create(
+			array(
+				'name' => 'Sprint 4',
+				'color' => '#5733ff'
+			)
+		);
 
-		$term_id = $term['term_id'];
+		// Verify the term exists
+		$term = get_term( $term_id, 'decker_label' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should exist before attempted deletion.' );
 
-		// Clean up
-		wp_set_current_user( 0 );
-
-		// Set current user as subscriber
 		wp_set_current_user( $this->subscriber );
 
-		// Expect wp_die to be called.
-		$this->expectException( 'WPDieException' );
+		// Expect wp_die to be called
+		$this->expectException( WPDieException::class );
 		$this->expectExceptionMessage( 'You do not have permission to delete terms.' );
 
 		// Attempt to delete the term
 		$result = wp_delete_term( $term_id, 'decker_label' );
 
-		// $this->expectException( Exception::class );
-		// $this->expectExceptionMessage( 'You do not have permission to delete this term.' );
-
 		// Verify that the term still exists
-		$this->assertNotNull( get_term( $term_id, 'decker_label' ), 'The term should exist because it was not deleted.' );
+		$this->assertNotNull( get_term( $term_id, 'decker_label' ), 'The term should still exist because deletion is not allowed.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
-
-		// Delete the term to avoid leaving residual data
-		wp_delete_term( $term_id, 'decker_label' );
 	}
 
 	/**
