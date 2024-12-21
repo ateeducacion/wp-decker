@@ -33,12 +33,16 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * @var array
 	 */
 	private $fired_hooks = array();
+	private $captured_mail = array();
 
 	/**
 	 * Set up test environment.
 	 */
 	public function set_up(): void {
 		parent::set_up();
+
+		// Set up email capturing
+		add_filter('wp_mail', array($this, 'capture_mail'));
 
 		// Crear un usuario de prueba
 		$this->test_user = $this->factory->user->create(
@@ -88,6 +92,10 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		remove_action( 'decker_task_assigned', array( $this, 'track_hook' ), 10 );
 		remove_action( 'decker_task_completed', array( $this, 'track_hook' ), 10 );
 		remove_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10 );
+
+		// Reset captured mail
+		$this->captured_mail = array();
+		remove_filter('wp_mail', array($this, 'capture_mail'));
 
 		parent::tear_down();
 	}
@@ -244,5 +252,16 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		// Verificar que no se envió ningún correo
 		$this->assertEmpty( $this->captured_mail, 'No debería haberse enviado ningún email.' );
+	}
+
+	/**
+	 * Capture emails sent via wp_mail
+	 *
+	 * @param array $args Email arguments
+	 * @return array Modified email arguments
+	 */
+	public function capture_mail($args) {
+		$this->captured_mail = $args;
+		return $args;
 	}
 }
