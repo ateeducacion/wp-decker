@@ -197,9 +197,9 @@ class Decker {
 	 * Run the loader to execute all of the hooks with WordPress.
 	 */
 	public function run() {
-		// Initialize notification handler
+		// Initialize notification handler.
 		new Decker_Notification_Handler();
-		
+
 		$this->loader->run();
 	}
 

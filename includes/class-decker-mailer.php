@@ -23,32 +23,32 @@ class Decker_Mailer {
 	/**
 	 * Send an HTML email with the Decker template.
 	 *
-	 * @param string $to The recipient email address
-	 * @param string $subject The email subject
-	 * @param string $content The email content/body
-	 * @return bool Whether the email was sent successfully
+	 * @param string $to The recipient email address.
+	 * @param string $subject The email subject.
+	 * @param string $content The email content/body.
+	 * @return bool Whether the email was sent successfully.
 	 */
 	public function send_email( $to, $subject, $content ) {
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
-		// Add Decker prefix to subject
+		// Add Decker prefix to subject.
 		$subject = '[Decker] ' . $subject;
 
-		// Get the HTML template
+		// Get the HTML template.
 		$message = $this->get_email_template( $content );
 
-		// Send the email using WordPress function
+		// Send the email using WordPress function.
 		return wp_mail( $to, $subject, $message, $headers );
 	}
 
 	/**
 	 * Get the HTML template for emails.
 	 *
-	 * @param string $content The main content to be inserted in the template
-	 * @return string The complete HTML email
+	 * @param string $content The main content to be inserted in the template.
+	 * @return string The complete HTML email.
 	 */
 	private function get_email_template( $content ) {
-		// Get plugin URL for images
+		// Get plugin URL for images.
 		$plugin_url = plugins_url( '', __DIR__ );
 
 		$template = '
@@ -69,7 +69,7 @@ class Decker_Mailer {
                 </div>
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eeeeee; color: #666666; font-size: 12px; text-align: center;">
-                    <p>' . esc_html__('This email was automatically sent by Decker', 'decker') . '</p>
+                    <p>' . esc_html__( 'This email was automatically sent by Decker', 'decker' ) . '</p>
                 </div>
             </div>
         </body>

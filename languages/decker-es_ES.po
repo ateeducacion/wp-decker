@@ -1306,3 +1306,37 @@ msgstr "Notificarme cuando alguien comente en una tarea que tengo asignada."
 #: public/layouts/topbar.php:101
 msgid "Help"
 msgstr "Ayuda"
+
+#: includes/class-decker-mailer.php:72
+msgid "This email was automatically sent by Decker"
+msgstr "Este correo ha sido enviado automáticamente por Decker"
+
+#. translators: %s: task title
+#: includes/class-decker-notification-handler.php:92
+msgid "New Task Assigned: %s"
+msgstr "Nueva tarea asignada: %s"
+
+#. translators: %1$s: task title, %2$s: task URL
+#: includes/class-decker-notification-handler.php:98
+msgid "You have been assigned to the task \"%1$s\". Click here to view it: %2$s"
+msgstr "Se te ha asignado la tarea \"%1$s\". Haz clic aquí para verla: %2$s"
+
+#. translators: %s: task title
+#: includes/class-decker-notification-handler.php:137
+msgid "Task Completed: %s"
+msgstr "Tarea completada: %s"
+
+#. translators: %1$s: task title, %2$s: user name, %3$s: task URL
+#: includes/class-decker-notification-handler.php:143
+msgid "The task \"%1$s\" has been marked as completed by %2$s. Click here to view it: %3$s"
+msgstr "La tarea \"%1$s\" ha sido marcada como completada por %2$s. Haz clic aquí para verla: %3$s"
+
+#. translators: %s: task title
+#: includes/class-decker-notification-handler.php:185
+msgid "New Comment on Task: %s"
+msgstr "Nuevo comentario en la tarea: %s"
+
+#. translators: %1$s: task title, %2$s: user name, %3$s: task URL
+#: includes/class-decker-notification-handler.php:191
+msgid "A new comment has been added to task \"%1$s\" by %2$s. Click here to view it: %3$s"
+msgstr "Se ha añadido un nuevo comentario a la tarea \"%1$s\" por %2$s. Haz clic aquí para verlo: %3$s"
