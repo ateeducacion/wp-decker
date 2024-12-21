@@ -206,14 +206,20 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		// Asignar la tarea al usuario de prueba
 		update_post_meta( $this->test_task, 'assigned_to', $this->test_user );
 
+		// Register post type for comments
+		register_post_type('task', array(
+			'public' => true,
+			'supports' => array('comments')
+		));
+
 		// Crear un comentario de prueba
-		$comment_id = $this->factory->comment->create(
-			array(
-				'comment_post_ID' => $this->test_task,
-				'comment_content' => 'Test comment',
-				'user_id' => $this->test_user,
-			)
-		);
+		$comment_id = wp_insert_comment(array(
+			'comment_post_ID' => $this->test_task,
+			'comment_content' => 'Test comment',
+			'user_id' => $this->test_user,
+			'comment_type' => '',
+			'comment_approved' => 1
+		));
 
 		// Trigger comment notification
 		$this->trigger_notifications( 'decker_task_comment_added', $this->test_task, $comment_id, $this->test_user );
