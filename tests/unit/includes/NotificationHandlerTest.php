@@ -214,14 +214,31 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			'supports' => array('comments')
 		));
 
-		// Crear un comentario de prueba
-		$comment_id = wp_insert_comment(array(
+		// Verify the test task exists
+		$task = get_post($this->test_task);
+		$this->assertNotNull($task, 'Test task does not exist');
+		$this->assertEquals('task', $task->post_type, 'Wrong post type');
+
+		// Create test comment with validation
+		$comment_data = array(
 			'comment_post_ID' => $this->test_task,
 			'comment_content' => 'Test comment',
 			'user_id' => $this->test_user,
 			'comment_type' => '',
 			'comment_approved' => 1
-		));
+		);
+
+		$comment_id = wp_insert_comment($comment_data);
+		
+		// Validate comment creation
+		$this->assertNotWPError($comment_id, 'Failed to create comment: ' . 
+			(is_wp_error($comment_id) ? $comment_id->get_error_message() : ''));
+		$this->assertIsInt($comment_id, 'Comment ID is not an integer');
+		$this->assertGreaterThan(0, $comment_id, 'Invalid comment ID');
+
+		// Verify comment exists
+		$comment = get_comment($comment_id);
+		$this->assertNotNull($comment, 'Comment not found after creation');
 
 		// Trigger comment notification
 		$this->trigger_notifications( 'decker_task_comment_added', $this->test_task, $comment_id, $this->test_user );
