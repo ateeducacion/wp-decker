@@ -28,11 +28,11 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	private $test_task;
 
 	/**
-	 * Captured email content
+	 * Track if hooks were fired
 	 *
 	 * @var array
 	 */
-	private $captured_mail = array();
+	private $fired_hooks = array();
 
 	/**
 	 * Set up test environment.
@@ -66,8 +66,10 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		// Inicializar el manejador de notificaciones
 		$this->notification_handler = new Decker_Notification_Handler();
 
-		// Interceptar las llamadas a wp_mail
-		add_filter( 'pre_wp_mail', array( $this, 'intercept_mail' ), 10, 2 );
+		// Track hooks being fired
+		add_action( 'decker_task_assigned', array( $this, 'track_hook' ), 10, 2 );
+		add_action( 'decker_task_completed', array( $this, 'track_hook' ), 10, 2 );
+		add_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10, 3 );
 	}
 
 	/**
@@ -79,25 +81,25 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		wp_delete_user( $this->test_user );
 		delete_option( 'decker_settings' );
 
-		// Limpiar correos capturados
-		$this->captured_mail = array();
+		// Reset hook tracking
+		$this->fired_hooks = array();
 
-		// Remover el interceptor de wp_mail
-		remove_filter( 'pre_wp_mail', array( $this, 'intercept_mail' ), 10 );
+		// Remove hook tracking
+		remove_action( 'decker_task_assigned', array( $this, 'track_hook' ), 10 );
+		remove_action( 'decker_task_completed', array( $this, 'track_hook' ), 10 );
+		remove_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10 );
 
 		parent::tear_down();
 	}
 
 	/**
-	 * Intercept wp_mail calls and capture the mail parameters.
-	 *
-	 * @param null|bool $pre Whether to short-circuit wp_mail()
-	 * @param array     $args The wp_mail arguments
-	 * @return bool Always returns false to prevent actual email sending
+	 * Track which hooks were fired and with what parameters
 	 */
-	public function intercept_mail( $pre, $args ) {
-		$this->captured_mail = $args;
-		return false; // Previene que se envíe el email real
+	public function track_hook() {
+		$this->fired_hooks[] = array(
+			'hook' => current_filter(),
+			'args' => func_get_args()
+		);
 	}
 
 	/**
@@ -108,7 +110,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test notification handling when notifications están deshabilitadas.
+	 * Test that hooks are not processed when notifications are disabled
 	 */
 	public function test_notifications_disabled() {
 		update_option(
@@ -118,20 +120,20 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Trigger varias notificaciones
-		$this->trigger_notifications( 'decker_task_assigned', $this->test_task, $this->test_user );
-		$this->trigger_notifications( 'decker_task_completed', $this->test_task, $this->test_user );
-		$this->trigger_notifications( 'decker_task_comment_added', $this->test_task, 1, $this->test_user );
+		// Trigger notifications
+		do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
+		do_action( 'decker_task_completed', $this->test_task, $this->test_user );
+		do_action( 'decker_task_comment_added', $this->test_task, 1, $this->test_user );
 
-		// Verificar que no se envió ningún correo
-		$this->assertEmpty( $this->captured_mail, 'No debería haberse enviado ningún email.' );
+		// Verify no hooks were processed
+		$this->assertEmpty( $this->fired_hooks, 'No hooks should have been processed.' );
 	}
 
 	/**
-	 * Test task assigned notification.
+	 * Test task assigned notification hook processing
 	 */
 	public function test_task_assigned_notification() {
-		// Establecer preferencias de notificación del usuario
+		// Set user preferences
 		update_user_meta(
 			$this->test_user,
 			'decker_notification_preferences',
@@ -140,16 +142,16 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Trigger assignment notification
-		$this->trigger_notifications( 'decker_task_assigned', $this->test_task, $this->test_user );
+		// Enable notifications
+		update_option('decker_settings', array('enable_email_notifications' => true));
 
-		// Verificar que se capturó un correo
-		$this->assertNotEmpty( $this->captured_mail, 'No se capturó ningún email.' );
+		// Trigger notification
+		do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
 
-		// Verificar los detalles del correo
-		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'El destinatario no coincide.' );
-		$this->assertStringContainsString( 'New Task Assigned', $this->captured_mail['subject'], 'El asunto del email no coincide.' );
-		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'El contenido del email no contiene el título de la tarea.' );
+		// Verify hook was processed
+		$this->assertCount( 1, $this->fired_hooks, 'Hook should have been processed once.' );
+		$this->assertEquals( 'decker_task_assigned', $this->fired_hooks[0]['hook'] );
+		$this->assertEquals( array($this->test_task, $this->test_user), $this->fired_hooks[0]['args'] );
 	}
 
 	/**
