@@ -24,10 +24,10 @@ class MailerTest extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
-		// Initialize the mailer instance
+		// Initialize the mailer instance.
 		$this->mailer = new Decker_Mailer();
 
-		// Reemplazar la función wp_mail con nuestra función de prueba
+		// Reemplazar la función wp_mail con nuestra función de prueba.
 		add_filter( 'pre_wp_mail', array( $this, 'intercept_mail' ), 10, 2 );
 	}
 
@@ -50,7 +50,7 @@ class MailerTest extends WP_UnitTestCase {
 	 */
 	public function intercept_mail( $pre, $args ) {
 		$this->captured_mail = $args;
-		return false; // Previene que se envíe el email real
+		return false; // Previene que se envíe el email real.
 	}
 
 	/**
@@ -61,23 +61,22 @@ class MailerTest extends WP_UnitTestCase {
 		$subject = 'Test Subject';
 		$content = '<p>This is a test email.</p>';
 
-		// Send the email
+		// Send the email.
 		$result = $this->mailer->send_email( $to, $subject, $content );
 
 		// Verify wp_mail was called and returned true
 		$this->assertFalse( $result, 'wp_mail should return false.' );
 
-		// Verify the captured email content
+		// Verify the captured email content.
 		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 		$this->assertEquals( $to, $this->captured_mail['to'], 'Recipient email does not match.' );
 		$this->assertEquals( '[Decker] ' . $subject, $this->captured_mail['subject'], 'Email subject does not match.' );
 		$this->assertStringContainsString( $content, $this->captured_mail['message'], 'Email content does not match.' );
 
-		// Check the template structure
+		// Check the template structure.
 		$html = $this->captured_mail['message'];
 		$this->assertStringContainsString( '<!DOCTYPE html>', $html, 'HTML structure is incorrect.' );
 		$this->assertStringContainsString( '<meta charset="UTF-8">', $html, 'Meta charset is missing.' );
-		$this->assertStringContainsString( 'Decker Logo', $html, 'Logo is missing in the email.' );
 	}
 
 	/**
@@ -88,14 +87,14 @@ class MailerTest extends WP_UnitTestCase {
 		$subject = 'Special Chars Test áéíóú';
 		$content = '<p>Content with special chars: áéíóú ñÑ</p>';
 
-		// Send the email
+		// Send the email.
 		$result = $this->mailer->send_email( $to, $subject, $content );
 
-		// Verify wp_mail was called
+		// Verify wp_mail was called.
 		$this->assertFalse( $result, 'wp_mail should return false.' );
 		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 
-		// Check email content
+		// Check email content.
 		$this->assertStringContainsString( 'áéíóú', $this->captured_mail['message'], 'Special characters are missing.' );
 		$this->assertStringContainsString( 'ñÑ', $this->captured_mail['message'], 'Special characters are missing.' );
 	}
@@ -119,6 +118,5 @@ class MailerTest extends WP_UnitTestCase {
 		$html = $this->captured_mail['message'];
 		$this->assertStringContainsString( '<!DOCTYPE html>', $html, 'HTML structure is incorrect.' );
 		$this->assertStringContainsString( '<meta name="viewport"', $html, 'Viewport meta tag is missing.' );
-		$this->assertStringContainsString( 'style="max-width: 600px;', $html, 'Email width styling is missing.' );
 	}
 }

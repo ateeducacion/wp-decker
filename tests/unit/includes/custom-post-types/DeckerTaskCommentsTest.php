@@ -74,7 +74,6 @@ class DeckerTaskCommentsTest extends Decker_Test_Base {
 					'comment_post_ID' => $this->task_id,
 					'comment_content' => "Test comment from $role",
 					'user_id'         => $user_id,
-					'comment_type'    => 'decker_task_comment',
 				)
 			);
 

@@ -43,9 +43,9 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		// Reset hooks tracking
 		$this->fired_hooks = array();
-		
+
 		// Set up email capturing
-		add_filter('wp_mail', array($this, 'capture_mail'));
+		add_filter( 'wp_mail', array( $this, 'capture_mail' ) );
 
 		// Crear un usuario de prueba
 		$this->test_user = $this->factory->user->create(
@@ -54,16 +54,14 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 				'user_email' => 'test@example.com',
 			)
 		);
-		wp_set_current_user($this->test_user);
-		
+		wp_set_current_user( $this->test_user );
+
 		// Crear una tarea de prueba
 		$this->test_task = $this->factory->task->create(
 			array(
 				'post_title' => 'Test Task',
 			)
 		);
-
-
 
 		// Habilitar notificaciones por email en la configuración
 		update_option(
@@ -101,7 +99,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		// Reset captured mail
 		$this->captured_mail = array();
-		remove_filter('wp_mail', array($this, 'capture_mail'));
+		remove_filter( 'wp_mail', array( $this, 'capture_mail' ) );
 
 		parent::tear_down();
 	}
@@ -112,7 +110,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	public function track_hook() {
 		$this->fired_hooks[] = array(
 			'hook' => current_filter(),
-			'args' => func_get_args()
+			'args' => func_get_args(),
 		);
 	}
 
@@ -128,8 +126,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 */
 	public function test_notifications_disabled() {
 		// Verificar estado inicial
-		$this->assertEmpty($this->fired_hooks, 'fired_hooks debería estar vacío al inicio');
-		
+		$this->assertEmpty( $this->fired_hooks, 'fired_hooks debería estar vacío al inicio' );
+
 		// Deshabilitar notificaciones explícitamente
 		update_option(
 			'decker_settings',
@@ -139,37 +137,37 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		);
 
 		// Verificar que las notificaciones están deshabilitadas
-		$settings = get_option('decker_settings');
+		$settings = get_option( 'decker_settings' );
 		$this->assertFalse(
 			$settings['enable_email_notifications'],
-			'Las notificaciones deberían estar deshabilitadas. Estado actual: ' . 
-			var_export($settings, true)
+			'Las notificaciones deberían estar deshabilitadas. Estado actual: ' .
+			var_export( $settings, true )
 		);
 
 		// Verificar que no hay hooks registrados
 		global $wp_filter;
 		$registered_hooks = array(
-			'decker_task_assigned' => isset($wp_filter['decker_task_assigned']),
-			'decker_task_completed' => isset($wp_filter['decker_task_completed']),
-			'decker_task_comment_added' => isset($wp_filter['decker_task_comment_added'])
+			'decker_task_assigned' => isset( $wp_filter['decker_task_assigned'] ),
+			'decker_task_completed' => isset( $wp_filter['decker_task_completed'] ),
+			'decker_task_comment_added' => isset( $wp_filter['decker_task_comment_added'] ),
 		);
-		
+
 		$this->assertEmpty(
-			array_filter($registered_hooks),
-			'No deberían haber hooks registrados. Hooks actuales: ' . 
-			var_export($registered_hooks, true)
+			array_filter( $registered_hooks ),
+			'No deberían haber hooks registrados. Hooks actuales: ' .
+			var_export( $registered_hooks, true )
 		);
 
 		// Trigger notifications
-		do_action('decker_task_assigned', $this->test_task, $this->test_user);
-		do_action('decker_task_completed', $this->test_task, $this->test_user);
-		do_action('decker_task_comment_added', $this->test_task, 1, $this->test_user);
+		do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
+		do_action( 'decker_task_completed', $this->test_task, $this->test_user );
+		do_action( 'decker_task_comment_added', $this->test_task, 1, $this->test_user );
 
 		// Verificar que no se procesaron hooks
 		$this->assertEmpty(
 			$this->fired_hooks,
-			'No deberían haberse procesado hooks. Hooks disparados: ' . 
-			var_export($this->fired_hooks, true)
+			'No deberían haberse procesado hooks. Hooks disparados: ' .
+			var_export( $this->fired_hooks, true )
 		);
 	}
 
@@ -187,7 +185,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		);
 
 		// Enable notifications
-		update_option('decker_settings', array('enable_email_notifications' => true));
+		update_option( 'decker_settings', array( 'enable_email_notifications' => true ) );
 
 		// Trigger notification
 		do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
@@ -195,7 +193,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		// Verify hook was processed
 		$this->assertCount( 1, $this->fired_hooks, 'Hook should have been processed once.' );
 		$this->assertEquals( 'decker_task_assigned', $this->fired_hooks[0]['hook'] );
-		$this->assertEquals( array($this->test_task, $this->test_user), $this->fired_hooks[0]['args'] );
+		$this->assertEquals( array( $this->test_task, $this->test_user ), $this->fired_hooks[0]['args'] );
 	}
 
 	/**
@@ -302,7 +300,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * @param array $args Email arguments
 	 * @return array Modified email arguments
 	 */
-	public function capture_mail($args) {
+	public function capture_mail( $args ) {
 		$this->captured_mail = $args;
 		return $args;
 	}
