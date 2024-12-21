@@ -100,7 +100,8 @@ class Decker_Notification_Handler {
 			$task_url
 		);
 
-		$this->mailer->send_email( $user->user_email, $subject, $content );
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
 	}
 
 	/**
@@ -146,7 +147,8 @@ class Decker_Notification_Handler {
 			$task_url
 		);
 
-		$this->mailer->send_email( $user->user_email, $subject, $content );
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
 	}
 
 	/**
@@ -194,6 +196,7 @@ class Decker_Notification_Handler {
 			$task_url
 		);
 
-		$this->mailer->send_email( $user->user_email, $subject, $content );
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
 	}
 }

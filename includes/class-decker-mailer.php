@@ -28,8 +28,10 @@ class Decker_Mailer {
 	 * @param string $content The email content/body.
 	 * @return bool Whether the email was sent successfully.
 	 */
-	public function send_email( $to, $subject, $content ) {
-		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+	public function send_email( $to, $subject, $content, $headers = array() ) {
+		if (empty($headers)) {
+			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		}
 
 		// Add Decker prefix to subject.
 		$subject = '[Decker] ' . $subject;
