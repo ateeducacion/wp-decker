@@ -214,37 +214,37 @@ msgstr ""
 msgid "Access denied"
 msgstr ""
 
-#: includes/class-decker-mailer.php:72
+#: includes/class-decker-mailer.php:129
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
 #. translators: %s: task title
-#: includes/class-decker-notification-handler.php:92
+#: includes/class-decker-notification-handler.php:94
 msgid "New Task Assigned: %s"
 msgstr ""
 
 #. translators: %1$s: task title, %2$s: task URL
-#: includes/class-decker-notification-handler.php:98
+#: includes/class-decker-notification-handler.php:100
 msgid "You have been assigned to the task \"%1$s\". Click here to view it: %2$s"
 msgstr ""
 
 #. translators: %s: task title
-#: includes/class-decker-notification-handler.php:137
+#: includes/class-decker-notification-handler.php:140
 msgid "Task Completed: %s"
 msgstr ""
 
 #. translators: %1$s: task title, %2$s: user name, %3$s: task URL
-#: includes/class-decker-notification-handler.php:143
+#: includes/class-decker-notification-handler.php:146
 msgid "The task \"%1$s\" has been marked as completed by %2$s. Click here to view it: %3$s"
 msgstr ""
 
 #. translators: %s: task title
-#: includes/class-decker-notification-handler.php:185
+#: includes/class-decker-notification-handler.php:189
 msgid "New Comment on Task: %s"
 msgstr ""
 
 #. translators: %1$s: task title, %2$s: user name, %3$s: task URL
-#: includes/class-decker-notification-handler.php:191
+#: includes/class-decker-notification-handler.php:195
 msgid "A new comment has been added to task \"%1$s\" by %2$s. Click here to view it: %3$s"
 msgstr ""
 
