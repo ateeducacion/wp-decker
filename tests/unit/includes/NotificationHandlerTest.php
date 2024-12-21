@@ -208,37 +208,21 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		// Asignar la tarea al usuario de prueba
 		update_post_meta( $this->test_task, 'assigned_to', $this->test_user );
 
-		// Register post type for comments
-		register_post_type('task', array(
-			'public' => true,
-			'supports' => array('comments')
-		));
-
-		// Verify the test task exists
-		$task = get_post($this->test_task);
-		$this->assertNotNull($task, 'Test task does not exist');
-		$this->assertEquals('task', $task->post_type, 'Wrong post type');
-
-		// Create test comment with validation
-		$comment_data = array(
-			'comment_post_ID' => $this->test_task,
-			'comment_content' => 'Test comment',
-			'user_id' => $this->test_user,
-			'comment_type' => '',
-			'comment_approved' => 1
+		// Crear un comentario usando el factory de WordPress
+		$comment_id = self::factory()->comment->create(
+			array(
+				'comment_post_ID' => $this->test_task,
+				'comment_content' => 'Test comment',
+				'user_id'        => $this->test_user,
+				'comment_type'   => 'decker_task_comment',
+			)
 		);
 
-		$comment_id = wp_insert_comment($comment_data);
-		
-		// Validate comment creation
-		$this->assertNotWPError($comment_id, 'Failed to create comment: ' . 
-			(is_wp_error($comment_id) ? $comment_id->get_error_message() : ''));
-		$this->assertIsInt($comment_id, 'Comment ID is not an integer');
-		$this->assertGreaterThan(0, $comment_id, 'Invalid comment ID');
+		$this->assertNotEquals( 0, $comment_id, 'Failed to create comment' );
+		$this->assertNotFalse( $comment_id, 'Failed to create comment' );
 
-		// Verify comment exists
-		$comment = get_comment($comment_id);
-		$this->assertNotNull($comment, 'Comment not found after creation');
+		$comment = get_comment( $comment_id );
+		$this->assertEquals( 'Test comment', $comment->comment_content, 'Incorrect comment content' );
 
 		// Trigger comment notification
 		$this->trigger_notifications( 'decker_task_comment_added', $this->test_task, $comment_id, $this->test_user );
