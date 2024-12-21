@@ -51,7 +51,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 				'user_email' => 'test@example.com',
 			)
 		);
-
+		wp_set_current_user($this->test_user);
+		
 		// Crear una tarea de prueba
 		$this->test_task = $this->factory->task->create(
 			array(
@@ -59,7 +60,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		wp_set_current_user($this->test_user);
+
 
 		// Habilitar notificaciones por email en la configuración
 		update_option(
@@ -214,7 +215,6 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 				'comment_post_ID' => $this->test_task,
 				'comment_content' => 'Test comment',
 				'user_id'        => $this->test_user,
-				'comment_type'   => 'decker_task_comment',
 			)
 		);
 
