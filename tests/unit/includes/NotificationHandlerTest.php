@@ -172,6 +172,46 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	// }
 
 	/**
+	 * Test heartbeat response when there are no notifications
+	 */
+	public function test_heartbeat_no_notifications() {
+		$response = array();
+		$data = array();
+		
+		$result = $this->notification_handler->heartbeat_received($response, $data);
+		
+		$this->assertEquals($response, $result, 'Response should not be modified when there are no notifications');
+	}
+
+	/**
+	 * Test heartbeat response with pending notifications
+	 */
+	public function test_heartbeat_with_notifications() {
+		// Crear una notificación de prueba
+		$notification = array(
+			'type' => 'task_assigned',
+			'task_id' => $this->test_task,
+			'task_title' => 'Test Task',
+			'timestamp' => current_time('timestamp'),
+			'message' => 'Test notification message'
+		);
+		
+		update_user_meta(get_current_user_id(), 'decker_pending_notifications', array($notification));
+		
+		$response = array();
+		$data = array();
+		
+		$result = $this->notification_handler->heartbeat_received($response, $data);
+		
+		$this->assertArrayHasKey('decker_notifications', $result, 'Response should include notifications');
+		$this->assertEquals(array($notification), $result['decker_notifications'], 'Notifications should match');
+		
+		// Verificar que las notificaciones se limpiaron
+		$pending = get_user_meta(get_current_user_id(), 'decker_pending_notifications', true);
+		$this->assertEmpty($pending, 'Pending notifications should be cleared after heartbeat');
+	}
+
+	/**
 	 * Test task assigned notification hook processing
 	 */
 	public function test_task_assigned_notification() {
@@ -222,6 +262,12 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'El destinatario no coincide.' );
 		$this->assertStringContainsString( 'Task Completed', $this->captured_mail['subject'], 'El asunto del email no coincide.' );
 		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'El contenido del email no contiene el título de la tarea.' );
+
+		// Verificar que se guardó la notificación para el heartbeat
+		$pending = get_user_meta($this->test_user, 'decker_pending_notifications', true);
+		$this->assertNotEmpty($pending, 'No se guardó la notificación para el heartbeat');
+		$this->assertEquals('task_completed', $pending[0]['type'], 'El tipo de notificación no coincide');
+		$this->assertEquals($this->test_task, $pending[0]['task_id'], 'El ID de la tarea no coincide');
 	}
 
 	/**
@@ -265,6 +311,12 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'El destinatario no coincide.' );
 		$this->assertStringContainsString( 'New Comment', $this->captured_mail['subject'], 'El asunto del email no coincide.' );
 		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'El contenido del email no contiene el título de la tarea.' );
+
+		// Verificar que se guardó la notificación para el heartbeat
+		$pending = get_user_meta($this->test_user, 'decker_pending_notifications', true);
+		$this->assertNotEmpty($pending, 'No se guardó la notificación para el heartbeat');
+		$this->assertEquals('task_comment_added', $pending[0]['type'], 'El tipo de notificación no coincide');
+		$this->assertEquals($this->test_task, $pending[0]['task_id'], 'El ID de la tarea no coincide');
 	}
 
 	/**
