@@ -30,9 +30,11 @@ class Decker_Notification_Handler {
 	 * Setup WordPress hooks.
 	 */
 	private function setup_hooks() {
-		add_action( 'decker_task_assigned', array( $this, 'handle_task_assigned' ), 10, 2 );
-		add_action( 'decker_task_completed', array( $this, 'handle_task_completed' ), 10, 2 );
-		add_action( 'decker_task_comment_added', array( $this, 'handle_task_comment' ), 10, 3 );
+		if ($this->are_notifications_enabled()) {
+			add_action( 'decker_task_assigned', array( $this, 'handle_task_assigned' ), 10, 2 );
+			add_action( 'decker_task_completed', array( $this, 'handle_task_completed' ), 10, 2 );
+			add_action( 'decker_task_comment_added', array( $this, 'handle_task_comment' ), 10, 3 );
+		}
 	}
 
 	/**
