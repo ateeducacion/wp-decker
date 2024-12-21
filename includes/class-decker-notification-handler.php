@@ -24,6 +24,35 @@ class Decker_Notification_Handler {
 	public function __construct() {
 		$this->mailer = new Decker_Mailer();
 		$this->setup_hooks();
+		
+		// Añadir soporte para Heartbeat API
+		add_filter('heartbeat_received', array($this, 'heartbeat_received'), 10, 2);
+		add_filter('heartbeat_nopriv_received', array($this, 'heartbeat_received'), 10, 2);
+	}
+
+	/**
+	 * Maneja las notificaciones a través del Heartbeat API
+	 * 
+	 * @param array $response Datos de respuesta del heartbeat
+	 * @param array $data Datos recibidos del cliente
+	 * @return array Datos modificados de respuesta
+	 */
+	public function heartbeat_received($response, $data) {
+		$current_user_id = get_current_user_id();
+		
+		if (!$current_user_id) {
+			return $response;
+		}
+
+		// Obtener notificaciones pendientes
+		$notifications = get_user_meta($current_user_id, 'decker_pending_notifications', true);
+		if (!empty($notifications)) {
+			$response['decker_notifications'] = $notifications;
+			// Limpiar notificaciones pendientes
+			delete_user_meta($current_user_id, 'decker_pending_notifications');
+		}
+
+		return $response;
 	}
 
 	/**
@@ -103,8 +132,20 @@ class Decker_Notification_Handler {
 			$task_url
 		);
 
+		// Enviar email
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
+
+		// Guardar notificación para Heartbeat
+		$notification = array(
+			'type' => 'task_assigned',
+			'task_id' => $task_id,
+			'task_title' => $task->post_title,
+			'timestamp' => current_time('timestamp'),
+			'message' => $content
+		);
+		
+		$this->save_notification($assigned_to, $notification);
 	}
 
 	/**
@@ -201,5 +242,20 @@ class Decker_Notification_Handler {
 
 		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 		$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
+	}
+
+	/**
+	 * Guarda una notificación en la metadata del usuario
+	 * 
+	 * @param int $user_id ID del usuario
+	 * @param array $notification Datos de la notificación
+	 */
+	private function save_notification($user_id, $notification) {
+		$notifications = get_user_meta($user_id, 'decker_pending_notifications', true);
+		if (!is_array($notifications)) {
+			$notifications = array();
+		}
+		$notifications[] = $notification;
+		update_user_meta($user_id, 'decker_pending_notifications', $notifications);
 	}
 }
