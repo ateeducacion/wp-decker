@@ -41,6 +41,9 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	public function set_up(): void {
 		parent::set_up();
 
+		// Reset hooks tracking
+		$this->fired_hooks = array();
+		
 		// Set up email capturing
 		add_filter('wp_mail', array($this, 'capture_mail'));
 
@@ -124,6 +127,10 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * Test that hooks are not processed when notifications are disabled
 	 */
 	public function test_notifications_disabled() {
+		// Verificar estado inicial
+		$this->assertEmpty($this->fired_hooks, 'fired_hooks debería estar vacío al inicio');
+		
+		// Deshabilitar notificaciones explícitamente
 		update_option(
 			'decker_settings',
 			array(
@@ -131,13 +138,39 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Trigger notifications
-		do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
-		do_action( 'decker_task_completed', $this->test_task, $this->test_user );
-		do_action( 'decker_task_comment_added', $this->test_task, 1, $this->test_user );
+		// Verificar que las notificaciones están deshabilitadas
+		$settings = get_option('decker_settings');
+		$this->assertFalse(
+			$settings['enable_email_notifications'],
+			'Las notificaciones deberían estar deshabilitadas. Estado actual: ' . 
+			var_export($settings, true)
+		);
 
-		// Verify no hooks were processed
-		$this->assertEmpty( $this->fired_hooks, 'No hooks should have been processed.' );
+		// Verificar que no hay hooks registrados
+		global $wp_filter;
+		$registered_hooks = array(
+			'decker_task_assigned' => isset($wp_filter['decker_task_assigned']),
+			'decker_task_completed' => isset($wp_filter['decker_task_completed']),
+			'decker_task_comment_added' => isset($wp_filter['decker_task_comment_added'])
+		);
+		
+		$this->assertEmpty(
+			array_filter($registered_hooks),
+			'No deberían haber hooks registrados. Hooks actuales: ' . 
+			var_export($registered_hooks, true)
+		);
+
+		// Trigger notifications
+		do_action('decker_task_assigned', $this->test_task, $this->test_user);
+		do_action('decker_task_completed', $this->test_task, $this->test_user);
+		do_action('decker_task_comment_added', $this->test_task, 1, $this->test_user);
+
+		// Verificar que no se procesaron hooks
+		$this->assertEmpty(
+			$this->fired_hooks,
+			'No deberían haberse procesado hooks. Hooks disparados: ' . 
+			var_export($this->fired_hooks, true)
+		);
 	}
 
 	/**
