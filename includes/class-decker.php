@@ -326,6 +326,13 @@ class Decker {
 			'blockquote' => array(),
 			'code' => array(),
 			'pre' => array(),
+			'img' => array(
+				'src' => array(),
+				'alt' => array(),
+				'style' => $allowed_css_properties,
+				'width' => array(),
+				'height' => array(),
+			),
 			// Add more basic tags if needed.
 		);
 
