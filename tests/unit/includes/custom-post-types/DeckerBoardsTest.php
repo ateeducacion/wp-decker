@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerBoardsTest extends WP_UnitTestCase {
+class DeckerBoardsTest extends Decker_Test_Base {
 
 	/**
 	 * Users for testing.
@@ -65,23 +65,31 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests that an editor can create terms.
+	 * Tests that an editor can create terms using the factory.
 	 */
 	public function test_editor_can_create_terms() {
 		wp_set_current_user( $this->editor );
 
-		// Create a term.
-		$term_name = 'Sprint 1';
-		$term = wp_insert_term( $term_name, 'decker_board' );
+		// Create a term using the factory with color
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Sprint 1',
+				'color' => '#ff5733',
+			)
+		);
 
-		// Verify that the term was created successfully.
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
-		$this->assertIsArray( $term, 'The term should be an array.' );
-		$this->assertArrayHasKey( 'term_id', $term, 'The term should have an ID.' );
-		$this->assertEquals( $term_name, get_term( $term['term_id'], 'decker_board' )->name, 'The term name should match.' );
+		// Verify that the term was created successfully
+		$term = get_term( $term_id, 'decker_board' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should be a valid WP_Term object.' );
+		$this->assertEquals( 'Sprint 1', $term->name, 'The term name should match.' );
+
+		// Verify the color meta was saved
+		$color = get_term_meta( $term_id, 'term-color', true );
+		$this->assertEquals( '#ff5733', $color, 'The term color should match.' );
 
 		wp_set_current_user( 0 );
 	}
+
 
 	/**
 	 * Tests that a subscriber cannot create terms.
@@ -90,8 +98,7 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 		wp_set_current_user( $this->subscriber );
 
 		// Attempt to create a term.
-		$term_name = 'Sprint 2';
-		$term = wp_insert_term( $term_name, 'decker_board' );
+		$term = self::factory()->board->create_and_get( array( 'name' => 'Sprint 2' ) );
 
 		// Verify that creation fails.
 		$this->assertWPError( $term, 'The term should not be created by a subscriber.' );
@@ -100,20 +107,13 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests that a user with permissions can delete terms.
+	 * Tests that a user with permissions can delete terms created with the factory.
 	 */
 	public function test_editor_can_delete_terms() {
 		wp_set_current_user( $this->editor );
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
-		// Create a term
-		$term_name = 'Sprint 3';
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
-
-		$term_id = $term['term_id'];
+		// Create a term using the factory.
+		$term_id = self::factory()->board->create( array( 'name' => 'Sprint 3' ) );
 
 		// Verify that the term exists
 		$this->assertNotNull( get_term( $term_id, 'decker_board' ), 'The term should exist before being deleted.' );
@@ -125,7 +125,6 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 		$this->assertTrue( $result, 'The term should be deleted successfully.' );
 		$this->assertNull( get_term( $term_id, 'decker_board' ), 'The term should not exist after being deleted.' );
 
-		// Clean up
 		wp_set_current_user( 0 );
 	}
 
@@ -135,17 +134,22 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	public function test_administrator_can_delete_terms() {
 		wp_set_current_user( $this->administrator );
 
-		// Create a term.
-		$term_name = 'Sprint 3';
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Sprint 3',
+				'color' => '#33ff57',
+			)
+		);
 
-		$term_id = $term['term_id'];
+		// Verify the term exists
+		$term = get_term( $term_id, 'decker_board' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should exist before deletion.' );
 
-		// Delete the term.
+		// Delete the term
 		$result = wp_delete_term( $term_id, 'decker_board' );
 
-		// Verify that deletion was successful.
+		// Verify that deletion was successful
 		$this->assertTrue( $result, 'The term should be deleted successfully.' );
 		$this->assertNull( get_term( $term_id, 'decker_board' ), 'The term should not exist after being deleted.' );
 
@@ -158,12 +162,17 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	public function test_subscriber_cannot_delete_terms() {
 		wp_set_current_user( $this->administrator );
 
-		// Create a term.
-		$term_name = 'Sprint 4';
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Sprint 4',
+				'color' => '#5733ff',
+			)
+		);
 
-		$term_id = $term['term_id'];
+		// Verify the term exists
+		$term = get_term( $term_id, 'decker_board' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should exist before attempted deletion.' );
 
 		wp_set_current_user( $this->subscriber );
 
@@ -184,24 +193,22 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Tests the creation and deletion of multiple terms.
+	 * Tests the creation and deletion of multiple terms using the factory.
 	 */
 	public function test_create_and_delete_multiple_terms() {
 		wp_set_current_user( $this->editor );
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
 		$terms = array( 'Board A', 'Board B', 'Board C' );
 		$term_ids = array();
 
-		// Create multiple terms
+		// Create multiple terms using the factory
 		foreach ( $terms as $term_name ) {
-			$term = wp_insert_term( $term_name, 'decker_board' );
-			$this->assertNotWPError( $term, "The term '{$term_name}' should be created without errors." );
-			$this->assertIsArray( $term, "The term '{$term_name}' should be an array." );
-			$this->assertArrayHasKey( 'term_id', $term, "The term '{$term_name}' should have an ID." );
-			$term_ids[] = $term['term_id'];
+			$term_id = self::factory()->board->create( array( 'name' => $term_name ) );
+			$term_ids[] = $term_id;
+
+			$term = get_term( $term_id, 'decker_board' );
+			$this->assertInstanceOf( WP_Term::class, $term, "The term '{$term_name}' should be a valid WP_Term object." );
+			$this->assertEquals( $term_name, $term->name, "The term name '{$term_name}' should match." );
 		}
 
 		// Verify that all terms exist
@@ -216,7 +223,6 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 			$this->assertNull( get_term( $term_id, 'decker_board' ), "The term with ID {$term_id} should not exist after being deleted." );
 		}
 
-		// Clean up
 		wp_set_current_user( 0 );
 	}
 
@@ -226,23 +232,19 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	public function test_editor_can_save_color_meta() {
 		wp_set_current_user( $this->editor );
 
-		// Create a term with color
-		$term_name = 'Sprint 5';
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#ff0000';
-
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
-
-		$term_id = $term['term_id'];
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name'  => 'Sprint 5',
+				'color' => '#ff0000',
+			)
+		);
 
 		// Verify that the color has been saved correctly
 		$color = get_term_meta( $term_id, 'term-color', true );
 		$this->assertEquals( '#ff0000', $color, 'The term color should be #ff0000.' );
 
 		// Clean up
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
 		wp_set_current_user( 0 );
 	}
 
@@ -250,57 +252,46 @@ class DeckerBoardsTest extends WP_UnitTestCase {
 	 * Tests that users without permissions cannot save color metadata.
 	 */
 	public function test_subscriber_cannot_save_color_meta() {
+		// Set up as editor to create the term
 		wp_set_current_user( $this->editor );
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
+		// Create a term using the factory
+		$term_id = self::factory()->board->create(
+			array(
+				'name'  => 'Sprint 6',
+				'color' => '#00ff00',
+			)
+		);
 
-		// Create a term
-		$term_name = 'Sprint 6';
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#00ff00';
+		// Verify that the term was created with the correct metadata
+		$this->assertNotWPError( $term_id, 'The term should be created without errors.' );
+		$term = get_term( $term_id, 'decker_board' );
+		$this->assertInstanceOf( WP_Term::class, $term, 'The term should be a valid WP_Term object.' );
+		$color = get_term_meta( $term_id, 'term-color', true );
+		$this->assertEquals( '#00ff00', $color, 'The term color should match the initial value.' );
 
-		$term = wp_insert_term( $term_name, 'decker_board' );
-		$this->assertNotWPError( $term, 'The term should be created without errors.' );
-
-		$term_id = $term['term_id'];
-
-		// Clean up
-		wp_set_current_user( 0 );
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
-
-		// Simulate the subscriber user login
+		// Switch to subscriber user
 		wp_set_current_user( $this->subscriber );
 
-		// Attempt to update the term's color
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-		$_POST['term-color'] = '#0000ff';
-
-		// Simulate editing the term
-		$result = wp_update_term(
+		// Simulate editing the term via factory update
+		$updated_term_id = self::factory()->board->update_object(
 			$term_id,
-			'decker_board',
 			array(
-				'name'        => $term_name,
-				'description' => '',
-				'slug'        => '',
-				'meta'        => array( 'term-color' => '#0000ff' ),
+				'color' => '#0000ff',
 			)
 		);
 
 		// Verify that the update fails
-		// Note: wp_update_term does not directly check permissions, so this test may need adjustments
-		// depending on how capabilities are handled in your implementation.
-		// For a more accurate test, you should simulate user actions in the admin form.
+		// In this case, we need to check permissions outside the factory logic, as `update_term_meta` does not enforce them.
+		if ( current_user_can( 'edit_terms', $term_id ) ) {
+			$this->fail( 'A subscriber should not be able to edit terms.' );
+		}
 
 		// Verify that the color has not changed
 		$color = get_term_meta( $term_id, 'term-color', true );
 		$this->assertEquals( '#00ff00', $color, 'The term color should not have changed for a subscriber.' );
 
 		// Clean up
-		unset( $_POST['decker_term_nonce'] );
-		unset( $_POST['term-color'] );
 		wp_set_current_user( 0 );
 	}
 }

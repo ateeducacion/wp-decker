@@ -4,7 +4,7 @@
  *
  * @package Decker
  */
-class DeckerTasksArchiveTest extends WP_UnitTestCase {
+class DeckerTasksArchiveTest extends Decker_Test_Base {
 
 	private $task_id;
 	private $user_id;
@@ -19,21 +19,8 @@ class DeckerTasksArchiveTest extends WP_UnitTestCase {
 		$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->user_id );
 
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
-
 		// Create a task.
-		$this->task_id = self::factory()->post->create(
-			array(
-				'post_type'   => 'decker_task',
-				'post_status' => 'publish',
-				'tax_input'    => array(
-					'decker_board' => array( $board_id ),
-				),
-				'meta_input'   => array(
-					'stack' => 'to-do',
-				),
-			)
-		);
+		$this->task_id = self::factory()->task->create();
 
 		// Ensure the task exists.
 		$this->assertTrue( get_post( $this->task_id ) instanceof WP_Post, 'Task was not created successfully.' );

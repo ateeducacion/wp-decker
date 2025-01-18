@@ -8,7 +8,7 @@
 /**
  * @group decker
  */
-class DeckerTasksIntegrationTest extends WP_UnitTestCase {
+class DeckerTasksIntegrationTest extends Decker_Test_Base {
 
 	private $editor;
 

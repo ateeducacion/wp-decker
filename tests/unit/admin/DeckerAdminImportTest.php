@@ -21,4 +21,9 @@ class DeckerAdminImportTest extends WP_UnitTestCase {
 		// Initialize the Decker_Admin_Import instance.
 		$this->admin_import = new Decker_Admin_Import();
 	}
+
+	public function test_sample() {
+
+		$this->assertTrue( true, 'This will be always true.' );
+	}
 }
