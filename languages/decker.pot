@@ -1,4 +1,4 @@
-# Copyright (C) 2024 Área de Tecnología Educativa
+# Copyright (C) 2025 Área de Tecnología Educativa
 # This file is distributed under the GPL-3.0+.
 msgid ""
 msgstr ""
@@ -126,7 +126,7 @@ msgstr ""
 
 #: admin/class-decker-admin-settings.php:223
 #: includes/custom-post-types/class-decker-user-extended.php:60
-#: public/layouts/topbar.php:94
+#: public/layouts/topbar.php:181
 msgid "Decker Settings"
 msgstr ""
 
@@ -216,36 +216,6 @@ msgstr ""
 
 #: includes/class-decker-mailer.php:129
 msgid "This email was automatically sent by Decker"
-msgstr ""
-
-#. translators: %s: task title
-#: includes/class-decker-notification-handler.php:95
-msgid "New Task Assigned: %s"
-msgstr ""
-
-#. translators: %1$s: task title, %2$s: task URL
-#: includes/class-decker-notification-handler.php:101
-msgid "You have been assigned to the task \"%1$s\". Click here to view it: %2$s"
-msgstr ""
-
-#. translators: %s: task title
-#: includes/class-decker-notification-handler.php:141
-msgid "Task Completed: %s"
-msgstr ""
-
-#. translators: %1$s: task title, %2$s: user name, %3$s: task URL
-#: includes/class-decker-notification-handler.php:147
-msgid "The task \"%1$s\" has been marked as completed by %2$s. Click here to view it: %3$s"
-msgstr ""
-
-#. translators: %s: task title
-#: includes/class-decker-notification-handler.php:190
-msgid "New Comment on Task: %s"
-msgstr ""
-
-#. translators: %1$s: task title, %2$s: user name, %3$s: task URL
-#: includes/class-decker-notification-handler.php:196
-msgid "A new comment has been added to task \"%1$s\" by %2$s. Click here to view it: %3$s"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-actions.php:37
@@ -988,86 +958,86 @@ msgstr ""
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:243
+#: public/class-decker-public.php:266
+msgid "Loading content. Please wait."
+msgstr ""
+
+#: public/class-decker-public.php:267
+msgid "Error loading content. Please try again."
+msgstr ""
+
+#: public/class-decker-public.php:299
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/class-decker-public.php:244
+#: public/class-decker-public.php:300
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/class-decker-public.php:245
+#: public/class-decker-public.php:301
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/class-decker-public.php:246
+#: public/class-decker-public.php:302
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:247
+#: public/class-decker-public.php:303
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/class-decker-public.php:248
+#: public/class-decker-public.php:304
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/class-decker-public.php:249
+#: public/class-decker-public.php:305
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/class-decker-public.php:250
+#: public/class-decker-public.php:306
 msgid "Failed to delete attachment."
 msgstr ""
 
-#: public/class-decker-public.php:251
+#: public/class-decker-public.php:307
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/class-decker-public.php:252
+#: public/class-decker-public.php:308
 #: public/layouts/task-card.php:136
 #: public/layouts/task-card.php:394
 msgid "Delete"
 msgstr ""
 
-#: public/class-decker-public.php:253
+#: public/class-decker-public.php:309
 msgid "Server response error."
 msgstr ""
 
-#: public/class-decker-public.php:254
+#: public/class-decker-public.php:310
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/class-decker-public.php:255
+#: public/class-decker-public.php:311
 msgid "Request error."
 msgstr ""
 
-#: public/class-decker-public.php:256
+#: public/class-decker-public.php:312
 msgid "Error saving task."
 msgstr ""
 
-#: public/class-decker-public.php:257
+#: public/class-decker-public.php:313
 msgid "Show HTML source"
 msgstr ""
 
-#: public/class-decker-public.php:258
+#: public/class-decker-public.php:314
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/class-decker-public.php:259
+#: public/class-decker-public.php:315
 msgid "OK"
 msgstr ""
 
-#: public/class-decker-public.php:260
+#: public/class-decker-public.php:316
 msgid "Cancel"
-msgstr ""
-
-#: public/class-decker-public.php:297
-msgid "Loading content. Please wait."
-msgstr ""
-
-#: public/class-decker-public.php:298
-msgid "Error loading content. Please try again."
 msgstr ""
 
 #: public/layouts/footer.php:24
@@ -1315,22 +1285,22 @@ msgstr ""
 msgid "Task"
 msgstr ""
 
-#: public/layouts/topbar.php:51
+#: public/layouts/topbar.php:138
 msgid "Theme Mode"
 msgstr ""
 
-#: public/layouts/topbar.php:79
+#: public/layouts/topbar.php:166
 msgid "Welcome !"
 msgstr ""
 
-#: public/layouts/topbar.php:85
+#: public/layouts/topbar.php:172
 msgid "My Profile"
 msgstr ""
 
-#: public/layouts/topbar.php:101
+#: public/layouts/topbar.php:188
 msgid "Help"
 msgstr ""
 
-#: public/layouts/topbar.php:106
+#: public/layouts/topbar.php:193
 msgid "Logout"
 msgstr ""
