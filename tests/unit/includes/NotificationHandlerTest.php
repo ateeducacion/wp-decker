@@ -6,33 +6,40 @@
  */
 
 class DeckerNotificationHandlerTest extends Decker_Test_Base {
-	/**
-	 * Instance of Decker_Notification_Handler
-	 *
-	 * @var Decker_Notification_Handler
-	 */
-	private $notification_handler;
 
 	/**
-	 * Test user ID
+	 * Instance of Decker_Notifications.
+	 *
+	 * @var Decker_Notifications
+	 */
+	private $notifications;
+
+	/**
+	 * Test user ID.
 	 *
 	 * @var int
 	 */
 	private $test_user;
 
 	/**
-	 * Test task ID
+	 * Test task ID.
 	 *
 	 * @var int
 	 */
 	private $test_task;
 
 	/**
-	 * Track if hooks were fired
+	 * Tracks fired hooks.
 	 *
 	 * @var array
 	 */
 	private $fired_hooks = array();
+
+	/**
+	 * Captured email data.
+	 *
+	 * @var array
+	 */
 	private $captured_mail = array();
 
 	/**
@@ -41,29 +48,28 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	public function set_up(): void {
 		parent::set_up();
 
-		// Reset hooks tracking
 		$this->fired_hooks = array();
 
-		// Set up email capturing
+		// Set up email capturing.
 		add_filter( 'wp_mail', array( $this, 'capture_mail' ) );
 
-		// Crear un usuario de prueba
+		// Create a test user.
 		$this->test_user = $this->factory->user->create(
 			array(
-				'role' => 'editor',
+				'role'       => 'editor',
 				'user_email' => 'test@example.com',
 			)
 		);
 		wp_set_current_user( $this->test_user );
 
-		// Crear una tarea de prueba
-		$this->test_task = $this->factory->task->create(
+		// Create a test task.
+		$this->task_id = $this->factory->task->create(
 			array(
 				'post_title' => 'Test Task',
 			)
 		);
 
-		// Habilitar notificaciones por email en la configuración
+		// Enable email notifications.
 		update_option(
 			'decker_settings',
 			array(
@@ -71,11 +77,11 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Inicializar el manejador de notificaciones
-		$this->notification_handler = new Decker_Notification_Handler();
+		// Initialize the notifications handler.
+		$this->notifications = new Decker_Notification_Handler();
 
-		// Track hooks being fired
-		add_action( 'decker_task_assigned', array( $this, 'track_hook' ), 10, 2 );
+		// Track hooks being fired.
+		add_action( 'decker_user_assigned', array( $this, 'track_hook' ), 10, 2 );
 		add_action( 'decker_task_completed', array( $this, 'track_hook' ), 10, 2 );
 		add_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10, 3 );
 	}
@@ -84,28 +90,24 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * Tear down the test environment.
 	 */
 	public function tear_down(): void {
-		// Eliminar la tarea y el usuario de prueba
-		wp_delete_post( $this->test_task, true );
+		// Delete the test task and user.
+		wp_delete_post( $this->task_id, true );
 		wp_delete_user( $this->test_user );
 		delete_option( 'decker_settings' );
 
-		// Reset hook tracking
-		$this->fired_hooks = array();
+		$this->fired_hooks  = array();
+		$this->captured_mail = array();
 
-		// Remove hook tracking
-		remove_action( 'decker_task_assigned', array( $this, 'track_hook' ), 10 );
+		remove_action( 'decker_user_assigned', array( $this, 'track_hook' ), 10 );
 		remove_action( 'decker_task_completed', array( $this, 'track_hook' ), 10 );
 		remove_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10 );
-
-		// Reset captured mail
-		$this->captured_mail = array();
 		remove_filter( 'wp_mail', array( $this, 'capture_mail' ) );
 
 		parent::tear_down();
 	}
 
 	/**
-	 * Track which hooks were fired and with what parameters
+	 * Tracks the hook name and its arguments whenever a relevant hook is triggered.
 	 */
 	public function track_hook() {
 		$this->fired_hooks[] = array(
@@ -116,106 +118,58 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 	/**
 	 * Helper method to trigger notification actions.
+	 *
+	 * @param string $action Hook name.
+	 * @param mixed  ...$params Hook arguments.
 	 */
 	private function trigger_notifications( $action, ...$params ) {
 		do_action( $action, ...$params );
 	}
 
-	// /**
-	// * Test that hooks are not processed when notifications are disabled
-	// */
-	// public function test_notifications_disabled() {
-	// Verificar estado inicial
-	// $this->assertEmpty( $this->fired_hooks, 'fired_hooks debería estar vacío al inicio' );
-
-	// Deshabilitar notificaciones explícitamente
-	// update_option(
-	// 'decker_settings',
-	// array(
-	// 'enable_email_notifications' => false,
-	// )
-	// );
-
-	// Verificar que las notificaciones están deshabilitadas
-	// $settings = get_option( 'decker_settings' );
-	// $this->assertFalse(
-	// $settings['enable_email_notifications'],
-	// 'Las notificaciones deberían estar deshabilitadas. Estado actual: ' .
-	// var_export( $settings, true )
-	// );
-
-	// Verificar que no hay hooks registrados
-	// global $wp_filter;
-	// $registered_hooks = array(
-	// 'decker_task_assigned' => isset( $wp_filter['decker_task_assigned'] ),
-	// 'decker_task_completed' => isset( $wp_filter['decker_task_completed'] ),
-	// 'decker_task_comment_added' => isset( $wp_filter['decker_task_comment_added'] ),
-	// );
-
-	// $this->assertEmpty(
-	// array_filter( $registered_hooks ),
-	// 'No deberían haber hooks registrados. Hooks actuales: ' .
-	// var_export( $registered_hooks, true )
-	// );
-
-	// Trigger notifications
-	// do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
-	// do_action( 'decker_task_completed', $this->test_task, $this->test_user );
-	// do_action( 'decker_task_comment_added', $this->test_task, 1, $this->test_user );
-
-	// Verificar que no se procesaron hooks
-	// $this->assertEmpty(
-	// $this->fired_hooks,
-	// 'No deberían haberse procesado hooks. Hooks disparados: ' .
-	// var_export( $this->fired_hooks, true )
-	// );
-	// }
-
 	/**
-	 * Test heartbeat response when there are no notifications
+	 * Tests Heartbeat response when no notifications exist for the current user.
 	 */
 	public function test_heartbeat_no_notifications() {
 		$response = array();
-		$data = array();
-		
-		$result = $this->notification_handler->heartbeat_received($response, $data);
-		
-		$this->assertEquals($response, $result, 'Response should not be modified when there are no notifications');
+		$data     = array();
+
+		$result = $this->notifications->heartbeat_received( $response, $data );
+
+		$this->assertEquals( $response, $result, 'Response should not be modified when no notifications exist.' );
 	}
 
 	/**
-	 * Test heartbeat response with pending notifications
+	 * Tests Heartbeat response when there are pending notifications.
 	 */
 	public function test_heartbeat_with_notifications() {
-		// Crear una notificación de prueba
 		$notification = array(
-			'type' => 'task_assigned',
-			'task_id' => $this->test_task,
+			'type'       => 'task_assigned',
+			'task_id'    => $this->task_id,
 			'task_title' => 'Test Task',
-			'timestamp' => current_time('timestamp'),
-			'message' => 'Test notification message'
+			'timestamp'  => current_time( 'timestamp' ),
+			'message'    => 'Test notification message',
 		);
-		
-		update_user_meta(get_current_user_id(), 'decker_pending_notifications', array($notification));
-		
+
+		update_user_meta( $this->test_user, 'decker_pending_notifications', array( $notification ) );
+
 		$response = array();
-		$data = array();
-		
-		$result = $this->notification_handler->heartbeat_received($response, $data);
-		
-		$this->assertArrayHasKey('decker_notifications', $result, 'Response should include notifications');
-		$this->assertEquals(array($notification), $result['decker_notifications'], 'Notifications should match');
-		
-		// Verificar que las notificaciones se limpiaron
-		$pending = get_user_meta(get_current_user_id(), 'decker_pending_notifications', true);
-		$this->assertEmpty($pending, 'Pending notifications should be cleared after heartbeat');
+		$data     = array();
+
+		$result = $this->notifications->heartbeat_received( $response, $data );
+
+		$this->assertArrayHasKey( 'decker_notifications', $result, 'Response should include notifications.' );
+		$this->assertEquals( array( $notification ), $result['decker_notifications'], 'Notifications should match.' );
+
+		// Verify that the notifications were cleared.
+		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
+		$this->assertEmpty( $pending, 'Pending notifications should be cleared after Heartbeat.' );
 	}
 
 	/**
-	 * Test task assigned notification hook processing
+	 * Tests user-assigned notification hook processing.
 	 */
-	public function test_task_assigned_notification() {
-		// Set user preferences
+	public function test_user_assigned_notification() {
+		// Set user preferences.
 		update_user_meta(
 			$this->test_user,
 			'decker_notification_preferences',
@@ -224,23 +178,24 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Enable notifications
-		update_option( 'decker_settings', array( 'enable_email_notifications' => true ) );
+		// Trigger the assignment hook.
+		do_action( 'decker_user_assigned', $this->task_id, $this->test_user );
 
-		// Trigger notification
-		do_action( 'decker_task_assigned', $this->test_task, $this->test_user );
-
-		// Verify hook was processed
+		// Verify hook was processed.
 		$this->assertCount( 1, $this->fired_hooks, 'Hook should have been processed once.' );
-		$this->assertEquals( 'decker_task_assigned', $this->fired_hooks[0]['hook'] );
-		$this->assertEquals( array( $this->test_task, $this->test_user ), $this->fired_hooks[0]['args'] );
+		$this->assertEquals( 'decker_user_assigned', $this->fired_hooks[0]['hook'], 'Unexpected hook name.' );
+		$this->assertEquals(
+			array( $this->task_id, $this->test_user ),
+			$this->fired_hooks[0]['args'],
+			'Unexpected hook arguments.'
+		);
 	}
 
 	/**
-	 * Test task completed notification.
+	 * Tests task completion notification.
 	 */
 	public function test_task_completed_notification() {
-		// Establecer preferencias de notificación del usuario
+		// Set user preferences.
 		update_user_meta(
 			$this->test_user,
 			'decker_notification_preferences',
@@ -249,32 +204,37 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Asignar la tarea al usuario de prueba
-		update_post_meta( $this->test_task, 'assigned_to', $this->test_user );
+		// Assign the task to the test user (for backward compatibility in meta).
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user ),
+			)
+		);
 
-		// Trigger completion notification
-		$this->trigger_notifications( 'decker_task_completed', $this->test_task, $this->test_user );
+		// Trigger the completion hook.
+		$this->trigger_notifications( 'decker_task_completed', $this->task_id, $this->test_user );
 
-		// Verificar que se capturó un correo
-		$this->assertNotEmpty( $this->captured_mail, 'No se capturó ningún email.' );
+		// Check that at least one email was captured.
+		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 
-		// Verificar los detalles del correo
-		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'El destinatario no coincide.' );
-		$this->assertStringContainsString( 'Task Completed', $this->captured_mail['subject'], 'El asunto del email no coincide.' );
-		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'El contenido del email no contiene el título de la tarea.' );
+		// Verify email details.
+		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'Recipient does not match.' );
+		$this->assertStringContainsString( 'Task Completed', $this->captured_mail['subject'], 'Subject mismatch.' );
+		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'Task title not found in email body.' );
 
-		// Verificar que se guardó la notificación para el heartbeat
-		$pending = get_user_meta($this->test_user, 'decker_pending_notifications', true);
-		$this->assertNotEmpty($pending, 'No se guardó la notificación para el heartbeat');
-		$this->assertEquals('task_completed', $pending[0]['type'], 'El tipo de notificación no coincide');
-		$this->assertEquals($this->test_task, $pending[0]['task_id'], 'El ID de la tarea no coincide');
+		// Verify that a notification was saved for Heartbeat.
+		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
+		$this->assertNotEmpty( $pending, 'No notification was saved for Heartbeat.' );
+		$this->assertEquals( 'task_completed', $pending[0]['type'], 'Notification type mismatch.' );
+		$this->assertEquals( $this->task_id, $pending[0]['task_id'], 'Task ID mismatch.' );
 	}
 
 	/**
-	 * Test task comment notification.
+	 * Tests task comment notification.
 	 */
 	public function test_task_comment_notification() {
-		// Establecer preferencias de notificación del usuario
+		// Set user preferences.
 		update_user_meta(
 			$this->test_user,
 			'decker_notification_preferences',
@@ -283,74 +243,80 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Asignar la tarea al usuario de prueba
-		update_post_meta( $this->test_task, 'assigned_to', $this->test_user );
+		// Assign the task to the test user (for backward compatibility in meta).
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user ),
+			)
+		);
 
-		// Crear un comentario usando el factory de WordPress
+		// Create a comment using the WordPress factory.
 		$comment_id = self::factory()->comment->create(
 			array(
-				'comment_post_ID' => $this->test_task,
+				'comment_post_ID' => $this->task_id,
 				'comment_content' => 'Test comment',
-				'user_id'        => $this->test_user,
+				'user_id'         => $this->test_user,
 			)
 		);
 
-		$this->assertNotEquals( 0, $comment_id, 'Failed to create comment' );
-		$this->assertNotFalse( $comment_id, 'Failed to create comment' );
+		$this->assertNotEquals( 0, $comment_id, 'Failed to create comment.' );
+		$this->assertNotFalse( $comment_id, 'Failed to create comment.' );
 
 		$comment = get_comment( $comment_id );
-		$this->assertEquals( 'Test comment', $comment->comment_content, 'Incorrect comment content' );
+		$this->assertEquals( 'Test comment', $comment->comment_content, 'Comment content mismatch.' );
 
-		// Trigger comment notification
-		$this->trigger_notifications( 'decker_task_comment_added', $this->test_task, $comment_id, $this->test_user );
+		// Trigger comment notification.
+		$this->trigger_notifications( 'decker_task_comment_added', $this->task_id, $comment_id, $this->test_user );
 
-		// Verificar que se capturó un correo
-		$this->assertNotEmpty( $this->captured_mail, 'No se capturó ningún email.' );
+		// Check that at least one email was captured.
+		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 
-		// Verificar los detalles del correo
-		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'El destinatario no coincide.' );
-		$this->assertStringContainsString( 'New Comment', $this->captured_mail['subject'], 'El asunto del email no coincide.' );
-		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'El contenido del email no contiene el título de la tarea.' );
+		// Verify email details.
+		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'Recipient mismatch.' );
+		$this->assertStringContainsString( 'New Comment', $this->captured_mail['subject'], 'Subject mismatch.' );
+		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'Task title not found in email body.' );
 
-		// Verificar que se guardó la notificación para el heartbeat
-		$pending = get_user_meta($this->test_user, 'decker_pending_notifications', true);
-		$this->assertNotEmpty($pending, 'No se guardó la notificación para el heartbeat');
-		$this->assertEquals('task_comment_added', $pending[0]['type'], 'El tipo de notificación no coincide');
-		$this->assertEquals($this->test_task, $pending[0]['task_id'], 'El ID de la tarea no coincide');
+		// Verify that a notification was saved for Heartbeat.
+		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
+		$this->assertNotEmpty( $pending, 'No notification was saved for Heartbeat.' );
+		$this->assertEquals( 'task_comment', $pending[0]['type'], 'Notification type mismatch.' );
+		$this->assertEquals( $this->task_id, $pending[0]['task_id'], 'Task ID mismatch.' );
 	}
 
 	/**
-	 * Test that no notifications are sent when the action is realizado por el mismo usuario.
+	 * Tests that no notifications are sent when the current user is the same user performing the action.
 	 */
 	public function test_no_self_notifications() {
-		// Establecer el usuario actual como el usuario de prueba
+		// Set the current user to the test user.
 		wp_set_current_user( $this->test_user );
 
-		// Establecer preferencias de notificación del usuario
+		// Set user preferences.
 		update_user_meta(
 			$this->test_user,
 			'decker_notification_preferences',
 			array(
-				'notify_assigned' => true,
+				'notify_assigned'  => true,
 				'notify_completed' => true,
-				'notify_comments' => true,
+				'notify_comments'  => true,
 			)
 		);
 
-		// Trigger notifications que deberían ser ignoradas
-		$this->trigger_notifications( 'decker_task_assigned', $this->test_task, $this->test_user );
-		$this->trigger_notifications( 'decker_task_completed', $this->test_task, $this->test_user );
-		$this->trigger_notifications( 'decker_task_comment_added', $this->test_task, 1, $this->test_user );
+		// Trigger notifications that should be ignored for self-actions.
+		$this->trigger_notifications( 'decker_user_assigned', $this->task_id, $this->test_user );
+		$this->trigger_notifications( 'decker_task_completed', $this->task_id, $this->test_user );
+		$this->trigger_notifications( 'decker_task_comment_added', $this->task_id, 1, $this->test_user );
 
-		// Verificar que no se envió ningún correo
-		$this->assertEmpty( $this->captured_mail, 'No debería haberse enviado ningún email.' );
+		// Verify that no email was sent.
+		$this->assertEmpty( $this->captured_mail, 'No email should have been sent for self-actions.' );
 	}
 
 	/**
-	 * Capture emails sent via wp_mail
+	 * Captures emails sent by wp_mail().
 	 *
-	 * @param array $args Email arguments
-	 * @return array Modified email arguments
+	 * @param array $args Email arguments.
+	 *
+	 * @return array The same email arguments, unchanged.
 	 */
 	public function capture_mail( $args ) {
 		$this->captured_mail = $args;

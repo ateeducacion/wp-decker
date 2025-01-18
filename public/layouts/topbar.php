@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile
+
 /**
  * File topbar
  *
@@ -25,6 +27,7 @@ defined( 'ABSPATH' ) || exit;
 					<span class="logo-sm">
 						<img src="<?php echo esc_url( plugins_url( 'assets/images/logo-sm.png', __DIR__ ) ); ?>" alt="small logo">
 					</span>
+
 				</a>
 
 			</div>
@@ -46,6 +49,90 @@ defined( 'ABSPATH' ) || exit;
 
 		<ul class="topbar-menu d-flex align-items-center gap-3">
 
+			<li class="dropdown notification-list">
+                <a class="nav-link dropdown-toggle arrow-none" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                    <i class="ri-notification-3-line fs-22"></i>
+                    <span class="noti-icon-badge"></span>
+                </a>
+
+				<div class="dropdown-menu dropdown-menu-end dropdown-menu-animated dropdown-lg py-0">
+
+					<div class="p-2 border-top-0 border-start-0 border-end-0 border-dashed border">
+					    <div class="row align-items-center">
+					        <div class="col">
+					            <h6 class="m-0 fs-16 fw-semibold"> Notification</h6>
+					        </div>
+					        <div class="col-auto">
+					            <a href="javascript: void(0);" class="text-dark text-decoration-underline">
+					                <small>Clear All</small>
+					            </a>
+					        </div>
+					    </div>
+					</div>
+
+		            <div id="notification-list" style="max-height: 300px; overflow-y: auto;">
+		            	<?php /*
+		                <!-- Notificación 1 -->
+		                <!-- <a href="#" class="dropdown-item notify-item">
+		                    <div class="d-flex align-items-center">
+		                        <div class="notify-icon bg-primary">
+		                            <i class="ri-message-3-line fs-18"></i>
+		                        </div>
+		                        <div class="ms-2">
+		                            <h5 class="fw-semibold">Datacorp</h5>
+		                            <small class="text-muted">1 min ago</small>
+		                        </div>
+		                    </div>
+		                </a> -->
+		                <!-- Agrega más notificaciones aquí para probar -->
+
+
+						<a href="http://localhost:8888/?decker_page=task&id=4" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="4" class="dropdown-item notify-item">
+					        <div class="d-flex align-items-center">
+					            <div class="notify-icon bg-primary">
+					                <i class="ri-message-3-line fs-18"></i>
+					            </div>
+					            <div class="ms-2">
+					                <h5 class="fw-semibold">Tarea Creada: </h5>
+					                <h7>Implementar la interfaz de usuario</h7><br>
+					                <small class="text-muted">Hace 1 minuto</small>
+					            </div>
+					        </div>
+					    </a>
+
+					    <a href="http://localhost:8888/?decker_page=task&id=5" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="5" class="dropdown-item notify-item">
+					        <div class="d-flex align-items-center">
+					            <div class="notify-icon bg-warning">
+					                <i class="ri-user-add-line fs-18"></i>
+					            </div>
+					            <div class="ms-2">
+					                <h5 class="fw-semibold">Usuario Asignado: Diseñar la base de datos</h5>
+					                <small class="text-muted">Hace 5 minutos</small>
+					            </div>
+					        </div>
+					    </a>
+
+					    <a href="http://localhost:8888/?decker_page=task&id=6" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="6" class="dropdown-item notify-item">
+					        <div class="d-flex align-items-center">
+					            <div class="notify-icon bg-success">
+					                <i class="ri-checkbox-circle-line fs-18"></i>
+					            </div>
+					            <div class="ms-2">
+					                <h5 class="fw-semibold">Tarea Completada: Probar la API</h5>
+					                <small class="text-muted">Hace 10 minutos</small>
+					            </div>
+					        </div>
+					    </a>
+						*/
+					    ?>
+
+
+
+
+		            </div>
+
+		        </div>
+            </li>
 
 			<li class="d-none d-sm-inline-block">
 				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attr_e( 'Theme Mode', 'decker' ); ?>">
