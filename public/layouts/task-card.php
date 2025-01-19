@@ -204,13 +204,11 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		</div>
 
 		
-		<!-- Author -->
+		<!-- Responsable -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<!-- Author always disabled -->
-				<select class="form-select" id="task-author" required 
-					<?php disabled( $disabled || ! current_user_can( 'edit_posts' ) ); // Disable the select if the current user cannot edit posts. ?>>
-					<option value="" disabled selected><?php esc_html_e( 'Select Author', 'decker' ); ?></option>
+				<select class="form-select" id="task-responsable" required <?php disabled( $disabled ); ?>>
+					<option value="" disabled selected><?php esc_html_e( 'Select Responsable', 'decker' ); ?></option>
 					<?php
 					// Get ignored users from settings.
 					$options       = get_option( 'decker_settings', array() );
@@ -223,16 +221,17 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 						)
 					);
 
+					$responsable_id = $task_id ? $task->responsable : get_current_user_id();
+
 					foreach ( $users as $user ) {
 						echo '<option value="' . esc_attr( $user->ID ) . '" '
-							. selected( $user->ID, $task->author, false ) . ' '
-							. disabled( ! user_can( $user->ID, 'edit_posts' ), true, false ) . // Disable the option if the user cannot edit posts.
-							'>' . esc_html( $user->display_name ) . '</option>';
+							. selected( $user->ID, $responsable_id, false ) . '>' 
+							. esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
-				<label for="task-author" class="form-label"><?php esc_html_e( 'Author', 'decker' ); ?></label>
-				<div class="invalid-feedback"><?php esc_html_e( 'Please select an author.', 'decker' ); ?><</div>				
+				<label for="task-responsable" class="form-label"><?php esc_html_e( 'Responsable', 'decker' ); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e( 'Please select a responsable.', 'decker' ); ?></div>				
 			</div>
 		</div>
 

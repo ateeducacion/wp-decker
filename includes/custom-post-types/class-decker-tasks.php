@@ -1798,6 +1798,7 @@ class Decker_Tasks {
 		}
 
 		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
+		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
 		// Manejar 'assignees'.
 		$assigned_users = array();
@@ -1964,6 +1965,7 @@ class Decker_Tasks {
 			'duedate'           => $duedate_str,
 			'max_priority'      => $max_priority ? '1' : '0',
 			'assigned_users'    => $assigned_users,
+			'responsable'       => $author, // Default to author if not set
 		);
 
 		// Preparar los datos del post.

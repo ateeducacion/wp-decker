@@ -81,6 +81,13 @@ class Task {
 	public int $author;
 
 	/**
+	 * The ID of the user responsible for the task.
+	 *
+	 * @var int
+	 */
+	public int $responsable;
+
+	/**
 	 * The order of the task within its stack.
 	 *
 	 * @var int
@@ -147,6 +154,7 @@ class Task {
 			$this->status      = (string) $post->post_status;
 			$this->author      = $post->post_author;
 			$this->order       = (int) $post->menu_order;
+			$this->responsable = (int) get_post_meta($post->ID, 'responsable', true) ?: $post->post_author;
 
 			// Load all metadata once.
 			$meta = get_post_meta( $this->ID );
