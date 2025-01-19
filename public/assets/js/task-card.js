@@ -277,7 +277,7 @@
         const form = context.querySelector('#task-form');
 
         // Añadir event listeners a todos los inputs del formulario
-        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author', 'task-today', 'task-max-priority'];
+        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-today', 'task-max-priority'];
 
         inputIds.forEach(function(id) {
             const element = context.querySelector(`#${id}`);
