@@ -16,7 +16,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: decker.php
 #: admin/class-decker-admin-export.php:60
-#: admin/class-decker-admin-settings.php:224
+#: admin/class-decker-admin-settings.php:208
 msgid "Decker"
 msgstr ""
 
@@ -104,91 +104,79 @@ msgstr ""
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:64
-msgid "Enable email notifications for all plugin events."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:66
-msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:100
+#: admin/class-decker-admin-settings.php:84
 msgid "Select the minimum user profile that can use Decker."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:113
+#: admin/class-decker-admin-settings.php:97
 msgid "Enter the alert message to display as a banner. Supports HTML. Leave empty to hide."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:138
+#: admin/class-decker-admin-settings.php:122
 msgid "Select the color for the alert message."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:223
+#: admin/class-decker-admin-settings.php:207
 #: includes/custom-post-types/class-decker-user-extended.php:60
-#: public/layouts/topbar.php:181
+#: public/layouts/topbar.php:94
 msgid "Decker Settings"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:241
+#: admin/class-decker-admin-settings.php:225
 msgid "Decker Configuration"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:247
+#: admin/class-decker-admin-settings.php:231
 msgid "Alert Color"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:248
+#: admin/class-decker-admin-settings.php:232
 msgid "Alert Message"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:249
+#: admin/class-decker-admin-settings.php:233
 msgid "Minimum User Profile"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:250
+#: admin/class-decker-admin-settings.php:234
 msgid "Shared Key"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:251
-msgid "Allow Email Notifications"
-msgstr ""
-
-#: admin/class-decker-admin-settings.php:252
-#: admin/class-decker-admin-settings.php:304
+#: admin/class-decker-admin-settings.php:235
+#: admin/class-decker-admin-settings.php:287
 msgid "Clear All Data"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:253
+#: admin/class-decker-admin-settings.php:236
 msgid "Ignored Users"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:274
+#: admin/class-decker-admin-settings.php:257
 msgid "Configure the Decker plugin settings."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:293
+#: admin/class-decker-admin-settings.php:276
 msgid "Please enter comma-separated user IDs (numbers only)"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:294
+#: admin/class-decker-admin-settings.php:277
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:304
+#: admin/class-decker-admin-settings.php:287
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:305
+#: admin/class-decker-admin-settings.php:288
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:332
+#: admin/class-decker-admin-settings.php:315
 msgid "All Decker records have been deleted."
 msgstr ""
 
 #. Translators: %s is a list of invalid user IDs that have been removed.
-#: admin/class-decker-admin-settings.php:340
+#: admin/class-decker-admin-settings.php:323
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr ""
 
@@ -212,10 +200,6 @@ msgstr ""
 #: includes/class-decker-email-to-post.php:50
 #: includes/class-decker-email-to-post.php:55
 msgid "Access denied"
-msgstr ""
-
-#: includes/class-decker-mailer.php:129
-msgid "This email was automatically sent by Decker"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-actions.php:37
@@ -958,86 +942,86 @@ msgstr ""
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:266
-msgid "Loading content. Please wait."
-msgstr ""
-
-#: public/class-decker-public.php:267
-msgid "Error loading content. Please try again."
-msgstr ""
-
-#: public/class-decker-public.php:299
+#: public/class-decker-public.php:243
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/class-decker-public.php:300
+#: public/class-decker-public.php:244
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/class-decker-public.php:301
+#: public/class-decker-public.php:245
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/class-decker-public.php:302
+#: public/class-decker-public.php:246
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:303
+#: public/class-decker-public.php:247
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/class-decker-public.php:304
+#: public/class-decker-public.php:248
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/class-decker-public.php:305
+#: public/class-decker-public.php:249
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/class-decker-public.php:306
+#: public/class-decker-public.php:250
 msgid "Failed to delete attachment."
 msgstr ""
 
-#: public/class-decker-public.php:307
+#: public/class-decker-public.php:251
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/class-decker-public.php:308
+#: public/class-decker-public.php:252
 #: public/layouts/task-card.php:136
 #: public/layouts/task-card.php:394
 msgid "Delete"
 msgstr ""
 
-#: public/class-decker-public.php:309
+#: public/class-decker-public.php:253
 msgid "Server response error."
 msgstr ""
 
-#: public/class-decker-public.php:310
+#: public/class-decker-public.php:254
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/class-decker-public.php:311
+#: public/class-decker-public.php:255
 msgid "Request error."
 msgstr ""
 
-#: public/class-decker-public.php:312
+#: public/class-decker-public.php:256
 msgid "Error saving task."
 msgstr ""
 
-#: public/class-decker-public.php:313
+#: public/class-decker-public.php:257
 msgid "Show HTML source"
 msgstr ""
 
-#: public/class-decker-public.php:314
+#: public/class-decker-public.php:258
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/class-decker-public.php:315
+#: public/class-decker-public.php:259
 msgid "OK"
 msgstr ""
 
-#: public/class-decker-public.php:316
+#: public/class-decker-public.php:260
 msgid "Cancel"
+msgstr ""
+
+#: public/class-decker-public.php:297
+msgid "Loading content. Please wait."
+msgstr ""
+
+#: public/class-decker-public.php:298
+msgid "Error loading content. Please try again."
 msgstr ""
 
 #: public/layouts/footer.php:24
@@ -1285,22 +1269,18 @@ msgstr ""
 msgid "Task"
 msgstr ""
 
-#: public/layouts/topbar.php:138
+#: public/layouts/topbar.php:51
 msgid "Theme Mode"
 msgstr ""
 
-#: public/layouts/topbar.php:166
+#: public/layouts/topbar.php:79
 msgid "Welcome !"
 msgstr ""
 
-#: public/layouts/topbar.php:172
+#: public/layouts/topbar.php:85
 msgid "My Profile"
 msgstr ""
 
-#: public/layouts/topbar.php:188
-msgid "Help"
-msgstr ""
-
-#: public/layouts/topbar.php:193
+#: public/layouts/topbar.php:101
 msgid "Logout"
 msgstr ""
