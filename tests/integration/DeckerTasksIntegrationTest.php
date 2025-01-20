@@ -260,6 +260,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 			$max_priority,
 			$due_date,
 			get_current_user_id(),
+			get_current_user_id(),
 			$user_ids,
 			$label_ids
 		);
@@ -296,6 +297,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 			$board_id,
 			$max_priority,
 			$due_date,
+			get_current_user_id(),
 			get_current_user_id(),
 			$user_ids,
 			$label_ids

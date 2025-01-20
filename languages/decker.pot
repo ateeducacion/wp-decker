@@ -344,7 +344,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:1077
 #: public/app-term-manager.php:119
 #: public/layouts/left-sidebar.php:294
-#: public/layouts/task-card.php:293
+#: public/layouts/task-card.php:292
 msgid "Labels"
 msgstr ""
 
@@ -353,7 +353,7 @@ msgstr ""
 #: public/app-priority.php:171
 #: public/app-priority.php:403
 #: public/app-tasks.php:204
-#: public/layouts/task-card.php:247
+#: public/layouts/task-card.php:246
 msgid "Stack"
 msgstr ""
 
@@ -427,7 +427,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1050
 #: public/app-priority.php:173
-#: public/app-tasks.php:207
+#: public/app-tasks.php:208
 msgid "Assigned Users"
 msgstr ""
 
@@ -436,7 +436,7 @@ msgid "Task User and Date"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1068
-#: public/layouts/task-card.php:319
+#: public/layouts/task-card.php:318
 msgid "Attachments"
 msgstr ""
 
@@ -449,7 +449,7 @@ msgid "Board"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1109
-#: public/layouts/task-card.php:255
+#: public/layouts/task-card.php:254
 msgid "Due Date"
 msgstr ""
 
@@ -464,14 +464,14 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:1120
 #: public/app-kanban-my.php:100
 #: public/app-kanban.php:141
-#: public/layouts/task-card.php:244
+#: public/layouts/task-card.php:243
 msgid "In Progress"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1121
 #: public/app-kanban-my.php:115
 #: public/app-kanban.php:156
-#: public/layouts/task-card.php:245
+#: public/layouts/task-card.php:244
 msgid "Done"
 msgstr ""
 
@@ -540,27 +540,27 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1909
+#: includes/custom-post-types/class-decker-tasks.php:1913
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1912
+#: includes/custom-post-types/class-decker-tasks.php:1916
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1915
+#: includes/custom-post-types/class-decker-tasks.php:1919
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1921
+#: includes/custom-post-types/class-decker-tasks.php:1925
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:2039
+#: includes/custom-post-types/class-decker-tasks.php:2049
 msgid "Security check failed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:2048
+#: includes/custom-post-types/class-decker-tasks.php:2058
 msgid "Invalid comment data."
 msgstr ""
 
@@ -632,56 +632,56 @@ msgstr ""
 msgid "Label deleted successfully"
 msgstr ""
 
-#: includes/models/class-task.php:141
+#: includes/models/class-task.php:148
 msgid "Invalid post type."
 msgstr ""
 
-#: includes/models/class-task.php:405
+#: includes/models/class-task.php:416
 msgid "🔥"
 msgstr ""
 
-#: includes/models/class-task.php:405
+#: includes/models/class-task.php:416
 msgid "Normal"
 msgstr ""
 
-#: includes/models/class-task.php:407
+#: includes/models/class-task.php:418
 msgid "Undefined date"
 msgstr ""
 
-#: includes/models/class-task.php:425
+#: includes/models/class-task.php:436
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:451
-#: public/layouts/task-card.php:313
+#: includes/models/class-task.php:462
+#: public/layouts/task-card.php:312
 msgid "Comments"
 msgstr ""
 
-#: includes/models/class-task.php:504
+#: includes/models/class-task.php:515
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:521
+#: includes/models/class-task.php:532
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:528
+#: includes/models/class-task.php:539
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:537
+#: includes/models/class-task.php:548
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:544
+#: includes/models/class-task.php:555
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:559
+#: includes/models/class-task.php:570
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:565
+#: includes/models/class-task.php:576
 msgid "Unmark for today"
 msgstr ""
 
@@ -864,7 +864,7 @@ msgid "P."
 msgstr ""
 
 #: public/app-tasks.php:205
-#: public/layouts/task-card.php:309
+#: public/layouts/task-card.php:308
 msgid "Description"
 msgstr ""
 
@@ -872,7 +872,12 @@ msgstr ""
 msgid "Tags"
 msgstr ""
 
-#: public/app-tasks.php:208
+#: public/app-tasks.php:207
+#: public/layouts/task-card.php:233
+msgid "Responsable"
+msgstr ""
+
+#: public/app-tasks.php:209
 msgid "Remaining Time"
 msgstr ""
 
@@ -896,7 +901,7 @@ msgid "Leave empty for automatic generation from name"
 msgstr ""
 
 #: public/app-term-manager.php:277
-#: public/layouts/task-card.php:467
+#: public/layouts/task-card.php:506
 msgid "Save"
 msgstr ""
 
@@ -980,7 +985,7 @@ msgstr ""
 
 #: public/class-decker-public.php:252
 #: public/layouts/task-card.php:136
-#: public/layouts/task-card.php:394
+#: public/layouts/task-card.php:396
 msgid "Delete"
 msgstr ""
 
@@ -1189,79 +1194,87 @@ msgstr ""
 msgid "Please select a board."
 msgstr ""
 
-#: public/layouts/task-card.php:213
-msgid "Select Author"
+#: public/layouts/task-card.php:211
+msgid "Select Responsable"
 msgstr ""
 
 #: public/layouts/task-card.php:234
-msgid "Author"
+msgid "Please select a responsable."
 msgstr ""
 
-#: public/layouts/task-card.php:235
-msgid "Please select an author."
-msgstr ""
-
-#: public/layouts/task-card.php:243
+#: public/layouts/task-card.php:242
 msgid "To Do"
 msgstr ""
 
-#: public/layouts/task-card.php:254
+#: public/layouts/task-card.php:253
 msgid "Select date"
 msgstr ""
 
-#: public/layouts/task-card.php:256
+#: public/layouts/task-card.php:255
 msgid "Please select a due date."
 msgstr ""
 
-#: public/layouts/task-card.php:266
+#: public/layouts/task-card.php:265
 msgid "Assign to"
 msgstr ""
 
-#: public/layouts/task-card.php:331
+#: public/layouts/task-card.php:330
 msgid "History"
 msgstr ""
 
-#: public/layouts/task-card.php:337
+#: public/layouts/task-card.php:336
 msgid "Gantt"
 msgstr ""
 
-#: public/layouts/task-card.php:357
+#: public/layouts/task-card.php:339
+msgid "Information"
+msgstr ""
+
+#: public/layouts/task-card.php:359
 msgid "No comments yet."
 msgstr ""
 
-#: public/layouts/task-card.php:365
+#: public/layouts/task-card.php:367
 msgid "Replying to"
 msgstr ""
 
-#: public/layouts/task-card.php:368
+#: public/layouts/task-card.php:370
 msgid "Write your comment..."
 msgstr ""
 
-#: public/layouts/task-card.php:369
+#: public/layouts/task-card.php:371
 msgid "Please enter a comment."
 msgstr ""
 
-#: public/layouts/task-card.php:371
+#: public/layouts/task-card.php:373
 msgid "Comment"
 msgstr ""
 
-#: public/layouts/task-card.php:402
+#: public/layouts/task-card.php:404
 msgid "Upload"
 msgstr ""
 
-#: public/layouts/task-card.php:412
+#: public/layouts/task-card.php:414
 msgid "Nickname"
 msgstr ""
 
-#: public/layouts/task-card.php:413
+#: public/layouts/task-card.php:415
 msgid "Date"
 msgstr ""
 
-#: public/layouts/task-card.php:454
+#: public/layouts/task-card.php:456
 msgid "Under construction..."
 msgstr ""
 
 #: public/layouts/task-card.php:470
+msgid "Created"
+msgstr ""
+
+#: public/layouts/task-card.php:490
+msgid "Author"
+msgstr ""
+
+#: public/layouts/task-card.php:509
 msgid "Toggle Dropdown"
 msgstr ""
 

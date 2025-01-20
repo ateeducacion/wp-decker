@@ -1838,6 +1838,7 @@ class Decker_Tasks {
 			$max_priority,
 			$duedate,
 			$author,
+			$responsable,
 			$assigned_users,
 			$labels
 		);
@@ -1879,8 +1880,9 @@ class Decker_Tasks {
 	 * @param string        $stack              The stack name (e.g., 'to-do', 'in-progress').
 	 * @param int           $board              The ID of the board associated with the task.
 	 * @param bool          $max_priority       Whether the task has maximum priority.
-	 * @param DateTime|null $duedate        The due date of the task, or null if not set.
+	 * @param DateTime|null $duedate            The due date of the task, or null if not set.
 	 * @param int           $author             The ID of the author of the task.
+	 * @param int           $responsable        The ID of the responsable of the task.
 	 * @param array         $assigned_users     An array of user IDs assigned to the task.
 	 * @param array         $labels             An array of label IDs associated with the task.
 	 * @param DateTime      $creation_date      The creation date of the task. Default is null.
@@ -1898,6 +1900,7 @@ class Decker_Tasks {
 		bool $max_priority,
 		?DateTime $duedate,
 		int $author,
+		int $responsable,
 		array $assigned_users,
 		array $labels,
 		?DateTime $creation_date = null,
@@ -1965,7 +1968,7 @@ class Decker_Tasks {
 			'duedate'           => $duedate_str,
 			'max_priority'      => $max_priority ? '1' : '0',
 			'assigned_users'    => $assigned_users,
-			'responsable'       => $author, // Default to author if not set
+			'responsable'       => $responsable,
 		);
 
 		// Preparar los datos del post.
@@ -1982,6 +1985,11 @@ class Decker_Tasks {
 		// Solo establece `post_date` si se proporciona `creation_date`.
 		if ( $creation_date ) {
 			$post_data['post_date'] = $creation_date->format( 'Y-m-d H:i:s' );
+		}
+
+		// Solo establece `responsable` si se proporciona.
+		if ( $responsable > 0 ) {
+			$post_data['responsable'] = $responsable;
 		}
 
 		// Determinar si es una actualización o creación.

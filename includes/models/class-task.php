@@ -85,7 +85,7 @@ class Task {
 	 *
 	 * @var int
 	 */
-	public int $responsable;
+	public WP_User $responsable;
 
 	/**
 	 * The order of the task within its stack.
@@ -154,10 +154,13 @@ class Task {
 			$this->status      = (string) $post->post_status;
 			$this->author      = $post->post_author;
 			$this->order       = (int) $post->menu_order;
-			$this->responsable = (int) get_post_meta($post->ID, 'responsable', true) ?: $post->post_author;
 
 			// Load all metadata once.
 			$meta = get_post_meta( $this->ID );
+
+			$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
+
+			$this->responsable  = get_userdata( $responsable_id );
 
 			// Use the meta array directly.
 			$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;

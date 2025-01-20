@@ -248,7 +248,7 @@ function toggleMarkForToday(taskId, shouldMark, element) {
 			const card = element.closest('.task');
 			const markElement = card.querySelector('.mark-for-today');
 			const unmarkElement = card.querySelector('.unmark-for-today');
-			const closestAvatar = card.querySelector(`.avatar-group-item[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
+			const closestAvatar = card.querySelector(`.avatar-group-item:not(.avatar-group-item-responsable)[aria-label="<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>"]`);
 			
 			if (shouldMark) {
 		markElement.classList.add('hidden');

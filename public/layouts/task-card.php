@@ -221,11 +221,11 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 						)
 					);
 
-					$responsable_id = $task_id ? $task->responsable : get_current_user_id();
+					$responsable_id = $task_id ? $task->responsable->ID : get_current_user_id();
 
 					foreach ( $users as $user ) {
 						echo '<option value="' . esc_attr( $user->ID ) . '" '
-							. selected( $user->ID, $responsable_id, false ) . '>' 
+							. selected( $user->ID, $responsable_id, false ) . '>'
 							. esc_html( $user->display_name ) . '</option>';
 					}
 					?>
@@ -480,8 +480,8 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 							$author_id = get_post_field( 'post_author', $task_id );
 							$users = get_users( array( 'orderby' => 'display_name' ) );
 							foreach ( $users as $user ) {
-								echo '<option value="' . esc_attr( $user->ID ) . '" ' . 
-									selected( $user->ID, $author_id, false ) . '>' . 
+								echo '<option value="' . esc_attr( $user->ID ) . '" ' .
+									selected( $user->ID, $author_id, false ) . '>' .
 									esc_html( $user->display_name ) . '</option>';
 							}
 							?>
