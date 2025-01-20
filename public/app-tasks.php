@@ -204,6 +204,7 @@ table#tablaTareas td:nth-child(4) {
 														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
+														<th class="c-responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
 														<th class="c-users"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
 														<th class="c-time"><?php esc_html_e( 'Remaining Time', 'decker' ); ?></th>
 														<th class="c-actions text-end"></th>
@@ -325,9 +326,9 @@ table#tablaTareas td:nth-child(4) {
 						config: {
 							depthLimit: 2,
 							searchBuilder: {
-								columns: [1, 2, 3, 4, 5],
+								columns: [1, 2, 3, 4, 5, 6],
 							},
-							columns: [1, 2, 3, 4, 5],
+							columns: [1, 2, 3, 4, 5, 6],
 						},
 					},
 					{
