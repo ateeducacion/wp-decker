@@ -188,6 +188,9 @@ if ( 'board' === $selected_type ) {
 														<th data-sort-default><?php esc_html_e( 'Name', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Slug', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Color', 'decker' ); ?></th>
+														<?php if ( 'board' === $selected_type ) : ?>
+														<th><?php esc_html_e( 'Description', 'decker' ); ?></th>
+														<?php endif; ?>
 														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
@@ -204,6 +207,9 @@ if ( 'board' === $selected_type ) {
 														echo '</td>';
 														echo '<td>' . esc_html( $item->slug ) . '</td>';
 														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
+														if ( 'board' === $selected_type ) {
+															echo '<td class="term-description" data-description="' . esc_attr( $item->description ) . '">' . wp_kses_post( $item->description ) . '</td>';
+														}
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';
@@ -272,6 +278,13 @@ if ( 'board' === $selected_type ) {
 							<label for="term-color" class="form-label"><?php esc_html_e( 'Color', 'decker' ); ?></label>
 							<input type="color" class="form-control" id="term-color" name="term_color">
 						</div>
+						<?php if ( 'board' === $selected_type ) : ?>
+						<div class="mb-3">
+							<label for="term-description" class="form-label"><?php esc_html_e( 'Description', 'decker' ); ?></label>
+							<textarea class="form-control" id="term-description" name="term_description" rows="3"></textarea>
+							<div class="form-text"><?php esc_html_e( 'Add a description for this board', 'decker' ); ?></div>
+						</div>
+						<?php endif; ?>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
 							<button type="submit" class="btn btn-primary"><i class="ri-save-line me-1"></i><?php esc_html_e( 'Save', 'decker' ); ?></button>
@@ -323,12 +336,14 @@ jQuery(document).ready(function($) {
 		const name = nameCell.find('.badge').length ? nameCell.find('.badge').text() : nameCell.text();
 		const slug = row.find('td:nth-child(2)').text();
 		const hexColor = row.find('td:nth-child(3)').text().trim();
+		const description = row.find('td.term-description').data('description') || '';
 		const id = $(this).data('id');
 		$('#termModalLabel').text('<?php esc_html_e( 'Edit Term', 'decker' ); ?>');
 		$('#term-id').val(id);
 		$('#term-name').val(name);
 		$('#term-slug').val(slug);
 		$('#term-color').val(hexColor);
+		$('#term-description').val(description);
 		termModal.show();
 	});
 
