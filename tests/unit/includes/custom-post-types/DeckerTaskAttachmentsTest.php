@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
+class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	private int $editor;
 	private int $subscriber;
 	private int $task_id;
@@ -29,35 +29,42 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
-		// Create a board for the task
+		// Create a board using the factory
 		wp_set_current_user( $this->editor );
-		$board = wp_insert_term( 'DeckerTaskAttachmentsTest Board', 'decker_board' );
-
-		if ( is_wp_error( $board ) ) {
-			error_log( 'Error inserting term: ' . $board->get_error_message() );
-			$this->fail( 'wp_insert_term failed: ' . $board->get_error_message() );
-		}
-
-		$this->board_id = $board['term_id'];
-
-		// Create a test task
-		$this->task_id = wp_insert_post(
+		$board_result = self::factory()->board->create(
 			array(
-				'post_type' => 'decker_task',
-				'post_title' => 'Test attachment Task',
-				'post_status' => 'publish',
-				'post_author' => $this->editor,
-				'tax_input' => array(
-					'decker_board' => array( $this->board_id ),
-				),
-				'meta_input' => array(
-					'stack' => 'to-do',
-				),
+				'name' => 'DeckerTaskAttachmentsTest Board',
+				'color' => '#ff5733',
 			)
 		);
 
-		// Create a test file
+		// Verify board creation was successful
+		if ( is_wp_error( $board_result ) ) {
+			$this->fail( 'Failed to create board: ' . $board_result->get_error_message() );
+		}
+		$this->board_id = $board_result;
+
+		// Create a test task using the factory
+		$task_result = self::factory()->task->create(
+			array(
+				'post_title' => 'Test attachment Task',
+				'post_author' => $this->editor,
+				'board' => $this->board_id,
+				'stack' => 'to-do',
+			)
+		);
+
+		// Verify task creation was successful
+		if ( is_wp_error( $task_result ) ) {
+			$this->fail( 'Failed to create task: ' . $task_result->get_error_message() );
+		}
+		$this->task_id = $task_result;
+
+		// Create a test file using WordPress's upload functionality
 		$this->test_file = wp_upload_bits( 'test.txt', null, 'test content' );
+		if ( $this->test_file['error'] ) {
+			$this->fail( 'Failed to create test file: ' . $this->test_file['error'] );
+		}
 	}
 
 	/**
@@ -160,33 +167,24 @@ class DeckerTaskAttachmentsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Helper function to create an attachment.
+	 * Helper function to create an attachment using WordPress factory.
 	 */
 	private function create_attachment( $file, $parent_post_id ) {
-		$filetype = wp_check_filetype( basename( $file ), null );
-
-		if ( current_user_can( 'upload_files' ) ) {
-
-			$attachment = array(
-				'post_mime_type' => $filetype['type'],
-				'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
-				'post_content' => '',
-				'post_status' => 'inherit',
-				'post_parent' => $parent_post_id,
-				'post_author' => get_current_user_id(),
-			);
-
-			$attachment_id = wp_insert_attachment( $attachment, $file, $parent_post_id );
-
-			// Generar metadatos
-			require_once ABSPATH . 'wp-admin/includes/image.php';
-			wp_generate_attachment_metadata( $attachment_id, $file );
-
-			return $attachment_id;
-
+		if ( ! current_user_can( 'upload_files' ) ) {
+			return 0;
 		}
 
-		return 0;
+		$filetype = wp_check_filetype( basename( $file ), null );
+
+		return self::factory()->attachment->create(
+			array(
+				'file' => $file,
+				'post_mime_type' => $filetype['type'],
+				'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
+				'post_parent' => $parent_post_id,
+				'post_author' => get_current_user_id(),
+			)
+		);
 	}
 
 	/**

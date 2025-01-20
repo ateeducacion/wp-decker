@@ -8,7 +8,7 @@
 /**
  * Main plugin test case.
  */
-class DeckerTest extends WP_UnitTestCase {
+class DeckerTest extends Decker_Test_Base {
 	protected $decker;
 	protected $admin_user_id;
 

@@ -5,9 +5,8 @@
  * @package Decker
  */
 
-class DeckerBoardManagerTest extends WP_UnitTestCase {
+class DeckerBoardManagerTest extends Decker_Test_Base {
 	private $test_board_id;
-	private $test_board_data;
 	private $editor;
 
 	public function setUp(): void {
@@ -25,22 +24,18 @@ class DeckerBoardManagerTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $this->editor );
 
-		// Create a test board
-		$this->test_board_data = array(
-			'name' => 'Test Board',
-			'slug' => 'test-board',
-			'color' => '#ff0000',
+		$result = $this->factory->board->create(
+			array(
+				'name' => 'Test Board',
+				'slug' => 'test-board',
+				'color' => '#ff0000',
+			)
 		);
-
-		$result = wp_insert_term( 'Test Board', 'decker_board', array( 'slug' => 'test-board' ) );
-		// $this->test_board_id = $result['term_id'];
-		// update_term_meta($this->test_board_id, 'term-color', '#ff0000');
 
 		if ( is_wp_error( $result ) ) {
 			var_dump( $result->get_error_message() );
 		} else {
-			$this->test_board_id = $result['term_id'];
-			update_term_meta( $this->test_board_id, 'term-color', '#ff0000' );
+			$this->test_board_id = $result;
 		}
 	}
 

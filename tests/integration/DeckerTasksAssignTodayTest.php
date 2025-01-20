@@ -4,7 +4,7 @@
  *
  * @package Decker
  */
-class DeckerTasksAssignTodayTest extends WP_UnitTestCase {
+class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 
 	private $task_id;
 	private $user_id;

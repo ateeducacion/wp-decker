@@ -155,6 +155,7 @@ class Decker_Demo_Data {
 					$max_priority,
 					$due_date,
 					1,
+					1,
 					$assigned_users,
 					$assigned_labels,
 					$creation_date,

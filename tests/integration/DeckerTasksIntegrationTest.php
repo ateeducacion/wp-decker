@@ -8,7 +8,7 @@
 /**
  * @group decker
  */
-class DeckerTasksIntegrationTest extends WP_UnitTestCase {
+class DeckerTasksIntegrationTest extends Decker_Test_Base {
 
 	private $editor;
 
@@ -260,6 +260,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 			$max_priority,
 			$due_date,
 			get_current_user_id(),
+			get_current_user_id(),
 			$user_ids,
 			$label_ids
 		);
@@ -296,6 +297,7 @@ class DeckerTasksIntegrationTest extends WP_UnitTestCase {
 			$board_id,
 			$max_priority,
 			$due_date,
+			get_current_user_id(),
 			get_current_user_id(),
 			$user_ids,
 			$label_ids

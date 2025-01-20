@@ -679,6 +679,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			$max_priority,
 			$due_date,
 			intval( $owner ),
+			intval( $owner ),
 			$assigned_users,
 			$label_ids,
 			$creation_date,

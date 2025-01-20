@@ -6,7 +6,7 @@
  * @package Decker
  */
 
-class DeckerPublicTest extends WP_UnitTestCase {
+class DeckerPublicTest extends Decker_Test_Base {
 
 	/**
 	 * Instancia de Decker_Public.

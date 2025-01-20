@@ -81,6 +81,13 @@ class Task {
 	public int $author;
 
 	/**
+	 * The ID of the user responsible for the task.
+	 *
+	 * @var int
+	 */
+	public WP_User $responsable;
+
+	/**
 	 * The order of the task within its stack.
 	 *
 	 * @var int
@@ -150,6 +157,10 @@ class Task {
 
 			// Load all metadata once.
 			$meta = get_post_meta( $this->ID );
+
+			$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
+
+			$this->responsable  = get_userdata( $responsable_id );
 
 			// Use the meta array directly.
 			$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;
@@ -347,71 +358,6 @@ class Task {
 		}
 
 		return $history;
-	}
-
-	/**
-	 * Assigns a user to the task.
-	 *
-	 * @param int $user_id The user ID.
-	 * @throws Exception If the user ID is invalid or the update fails.
-	 */
-	public function assign_user( int $user_id ): void {
-		// Validate the user ID.
-		if ( ! get_userdata( $user_id ) ) {
-			throw new Exception( 'Invalid user ID.' );
-		}
-
-		// Prevent duplicate assignment.
-		if ( in_array( $user_id, $this->assigned_users, true ) ) {
-			return; // User is already assigned.
-		}
-
-		// Add the user to the assigned users array.
-		$this->assigned_users[] = $user_id;
-
-		// Update the database.
-		$updated = update_post_meta( $this->ID, 'assigned_users', $this->assigned_users );
-
-		if ( ! $updated ) {
-			// Remove the user from the array if the update fails.
-			array_pop( $this->assigned_users );
-			throw new Exception( 'Failed to assign the user to the task.' );
-		}
-	}
-
-
-	/**
-	 * Unassigns a user from the task.
-	 *
-	 * @param int $user_id The user ID.
-	 * @throws Exception If the user ID is invalid or the update fails.
-	 */
-	public function unassign_user( int $user_id ): void {
-		// Validate the user ID.
-		if ( ! get_userdata( $user_id ) ) {
-			throw new Exception( 'Invalid user ID.' );
-		}
-
-		// Find the user in the assigned users array.
-		$key = array_search( $user_id, $this->assigned_users, true );
-		if ( false === $key ) {
-			return; // User is not assigned.
-		}
-
-		// Remove the user from the array.
-		unset( $this->assigned_users[ $key ] );
-
-		// Re-index the array to maintain consistency.
-		$this->assigned_users = array_values( $this->assigned_users );
-
-		// Update the database.
-		$updated = update_post_meta( $this->ID, 'assigned_users', $this->assigned_users );
-
-		if ( ! $updated ) {
-			// Re-add the user to the array if the update fails.
-			$this->assigned_users[] = $user_id;
-			throw new Exception( 'Failed to unassign the user from the task.' );
-		}
 	}
 
 

@@ -204,13 +204,11 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		</div>
 
 		
-		<!-- Author -->
+		<!-- Responsable -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<!-- Author always disabled -->
-				<select class="form-select" id="task-author" required 
-					<?php disabled( $disabled || ! current_user_can( 'edit_posts' ) ); // Disable the select if the current user cannot edit posts. ?>>
-					<option value="" disabled selected><?php esc_html_e( 'Select Author', 'decker' ); ?></option>
+				<select class="form-select" id="task-responsable" required <?php disabled( $disabled ); ?>>
+					<option value="" disabled selected><?php esc_html_e( 'Select Responsable', 'decker' ); ?></option>
 					<?php
 					// Get ignored users from settings.
 					$options       = get_option( 'decker_settings', array() );
@@ -223,16 +221,17 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 						)
 					);
 
+					$responsable_id = $task_id ? $task->responsable->ID : get_current_user_id();
+
 					foreach ( $users as $user ) {
 						echo '<option value="' . esc_attr( $user->ID ) . '" '
-							. selected( $user->ID, $task->author, false ) . ' '
-							. disabled( ! user_can( $user->ID, 'edit_posts' ), true, false ) . // Disable the option if the user cannot edit posts.
-							'>' . esc_html( $user->display_name ) . '</option>';
+							. selected( $user->ID, $responsable_id, false ) . '>'
+							. esc_html( $user->display_name ) . '</option>';
 					}
 					?>
 				</select>
-				<label for="task-author" class="form-label"><?php esc_html_e( 'Author', 'decker' ); ?></label>
-				<div class="invalid-feedback"><?php esc_html_e( 'Please select an author.', 'decker' ); ?><</div>				
+				<label for="task-responsable" class="form-label"><?php esc_html_e( 'Responsable', 'decker' ); ?></label>
+				<div class="invalid-feedback"><?php esc_html_e( 'Please select a responsable.', 'decker' ); ?></div>				
 			</div>
 		</div>
 
@@ -335,6 +334,9 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		</li>
 		<li class="nav-item">
 			<a href="#gantt-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Gantt', 'decker' ); ?></a>
+		</li>
+		<li class="nav-item">
+			<a href="#info-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Information', 'decker' ); ?></a>
 		</li>
 	</ul>
 
@@ -452,6 +454,43 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		<div class="tab-pane" id="gantt-tab">
 			<div class="tab-pane" id="gantt-tab">
 				<p class="text-muted"><?php esc_html_e( 'Under construction...', 'decker' ); ?></p>
+			</div>
+		</div>
+
+		<!-- Information -->
+		<div class="tab-pane" id="info-tab">
+			<div class="row mt-3">
+				<!-- Creation Date -->
+				<div class="col-md-6 mb-3">
+					<div class="form-floating">
+						<input type="text" class="form-control" id="task-created" 
+							value="<?php echo esc_attr( get_the_date( 'Y-m-d H:i:s', $task_id ) ); ?>" 
+							readonly>
+						<label for="task-created" class="form-label">
+							<?php esc_html_e( 'Created', 'decker' ); ?>
+						</label>
+					</div>
+				</div>
+
+				<!-- Author (Read-only unless admin) -->
+				<div class="col-md-6 mb-3">
+					<div class="form-floating">
+						<select class="form-select" id="task-author-info" <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
+							<?php
+							$author_id = get_post_field( 'post_author', $task_id );
+							$users = get_users( array( 'orderby' => 'display_name' ) );
+							foreach ( $users as $user ) {
+								echo '<option value="' . esc_attr( $user->ID ) . '" ' .
+									selected( $user->ID, $author_id, false ) . '>' .
+									esc_html( $user->display_name ) . '</option>';
+							}
+							?>
+						</select>
+						<label for="task-author-info" class="form-label">
+							<?php esc_html_e( 'Author', 'decker' ); ?>
+						</label>
+					</div>
+				</div>
 			</div>
 		</div>
 

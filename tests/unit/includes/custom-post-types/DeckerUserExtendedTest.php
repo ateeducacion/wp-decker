@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerUserExtendedTest extends WP_UnitTestCase {
+class DeckerUserExtendedTest extends Decker_Test_Base {
 
 	/**
 	 * Instance of Decker_User_Extended.
@@ -23,12 +23,7 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 		$editor_id = $this->factory->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $editor_id );
 
-		// Ensure the Decker_User_Extended class is available.
-		if ( class_exists( 'Decker_User_Extended' ) ) {
-			$this->decker_user_extended = new Decker_User_Extended();
-		} else {
-			$this->fail( 'The Decker_User_Extended class does not exist.' );
-		}
+		$this->decker_user_extended = new Decker_User_Extended();
 	}
 
 	/**
@@ -36,17 +31,8 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 	 */
 	public function test_create_users_and_assign_color_and_board() {
 
-		// Ensure 'decker_term_action' matches your plugin action.
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-
 		// Create 'decker_board' terms.
-		$board_ids = array();
-		for ( $i = 1; $i <= 2; $i++ ) {
-			$term = wp_insert_term( "Board {$i}", 'decker_board' );
-			if ( ! is_wp_error( $term ) ) {
-				$board_ids[] = $term['term_id'];
-			}
-		}
+		$board_ids = self::factory()->board->create_many( 2 );
 
 		$this->assertCount( 2, $board_ids, 'Failed to create the correct number of decker_board terms.' );
 
@@ -76,28 +62,120 @@ class DeckerUserExtendedTest extends WP_UnitTestCase {
 	 */
 	public function test_delete_decker_board_and_remove_user_meta() {
 
-		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' ); // Ensure 'decker_term_action' matches your plugin action.
-
 		// Create a 'decker_board' term.
-		$term = wp_insert_term( 'Board to Delete', 'decker_board' );
-		$this->assertFalse( is_wp_error( $term ), 'Failed to create decker_board term.' );
-		$term_id = $term['term_id'];
+		$board_id = self::factory()->board->create();
 
 		// Create a user and assign the board to be deleted.
 		$user_id = $this->factory->user->create();
-		update_user_meta( $user_id, 'decker_default_board', $term_id );
+		update_user_meta( $user_id, 'decker_default_board', $board_id );
 
 		// Verify that the meta is assigned.
 		$saved_board = get_user_meta( $user_id, 'decker_default_board', true );
-		$this->assertEquals( $term_id, $saved_board, 'Failed to assign the board to the user.' );
+		$this->assertEquals( $board_id, $saved_board, 'Failed to assign the board to the user.' );
 
 		// Delete the 'decker_board' term.
-		wp_delete_term( $term_id, 'decker_board' );
+		wp_delete_term( $board_id, 'decker_board' );
 
 		// Verify that the meta has been removed.
 		$deleted_board = get_user_meta( $user_id, 'decker_default_board', true );
 		$this->assertEmpty( $deleted_board, 'The decker_default_board meta was not removed after deleting the term.' );
 	}
+
+	/**
+	 * Test default email notification settings.
+	 */
+	public function test_default_email_notification_settings() {
+		$user_id = $this->factory->user->create();
+		$email_notifications = get_user_meta( $user_id, 'decker_email_notifications', true );
+
+		$this->assertEmpty( $email_notifications, 'Email notification settings should be empty by default.' );
+
+		// Ensure defaults are applied when retrieved.
+		$default_settings = array(
+			'task_assigned'   => '1',
+			'task_completed'  => '1',
+			'task_commented'  => '1',
+		);
+		$email_notifications = wp_parse_args( $email_notifications, $default_settings );
+
+		$this->assertEquals( $default_settings, $email_notifications, 'Default email settings should be applied.' );
+	}
+
+	/**
+	 * Test saving email notification settings.
+	 */
+	public function test_save_email_notification_settings() {
+		$user_id = $this->factory->user->create();
+
+		// Simulate saving settings.
+		$settings = array(
+			'task_assigned'   => '0',
+			'task_completed'  => '1',
+			'task_commented'  => '0',
+		);
+
+		update_user_meta( $user_id, 'decker_email_notifications', $settings );
+
+		$saved_settings = get_user_meta( $user_id, 'decker_email_notifications', true );
+		$this->assertEquals( $settings, $saved_settings, 'Failed to save email notification settings.' );
+	}
+
+	/**
+	 * Test sanitization of email notification settings.
+	 */
+	public function test_sanitize_email_notification_settings() {
+
+		// Enable global email notifications.
+		update_option( 'decker_settings', array( 'allow_email_notifications' => '1' ) );
+
+		$user_id = $this->factory->user->create();
+
+		// Simulate invalid settings.
+		$invalid_settings = array(
+			'task_assigned'   => 'invalid',
+			'task_completed'  => '1',
+			'task_commented'  => null,
+		);
+
+		// Set the POST data to simulate saving invalid settings.
+		$_POST['decker_email_notifications'] = $invalid_settings;
+
+		// Call the method to save the settings.
+		$this->decker_user_extended->save_custom_user_profile_fields( $user_id );
+
+		// Retrieve the saved settings.
+		$saved_settings = get_user_meta( $user_id, 'decker_email_notifications', true );
+
+		// Ensure the result is empty.
+		$this->assertEmpty( $saved_settings, 'Email notification settings should be empty.' );
+	}
+
+
+
+	/**
+	 * Test email notification fields visibility based on global setting.
+	 */
+	public function test_email_notification_fields_visibility() {
+		$user_id = $this->factory->user->create();
+
+		// Case 1: Global setting enabled.
+		update_option( 'decker_settings', array( 'allow_email_notifications' => '1' ) );
+		ob_start();
+		$this->decker_user_extended->add_custom_user_profile_fields( get_userdata( $user_id ) );
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'Notify me when a task is assigned to me', $output, 'Email notification fields should be visible when global setting is enabled.' );
+
+		// Case 2: Global setting disabled.
+		update_option( 'decker_settings', array( 'allow_email_notifications' => '0' ) );
+		ob_start();
+		$this->decker_user_extended->add_custom_user_profile_fields( get_userdata( $user_id ) );
+		$output = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'Notify me when a task is assigned to me', $output, 'Email notification fields should not be visible when global setting is disabled.' );
+	}
+
+
 
 	/**
 	 * Tear down the test environment.
