@@ -36,7 +36,6 @@ class Decker_Boards {
 		add_action( 'edited_decker_board', array( $this, 'save_color_meta' ), 10, 2 );
 		add_action( 'delete_term', array( $this, 'decker_handle_board_deletion' ), 10, 3 );
 
-		add_action( 'admin_head', array( $this, 'hide_description' ) );
 		add_filter( 'manage_edit-decker_board_columns', array( $this, 'customize_columns' ) );
 		add_filter( 'manage_decker_board_custom_column', array( $this, 'add_column_content' ), 10, 3 );
 
@@ -221,16 +220,6 @@ class Decker_Boards {
 		}
 
 		return true;
-	}
-
-
-	/**
-	 * Hide description field in term forms.
-	 */
-	public function hide_description() {
-		if ( isset( $_GET['taxonomy'] ) && 'decker_board' === $_GET['taxonomy'] ) {
-			echo '<style>.term-description-wrap, .column-description { display: none; }</style>';
-		}
 	}
 
 	/**

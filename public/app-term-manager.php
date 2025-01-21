@@ -52,7 +52,7 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 	// If not delete, process normal form submission.
 	$term_name = isset( $_POST['term_name'] ) ? sanitize_text_field( wp_unslash( $_POST['term_name'] ) ) : '';
 	$term_slug = isset( $_POST['term_slug'] ) ? sanitize_title( wp_unslash( $_POST['term_slug'] ) ) : '';
-
+	$description = isset( $_POST['term_description'] ) ? sanitize_title( wp_unslash( $_POST['term_description'] ) ) : '';
 
 	$data = array(
 		'name' => $term_name,
@@ -60,10 +60,11 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 
 	$data['color'] = isset( $_POST['term_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['term_color'] ) ) : '';
 
-
 	if ( ! empty( $term_slug ) ) {
 		$data['slug'] = $term_slug;
 	}
+
+	$data['description'] = $description;
 
 	$result = array(
 		'success' => false,
@@ -188,9 +189,6 @@ if ( 'board' === $selected_type ) {
 														<th data-sort-default><?php esc_html_e( 'Name', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Slug', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Color', 'decker' ); ?></th>
-														<?php if ( 'board' === $selected_type ) : ?>
-														<th><?php esc_html_e( 'Description', 'decker' ); ?></th>
-														<?php endif; ?>
 														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
@@ -207,9 +205,6 @@ if ( 'board' === $selected_type ) {
 														echo '</td>';
 														echo '<td>' . esc_html( $item->slug ) . '</td>';
 														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
-														if ( 'board' === $selected_type ) {
-															echo '<td class="term-description" data-description="' . esc_attr( $item->description ) . '">' . wp_kses_post( $item->description ) . '</td>';
-														}
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';

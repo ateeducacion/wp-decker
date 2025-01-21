@@ -93,6 +93,11 @@ class BoardManager {
 			$args['slug'] = sanitize_title( $data['name'] );
 		}
 
+		// Save description if provided.
+		if ( isset( $data['description'] ) ) {
+			$args['description'] = wp_kses_post( $data['description'] );
+		}
+
 		if ( $id ) {
 			$result = wp_update_term( $id, 'decker_board', $args );
 		} else {
@@ -110,11 +115,6 @@ class BoardManager {
 		$id = $result['term_id'];
 
 		update_term_meta( $id, 'term-color', sanitize_hex_color( $data['color'] ) );
-		
-		// Save description if provided
-		if ( isset( $data['description'] ) ) {
-			update_term_meta( $id, 'term-description', wp_kses_post( $data['description'] ) );
-		}
 
 		return array(
 			'success' => true,
