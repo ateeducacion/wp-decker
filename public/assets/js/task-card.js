@@ -277,7 +277,7 @@
         const form = context.querySelector('#task-form');
 
         // Añadir event listeners a todos los inputs del formulario
-        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-today', 'task-max-priority'];
+        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-today', 'task-max-priority'];
 
         inputIds.forEach(function(id) {
             const element = context.querySelector(`#${id}`);
@@ -518,6 +518,7 @@
             stack: form.querySelector('#task-stack').value,
             author: form.querySelector('#task-author-info').value,
             responsable: form.querySelector('#task-responsable').value,
+            hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
             assignees: selectedAssigneesValues,
             labels: selectedLabelsValues,
             description: quill.root.innerHTML,

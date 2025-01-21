@@ -88,6 +88,13 @@ class Task {
 	public WP_User $responsable;
 
 	/**
+	 * Whether the task is hidden in listings.
+	 *
+	 * @var bool
+	 */
+	public bool $hidden = false;
+
+	/**
 	 * The order of the task within its stack.
 	 *
 	 * @var int
@@ -161,6 +168,8 @@ class Task {
 			$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
 
 			$this->responsable  = get_userdata( $responsable_id );
+
+			$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];
 
 			// Use the meta array directly.
 			$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;
@@ -426,6 +435,9 @@ class Task {
 		if ( $draw_background_color && $this->board && $this->board->color ) {
 			$board_color           = $this->pastelize_color( $this->board->color );
 			$card_background_color = 'style="background-color: ' . esc_attr( $board_color ) . ';"';
+		} elseif ( $this->hidden ) {
+			// For hidden tasks, we set a light gray color.
+			$card_background_color = 'style="background-color: gainsboro;"';
 		}
 
 		?>
