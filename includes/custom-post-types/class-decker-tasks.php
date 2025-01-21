@@ -1562,6 +1562,28 @@ class Decker_Tasks {
 			return $post_id;
 		}
 
+
+    // REVISAR!!!
+
+    // Antes de asignar la nueva board, obtenemos la board anterior.
+    $old_boards = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
+    $old_board_id = ! empty( $old_boards ) ? (int) $old_boards[0] : 0;
+
+    // También necesitamos saber el stack actual de la tarea.
+    // (Podemos suponer que la metabox de 'stack' ya está procesada y guardada en $_POST['stack'],
+    //  o recuperarla del post meta existente si la guarda más adelante).
+    $stack = '';
+    if ( isset( $_POST['stack'] ) ) {
+        $stack = sanitize_text_field( wp_unslash( $_POST['stack'] ) );
+    } else {
+        // If not found in $_POST, you can retrieve it from meta:
+        $stack = get_post_meta( $post_id, 'stack', true );
+    }
+
+
+
+
+
 		// Save task details.
 		if ( isset( $_POST['duedate'] ) ) {
 			$duedate = sanitize_text_field( wp_unslash( $_POST['duedate'] ) );
@@ -1588,11 +1610,51 @@ class Decker_Tasks {
 			wp_set_post_terms( $post_id, $label_slugs, 'decker_label' );
 		}
 		if ( isset( $_POST['decker_board'] ) ) {
-			$board_id   = sanitize_text_field( wp_unslash( $_POST['decker_board'] ) );
-			$board_term = get_term( $board_id, 'decker_board' );
-			if ( $board_term && ! is_wp_error( $board_term ) ) {
-				wp_set_post_terms( $post_id, array( $board_term->slug ), 'decker_board' );
-			}
+
+    // REVISAR!!! (codigo antiguo)
+
+// $board_id   = sanitize_text_field( wp_unslash( $_POST['decker_board'] ) );
+// $board_term = get_term( $board_id, 'decker_board' );
+// if ( $board_term && ! is_wp_error( $board_term ) ) {
+// 	wp_set_post_terms( $post_id, array( $board_term->slug ), 'decker_board' );
+// }
+
+    // REVISAR!!! (codigo nuevo)
+
+$new_board_id = (int) sanitize_text_field( wp_unslash( $_POST['decker_board'] ) );
+$board_term   = get_term( $new_board_id, 'decker_board' );
+
+// Si la nueva board es distinta de la anterior, reordenamos la anterior y luego la nueva.
+if ( $new_board_id !== $old_board_id ) {
+
+    // 1) Reordenar las tareas en la board anterior, excluyendo la actual.
+    if ( $old_board_id > 0 ) {
+        // Asegúrate de que tu método reorder_tasks_in_stack
+        // acepte un $exclude_post_id para que no cuente este post.
+        $this->reorder_tasks_in_stack( $old_board_id, $stack, $post_id );
+    }
+
+    // 2) Asignamos la nueva board (si es válida).
+    if ( $board_term && ! is_wp_error( $board_term ) ) {
+        wp_set_post_terms( $post_id, array( $board_term->slug ), 'decker_board' );
+    }
+
+    // 3) Reordenar la nueva board con la tarea ya incluida.
+    if ( $new_board_id > 0 ) {
+        $this->reorder_tasks_in_stack( $new_board_id, $stack, 0 );
+    }
+
+} else {
+    // Si la board no cambia, solo asignamos la misma (no reordenamos).
+    if ( $board_term && ! is_wp_error( $board_term ) ) {
+        wp_set_post_terms( $post_id, array( $board_term->slug ), 'decker_board' );
+    }
+}
+
+
+
+
+
 		}
 
 		// Save assigned users.
