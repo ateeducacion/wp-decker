@@ -52,7 +52,7 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 	// If not delete, process normal form submission.
 	$term_name = isset( $_POST['term_name'] ) ? sanitize_text_field( wp_unslash( $_POST['term_name'] ) ) : '';
 	$term_slug = isset( $_POST['term_slug'] ) ? sanitize_title( wp_unslash( $_POST['term_slug'] ) ) : '';
-	$description = isset( $_POST['term_description'] ) ? sanitize_title( wp_unslash( $_POST['term_description'] ) ) : '';
+	$description = isset( $_POST['term_description'] ) ? wp_kses_post( wp_unslash( $_POST['term_description'] ) ) : '';
 
 	$data = array(
 		'name' => $term_name,
@@ -196,18 +196,23 @@ if ( 'board' === $selected_type ) {
 													<?php
 													foreach ( $items as $item ) {
 														echo '<tr>';
-														echo '<td>';
+														echo '<td class="term-name">';
 														if ( ! empty( $item->color ) ) {
 															echo '<span class="badge" style="background-color: ' . esc_attr( $item->color ) . ';">' . esc_html( $item->name ) . '</span>';
 														} else {
 															echo esc_html( $item->name );
 														}
 														echo '</td>';
-														echo '<td>' . esc_html( $item->slug ) . '</td>';
-														echo '<td><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
+														echo '<td class="term-slug">' . esc_html( $item->slug ) . '</td>';
+														echo '<td class="term-color"><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';
+
+														// Hidden span with the term-description (for boards).
+														if ( 'board' === $selected_type ) {
+															echo '<span class="term-description d-none">' . esc_html( $item->description ) . '</span>';
+														}
 														echo '</td>';
 														echo '</tr>';
 													}
@@ -259,6 +264,7 @@ if ( 'board' === $selected_type ) {
 					<form id="term-form" method="POST">
 						<input type="hidden" name="term_type" value="<?php echo esc_attr( $selected_type ); ?>">
 						<input type="hidden" name="term_id" id="term-id">
+
 						<?php wp_nonce_field( 'decker_term_action', 'decker_term_nonce' ); ?>
 						<div class="mb-3">
 							<label for="term-name" class="form-label"><?php esc_html_e( 'Name', 'decker' ); ?> <span class="text-danger">*</span></label>
@@ -301,10 +307,12 @@ jQuery(document).ready(function($) {
 	$('#searchInput').on('keyup', function() {
 		const searchText = $(this).val().toLowerCase();
 		$('#termsTable tbody tr').each(function() {
-			const name = $(this).find('td:first-child').text().toLowerCase();
-			const slug = $(this).find('td:nth-child(2)').text().toLowerCase();
-			const color = $(this).find('td:nth-child(3)').text().toLowerCase();
-			
+
+			const name = $(this).find('.term-name').text().toLowerCase();
+			const slug = $(this).find('.term-slug').text().toLowerCase();
+			const color = $(this).find('.term-color').text().toLowerCase();			
+
+
 			if (name.includes(searchText) || slug.includes(searchText) || color.includes(searchText)) {
 				$(this).show();
 			} else {
@@ -327,11 +335,11 @@ jQuery(document).ready(function($) {
 	$('.edit-term').on('click', function(e) {
 		e.preventDefault();
 		const row = $(this).closest('tr');
-		const nameCell = row.find('td:first-child');
-		const name = nameCell.find('.badge').length ? nameCell.find('.badge').text() : nameCell.text();
-		const slug = row.find('td:nth-child(2)').text();
-		const hexColor = row.find('td:nth-child(3)').text().trim();
-		const description = row.find('td.term-description').data('description') || '';
+
+		const name = row.find('.term-name').text().trim();
+		const slug = row.find('.term-slug').text().trim();
+		const hexColor = row.find('.term-color').text().trim();
+		const description = row.find('.term-description').text().trim();
 		const id = $(this).data('id');
 		$('#termModalLabel').text('<?php esc_html_e( 'Edit Term', 'decker' ); ?>');
 		$('#term-id').val(id);
@@ -346,7 +354,7 @@ jQuery(document).ready(function($) {
 	$('.delete-term').on('click', function(e) {
 		e.preventDefault();
 		const row = $(this).closest('tr');
-		const termSlug = row.find('td:nth-child(2)').text();
+		const termSlug = row.find('.term-slug').text().trim();
 
 		let promptMessage = "<?php echo esc_js( __( 'To confirm deletion, please enter the term slug:', 'decker' ) ); ?>";
 		if ($(this).data('type') === 'board') {
