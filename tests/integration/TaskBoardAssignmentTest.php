@@ -100,10 +100,12 @@ class TaskBoardAssignmentTest extends Decker_Test_Base {
 			)
 		);
 
-		// Get the current board ID
-		$currentBoardId = wp_get_post_terms( $this->testTaskId, 'decker_board' )[0]->term_id;
+		// Verify initial menu_order is 1 (first task in original board)
+		$initial_menu_order = get_post_field( 'menu_order', $this->testTaskId );
+		$this->assertEquals( 1, $initial_menu_order, 'Initial task should have menu_order 1' );
 
-		// Verify board changed
+		// Get the current board ID and verify board changed
+		$currentBoardId = wp_get_post_terms( $this->testTaskId, 'decker_board' )[0]->term_id;
 		$this->assertEquals(
 			$this->newBoardId,
 			$currentBoardId,
@@ -141,5 +143,9 @@ class TaskBoardAssignmentTest extends Decker_Test_Base {
 			end( $tasks ),
 			'Task should be placed at the end of the stack in the new board'
 		);
+
+		// Verify final menu_order is 3 (after 2 existing tasks in new board)
+		$final_menu_order = get_post_field( 'menu_order', $this->testTaskId );
+		$this->assertEquals( 3, $final_menu_order, 'Task should have menu_order 3 after moving to new board' );
 	}
 }
