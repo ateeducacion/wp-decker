@@ -338,14 +338,14 @@ msgstr "Por Hacer"
 
 #: includes/custom-post-types/class-decker-tasks.php:1120
 #: public/app-kanban-my.php:100
-#: public/app-kanban.php:141
+#: public/app-kanban.php:150
 #: public/layouts/task-card.php:243
 msgid "In Progress"
 msgstr "En Progreso"
 
 #: includes/custom-post-types/class-decker-tasks.php:1121
 #: public/app-kanban-my.php:115
-#: public/app-kanban.php:156
+#: public/app-kanban.php:165
 #: public/layouts/task-card.php:244
 msgid "Done"
 msgstr "Hecho"
@@ -566,19 +566,19 @@ msgid "All Users"
 msgstr "Todos los Usuarios"
 
 #: public/app-kanban-my.php:73
-#: public/app-kanban.php:105
+#: public/app-kanban.php:114
 #: public/app-priority.php:141
 #: public/app-tasks.php:175
 #: public/app-upcoming.php:131
 msgid "Add New"
 msgstr "Agregar Nuevo"
 
-#: public/app-kanban.php:109
+#: public/app-kanban.php:118
 msgid "Fix Order"
 msgstr "Corregir Orden"
 
 #: public/app-kanban-my.php:86
-#: public/app-kanban.php:127
+#: public/app-kanban.php:136
 msgid "TO-DO"
 msgstr "POR HACER"
 
@@ -1306,5 +1306,5 @@ msgid "Created"
 msgstr "Creado"
 
 #: public/app-term-manager.php:286
-msgid "Add a description for this board"
-msgstr "Agregue una descripción para este tablero"
+msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
+msgstr "Solo se permite formato HTML básico (i, b, em, strong, br)"

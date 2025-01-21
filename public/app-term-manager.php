@@ -283,7 +283,7 @@ if ( 'board' === $selected_type ) {
 						<div class="mb-3">
 							<label for="term-description" class="form-label"><?php esc_html_e( 'Description', 'decker' ); ?></label>
 							<textarea class="form-control" id="term-description" name="term_description" rows="3"></textarea>
-							<div class="form-text"><?php esc_html_e( 'Add a description for this board', 'decker' ); ?></div>
+							<div class="form-text"><?php esc_html_e( 'Only basic HTML formatting is allowed (i, b, em, strong, br)', 'decker' ); ?></div>
 						</div>
 						<?php endif; ?>
 						<div class="modal-footer">

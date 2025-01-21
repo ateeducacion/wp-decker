@@ -463,14 +463,14 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1120
 #: public/app-kanban-my.php:100
-#: public/app-kanban.php:141
+#: public/app-kanban.php:150
 #: public/layouts/task-card.php:243
 msgid "In Progress"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1121
 #: public/app-kanban-my.php:115
-#: public/app-kanban.php:156
+#: public/app-kanban.php:165
 #: public/layouts/task-card.php:244
 msgid "Done"
 msgstr ""
@@ -752,7 +752,7 @@ msgid "Search"
 msgstr ""
 
 #: public/app-kanban-my.php:73
-#: public/app-kanban.php:105
+#: public/app-kanban.php:114
 #: public/app-priority.php:141
 #: public/app-tasks.php:175
 #: public/app-upcoming.php:131
@@ -760,7 +760,7 @@ msgid "Add New"
 msgstr ""
 
 #: public/app-kanban-my.php:86
-#: public/app-kanban.php:127
+#: public/app-kanban.php:136
 msgid "TO-DO"
 msgstr ""
 
@@ -778,7 +778,7 @@ msgstr ""
 msgid "All Users"
 msgstr ""
 
-#: public/app-kanban.php:109
+#: public/app-kanban.php:118
 msgid "Fix Order"
 msgstr ""
 
@@ -902,7 +902,7 @@ msgid "Leave empty for automatic generation from name"
 msgstr ""
 
 #: public/app-term-manager.php:286
-msgid "Add a description for this board"
+msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
 msgstr ""
 
 #: public/app-term-manager.php:291
