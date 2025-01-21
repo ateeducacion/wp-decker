@@ -173,6 +173,8 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 			'max_priority'   => get_post_meta( $task_id, 'max_priority', true ),
 			'duedate'        => get_post_meta( $task_id, 'duedate', true ),
 			'author'         => (int) $post->post_author,
+			'responsable'    => (int) get_post_meta( $task_id, 'responsable', true ),
+			'hidden'         => (bool) get_post_meta( $task_id, 'hidden', true ),
 			'assigned_users' => get_post_meta( $task_id, 'assigned_users', true ),
 			'labels'         => wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) ),
 		);
@@ -214,6 +216,8 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 			$args['max_priority'],
 			$args['duedate'],
 			$args['author'],
+			$args['responsable'],
+			$args['hidden'],
 			$args['assigned_users'],
 			$args['labels']
 		);
