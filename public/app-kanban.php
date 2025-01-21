@@ -89,7 +89,16 @@ foreach ( $tasks as $task ) {
 
 									</div>
 
-									<h4 class="page-title"><?php echo esc_html( $main_board->name ); ?>
+									<h4 class="page-title">
+										<?php echo esc_html( $main_board->name ); ?>
+										<?php if ( ! empty( $main_board->description ) ) : ?>
+											<i class="ri-information-line ms-1" 
+											   data-bs-toggle="popover" 
+											   data-bs-trigger="hover focus"
+											   data-bs-html="true"
+											   data-bs-content="<?php echo esc_attr( $main_board->description ); ?>"
+											   style="font-size: 0.8em; cursor: pointer;"></i>
+										<?php endif; ?>
 										<a href="
 										<?php
 										echo esc_url(
