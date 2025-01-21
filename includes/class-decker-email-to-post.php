@@ -370,6 +370,7 @@ class Decker_Email_To_Post {
 			$due_date,
 			$author->ID,
 			$author->ID,
+			false,
 			$assigned_users,
 			array()
 		);

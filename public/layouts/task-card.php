@@ -463,10 +463,10 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 				<!-- Hidden Status -->
 				<div class="col-12 mb-3">
 					<div class="form-check form-switch">
-						<input class="form-check-input" type="checkbox" id="task-hidden" <?php checked($task->hidden); ?> <?php disabled($disabled); ?>>
+						<input class="form-check-input" type="checkbox" id="task-hidden" <?php checked( $task->hidden ); ?> <?php disabled( $disabled ); ?>>
 						<label class="form-check-label" for="task-hidden">
-							<?php esc_html_e('Hidden task', 'decker'); ?>
-							<small class="text-muted"><?php esc_html_e('(Hidden tasks are not shown in priority listings)', 'decker'); ?></small>
+							<?php esc_html_e( 'Hidden task', 'decker' ); ?>
+							<small class="text-muted"><?php esc_html_e( '(Hidden tasks are not shown in task listings)', 'decker' ); ?></small>
 						</label>
 					</div>
 				</div>

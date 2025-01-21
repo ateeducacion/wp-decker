@@ -1101,6 +1101,8 @@ class Decker_Tasks {
 		$max_priority      = get_post_meta( $post->ID, 'max_priority', true );
 		$stack             = get_post_meta( $post->ID, 'stack', true );
 		$id_nextcloud_card = get_post_meta( $post->ID, 'id_nextcloud_card', true );
+		$responsable       = get_post_meta( $post->ID, 'responsable', true );
+		$hidden            = get_post_meta( $post->ID, 'hidden', true );
 
 		wp_nonce_field( 'save_decker_task', 'decker_task_nonce' );
 
@@ -1125,6 +1127,17 @@ class Decker_Tasks {
 			<label for="id_nextcloud_card"><?php esc_html_e( 'Nextcloud Card ID', 'decker' ); ?></label>
 			<input type="number" name="id_nextcloud_card" value="<?php echo esc_attr( $id_nextcloud_card ); ?>" class="widefat">
 		</p>
+
+		<p>
+			<label for="responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></label>
+			<input type="number" name="responsable" value="<?php echo esc_attr( $responsable ); ?>" class="widefat">
+		</p>
+
+		<p>
+			<label for="hidden"><?php esc_html_e( 'Hidden', 'decker' ); ?></label>
+			<input type="checkbox" name="hidden" value="1" <?php checked( '1', $hidden ); ?> class="widefat">
+		</p>
+
 		<?php
 	}
 
@@ -1800,6 +1813,8 @@ class Decker_Tasks {
 		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
 		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
+		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
+
 		// Manejar 'assignees'.
 		$assigned_users = array();
 
@@ -1839,6 +1854,7 @@ class Decker_Tasks {
 			$duedate,
 			$author,
 			$responsable,
+			$hidden,
 			$assigned_users,
 			$labels
 		);
@@ -1883,6 +1899,7 @@ class Decker_Tasks {
 	 * @param DateTime|null $duedate            The due date of the task, or null if not set.
 	 * @param int           $author             The ID of the author of the task.
 	 * @param int           $responsable        The ID of the responsable of the task.
+	 * @param bool          $hidden             Whether the task is hidden in listings.
 	 * @param array         $assigned_users     An array of user IDs assigned to the task.
 	 * @param array         $labels             An array of label IDs associated with the task.
 	 * @param DateTime      $creation_date      The creation date of the task. Default is null.
@@ -1901,6 +1918,7 @@ class Decker_Tasks {
 		?DateTime $duedate,
 		int $author,
 		int $responsable,
+		bool $hidden,
 		array $assigned_users,
 		array $labels,
 		?DateTime $creation_date = null,
@@ -1969,6 +1987,7 @@ class Decker_Tasks {
 			'max_priority'      => $max_priority ? '1' : '0',
 			'assigned_users'    => $assigned_users,
 			'responsable'       => $responsable,
+			'hidden'            => $hidden,
 		);
 
 		// Preparar los datos del post.
@@ -1991,6 +2010,8 @@ class Decker_Tasks {
 		if ( $responsable > 0 ) {
 			$post_data['responsable'] = $responsable;
 		}
+
+		$post_data['hidden'] = $hidden;
 
 		// Determinar si es una actualización o creación.
 		if ( $id > 0 ) {

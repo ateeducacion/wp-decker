@@ -73,6 +73,18 @@ class TaskManager {
 			'orderby'     => array(
 				'max_priority' => 'DESC',
 			),
+			'meta_query'  => array(
+				'relation' => 'OR', // Relationship between the meta query conditions.
+				array(
+					'key'     => 'hidden', // Meta field 'hidden'.
+					'compare' => 'NOT EXISTS', // Exclude tasks that do not have the 'hidden' meta field.
+				),
+				array(
+					'key'     => 'hidden', // Meta field 'hidden'.
+					'value'   => '1', // Value indicating that the task is hidden.
+					'compare' => '!=', // Exclude tasks where 'hidden' is equal to '1'.
+				),
+			),
 		);
 
 		$tasks = $this->get_tasks( $args );
