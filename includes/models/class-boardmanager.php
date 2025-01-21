@@ -93,6 +93,11 @@ class BoardManager {
 			$args['slug'] = sanitize_title( $data['name'] );
 		}
 
+		// Save description if provided.
+		if ( isset( $data['description'] ) ) {
+			$args['description'] = wp_kses_post( $data['description'] );
+		}
+
 		if ( $id ) {
 			$result = wp_update_term( $id, 'decker_board', $args );
 		} else {

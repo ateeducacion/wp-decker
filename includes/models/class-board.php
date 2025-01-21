@@ -46,6 +46,13 @@ class Board {
 	public ?string $color;
 
 	/**
+	 * The description of the board, or null if not set.
+	 *
+	 * @var string|null
+	 */
+	public ?string $description;
+
+	/**
 	 * Board constructor.
 	 *
 	 * @param WP_Term $term The term object representing the board.
@@ -56,10 +63,12 @@ class Board {
 			$this->id    = $term->term_id;
 			$this->name  = $term->name;
 			$this->slug  = $term->slug;
+			$this->description = $term->description;
 
 			// Avoid short ternaries by using a complete ternary expression.
 			$color = get_term_meta( $term->term_id, 'term-color', true );
 			$this->color = $color ? $color : null;
+
 		} else {
 			throw new Exception( 'Invalid board term.' );
 		}
