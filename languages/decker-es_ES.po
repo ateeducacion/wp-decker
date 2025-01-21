@@ -159,8 +159,8 @@ msgstr "Nombre del Nuevo Tablero"
 
 #: includes/custom-post-types/class-decker-boards.php:60
 #: public/app-term-manager.php:116
-#: public/layouts/left-sidebar.php:207
-#: public/layouts/left-sidebar.php:308
+#: public/layouts/left-sidebar.php:212
+#: public/layouts/left-sidebar.php:313
 msgid "Boards"
 msgstr "Tableros"
 
@@ -215,7 +215,7 @@ msgstr "Nombre de la Nueva Etiqueta"
 #: includes/custom-post-types/class-decker-labels.php:60
 #: includes/custom-post-types/class-decker-tasks.php:1077
 #: public/app-term-manager.php:120
-#: public/layouts/left-sidebar.php:294
+#: public/layouts/left-sidebar.php:299
 #: public/layouts/task-card.php:292
 msgid "Labels"
 msgstr "Etiquetas"
@@ -472,19 +472,19 @@ msgstr "Agregar Adjuntos"
 msgid "Select Attachments"
 msgstr "Seleccionar Adjuntos"
 
-#: includes/custom-post-types/class-decker-tasks.php:1932
+#: includes/custom-post-types/class-decker-tasks.php:1931
 msgid "The title is required."
 msgstr "El título es obligatorio."
 
-#: includes/custom-post-types/class-decker-tasks.php:1935
+#: includes/custom-post-types/class-decker-tasks.php:1934
 msgid "The stack is required."
 msgstr "La columna es obligatoria."
 
-#: includes/custom-post-types/class-decker-tasks.php:1938
+#: includes/custom-post-types/class-decker-tasks.php:1937
 msgid "The board is required and must be a positive integer."
 msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
-#: includes/custom-post-types/class-decker-tasks.php:1944
+#: includes/custom-post-types/class-decker-tasks.php:1943
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr "El tablero no existe en la taxonomía decker_board."
 
@@ -506,13 +506,13 @@ msgstr "Panel de Análisis"
 
 #: public/app-analytics.php:46
 #: public/app-analytics.php:49
-#: public/layouts/left-sidebar.php:246
+#: public/layouts/left-sidebar.php:251
 msgid "Analytics"
 msgstr "Analíticas"
 
 #: public/app-analytics.php:61
 #: public/app-tasks.php:167
-#: public/layouts/left-sidebar.php:149
+#: public/layouts/left-sidebar.php:154
 msgid "Active Tasks"
 msgstr "Tareas Activas"
 
@@ -522,7 +522,7 @@ msgstr "Usuarios Totales"
 
 #: public/app-analytics.php:77
 #: public/app-tasks.php:171
-#: public/layouts/left-sidebar.php:175
+#: public/layouts/left-sidebar.php:180
 msgid "Archived Tasks"
 msgstr "Tareas Archivadas"
 
@@ -646,7 +646,7 @@ msgid "Task Detail"
 msgstr "Detalle de la Tarea"
 
 #: public/app-task-full.php:51
-#: public/layouts/left-sidebar.php:188
+#: public/layouts/left-sidebar.php:193
 msgid "New task"
 msgstr "Nueva tarea"
 
@@ -655,7 +655,7 @@ msgid "Task not found"
 msgstr "Tarea no encontrada"
 
 #: public/app-tasks.php:169
-#: public/layouts/left-sidebar.php:162
+#: public/layouts/left-sidebar.php:167
 msgid "My Tasks"
 msgstr "Mis Tareas"
 
@@ -1114,7 +1114,7 @@ msgstr "¡ADVERTENCIA: ¡Eliminar un tablero es peligroso! Todas las tareas asig
 msgid "Incorrect slug. Deletion cancelled."
 msgstr "Slug incorrecto. Eliminación cancelada."
 
-#: public/layouts/left-sidebar.php:272
+#: public/layouts/left-sidebar.php:277
 msgid "Utilities"
 msgstr "Utilidades"
 
@@ -1224,11 +1224,11 @@ msgstr "No tienes permiso para borrar etiquetas"
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
-#: includes/custom-post-types/class-decker-tasks.php:2071
+#: includes/custom-post-types/class-decker-tasks.php:2070
 msgid "Security check failed."
 msgstr "Error de comprobación."
 
-#: includes/custom-post-types/class-decker-tasks.php:2080
+#: includes/custom-post-types/class-decker-tasks.php:2079
 msgid "Invalid comment data."
 msgstr "Datos de comentario inválidos."
 

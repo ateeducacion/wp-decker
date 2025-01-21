@@ -287,8 +287,8 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-boards.php:60
 #: public/app-term-manager.php:116
-#: public/layouts/left-sidebar.php:207
-#: public/layouts/left-sidebar.php:308
+#: public/layouts/left-sidebar.php:212
+#: public/layouts/left-sidebar.php:313
 msgid "Boards"
 msgstr ""
 
@@ -343,7 +343,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-labels.php:60
 #: includes/custom-post-types/class-decker-tasks.php:1077
 #: public/app-term-manager.php:120
-#: public/layouts/left-sidebar.php:294
+#: public/layouts/left-sidebar.php:299
 #: public/layouts/task-card.php:292
 msgid "Labels"
 msgstr ""
@@ -550,27 +550,27 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1932
+#: includes/custom-post-types/class-decker-tasks.php:1931
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1935
+#: includes/custom-post-types/class-decker-tasks.php:1934
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1938
+#: includes/custom-post-types/class-decker-tasks.php:1937
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1944
+#: includes/custom-post-types/class-decker-tasks.php:1943
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:2071
+#: includes/custom-post-types/class-decker-tasks.php:2070
 msgid "Security check failed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:2080
+#: includes/custom-post-types/class-decker-tasks.php:2079
 msgid "Invalid comment data."
 msgstr ""
 
@@ -701,13 +701,13 @@ msgstr ""
 
 #: public/app-analytics.php:46
 #: public/app-analytics.php:49
-#: public/layouts/left-sidebar.php:246
+#: public/layouts/left-sidebar.php:251
 msgid "Analytics"
 msgstr ""
 
 #: public/app-analytics.php:61
 #: public/app-tasks.php:167
-#: public/layouts/left-sidebar.php:149
+#: public/layouts/left-sidebar.php:154
 msgid "Active Tasks"
 msgstr ""
 
@@ -717,7 +717,7 @@ msgstr ""
 
 #: public/app-analytics.php:77
 #: public/app-tasks.php:171
-#: public/layouts/left-sidebar.php:175
+#: public/layouts/left-sidebar.php:180
 msgid "Archived Tasks"
 msgstr ""
 
@@ -856,7 +856,7 @@ msgid "Task Detail"
 msgstr ""
 
 #: public/app-task-full.php:51
-#: public/layouts/left-sidebar.php:188
+#: public/layouts/left-sidebar.php:193
 msgid "New task"
 msgstr ""
 
@@ -865,7 +865,7 @@ msgid "Task not found"
 msgstr ""
 
 #: public/app-tasks.php:169
-#: public/layouts/left-sidebar.php:162
+#: public/layouts/left-sidebar.php:167
 msgid "My Tasks"
 msgstr ""
 
@@ -1055,7 +1055,7 @@ msgstr ""
 msgid "Apps"
 msgstr ""
 
-#: public/layouts/left-sidebar.php:272
+#: public/layouts/left-sidebar.php:277
 msgid "Utilities"
 msgstr ""
 
