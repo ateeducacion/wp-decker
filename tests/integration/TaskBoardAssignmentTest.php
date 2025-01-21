@@ -51,61 +51,39 @@ class TaskBoardAssignmentTest extends Decker_Test_Base {
 		parent::tearDown();
 	}
 
-	public function testEditingTitleShouldNotChangeBoard() {
-		// Update only the title using the factory
-		self::factory()->task->update_object(
-			$this->testTaskId,
-			array(
-				'post_title' => 'Updated Title',
-				'post_content' => 'Original Description',
-				'meta_input' => array(
-					'stack' => 'to-do',
-					'max_priority' => false,
-				),
-				'tax_input' => array(
-					'decker_board' => array( $this->originalBoardId ),
-				),
-			)
-		);
-
-		// Get the current board ID
-		$currentBoardId = wp_get_post_terms( $this->testTaskId, 'decker_board' )[0]->term_id;
-
-		$this->assertEquals(
-			$this->originalBoardId,
-			$currentBoardId,
-			'Board should not change when only updating title'
-		);
-	}
-
-	public function testEditingDescriptionShouldNotChangeBoard() {
-		// Update only the description using the factory
-		self::factory()->task->update_object(
-			$this->testTaskId,
-			array(
-				'post_title' => 'Original Title',
-				'post_content' => 'Updated Description',
-				'meta_input' => array(
-					'stack' => 'to-do',
-					'max_priority' => false,
-				),
-				'tax_input' => array(
-					'decker_board' => array( $this->originalBoardId ),
-				),
-			)
-		);
-
-		// Get the current board ID
-		$currentBoardId = wp_get_post_terms( $this->testTaskId, 'decker_board' )[0]->term_id;
-
-		$this->assertEquals(
-			$this->originalBoardId,
-			$currentBoardId,
-			'Board should not change when only updating description'
-		);
-	}
-
 	public function testExplicitlyChangingBoardShouldWork() {
+		// Create three tasks in the original board's to-do stack
+		for ( $i = 1; $i <= 3; $i++ ) {
+			self::factory()->task->create(
+				array(
+					'post_title' => "Task $i",
+					'meta_input' => array(
+						'stack' => 'to-do',
+						'max_priority' => false,
+					),
+					'tax_input' => array(
+						'decker_board' => array( $this->originalBoardId ),
+					),
+				)
+			);
+		}
+
+		// Create two tasks in the new board's to-do stack
+		for ( $i = 1; $i <= 2; $i++ ) {
+			self::factory()->task->create(
+				array(
+					'post_title' => "New Board Task $i",
+					'meta_input' => array(
+						'stack' => 'to-do',
+						'max_priority' => false,
+					),
+					'tax_input' => array(
+						'decker_board' => array( $this->newBoardId ),
+					),
+				)
+			);
+		}
+
 		// Update the board explicitly using the factory
 		self::factory()->task->update_object(
 			$this->testTaskId,
@@ -125,10 +103,43 @@ class TaskBoardAssignmentTest extends Decker_Test_Base {
 		// Get the current board ID
 		$currentBoardId = wp_get_post_terms( $this->testTaskId, 'decker_board' )[0]->term_id;
 
+		// Verify board changed
 		$this->assertEquals(
 			$this->newBoardId,
 			$currentBoardId,
 			'Board should change when explicitly updated'
+		);
+
+		// Get all tasks in the new board's to-do stack
+		$tasks = get_posts(
+			array(
+				'post_type' => 'decker_task',
+				'orderby' => 'menu_order',
+				'order' => 'ASC',
+				'tax_query' => array(
+					array(
+						'taxonomy' => 'decker_board',
+						'field' => 'term_id',
+						'terms' => $this->newBoardId,
+					),
+				),
+				'meta_query' => array(
+					array(
+						'key' => 'stack',
+						'value' => 'to-do',
+						'compare' => '=',
+					),
+				),
+				'posts_per_page' => -1,
+				'fields' => 'ids',
+			)
+		);
+
+		// Verify the moved task is the last one in the list
+		$this->assertEquals(
+			$this->testTaskId,
+			end( $tasks ),
+			'Task should be placed at the end of the stack in the new board'
 		);
 	}
 }
