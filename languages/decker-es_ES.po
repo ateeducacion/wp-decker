@@ -173,7 +173,7 @@ msgstr "Tableros"
 #: includes/custom-post-types/class-decker-user-extended.php:65
 #: includes/custom-post-types/class-decker-user-extended.php:207
 #: public/app-term-manager.php:191
-#: public/app-term-manager.php:273
+#: public/app-term-manager.php:279
 msgid "Color"
 msgstr "Color"
 
@@ -599,7 +599,7 @@ msgstr "Sí"
 
 #: public/app-priority.php:154
 #: public/app-priority.php:392
-#: public/app-term-manager.php:284
+#: public/app-term-manager.php:290
 msgid "Close"
 msgstr "Cerrar"
 
@@ -664,7 +664,7 @@ msgid "P."
 msgstr "P."
 
 #: public/app-tasks.php:205
-#: public/app-term-manager.php:278
+#: public/app-term-manager.php:284
 #: public/layouts/task-card.php:308
 msgid "Description"
 msgstr "Descripción"
@@ -926,7 +926,7 @@ msgstr "Autor"
 msgid "Under construction..."
 msgstr "En construcción..."
 
-#: public/app-term-manager.php:285
+#: public/app-term-manager.php:291
 #: public/layouts/task-card.php:506
 msgid "Save"
 msgstr "Guardar"
@@ -1080,37 +1080,37 @@ msgid "Label deleted successfully"
 msgstr "Etiqueta eliminada correctamente"
 
 #: public/app-term-manager.php:189
-#: public/app-term-manager.php:264
+#: public/app-term-manager.php:270
 msgid "Name"
 msgstr "Nombre"
 
 #: public/app-term-manager.php:190
-#: public/app-term-manager.php:268
+#: public/app-term-manager.php:274
 msgid "Slug"
 msgstr "Slug"
 
-#: public/app-term-manager.php:255
-#: public/app-term-manager.php:322
+#: public/app-term-manager.php:260
+#: public/app-term-manager.php:330
 msgid "Add New Term"
 msgstr "Añadir Nuevo Término"
 
-#: public/app-term-manager.php:270
+#: public/app-term-manager.php:276
 msgid "Leave empty for automatic generation from name"
 msgstr "Dejar vacío para generación automática desde el nombre"
 
-#: public/app-term-manager.php:336
+#: public/app-term-manager.php:344
 msgid "Edit Term"
 msgstr "Editar Término"
 
-#: public/app-term-manager.php:351
+#: public/app-term-manager.php:359
 msgid "To confirm deletion, please enter the term slug:"
 msgstr "Para confirmar la eliminación, por favor introduce el slug del término:"
 
-#: public/app-term-manager.php:353
+#: public/app-term-manager.php:361
 msgid "WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board."
 msgstr "¡ADVERTENCIA: ¡Eliminar un tablero es peligroso! Todas las tareas asignadas a este tablero se quedarán sin tablero."
 
-#: public/app-term-manager.php:369
+#: public/app-term-manager.php:377
 msgid "Incorrect slug. Deletion cancelled."
 msgstr "Slug incorrecto. Eliminación cancelada."
 
@@ -1305,6 +1305,6 @@ msgstr "Información"
 msgid "Created"
 msgstr "Creado"
 
-#: public/app-term-manager.php:280
+#: public/app-term-manager.php:286
 msgid "Add a description for this board"
 msgstr "Agregue una descripción para este tablero"
