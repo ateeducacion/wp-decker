@@ -81,11 +81,13 @@ class Task {
 	public int $author;
 
 	/**
-	 * The ID of the user responsible for the task.
+	 * The user responsible for the task.
 	 *
-	 * @var int
+	 * This may be null if get_userdata() fails.
+	 *
+	 * @var WP_User|null
 	 */
-	public WP_User $responsable;
+	public ?WP_User $responsable = null;
 
 	/**
 	 * Whether the task is hidden in listings.
@@ -166,8 +168,12 @@ class Task {
 			$meta = get_post_meta( $this->ID );
 
 			$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
+			$user_object    = get_userdata( $responsable_id );
 
-			$this->responsable  = get_userdata( $responsable_id );
+			// Only assign if $user_object is a WP_User.
+			if ( $user_object instanceof WP_User ) {
+				$this->responsable = $user_object;
+			}
 
 			$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];
 
