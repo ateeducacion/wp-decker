@@ -184,8 +184,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		<!-- Boards -->
 		<div class="col-md-4 mb-3">
 			<div class="form-floating">
-				<?php // TODO: Allow changing the board. ?>
-				<select class="form-select" id="task-board" required <?php disabled( $disabled || $task_id ); ?>>
+				<select class="form-select" id="task-board" required <?php disabled( $disabled ); ?>>
 					<option value="" disabled selected><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 					<?php
 

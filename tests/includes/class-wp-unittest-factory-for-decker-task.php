@@ -201,10 +201,10 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 			return new WP_Error( 'invalid_board', 'El ID del board proporcionado no es válido.' );
 		}
 
-		// Si 'board' ha cambiado, actualizar la relación de términos.
-		if ( isset( $fields['board'] ) ) {
-			wp_set_object_terms( $task_id, (int) $args['board'], 'decker_board', false );
-		}
+		// // Si 'board' ha cambiado, actualizar la relación de términos.
+		// if ( isset( $fields['board'] ) ) {
+		// 	wp_set_object_terms( $task_id, array( $args['board']), 'decker_board', false );
+		// }
 
 		// Usar el método del plugin para actualizar la tarea.
 		$updated_id = Decker_Tasks::create_or_update_task(

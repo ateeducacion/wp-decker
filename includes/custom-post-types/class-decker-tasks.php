@@ -385,10 +385,10 @@ class Decker_Tasks {
 
 		// Reorder tasks in the source stack.
 		if ( $source_stack !== $target_stack ) {
-			$result = $this->reorder_tasks_in_stack( $board_id, $source_stack );
+			$result = self::reorder_tasks_in_stack( $board_id, $source_stack );
 		}
 		// Reorder tasks in the target stack.
-		$result = $this->reorder_tasks_in_stack( $board_id, $target_stack );
+		$result = self::reorder_tasks_in_stack( $board_id, $target_stack );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -411,7 +411,7 @@ class Decker_Tasks {
 	 * @param string $stack The stack to reorder.
 	 * @param int    $exclude_post_id Task to exclude.
 	 */
-	private function reorder_tasks_in_stack( int $board_term_id, string $stack, int $exclude_post_id = 0 ) {
+	private static function reorder_tasks_in_stack( int $board_term_id, string $stack, int $exclude_post_id = 0 ) {
 		global $wpdb;
 
 		// This is the autoincrement value.
@@ -483,7 +483,7 @@ class Decker_Tasks {
 		$board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
 		$stack         = get_post_meta( $post_id, 'stack', true );
 		if ( $board_term_id > 0 && $stack ) {
-			$this->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
+			self::reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
 		}
 	}
 
@@ -507,7 +507,7 @@ class Decker_Tasks {
 			$stack = get_post_meta( $post->ID, 'stack', true );
 
 			if ( $board_term_id > 0 && $stack ) {
-				$this->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
+				self::reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
 			}
 		}
 	}
@@ -907,7 +907,7 @@ class Decker_Tasks {
 		$stacks = array( 'to-do', 'in-progress', 'done' );
 
 		foreach ( $stacks as $stack ) {
-			$this->reorder_tasks_in_stack( $board_id, $stack );
+			self::reorder_tasks_in_stack( $board_id, $stack );
 		}
 
 		return new WP_REST_Response(
@@ -1631,7 +1631,7 @@ if ( $new_board_id !== $old_board_id ) {
     if ( $old_board_id > 0 ) {
         // Asegúrate de que tu método reorder_tasks_in_stack
         // acepte un $exclude_post_id para que no cuente este post.
-        $this->reorder_tasks_in_stack( $old_board_id, $stack, $post_id );
+        self::reorder_tasks_in_stack( $old_board_id, $stack, $post_id );
     }
 
     // 2) Asignamos la nueva board (si es válida).
@@ -1641,7 +1641,7 @@ if ( $new_board_id !== $old_board_id ) {
 
     // 3) Reordenar la nueva board con la tarea ya incluida.
     if ( $new_board_id > 0 ) {
-        $this->reorder_tasks_in_stack( $new_board_id, $stack, 0 );
+        self::reorder_tasks_in_stack( $new_board_id, $stack, 0 );
     }
 
 } else {
@@ -1988,138 +1988,311 @@ if ( $new_board_id !== $old_board_id ) {
 		int $id_nextcloud_card = 0
 	) {
 
-		// Validate required fields.
-		if ( empty( $title ) ) {
-			return new WP_Error( 'missing_field', __( 'The title is required.', 'decker' ) );
-		}
-		if ( empty( $stack ) ) {
-			return new WP_Error( 'missing_field', __( 'The stack is required.', 'decker' ) );
-		}
-		if ( $board <= 0 ) {
-			return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
-		}
+	// ------------------------------------------------------
+	// 1. Basic validations.
+	// ------------------------------------------------------
+	if ( empty( $title ) ) {
+		return new WP_Error( 'missing_field', __( 'The title is required.', 'decker' ) );
+	}
+	if ( empty( $stack ) ) {
+		return new WP_Error( 'missing_field', __( 'The stack is required.', 'decker' ) );
+	}
+	if ( $board <= 0 ) {
+		return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
+	}
 
-		if ( ! term_exists( $board, 'decker_board' ) ) {
+	// Validate that the board term actually exists.
+	if ( ! term_exists( $board, 'decker_board' ) ) {
+		error_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.' );
+		return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
+	}
 
-			error_log( 'Invalid default board: "' . esc_html( $board ) . '" does not exist in the decker_board taxonomy.' );
-			return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
-		}
+	// Convert DateTime object to string if provided.
+	$duedate_str = $duedate ? $duedate->format( 'Y-m-d' ) : null;
 
-		// Convertir objetos DateTime a formato string (si no, pasamos null to undefined).
-		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+	// ------------------------------------------------------
+	// 2. Build tax_input.
+	// ------------------------------------------------------
+	$tax_input = array(
+		'decker_board' => array( $board ), // Board ID as taxonomy term.
+	);
 
-		// Preparar los términos para tax_input.
-		$tax_input = array();
+	if ( ! empty( $labels ) ) {
+		$tax_input['decker_label'] = array_map( 'intval', $labels );
+	}
 
-		$new_users = array();
+	// ------------------------------------------------------
+	// 3. Handle assigned_users (and detect new ones).
+	// ------------------------------------------------------
+	$new_users = array();
 
-		// Asignar la taxonomía 'decker_board' con el ID del board.
-		if ( $board > 0 ) {
-			$tax_input['decker_board'] = array( $board );
-		}
-
-		// Incluir etiquetas en tax_input si las hay.
-		if ( ! empty( $labels ) ) {
-			// Asegúrate de que $labels contiene IDs de términos válidos.
-			$tax_input['decker_label'] = array_map( 'intval', $labels );
-		}
-
-		if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
-			if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
-				$assigned_users = wp_list_pluck( $assigned_users, 'ID' );
-			}
-
-			// Almacenar los usuarios previamente asignados antes de la actualización.
-			$previous_assigned_users = array();
-			if ( $id > 0 ) { // Solo si estamos actualizando.
-				$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
-				$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
-			}
-
-			// Comparar los usuarios nuevos con los previamente asignados.
-			$new_users = array_diff( $assigned_users, $previous_assigned_users );
-
+	if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
+		// If assigned_users is an array of WP_User objects, reduce them to their IDs.
+		if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
+			$assigned_users = wp_list_pluck( $assigned_users, 'ID' );
 		}
 
-		// Preparar los metadatos personalizados.
-		$meta_input = array(
-			'id_nextcloud_card' => $id_nextcloud_card,
-			'stack'             => sanitize_text_field( $stack ),
-			'duedate'           => $duedate_str,
-			'max_priority'      => $max_priority ? '1' : '0',
-			'assigned_users'    => $assigned_users,
-			'responsable'       => $responsable,
-			'hidden'            => $hidden,
-		);
-
-		// Preparar los datos del post.
-		$post_data = array(
-			'post_title'   => sanitize_text_field( $title ),
-			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
-			'post_status'  => $archived ? 'archived' : 'publish',
-			'post_type'    => 'decker_task',
-			'post_author'  => $author,
-			'meta_input'   => $meta_input,
-			'tax_input'    => $tax_input,
-		);
-
-		// Solo establece `post_date` si se proporciona `creation_date`.
-		if ( $creation_date ) {
-			$post_data['post_date'] = $creation_date->format( 'Y-m-d H:i:s' );
-		}
-
-		// Solo establece `responsable` si se proporciona.
-		if ( $responsable > 0 ) {
-			$post_data['responsable'] = $responsable;
-		}
-
-		$post_data['hidden'] = $hidden;
-
-		// Determinar si es una actualización o creación.
+		// If updating an existing post, find which are "new" assigned users.
+		$previous_assigned_users = array();
 		if ( $id > 0 ) {
+			$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
+			$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
+		}
 
-			// Retrieve the current stack value as a string.
-			$source_stack = get_post_meta( $id, 'stack', true );
+		$new_users = array_diff( $assigned_users, $previous_assigned_users );
+	} else {
+		$assigned_users = array();
+	}
 
-			// Actualizar el post existente.
-			$post_data['ID'] = $id;
-			$task_id         = wp_update_post( $post_data );
 
-			// Check if the stack value has changed.
-			if ( ! is_wp_error( $task_id ) && $source_stack != $stack ) {
+	// ------------------------------------------------------
+	// 4. Prepare meta_input.
+	// ------------------------------------------------------
+	$meta_input = array(
+		'id_nextcloud_card' => (int) $id_nextcloud_card,
+		'stack'             => sanitize_text_field( $stack ),
+		'duedate'           => $duedate_str,
+		'max_priority'      => $max_priority ? '1' : '0',
+		'assigned_users'    => $assigned_users,
+		'responsable'       => $responsable,
+		'hidden'            => $hidden,
+	);
 
-				// Trigger general stack transition hook.
-				do_action( 'decker_stack_transition', $id, $source_stack, $stack );
 
-				// If the target stack is "done", trigger a specific hook for task completion.
-				if ( 'done' === $stack ) {
-					do_action( 'decker_task_completed', $id, $stack );
-				}
+	// ------------------------------------------------------
+	// 5. Prepare post_data.
+	// ------------------------------------------------------
+	$post_data = array(
+		'post_title'   => sanitize_text_field( $title ),
+		'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
+		'post_status'  => $archived ? 'archived' : 'publish',
+		'post_type'    => 'decker_task',
+		'post_author'  => $author,
+		'meta_input'   => $meta_input,
+		'tax_input'    => $tax_input,
+	);
+
+	if ( $creation_date ) {
+		$post_data['post_date'] = $creation_date->format( 'Y-m-d H:i:s' );
+	}
+
+	// We only set this if > 0 (usually done via meta, but if you have custom usage).
+	if ( $responsable > 0 ) {
+		$post_data['responsable'] = $responsable; 
+	}
+	$post_data['hidden'] = $hidden;
+
+
+	// ------------------------------------------------------
+	// 6. If updating, reorder old board (exclude current task), then reorder new board.
+	// ------------------------------------------------------
+	$old_board_id = 0; 
+	$old_stack    = '';
+
+	if ( $id > 0 ) {
+		// Retrieve the old board and stack from the DB
+		$old_boards = wp_get_post_terms( $id, 'decker_board', array( 'fields' => 'ids' ) );
+		$old_board_id = ! empty( $old_boards ) ? (int) $old_boards[0] : 0;
+		$old_stack    = get_post_meta( $id, 'stack', true );
+
+		// If the old board is different, reorder the old board excluding this task.
+		if ( $old_board_id && $old_board_id !== $board ) {
+			// Replace "self::..." with the appropriate approach if the reorder method is not static.
+			self::reorder_tasks_in_stack( $old_board_id, $old_stack, $id );
+		}
+	}
+
+	// ------------------------------------------------------
+	// 7. Insert or Update post.
+	// ------------------------------------------------------
+	if ( $id > 0 ) {
+		$post_data['ID'] = $id;
+		$task_id         = wp_update_post( $post_data );
+
+
+        // Si la board cambió, actualizar menu_order a un valor alto y reordenar nueva board
+        if (!is_wp_error($task_id) && $old_board_id !== $board && $board > 0) {
+
+        	print_r("hola");
+        	print_r($board);
+
+            global $wpdb;
+            // Establecer menu_order a un valor alto temporalmente
+            $wpdb->update(
+                $wpdb->posts,
+                array('menu_order' => 99999),
+                array('ID' => $task_id),
+                array('%d'),
+                array('%d')
+            );
+            // Reordenar nueva board incluyendo este task
+            self::reorder_tasks_in_stack($board, $stack, $task_id);
+        }
+
+
+		// Check if the "stack" changed; if so, trigger custom hooks.
+		$source_stack = $old_stack; 
+		if ( ! is_wp_error( $task_id ) && $source_stack !== $stack ) {
+			// General transition hook
+			do_action( 'decker_stack_transition', $task_id, $source_stack, $stack );
+
+			// If the new stack is 'done', we might do something special.
+			if ( 'done' === $stack ) {
+				do_action( 'decker_task_completed', $task_id, $stack );
 			}
+		}
 
-			// Trigger a hook after a task has been updated.
+		// Hook after a task has been updated.
+		if ( ! is_wp_error( $task_id ) ) {
 			do_action( 'decker_task_updated', $task_id );
+		}
 
-		} else {
-			// Crear un nuevo post.
-			$task_id = wp_insert_post( $post_data );
+	} else {
+		// It's a new task.
+		$task_id = wp_insert_post( $post_data );
 
-			// Trigger a hook after a new task has been created.
+		// Hook after a new task has been created.
+		if ( ! is_wp_error( $task_id ) ) {
 			do_action( 'decker_task_created', $task_id );
-
 		}
+	}
 
-		if ( is_wp_error( $task_id ) ) {
-			return $task_id; // Retornar el error para manejarlo externamente.
-		}
-
-		// Disparar el evento para cada usuario nuevo.
-		foreach ( $new_users as $new_user_id ) {
-			do_action( 'decker_user_assigned', $task_id, $new_user_id );
-		}
-
-		// Retornar el ID de la tarea creada o actualizada.
+	// If there was an error during wp_insert_post / wp_update_post.
+	if ( is_wp_error( $task_id ) ) {
 		return $task_id;
+	}
+
+
+	// ------------------------------------------------------
+	// 8. If board changed on update, reorder the new board.
+	// ------------------------------------------------------
+	if ( $id > 0 && ! is_wp_error( $task_id ) ) {
+		if ( $old_board_id !== $board && $board > 0 ) {
+			// "Include" the task in the new board now
+			self::reorder_tasks_in_stack( $board, $stack, 0 );
+		}
+	}
+
+	// ------------------------------------------------------
+	// 9. Trigger user assignment hook if relevant.
+	// ------------------------------------------------------
+	foreach ( $new_users as $new_user_id ) {
+		do_action( 'decker_user_assigned', $task_id, $new_user_id );
+	}
+
+	// ------------------------------------------------------
+	// 10. Return the final task ID.
+	// ------------------------------------------------------
+	return $task_id;
+
+
+		// // Asignar la taxonomía 'decker_board' con el ID del board.
+		// if ( $board > 0 ) {
+		// 	$tax_input['decker_board'] = array( $board );
+		// }
+
+		// // Incluir etiquetas en tax_input si las hay.
+		// if ( ! empty( $labels ) ) {
+		// 	// Asegúrate de que $labels contiene IDs de términos válidos.
+		// 	$tax_input['decker_label'] = array_map( 'intval', $labels );
+		// }
+
+		// if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
+		// 	if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
+		// 		$assigned_users = wp_list_pluck( $assigned_users, 'ID' );
+		// 	}
+
+		// 	// Almacenar los usuarios previamente asignados antes de la actualización.
+		// 	$previous_assigned_users = array();
+		// 	if ( $id > 0 ) { // Solo si estamos actualizando.
+		// 		$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
+		// 		$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
+		// 	}
+
+		// 	// Comparar los usuarios nuevos con los previamente asignados.
+		// 	$new_users = array_diff( $assigned_users, $previous_assigned_users );
+
+		// }
+
+		// // Preparar los metadatos personalizados.
+		// $meta_input = array(
+		// 	'id_nextcloud_card' => $id_nextcloud_card,
+		// 	'stack'             => sanitize_text_field( $stack ),
+		// 	'duedate'           => $duedate_str,
+		// 	'max_priority'      => $max_priority ? '1' : '0',
+		// 	'assigned_users'    => $assigned_users,
+		// 	'responsable'       => $responsable,
+		// 	'hidden'            => $hidden,
+		// );
+
+		// // Preparar los datos del post.
+		// $post_data = array(
+		// 	'post_title'   => sanitize_text_field( $title ),
+		// 	'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
+		// 	'post_status'  => $archived ? 'archived' : 'publish',
+		// 	'post_type'    => 'decker_task',
+		// 	'post_author'  => $author,
+		// 	'meta_input'   => $meta_input,
+		// 	'tax_input'    => $tax_input,
+		// );
+
+		// // Solo establece `post_date` si se proporciona `creation_date`.
+		// if ( $creation_date ) {
+		// 	$post_data['post_date'] = $creation_date->format( 'Y-m-d H:i:s' );
+		// }
+
+		// // Solo establece `responsable` si se proporciona.
+		// if ( $responsable > 0 ) {
+		// 	$post_data['responsable'] = $responsable;
+		// }
+
+		// $post_data['hidden'] = $hidden;
+
+		// // Determinar si es una actualización o creación.
+		// if ( $id > 0 ) {
+
+		// 	// Retrieve the current stack value as a string.
+		// 	$source_stack = get_post_meta( $id, 'stack', true );
+
+		// 	// Actualizar el post existente.
+		// 	$post_data['ID'] = $id;
+		// 	$task_id         = wp_update_post( $post_data );
+
+		// 	// Check if the stack value has changed.
+		// 	if ( ! is_wp_error( $task_id ) && $source_stack != $stack ) {
+
+		// 		// Trigger general stack transition hook.
+		// 		do_action( 'decker_stack_transition', $id, $source_stack, $stack );
+
+		// 		// If the target stack is "done", trigger a specific hook for task completion.
+		// 		if ( 'done' === $stack ) {
+		// 			do_action( 'decker_task_completed', $id, $stack );
+		// 		}
+		// 	}
+
+		// 	// Trigger a hook after a task has been updated.
+		// 	do_action( 'decker_task_updated', $task_id );
+
+		// } else {
+		// 	// Crear un nuevo post.
+		// 	$task_id = wp_insert_post( $post_data );
+
+		// 	// Trigger a hook after a new task has been created.
+		// 	do_action( 'decker_task_created', $task_id );
+
+		// }
+
+		// if ( is_wp_error( $task_id ) ) {
+		// 	return $task_id; // Retornar el error para manejarlo externamente.
+		// }
+
+		// // Disparar el evento para cada usuario nuevo.
+		// foreach ( $new_users as $new_user_id ) {
+		// 	do_action( 'decker_user_assigned', $task_id, $new_user_id );
+		// }
+
+		// // Retornar el ID de la tarea creada o actualizada.
+		// return $task_id;
 	}
 
 	/**
