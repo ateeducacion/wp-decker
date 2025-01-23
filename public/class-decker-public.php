@@ -124,13 +124,14 @@ class Decker_Public {
 	protected function include_decker_page( $decker_page ) {
 		$include_files = array(
 			'analytics'       => 'public/app-analytics.php',
-			'my-board'        => 'public/app-kanban-my.php',
 			'board'           => 'public/app-kanban.php',
+			'calendar'        => 'public/app-calendar.php',
+			'my-board'        => 'public/app-kanban-my.php',
+			'priority'        => 'public/app-priority.php',
 			'task'            => 'public/app-task-full.php',
 			'tasks'           => 'public/app-tasks.php',
-			'upcoming'        => 'public/app-upcoming.php',
-			'priority'        => 'public/app-priority.php',
 			'term-manager'    => 'public/app-term-manager.php',
+			'upcoming'        => 'public/app-upcoming.php',
 		);
 
 		if ( array_key_exists( $decker_page, $include_files ) ) {
@@ -207,6 +208,11 @@ class Decker_Public {
 			if ( 'board' == $decker_page ) {
 				// Dragula.
 				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js';
+			}
+
+			if ( 'calendar' == $decker_page ) {
+				// FullCalendar.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js';
 			}
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
