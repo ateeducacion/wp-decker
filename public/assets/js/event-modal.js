@@ -72,6 +72,11 @@
                     selectable: true,
                     dateClick: this.onSelect.bind(this),
                     eventClick: this.onEventClick.bind(this),
+                    eventDidMount: function(info) {
+                        if (info.event.extendedProps.type === 'task') {
+                            info.el.style.backgroundColor = info.event.classNames[0];
+                        }
+                    }
                 });
 
                 this.$calendarObj.render();
