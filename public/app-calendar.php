@@ -118,6 +118,63 @@ include 'layouts/main.php';
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
+															<label class="control-label form-label"><?php esc_html_e('Description', 'decker'); ?></label>
+															<textarea class="form-control" name="description" id="event-description" rows="3"></textarea>
+														</div>
+													</div>
+													<div class="col-12">
+														<div class="mb-3">
+															<div class="form-check">
+																<input class="form-check-input" type="checkbox" id="event-all-day" name="allDay">
+																<label class="form-check-label" for="event-all-day">
+																	<?php esc_html_e('All day', 'decker'); ?>
+																</label>
+															</div>
+														</div>
+													</div>
+													<div class="col-md-6">
+														<div class="mb-3">
+															<label class="control-label form-label"><?php esc_html_e('Start', 'decker'); ?></label>
+															<input type="datetime-local" class="form-control" name="start" id="event-start" required />
+														</div>
+													</div>
+													<div class="col-md-6">
+														<div class="mb-3">
+															<label class="control-label form-label"><?php esc_html_e('End', 'decker'); ?></label>
+															<input type="datetime-local" class="form-control" name="end" id="event-end" required />
+														</div>
+													</div>
+													<div class="col-12">
+														<div class="mb-3">
+															<label class="control-label form-label"><?php esc_html_e('Location', 'decker'); ?></label>
+															<input type="text" class="form-control" name="location" id="event-location" />
+														</div>
+													</div>
+													<div class="col-12">
+														<div class="mb-3">
+															<label class="control-label form-label"><?php esc_html_e('URL', 'decker'); ?></label>
+															<input type="url" class="form-control" name="url" id="event-url" />
+														</div>
+													</div>
+													<div class="col-12">
+														<div class="mb-3">
+															<label class="control-label form-label"><?php esc_html_e('Assigned Users', 'decker'); ?></label>
+															<select class="form-select" name="assigned_users[]" id="event-assigned-users" multiple>
+																<?php
+																$users = get_users(array('fields' => array('ID', 'display_name')));
+																foreach ($users as $user) {
+																	printf(
+																		'<option value="%d">%s</option>',
+																		esc_attr($user->ID),
+																		esc_html($user->display_name)
+																	);
+																}
+																?>
+															</select>
+														</div>
+													</div>
+													<div class="col-12">
+														<div class="mb-3">
 															<label class="control-label form-label"><?php esc_html_e('Category', 'decker'); ?></label>
 															<select class="form-select" name="category" id="event-category" required>
 																<option value="bg-danger" selected><?php esc_html_e('Danger', 'decker'); ?></option>
@@ -206,8 +263,17 @@ include 'layouts/main.php';
 	  this.$modalTitle.text("Edit Event"),
 	  this.$modal.show(),
 	  (this.$selectedEvent = e.event),
-	  l("#event-title").val(this.$selectedEvent.title),
+	  l("#event-title").val(this.$selectedEvent.title);
+	  l("#event-description").val(this.$selectedEvent.extendedProps.description || '');
+	  l("#event-location").val(this.$selectedEvent.extendedProps.location || '');
+	  l("#event-url").val(this.$selectedEvent.url || '');
+	  l("#event-all-day").prop('checked', this.$selectedEvent.allDay);
+	  l("#event-start").val(moment(this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
+	  l("#event-end").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
 	  l("#event-category").val(this.$selectedEvent.classNames[0]);
+	  if (this.$selectedEvent.extendedProps.assigned_users) {
+		l("#event-assigned-users").val(this.$selectedEvent.extendedProps.assigned_users);
+	  }
   }),
 	(e.prototype.onSelect = function (e) {
 	  this.$formEvent[0].reset(),
@@ -284,14 +350,28 @@ include 'layouts/main.php';
 		  n.checkValidity()
 			? (a.$selectedEvent
 				? (a.$selectedEvent.setProp("title", l("#event-title").val()),
-				  a.$selectedEvent.setProp("classNames", [
-					l("#event-category").val(),
-				  ]))
+				  a.$selectedEvent.setProp("classNames", [l("#event-category").val()]),
+				  a.$selectedEvent.setExtendedProp("description", l("#event-description").val()),
+				  a.$selectedEvent.setExtendedProp("location", l("#event-location").val()),
+				  a.$selectedEvent.setProp("url", l("#event-url").val()),
+				  a.$selectedEvent.setAllDay(l("#event-all-day").prop('checked')),
+				  a.$selectedEvent.setStart(l("#event-start").val()),
+				  a.$selectedEvent.setEnd(l("#event-end").val()),
+				  a.$selectedEvent.setExtendedProp("assigned_users", l("#event-assigned-users").val()))
 				: ((t = {
 					title: l("#event-title").val(),
-					start: a.$newEventData.date,
-					allDay: a.$newEventData.allDay,
+					start: l("#event-start").val(),
+					end: l("#event-end").val(),
+					allDay: l("#event-all-day").prop('checked'),
 					className: l("#event-category").val(),
+					description: l("#event-description").val(),
+					location: l("#event-location").val(),
+					url: l("#event-url").val(),
+					extendedProps: {
+						description: l("#event-description").val(),
+						location: l("#event-location").val(),
+						assigned_users: l("#event-assigned-users").val()
+					}
 				  }),
 				  a.$calendarObj.addEvent(t)),
 			  a.$modal.hide())
