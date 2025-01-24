@@ -148,3 +148,8 @@ class Decker_Calendar {
 		return $string;
 	}
 }
+
+// Instantiate the class.
+if ( class_exists( 'Decker_Calendar' ) ) {
+	new Decker_Calendar();
+}
