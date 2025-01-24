@@ -70,22 +70,6 @@ include 'layouts/main.php';
 												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e('Create New theme', 'decker'); ?></div>
 											</div>
 
-											<div class="mt-5 d-none d-xl-block">
-												<h5 class="text-center"><?php esc_html_e('How It Works ?', 'decker'); ?></h5>
-
-												<ul class="ps-3">
-													<li class="text-muted mb-3">
-														<?php esc_html_e('It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'decker'); ?>
-													</li>
-													<li class="text-muted mb-3">
-														<?php esc_html_e('Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage.', 'decker'); ?>
-													</li>
-													<li class="text-muted mb-3">
-														<?php esc_html_e('It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged.', 'decker'); ?>
-													</li>
-												</ul>
-											</div>
-
 										</div> <!-- end col-->
 
 										<div class="col-lg-10">
