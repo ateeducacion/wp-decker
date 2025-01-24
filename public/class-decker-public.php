@@ -152,6 +152,9 @@ class Decker_Public {
 				// Register the main theme config script.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
 
+				// WordPress REST API.
+				'wp-api',
+
 				// Bootstrap 5.
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
