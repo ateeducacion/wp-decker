@@ -116,7 +116,7 @@ class Decker_Calendar {
 		
 		foreach ( $tasks as $task ) {
 			$board = $task->get_board();
-			$board_color = $board ? get_term_meta( $board->term_id, 'color', true ) : '';
+			$board_color = $board ? get_term_meta( $board->ID, 'color', true ) : '';
 			
 			// Only add tasks that have a due date
 			if ($task->duedate) {
@@ -127,7 +127,7 @@ class Decker_Calendar {
 					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'className'      => $board_color ? $board_color : 'bg-primary',
-					'assigned_users' => $task->get_assigned_users(),
+					'assigned_users' => $task->assigned_users,
 					'type'           => 'task',
 				);
 			}
