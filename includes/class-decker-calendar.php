@@ -71,7 +71,7 @@ class Decker_Calendar {
 	 */
 	public function handle_ical_request() {
 		global $wp_query;
-		
+
 		if ( ! isset( $wp_query->query_vars['decker-calendar'] ) ) {
 			return;
 		}
@@ -93,21 +93,21 @@ class Decker_Calendar {
 	private function get_events() {
 		$events = array();
 		$event_posts = EventManager::get_events();
-		
-		foreach ($event_posts as $event) {
+
+		foreach ( $event_posts as $event ) {
 			$events[] = array(
 				'id'             => $event->get_id(),
 				'title'          => $event->get_title(),
 				'description'    => $event->get_description(),
-				'start'          => $event->get_start_date()->format('Y-m-d\TH:i:s'),
-				'end'            => $event->get_end_date()->format('Y-m-d\TH:i:s'),
+				'start'          => $event->get_start_date()->format( 'Y-m-d\TH:i:s' ),
+				'end'            => $event->get_end_date()->format( 'Y-m-d\TH:i:s' ),
 				'location'       => $event->get_location(),
 				'url'            => $event->get_url(),
 				'className'      => $event->get_category(),
 				'assigned_users' => $event->get_assigned_users(),
 			);
 		}
-		
+
 		return $events;
 	}
 
@@ -126,15 +126,15 @@ class Decker_Calendar {
 
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
-			$ical .= "UID:" . $event['id'] . "@decker\r\n";
-			$ical .= "DTSTART:" . date( 'Ymd\THis\Z', strtotime( $event['start'] ) ) . "\r\n";
-			$ical .= "DTEND:" . date( 'Ymd\THis\Z', strtotime( $event['end'] ) ) . "\r\n";
-			$ical .= "SUMMARY:" . $this->ical_escape( $event['title'] ) . "\r\n";
-			$ical .= "DESCRIPTION:" . $this->ical_escape( $event['description'] ) . "\r\n";
+			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
+			$ical .= 'DTSTART:' . gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) ) . "\r\n";
+			$ical .= 'DTEND:' . gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) ) . "\r\n";
+			$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
+			$ical .= 'DESCRIPTION:' . $this->ical_escape( $event['description'] ) . "\r\n";
 			$ical .= "END:VEVENT\r\n";
 		}
 
-		$ical .= "END:VCALENDAR";
+		$ical .= 'END:VCALENDAR';
 		return $ical;
 	}
 
@@ -146,7 +146,7 @@ class Decker_Calendar {
 	 */
 	private function ical_escape( $string ) {
 		$string = str_replace( array( "\r\n", "\n", "\r" ), "\\n", $string );
-		$string = str_replace( array( ",", ";", ":" ), array( "\,", "\;", "\:" ), $string );
+		$string = str_replace( array( ',', ';', ':' ), array( '\,', '\;', '\:' ), $string );
 		return $string;
 	}
 }
