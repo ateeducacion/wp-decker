@@ -3,6 +3,15 @@
 
     // Initialize event card functionality
     function initializeEventCard() {
+        // Initialize Choices.js for assigned users
+        if (document.getElementById('event-assigned-users')) {
+            new Choices('#event-assigned-users', { 
+                removeItemButton: true,
+                allowHTML: true,
+                searchEnabled: true,
+                shouldSort: true,
+            });
+        }
         
         // Handle search functionality
         $('#searchInput').on('keyup', function() {
