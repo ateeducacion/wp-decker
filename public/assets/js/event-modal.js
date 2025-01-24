@@ -111,25 +111,32 @@
 
             // Handle date/time field interactions
             $('#event-start-time, #event-end-time').on('input', function() {
-                if ($('#event-start-time').val() || $('#event-end-time').val()) {
-                    $('#event-end-date').val('').prop('disabled', true);
-                } else {
-                    $('#event-end-date').prop('disabled', false);
+                const hasTime = $('#event-start-time').val() || $('#event-end-time').val();
+                if (hasTime) {
+                    // If time is entered, clear and disable end date
+                    $('#event-end-date').val('');
                 }
+                // Show/hide end date based on time presence
+                $('#event-end-date').closest('.col-md-6').toggle(!hasTime);
             });
 
             $('#event-end-date').on('input', function() {
-                if ($(this).val()) {
-                    $('#event-start-time, #event-end-time').val('').prop('disabled', true);
-                } else {
-                    $('#event-start-time, #event-end-time').prop('disabled', false);
+                const hasEndDate = $(this).val();
+                if (hasEndDate) {
+                    // If end date is entered, clear times
+                    $('#event-start-time, #event-end-time').val('');
                 }
+                // Show/hide time inputs based on end date presence
+                $('#time-inputs').toggle(!hasEndDate);
             });
 
-            // Sync start date to end date if no end date set
+            // Sync start date to end date for single-day events
             $('#event-start-date').on('change', function() {
-                if (!$('#event-end-date').val()) {
-                    $('#event-end-date').val($(this).val());
+                const startDate = $(this).val();
+                const endDate = $('#event-end-date').val();
+                // Only update end date if it's empty or less than start date
+                if (!endDate || endDate < startDate) {
+                    $('#event-end-date').val(startDate);
                 }
             });
 
@@ -172,21 +179,22 @@
 
                 $('#event-title').val(this.$selectedEvent.title);
                 $('#event-description').val(this.$selectedEvent.extendedProps.description || '');
-                $('#event-location').val(this.$selectedEvent.extendedProps.location || '');
-                $('#event-url').val(this.$selectedEvent.url || '');
 
                 const startDate = moment(this.$selectedEvent.start);
                 const endDate = this.$selectedEvent.end ? moment(this.$selectedEvent.end) : startDate;
 
+                // Always set start date
                 $('#event-start-date').val(startDate.format('YYYY-MM-DD'));
-            
+
                 if (this.$selectedEvent.allDay) {
+                    // For all-day events, set end date and clear times
                     $('#event-end-date').val(endDate.format('YYYY-MM-DD'));
-                    $('#event-start-time, #event-end-time').val('').prop('disabled', true);
+                    $('#event-start-time, #event-end-time').val('');
                 } else {
+                    // For timed events, set times and clear end date
                     $('#event-start-time').val(startDate.format('HH:mm'));
                     $('#event-end-time').val(endDate.format('HH:mm'));
-                    $('#event-end-date').val('').prop('disabled', true);
+                    $('#event-end-date').val('');
                 }
 
                 $('#event-category').val(this.$selectedEvent.classNames[0]);

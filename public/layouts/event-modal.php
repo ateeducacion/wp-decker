@@ -35,23 +35,33 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label"><?php esc_html_e( 'Date and Time', 'decker' ); ?></label>
+						<label class="form-label"><?php esc_html_e( 'Date', 'decker' ); ?></label>
 						<div class="row g-2">
 							<div class="col-md-6">
-								<input type="datetime-local" class="form-control" name="event_start" id="event-start" 
-									pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
-									required />
-								<small class="text-muted"><?php esc_html_e( 'From', 'decker' ); ?></small>
+								<input type="date" class="form-control" name="event_start_date" id="event-start-date" required />
+								<small class="text-muted"><?php esc_html_e( 'Start Date', 'decker' ); ?></small>
 							</div>
 							<div class="col-md-6">
-								<input type="datetime-local" class="form-control" name="event_end" id="event-end" 
-									pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
-									required />
-								<small class="text-muted"><?php esc_html_e( 'To', 'decker' ); ?></small>
+								<input type="date" class="form-control" name="event_end_date" id="event-end-date" />
+								<small class="text-muted"><?php esc_html_e( 'End Date', 'decker' ); ?></small>
 							</div>
 						</div>
-						<small class="form-text text-muted">
-							<?php esc_html_e( 'Tip: Clear time input for all-day events.', 'decker' ); ?>
+					</div>
+
+					<div class="mb-3" id="time-inputs">
+						<label class="form-label"><?php esc_html_e( 'Time', 'decker' ); ?></label>
+						<div class="row g-2">
+							<div class="col-md-6">
+								<input type="time" class="form-control" name="event_start_time" id="event-start-time" />
+								<small class="text-muted"><?php esc_html_e( 'Start Time', 'decker' ); ?></small>
+							</div>
+							<div class="col-md-6">
+								<input type="time" class="form-control" name="event_end_time" id="event-end-time" />
+								<small class="text-muted"><?php esc_html_e( 'End Time', 'decker' ); ?></small>
+							</div>
+						</div>
+						<small class="form-text text-muted mt-2">
+							<?php esc_html_e( 'Fill in times for a single-day event, or leave empty and set end date for multi-day events.', 'decker' ); ?>
 						</small>
 					</div>
 
