@@ -79,7 +79,7 @@ defined( 'ABSPATH' ) || exit;
 
 					<div class="mb-3">
 						<label for="event-assigned-users" class="form-label"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></label>
-						<select class="form-select" id="event-assigned-users" name="event_assigned_users[]" multiple>
+						<select class="form-select choices-select" id="event-assigned-users" name="event_assigned_users[]" multiple>
 							<?php
 							$users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
 							foreach ( $users as $user ) {
