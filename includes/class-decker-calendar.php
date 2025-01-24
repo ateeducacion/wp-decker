@@ -62,7 +62,7 @@ class Decker_Calendar {
 	 * @return WP_REST_Response
 	 */
 	public function get_calendar_json( $request ) {
-		$events = $this->get_sample_events();
+		$events = $this->get_events();
 		return rest_ensure_response( $events );
 	}
 
@@ -76,7 +76,7 @@ class Decker_Calendar {
 			return;
 		}
 
-		$events = $this->get_sample_events();
+		$events = $this->get_events();
 		$ical = $this->generate_ical( $events );
 
 		header( 'Content-Type: text/calendar; charset=utf-8' );
@@ -86,45 +86,29 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Get sample events (to be replaced with actual data)
+	 * Get events from the decker_event post type
 	 *
 	 * @return array
 	 */
-	private function get_sample_events() {
-		return array(
-			array(
-				'id'          => 1,
-				'title'       => esc_html__( 'Meeting with Mr. Shreyu', 'decker' ),
-				'start'       => date('Y-m-d\TH:i:s', strtotime('+2 days')),
-				'end'         => date('Y-m-d\TH:i:s', strtotime('+2 days +2 hours')),
-				'className'   => 'bg-warning',
-				'description' => esc_html__( 'Project planning meeting', 'decker' ),
-			),
-			array(
-				'id'          => 2,
-				'title'       => esc_html__( 'Interview - Backend Engineer', 'decker' ),
-				'start'       => date('Y-m-d\TH:i:s'),
-				'end'         => date('Y-m-d\TH:i:s', strtotime('+1 hour')),
-				'className'   => 'bg-success',
-				'description' => esc_html__( 'Technical interview for backend position', 'decker' ),
-			),
-			array(
-				'id'          => 3,
-				'title'       => esc_html__( 'Phone Screen - Frontend Engineer', 'decker' ),
-				'start'       => date('Y-m-d\TH:i:s', strtotime('+2 hours')),
-				'end'         => date('Y-m-d\TH:i:s', strtotime('+3 hours')),
-				'className'   => 'bg-info',
-				'description' => esc_html__( 'Initial screening call for frontend position', 'decker' ),
-			),
-			array(
-				'id'          => 4,
-				'title'       => esc_html__( 'Buy Design Assets', 'decker' ),
-				'start'       => date('Y-m-d\TH:i:s', strtotime('+4 hours')),
-				'end'         => date('Y-m-d\TH:i:s', strtotime('+1 day')),
-				'className'   => 'bg-primary',
-				'description' => esc_html__( 'Purchase new design resources', 'decker' ),
-			),
-		);
+	private function get_events() {
+		$events = array();
+		$event_posts = EventManager::get_events();
+		
+		foreach ($event_posts as $event) {
+			$events[] = array(
+				'id'             => $event->get_id(),
+				'title'          => $event->get_title(),
+				'description'    => $event->get_description(),
+				'start'          => $event->get_start_date()->format('Y-m-d\TH:i:s'),
+				'end'            => $event->get_end_date()->format('Y-m-d\TH:i:s'),
+				'location'       => $event->get_location(),
+				'url'            => $event->get_url(),
+				'className'      => $event->get_category(),
+				'assigned_users' => $event->get_assigned_users(),
+			);
+		}
+		
+		return $events;
 	}
 
 	/**
