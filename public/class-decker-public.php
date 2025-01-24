@@ -132,6 +132,7 @@ class Decker_Public {
 			'tasks'           => 'public/app-tasks.php',
 			'term-manager'    => 'public/app-term-manager.php',
 			'upcoming'        => 'public/app-upcoming.php',
+			'event-manager'   => 'public/app-event-manager.php',
 		);
 
 		if ( array_key_exists( $decker_page, $include_files ) ) {
