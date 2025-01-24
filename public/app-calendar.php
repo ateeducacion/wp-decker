@@ -376,6 +376,11 @@ include 'layouts/main.php';
 		a.$btnNewEvent.on("click", function (e) {
 		  a.onSelect({ date: new Date(), allDay: !0 });
 		}),
+		// Handle start date changes and sync end date
+		l("#event-start-date").on("change", function() {
+			l("#event-end-date").val(l(this).val());
+		});
+
 		a.$formEvent.on("submit", function (e) {
 		  e.preventDefault();
 		  var t,
