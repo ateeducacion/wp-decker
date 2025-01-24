@@ -81,7 +81,7 @@ class Decker_Calendar {
 
 		header( 'Content-Type: text/calendar; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
-		echo $ical;
+		echo wp_kses_post( $ical );
 		exit;
 	}
 
