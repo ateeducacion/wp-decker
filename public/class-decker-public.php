@@ -222,7 +222,7 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page || 'event-manager' ==  $decker_page ) { 
 
 			
-				// $resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
 
 			}

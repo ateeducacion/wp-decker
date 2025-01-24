@@ -79,6 +79,8 @@ include 'layouts/main.php';
 							</div> <!-- end card -->
 
 							<?php include 'layouts/event-modal.php'; ?>
+							<?php include 'layouts/task-modal.php'; ?>
+
 						</div>
 						<!-- end col-12 -->
 					</div> <!-- end row -->

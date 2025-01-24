@@ -23,7 +23,7 @@
                 }
             });
         });
-
+        
         // Handle delete event
         $('.delete-event').on('click', function(e) {
             e.preventDefault();
