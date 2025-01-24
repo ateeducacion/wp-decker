@@ -392,15 +392,27 @@ include 'layouts/main.php';
 				  a.$selectedEvent.setExtendedProp("description", l("#event-description").val()),
 				  a.$selectedEvent.setExtendedProp("location", l("#event-location").val()),
 				  a.$selectedEvent.setProp("url", l("#event-url").val()),
-				  a.$selectedEvent.setAllDay(l("#event-all-day").prop('checked')),
-				  a.$selectedEvent.setStart(l("#event-start").val()),
-				  a.$selectedEvent.setEnd(l("#event-end").val()),
+				  a.$selectedEvent.setAllDay(!l("#event-start-time").val() && !l("#event-end-time").val()),
+				  a.$selectedEvent.setStart(
+					l("#event-start-time").val()
+					  ? l("#event-start-date").val() + 'T' + l("#event-start-time").val()
+					  : l("#event-start-date").val()
+				  ),
+				  a.$selectedEvent.setEnd(
+					l("#event-end-time").val()
+					  ? l("#event-end-date").val() + 'T' + l("#event-end-time").val()
+					  : l("#event-end-date").val()
+				  ),
 				  a.$selectedEvent.setExtendedProp("assigned_users", l("#event-assigned-users").val()))
 				: ((t = {
 					title: l("#event-title").val(),
-					start: l("#event-start").val(),
-					end: l("#event-end").val(),
-					allDay: l("#event-all-day").prop('checked'),
+					start: l("#event-start-time").val()
+						? l("#event-start-date").val() + 'T' + l("#event-start-time").val()
+						: l("#event-start-date").val(),
+					end: l("#event-end-time").val()
+						? l("#event-end-date").val() + 'T' + l("#event-end-time").val()
+						: l("#event-end-date").val(),
+					allDay: !l("#event-start-time").val() && !l("#event-end-time").val(),
 					className: l("#event-category").val(),
 					description: l("#event-description").val(),
 					location: l("#event-location").val(),
