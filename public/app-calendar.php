@@ -41,7 +41,12 @@ include 'layouts/main.php';
 										<li class="breadcrumb-item active"><?php esc_html_e( 'Calendar', 'decker' ); ?></li>
 									</ol>
 								</div>
-								<h4 class="page-title"><?php esc_html_e( 'Calendar', 'decker' ); ?></h4>
+								<h4 class="page-title">
+									<?php esc_html_e( 'Calendar', 'decker' ); ?>
+									<button class="btn btn-success btn-sm ms-3" id="btn-new-event">
+										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Create New Event', 'decker' ); ?>
+									</button>
+								</h4>
 							</div>
 						</div>
 					</div>
@@ -53,11 +58,6 @@ include 'layouts/main.php';
 								<div class="card-body">
 									<div class="row">
 										<div class="col-lg-2">
-											<div class="d-grid">
-												<button class="btn btn-lg fs-16 btn-danger" id="btn-new-event">
-													<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Create New Event', 'decker' ); ?>
-												</button>
-											</div>
 											<div id="external-events" class="mt-3">
 												<p class="text-muted"><?php esc_html_e( 'Drag and drop your event or click in the calendar', 'decker' ); ?></p>
 												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'New Theme Release', 'decker' ); ?></div>
