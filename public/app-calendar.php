@@ -60,10 +60,10 @@ include 'layouts/main.php';
 										<div class="col-lg-2 d-none d-lg-block">
 											<div id="external-events" class="mt-3">
 												<p class="text-muted"><?php esc_html_e( 'Drag and drop your event or click in the calendar', 'decker' ); ?></p>
-												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'New Theme Release', 'decker' ); ?></div>
-												<div class="external-event bg-info-subtle text-info" data-class="bg-info"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'My Event', 'decker' ); ?></div>
-												<div class="external-event bg-warning-subtle text-warning" data-class="bg-warning"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Meet manager', 'decker' ); ?></div>
-												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Create New theme', 'decker' ); ?></div>
+												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Meeting', 'decker' ); ?></div>
+												<div class="external-event bg-info-subtle text-info" data-class="bg-info"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Holidays', 'decker' ); ?></div>
+												<div class="external-event bg-warning-subtle text-warning" data-class="bg-warning"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Warning', 'decker' ); ?></div>
+												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Alert', 'decker' ); ?></div>
 											</div>
 
 										</div> <!-- end col-->
