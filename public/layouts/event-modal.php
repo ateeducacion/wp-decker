@@ -56,16 +56,6 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 
 					<div class="mb-3">
-						<label for="event-location" class="form-label"><?php esc_html_e( 'Location', 'decker' ); ?></label>
-						<input type="text" class="form-control" id="event-location" name="event_location">
-					</div>
-
-					<div class="mb-3">
-						<label for="event-url" class="form-label"><?php esc_html_e( 'URL', 'decker' ); ?></label>
-						<input type="url" class="form-control" id="event-url" name="event_url">
-					</div>
-
-					<div class="mb-3">
 						<label for="event-category" class="form-label"><?php esc_html_e( 'Category', 'decker' ); ?></label>
 						<select class="form-select" id="event-category" name="event_category">
 							<option value="bg-success" class="d-flex align-items-center">
