@@ -24,6 +24,17 @@
 
         initCalendar: function() {
             if (this.$calendar.length) {
+                // Initialize draggable events
+                new FullCalendar.Draggable(document.getElementById('external-events'), {
+                    itemSelector: '.external-event',
+                    eventData: function(eventEl) {
+                        return {
+                            title: eventEl.innerText,
+                            className: $(eventEl).data('class')
+                        };
+                    }
+                });
+
                 this.$calendarObj = new FullCalendar.Calendar(this.$calendar[0], {
                     slotDuration: '00:15:00',
                     slotMinTime: '08:00:00',
