@@ -68,13 +68,22 @@ defined( 'ABSPATH' ) || exit;
 					<div class="mb-3">
 						<label for="event-category" class="form-label"><?php esc_html_e( 'Category', 'decker' ); ?></label>
 						<select class="form-select" id="event-category" name="event_category">
-							<option value="bg-danger"><?php esc_html_e( 'Danger', 'decker' ); ?></option>
-							<option value="bg-success"><?php esc_html_e( 'Success', 'decker' ); ?></option>
-							<option value="bg-primary" selected><?php esc_html_e( 'Primary', 'decker' ); ?></option>
-							<option value="bg-info"><?php esc_html_e( 'Info', 'decker' ); ?></option>
-							<option value="bg-dark"><?php esc_html_e( 'Dark', 'decker' ); ?></option>
-							<option value="bg-warning"><?php esc_html_e( 'Warning', 'decker' ); ?></option>
+							<option value="bg-success" class="d-flex align-items-center">
+								<span class="badge bg-success me-2" style="width: 20px;">&nbsp;</span><?php esc_html_e( 'Meeting', 'decker' ); ?>
+							</option>
+							<option value="bg-info" class="d-flex align-items-center">
+								<span class="badge bg-info me-2" style="width: 20px;">&nbsp;</span><?php esc_html_e( 'Holidays', 'decker' ); ?>
+							</option>
+							<option value="bg-warning" class="d-flex align-items-center">
+								<span class="badge bg-warning me-2" style="width: 20px;">&nbsp;</span><?php esc_html_e( 'Warning', 'decker' ); ?>
+							</option>
+							<option value="bg-danger" class="d-flex align-items-center">
+								<span class="badge bg-danger me-2" style="width: 20px;">&nbsp;</span><?php esc_html_e( 'Alert', 'decker' ); ?>
+							</option>
 						</select>
+						<small class="form-text text-muted mt-1">
+							<?php esc_html_e( 'The category determines the color of the event in the calendar.', 'decker' ); ?>
+						</small>
 					</div>
 
 					<div class="mb-3">
