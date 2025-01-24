@@ -123,12 +123,16 @@ $events = EventManager::get_events();
 	</div>
 
 	<?php include 'layouts/right-sidebar.php'; ?>
-	<?php 
+	<?php
 	include 'layouts/footer-scripts.php';
-	wp_localize_script('jquery', 'wpApiSettings', array(
-		'root' => esc_url_raw(rest_url()),
-		'nonce' => wp_create_nonce('wp_rest')
-	));
+	wp_localize_script(
+		'jquery',
+		'wpApiSettings',
+		array(
+			'root' => esc_url_raw( rest_url() ),
+			'nonce' => wp_create_nonce( 'wp_rest' ),
+		)
+	);
 	?>
 
 	<!-- Event Modal -->

@@ -172,32 +172,32 @@ class Decker_Events {
 			return;
 		}
 
-		// Save start date
+		// Save start date.
 		if ( isset( $_POST['event_start'] ) ) {
 			update_post_meta( $post_id, '_event_start', sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) );
 		}
 
-		// Save end date
+		// Save end date.
 		if ( isset( $_POST['event_end'] ) ) {
 			update_post_meta( $post_id, '_event_end', sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) );
 		}
 
-		// Save location
+		// Save location.
 		if ( isset( $_POST['event_location'] ) ) {
 			update_post_meta( $post_id, '_event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
 		}
 
-		// Save URL
+		// Save URL.
 		if ( isset( $_POST['event_url'] ) ) {
 			update_post_meta( $post_id, '_event_url', esc_url_raw( wp_unslash( $_POST['event_url'] ) ) );
 		}
 
-		// Save category
+		// Save category.
 		if ( isset( $_POST['event_category'] ) ) {
 			update_post_meta( $post_id, '_event_category', sanitize_text_field( wp_unslash( $_POST['event_category'] ) ) );
 		}
 
-		// Save assigned users
+		// Save assigned users.
 		if ( isset( $_POST['event_assigned_users'] ) ) {
 			$assigned_users = array_map( 'absint', wp_unslash( $_POST['event_assigned_users'] ) );
 			update_post_meta( $post_id, '_event_assigned_users', $assigned_users );

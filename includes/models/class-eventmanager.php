@@ -39,7 +39,7 @@ class EventManager {
 		$category = 'bg-primary',
 		$assigned_users = array()
 	) {
-		// Prepare post data
+		// Prepare post data.
 		$post_data = array(
 			'post_title'   => $title,
 			'post_content' => $description,
@@ -58,7 +58,7 @@ class EventManager {
 			return $event_id;
 		}
 
-		// Update meta fields
+		// Update meta fields.
 		update_post_meta( $event_id, '_event_start', $start_date->format( 'Y-m-d\TH:i:s' ) );
 		update_post_meta( $event_id, '_event_end', $end_date->format( 'Y-m-d\TH:i:s' ) );
 		update_post_meta( $event_id, '_event_location', $location );

@@ -70,9 +70,9 @@ class DeckerEventsIntegrationTest extends Decker_Test_Base {
 	 */
 	public function test_event_meta_box_registration() {
 		global $wp_meta_boxes;
-		
+
 		do_action( 'add_meta_boxes', 'decker_event' );
-		
+
 		$this->assertArrayHasKey( 'decker_event', $wp_meta_boxes );
 		$this->assertArrayHasKey( 'normal', $wp_meta_boxes['decker_event'] );
 		$this->assertArrayHasKey( 'high', $wp_meta_boxes['decker_event']['normal'] );
