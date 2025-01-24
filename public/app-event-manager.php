@@ -139,6 +139,5 @@ $events = EventManager::get_events();
 
 </body>
 
-	<script src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . 'assets/js/event-card.js' ); ?>"></script>
 
 </html>

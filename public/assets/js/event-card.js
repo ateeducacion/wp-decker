@@ -3,7 +3,6 @@
 
     // Initialize event card functionality
     function initializeEventCard() {
-        new Tablesort(document.getElementById('eventsTable'));
         
         // Handle search functionality
         $('#searchInput').on('keyup', function() {

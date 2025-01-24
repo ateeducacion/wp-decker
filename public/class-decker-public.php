@@ -219,6 +219,17 @@ class Decker_Public {
 				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js';
 			}
 
+			if ( 'calendar' == $decker_page || 'event-manager' ==  $decker_page ) { 
+
+			
+				// $resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
+
+			}
+
+
+
+
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js';
@@ -240,7 +251,7 @@ class Decker_Public {
 			// Preparar los datos a pasar al JS.
 			$localized_data = array(
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
-				'rest_url' => rest_url( 'wp/v2/' ), // Ajusta según tus endpoints.
+				'rest_url' => rest_url( 'decker/v1/' ), // Ajusta según tus endpoints.
 				'home_url' => home_url( '/' ),
 				'nonces' => array(
 					'task_comment_nonce' => wp_create_nonce( 'task_comment_nonce' ),
@@ -269,6 +280,13 @@ class Decker_Public {
 					'ok' => __( 'OK', 'decker' ),
 					'cancel' => __( 'Cancel', 'decker' ),
 					// Añade más strings según sea necesario.
+
+                     'today' => __( 'Today' ),
+                     'month' => __( 'Month' ),
+                     'week' => __( 'Week' ),
+                     'day' => __( 'Day' ),
+                     'list' => __( 'List' ),
+
 				),
 				'disabled' => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id' => get_current_user_id(),

@@ -103,8 +103,6 @@ include 'layouts/main.php';
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 
-	<script src="<?php echo esc_url( plugin_dir_url( __DIR__ ) . 'assets/js/event-modal.js' ); ?>"></script>
-
 </body>
 
 </html>
