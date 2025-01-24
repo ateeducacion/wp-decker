@@ -128,30 +128,44 @@
         },
 
         onEventClick: function(e) {
-            this.$formEvent[0].reset();
-            this.$formEvent.removeClass('was-validated');
-            this.$newEventData = null;
-            this.$btnDeleteEvent.show();
-            this.$modalTitle.text(deckerVars.strings.edit_event);
-            this.$modal.show();
-            this.$selectedEvent = e.event;
-
-            $('#event-title').val(this.$selectedEvent.title);
-            $('#event-description').val(this.$selectedEvent.extendedProps.description || '');
-            $('#event-location').val(this.$selectedEvent.extendedProps.location || '');
-            $('#event-url').val(this.$selectedEvent.url || '');
-
-            if (this.$selectedEvent.allDay) {
-                $('#event-start').val('');
-                $('#event-end').val('');
+            if (e.event.extendedProps.type === 'task') {
+                // For tasks, open the task modal
+                const taskId = e.event.id.replace('task_', '');
+                const taskModal = document.querySelector('#task-modal');
+                const taskButton = document.createElement('button');
+                taskButton.setAttribute('data-task-id', taskId);
+                taskButton.setAttribute('data-bs-toggle', 'modal');
+                taskButton.setAttribute('data-bs-target', '#task-modal');
+                document.body.appendChild(taskButton);
+                taskButton.click();
+                document.body.removeChild(taskButton);
             } else {
-                $('#event-start').val(moment(this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
-                $('#event-end').val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
-            }
+                // For regular events, open the event modal
+                this.$formEvent[0].reset();
+                this.$formEvent.removeClass('was-validated');
+                this.$newEventData = null;
+                this.$btnDeleteEvent.show();
+                this.$modalTitle.text(deckerVars.strings.edit_event);
+                this.$modal.show();
+                this.$selectedEvent = e.event;
 
-            $('#event-category').val(this.$selectedEvent.classNames[0]);
-            if (this.$selectedEvent.extendedProps.assigned_users) {
-                $('#event-assigned-users').val(this.$selectedEvent.extendedProps.assigned_users);
+                $('#event-title').val(this.$selectedEvent.title);
+                $('#event-description').val(this.$selectedEvent.extendedProps.description || '');
+                $('#event-location').val(this.$selectedEvent.extendedProps.location || '');
+                $('#event-url').val(this.$selectedEvent.url || '');
+
+                if (this.$selectedEvent.allDay) {
+                    $('#event-start').val('');
+                    $('#event-end').val('');
+                } else {
+                    $('#event-start').val(moment(this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
+                    $('#event-end').val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
+                }
+
+                $('#event-category').val(this.$selectedEvent.classNames[0]);
+                if (this.$selectedEvent.extendedProps.assigned_users) {
+                    $('#event-assigned-users').val(this.$selectedEvent.extendedProps.assigned_users);
+                }
             }
         },
 
