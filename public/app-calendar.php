@@ -324,6 +324,7 @@ include 'layouts/main.php';
 		initialView: "dayGridMonth",
 		handleWindowResize: !0,
 		height: l(window).height() - 200,
+		dayMaxEvents: 4, // Show only 4 events per day
 		headerToolbar: {
 		  left: "prev,next today",
 		  center: "title",
