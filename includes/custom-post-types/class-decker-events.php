@@ -44,7 +44,7 @@ class Decker_Events {
 			'new_item'           => __( 'New Event', 'decker' ),
 			'edit_item'          => __( 'Edit Event', 'decker' ),
 			'view_item'          => __( 'View Event', 'decker' ),
-			'all_items'          => __( 'All Events', 'decker' ),
+			'all_items'          => __( 'Events', 'decker' ),
 			'search_items'       => __( 'Search Events', 'decker' ),
 			'not_found'          => __( 'No events found.', 'decker' ),
 			'not_found_in_trash' => __( 'No events found in Trash.', 'decker' ),
@@ -63,7 +63,7 @@ class Decker_Events {
 			'hierarchical'      => false,
 			'menu_position'     => null,
 			'supports'          => array( 'title', 'editor', 'author' ),
-			'show_in_rest'      => true,
+			'show_in_rest'      => false,
 		);
 
 		register_post_type( 'decker_event', $args );
