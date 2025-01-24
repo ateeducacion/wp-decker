@@ -109,11 +109,27 @@
                 self.onSelect({ date: new Date(), allDay: true });
             });
 
-            // Sync dates
-            $('#event-start').on('change', function() {
-                let startVal = $(this).val();
-                if (startVal) {
-                    $('#event-end').val(startVal);
+            // Handle date/time field interactions
+            $('#event-start-time, #event-end-time').on('input', function() {
+                if ($('#event-start-time').val() || $('#event-end-time').val()) {
+                    $('#event-end-date').val('').prop('disabled', true);
+                } else {
+                    $('#event-end-date').prop('disabled', false);
+                }
+            });
+
+            $('#event-end-date').on('input', function() {
+                if ($(this).val()) {
+                    $('#event-start-time, #event-end-time').val('').prop('disabled', true);
+                } else {
+                    $('#event-start-time, #event-end-time').prop('disabled', false);
+                }
+            });
+
+            // Sync start date to end date if no end date set
+            $('#event-start-date').on('change', function() {
+                if (!$('#event-end-date').val()) {
+                    $('#event-end-date').val($(this).val());
                 }
             });
 
@@ -159,12 +175,18 @@
                 $('#event-location').val(this.$selectedEvent.extendedProps.location || '');
                 $('#event-url').val(this.$selectedEvent.url || '');
 
+                const startDate = moment(this.$selectedEvent.start);
+                const endDate = this.$selectedEvent.end ? moment(this.$selectedEvent.end) : startDate;
+
+                $('#event-start-date').val(startDate.format('YYYY-MM-DD'));
+            
                 if (this.$selectedEvent.allDay) {
-                    $('#event-start').val('');
-                    $('#event-end').val('');
+                    $('#event-end-date').val(endDate.format('YYYY-MM-DD'));
+                    $('#event-start-time, #event-end-time').val('').prop('disabled', true);
                 } else {
-                    $('#event-start').val(moment(this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
-                    $('#event-end').val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
+                    $('#event-start-time').val(startDate.format('HH:mm'));
+                    $('#event-end-time').val(endDate.format('HH:mm'));
+                    $('#event-end-date').val('').prop('disabled', true);
                 }
 
                 $('#event-category').val(this.$selectedEvent.classNames[0]);
