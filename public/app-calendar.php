@@ -124,26 +124,51 @@ include 'layouts/main.php';
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<div class="form-check">
-																<input class="form-check-input" type="checkbox" id="event-all-day" name="allDay">
-																<label class="form-check-label" for="event-all-day">
-																	<?php esc_html_e('All day', 'decker'); ?>
-																</label>
+															<label class="control-label form-label"><?php esc_html_e('Date and Time', 'decker'); ?></label>
+															<div class="row g-2">
+																<div class="col-md-6">
+																	<div class="row g-2">
+																		<div class="col-8">
+																			<input type="date" class="form-control" name="start_date" id="event-start-date" required />
+																		</div>
+																		<div class="col-4">
+																			<input type="time" class="form-control" name="start_time" id="event-start-time" step="900" list="time-options" />
+																		</div>
+																	</div>
+																	<small class="text-muted"><?php esc_html_e('From', 'decker'); ?></small>
+																</div>
+																<div class="col-md-6">
+																	<div class="row g-2">
+																		<div class="col-8">
+																			<input type="date" class="form-control" name="end_date" id="event-end-date" required />
+																		</div>
+																		<div class="col-4">
+																			<input type="time" class="form-control" name="end_time" id="event-end-time" step="900" list="time-options" />
+																		</div>
+																	</div>
+																	<small class="text-muted"><?php esc_html_e('To', 'decker'); ?></small>
+																</div>
 															</div>
+															<small class="form-text text-muted">
+																<?php esc_html_e('Tip: Use Del key to clear time for all-day events. Time inputs accept 15-minute intervals.', 'decker'); ?>
+															</small>
 														</div>
 													</div>
-													<div class="col-md-6">
-														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Start', 'decker'); ?></label>
-															<input type="datetime-local" class="form-control" name="start" id="event-start" required />
-														</div>
-													</div>
-													<div class="col-md-6">
-														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('End', 'decker'); ?></label>
-															<input type="datetime-local" class="form-control" name="end" id="event-end" required />
-														</div>
-													</div>
+													<datalist id="time-options">
+														<?php
+														for ($hour = 0; $hour < 24; $hour++) {
+															foreach ([0, 15, 30, 45] as $minute) {
+																printf(
+																	'<option value="%02d:%02d">%02d:%02d</option>',
+																	$hour,
+																	$minute,
+																	$hour,
+																	$minute
+																);
+															}
+														}
+														?>
+													</datalist>
 													<div class="col-12">
 														<div class="mb-3">
 															<label class="control-label form-label"><?php esc_html_e('Location', 'decker'); ?></label>
@@ -267,9 +292,17 @@ include 'layouts/main.php';
 	  l("#event-description").val(this.$selectedEvent.extendedProps.description || '');
 	  l("#event-location").val(this.$selectedEvent.extendedProps.location || '');
 	  l("#event-url").val(this.$selectedEvent.url || '');
-	  l("#event-all-day").prop('checked', this.$selectedEvent.allDay);
-	  l("#event-start").val(moment(this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
-	  l("#event-end").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
+	  // Set dates and times
+	  l("#event-start-date").val(moment(this.$selectedEvent.start).format('YYYY-MM-DD'));
+	  l("#event-end-date").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DD'));
+	  
+	  if (this.$selectedEvent.allDay) {
+		l("#event-start-time").val('');
+		l("#event-end-time").val('');
+	  } else {
+		l("#event-start-time").val(moment(this.$selectedEvent.start).format('HH:mm'));
+		l("#event-end-time").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('HH:mm'));
+	  }
 	  l("#event-category").val(this.$selectedEvent.classNames[0]);
 	  if (this.$selectedEvent.extendedProps.assigned_users) {
 		l("#event-assigned-users").val(this.$selectedEvent.extendedProps.assigned_users);
