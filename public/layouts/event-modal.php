@@ -15,12 +15,12 @@ defined( 'ABSPATH' ) || exit;
 <div class="modal fade" id="event-modal" tabindex="-1">
 	<div class="modal-dialog">
 		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="eventModalLabel"><?php esc_html_e( 'Add New Event', 'decker' ); ?></h5>
+			<div class="modal-header py-3 px-4 border-bottom-0">
+				<h5 class="modal-title" id="modal-title"><?php esc_html_e( 'Event', 'decker' ); ?></h5>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-			<div class="modal-body">
-				<form id="event-form" method="POST">
+			<div class="modal-body px-4 pb-4 pt-0">
+				<form class="needs-validation" name="event-form" id="form-event" novalidate>
 					<input type="hidden" name="event_id" id="event-id">
 					<?php wp_nonce_field( 'decker_event_action', 'decker_event_nonce' ); ?>
 
