@@ -325,6 +325,7 @@ include 'layouts/main.php';
 		handleWindowResize: !0,
 		height: l(window).height() - 200,
 		dayMaxEvents: 4, // Show only 4 events per day
+		firstDay: 1, // 1 means Monday
 		headerToolbar: {
 		  left: "prev,next today",
 		  center: "title",
