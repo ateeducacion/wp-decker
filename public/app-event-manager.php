@@ -35,7 +35,7 @@ $events = EventManager::get_events();
 								<h4 class="page-title">
 									<?php esc_html_e( 'Events', 'decker' ); ?>
 									<a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#event-modal">
-										<?php esc_html_e( 'Add New Event', 'decker' ); ?>
+										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Event', 'decker' ); ?>
 									</a>
 								</h4>
 								<div class="page-title-right">
