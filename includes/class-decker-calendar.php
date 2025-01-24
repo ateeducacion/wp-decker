@@ -92,11 +92,12 @@ class Decker_Calendar {
 	 */
 	private function get_events() {
 		$events = array();
-		$event_posts = EventManager::get_events();
 
+		// Get regular events
+		$event_posts = EventManager::get_events();
 		foreach ( $event_posts as $event ) {
 			$events[] = array(
-				'id'             => $event->get_id(),
+				'id'             => 'event_' . $event->get_id(), // Prefix to distinguish from tasks
 				'title'          => $event->get_title(),
 				'description'    => $event->get_description(),
 				'start'          => $event->get_start_date()->format( 'Y-m-d\TH:i:s' ),
@@ -105,6 +106,27 @@ class Decker_Calendar {
 				'url'            => $event->get_url(),
 				'className'      => $event->get_category(),
 				'assigned_users' => $event->get_assigned_users(),
+				'type'           => 'event',
+			);
+		}
+
+		// Get published tasks
+		$task_manager = new TaskManager();
+		$tasks = $task_manager->get_tasks_by_status( 'publish' );
+		
+		foreach ( $tasks as $task ) {
+			$board_term = get_term( $task->get_board(), 'decker_board' );
+			$board_color = get_term_meta( $board_term->term_id, 'color', true );
+			
+			$events[] = array(
+				'id'             => 'task_' . $task->get_id(), // Prefix to distinguish from events
+				'title'          => $task->get_title(),
+				'description'    => $task->get_description(),
+				'start'          => $task->get_due_date()->format( 'Y-m-d\TH:i:s' ),
+				'end'            => $task->get_due_date()->format( 'Y-m-d\TH:i:s' ),
+				'className'      => $board_color ? $board_color : 'bg-primary',
+				'assigned_users' => $task->get_assigned_users(),
+				'type'           => 'task',
 			);
 		}
 
