@@ -127,16 +127,22 @@ include 'layouts/main.php';
 															<label class="control-label form-label"><?php esc_html_e('Date and Time', 'decker'); ?></label>
 															<div class="row g-2">
 																<div class="col-md-6">
-																	<input type="datetime-local" class="form-control" name="start" id="event-start" step="900" required />
+																	<input type="datetime-local" class="form-control" name="start" id="event-start" 
+																		step="900" 
+																		pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
+																		required />
 																	<small class="text-muted"><?php esc_html_e('From', 'decker'); ?></small>
 																</div>
 																<div class="col-md-6">
-																	<input type="datetime-local" class="form-control" name="end" id="event-end" step="900" required />
+																	<input type="datetime-local" class="form-control" name="end" id="event-end" 
+																		step="900"
+																		pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
+																		required />
 																	<small class="text-muted"><?php esc_html_e('To', 'decker'); ?></small>
 																</div>
 															</div>
 															<small class="form-text text-muted">
-																<?php esc_html_e('Tip: Clear time input for all-day events. Time inputs accept 15-minute intervals.', 'decker'); ?>
+																<?php esc_html_e('Tip: Clear time input for all-day events. Time picker suggests 15-minute intervals but you can type any time.', 'decker'); ?>
 															</small>
 														</div>
 													</div>
