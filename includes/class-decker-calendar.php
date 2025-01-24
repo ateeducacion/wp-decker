@@ -127,6 +127,7 @@ class Decker_Calendar {
 					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'color'          => $board_color,
+					'className'      => $board_color,
 					'assigned_users' => $task->assigned_users,
 					'type'           => 'task',
 				);
