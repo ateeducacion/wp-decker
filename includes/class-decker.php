@@ -125,6 +125,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';
+
 
 		/**
 		 * The class responsible for defining the MVC.
