@@ -55,7 +55,7 @@ class Decker_Events {
 			'public'             => true,
 			'publicly_queryable' => true,
 			'show_ui'           => true,
-			'show_in_menu'      => true,
+			'show_in_menu'      => 'edit.php?post_type=decker_task',
 			'query_var'         => true,
 			'rewrite'           => array( 'slug' => 'events' ),
 			'capability_type'   => 'post',
