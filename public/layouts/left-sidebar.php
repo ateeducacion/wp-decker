@@ -327,6 +327,13 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 										?>
 				"><?php esc_html_e( 'Boards', 'decker' ); ?></a></li>
 
+				<li class="<?php echo esc_attr( decker_is_active_page( 'event-manager' ) ); ?>">
+					<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'event-manager' ), home_url( '/' ) ) ); ?>">
+						<i class="ri-calendar-event-line"></i>
+						<span><?php esc_html_e( 'Events', 'decker' ); ?></span>
+					</a>
+				</li>
+
 				  <?php
 					/*
 					TO-DO: Add the actions manager
