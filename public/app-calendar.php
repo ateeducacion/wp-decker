@@ -56,7 +56,7 @@ include 'layouts/main.php';
 							<div class="card">
 								<div class="card-body">
 									<div class="row">
-										<div class="col-lg-3">
+										<div class="col-lg-2">
 											<div class="d-grid">
 												<button class="btn btn-lg fs-16 btn-danger" id="btn-new-event">
 													<i class="ri-add-circle-fill"></i> <?php esc_html_e('Create New Event', 'decker'); ?>
@@ -88,7 +88,7 @@ include 'layouts/main.php';
 
 										</div> <!-- end col-->
 
-										<div class="col-lg-9">
+										<div class="col-lg-10">
 											<div class="mt-4 mt-lg-0">
 												<div id="calendar"></div>
 											</div>
