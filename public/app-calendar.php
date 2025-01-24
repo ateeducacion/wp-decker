@@ -127,48 +127,19 @@ include 'layouts/main.php';
 															<label class="control-label form-label"><?php esc_html_e('Date and Time', 'decker'); ?></label>
 															<div class="row g-2">
 																<div class="col-md-6">
-																	<div class="row g-2">
-																		<div class="col-8">
-																			<input type="date" class="form-control" name="start_date" id="event-start-date" required />
-																		</div>
-																		<div class="col-4">
-																			<input type="time" class="form-control" name="start_time" id="event-start-time" step="900" list="time-options" />
-																		</div>
-																	</div>
+																	<input type="datetime-local" class="form-control" name="start" id="event-start" step="900" required />
 																	<small class="text-muted"><?php esc_html_e('From', 'decker'); ?></small>
 																</div>
 																<div class="col-md-6">
-																	<div class="row g-2">
-																		<div class="col-8">
-																			<input type="date" class="form-control" name="end_date" id="event-end-date" required />
-																		</div>
-																		<div class="col-4">
-																			<input type="time" class="form-control" name="end_time" id="event-end-time" step="900" list="time-options" />
-																		</div>
-																	</div>
+																	<input type="datetime-local" class="form-control" name="end" id="event-end" step="900" required />
 																	<small class="text-muted"><?php esc_html_e('To', 'decker'); ?></small>
 																</div>
 															</div>
 															<small class="form-text text-muted">
-																<?php esc_html_e('Tip: Use Del key to clear time for all-day events. Time inputs accept 15-minute intervals.', 'decker'); ?>
+																<?php esc_html_e('Tip: Clear time input for all-day events. Time inputs accept 15-minute intervals.', 'decker'); ?>
 															</small>
 														</div>
 													</div>
-													<datalist id="time-options">
-														<?php
-														for ($hour = 0; $hour < 24; $hour++) {
-															foreach ([0, 15, 30, 45] as $minute) {
-																printf(
-																	'<option value="%02d:%02d">%02d:%02d</option>',
-																	$hour,
-																	$minute,
-																	$hour,
-																	$minute
-																);
-															}
-														}
-														?>
-													</datalist>
 													<div class="col-12">
 														<div class="mb-3">
 															<label class="control-label form-label"><?php esc_html_e('Location', 'decker'); ?></label>
@@ -293,15 +264,12 @@ include 'layouts/main.php';
 	  l("#event-location").val(this.$selectedEvent.extendedProps.location || '');
 	  l("#event-url").val(this.$selectedEvent.url || '');
 	  // Set dates and times
-	  l("#event-start-date").val(moment(this.$selectedEvent.start).format('YYYY-MM-DD'));
-	  l("#event-end-date").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DD'));
-	  
 	  if (this.$selectedEvent.allDay) {
-		l("#event-start-time").val('');
-		l("#event-end-time").val('');
+		l("#event-start").val('');
+		l("#event-end").val('');
 	  } else {
-		l("#event-start-time").val(moment(this.$selectedEvent.start).format('HH:mm'));
-		l("#event-end-time").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('HH:mm'));
+		l("#event-start").val(moment(this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
+		l("#event-end").val(moment(this.$selectedEvent.end || this.$selectedEvent.start).format('YYYY-MM-DDTHH:mm'));
 	  }
 	  l("#event-category").val(this.$selectedEvent.classNames[0]);
 	  if (this.$selectedEvent.extendedProps.assigned_users) {
@@ -376,9 +344,12 @@ include 'layouts/main.php';
 		a.$btnNewEvent.on("click", function (e) {
 		  a.onSelect({ date: new Date(), allDay: !0 });
 		}),
-		// Handle start date changes and sync end date
-		l("#event-start-date").on("change", function() {
-			l("#event-end-date").val(l(this).val());
+		// Handle start datetime changes and sync end date
+		l("#event-start").on("change", function() {
+			let startVal = l(this).val();
+			if (startVal) {
+				l("#event-end").val(startVal);
+			}
 		});
 
 		a.$formEvent.on("submit", function (e) {
@@ -392,27 +363,15 @@ include 'layouts/main.php';
 				  a.$selectedEvent.setExtendedProp("description", l("#event-description").val()),
 				  a.$selectedEvent.setExtendedProp("location", l("#event-location").val()),
 				  a.$selectedEvent.setProp("url", l("#event-url").val()),
-				  a.$selectedEvent.setAllDay(!l("#event-start-time").val() && !l("#event-end-time").val()),
-				  a.$selectedEvent.setStart(
-					l("#event-start-time").val()
-					  ? l("#event-start-date").val() + 'T' + l("#event-start-time").val()
-					  : l("#event-start-date").val()
-				  ),
-				  a.$selectedEvent.setEnd(
-					l("#event-end-time").val()
-					  ? l("#event-end-date").val() + 'T' + l("#event-end-time").val()
-					  : l("#event-end-date").val()
-				  ),
+				  a.$selectedEvent.setAllDay(!l("#event-start").val() || !l("#event-end").val()),
+				  a.$selectedEvent.setStart(l("#event-start").val() || null),
+				  a.$selectedEvent.setEnd(l("#event-end").val() || null),
 				  a.$selectedEvent.setExtendedProp("assigned_users", l("#event-assigned-users").val()))
 				: ((t = {
 					title: l("#event-title").val(),
-					start: l("#event-start-time").val()
-						? l("#event-start-date").val() + 'T' + l("#event-start-time").val()
-						: l("#event-start-date").val(),
-					end: l("#event-end-time").val()
-						? l("#event-end-date").val() + 'T' + l("#event-end-time").val()
-						: l("#event-end-date").val(),
-					allDay: !l("#event-start-time").val() && !l("#event-end-time").val(),
+					start: l("#event-start").val() || null,
+					end: l("#event-end").val() || null,
+					allDay: !l("#event-start").val() || !l("#event-end").val(),
 					className: l("#event-category").val(),
 					description: l("#event-description").val(),
 					location: l("#event-location").val(),
