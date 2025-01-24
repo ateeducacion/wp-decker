@@ -123,7 +123,13 @@ $events = EventManager::get_events();
 	</div>
 
 	<?php include 'layouts/right-sidebar.php'; ?>
-	<?php include 'layouts/footer-scripts.php'; ?>
+	<?php 
+	include 'layouts/footer-scripts.php';
+	wp_localize_script('jquery', 'wpApiSettings', array(
+		'root' => esc_url_raw(rest_url()),
+		'nonce' => wp_create_nonce('wp_rest')
+	));
+	?>
 
 	<!-- Event Modal -->
 	<div class="modal fade" id="event-modal" tabindex="-1">
