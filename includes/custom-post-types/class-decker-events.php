@@ -63,7 +63,7 @@ class Decker_Events {
 			'hierarchical'      => false,
 			'menu_position'     => null,
 			'supports'          => array( 'title', 'editor', 'author' ),
-			'show_in_rest'      => false,
+			'show_in_rest'      => true,
 		);
 
 		register_post_type( 'decker_event', $args );
