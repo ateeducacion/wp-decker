@@ -115,16 +115,18 @@ class Decker_Calendar {
 		$tasks = $task_manager->get_tasks_by_status( 'publish' );
 		
 		foreach ( $tasks as $task ) {
-			$board_term = get_term( $task->get_board(), 'decker_board' );
-			$board_color = get_term_meta( $board_term->term_id, 'color', true );
+			$board = $task->get_board();
+			$board_color = $board ? get_term_meta( $board->term_id, 'color', true ) : '';
 			
-			$events[] = array(
-				'id'             => 'task_' . $task->get_id(), // Prefix to distinguish from events
-				'title'          => $task->get_title(),
-				'description'    => $task->get_description(),
-				'start'          => $task->get_due_date()->format( 'Y-m-d\TH:i:s' ),
-				'end'            => $task->get_due_date()->format( 'Y-m-d\TH:i:s' ),
-				'className'      => $board_color ? $board_color : 'bg-primary',
+			// Only add tasks that have a due date
+			if ($task->duedate) {
+				$events[] = array(
+					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events
+					'title'          => $task->title,
+					'description'    => $task->description,
+					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+					'className'      => $board_color ? $board_color : 'bg-primary',
 				'assigned_users' => $task->get_assigned_users(),
 				'type'           => 'task',
 			);
