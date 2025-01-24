@@ -20,12 +20,10 @@
                 const title = $(this).find('.event-title').text().toLowerCase();
                 const start = $(this).find('.event-start').text().toLowerCase();
                 const end = $(this).find('.event-end').text().toLowerCase();
-                const location = $(this).find('.event-location').text().toLowerCase();
                 const category = $(this).find('.event-category').text().toLowerCase();
 
                 if (title.includes(searchText) || start.includes(searchText) || 
-                    end.includes(searchText) || location.includes(searchText) || 
-                    category.includes(searchText)) {
+                    end.includes(searchText) || category.includes(searchText)) {
                     $(this).show();
                 } else {
                     $(this).hide();

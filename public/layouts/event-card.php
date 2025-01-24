@@ -27,9 +27,6 @@ function render_event_card( $event ) {
 		<td class="event-end">
 			<?php echo esc_html( $event->get_end_date()->format( 'Y-m-d H:i' ) ); ?>
 		</td>
-		<td class="event-location">
-			<?php echo esc_html( $event->get_location() ); ?>
-		</td>
 		<td class="event-category">
 			<span class="badge <?php echo esc_attr( $event->get_category() ); ?>">
 				<?php echo esc_html( str_replace( 'bg-', '', $event->get_category() ) ); ?>
@@ -46,9 +43,6 @@ function render_event_card( $event ) {
 			</a>
 			<span class="event-description d-none">
 				<?php echo esc_html( $event->get_description() ); ?>
-			</span>
-			<span class="event-url d-none">
-				<?php echo esc_url( $event->get_url() ); ?>
 			</span>
 			<span class="event-assigned-users d-none">
 				<?php echo esc_attr( json_encode( $event->get_assigned_users() ) ); ?>
