@@ -231,31 +231,7 @@ include 'layouts/main.php';
 			  },
 			}
 		  ),
-		  [
-			{
-			  title: "Meeting with Mr. Shreyu",
-			  start: new Date(l.now() + 158e6),
-			  end: new Date(l.now() + 338e6),
-			  className: "bg-warning",
-			},
-			{
-			  title: "Interview - Backend Engineer",
-			  start: e,
-			  end: e,
-			  className: "bg-success",
-			},
-			{
-			  title: "Phone Screen - Frontend Engineer",
-			  start: new Date(l.now() + 168e6),
-			  className: "bg-info",
-			},
-			{
-			  title: "Buy Design Assets",
-			  start: new Date(l.now() + 338e6),
-			  end: new Date(l.now() + 4056e5),
-			  className: "bg-primary",
-			},
-		  ]),
+		  []),
 		a = this;
 	  (a.$calendarObj = new FullCalendar.Calendar(a.$calendar[0], {
 		slotDuration: "00:15:00",
@@ -280,7 +256,13 @@ include 'layouts/main.php';
 		  center: "title",
 		  right: "dayGridMonth,timeGridWeek,timeGridDay,listMonth",
 		},
-		initialEvents: e,
+		events: {
+			url: '/wp-json/decker/v1/calendar',
+			method: 'GET',
+			failure: function() {
+				alert('There was an error while fetching events!');
+			}
+		},
 		editable: !0,
 		droppable: !0,
 		selectable: !0,

@@ -94,17 +94,35 @@ class Decker_Calendar {
 		return array(
 			array(
 				'id'          => 1,
-				'title'       => esc_html__( 'Sample Task 1', 'decker' ),
-				'start'       => '2024-01-24T10:00:00',
-				'end'         => '2024-01-24T11:00:00',
-				'description' => esc_html__( 'This is a sample task description', 'decker' ),
+				'title'       => esc_html__( 'Meeting with Mr. Shreyu', 'decker' ),
+				'start'       => date('Y-m-d\TH:i:s', strtotime('+2 days')),
+				'end'         => date('Y-m-d\TH:i:s', strtotime('+2 days +2 hours')),
+				'className'   => 'bg-warning',
+				'description' => esc_html__( 'Project planning meeting', 'decker' ),
 			),
 			array(
 				'id'          => 2,
-				'title'       => esc_html__( 'Sample Task 2', 'decker' ),
-				'start'       => '2024-01-25T14:00:00',
-				'end'         => '2024-01-25T15:00:00',
-				'description' => esc_html__( 'Another sample task description', 'decker' ),
+				'title'       => esc_html__( 'Interview - Backend Engineer', 'decker' ),
+				'start'       => date('Y-m-d\TH:i:s'),
+				'end'         => date('Y-m-d\TH:i:s', strtotime('+1 hour')),
+				'className'   => 'bg-success',
+				'description' => esc_html__( 'Technical interview for backend position', 'decker' ),
+			),
+			array(
+				'id'          => 3,
+				'title'       => esc_html__( 'Phone Screen - Frontend Engineer', 'decker' ),
+				'start'       => date('Y-m-d\TH:i:s', strtotime('+2 hours')),
+				'end'         => date('Y-m-d\TH:i:s', strtotime('+3 hours')),
+				'className'   => 'bg-info',
+				'description' => esc_html__( 'Initial screening call for frontend position', 'decker' ),
+			),
+			array(
+				'id'          => 4,
+				'title'       => esc_html__( 'Buy Design Assets', 'decker' ),
+				'start'       => date('Y-m-d\TH:i:s', strtotime('+4 hours')),
+				'end'         => date('Y-m-d\TH:i:s', strtotime('+1 day')),
+				'className'   => 'bg-primary',
+				'description' => esc_html__( 'Purchase new design resources', 'decker' ),
 			),
 		);
 	}
