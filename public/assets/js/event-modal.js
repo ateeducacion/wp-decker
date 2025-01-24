@@ -75,6 +75,7 @@
                     eventDidMount: function(info) {
                         if (info.event.extendedProps.type === 'task') {
                             info.el.style.backgroundColor = info.event.classNames[0];
+                            info.event.setAllDay(true);
                             // Add task icon to title
                             const titleEl = info.el.querySelector('.fc-event-title');
                             if (titleEl) {
