@@ -18,10 +18,6 @@ include 'layouts/main.php';
 
 	<?php include 'layouts/head-css.php'; ?>
 
-	<!-- Fullcalendar css -->
-	<!-- <link href="public/assets/css/fullcalendar.min.css" rel="stylesheet" type="text/css" /> -->
-
-
 </head>
 <body <?php body_class(); ?>>
 
@@ -41,11 +37,11 @@ include 'layouts/main.php';
 							<div class="page-title-box">
 								<div class="page-title-right">
 									<ol class="breadcrumb m-0">
-										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php esc_html_e('Decker', 'decker'); ?></a></li>
-										<li class="breadcrumb-item active"><?php esc_html_e('Calendar', 'decker'); ?></li>
+										<li class="breadcrumb-item"><a href="javascript: void(0);"><?php esc_html_e( 'Decker', 'decker' ); ?></a></li>
+										<li class="breadcrumb-item active"><?php esc_html_e( 'Calendar', 'decker' ); ?></li>
 									</ol>
 								</div>
-								<h4 class="page-title"><?php esc_html_e('Calendar', 'decker'); ?></h4>
+								<h4 class="page-title"><?php esc_html_e( 'Calendar', 'decker' ); ?></h4>
 							</div>
 						</div>
 					</div>
@@ -59,15 +55,15 @@ include 'layouts/main.php';
 										<div class="col-lg-2">
 											<div class="d-grid">
 												<button class="btn btn-lg fs-16 btn-danger" id="btn-new-event">
-													<i class="ri-add-circle-fill"></i> <?php esc_html_e('Create New Event', 'decker'); ?>
+													<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Create New Event', 'decker' ); ?>
 												</button>
 											</div>
 											<div id="external-events" class="mt-3">
-												<p class="text-muted"><?php esc_html_e('Drag and drop your event or click in the calendar', 'decker'); ?></p>
-												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e('New Theme Release', 'decker'); ?></div>
-												<div class="external-event bg-info-subtle text-info" data-class="bg-info"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e('My Event', 'decker'); ?></div>
-												<div class="external-event bg-warning-subtle text-warning" data-class="bg-warning"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e('Meet manager', 'decker'); ?></div>
-												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e('Create New theme', 'decker'); ?></div>
+												<p class="text-muted"><?php esc_html_e( 'Drag and drop your event or click in the calendar', 'decker' ); ?></p>
+												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'New Theme Release', 'decker' ); ?></div>
+												<div class="external-event bg-info-subtle text-info" data-class="bg-info"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'My Event', 'decker' ); ?></div>
+												<div class="external-event bg-warning-subtle text-warning" data-class="bg-warning"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Meet manager', 'decker' ); ?></div>
+												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Create New theme', 'decker' ); ?></div>
 											</div>
 
 										</div> <!-- end col-->
@@ -88,71 +84,71 @@ include 'layouts/main.php';
 									<div class="modal-content">
 										<form class="needs-validation" name="event-form" id="form-event" novalidate>
 											<div class="modal-header py-3 px-4 border-bottom-0">
-												<h5 class="modal-title" id="modal-title"><?php esc_html_e('Event', 'decker'); ?></h5>
+												<h5 class="modal-title" id="modal-title"><?php esc_html_e( 'Event', 'decker' ); ?></h5>
 												<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 											</div>
 											<div class="modal-body px-4 pb-4 pt-0">
 												<div class="row">
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Event Name', 'decker'); ?></label>
-															<input class="form-control" placeholder="<?php esc_attr_e('Insert Event Name', 'decker'); ?>" type="text" name="title" id="event-title" required />
-															<div class="invalid-feedback"><?php esc_html_e('Please provide a valid event name', 'decker'); ?></div>
+															<label class="control-label form-label"><?php esc_html_e( 'Event Name', 'decker' ); ?></label>
+															<input class="form-control" placeholder="<?php esc_attr_e( 'Insert Event Name', 'decker' ); ?>" type="text" name="title" id="event-title" required />
+															<div class="invalid-feedback"><?php esc_html_e( 'Please provide a valid event name', 'decker' ); ?></div>
 														</div>
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Description', 'decker'); ?></label>
+															<label class="control-label form-label"><?php esc_html_e( 'Description', 'decker' ); ?></label>
 															<textarea class="form-control" name="description" id="event-description" rows="3"></textarea>
 														</div>
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Date and Time', 'decker'); ?></label>
+															<label class="control-label form-label"><?php esc_html_e( 'Date and Time', 'decker' ); ?></label>
 															<div class="row g-2">
 																<div class="col-md-6">
 																	<input type="datetime-local" class="form-control" name="start" id="event-start" 
 																		step="900" 
 																		pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
 																		required />
-																	<small class="text-muted"><?php esc_html_e('From', 'decker'); ?></small>
+																	<small class="text-muted"><?php esc_html_e( 'From', 'decker' ); ?></small>
 																</div>
 																<div class="col-md-6">
 																	<input type="datetime-local" class="form-control" name="end" id="event-end" 
 																		step="900"
 																		pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}"
 																		required />
-																	<small class="text-muted"><?php esc_html_e('To', 'decker'); ?></small>
+																	<small class="text-muted"><?php esc_html_e( 'To', 'decker' ); ?></small>
 																</div>
 															</div>
 															<small class="form-text text-muted">
-																<?php esc_html_e('Tip: Clear time input for all-day events. Time picker suggests 15-minute intervals but you can type any time.', 'decker'); ?>
+																<?php esc_html_e( 'Tip: Clear time input for all-day events. Time picker suggests 15-minute intervals but you can type any time.', 'decker' ); ?>
 															</small>
 														</div>
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Location', 'decker'); ?></label>
+															<label class="control-label form-label"><?php esc_html_e( 'Location', 'decker' ); ?></label>
 															<input type="text" class="form-control" name="location" id="event-location" />
 														</div>
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('URL', 'decker'); ?></label>
+															<label class="control-label form-label"><?php esc_html_e( 'URL', 'decker' ); ?></label>
 															<input type="url" class="form-control" name="url" id="event-url" />
 														</div>
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Assigned Users', 'decker'); ?></label>
+															<label class="control-label form-label"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></label>
 															<select class="form-select" name="assigned_users[]" id="event-assigned-users" multiple>
 																<?php
-																$users = get_users(array('fields' => array('ID', 'display_name')));
-																foreach ($users as $user) {
+																$users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
+																foreach ( $users as $user ) {
 																	printf(
 																		'<option value="%d">%s</option>',
-																		esc_attr($user->ID),
-																		esc_html($user->display_name)
+																		esc_attr( $user->ID ),
+																		esc_html( $user->display_name )
 																	);
 																}
 																?>
@@ -161,26 +157,26 @@ include 'layouts/main.php';
 													</div>
 													<div class="col-12">
 														<div class="mb-3">
-															<label class="control-label form-label"><?php esc_html_e('Category', 'decker'); ?></label>
+															<label class="control-label form-label"><?php esc_html_e( 'Category', 'decker' ); ?></label>
 															<select class="form-select" name="category" id="event-category" required>
-																<option value="bg-danger" selected><?php esc_html_e('Danger', 'decker'); ?></option>
-																<option value="bg-success"><?php esc_html_e('Success', 'decker'); ?></option>
-																<option value="bg-primary"><?php esc_html_e('Primary', 'decker'); ?></option>
-																<option value="bg-info"><?php esc_html_e('Info', 'decker'); ?></option>
-																<option value="bg-dark"><?php esc_html_e('Dark', 'decker'); ?></option>
-																<option value="bg-warning"><?php esc_html_e('Warning', 'decker'); ?></option>
+																<option value="bg-danger" selected><?php esc_html_e( 'Danger', 'decker' ); ?></option>
+																<option value="bg-success"><?php esc_html_e( 'Success', 'decker' ); ?></option>
+																<option value="bg-primary"><?php esc_html_e( 'Primary', 'decker' ); ?></option>
+																<option value="bg-info"><?php esc_html_e( 'Info', 'decker' ); ?></option>
+																<option value="bg-dark"><?php esc_html_e( 'Dark', 'decker' ); ?></option>
+																<option value="bg-warning"><?php esc_html_e( 'Warning', 'decker' ); ?></option>
 															</select>
-															<div class="invalid-feedback"><?php esc_html_e('Please select a valid event category', 'decker'); ?></div>
+															<div class="invalid-feedback"><?php esc_html_e( 'Please select a valid event category', 'decker' ); ?></div>
 														</div>
 													</div>
 												</div>
 												<div class="row">
 													<div class="col-6">
-														<button type="button" class="btn btn-danger" id="btn-delete-event"><?php esc_html_e('Delete', 'decker'); ?></button>
+														<button type="button" class="btn btn-danger" id="btn-delete-event"><?php esc_html_e( 'Delete', 'decker' ); ?></button>
 													</div>
 													<div class="col-6 text-end">
-														<button type="button" class="btn btn-light me-1" data-bs-dismiss="modal"><?php esc_html_e('Close', 'decker'); ?></button>
-														<button type="submit" class="btn btn-success" id="btn-save-event"><?php esc_html_e('Save', 'decker'); ?></button>
+														<button type="button" class="btn btn-light me-1" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
+														<button type="submit" class="btn btn-success" id="btn-save-event"><?php esc_html_e( 'Save', 'decker' ); ?></button>
 													</div>
 												</div>
 											</div>
@@ -212,14 +208,6 @@ include 'layouts/main.php';
 
 	<?php include 'layouts/footer-scripts.php'; ?>
 
-	<!-- Fullcalendar js -->
-	<!-- <script src="assets/vendor/fullcalendar/main.min.js"></script> -->
-
-	<!-- Calendar App Demo js -->
-	<!-- <script src="assets/js/pages/demo.calendar.js"></script> -->
-
-	<!-- App js -->
-	<!-- <script src="assets/js/app.min.js"></script> -->
 
 	<script type="text/javascript">
 		
@@ -297,13 +285,13 @@ include 'layouts/main.php';
 		themeSystem: "bootstrap",
 		bootstrapFontAwesome: !1,
 		buttonText: {
-		  today: "<?php esc_html_e('Today', 'decker'); ?>",
-		  month: "<?php esc_html_e('Month', 'decker'); ?>",
-		  week: "<?php esc_html_e('Week', 'decker'); ?>",
-		  day: "<?php esc_html_e('Day', 'decker'); ?>",
-		  list: "<?php esc_html_e('List', 'decker'); ?>",
-		  prev: "<?php esc_html_e('Prev', 'decker'); ?>",
-		  next: "<?php esc_html_e('Next', 'decker'); ?>",
+		  today: "<?php esc_html_e( 'Today', 'decker' ); ?>",
+		  month: "<?php esc_html_e( 'Month', 'decker' ); ?>",
+		  week: "<?php esc_html_e( 'Week', 'decker' ); ?>",
+		  day: "<?php esc_html_e( 'Day', 'decker' ); ?>",
+		  list: "<?php esc_html_e( 'List', 'decker' ); ?>",
+		  prev: "<?php esc_html_e( 'Prev', 'decker' ); ?>",
+		  next: "<?php esc_html_e( 'Next', 'decker' ); ?>",
 		},
 		initialView: "dayGridMonth",
 		handleWindowResize: !0,
@@ -319,7 +307,7 @@ include 'layouts/main.php';
 			url: '/wp-json/decker/v1/calendar',
 			method: 'GET',
 			failure: function() {
-				alert('<?php esc_html_e('There was an error while fetching events!', 'decker'); ?>');
+				alert('<?php esc_html_e( 'There was an error while fetching events!', 'decker' ); ?>');
 			}
 		},
 		editable: !0,
