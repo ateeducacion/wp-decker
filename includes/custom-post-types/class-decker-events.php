@@ -235,7 +235,12 @@ class Decker_Events {
 			</select>
 		</p>
 		<p>
-			<label for="event_assigned_users"><?php esc_html_e( 'Assigned Users:', 'decker' ); ?></label><br>
+			<label for="event_assigned_users">
+				<?php esc_html_e( 'Assigned Users:', 'decker' ); ?>
+				<a href="#" class="select-all-users" style="font-size: 0.8em;">
+					(<?php esc_html_e( 'all', 'decker' ); ?>)
+				</a>
+			</label><br>
 			<select id="event_assigned_users" name="event_assigned_users[]" multiple class="widefat">
 				<?php
 				$users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );

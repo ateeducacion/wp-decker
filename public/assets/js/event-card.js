@@ -31,6 +31,12 @@
             });
         });
         
+        // Handle select all users
+        $('.select-all-users').on('click', function(e) {
+            e.preventDefault();
+            $('#event_assigned_users option').prop('selected', true);
+        });
+
         // Handle delete event
         $('.delete-event').on('click', function(e) {
             e.preventDefault();
