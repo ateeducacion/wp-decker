@@ -118,35 +118,76 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
     }
 
     /**
-     * Test event update via REST API
+     * Test event update via REST API including meta fields
      */
     public function test_update_event() {
-        // Create event as editor
+        // Create event as editor with initial meta
         wp_set_current_user($this->editor);
+        
+        $initial_meta = array(
+            'event_start' => '2024-02-01T10:00:00',
+            'event_end' => '2024-02-01T11:00:00',
+            'event_location' => 'Initial Location',
+            'event_url' => 'https://example.com',
+            'event_category' => 'bg-primary',
+            'event_assigned_users' => array($this->editor)
+        );
         
         $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
         $request->set_param('title', 'Original Event');
         $request->set_param('status', 'publish');
+        $request->set_param('meta', $initial_meta);
         
         $response = $this->server->dispatch($request);
         $this->event_id = $response->get_data()['id'];
 
-        // Update event
+        // Update event with new title and meta
+        $updated_meta = array(
+            'event_start' => '2024-02-01T14:00:00',
+            'event_end' => '2024-02-01T15:00:00',
+            'event_location' => 'Updated Location',
+            'event_url' => 'https://updated-example.com',
+            'event_category' => 'bg-success',
+            'event_assigned_users' => array($this->administrator, $this->editor)
+        );
+        
         $request = new WP_REST_Request('PUT', '/wp/v2/decker_event/' . $this->event_id);
         $request->set_param('title', 'Updated Event');
+        $request->set_param('meta', $updated_meta);
         
         $response = $this->server->dispatch($request);
+        $data = $response->get_data();
+        
+        // Verify response status and title
         $this->assertEquals(200, $response->get_status());
-        $this->assertEquals('Updated Event', $response->get_data()['title']['rendered']);
+        $this->assertEquals('Updated Event', $data['title']['rendered']);
+        
+        // Verify updated meta fields
+        foreach($updated_meta as $key => $value) {
+            // Check meta in REST response
+            $this->assertArrayHasKey($key, $data['meta'], "Meta field '$key' not found in REST response");
+            $this->assertEquals($value, $data['meta'][$key], "Meta field '$key' has incorrect value in REST response");
+            
+            // Check meta in database
+            $stored_value = get_post_meta($this->event_id, $key, true);
+            $this->assertEquals($value, $stored_value, "Meta field '$key' has incorrect value in database");
+        }
 
         // Test that subscriber cannot update
         wp_set_current_user($this->subscriber);
         
         $request = new WP_REST_Request('PUT', '/wp/v2/decker_event/' . $this->event_id);
         $request->set_param('title', 'Subscriber Update');
+        $request->set_param('meta', $initial_meta); // Try to revert meta
         
         $response = $this->server->dispatch($request);
         $this->assertEquals(403, $response->get_status());
+        
+        // Verify meta wasn't changed by failed subscriber update
+        foreach($updated_meta as $key => $value) {
+            $stored_value = get_post_meta($this->event_id, $key, true);
+            $this->assertEquals($value, $stored_value, "Meta field '$key' should not have been changed by subscriber");
+        }
     }
 
     /**
