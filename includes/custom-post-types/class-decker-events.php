@@ -39,25 +39,6 @@ class Decker_Events {
 	 * Register the custom post type
 	 */
 	public function register_post_type() {
-		// Add capabilities to roles
-		$admin = get_role('administrator');
-		$editor = get_role('editor');
-		
-		$caps = array(
-			'edit_decker_event',
-			'read_decker_event',
-			'delete_decker_event',
-			'edit_decker_events',
-			'edit_others_decker_events',
-			'publish_decker_events',
-			'read_private_decker_events',
-			'delete_decker_events'
-		);
-
-		foreach ($caps as $cap) {
-			$admin->add_cap($cap);
-			$editor->add_cap($cap);
-		}
 
 		$labels = array(
 			'name'               => _x( 'Events', 'post type general name', 'decker' ),
@@ -83,16 +64,9 @@ class Decker_Events {
 			'show_in_menu'      => 'edit.php?post_type=decker_task',
 			'query_var'         => true,
 			'rewrite'           => array( 'slug' => 'events' ),
-			'capability_type'   => array('decker_event', 'decker_events'),
+			'capability_type'   => 'post',
 			'capabilities'      => array(
-				'edit_post'          => 'edit_decker_event',
-				'read_post'          => 'read_decker_event',
-				'delete_post'        => 'delete_decker_event',
-				'edit_posts'         => 'edit_decker_events',
-				'edit_others_posts'  => 'edit_others_decker_events',
-				'publish_posts'      => 'publish_decker_events',
-				'read_private_posts' => 'read_private_decker_events',
-				'delete_posts'       => 'delete_decker_events',
+				'create_posts' => 'edit_posts',
 			),
 			'map_meta_cap'      => true,
 
@@ -201,7 +175,10 @@ public function restrict_rest_access($result, $rest_server, $request) {
 
     if (strpos($route, '/wp/v2/decker_event') === 0) {
         // Usa la capacidad específica del CPT
-		if (!current_user_can('edit_others_posts')) {
+        if (!current_user_can('edit_posts')) {
+        	// print_r(get_current_user_id());
+        	// print_r("hola");
+        	// die();
             return new WP_Error(
                 'rest_forbidden',
                 __('No tienes permisos para acceder a este recurso.', 'decker'),

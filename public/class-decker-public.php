@@ -294,7 +294,12 @@ class Decker_Public {
 
 			$last_handle = '';
 
+			// Add the bundled jQuery library.
 			wp_enqueue_script( 'jquery' );
+
+			// Add the bundled Backbone library.
+			wp_enqueue_script( 'wp-api' );
+
 
 			foreach ( $resources as $resource ) {
 				$handle = sanitize_title( basename( $resource, '.' . pathinfo( $resource, PATHINFO_EXTENSION ) ) );
@@ -314,6 +319,7 @@ class Decker_Public {
 
 				}
 			}
+
 
 			// Localize the script with new data.
 			wp_localize_script(
