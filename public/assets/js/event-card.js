@@ -56,7 +56,7 @@
 
                 const formData = new FormData(form);
                 const id = formData.get('event_id');
-                const url = wpApiSettings.root + 'wp/v2/decker_event' + (id ? '/' + id : '');
+                const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id > 0 ? '/' + id : '');
 
                 // Build the event data object
                 const eventData = {
@@ -80,7 +80,7 @@
                 }
 
                 fetch(url, {
-                    method: id ? 'PUT' : 'POST',
+                    method: 'POST',
                     body: JSON.stringify(eventData),
                     headers: {
                         'X-WP-Nonce': wpApiSettings.nonce,

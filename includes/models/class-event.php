@@ -100,8 +100,7 @@ class Event {
         } elseif ( is_int( $input ) && $input > 0 ) {
             $post = get_post( $input );
         } else {
-            $this->author = get_current_user_id(); // Default author.
-            $post         = false;
+            $post = false;
         }
 
         if ( $post ) {
@@ -113,8 +112,6 @@ class Event {
             $this->id          = $post->ID;
             $this->title       = (string) $post->post_title;
             $this->description = (string) $post->post_content;
-            $this->status      = (string) $post->post_status;
-            $this->author      = $post->post_author;
 
             // Load all metadata once.
             $this->meta        = get_post_meta( $this->id );

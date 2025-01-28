@@ -169,7 +169,7 @@
                 document.body.removeChild(taskButton);
             } else {
                 // For regular events, open the event modal
-                this.$formEvent[0].reset();
+                // this.$formEvent[0].reset();
                 this.$formEvent.removeClass('was-validated');
                 this.$newEventData = null;
                 this.$btnDeleteEvent.show();

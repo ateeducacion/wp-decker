@@ -43,9 +43,10 @@ include 'layouts/main.php';
 								</div>
 								<h4 class="page-title">
 									<?php esc_html_e( 'Calendar', 'decker' ); ?>
-									<button class="btn btn-success btn-sm ms-3" id="btn-new-event">
-										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Create New Event', 'decker' ); ?>
-									</button>
+
+									<a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#event-modal" data-event-id="0">
+										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Event', 'decker' ); ?>
+									</a>
 								</h4>
 							</div>
 						</div>
