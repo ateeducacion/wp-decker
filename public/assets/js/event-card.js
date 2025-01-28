@@ -56,7 +56,6 @@
 
                 const formData = new FormData(form);
                 const id = formData.get('event_id');
-                const method = id ? 'PUT' : 'POST';
                 const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id ? '/' + id : '');
 
                 // Convert FormData to JSON object
@@ -75,7 +74,7 @@
                 });
 
                 fetch(url, {
-                    method: method,
+                    method: 'POST', 
                     body: JSON.stringify(jsonData),
                     headers: {
                         'X-WP-Nonce': wpApiSettings.nonce,
