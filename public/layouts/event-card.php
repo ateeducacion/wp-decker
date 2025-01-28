@@ -36,6 +36,13 @@ if ( ! defined( 'ABSPATH' ) ) {
     }
 }
 
+// Sanitize and verify the nonce.
+$nonce = isset( $_GET['nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['nonce'] ) ) : '';
+if ( ! wp_verify_nonce( $nonce, 'decker_event_card' ) ) {
+	exit( 'Unauthorized request.' );
+}
+
+
 // Initialize variables
 $event_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 $event = $event_id ? new Event( $event_id ) : null;
