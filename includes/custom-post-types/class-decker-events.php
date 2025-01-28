@@ -271,7 +271,7 @@ public function restrict_rest_access($result, $rest_server, $request) {
 	 */
 	public function save_event_meta( $post_id ) {
 		if ( ! isset( $_POST['decker_event_meta_box_nonce'] ) ) {
-			return;
+			return; 
 		}
 
 		if ( ! wp_verify_nonce( sanitize_key( $_POST['decker_event_meta_box_nonce'] ), 'decker_event_meta_box' ) ) {
