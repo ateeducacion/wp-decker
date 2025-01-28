@@ -56,26 +56,32 @@
 
                 const formData = new FormData(form);
                 const id = formData.get('event_id');
-                const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id ? '/' + id : '');
+                const url = wpApiSettings.root + 'wp/v2/decker_event' + (id ? '/' + id : '');
 
-                // Convert FormData to JSON object
-                const jsonData = {};
-                formData.forEach((value, key) => {
-                    // Handle multiple values (like assigned users)
-                    if (key.endsWith('[]')) {
-                        const cleanKey = key.slice(0, -2);
-                        if (!jsonData[cleanKey]) {
-                            jsonData[cleanKey] = [];
-                        }
-                        jsonData[cleanKey].push(value);
-                    } else {
-                        jsonData[key] = value;
+                // Build the event data object
+                const eventData = {
+                    title: formData.get('event_title'),
+                    status: 'publish',
+                    meta: {
+                        event_start: formData.get('event_start_date') + 'T' + (formData.get('event_start_time') || '00:00'),
+                        event_end: formData.get('event_end_date') + 'T' + (formData.get('event_end_time') || '00:00'),
+                        event_category: formData.get('event_category'),
+                        event_assigned_users: Array.from(formData.getAll('event_assigned_users[]')).map(Number)
                     }
-                });
+                };
+
+                // Add content if provided
+                const description = formData.get('event_description');
+                if (description) {
+                    eventData.content = {
+                        raw: description,
+                        rendered: description
+                    };
+                }
 
                 fetch(url, {
-                    method: 'POST', 
-                    body: JSON.stringify(jsonData),
+                    method: id ? 'PUT' : 'POST',
+                    body: JSON.stringify(eventData),
                     headers: {
                         'X-WP-Nonce': wpApiSettings.nonce,
                         'Content-Type': 'application/json'
