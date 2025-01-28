@@ -7,9 +7,6 @@
  * @author     ATE <ate.educacion@gobiernodecanarias.org>
  */
 
-// Exit if accessed directly.
-defined( 'ABSPATH' ) || exit;
-
 /**
  * Function to find and include wp-load.php dynamically.
  *
@@ -42,6 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Initialize variables
 $event_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 $event = $event_id ? new Event( $event_id ) : null;
+
 ?>
 
 <form class="needs-validation" name="event-form" id="form-event" novalidate>
@@ -63,12 +61,12 @@ $event = $event_id ? new Event( $event_id ) : null;
         <div class="row g-2">
             <div class="col-md-6">
                 <input type="date" class="form-control" name="event_start_date" id="event-start-date" 
-                       value="<?php echo $event ? esc_attr( $event->get_start_date()->format( 'Y-m-d' ) ) : ''; ?>" required />
+                       value="<?php echo $event ? esc_attr( $event->get_start_date()?->format( 'Y-m-d' ) ) : ''; ?>" required />
                 <small class="text-muted"><?php esc_html_e( 'Start Date', 'decker' ); ?></small>
             </div>
             <div class="col-md-6">
                 <input type="date" class="form-control" name="event_end_date" id="event-end-date" 
-                       value="<?php echo $event ? esc_attr( $event->get_end_date()->format( 'Y-m-d' ) ) : ''; ?>" />
+                       value="<?php echo $event ? esc_attr( $event->get_end_date()?->format( 'Y-m-d' ) ) : ''; ?>" />
                 <small class="text-muted"><?php esc_html_e( 'End Date', 'decker' ); ?></small>
             </div>
         </div>
@@ -79,12 +77,12 @@ $event = $event_id ? new Event( $event_id ) : null;
         <div class="row g-2">
             <div class="col-md-6">
                 <input type="time" class="form-control" name="event_start_time" id="event-start-time" 
-                       value="<?php echo $event ? esc_attr( $event->get_start_date()->format( 'H:i' ) ) : ''; ?>" />
+                       value="<?php echo $event ? esc_attr( $event->get_start_date()?->format( 'H:i' ) ) : ''; ?>" />
                 <small class="text-muted"><?php esc_html_e( 'Start Time', 'decker' ); ?></small>
             </div>
             <div class="col-md-6">
                 <input type="time" class="form-control" name="event_end_time" id="event-end-time" 
-                       value="<?php echo $event ? esc_attr( $event->get_end_date()->format( 'H:i' ) ) : ''; ?>" />
+                       value="<?php echo $event ? esc_attr( $event->get_end_date()?->format( 'H:i' ) ) : ''; ?>" />
                 <small class="text-muted"><?php esc_html_e( 'End Time', 'decker' ); ?></small>
             </div>
         </div>

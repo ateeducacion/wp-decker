@@ -89,7 +89,7 @@ class EventManager {
 		$category = get_post_meta( $id, '_event_category', true );
 		$assigned_users = get_post_meta( $id, '_event_assigned_users', true );
 
-		return new Event(
+		return Event::create(
 			$id,
 			$post->post_title,
 			$post->post_content,
