@@ -217,6 +217,9 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page ) {
 				// FullCalendar.
 				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js';
+
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
+
 			}
 
 			if ( 'calendar' == $decker_page || 'event-manager' ==  $decker_page ) { 
