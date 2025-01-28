@@ -9,6 +9,26 @@
     const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
 
+    // Function to delete an event
+    function deleteEvent(id, title) {
+        if (confirm(strings.confirm_delete_event + ' "' + title + '"')) {
+            fetch(restUrl + 'events/' + id, {
+                method: 'DELETE',
+                headers: {
+                    'X-WP-Nonce': nonces.wp_rest
+                }
+            })
+            .then(response => response.json())
+            .then(() => {
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(strings.error_deleting_event);
+            });
+        }
+    }
+
     // Initialize event card functionality
     function initializeEventCard(context = document) {
         // Initialize Choices.js for assigned users
@@ -116,29 +136,15 @@
             });
         });
 
-        // Handle delete event
+        // Handle delete event buttons
         context.querySelectorAll('.delete-event').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const id = this.dataset.id;
-                const title = this.closest('tr').querySelector('.event-title').textContent.trim();
-
-                if (confirm(strings.confirm_delete_event + ' "' + title + '"')) {
-                    fetch(restUrl + 'events/' + id, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-WP-Nonce': nonces.wp_rest
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(() => {
-                        location.reload();
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert(strings.error_deleting_event);
-                    });
-                }
+                const titleElement = this.closest('tr')?.querySelector('.event-title') || 
+                                   document.querySelector('#event-title');
+                const title = titleElement ? titleElement.value || titleElement.textContent.trim() : '';
+                deleteEvent(id, title);
             });
         });
     }
