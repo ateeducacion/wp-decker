@@ -57,16 +57,37 @@
                 const formData = new FormData(form);
                 const id = formData.get('event_id');
                 const method = id ? 'PUT' : 'POST';
-                const url = restUrl + 'events' + (id ? '/' + id : '');
+                const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id ? '/' + id : '');
+
+                // Convert FormData to JSON object
+                const jsonData = {};
+                formData.forEach((value, key) => {
+                    // Handle multiple values (like assigned users)
+                    if (key.endsWith('[]')) {
+                        const cleanKey = key.slice(0, -2);
+                        if (!jsonData[cleanKey]) {
+                            jsonData[cleanKey] = [];
+                        }
+                        jsonData[cleanKey].push(value);
+                    } else {
+                        jsonData[key] = value;
+                    }
+                });
 
                 fetch(url, {
                     method: method,
-                    body: formData,
+                    body: JSON.stringify(jsonData),
                     headers: {
-                        'X-WP-Nonce': nonces.wp_rest
+                        'X-WP-Nonce': wpApiSettings.nonce,
+                        'Content-Type': 'application/json'
                     }
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(response.statusText);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     location.reload();
                 })
