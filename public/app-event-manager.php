@@ -138,8 +138,6 @@ $events = EventManager::get_events();
 	<?php 
 	// Include event modal template
 	include plugin_dir_path( __FILE__ ) . 'layouts/event-modal.php';
-
+	?>
 </body>
-
-
 </html>
