@@ -63,9 +63,18 @@ class Decker_Events {
 			'show_in_menu'      => 'edit.php?post_type=decker_task',
 			'query_var'         => true,
 			'rewrite'           => array( 'slug' => 'events' ),
-			// 'capability_type'   => 'post',
-    // 'capability_type' => 'decker_event', // <- Define un tipo de capacidad único
-    'map_meta_cap' => true, // <- Habilita el mapeo automático de capacidades
+			'capability_type'   => array('decker_event', 'decker_events'),
+			'capabilities'      => array(
+				'edit_post'          => 'edit_decker_event',
+				'read_post'          => 'read_decker_event',
+				'delete_post'        => 'delete_decker_event',
+				'edit_posts'         => 'edit_decker_events',
+				'edit_others_posts'  => 'edit_others_decker_events',
+				'publish_posts'      => 'publish_decker_events',
+				'read_private_posts' => 'read_private_decker_events',
+				'delete_posts'       => 'delete_decker_events',
+			),
+			'map_meta_cap'      => true,
 
 			'has_archive'       => true,
 			'hierarchical'      => false,
