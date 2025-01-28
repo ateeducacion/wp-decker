@@ -246,15 +246,26 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         $this->assertArrayHasKey('content', $schema['properties']);
         $this->assertArrayHasKey('status', $schema['properties']);
         $this->assertArrayHasKey('meta', $schema['properties']);
+        $this->assertArrayHasKey('author', $schema['properties']);
+        $this->assertArrayHasKey('date', $schema['properties']);
+        $this->assertArrayHasKey('modified', $schema['properties']);
+        $this->assertArrayHasKey('slug', $schema['properties']);
+        $this->assertArrayHasKey('guid', $schema['properties']);
+        $this->assertArrayHasKey('link', $schema['properties']);
         
         // Check meta schema
         $meta_schema = $schema['properties']['meta']['properties'];
-        $this->assertArrayHasKey('event_start', $meta_schema);
-        $this->assertArrayHasKey('event_end', $meta_schema);
-        $this->assertArrayHasKey('event_location', $meta_schema);
-        $this->assertArrayHasKey('event_url', $meta_schema);
-        $this->assertArrayHasKey('event_category', $meta_schema);
+        foreach(['event_start', 'event_end', 'event_location', 'event_url', 'event_category'] as $field) {
+            $this->assertArrayHasKey($field, $meta_schema);
+            $this->assertEquals('string', $meta_schema[$field]['type']);
+            $this->assertEquals('', $meta_schema[$field]['default']);
+        }
+        
+        // Check array type meta field
         $this->assertArrayHasKey('event_assigned_users', $meta_schema);
+        $this->assertEquals('array', $meta_schema['event_assigned_users']['type']);
+        $this->assertEquals('integer', $meta_schema['event_assigned_users']['items']['type']);
+        $this->assertEquals([], $meta_schema['event_assigned_users']['default']);
     }
 
     /**
@@ -285,11 +296,33 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         
         // Check Backbone-required parameters
         $args = $get_endpoint['args'];
+        
+        // Pagination
         $this->assertArrayHasKey('page', $args);
+        $this->assertEquals(1, $args['page']['default']);
         $this->assertArrayHasKey('per_page', $args);
+        $this->assertEquals(10, $args['per_page']['default']);
+        
+        // Search
         $this->assertArrayHasKey('search', $args);
+        $this->assertArrayHasKey('search_columns', $args);
+        $this->assertEquals(['post_title', 'post_content', 'post_excerpt'], $args['search_columns']['items']['enum']);
+        
+        // Ordering
         $this->assertArrayHasKey('order', $args);
+        $this->assertEquals(['asc', 'desc'], $args['order']['enum']);
+        $this->assertEquals('desc', $args['order']['default']);
+        
         $this->assertArrayHasKey('orderby', $args);
+        $expected_orderby = ['author', 'date', 'id', 'include', 'modified', 'parent', 'relevance', 'slug', 'include_slugs', 'title'];
+        $this->assertEquals($expected_orderby, $args['orderby']['enum']);
+        $this->assertEquals('date', $args['orderby']['default']);
+        
+        // Filtering
+        $this->assertArrayHasKey('status', $args);
+        $this->assertEquals('publish', $args['status']['default']);
+        $this->assertArrayHasKey('author', $args);
+        $this->assertArrayHasKey('author_exclude', $args);
     }
 
     /**
