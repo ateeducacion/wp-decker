@@ -82,88 +82,62 @@ class Decker_Events {
 	 * Register the custom post type meta fields
 	 */
 	public function register_post_meta() {
-	    register_post_meta(
-	        'decker_event',
-	        'event_start',
-	        array(
-	            'type' => 'string',
-	            'single' => true,
-	            'show_in_rest' => true,
-	            'sanitize_callback' => 'sanitize_text_field',
-	            'schema' => array(
-	                'type' => 'string',
-	                'format' => 'date-time',
-	            ),
-	        )
-	    );
+		$meta_fields = array(
+			'event_start' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'schema' => array(
+					'type' => 'string',
+					'format' => 'date-time',
+				),
+			),
+			'event_end' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'schema' => array(
+					'type' => 'string',
+					'format' => 'date-time',
+				),
+			),
+			'event_location' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'event_url' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'esc_url_raw',
+			),
+			'event_category' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'event_assigned_users' => array(
+				'type' => 'array',
+				'show_in_rest' => array(
+					'schema' => array(
+						'items' => array(
+							'type' => 'integer',
+						),
+					),
+				),
+				'sanitize_callback' => function ($value) {
+					return array_map('absint', (array)$value);
+				},
+			),
+		);
 
-	    register_post_meta(
-	        'decker_event',
-	        'event_end',
-	        array(
-	            'type' => 'string',
-	            'single' => true,
-	            'show_in_rest' => true,
-	            'sanitize_callback' => 'sanitize_text_field',
-	            'schema' => array(
-	                'type' => 'string',
-	                'format' => 'date-time',
-	            ),
-	        )
-	    );
-
-	    register_post_meta(
-	        'decker_event',
-	        'event_location',
-	        array(
-	            'type' => 'string',
-	            'single' => true,
-	            'show_in_rest' => true,
-	            'sanitize_callback' => 'sanitize_text_field',
-
-	        )
-	    );
-
-	    register_post_meta(
-	        'decker_event',
-	        'event_url',
-	        array(
-	            'type' => 'string',
-	            'single' => true,
-	            'show_in_rest' => true,
-	            'sanitize_callback' => 'esc_url_raw',
-	        )
-	    );
-
-	    register_post_meta(
-	        'decker_event',
-	        'event_category',
-	        array(
-	            'type' => 'string',
-	            'single' => true,
-	            'show_in_rest' => true,
-	            'sanitize_callback' => 'sanitize_text_field',
-	        )
-	    );
-
-	    register_post_meta(
-	        'decker_event',
-	        'event_assigned_users',
-	        array(
-	            'type' => 'array',
-	            'single' => true,
-	            'show_in_rest' => array(
-	                'schema' => array(
-	                    'items' => array(
-	                        'type' => 'integer',
-	                    ),
-	                ),
-	            ),
-	            'sanitize_callback' => function ($value) {
-	                return array_map('absint', (array)$value);
-	            },
-	        )
-	    );
+		foreach ($meta_fields as $key => $args) {
+			$default_args = array(
+				'single' => true,
+				'show_in_rest' => true,
+			);
+			
+			register_post_meta(
+				'decker_event',
+				$key,
+				array_merge($default_args, $args)
+			);
+		}
 	}
 
 
