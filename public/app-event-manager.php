@@ -92,10 +92,10 @@ $events = EventManager::get_events();
 																   data-event-id="<?php echo esc_attr( $event->get_id() ); ?>">
 																	<i class="ri-pencil-line"></i>
 																</a>
-																<a href="#" class="btn btn-sm btn-danger delete-event" 
-																   data-id="<?php echo esc_attr( $event->get_id() ); ?>">
+																<button type="button" class="btn btn-sm btn-danger" 
+																   onclick="deleteEvent(<?php echo esc_attr( $event->get_id() ); ?>, '<?php echo esc_js( $event->get_title() ); ?>')">
 																	<i class="ri-delete-bin-line"></i>
-																</a>
+																</button>
 																<span class="event-description d-none">
 																	<?php echo esc_html( $event->get_description() ); ?>
 																</span>
