@@ -154,66 +154,27 @@
             });
         },
 
-        onEventClick: function(e) {
-            if (e.event.extendedProps.type === 'task') {
-
-                this.$modal = new bootstrap.Modal(document.getElementById('task-modal'), { backdrop: 'static' });
-
-                this.$formEvent.removeClass('was-validated');
-                this.$newEventData = null;
-                this.$btnDeleteEvent.show();
-                this.$modalTitle.text(deckerVars.strings.edit_event);
-                this.$modal.show();
-                this.$selectedEvent = e.event;
-
+        onEventClick: function(info) {
+            if (info.event.extendedProps.type === 'task') {
                 // For tasks, open the task modal
-                // const taskId = e.event.id.replace('task_', '');
-                // const taskModal = document.querySelector('#task-modal');
-                // const taskButton = document.createElement('button');
-                // taskButton.setAttribute('data-task-id', taskId);
-                // taskButton.setAttribute('data-bs-toggle', 'modal');
-                // taskButton.setAttribute('data-bs-target', '#task-modal');
-                // document.body.appendChild(taskButton);
-                // taskButton.click();
-                // document.body.removeChild(taskButton);
+                const taskId = info.event.id.replace('task_', '');
+                const taskButton = document.createElement('button');
+                taskButton.setAttribute('data-task-id', taskId);
+                taskButton.setAttribute('data-bs-toggle', 'modal');
+                taskButton.setAttribute('data-bs-target', '#task-modal');
+                document.body.appendChild(taskButton);
+                taskButton.click();
+                document.body.removeChild(taskButton);
             } else {
-                // For regular events, open the event modal
-                // this.$formEvent[0].reset();
-
-                this.$modal = new bootstrap.Modal(document.getElementById('event-modal'), { backdrop: 'static' });
-
-
-                this.$formEvent.removeClass('was-validated');
-                this.$newEventData = null;
-                this.$btnDeleteEvent.show();
-                this.$modalTitle.text(deckerVars.strings.edit_event);
-                this.$modal.show();
-                this.$selectedEvent = e.event;
-
-                $('#event-title').val(this.$selectedEvent.title);
-                $('#event-description').val(this.$selectedEvent.extendedProps.description || '');
-
-                const startDate = moment(this.$selectedEvent.start);
-                const endDate = this.$selectedEvent.end ? moment(this.$selectedEvent.end) : startDate;
-
-                // Always set start date
-                $('#event-start-date').val(startDate.format('YYYY-MM-DD'));
-
-                if (this.$selectedEvent.allDay) {
-                    // For all-day events, set end date and clear times
-                    $('#event-end-date').val(endDate.format('YYYY-MM-DD'));
-                    $('#event-start-time, #event-end-time').val('');
-                } else {
-                    // For timed events, set times and clear end date
-                    $('#event-start-time').val(startDate.format('HH:mm'));
-                    $('#event-end-time').val(endDate.format('HH:mm'));
-                    $('#event-end-date').val('');
-                }
-
-                $('#event-category').val(this.$selectedEvent.classNames[0]);
-                if (this.$selectedEvent.extendedProps.assigned_users) {
-                    $('#event-assigned-users').val(this.$selectedEvent.extendedProps.assigned_users);
-                }
+                // For regular events, open the event modal with the event ID
+                const eventId = info.event.id.replace('event_', '');
+                const button = document.createElement('button');
+                button.setAttribute('data-bs-toggle', 'modal');
+                button.setAttribute('data-bs-target', '#event-modal');
+                button.setAttribute('data-event-id', eventId);
+                document.body.appendChild(button);
+                button.click();
+                document.body.removeChild(button);
             }
         },
 
