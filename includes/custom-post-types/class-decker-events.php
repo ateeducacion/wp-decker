@@ -26,13 +26,12 @@ class Decker_Events {
 	 */
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
-	    add_filter('rest_pre_dispatch', array($this, 'restrict_rest_access'), 10, 3);
+		add_filter( 'rest_pre_dispatch', array( $this, 'restrict_rest_access' ), 10, 3 );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post_decker_event', array( $this, 'save_event_meta' ) );
 
-        add_filter('use_block_editor_for_post_type', array( $this, 'force_classic_editor'), 10, 2);
-    
+		add_filter( 'use_block_editor_for_post_type', array( $this, 'force_classic_editor' ), 10, 2 );
 	}
 
 	/**
@@ -120,22 +119,22 @@ class Decker_Events {
 						),
 					),
 				),
-				'sanitize_callback' => function ($value) {
-					return array_map('absint', (array)$value);
+				'sanitize_callback' => function ( $value ) {
+					return array_map( 'absint', (array) $value );
 				},
 			),
 		);
 
-		foreach ($meta_fields as $key => $args) {
+		foreach ( $meta_fields as $key => $args ) {
 			$default_args = array(
 				'single' => true,
 				'show_in_rest' => true,
 			);
-			
+
 			register_post_meta(
 				'decker_event',
 				$key,
-				array_merge($default_args, $args)
+				array_merge( $default_args, $args )
 			);
 		}
 	}
@@ -144,34 +143,34 @@ class Decker_Events {
 	/**
 	 * Forces classic editor
 	 */
-public function force_classic_editor($use_block_editor, $post_type) {
-    if ($post_type === 'decker_event') {
-        return false; // Deactivate gutenberg editor.
-    }
-    return $use_block_editor;
-}
+	public function force_classic_editor( $use_block_editor, $post_type ) {
+		if ( $post_type === 'decker_event' ) {
+			return false; // Deactivate gutenberg editor.
+		}
+		return $use_block_editor;
+	}
 
 
 
 	/**
 	 * Restringe el acceso a los endpoints de 'decker_event' solo a editores y superiores.
 	 */
-public function restrict_rest_access($result, $rest_server, $request) {
-    $route = $request->get_route();
+	public function restrict_rest_access( $result, $rest_server, $request ) {
+		$route = $request->get_route();
 
-    if (strpos($route, '/wp/v2/decker_event') === 0) {
-        // Usa la capacidad específica del CPT
-        if (!current_user_can('edit_posts')) {
-            return new WP_Error(
-                'rest_forbidden',
-                __('No tienes permisos para acceder a este recurso.', 'decker'),
-                array('status' => 403)
-            );
-        }
-    }
+		if ( strpos( $route, '/wp/v2/decker_event' ) === 0 ) {
+			// Usa la capacidad específica del CPT
+			if ( ! current_user_can( 'edit_posts' ) ) {
+				return new WP_Error(
+					'rest_forbidden',
+					__( 'No tienes permisos para acceder a este recurso.', 'decker' ),
+					array( 'status' => 403 )
+				);
+			}
+		}
 
-    return $result;
-}
+		return $result;
+	}
 
 
 	/**
@@ -262,9 +261,9 @@ public function restrict_rest_access($result, $rest_server, $request) {
 	 */
 	public function save_event_meta( $post_id ) {
 		// Skip capability check in test environment
-		if (!defined('WP_TESTS_RUNNING')) {
+		if ( ! defined( 'WP_TESTS_RUNNING' ) ) {
 			if ( ! isset( $_POST['decker_event_meta_box_nonce'] ) ) {
-				return; 
+				return;
 			}
 
 			if ( ! wp_verify_nonce( sanitize_key( $_POST['decker_event_meta_box_nonce'] ), 'decker_event_meta_box' ) ) {
