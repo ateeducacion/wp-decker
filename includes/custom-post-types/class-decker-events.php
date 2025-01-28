@@ -31,9 +31,6 @@ class Decker_Events {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post_decker_event', array( $this, 'save_event_meta' ) );
 
-
-		// add_filter( 'rest_prepare_decker_event', array( $this, 'add_event_meta_to_rest_response' ), 10, 3 );
-
         add_filter('use_block_editor_for_post_type', array( $this, 'force_classic_editor'), 10, 2);
     
 	}
@@ -68,17 +65,12 @@ class Decker_Events {
 			'query_var'         => true,
 			'rewrite'           => array( 'slug' => 'events' ),
 			'capability_type'   => 'post',
-			// 'capabilities'      => array(
-			// 	'create_posts' => 'edit_posts',
-			// ),
 			'map_meta_cap'      => true,
-
 			'has_archive'       => true,
 			'hierarchical'      => false,
 			'menu_position'     => null,
 			'supports'          => array( 'title', 'editor', 'author', 'custom-fields' ),
 			'show_in_rest'      => true,
-			// 'rest_controller_class' => 'WP_REST_Posts_Controller',
 		);
 
 		register_post_type( 'decker_event', $args );
