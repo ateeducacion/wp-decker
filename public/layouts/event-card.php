@@ -45,6 +45,13 @@ if ( ! wp_verify_nonce( $nonce, 'decker_event_card' ) ) {
 
 // Initialize variables
 $event_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+
+// Verify this is actually an event post type before creating Event object
+$post_type = get_post_type($event_id);
+if ($event_id && $post_type !== 'decker_event') {
+    wp_die(__('Invalid post type. This form is only for events.', 'decker'));
+}
+
 $event = $event_id ? new Event( $event_id ) : null;
 
 ?>
