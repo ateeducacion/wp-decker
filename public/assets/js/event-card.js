@@ -3,16 +3,14 @@
     console.log('loading event-card.js');
 
     // Global variables received from PHP
-    const ajaxUrl = deckerVars.ajax_url;
     const restUrl = deckerVars.rest_url;
-    const homeUrl = deckerVars.home_url;
     const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
 
     // Function to delete an event
     function deleteEvent(id, title) {
         if (confirm(strings.confirm_delete_event + ' "' + title + '"')) {
-            fetch(wpApiSettings.root + 'events/' + id, {
+            fetch(wpApiSettings.root + wpApiSettings.versionString + 'decker_event/' + id, {
                 method: 'DELETE',
                 headers: {
                     'X-WP-Nonce': wpApiSettings.nonce,

@@ -93,7 +93,7 @@ $events = EventManager::get_events();
 																	<i class="ri-pencil-line"></i>
 																</a>
 																<button type="button" class="btn btn-sm btn-danger" 
-																   onclick="deleteEvent(<?php echo esc_attr( $event->get_id() ); ?>, '<?php echo esc_js( $event->get_title() ); ?>')">
+																   onclick="window.deleteEvent(<?php echo esc_attr( $event->get_id() ); ?>, '<?php echo esc_js( $event->get_title() ); ?>')">
 																	<i class="ri-delete-bin-line"></i>
 																</button>
 																<span class="event-description d-none">
