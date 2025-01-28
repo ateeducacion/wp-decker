@@ -221,10 +221,9 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         
         $this->assertEquals(200, $response->get_status());
         
-        // Verify post is correctly trashed
+        // Verify post is correctly deleted
         $this->assertNull(get_post($this->event_id));
 
-        $this->assertEquals('trashed', get_post_status($this->event_id));
 
     }
 }
