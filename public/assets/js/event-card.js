@@ -29,6 +29,8 @@
         }
     }
 
+    window.deleteEvent = deleteEvent;
+
     // Initialize event card functionality
     function initializeEventCard(context = document) {
         // Initialize Choices.js for assigned users
