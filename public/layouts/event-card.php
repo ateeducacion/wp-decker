@@ -132,14 +132,25 @@ $event = $event_id ? new Event( $event_id ) : null;
     </div>
 
     <div class="modal-footer">
-        <?php if ( isset( $_GET['modal'] ) ) : ?>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                <?php esc_html_e( 'Close', 'decker' ); ?>
-            </button>
-        <?php endif; ?>
-        <button type="submit" class="btn btn-primary">
-            <i class="ri-save-line me-1"></i><?php esc_html_e( 'Save', 'decker' ); ?>
-        </button>
+        <div class="d-flex justify-content-between w-100">
+            <?php if ( $event_id ) : ?>
+                <button type="button" class="btn btn-danger delete-event" data-id="<?php echo esc_attr( $event_id ); ?>">
+                    <i class="ri-delete-bin-line me-1"></i><?php esc_html_e( 'Delete', 'decker' ); ?>
+                </button>
+            <?php else: ?>
+                <div></div>
+            <?php endif; ?>
+            <div>
+                <?php if ( isset( $_GET['modal'] ) ) : ?>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <?php esc_html_e( 'Close', 'decker' ); ?>
+                    </button>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-primary">
+                    <i class="ri-save-line me-1"></i><?php esc_html_e( 'Save', 'decker' ); ?>
+                </button>
+            </div>
+        </div>
     </div>
 </form>
 
