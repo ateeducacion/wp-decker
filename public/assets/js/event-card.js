@@ -145,12 +145,31 @@
 
     // Initialize when document is ready - only for standalone pages
     document.addEventListener('DOMContentLoaded', function() {
-        if (!document.querySelector('.modal.show')) {
+        // Only initialize if we're not in a modal context
+        const modalContext = document.querySelector('.modal.show');
+        if (!modalContext) {
+            console.log('Initializing event card in standalone context');
             initializeEventCard();
+        } else {
+            console.log('Skipping initialization in modal context');
         }
     });
 
-    // Export for use in modal
-    window.initializeEventCard = initializeEventCard;
+    // Export for use in modal and make it handle initialization tracking
+    window.initializeEventCard = function(context = document) {
+        // Check if already initialized in this context
+        if (context instanceof Element && context.hasAttribute('data-event-initialized')) {
+            console.log('Event card already initialized in this context');
+            return;
+        }
+
+        // Initialize the event card
+        initializeEventCard(context);
+
+        // Mark as initialized
+        if (context instanceof Element) {
+            context.setAttribute('data-event-initialized', 'true');
+        }
+    };
 
 })();
