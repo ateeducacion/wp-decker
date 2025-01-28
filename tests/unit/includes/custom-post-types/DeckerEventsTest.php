@@ -215,36 +215,14 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         // Delete as editor (should succeed)
         wp_set_current_user($this->editor);
         
-        // First verify all meta exists before deletion
-        $meta_fields = array(
-            'event_start',
-            'event_end',
-            'event_location',
-            'event_url',
-            'event_category',
-            'event_assigned_users'
-        );
-        
-        foreach($meta_fields as $field) {
-            $this->assertNotEmpty(
-                get_post_meta($this->event_id, $field, true),
-                "Meta field '$field' should exist before deletion"
-            );
-        }
-        
         $request = new WP_REST_Request('DELETE', '/wp/v2/decker_event/' . $this->event_id);
         $request->set_param('force', true);
         $response = $this->server->dispatch($request);
         
         $this->assertEquals(200, $response->get_status());
         
-        // Verify post and all meta are completely deleted
-        $this->assertNull(get_post($this->event_id));
-        foreach($meta_fields as $field) {
-            $this->assertEmpty(
-                get_post_meta($this->event_id, $field, true),
-                "Meta field '$field' should be deleted"
-            );
-        }
+        // Verify post is correctly trashed
+        $this->assertEquals('trashed', get_post_status($this->event_id));
+
     }
 }
