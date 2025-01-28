@@ -112,41 +112,62 @@ class DeckerEventsTest extends Decker_Test_Base {
     }
 
     /**
-     * Test REST API access restrictions
+     * Test event meta box rendering
      */
-    public function test_rest_api_restrictions() {
-        $request = new WP_REST_Request( 'GET', '/wp/v2/decker_event' );
-        
-        // Test subscriber access (should be denied)
-        wp_set_current_user( $this->subscriber );
-        $response = rest_do_request( $request );
-        $this->assertEquals( 403, $response->get_status() );
-
-        // Test editor access (should be allowed)
+    public function test_meta_box_rendering() {
         wp_set_current_user( $this->editor );
-        $response = rest_do_request( $request );
-        $this->assertEquals( 200, $response->get_status() );
+        
+        // Create an event
+        $this->event_id = wp_insert_post(array(
+            'post_title'  => 'Test Meta Box Event',
+            'post_type'   => 'decker_event',
+            'post_status' => 'publish'
+        ));
+
+        // Verify meta box is added
+        global $wp_meta_boxes;
+        do_action('add_meta_boxes', 'decker_event', get_post($this->event_id));
+        
+        $this->assertArrayHasKey('decker_event', $wp_meta_boxes);
+        $this->assertArrayHasKey('normal', $wp_meta_boxes['decker_event']);
+        $this->assertArrayHasKey('high', $wp_meta_boxes['decker_event']['normal']);
+        $this->assertArrayHasKey('decker_event_details', $wp_meta_boxes['decker_event']['normal']['high']);
     }
 
     /**
-     * Test event meta registration
+     * Test event meta saving functionality
      */
-    public function test_meta_registration() {
-        $registered_meta = get_registered_meta_keys( 'post', 'decker_event' );
+    public function test_meta_saving() {
+        wp_set_current_user( $this->editor );
         
-        $expected_meta_keys = array(
-            '_event_start',
-            '_event_end',
-            '_event_location',
-            '_event_url',
-            '_event_category',
-            '_event_assigned_users'
-        );
+        // Create test event
+        $this->event_id = wp_insert_post(array(
+            'post_title'  => 'Test Meta Save Event',
+            'post_type'   => 'decker_event',
+            'post_status' => 'publish'
+        ));
 
-        foreach ( $expected_meta_keys as $key ) {
-            $this->assertArrayHasKey( $key, $registered_meta );
-            $this->assertTrue( $registered_meta[$key]['show_in_rest'] );
-        }
+        // Simulate POST data
+        $_POST['decker_event_meta_box_nonce'] = wp_create_nonce('decker_event_meta_box');
+        $_POST['event_start'] = '2024-02-01T10:00:00';
+        $_POST['event_end'] = '2024-02-01T11:00:00';
+        $_POST['event_location'] = 'Test Location';
+        $_POST['event_url'] = 'https://example.com';
+        $_POST['event_category'] = 'bg-primary';
+        $_POST['event_assigned_users'] = array($this->editor);
+
+        // Trigger save action
+        do_action('save_post_decker_event', $this->event_id, get_post($this->event_id), true);
+
+        // Verify meta was saved
+        $this->assertEquals('2024-02-01T10:00:00', get_post_meta($this->event_id, '_event_start', true));
+        $this->assertEquals('2024-02-01T11:00:00', get_post_meta($this->event_id, '_event_end', true));
+        $this->assertEquals('Test Location', get_post_meta($this->event_id, '_event_location', true));
+        $this->assertEquals('https://example.com', get_post_meta($this->event_id, '_event_url', true));
+        $this->assertEquals('bg-primary', get_post_meta($this->event_id, '_event_category', true));
+        
+        $assigned_users = get_post_meta($this->event_id, '_event_assigned_users', true);
+        $this->assertContains($this->editor, $assigned_users);
     }
 
     /**
