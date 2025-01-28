@@ -82,9 +82,6 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         
         // Store event ID for cleanup
         $this->event_id = $data['id'];
-        
-        // var_dump($data);
-        // die();
 
         // Verify meta via REST
         $this->assertEquals('2024-02-01T10:00:00', $data['meta']['event_start']);
