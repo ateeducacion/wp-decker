@@ -66,12 +66,12 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         $request->set_param('title', 'Test Event');
         $request->set_param('status', 'publish');
         $request->set_param('meta', array(
-            '_event_start' => '2024-02-01T10:00:00',
-            '_event_end' => '2024-02-01T11:00:00',
-            '_event_location' => 'Test Location',
-            '_event_url' => 'https://example.com',
-            '_event_category' => 'bg-primary',
-            '_event_assigned_users' => array($this->editor)
+            'event_start' => '2024-02-01T10:00:00',
+            'event_end' => '2024-02-01T11:00:00',
+            'event_location' => 'Test Location',
+            'event_url' => 'https://example.com',
+            'event_category' => 'bg-primary',
+            'event_assigned_users' => array($this->editor)
         ));
 
         $response = $this->server->dispatch($request);
@@ -87,12 +87,12 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         // die();
 
         // Verify meta via REST
-        // $this->assertEquals('2024-02-01T10:00:00', $data['meta']['_event_start']);
-        // $this->assertEquals('2024-02-01T11:00:00', $data['meta']['_event_end']);
-        $this->assertEquals('Test Location', $data['meta']['_event_location']);
-        $this->assertEquals('https://example.com', $data['meta']['_event_url']);
-        $this->assertEquals('bg-primary', $data['meta']['_event_category']);
-        $this->assertContains($this->editor, $data['meta']['_event_assigned_users']);
+        $this->assertEquals('2024-02-01T10:00:00', $data['meta']['event_start']);
+        $this->assertEquals('2024-02-01T11:00:00', $data['meta']['event_end']);
+        $this->assertEquals('Test Location', $data['meta']['event_location']);
+        $this->assertEquals('https://example.com', $data['meta']['event_url']);
+        $this->assertEquals('bg-primary', $data['meta']['event_category']);
+        $this->assertContains($this->editor, $data['meta']['event_assigned_users']);
     }
 
     /**

@@ -26,14 +26,13 @@ class Decker_Events {
 	 */
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
-        add_action('init', array($this, 'register_post_meta'), 20); // Prioridad 20 para asegurar que el CPT ya existe		
 	    add_filter('rest_pre_dispatch', array($this, 'restrict_rest_access'), 10, 3);
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post_decker_event', array( $this, 'save_event_meta' ) );
 
 
-		add_filter( 'rest_prepare_decker_event', array( $this, 'add_event_meta_to_rest_response' ), 10, 3 );
+		// add_filter( 'rest_prepare_decker_event', array( $this, 'add_event_meta_to_rest_response' ), 10, 3 );
 
         add_filter('use_block_editor_for_post_type', array( $this, 'force_classic_editor'), 10, 2);
     
@@ -69,19 +68,22 @@ class Decker_Events {
 			'query_var'         => true,
 			'rewrite'           => array( 'slug' => 'events' ),
 			'capability_type'   => 'post',
-			'capabilities'      => array(
-				'create_posts' => 'edit_posts',
-			),
+			// 'capabilities'      => array(
+			// 	'create_posts' => 'edit_posts',
+			// ),
 			'map_meta_cap'      => true,
 
 			'has_archive'       => true,
 			'hierarchical'      => false,
 			'menu_position'     => null,
-			'supports'          => array( 'title', 'editor', 'author' ),
+			'supports'          => array( 'title', 'editor', 'author', 'custom-fields' ),
 			'show_in_rest'      => true,
+			// 'rest_controller_class' => 'WP_REST_Posts_Controller',
 		);
 
 		register_post_type( 'decker_event', $args );
+
+		$this->register_post_meta();
 	}
 
 	/**
@@ -90,7 +92,7 @@ class Decker_Events {
 	public function register_post_meta() {
 	    register_post_meta(
 	        'decker_event',
-	        '_event_start',
+	        'event_start',
 	        array(
 	            'type' => 'string',
 	            'single' => true,
@@ -105,7 +107,7 @@ class Decker_Events {
 
 	    register_post_meta(
 	        'decker_event',
-	        '_event_end',
+	        'event_end',
 	        array(
 	            'type' => 'string',
 	            'single' => true,
@@ -120,18 +122,19 @@ class Decker_Events {
 
 	    register_post_meta(
 	        'decker_event',
-	        '_event_location',
+	        'event_location',
 	        array(
 	            'type' => 'string',
 	            'single' => true,
 	            'show_in_rest' => true,
 	            'sanitize_callback' => 'sanitize_text_field',
+
 	        )
 	    );
 
 	    register_post_meta(
 	        'decker_event',
-	        '_event_url',
+	        'event_url',
 	        array(
 	            'type' => 'string',
 	            'single' => true,
@@ -142,7 +145,7 @@ class Decker_Events {
 
 	    register_post_meta(
 	        'decker_event',
-	        '_event_category',
+	        'event_category',
 	        array(
 	            'type' => 'string',
 	            'single' => true,
@@ -153,7 +156,7 @@ class Decker_Events {
 
 	    register_post_meta(
 	        'decker_event',
-	        '_event_assigned_users',
+	        'event_assigned_users',
 	        array(
 	            'type' => 'array',
 	            'single' => true,
@@ -205,26 +208,6 @@ public function restrict_rest_access($result, $rest_server, $request) {
 }
 
 
-/**
- * Add meta data to the REST API response for 'decker_event' post type.
- */
-public function add_event_meta_to_rest_response( $data, $post, $context ) {
-    if ( $post->post_type === 'decker_event' ) {
-        // Get the event meta data
-        $meta = array(
-            '_event_start'         => get_post_meta( $post->ID, '_event_start', true ),
-            '_event_end'           => get_post_meta( $post->ID, '_event_end', true ),
-            '_event_location'      => get_post_meta( $post->ID, '_event_location', true ),
-            '_event_url'           => get_post_meta( $post->ID, '_event_url', true ),
-            '_event_category'      => get_post_meta( $post->ID, '_event_category', true ),
-            '_event_assigned_users' => get_post_meta( $post->ID, '_event_assigned_users', true ),
-        );
-        $data->data['meta'] = $meta;
-    }
-    return $data;
-}
-
-
 	/**
 	 * Add meta boxes for event details
 	 */
@@ -247,23 +230,23 @@ public function add_event_meta_to_rest_response( $data, $post, $context ) {
 	public function render_event_details_meta_box( $post ) {
 		wp_nonce_field( 'decker_event_meta_box', 'decker_event_meta_box_nonce' );
 
-		$start_date = get_post_meta( $post->ID, '_event_start', true );
-		$end_date = get_post_meta( $post->ID, '_event_end', true );
-		$location = get_post_meta( $post->ID, '_event_location', true );
-		$url = get_post_meta( $post->ID, '_event_url', true );
-		$category = get_post_meta( $post->ID, '_event_category', true );
-		$assigned_users = get_post_meta( $post->ID, '_event_assigned_users', true );
+		$start_date = get_post_meta( $post->ID, 'event_start', true );
+		$end_date = get_post_meta( $post->ID, 'event_end', true );
+		$location = get_post_meta( $post->ID, 'event_location', true );
+		$url = get_post_meta( $post->ID, 'event_url', true );
+		$category = get_post_meta( $post->ID, 'event_category', true );
+		$assigned_users = get_post_meta( $post->ID, 'event_assigned_users', true );
 
 		?>
 		<p>
 			<label for="event_start"><?php esc_html_e( 'Start Date/Time:', 'decker' ); ?></label><br>
 			<input type="datetime-local" id="event_start" name="event_start" 
-				value="<?php echo esc_attr( $start_date ); ?>" step="900" required>
+				value="<?php echo esc_attr( $start_date ); ?>">
 		</p>
 		<p>
 			<label for="event_end"><?php esc_html_e( 'End Date/Time:', 'decker' ); ?></label><br>
 			<input type="datetime-local" id="event_end" name="event_end" 
-				value="<?php echo esc_attr( $end_date ); ?>" step="900" required>
+				value="<?php echo esc_attr( $end_date ); ?>">
 		</p>
 		<p>
 			<label for="event_location"><?php esc_html_e( 'Location:', 'decker' ); ?></label><br>
@@ -333,35 +316,35 @@ public function add_event_meta_to_rest_response( $data, $post, $context ) {
 
 		// Save start date.
 		if ( isset( $_POST['event_start'] ) ) {
-			update_post_meta( $post_id, '_event_start', sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) );
+			update_post_meta( $post_id, 'event_start', sanitize_text_field( wp_unslash( $_POST['event_start'] ) ) );
 		}
 
 		// Save end date.
 		if ( isset( $_POST['event_end'] ) ) {
-			update_post_meta( $post_id, '_event_end', sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) );
+			update_post_meta( $post_id, 'event_end', sanitize_text_field( wp_unslash( $_POST['event_end'] ) ) );
 		}
 
 		// Save location.
 		if ( isset( $_POST['event_location'] ) ) {
-			update_post_meta( $post_id, '_event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
+			update_post_meta( $post_id, 'event_location', sanitize_text_field( wp_unslash( $_POST['event_location'] ) ) );
 		}
 
 		// Save URL.
 		if ( isset( $_POST['event_url'] ) ) {
-			update_post_meta( $post_id, '_event_url', esc_url_raw( wp_unslash( $_POST['event_url'] ) ) );
+			update_post_meta( $post_id, 'event_url', esc_url_raw( wp_unslash( $_POST['event_url'] ) ) );
 		}
 
 		// Save category.
 		if ( isset( $_POST['event_category'] ) ) {
-			update_post_meta( $post_id, '_event_category', sanitize_text_field( wp_unslash( $_POST['event_category'] ) ) );
+			update_post_meta( $post_id, 'event_category', sanitize_text_field( wp_unslash( $_POST['event_category'] ) ) );
 		}
 
 		// Save assigned users.
 		if ( isset( $_POST['event_assigned_users'] ) ) {
 			$assigned_users = array_map( 'absint', wp_unslash( $_POST['event_assigned_users'] ) );
-			update_post_meta( $post_id, '_event_assigned_users', $assigned_users );
+			update_post_meta( $post_id, 'event_assigned_users', $assigned_users );
 		} else {
-			delete_post_meta( $post_id, '_event_assigned_users' );
+			delete_post_meta( $post_id, 'event_assigned_users' );
 		}
 	}
 }
