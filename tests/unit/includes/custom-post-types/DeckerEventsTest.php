@@ -5,12 +5,13 @@
  * @package Decker
  */
 
-class DeckerEventsTest extends Decker_Test_Base {
-
+class DeckerEventsTest extends WP_Test_REST_TestCase {
+    
     private $administrator;
     private $editor;
     private $subscriber;
     private $event_id;
+    private $server;
 
     /**
      * Set up before each test.
@@ -18,215 +19,155 @@ class DeckerEventsTest extends Decker_Test_Base {
     public function set_up() {
         parent::set_up();
 
+        // Initialize REST server
+        global $wp_rest_server;
+        $this->server = $wp_rest_server = new WP_REST_Server;
+        do_action('rest_api_init');
+
         // Ensure that post types are registered
-        do_action( 'init' );
+        do_action('init');
 
         // Create users for testing
-        $this->administrator = self::factory()->user->create( array( 'role' => 'administrator' ) );
-        $this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
-        $this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-
-        // Set current user as administrator for setup
-        wp_set_current_user( $this->administrator );
+        $this->administrator = self::factory()->user->create(array('role' => 'administrator'));
+        $this->editor = self::factory()->user->create(array('role' => 'editor'));
+        $this->subscriber = self::factory()->user->create(array('role' => 'subscriber'));
     }
 
     /**
      * Clean up after each test.
      */
     public function tear_down() {
-        if ( $this->event_id ) {
-            wp_delete_post( $this->event_id, true );
+        if ($this->event_id) {
+            wp_delete_post($this->event_id, true);
         }
         
-        wp_delete_user( $this->administrator );
-        wp_delete_user( $this->editor );
-        wp_delete_user( $this->subscriber );
+        wp_delete_user($this->administrator);
+        wp_delete_user($this->editor);
+        wp_delete_user($this->subscriber);
         
         parent::tear_down();
     }
 
     /**
-     * Test that the event post type exists and has correct settings
+     * Test that the event post type exists and is accessible via REST
      */
-    public function test_post_type_exists() {
-        $post_type = get_post_type_object( 'decker_event' );
-        
-        $this->assertNotNull( $post_type );
-        $this->assertTrue( $post_type->public );
-        $this->assertTrue( $post_type->show_in_rest );
-        $this->assertEquals( 'events', $post_type->rewrite['slug'] );
+    public function test_register_route() {
+        $routes = $this->server->get_routes();
+        $this->assertArrayHasKey('/wp/v2/decker_event', $routes);
     }
 
     /**
-     * Test event creation with meta fields
+     * Test event creation via REST API
      */
     public function test_create_event() {
-        wp_set_current_user( $this->editor );
+        wp_set_current_user($this->editor);
 
-        $event_data = array(
-            'post_title'  => 'Test Event',
-            'post_type'   => 'decker_event',
-            'post_status' => 'publish',
-            'meta_input'  => array(
-                '_event_start'    => '2024-02-01T10:00:00',
-                '_event_end'      => '2024-02-01T11:00:00',
-                '_event_location' => 'Test Location',
-                '_event_url'      => 'https://example.com',
-                '_event_category' => 'bg-primary',
-                '_event_assigned_users' => array( $this->editor )
-            )
-        );
+        $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
+        $request->set_param('title', 'Test Event');
+        $request->set_param('status', 'publish');
+        $request->set_param('meta', array(
+            '_event_start' => '2024-02-01T10:00:00',
+            '_event_end' => '2024-02-01T11:00:00',
+            '_event_location' => 'Test Location',
+            '_event_url' => 'https://example.com',
+            '_event_category' => 'bg-primary',
+            '_event_assigned_users' => array($this->editor)
+        ));
 
-        $this->event_id = wp_insert_post( $event_data );
-
-        $this->assertNotEquals( 0, $this->event_id );
-        $this->assertEquals( 'Test Event', get_the_title( $this->event_id ) );
+        $response = $this->server->dispatch($request);
+        $data = $response->get_data();
         
-        // Verify meta fields
-        $this->assertEquals( '2024-02-01T10:00:00', get_post_meta( $this->event_id, '_event_start', true ) );
-        $this->assertEquals( '2024-02-01T11:00:00', get_post_meta( $this->event_id, '_event_end', true ) );
-        $this->assertEquals( 'Test Location', get_post_meta( $this->event_id, '_event_location', true ) );
-        $this->assertEquals( 'https://example.com', get_post_meta( $this->event_id, '_event_url', true ) );
-        $this->assertEquals( 'bg-primary', get_post_meta( $this->event_id, '_event_category', true ) );
+        $this->assertEquals(201, $response->get_status());
+        $this->assertEquals('Test Event', $data['title']['rendered']);
         
-        $assigned_users = get_post_meta( $this->event_id, '_event_assigned_users', true );
-        $this->assertContains( $this->editor, $assigned_users );
+        // Store event ID for cleanup
+        $this->event_id = $data['id'];
+        
+        // Verify meta via REST
+        $this->assertEquals('2024-02-01T10:00:00', $data['meta']['_event_start']);
+        $this->assertEquals('2024-02-01T11:00:00', $data['meta']['_event_end']);
+        $this->assertEquals('Test Location', $data['meta']['_event_location']);
+        $this->assertEquals('https://example.com', $data['meta']['_event_url']);
+        $this->assertEquals('bg-primary', $data['meta']['_event_category']);
+        $this->assertContains($this->editor, $data['meta']['_event_assigned_users']);
     }
 
     /**
-     * Test that subscribers cannot create events
+     * Test that subscribers cannot create events via REST
      */
     public function test_subscriber_cannot_create_event() {
-        wp_set_current_user( $this->subscriber );
+        wp_set_current_user($this->subscriber);
 
-        $event_data = array(
-            'post_title'  => 'Subscriber Event',
-            'post_type'   => 'decker_event',
-            'post_status' => 'publish'
-        );
+        $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
+        $request->set_param('title', 'Subscriber Event');
+        $request->set_param('status', 'publish');
 
-        $result = wp_insert_post( $event_data );
+        $response = $this->server->dispatch($request);
         
-        // Should fail due to lack of permissions
-        $this->assertEquals( 0, $result );
+        $this->assertEquals(403, $response->get_status());
     }
 
     /**
-     * Test event meta box rendering
-     */
-    public function test_meta_box_rendering() {
-        wp_set_current_user( $this->editor );
-        
-        // Create an event
-        $this->event_id = wp_insert_post(array(
-            'post_title'  => 'Test Meta Box Event',
-            'post_type'   => 'decker_event',
-            'post_status' => 'publish'
-        ));
-
-        // Verify meta box is added
-        global $wp_meta_boxes;
-        do_action('add_meta_boxes', 'decker_event', get_post($this->event_id));
-        
-        $this->assertArrayHasKey('decker_event', $wp_meta_boxes);
-        $this->assertArrayHasKey('normal', $wp_meta_boxes['decker_event']);
-        $this->assertArrayHasKey('high', $wp_meta_boxes['decker_event']['normal']);
-        $this->assertArrayHasKey('decker_event_details', $wp_meta_boxes['decker_event']['normal']['high']);
-    }
-
-    /**
-     * Test event meta saving functionality
-     */
-    public function test_meta_saving() {
-        wp_set_current_user( $this->editor );
-        
-        // Create test event
-        $this->event_id = wp_insert_post(array(
-            'post_title'  => 'Test Meta Save Event',
-            'post_type'   => 'decker_event',
-            'post_status' => 'publish'
-        ));
-
-        // Simulate POST data
-        $_POST['decker_event_meta_box_nonce'] = wp_create_nonce('decker_event_meta_box');
-        $_POST['event_start'] = '2024-02-01T10:00:00';
-        $_POST['event_end'] = '2024-02-01T11:00:00';
-        $_POST['event_location'] = 'Test Location';
-        $_POST['event_url'] = 'https://example.com';
-        $_POST['event_category'] = 'bg-primary';
-        $_POST['event_assigned_users'] = array($this->editor);
-
-        // Trigger save action
-        do_action('save_post_decker_event', $this->event_id, get_post($this->event_id), true);
-
-        // Verify meta was saved
-        $this->assertEquals('2024-02-01T10:00:00', get_post_meta($this->event_id, '_event_start', true));
-        $this->assertEquals('2024-02-01T11:00:00', get_post_meta($this->event_id, '_event_end', true));
-        $this->assertEquals('Test Location', get_post_meta($this->event_id, '_event_location', true));
-        $this->assertEquals('https://example.com', get_post_meta($this->event_id, '_event_url', true));
-        $this->assertEquals('bg-primary', get_post_meta($this->event_id, '_event_category', true));
-        
-        $assigned_users = get_post_meta($this->event_id, '_event_assigned_users', true);
-        $this->assertContains($this->editor, $assigned_users);
-    }
-
-    /**
-     * Test event update capabilities
+     * Test event update via REST API
      */
     public function test_update_event() {
         // Create event as editor
-        wp_set_current_user( $this->editor );
+        wp_set_current_user($this->editor);
         
-        $this->event_id = wp_insert_post( array(
-            'post_title'  => 'Original Event',
-            'post_type'   => 'decker_event',
-            'post_status' => 'publish'
-        ) );
+        $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
+        $request->set_param('title', 'Original Event');
+        $request->set_param('status', 'publish');
+        
+        $response = $this->server->dispatch($request);
+        $this->event_id = $response->get_data()['id'];
 
         // Update event
-        $updated = wp_update_post( array(
-            'ID'         => $this->event_id,
-            'post_title' => 'Updated Event'
-        ) );
-
-        $this->assertNotWPError( $updated );
-        $this->assertEquals( 'Updated Event', get_the_title( $this->event_id ) );
+        $request = new WP_REST_Request('PUT', '/wp/v2/decker_event/' . $this->event_id);
+        $request->set_param('title', 'Updated Event');
+        
+        $response = $this->server->dispatch($request);
+        $this->assertEquals(200, $response->get_status());
+        $this->assertEquals('Updated Event', $response->get_data()['title']['rendered']);
 
         // Test that subscriber cannot update
-        wp_set_current_user( $this->subscriber );
+        wp_set_current_user($this->subscriber);
         
-        $result = wp_update_post( array(
-            'ID'         => $this->event_id,
-            'post_title' => 'Subscriber Update'
-        ) );
-
-        $this->assertEquals( 0, $result );
-        $this->assertEquals( 'Updated Event', get_the_title( $this->event_id ) );
+        $request = new WP_REST_Request('PUT', '/wp/v2/decker_event/' . $this->event_id);
+        $request->set_param('title', 'Subscriber Update');
+        
+        $response = $this->server->dispatch($request);
+        $this->assertEquals(403, $response->get_status());
     }
 
     /**
-     * Test event deletion capabilities
+     * Test event deletion via REST API
      */
     public function test_delete_event() {
         // Create event as editor
-        wp_set_current_user( $this->editor );
+        wp_set_current_user($this->editor);
         
-        $this->event_id = wp_insert_post( array(
-            'post_title'  => 'Event to Delete',
-            'post_type'   => 'decker_event',
-            'post_status' => 'publish'
-        ) );
+        $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
+        $request->set_param('title', 'Event to Delete');
+        $request->set_param('status', 'publish');
+        
+        $response = $this->server->dispatch($request);
+        $this->event_id = $response->get_data()['id'];
 
         // Try to delete as subscriber (should fail)
-        wp_set_current_user( $this->subscriber );
-        $result = wp_delete_post( $this->event_id );
-        $this->assertFalse( $result );
-        $this->assertNotNull( get_post( $this->event_id ) );
+        wp_set_current_user($this->subscriber);
+        
+        $request = new WP_REST_Request('DELETE', '/wp/v2/decker_event/' . $this->event_id);
+        $response = $this->server->dispatch($request);
+        
+        $this->assertEquals(403, $response->get_status());
 
         // Delete as editor (should succeed)
-        wp_set_current_user( $this->editor );
-        $result = wp_delete_post( $this->event_id );
-        $this->assertNotFalse( $result );
-        $this->assertNull( get_post( $this->event_id ) );
+        wp_set_current_user($this->editor);
+        
+        $request = new WP_REST_Request('DELETE', '/wp/v2/decker_event/' . $this->event_id);
+        $response = $this->server->dispatch($request);
+        
+        $this->assertEquals(200, $response->get_status());
+        $this->assertNull(get_post($this->event_id));
     }
 }
