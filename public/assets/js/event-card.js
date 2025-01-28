@@ -143,33 +143,47 @@
         });
     }
 
-    // Initialize when document is ready - only for standalone pages
+    // Exportar funciones globalmente para que puedan ser llamadas desde HTML
+    window.initializeEventCard = initializeEventCard;
+
+
+    // Inicializar automáticamente si el contenido está cargado directamente en la página
     document.addEventListener('DOMContentLoaded', function() {
-        // Only initialize if we're not in a modal context
-        const modalContext = document.querySelector('.modal.show');
-        if (!modalContext) {
-            console.log('Initializing event card in standalone context');
-            initializeEventCard();
-        } else {
-            console.log('Skipping initialization in modal context');
+        // Verificar si existe el formulario de tarea directamente en la página
+        const taskForm = document.querySelector('#event-form');
+        if (taskForm && !taskForm.closest('.event-modal')) { // Asegurarse de que no está dentro de un modal
+            initializeEventCard(document);
         }
     });
 
-    // Export for use in modal and make it handle initialization tracking
-    window.initializeEventCard = function(context = document) {
-        // Check if already initialized in this context
-        if (context instanceof Element && context.hasAttribute('data-event-initialized')) {
-            console.log('Event card already initialized in this context');
-            return;
-        }
 
-        // Initialize the event card
-        initializeEventCard(context);
+    // // Initialize when document is ready - only for standalone pages
+    // document.addEventListener('DOMContentLoaded', function() {
+    //     // Only initialize if we're not in a modal context
+    //     const modalContext = document.querySelector('.modal.show');
+    //     if (!modalContext) {
+    //         console.log('Initializing event card in standalone context');
+    //         initializeEventCard();
+    //     } else {
+    //         console.log('Skipping initialization in modal context');
+    //     }
+    // });
 
-        // Mark as initialized
-        if (context instanceof Element) {
-            context.setAttribute('data-event-initialized', 'true');
-        }
-    };
+    // // Export for use in modal and make it handle initialization tracking
+    // window.initializeEventCard = function(context = document) {
+    //     // Check if already initialized in this context
+    //     if (context instanceof Element && context.hasAttribute('data-event-initialized')) {
+    //         console.log('Event card already initialized in this context');
+    //         return;
+    //     }
+
+    //     // Initialize the event card
+    //     initializeEventCard(context);
+
+    //     // Mark as initialized
+    //     if (context instanceof Element) {
+    //         context.setAttribute('data-event-initialized', 'true');
+    //     }
+    // };
 
 })();

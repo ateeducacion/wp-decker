@@ -24,9 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 modal.find('.modal-body').html(data);
 
                 // Después de cargar el contenido, inicializar las funciones JS
-                if (typeof window.initializeSendComments === 'function' && typeof window.initializeEventPage === 'function') {
-                    window.initializeSendComments(modal[0]);
-                    window.initializeEventPage(modal[0]);
+                if (typeof window.initializeEventCard === 'function') {
+                    window.initializeEventCard(modal[0]);
                 }
 
             },
@@ -40,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function () {
     jQuery('#event-modal').on('hidden.bs.modal', function () {
         var modal = jQuery(this);
         // Remover los atributos data-* utilizados para rastrear inicialización
-        modal[0].removeAttribute('data-send-comments-initialized');
         modal[0].removeAttribute('data-event-page-initialized');
 
         // Opcional: destruir instancias de Choices.js o Quill editor si es necesario

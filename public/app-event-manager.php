@@ -88,8 +88,8 @@ $events = EventManager::get_events();
 																</span>
 															</td>
 															<td>
-																<a href="#" class="btn btn-sm btn-info me-2 edit-event" 
-																   data-id="<?php echo esc_attr( $event->get_id() ); ?>">
+																<a href="#" class="btn btn-sm btn-info me-2 edit-event" data-bs-toggle="modal" data-bs-target="#event-modal"
+																   data-event-id="<?php echo esc_attr( $event->get_id() ); ?>">
 																	<i class="ri-pencil-line"></i>
 																</a>
 																<a href="#" class="btn btn-sm btn-danger delete-event" 
