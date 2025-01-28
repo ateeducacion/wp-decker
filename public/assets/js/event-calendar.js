@@ -1,8 +1,7 @@
 (function($) {
     'use strict';
 
-    function EventModal() {
-        this.$modal = new bootstrap.Modal(document.getElementById('event-modal'), { backdrop: 'static' });
+    function EventCalendar() {
         this.$calendar = $('#calendar');
         this.$formEvent = $('#form-event');
         this.$btnNewEvent = $('#btn-new-event');
@@ -16,7 +15,7 @@
         this.init();
     }
 
-    EventModal.prototype = {
+    EventCalendar.prototype = {
         init: function() {
             this.initCalendar();
             this.initEventHandlers();
@@ -157,19 +156,33 @@
 
         onEventClick: function(e) {
             if (e.event.extendedProps.type === 'task') {
+
+                this.$modal = new bootstrap.Modal(document.getElementById('task-modal'), { backdrop: 'static' });
+
+                this.$formEvent.removeClass('was-validated');
+                this.$newEventData = null;
+                this.$btnDeleteEvent.show();
+                this.$modalTitle.text(deckerVars.strings.edit_event);
+                this.$modal.show();
+                this.$selectedEvent = e.event;
+
                 // For tasks, open the task modal
-                const taskId = e.event.id.replace('task_', '');
-                const taskModal = document.querySelector('#task-modal');
-                const taskButton = document.createElement('button');
-                taskButton.setAttribute('data-task-id', taskId);
-                taskButton.setAttribute('data-bs-toggle', 'modal');
-                taskButton.setAttribute('data-bs-target', '#task-modal');
-                document.body.appendChild(taskButton);
-                taskButton.click();
-                document.body.removeChild(taskButton);
+                // const taskId = e.event.id.replace('task_', '');
+                // const taskModal = document.querySelector('#task-modal');
+                // const taskButton = document.createElement('button');
+                // taskButton.setAttribute('data-task-id', taskId);
+                // taskButton.setAttribute('data-bs-toggle', 'modal');
+                // taskButton.setAttribute('data-bs-target', '#task-modal');
+                // document.body.appendChild(taskButton);
+                // taskButton.click();
+                // document.body.removeChild(taskButton);
             } else {
                 // For regular events, open the event modal
                 // this.$formEvent[0].reset();
+
+                this.$modal = new bootstrap.Modal(document.getElementById('event-modal'), { backdrop: 'static' });
+
+
                 this.$formEvent.removeClass('was-validated');
                 this.$newEventData = null;
                 this.$btnDeleteEvent.show();
@@ -205,7 +218,7 @@
         },
 
         onSelect: function(e) {
-            this.$formEvent[0].reset();
+            // this.$formEvent[0].reset();
             this.$formEvent.removeClass('was-validated');
             this.$selectedEvent = null;
             this.$newEventData = e;
@@ -279,7 +292,7 @@
 
     // Initialize when document is ready
     $(document).ready(function() {
-        new EventModal();
+        new EventCalendar();
     });
 
 })(jQuery);

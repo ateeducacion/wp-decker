@@ -10,7 +10,8 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 ?>
-<!--  Add new task modal -->
+
+<!-- Task Modal -->
 <div class="modal fade task-modal" id="task-modal" tabindex="-1" role="dialog" aria-labelledby="NewTaskModalLabel">
 	<div class="modal-dialog modal-dialog-centered modal-lg">
 		<div class="modal-content">

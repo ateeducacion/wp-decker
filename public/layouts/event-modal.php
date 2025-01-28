@@ -12,16 +12,18 @@ defined( 'ABSPATH' ) || exit;
 ?>
 
 <!-- Event Modal -->
-<div class="modal fade" id="event-modal" tabindex="-1">
-	<div class="modal-dialog">
+<div class="modal fade event-modal" id="event-modal" tabindex="-1" role="dialog" aria-labelledby="NewEventModalLabel">
+	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
-			<div class="modal-header py-3 px-4 border-bottom-0">
-				<h5 class="modal-title" id="modal-title"><?php esc_html_e( 'Event', 'decker' ); ?></h5>
+			<div class="modal-header">
+				<h4 class="modal-title" id="NewEventModalLabel"><?php esc_html_e( 'Event', 'decker' ); ?></h4>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-			<div class="modal-body px-4 pb-4 pt-0" id="event-modal-content">
-				<!-- Event card content will be loaded here -->
+			<div class="modal-body">
+				<div id="event-modal-content">
+					<!-- Aquí se cargará el contenido dinámico desde event-card.php -->
+				</div>
 			</div>
-		</div>
-	</div>
-</div>
+		</div><!-- /.modal-content -->
+	</div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
