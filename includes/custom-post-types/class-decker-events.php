@@ -32,6 +32,10 @@ class Decker_Events {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post_decker_event', array( $this, 'save_event_meta' ) );
 
+
+		add_filter( 'rest_prepare_decker_event', array( $this, 'add_event_meta_to_rest_response' ), 10, 3 );
+
+        add_filter('use_block_editor_for_post_type', array( $this, 'force_classic_editor'), 10, 2);
     
 	}
 
@@ -167,6 +171,19 @@ class Decker_Events {
 	    );
 	}
 
+
+	/**
+	 * Forces classic editor
+	 */
+public function force_classic_editor($use_block_editor, $post_type) {
+    if ($post_type === 'decker_event') {
+        return false; // Deactivate gutenberg editor.
+    }
+    return $use_block_editor;
+}
+
+
+
 	/**
 	 * Restringe el acceso a los endpoints de 'decker_event' solo a editores y superiores.
 	 */
@@ -176,9 +193,6 @@ public function restrict_rest_access($result, $rest_server, $request) {
     if (strpos($route, '/wp/v2/decker_event') === 0) {
         // Usa la capacidad específica del CPT
         if (!current_user_can('edit_posts')) {
-        	// print_r(get_current_user_id());
-        	// print_r("hola");
-        	// die();
             return new WP_Error(
                 'rest_forbidden',
                 __('No tienes permisos para acceder a este recurso.', 'decker'),
@@ -189,6 +203,28 @@ public function restrict_rest_access($result, $rest_server, $request) {
 
     return $result;
 }
+
+
+/**
+ * Add meta data to the REST API response for 'decker_event' post type.
+ */
+public function add_event_meta_to_rest_response( $data, $post, $context ) {
+    if ( $post->post_type === 'decker_event' ) {
+        // Get the event meta data
+        $meta = array(
+            '_event_start'         => get_post_meta( $post->ID, '_event_start', true ),
+            '_event_end'           => get_post_meta( $post->ID, '_event_end', true ),
+            '_event_location'      => get_post_meta( $post->ID, '_event_location', true ),
+            '_event_url'           => get_post_meta( $post->ID, '_event_url', true ),
+            '_event_category'      => get_post_meta( $post->ID, '_event_category', true ),
+            '_event_assigned_users' => get_post_meta( $post->ID, '_event_assigned_users', true ),
+        );
+        $data->data['meta'] = $meta;
+    }
+    return $data;
+}
+
+
 	/**
 	 * Add meta boxes for event details
 	 */
