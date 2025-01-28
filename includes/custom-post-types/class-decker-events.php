@@ -251,6 +251,23 @@ class Decker_Events {
 				?>
 			</select>
 		</p>
+		<div class="d-flex justify-content-between mt-4">
+			<?php if (isset($post->ID) && $post->ID > 0): ?>
+				<button type="button" class="btn btn-danger delete-event" data-id="<?php echo esc_attr($post->ID); ?>">
+					<i class="ri-delete-bin-line me-1"></i><?php esc_html_e('Delete', 'decker'); ?>
+				</button>
+			<?php else: ?>
+				<div></div>
+			<?php endif; ?>
+			<div>
+				<button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+					<?php esc_html_e('Close', 'decker'); ?>
+				</button>
+				<button type="submit" class="btn btn-primary">
+					<?php esc_html_e('Save', 'decker'); ?>
+				</button>
+			</div>
+		</div>
 		<?php
 	}
 
