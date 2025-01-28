@@ -12,10 +12,11 @@
     // Function to delete an event
     function deleteEvent(id, title) {
         if (confirm(strings.confirm_delete_event + ' "' + title + '"')) {
-            fetch(restUrl + 'events/' + id, {
+            fetch(wpApiSettings.root + 'events/' + id, {
                 method: 'DELETE',
                 headers: {
-                    'X-WP-Nonce': nonces.wp_rest
+                    'X-WP-Nonce': wpApiSettings.nonce,
+                    'Content-Type': 'application/json'
                 }
             })
             .then(response => response.json())
