@@ -226,4 +226,120 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
 
 
     }
+
+    /**
+     * Test REST API schema for Backbone compatibility
+     */
+    public function test_rest_api_schema() {
+        wp_set_current_user($this->editor);
+        
+        $request = new WP_REST_Request('OPTIONS', '/wp/v2/decker_event');
+        $response = $this->server->dispatch($request);
+        $data = $response->get_data();
+        
+        // Check schema exists
+        $this->assertArrayHasKey('schema', $data);
+        $schema = $data['schema'];
+        
+        // Check required fields for Backbone
+        $this->assertArrayHasKey('title', $schema['properties']);
+        $this->assertArrayHasKey('content', $schema['properties']);
+        $this->assertArrayHasKey('status', $schema['properties']);
+        $this->assertArrayHasKey('meta', $schema['properties']);
+        
+        // Check meta schema
+        $meta_schema = $schema['properties']['meta']['properties'];
+        $this->assertArrayHasKey('event_start', $meta_schema);
+        $this->assertArrayHasKey('event_end', $meta_schema);
+        $this->assertArrayHasKey('event_location', $meta_schema);
+        $this->assertArrayHasKey('event_url', $meta_schema);
+        $this->assertArrayHasKey('event_category', $meta_schema);
+        $this->assertArrayHasKey('event_assigned_users', $meta_schema);
+    }
+
+    /**
+     * Test REST API collection parameters for Backbone compatibility
+     */
+    public function test_rest_api_collection_params() {
+        wp_set_current_user($this->editor);
+        
+        $request = new WP_REST_Request('OPTIONS', '/wp/v2/decker_event');
+        $response = $this->server->dispatch($request);
+        $data = $response->get_data();
+        
+        // Check collection parameters
+        $this->assertArrayHasKey('endpoints', $data);
+        $endpoints = $data['endpoints'];
+        
+        // Find GET endpoint
+        $get_endpoint = null;
+        foreach ($endpoints as $endpoint) {
+            if ($endpoint['methods'][0] === 'GET' && count($endpoint['methods']) === 1) {
+                $get_endpoint = $endpoint;
+                break;
+            }
+        }
+        
+        $this->assertNotNull($get_endpoint);
+        $this->assertArrayHasKey('args', $get_endpoint);
+        
+        // Check Backbone-required parameters
+        $args = $get_endpoint['args'];
+        $this->assertArrayHasKey('page', $args);
+        $this->assertArrayHasKey('per_page', $args);
+        $this->assertArrayHasKey('search', $args);
+        $this->assertArrayHasKey('order', $args);
+        $this->assertArrayHasKey('orderby', $args);
+    }
+
+    /**
+     * Test REST API response format for Backbone compatibility
+     */
+    public function test_rest_api_response_format() {
+        wp_set_current_user($this->editor);
+        
+        // Create test events
+        $events = array();
+        for ($i = 1; $i <= 3; $i++) {
+            $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
+            $request->set_param('title', "Test Event $i");
+            $request->set_param('status', 'publish');
+            $request->set_param('meta', array(
+                'event_start' => "2024-02-0{$i}T10:00:00",
+                'event_end' => "2024-02-0{$i}T11:00:00",
+                'event_location' => "Location $i",
+                'event_category' => 'bg-primary'
+            ));
+            
+            $response = $this->server->dispatch($request);
+            $events[] = $response->get_data()['id'];
+        }
+        
+        // Test collection response
+        $request = new WP_REST_Request('GET', '/wp/v2/decker_event');
+        $response = $this->server->dispatch($request);
+        $data = $response->get_data();
+        
+        // Check response headers
+        $headers = $response->get_headers();
+        $this->assertArrayHasKey('X-WP-Total', $headers);
+        $this->assertArrayHasKey('X-WP-TotalPages', $headers);
+        
+        // Check response format
+        $this->assertIsArray($data);
+        $this->assertGreaterThanOrEqual(3, count($data));
+        
+        // Check first item format
+        $item = $data[0];
+        $this->assertArrayHasKey('id', $item);
+        $this->assertArrayHasKey('title', $item);
+        $this->assertArrayHasKey('content', $item);
+        $this->assertArrayHasKey('meta', $item);
+        $this->assertArrayHasKey('_links', $item);
+        
+        // Clean up
+        foreach ($events as $event_id) {
+            wp_delete_post($event_id, true);
+        }
+    }
 }
