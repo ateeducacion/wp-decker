@@ -57,39 +57,49 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
     }
 
     /**
-     * Test event creation via REST API
+     * Test event creation via REST API with meta fields
      */
     public function test_create_event() {
         wp_set_current_user($this->editor);
 
+        $event_data = array(
+            'title' => 'Test Event',
+            'status' => 'publish',
+            'meta' => array(
+                'event_start' => '2024-02-01T10:00:00',
+                'event_end' => '2024-02-01T11:00:00',
+                'event_location' => 'Test Location',
+                'event_url' => 'https://example.com',
+                'event_category' => 'bg-primary',
+                'event_assigned_users' => array($this->editor)
+            )
+        );
+
         $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
-        $request->set_param('title', 'Test Event');
-        $request->set_param('status', 'publish');
-        $request->set_param('meta', array(
-            'event_start' => '2024-02-01T10:00:00',
-            'event_end' => '2024-02-01T11:00:00',
-            'event_location' => 'Test Location',
-            'event_url' => 'https://example.com',
-            'event_category' => 'bg-primary',
-            'event_assigned_users' => array($this->editor)
-        ));
+        foreach($event_data as $key => $value) {
+            $request->set_param($key, $value);
+        }
 
         $response = $this->server->dispatch($request);
         $data = $response->get_data();
         
+        // Check response status and basic data
         $this->assertEquals(201, $response->get_status());
         $this->assertEquals('Test Event', $data['title']['rendered']);
         
         // Store event ID for cleanup
         $this->event_id = $data['id'];
 
-        // Verify meta via REST
-        $this->assertEquals('2024-02-01T10:00:00', $data['meta']['event_start']);
-        $this->assertEquals('2024-02-01T11:00:00', $data['meta']['event_end']);
-        $this->assertEquals('Test Location', $data['meta']['event_location']);
-        $this->assertEquals('https://example.com', $data['meta']['event_url']);
-        $this->assertEquals('bg-primary', $data['meta']['event_category']);
-        $this->assertContains($this->editor, $data['meta']['event_assigned_users']);
+        // Verify meta via direct access and REST response
+        foreach($event_data['meta'] as $key => $value) {
+            // Check meta in REST response
+            $this->assertArrayHasKey($key, $data['meta'], "Meta field '$key' not found in REST response");
+            $this->assertEquals($value, $data['meta'][$key], "Meta field '$key' has incorrect value in REST response");
+            
+            // Check meta in database
+            $stored_value = get_post_meta($this->event_id, $key, true);
+            $this->assertEquals($value, $stored_value, "Meta field '$key' has incorrect value in database");
+        }
     }
 
     /**
@@ -164,10 +174,36 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
         // Delete as editor (should succeed)
         wp_set_current_user($this->editor);
         
+        // First verify all meta exists before deletion
+        $meta_fields = array(
+            'event_start',
+            'event_end',
+            'event_location',
+            'event_url',
+            'event_category',
+            'event_assigned_users'
+        );
+        
+        foreach($meta_fields as $field) {
+            $this->assertNotEmpty(
+                get_post_meta($this->event_id, $field, true),
+                "Meta field '$field' should exist before deletion"
+            );
+        }
+        
         $request = new WP_REST_Request('DELETE', '/wp/v2/decker_event/' . $this->event_id);
+        $request->set_param('force', true);
         $response = $this->server->dispatch($request);
         
         $this->assertEquals(200, $response->get_status());
-        $this->assertEquals('trash', get_post_status($this->event_id));
+        
+        // Verify post and all meta are completely deleted
+        $this->assertNull(get_post($this->event_id));
+        foreach($meta_fields as $field) {
+            $this->assertEmpty(
+                get_post_meta($this->event_id, $field, true),
+                "Meta field '$field' should be deleted"
+            );
+        }
     }
 }
