@@ -26,8 +26,13 @@ class Decker_Events {
 	 */
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
+        add_action('init', array($this, 'register_post_meta'), 20); // Prioridad 20 para asegurar que el CPT ya existe		
+	    add_filter('rest_pre_dispatch', array($this, 'restrict_rest_access'), 10, 3);
+
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post_decker_event', array( $this, 'save_event_meta' ) );
+
+    
 	}
 
 	/**
@@ -58,7 +63,10 @@ class Decker_Events {
 			'show_in_menu'      => 'edit.php?post_type=decker_task',
 			'query_var'         => true,
 			'rewrite'           => array( 'slug' => 'events' ),
-			'capability_type'   => 'post',
+			// 'capability_type'   => 'post',
+    // 'capability_type' => 'decker_event', // <- Define un tipo de capacidad único
+    'map_meta_cap' => true, // <- Habilita el mapeo automático de capacidades
+
 			'has_archive'       => true,
 			'hierarchical'      => false,
 			'menu_position'     => null,
@@ -69,6 +77,112 @@ class Decker_Events {
 		register_post_type( 'decker_event', $args );
 	}
 
+	/**
+	 * Register the custom post type meta fields
+	 */
+	public function register_post_meta() {
+	    register_post_meta(
+	        'decker_event',
+	        '_event_start',
+	        array(
+	            'type' => 'string',
+	            'single' => true,
+	            'show_in_rest' => true,
+	            'sanitize_callback' => 'sanitize_text_field',
+	            'schema' => array(
+	                'type' => 'string',
+	                'format' => 'date-time',
+	            ),
+	        )
+	    );
+
+	    register_post_meta(
+	        'decker_event',
+	        '_event_end',
+	        array(
+	            'type' => 'string',
+	            'single' => true,
+	            'show_in_rest' => true,
+	            'sanitize_callback' => 'sanitize_text_field',
+	            'schema' => array(
+	                'type' => 'string',
+	                'format' => 'date-time',
+	            ),
+	        )
+	    );
+
+	    register_post_meta(
+	        'decker_event',
+	        '_event_location',
+	        array(
+	            'type' => 'string',
+	            'single' => true,
+	            'show_in_rest' => true,
+	            'sanitize_callback' => 'sanitize_text_field',
+	        )
+	    );
+
+	    register_post_meta(
+	        'decker_event',
+	        '_event_url',
+	        array(
+	            'type' => 'string',
+	            'single' => true,
+	            'show_in_rest' => true,
+	            'sanitize_callback' => 'esc_url_raw',
+	        )
+	    );
+
+	    register_post_meta(
+	        'decker_event',
+	        '_event_category',
+	        array(
+	            'type' => 'string',
+	            'single' => true,
+	            'show_in_rest' => true,
+	            'sanitize_callback' => 'sanitize_text_field',
+	        )
+	    );
+
+	    register_post_meta(
+	        'decker_event',
+	        '_event_assigned_users',
+	        array(
+	            'type' => 'array',
+	            'single' => true,
+	            'show_in_rest' => array(
+	                'schema' => array(
+	                    'items' => array(
+	                        'type' => 'integer',
+	                    ),
+	                ),
+	            ),
+	            'sanitize_callback' => function ($value) {
+	                return array_map('absint', (array)$value);
+	            },
+	        )
+	    );
+	}
+
+	/**
+	 * Restringe el acceso a los endpoints de 'decker_event' solo a editores y superiores.
+	 */
+public function restrict_rest_access($result, $rest_server, $request) {
+    $route = $request->get_route();
+
+    if (strpos($route, '/wp/v2/decker_event') === 0) {
+        // Usa la capacidad específica del CPT
+		if (!current_user_can('edit_others_posts')) {
+            return new WP_Error(
+                'rest_forbidden',
+                __('No tienes permisos para acceder a este recurso.', 'decker'),
+                array('status' => 403)
+            );
+        }
+    }
+
+    return $result;
+}
 	/**
 	 * Add meta boxes for event details
 	 */
