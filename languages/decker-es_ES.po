@@ -1416,19 +1416,19 @@ msgstr "Categoría:"
 
 #: includes/custom-post-types/class-decker-events.php:383
 msgid "Danger"
-msgstr ""
+msgstr "Peligro"
 
 #: includes/custom-post-types/class-decker-events.php:384
 msgid "Success"
-msgstr ""
+msgstr "Éxito"
 
 #: includes/custom-post-types/class-decker-events.php:385
 msgid "Primary"
-msgstr ""
+msgstr "Primario"
 
 #: includes/custom-post-types/class-decker-events.php:386
 msgid "Info"
-msgstr ""
+msgstr "Información"
 
 #: includes/custom-post-types/class-decker-user-extended.php:126
 #: public/app-calendar.php:16
@@ -1478,7 +1478,7 @@ msgstr "No tienes permisos para acceder a estos datos."
 
 #: includes/custom-post-types/class-decker-events.php:227
 msgid "No tienes permisos para acceder a este recurso."
-msgstr ""
+msgstr "No tienes permisos para acceder a este recurso."
 
 #: includes/custom-post-types/class-decker-events.php:280
 #: public/layouts/event-card.php:129
