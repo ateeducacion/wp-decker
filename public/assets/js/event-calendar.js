@@ -18,7 +18,7 @@
     EventCalendar.prototype = {
         init: function() {
             this.initCalendar();
-            this.initEventHandlers();
+            // this.initEventHandlers();
         },
 
         initCalendar: function() {
@@ -143,13 +143,23 @@
                         } else if (info.event.extendedProps.type === 'event') {
                             // For events, add assigned users before title
                             const users = info.event.extendedProps.assigned_users || [];
+
                             if (users.length > 0) {
-                                const userNicknames = users.map(id => deckerVars.users[id]?.nickname || '').filter(Boolean);
+                                const userNicknames = users.map(userId => {
+                                    // Convertir a número si es necesario (depende de cómo vengan los IDs)
+                                    const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+                                    // Buscar el usuario por ID en el array
+                                    const user = deckerVars.users.find(u => u.id == id); // == para compatibilidad string/number
+                                    return user?.nickname || '';
+                                }).filter(Boolean);
+                                
                                 if (userNicknames.length > 0) {
                                     const prefix = document.createTextNode(userNicknames.join(', ') + ': ');
                                     titleEl.insertBefore(prefix, titleEl.firstChild);
                                 }
                             }
+
+
                         }
                         titleEl.setAttribute('title', info.event.title);
                     }
