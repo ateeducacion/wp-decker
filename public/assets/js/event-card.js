@@ -79,9 +79,8 @@
         // All Day Event handler
         const allDaySwitch = context.querySelector('#event-allday');
         if (allDaySwitch) {
-            allDaySwitch.addEventListener('change', function() {
-                const isAllDay = this.checked;
-                
+            // Function to handle all-day mode changes
+            const handleAllDayChange = function(isAllDay) {
                 startPicker.set('enableTime', !isAllDay);
                 startPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
                 endPicker.set('enableTime', !isAllDay);
@@ -100,6 +99,14 @@
                         endPicker.setDate(endDate);
                     }
                 }
+            };
+
+            // Initial setup based on current state
+            handleAllDayChange(allDaySwitch.checked);
+
+            // Handle changes
+            allDaySwitch.addEventListener('change', function() {
+                handleAllDayChange(this.checked);
             });
         }
 
