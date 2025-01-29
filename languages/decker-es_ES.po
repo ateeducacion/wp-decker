@@ -1621,16 +1621,16 @@ msgstr "La categoría determina el color del evento en el calendario."
 
 #: public/class-decker-public.php:301
 msgid "Month"
-msgstr ""
+msgstr "Mes"
 
 #: public/class-decker-public.php:302
 msgid "Week"
-msgstr ""
+msgstr "Semana"
 
 #: public/class-decker-public.php:303
 msgid "Day"
-msgstr ""
+msgstr "Día"
 
 #: public/class-decker-public.php:304
 msgid "List"
-msgstr ""
+msgstr "Lista"
