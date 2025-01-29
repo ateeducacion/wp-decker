@@ -61,14 +61,37 @@ $meta = $event_id ? get_post_meta($event_id) : array();
 
 // Process metas
 $allday = isset($meta['event_allday'][0]) ? $meta['event_allday'][0] : '';
-// Round to nearest 30 minutes for new events
-$start_date = isset($meta['event_start'][0]) ? 
-    date('Y-m-d H:i', strtotime($meta['event_start'][0])) : 
-    date('Y-m-d H:i', strtotime(date('Y-m-d H') . ':' . (round(date('i')/30) * 30)));
 
+// Función para redondear a la media hora más cercana
+function round_to_nearest_half_hour($date) {
+    $timestamp = strtotime($date);
+    $minutes = (int)gmdate('i', $timestamp);
+    $seconds = (int)gmdate('s', $timestamp);
+    
+    // Redondear los minutos
+    $rounded_minutes = round($minutes / 30) * 30;
+    
+    // Manejar el caso en que los minutos redondean a 60
+    if ($rounded_minutes == 60) {
+        $timestamp = strtotime("+1 hour", strtotime(gmdate('Y-m-d H:00', $timestamp)));
+        $rounded_minutes = 0;
+    } else {
+        $timestamp = strtotime(gmdate('Y-m-d H:', $timestamp) . sprintf('%02d', $rounded_minutes));
+    }
+    
+    return gmdate('Y-m-d H:i', $timestamp);
+}
+
+// Establecer la fecha de inicio
+$start_date = isset($meta['event_start'][0]) ? 
+    gmdate('Y-m-d H:i', strtotime($meta['event_start'][0])) : 
+    round_to_nearest_half_hour(gmdate('Y-m-d H:i'));
+
+// Establecer la fecha de fin
 $end_date = isset($meta['event_end'][0]) ? 
-    date('Y-m-d H:i', strtotime($meta['event_end'][0])) : 
-    date('Y-m-d H:i', strtotime(date('Y-m-d H') . ':' . (round(date('i')/30) * 30) . ' +1 hour'));
+    gmdate('Y-m-d H:i', strtotime($meta['event_end'][0])) : 
+    gmdate('Y-m-d H:i', strtotime($start_date . ' +1 hour'));
+
 $assigned_users = isset($meta['event_assigned_users'][0]) ? 
     maybe_unserialize($meta['event_assigned_users'][0]) : 
     array(get_current_user_id());
