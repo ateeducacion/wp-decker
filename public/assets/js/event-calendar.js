@@ -132,9 +132,9 @@
                             // For events, add assigned users before title
                             const users = info.event.extendedProps.assigned_users || [];
                             if (users.length > 0) {
-                                const userAliases = users.map(id => deckerVars.users[id]?.alias || '').filter(Boolean);
-                                if (userAliases.length > 0) {
-                                    const prefix = document.createTextNode(userAliases.join(', ') + ': ');
+                                const userNicknames = users.map(id => deckerVars.users[id]?.nickname || '').filter(Boolean);
+                                if (userNicknames.length > 0) {
+                                    const prefix = document.createTextNode(userNicknames.join(', ') + ': ');
                                     titleEl.insertBefore(prefix, titleEl.firstChild);
                                 }
                             }

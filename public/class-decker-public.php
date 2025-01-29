@@ -257,6 +257,18 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
+
+			$users = get_users(array(
+			    'fields' => array('ID', 'display_name') // Campos nativos
+			));
+
+			// Añadir el nickname a cada usuario
+			foreach ($users as &$user) {
+			    $user->nickname = get_user_meta($user->ID, 'nickname', true); // Cambia 'alias' por tu meta key real
+			}
+
+
+
 			// Preparar los datos a pasar al JS.
 			$localized_data = array(
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
@@ -299,6 +311,7 @@ class Decker_Public {
 				),
 				'disabled' => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id' => get_current_user_id(),
+				'users' => $users,
 			);
 
 			$last_handle = '';
@@ -328,7 +341,6 @@ class Decker_Public {
 
 				}
 			}
-
 
 			// Localize the script with new data.
 			wp_localize_script(
