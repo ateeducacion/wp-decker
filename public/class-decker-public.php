@@ -297,11 +297,11 @@ class Decker_Public {
 					'cancel' => __( 'Cancel', 'decker' ),
 					// Añade más strings según sea necesario.
 
-					 'today' => __( 'Today' ),
-					'month' => __( 'Month' ),
-					'week' => __( 'Week' ),
-					'day' => __( 'Day' ),
-					'list' => __( 'List' ),
+					 'today' => __( 'Today', 'decker' ),
+					'month' => __( 'Month', 'decker' ),
+					'week' => __( 'Week', 'decker' ),
+					'day' => __( 'Day', 'decker' ),
+					'list' => __( 'List', 'decker' ),
 
 				),
 				'disabled' => isset( $disabled ) && $disabled ? true : false,
