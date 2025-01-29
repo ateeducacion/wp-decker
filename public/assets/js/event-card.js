@@ -99,8 +99,15 @@
         if (selectAllLink && assignedUsersChoices) {
             selectAllLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                const allValues = Array.from(assignedUsersSelect.options).map(opt => opt.value);
-                assignedUsersChoices.setValue(allValues);
+                const allOptions = Array.from(assignedUsersSelect.options).map(opt => ({
+                    value: opt.value,
+                    label: opt.textContent.trim()
+                }));
+                assignedUsersChoices.removeActiveItems();
+                assignedUsersChoices.setChoices(allOptions, 'value', 'label', true);
+                allOptions.forEach(option => {
+                    assignedUsersChoices.setChoiceByValue(option.value);
+                });
             });
         }
 
