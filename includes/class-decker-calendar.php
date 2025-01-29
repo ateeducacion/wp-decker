@@ -52,18 +52,31 @@ class Decker_Calendar {
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
+		// Check for token in request
+		$token = $request->get_param('token');
+		if (!empty($token)) {
+			// Look for a user with this calendar token
+			$users = get_users(array(
+				'meta_key' => 'decker_calendar_token',
+				'meta_value' => $token,
+				'number' => 1
+			));
 
-		// CHANGE THIS
-		return true;
+			if (!empty($users)) {
+				return true;
+			}
+		}
 
-	    if ( current_user_can( 'read' ) ) {
-	        return true;
-	    }
-	    return new WP_Error(
-	        'rest_forbidden',
-	        __( 'You do not have permissions to access this data.', 'decker' ),
-	        array( 'status' => 403 )
-	    );
+		// If no token or invalid token, check for logged-in user permission
+		if (current_user_can('read')) {
+			return true;
+		}
+
+		return new WP_Error(
+			'rest_forbidden',
+			__('You do not have permissions to access this data.', 'decker'),
+			array('status' => 403)
+		);
 	}
 
 	/**
