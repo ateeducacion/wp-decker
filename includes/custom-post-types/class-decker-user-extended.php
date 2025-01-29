@@ -55,14 +55,14 @@ class Decker_User_Extended {
 						data: {
 							action: 'generate_calendar_token',
 							user_id: <?php echo esc_js( $user->ID ); ?>,
-							nonce: '<?php echo wp_create_nonce( 'generate_calendar_token' ); ?>',
+							nonce: '<?php echo esc_js( wp_create_nonce( 'generate_calendar_token' ) ); ?>',
 							action: 'generate_calendar_token'
 						},
 						success: function(response) {
 							if (response.success) {
 								$('#decker_calendar_token').val(response.data.token);
 								// Update calendar URL in description
-								const calendarUrl = '<?php echo home_url( 'decker-calendar' ); ?>?token=' + response.data.token;
+								const calendarUrl = '<?php echo esc_js( esc_url( home_url( 'decker-calendar' ) ) ); ?>?token=' + response.data.token;
 								$('#decker_calendar_token').closest('td').find('.description code').text(calendarUrl);
 							}
 						}

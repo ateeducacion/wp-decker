@@ -132,7 +132,7 @@ class Decker_Events {
 			),
 			'event_start' => array(
 				'type' => 'string',
-				'sanitize_callback' => array( $this, 'sanitize_event_date' ),
+				'sanitize_callback' => array( $this, 'sanitize_text_field' ),
 				'schema' => array(
 					'type' => 'string',
 					'format' => 'date-time',
@@ -140,7 +140,7 @@ class Decker_Events {
 			),
 			'event_end' => array(
 				'type' => 'string',
-				'sanitize_callback' => array( $this, 'sanitize_event_date' ),
+				'sanitize_callback' => array( $this, 'sanitize_text_field' ),
 				'schema' => array(
 					'type' => 'string',
 					'format' => 'date-time',
@@ -190,22 +190,6 @@ class Decker_Events {
 				array_merge( $default_args, $args )
 			);
 		}
-	}
-
-	/**
-	 * Sanitizes the event date.
-	 *
-	 * @param string $value The date value to sanitize.
-	 * @return string The sanitized date.
-	 */
-	public function sanitize_event_date( $value ) {
-		$allday = isset( $_POST['event_allday'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['event_allday'] ) ) : false;
-
-		if ( $allday ) {
-			return sanitize_text_field( substr( $value, 0, 10 ) ); // Solo fecha.
-		}
-
-		return sanitize_text_field( $value ); // Fecha y hora.
 	}
 
 	/**
@@ -413,6 +397,13 @@ class Decker_Events {
 	 * @param int $post_id The post ID.
 	 */
 	public function save_event_meta( $post_id ) {
+
+		// Add this at the VERY BEGINNING of the method.
+		if ( ! isset( $_POST['decker_event_meta_box_nonce'] ) ||
+			! wp_verify_nonce( sanitize_key( $_POST['decker_event_meta_box_nonce'] ), 'decker_event_meta_box' ) ) {
+			return;
+		}
+
 		// Skip capability check in test environment.
 		if ( ! defined( 'WP_TESTS_RUNNING' ) ) {
 			if ( ! isset( $_POST['decker_event_meta_box_nonce'] ) ) {
@@ -439,8 +430,8 @@ class Decker_Events {
 		// Special processing for dates.
 		// Handle date formatting.
 		if ( $allday ) {
-			$start = isset( $_POST['event_start_date'] ) ? $this->format_event_date( $_POST['event_start_date'], true ) : '';
-			$end = isset( $_POST['event_end_date'] ) ? $this->format_event_date( $_POST['event_end_date'], true ) : '';
+			$start = isset( $_POST['event_start_date'] ) ? $this->format_event_date( sanitize_text_field( wp_unslash( $_POST['event_start_date'] ) ), true ) : '';
+			$end = isset( $_POST['event_end_date'] ) ? $this->format_event_date( sanitize_text_field( wp_unslash( $_POST['event_end_date'] ) ), true ) : '';
 		} else {
 			$start_date = isset( $_POST['event_start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start_date'] ) ) : '';
 			$start_time = isset( $_POST['event_start_time'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start_time'] ) ) : '00:00';
@@ -479,13 +470,8 @@ class Decker_Events {
 		// Save assigned users.
 		$assigned_users = array();
 		if ( isset( $_POST['event_assigned_users'] ) ) {
-			$users_data = wp_unslash( $_POST['event_assigned_users'] );
-			if ( is_array( $users_data ) ) {
-				$assigned_users = array_map( 'absint', $users_data );
-			} elseif ( is_string( $users_data ) ) {
-				$users_array = explode( ',', $users_data );
-				$assigned_users = array_map( 'absint', $users_array );
-			}
+
+			$assigned_users = array_map( 'intval', wp_unslash( $_POST['event_assigned_users'] ) );
 		}
 		update_post_meta( $post_id, 'event_assigned_users', array_filter( $assigned_users ) );
 	}
