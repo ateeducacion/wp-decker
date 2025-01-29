@@ -77,8 +77,9 @@
                             title: info.draggedEl.innerText,
                             status: 'publish',
                             meta: {
+                                event_allday: true,
                                 event_start: info.date.toISOString().split('T')[0] + 'T00:00',
-                                event_end: info.date.toISOString().split('T')[0] + 'T23:59',
+                                event_end: info.date.toISOString().split('T')[0] + 'T00:00',
                                 event_category: info.draggedEl.dataset.class,
                                 event_assigned_users: [deckerVars.current_user_id]
                             }
@@ -100,7 +101,7 @@
                             return response.json();
                         })
                         .then(() => {
-                            location.reload();
+                            // location.reload();
                         })
                         .catch(error => {
                             console.error('Error:', error);
