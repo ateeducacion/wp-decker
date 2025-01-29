@@ -117,13 +117,13 @@ class Decker_Calendar {
 	                'title'          => $post->post_title,
 	                'description'    => $post->post_content,
 
-	                'all_day'        => isset($meta['event_allday']) ? $meta['event_allday'] : false,
-	                'start'          => isset($meta['event_start']) ? $meta['event_start'] : '',
-	                'end'            => isset($meta['event_end']) ? $meta['event_end'] : '',
-	                'location'       => isset($meta['event_location']) ? $meta['event_location'] : '',
-	                'url'            => isset($meta['event_url']) ? $meta['event_url'] : '',
-	                'className'      => isset($meta['event_category']) ? $meta['event_category'] : '',
-	                'assigned_users' => isset($meta['event_assigned_users']) ? array_map('intval', (array) $meta['event_assigned_users']) : array(),
+	                'all_day'        => isset($meta['event_allday']) ? $meta['event_allday'][0] : false,
+	                'start'          => isset($meta['event_start']) ? $meta['event_start'][0] : '',
+	                'end'            => isset($meta['event_end']) ? $meta['event_end'][0] : '',
+	                'location'       => isset($meta['event_location']) ? $meta['event_location'][0] : '',
+	                'url'            => isset($meta['event_url']) ? $meta['event_url'][0] : '',
+	                'className'      => isset($meta['event_category']) ? $meta['event_category'][0] : '',
+	                'assigned_users' => isset($meta['event_assigned_users'][0]) ?  maybe_unserialize($meta['event_assigned_users'][0]) : array(),
 
 	                'type'           => 'event',
 	            );
