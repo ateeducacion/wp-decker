@@ -60,13 +60,13 @@ $description = $post ? esc_textarea($post->post_content) : '';
 $meta = $event_id ? get_post_meta($event_id) : array();
 
 // Process metas
-$allday = isset($meta['_event_allday'][0]) ? $meta['_event_allday'][0] : '';
-$start_date = isset($meta['_event_start'][0]) ? date('Y-m-d H:i', strtotime($meta['_event_start'][0])) : '';
-$end_date = isset($meta['_event_end'][0]) ? date('Y-m-d H:i', strtotime($meta['_event_end'][0])) : '';
-$assigned_users = isset($meta['_event_assigned_users'][0]) ? maybe_unserialize($meta['_event_assigned_users'][0]) : array();
-$location = isset($meta['_event_location'][0]) ? $meta['_event_location'][0] : '';
-$url = isset($meta['_event_url'][0]) ? $meta['_event_url'][0] : '';
-$category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '';
+$allday = isset($meta['event_allday'][0]) ? $meta['event_allday'][0] : '';
+$start_date = isset($meta['event_start'][0]) ? date('Y-m-d H:i', strtotime($meta['event_start'][0])) : '';
+$end_date = isset($meta['event_end'][0]) ? date('Y-m-d H:i', strtotime($meta['event_end'][0])) : '';
+$assigned_users = isset($meta['event_assigned_users'][0]) ? maybe_unserialize($meta['event_assigned_users'][0]) : array();
+$location = isset($meta['event_location'][0]) ? $meta['event_location'][0] : '';
+$url = isset($meta['event_url'][0]) ? $meta['event_url'][0] : '';
+$category = isset($meta['event_category'][0]) ? $meta['event_category'][0] : '';
 
 
 ?>
@@ -147,9 +147,9 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     </div>
 
     <!-- Ubicación -->
-    <div class="form-floating mb-3">
+    <div class="form-floating mb-3 d-none">
         <input type="text" class="form-control" id="event-location" name="event_location" 
-               value="<?php echo esc_attr($location); ?>" required 
+               value="<?php echo esc_attr($location); ?>"  
                placeholder="<?php esc_attr_e( 'Location', 'decker' ); ?>">
         <label for="event-location"><?php esc_html_e( 'Location', 'decker' ); ?> <span class="text-danger">*</span></label>
         <div class="invalid-feedback">
@@ -158,7 +158,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     </div>
 
     <!-- URL -->
-    <div class="form-floating mb-3">
+    <div class="form-floating mb-3 d-none">
         <input type="url" class="form-control" id="event-url" name="event_url" 
                value="<?php echo esc_attr($url); ?>" 
                placeholder="<?php esc_attr_e( 'Event URL', 'decker' ); ?>">

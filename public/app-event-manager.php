@@ -61,9 +61,9 @@ $events_data = Decker_Events::get_events();
 												<thead>
 													<tr>
 														<th data-sort-default><?php esc_html_e( 'Title', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'All Day', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Start', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'End', 'decker' ); ?></th>
-														<th><?php esc_html_e( 'Location', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Category', 'decker' ); ?></th>
 														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
@@ -83,14 +83,10 @@ foreach ( $events_data as $event_data ) :
 	// Extraer metadatos con valores predeterminados
 	$event_id = $post->ID;
 	$title = $post->post_title;
-	$description = $post->post_content;
-	$all_day = isset( $meta['event_all_day'] ) ? $meta['event_all_day'] : false;
+	$allday = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
 	$start_date = isset( $meta['event_start'] ) ? $meta['event_start'][0] : '';
 	$end_date = isset( $meta['event_end'] ) ? $meta['event_end'][0] : '';
-	$location = isset( $meta['event_location'] ) ? $meta['event_location'] : '';
-	$url = isset( $meta['event_url'] ) ? $meta['event_url'] : '';
-	$category = isset( $meta['event_category'] ) ? $meta['event_category'] : '';
-	$assigned_users = isset( $meta['event_assigned_users'] ) ? $meta['event_assigned_users'] : array();
+	$category = isset( $meta['event_category'] ) ? $meta['event_category'][0] : '';
 
 
 	// Formatear fechas
@@ -101,7 +97,7 @@ foreach ( $events_data as $event_data ) :
 	if (!empty($start_date)) {
 	    try {
 	        $start_datetime = new DateTime($start_date);
-	        $start_formatted = $all_day ? $start_datetime->format('Y-m-d') : $start_datetime->format('Y-m-d H:i');
+	        $start_formatted = $allday ? $start_datetime->format('Y-m-d') : $start_datetime->format('Y-m-d H:i');
 	    } catch (Exception $e) {
 	        error_log('Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage());
 	        $start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
@@ -111,35 +107,27 @@ foreach ( $events_data as $event_data ) :
 	if (!empty($end_date)) {
 	    try {
 	        $end_datetime = new DateTime($end_date);
-	        $end_formatted = $all_day ? $end_datetime->format('Y-m-d') : $end_datetime->format('Y-m-d H:i');
+	        $end_formatted = $allday ? $end_datetime->format('Y-m-d') : $end_datetime->format('Y-m-d H:i');
 	    } catch (Exception $e) {
 	        error_log('Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage());
 	        $end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
 	    }
 	}
 
-    // Obtener nombre de usuarios asignados
-    $assigned_users_names = array();
-    foreach ( $assigned_users as $user_id ) {
-        $user = get_userdata( $user_id );
-        if ( $user ) {
-            $assigned_users_names[] = $user->display_name;
-        }
-    }
 ?>
 
 <tr>
 	<td class="event-title">
 	    <?php echo esc_html( $title ); ?>
 	</td>
+	<td class="event-allday">
+	    <?php echo esc_html( $allday ); ?>
+	</td>
 	<td class="event-start">
 	    <?php echo esc_html( $start_formatted ); ?>
 	</td>
 	<td class="event-end">
 	    <?php echo esc_html( $end_formatted ); ?>
-	</td>
-	<td class="event-location">
-	    <?php echo esc_html( $location ); ?>
 	</td>
 	<td class="event-category">
 	    <?php if ( ! empty( $category ) ) : ?>
@@ -159,15 +147,6 @@ foreach ( $events_data as $event_data ) :
 	       onclick="window.deleteEvent(<?php echo esc_attr( $event_id ); ?>, '<?php echo esc_js( $title ); ?>')">
 	        <i class="ri-delete-bin-line"></i>
 	    </button>
-	    <span class="event-description d-none">
-	        <?php echo esc_html( $description ); ?>
-	    </span>
-	    <span class="event-url d-none">
-	        <?php //echo esc_url( $url ); ?>
-	    </span>
-	    <span class="event-assigned-users d-none">
-	        <?php //echo esc_attr( json_encode( $assigned_users_names ) ); ?>
-	    </span>
 	</td>
 </tr>
 <?php endforeach; ?>
