@@ -199,21 +199,46 @@ class Decker_Calendar {
 	        $ical .= 'DTEND:' . $dtend . "\r\n";
 
 			$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
-			$ical .= 'DESCRIPTION:' . $this->ical_escape( $event['description'] ) . "\r\n";
-
-			if ( ! empty( $event['location'] ) ) {
-			    $ical .= 'LOCATION:' . $this->ical_escape( $event['location'] ) . "\r\n";
+			// Split description into 75 character chunks
+			$description = $this->ical_escape($event['description']);
+			$desc_chunks = str_split($description, 74); // 74 to account for the space after continuation
+			if (!empty($desc_chunks)) {
+				$ical .= 'DESCRIPTION:' . array_shift($desc_chunks) . "\r\n";
+				foreach ($desc_chunks as $chunk) {
+					$ical .= ' ' . $chunk . "\r\n";
+				}
 			}
-			if ( ! empty( $event['url'] ) ) {
-			    $ical .= 'URL:' . esc_url_raw( $event['url'] ) . "\r\n";
+
+			if (!empty($event['location'])) {
+				$location = $this->ical_escape($event['location']);
+				$loc_chunks = str_split($location, 74);
+				$ical .= 'LOCATION:' . array_shift($loc_chunks) . "\r\n";
+				foreach ($loc_chunks as $chunk) {
+					$ical .= ' ' . $chunk . "\r\n";
+				}
 			}
 
-			// Add assigned users as attendees
+			if (!empty($event['url'])) {
+				$url = esc_url_raw($event['url']);
+				$url_chunks = str_split($url, 74);
+				$ical .= 'URL:' . array_shift($url_chunks) . "\r\n";
+				foreach ($url_chunks as $chunk) {
+					$ical .= ' ' . $chunk . "\r\n";
+				}
+			}
+
+			// Add assigned users as attendees with proper line folding
 			if (!empty($event['assigned_users'])) {
 				foreach ($event['assigned_users'] as $user_id) {
 					$user = get_userdata($user_id);
 					if ($user && $user->user_email) {
-						$ical .= 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:' . $user->user_email . "\r\n";
+						$attendee = 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;'
+							. 'RSVP=TRUE:mailto:' . $user->user_email;
+						$att_chunks = str_split($attendee, 74);
+						$ical .= array_shift($att_chunks) . "\r\n";
+						foreach ($att_chunks as $chunk) {
+							$ical .= ' ' . $chunk . "\r\n";
+						}
 					}
 				}
 			}
