@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 				<h4 class="modal-title" id="NewTaskModalLabel"><?php esc_html_e( 'Task', 'decker' ); ?></h4>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-			<div class="modal-body">
+			<div id="task-modal-body"  class="modal-body">
 				<div id="task-modal-content">
 					<!-- Aquí se cargará el contenido dinámico desde task-card.php -->
 				</div>

@@ -158,37 +158,53 @@
             if (info.event.extendedProps.type === 'task') {
                 // For tasks, open the task modal
                 const taskId = info.event.id.replace('task_', '');
-                const taskButton = document.createElement('button');
-                taskButton.setAttribute('data-task-id', taskId);
+                const taskButton = document.createElement('a');
                 taskButton.setAttribute('data-bs-toggle', 'modal');
                 taskButton.setAttribute('data-bs-target', '#task-modal');
+                taskButton.setAttribute('data-task-id', taskId);
+                taskButton.style.display = 'none';
                 document.body.appendChild(taskButton);
                 taskButton.click();
                 document.body.removeChild(taskButton);
             } else {
                 // For regular events, open the event modal with the event ID
                 const eventId = info.event.id.replace('event_', '');
-                const button = document.createElement('button');
-                button.setAttribute('data-bs-toggle', 'modal');
-                button.setAttribute('data-bs-target', '#event-modal');
-                button.setAttribute('data-event-id', eventId);
-                document.body.appendChild(button);
-                button.click();
-                document.body.removeChild(button);
+                const eventButton = document.createElement('a');
+                eventButton.setAttribute('data-bs-toggle', 'modal');
+                eventButton.setAttribute('data-bs-target', '#event-modal');
+                eventButton.setAttribute('data-event-id', eventId);
+                eventButton.style.display = 'none';
+                document.body.appendChild(eventButton);
+                eventButton.click();
+                document.body.removeChild(eventButton);
             }
         },
 
         onSelect: function(e) {
+
+
+            // For new events, open the event modal with the event ID
+            const eventId = 0;
+            const eventButton = document.createElement('eventButton');
+            eventButton.setAttribute('data-bs-toggle', 'modal');
+            eventButton.setAttribute('data-bs-target', '#event-modal');
+            eventButton.setAttribute('data-event-id', eventId);
+            document.body.appendChild(eventButton);
+            eventButton.click();
+            document.body.removeChild(eventButton);
+
+
+        	// alert("onSelect called");
             // this.$formEvent[0].reset();
-            this.$formEvent.removeClass('was-validated');
-            this.$selectedEvent = null;
-            this.$newEventData = e;
-            this.$btnDeleteEvent.hide();
-            this.$modalTitle.text(deckerVars.strings.add_new_event);
-            this.$modal.show();
-            if (this.$calendarObj) {
-                this.$calendarObj.unselect();
-            }
+            // this.$formEvent.removeClass('was-validated');
+            // this.$selectedEvent = null;
+            // this.$newEventData = e;
+            // this.$btnDeleteEvent.hide();
+            // this.$modalTitle.text(deckerVars.strings.add_new_event);
+            // this.$modal.show();
+            // if (this.$calendarObj) {
+            //     this.$calendarObj.unselect();
+            // }
         },
 
         handleFormSubmit: function(e) {

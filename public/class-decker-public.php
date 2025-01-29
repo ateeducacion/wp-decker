@@ -327,7 +327,7 @@ class Decker_Public {
 			// Localize the script with new data.
 			wp_localize_script(
 				'task-modal', // task-modal script handle.
-				'jsdata',
+				'jsdata_task',
 				array(
 					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
 					'url'          => esc_url( plugins_url( 'public/layouts/task-card.php', __DIR__ ) ),
@@ -357,7 +357,7 @@ class Decker_Public {
 			// Localize the script with new data.
 			wp_localize_script(
 				'event-modal', // event-modal script handle.
-				'jsdata',
+				'jsdata_event',
 				array(
 					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
 					'url'          => esc_url( plugins_url( 'public/layouts/event-card.php', __DIR__ ) ),

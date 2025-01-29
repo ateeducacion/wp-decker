@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 				<h4 class="modal-title" id="NewEventModalLabel"><?php esc_html_e( 'Event', 'decker' ); ?></h4>
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-			<div class="modal-body">
+			<div id="event-modal-body" class="modal-body">
 				<div id="event-modal-content">
 					<!-- Aquí se cargará el contenido dinámico desde event-card.php -->
 				</div>
