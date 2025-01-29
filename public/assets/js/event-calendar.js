@@ -227,6 +227,11 @@
             eventButton.style.display = 'none';
             document.body.appendChild(eventButton);
             eventButton.click();
+
+            // Guardamos el eventDate
+            const eventDate = eventButton.dataset.eventDate;
+            document.querySelector('#event-modal').dataset.tempEventDate = eventDate; // Guardar en el moda
+
             document.body.removeChild(eventButton);
 
             if (this.$calendarObj) {

@@ -40,10 +40,14 @@
         flatpickr.localize(flatpickr.l10ns.es);
         flatpickr.l10ns.default.firstDayOfWeek = 1; // Monday
 
-
-
         // Get selected date from modal if available
-        const selectedDate = context.closest('.modal')?.querySelector('[data-bs-toggle="modal"]')?.dataset.eventDate;
+        // Obtener el modal
+        const modal = document.querySelector('#event-modal');
+        // Recuperar la fecha guardada
+        const selectedDate = modal?.dataset.tempEventDate;
+        
+        // Limpiar el dato temporal si es necesario
+        if (modal && selectedDate) delete modal.dataset.tempEventDate;
 
         // Flatpickr configuration
         const flatpickrConfig = {
