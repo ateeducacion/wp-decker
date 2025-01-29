@@ -60,7 +60,7 @@
                         right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth',
                     },
                     events: {
-                        url: deckerVars.rest_url + 'calendar',
+                        url: wpApiSettings.root + 'decker/v1/calendar',
                         method: 'GET',
                         failure: function() {
                             alert(deckerVars.strings.error_fetching_events);
