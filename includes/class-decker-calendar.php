@@ -52,7 +52,12 @@ class Decker_Calendar {
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
-		// Check for token in request
+		// First check if user is logged in
+		if (is_user_logged_in() && current_user_can('read')) {
+			return true;
+		}
+
+		// If not logged in, check for token
 		$token = $request->get_param('token');
 		if (!empty($token)) {
 			// Look for a user with this calendar token
@@ -65,11 +70,6 @@ class Decker_Calendar {
 			if (!empty($users)) {
 				return true;
 			}
-		}
-
-		// If no token or invalid token, check for logged-in user permission
-		if (current_user_can('read')) {
-			return true;
 		}
 
 		return new WP_Error(
