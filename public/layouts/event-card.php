@@ -128,9 +128,8 @@ $category = isset($meta['event_category'][0]) ? $meta['event_category'][0] : '';
                 aria-label="<?php esc_attr_e( 'Assigned Users', 'decker' ); ?>">
             <?php
             $users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
-            $assigned_users = $event ? $event->get_assigned_users() : array();
             foreach ( $users as $user ) {
-                $selected = in_array( $user->ID, array_column( $assigned_users, 'ID' ) );
+                $selected = is_array($assigned_users) && in_array($user->ID, $assigned_users);
                 printf(
                     '<option value="%d" %s>%s</option>',
                     esc_attr( $user->ID ),
