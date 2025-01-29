@@ -123,7 +123,7 @@ class Decker_Calendar {
 	                'location'       => isset($meta['event_location']) ? $meta['event_location'] : '',
 	                'url'            => isset($meta['event_url']) ? $meta['event_url'] : '',
 	                'className'      => isset($meta['event_category']) ? $meta['event_category'] : '',
-	                'assigned_users' => isset($meta['event_assigned_users']) ? $meta['event_assigned_users'] : array(),
+	                'assigned_users' => isset($meta['event_assigned_users']) ? array_map('intval', (array) $meta['event_assigned_users']) : array(),
 
 	                'type'           => 'event',
 	            );
@@ -150,7 +150,9 @@ class Decker_Calendar {
 					'color'          => $board_color,
 					'className'      => $board_color,
 					'max_priority'   => $task->max_priority,
-					'assigned_users' => $task->assigned_users,
+					'assigned_users' => array_map(function($user) { 
+                        return intval($user->ID); 
+                    }, $task->assigned_users),
 					'type'           => 'task',
 				);
 			}
