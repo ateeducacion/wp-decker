@@ -71,6 +71,42 @@
                     selectable: true,
                     dateClick: this.onSelect.bind(this),
                     eventClick: this.onEventClick.bind(this),
+                    drop: function(info) {
+                        // Create event data
+                        const eventData = {
+                            title: info.draggedEl.innerText,
+                            status: 'publish',
+                            meta: {
+                                event_start: info.date.toISOString().split('T')[0] + 'T00:00',
+                                event_end: info.date.toISOString().split('T')[0] + 'T23:59',
+                                event_category: info.draggedEl.dataset.class,
+                                event_assigned_users: [deckerVars.current_user_id]
+                            }
+                        };
+
+                        // Create event via REST API
+                        fetch(wpApiSettings.root + 'wp/v2/decker_event', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-WP-Nonce': wpApiSettings.nonce
+                            },
+                            body: JSON.stringify(eventData)
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText);
+                            }
+                            return response.json();
+                        })
+                        .then(() => {
+                            location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert(deckerVars.strings.error_saving_event);
+                        });
+                    },
                     eventDidMount: function(info) {
                         if (info.event.extendedProps.type === 'task') {
                             info.el.style.backgroundColor = info.event.classNames[0];
