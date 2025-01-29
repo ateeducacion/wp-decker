@@ -127,10 +127,20 @@ foreach ( $events_data as $event_data ) :
 	    </div>
 	</td>
 	<td class="event-start">
-	    <?php echo esc_html( $start_formatted ); ?>
+	    <?php 
+	    if (!empty($start_formatted)) {
+	        $date = new DateTime($start_formatted);
+	        echo esc_html($date->format('j M Y' . ($allday ? '' : ' H:i')));
+	    }
+	    ?>
 	</td>
 	<td class="event-end">
-	    <?php echo esc_html( $end_formatted ); ?>
+	    <?php 
+	    if (!empty($end_formatted)) {
+	        $date = new DateTime($end_formatted);
+	        echo esc_html($date->format('j M Y' . ($allday ? '' : ' H:i')));
+	    }
+	    ?>
 	</td>
 	<td class="event-category">
 	    <?php if ( ! empty( $category ) ) : ?>
