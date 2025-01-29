@@ -55,7 +55,7 @@
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
             minuteIncrement: 15,
-            defaultDate: selectedDate || undefined
+            // defaultDate: selectedDate || undefined
         };
 
         const startPicker = flatpickr("#event-start", flatpickrConfig);
