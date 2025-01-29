@@ -14,19 +14,19 @@
  * @return bool Returns true if wp-load.php is found and included, otherwise false.
  */
 function include_wp_load( $max_levels = 10 ) {
-    $dir = __DIR__;
-    for ( $i = 0; $i < $max_levels; $i++ ) {
-        if ( file_exists( $dir . '/wp-load.php' ) ) {
-            require_once $dir . '/wp-load.php';
-            return true;
-        }
-        $parent_dir = dirname( $dir );
-        if ( $parent_dir === $dir ) {
-            break;
-        }
-        $dir = $parent_dir;
-    }
-    return false;
+	$dir = __DIR__;
+	for ( $i = 0; $i < $max_levels; $i++ ) {
+		if ( file_exists( $dir . '/wp-load.php' ) ) {
+			require_once $dir . '/wp-load.php';
+			return true;
+		}
+		$parent_dir = dirname( $dir );
+		if ( $parent_dir === $dir ) {
+			break;
+		}
+		$dir = $parent_dir;
+	}
+	return false;
 }
 
 

@@ -70,15 +70,15 @@ $events_data = Decker_Events::get_events();
 												</thead>
 												<tbody>
 
-<?php 	
-foreach ( $events_data as $event_data ) : 
+<?php
+foreach ( $events_data as $event_data ) :
 	$post = $event_data['post'];
 	$meta = $event_data['meta'];
 
-    // Asegurarse de que el objeto $post sea válido
-    if ( ! $post instanceof WP_Post ) {
-        continue;
-    }
+	// Asegurarse de que el objeto $post sea válido
+	if ( ! $post instanceof WP_Post ) {
+		continue;
+	}
 
 	// Extraer metadatos con valores predeterminados
 	$event_id = $post->ID;
@@ -94,89 +94,89 @@ foreach ( $events_data as $event_data ) :
 	$end_formatted = '';
 
 
-	if (!empty($start_date)) {
-	    try {
-	        $start_datetime = new DateTime($start_date);
-	        $start_formatted = $allday ? $start_datetime->format('Y-m-d') : $start_datetime->format('Y-m-d H:i');
-	    } catch (Exception $e) {
-	        error_log('Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage());
-	        $start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
-	    }
+	if ( ! empty( $start_date ) ) {
+		try {
+			$start_datetime = new DateTime( $start_date );
+			$start_formatted = $allday ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
+		} catch ( Exception $e ) {
+			error_log( 'Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage() );
+			$start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
+		}
 	}
 
-	if (!empty($end_date)) {
-	    try {
-	        $end_datetime = new DateTime($end_date);
-	        $end_formatted = $allday ? $end_datetime->format('Y-m-d') : $end_datetime->format('Y-m-d H:i');
-	    } catch (Exception $e) {
-	        error_log('Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage());
-	        $end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
-	    }
+	if ( ! empty( $end_date ) ) {
+		try {
+			$end_datetime = new DateTime( $end_date );
+			$end_formatted = $allday ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
+		} catch ( Exception $e ) {
+			error_log( 'Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage() );
+			$end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
+		}
 	}
 
-?>
+	?>
 
 <tr>
 	<td class="event-title">
-	    <?php echo esc_html( $title ); ?>
+		<?php echo esc_html( $title ); ?>
 	</td>
 	<td class="event-allday text-center">
-	    <div class="form-check">
-	        <input class="form-check-input" type="checkbox" disabled readonly 
-	               <?php echo $allday ? 'checked' : ''; ?>>
-	    </div>
+		<div class="form-check">
+			<input class="form-check-input" type="checkbox" disabled readonly 
+				   <?php echo $allday ? 'checked' : ''; ?>>
+		</div>
 	</td>
 	<td class="event-start">
-	    <?php 
-	    if (!empty($start_formatted)) {
-	        $date = new DateTime($start_formatted);
-	        echo esc_html($date->format('j M Y' . ($allday ? '' : ' H:i')));
-	    }
-	    ?>
+		<?php
+		if ( ! empty( $start_formatted ) ) {
+			$date = new DateTime( $start_formatted );
+			echo esc_html( $date->format( 'j M Y' . ( $allday ? '' : ' H:i' ) ) );
+		}
+		?>
 	</td>
 	<td class="event-end">
-	    <?php 
-	    if (!empty($end_formatted)) {
-	        $date = new DateTime($end_formatted);
-	        echo esc_html($date->format('j M Y' . ($allday ? '' : ' H:i')));
-	    }
-	    ?>
+		<?php
+		if ( ! empty( $end_formatted ) ) {
+			$date = new DateTime( $end_formatted );
+			echo esc_html( $date->format( 'j M Y' . ( $allday ? '' : ' H:i' ) ) );
+		}
+		?>
 	</td>
 	<td class="event-category">
-	    <?php if ( ! empty( $category ) ) : ?>
-	        <span class="badge <?php echo esc_attr( $category ); ?>">
-	            <?php 
-	            switch ($category) {
-	                case 'bg-success':
-	                    esc_html_e('Meeting', 'decker');
-	                    break;
-	                case 'bg-info':
-	                    esc_html_e('Holidays', 'decker');
-	                    break;
-	                case 'bg-warning':
-	                    esc_html_e('Warning', 'decker');
-	                    break;
-	                case 'bg-danger':
-	                    esc_html_e('Alert', 'decker');
-	                    break;
-	                default:
-	                    echo esc_html(str_replace('bg-', '', $category));
-	            }
-	            ?>
-	        </span>
-	    <?php else : ?>
-	        <?php esc_html_e( 'Uncategorized', 'decker' ); ?>
-	    <?php endif; ?>
+		<?php if ( ! empty( $category ) ) : ?>
+			<span class="badge <?php echo esc_attr( $category ); ?>">
+				<?php
+				switch ( $category ) {
+					case 'bg-success':
+						esc_html_e( 'Meeting', 'decker' );
+						break;
+					case 'bg-info':
+						esc_html_e( 'Holidays', 'decker' );
+						break;
+					case 'bg-warning':
+						esc_html_e( 'Warning', 'decker' );
+						break;
+					case 'bg-danger':
+						esc_html_e( 'Alert', 'decker' );
+						break;
+					default:
+						echo esc_html( str_replace( 'bg-', '', $category ) );
+				}
+				?>
+			</span>
+		<?php else : ?>
+			<?php esc_html_e( 'Uncategorized', 'decker' ); ?>
+		<?php endif; ?>
 	</td>
 	<td>
-	    <a href="#" class="btn btn-sm btn-info me-2 edit-event" data-bs-toggle="modal" data-bs-target="#event-modal"
-	       data-event-id="<?php echo esc_attr( $event_id ); ?>">
-	        <i class="ri-pencil-line"></i>
-	    </a>
-	    <button type="button" class="btn btn-sm btn-danger" 
-	       onclick="window.deleteEvent(<?php echo esc_attr( $event_id ); ?>, '<?php echo esc_js( $title ); ?>')">
-	        <i class="ri-delete-bin-line"></i>
-	    </button>
+		<a href="#" class="btn btn-sm btn-info me-2 edit-event" data-bs-toggle="modal" data-bs-target="#event-modal"
+		   data-event-id="<?php echo esc_attr( $event_id ); ?>">
+			<i class="ri-pencil-line"></i>
+		</a>
+		<button type="button" class="btn btn-sm btn-danger" 
+		   onclick="window.deleteEvent(<?php echo esc_attr( $event_id ); ?>, '<?php echo esc_js( $title ); ?>')">
+			<i class="ri-delete-bin-line"></i>
+		</button>
 	</td>
 </tr>
 <?php endforeach; ?>
@@ -209,7 +209,7 @@ foreach ( $events_data as $event_data ) :
 	);
 	?>
 
-	<?php 
+	<?php
 	// Include event modal template
 	include plugin_dir_path( __FILE__ ) . 'layouts/event-modal.php';
 	?>

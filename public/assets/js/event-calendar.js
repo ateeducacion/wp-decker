@@ -18,7 +18,6 @@
     EventCalendar.prototype = {
         init: function() {
             this.initCalendar();
-            // this.initEventHandlers();
         },
 
         initCalendar: function() {
@@ -173,60 +172,6 @@
             }
         },
 
-        initEventHandlers: function() {
-            const self = this;
-
-            // New event button
-            this.$btnNewEvent.on('click', function() {
-                self.onSelect({ date: new Date(), allDay: true });
-            });
-
-            // Handle date/time field interactions
-            $('#event-start-time, #event-end-time').on('input', function() {
-                const hasTime = $('#event-start-time').val() || $('#event-end-time').val();
-                if (hasTime) {
-                    // If time is entered, clear and disable end date
-                    $('#event-end-date').val('');
-                }
-                // Show/hide end date based on time presence
-                $('#event-end-date').closest('.col-md-6').toggle(!hasTime);
-            });
-
-            $('#event-end-date').on('input', function() {
-                const hasEndDate = $(this).val();
-                if (hasEndDate) {
-                    // If end date is entered, clear times
-                    $('#event-start-time, #event-end-time').val('');
-                }
-                // Show/hide time inputs based on end date presence
-                $('#time-inputs').toggle(!hasEndDate);
-            });
-
-            // Sync start date to end date for single-day events
-            $('#event-start-date').on('change', function() {
-                const startDate = $(this).val();
-                const endDate = $('#event-end-date').val();
-                // Only update end date if it's empty or less than start date
-                if (!endDate || endDate < startDate) {
-                    $('#event-end-date').val(startDate);
-                }
-            });
-
-            // Form submission
-            this.$formEvent.on('submit', this.handleFormSubmit.bind(this));
-
-            // Delete event
-            this.$btnDeleteEvent.on('click', this.handleDeleteEvent.bind(this));
-
-            // Edit event
-            $('.edit-event').on('click', function(e) {
-                e.preventDefault();
-                const row = $(this).closest('tr');
-                const id = $(this).data('id');
-                self.openEditModal(row, id);
-            });
-        },
-
         onEventClick: function(info) {
             if (info.event.extendedProps.type === 'task') {
                 // For tasks, open the task modal
@@ -276,40 +221,6 @@
             }
         },
 
-        handleFormSubmit: function(e) {
-            e.preventDefault();
-            const self = this;
-            const form = e.target;
-
-            if (!form.checkValidity()) {
-                e.stopPropagation();
-                form.classList.add('was-validated');
-                return;
-            }
-
-            const formData = new FormData(form);
-            const id = formData.get('event_id');
-            const method = id ? 'PUT' : 'POST';
-            const url = deckerVars.rest_url + 'events' + (id ? '/' + id : '');
-
-            $.ajax({
-                url: url,
-                method: method,
-                data: formData,
-                processData: false,
-                contentType: false,
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-WP-Nonce', deckerVars.nonces.wp_rest);
-                },
-                success: function(response) {
-                    location.reload();
-                },
-                error: function(xhr, status, error) {
-                    alert(deckerVars.strings.error_saving_event + ' ' + error);
-                }
-            });
-        },
-
         handleDeleteEvent: function() {
             if (this.$selectedEvent) {
                 this.$selectedEvent.remove();
@@ -318,22 +229,6 @@
             }
         },
 
-        openEditModal: function(row, id) {
-            $('#eventModalLabel').text(deckerVars.strings.edit_event);
-            $('#event-id').val(id);
-            $('#event-title').val(row.find('.event-title').text().trim());
-            $('#event-description').val(row.find('.event-description').text().trim());
-            $('#event-start').val(row.find('.event-start').text().trim().replace(' ', 'T'));
-            $('#event-end').val(row.find('.event-end').text().trim().replace(' ', 'T'));
-            $('#event-location').val(row.find('.event-location').text().trim());
-            $('#event-url').val(row.find('.event-url').text().trim());
-            $('#event-category').val(row.find('.event-category .badge').attr('class').split(' ')[1]);
-            
-            const assignedUsers = JSON.parse(row.find('.event-assigned-users').text().trim());
-            $('#event-assigned-users').val(assignedUsers);
-
-            this.$modal.show();
-        }
     };
 
     // Initialize when document is ready

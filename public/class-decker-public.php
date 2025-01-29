@@ -223,21 +223,17 @@ class Decker_Public {
 
 			}
 
-			if ( 'calendar' == $decker_page || 'event-manager' ==  $decker_page ) { 
+			if ( 'calendar' == $decker_page || 'event-manager' == $decker_page ) {
 
 				// Flatpickr.
 				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js';
-				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css';			
+				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css';
 				$resources[] = 'https://npmcdn.com/flatpickr@4.6.13/dist/l10n/es.js';
-
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
 
 			}
-
-
-
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
@@ -257,17 +253,16 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
-
-			$users = get_users(array(
-			    'fields' => array('ID', 'display_name') // Campos nativos
-			));
+			$users = get_users(
+				array(
+					'fields' => array( 'ID', 'display_name' ), // Campos nativos
+				)
+			);
 
 			// Añadir el nickname a cada usuario
-			foreach ($users as &$user) {
-			    $user->nickname = get_user_meta($user->ID, 'nickname', true); // Cambia 'alias' por tu meta key real
+			foreach ( $users as &$user ) {
+				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real
 			}
-
-
 
 			// Preparar los datos a pasar al JS.
 			$localized_data = array(
@@ -302,11 +297,11 @@ class Decker_Public {
 					'cancel' => __( 'Cancel', 'decker' ),
 					// Añade más strings según sea necesario.
 
-                     'today' => __( 'Today' ),
-                     'month' => __( 'Month' ),
-                     'week' => __( 'Week' ),
-                     'day' => __( 'Day' ),
-                     'list' => __( 'List' ),
+					 'today' => __( 'Today' ),
+					'month' => __( 'Month' ),
+					'week' => __( 'Week' ),
+					'day' => __( 'Day' ),
+					'list' => __( 'List' ),
 
 				),
 				'disabled' => isset( $disabled ) && $disabled ? true : false,
@@ -321,7 +316,6 @@ class Decker_Public {
 
 			// Add the bundled Backbone library.
 			wp_enqueue_script( 'wp-api' );
-
 
 			foreach ( $resources as $resource ) {
 				$handle = sanitize_title( basename( $resource, '.' . pathinfo( $resource, PATHINFO_EXTENSION ) ) );
@@ -370,8 +364,6 @@ class Decker_Public {
 			wp_localize_script( 'decker-public', 'deckerData', $script_data );
 			wp_localize_script( 'task-card', 'deckerVars', $localized_data );
 
-
-
 			// Localize the script with new data.
 			wp_localize_script(
 				'event-modal', // event-modal script handle.
@@ -384,7 +376,6 @@ class Decker_Public {
 					'nonce'        => wp_create_nonce( 'decker_event_card' ),
 				)
 			);
-
 
 			// TODO: This can be removed
 			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
