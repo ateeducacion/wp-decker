@@ -61,6 +61,9 @@ class Decker_User_Extended {
 						success: function(response) {
 							if (response.success) {
 								$('#decker_calendar_token').val(response.data.token);
+								// Update calendar URL in description
+								const calendarUrl = '<?php echo home_url('decker-calendar'); ?>?token=' + response.data.token;
+								$('#decker_calendar_token').closest('td').find('.description code').text(calendarUrl);
 							}
 						}
 					});
