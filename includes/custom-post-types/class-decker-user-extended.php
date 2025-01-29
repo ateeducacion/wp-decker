@@ -55,7 +55,8 @@ class Decker_User_Extended {
 						data: {
 							action: 'generate_calendar_token',
 							user_id: <?php echo esc_js($user->ID); ?>,
-							nonce: '<?php echo wp_create_nonce('generate_calendar_token'); ?>'
+							nonce: '<?php echo wp_create_nonce('generate_calendar_token'); ?>',
+							action: 'generate_calendar_token'
 						},
 						success: function(response) {
 							if (response.success) {
@@ -284,7 +285,7 @@ class Decker_User_Extended {
 	 * Generate a new calendar token via AJAX
 	 */
 	public function generate_calendar_token() {
-		check_ajax_referer('generate_calendar_token');
+		check_ajax_referer('generate_calendar_token', 'nonce');
 		
 		$user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
 		
