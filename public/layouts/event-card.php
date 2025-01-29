@@ -68,7 +68,6 @@ $location = isset($meta['event_location'][0]) ? $meta['event_location'][0] : '';
 $url = isset($meta['event_url'][0]) ? $meta['event_url'][0] : '';
 $category = isset($meta['event_category'][0]) ? $meta['event_category'][0] : '';
 
-
 ?>
 
 <form class="needs-validation" name="event-form" id="form-event" novalidate>
