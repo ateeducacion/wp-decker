@@ -78,7 +78,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     <!-- Título -->
     <div class="form-floating mb-3">
         <input type="text" class="form-control" id="event-title" name="event_title" 
-               value="<?php echo esc_attr( $title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
+               value="<?php echo esc_attr($title); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
         <label for="event-title"><?php esc_html_e( 'Title', 'decker' ); ?> <span class="text-danger">*</span></label>
         <div class="invalid-feedback">
             <?php esc_html_e( 'Please enter a title for the event.', 'decker' ); ?>
@@ -89,7 +89,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     <div class="mb-3">
         <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="event-allday" name="event_allday" 
-                   <?php echo $event && $allday ? 'checked' : ''; ?>>
+                   <?php echo $allday ? 'checked' : ''; ?>>
             <label class="form-check-label" for="event-allday">
                 <?php esc_html_e('All Day Event', 'decker'); ?>
             </label>
@@ -99,7 +99,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
             <div class="col-md-6">
                 <div class="form-floating">
                     <input type="text" class="form-control flatpickr" id="event-start" name="event_start" 
-                           value="<?php echo $event ? esc_attr($event->get_start_date()?->format('Y-m-d H:i')) : ''; ?>" required 
+                           value="<?php echo esc_attr($start_date); ?>" required 
                            placeholder="<?php esc_attr_e( 'Start Date and Time', 'decker' ); ?>">
                     <label for="event-start"><?php esc_html_e( 'Start Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
                     <div class="invalid-feedback">
@@ -110,7 +110,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
             <div class="col-md-6">
                 <div class="form-floating">
                     <input type="text" class="form-control flatpickr" id="event-end" name="event_end" 
-                           value="<?php echo $event ? esc_attr($event->get_end_date()?->format('Y-m-d H:i')) : ''; ?>" required 
+                           value="<?php echo esc_attr($end_date); ?>" required 
                            placeholder="<?php esc_attr_e( 'End Date and Time', 'decker' ); ?>">
                     <label for="event-end"><?php esc_html_e( 'End Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
                     <div class="invalid-feedback">
@@ -149,7 +149,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     <!-- Ubicación -->
     <div class="form-floating mb-3">
         <input type="text" class="form-control" id="event-location" name="event_location" 
-               value="<?php echo $event ? esc_attr( $event->get_location() ) : ''; ?>" required 
+               value="<?php echo esc_attr($location); ?>" required 
                placeholder="<?php esc_attr_e( 'Location', 'decker' ); ?>">
         <label for="event-location"><?php esc_html_e( 'Location', 'decker' ); ?> <span class="text-danger">*</span></label>
         <div class="invalid-feedback">
@@ -160,7 +160,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     <!-- URL -->
     <div class="form-floating mb-3">
         <input type="url" class="form-control" id="event-url" name="event_url" 
-               value="<?php echo $event ? esc_attr( $event->get_url() ) : ''; ?>" 
+               value="<?php echo esc_attr($url); ?>" 
                placeholder="<?php esc_attr_e( 'Event URL', 'decker' ); ?>">
         <label for="event-url"><?php esc_html_e( 'Event URL', 'decker' ); ?></label>
         <div class="invalid-feedback">
@@ -171,7 +171,7 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     <!-- Descripción -->
     <div class="form-floating mb-3">
         <textarea class="form-control" id="event-description" name="event_description" rows="3" 
-                  placeholder="<?php esc_attr_e( 'Description', 'decker' ); ?>"><?php echo $event ? esc_textarea( $event->get_description() ) : ''; ?></textarea>
+                  placeholder="<?php esc_attr_e( 'Description', 'decker' ); ?>"><?php echo esc_textarea($description); ?></textarea>
         <label for="event-description"><?php esc_html_e( 'Description', 'decker' ); ?></label>
         <div class="invalid-feedback">
             <?php esc_html_e( 'Please enter a description for the event.', 'decker' ); ?>
@@ -182,16 +182,16 @@ $category = isset($meta['_event_category'][0]) ? $meta['_event_category'][0] : '
     <div class="form-floating mb-4">
         <select class="form-select" id="event-category" name="event_category" required>
             <option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
-            <option value="bg-success" <?php echo $event && $event->get_category() === 'bg-success' ? 'selected' : ''; ?>>
+            <option value="bg-success" <?php echo $category === 'bg-success' ? 'selected' : ''; ?>>
                 <?php esc_html_e( 'Meeting', 'decker' ); ?>
             </option>
-            <option value="bg-info" <?php echo $event && $event->get_category() === 'bg-info' ? 'selected' : ''; ?>>
+            <option value="bg-info" <?php echo $category === 'bg-info' ? 'selected' : ''; ?>>
                 <?php esc_html_e( 'Holidays', 'decker' ); ?>
             </option>
-            <option value="bg-warning" <?php echo $event && $event->get_category() === 'bg-warning' ? 'selected' : ''; ?>>
+            <option value="bg-warning" <?php echo $category === 'bg-warning' ? 'selected' : ''; ?>>
                 <?php esc_html_e( 'Warning', 'decker' ); ?>
             </option>
-            <option value="bg-danger" <?php echo $event && $event->get_category() === 'bg-danger' ? 'selected' : ''; ?>>
+            <option value="bg-danger" <?php echo $category === 'bg-danger' ? 'selected' : ''; ?>>
                 <?php esc_html_e( 'Alert', 'decker' ); ?>
             </option>
         </select>
