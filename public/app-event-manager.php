@@ -135,7 +135,24 @@ foreach ( $events_data as $event_data ) :
 	<td class="event-category">
 	    <?php if ( ! empty( $category ) ) : ?>
 	        <span class="badge <?php echo esc_attr( $category ); ?>">
-	            <?php echo esc_html( str_replace( 'bg-', '', $category ) ); ?>
+	            <?php 
+	            switch ($category) {
+	                case 'bg-success':
+	                    esc_html_e('Meeting', 'decker');
+	                    break;
+	                case 'bg-info':
+	                    esc_html_e('Holidays', 'decker');
+	                    break;
+	                case 'bg-warning':
+	                    esc_html_e('Warning', 'decker');
+	                    break;
+	                case 'bg-danger':
+	                    esc_html_e('Alert', 'decker');
+	                    break;
+	                default:
+	                    echo esc_html(str_replace('bg-', '', $category));
+	            }
+	            ?>
 	        </span>
 	    <?php else : ?>
 	        <?php esc_html_e( 'Uncategorized', 'decker' ); ?>
