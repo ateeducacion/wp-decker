@@ -110,7 +110,7 @@ class Decker_User_Extended {
 						$webcal_url = str_replace('https://', 'webcal://', $webcal_url);
 						
 						echo '<div class="calendar-links" style="margin-top: 10px;">';
-						echo '<p style="margin-bottom: 5px;">' . esc_html__('Subscribe to your calendar:', 'decker') . '</p>';
+						echo '<p style="margin-bottom: 5px;">' . esc_html__('Subscribe to Decker calendar:', 'decker') . '</p>';
 						echo '<a href="' . esc_url('https://www.google.com/calendar/render?cid=' . urlencode($webcal_url)) . '" 
 								class="button" target="_blank" rel="noopener noreferrer">
 								<span class="dashicons dashicons-google" style="vertical-align: middle;"></span> ' . 
