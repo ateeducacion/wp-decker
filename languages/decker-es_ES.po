@@ -693,6 +693,7 @@ msgid "DELAYED"
 msgstr "RETARDADO"
 
 #: public/app-upcoming.php:157
+#: public/class-decker-public.php:300
 msgid "Today"
 msgstr "Hoy"
 
@@ -1617,3 +1618,19 @@ msgstr "Por favor, selecciona una categoría para el evento."
 #: public/layouts/event-card.php:237
 msgid "The category determines the color of the event in the calendar."
 msgstr "La categoría determina el color del evento en el calendario."
+
+#: public/class-decker-public.php:301
+msgid "Month"
+msgstr ""
+
+#: public/class-decker-public.php:302
+msgid "Week"
+msgstr ""
+
+#: public/class-decker-public.php:303
+msgid "Day"
+msgstr ""
+
+#: public/class-decker-public.php:304
+msgid "List"
+msgstr ""
