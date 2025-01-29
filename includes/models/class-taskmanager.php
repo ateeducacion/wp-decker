@@ -45,6 +45,13 @@ class TaskManager {
 		);
 		$query_args = array_merge( $default_args, $args );
 		$posts      = get_posts( $query_args );
+
+		// Carga todos los metadatos en caché de una sola vez.
+		$post_ids = wp_list_pluck( $posts, 'ID' );
+		if ( ! empty( $post_ids ) ) {
+			update_meta_cache( 'post', $post_ids ); // 1 consulta para todos los metadatos.
+		}
+
 		$tasks      = array();
 
 		foreach ( $posts as $post ) {
@@ -215,6 +222,12 @@ class TaskManager {
 
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids = get_posts( $args );
+
+		// Optimización: Cargar metadatos en caché.
+		if ( ! empty( $post_ids ) ) {
+			update_meta_cache( 'post', $post_ids );
+		}
+
 		$today    = ( new DateTime() )->format( 'Y-m-d' );
 
 		// Additional filtering: Check tasks that are not truly assigned to the specified user.
@@ -305,6 +318,12 @@ class TaskManager {
 
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids   = get_posts( $args );
+
+		// Optimización: Cargar metadatos en caché.
+		if ( ! empty( $post_ids ) ) {
+			update_meta_cache( 'post', $post_ids );
+		}
+
 		$tasks      = array();
 		$today      = ( new DateTime() )->setTime( 23, 59 );
 		$start_date = ( new DateTime() )->setTime( 0, 0 )->modify( "-$days days" );

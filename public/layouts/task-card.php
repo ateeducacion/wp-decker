@@ -20,16 +20,15 @@ function include_wp_load( $max_levels = 10 ) {
 			require_once $dir . '/wp-load.php';
 			return true;
 		}
-		// Move up one level in the directory structure.
 		$parent_dir = dirname( $dir );
 		if ( $parent_dir === $dir ) {
-			// Reached the root directory of the file system.
 			break;
 		}
 		$dir = $parent_dir;
 	}
 	return false;
 }
+
 
 // Attempt to include wp-load.php, required when we are loading the task-card in a Bootstrap modal.
 if ( ! defined( 'ABSPATH' ) ) {

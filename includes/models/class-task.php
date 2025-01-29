@@ -201,7 +201,7 @@ class Task {
 	 *
 	 * @return Board|null The Board or null if no term is assigned.
 	 */
-	private function get_board(): ?Board {
+	public function get_board(): ?Board {
 		$terms = wp_get_post_terms( $this->ID, 'decker_board' );
 
 		if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
