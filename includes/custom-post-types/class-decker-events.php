@@ -22,6 +22,44 @@ class Decker_Events {
 	}
 
 	/**
+	 * Display the users meta box.
+	 *
+	 * @param WP_Post $post The current post object.
+	 */
+	public function display_users_meta_box( $post ) {
+		$users = get_users( array( 'orderby' => 'display_name' ) );
+		$assigned_users = get_post_meta( $post->ID, 'event_assigned_users', true );
+		?>
+		<div id="assigned-users" class="categorydiv">
+			<ul class="categorychecklist form-no-clear">
+				<?php foreach ( $users as $user ) { ?>
+					<li>
+						<label class="selectit">
+							<input type="checkbox" name="event_assigned_users[]" value="<?php echo esc_attr( $user->ID ); ?>" <?php checked( is_array( $assigned_users ) && in_array( $user->ID, $assigned_users ) ); ?>>
+							<?php echo esc_html( $user->display_name ); ?>
+						</label>
+					</li>
+				<?php } ?>
+			</ul>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Hide visibility options for decker_event post type.
+	 */
+	public function hide_visibility_options() {
+		global $post_type;
+		if ( 'decker_event' == $post_type ) {
+			echo '<style type="text/css">
+				.misc-pub-section.misc-pub-visibility {
+					display: none;
+				}
+			</style>';
+		}
+	}
+
+	/**
 	 * Define the hooks for the events custom post type
 	 */
 	private function define_hooks() {
@@ -32,6 +70,9 @@ class Decker_Events {
 		add_action( 'save_post_decker_event', array( $this, 'save_event_meta' ) );
 
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'force_classic_editor' ), 10, 2 );
+		
+		// Hide visibility options
+		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
 	}
 
 	/**
@@ -209,6 +250,15 @@ class Decker_Events {
 			'normal',
 			'high'
 		);
+
+		add_meta_box(
+			'decker_users_meta_box',
+			__( 'Assigned Users', 'decker' ),
+			array( $this, 'display_users_meta_box' ),
+			'decker_event',
+			'side',
+			'default'
+		);
 	}
 
 	/**
@@ -340,25 +390,6 @@ class Decker_Events {
 				<option value="bg-info" <?php selected( $category, 'bg-info' ); ?>><?php esc_html_e( 'Info', 'decker' ); ?></option>
 				<option value="bg-dark" <?php selected( $category, 'bg-dark' ); ?>><?php esc_html_e( 'Dark', 'decker' ); ?></option>
 				<option value="bg-warning" <?php selected( $category, 'bg-warning' ); ?>><?php esc_html_e( 'Warning', 'decker' ); ?></option>
-			</select>
-		</p>
-		<p>
-			<label for="event_assigned_users">
-				<?php esc_html_e( 'Assigned Users:', 'decker' ); ?>
-			</label><br>
-			<select id="event_assigned_users" name="event_assigned_users[]" multiple class="widefat">
-				<?php
-				$users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
-				foreach ( $users as $user ) {
-					$selected = is_array( $assigned_users ) && in_array( $user->ID, $assigned_users, true );
-					printf(
-						'<option value="%d" %s>%s</option>',
-						esc_attr( $user->ID ),
-						selected( $selected, true, false ),
-						esc_html( $user->display_name )
-					);
-				}
-				?>
 			</select>
 		</p>
 		<?php
