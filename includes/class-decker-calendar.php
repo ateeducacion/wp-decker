@@ -52,6 +52,13 @@ class Decker_Calendar {
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
+
+	    // Verificar nonce de REST API primero
+	    $nonce = $request->get_header( 'X-WP-Nonce' );
+	    if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+	        return true;
+	    }
+
 		// First check if user is logged in
 		if (is_user_logged_in() && current_user_can('read')) {
 			return true;

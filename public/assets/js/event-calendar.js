@@ -59,13 +59,25 @@
                         center: 'title',
                         right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth',
                     },
-                    events: {
-                        url: wpApiSettings.root + 'decker/v1/calendar',
-                        method: 'GET',
-                        failure: function() {
-                            alert(deckerVars.strings.error_fetching_events);
-                        }
+                    events: function(fetchInfo, successCallback, failureCallback) {
+                        // Hacer la petición manualmente con fetch
+                        fetch(wpApiSettings.root + 'decker/v1/calendar', {
+                            method: 'GET',
+                            headers: {
+                                'X-WP-Nonce': wpApiSettings.nonce // Usar el nonce de wpApiSettings
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) throw new Error(response.statusText);
+                            return response.json();
+                        })
+                        .then(data => successCallback(data))
+                        .catch(error => {
+                            console.error('Error fetching events:', error);
+                            failureCallback(error);
+                        });
                     },
+
                     editable: true,
                     droppable: true,
                     selectable: true,
