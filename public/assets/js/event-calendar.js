@@ -216,31 +216,22 @@
             }
         },
 
-        onSelect: function(e) {
-
-
-            // For new events, open the event modal with the event ID
+        onSelect: function(info) {
+            // For new events, open the event modal with the clicked date
             const eventId = 0;
-            const eventButton = document.createElement('eventButton');
+            const eventButton = document.createElement('a');
             eventButton.setAttribute('data-bs-toggle', 'modal');
             eventButton.setAttribute('data-bs-target', '#event-modal');
             eventButton.setAttribute('data-event-id', eventId);
+            eventButton.setAttribute('data-event-date', info.dateStr);
+            eventButton.style.display = 'none';
             document.body.appendChild(eventButton);
             eventButton.click();
             document.body.removeChild(eventButton);
 
-
-        	// alert("onSelect called");
-            // this.$formEvent[0].reset();
-            // this.$formEvent.removeClass('was-validated');
-            // this.$selectedEvent = null;
-            // this.$newEventData = e;
-            // this.$btnDeleteEvent.hide();
-            // this.$modalTitle.text(deckerVars.strings.add_new_event);
-            // this.$modal.show();
-            // if (this.$calendarObj) {
-            //     this.$calendarObj.unselect();
-            // }
+            if (this.$calendarObj) {
+                this.$calendarObj.unselect();
+            }
         },
 
         handleFormSubmit: function(e) {
