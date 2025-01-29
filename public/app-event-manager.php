@@ -120,8 +120,11 @@ foreach ( $events_data as $event_data ) :
 	<td class="event-title">
 	    <?php echo esc_html( $title ); ?>
 	</td>
-	<td class="event-allday">
-	    <?php echo esc_html( $allday ); ?>
+	<td class="event-allday text-center">
+	    <div class="form-check">
+	        <input class="form-check-input" type="checkbox" disabled readonly 
+	               <?php echo $allday ? 'checked' : ''; ?>>
+	    </div>
 	</td>
 	<td class="event-start">
 	    <?php echo esc_html( $start_formatted ); ?>
