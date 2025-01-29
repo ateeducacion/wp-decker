@@ -29,7 +29,7 @@ function include_wp_load( $max_levels = 10 ) {
 	return false;
 }
 
-// Attempt to include wp-load.php when loading the event card in a modal
+// Attempt to include wp-load.php when loading the event card in a modal.
 if ( ! defined( 'ABSPATH' ) ) {
 	if ( ! include_wp_load() ) {
 		exit( 'Error: Unauthorized access.' );
@@ -42,37 +42,42 @@ if ( ! wp_verify_nonce( $nonce, 'decker_event_card' ) ) {
 	exit( 'Unauthorized request.' );
 }
 
-// Initialize variables
+// Initialize variables.
 $event_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
 
-// Verify this is actually an event post type before creating Event object
-$post = $event_id ? get_post( $event_id ) : null;
+// Verify this is actually an event post type before creating Event object.
+$event_post = $event_id ? get_post( $event_id ) : null;
 
-// Verify this is actually an event post type
-if ( $event_id && $post->post_type !== 'decker_event' ) {
-	wp_die( __( 'Invalid post type. This form is only for events.', 'decker' ) );
+// Verify this is actually an event post type.
+if ( $event_id && 'decker_event' !== $event_post->post_type ) {
+	wp_die( 'Invalid post type. This form is only for events.' );
 }
 
-$title = $post ? esc_attr( $post->post_title ) : '';
-$description = $post ? esc_textarea( $post->post_content ) : '';
+$event_title = $event_post ? esc_attr( $event_post->post_title ) : '';
+$description = $event_post ? esc_textarea( $event_post->post_content ) : '';
 
-// Get metadata
+// Get metadata.
 $meta = $event_id ? get_post_meta( $event_id ) : array();
 
-// Process metas
+// Process metas.
 $allday = isset( $meta['event_allday'][0] ) ? $meta['event_allday'][0] : '';
 
-// Función para redondear a la media hora más cercana
+/**
+ * Función para redondear a la media hora más cercana.
+ *
+ * @param Datetime $date value.
+ * @return Datetime Returns  a correct datetime.
+ */
 function round_to_nearest_half_hour( $date ) {
 	$timestamp = strtotime( $date );
 	$minutes = (int) gmdate( 'i', $timestamp );
 	$seconds = (int) gmdate( 's', $timestamp );
 
-	// Redondear los minutos
+	// Redondear los minutos.
 	$rounded_minutes = round( $minutes / 30 ) * 30;
 
-	// Manejar el caso en que los minutos redondean a 60
-	if ( $rounded_minutes == 60 ) {
+	// Manejar el caso en que los minutos redondean a 60.
+	if ( 60 == $rounded_minutes ) {
 		$timestamp = strtotime( '+1 hour', strtotime( gmdate( 'Y-m-d H:00', $timestamp ) ) );
 		$rounded_minutes = 0;
 	} else {
@@ -82,12 +87,12 @@ function round_to_nearest_half_hour( $date ) {
 	return gmdate( 'Y-m-d H:i', $timestamp );
 }
 
-// Establecer la fecha de inicio
+// Establecer la fecha de inicio.
 $start_date = isset( $meta['event_start'][0] ) ?
 	gmdate( 'Y-m-d H:i', strtotime( $meta['event_start'][0] ) ) :
 	round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) );
 
-// Establecer la fecha de fin
+// Establecer la fecha de fin.
 $end_date = isset( $meta['event_end'][0] ) ?
 	gmdate( 'Y-m-d H:i', strtotime( $meta['event_end'][0] ) ) :
 	gmdate( 'Y-m-d H:i', strtotime( $start_date . ' +1 hour' ) );
@@ -108,7 +113,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 	<!-- Título -->
 	<div class="form-floating mb-3">
 		<input type="text" class="form-control" id="event-title" name="event_title" 
-			   value="<?php echo esc_attr( $title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
+			   value="<?php echo esc_attr( $event_title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
 		<label for="event-title"><?php esc_html_e( 'Title', 'decker' ); ?> <span class="text-danger">*</span></label>
 		<div class="invalid-feedback">
 			<?php esc_html_e( 'Please enter a title for the event.', 'decker' ); ?>
@@ -211,16 +216,16 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 	<div class="form-floating mb-4">
 		<select class="form-select" id="event-category" name="event_category" required>
 			<option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
-			<option value="bg-success" <?php echo $category === 'bg-success' ? 'selected' : ''; ?>>
+			<option value="bg-success" <?php echo 'bg-success' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Meeting', 'decker' ); ?>
 			</option>
-			<option value="bg-info" <?php echo $category === 'bg-info' ? 'selected' : ''; ?>>
+			<option value="bg-info" <?php echo 'bg-info' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Holidays', 'decker' ); ?>
 			</option>
-			<option value="bg-warning" <?php echo $category === 'bg-warning' ? 'selected' : ''; ?>>
+			<option value="bg-warning" <?php echo 'bg-warning' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Warning', 'decker' ); ?>
 			</option>
-			<option value="bg-danger" <?php echo $category === 'bg-danger' ? 'selected' : ''; ?>>
+			<option value="bg-danger" <?php echo 'bg-danger' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Alert', 'decker' ); ?>
 			</option>
 		</select>

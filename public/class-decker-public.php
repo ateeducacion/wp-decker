@@ -255,13 +255,13 @@ class Decker_Public {
 
 			$users = get_users(
 				array(
-					'fields' => array( 'ID', 'display_name' ), // Campos nativos
+					'fields' => array( 'ID', 'display_name' ), // Campos nativos.
 				)
 			);
 
-			// Añadir el nickname a cada usuario
+			// Añadir el nickname a cada usuario.
 			foreach ( $users as &$user ) {
-				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real
+				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real.
 			}
 
 			// Preparar los datos a pasar al JS.
@@ -377,7 +377,7 @@ class Decker_Public {
 				)
 			);
 
-			// TODO: This can be removed
+			// TODO: This can be removed, review.
 			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
 
 		}

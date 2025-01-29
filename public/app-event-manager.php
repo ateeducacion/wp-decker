@@ -72,24 +72,24 @@ $events_data = Decker_Events::get_events();
 
 <?php
 foreach ( $events_data as $event_data ) :
-	$post = $event_data['post'];
+	$event_post = $event_data['post'];
 	$meta = $event_data['meta'];
 
-	// Asegurarse de que el objeto $post sea válido
-	if ( ! $post instanceof WP_Post ) {
+	// Asegurarse de que el objeto $event_post sea válido.
+	if ( ! $event_post instanceof WP_Post ) {
 		continue;
 	}
 
-	// Extraer metadatos con valores predeterminados
-	$event_id = $post->ID;
-	$title = $post->post_title;
+	// Extraer metadatos con valores predeterminados.
+	$event_id = $event_post->ID;
+	$event_title = $event_post->post_title;
 	$allday = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
 	$start_date = isset( $meta['event_start'] ) ? $meta['event_start'][0] : '';
 	$end_date = isset( $meta['event_end'] ) ? $meta['event_end'][0] : '';
 	$category = isset( $meta['event_category'] ) ? $meta['event_category'][0] : '';
 
 
-	// Formatear fechas
+	// Formatear fechas.
 	$start_formatted = '';
 	$end_formatted = '';
 
@@ -100,7 +100,7 @@ foreach ( $events_data as $event_data ) :
 			$start_formatted = $allday ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
 			error_log( 'Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage() );
-			$start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
+			$start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable.
 		}
 	}
 
@@ -110,7 +110,7 @@ foreach ( $events_data as $event_data ) :
 			$end_formatted = $allday ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
 			error_log( 'Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage() );
-			$end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
+			$end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable.
 		}
 	}
 
@@ -118,7 +118,7 @@ foreach ( $events_data as $event_data ) :
 
 <tr>
 	<td class="event-title">
-		<?php echo esc_html( $title ); ?>
+		<?php echo esc_html( $event_title ); ?>
 	</td>
 	<td class="event-allday text-center">
 		<div class="form-check">
@@ -174,7 +174,7 @@ foreach ( $events_data as $event_data ) :
 			<i class="ri-pencil-line"></i>
 		</a>
 		<button type="button" class="btn btn-sm btn-danger" 
-		   onclick="window.deleteEvent(<?php echo esc_attr( $event_id ); ?>, '<?php echo esc_js( $title ); ?>')">
+		   onclick="window.deleteEvent(<?php echo esc_attr( $event_id ); ?>, '<?php echo esc_js( $event_title ); ?>')">
 			<i class="ri-delete-bin-line"></i>
 		</button>
 	</td>
@@ -210,7 +210,7 @@ foreach ( $events_data as $event_data ) :
 	?>
 
 	<?php
-	// Include event modal template
+	// Include event modal template.
 	include plugin_dir_path( __FILE__ ) . 'layouts/event-modal.php';
 	?>
 </body>

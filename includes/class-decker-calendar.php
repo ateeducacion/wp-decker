@@ -53,21 +53,21 @@ class Decker_Calendar {
 	 */
 	public function get_calendar_permissions_check( $request ) {
 
-		// Verificar nonce de REST API primero
+		// Verificar nonce de REST API primero.
 		$nonce = $request->get_header( 'X-WP-Nonce' );
 		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return true;
 		}
 
-		// First check if user is logged in
+		// First check if user is logged in.
 		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
 			return true;
 		}
 
-		// If not logged in, check for token
+		// If not logged in, check for token.
 		$token = $request->get_param( 'token' );
 		if ( ! empty( $token ) ) {
-			// Look for a user with this calendar token
+			// Look for a user with this calendar token.
 			$users = get_users(
 				array(
 					'meta_key' => 'decker_calendar_token',
@@ -126,16 +126,16 @@ class Decker_Calendar {
 	private function get_events() {
 		$events = array();
 
-		// Get regular events
+		// Get regular events.
 		$event_posts = Decker_Events::get_events();
 		foreach ( $event_posts as $event_data ) {
 			$post = $event_data['post'];
 			$meta = $event_data['meta'];
 
-			// Asegurarse de que las fechas sean válidas antes de agregarlas
+			// Asegurarse de que las fechas sean válidas antes de agregarlas.
 			if ( ! empty( $meta['event_start'] ) && ! empty( $meta['event_end'] ) ) {
 				$events[] = array(
-					'id'             => 'event_' . $post->ID, // Prefijo para distinguir de tareas
+					'id'             => 'event_' . $post->ID, // Prefijo para distinguir de tareas.
 					'title'          => $post->post_title,
 					'description'    => $post->post_content,
 
@@ -152,7 +152,7 @@ class Decker_Calendar {
 			}
 		}
 
-		// Get published tasks
+		// Get published tasks.
 		$task_manager = new TaskManager();
 		$tasks = $task_manager->get_tasks_by_status( 'publish' );
 
@@ -160,10 +160,10 @@ class Decker_Calendar {
 			$board = $task->get_board();
 			$board_color = $board ? $board->color : '';
 
-			// Only add tasks that have a due date
+			// Only add tasks that have a due date.
 			if ( $task->duedate ) {
 				$events[] = array(
-					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events
+					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
 					'title'          => $task->title,
 					'description'    => $task->description,
 					'all_day'        => true,
@@ -204,7 +204,7 @@ class Decker_Calendar {
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 
-			// Convertir fechas a UTC
+			// Convertir fechas a UTC.
 			$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
 			$dtend = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
 
@@ -212,9 +212,9 @@ class Decker_Calendar {
 			$ical .= 'DTEND:' . $dtend . "\r\n";
 
 			$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
-			// Split description into 75 character chunks
+			// Split description into 75 character chunks.
 			$description = $this->ical_escape( $event['description'] );
-			$desc_chunks = str_split( $description, 74 ); // 74 to account for the space after continuation
+			$desc_chunks = str_split( $description, 74 ); // 74 to account for the space after continuation.
 			if ( ! empty( $desc_chunks ) ) {
 				$ical .= 'DESCRIPTION:' . array_shift( $desc_chunks ) . "\r\n";
 				foreach ( $desc_chunks as $chunk ) {
@@ -240,7 +240,7 @@ class Decker_Calendar {
 				}
 			}
 
-			// Add assigned users as attendees with proper line folding
+			// Add assigned users as attendees with proper line folding.
 			if ( ! empty( $event['assigned_users'] ) ) {
 				foreach ( $event['assigned_users'] as $user_id ) {
 					$user = get_userdata( $user_id );

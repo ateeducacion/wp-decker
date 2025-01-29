@@ -71,7 +71,7 @@ class Decker_Events {
 
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'force_classic_editor' ), 10, 2 );
 
-		// Hide visibility options
+		// Hide visibility options.
 		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
 	}
 
@@ -193,23 +193,30 @@ class Decker_Events {
 	}
 
 	/**
-	 * Sanitiza las fechas según el tipo de evento
+	 * Sanitizes the event date.
+	 *
+	 * @param string $value The date value to sanitize.
+	 * @return string The sanitized date.
 	 */
 	public function sanitize_event_date( $value ) {
-		$allday = isset( $_POST['event_allday'] ) ? rest_sanitize_boolean( $_POST['event_allday'] ) : false;
+		$allday = isset( $_POST['event_allday'] ) ? rest_sanitize_boolean( wp_unslash( $_POST['event_allday'] ) ) : false;
 
 		if ( $allday ) {
-			return sanitize_text_field( substr( $value, 0, 10 ) ); // Solo fecha
+			return sanitize_text_field( substr( $value, 0, 10 ) ); // Solo fecha.
 		}
 
-		return sanitize_text_field( $value ); // Fecha y hora
+		return sanitize_text_field( $value ); // Fecha y hora.
 	}
 
 	/**
-	 * Forces classic editor
+	 * Forces the classic editor for decker_event post type.
+	 *
+	 * @param bool   $use_block_editor Whether to use block editor.
+	 * @param string $post_type The post type being checked.
+	 * @return bool Whether to use the classic editor.
 	 */
 	public function force_classic_editor( $use_block_editor, $post_type ) {
-		if ( $post_type === 'decker_event' ) {
+		if ( 'decker_event' === $post_type ) {
 			return false; // Deactivate gutenberg editor.
 		}
 		return $use_block_editor;
@@ -218,13 +225,18 @@ class Decker_Events {
 
 
 	/**
-	 * Restringe el acceso a los endpoints de 'decker_event' solo a editores y superiores.
+	 * Restricts REST API access for decker_event post type.
+	 *
+	 * @param mixed           $result The pre-calculated result to return.
+	 * @param WP_REST_Server  $rest_server The REST server instance.
+	 * @param WP_REST_Request $request The current REST request.
+	 * @return mixed WP_Error if unauthorized, otherwise the original result.
 	 */
 	public function restrict_rest_access( $result, $rest_server, $request ) {
 		$route = $request->get_route();
 
 		if ( strpos( $route, '/wp/v2/decker_event' ) === 0 ) {
-			// Usa la capacidad específica del CPT
+			// Usa la capacidad específica del CPT.
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				return new WP_Error(
 					'rest_forbidden',
@@ -333,14 +345,14 @@ class Decker_Events {
 				}
 			}
 			
-			// Añadir manejadores de eventos
+			// Añadir manejadores de eventos.
 			$('#event_allday').on('change', toggleTimeFields);
 			$('#event_start_date, #event_start_time, #event_end_date, #event_end_time').on('change', validateDates);
 			
-			// Validar al cargar
+			// Validar al cargar.
 			toggleTimeFields();
 			
-			// Validar antes de guardar
+			// Validar antes de guardar.
 			$('#post').on('submit', function(e) {
 				if (!validateDates()) {
 					e.preventDefault();
@@ -401,7 +413,7 @@ class Decker_Events {
 	 * @param int $post_id The post ID.
 	 */
 	public function save_event_meta( $post_id ) {
-		// Skip capability check in test environment
+		// Skip capability check in test environment.
 		if ( ! defined( 'WP_TESTS_RUNNING' ) ) {
 			if ( ! isset( $_POST['decker_event_meta_box_nonce'] ) ) {
 				return;
@@ -430,15 +442,15 @@ class Decker_Events {
 			$start = isset( $_POST['event_start_date'] ) ? $this->format_event_date( $_POST['event_start_date'], true ) : '';
 			$end = isset( $_POST['event_end_date'] ) ? $this->format_event_date( $_POST['event_end_date'], true ) : '';
 		} else {
-			$start_date = isset( $_POST['event_start_date'] ) ? sanitize_text_field( $_POST['event_start_date'] ) : '';
-			$start_time = isset( $_POST['event_start_time'] ) ? sanitize_text_field( $_POST['event_start_time'] ) : '00:00';
-			$end_date = isset( $_POST['event_end_date'] ) ? sanitize_text_field( $_POST['event_end_date'] ) : '';
-			$end_time = isset( $_POST['event_end_time'] ) ? sanitize_text_field( $_POST['event_end_time'] ) : '00:00';
+			$start_date = isset( $_POST['event_start_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start_date'] ) ) : '';
+			$start_time = isset( $_POST['event_start_time'] ) ? sanitize_text_field( wp_unslash( $_POST['event_start_time'] ) ) : '00:00';
+			$end_date = isset( $_POST['event_end_date'] ) ? sanitize_text_field( wp_unslash( $_POST['event_end_date'] ) ) : '';
+			$end_time = isset( $_POST['event_end_time'] ) ? sanitize_text_field( wp_unslash( $_POST['event_end_time'] ) ) : '00:00';
 			$start = $this->format_event_date( "$start_date $start_time", false );
 			$end = $this->format_event_date( "$end_date $end_time", false );
 		}
 
-		// Validar que end date es mayor que start date
+		// Validar que end date es mayor que start date.
 		if ( strtotime( $end ) <= strtotime( $start ) ) {
 			// You can either add an error or simply not save the dates.
 			// For simplicity, we'll just skip saving invalid dates.
@@ -448,16 +460,6 @@ class Decker_Events {
 
 		update_post_meta( $post_id, 'event_start', $start );
 		update_post_meta( $post_id, 'event_end', $end );
-
-		// if ( isset( $_POST['event_start'] ) ) {
-		// $start = isset($_POST['event_start']) ? $this->format_event_date($_POST['event_start'], $allday) : '';
-		// update_post_meta($post_id, 'event_start', $start);
-		// }
-
-		// if ( isset( $_POST['event_end'] ) ) {
-		// $end = isset($_POST['event_end']) ? $this->format_event_date($_POST['event_end'], $allday) : '';
-		// update_post_meta($post_id, 'event_end', $end);
-		// }
 
 		// Save location.
 		if ( isset( $_POST['event_location'] ) ) {
@@ -474,7 +476,7 @@ class Decker_Events {
 			update_post_meta( $post_id, 'event_category', sanitize_text_field( wp_unslash( $_POST['event_category'] ) ) );
 		}
 
-		// Save assigned users
+		// Save assigned users.
 		$assigned_users = array();
 		if ( isset( $_POST['event_assigned_users'] ) ) {
 			$users_data = wp_unslash( $_POST['event_assigned_users'] );
@@ -489,13 +491,17 @@ class Decker_Events {
 	}
 
 	/**
-	 * Formatea la fecha según el tipo de evento
+	 * Formats the event date.
+	 *
+	 * @param string $date The date to format.
+	 * @param bool   $allday Whether the event is all-day.
+	 * @return string The formatted date.
 	 */
 	private function format_event_date( $date, $allday ) {
 		if ( $allday ) {
-			return date( 'Y-m-d', strtotime( $date ) ) . 'T00:00:00';
+			return gmdate( 'Y-m-d', strtotime( $date ) ) . 'T00:00:00';
 		}
-		return date( 'Y-m-d\TH:i:s', strtotime( $date ) );
+		return gmdate( 'Y-m-d\TH:i:s', strtotime( $date ) );
 	}
 
 	/**
