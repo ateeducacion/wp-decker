@@ -30,79 +30,121 @@
 
     window.deleteEvent = deleteEvent;
 
-    // Initialize event card functionality
+
+    /**
+     * Inicializa las funcionalidades del formulario de eventos.
+     * @param {Element} context - Contexto del DOM donde inicializar (por defecto es document).
+     */
     function initializeEventCard(context = document) {
 
+        flatpickr.localize(flatpickr.l10ns.es);
+        flatpickr.l10ns.default.firstDayOfWeek = 1; // Monday
 
-            // Default flatpickr config
-            const flatpickrConfig = {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i",
-                time_24hr: true,
-                minuteIncrement: 15
-            };
 
-            // Initialize flatpickr instances
-            const startPicker = flatpickr("#event-start", flatpickrConfig);
-            const endPicker = flatpickr("#event-end", {
-                ...flatpickrConfig,
-                minDate: startPicker.selectedDates[0] || "today"
-            });
 
-            // Update end date min when start date changes
-            startPicker.config.onChange = function(selectedDates) {
-                endPicker.set('minDate', selectedDates[0] || "today");
-            };
+        // Flatpickr configuration
+        const flatpickrConfig = {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            minuteIncrement: 15
+        };
 
-            // Handle all day toggle
-            const allDayCheckbox = document.getElementById('event-allday');
-            allDayCheckbox.addEventListener('change', function() {
-                const config = {
-                    enableTime: !this.checked,
-                    dateFormat: this.checked ? "Y-m-d" : "Y-m-d H:i"
-                };
+        const startPicker = flatpickr("#event-start", flatpickrConfig);
+        const endPicker = flatpickr("#event-end", flatpickrConfig);
+        let assignedUsersChoices = null;
+
+        // All Day Event handler
+        const allDaySwitch = context.querySelector('#event-allday');
+        if (allDaySwitch) {
+            allDaySwitch.addEventListener('change', function() {
+                const isAllDay = this.checked;
                 
-                startPicker.set('enableTime', !this.checked);
-                startPicker.set('dateFormat', config.dateFormat);
-                
-                endPicker.set('enableTime', !this.checked);
-                endPicker.set('dateFormat', config.dateFormat);
-                
-                if (this.checked) {
-                    // If switching to all day, set times to start/end of day
-                    if (startPicker.selectedDates[0]) {
-                        startPicker.selectedDates[0].setHours(0, 0, 0, 0);
-                        startPicker.setDate(startPicker.selectedDates[0]);
+                startPicker.set('enableTime', !isAllDay);
+                startPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+                endPicker.set('enableTime', !isAllDay);
+                endPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+
+                // Adjust existing dates
+                if (isAllDay) {
+                    if (startPicker.selectedDates.length > 0) {
+                        const startDate = new Date(startPicker.selectedDates[0]);
+                        startDate.setHours(0, 0, 0, 0);
+                        startPicker.setDate(startDate);
                     }
-                    if (endPicker.selectedDates[0]) {
-                        endPicker.selectedDates[0].setHours(23, 59, 0, 0);
-                        endPicker.setDate(endPicker.selectedDates[0]);
+                    if (endPicker.selectedDates.length > 0) {
+                        const endDate = new Date(endPicker.selectedDates[0]);
+                        endDate.setHours(23, 59, 0, 0);
+                        endPicker.setDate(endDate);
                     }
                 }
             });
-    
+        }
 
-
-
-
-
-
-        // Initialize Choices.js for assigned users
-        if (context.querySelector('#event-assigned-users')) {
-            new Choices('#event-assigned-users', { 
+        // Initialize Choices.js
+        const assignedUsersSelect = context.querySelector('#event-assigned-users');
+        if (assignedUsersSelect) {
+            assignedUsersChoices = new Choices(assignedUsersSelect, { 
                 removeItemButton: true,
-                allowHTML: true,
                 searchEnabled: true,
-                shouldSort: true,
+                placeholder: true,
+                placeholderValue: strings.select_users_placeholder,
+                searchPlaceholderValue: strings.search_users_placeholder
             });
         }
 
-        // Handle form submission
+
+        // Select all users handler
+        const selectAllLink = context.querySelector('#event-assigned-users-select-all');
+        if (selectAllLink && assignedUsersChoices) {
+            selectAllLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                const allValues = Array.from(assignedUsersSelect.options).map(opt => opt.value);
+                assignedUsersChoices.setValue(allValues);
+            });
+        }
+
+
+
+
+
+        // const startPicker = flatpickr("#event-start", flatpickrConfig);
+        // const endPicker = flatpickr("#event-end", flatpickrConfig);
+
+        // // Manejar el cambio del switch "All Day Event"
+        // const allDaySwitch = context.querySelector('#event-allday');
+        // if (allDaySwitch) {
+        //     allDaySwitch.addEventListener('change', function() {
+        //         const isAllDay = this.checked;
+
+        //         // Actualizar la configuración de flatpickr según el estado del switch
+        //         startPicker.set('enableTime', !isAllDay);
+        //         startPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+
+        //         endPicker.set('enableTime', !isAllDay);
+        //         endPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+
+        //         // Ajustar las fechas si es un evento de todo el día
+        //         if (isAllDay) {
+        //             if (startPicker.selectedDates[0]) {
+        //                 const startDate = startPicker.selectedDates[0];
+        //                 startDate.setHours(0, 0, 0, 0);
+        //                 startPicker.setDate(startDate);
+        //             }
+        //             if (endPicker.selectedDates[0]) {
+        //                 const endDate = endPicker.selectedDates[0];
+        //                 endDate.setHours(23, 59, 0, 0);
+        //                 endPicker.setDate(endDate);
+        //             }
+        //         }
+        //     });
+        // }
+
+      // Form submission handler
         const form = context.querySelector('#form-event');
         if (form) {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
                 if (!form.checkValidity()) {
                     e.stopPropagation();
                     form.classList.add('was-validated');
@@ -110,126 +152,163 @@
                 }
 
                 const formData = new FormData(form);
-                const id = formData.get('event_id');
-                const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id > 0 ? '/' + id : '');
+                const eventId = formData.get('event_id');
+                const isEdit = eventId > 0;
 
-                // Build the event data object
+                // Build request parameters
+                const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (isEdit ? '/' + eventId : '');
+                const method = isEdit ? 'PUT' : 'POST';
+
+                // Prepare event data
                 const eventData = {
                     title: formData.get('event_title'),
                     status: 'publish',
                     meta: {
-                        event_start: formData.get('event_start_date') + 'T' + (formData.get('event_start_time') || '00:00'),
-                        event_end: formData.get('event_end_date') + 'T' + (formData.get('event_end_time') || '00:00'),
+                        event_start: formData.get('event_start'),
+                        event_end: formData.get('event_end'),
+                        event_allday: formData.get('event_allday') === 'on',
                         event_category: formData.get('event_category'),
-                        event_assigned_users: Array.from(formData.getAll('event_assigned_users[]')).map(Number)
-                    }
+                        event_assigned_users: formData.getAll('event_assigned_users[]').map(Number),
+                        event_location: formData.get('event_location'),
+                        event_url: formData.get('event_url')
+                    },
+                    content: formData.get('event_description')
                 };
 
-                // Add content if provided
-                const description = formData.get('event_description');
-                if (description) {
-                    eventData.content = {
-                        raw: description,
-                        rendered: description
-                    };
-                }
-
-                fetch(url, {
-                    method: 'POST',
-                    body: JSON.stringify(eventData),
-                    headers: {
-                        'X-WP-Nonce': wpApiSettings.nonce,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(response.statusText);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    location.reload();
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert(strings.error_saving_event);
-                });
-            });
-        }
-
-        // Handle date/time field interactions
-        const startTimeInput = context.querySelector('#event-start-time');
-        const endTimeInput = context.querySelector('#event-end-time');
-        const endDateInput = context.querySelector('#event-end-date');
-        const timeInputs = context.querySelector('#time-inputs');
-
-        if (startTimeInput && endTimeInput && endDateInput && timeInputs) {
-            [startTimeInput, endTimeInput].forEach(input => {
-                input.addEventListener('input', function() {
-                    const hasTime = startTimeInput.value || endTimeInput.value;
-                    if (hasTime) {
-                        endDateInput.value = '';
-                    }
-                    endDateInput.closest('.col-md-6').style.display = hasTime ? 'none' : '';
-                });
-            });
-
-            endDateInput.addEventListener('input', function() {
-                const hasEndDate = this.value;
-                if (hasEndDate) {
-                    startTimeInput.value = '';
-                    endTimeInput.value = '';
-                }
-                timeInputs.style.display = hasEndDate ? 'none' : '';
-            });
-        }
-        
-        // Handle search functionality (only on main page, not in modal)
-        if (!(context instanceof Element) || !context.closest('.modal')) {
-            const searchInput = document.querySelector('#searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('keyup', function() {
-                    const searchText = this.value.toLowerCase();
-                    document.querySelectorAll('#eventsTable tbody tr').forEach(row => {
-                        const title = row.querySelector('.event-title').textContent.toLowerCase();
-                        const start = row.querySelector('.event-start').textContent.toLowerCase();
-                        const end = row.querySelector('.event-end').textContent.toLowerCase();
-                        const category = row.querySelector('.event-category').textContent.toLowerCase();
-
-                        if (title.includes(searchText) || start.includes(searchText) || 
-                            end.includes(searchText) || category.includes(searchText)) {
-                            row.style.display = '';
-                        } else {
-                            row.style.display = 'none';
-                        }
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'X-WP-Nonce': wpApiSettings.nonce,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(eventData)
                     });
-                });
-            }
-        }
-        
-        // Handle select all users
-        context.querySelectorAll('.select-all-users').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                context.querySelectorAll('#event_assigned_users option').forEach(option => {
-                    option.selected = true;
-                });
-            });
-        });
 
-        // Handle delete event buttons
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || strings.error_saving_event);
+                    }
+
+                    location.reload();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message || strings.error_saving_event);
+                }
+            });
+        }
+
+        // Delete event handler
         context.querySelectorAll('.delete-event').forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const id = this.dataset.id;
-                const titleElement = this.closest('tr')?.querySelector('.event-title') || 
-                                   document.querySelector('#event-title');
-                const title = titleElement ? titleElement.value || titleElement.textContent.trim() : '';
+                const title = context.querySelector('#event-title').value || '';
                 deleteEvent(id, title);
             });
         });
     }
+        
+
+    //     // Inicializar Choices.js para el campo de usuarios asignados
+    //     const assignedUsersSelect = context.querySelector('#event-assigned-users');
+    //     if (assignedUsersSelect) {
+    //         new Choices(assignedUsersSelect, { 
+    //             removeItemButton: true,
+    //             searchEnabled: true,
+    //             shouldSort: true,
+    //             placeholder: true,
+    //             placeholderValue: strings.select_users_placeholder,
+    //             searchPlaceholderValue: strings.search_users_placeholder
+    //         });
+    //     }
+
+    //     // Manejar el envío del formulario
+    //     const form = context.querySelector('#form-event');
+    //     if (form) {
+    //         form.addEventListener('submit', async function(e) {
+    //             e.preventDefault();
+
+    //             // Validar el formulario
+    //             if (!form.checkValidity()) {
+    //                 e.stopPropagation();
+    //                 form.classList.add('was-validated');
+    //                 return;
+    //             }
+
+    //             form.classList.add('was-validated');
+
+    //             // Recopilar los datos del formulario
+    //             const formData = new FormData(form);
+    //             const eventId = formData.get('event_id');
+    //             const isEdit = eventId && parseInt(eventId) > 0;
+
+    //             // Construir el objeto de datos del evento
+    //             const eventData = {
+    //                 title: formData.get('event_title'),
+    //                 status: 'publish',
+    //                 meta: {
+    //                     event_start: formData.get('event_start'),
+    //                     event_end: formData.get('event_end'),
+    //                     event_allday: formData.get('event_allday') === 'on',
+    //                     event_category: formData.get('event_category'),
+    //                     event_assigned_users: formData.getAll('event_assigned_users[]').map(id => parseInt(id)),
+    //                     event_location: formData.get('event_location'),
+    //                     event_url: formData.get('event_url') || ''
+    //                 },
+    //                 content: formData.get('event_description') || ''
+    //             };
+
+    //             // Definir la URL según si es creación o actualización
+    //             const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id > 0 ? '/' + id : '');
+
+    //             try {
+    //                 const response = await fetch(url, {
+    //                     method: 'POST',
+    //                     headers: {
+    //                         'X-WP-Nonce': wpApiSettings.nonce,
+    //                         'Content-Type': 'application/json'
+    //                     },
+    //                     body: JSON.stringify(eventData)
+    //                 });
+
+    //                 if (!response.ok) {
+    //                     const errorData = await response.json();
+    //                     throw new Error(errorData.message || strings.error_saving_event);
+    //                 }
+
+    //                 // Recargar la página para reflejar los cambios
+    //                 location.reload();
+    //             } catch (error) {
+    //                 console.error('Error:', error);
+    //                 alert(error.message || strings.error_saving_event);
+    //             }
+    //         });
+    //     }
+    
+        
+    //     // Handle select all users
+    //     context.querySelectorAll('#event-assigned-users-select-all').forEach(button => {
+    //         button.addEventListener('click', function(e) {
+    //             e.preventDefault();
+    //             context.querySelectorAll('#event_assigned_users option').forEach(option => {
+    //                 option.selected = true;
+    //             });
+    //         });
+    //     });
+
+    //     // Handle delete event buttons
+    //     context.querySelectorAll('.delete-event').forEach(button => {
+    //         button.addEventListener('click', function(e) {
+    //             e.preventDefault();
+    //             const id = this.dataset.id;
+    //             const titleElement = this.closest('tr')?.querySelector('.event-title') || 
+    //                                document.querySelector('#event-title');
+    //             const title = titleElement ? titleElement.value || titleElement.textContent.trim() : '';
+    //             deleteEvent(id, title);
+    //         });
+    //     });
+    // }
 
     // Exportar funciones globalmente para que puedan ser llamadas desde HTML
     window.initializeEventCard = initializeEventCard;

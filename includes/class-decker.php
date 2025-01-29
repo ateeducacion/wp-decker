@@ -139,7 +139,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
-		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-eventmanager.php';
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.

@@ -98,15 +98,25 @@ foreach ( $events_data as $event_data ) :
 	$end_formatted = '';
 
 
-    if ( ! empty( $start_date ) ) {
-        $start_datetime = new DateTime( $start_date );
-        $start_formatted = $all_day ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
-    }
+	if (!empty($start_date)) {
+	    try {
+	        $start_datetime = new DateTime($start_date);
+	        $start_formatted = $all_day ? $start_datetime->format('Y-m-d') : $start_datetime->format('Y-m-d H:i');
+	    } catch (Exception $e) {
+	        error_log('Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage());
+	        $start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
+	    }
+	}
 
-    if ( ! empty( $end_date ) ) {
-        $end_datetime = new DateTime( $end_date );
-        $end_formatted = $all_day ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
-    }
+	if (!empty($end_date)) {
+	    try {
+	        $end_datetime = new DateTime($end_date);
+	        $end_formatted = $all_day ? $end_datetime->format('Y-m-d') : $end_datetime->format('Y-m-d H:i');
+	    } catch (Exception $e) {
+	        error_log('Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage());
+	        $end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable
+	    }
+	}
 
     // Obtener nombre de usuarios asignados
     $assigned_users_names = array();

@@ -228,6 +228,8 @@ class Decker_Public {
 				// Flatpickr.
 				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js';
 				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css';			
+				$resources[] = 'https://npmcdn.com/flatpickr@4.6.13/dist/l10n/es.js';
+
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
