@@ -134,7 +134,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
-		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-event.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
