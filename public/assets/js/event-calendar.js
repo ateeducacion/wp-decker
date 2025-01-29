@@ -141,6 +141,10 @@
                                 titleEl.insertBefore(svg, titleEl.firstChild);
                             }
                         } else if (info.event.extendedProps.type === 'event') {
+                            // Set background color based on category class
+                            info.el.style.backgroundColor = info.event.classNames[0];
+                            info.el.style.opacity = '0.7'; // Make it lighter
+
                             // For events, add assigned users before title
                             const users = info.event.extendedProps.assigned_users || [];
 
