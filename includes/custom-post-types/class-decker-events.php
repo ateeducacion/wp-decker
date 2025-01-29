@@ -119,15 +119,20 @@ class Decker_Events {
 			),
 			'event_assigned_users' => array(
 				'type' => 'array',
+				'single' => true,
 				'show_in_rest' => array(
 					'schema' => array(
+						'type' => 'array',
 						'items' => array(
 							'type' => 'integer',
 						),
 					),
 				),
-				'sanitize_callback' => function ( $value ) {
-					return array_map( 'absint', (array) $value );
+				'sanitize_callback' => function ( $users ) {
+					if (is_string($users)) {
+						$users = explode(',', $users);
+					}
+					return array_map('absint', (array) $users);
 				},
 			),
 		);
@@ -443,13 +448,18 @@ class Decker_Events {
 			update_post_meta( $post_id, 'event_category', sanitize_text_field( wp_unslash( $_POST['event_category'] ) ) );
 		}
 
-		// Save assigned users.
+		// Save assigned users
+		$assigned_users = array();
 		if ( isset( $_POST['event_assigned_users'] ) ) {
-			$assigned_users = array_map( 'absint', wp_unslash( $_POST['event_assigned_users'] ) );
-			update_post_meta( $post_id, 'event_assigned_users', $assigned_users );
-		} else {
-			delete_post_meta( $post_id, 'event_assigned_users' );
+			$users_data = wp_unslash($_POST['event_assigned_users']);
+			if (is_array($users_data)) {
+				$assigned_users = array_map('absint', $users_data);
+			} elseif (is_string($users_data)) {
+				$users_array = explode(',', $users_data);
+				$assigned_users = array_map('absint', $users_array);
+			}
 		}
+		update_post_meta($post_id, 'event_assigned_users', array_filter($assigned_users));
 	}
 
     /**
