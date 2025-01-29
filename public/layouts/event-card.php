@@ -71,39 +71,77 @@ $event = $event_id ? new Event( $event_id ) : null;
     </div>
 
     <div class="mb-3">
-        <label class="form-label"><?php esc_html_e( 'Date', 'decker' ); ?></label>
-        <div class="row g-2">
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="event-allday" name="event_allday">
+            <label class="form-check-label" for="event-allday">
+                <?php esc_html_e('All Day Event', 'decker'); ?>
+            </label>
+        </div>
+        
+        <div class="row g-3">
             <div class="col-md-6">
-                <input type="date" class="form-control" name="event_start_date" id="event-start-date" 
-                       value="<?php echo $event ? esc_attr( $event->get_start_date()?->format( 'Y-m-d' ) ) : ''; ?>" required />
-                <small class="text-muted"><?php esc_html_e( 'Start Date', 'decker' ); ?></small>
+                <label for="event-start" class="form-label"><?php esc_html_e('Start', 'decker'); ?></label>
+                <input type="text" class="form-control flatpickr" id="event-start" name="event_start" 
+                       value="<?php echo $event ? esc_attr($event->get_start_date()?->format('Y-m-d H:i')) : ''; ?>" required />
             </div>
             <div class="col-md-6">
-                <input type="date" class="form-control" name="event_end_date" id="event-end-date" 
-                       value="<?php echo $event ? esc_attr( $event->get_end_date()?->format( 'Y-m-d' ) ) : ''; ?>" />
-                <small class="text-muted"><?php esc_html_e( 'End Date', 'decker' ); ?></small>
+                <label for="event-end" class="form-label"><?php esc_html_e('End', 'decker'); ?></label>
+                <input type="text" class="form-control flatpickr" id="event-end" name="event_end" 
+                       value="<?php echo $event ? esc_attr($event->get_end_date()?->format('Y-m-d H:i')) : ''; ?>" required />
             </div>
         </div>
     </div>
 
-    <div class="mb-3" id="time-inputs">
-        <label class="form-label"><?php esc_html_e( 'Time', 'decker' ); ?></label>
-        <div class="row g-2">
-            <div class="col-md-6">
-                <input type="time" class="form-control" name="event_start_time" id="event-start-time" 
-                       value="<?php echo $event ? esc_attr( $event->get_start_date()?->format( 'H:i' ) ) : ''; ?>" />
-                <small class="text-muted"><?php esc_html_e( 'Start Time', 'decker' ); ?></small>
-            </div>
-            <div class="col-md-6">
-                <input type="time" class="form-control" name="event_end_time" id="event-end-time" 
-                       value="<?php echo $event ? esc_attr( $event->get_end_date()?->format( 'H:i' ) ) : ''; ?>" />
-                <small class="text-muted"><?php esc_html_e( 'End Time', 'decker' ); ?></small>
-            </div>
-        </div>
-        <small class="form-text text-muted mt-2">
-            <?php esc_html_e( 'Fill in times for a single-day event, or leave empty and set end date for multi-day events.', 'decker' ); ?>
-        </small>
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Default flatpickr config
+            const flatpickrConfig = {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                minuteIncrement: 15
+            };
+
+            // Initialize flatpickr instances
+            const startPicker = flatpickr("#event-start", flatpickrConfig);
+            const endPicker = flatpickr("#event-end", {
+                ...flatpickrConfig,
+                minDate: startPicker.selectedDates[0] || "today"
+            });
+
+            // Update end date min when start date changes
+            startPicker.config.onChange = function(selectedDates) {
+                endPicker.set('minDate', selectedDates[0] || "today");
+            };
+
+            // Handle all day toggle
+            const allDayCheckbox = document.getElementById('event-allday');
+            allDayCheckbox.addEventListener('change', function() {
+                const config = {
+                    enableTime: !this.checked,
+                    dateFormat: this.checked ? "Y-m-d" : "Y-m-d H:i"
+                };
+                
+                startPicker.set('enableTime', !this.checked);
+                startPicker.set('dateFormat', config.dateFormat);
+                
+                endPicker.set('enableTime', !this.checked);
+                endPicker.set('dateFormat', config.dateFormat);
+                
+                if (this.checked) {
+                    // If switching to all day, set times to start/end of day
+                    if (startPicker.selectedDates[0]) {
+                        startPicker.selectedDates[0].setHours(0, 0, 0, 0);
+                        startPicker.setDate(startPicker.selectedDates[0]);
+                    }
+                    if (endPicker.selectedDates[0]) {
+                        endPicker.selectedDates[0].setHours(23, 59, 0, 0);
+                        endPicker.setDate(endPicker.selectedDates[0]);
+                    }
+                }
+            });
+        });
+    </script>
 
     <div class="mb-3">
         <label for="event-category" class="form-label"><?php esc_html_e( 'Category', 'decker' ); ?></label>
