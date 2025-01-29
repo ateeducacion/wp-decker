@@ -106,11 +106,32 @@ class Decker_User_Extended {
 					<span class="description">
 						<?php 
 						$calendar_url = add_query_arg('token', $calendar_token, home_url('decker-calendar'));
-						echo sprintf(
-							/* translators: %s: Calendar URL with token */
-							esc_html__('Use this token to access your calendar feed: %s', 'decker'),
-							'<br><code>' . esc_url($calendar_url) . '</code>'
-						);
+						$webcal_url = str_replace('http://', 'webcal://', $calendar_url);
+						$webcal_url = str_replace('https://', 'webcal://', $webcal_url);
+						
+						echo '<div class="calendar-links" style="margin-top: 10px;">';
+						echo '<p style="margin-bottom: 5px;">' . esc_html__('Subscribe to your calendar:', 'decker') . '</p>';
+						echo '<a href="' . esc_url('https://www.google.com/calendar/render?cid=' . urlencode($webcal_url)) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-google" style="vertical-align: middle;"></span> ' . 
+								esc_html__('Google Calendar', 'decker') . '</a> ';
+						
+						echo '<a href="' . esc_url($webcal_url) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-calendar-alt" style="vertical-align: middle;"></span> ' . 
+								esc_html__('iCalendar', 'decker') . '</a> ';
+						
+						echo '<a href="' . esc_url('https://outlook.office.com/owa?path=/calendar/action/compose&rru=addsubscription&url=' . 
+								urlencode($webcal_url) . '&name=' . urlencode(get_bloginfo('name') . ' - ' . __('Calendar', 'decker'))) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-calendar" style="vertical-align: middle;"></span> ' . 
+								esc_html__('Outlook 365', 'decker') . '</a> ';
+						
+						echo '<a href="' . esc_url(add_query_arg('export', '1', $calendar_url)) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-download" style="vertical-align: middle;"></span> ' . 
+								esc_html__('Export .ics file', 'decker') . '</a>';
+						echo '</div>';
 						?>
 					</span>
 				</td>
