@@ -1339,80 +1339,80 @@ msgstr "(Las tareas ocultas simplemente no se muestran en los listados)"
 #: includes/custom-post-types/class-decker-events.php:84
 msgctxt "post type general name"
 msgid "Events"
-msgstr ""
+msgstr "Eventos"
 
 #: includes/custom-post-types/class-decker-events.php:85
 msgctxt "post type singular name"
 msgid "Event"
-msgstr ""
+msgstr "Evento"
 
 #: includes/custom-post-types/class-decker-events.php:86
 msgctxt "admin menu"
 msgid "Events"
-msgstr ""
+msgstr "Eventos"
 
 #: includes/custom-post-types/class-decker-events.php:87
 msgctxt "add new on admin bar"
 msgid "Event"
-msgstr ""
+msgstr "Evento"
 
 #: includes/custom-post-types/class-decker-events.php:88
 msgctxt "event"
 msgid "Add New"
-msgstr ""
+msgstr "Añadir Nuevo"
 
 #: includes/custom-post-types/class-decker-events.php:89
 #: public/app-calendar.php:48
 #: public/app-event-manager.php:39
 msgid "Add New Event"
-msgstr ""
+msgstr "Añadir Nuevo Evento"
 
 #: includes/custom-post-types/class-decker-events.php:90
 msgid "New Event"
-msgstr ""
+msgstr "Nuevo Evento"
 
 #: includes/custom-post-types/class-decker-events.php:91
 msgid "Edit Event"
-msgstr ""
+msgstr "Editar Evento"
 
 #: includes/custom-post-types/class-decker-events.php:92
 msgid "View Event"
-msgstr ""
+msgstr "Ver Evento"
 
 #: includes/custom-post-types/class-decker-events.php:93
 #: public/app-event-manager.php:20
 #: public/app-event-manager.php:37
 #: public/layouts/left-sidebar.php:332
 msgid "Events"
-msgstr ""
+msgstr "Eventos"
 
 #: includes/custom-post-types/class-decker-events.php:94
 msgid "Search Events"
-msgstr ""
+msgstr "Buscar Eventos"
 
 #: includes/custom-post-types/class-decker-events.php:95
 msgid "No events found."
-msgstr ""
+msgstr "No se encontraron eventos."
 
 #: includes/custom-post-types/class-decker-events.php:96
 msgid "No events found in Trash."
-msgstr ""
+msgstr "No se encontraron eventos en la papelera."
 
 #: includes/custom-post-types/class-decker-events.php:243
 msgid "Event Details"
-msgstr ""
+msgstr "Detalles del Evento"
 
 #: includes/custom-post-types/class-decker-events.php:371
 msgid "Location:"
-msgstr ""
+msgstr "Ubicación:"
 
 #: includes/custom-post-types/class-decker-events.php:376
 msgid "URL:"
-msgstr ""
+msgstr "URL:"
 
 #: includes/custom-post-types/class-decker-events.php:381
 msgid "Category:"
-msgstr ""
+msgstr "Categoría:"
 
 #: includes/custom-post-types/class-decker-events.php:383
 msgid "Danger"
@@ -1436,33 +1436,33 @@ msgstr ""
 #: public/app-calendar.php:45
 #: public/layouts/left-sidebar.php:122
 msgid "Calendar"
-msgstr ""
+msgstr "Calendario"
 
 #: public/app-calendar.php:63
 msgid "Drag and drop your event or click in the calendar"
-msgstr ""
+msgstr "Arrastra y suelta tu evento o haz clic en el calendario"
 
 #: public/layouts/event-modal.php:19
 msgid "Event"
-msgstr ""
+msgstr "Evento"
 
 #: public/layouts/event-card.php:187
 #: public/layouts/event-card.php:188
 msgid "Location"
-msgstr ""
+msgstr "Ubicación"
 
 #: public/app-event-manager.php:67
 #: public/layouts/event-card.php:232
 msgid "Category"
-msgstr ""
+msgstr "Categoría"
 
 #: public/app-event-manager.php:65
 msgid "Start"
-msgstr ""
+msgstr "Inicio"
 
 #: public/app-event-manager.php:66
 msgid "End"
-msgstr ""
+msgstr "Fin"
 
 #: public/app-kanban-my.php:73
 #: public/app-kanban.php:114
@@ -1470,11 +1470,11 @@ msgstr ""
 #: public/app-tasks.php:175
 #: public/app-upcoming.php:131
 msgid "Add New Task"
-msgstr ""
+msgstr "Añadir Nueva Tarea"
 
 #: includes/class-decker-calendar.php:86
 msgid "You do not have permissions to access this data."
-msgstr ""
+msgstr "No tienes permisos para acceder a estos datos."
 
 #: includes/custom-post-types/class-decker-events.php:227
 msgid "No tienes permisos para acceder a este recurso."
@@ -1483,137 +1483,137 @@ msgstr ""
 #: includes/custom-post-types/class-decker-events.php:280
 #: public/layouts/event-card.php:129
 msgid "All Day Event"
-msgstr ""
+msgstr "Evento de Todo el Día"
 
 #: includes/custom-post-types/class-decker-events.php:286
 msgid "End Date must be after Start Date."
-msgstr ""
+msgstr "La fecha de fin debe ser posterior a la fecha de inicio."
 
 #: includes/custom-post-types/class-decker-events.php:343
 msgid "Please ensure that the End Date is after the Start Date."
-msgstr ""
+msgstr "Por favor, asegúrate de que la fecha de fin sea posterior a la fecha de inicio."
 
 #: includes/custom-post-types/class-decker-events.php:351
 msgid "Start Date:"
-msgstr ""
+msgstr "Fecha de Inicio:"
 
 #: includes/custom-post-types/class-decker-events.php:356
 msgid "Start Time:"
-msgstr ""
+msgstr "Hora de Inicio:"
 
 #: includes/custom-post-types/class-decker-events.php:361
 msgid "End Date:"
-msgstr ""
+msgstr "Fecha de Fin:"
 
 #: includes/custom-post-types/class-decker-events.php:366
 msgid "End Time:"
-msgstr ""
+msgstr "Hora de Fin:"
 
 #: includes/custom-post-types/class-decker-user-extended.php:92
 msgid "Calendar Token"
-msgstr ""
+msgstr "Token del Calendario"
 
 #: includes/custom-post-types/class-decker-user-extended.php:103
 msgid "Generate New Token"
-msgstr ""
+msgstr "Generar Nuevo Token"
 
 #: includes/custom-post-types/class-decker-user-extended.php:113
 msgid "Subscribe to Decker calendar:"
-msgstr ""
+msgstr "Suscribirse al calendario de Decker:"
 
 #: includes/custom-post-types/class-decker-user-extended.php:117
 msgid "Google Calendar"
-msgstr ""
+msgstr "Calendario de Google"
 
 #: includes/custom-post-types/class-decker-user-extended.php:122
 msgid "iCalendar"
-msgstr ""
+msgstr "iCalendar"
 
 #: includes/custom-post-types/class-decker-user-extended.php:130
 msgid "Outlook 365"
-msgstr ""
+msgstr "Outlook 365"
 
 #: includes/custom-post-types/class-decker-user-extended.php:135
 msgid "Export .ics file"
-msgstr ""
+msgstr "Exportar archivo .ics"
 
 #: public/app-calendar.php:64
 #: public/app-event-manager.php:151
 #: public/layouts/event-card.php:220
 msgid "Meeting"
-msgstr ""
+msgstr "Reunión"
 
 #: public/app-calendar.php:65
 #: public/app-event-manager.php:154
 #: public/layouts/event-card.php:223
 msgid "Holidays"
-msgstr ""
+msgstr "Vacaciones"
 
 #: public/app-calendar.php:67
 #: public/app-event-manager.php:160
 #: public/layouts/event-card.php:229
 msgid "Alert"
-msgstr ""
+msgstr "Alerta"
 
 #: public/app-event-manager.php:64
 msgid "All Day"
-msgstr ""
+msgstr "Todo el Día"
 
 #: public/app-event-manager.php:168
 msgid "Uncategorized"
-msgstr ""
+msgstr "Sin Categorizar"
 
 #: public/layouts/event-card.php:119
 msgid "Please enter a title for the event."
-msgstr ""
+msgstr "Por favor, introduce un título para el evento."
 
 #: public/layouts/event-card.php:138
 #: public/layouts/event-card.php:139
 msgid "Start Date and Time"
-msgstr ""
+msgstr "Fecha y Hora de Inicio"
 
 #: public/layouts/event-card.php:141
 msgid "Please select a start date and time."
-msgstr ""
+msgstr "Por favor, selecciona una fecha y hora de inicio."
 
 #: public/layouts/event-card.php:149
 #: public/layouts/event-card.php:150
 msgid "End Date and Time"
-msgstr ""
+msgstr "Fecha y Hora de Fin"
 
 #: public/layouts/event-card.php:152
 msgid "Please select an end date and time."
-msgstr ""
+msgstr "Por favor, selecciona una fecha y hora de fin."
 
 #: public/layouts/event-card.php:179
 msgid "Please select at least one user."
-msgstr ""
+msgstr "Por favor, selecciona al menos un usuario."
 
 #: public/layouts/event-card.php:190
 msgid "Please enter the event location."
-msgstr ""
+msgstr "Por favor, introduce la ubicación del evento."
 
 #: public/layouts/event-card.php:198
 #: public/layouts/event-card.php:199
 msgid "Event URL"
-msgstr ""
+msgstr "URL del Evento"
 
 #: public/layouts/event-card.php:201
 msgid "Please enter a valid URL."
-msgstr ""
+msgstr "Por favor, introduce una URL válida."
 
 #: public/layouts/event-card.php:211
 msgid "Please enter a description for the event."
-msgstr ""
+msgstr "Por favor, introduce una descripción para el evento."
 
 #: public/layouts/event-card.php:218
 msgid "Select Category"
-msgstr ""
+msgstr "Seleccionar Categoría"
 
 #: public/layouts/event-card.php:234
 msgid "Please select a category for the event."
-msgstr ""
+msgstr "Por favor, selecciona una categoría para el evento."
 
 #: public/layouts/event-card.php:237
 msgid "The category determines the color of the event in the calendar."
-msgstr ""
+msgstr "La categoría determina el color del evento en el calendario."
