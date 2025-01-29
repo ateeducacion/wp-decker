@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 
 include 'layouts/main.php';
 
-$events = EventManager::get_events();
+$events_data = Decker_Events::get_events();
+
 ?>
 
 <head>
@@ -68,46 +69,100 @@ $events = EventManager::get_events();
 													</tr>
 												</thead>
 												<tbody>
-													<?php foreach ( $events as $event ) : ?>
-														<tr>
-															<td class="event-title">
-																<?php echo esc_html( $event->get_title() ); ?>
-															</td>
-															<td class="event-start">
-																<?php echo esc_html( $event->get_start_date()->format( 'Y-m-d H:i' ) ); ?>
-															</td>
-															<td class="event-end">
-																<?php echo esc_html( $event->get_end_date()->format( 'Y-m-d H:i' ) ); ?>
-															</td>
-															<td class="event-location">
-																<?php echo esc_html( $event->get_location() ); ?>
-															</td>
-															<td class="event-category">
-																<span class="badge <?php echo esc_attr( $event->get_category() ); ?>">
-																	<?php echo esc_html( str_replace( 'bg-', '', $event->get_category() ) ); ?>
-																</span>
-															</td>
-															<td>
-																<a href="#" class="btn btn-sm btn-info me-2 edit-event" data-bs-toggle="modal" data-bs-target="#event-modal"
-																   data-event-id="<?php echo esc_attr( $event->get_id() ); ?>">
-																	<i class="ri-pencil-line"></i>
-																</a>
-																<button type="button" class="btn btn-sm btn-danger" 
-																   onclick="window.deleteEvent(<?php echo esc_attr( $event->get_id() ); ?>, '<?php echo esc_js( $event->get_title() ); ?>')">
-																	<i class="ri-delete-bin-line"></i>
-																</button>
-																<span class="event-description d-none">
-																	<?php echo esc_html( $event->get_description() ); ?>
-																</span>
-																<span class="event-url d-none">
-																	<?php echo esc_url( $event->get_url() ); ?>
-																</span>
-																<span class="event-assigned-users d-none">
-																	<?php echo esc_attr( json_encode( $event->get_assigned_users() ) ); ?>
-																</span>
-															</td>
-														</tr>
-													<?php endforeach; ?>
+
+<?php 	
+foreach ( $events_data as $event_data ) : 
+	$post = $event_data['post'];
+	$meta = $event_data['meta'];
+
+    // Asegurarse de que el objeto $post sea válido
+    if ( ! $post instanceof WP_Post ) {
+        continue;
+    }
+
+	// Extraer metadatos con valores predeterminados
+	$event_id = $post->ID;
+	$title = $post->post_title;
+	$description = $post->post_content;
+	$all_day = isset( $meta['event_all_day'] ) ? $meta['event_all_day'] : false;
+	$start_date = isset( $meta['event_start'] ) ? $meta['event_start'][0] : '';
+	$end_date = isset( $meta['event_end'] ) ? $meta['event_end'][0] : '';
+	$location = isset( $meta['event_location'] ) ? $meta['event_location'] : '';
+	$url = isset( $meta['event_url'] ) ? $meta['event_url'] : '';
+	$category = isset( $meta['event_category'] ) ? $meta['event_category'] : '';
+	$assigned_users = isset( $meta['event_assigned_users'] ) ? $meta['event_assigned_users'] : array();
+
+
+	// Formatear fechas
+	$start_formatted = '';
+	$end_formatted = '';
+
+
+    if ( ! empty( $start_date ) ) {
+        $start_datetime = new DateTime( $start_date );
+        $start_formatted = $all_day ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
+    }
+
+    if ( ! empty( $end_date ) ) {
+        $end_datetime = new DateTime( $end_date );
+        $end_formatted = $all_day ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
+    }
+
+    // Obtener nombre de usuarios asignados
+    $assigned_users_names = array();
+    foreach ( $assigned_users as $user_id ) {
+        $user = get_userdata( $user_id );
+        if ( $user ) {
+            $assigned_users_names[] = $user->display_name;
+        }
+    }
+?>
+
+<tr>
+	<td class="event-title">
+	    <?php echo esc_html( $title ); ?>
+	</td>
+	<td class="event-start">
+	    <?php echo esc_html( $start_formatted ); ?>
+	</td>
+	<td class="event-end">
+	    <?php echo esc_html( $end_formatted ); ?>
+	</td>
+	<td class="event-location">
+	    <?php echo esc_html( $location ); ?>
+	</td>
+	<td class="event-category">
+	    <?php if ( ! empty( $category ) ) : ?>
+	        <span class="badge <?php echo esc_attr( $category ); ?>">
+	            <?php echo esc_html( str_replace( 'bg-', '', $category ) ); ?>
+	        </span>
+	    <?php else : ?>
+	        <?php esc_html_e( 'Uncategorized', 'decker' ); ?>
+	    <?php endif; ?>
+	</td>
+	<td>
+	    <a href="#" class="btn btn-sm btn-info me-2 edit-event" data-bs-toggle="modal" data-bs-target="#event-modal"
+	       data-event-id="<?php echo esc_attr( $event_id ); ?>">
+	        <i class="ri-pencil-line"></i>
+	    </a>
+	    <button type="button" class="btn btn-sm btn-danger" 
+	       onclick="window.deleteEvent(<?php echo esc_attr( $event_id ); ?>, '<?php echo esc_js( $title ); ?>')">
+	        <i class="ri-delete-bin-line"></i>
+	    </button>
+	    <span class="event-description d-none">
+	        <?php echo esc_html( $description ); ?>
+	    </span>
+	    <span class="event-url d-none">
+	        <?php //echo esc_url( $url ); ?>
+	    </span>
+	    <span class="event-assigned-users d-none">
+	        <?php //echo esc_attr( json_encode( $assigned_users_names ) ); ?>
+	    </span>
+	</td>
+</tr>
+<?php endforeach; ?>
+
+													
 												</tbody>
 											</table>
 										</div>

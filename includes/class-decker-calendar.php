@@ -49,10 +49,21 @@ class Decker_Calendar {
 	 * Check if user has permission to access calendar data
 	 *
 	 * @param WP_REST_Request $request The request object.
-	 * @return bool
+	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
-		return true; // Modify according to your needs.
+
+		// CHANGE THIS
+		return true;
+
+	    if ( current_user_can( 'read' ) ) {
+	        return true;
+	    }
+	    return new WP_Error(
+	        'rest_forbidden',
+	        __( 'You do not have permissions to access this data.', 'decker' ),
+	        array( 'status' => 403 )
+	    );
 	}
 
 	/**
@@ -94,21 +105,30 @@ class Decker_Calendar {
 		$events = array();
 
 		// Get regular events
-		$event_posts = EventManager::get_events();
-		foreach ( $event_posts as $event ) {
-			$events[] = array(
-				'id'             => 'event_' . $event->get_id(), // Prefix to distinguish from tasks
-				'title'          => $event->get_title(),
-				'description'    => $event->get_description(),
-				'start'          => $event->get_start_date()->format( 'Y-m-d\TH:i:s' ),
-				'end'            => $event->get_end_date()->format( 'Y-m-d\TH:i:s' ),
-				'location'       => $event->get_location(),
-				'url'            => $event->get_url(),
-				'className'      => $event->get_category(),
-				'assigned_users' => $event->get_assigned_users(),
-				'type'           => 'event',
-			);
-		}
+	    $event_posts = Decker_Events::get_events();
+	    foreach ( $event_posts as $event_data ) {
+	        $post = $event_data['post'];
+	        $meta = $event_data['meta'];
+
+	        // Asegurarse de que las fechas sean válidas antes de agregarlas
+	        if ( ! empty( $meta['event_start'] ) && ! empty( $meta['event_end'] ) ) {
+	            $events[] = array(
+	                'id'             => 'event_' . $post->ID, // Prefijo para distinguir de tareas
+	                'title'          => $post->post_title,
+	                'description'    => $post->post_content,
+
+	                'all_day'        => isset($meta['event_allday']) ? $meta['event_allday'] : false,
+	                'start'          => isset($meta['event_start']) ? $meta['event_start'] : '',
+	                'end'            => isset($meta['event_end']) ? $meta['event_end'] : '',
+	                'location'       => isset($meta['event_location']) ? $meta['event_location'] : '',
+	                'url'            => isset($meta['event_url']) ? $meta['event_url'] : '',
+	                'className'      => isset($meta['event_category']) ? $meta['event_category'] : '',
+	                'assigned_users' => isset($meta['event_assigned_users']) ? $meta['event_assigned_users'] : array(),
+
+	                'type'           => 'event',
+	            );
+	        }
+	    }
 
 		// Get published tasks
 		$task_manager = new TaskManager();
@@ -124,6 +144,7 @@ class Decker_Calendar {
 					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events
 					'title'          => $task->title,
 					'description'    => $task->description,
+					'all_day'	     => true,
 					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'color'          => $board_color,
@@ -154,10 +175,24 @@ class Decker_Calendar {
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
-			$ical .= 'DTSTART:' . gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) ) . "\r\n";
-			$ical .= 'DTEND:' . gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) ) . "\r\n";
+
+	        // Convertir fechas a UTC
+	        $dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
+	        $dtend = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
+
+	        $ical .= 'DTSTART:' . $dtstart . "\r\n";
+	        $ical .= 'DTEND:' . $dtend . "\r\n";
+
 			$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
 			$ical .= 'DESCRIPTION:' . $this->ical_escape( $event['description'] ) . "\r\n";
+
+			if ( ! empty( $event['location'] ) ) {
+			    $ical .= 'LOCATION:' . $this->ical_escape( $event['location'] ) . "\r\n";
+			}
+			if ( ! empty( $event['url'] ) ) {
+			    $ical .= 'URL:' . esc_url_raw( $event['url'] ) . "\r\n";
+			}
+
 			$ical .= "END:VEVENT\r\n";
 		}
 

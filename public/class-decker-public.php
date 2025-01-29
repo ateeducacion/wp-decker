@@ -215,6 +215,7 @@ class Decker_Public {
 			}
 
 			if ( 'calendar' == $decker_page ) {
+				
 				// FullCalendar.
 				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js';
 
@@ -224,7 +225,10 @@ class Decker_Public {
 
 			if ( 'calendar' == $decker_page || 'event-manager' ==  $decker_page ) { 
 
-			
+				// Flatpickr.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js',
+				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css',			
+
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
 
