@@ -42,17 +42,35 @@
 
 
 
+        // Get selected date from modal if available
+        const selectedDate = context.closest('.modal')?.querySelector('[data-bs-toggle="modal"]')?.dataset.eventDate;
+
         // Flatpickr configuration
         const flatpickrConfig = {
             enableTime: true,
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
-            minuteIncrement: 15
+            minuteIncrement: 15,
+            defaultDate: selectedDate || undefined
         };
 
         const startPicker = flatpickr("#event-start", flatpickrConfig);
         const endPicker = flatpickr("#event-end", flatpickrConfig);
         let assignedUsersChoices = null;
+
+        // If we have a selected date, update both pickers while keeping their current times
+        if (selectedDate) {
+            const startInput = context.querySelector("#event-start");
+            const endInput = context.querySelector("#event-end");
+            
+            if (startInput && endInput) {
+                const startTime = startInput.value.split(' ')[1] || '';
+                const endTime = endInput.value.split(' ')[1] || '';
+                
+                startPicker.setDate(selectedDate + (startTime ? ' ' + startTime : ''));
+                endPicker.setDate(selectedDate + (endTime ? ' ' + endTime : ''));
+            }
+        }
 
         // All Day Event handler
         const allDaySwitch = context.querySelector('#event-allday');
