@@ -63,7 +63,9 @@ $meta = $event_id ? get_post_meta($event_id) : array();
 $allday = isset($meta['event_allday'][0]) ? $meta['event_allday'][0] : '';
 $start_date = isset($meta['event_start'][0]) ? date('Y-m-d H:i', strtotime($meta['event_start'][0])) : '';
 $end_date = isset($meta['event_end'][0]) ? date('Y-m-d H:i', strtotime($meta['event_end'][0])) : '';
-$assigned_users = isset($meta['event_assigned_users'][0]) ? maybe_unserialize($meta['event_assigned_users'][0]) : array();
+$assigned_users = isset($meta['event_assigned_users'][0]) ? 
+    maybe_unserialize($meta['event_assigned_users'][0]) : 
+    array(get_current_user_id());
 $location = isset($meta['event_location'][0]) ? $meta['event_location'][0] : '';
 $url = isset($meta['event_url'][0]) ? $meta['event_url'][0] : '';
 $category = isset($meta['event_category'][0]) ? $meta['event_category'][0] : '';
