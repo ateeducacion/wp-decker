@@ -208,6 +208,16 @@ class Decker_Calendar {
 			    $ical .= 'URL:' . esc_url_raw( $event['url'] ) . "\r\n";
 			}
 
+			// Add assigned users as attendees
+			if (!empty($event['assigned_users'])) {
+				foreach ($event['assigned_users'] as $user_id) {
+					$user = get_userdata($user_id);
+					if ($user && $user->user_email) {
+						$ical .= 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:' . $user->user_email . "\r\n";
+					}
+				}
+			}
+
 			$ical .= "END:VEVENT\r\n";
 		}
 
