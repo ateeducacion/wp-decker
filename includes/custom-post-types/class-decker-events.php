@@ -420,12 +420,12 @@ class Decker_Events {
 			}
 		}
 
-		// Guardar día completo
+		// Save all-day event status.
 		$allday = isset( $_POST['event_allday'] ) ? 1 : 0;
 		update_post_meta( $post_id, 'event_allday', $allday );
 
-		// Procesamiento especial para fechas
-		// Procesamiento especial para fechas
+		// Special processing for dates.
+		// Handle date formatting.
 		if ( $allday ) {
 			$start = isset( $_POST['event_start_date'] ) ? $this->format_event_date( $_POST['event_start_date'], true ) : '';
 			$end = isset( $_POST['event_end_date'] ) ? $this->format_event_date( $_POST['event_end_date'], true ) : '';
@@ -440,9 +440,9 @@ class Decker_Events {
 
 		// Validar que end date es mayor que start date
 		if ( strtotime( $end ) <= strtotime( $start ) ) {
-			// Puedes optar por añadir un error o simplemente no guardar las fechas
-			// Aquí, por simplicidad, simplemente no guardaremos las fechas inválidas
-			// También puedes añadir un mensaje de error usando admin_notices
+			// You can either add an error or simply not save the dates.
+			// For simplicity, we'll just skip saving invalid dates.
+			// You could also add an error message using admin_notices.
 			return;
 		}
 
@@ -509,22 +509,22 @@ class Decker_Events {
 			'post_type'      => 'decker_event',
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
-			'cache_results'  => true, // <- Activa la caché de posts
+			'cache_results'  => true, // Enable post caching.
 		);
 
 		$args = wp_parse_args( $args, $default_args );
 		$posts = get_posts( $args );
 
-		// Después de obtener los posts, carga todos los metadatos en caché de una sola vez
+		// After getting posts, load all metadata into cache at once.
 		$post_ids = wp_list_pluck( $posts, 'ID' );
 		update_meta_cache( 'post', $post_ids ); // 1 consulta extra para todos los metadatos
 
-		// Evita modificar objetos nativos de WP_Post
+		// Avoid modifying native WP_Post objects.
 		$events = array();
 		foreach ( $posts as $post ) {
 			$events[] = array(
 				'post' => $post,
-				'meta' => get_post_meta( $post->ID ), // get_post_meta() usará la caché y no hará consultas adicionales
+				'meta' => get_post_meta( $post->ID ), // get_post_meta() will use cache and avoid additional queries.
 
 			);
 		}
