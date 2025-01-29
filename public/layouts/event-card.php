@@ -92,57 +92,6 @@ $event = $event_id ? new Event( $event_id ) : null;
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Default flatpickr config
-            const flatpickrConfig = {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i",
-                time_24hr: true,
-                minuteIncrement: 15
-            };
-
-            // Initialize flatpickr instances
-            const startPicker = flatpickr("#event-start", flatpickrConfig);
-            const endPicker = flatpickr("#event-end", {
-                ...flatpickrConfig,
-                minDate: startPicker.selectedDates[0] || "today"
-            });
-
-            // Update end date min when start date changes
-            startPicker.config.onChange = function(selectedDates) {
-                endPicker.set('minDate', selectedDates[0] || "today");
-            };
-
-            // Handle all day toggle
-            const allDayCheckbox = document.getElementById('event-allday');
-            allDayCheckbox.addEventListener('change', function() {
-                const config = {
-                    enableTime: !this.checked,
-                    dateFormat: this.checked ? "Y-m-d" : "Y-m-d H:i"
-                };
-                
-                startPicker.set('enableTime', !this.checked);
-                startPicker.set('dateFormat', config.dateFormat);
-                
-                endPicker.set('enableTime', !this.checked);
-                endPicker.set('dateFormat', config.dateFormat);
-                
-                if (this.checked) {
-                    // If switching to all day, set times to start/end of day
-                    if (startPicker.selectedDates[0]) {
-                        startPicker.selectedDates[0].setHours(0, 0, 0, 0);
-                        startPicker.setDate(startPicker.selectedDates[0]);
-                    }
-                    if (endPicker.selectedDates[0]) {
-                        endPicker.selectedDates[0].setHours(23, 59, 0, 0);
-                        endPicker.setDate(endPicker.selectedDates[0]);
-                    }
-                }
-            });
-        });
-    </script>
-
     <div class="mb-3">
         <label for="event-category" class="form-label"><?php esc_html_e( 'Category', 'decker' ); ?></label>
         <select class="form-select" id="event-category" name="event_category">
