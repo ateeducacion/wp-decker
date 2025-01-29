@@ -190,6 +190,7 @@ class Decker_Calendar {
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
+			$ical .= 'DTSTAMP:' . gmdate('Ymd\THis\Z') . "\r\n";
 
 	        // Convertir fechas a UTC
 	        $dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
