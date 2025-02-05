@@ -107,10 +107,16 @@ class TaskManager {
 	public function get_tasks_by_user( int $user_id ): array {
 		$args = array(
 			'meta_query' => array(
+				'relation' => 'OR',
 				array(
 					'key'     => 'assigned_users',
 					'value'   => $user_id,
 					'compare' => 'LIKE',
+				),
+				array(
+					'key'     => 'responsable',
+					'value'   => $user_id,
+					'compare' => '=',
 				),
 			),
 			'meta_key'  => 'max_priority', // Define field to use in order.
@@ -123,21 +129,27 @@ class TaskManager {
 
 		$tasks = $this->get_tasks( $args );
 
-		// Additional filtering to ensure only tasks assigned to the user are returned.
-		// Filtering serialized data with a LIKE or REGEXP can lead to false positives due to serialization quirks.
-		// This extra step ensures we accurately check for the assigned user.
+		/**
+		 * Additional filtering ensures the user truly appears in the assigned_users array
+		 * or is the responsable. Serializing data with a LIKE can sometimes cause false positives.
+		 */
 		$filtered_tasks = array_filter(
 			$tasks,
 			function ( $task ) use ( $user_id ) {
+				$is_assigned = false;
 				if ( is_array( $task->assigned_users ) ) {
 					foreach ( $task->assigned_users as $assigned_user ) {
-						// Compare the user ID directly.
 						if ( (int) $assigned_user->ID === $user_id ) {
-							return true;
+							$is_assigned = true;
+							break;
 						}
 					}
 				}
-				return false;
+				$is_responsable = (
+					isset( $task->responsable->ID ) &&
+					( (int) $task->responsable->ID === $user_id )
+				);
+				return $is_assigned || $is_responsable;
 			}
 		);
 
