@@ -457,13 +457,13 @@ class Task {
 				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
 					<span class="task-id label-to-hide"  
 							<?php
-								if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ){
-									$now=new DateTime("now");
-									if($now->diff($this->duedate)->invert==1){
-										echo 'style="color: var(--ct-danger-text-emphasis)"';
-									}
+							if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
+								$now = new DateTime( 'now' );
+								if ( $now->diff( $this->duedate )->invert == 1 ) {
+									echo 'style="color: var(--ct-danger-text-emphasis)"';
 								}
-								
+							}
+
 							?>
 						>
 						<?php echo wp_kses_post( $relative_time ); ?>
