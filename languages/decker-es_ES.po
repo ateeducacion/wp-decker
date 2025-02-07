@@ -901,7 +901,7 @@ msgstr "Por favor, seleccione una fecha de vencimiento."
 msgid "Assign to"
 msgstr "Asignar a"
 
-#: includes/models/class-task.php:480
+#: includes/models/class-task.php:492
 #: public/layouts/task-card.php:311
 msgid "Comments"
 msgstr "Comentarios"
@@ -984,31 +984,31 @@ msgstr "Fecha no definida"
 msgid "Order:"
 msgstr "Orden:"
 
-#: includes/models/class-task.php:533
+#: includes/models/class-task.php:545
 msgid "Edit"
 msgstr "Editar"
 
-#: includes/models/class-task.php:550
+#: includes/models/class-task.php:562
 msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
-#: includes/models/class-task.php:557
+#: includes/models/class-task.php:569
 msgid "Archive"
 msgstr "Archivar"
 
-#: includes/models/class-task.php:566
+#: includes/models/class-task.php:578
 msgid "Assign to me"
 msgstr "Asignarme"
 
-#: includes/models/class-task.php:573
+#: includes/models/class-task.php:585
 msgid "Leave"
 msgstr "Abandonar"
 
-#: includes/models/class-task.php:588
+#: includes/models/class-task.php:600
 msgid "Mark for today"
 msgstr "Marcar para hoy"
 
-#: includes/models/class-task.php:594
+#: includes/models/class-task.php:606
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 

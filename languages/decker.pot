@@ -845,36 +845,36 @@ msgstr ""
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:480
+#: includes/models/class-task.php:492
 #: public/layouts/task-card.php:311
 msgid "Comments"
 msgstr ""
 
-#: includes/models/class-task.php:533
+#: includes/models/class-task.php:545
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:550
+#: includes/models/class-task.php:562
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:557
+#: includes/models/class-task.php:569
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:566
+#: includes/models/class-task.php:578
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:573
+#: includes/models/class-task.php:585
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:588
+#: includes/models/class-task.php:600
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:594
+#: includes/models/class-task.php:606
 msgid "Unmark for today"
 msgstr ""
 
