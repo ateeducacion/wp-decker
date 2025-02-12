@@ -72,6 +72,7 @@ class Decker_Labels {
 			'rewrite'            => array( 'slug' => 'decker_label' ),
 			'show_in_rest'       => true,
 			'rest_base'          => 'labels',
+			'show_in_rest_meta'  => true,
 			'can_export'         => true,
 			'capabilities'       => array(
 				'manage_terms' => 'edit_posts',
