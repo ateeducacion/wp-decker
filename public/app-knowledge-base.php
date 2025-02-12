@@ -86,8 +86,8 @@ die();
 													<tr>
 														<th width="35%"><?php esc_html_e( 'Title', 'decker' ); ?></th>
 														<th width="25%"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
-														<th width="20%"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
 														<th width="10%"><?php esc_html_e( 'Author', 'decker' ); ?></th>
+														<th width="20%"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
 														<th width="10%"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
 														<th width="10%" class="text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 														<th class="d-none"><?php esc_html_e( 'Content', 'decker' ); ?></th>
@@ -141,6 +141,20 @@ die();
 													$excerpt = wp_strip_all_tags($article->post_content);
 													echo esc_html(wp_trim_words($excerpt, 10, '...'));
 													echo '</td>';
+
+													// Last Updated.
+													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
+
+													// Actions.
+													echo '<td class="text-end">';
+													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
+													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
+													echo '<i class="ri-delete-bin-line"></i>';
+													echo '</button>';
+													echo '</td>';
+
+													// Hidden content column for search
+													echo '<td class="d-none">' . esc_html(wp_strip_all_tags($article->post_content)) . '</td>';
 
 													// Last Updated.
 													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
