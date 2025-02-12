@@ -247,7 +247,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-actions.php:45
 #: public/app-event-manager.php:68
-#: public/app-knowledge-base.php:100
+#: public/app-knowledge-base.php:91
 #: public/app-term-manager.php:192
 msgid "Actions"
 msgstr ""
@@ -476,7 +476,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-kb.php:42
 #: includes/custom-post-types/class-decker-kb.php:43
-#: public/app-knowledge-base.php:64
+#: public/app-knowledge-base.php:55
 #: public/layouts/kb-modal.php:18
 msgid "Add New Article"
 msgstr ""
@@ -495,7 +495,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-kb.php:47
 #: public/app-knowledge-base.php:26
-#: public/app-knowledge-base.php:49
+#: public/app-knowledge-base.php:47
 #: public/layouts/left-sidebar.php:266
 msgid "Knowledge Base"
 msgstr ""
@@ -902,7 +902,7 @@ msgid "Comments"
 msgstr ""
 
 #: includes/models/class-task.php:545
-#: public/app-knowledge-base.php:144
+#: public/app-knowledge-base.php:135
 msgid "Edit"
 msgstr ""
 
@@ -1015,7 +1015,7 @@ msgid "Search"
 msgstr ""
 
 #: public/app-event-manager.php:63
-#: public/app-knowledge-base.php:96
+#: public/app-knowledge-base.php:87
 #: public/app-priority.php:172
 #: public/app-priority.php:404
 #: public/layouts/event-card.php:116
@@ -1038,13 +1038,13 @@ msgid "End"
 msgstr ""
 
 #: public/app-event-manager.php:67
-#: public/app-knowledge-base.php:97
+#: public/app-knowledge-base.php:88
 #: public/layouts/event-card.php:232
 msgid "Category"
 msgstr ""
 
 #: public/app-event-manager.php:168
-#: public/app-knowledge-base.php:132
+#: public/app-knowledge-base.php:123
 msgid "Uncategorized"
 msgstr ""
 
@@ -1085,28 +1085,20 @@ msgstr ""
 msgid "Fix Order"
 msgstr ""
 
-#: public/app-knowledge-base.php:52
-msgid "My Articles"
-msgstr ""
-
-#: public/app-knowledge-base.php:54
-msgid "Archived Articles"
-msgstr ""
-
-#: public/app-knowledge-base.php:70
+#: public/app-knowledge-base.php:61
 msgid "All Categories"
 msgstr ""
 
-#: public/app-knowledge-base.php:98
+#: public/app-knowledge-base.php:89
 #: public/layouts/task-card.php:499
 msgid "Author"
 msgstr ""
 
-#: public/app-knowledge-base.php:99
+#: public/app-knowledge-base.php:90
 msgid "Last Updated"
 msgstr ""
 
-#: public/app-knowledge-base.php:145
+#: public/app-knowledge-base.php:136
 msgid "View"
 msgstr ""
 

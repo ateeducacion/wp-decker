@@ -1,0 +1,183 @@
+<?php
+/**
+ * File app-knowledge-base
+ *
+ * @package    Decker
+ * @subpackage Decker/public
+ * @author     ATE <ate.educacion@gobiernodecanarias.org>
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+include 'layouts/main.php';
+
+$kb_data = Decker_Kb::get_articles();
+
+/*
+// Test.
+echo '<pre>';
+print_r($kb_data);
+die();
+*/
+?>
+
+<head>
+	<title><?php esc_html_e( 'Knowledge Base', 'decker' ); ?> | Decker</title>
+	<?php include 'layouts/title-meta.php'; ?>
+	<?php include 'layouts/head-css.php'; ?>
+
+</head>
+<body <?php body_class(); ?>>
+
+	<div class="wrapper">
+
+		<?php include 'layouts/menu.php'; ?>
+
+		<div class="content-page">
+			<div class="content">
+				<div class="container-fluid">
+
+					<div class="row">
+						<div class="col-xxl-12">
+
+							<div class="page-title-box d-flex align-items-center justify-content-between">
+							
+								<?php
+								$page_title     = __( 'Knowledge Base', 'decker' );
+								?>
+
+								<h4 class="page-title">
+									<?php echo esc_html( $page_title ); ?>
+									<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" 
+									   class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" 
+									   data-bs-toggle="modal" data-bs-target="#kb-modal">
+										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Article', 'decker' ); ?>
+									</a>
+								</h4>
+
+								<div class="d-flex align-items-center">
+									<select id="categoryFilter" class="form-select">
+										<option value=""><?php esc_html_e( 'All Categories', 'decker' ); ?></option>
+										<?php
+										$categories = get_terms(
+											array(
+												'taxonomy'   => 'decker_label',
+												'hide_empty' => false,
+											)
+										);
+										foreach ( $categories as $category ) {
+											echo '<option value="' . esc_attr( $category->name ) . '">' . esc_html( $category->name ) . '</option>';
+										}
+										?>
+									</select>
+								</div>
+							</div>
+
+							<?php include 'layouts/top-alert.php'; ?>
+
+							<div class="row">
+								<div class="col-12">
+									<div class="card">
+										<div class="card-body table-responsive">
+
+											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
+												<thead>
+													<tr>
+														<th><?php esc_html_e( 'Title', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Category', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Author', 'decker' ); ?></th>
+														<th><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th class="text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
+													</tr>
+												</thead>
+												<tbody>
+												<?php
+
+												foreach ( $kb_data as $article ) {
+													echo '<tr>';
+
+													// Article Title with hierarchy.
+													echo '<td>';
+
+													// Ensure 'level' meta exists and is an integer.
+													$level = get_post_meta( $article->ID, 'level', true );
+													if ( empty( $level ) || ! is_numeric( $level ) ) {
+														$level = 0;
+													}
+
+													// Sanitize and output the article title with hierarchy.
+													echo esc_html( str_repeat( '— ', intval( $level ) ) ) .
+														'<a href="' . esc_url( get_edit_post_link( $article->ID ) ) . '">' . esc_html( $article->post_title ) . '</a>';
+
+													echo '</td>';
+
+													// Article Category.
+													echo '<td>';
+													$categories = wp_get_post_terms( $article->ID, 'decker_label' );
+													if ( ! empty( $categories ) ) {
+														foreach ( $categories as $category ) {
+															echo '<span class="badge bg-info">' . esc_html( $category->name ) . '</span> ';
+														}
+													} else {
+														echo '<span class="text-muted">' . esc_html__( 'Uncategorized', 'decker' ) . '</span>';
+													}
+													echo '</td>';
+
+													// Author.
+													echo '<td>' . esc_html( get_the_author_meta( 'display_name', $article->post_author ) ) . '</td>';
+
+													// Last Updated.
+													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
+
+													// Actions.
+													echo '<td class="text-end">';
+													echo '<a href="' . esc_url( get_edit_post_link( $article->ID ) ) . '" class="btn btn-primary btn-sm">' . esc_html__( 'Edit', 'decker' ) . '</a> ';
+													echo '<a href="' . esc_url( get_permalink( $article->ID ) ) . '" class="btn btn-info btn-sm" target="_blank">' . esc_html__( 'View', 'decker' ) . '</a>';
+													echo '</td>';
+
+													echo '</tr>';
+												}
+												?>
+												</tbody>
+											</table>
+
+										</div>
+									</div>
+								</div>
+							</div> <!-- end row-->
+
+						</div>
+					</div>
+
+				</div>
+
+			</div>
+
+			<?php include 'layouts/footer.php'; ?>
+
+		</div>
+
+	</div>
+
+	<?php include 'layouts/right-sidebar.php'; ?>
+	<?php include 'layouts/kb-modal.php'; ?>
+	<?php include 'layouts/footer-scripts.php'; ?>
+
+	<script>
+	jQuery(document).ready(function () {
+		jQuery('#tablaKB').DataTable({
+			language: { url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json' },
+			pageLength: 50,
+			responsive: true,
+			order: [[3, 'desc']]
+		});
+
+		jQuery('#categoryFilter').on('change', function () {
+			jQuery('#tablaKB').DataTable().column(1).search(this.value).draw();
+		});
+	});
+	</script>
+
+</body>
+</html>

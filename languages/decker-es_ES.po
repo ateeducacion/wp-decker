@@ -111,7 +111,7 @@ msgstr "Nombre de la Nueva Acción"
 
 #: includes/custom-post-types/class-decker-actions.php:45
 #: public/app-event-manager.php:68
-#: public/app-knowledge-base.php:100
+#: public/app-knowledge-base.php:91
 #: public/app-term-manager.php:192
 msgid "Actions"
 msgstr "Acciones"
@@ -611,7 +611,7 @@ msgid "MAX PRIORITY"
 msgstr "MÁXIMA PRIORIDAD"
 
 #: public/app-event-manager.php:63
-#: public/app-knowledge-base.php:96
+#: public/app-knowledge-base.php:87
 #: public/app-priority.php:172
 #: public/app-priority.php:404
 #: public/layouts/event-card.php:116
@@ -932,7 +932,7 @@ msgstr "Seleccionar fecha"
 msgid "Please select a board."
 msgstr "Por favor, seleccione un tablero"
 
-#: public/app-knowledge-base.php:98
+#: public/app-knowledge-base.php:89
 #: public/layouts/task-card.php:499
 msgid "Author"
 msgstr "Autor"
@@ -992,7 +992,7 @@ msgid "Order:"
 msgstr "Orden:"
 
 #: includes/models/class-task.php:545
-#: public/app-knowledge-base.php:144
+#: public/app-knowledge-base.php:135
 msgid "Edit"
 msgstr "Editar"
 
@@ -1461,7 +1461,7 @@ msgid "Location"
 msgstr "Ubicación"
 
 #: public/app-event-manager.php:67
-#: public/app-knowledge-base.php:97
+#: public/app-knowledge-base.php:88
 #: public/layouts/event-card.php:232
 msgid "Category"
 msgstr "Categoría"
@@ -1570,7 +1570,7 @@ msgid "All Day"
 msgstr "Todo el Día"
 
 #: public/app-event-manager.php:168
-#: public/app-knowledge-base.php:132
+#: public/app-knowledge-base.php:123
 msgid "Uncategorized"
 msgstr "Sin Categorizar"
 
@@ -1662,7 +1662,7 @@ msgstr "Base de conocimiento"
 
 #: includes/custom-post-types/class-decker-kb.php:42
 #: includes/custom-post-types/class-decker-kb.php:43
-#: public/app-knowledge-base.php:64
+#: public/app-knowledge-base.php:55
 #: public/layouts/kb-modal.php:18
 msgid "Add New Article"
 msgstr "Agregar nuevo artículo"
@@ -1681,24 +1681,20 @@ msgstr "Ver artículo"
 
 #: includes/custom-post-types/class-decker-kb.php:47
 #: public/app-knowledge-base.php:26
-#: public/app-knowledge-base.php:49
+#: public/app-knowledge-base.php:47
 #: public/layouts/left-sidebar.php:266
 msgid "Knowledge Base"
 msgstr "Base de conocimiento"
 
-#: public/app-knowledge-base.php:54
-msgid "Archived Articles"
-msgstr "Artículos archivdaso"
-
-#: public/app-knowledge-base.php:70
+#: public/app-knowledge-base.php:61
 msgid "All Categories"
 msgstr "Todas las categoríoas"
 
-#: public/app-knowledge-base.php:99
+#: public/app-knowledge-base.php:90
 msgid "Last Updated"
 msgstr "Ultima modificación"
 
-#: public/app-knowledge-base.php:145
+#: public/app-knowledge-base.php:136
 msgid "View"
 msgstr "Ver"
 
@@ -1717,7 +1713,3 @@ msgstr "Artículo padre"
 #: includes/custom-post-types/class-decker-kb.php:49
 msgid "No articles found."
 msgstr "No se encontraron artículos"
-
-#: public/app-knowledge-base.php:52
-msgid "My Articles"
-msgstr ""
