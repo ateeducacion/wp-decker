@@ -135,8 +135,15 @@ defined( 'ABSPATH' ) || exit;
 						$('#article-title').val(article.title);
 						$('#article-order').val(article.menu_order);
 						editor.setContent(article.content);
-						labelsSelect.clearStore();
-						labelsSelect.setChoiceByValue(article.labels);
+			
+						// Reset and set labels
+						if (labelsSelect) {
+							labelsSelect.destroy();
+						}
+						labelsSelect = new Choices('#article-labels', choicesConfig);
+						if (article.labels && article.labels.length > 0) {
+							labelsSelect.setChoiceByValue(article.labels.map(String));
+						}
 						window.parentSelect.setChoiceByValue(article.parent_id.toString());
 					} else {
 						Swal.fire({
@@ -194,11 +201,13 @@ defined( 'ABSPATH' ) || exit;
 			removeItemButton: true,
 			allowHTML: true,
 			searchEnabled: true,
-			shouldSort: true
+			shouldSort: true,
+			placeholderValue: '<?php esc_html_e('Select labels...', 'decker'); ?>',
+			noChoicesText: '<?php esc_html_e('No more labels available', 'decker'); ?>'
 		};
 
+		// Initial labels setup
 		labelsSelect = new Choices('#article-labels', choicesConfig);
-		window.labelsSelect = labelsSelect;
 
 		parentSelect = new Choices('#article-parent', {
 			...choicesConfig,
