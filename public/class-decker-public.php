@@ -247,6 +247,10 @@ class Decker_Public {
 
 				wp_enqueue_editor();
 
+				// sweetalert2.js.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css';
+
 			}
 
 			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
