@@ -84,11 +84,11 @@ die();
 											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
 												<thead>
 													<tr>
-														<th><?php esc_html_e( 'Title', 'decker' ); ?></th>
-														<th><?php esc_html_e( 'Category', 'decker' ); ?></th>
-														<th><?php esc_html_e( 'Author', 'decker' ); ?></th>
-														<th><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
-														<th class="text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
+														<th width="40%"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+														<th width="30%"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
+														<th width="15%"><?php esc_html_e( 'Author', 'decker' ); ?></th>
+														<th width="15%"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th width="10%" class="text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -139,7 +139,7 @@ die();
 
 													// Actions.
 													echo '<td class="text-end">';
-													echo '<button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '">' . esc_html__( 'Edit', 'decker' ) . '</button>';
+													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
 													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
 													echo '<i class="ri-delete-bin-line"></i>';
 													echo '</button>';
