@@ -84,12 +84,12 @@ die();
 											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
 												<thead>
 													<tr>
-														<th width="35%"><?php esc_html_e( 'Title', 'decker' ); ?></th>
-														<th width="25%"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
-														<th width="10%"><?php esc_html_e( 'Author', 'decker' ); ?></th>
-														<th width="20%"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
-														<th width="10%"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
-														<th width="10%" class="text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
+														<th class="col-4"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+														<th class="col-2"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
+														<th class="col-1"><?php esc_html_e( 'Author', 'decker' ); ?></th>
+														<th class="col-2"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
+														<th class="col-1"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th class="col-2 text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 														<th class="d-none"><?php esc_html_e( 'Content', 'decker' ); ?></th>
 													</tr>
 												</thead>
