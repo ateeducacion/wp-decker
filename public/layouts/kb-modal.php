@@ -192,6 +192,7 @@ defined( 'ABSPATH' ) || exit;
 				wp.editor.remove('article-content');
 				editor.initialized = false;
 			}
+			window.labelsSelect.removeActiveItems();
 		});
 
 		let labelsSelect, parentSelect;
