@@ -79,6 +79,8 @@ class Decker_Kb {
 			'post_title'   => sanitize_text_field( $params['title'] ),
 			'post_content' => wp_kses_post( $params['content'] ),
 			'post_status'  => 'publish',
+			'post_parent'  => isset( $params['parent_id'] ) ? intval( $params['parent_id'] ) : 0,
+			'menu_order'   => isset( $params['menu_order'] ) ? intval( $params['menu_order'] ) : 0,
 		);
 
 		if ( ! empty( $params['id'] ) ) {
@@ -138,10 +140,12 @@ class Decker_Kb {
 			array(
 				'success'  => true,
 				'article' => array(
-					'id'      => $post->ID,
-					'title'   => $post->post_title,
-					'content' => $post->post_content,
-					'labels'  => $labels,
+					'id'         => $post->ID,
+					'title'      => $post->post_title,
+					'content'    => $post->post_content,
+					'labels'     => $labels,
+					'parent_id'  => $post->post_parent,
+					'menu_order' => $post->menu_order,
 				),
 			),
 			200

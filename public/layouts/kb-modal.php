@@ -24,13 +24,40 @@ defined( 'ABSPATH' ) || exit;
 <form id="article-form" class="needs-validation" novalidate>
 	<input type="hidden" name="article_id" id="article-id" value="">
 	<div class="row">
-		<!-- Title -->
-		<div class="col-md-12 mb-3">
+		<!-- Title and Order -->
+		<div class="col-md-9 mb-3">
 			<div class="form-floating">
 				<input type="text" class="form-control" id="article-title" name="title" placeholder="<?php esc_attr_e( 'Article title', 'decker' ); ?>" required>
 				<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?></label>
 				<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
 			</div>
+		</div>
+		<div class="col-md-3 mb-3">
+			<div class="form-floating">
+				<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0">
+				<label for="article-order" class="form-label"><?php esc_html_e( 'Order', 'decker' ); ?></label>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-md-12 mb-3">
+			<label for="article-parent" class="form-label"><?php esc_html_e( 'Parent Article', 'decker' ); ?></label>
+			<select class="form-select" id="article-parent" name="parent_id">
+				<option value="0"><?php esc_html_e( 'No parent (top level)', 'decker' ); ?></option>
+				<?php
+				$articles = get_posts(array(
+					'post_type' => 'decker_kb',
+					'posts_per_page' => -1,
+					'orderby' => 'menu_order title',
+					'order' => 'ASC',
+					'post_status' => 'publish'
+				));
+				foreach ($articles as $article) {
+					echo '<option value="' . esc_attr($article->ID) . '">' . esc_html($article->post_title) . '</option>';
+				}
+				?>
+			</select>
 		</div>
 	</div>
 
@@ -100,8 +127,10 @@ defined( 'ABSPATH' ) || exit;
 						const article = response.article;
 						$('#article-id').val(article.id);
 						$('#article-title').val(article.title);
+						$('#article-order').val(article.menu_order);
 						editor.setContent(article.content);
 						window.labelsSelect.setChoiceByValue(article.labels);
+						window.parentSelect.setChoiceByValue(article.parent_id.toString());
 					} else {
 						Swal.fire({
 							title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
@@ -127,13 +156,16 @@ defined( 'ABSPATH' ) || exit;
 			const articleId = button.data('article-id');
 			
 			if (articleId) {
+				$('#kb-modalLabel').text('<?php esc_html_e( 'Edit Article', 'decker' ); ?>');
 				loadArticle(articleId);
 			} else {
 				// New article
+				$('#kb-modalLabel').text('<?php esc_html_e( 'Add New Article', 'decker' ); ?>');
 				$('#article-form')[0].reset();
 				$('#article-id').val('');
 				editor.setContent('');
 				window.labelsSelect.removeActiveItems();
+				window.parentSelect.setChoiceByValue('0');
 			}
 		});
 
@@ -143,13 +175,22 @@ defined( 'ABSPATH' ) || exit;
 			}
 		});
 
-		// Initialize Choices.js for labels
+		// Initialize Choices.js for labels and parent
+		const choicesConfig = {
+			removeItemButton: true,
+			allowHTML: true,
+			searchEnabled: true,
+			shouldSort: true
+		};
+
 		if (!window.labelsSelect) {
-			window.labelsSelect = new Choices('#article-labels', { 
-				removeItemButton: true, 
-				allowHTML: true,
-				searchEnabled: true,
-				shouldSort: true,
+			window.labelsSelect = new Choices('#article-labels', choicesConfig);
+		}
+
+		if (!window.parentSelect) {
+			window.parentSelect = new Choices('#article-parent', {
+				...choicesConfig,
+				searchPlaceholderValue: '<?php esc_html_e( 'Search for parent article...', 'decker' ); ?>'
 			});
 		}
 
@@ -166,7 +207,9 @@ defined( 'ABSPATH' ) || exit;
 				id: $('#article-id').val(),
 				title: $('#article-title').val(),
 				content: editor.getContent(),
-				labels: window.labelsSelect.getValue().map(choice => choice.value)
+				labels: window.labelsSelect.getValue().map(choice => choice.value),
+				parent_id: $('#article-parent').val(),
+				menu_order: $('#article-order').val()
 			};
 
 			$.ajax({
