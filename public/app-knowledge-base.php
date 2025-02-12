@@ -119,12 +119,13 @@ die();
 
 													echo '</td>';
 
-													// Article Category.
+													// Labels with colors
 													echo '<td>';
-													$categories = wp_get_post_terms( $article->ID, 'decker_label' );
-													if ( ! empty( $categories ) ) {
-														foreach ( $categories as $category ) {
-															echo '<span class="badge bg-info">' . esc_html( $category->name ) . '</span> ';
+													$labels = wp_get_post_terms( $article->ID, 'decker_label' );
+													if ( ! empty( $labels ) ) {
+														foreach ( $labels as $label ) {
+															$color = get_term_meta( $label->term_id, 'term-color', true );
+															echo '<span class="badge me-1" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $label->name ) . '</span> ';
 														}
 													} else {
 														echo '<span class="text-muted">' . esc_html__( 'Uncategorized', 'decker' ) . '</span>';

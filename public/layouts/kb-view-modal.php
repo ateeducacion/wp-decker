@@ -35,10 +35,24 @@ function viewArticle(id, title, content, labelsJson) {
 	modal.find('#kb-view-modalLabel').text(title);
 	modal.find('#kb-view-content').html(content);
 	
-	const labels = JSON.parse(labelsJson);
-	const labelsHtml = labels.map(label => 
-		`<span class="badge bg-info me-1">${label}</span>`
-	).join('');
+	// Get labels with their colors
+	jQuery.ajax({
+		url: wpApiSettings.root + 'wp/v2/decker_label',
+		method: 'GET',
+		beforeSend: function(xhr) {
+			xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+		},
+		success: function(response) {
+			const labels = JSON.parse(labelsJson);
+			const labelMap = new Map(response.map(l => [l.name, l.meta['term-color']]));
+			
+			const labelsHtml = labels.map(label => 
+				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
+			).join('');
+			
+			modal.find('#kb-view-labels').html(labelsHtml);
+		}
+	});
 	
 	modal.find('#kb-view-labels').html(labelsHtml);
 	modal.modal('show');
