@@ -70,8 +70,7 @@ class Decker_Labels {
 			'show_in_quick_edit' => false,
 			'rewrite'            => array( 'slug' => 'decker_label' ),
 			'show_in_rest'       => true,
-			'rest_base'          => 'decker_label',
-			'rest_controller_class' => 'WP_REST_Terms_Controller',
+			'rest_base'          => 'labels',
 			'can_export'         => true,
 			'capabilities'       => array(
 				'manage_terms' => 'edit_posts',
