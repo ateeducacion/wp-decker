@@ -54,7 +54,6 @@ function viewArticle(id, title, content, labelsJson) {
 		}
 	});
 	
-	modal.find('#kb-view-labels').html(labelsHtml);
 	modal.modal('show');
 }
 </script>

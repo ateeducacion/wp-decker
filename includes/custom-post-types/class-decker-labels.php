@@ -69,7 +69,7 @@ class Decker_Labels {
 			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
 			'rewrite'            => array( 'slug' => 'decker_label' ),
-			'show_in_rest'       => false,
+			'show_in_rest'       => true,
 			'rest_base'          => 'labels',
 			'can_export'         => true,
 			'capabilities'       => array(
