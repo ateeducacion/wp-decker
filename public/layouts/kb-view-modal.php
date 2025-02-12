@@ -37,7 +37,7 @@ function viewArticle(id, title, content, labelsJson) {
 	
 	// Get labels with their colors
 	jQuery.ajax({
-		url: wpApiSettings.root + 'wp/v2/decker_label',
+		url: wpApiSettings.root + 'wp/v2/labels',
 		method: 'GET',
 		beforeSend: function(xhr) {
 			xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
