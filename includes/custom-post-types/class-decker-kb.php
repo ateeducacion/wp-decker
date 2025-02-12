@@ -26,6 +26,7 @@ class Decker_Kb {
 	 */
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_filter( 'rest_pre_dispatch', array( $this, 'restrict_rest_access' ), 10, 3 );
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'adjust_admin_menu' ) );
@@ -113,6 +114,32 @@ class Decker_Kb {
 			200
 		);
 	}
+
+	/**
+	 * Restricts REST API access for decker_kb post type.
+	 *
+	 * @param mixed           $result The pre-calculated result to return.
+	 * @param WP_REST_Server  $rest_server The REST server instance.
+	 * @param WP_REST_Request $request The current REST request.
+	 * @return mixed WP_Error if unauthorized, otherwise the original result.
+	 */
+	public function restrict_rest_access( $result, $rest_server, $request ) {
+		$route = $request->get_route();
+
+		if ( strpos( $route, '/wp/v2/decker_kb' ) === 0 ) {
+			// Usa la capacidad específica del CPT.
+			if ( ! current_user_can( 'edit_posts' ) ) {
+				return new WP_Error(
+					'rest_forbidden',
+					__( 'You do not have permission to access this resource.', 'decker' ),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
+		return $result;
+	}
+
 
 	/**
 	 * Get KB article data

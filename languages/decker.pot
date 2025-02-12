@@ -435,7 +435,8 @@ msgid "No events found in Trash."
 msgstr ""
 
 #: includes/custom-post-types/class-decker-events.php:227
-msgid "No tienes permisos para acceder a este recurso."
+#: includes/custom-post-types/class-decker-kb.php:134
+msgid "You do not have permission to access this resource."
 msgstr ""
 
 #: includes/custom-post-types/class-decker-events.php:243
@@ -497,7 +498,7 @@ msgid "Danger"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-events.php:384
-#: public/layouts/kb-modal.php:236
+#: public/layouts/kb-modal.php:262
 msgid "Success"
 msgstr ""
 
@@ -516,62 +517,62 @@ msgstr ""
 msgid "Dark"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:110
+#: includes/custom-post-types/class-decker-kb.php:111
 msgid "Article saved successfully"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:131
+#: includes/custom-post-types/class-decker-kb.php:158
 msgid "Article not found"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:160
+#: includes/custom-post-types/class-decker-kb.php:187
 msgctxt "post type general name"
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:161
+#: includes/custom-post-types/class-decker-kb.php:188
 msgctxt "post type singular name"
 msgid "Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:162
+#: includes/custom-post-types/class-decker-kb.php:189
 msgctxt "admin menu"
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:163
-#: includes/custom-post-types/class-decker-kb.php:164
+#: includes/custom-post-types/class-decker-kb.php:190
+#: includes/custom-post-types/class-decker-kb.php:191
 #: public/app-knowledge-base.php:55
 #: public/layouts/kb-modal.php:18
-#: public/layouts/kb-modal.php:173
+#: public/layouts/kb-modal.php:191
 msgid "Add New Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:165
+#: includes/custom-post-types/class-decker-kb.php:192
 msgid "New Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:166
-#: public/layouts/kb-modal.php:169
+#: includes/custom-post-types/class-decker-kb.php:193
+#: public/layouts/kb-modal.php:187
 msgid "Edit Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:167
+#: includes/custom-post-types/class-decker-kb.php:194
 msgid "View Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:168
+#: includes/custom-post-types/class-decker-kb.php:195
 #: public/app-knowledge-base.php:26
 #: public/app-knowledge-base.php:47
 #: public/layouts/left-sidebar.php:266
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:169
+#: includes/custom-post-types/class-decker-kb.php:196
 msgid "Parent Article:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:170
+#: includes/custom-post-types/class-decker-kb.php:197
 msgid "No articles found."
 msgstr ""
 
@@ -1529,22 +1530,30 @@ msgstr ""
 msgid "Save Article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:142
-#: public/layouts/kb-modal.php:150
-#: public/layouts/kb-modal.php:244
-#: public/layouts/kb-modal.php:252
+#: public/layouts/kb-modal.php:160
+#: public/layouts/kb-modal.php:168
+#: public/layouts/kb-modal.php:270
+#: public/layouts/kb-modal.php:278
 msgid "Error"
 msgstr ""
 
-#: public/layouts/kb-modal.php:151
+#: public/layouts/kb-modal.php:169
 msgid "Could not load article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:204
+#: public/layouts/kb-modal.php:220
+msgid "Select labels..."
+msgstr ""
+
+#: public/layouts/kb-modal.php:221
+msgid "No more labels available"
+msgstr ""
+
+#: public/layouts/kb-modal.php:230
 msgid "Search for parent article..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:253
+#: public/layouts/kb-modal.php:279
 msgid "Could not save article"
 msgstr ""
 

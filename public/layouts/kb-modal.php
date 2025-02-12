@@ -101,7 +101,7 @@ defined( 'ABSPATH' ) || exit;
 					tinymce: {
 						wpautop: true,
 						container: 'kb-modal .modal-body',
-						toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright link wp_adv',
+						toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright wp_adv',
 						toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
 						menubar: false,
 						setup: function(ed) {
@@ -136,14 +136,24 @@ defined( 'ABSPATH' ) || exit;
 						$('#article-order').val(article.menu_order);
 						editor.setContent(article.content);
 			
-						// Reset and set labels
-						if (labelsSelect) {
-							labelsSelect.destroy();
-						}
-						labelsSelect = new Choices('#article-labels', choicesConfig);
-						if (article.labels && article.labels.length > 0) {
-							labelsSelect.setChoiceByValue(article.labels.map(String));
-						}
+						// // Reset and set labels
+						// if (labelsSelect) {
+						// 	labelsSelect.destroy();
+						// }
+						// labelsSelect = new Choices('#article-labels', choicesConfig);
+						// if (article.labels && article.labels.length > 0) {
+
+						// 	labelsSelect.removeActiveItems();
+						// 	labelsSelect.clearInput();
+
+						// 	labelsSelect.setChoiceByValue(article.labels.map(String));
+						// }
+
+						window.labelsSelect.removeActiveItems();
+						window.labelsSelect.clearInput();
+						window.labelsSelect.setChoiceByValue(article.labels.map(String));
+
+
 						window.parentSelect.setChoiceByValue(article.parent_id.toString());
 					} else {
 						Swal.fire({
@@ -182,8 +192,11 @@ defined( 'ABSPATH' ) || exit;
 				$('#article-form')[0].reset();
 				$('#article-id').val('');
 				editor.setContent('');
-				// window.labelsSelect.removeActiveItems();
+				window.labelsSelect.removeActiveItems();
+				window.labelsSelect.clearInput();
+
 				window.parentSelect.setChoiceByValue('0');
+				window.parentSelect.clearInput();
 			}
 		});
 
@@ -193,6 +206,7 @@ defined( 'ABSPATH' ) || exit;
 				editor.initialized = false;
 			}
 			window.labelsSelect.removeActiveItems();
+			window.labelsSelect.clearInput();
 		});
 
 		let labelsSelect, parentSelect;
@@ -203,12 +217,13 @@ defined( 'ABSPATH' ) || exit;
 			allowHTML: true,
 			searchEnabled: true,
 			shouldSort: true,
-			placeholderValue: '<?php esc_html_e('Select labels...', 'decker'); ?>',
-			noChoicesText: '<?php esc_html_e('No more labels available', 'decker'); ?>'
+			placeholderValue: '<?php esc_html_e( 'Select labels...', 'decker' ); ?>',
+			noChoicesText: '<?php esc_html_e( 'No more labels available', 'decker' ); ?>'
 		};
 
 		// Initial labels setup
 		labelsSelect = new Choices('#article-labels', choicesConfig);
+		window.labelsSelect = labelsSelect;
 
 		parentSelect = new Choices('#article-parent', {
 			...choicesConfig,

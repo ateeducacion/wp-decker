@@ -224,7 +224,7 @@ class Decker_Events {
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				return new WP_Error(
 					'rest_forbidden',
-					__( 'No tienes permisos para acceder a este recurso.', 'decker' ),
+					__( 'You do not have permission to access this resource.', 'decker' ),
 					array( 'status' => 403 )
 				);
 			}

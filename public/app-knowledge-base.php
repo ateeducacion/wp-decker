@@ -234,6 +234,27 @@ die();
 		});
 	});
 
+	// Function to delete an event
+	function deleteEvent(id, title) {
+		if (confirm(strings.confirm_delete_event + ' "' + title + '"')) {
+			fetch(wpApiSettings.root + wpApiSettings.versionString + 'decker_event/' + id, {
+				method: 'DELETE',
+				headers: {
+					'X-WP-Nonce': wpApiSettings.nonce,
+					'Content-Type': 'application/json'
+				}
+			})
+			.then(response => response.json())
+			.then(() => {
+				location.reload();
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert(strings.error_deleting_event);
+			});
+		}
+	}
+
 	function deleteArticle(id, title) {
 		Swal.fire({
 			title: '¿Estás seguro?',
@@ -246,10 +267,31 @@ die();
 			cancelButtonColor: '#3085d6'
 		}).then((result) => {
 			if (result.isConfirmed) {
-				window.location.href = '?action=delete&id=' + id;
+				fetch(wpApiSettings.root + wpApiSettings.versionString + 'decker_kb/' + id, {
+					method: 'DELETE',
+					headers: {
+						'X-WP-Nonce': wpApiSettings.nonce,
+						'Content-Type': 'application/json'
+					}
+				})
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Error en la eliminación');
+					}
+					return response.json();
+				})
+				.then(() => {
+					Swal.fire('Eliminado', 'El artículo ha sido eliminado correctamente.', 'success')
+						.then(() => location.reload());
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					Swal.fire('Error', 'No se pudo eliminar el artículo.', 'error');
+				});
 			}
 		});
 	}
+
 	</script>
 
 </body>
