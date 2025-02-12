@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
 		<!-- Title, Parent and Order -->
 		<div class="col-md-7">
 			<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?> *</label>
-			<input type="text" class="form-control" id="article-title" name="title" required>
+			<input type="text" class="form-control" id="article-title" name="title" required style="min-height: 45px;">
 			<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
 		</div>
 		<div class="col-md-4">
@@ -50,7 +50,7 @@ defined( 'ABSPATH' ) || exit;
 		</div>
 		<div class="col-md-1">
 			<label for="article-order" class="form-label"><?php esc_html_e( 'Order', 'decker' ); ?></label>
-			<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0">
+			<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0" style="min-height: 45px;">
 		</div>
 	</div>
 
