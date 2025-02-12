@@ -114,7 +114,7 @@ die();
 														esc_attr( $article->ID ) . ', ' . 
 														"'" . esc_js( $article->post_title ) . "', " . 
 														"'" . esc_js( $article->post_content ) . "', " .
-														json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name')) .
+														"'" . esc_js(json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name'))) . "'" .
 														')">' . esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
@@ -157,7 +157,7 @@ die();
 														esc_attr( $article->ID ) . ', ' . 
 														"'" . esc_js( $article->post_title ) . "', " . 
 														"'" . esc_js( $article->post_content ) . "', " .
-														json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name')) .
+														"'" . esc_js(json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name'))) . "'" .
 														')"><i class="ri-eye-line"></i></button>';
 													// Edit button
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';

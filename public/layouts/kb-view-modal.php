@@ -30,11 +30,12 @@ defined( 'ABSPATH' ) || exit;
 </div>
 
 <script>
-function viewArticle(id, title, content, labels) {
+function viewArticle(id, title, content, labelsJson) {
 	const modal = jQuery('#kb-view-modal');
 	modal.find('#kb-view-modalLabel').text(title);
 	modal.find('#kb-view-content').html(content);
 	
+	const labels = JSON.parse(labelsJson);
 	const labelsHtml = labels.map(label => 
 		`<span class="badge bg-info me-1">${label}</span>`
 	).join('');
