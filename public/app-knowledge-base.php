@@ -110,7 +110,12 @@ die();
 
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $level ) ) ) .
-														'<a href="' . esc_url( get_edit_post_link( $article->ID ) ) . '">' . esc_html( $article->post_title ) . '</a>';
+														'<a href="javascript:void(0);" onclick="viewArticle(' . 
+														esc_attr( $article->ID ) . ', ' . 
+														"'" . esc_js( $article->post_title ) . "', " . 
+														"'" . esc_js( $article->post_content ) . "', " .
+														json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name')) .
+														')">' . esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
 
