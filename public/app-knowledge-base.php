@@ -51,7 +51,7 @@ die();
 									<?php echo esc_html( $page_title ); ?>
 									<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" 
 									   class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" 
-									   data-bs-toggle="modal" data-bs-target="#kb-modal">
+									   data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="">
 										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Article', 'decker' ); ?>
 									</a>
 								</h4>
@@ -139,7 +139,7 @@ die();
 
 													// Actions.
 													echo '<td class="text-end">';
-													echo '<a href="' . esc_url( get_edit_post_link( $article->ID ) ) . '" class="btn btn-primary btn-sm me-2">' . esc_html__( 'Edit', 'decker' ) . '</a>';
+													echo '<button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '">' . esc_html__( 'Edit', 'decker' ) . '</button>';
 													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
 													echo '<i class="ri-delete-bin-line"></i>';
 													echo '</button>';

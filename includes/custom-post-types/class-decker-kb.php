@@ -29,6 +29,123 @@ class Decker_Kb {
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'adjust_admin_menu' ) );
+		
+		// REST API endpoints
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+	}
+
+	/**
+	 * Register REST API routes
+	 */
+	public function register_rest_routes() {
+		register_rest_route(
+			'decker/v1',
+			'/kb',
+			array(
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'save_article' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_article' ),
+					'permission_callback' => array( $this, 'check_permissions' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Check if user has permission to manage KB articles
+	 *
+	 * @return bool
+	 */
+	public function check_permissions() {
+		return current_user_can( 'edit_posts' );
+	}
+
+	/**
+	 * Save or update KB article
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function save_article( $request ) {
+		$params = $request->get_params();
+		
+		$post_data = array(
+			'post_type'    => 'decker_kb',
+			'post_title'   => sanitize_text_field( $params['title'] ),
+			'post_content' => wp_kses_post( $params['content'] ),
+			'post_status'  => 'publish',
+		);
+
+		if ( ! empty( $params['id'] ) ) {
+			$post_data['ID'] = intval( $params['id'] );
+		}
+
+		$post_id = wp_insert_post( $post_data );
+
+		if ( is_wp_error( $post_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $post_id->get_error_message(),
+				),
+				400
+			);
+		}
+
+		// Handle labels
+		if ( ! empty( $params['labels'] ) ) {
+			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Article saved successfully', 'decker' ),
+				'id'     => $post_id,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Get KB article data
+	 *
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response
+	 */
+	public function get_article( $request ) {
+		$article_id = $request->get_param( 'id' );
+		
+		$post = get_post( $article_id );
+		if ( ! $post || 'decker_kb' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Article not found', 'decker' ),
+				),
+				404
+			);
+		}
+
+		$labels = wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) );
+
+		return new WP_REST_Response(
+			array(
+				'success'  => true,
+				'article' => array(
+					'id'      => $post->ID,
+					'title'   => $post->post_title,
+					'content' => $post->post_content,
+					'labels'  => $labels,
+				),
+			),
+			200
+		);
 	}
 
 	/**
