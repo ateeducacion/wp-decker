@@ -23,25 +23,14 @@ defined( 'ABSPATH' ) || exit;
 <!-- Article -->
 <form id="article-form" class="needs-validation" novalidate>
 	<input type="hidden" name="article_id" id="article-id" value="">
-	<div class="row">
-		<!-- Title and Order -->
-		<div class="col-md-9 mb-3">
-			<div class="form-floating">
-				<input type="text" class="form-control" id="article-title" name="title" placeholder="<?php esc_attr_e( 'Article title', 'decker' ); ?>" required>
-				<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?></label>
-				<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
-			</div>
+	<div class="row mb-3">
+		<!-- Title, Parent and Order -->
+		<div class="col-md-7">
+			<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?> *</label>
+			<input type="text" class="form-control" id="article-title" name="title" required>
+			<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
 		</div>
-		<div class="col-md-3 mb-3">
-			<div class="form-floating">
-				<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0">
-				<label for="article-order" class="form-label"><?php esc_html_e( 'Order', 'decker' ); ?></label>
-			</div>
-		</div>
-	</div>
-
-	<div class="row">
-		<div class="col-md-12 mb-3">
+		<div class="col-md-4">
 			<label for="article-parent" class="form-label"><?php esc_html_e( 'Parent Article', 'decker' ); ?></label>
 			<select class="form-select" id="article-parent" name="parent_id">
 				<option value="0"><?php esc_html_e( 'No parent (top level)', 'decker' ); ?></option>
@@ -58,6 +47,10 @@ defined( 'ABSPATH' ) || exit;
 				}
 				?>
 			</select>
+		</div>
+		<div class="col-md-1">
+			<label for="article-order" class="form-label"><?php esc_html_e( 'Order', 'decker' ); ?></label>
+			<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0">
 		</div>
 	</div>
 
