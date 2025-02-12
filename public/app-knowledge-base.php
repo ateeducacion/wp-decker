@@ -147,7 +147,16 @@ die();
 
 													// Actions.
 													echo '<td class="text-end">';
+													// View button
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' . 
+														esc_attr( $article->ID ) . ', ' . 
+														"'" . esc_js( $article->post_title ) . "', " . 
+														"'" . esc_js( $article->post_content ) . "', " .
+														json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name')) .
+														')"><i class="ri-eye-line"></i></button>';
+													// Edit button
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
+													// Delete button
 													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
 													echo '<i class="ri-delete-bin-line"></i>';
 													echo '</button>';
@@ -180,7 +189,10 @@ die();
 	</div>
 
 	<?php include 'layouts/right-sidebar.php'; ?>
-	<?php include 'layouts/kb-modal.php'; ?>
+	<?php 
+	include 'layouts/kb-modal.php';
+	include 'layouts/kb-view-modal.php';
+	?>
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
