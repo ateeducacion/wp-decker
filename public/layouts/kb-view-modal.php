@@ -20,9 +20,9 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="modal-body">
 				<div id="kb-view-content"></div>
-				<div id="kb-view-labels" class="mt-3"></div>
 			</div>
 			<div class="modal-footer">
+				<div id="kb-view-labels" class="me-auto"></div>
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
 			</div>
 		</div>
