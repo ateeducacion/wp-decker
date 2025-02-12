@@ -259,6 +259,15 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		</div>
 	  </li>
 
+		<!-- Knowledge Base -->
+	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'knowledge-base' ) ); ?>">
+			<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" class="side-nav-link">
+			<i class="ri-database-2-line"></i>
+			  <span><?php esc_html_e( 'Knowledge Base', 'decker' ); ?></span>
+			</a>
+			</a>
+	  </li>
+
 	  <!-- Analytics -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'analytics' ) ); ?>">
 		<a href="<?php echo esc_url( add_query_arg( 'decker_page', 'analytics', home_url( '/' ) ) ); ?>" class="side-nav-link">
@@ -266,6 +275,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  <span><?php esc_html_e( 'Analytics', 'decker' ); ?></span>
 		</a>
 	  </li>
+
 
 
 	  <?php

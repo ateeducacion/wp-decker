@@ -123,16 +123,17 @@ class Decker_Public {
 	 */
 	protected function include_decker_page( $decker_page ) {
 		$include_files = array(
-			'analytics'       => 'public/app-analytics.php',
-			'board'           => 'public/app-kanban.php',
-			'calendar'        => 'public/app-calendar.php',
-			'my-board'        => 'public/app-kanban-my.php',
-			'priority'        => 'public/app-priority.php',
-			'task'            => 'public/app-task-full.php',
-			'tasks'           => 'public/app-tasks.php',
-			'term-manager'    => 'public/app-term-manager.php',
-			'upcoming'        => 'public/app-upcoming.php',
-			'event-manager'   => 'public/app-event-manager.php',
+			'analytics'      => 'public/app-analytics.php',
+			'board'          => 'public/app-kanban.php',
+			'calendar'       => 'public/app-calendar.php',
+			'my-board'       => 'public/app-kanban-my.php',
+			'priority'       => 'public/app-priority.php',
+			'task'           => 'public/app-task-full.php',
+			'tasks'          => 'public/app-tasks.php',
+			'term-manager'   => 'public/app-term-manager.php',
+			'upcoming'       => 'public/app-upcoming.php',
+			'event-manager'  => 'public/app-event-manager.php',
+			'knowledge-base' => 'public/app-knowledge-base.php',
 		);
 
 		if ( array_key_exists( $decker_page, $include_files ) ) {
@@ -235,7 +236,24 @@ class Decker_Public {
 
 			}
 
-			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
+			if ( 'knowledge-base' == $decker_page ) {
+
+				wp_enqueue_media(); // Obligatorio para subida de medios.
+				// wp_enqueue_script('editor');
+				// wp_enqueue_script('thickbox');
+				// wp_enqueue_style('editor-buttons');
+				// wp_enqueue_style('thickbox');
+				// wp_enqueue_script('wp-tinymce'); // Script principal de TinyMCE.
+
+				wp_enqueue_editor();
+
+				// sweetalert2.js.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css';
+
+			}
+
+			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
