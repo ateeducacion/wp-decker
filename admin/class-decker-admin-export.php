@@ -122,6 +122,8 @@ class Decker_Admin_Export {
 					'ID'            => get_the_ID(),
 					'post_title'    => get_the_title(),
 					'post_content'  => get_the_content(),
+					'post_parent'   => get_post()->post_parent,
+					'menu_order'    => get_post()->menu_order,
 					'post_meta'     => get_post_meta( get_the_ID() ),
 					'decker_board'  => wp_get_object_terms( get_the_ID(), 'decker_board' ),
 					'decker_label'  => wp_get_object_terms( get_the_ID(), 'decker_label' ),
