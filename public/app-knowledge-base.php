@@ -84,11 +84,13 @@ die();
 											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
 												<thead>
 													<tr>
-														<th width="40%"><?php esc_html_e( 'Title', 'decker' ); ?></th>
-														<th width="30%"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
-														<th width="15%"><?php esc_html_e( 'Author', 'decker' ); ?></th>
-														<th width="15%"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th width="35%"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+														<th width="25%"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
+														<th width="20%"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
+														<th width="10%"><?php esc_html_e( 'Author', 'decker' ); ?></th>
+														<th width="10%"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
 														<th width="10%" class="text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
+														<th class="d-none"><?php esc_html_e( 'Content', 'decker' ); ?></th>
 													</tr>
 												</thead>
 												<tbody>
@@ -134,8 +136,17 @@ die();
 													echo '</div>';
 													echo '</td>';
 
+													// Excerpt
+													echo '<td>';
+													$excerpt = wp_strip_all_tags($article->post_content);
+													echo esc_html(wp_trim_words($excerpt, 10, '...'));
+													echo '</td>';
+
 													// Last Updated.
 													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
+
+													// Hidden content column for search
+													echo '<td class="d-none">' . esc_html(wp_strip_all_tags($article->post_content)) . '</td>';
 
 													// Actions.
 													echo '<td class="text-end">';
@@ -176,10 +187,34 @@ die();
 	<script>
 	jQuery(document).ready(function () {
 		jQuery('#tablaKB').DataTable({
-			language: { url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json' },
+			language: { 
+				url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json',
+				searchBuilder: {
+					title: 'Búsqueda Avanzada'
+				}
+			},
 			pageLength: 50,
 			responsive: true,
-			order: [[3, 'desc']]
+			order: [[4, 'desc']],
+			columnDefs: [
+				{
+					targets: [6], // Hidden content column
+					visible: false,
+					searchable: true
+				}
+			],
+			mark: true, // Enable mark.js
+			search: {
+				smart: true,
+				regex: false,
+				caseInsensitive: true
+			},
+			initComplete: function() {
+				// Add custom search placeholder
+				jQuery('.dataTables_filter input')
+					.attr('placeholder', '<?php esc_html_e('Search in title, tags, excerpt and content...', 'decker'); ?>')
+					.css('width', '300px');
+			}
 		});
 
 		jQuery('#categoryFilter').on('change', function () {
