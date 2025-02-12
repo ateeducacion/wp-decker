@@ -11,7 +11,7 @@
 defined( 'ABSPATH' ) || exit;
 
 ?>
-<div class="modal fade" id="kb-modal" tabindex="-1" aria-labelledby="kb-modalLabel" aria-hidden="true">
+<div class="modal fade" id="kb-modal" tabindex="-1" aria-labelledby="kb-modalLabel" aria-hidden="true" style="display: none;">
 	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -87,24 +87,35 @@ defined( 'ABSPATH' ) || exit;
 <script type="text/javascript">
 	jQuery(document).ready(function($) {
 		let editor;
+		let editorInitPromise;
 
 		function initializeEditor() {
-			const config = {
-				tinymce: {
-					wpautop: true,
-					container: 'kb-modal .modal-body',
-					toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright link wp_adv',
-					toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
-					menubar: false,
-					setup: function(ed) {
-						editor = ed;
-					}
-				},
-				quicktags: true,
-				mediaButtons: true
-			};
+			if (editor && editor.initialized) {
+				return Promise.resolve();
+			}
 
-			wp.editor.initialize('article-content', config);
+			return new Promise((resolve) => {
+				const config = {
+					tinymce: {
+						wpautop: true,
+						container: 'kb-modal .modal-body',
+						toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright link wp_adv',
+						toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+						menubar: false,
+						setup: function(ed) {
+							editor = ed;
+							ed.on('init', function() {
+								editor.initialized = true;
+								resolve();
+							});
+						}
+					},
+					quicktags: true,
+					mediaButtons: true
+				};
+
+				wp.editor.initialize('article-content', config);
+			});
 		}
 
 		function loadArticle(id) {
@@ -142,8 +153,12 @@ defined( 'ABSPATH' ) || exit;
 			});
 		}
 
-		$('#kb-modal').on('shown.bs.modal', function(e) {
+		// Pre-initialize editor when button is clicked
+		$('[data-bs-target="#kb-modal"]').on('click', function() {
 			initializeEditor();
+		});
+
+		$('#kb-modal').on('shown.bs.modal', function(e) {
 			
 			const button = $(e.relatedTarget);
 			const articleId = button.data('article-id');
@@ -163,8 +178,9 @@ defined( 'ABSPATH' ) || exit;
 		});
 
 		$('#kb-modal').on('hidden.bs.modal', function() {
-			if (editor) {
+			if (editor && editor.initialized) {
 				wp.editor.remove('article-content');
+				editor.initialized = false;
 			}
 		});
 
