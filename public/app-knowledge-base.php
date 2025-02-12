@@ -139,8 +139,10 @@ die();
 
 													// Actions.
 													echo '<td class="text-end">';
-													echo '<a href="' . esc_url( get_edit_post_link( $article->ID ) ) . '" class="btn btn-primary btn-sm">' . esc_html__( 'Edit', 'decker' ) . '</a> ';
-													echo '<a href="' . esc_url( get_permalink( $article->ID ) ) . '" class="btn btn-info btn-sm" target="_blank">' . esc_html__( 'View', 'decker' ) . '</a>';
+													echo '<a href="' . esc_url( get_edit_post_link( $article->ID ) ) . '" class="btn btn-primary btn-sm me-2">' . esc_html__( 'Edit', 'decker' ) . '</a>';
+													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
+													echo '<i class="ri-delete-bin-line"></i>';
+													echo '</button>';
 													echo '</td>';
 
 													echo '</tr>';
@@ -184,6 +186,23 @@ die();
 			jQuery('#tablaKB').DataTable().column(1).search(this.value).draw();
 		});
 	});
+
+	function deleteArticle(id, title) {
+		Swal.fire({
+			title: '¿Estás seguro?',
+			text: 'Se eliminará el artículo "' + title + '"',
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonText: 'Sí, eliminar',
+			cancelButtonText: 'Cancelar',
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6'
+		}).then((result) => {
+			if (result.isConfirmed) {
+				window.location.href = '?action=delete&id=' + id;
+			}
+		});
+	}
 	</script>
 
 </body>
