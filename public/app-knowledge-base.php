@@ -156,21 +156,6 @@ die();
 													// Hidden content column for search
 													echo '<td class="d-none">' . esc_html(wp_strip_all_tags($article->post_content)) . '</td>';
 
-													// Last Updated.
-													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
-
-													// Hidden content column for search
-													echo '<td class="d-none">' . esc_html(wp_strip_all_tags($article->post_content)) . '</td>';
-
-													// Actions.
-													echo '<td class="text-end">';
-													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
-													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
-													echo '<i class="ri-delete-bin-line"></i>';
-													echo '</button>';
-													echo '</td>';
-
-													echo '</tr>';
 												}
 												?>
 												</tbody>
