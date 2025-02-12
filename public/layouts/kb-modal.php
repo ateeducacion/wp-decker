@@ -175,7 +175,7 @@ defined( 'ABSPATH' ) || exit;
 				$('#article-form')[0].reset();
 				$('#article-id').val('');
 				editor.setContent('');
-				window.labelsSelect.removeActiveItems();
+				// window.labelsSelect.removeActiveItems();
 				window.parentSelect.setChoiceByValue('0');
 			}
 		});
