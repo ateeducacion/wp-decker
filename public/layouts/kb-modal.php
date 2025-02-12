@@ -35,15 +35,17 @@ defined( 'ABSPATH' ) || exit;
 			<select class="form-select" id="article-parent" name="parent_id">
 				<option value="0"><?php esc_html_e( 'No parent (top level)', 'decker' ); ?></option>
 				<?php
-				$articles = get_posts(array(
-					'post_type' => 'decker_kb',
-					'posts_per_page' => -1,
-					'orderby' => 'menu_order title',
-					'order' => 'ASC',
-					'post_status' => 'publish'
-				));
-				foreach ($articles as $article) {
-					echo '<option value="' . esc_attr($article->ID) . '">' . esc_html($article->post_title) . '</option>';
+				$articles = get_posts(
+					array(
+						'post_type' => 'decker_kb',
+						'posts_per_page' => -1,
+						'orderby' => 'menu_order title',
+						'order' => 'ASC',
+						'post_status' => 'publish',
+					)
+				);
+				foreach ( $articles as $article ) {
+					echo '<option value="' . esc_attr( $article->ID ) . '">' . esc_html( $article->post_title ) . '</option>';
 				}
 				?>
 			</select>

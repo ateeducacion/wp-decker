@@ -58,7 +58,7 @@ die();
 
 								<div class="d-flex align-items-center">
 									<select id="categoryFilter" class="form-select">
-										<option value=""><?php esc_html_e( 'All Categories', 'decker' ); ?></option>
+										<option value=""><?php esc_html_e( 'All Labels', 'decker' ); ?></option>
 										<?php
 										$categories = get_terms(
 											array(
@@ -102,24 +102,18 @@ die();
 													// Article Title with hierarchy.
 													echo '<td>';
 
-													// Ensure 'level' meta exists and is an integer.
-													$level = get_post_meta( $article->ID, 'level', true );
-													if ( empty( $level ) || ! is_numeric( $level ) ) {
-														$level = 0;
-													}
-
 													// Sanitize and output the article title with hierarchy.
-													echo esc_html( str_repeat( '— ', intval( $level ) ) ) .
-														'<a href="javascript:void(0);" onclick="viewArticle(' . 
-														esc_attr( $article->ID ) . ', ' . 
-														"'" . esc_js( $article->post_title ) . "', " . 
+													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
+														'<a href="javascript:void(0);" onclick="viewArticle(' .
+														esc_attr( $article->ID ) . ', ' .
+														"'" . esc_js( $article->post_title ) . "', " .
 														"'" . esc_js( $article->post_content ) . "', " .
-														"'" . esc_js(json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name'))) . "'" .
+														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "'" .
 														')">' . esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
 
-													// Labels with colors
+													// Labels with colors.
 													echo '<td>';
 													$labels = wp_get_post_terms( $article->ID, 'decker_label' );
 													if ( ! empty( $labels ) ) {
@@ -132,7 +126,7 @@ die();
 													}
 													echo '</td>';
 
-													// Author with avatar
+													// Author with avatar.
 													echo '<td>';
 													echo '<div class="avatar-group">';
 													echo '<a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" data-bs-original-title="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '">';
@@ -142,10 +136,10 @@ die();
 													echo '</div>';
 													echo '</td>';
 
-													// Excerpt
-													echo '<td>';
-													$excerpt = wp_strip_all_tags($article->post_content);
-													echo esc_html(wp_trim_words($excerpt, 10, '...'));
+													// Excerpt.
+													echo '<td title="' . esc_html( wp_trim_words( $excerpt, 50, '...' ) ) . '">';
+													$excerpt = wp_strip_all_tags( $article->post_content );
+													echo esc_html( wp_trim_words( $excerpt, 10, '...' ) );
 													echo '</td>';
 
 													// Last Updated.
@@ -153,23 +147,23 @@ die();
 
 													// Actions.
 													echo '<td class="text-end">';
-													// View button
-													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' . 
-														esc_attr( $article->ID ) . ', ' . 
-														"'" . esc_js( $article->post_title ) . "', " . 
+													// View button.
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' .
+														esc_attr( $article->ID ) . ', ' .
+														"'" . esc_js( $article->post_title ) . "', " .
 														"'" . esc_js( $article->post_content ) . "', " .
-														"'" . esc_js(json_encode(wp_list_pluck(wp_get_post_terms($article->ID, 'decker_label'), 'name'))) . "'" .
+														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "'" .
 														')"><i class="ri-eye-line"></i></button>';
-													// Edit button
+													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
-													// Delete button
+													// Delete button.
 													echo '<button type="button" class="btn btn-danger btn-sm" onclick="deleteArticle(' . esc_attr( $article->ID ) . ', \'' . esc_js( $article->post_title ) . '\')">';
 													echo '<i class="ri-delete-bin-line"></i>';
 													echo '</button>';
 													echo '</td>';
 
-													// Hidden content column for search
-													echo '<td class="d-none">' . esc_html(wp_strip_all_tags($article->post_content)) . '</td>';
+													// Hidden content column for search.
+													echo '<td class="d-none">' . esc_html( wp_strip_all_tags( $article->post_content ) ) . '</td>';
 
 												}
 												?>
@@ -195,7 +189,7 @@ die();
 	</div>
 
 	<?php include 'layouts/right-sidebar.php'; ?>
-	<?php 
+	<?php
 	include 'layouts/kb-modal.php';
 	include 'layouts/kb-view-modal.php';
 	?>
@@ -212,24 +206,25 @@ die();
 			},
 			pageLength: 50,
 			responsive: true,
+			ordering: false,
 			order: [[4, 'desc']],
 			columnDefs: [
 				{
-					targets: [6], // Hidden content column
+					targets: [6], // Hidden content column.
 					visible: false,
 					searchable: true
 				}
 			],
-			mark: true, // Enable mark.js
+			mark: true, // Enable mark.js.
 			search: {
 				smart: true,
 				regex: false,
 				caseInsensitive: true
 			},
 			initComplete: function() {
-				// Add custom search placeholder
+				// Add custom search placeholder.
 				jQuery('.dataTables_filter input')
-					.attr('placeholder', '<?php esc_html_e('Search in title, tags, excerpt and content...', 'decker'); ?>')
+					.attr('placeholder', '<?php esc_html_e( 'Search in title, tags, excerpt and content...', 'decker' ); ?>')
 					.css('width', '300px');
 			}
 		});

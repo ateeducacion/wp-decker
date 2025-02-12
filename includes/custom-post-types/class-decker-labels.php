@@ -233,11 +233,15 @@ class Decker_Labels {
 	 * Register term meta for REST API
 	 */
 	public function register_meta() {
-		register_term_meta('decker_label', 'term-color', [
-			'type' => 'string',
-			'single' => true,
-			'show_in_rest' => true,
-		]);
+		register_term_meta(
+			'decker_label',
+			'term-color',
+			array(
+				'type' => 'string',
+				'single' => true,
+				'show_in_rest' => true,
+			)
+		);
 	}
 }
 

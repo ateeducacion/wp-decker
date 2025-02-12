@@ -29,8 +29,8 @@ class Decker_Kb {
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'adjust_admin_menu' ) );
-		
-		// REST API endpoints
+
+		// REST API endpoints.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 	}
 
@@ -73,7 +73,7 @@ class Decker_Kb {
 	 */
 	public function save_article( $request ) {
 		$params = $request->get_params();
-		
+
 		$post_data = array(
 			'post_type'    => 'decker_kb',
 			'post_title'   => sanitize_text_field( $params['title'] ),
@@ -99,7 +99,7 @@ class Decker_Kb {
 			);
 		}
 
-		// Handle labels
+		// Handle labels.
 		if ( ! empty( $params['labels'] ) ) {
 			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
 		}
@@ -122,7 +122,7 @@ class Decker_Kb {
 	 */
 	public function get_article( $request ) {
 		$article_id = $request->get_param( 'id' );
-		
+
 		$post = get_post( $article_id );
 		if ( ! $post || 'decker_kb' !== $post->post_type ) {
 			return new WP_REST_Response(
@@ -234,41 +234,74 @@ class Decker_Kb {
 
 
 	/**
-	 * Get all articles
+	 * Get all articles in hierarchical order.
 	 *
 	 * @param array $args Optional. Additional arguments for WP_Query.
-	 * @return array Array of Event objects.
+	 * @return array Array of WP_Post objects ordered hierarchically.
 	 */
 	public static function get_articles( $args = array() ) {
 		$default_args = array(
 			'post_type'      => 'decker_kb',
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
-			'cache_results'  => true, // Enable post caching.
+			'cache_results'  => true,
+			'orderby'        => 'menu_order',
+			'order'          => 'ASC',
 		);
 
-		$args = wp_parse_args( $args, $default_args );
+		$args  = wp_parse_args( $args, $default_args );
 		$posts = get_posts( $args );
+
+		if ( empty( $posts ) ) {
+			return array();
+		}
 
 		// After getting posts, load all metadata into cache at once.
 		$post_ids = wp_list_pluck( $posts, 'ID' );
-		update_meta_cache( 'post', $post_ids ); // 1 consulta extra para todos los metadatos
+		update_meta_cache( 'post', $post_ids );
 
-		return $posts;
+		// Map posts by ID and organize them into a tree.
+		$post_map  = array();
+		$tree_root = array();
 
-		/*
-		// Avoid modifying native WP_Post objects.
-		// $articles = array();
-		// foreach ( $posts as $post ) {
-		// $articles[] = array(
-		// 'post' => $post,
-		// 'meta' => get_post_meta( $post->ID ), // get_post_meta() will use cache and avoid additional queries.
+		foreach ( $posts as $post ) {
+			$post->ancestors = get_post_ancestors( $post->ID ); // Ancestors.
+			$post->depth = count( $post->ancestors ); // Depth in hierarchy.
+			$post_map[ $post->ID ] = $post;
+		}
 
-		// );
-		// }
+		foreach ( $posts as $post ) {
+			$parent_id = $post->post_parent;
+			if ( $parent_id && isset( $post_map[ $parent_id ] ) ) {
+				if ( ! isset( $post_map[ $parent_id ]->children ) ) {
+					$post_map[ $parent_id ]->children = array();
+				}
+				$post_map[ $parent_id ]->children[] = $post;
+			} else {
+				$tree_root[] = $post; // Is a root node.
+			}
+		}
 
-		// return $articles;
-		*/
+		// Flatten tree structure into an ordered list.
+		$ordered_posts = array();
+		self::flatten_hierarchical_posts( $tree_root, $ordered_posts );
+
+		return $ordered_posts;
+	}
+
+	/**
+	 * Recursively flatten hierarchical posts into an ordered list.
+	 *
+	 * @param array $posts Array of hierarchical posts.
+	 * @param array $output Ordered output array.
+	 */
+	private static function flatten_hierarchical_posts( $posts, &$output ) {
+		foreach ( $posts as $post ) {
+			$output[] = $post;
+			if ( isset( $post->children ) ) {
+				self::flatten_hierarchical_posts( $post->children, $output );
+			}
+		}
 	}
 }
 
