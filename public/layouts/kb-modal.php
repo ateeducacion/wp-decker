@@ -135,7 +135,8 @@ defined( 'ABSPATH' ) || exit;
 						$('#article-title').val(article.title);
 						$('#article-order').val(article.menu_order);
 						editor.setContent(article.content);
-						window.labelsSelect.setChoiceByValue(article.labels);
+						labelsSelect.clearStore();
+						labelsSelect.setChoiceByValue(article.labels);
 						window.parentSelect.setChoiceByValue(article.parent_id.toString());
 					} else {
 						Swal.fire({
@@ -186,6 +187,8 @@ defined( 'ABSPATH' ) || exit;
 			}
 		});
 
+		let labelsSelect, parentSelect;
+
 		// Initialize Choices.js for labels and parent
 		const choicesConfig = {
 			removeItemButton: true,
@@ -194,16 +197,14 @@ defined( 'ABSPATH' ) || exit;
 			shouldSort: true
 		};
 
-		if (!window.labelsSelect) {
-			window.labelsSelect = new Choices('#article-labels', choicesConfig);
-		}
+		labelsSelect = new Choices('#article-labels', choicesConfig);
+		window.labelsSelect = labelsSelect;
 
-		if (!window.parentSelect) {
-			window.parentSelect = new Choices('#article-parent', {
-				...choicesConfig,
-				searchPlaceholderValue: '<?php esc_html_e( 'Search for parent article...', 'decker' ); ?>'
-			});
-		}
+		parentSelect = new Choices('#article-parent', {
+			...choicesConfig,
+			searchPlaceholderValue: '<?php esc_html_e( 'Search for parent article...', 'decker' ); ?>'
+		});
+		window.parentSelect = parentSelect;
 
 		// Handle form submission
 		$('#guardar-articulo').on('click', function() {
