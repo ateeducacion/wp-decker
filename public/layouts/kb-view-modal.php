@@ -44,7 +44,7 @@ function viewArticle(id, title, content, labelsJson) {
 		},
 		success: function(response) {
 			const labels = JSON.parse(labelsJson);
-			const labelMap = new Map(response.map(l => [l.name, l.meta['term-color']]));
+			const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
 			
 			const labelsHtml = labels.map(label => 
 				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`

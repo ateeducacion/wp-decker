@@ -30,6 +30,7 @@ class Decker_Labels {
 	 */
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
+		add_action( 'init', array( $this, 'register_meta' ) );
 		add_action( 'decker_label_add_form_fields', array( $this, 'add_color_field' ), 10, 2 );
 		add_action( 'decker_label_edit_form_fields', array( $this, 'edit_color_field' ), 10, 2 );
 		add_action( 'created_decker_label', array( $this, 'save_color_meta' ), 10, 2 );
@@ -225,6 +226,17 @@ class Decker_Labels {
 			$content = '<span style="display:inline-block;width:20px;height:20px;background-color:' . esc_attr( $color ) . ';"></span>';
 		}
 		return $content;
+	}
+
+	/**
+	 * Register term meta for REST API
+	 */
+	public function register_meta() {
+		register_term_meta('decker_label', 'term-color', [
+			'type' => 'string',
+			'single' => true,
+			'show_in_rest' => true,
+		]);
 	}
 }
 
