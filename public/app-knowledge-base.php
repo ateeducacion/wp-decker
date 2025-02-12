@@ -124,8 +124,15 @@ die();
 													}
 													echo '</td>';
 
-													// Author.
-													echo '<td>' . esc_html( get_the_author_meta( 'display_name', $article->post_author ) ) . '</td>';
+													// Author with avatar
+													echo '<td>';
+													echo '<div class="avatar-group">';
+													echo '<a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" data-bs-original-title="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '">';
+													echo '<span class="d-none">' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '</span>';
+													echo '<img src="' . esc_url( get_avatar_url( $article->post_author ) ) . '" alt="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" class="rounded-circle avatar-xs">';
+													echo '</a>';
+													echo '</div>';
+													echo '</td>';
 
 													// Last Updated.
 													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
