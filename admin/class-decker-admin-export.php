@@ -35,7 +35,7 @@ class Decker_Admin_Export {
 	 */
 	private function get_custom_post_types() {
 		// Define the custom post types to export.
-		return array( 'decker_task' );
+		return array( 'decker_task', 'decker_kb', 'decker_event' );
 	}
 
 	/**
