@@ -488,11 +488,11 @@ msgstr "El título es obligatorio."
 msgid "The stack is required."
 msgstr "La columna es obligatoria."
 
-#: includes/custom-post-types/class-decker-tasks.php:1937
+#: includes/custom-post-types/class-decker-tasks.php:1944
 msgid "The board is required and must be a positive integer."
 msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
-#: includes/custom-post-types/class-decker-tasks.php:1943
+#: includes/custom-post-types/class-decker-tasks.php:1950
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr "El tablero no existe en la taxonomía decker_board."
 
@@ -1259,11 +1259,11 @@ msgstr "No tienes permiso para borrar etiquetas"
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
-#: includes/custom-post-types/class-decker-tasks.php:2070
+#: includes/custom-post-types/class-decker-tasks.php:2077
 msgid "Security check failed."
 msgstr "Error de comprobación."
 
-#: includes/custom-post-types/class-decker-tasks.php:2079
+#: includes/custom-post-types/class-decker-tasks.php:2086
 msgid "Invalid comment data."
 msgstr "Datos de comentario inválidos."
 
@@ -1861,3 +1861,7 @@ msgstr ""
 #: includes/class-decker-mailer.php:129
 msgid "This email was automatically sent by Decker"
 msgstr "Este email fue enviado automáticamente por Decker"
+
+#: includes/custom-post-types/class-decker-tasks.php:1940
+msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
+msgstr "La columna es inválida. Los tipos permitodos son: to-do, in-progress, done."

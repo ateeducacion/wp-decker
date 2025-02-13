@@ -52,11 +52,11 @@ check-all: check
 # Run unit tests with PHPUnit
 tests: test
 test:
-	npx wp-env start
+# 	npx wp-env start
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
 test-verbose:
-	npx wp-env start
+# 	npx wp-env start
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=always
 
 logs:
