@@ -81,6 +81,22 @@ class Task {
 	public int $author;
 
 	/**
+	 * The user responsible for the task.
+	 *
+	 * This may be null if get_userdata() fails.
+	 *
+	 * @var WP_User|null
+	 */
+	public ?WP_User $responsable = null;
+
+	/**
+	 * Whether the task is hidden in listings.
+	 *
+	 * @var bool
+	 */
+	public bool $hidden = false;
+
+	/**
 	 * The order of the task within its stack.
 	 *
 	 * @var int
@@ -151,6 +167,16 @@ class Task {
 			// Load all metadata once.
 			$meta = get_post_meta( $this->ID );
 
+			$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
+			$user_object    = get_userdata( $responsable_id );
+
+			// Only assign if $user_object is a WP_User.
+			if ( $user_object instanceof WP_User ) {
+				$this->responsable = $user_object;
+			}
+
+			$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];
+
 			// Use the meta array directly.
 			$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;
 			$this->max_priority = isset( $meta['max_priority'][0] ) && '1' === $meta['max_priority'][0];
@@ -175,7 +201,7 @@ class Task {
 	 *
 	 * @return Board|null The Board or null if no term is assigned.
 	 */
-	private function get_board(): ?Board {
+	public function get_board(): ?Board {
 		$terms = wp_get_post_terms( $this->ID, 'decker_board' );
 
 		if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
@@ -415,6 +441,9 @@ class Task {
 		if ( $draw_background_color && $this->board && $this->board->color ) {
 			$board_color           = $this->pastelize_color( $this->board->color );
 			$card_background_color = 'style="background-color: ' . esc_attr( $board_color ) . ';"';
+		} elseif ( $this->hidden ) {
+			// For hidden tasks, we set a light gray color.
+			$card_background_color = 'style="background-color: gainsboro;"';
 		}
 
 		?>
@@ -426,7 +455,19 @@ class Task {
 				</span>
 
 				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
-					<span class="task-id label-to-hide"><?php echo wp_kses_post( $relative_time ); ?></span>
+					<span class="task-id label-to-hide"  
+							<?php
+							if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
+								$now = new DateTime( 'now' );
+								if ( $now->diff( $this->duedate )->invert == 1 ) {
+									echo 'style="color: var(--ct-danger-text-emphasis)"';
+								}
+							}
+
+							?>
+						>
+						<?php echo wp_kses_post( $relative_time ); ?>
+					</span>
 					<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->ID ); ?></span>
 				</small>
 

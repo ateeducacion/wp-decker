@@ -89,7 +89,16 @@ foreach ( $tasks as $task ) {
 
 									</div>
 
-									<h4 class="page-title"><?php echo esc_html( $main_board->name ); ?>
+									<h4 class="page-title">
+										<?php echo esc_html( $main_board->name ); ?>
+										<?php if ( ! empty( $main_board->description ) ) : ?>
+											<i class="ri-information-line ms-1" 
+											   data-bs-toggle="popover" 
+											   data-bs-trigger="hover focus"
+											   data-bs-html="true"
+											   data-bs-content="<?php echo esc_attr( $main_board->description ); ?>"
+											   style="font-size: 0.8em; cursor: pointer;"></i>
+										<?php endif; ?>
 										<a href="
 										<?php
 										echo esc_url(
@@ -102,7 +111,7 @@ foreach ( $tasks as $task ) {
 											)
 										);
 										?>
-										" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a>
+										" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Task', 'decker' ); ?></a>
 	
 									<?php if ( current_user_can( 'manage_options' ) ) { ?> 
 									<!-- <span class="label-to-show"> -->

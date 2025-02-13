@@ -172,7 +172,7 @@ table#tablaTareas td:nth-child(4) {
 								$class_disabled = ' disabled';
 							}
 							?>
-								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Task', 'decker' ); ?></a></h4>
 
 								<div class="d-flex align-items-center">
 									<div id="searchBuilderContainer" class="me-2"></div>
@@ -204,6 +204,7 @@ table#tablaTareas td:nth-child(4) {
 														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
+														<th class="c-responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
 														<th class="c-users"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
 														<th class="c-time"><?php esc_html_e( 'Remaining Time', 'decker' ); ?></th>
 														<th class="c-actions text-end"></th>
@@ -224,7 +225,11 @@ table#tablaTareas td:nth-child(4) {
 
 												foreach ( $tasks as $task ) {
 													echo '<tr class="task">';
+
+													// Task max priority.
 													echo '<td>' . ( $task->max_priority ? '🔥' : '' ) . '</td>';
+
+													// Task board.
 													echo '<td>';
 
 													if ( null === $task->board ) {
@@ -233,7 +238,12 @@ table#tablaTareas td:nth-child(4) {
 														echo '<span class="badge rounded-pill" style="background-color: ' . esc_attr( $task->board->color ) . ';">' . esc_html( $task->board->name ) . '</span>';
 													}
 													echo '</td>';
+
+													// Task stack.
 													echo '<td>' . esc_html( $task->stack ) . '</td>';
+
+
+													// Task title.
 													echo '<td><a href="' . esc_url(
 														add_query_arg(
 															array(
@@ -243,6 +253,9 @@ table#tablaTareas td:nth-child(4) {
 															home_url( '/' )
 														)
 													) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr( $task->ID ) . '">' . esc_html( $task->title ) . '</a></td>';
+
+
+													// Labels.
 													echo '<td>';
 													foreach ( $task->labels as $label ) {
 														echo '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span> ';
@@ -250,6 +263,19 @@ table#tablaTareas td:nth-child(4) {
 													echo '</td>';
 
 
+													// Responsable.
+													echo '<td>';
+													echo '<div class="avatar-group">';
+
+													echo '<a href="javascript: void(0);" class="avatar-group-item avatar-group-item-responsable" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $task->responsable->display_name ) . '" data-bs-original-title="' . esc_attr( $task->responsable->display_name ) . '">';
+													echo '<span class="d-none">' . esc_attr( $task->responsable->display_name ) . '</span>';
+													echo '<img src="' . esc_url( get_avatar_url( $task->responsable->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
+													echo '</a>';
+
+													echo '</div></td>';
+
+
+													// Assigned users.
 													echo '<td data-users=\'' . esc_attr( wp_json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
 													echo '<div class="avatar-group">';
 
@@ -261,7 +287,11 @@ table#tablaTareas td:nth-child(4) {
 														echo '</a>';
 													}
 													echo '</div></td>';
+
+													// Remaining time.
 													echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
+
+													// Context menu.
 													echo '<td class="text-end">';
 													$task->render_task_menu();
 													echo '</td>';
@@ -325,9 +355,9 @@ table#tablaTareas td:nth-child(4) {
 						config: {
 							depthLimit: 2,
 							searchBuilder: {
-								columns: [1, 2, 3, 4, 5],
+								columns: [1, 2, 3, 4, 5, 6],
 							},
-							columns: [1, 2, 3, 4, 5],
+							columns: [1, 2, 3, 4, 5, 6],
 						},
 					},
 					{
@@ -341,7 +371,7 @@ table#tablaTareas td:nth-child(4) {
 						searchPanes: {
 							show: false,
 						},
-						targets: [1, 6], // Columnas para las cuales SearchPanes está deshabilitado
+						targets: [1, 7], // Columnas para las cuales SearchPanes está deshabilitado
 					},
 					{
 						targets: 2, // Columna 3
@@ -354,7 +384,7 @@ table#tablaTareas td:nth-child(4) {
 						orderable: false
 					},
 					{
-						targets: 6, // Columna 6 (Remaining Time)
+						targets: 7, // Columna 6 (Remaining Time)
 						render: function(data, type, row, meta) {
 							if(type === 'display') {
 								// Verificar que la fecha sea válida

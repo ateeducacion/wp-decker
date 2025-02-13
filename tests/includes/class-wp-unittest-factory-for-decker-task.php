@@ -38,6 +38,8 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 				'max_priority' => false,
 				// 'duedate'      => null,
 				'author'       => 1, // default to user ID 1 (admin)
+				'responsable'  => 1, // default to user ID 1 (admin)
+				'hidden'       => false,
 				// 'assigned_users' => array(),
 				// 'labels'       => array(),
 				'post_type'    => 'decker_task',
@@ -136,6 +138,8 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 			$args['max_priority'],
 			$args['duedate'],
 			$args['author'],
+			$args['responsable'],
+			$args['hidden'],
 			$args['assigned_users'],
 			$args['labels']
 		);

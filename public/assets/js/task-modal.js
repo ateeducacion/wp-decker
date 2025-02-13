@@ -3,10 +3,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     jQuery('#task-modal').on('show.bs.modal', function (e) {
         var modal = jQuery(this);
-        modal.find('.modal-body').html('<p>' + jsdata.loadingMessage + '</p>');
+        modal.find('#task-modal-body').html('<p>' + jsdata_task.loadingMessage + '</p>');
 
         var taskId = jQuery(e.relatedTarget).data('task-id'); // Puede ser 0 (nueva tarea).
-        var url = jsdata.url;
+        var url = jsdata_task.url;
 
         const params = new URLSearchParams(window.location.search);
         const boardSlug = params.get('slug'); // Si existe.
@@ -17,11 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
             data: { 
                 id: taskId,
                 slug: boardSlug,
-                nonce: jsdata.nonce,
+                nonce: jsdata_task.nonce,
                 nocache: new Date().getTime()
             },
             success: function (data) {
-                modal.find('.modal-body').html(data);
+                modal.find('#task-modal-body').html(data);
 
                 // Después de cargar el contenido, inicializar las funciones JS
                 if (typeof window.initializeSendComments === 'function' && typeof window.initializeTaskPage === 'function') {
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             },
             error: function () {
-                modal.find('.modal-body').html('<p>' + jsdata.errorMessage + '</p>');
+                modal.find('#task-modal-body').html('<p>' + jsdata_task.errorMessage + '</p>');
             }
         });
     });

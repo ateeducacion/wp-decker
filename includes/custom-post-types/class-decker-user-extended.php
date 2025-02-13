@@ -34,6 +34,7 @@ class Decker_User_Extended {
 		add_action( 'edit_user_profile_update', array( $this, 'save_custom_user_profile_fields' ) );
 		add_filter( 'manage_users_columns', array( $this, 'add_custom_user_columns' ) );
 		add_filter( 'manage_users_custom_column', array( $this, 'show_custom_user_column_content' ), 10, 3 );
+		add_action( 'wp_ajax_generate_calendar_token', array( $this, 'generate_calendar_token' ) );
 	}
 
 	/**
@@ -44,6 +45,32 @@ class Decker_User_Extended {
 	public function add_custom_user_profile_fields( $user ) {
 		wp_enqueue_script( 'wp-color-picker' );
 		wp_enqueue_style( 'wp-color-picker' );
+		?>
+		<script type="text/javascript">
+			jQuery(document).ready(function($) {
+				$('#generate-calendar-token').on('click', function() {
+					$.ajax({
+						url: ajaxurl,
+						type: 'POST',
+						data: {
+							action: 'generate_calendar_token',
+							user_id: <?php echo esc_js( $user->ID ); ?>,
+							nonce: '<?php echo esc_js( wp_create_nonce( 'generate_calendar_token' ) ); ?>',
+							action: 'generate_calendar_token'
+						},
+						success: function(response) {
+							if (response.success) {
+								$('#decker_calendar_token').val(response.data.token);
+								// Update calendar URL in description
+								const calendarUrl = '<?php echo esc_js( esc_url( home_url( 'decker-calendar' ) ) ); ?>?token=' + response.data.token;
+								$('#decker_calendar_token').closest('td').find('.description code').text(calendarUrl);
+							}
+						}
+					});
+				});
+			});
+		</script>
+		<?php
 
 		// Retrieve all boards for the select box.
 		$boards = get_terms(
@@ -60,6 +87,58 @@ class Decker_User_Extended {
 		<h3><?php esc_html_e( 'Decker Settings', 'decker' ); ?></h3>
 
 		<table class="form-table">
+			<!-- Calendar Token Field -->
+			<tr>
+				<th><label for="decker_calendar_token"><?php esc_html_e( 'Calendar Token', 'decker' ); ?></label></th>
+				<td>
+					<?php
+					$calendar_token = get_user_meta( $user->ID, 'decker_calendar_token', true );
+					if ( empty( $calendar_token ) ) {
+						$calendar_token = wp_generate_uuid4();
+					}
+					?>
+					<input type="text" name="decker_calendar_token" id="decker_calendar_token" 
+						value="<?php echo esc_attr( $calendar_token ); ?>" class="regular-text" readonly />
+					<button type="button" class="button" id="generate-calendar-token">
+						<?php esc_html_e( 'Generate New Token', 'decker' ); ?>
+					</button>
+					<br />
+					<span class="description">
+						<?php
+						$calendar_url = add_query_arg( 'token', $calendar_token, home_url( 'decker-calendar' ) );
+						$webcal_url = str_replace( 'http://', 'webcal://', $calendar_url );
+						$webcal_url = str_replace( 'https://', 'webcal://', $webcal_url );
+
+						echo '<div class="calendar-links" style="margin-top: 10px;">';
+						echo '<p style="margin-bottom: 5px;">' . esc_html__( 'Subscribe to Decker calendar:', 'decker' ) . '</p>';
+						echo '<a href="' . esc_url( 'https://www.google.com/calendar/render?cid=' . urlencode( $webcal_url ) ) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-google" style="vertical-align: middle;"></span> ' .
+								esc_html__( 'Google Calendar', 'decker' ) . '</a> ';
+
+						echo '<a href="' . esc_url( $webcal_url ) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-calendar-alt" style="vertical-align: middle;"></span> ' .
+								esc_html__( 'iCalendar', 'decker' ) . '</a> ';
+
+						echo '<a href="' . esc_url(
+							'https://outlook.office.com/owa?path=/calendar/action/compose&rru=addsubscription&url=' .
+							urlencode( $webcal_url ) . '&name=' . urlencode( get_bloginfo( 'name' ) . ' - ' . __( 'Calendar', 'decker' ) )
+						) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-calendar" style="vertical-align: middle;"></span> ' .
+								esc_html__( 'Outlook 365', 'decker' ) . '</a> ';
+
+						echo '<a href="' . esc_url( add_query_arg( 'export', '1', $calendar_url ) ) . '" 
+								class="button" target="_blank" rel="noopener noreferrer">
+								<span class="dashicons dashicons-download" style="vertical-align: middle;"></span> ' .
+								esc_html__( 'Export .ics file', 'decker' ) . '</a>';
+						echo '</div>';
+						?>
+					</span>
+				</td>
+			</tr>
+
 			<!-- Color Picker Field -->
 			<tr>
 				<th><label for="decker_color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
@@ -226,6 +305,24 @@ class Decker_User_Extended {
 			}
 		}
 		return $value;
+	}
+
+	/**
+	 * Generate a new calendar token via AJAX
+	 */
+	public function generate_calendar_token() {
+		check_ajax_referer( 'generate_calendar_token', 'nonce' );
+
+		$user_id = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : 0;
+
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			wp_send_json_error();
+		}
+
+		$new_token = wp_generate_uuid4();
+		update_user_meta( $user_id, 'decker_calendar_token', $new_token );
+
+		wp_send_json_success( array( 'token' => $new_token ) );
 	}
 }
 

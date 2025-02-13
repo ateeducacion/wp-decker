@@ -112,6 +112,21 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 	  <li class="side-nav-title"><?php esc_html_e( 'Apps', 'decker' ); ?></li>
 
+
+		<!-- Calendar -->
+	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'calendar' ) ); ?>">
+
+
+			<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'calendar' ), home_url( '/' ) ) ); ?>" class="side-nav-link">
+			<i class="ri-calendar-event-line"></i>
+			  <span><?php esc_html_e( 'Calendar', 'decker' ); ?></span>
+			</a>
+	 
+			</a>
+	  </li>
+
+
+
 	  <!-- Tasks -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'tasks' ) ); ?>">
 		<a
@@ -128,11 +143,16 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		<div class="collapse<?php echo ( 'tasks' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarTasks">
 		  <ul class="side-nav-second-level">
 			<?php
-			$active_tasks_count = wp_count_posts( 'decker_task' )->publish;
-			$task_manager                    = new taskManager();
-			$my_tasks                       = $task_manager->get_tasks_by_user( get_current_user_id() );
-			$my_tasks_count                 = count( $my_tasks );
-			$archived_tasks_count           = wp_count_posts( 'decker_task' )->archived;
+
+			$task_manager         = new taskManager();
+
+			$active_tasks         = $task_manager->get_tasks_by_status( 'publish' );
+			$active_tasks_count   = count( $active_tasks );
+
+			$my_tasks             = $task_manager->get_tasks_by_user( get_current_user_id() );
+			$my_tasks_count       = count( $my_tasks );
+
+			$archived_tasks_count = wp_count_posts( 'decker_task' )->archived;
 			?>
 			<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'active' ) ); ?>"><span class="badge bg-success float-end"><?php echo esc_html( $active_tasks_count ); ?></span><a href="
 								  <?php
@@ -239,6 +259,15 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		</div>
 	  </li>
 
+		<!-- Knowledge Base -->
+	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'knowledge-base' ) ); ?>">
+			<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" class="side-nav-link">
+			<i class="ri-database-2-line"></i>
+			  <span><?php esc_html_e( 'Knowledge Base', 'decker' ); ?></span>
+			</a>
+			</a>
+	  </li>
+
 	  <!-- Analytics -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'analytics' ) ); ?>">
 		<a href="<?php echo esc_url( add_query_arg( 'decker_page', 'analytics', home_url( '/' ) ) ); ?>" class="side-nav-link">
@@ -246,6 +275,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 		  <span><?php esc_html_e( 'Analytics', 'decker' ); ?></span>
 		</a>
 	  </li>
+
 
 
 	  <?php
@@ -306,6 +336,12 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 										);
 										?>
 				"><?php esc_html_e( 'Boards', 'decker' ); ?></a></li>
+
+				<li class="<?php echo esc_attr( decker_is_active_page( 'event-manager' ) ); ?>">
+					<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'event-manager' ), home_url( '/' ) ) ); ?>">
+						<span><?php esc_html_e( 'Events', 'decker' ); ?></span>
+					</a>
+				</li>
 
 				  <?php
 					/*

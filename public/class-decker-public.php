@@ -123,14 +123,17 @@ class Decker_Public {
 	 */
 	protected function include_decker_page( $decker_page ) {
 		$include_files = array(
-			'analytics'       => 'public/app-analytics.php',
-			'my-board'        => 'public/app-kanban-my.php',
-			'board'           => 'public/app-kanban.php',
-			'task'            => 'public/app-task-full.php',
-			'tasks'           => 'public/app-tasks.php',
-			'upcoming'        => 'public/app-upcoming.php',
-			'priority'        => 'public/app-priority.php',
-			'term-manager'    => 'public/app-term-manager.php',
+			'analytics'      => 'public/app-analytics.php',
+			'board'          => 'public/app-kanban.php',
+			'calendar'       => 'public/app-calendar.php',
+			'my-board'       => 'public/app-kanban-my.php',
+			'priority'       => 'public/app-priority.php',
+			'task'           => 'public/app-task-full.php',
+			'tasks'          => 'public/app-tasks.php',
+			'term-manager'   => 'public/app-term-manager.php',
+			'upcoming'       => 'public/app-upcoming.php',
+			'event-manager'  => 'public/app-event-manager.php',
+			'knowledge-base' => 'public/app-knowledge-base.php',
 		);
 
 		if ( array_key_exists( $decker_page, $include_files ) ) {
@@ -149,6 +152,9 @@ class Decker_Public {
 			$resources = array(
 				// Register the main theme config script.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
+
+				// WordPress REST API.
+				'wp-api',
 
 				// Bootstrap 5.
 				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
@@ -210,7 +216,45 @@ class Decker_Public {
 				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js';
 			}
 
-			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
+			if ( 'calendar' == $decker_page ) {
+
+				// FullCalendar.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js';
+
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
+
+			}
+
+			if ( 'calendar' == $decker_page || 'event-manager' == $decker_page ) {
+
+				// Flatpickr.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css';
+				$resources[] = 'https://npmcdn.com/flatpickr@4.6.13/dist/l10n/es.js';
+
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
+
+			}
+
+			if ( 'knowledge-base' == $decker_page ) {
+
+				wp_enqueue_media(); // Obligatorio para subida de medios.
+				// wp_enqueue_script('editor');
+				// wp_enqueue_script('thickbox');
+				// wp_enqueue_style('editor-buttons');
+				// wp_enqueue_style('thickbox');
+				// wp_enqueue_script('wp-tinymce'); // Script principal de TinyMCE.
+
+				wp_enqueue_editor();
+
+				// sweetalert2.js.
+				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css';
+
+			}
+
+			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
@@ -230,12 +274,72 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
 
+			$users = get_users(
+				array(
+					'fields' => array( 'ID', 'display_name' ), // Campos nativos.
+				)
+			);
+
+			// Añadir el nickname a cada usuario.
+			foreach ( $users as &$user ) {
+				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real.
+			}
+
+			// Preparar los datos a pasar al JS.
+			$localized_data = array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'rest_url' => rest_url( 'decker/v1/' ), // Ajusta según tus endpoints.
+				'home_url' => home_url( '/' ),
+				'nonces' => array(
+					'task_comment_nonce' => wp_create_nonce( 'task_comment_nonce' ),
+					'wp_rest_nonce' => wp_create_nonce( 'wp_rest' ),
+					'upload_attachment_nonce' => wp_create_nonce( 'upload_attachment_nonce' ),
+					'delete_attachment_nonce' => wp_create_nonce( 'delete_attachment_nonce' ),
+					'save_decker_task_nonce' => wp_create_nonce( 'save_decker_task_nonce' ),
+				),
+				'strings' => array(
+					'confirm_delete_comment' => __( 'Are you sure you want to delete this comment?', 'decker' ),
+					'failed_delete_comment' => __( 'Failed to delete comment.', 'decker' ),
+					'error_deleting_comment' => __( 'Error deleting comment.', 'decker' ),
+					'confirm_archive_task' => __( 'Are you sure you want to archive this task?', 'decker' ),
+					'failed_archive_task' => __( 'Failed to archive task.', 'decker' ),
+					'please_select_file' => __( 'Please select a file to upload.', 'decker' ),
+					'confirm_delete_attachment' => __( 'Are you sure you want to delete this attachment?', 'decker' ),
+					'failed_delete_attachment' => __( 'Failed to delete attachment.', 'decker' ),
+					'error_uploading_attachment' => __( 'Error uploading attachment.', 'decker' ),
+					'delete' => __( 'Delete', 'decker' ),
+					'server_response_error' => __( 'Server response error.', 'decker' ),
+					'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
+					'request_error' => __( 'Request error.', 'decker' ),
+					'error_saving_task' => __( 'Error saving task.', 'decker' ),
+					'show_html_source' => __( 'Show HTML source', 'decker' ),
+					'edit_html_content' => __( 'Edit the content in HTML format', 'decker' ),
+					'ok' => __( 'OK', 'decker' ),
+					'cancel' => __( 'Cancel', 'decker' ),
+					// Añade más strings según sea necesario.
+
+					 'today' => __( 'Today', 'decker' ),
+					'month' => __( 'Month', 'decker' ),
+					'week' => __( 'Week', 'decker' ),
+					'day' => __( 'Day', 'decker' ),
+					'list' => __( 'List', 'decker' ),
+
+				),
+				'disabled' => isset( $disabled ) && $disabled ? true : false,
+				'current_user_id' => get_current_user_id(),
+				'users' => $users,
+			);
+
 			$last_handle = '';
 
+			// Add the bundled jQuery library.
 			wp_enqueue_script( 'jquery' );
 
 			// Asegurar que el script de Heartbeat esté encolado.
 			wp_enqueue_script( 'heartbeat' );
+
+			// Add the bundled Backbone library.
+			wp_enqueue_script( 'wp-api' );
 
 			foreach ( $resources as $resource ) {
 				$handle = sanitize_title( basename( $resource, '.' . pathinfo( $resource, PATHINFO_EXTENSION ) ) );
@@ -259,7 +363,7 @@ class Decker_Public {
 			// Localize the script with new data.
 			wp_localize_script(
 				'task-modal', // task-modal script handle.
-				'jsdata',
+				'jsdata_task',
 				array(
 					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
 					'url'          => esc_url( plugins_url( 'public/layouts/task-card.php', __DIR__ ) ),
@@ -325,6 +429,21 @@ class Decker_Public {
 			$heartbeat_data = array();
 
 			wp_localize_script( 'decker-heartbeat', 'heartbeatData', $heartbeat_data );
+			// Localize the script with new data.
+			wp_localize_script(
+				'event-modal', // event-modal script handle.
+				'jsdata_event',
+				array(
+					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
+					'url'          => esc_url( plugins_url( 'public/layouts/event-card.php', __DIR__ ) ),
+					'loadingMessage' => esc_html__( 'Loading content. Please wait.', 'decker' ),
+					'errorMessage' => esc_html__( 'Error loading content. Please try again.', 'decker' ),
+					'nonce'        => wp_create_nonce( 'decker_event_card' ),
+				)
+			);
+
+			// TODO: This can be removed, review.
+			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
 
 		}
 	}
