@@ -1340,7 +1340,7 @@ msgid "DELAYED"
 msgstr ""
 
 #: public/app-upcoming.php:157
-#: public/class-decker-public.php:322
+#: public/class-decker-public.php:321
 msgid "Today"
 msgstr ""
 
@@ -1356,122 +1356,122 @@ msgstr ""
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:302
-#: public/class-decker-public.php:406
+#: public/class-decker-public.php:301
+#: public/class-decker-public.php:403
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/class-decker-public.php:303
-#: public/class-decker-public.php:407
+#: public/class-decker-public.php:302
+#: public/class-decker-public.php:404
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/class-decker-public.php:304
-#: public/class-decker-public.php:408
+#: public/class-decker-public.php:303
+#: public/class-decker-public.php:405
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/class-decker-public.php:305
-#: public/class-decker-public.php:409
+#: public/class-decker-public.php:304
+#: public/class-decker-public.php:406
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:306
-#: public/class-decker-public.php:410
+#: public/class-decker-public.php:305
+#: public/class-decker-public.php:407
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/class-decker-public.php:307
-#: public/class-decker-public.php:411
+#: public/class-decker-public.php:306
+#: public/class-decker-public.php:408
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/class-decker-public.php:308
-#: public/class-decker-public.php:412
+#: public/class-decker-public.php:307
+#: public/class-decker-public.php:409
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/class-decker-public.php:309
-#: public/class-decker-public.php:413
+#: public/class-decker-public.php:308
+#: public/class-decker-public.php:410
 msgid "Failed to delete attachment."
 msgstr ""
 
-#: public/class-decker-public.php:310
-#: public/class-decker-public.php:414
+#: public/class-decker-public.php:309
+#: public/class-decker-public.php:411
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/class-decker-public.php:311
-#: public/class-decker-public.php:415
+#: public/class-decker-public.php:310
+#: public/class-decker-public.php:412
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
 #: public/layouts/task-card.php:395
 msgid "Delete"
 msgstr ""
 
-#: public/class-decker-public.php:312
-#: public/class-decker-public.php:416
+#: public/class-decker-public.php:311
+#: public/class-decker-public.php:413
 msgid "Server response error."
 msgstr ""
 
-#: public/class-decker-public.php:313
-#: public/class-decker-public.php:417
+#: public/class-decker-public.php:312
+#: public/class-decker-public.php:414
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/class-decker-public.php:314
-#: public/class-decker-public.php:418
+#: public/class-decker-public.php:313
+#: public/class-decker-public.php:415
 msgid "Request error."
 msgstr ""
 
-#: public/class-decker-public.php:315
-#: public/class-decker-public.php:419
+#: public/class-decker-public.php:314
+#: public/class-decker-public.php:416
 msgid "Error saving task."
 msgstr ""
 
-#: public/class-decker-public.php:316
-#: public/class-decker-public.php:420
+#: public/class-decker-public.php:315
+#: public/class-decker-public.php:417
 msgid "Show HTML source"
 msgstr ""
 
-#: public/class-decker-public.php:317
-#: public/class-decker-public.php:421
+#: public/class-decker-public.php:316
+#: public/class-decker-public.php:418
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/class-decker-public.php:318
-#: public/class-decker-public.php:422
+#: public/class-decker-public.php:317
+#: public/class-decker-public.php:419
 msgid "OK"
 msgstr ""
 
-#: public/class-decker-public.php:319
-#: public/class-decker-public.php:423
+#: public/class-decker-public.php:318
+#: public/class-decker-public.php:420
 msgid "Cancel"
 msgstr ""
 
-#: public/class-decker-public.php:323
+#: public/class-decker-public.php:322
 msgid "Month"
 msgstr ""
 
-#: public/class-decker-public.php:324
+#: public/class-decker-public.php:323
 msgid "Week"
 msgstr ""
 
-#: public/class-decker-public.php:325
+#: public/class-decker-public.php:324
 msgid "Day"
 msgstr ""
 
-#: public/class-decker-public.php:326
+#: public/class-decker-public.php:325
 msgid "List"
 msgstr ""
 
-#: public/class-decker-public.php:373
-#: public/class-decker-public.php:443
+#: public/class-decker-public.php:370
+#: public/class-decker-public.php:439
 msgid "Loading content. Please wait."
 msgstr ""
 
-#: public/class-decker-public.php:374
-#: public/class-decker-public.php:444
+#: public/class-decker-public.php:371
+#: public/class-decker-public.php:440
 msgid "Error loading content. Please try again."
 msgstr ""
 
