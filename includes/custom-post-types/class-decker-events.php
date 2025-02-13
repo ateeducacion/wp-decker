@@ -98,12 +98,12 @@ class Decker_Events {
 
 		$args = array(
 			'labels'             => $labels,
-			'public'             => true,
-			'publicly_queryable' => true,
+			'public'             => false,
+			'publicly_queryable' => false,
 			'show_ui'           => true,
 			'show_in_menu'      => 'edit.php?post_type=decker_task',
 			'query_var'         => true,
-			'rewrite'           => array( 'slug' => 'events' ),
+			'rewrite'           => false,
 			'capability_type'   => 'post',
 			'map_meta_cap'      => true,
 			'has_archive'       => true,
