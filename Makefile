@@ -15,8 +15,8 @@ check-docker:
 # Bring up Docker containers
 up: check-docker
 	npx wp-env start
-	$(MAKE) create-user USER=test1 EMAIL=test1@example.org ROLE=editor PASSWORD=password
-	$(MAKE) create-user USER=test2 EMAIL=test2@example.org ROLE=editor PASSWORD=password
+# 	$(MAKE) create-user USER=test1 EMAIL=test1@example.org ROLE=editor PASSWORD=password
+# 	$(MAKE) create-user USER=test2 EMAIL=test2@example.org ROLE=editor PASSWORD=password
 	npx wp-env run cli wp plugin activate decker
 
 # Function to create a user only if it does not exist
