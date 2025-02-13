@@ -35,3 +35,20 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .choices__list--dropdown {
     z-index: 9999 !important;
 }
+
+
+#kb-view-modal .modal-dialog {
+    max-width: 90vw; /* Ensure it doesn't overflow horizontally */
+}
+
+#kb-view-modal .modal-content {
+    max-height: 90vh; /* Prevent modal from exceeding viewport height */
+    display: flex;
+    flex-direction: column;
+}
+
+#kb-view-modal .modal-body {
+    overflow-y: auto; /* Enables vertical scrolling */
+    max-height: 65vh; /* Adjust based on header/footer size */
+    padding: 1rem; /* Prevents content from touching edges */
+}
