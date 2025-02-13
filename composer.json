@@ -6,9 +6,9 @@
     "require-dev": {
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
-        "squizlabs/php_codesniffer": "*",
+        "squizlabs/php_codesniffer": "^3.11",
         "wp-cli/i18n-command": "*",
-        "wp-coding-standards/wpcs": "*",
+        "wp-coding-standards/wpcs": "^3.1",
         "yoast/phpunit-polyfills": "*",
         "yoast/wp-test-utils": "*"
     },
@@ -29,7 +29,6 @@
         "test": "phpunit",
         "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/,tests/ --colors --warning-severity=0 --extensions=php",
         "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php", 
-        "php-cs-fixer": "php-cs-fixer fix --config=.php-cs-fixer.php",
         "make-pot": "wp i18n make-pot . languages/decker.pot --domain=decker --exclude=vendor,assets,node_modules,tests,wp,wp-content --include=**/*.php",
         "update-po": "wp i18n update-po languages/decker.pot languages/decker-es_ES.po",
         "make-mo": "wp i18n make-mo languages/ languages/",

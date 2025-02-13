@@ -1933,6 +1933,13 @@ class Decker_Tasks {
 		if ( empty( $stack ) ) {
 			return new WP_Error( 'missing_field', __( 'The stack is required.', 'decker' ) );
 		}
+
+		// Validate allowed values for stack.
+		$allowed_stacks = array( 'to-do', 'in-progress', 'done' );
+		if ( ! in_array( $stack, $allowed_stacks, true ) ) {
+			return new WP_Error( 'invalid_field', __( 'The stack is invalid. Allowed values: to-do, in-progress, done.', 'decker' ) );
+		}
+
 		if ( $board <= 0 ) {
 			return new WP_Error( 'missing_field', __( 'The board is required and must be a positive integer.', 'decker' ) );
 		}
