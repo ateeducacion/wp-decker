@@ -14,7 +14,7 @@ check-docker:
 
 # Bring up Docker containers
 up: check-docker
-	npx wp-env start --update
+	npx wp-env start
 	$(MAKE) create-user USER=test1 EMAIL=test1@example.org ROLE=editor PASSWORD=password
 	$(MAKE) create-user USER=test2 EMAIL=test2@example.org ROLE=editor PASSWORD=password
 	npx wp-env run cli wp plugin activate decker
@@ -70,9 +70,9 @@ lint:
 fix:
 	composer --no-cache phpcbf --colors=always
 
-# Update Composer dependencies
+# Update wp-env and Composer dependencies
 update: check-docker
-	npx wp-env update
+	npx wp-env start --update
 	composer update --no-cache --with-all-dependencies
 
 # Generate a .pot file for translations
@@ -123,7 +123,7 @@ help:
 	@echo "  test               - Run unit tests"
 	@echo "  check-untranslated - Check the untranslated strings"
 	@echo "  check/check-all    - Run fix, lint, check-pugin, test, check-untraslated, mo"
-	@echo "  update             - Update Composer dependencies"
+	@echo "  update             - Update wp-env and Composer dependencies"
 	@echo "  package            - Generate a .zip package"
 	@echo "  destroy            - Destroy the WordPress environment"
 	@echo "  create-user        - Create a WordPress user if it doesn't exist. Usage: make create-user USER=<username> EMAIL=<email> ROLE=<role> PASSWORD=<password>"
