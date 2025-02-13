@@ -23,6 +23,10 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div class="modal-footer">
 				<div id="kb-view-labels" class="me-auto"></div>
+				<button type="button" class="btn btn-outline-secondary btn-sm me-2" id="copy-kb-content" title="Copiar texto">
+					<i class="ri-file-copy-line"></i>
+				</button>
+  
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
 			</div>
 		</div>
@@ -56,4 +60,31 @@ function viewArticle(id, title, content, labelsJson) {
 	
 	modal.modal('show');
 }
+
+// Función para copiar el contenido del modal al portapapeles usando Swal
+jQuery(document).ready(function($) {
+	$('#copy-kb-content').on('click', function() {
+		const textToCopy = $('#kb-view-content').text().trim();
+		if (!textToCopy) return;
+
+		navigator.clipboard.writeText(textToCopy).then(() => {
+			Swal.fire({
+				title: "¡Copiado!",
+				text: "El texto se ha copiado al portapapeles.",
+				icon: "success",
+				toast: true,
+				position: "top-end",
+				showConfirmButton: false,
+				timer: 2000
+			});
+		}).catch(err => {
+			Swal.fire({
+				title: "Error",
+				text: "No se pudo copiar el texto.",
+				icon: "error"
+			});
+			console.error('Error al copiar:', err);
+		});
+	});
+});
 </script>
