@@ -1198,7 +1198,7 @@ msgstr ""
 #: public/app-term-manager.php:290
 #: public/layouts/event-card.php:253
 #: public/layouts/kb-modal.php:82
-#: public/layouts/kb-view-modal.php:26
+#: public/layouts/kb-view-modal.php:30
 msgid "Close"
 msgstr ""
 
