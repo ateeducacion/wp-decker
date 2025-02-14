@@ -4,14 +4,14 @@ stages:
   - release
 
 variables:
+  # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
+  # See https://docs.gitlab.com/ee/user/packages/generic_packages/#publish-a-package-file
   PACKAGE_VERSION: "${CI_COMMIT_TAG}"
   PACKAGE_BINARY: "decker-${PACKAGE_VERSION}"
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
 
 build:
   stage: build
-  # Puedes usar 'rules:' o 'only:', pero no ambos mezclados 
-  # para la misma condición
   only:
     - tags
   before_script:
@@ -30,7 +30,7 @@ upload:
   image: curlimages/curl:latest
   only:
     - tags
-  needs: ["build"] # Para asegurar que vea el artifact del build
+  needs: ["build"]
   script:
     - |
       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
@@ -42,161 +42,28 @@ release:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   only:
     - tags
-  needs: ["upload"] # Asegura que se ejecute después de subir el archivo
+  needs: ["upload"]
+
   script:
-    - |
-      release-cli create \
-        --name "Release ${CI_COMMIT_TAG}" \
-        --tag-name "${CI_COMMIT_TAG}" \
-        --description "Release for ${CI_COMMIT_TAG}" \
-        --assets-link "{\"name\":\"${PACKAGE_BINARY}.zip\",\"url\":\"${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip\"}"
+    - echo "Creating GitLab release for tag ${RELEASE_TAG}"
 
-
-# stages:
-#   - build
-#   - upload
-#   - release
-
-# variables:
-#   # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
-#   # See https://docs.gitlab.com/ee/user/packages/generic_packages/#publish-a-package-file
-#   PACKAGE_VERSION: "${CI_COMMIT_TAG}"
-#   PACKAGE_BINARY: "decker-${PACKAGE_VERSION}"
-#   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
-
-# build:
-#   stage: build
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#   only:
-#     - tags
-#   before_script:
-#     - apt-get update && apt-get install -y make zip composer
-#     - composer --version
-#   # script:
-#     - make package VERSION="${PACKAGE_VERSION}"
-#     - ls -lh decker-${PACKAGE_VERSION}.zip
-#   artifacts:
-#     paths:
-#       - decker-${PACKAGE_VERSION}.zip
-#     expire_in: 1 week
-
-# upload:
-#   stage: upload
-#   image: curlimages/curl:latest
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#   script:
-#     - |
-#       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${PACKAGE_BINARY}.zip ${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip
-
-# release:
-#   # Caution, as of 2021-02-02 these assets links require a login, see:
-#   # https://gitlab.com/gitlab-org/gitlab/-/issues/299384
-#   stage: release
-#   image: registry.gitlab.com/gitlab-org/release-cli:latest
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#   script:
-#     - |
-#       release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
-#         --assets-link "{\"name\":\"${PACKAGE_BINARY}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}\"}" \
+  release:
+    name: "Release ${RELEASE_TAG}"
+    tag_name: "${RELEASE_TAG}"
+    description: "New release ${RELEASE_TAG}"
+    assets:
+      links:
+        - name: "${PACKAGE_BINARY}.zip"
+          url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
 
 
 
-# # stages:
-# #   - build
-# #   - release
 
-# # variables:
-# #   RELEASE_TAG: "${CI_COMMIT_TAG}"
-
-# # build_package:
-# #   stage: build
-# #   only:
-# #     - tags
-# #   before_script:
-# #     - apt-get update && apt-get install -y make zip composer
-# #     - composer --version
-# #   script:
-# #     - make package VERSION="${RELEASE_TAG}"
-# #     - ls -lh decker-${RELEASE_TAG}.zip
-# #   artifacts:
-# #     paths:
-# #       - decker-${RELEASE_TAG}.zip
-# #     expire_in: 1 week
-
-# # release:
-# #   stage: release
-# #   image: registry.gitlab.com/gitlab-org/release-cli:latest
-# #   needs: ["build_package"]  # Asegura que este job dependa del artefacto
-# #   only:
-# #     - tags
-# #   script:
-# #     - echo "Creando Release en GitLab para el tag ${RELEASE_TAG}"
-# #   release:
-# #     name: "Release ${RELEASE_TAG}"
-# #     tag_name: "${RELEASE_TAG}"
-# #     description: "New release ${RELEASE_TAG}"
-# #     assets:
-# #       links:
-# #         - name: "decker-${RELEASE_TAG}.zip"
-# #           url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/decker-${RELEASE_TAG}.zip?inline=false"
-# #           url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/decker-${RELEASE_TAG}.zip}"
-
-# #         --assets-link "{\"name\":\"${LINUX_AMD64_BINARY}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${LINUX_AMD64_BINARY}\"}"
-
-
-# # # stages:
-# # #   - build
-# # #   - release
-
-# # # variables:
-# # #   RELEASE_TAG: "${CI_COMMIT_TAG}"
-
-# # # build_package:
-# # #   stage: build
-# # #   only:
-# # #     - tags
-# # #   before_script:
-# # #     - apt-get update && apt-get install -y make zip composer
-# # #     - composer --version
-# # #   script:
-# # #     - make package VERSION="${RELEASE_TAG}"
-# # #     - ls -lh decker-${RELEASE_TAG}.zip
-# # #   artifacts:
-# # #     paths:
-# # #       - decker-${RELEASE_TAG}.zip
-# # #     expire_in: 1 week
-
-# # # # build_package:
-# # # #   stage: build
-# # # #   only:
-# # # #     - tags
-# # # #   before_script:
-# # # #     - apt-get update && apt-get install -y make zip composer
-# # # #   script:
-# # # #     # Run the Makefile to generate the ZIP package
-# # # #     - make package VERSION="${RELEASE_TAG}"
-# # # #     - ls -lh decker-"${RELEASE_TAG}".zip
-# # # #   artifacts:
-# # # #     paths:
-# # # #       - decker-"${RELEASE_TAG}".zip
-# # # #     expire_in: 1 week
-
-# # # release:
-# # #   stage: release
-# # #   image: registry.gitlab.com/gitlab-org/release-cli:latest
-# # #   only:
-# # #     - tags
-# # #   script:
-# # #     - echo "Creating GitLab release for tag ${RELEASE_TAG}"
-# # #   release:
-# # #     name: "Release ${RELEASE_TAG}"
-# # #     tag_name: "${RELEASE_TAG}"
-# # #     description: "New release ${RELEASE_TAG}"
-# # #     assets:
-# # #       links:
-# # #         - name: "decker-${RELEASE_TAG}.zip"
-# # #           url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download?file=decker-${RELEASE_TAG}.zip"
+  # script:
+  #   - |
+  #     release-cli create \
+  #       --name "Release ${CI_COMMIT_TAG}" \
+  #       --tag-name "${CI_COMMIT_TAG}" \
+  #       --description "Release for ${CI_COMMIT_TAG}" \
+  #       --assets-link "{\"name\":\"${PACKAGE_BINARY}.zip\",\"url\":\"${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip\"}"
 

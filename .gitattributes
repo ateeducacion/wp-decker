@@ -15,7 +15,7 @@ CONVENTIONS.md             export-ignore
 docker-compose.yml         export-ignore
 docs/                      export-ignore
 Makefile                   export-ignore
-mkdocs.yml                 export-ignore	
+mkdocs.yml                 export-ignore
 node_modules/              export-ignore
 package-lock.json          export-ignore
 package.json               export-ignore
@@ -28,3 +28,4 @@ sftp-config.json           export-ignore
 test.php                   export-ignore
 tests/                     export-ignore
 /vendor/                   export-ignore
+*.css.map 				   export-ignore
