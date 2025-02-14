@@ -47,6 +47,7 @@ class Decker_Notification_Handler {
 	 * User-specific settings are handled separately.
 	 */
 	private function setup_hooks() {
+
 		if ( $this->are_notifications_enabled() ) {
 			// Triggered when a new task is created.
 			add_action( 'decker_task_created', array( $this, 'handle_task_created' ) );
@@ -68,9 +69,10 @@ class Decker_Notification_Handler {
 	 * @return bool True if global email notifications are enabled, false otherwise.
 	 */
 	private function are_notifications_enabled() {
+				return true;
 		$options = get_option( 'decker_settings', array() );
 
-		if ( isset( $options['enable_email_notifications'] ) && $options['enable_email_notifications'] ) {
+		if ( isset( $options['allow_email_notifications'] ) && $options['allow_email_notifications'] ) {
 			return true;
 		}
 
@@ -109,6 +111,10 @@ class Decker_Notification_Handler {
 	 * @param int $task_id The ID of the newly created task.
 	 */
 	public function handle_task_created( $task_id ) {
+
+			error_log("Intentando enviar emails");
+
+
 		// Fetch assigned users.
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
 
@@ -127,6 +133,9 @@ class Decker_Notification_Handler {
 
 		// For each assigned user, send an email if their preferences allow it.
 		foreach ( $assigned_users as $user_id ) {
+
+			error_log("Intentando enviar email al usuario: $user_id");
+
 			// Heartbeat notification is always saved, regardless of preferences.
 			$notification_data = array(
 				'type'      => 'task_created',

@@ -48,6 +48,15 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	public function set_up(): void {
 		parent::set_up();
 
+
+		// Enable email notifications.
+		update_option(
+			'decker_settings',
+			array(
+				'allow_email_notifications' => true,
+			)
+		);
+
 		$this->fired_hooks = array();
 
 		// Set up email capturing.
@@ -69,13 +78,6 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Enable email notifications.
-		update_option(
-			'decker_settings',
-			array(
-				'enable_email_notifications' => true,
-			)
-		);
 
 		// Initialize the notifications handler.
 		$this->notifications = new Decker_Notification_Handler();
@@ -195,8 +197,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * Tests task completion notification.
 	 */
 	public function test_task_completed_notification() {
-		$this->assertTrue( true );
-		return;
+
 		// Set user preferences.
 		update_user_meta(
 			$this->test_user,
@@ -241,8 +242,6 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * Tests task comment notification.
 	 */
 	public function test_task_comment_notification() {
-		$this->assertTrue( true );
-		return;
 
 		// Set user preferences.
 		update_user_meta(
@@ -298,8 +297,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * Tests that no notifications are sent when the current user is the same user performing the action.
 	 */
 	public function test_no_self_notifications() {
-		$this->assertTrue( true );
-		return;
+
 		// Set the current user to the test user.
 		wp_set_current_user( $this->test_user );
 
