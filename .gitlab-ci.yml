@@ -36,18 +36,22 @@ upload:
       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
            --upload-file "${PACKAGE_BINARY}.zip" \
            "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
-           
+
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   only:
     - tags
   needs: ["upload"]
+
   script:
-    - |
-      release-cli create \
-        --name "Release ${CI_COMMIT_TAG}" \
-        --tag-name "${CI_COMMIT_TAG}" \
-        --description "Release for ${CI_COMMIT_TAG}" \
-        --assets-link "{\"name\":\"${PACKAGE_BINARY}.zip\",\"url\":\"${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip\"}"
+    - echo "Creating GitLab release for tag ${PACKAGE_VERSION}"
+  release:
+    name: "Release ${PACKAGE_VERSION}"
+    tag_name: "${CI_COMMIT_TAG}"
+    description: "Release for ${PACKAGE_VERSION}"
+    assets:
+      links:
+        - name: "${PACKAGE_BINARY}.zip"
+          url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
 
