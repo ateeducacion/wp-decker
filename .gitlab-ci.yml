@@ -3,35 +3,38 @@ stages:
   - release
 
 variables:
-  RELEASE_TAG: $CI_COMMIT_TAG
+  RELEASE_TAG: "${CI_COMMIT_TAG}"
 
 build_package:
   stage: build
   image: ubuntu:latest
+  only:
+    - tags
   before_script:
-    - apt update && apt install -y make zip
+    - apt-get update && apt-get install -y make zip
   script:
-    - make package VERSION=${RELEASE_TAG}
-    - mv decker-${RELEASE_TAG}.zip decker-latest.zip
+    # Run the Makefile to generate the ZIP package
+    - make package VERSION="${RELEASE_TAG}"
+    - ls -lh decker-"${RELEASE_TAG}".zip
   artifacts:
     paths:
-      - decker-${RELEASE_TAG}.zip
-      - decker-latest.zip
+      - decker-"${RELEASE_TAG}".zip
     expire_in: 1 week
 
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
+  only:
+    - tags
   script:
-    - echo "Releasing ${RELEASE_TAG}"
+    - echo "Creating GitLab release for tag ${RELEASE_TAG}"
   release:
+    # Creates a new release entry in GitLab
     name: "Release ${RELEASE_TAG}"
     tag_name: "${RELEASE_TAG}"
     description: "New release ${RELEASE_TAG}"
     assets:
+      # Adds a direct link to download the artifact
       links:
         - name: "Download decker-${RELEASE_TAG}.zip"
           url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download"
-        - name: "Latest package"
-          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download?file_type=archive"
-
