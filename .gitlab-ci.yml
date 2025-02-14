@@ -20,34 +20,72 @@ build_package:
       - decker-${RELEASE_TAG}.zip
     expire_in: 1 week
 
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: ["build_package"]  # Asegura que este job dependa del artefacto
+  only:
+    - tags
+  script:
+    - echo "Creando Release en GitLab para el tag ${RELEASE_TAG}"
+  release:
+    name: "Release ${RELEASE_TAG}"
+    tag_name: "${RELEASE_TAG}"
+    description: "Nueva versión ${RELEASE_TAG}"
+    assets:
+      links:
+        - name: "decker-${RELEASE_TAG}.zip"
+          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/raw/decker-${RELEASE_TAG}.zip?inline=false"
+# stages:
+#   - build
+#   - release
+
+# variables:
+#   RELEASE_TAG: "${CI_COMMIT_TAG}"
+
 # build_package:
 #   stage: build
 #   only:
 #     - tags
 #   before_script:
 #     - apt-get update && apt-get install -y make zip composer
+#     - composer --version
 #   script:
-#     # Run the Makefile to generate the ZIP package
 #     - make package VERSION="${RELEASE_TAG}"
-#     - ls -lh decker-"${RELEASE_TAG}".zip
+#     - ls -lh decker-${RELEASE_TAG}.zip
 #   artifacts:
 #     paths:
-#       - decker-"${RELEASE_TAG}".zip
+#       - decker-${RELEASE_TAG}.zip
 #     expire_in: 1 week
 
-release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  only:
-    - tags
-  script:
-    - echo "Creating GitLab release for tag ${RELEASE_TAG}"
-  release:
-    name: "Release ${RELEASE_TAG}"
-    tag_name: "${RELEASE_TAG}"
-    description: "New release ${RELEASE_TAG}"
-    assets:
-      links:
-        - name: "decker-${RELEASE_TAG}.zip"
-          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download?file=decker-${RELEASE_TAG}.zip"
+# # build_package:
+# #   stage: build
+# #   only:
+# #     - tags
+# #   before_script:
+# #     - apt-get update && apt-get install -y make zip composer
+# #   script:
+# #     # Run the Makefile to generate the ZIP package
+# #     - make package VERSION="${RELEASE_TAG}"
+# #     - ls -lh decker-"${RELEASE_TAG}".zip
+# #   artifacts:
+# #     paths:
+# #       - decker-"${RELEASE_TAG}".zip
+# #     expire_in: 1 week
+
+# release:
+#   stage: release
+#   image: registry.gitlab.com/gitlab-org/release-cli:latest
+#   only:
+#     - tags
+#   script:
+#     - echo "Creating GitLab release for tag ${RELEASE_TAG}"
+#   release:
+#     name: "Release ${RELEASE_TAG}"
+#     tag_name: "${RELEASE_TAG}"
+#     description: "New release ${RELEASE_TAG}"
+#     assets:
+#       links:
+#         - name: "decker-${RELEASE_TAG}.zip"
+#           url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download?file=decker-${RELEASE_TAG}.zip"
 
