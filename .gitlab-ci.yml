@@ -14,10 +14,10 @@ build_package:
     - composer --version
   script:
     - make package VERSION="${RELEASE_TAG}"
-    - ls -lh decker-v${RELEASE_TAG}.zip
+    - ls -lh decker-${RELEASE_TAG}.zip
   artifacts:
     paths:
-      - decker-v${RELEASE_TAG}.zip
+      - decker-${RELEASE_TAG}.zip
     expire_in: 1 week
 
 # build_package:
