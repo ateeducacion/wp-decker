@@ -43,12 +43,11 @@ release:
   script:
     - echo "Creating GitLab release for tag ${RELEASE_TAG}"
   release:
-    # Creates a new release entry in GitLab
     name: "Release ${RELEASE_TAG}"
     tag_name: "${RELEASE_TAG}"
     description: "New release ${RELEASE_TAG}"
     assets:
-      # Adds a direct link to download the artifact
       links:
-        - name: "Download decker-${RELEASE_TAG}.zip"
-          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download"
+        - name: "decker-${RELEASE_TAG}.zip"
+          url: "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/download?file=decker-${RELEASE_TAG}.zip"
+
