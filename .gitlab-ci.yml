@@ -11,14 +11,29 @@ build_package:
     - tags
   before_script:
     - apt-get update && apt-get install -y make zip composer
+    - composer --version
   script:
-    # Run the Makefile to generate the ZIP package
     - make package VERSION="${RELEASE_TAG}"
-    - ls -lh decker-"${RELEASE_TAG}".zip
+    - ls -lh decker-v${RELEASE_TAG}.zip
   artifacts:
     paths:
-      - decker-"${RELEASE_TAG}".zip
+      - decker-v${RELEASE_TAG}.zip
     expire_in: 1 week
+
+# build_package:
+#   stage: build
+#   only:
+#     - tags
+#   before_script:
+#     - apt-get update && apt-get install -y make zip composer
+#   script:
+#     # Run the Makefile to generate the ZIP package
+#     - make package VERSION="${RELEASE_TAG}"
+#     - ls -lh decker-"${RELEASE_TAG}".zip
+#   artifacts:
+#     paths:
+#       - decker-"${RELEASE_TAG}".zip
+#     expire_in: 1 week
 
 release:
   stage: release
