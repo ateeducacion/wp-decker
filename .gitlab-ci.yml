@@ -7,11 +7,10 @@ variables:
 
 build_package:
   stage: build
-  image: ubuntu:latest
   only:
     - tags
   before_script:
-    - apt-get update && apt-get install -y make zip
+    - apt-get update && apt-get install -y make zip composer
   script:
     # Run the Makefile to generate the ZIP package
     - make package VERSION="${RELEASE_TAG}"
