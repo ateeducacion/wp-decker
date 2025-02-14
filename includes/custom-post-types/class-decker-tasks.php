@@ -940,12 +940,12 @@ class Decker_Tasks {
 
 		$args = array(
 			'labels'             => $labels,
-			'public'             => true,
-			'publicly_queryable' => true,
+			'public'             => false,
+			'publicly_queryable' => false,
 			'show_ui'            => true,
 			'show_in_menu'       => true,
 			'query_var'          => true,
-			'rewrite'            => array( 'slug' => 'decker_task' ),
+			'rewrite'            => false,
 			'capability_type'    => 'post',
 			'has_archive'        => true,
 			'hierarchical'       => false,

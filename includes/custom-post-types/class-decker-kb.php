@@ -199,13 +199,13 @@ class Decker_Kb {
 
 		$args = array(
 			'labels'              => $labels,
-			'public'              => true,
-			'publicly_queryable'  => true,
+			'public'              => false,
+			'publicly_queryable'  => false,
 			'show_ui'            => true,
 			'show_in_menu'      => 'edit.php?post_type=decker_task',
 			'show_in_nav_menus'  => true,
 			'query_var'          => true,
-			'rewrite'            => array( 'slug' => 'knowledge-base' ),
+			'rewrite'            => false,
 			'capability_type'     => 'post',
 			'has_archive'        => true,
 			'hierarchical'       => true, // Enable hierarchy.
