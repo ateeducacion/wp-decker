@@ -1,6 +1,7 @@
 stages:
-  - build
-  - upload
+  # Disabled build and upload stages until get internet connection on Gitlab Runner  
+  # - build
+  # - upload
   - release
 
 variables:
@@ -10,32 +11,33 @@ variables:
   PACKAGE_BINARY: "decker-${PACKAGE_VERSION}"
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
 
-build:
-  stage: build
-  only:
-    - tags
-  before_script:
-    - apt-get update && apt-get install -y make zip composer
-    - composer --version
-  script:
-    - make package VERSION="${PACKAGE_VERSION}"
-    - ls -lh "decker-${PACKAGE_VERSION}.zip"
-  artifacts:
-    paths:
-      - "decker-${PACKAGE_VERSION}.zip"
-    expire_in: 1 week
+# Disabled build and upload stages until get internet connection on Gitlab Runner
+# build:
+#   stage: build
+#   only:
+#     - tags
+#   before_script:
+#     - apt-get update && apt-get install -y make zip composer
+#     - composer --version
+#   script:
+#     - make package VERSION="${PACKAGE_VERSION}"
+#     - ls -lh "decker-${PACKAGE_VERSION}.zip"
+#   artifacts:
+#     paths:
+#       - "decker-${PACKAGE_VERSION}.zip"
+#     expire_in: 1 week
 
-upload:
-  stage: upload
-  image: curlimages/curl:latest
-  only:
-    - tags
-  needs: ["build"]
-  script:
-    - |
-      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-           --upload-file "${PACKAGE_BINARY}.zip" \
-           "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
+# upload:
+#   stage: upload
+#   image: curlimages/curl:latest
+#   only:
+#     - tags
+#   needs: ["build"]
+#   script:
+#     - |
+#       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+#            --upload-file "${PACKAGE_BINARY}.zip" \
+#            "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
 
 release:
   stage: release
@@ -53,5 +55,7 @@ release:
     assets:
       links:
         - name: "${PACKAGE_BINARY}.zip"
-          url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
+          # Disabled build and upload stages until get internet connection on Gitlab Runner
+          # url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
+          url: "https://github.com/ateeducacion/wp-decker/releases/download/${PACKAGE_VERSION}/${PACKAGE_BINARY}"
 
