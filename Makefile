@@ -12,6 +12,9 @@ endif
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
 
+install-requirements:
+	npm -g i @wordpress/env
+
 # Bring up Docker containers
 up: check-docker
 	npx wp-env start
