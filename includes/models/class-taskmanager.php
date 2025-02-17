@@ -270,9 +270,10 @@ class TaskManager {
 	 *
 	 * @param DateTime $from The start date of the range to filter tasks by.
 	 * @param DateTime $until The end date of the range to filter tasks by.
+	 * @param bool     $show_hidden_task Switch to show/not show hidden task. Default is true.
 	 * @return Task[] List of Task objects that meet the specified criteria.
 	 */
-	public function get_upcoming_tasks_by_date( DateTime $from, DateTime $until ): array {
+	public function get_upcoming_tasks_by_date( DateTime $from, DateTime $until, bool $show_hidden_task = true ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -295,6 +296,13 @@ class TaskManager {
 				),
 			),
 		);
+		if ( ! $show_hidden_task ) {
+			$args['meta_query'][] = array(
+				'key'       => 'hidden',
+				'value'     => '1',
+				'compare'   => '!=',
+			);
+		}
 		return $this->get_tasks( $args );
 	}
 
@@ -304,17 +312,18 @@ class TaskManager {
 	 * The function fetches tasks assigned to the given user and filters them based on user-date relations.
 	 * It returns tasks where the user has a relation date between the start date (today minus $days) and today.
 	 *
-	 * @param int $user_id The ID of the user.
-	 * @param int $days Number of days to look back from today. Pass 0 to get tasks for today only.
+	 * @param int  $user_id The ID of the user.
+	 * @param int  $days Number of days to look back from today. Pass 0 to get tasks for today only.
+	 * @param bool $show_hidden_task Switch to show/not show hidden task. Default is true.
 	 * @return Task[] List of Task objects within the specified time range.
 	 */
-	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days ): array {
+	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days, bool $show_hidden_task = true ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
 			'fields'      => 'ids', // Only retrieve IDs for performance optimization.
-			'meta_query'  => array(
+			'meta_query' => array(
 				'relation' => 'AND',
 				array(
 					'key'     => 'assigned_users',
@@ -327,6 +336,16 @@ class TaskManager {
 				),
 			),
 		);
+
+		// Not showing hidden task if the parameter show_hidden_task is false.
+
+		if ( ! $show_hidden_task ) {
+			$args['meta_query'][] = array(
+				'key'     => 'hidden',
+				'value'   => '1',
+				'compare' => '!=',
+			);
+		}
 
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids   = get_posts( $args );

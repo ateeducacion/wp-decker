@@ -440,7 +440,12 @@ class Task {
 		$card_background_color = '';
 		if ( $draw_background_color && $this->board && $this->board->color ) {
 			$board_color           = $this->pastelize_color( $this->board->color );
-			$card_background_color = 'style="background-color: ' . esc_attr( $board_color ) . ';"';
+
+			if ( $this->hidden ) {
+				$card_background_color = 'style="background-color: gainsboro; opacity: 1; background-image: repeating-linear-gradient(45deg,' . $board_color . ' 25%, transparent 25%, transparent 75%,' . $board_color . ' 75%,' . $board_color . '), repeating-linear-gradient(45deg,' . $board_color . ' 25%, gainsboro 25%, gainsboro 75%,' . $board_color . ' 75%,' . $board_color . '); background-position: 0 0, 10px 10px; background-size: 20px 20px;"';
+			} else {
+				$card_background_color = 'style="background-color: ' . esc_attr( $board_color ) . ';"';
+			}
 		} elseif ( $this->hidden ) {
 			// For hidden tasks, we set a light gray color.
 			$card_background_color = 'style="background-color: gainsboro;"';
@@ -459,7 +464,7 @@ class Task {
 							<?php
 							if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
 								$now = new DateTime( 'now' );
-								if ( $now->diff( $this->duedate )->invert == 1 ) {
+								if ( $now->diff( $this->duedate )->invert == 1 && $now->diff( $this->duedate )->days > 0 ) {
 									echo 'style="color: var(--ct-danger-text-emphasis)"';
 								}
 							}
