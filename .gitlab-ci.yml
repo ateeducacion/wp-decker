@@ -44,7 +44,8 @@ release:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   only:
     - tags
-  needs: ["upload"]
+  # Disabled build and upload stages until get internet connection on Gitlab Runner      
+  # needs: ["upload"]
 
   script:
     - echo "Creating GitLab release for tag ${PACKAGE_VERSION}"
