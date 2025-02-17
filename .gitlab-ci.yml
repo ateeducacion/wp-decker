@@ -58,5 +58,5 @@ release:
         - name: "${PACKAGE_BINARY}.zip"
           # Disabled build and upload stages until get internet connection on Gitlab Runner
           # url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
-          url: "https://github.com/ateeducacion/wp-decker/releases/download/${PACKAGE_VERSION}/${PACKAGE_BINARY}"
+          url: "https://github.com/ateeducacion/wp-decker/releases/download/${PACKAGE_VERSION}/${PACKAGE_BINARY}.zip"
 
