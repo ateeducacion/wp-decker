@@ -364,6 +364,18 @@ table#tablaTareas td:nth-child(4) {
 						extend: 'print',
 						className: 'd-none d-md-block', // Ocultar en móviles
 					},
+					{
+						extend: 'csv',
+						className: 'd-none d-md-block', // Ocultar en móviles
+					},
+					// {
+					// 	extend: 'excel',
+					// 	className: 'd-none d-md-block', // Ocultar en móviles
+					// },
+					// {
+					// 	extend: 'pdf',
+					// 	className: 'd-none d-md-block', // Ocultar en móviles
+					// },
 				],
 				dom: '<"ms-2"l><"d-flex justify-content-between align-items-center"<"me-2"B>f>rtip', // Ajustar layout
 				columnDefs: [
