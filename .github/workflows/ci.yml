@@ -54,7 +54,12 @@ jobs:
       - name: Run unit tests
         run: make test
 
+<<<<<<< HEAD
       # Determine the branch name
+=======
+
+      # Set branch name variable for blueprint URL based on event type
+>>>>>>> 14efca43e9ed417aa68a18ae8155b60523328f4e
       - name: Set branch name for blueprint URL
         shell: bash
         run: |
