@@ -83,7 +83,7 @@ jobs:
       - name: Encode blueprint for Playground
         id: blueprint
         run: |
-          JSON_BLUEPRINT=$(jq -c . blueprint.json)
+          JSON_BLUEPRINT=$(jq -c . blueprint.json | jq -sRr @uri)
           echo "JSON_BLUEPRINT=$JSON_BLUEPRINT" >> $GITHUB_ENV
 
       # Show final Playground URL in the Summary
