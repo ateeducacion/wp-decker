@@ -119,6 +119,7 @@
                             alert(deckerVars.strings.error_saving_event);
                         });
                     },
+                    eventDrop: this.onEventDrop.bind(this), // Pe15c
                     eventDidMount: function(info) {
                         const titleEl = info.el.querySelector('.fc-event-title');
                         if (!titleEl) return;
@@ -218,6 +219,39 @@
 
             if (this.$calendarObj) {
                 this.$calendarObj.unselect();
+            }
+        },
+
+        onEventDrop: function(info) { // P54e3
+            if (info.event.extendedProps.type === 'task') {
+                const taskId = info.event.id.replace('task_', '');
+                const newDate = info.event.start.toISOString().split('T')[0];
+
+                fetch(wpApiSettings.root + 'decker/v1/tasks/' + taskId + '/update-date', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': wpApiSettings.nonce
+                    },
+                    body: JSON.stringify({ date: newDate })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert(deckerVars.strings.task_date_updated);
+                    } else {
+                        alert(deckerVars.strings.error_updating_task_date);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(deckerVars.strings.error_updating_task_date);
+                });
             }
         },
 

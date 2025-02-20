@@ -673,6 +673,16 @@ class Decker_Tasks {
 					return current_user_can( 'manage_options' );
 				},
 			)
+			);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/(?P<id>\d+)/update-date',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'update_task_date' ),
+				'permission_callback' => array( $this, 'update_task_date_permissions_check' ),
+			)
 		);
 	}
 
@@ -2109,6 +2119,61 @@ class Decker_Tasks {
 		);
 
 		wp_send_json_success( $response );
+	}
+
+	/**
+	 * Update task date via REST API
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 * @return WP_REST_Response
+	 */
+	public function update_task_date( $request ) {
+		$task_id = $request->get_param( 'id' );
+		$new_date = $request->get_param( 'date' );
+
+		if ( empty( $task_id ) || empty( $new_date ) ) {
+			return new WP_Error(
+				'rest_invalid_param',
+				__( 'Invalid task ID or date.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$task = get_post( $task_id );
+		if ( ! $task || 'decker_task' !== $task->post_type ) {
+			return new WP_Error(
+				'rest_not_found',
+				__( 'Task not found.', 'decker' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		// Update the task's due date.
+		update_post_meta( $task_id, 'duedate', $new_date );
+
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'message' => __( 'Task date updated successfully.', 'decker' ),
+			)
+		);
+	}
+
+	/**
+	 * Check if user has permission to update task date
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 * @return bool|WP_Error
+	 */
+	public function update_task_date_permissions_check( $request ) {
+		if ( ! is_user_logged_in() || ! current_user_can( 'edit_posts' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				__( 'You do not have permissions to modify this data.', 'decker' ),
+				array( 'status' => 403 )
+			);
+		}
+		return true;
 	}
 }
 
