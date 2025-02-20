@@ -87,15 +87,15 @@ install-phpcs: up
 
 # Check code style with PHP Code Sniffer inside the container
 lint: install-phpcs
-	npx wp-env run --no-TTY cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcs --standard=WordPress /var/www/html/wp-content/plugins/decker \
+	npx wp-env run cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcs --standard=WordPress /var/www/html/wp-content/plugins/decker \
 	--ignore=*/vendor/*,*/assets/*,*/node_modules/*,*/tests/js/*,*/wp/*,*/tests/* \
-	--colors --warning-severity=0 --extensions=php < /dev/null
+	--colors --warning-severity=0 --extensions=php
 
 # Automatically fix code style with PHP Code Beautifier inside the container
 fix: install-phpcs
-	npx wp-env run --no-TTY cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcbf --standard=WordPress /var/www/html/wp-content/plugins/decker \
+	npx wp-env run cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcbf --standard=WordPress /var/www/html/wp-content/plugins/decker \
 	--ignore=*/vendor/*,*/assets/*,*/node_modules/*,*/tests/js/*,*/wp/*,*/tests/* \
-	--colors --warning-severity=0 --extensions=php < /dev/null
+	--colors --warning-severity=0 --extensions=php
 
 
 # Finds the CLI container used by wp-env
