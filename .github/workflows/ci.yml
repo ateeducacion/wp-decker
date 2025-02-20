@@ -80,7 +80,6 @@ jobs:
       # Show final Playground URL in the Summary
       - name: Add Playground URL to summary
         run: |
-          echo "https://playground.wordpress.net/#${BASE64_BLUEPRINT}" >> $GITHUB_STEP_SUMMARY
           echo "[Test in WP Playground](https://playground.wordpress.net/#${BASE64_BLUEPRINT})" >> $GITHUB_STEP_SUMMARY
 
 
