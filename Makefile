@@ -98,7 +98,7 @@ fix: install-phpcs
 	--colors --warning-severity=0 --extensions=php < /dev/null
 
 
-# Encuentra el contenedor CLI que levanta wp-env
+# Finds the CLI container used by wp-env
 cli-container:
 	@docker ps --format "{{.Names}}" \
 	| grep "\-cli\-" \
@@ -108,6 +108,7 @@ cli-container:
 		exit 1 \
 	)
 
+# Fix wihout tty for use on git hooks
 fix-no-tty: cli-container
 	@CONTAINER_CLI=$$( \
 		docker ps --format "{{.Names}}" \
@@ -124,6 +125,7 @@ fix-no-tty: cli-container
 		--warning-severity=0 \
 		--extensions=php
 
+# Lint wihout tty for use on git hooks
 lint-no-tty: cli-container
 	@CONTAINER_CLI=$$( \
 		docker ps --format "{{.Names}}" \

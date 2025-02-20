@@ -31,9 +31,6 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Run code linting
-        run: make lint
-
       - name: Install gettext
         run: sudo apt-get install -y gettext
 
@@ -47,6 +44,9 @@ jobs:
       # Start wp-env environment
       - name: Start wp-env
         run: make up
+
+      - name: Run code linting
+        run: make lint
 
       - name: Run plugin check
         run: make check-plugin
