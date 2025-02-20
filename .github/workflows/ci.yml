@@ -85,7 +85,7 @@ jobs:
               name: "Test on WP playground",
               head_sha: context.payload.pull_request ? context.payload.pull_request.head.sha : context.sha,
               status: "completed",
-              conclusion: "skipped",
+              conclusion: "neutral",
               output: {
                 title: "Test in WP playground",
                 summary: testUrl
