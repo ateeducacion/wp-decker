@@ -82,7 +82,7 @@ jobs:
       # Show final Playground URL in the Summary
       - name: Add Playground URL to summary
         run: |
-          echo "https://playground.wordpress.net/?blueprint=${ENCODED_BLUEPRINT}" >> $GITHUB_STEP_SUMMARY
+          echo "https://playground.wordpress.net/#${ENCODED_BLUEPRINT}" >> $GITHUB_STEP_SUMMARY
 
       # Create a GitHub Check Run with the Playground URL
       - name: Create a check with a test link
@@ -91,7 +91,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const encodedBlueprint = process.env.ENCODED_BLUEPRINT;
-            const playgroundUrl = `https://playground.wordpress.net/?blueprint=${encodedBlueprint}`;
+            const playgroundUrl = `https://playground.wordpress.net/#${encodedBlueprint}`;
             github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
