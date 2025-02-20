@@ -57,7 +57,7 @@ jobs:
 
       # Add test URL to workflow summary
       - name: Add test URL to summary
-        run: echo "🔗 [Test the branch here](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/${{ github.ref_name }}/blueprint.json)" >> $GITHUB_STEP_SUMMARY
+        run: echo "https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/${{ github.ref_name }}/blueprint.json)" >> $GITHUB_STEP_SUMMARY
 
       # Create a GitHub Check Run with the test URL
       - name: Create a check with a test link
@@ -68,12 +68,12 @@ jobs:
             github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              name: "Test Deployment",
+              name: "Test on WP playground",
               head_sha: context.payload.pull_request ? context.payload.pull_request.head.sha : context.sha,
               status: "completed",
               conclusion: "success",
               output: {
                 title: "Test Deployment Ready",
-                summary: "You can test the branch here: [Test the branch](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/${{ github.ref_name }}/blueprint.json)"
+                summary: "https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/${{ github.ref_name }}/blueprint.json"
               }
             });
