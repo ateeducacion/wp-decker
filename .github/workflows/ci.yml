@@ -75,14 +75,12 @@ jobs:
         run: |
           # Base64-encode the blueprint (no line wraps)
           BASE64_BLUEPRINT=$(base64 -w 0 blueprint.json)
-          # Then URL-encode the Base64 string
-          ENCODED_BLUEPRINT=$(echo "$BASE64_BLUEPRINT" | jq -sRr @uri)
-          echo "ENCODED_BLUEPRINT=$ENCODED_BLUEPRINT" >> $GITHUB_ENV
+          echo "BASE64_BLUEPRINT=$BASE64_BLUEPRINT" >> $GITHUB_ENV
 
       # Show final Playground URL in the Summary
       - name: Add Playground URL to summary
         run: |
-          echo "https://playground.wordpress.net/#${ENCODED_BLUEPRINT}" >> $GITHUB_STEP_SUMMARY
+          echo "https://playground.wordpress.net/#${BASE64_BLUEPRINT}" >> $GITHUB_STEP_SUMMARY
 
       # Create a GitHub Check Run with the Playground URL
       - name: Create a check with a test link
@@ -90,7 +88,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const encodedBlueprint = process.env.ENCODED_BLUEPRINT;
+            const encodedBlueprint = process.env.BASE64_BLUEPRINT;
             const playgroundUrl = `https://playground.wordpress.net/#${encodedBlueprint}`;
             github.rest.checks.create({
               owner: context.repo.owner,
