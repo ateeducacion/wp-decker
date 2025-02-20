@@ -64,32 +64,25 @@ jobs:
             echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
           fi
 
-      # Determine the branch name
-      - name: Set branch name for blueprint URL
-        shell: bash
-        run: |
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            echo "BRANCH_NAME=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
-          else
-            echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          fi
-
       # Replace main.zip with <BRANCH_NAME>.zip in blueprint.json
       - name: Patch blueprint.json with branch ZIP
         run: |
           sed -i "s|refs/heads/main.zip|refs/heads/${BRANCH_NAME}.zip|g" blueprint.json
 
-      # Convert blueprint.json to a single line
+      # Convert blueprint.json to Base64, because github not processes well json in urls
       - name: Encode blueprint for Playground
         id: blueprint
         run: |
-          JSON_BLUEPRINT=$(jq -c . blueprint.json | jq -sRr @uri)
-          echo "JSON_BLUEPRINT=$JSON_BLUEPRINT" >> $GITHUB_ENV
+          # Base64-encode the blueprint (no line wraps)
+          BASE64_BLUEPRINT=$(base64 -w 0 blueprint.json)
+          echo "BASE64_BLUEPRINT=$BASE64_BLUEPRINT" >> $GITHUB_ENV
 
       # Show final Playground URL in the Summary
       - name: Add Playground URL to summary
         run: |
-          echo "[Test in WP Playground](https://playground.wordpress.net/#${JSON_BLUEPRINT})" >> $GITHUB_STEP_SUMMARY
+          echo "https://playground.wordpress.net/#${BASE64_BLUEPRINT}" >> $GITHUB_STEP_SUMMARY
+          echo "[Test in WP Playground](https://playground.wordpress.net/#${BASE64_BLUEPRINT})" >> $GITHUB_STEP_SUMMARY
+
 
       # Create a GitHub Check Run with the Playground URL
       - name: Create a check with a test link
@@ -97,8 +90,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const jsonBlueprint = process.env.JSON_BLUEPRINT;
-            const playgroundUrl = `https://playground.wordpress.net/#${jsonBlueprint}`;
+            const encodedBlueprint = process.env.BASE64_BLUEPRINT;
+            const playgroundUrl = `https://playground.wordpress.net/#${encodedBlueprint}`;
             github.rest.checks.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -107,7 +100,9 @@ jobs:
               status: "completed",
               conclusion: "neutral",
               output: {
-                title: "Test in WP Playground",
+                title: "Test in WP playground",
                 summary: `[Test in WP Playground](${playgroundUrl})`
               }
             });
+
+
