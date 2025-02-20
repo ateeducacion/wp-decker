@@ -53,3 +53,27 @@ jobs:
 
       - name: Run unit tests
         run: make test
+
+
+      # Add test URL to workflow summary
+      - name: Add test URL to summary
+        run: echo "🔗 [Test the branch here](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/${{ github.ref_name }}/blueprint.json)" >> $GITHUB_STEP_SUMMARY
+
+      # Create a GitHub Check Run with the test URL
+      - name: Create a check with a test link
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: "Test Deployment",
+              head_sha: context.payload.pull_request ? context.payload.pull_request.head.sha : context.sha,
+              status: "completed",
+              conclusion: "success",
+              output: {
+                title: "Test Deployment Ready",
+                summary: "You can test the branch here: [Test the branch](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/${{ github.ref_name }}/blueprint.json)"
+              }
+            });
