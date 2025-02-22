@@ -624,7 +624,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-tasks.php:205
 #: includes/custom-post-types/class-decker-tasks.php:1119
 #: public/app-priority.php:171
-#: public/app-priority.php:403
+#: public/app-priority.php:409
 #: public/app-tasks.php:204
 #: public/layouts/task-card.php:245
 msgid "Stack"
@@ -709,7 +709,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1086
 #: public/app-priority.php:170
-#: public/app-priority.php:402
+#: public/app-priority.php:408
 #: public/app-tasks.php:203
 #: public/layouts/task-card.php:199
 msgid "Board"
@@ -961,40 +961,40 @@ msgstr ""
 msgid "Undefined date"
 msgstr ""
 
-#: includes/models/class-task.php:454
+#: includes/models/class-task.php:459
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:492
+#: includes/models/class-task.php:497
 #: public/layouts/task-card.php:311
 msgid "Comments"
 msgstr ""
 
-#: includes/models/class-task.php:545
+#: includes/models/class-task.php:550
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:562
+#: includes/models/class-task.php:567
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:569
+#: includes/models/class-task.php:574
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:578
+#: includes/models/class-task.php:583
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:585
+#: includes/models/class-task.php:590
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:600
+#: includes/models/class-task.php:605
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:606
+#: includes/models/class-task.php:611
 msgid "Unmark for today"
 msgstr ""
 
@@ -1085,7 +1085,7 @@ msgstr ""
 #: public/app-event-manager.php:63
 #: public/app-knowledge-base.php:87
 #: public/app-priority.php:172
-#: public/app-priority.php:404
+#: public/app-priority.php:410
 #: public/layouts/event-card.php:116
 #: public/layouts/event-card.php:117
 #: public/layouts/kb-modal.php:29
@@ -1194,7 +1194,7 @@ msgid "Yes"
 msgstr ""
 
 #: public/app-priority.php:154
-#: public/app-priority.php:392
+#: public/app-priority.php:398
 #: public/app-term-manager.php:290
 #: public/layouts/event-card.php:253
 #: public/layouts/kb-modal.php:82
@@ -1206,19 +1206,19 @@ msgstr ""
 msgid "MAX PRIORITY"
 msgstr ""
 
-#: public/app-priority.php:209
+#: public/app-priority.php:215
 msgid "No board assigned"
 msgstr ""
 
-#: public/app-priority.php:350
+#: public/app-priority.php:356
 msgid "No tasks for today."
 msgstr ""
 
-#: public/app-priority.php:391
+#: public/app-priority.php:397
 msgid "Select tasks to import"
 msgstr ""
 
-#: public/app-priority.php:432
+#: public/app-priority.php:438
 msgid "There are no tasks from previous days to import."
 msgstr ""
 

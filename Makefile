@@ -15,12 +15,22 @@ check-docker:
 install-requirements:
 	npm -g i @wordpress/env
 
+start-if-not-running:
+	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8888)" = "000" ]; then \
+		echo "wp-env is NOT running. Starting (previous updating) containers..."; \
+		npx wp-env start --update; \
+		npx wp-env run cli wp plugin activate decker; \
+	else \
+		echo "wp-env is already running, skipping start."; \
+	fi
+
+
 # Bring up Docker containers
-up: check-docker
-	npx wp-env start
+up: check-docker start-if-not-running
+# 	npx wp-env start --update
 # 	$(MAKE) create-user USER=test1 EMAIL=test1@example.org ROLE=editor PASSWORD=password
 # 	$(MAKE) create-user USER=test2 EMAIL=test2@example.org ROLE=editor PASSWORD=password
-	npx wp-env run cli wp plugin activate decker
+# 	npx wp-env run cli wp plugin activate decker
 
 # Function to create a user only if it does not exist
 create-user:
@@ -65,17 +75,76 @@ test-verbose:
 logs:
 	npx wp-env logs
 
-# Check code style with PHP-CS-Fixer
-lint:
-	composer --no-cache phpcs --colors=always
+# Install PHP_CodeSniffer and WordPress Coding Standards in the container
+install-phpcs: up
+	@echo "Checking if PHP_CodeSniffer is installed..."
+	@if ! npx wp-env run cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcs --version > /dev/null 2>&1; then \
+		echo "Installing PHP_CodeSniffer and WordPress Coding Standards..."; \
+		npx wp-env run cli composer global require squizlabs/php_codesniffer wp-coding-standards/wpcs --no-interaction; \
+	else \
+		echo "PHP_CodeSniffer is already installed."; \
+	fi
 
-# Automatically fix code style with PHP-CS-Fixer
-fix:
-	composer --no-cache phpcbf --colors=always
+# Check code style with PHP Code Sniffer inside the container
+lint: install-phpcs
+	npx wp-env run cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcs --standard=WordPress /var/www/html/wp-content/plugins/decker \
+	--ignore=*/vendor/*,*/assets/*,*/node_modules/*,*/tests/js/*,*/wp/*,*/tests/* \
+	--colors --warning-severity=0 --extensions=php
 
-# Update wp-env and Composer dependencies
+# Automatically fix code style with PHP Code Beautifier inside the container
+fix: install-phpcs
+	npx wp-env run cli /var/www/html/wp-content/plugins/decker/vendor/bin/phpcbf --standard=WordPress /var/www/html/wp-content/plugins/decker \
+	--ignore=*/vendor/*,*/assets/*,*/node_modules/*,*/tests/js/*,*/wp/*,*/tests/* \
+	--colors --warning-severity=0 --extensions=php
+
+
+# Finds the CLI container used by wp-env
+cli-container:
+	@docker ps --format "{{.Names}}" \
+	| grep "\-cli\-" \
+	| grep -v "tests-cli" \
+	|| ( \
+		echo "No main CLI container found. Please run 'make up' first." ; \
+		exit 1 \
+	)
+
+# Fix wihout tty for use on git hooks
+fix-no-tty: cli-container
+	@CONTAINER_CLI=$$( \
+		docker ps --format "{{.Names}}" \
+		| grep "\-cli\-" \
+		| grep -v "tests-cli" \
+	) && \
+	echo "Running PHPCBF (no TTY) inside $$CONTAINER_CLI..." && \
+	docker exec -i $$CONTAINER_CLI \
+		/var/www/html/wp-content/plugins/decker/vendor/bin/phpcbf \
+		--standard=WordPress \
+		/var/www/html/wp-content/plugins/decker \
+		--ignore=*/vendor/*,*/assets/*,*/node_modules/*,*/tests/js/*,*/wp/*,*/tests/* \
+		--colors \
+		--warning-severity=0 \
+		--extensions=php
+
+# Lint wihout tty for use on git hooks
+lint-no-tty: cli-container
+	@CONTAINER_CLI=$$( \
+		docker ps --format "{{.Names}}" \
+		| grep "\-cli\-" \
+		| grep -v "tests-cli" \
+	) && \
+	echo "Running PHPCS (no TTY) inside $$CONTAINER_CLI..." && \
+	docker exec -i $$CONTAINER_CLI \
+		/var/www/html/wp-content/plugins/decker/vendor/bin/phpcs \
+		--standard=WordPress \
+		/var/www/html/wp-content/plugins/decker \
+		--ignore=*/vendor/*,*/assets/*,*/node_modules/*,*/tests/js/*,*/wp/*,*/tests/* \
+		--colors \
+		--warning-severity=0 \
+		--extensions=php
+
+
+# Update Composer dependencies
 update: check-docker
-	npx wp-env start --update
 	composer update --no-cache --with-all-dependencies
 
 # Generate a .pot file for translations
@@ -126,7 +195,7 @@ help:
 	@echo "  test               - Run unit tests"
 	@echo "  check-untranslated - Check the untranslated strings"
 	@echo "  check/check-all    - Run fix, lint, check-pugin, test, check-untraslated, mo"
-	@echo "  update             - Update wp-env and Composer dependencies"
+	@echo "  update             - Update Composer dependencies"
 	@echo "  package            - Generate a .zip package"
 	@echo "  destroy            - Destroy the WordPress environment"
 	@echo "  create-user        - Create a WordPress user if it doesn't exist. Usage: make create-user USER=<username> EMAIL=<email> ROLE=<role> PASSWORD=<password>"
