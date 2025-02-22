@@ -69,7 +69,7 @@ class Decker_Boards {
 			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
 			'rewrite'            => array( 'slug' => 'decker_board' ),
-			'show_in_rest'       => false,
+			'show_in_rest'       => true,
 			'rest_base'          => 'boards',
 			'can_export'         => true,
 			'capabilities'       => array(

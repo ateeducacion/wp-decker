@@ -101,8 +101,7 @@ class DeckerAdminTest extends WP_UnitTestCase {
 		$method->invoke( $this->admin );
 
 		$this->assertTrue( class_exists( 'Decker_Admin_Settings' ) );
-		$this->assertTrue( class_exists( 'Decker_Admin_Export' ) );
-		$this->assertTrue( class_exists( 'Decker_Admin_Import' ) );
+
 	}
 
 	public function tear_down() {

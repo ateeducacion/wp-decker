@@ -32,6 +32,8 @@ class Decker_Tasks {
 	 */
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_filter( 'rest_pre_dispatch', array( $this, 'restrict_rest_access' ), 10, 3 );
+
 		add_action( 'init', array( $this, 'register_archived_post_status' ) );
 		add_action( 'admin_footer-post.php', array( $this, 'append_post_status_list' ) );
 		add_action( 'before_delete_post', array( $this, 'handle_task_deletion' ) );
@@ -41,7 +43,7 @@ class Decker_Tasks {
 		add_action( 'admin_head', array( $this, 'disable_menu_order_field' ) );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
-		add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
+		// add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
 		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
 		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
 		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
@@ -59,113 +61,40 @@ class Decker_Tasks {
 
 		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
 
-		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
-		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
+		// add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
+		// add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 
 		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
-		add_action( 'wp_ajax_upload_task_attachment', array( $this, 'upload_task_attachment' ) );
-		add_action( 'wp_ajax_delete_task_attachment', array( $this, 'delete_task_attachment' ) );
+		add_filter( 'wp_unique_filename',array( $this,  'custom_unique_filename' ), 10, 4 );
 
-		add_action( 'wp_ajax_add_task_comment', array( $this, 'handle_task_comment_ajax' ) );
-	}
-
-
-	/**
-	 * Handles the upload of an attachment to a task.
-	 *
-	 * Validates permissions, checks for required data, and processes the file upload
-	 * using WordPress media handling functions. Assigns the uploaded file to the specified task.
-	 *
-	 * @throws WP_Error If the user does not have permission to upload files, if the task ID or file is invalid,
-	 *                  or if the upload fails.
-	 */
-	public function upload_task_attachment() {
-		check_ajax_referer( 'upload_attachment_nonce', 'nonce' );
-
-		// Verificar permisos y datos necesarios.
-		if ( ! current_user_can( 'upload_files' ) ) {
-			wp_send_json_error( array( 'message' => 'You do not have permission to upload files.' ) );
-		}
-
-		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-
-		if ( ! $task_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid task ID.' ) );
-		}
-
-		if ( empty( $_FILES['attachment'] ) ) {
-			wp_send_json_error( array( 'message' => 'No file uploaded.' ) );
-		}
-
-		// Manejar la subida del archivo con un callback personalizado.
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-
-		// Generar nombre ofuscado para el archivo usando la función nativa de WordPress.
-		$overrides = array(
-			'test_form'                => false,
-			'unique_filename_callback' => function ( $dir, $name, $ext ) {
-				return wp_generate_uuid4() . $ext;
-			},
-		);
-
-		$attachment_id = media_handle_upload( 'attachment', $task_id, array(), $overrides );
-
-		if ( is_wp_error( $attachment_id ) ) {
-			wp_send_json_error( array( 'message' => $attachment_id->get_error_message() ) );
-		}
-
-		$attachment_url       = wp_get_attachment_url( $attachment_id );
-		$attachment_title     = get_the_title( $attachment_id );
-		$attachment_extension = pathinfo( $attachment_url, PATHINFO_EXTENSION );
-
-		wp_send_json_success(
-			array(
-				'message'              => 'Attachment uploaded successfully.',
-				'attachment_id'        => $attachment_id,
-				'attachment_url'       => $attachment_url,
-				'attachment_title'     => $attachment_title,
-				'attachment_extension' => $attachment_extension,
-			)
-		);
 	}
 
 	/**
-	 * Handles the deletion of an attachment from a task.
+	 * Filter the unique filename for media uploads.
 	 *
-	 * Validates permissions and checks for required data. Deletes the specified attachment
-	 * from the WordPress Media Library and disassociates it from the task.
-	 *
-	 * @throws WP_Error If the user does not have permission to delete attachments, or if the task ID
-	 *                  or attachment ID is invalid.
+	 * @param string $filename Original filename.
+	 * @param string $ext File extension including the dot.
+	 * @param string $dir Directory where the file will be uploaded.
+	 * @param string $unique_filename_callback Callback used for generating unique filenames.
+	 * @return string Modified filename.
 	 */
-	public function delete_task_attachment() {
-		check_ajax_referer( 'delete_attachment_nonce', 'nonce' );
+	public function custom_unique_filename( $filename, $ext, $dir, $unique_filename_callback ) {
 
-		if ( ! current_user_can( 'delete_posts' ) ) {
-			wp_send_json_error( array( 'message' => 'You do not have permission to delete attachments.' ) );
-		}
+	    // Check if a file is being uploaded in the context of a task.
+	    if ( ! empty( $_POST['post'] ) ) {
+	        $post_id = intval( $_POST['post'] );
+	        $post_type = get_post_type( $post_id );
 
-		$task_id       = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$attachment_id = isset( $_POST['attachment_id'] ) ? intval( $_POST['attachment_id'] ) : 0;
+	        // Apply renaming only if the associated post is of type 'decker_task'.
+	        if ( 'decker_task' === $post_type ) {
+	            return wp_generate_uuid4() . $ext;
+	        }
+	    }
 
-		if ( ! $task_id || ! $attachment_id ) {
-			wp_send_json_error( array( 'message' => 'Invalid task ID or attachment ID.' ) );
-		}
+	    return $filename;
 
-		$result = wp_delete_attachment( $attachment_id, true );
-
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => 'Attachment not found in task.' ) );
-
-		} else {
-			wp_send_json_success( array( 'message' => 'Attachment deleted successfully.' ) );
-		}
 	}
-
-
 
 	/**
 	 * Make custom columns sortable.
@@ -653,18 +582,6 @@ class Decker_Tasks {
 
 		register_rest_route(
 			'decker/v1',
-			'/tasks/(?P<id>\d+)/archive',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'archive_task_callback' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
 			'/fix-order/(?P<board_id>\d+)',
 			array(
 				'methods'             => 'POST',
@@ -824,67 +741,6 @@ class Decker_Tasks {
 		update_post_meta( $task_id, '_user_date_relations', $relations );
 	}
 
-	/**
-	 * Archive a task by updating its status to 'archived'.
-	 *
-	 * @param WP_REST_Request $request The REST request.
-	 * @return WP_REST_Response The REST response.
-	 */
-	public function archive_task_callback( $request ) {
-		$task_id = $request['id'];
-
-		// Validar el ID de la tarea.
-		if ( ! $task_id ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'ID de tarea inválido.',
-				),
-				400
-			);
-		}
-
-		$task = get_post( $task_id );
-		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Tarea no encontrada.',
-					'task_id' => $task_id,
-				),
-				404
-			);
-		}
-
-		// Actualizar el estado de la tarea a 'archived'.
-		$updated = wp_update_post(
-			array(
-				'ID'          => $task_id,
-				'post_status' => 'archived',
-			),
-			true
-		);
-
-		if ( is_wp_error( $updated ) ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Error al archivar la tarea.',
-					'task_id' => $task_id,
-				),
-				500
-			);
-		}
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => 'Tarea archivada exitosamente.',
-				'task_id' => $task_id,
-			),
-			200
-		);
-	}
 
 	/**
 	 * Handle fixing the order for tasks in the specified board.
@@ -961,14 +817,137 @@ class Decker_Tasks {
 				'page-attributes',
 			),
 			'taxonomies'   => array( 'decker_board', 'decker_label' ),
-			'show_in_rest' => false,
+			'show_in_rest' => true,
 			'rest_base'    => 'tasks',
 			'can_export'   => true,
 		);
 
 		register_post_type( 'decker_task', $args );
+
+		$this->register_post_meta();
+
 	}
 
+/**
+ * Register the custom post type meta fields
+ */
+public function register_post_meta() {
+    $meta_fields = array(
+        'duedate' => array(
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'schema' => array(
+                'type' => 'string',
+                'format' => 'date'
+            )
+        ),
+        'max_priority' => array(
+            'type' => 'boolean',
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'schema' => array('type' => 'boolean')
+        ),
+        'stack' => array(
+            'type' => 'string',
+            'sanitize_callback' => 'sanitize_text_field',
+            'schema' => array(
+                'type' => 'string',
+                'enum' => ['to-do', 'in-progress', 'done']
+            )
+        ),
+        'id_nextcloud_card' => array(
+            'type' => 'integer',
+            'sanitize_callback' => 'absint',
+            'schema' => array('type' => 'integer')
+        ),
+        'responsable' => array(
+            'type' => 'integer',
+            'sanitize_callback' => 'absint',
+            'schema' => array('type' => 'integer')
+        ),
+        'hidden' => array(
+            'type' => 'boolean',
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'schema' => array('type' => 'boolean')
+        ),
+        'assigned_users' => array(
+            'type' => 'array',
+            'single' => true,
+            'sanitize_callback' => function($users) {
+                return array_map('absint', (array)$users);
+            },
+            'show_in_rest' => array(
+                'schema' => array(
+                    'type' => 'array',
+                    'items' => array('type' => 'integer')
+                )
+            )
+        ),
+        '_user_date_relations' => array(
+            'type' => 'array',
+            'single' => true,
+            'sanitize_callback' => function($relations) {
+                return array_map(function($relation) {
+                    return [
+                        'user_id' => absint($relation['user_id']),
+                        'date' => sanitize_text_field($relation['date'])
+                    ];
+                }, (array)$relations);
+            },
+            'show_in_rest' => array(
+                'schema' => array(
+                    'type' => 'array',
+                    'items' => array(
+                        'type' => 'object',
+                        'properties' => [
+                            'user_id' => ['type' => 'integer'],
+                            'date' => ['type' => 'string', 'format' => 'date']
+                        ]
+                    )
+                )
+            )
+        )
+    );
+
+    foreach ($meta_fields as $key => $args) {
+        register_post_meta(
+            'decker_task',
+            $key,
+            array_merge(
+                array(
+                    'show_in_rest' => true,
+                    'single' => true,
+                    'type' => 'string' // Valor por defecto, se sobrescribe en cada campo
+                ),
+                $args
+            )
+        );
+    }
+}
+
+	/**
+	 * Restricts REST API access for decker_event post type.
+	 *
+	 * @param mixed           $result The pre-calculated result to return.
+	 * @param WP_REST_Server  $rest_server The REST server instance.
+	 * @param WP_REST_Request $request The current REST request.
+	 * @return mixed WP_Error if unauthorized, otherwise the original result.
+	 */
+	public function restrict_rest_access( $result, $rest_server, $request ) {
+		$route = $request->get_route();
+
+		if ( strpos( $route, '/wp/v2/decker_task' ) === 0 ) {
+			// Usa la capacidad específica del CPT.
+			if ( ! current_user_can( 'edit_posts' ) ) {
+				return new WP_Error(
+					'rest_forbidden',
+					__( 'You do not have permission to access this resource.', 'decker' ),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
+		return $result;
+	}
 
 	/**
 	 * Register the custom post status "archived".
@@ -2060,56 +2039,6 @@ class Decker_Tasks {
 		return $task_id;
 	}
 
-	/**
-	 * Handle AJAX comment submission for tasks using WordPress native functions.
-	 */
-	public function handle_task_comment_ajax() {
-
-		// Verify nonce.
-		if ( ! check_ajax_referer( 'task_comment_nonce', 'nonce', false ) ) {
-			wp_send_json_error( array( 'message' => __( 'Security check failed.', 'decker' ) ) );
-		}
-
-		// Get and validate data.
-		$task_id = isset( $_POST['task_id'] ) ? absint( $_POST['task_id'] ) : 0;
-		$content = isset( $_POST['comment_content'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['comment_content'] ) ) ) : '';
-		$parent_id = isset( $_POST['parent_id'] ) ? absint( $_POST['parent_id'] ) : 0;
-
-		if ( ! $task_id || ! $content ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid comment data.', 'decker' ) ) );
-
-		}
-
-		// Use wp_handle_comment_submission() which handles all validation and filtering.
-		$commentdata = array(
-			'comment_post_ID' => $task_id,
-			'comment_parent' => $parent_id,
-			'comment' => $content,
-			'author' => wp_get_current_user()->display_name,
-			'email' => wp_get_current_user()->user_email,
-			'url' => wp_get_current_user()->user_url,
-			// 'comment_type' => 'comment',
-		);
-
-		// Let WordPress handle the comment submission.
-		$comment = wp_handle_comment_submission( $commentdata );
-
-		if ( is_wp_error( $comment ) ) {
-			wp_send_json_error( array( 'message' => $comment->get_error_message() ) );
-		}
-
-		// Prepare response data using WordPress functions.
-		$response = array(
-			'success' => true,
-			'comment_id' => $comment->comment_ID,
-			'content' => apply_filters( 'comment', $comment->comment_content ),
-			'author' => get_comment_author( $comment ),
-			'date' => get_comment_date( get_option( 'date_format' ), $comment ),
-			'avatar_url' => get_avatar_url( $comment->user_id, array( 'size' => 48 ) ),
-		);
-
-		wp_send_json_success( $response );
-	}
 }
 
 // Instantiate the class.

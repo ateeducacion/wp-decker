@@ -1,73 +1,81 @@
-
 (function() {
     console.log('loading task-card.js');
 
-    // Variables globales recibidas desde PHP
+    // Global variables received from PHP
     const ajaxUrl = deckerVars.ajax_url;
-    const restUrl = deckerVars.rest_url;
+    // const restUrl = deckerVars.rest_url;
     const homeUrl = deckerVars.home_url;
-    const nonces = deckerVars.nonces;
+    // const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
     const disabled = deckerVars.disabled;
     const userId = deckerVars.current_user_id;
 
+    const restUrl = wpApiSettings.root + wpApiSettings.versionString;
+    const nonces = wpApiSettings.nonce;
+
     let quill = null;
 
-    // Start of comment part
+    // Comment-related variable
     var replyToCommentId = null;
 
-    // Función para inicializar el envío de comentarios dentro del contexto dado
+    // Function to initialize comment submission within the given context
     function initializeSendComments(context) {
-        // Comprobar si ya se ha inicializado en este contexto
-        if ( context.dataset && context.dataset.sendCommentsInitialized === 'true') return;
-        if ( context.dataset) context.dataset.sendCommentsInitialized = 'true';
+        // Check if already initialized in this context
+        if (context.dataset && context.dataset.sendCommentsInitialized === 'true') return;
+        if (context.dataset) context.dataset.sendCommentsInitialized = 'true';
 
         const commentTextArea = context.querySelector('#comment-text');
         const submitButton = context.querySelector('#submit-comment');
 
         if (commentTextArea && submitButton) {
-            // Habilitar/deshabilitar el botón de enviar basado en el contenido del textarea
+            // Enable/disable the submit button based on textarea content
             commentTextArea.addEventListener('input', function() {
                 submitButton.disabled = this.value.trim() === '';
             });
 
-            // Manejar la sumisión de comentarios
+            // Handle comment submission
             submitButton.addEventListener('click', function() {
-                const commentText = commentTextArea.value;
-                const parentId = replyToCommentId;
+                const commentText = commentTextArea.value.trim();
+                const parentId = replyToCommentId || 0;
 
-                if (commentText.trim() === '') {
+                if (commentText === '') {
                     return;
                 }
 
-                // Mostrar estado de carga
+                // Show loading state
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<i class="ri-loader-2-line ri-spin me-1"></i> Sending...';
 
-                const formData = new FormData();
                 const taskId = getTaskId();
-                formData.append('action', 'add_task_comment');
-                formData.append('task_id', taskId);
-                formData.append('comment_content', commentText);
-                formData.append('parent_id', parentId || 0);
-                formData.append('nonce', nonces.task_comment_nonce);
+                const payload = {
+                    post: taskId,
+                    content: commentText,
+                    parent: parentId
+                };
 
-                fetch(ajaxUrl, {
+                fetch(`${restUrl}comments`, {
                     method: 'POST',
-                    body: formData,
+                    headers: {
+                        'X-WP-Nonce': wpApiSettings.nonce,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
                     credentials: 'same-origin'
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        // Limpiar el formulario
+                    // Check for errors returned by the REST API
+                    if (data.code) {
+                        alert(data.message || 'Error adding comment.');
+                    } else {
+                        // Clear the form
                         commentTextArea.value = '';
                         if (replyToCommentId) {
                             context.querySelector('#reply-indicator').classList.add('d-none');
                             replyToCommentId = null;
                         }
 
-                        // Añadir el nuevo comentario a la lista
+                        // Add the new comment to the list
                         const commentsList = context.querySelector('#comments-list');
                         const newComment = document.createElement('div');
                         newComment.className = 'd-flex align-items-start mb-2';
@@ -75,36 +83,40 @@
                             newComment.style.marginLeft = '20px';
                         }
 
+                        const avatarUrl = data.author_avatar_urls && data.author_avatar_urls['48'] ? data.author_avatar_urls['48'] : '';
+
                         newComment.innerHTML = `
-                            <img class="me-2 rounded-circle" src="${data.data.avatar_url}" alt="Avatar" height="32" />
+                            <img class="me-2 rounded-circle" src="${avatarUrl}" alt="Avatar" height="32" />
                             <div class="w-100">
-                                <h5 class="mt-0">${data.data.author} <small class="text-muted float-end">${data.data.date}</small></h5>
-                                ${data.data.content}
+                                <h5 class="mt-0">${data.author_name} <small class="text-muted float-end">${data.date}</small></h5>
+                                ${data.content.rendered}
                                 <br />
-                                <a href="javascript:void(0);" onclick="deleteComment(${data.data.comment_id});" 
+                                <a href="javascript:void(0);" onclick="deleteComment(${data.id});" 
                                    class="text-muted d-inline-block mt-2 comment-delete" 
-                                   data-comment-id="${data.data.comment_id}">
+                                   data-comment-id="${data.id}">
                                     <i class="ri-delete-bin-line"></i> ${strings.delete}
                                 </a>
                             </div>
                         `;
 
                         if (parentId) {
-                            // Encontrar el comentario padre y añadir después
-                            const parentComment = commentsList.querySelector(`[data-comment-id="${parentId}"]`).closest('.d-flex');
-                            parentComment.after(newComment);
+                            // Find the parent comment and insert after it
+                            const parentComment = commentsList.querySelector(`[data-comment-id="${parentId}"]`)?.closest('.d-flex');
+                            if (parentComment) {
+                                parentComment.after(newComment);
+                            } else {
+                                commentsList.appendChild(newComment);
+                            }
                         } else {
-                            // Añadir al final de la lista principal
+                            // Append to the main list
                             commentsList.appendChild(newComment);
                         }
 
-                        // Actualizar el contador de comentarios
+                        // Update the comment count
                         const commentCount = context.querySelector('#comment-count');
                         if (commentCount) {
                             commentCount.textContent = parseInt(commentCount.textContent) + 1;
                         }
-                    } else {
-                        alert(data.message || 'Error adding comment.');
                     }
                 })
                 .catch(error => {
@@ -112,7 +124,7 @@
                     alert('Error adding comment. Please try again.');
                 })
                 .finally(() => {
-                    // Reiniciar el estado del botón
+                    // Reset the submit button state
                     submitButton.disabled = commentTextArea.value.trim() === '';
                     submitButton.innerHTML = '<i class="ri-chat-1-line me-1"></i> Comment';
                 });
@@ -120,7 +132,7 @@
         }
     }
 
-    // Función para borrar un comentario
+    // Function to delete a comment
     function deleteComment(commentId) {
         if (!confirm(strings.confirm_delete_comment)) {
             return;
@@ -129,19 +141,19 @@
         fetch(`${restUrl}comments/${commentId}`, {
             method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json',
-                'X-WP-Nonce': nonces.wp_rest_nonce
+                'X-WP-Nonce': wpApiSettings.nonce,
+                'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'trash') {
-                // Encontrar y eliminar el elemento del comentario
-                const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`).closest('.d-flex');
+            if (data.status === 'trash' || data.deleted) {
+                // Find and remove the comment element
+                const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`)?.closest('.d-flex');
                 if (commentElement) {
                     commentElement.remove();
 
-                    // Actualizar el contador de comentarios
+                    // Update the comment count
                     const commentCount = document.getElementById('comment-count');
                     if (commentCount) {
                         const currentCount = parseInt(commentCount.textContent);
@@ -160,11 +172,11 @@
         });
     }
 
-    // Función para inicializar la página de tareas dentro del contexto dado
+    // Function to initialize the task page within the given context
     function initializeTaskPage(context) {
         new Tablesort(context.querySelector('#user-history-table'));
 
-        // Verificar si el task_id está presente en data-task-id
+        // Check if task_id is present in data-task-id
         const taskId = getTaskId();
         const taskElement = context.querySelector(`[data-task-id="${taskId}"]`);
         if (taskElement) {
@@ -175,9 +187,8 @@
 
         if (context.querySelector('#editor')) {
             if (quill === null) {
-                // Registrar el módulo HTML Edit Button
+                // Register the HTML Edit Button module
                 Quill.register('modules/htmlEditButton', htmlEditButton);
-
             }
 
             quill = new Quill(context.querySelector('#editor'), {
@@ -216,10 +227,9 @@
                     },                   
                 }
             });
-        
         }
 
-        // Inicializar Choices.js para los selectores de asignados y etiquetas
+        // Initialize Choices.js for assignees and labels selectors
         if (context.querySelector('#task-assignees')) {
             assigneesSelect = new Choices(context.querySelector('#task-assignees'), { 
                 removeItemButton: true,
@@ -228,7 +238,7 @@
                 shouldSort: true,
             });
         
-            // Agregar el evento de cambio para los asignados
+            // Add change event for assignees
             assigneesSelect.passedElement.element.addEventListener('change', handleAssigneesChange);
         }
 
@@ -253,7 +263,7 @@
             });
         }
         
-        // Mostrar/ocultar la etiqueta "High" para prioridad máxima
+        // Show/hide the "High" label for maximum priority
         var taskMaxPriority = context.querySelector('#task-max-priority');
         if (taskMaxPriority) {
             taskMaxPriority.addEventListener('change', function () {
@@ -261,7 +271,7 @@
             });
         }
 
-        // Cambios estéticos al seleccionar/deseleccionar el checkbox de tareas
+        // Aesthetic changes when selecting/deselecting the task checkbox
         const taskTodayCheckbox = context.querySelector('#task-today');
         if (taskTodayCheckbox) {
             taskTodayCheckbox.addEventListener('change', handleTaskTodayChange);
@@ -269,14 +279,14 @@
 
         const saveButton = context.querySelector('#save-task');
 
-        // Función para habilitar el botón de guardar cuando cualquier campo cambia
+        // Function to enable save button when any field changes
         const enableSaveButton = function() {
             saveButton.disabled = false;
         };
 
         const form = context.querySelector('#task-form');
 
-        // Añadir event listeners a todos los inputs del formulario
+        // Add event listeners to all form inputs
         const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-today', 'task-max-priority'];
 
         inputIds.forEach(function(id) {
@@ -287,20 +297,20 @@
             }
         });
 
-        // Verificar el estado inicial del checkbox de prioridad máxima y alternar la etiqueta
+        // Check initial state of maximum priority checkbox and toggle label
         var taskMaxPriorityCheck = context.querySelector('#task-max-priority');
         if (taskMaxPriorityCheck) {
             togglePriorityLabel(taskMaxPriorityCheck);
         }
         
-        // Para el Editor Quill
+        // For Quill Editor
         if (quill) {
             quill.on('text-change', function() {
                 saveButton.disabled = false;
             });
         }
 
-        // Para los selectores de Choices.js
+        // For Choices.js selectors
         if (assigneesSelect) {
             assigneesSelect.passedElement.element.addEventListener('change', enableSaveButton);
         }
@@ -309,81 +319,68 @@
         }        
 
         document.querySelectorAll('.archive-task').forEach((element) => {
-
           element.removeEventListener('click', archiveTaskHandler);
           element.addEventListener('click', archiveTaskHandler);
-
         });
-
     }
 
-    // Función para manejar cambios en el checkbox "task-today"
+    // Function to handle changes in the "task-today" checkbox
     function handleTaskTodayChange(event) {
-        // Si el usuario marca una tarea para hoy
         if (event.target.checked) {
-            // Verificar si el usuario ya está seleccionado
-            const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
-            // Y si no está seleccionando
+            const selectedValues = assigneesSelect.getValue(true);
             if (!selectedValues.includes(userId.toString())) {
-                // Lo selecciona
                 assigneesSelect.setChoiceByValue(userId.toString());
             }
         }
-        // Si se desmarca, no hacer nada
     }
 
-    // Función para manejar cambios en los asignados
+    // Function to handle changes in assignees
     function handleAssigneesChange(event) {
-        // Si el usuario se quita de los asignados a la tarea
-        const selectedValues = assigneesSelect.getValue(true); // Obtener valores como array de números
+        const selectedValues = assigneesSelect.getValue(true);
         if (!selectedValues.includes(userId.toString())) {
             const taskTodayCheckbox = document.querySelector('#task-today');
-            // Y tiene la tarea marcada para hoy
             if (taskTodayCheckbox && taskTodayCheckbox.checked) {
-                // La desmarca
                 taskTodayCheckbox.checked = false;
             }
         }
     }
 
-    // Función para subir adjuntos
+    // Function to upload attachments via the native WP REST API
     function uploadAttachment(file, context) {
         var formData = new FormData();
-        const taskId = getTaskId();
-        formData.append('action', 'upload_task_attachment');
-        formData.append('task_id', taskId);
-        formData.append('attachment', file);
-        formData.append('nonce', nonces.upload_attachment_nonce);
+        // Append the file with key "file" as expected by wp/v2/media
+        formData.append('file', file);
+        formData.append('post', getTaskId());
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', ajaxUrl, true);
+        // Optionally, you can add additional data (e.g. title) via formData.append()
 
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    // Añadir el nuevo adjunto a la lista en la interfaz
-                    addAttachmentToList(response.data.attachment_id, response.data.attachment_url, response.data.attachment_title, response.data.attachment_extension, context);
-                    // Limpiar el input de archivo
-                    context.querySelector('#file-input').value = '';
-                } else {
-                    alert(response.data.message || strings.error_uploading_attachment);
-                }
+        fetch(`${restUrl}media`, {
+            method: 'POST',
+            headers: {
+                'X-WP-Nonce': wpApiSettings.nonce,
+                // Set Content-Disposition with the file name
+                'Content-Disposition': 'attachment; filename="' + file.name + '"'
+            },
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.id) {
+                // Use data.source_url as the attachment URL and data.title.rendered for the title
+                addAttachmentToList(data.id, data.source_url, data.title.rendered, data.media_type, context);
+                context.querySelector('#file-input').value = '';
             } else {
-                console.error('Server error.');
-                alert('An error occurred while uploading the attachment.');
+                alert(data.message || strings.error_uploading_attachment);
             }
-        };
-
-        xhr.onerror = function() {
-            console.error('Request error.');
-            alert('An error occurred while uploading the attachment.');
-        };
-
-        xhr.send(formData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error uploading attachment.');
+        });
     }
 
-    // Función para añadir un adjunto a la lista
+    // Function to add an attachment to the list
     function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle, attachmentExtension, context) {
         var attachmentsList = context.querySelector('#attachments-list');
         var li = document.createElement('li');
@@ -403,67 +400,53 @@
 
         attachmentsList.appendChild(li);
 
-        // Actualizar el contador de adjuntos
-        updateAttachmentCount(context, 1); // Incrementar en 1    
+        updateAttachmentCount(context, 1);
     }
 
-    // Event delegation para eliminar adjuntos
+    // Event delegation to remove attachments
     document.addEventListener('click', function(event) {
         if (event.target && event.target.classList.contains('remove-attachment')) {
             var listItem = event.target.closest('li');
             var attachmentId = listItem.getAttribute('data-attachment-id');
-            const modalElement = document.querySelector('.task-modal.show'); // Selecciona el modal abierto, o null si no está en un modal
+            const modalElement = document.querySelector('.task-modal.show');
             if (modalElement) {
                 deleteAttachment(attachmentId, listItem, modalElement);
             } else {
-                deleteAttachment(attachmentId, listItem, document); // Asume que está cargado directamente en la página
+                deleteAttachment(attachmentId, listItem, document);
             }
         }
     });
 
-    // Función para eliminar un adjunto
+    // Function to delete an attachment using the REST API
     function deleteAttachment(attachmentId, listItem, context) {
         if (!confirm(strings.confirm_delete_attachment)) {
             return;
         }
 
-        var formData = new FormData();
-        const taskId = getTaskId();
-        formData.append('action', 'delete_task_attachment');
-        formData.append('task_id', taskId);
-        formData.append('attachment_id', attachmentId);
-        formData.append('nonce', nonces.delete_attachment_nonce);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', ajaxUrl, true);
-
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    // Eliminar el adjunto de la lista en la interfaz
-                    listItem.remove();
-
-                    // Actualizar el contador de adjuntos
-                    updateAttachmentCount(context, -1); // Decrementar en 1                
-                } else {
-                    alert(response.data.message || 'Error deleting attachment.');
-                }
+        fetch(`${restUrl}media/${attachmentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': wpApiSettings.nonce // Required for authentication
+            },
+            body: JSON.stringify({ force: true }) // Force delete the attachment
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.deleted) {
+                listItem.remove();
+                updateAttachmentCount(context, -1);
             } else {
-                console.error('Server error.');
-                alert('An error occurred while deleting the attachment.');
+                alert(data.message || 'Error deleting attachment.');
             }
-        };
-
-        xhr.onerror = function() {
-            console.error('Request error.');
+        })
+        .catch(error => {
+            console.error('Request error:', error);
             alert('An error occurred while deleting the attachment.');
-        };
-
-        xhr.send(formData);
+        });
     }
 
-    // Función para actualizar el contador de adjuntos
+    // Function to update the attachment count
     function updateAttachmentCount(context, change) {
         var attachmentCountElement = context.querySelector('#attachment-count');
         if (attachmentCountElement) {
@@ -473,9 +456,9 @@
         }
     }
 
-    // Función para alternar la etiqueta de prioridad máxima
+    // Function to toggle the maximum priority label
     function togglePriorityLabel(element) {
-        var highLabel =document.querySelector('#high-label');
+        var highLabel = document.querySelector('#high-label');
         if (highLabel) {
             if (element.checked) {
                 highLabel.classList.remove('d-none');
@@ -485,48 +468,185 @@
         }
     }
 
-    // Función para enviar el formulario vía AJAX
-    function sendFormByAjax(event) {
+function sendForm(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('task-form');
+    form.classList.remove('was-validated');
+
+    if (!form.checkValidity()) {
+        event.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+    }
+
+    const taskId = parseInt(form.querySelector('input[name="task_id"]').value, 10);
+    const title = form.querySelector('#task-title').value.trim();
+    const dueDate = form.querySelector('#task-due-date').value.trim();
+    const board = parseInt(form.querySelector('#task-board').value, 10);
+    const stack = form.querySelector('#task-stack').value.trim();
+    const author = parseInt(form.querySelector('#task-author-info').value, 10);
+    const responsable = parseInt(form.querySelector('#task-responsable').value, 10);
+    const hidden = form.querySelector('#task-hidden').checked ? true : false;
+    const maxPriority = form.querySelector('#task-max-priority').checked ? true : false;
+    const markForToday = form.querySelector('#task-today').checked ? true : false;
+
+    const selectedAssigneesValues = assigneesSelect.getValue(true).map(Number);
+    const selectedLabelsValues = labelsSelect.getValue(true).map(Number);
+
+    // Quill contenido
+    const content = quill ? quill.root.innerHTML : '';
+
+    // Objeto de datos que mandaremos al endpoint
+    // Para taxonomías, si tu CPT está configurado con `'rest_base' => 'tasks'` y `'show_in_rest' => true`,
+    // se envían así:  "decker_board": [boardID], "decker_label": [labelIDs].
+    // Los meta fields van en `meta`.
+    const payload = {
+        title: title,
+        content: content,
+        status: 'publish', // O 'archived', etc. si quieres cambiar el estado
+        meta: {
+            duedate: dueDate,
+            max_priority: maxPriority,
+            stack: stack,
+            responsable: responsable,
+            hidden: hidden,
+            assigned_users: selectedAssigneesValues
+        },
+        // Para las taxonomías personalizadas
+        decker_board: board ? [board] : [],
+        decker_label: selectedLabelsValues && selectedLabelsValues.length > 0 ? selectedLabelsValues : []
+    };
+
+    // Si no tienes ID => creas (POST /tasks). Si tienes ID => actualizas (POST /tasks/<id>).
+    const isUpdate = !!taskId;
+
+    const restEndpoint = isUpdate 
+        ? `${wpApiSettings.root}wp/v2/tasks/${taskId}`
+        : `${wpApiSettings.root}wp/v2/tasks`;
+
+    // Para "marcar para hoy", si usas la lógica de `_user_date_relations` o tus endpoints custom,
+    // podrías hacer otra llamada fetch a /decker/v1/tasks/${taskId}/mark_relation, etc.
+    // En este ejemplo, sólo mostramos cómo guardar la tarea.
+    
+    fetch(restEndpoint, {
+        method: 'POST',
+        headers: {
+            'X-WP-Nonce': wpApiSettings.nonce,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Verifica si hubo error
+        if (data.code || data.data?.status >= 400) {
+            console.error('Error response', data);
+            alert(data.message || 'Error saving task.');
+            return;
+        }
+
+
+        // Obtener el ID de la tarea creada/actualizada
+        const taskId = data.id || taskId;
+        
+        // Manejar la relación de fecha-usuario
+        const relationEndpoint = `${wpApiSettings.root}decker/v1/tasks/${taskId}/${
+            markForToday ? 'mark_relation' : 'unmark_relation'
+        }`;
+
+        return fetch(relationEndpoint, {
+            method: 'POST',
+            headers: {
+                'X-WP-Nonce': wpApiSettings.nonce,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: userId // ID del usuario actual
+            }),
+            credentials: 'same-origin'
+        });
+
+
+
+
+
+
+
+
+        // Si se guardó la tarea con éxito, data debería incluir la nueva o actualizada info.
+        // Por ejemplo, data.id tendría el ID del post.
+        // if (isUpdate) {
+        //     alert(`Task updated. ID: ${data.id}`);
+        // } else {
+        //     alert(`Task created. ID: ${data.id}`);
+        // }
+
+        // Aquí puedes cerrar el modal o recargar la página
+        // location.reload();
+    })
+    .then(response => response.json())
+    .then(relationData => {
+        if (relationData.success) {
+            if (isUpdate) {
+                alert(`Task updated. ID: ${taskId}`);
+            } else {
+                alert(`Task created. ID: ${taskId}`);
+            }
+            
+            // Recargar o cerrar modal
+            const modalElement = document.querySelector('.task-modal.show');
+            if (modalElement) {
+                bootstrap.Modal.getInstance(modalElement)?.hide();
+                location.reload();
+            }
+        } else {
+            throw new Error(relationData.message || 'Error updating date relation');
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        alert('Network error saving task.');
+    });
+}
+
+
+    // Function to send the form via AJAX
+    function sendFormByAjax_old(event) {
         event.preventDefault();
 
-        const form = document.getElementById('task-form'); // Fallback
+        const form = document.getElementById('task-form');
 
-        // const form = event.target; // Obtiene el formulario que disparó el evento
-
-        // Remueve la clase 'was-validated' previamente
         form.classList.remove('was-validated');
 
-        // Verifica la validez del formulario
         if (!form.checkValidity()) {
             event.stopPropagation();
             form.classList.add('was-validated');
             return;
         }
 
-        // Si el formulario es válido, procede con el envío vía AJAX
         const selectedAssigneesValues = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
         const selectedLabelsValues = labelsSelect.getValue().map(item => parseInt(item.value, 10));
 
-        // Recopila los datos del formulario
         const formData = {
-            action: 'save_decker_task',
-            nonce: nonces.save_decker_task_nonce,
-            task_id: form.querySelector('input[name="task_id"]').value,
-            title: form.querySelector('#task-title').value,
-            due_date: form.querySelector('#task-due-date').value,
-            board: form.querySelector('#task-board').value,
-            stack: form.querySelector('#task-stack').value,
-            author: form.querySelector('#task-author-info').value,
-            responsable: form.querySelector('#task-responsable').value,
-            hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
-            assignees: selectedAssigneesValues,
-            labels: selectedLabelsValues,
-            description: quill.root.innerHTML,
-            max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
+            // action: 'save_decker_task',
+            // nonce: nonces.save_decker_task_nonce,
+            // task_id: form.querySelector('input[name="task_id"]').value,
+            // title: form.querySelector('#task-title').value,
+            // due_date: form.querySelector('#task-due-date').value,
+            // board: form.querySelector('#task-board').value,
+            // stack: form.querySelector('#task-stack').value,
+            // author: form.querySelector('#task-author-info').value,
+            // responsable: form.querySelector('#task-responsable').value,
+            // hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
+            // assignees: selectedAssigneesValues,
+            // labels: selectedLabelsValues,
+            // description: quill.root.innerHTML,
+            // max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
         };
 
-        // Envía la solicitud AJAX
         const xhr = new XMLHttpRequest();
         xhr.open('POST', ajaxUrl, true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -535,22 +655,18 @@
             if (xhr.status >= 200 && xhr.status < 400) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
-                    const modalElement = document.querySelector('.task-modal.show'); // Selecciona el modal abierto, o null si no está en un modal
+                    const modalElement = document.querySelector('.task-modal.show');
                     if (modalElement) {
                         var modalInstance = bootstrap.Modal.getInstance(modalElement);
                         if (modalInstance) {
                             modalInstance.hide();
                         }
-
-                        // Recargar la página si la solicitud fue exitosa
                         location.reload();   
                     } else {
-                        // Redirecciona o actualiza según la respuesta
                         window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
                     }
-
                 } else {
-                    alert(response.data.message || 'Error al guardar la tarea.');
+                    alert(response.data.message || 'Error saving task.');
                 }
             } else {
                 console.error(strings.server_response_error);
@@ -570,7 +686,7 @@
         xhr.send(encodedData);
     }
 
-    // Obtener el task_id desde el input hidden
+    // Function to get the task ID from the hidden input
     function getTaskId() {
         const taskIdInput = document.querySelector('input[name="task_id"]');
         if (taskIdInput) {
@@ -581,22 +697,20 @@
         }
     }
 
-    // Exportar funciones globalmente para que puedan ser llamadas desde HTML
+    // Expose functions globally to be callable from HTML
     window.initializeSendComments = initializeSendComments;
     window.initializeTaskPage = initializeTaskPage;
-    window.sendFormByAjax = sendFormByAjax;
+    window.sendForm = sendForm;
     window.deleteComment = deleteComment;
     window.togglePriorityLabel = togglePriorityLabel;
 
-    // Inicializar automáticamente si el contenido está cargado directamente en la página
+    // Automatically initialize if content is loaded directly on the page
     document.addEventListener('DOMContentLoaded', function() {
-        // Verificar si existe el formulario de tarea directamente en la página
         const taskForm = document.querySelector('#task-form');
-        if (taskForm && !taskForm.closest('.task-modal')) { // Asegurarse de que no está dentro de un modal
+        if (taskForm && !taskForm.closest('.task-modal')) {
             initializeTaskPage(document);
             initializeSendComments(document);
         }
     });
 
 })();
-
