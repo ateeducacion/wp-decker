@@ -43,7 +43,7 @@ class Decker_Tasks {
 		add_action( 'admin_head', array( $this, 'disable_menu_order_field' ) );
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
-		// add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
+		add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
 		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
 		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
 		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );

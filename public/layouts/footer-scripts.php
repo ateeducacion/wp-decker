@@ -119,14 +119,14 @@ function archiveTaskHandler(event) {
     })
     .then(data => {
       if (data.status === newStatus) {
-        // Actualizar la UI sin recargar
-        const card = element.closest('.task');
-        card.classList.toggle('archived-task', newStatus === 'archived');
+        // // Actualizar la UI sin recargar
+        // const card = element.closest('.task');
+        // card.classList.toggle('archived-task', newStatus === 'archived');
         
-        // Cambiar el texto del botón
-        element.textContent = newStatus === 'archived' ? 'Unarchive' : 'Archive';
-        element.classList.toggle('unarchive-task', newStatus === 'archived');
-        element.classList.toggle('archive-task', newStatus !== 'archived');
+        // // Cambiar el texto del botón
+        // element.textContent = newStatus === 'archived' ? 'Unarchive' : 'Archive';
+        // element.classList.toggle('unarchive-task', newStatus === 'archived');
+        // element.classList.toggle('archive-task', newStatus !== 'archived');
         
         // Opcional: Mostrar feedback visual
         // showToast(newStatus === 'archived' ? 'Task archived' : 'Task unarchived');

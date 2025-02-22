@@ -318,7 +318,7 @@
             labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
         }        
 
-        document.querySelectorAll('.archive-task').forEach((element) => {
+        document.querySelectorAll('.archive-task,.unarchive-task').forEach((element) => {
           element.removeEventListener('click', archiveTaskHandler);
           element.addEventListener('click', archiveTaskHandler);
         });
