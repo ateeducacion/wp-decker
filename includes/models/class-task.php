@@ -489,7 +489,11 @@ class Task {
 					</span>
 					<span class="text-nowrap mb-2 d-inline-block">
 						<i class="ri-discuss-line text-muted"></i>
-						<b><?php echo esc_html( get_comments_number( $this->ID ) ); ?></b> <?php esc_html_e( 'Comments', 'decker' ); ?>
+						<b><?php echo esc_html( get_comments_number( $this->ID ) ); ?></b>
+					</span>
+					<span class="text-nowrap mb-2 d-inline-block">
+						<i class="ri-attachment-2"></i>
+						<b><?php echo esc_html( count( get_attached_media( '', $this->ID ) ) ); ?></b>
 					</span>
 				</p>
 
