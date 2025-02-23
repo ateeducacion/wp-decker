@@ -965,36 +965,31 @@ msgstr ""
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:497
-#: public/layouts/task-card.php:311
-msgid "Comments"
-msgstr ""
-
-#: includes/models/class-task.php:550
+#: includes/models/class-task.php:554
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:567
+#: includes/models/class-task.php:571
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:574
+#: includes/models/class-task.php:578
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:583
+#: includes/models/class-task.php:587
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:590
+#: includes/models/class-task.php:594
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:605
+#: includes/models/class-task.php:609
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:611
+#: includes/models/class-task.php:615
 msgid "Unmark for today"
 msgstr ""
 
@@ -1730,6 +1725,10 @@ msgstr ""
 
 #: public/layouts/task-card.php:264
 msgid "Assign to"
+msgstr ""
+
+#: public/layouts/task-card.php:311
+msgid "Comments"
 msgstr ""
 
 #: public/layouts/task-card.php:329
