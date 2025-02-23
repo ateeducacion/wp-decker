@@ -27,6 +27,10 @@ $task_manager = new TaskManager();
 $tasks       = $task_manager->get_tasks_by_board( $main_board );
 
 
+echo '<pre>';
+print_r( $tasks );
+die();
+
 // Dividir las tareas en columnas.
 $columns = array(
 	'to-do'       => array(),

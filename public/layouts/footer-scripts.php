@@ -99,47 +99,47 @@ function archiveTaskHandler(event) {
   
   const newStatus = isArchived ? 'publish' : 'archived';
   const confirmationMessage = isArchived 
-    ? 'Are you sure you want to unarchive this task?' 
-    : 'Are you sure you want to archive this task?';
+	? 'Are you sure you want to unarchive this task?' 
+	: 'Are you sure you want to archive this task?';
 
   if (confirm(confirmationMessage)) {
-    fetch(`${wpApiSettings.root}wp/v2/tasks/${taskId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-WP-Nonce': wpApiSettings.nonce
-      },
-      body: JSON.stringify({
-        status: newStatus
-      })
-    })
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(data => {
-      if (data.status === newStatus) {
-        // // Actualizar la UI sin recargar
-        // const card = element.closest('.task');
-        // card.classList.toggle('archived-task', newStatus === 'archived');
-        
-        // // Cambiar el texto del botón
-        // element.textContent = newStatus === 'archived' ? 'Unarchive' : 'Archive';
-        // element.classList.toggle('unarchive-task', newStatus === 'archived');
-        // element.classList.toggle('archive-task', newStatus !== 'archived');
-        
-        // Opcional: Mostrar feedback visual
-        // showToast(newStatus === 'archived' ? 'Task archived' : 'Task unarchived');
+	fetch(`${wpApiSettings.root}wp/v2/tasks/${taskId}`, {
+	  method: 'POST',
+	  headers: {
+		'Content-Type': 'application/json',
+		'X-WP-Nonce': wpApiSettings.nonce
+	  },
+	  body: JSON.stringify({
+		status: newStatus
+	  })
+	})
+	.then(response => {
+	  if (!response.ok) throw new Error('Network response was not ok');
+	  return response.json();
+	})
+	.then(data => {
+	  if (data.status === newStatus) {
+		// // Actualizar la UI sin recargar
+		// const card = element.closest('.task');
+		// card.classList.toggle('archived-task', newStatus === 'archived');
+		
+		// // Cambiar el texto del botón
+		// element.textContent = newStatus === 'archived' ? 'Unarchive' : 'Archive';
+		// element.classList.toggle('unarchive-task', newStatus === 'archived');
+		// element.classList.toggle('archive-task', newStatus !== 'archived');
+		
+		// Opcional: Mostrar feedback visual
+		// showToast(newStatus === 'archived' ? 'Task archived' : 'Task unarchived');
 
 			  // Reload the page if the request was successful
 			  location.reload();
 
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Operation failed: ' + error.message);
-    });
+	  }
+	})
+	.catch(error => {
+	  console.error('Error:', error);
+	  alert('Operation failed: ' + error.message);
+	});
   }
 }
 

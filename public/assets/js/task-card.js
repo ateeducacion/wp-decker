@@ -514,8 +514,8 @@ function sendForm(event) {
             assigned_users: selectedAssigneesValues
         },
         // Para las taxonomías personalizadas
-        decker_board: board ? [board] : [],
-        decker_label: selectedLabelsValues && selectedLabelsValues.length > 0 ? selectedLabelsValues : []
+        boards: board ? [board] : [],
+        labels: selectedLabelsValues && selectedLabelsValues.length > 0 ? selectedLabelsValues : []
     };
 
     // Si no tienes ID => creas (POST /tasks). Si tienes ID => actualizas (POST /tasks/<id>).

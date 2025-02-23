@@ -573,7 +573,7 @@ class Task {
 			);
 		}
 
-		if ('publish' == $this->status ){
+		if ( 'publish' == $this->status ) {
 			// Add 'Archive' menu item.
 			$menu_items[] = sprintf(
 				'<a href="#" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
@@ -589,7 +589,6 @@ class Task {
 			);
 
 		}
-
 
 		if ( ! $card ) {
 

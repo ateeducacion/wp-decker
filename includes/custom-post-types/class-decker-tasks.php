@@ -61,40 +61,44 @@ class Decker_Tasks {
 
 		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
 
-		// add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
-		// add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
-
 		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
-		add_filter( 'wp_unique_filename',array( $this,  'custom_unique_filename' ), 10, 4 );
+		add_filter( 'wp_unique_filename', array( $this, 'custom_unique_filename' ), 10, 4 );
 
+		// Validate required fields on create: now triggers 400 if missing.
+		add_filter( 'rest_pre_insert_decker_task', array( $this, 'validate_task_fields' ), 10, 2 );
 	}
 
 	/**
-	 * Filter the unique filename for media uploads.
+	 * Custom function to generate a unique filename.
 	 *
-	 * @param string $filename Original filename.
-	 * @param string $ext File extension including the dot.
-	 * @param string $dir Directory where the file will be uploaded.
-	 * @param string $unique_filename_callback Callback used for generating unique filenames.
-	 * @return string Modified filename.
+	 * @param string   $filename The original filename.
+	 * @param string   $ext      The file extension.
+	 * @param string   $dir      The directory where the file is being uploaded.
+	 * @param callable $unique_filename_callback Callback function for unique filename generation.
+	 *
+	 * @return string The sanitized and unique filename.
 	 */
 	public function custom_unique_filename( $filename, $ext, $dir, $unique_filename_callback ) {
 
-	    // Check if a file is being uploaded in the context of a task.
-	    if ( ! empty( $_POST['post'] ) ) {
-	        $post_id = intval( $_POST['post'] );
-	        $post_type = get_post_type( $post_id );
+		// Verify nonce to ensure request is legitimate.
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'custom_upload_action' ) ) {
 
-	        // Apply renaming only if the associated post is of type 'decker_task'.
-	        if ( 'decker_task' === $post_type ) {
-	            return wp_generate_uuid4() . $ext;
-	        }
-	    }
+			// Check if a file is being uploaded in the context of a task.
+			if ( ! empty( $_POST['post'] ) ) {
+				$post_id = intval( sanitize_text_field( wp_unslash( $_POST['post'] ) ) );
+				$post_type = get_post_type( $post_id );
 
-	    return $filename;
+				// Apply renaming only if the associated post is of type 'decker_task'.
+				if ( 'decker_task' === $post_type ) {
+					return wp_generate_uuid4() . $ext;
+				}
+			}
+		}
 
+		return $filename;
 	}
+
 
 	/**
 	 * Make custom columns sortable.
@@ -825,104 +829,109 @@ class Decker_Tasks {
 		register_post_type( 'decker_task', $args );
 
 		$this->register_post_meta();
-
 	}
 
-/**
- * Register the custom post type meta fields
- */
-public function register_post_meta() {
-    $meta_fields = array(
-        'duedate' => array(
-            'type' => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
-            'schema' => array(
-                'type' => 'string',
-                'format' => 'date'
-            )
-        ),
-        'max_priority' => array(
-            'type' => 'boolean',
-            'sanitize_callback' => 'rest_sanitize_boolean',
-            'schema' => array('type' => 'boolean')
-        ),
-        'stack' => array(
-            'type' => 'string',
-            'sanitize_callback' => 'sanitize_text_field',
-            'schema' => array(
-                'type' => 'string',
-                'enum' => ['to-do', 'in-progress', 'done']
-            )
-        ),
-        'id_nextcloud_card' => array(
-            'type' => 'integer',
-            'sanitize_callback' => 'absint',
-            'schema' => array('type' => 'integer')
-        ),
-        'responsable' => array(
-            'type' => 'integer',
-            'sanitize_callback' => 'absint',
-            'schema' => array('type' => 'integer')
-        ),
-        'hidden' => array(
-            'type' => 'boolean',
-            'sanitize_callback' => 'rest_sanitize_boolean',
-            'schema' => array('type' => 'boolean')
-        ),
-        'assigned_users' => array(
-            'type' => 'array',
-            'single' => true,
-            'sanitize_callback' => function($users) {
-                return array_map('absint', (array)$users);
-            },
-            'show_in_rest' => array(
-                'schema' => array(
-                    'type' => 'array',
-                    'items' => array('type' => 'integer')
-                )
-            )
-        ),
-        '_user_date_relations' => array(
-            'type' => 'array',
-            'single' => true,
-            'sanitize_callback' => function($relations) {
-                return array_map(function($relation) {
-                    return [
-                        'user_id' => absint($relation['user_id']),
-                        'date' => sanitize_text_field($relation['date'])
-                    ];
-                }, (array)$relations);
-            },
-            'show_in_rest' => array(
-                'schema' => array(
-                    'type' => 'array',
-                    'items' => array(
-                        'type' => 'object',
-                        'properties' => [
-                            'user_id' => ['type' => 'integer'],
-                            'date' => ['type' => 'string', 'format' => 'date']
-                        ]
-                    )
-                )
-            )
-        )
-    );
+	/**
+	 * Register the custom post type meta fields
+	 */
+	public function register_post_meta() {
+		$meta_fields = array(
+			'duedate' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'schema' => array(
+					'type' => 'string',
+					'format' => 'date',
+				),
+			),
+			'max_priority' => array(
+				'type' => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			'stack' => array(
+				'type' => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'schema' => array(
+					'type' => 'string',
+					'enum' => array( 'to-do', 'in-progress', 'done' ),
+				),
+			),
+			'id_nextcloud_card' => array(
+				'type' => 'integer',
+				'sanitize_callback' => 'absint',
+				'schema' => array( 'type' => 'integer' ),
+			),
+			'responsable' => array(
+				'type' => 'integer',
+				'sanitize_callback' => 'absint',
+				'schema' => array( 'type' => 'integer' ),
+			),
+			'hidden' => array(
+				'type' => 'boolean',
+				'sanitize_callback' => 'rest_sanitize_boolean',
+				'schema' => array( 'type' => 'boolean' ),
+			),
+			'assigned_users' => array(
+				'type' => 'array',
+				'single' => true,
+				'sanitize_callback' => function ( $users ) {
+					return array_map( 'absint', (array) $users );
+				},
+				'show_in_rest' => array(
+					'schema' => array(
+						'type' => 'array',
+						'items' => array( 'type' => 'integer' ),
+					),
+				),
+			),
+			'_user_date_relations' => array(
+				'type' => 'array',
+				'single' => true,
+				'sanitize_callback' => function ( $relations ) {
+					return array_map(
+						function ( $relation ) {
+							return array(
+								'user_id' => absint( $relation['user_id'] ),
+								'date' => sanitize_text_field( $relation['date'] ),
+							);
+						},
+						(array) $relations
+					);
+				},
+				'show_in_rest' => array(
+					'schema' => array(
+						'type' => 'array',
+						'items' => array(
+							'type' => 'object',
+							'properties' => array(
+								'user_id' => array( 'type' => 'integer' ),
+								'date' => array(
+									'type' => 'string',
+									'format' => 'date',
+								),
+							),
+						),
+					),
+				),
+			),
+		);
 
-    foreach ($meta_fields as $key => $args) {
-        register_post_meta(
-            'decker_task',
-            $key,
-            array_merge(
-                array(
-                    'show_in_rest' => true,
-                    'single' => true,
-                    'type' => 'string' // Valor por defecto, se sobrescribe en cada campo
-                ),
-                $args
-            )
-        );
-    }
-}
+		foreach ( $meta_fields as $key => $args ) {
+			register_post_meta(
+				'decker_task',
+				$key,
+				array_merge(
+					array(
+						'show_in_rest' => true,
+						'single' => true,
+						'type' => 'string', // Default value, can be overrided.
+					),
+					$args
+				)
+			);
+		}
+	}
 
 	/**
 	 * Restricts REST API access for decker_event post type.
@@ -935,7 +944,7 @@ public function register_post_meta() {
 	public function restrict_rest_access( $result, $rest_server, $request ) {
 		$route = $request->get_route();
 
-		if ( strpos( $route, '/wp/v2/decker_task' ) === 0 ) {
+		if ( strpos( $route, '/wp/v2/tasks' ) === 0 ) {
 			// Usa la capacidad específica del CPT.
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				return new WP_Error(
@@ -1751,119 +1760,6 @@ public function register_post_meta() {
 	}
 
 	/**
-	 * Handles the creation or update of a Decker task via AJAX.
-	 *
-	 * This method processes form data sent via an AJAX request, validates and sanitizes
-	 * the input, and either creates a new task or updates an existing one. It returns a JSON
-	 * response indicating success or failure.
-	 *
-	 * @return void Outputs a JSON response indicating the result of the operation.
-	 *
-	 * @throws WP_Error If any validation or task creation/updating fails, an error is logged or returned.
-	 */
-	public function handle_save_decker_task() {
-
-		$send_response = apply_filters( 'decker_save_task_send_response', true );
-
-		// Security nonce check.
-		if ( $send_response ) {
-			check_ajax_referer( 'save_decker_task_nonce', 'nonce' );
-		}
-
-		// Retrieve and sanitize form data.
-		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
-		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-		$description = isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '';
-		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '';
-		$board       = isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0;
-
-		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
-
-		$duedate_raw = isset( $_POST['due_date'] ) ? sanitize_text_field( wp_unslash( $_POST['due_date'] ) ) : '';
-
-		$mark_for_today = isset( $_POST['mark_for_today'] ) ? boolval( wp_unslash( $_POST['mark_for_today'] ) ) : false;
-
-		try {
-			$duedate = new DateTime( $duedate_raw );
-		} catch ( Exception $e ) {
-			$duedate = new DateTime(); // Default value if conversion fails.
-		}
-
-		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
-		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
-
-		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
-
-		// Manejar 'assignees'.
-		$assigned_users = array();
-
-		if ( isset( $_POST['assignees'] ) ) {
-			// Eliminar las barras invertidas añadidas por WordPress.
-			$assignees_raw = sanitize_text_field( wp_unslash( $_POST['assignees'] ) );
-
-			if ( is_string( $assignees_raw ) ) {
-				$assigned_users = array_map( 'absint', explode( ',', $assignees_raw ) );
-			} elseif ( is_array( $assignees_raw ) ) {
-				$assigned_users = array_map( 'absint', $assignees_raw );
-			}
-		}
-
-		// Manejar 'labels'.
-		$labels = array();
-
-		if ( isset( $_POST['labels'] ) ) {
-			// Eliminar las barras invertidas añadidas por WordPress.
-			$labels_raw = sanitize_text_field( wp_unslash( $_POST['labels'] ) );
-
-			if ( is_string( $labels_raw ) ) {
-				$labels = array_map( 'absint', explode( ',', $labels_raw ) );
-			} elseif ( is_array( $labels_raw ) ) {
-				$labels = array_map( 'absint', $labels_raw );
-			}
-		}
-
-		// Llamar a la función común para crear o actualizar la tarea.
-		$result = self::create_or_update_task(
-			$id,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
-			$duedate,
-			$author,
-			$responsable,
-			$hidden,
-			$assigned_users,
-			$labels
-		);
-
-		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-			return;
-		}
-
-		// Set today.
-		if ( $mark_for_today ) {
-			$this->add_user_date_relation( $result, get_current_user_id() );
-		} else {
-			$this->remove_user_date_relation( $result, get_current_user_id() );
-		}
-
-		$result_data = array(
-			'success' => ! is_wp_error( $result ),
-			'message' => is_wp_error( $result ) ? $result->get_error_message() : 'Tarea guardada exitosamente.',
-			'task_id' => $result,
-		);
-
-		if ( $send_response ) {
-			wp_send_json_success( $result_data );
-		}
-
-		return $result_data;
-	}
-
-	/**
 	 * Creates or updates a task in the Decker system.
 	 *
 	 * This method handles validation, taxonomy assignments, and metadata management.
@@ -2039,6 +1935,67 @@ public function register_post_meta() {
 		return $task_id;
 	}
 
+
+	/**
+	 * Validates required fields for decker_task in REST create requests.
+	 *
+	 * @param WP_Post         $prepared_post The post object prepared for insertion.
+	 * @param WP_REST_Request $request       The request used to insert the post.
+	 *
+	 * @return WP_Error|WP_Post
+	 */
+	public function validate_task_fields( $prepared_post, $request ) {
+
+		// Only validate on creation (when there is not ID).
+		if ( empty( $prepared_post->ID ) ) {
+
+			// If there's no title, fail with 400.
+			if ( empty( $prepared_post->post_title ) ) {
+				return new WP_Error(
+					'rest_missing_title',
+					__( 'Title is required for tasks.', 'decker' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Check if decker_board was provided directly as a parameter.
+			$board_terms = $request->get_param( 'boards' );
+
+			if ( ! is_array( $board_terms ) ) {
+				$board_terms = (array) $board_terms;
+			}
+
+			// If no board, fail with 400.
+			if ( empty( $board_terms ) ) {
+				return new WP_Error(
+					'rest_missing_board',
+					__( 'Board is required for tasks.', 'decker' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Validate stack (meta field).
+			$meta = $request->get_param( 'meta' );
+			if ( empty( $meta['stack'] ) ) {
+				return new WP_Error(
+					'rest_missing_stack',
+					__( 'Stack is required for tasks.', 'decker' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			// Validate duedate (meta field).
+			$meta = $request->get_param( 'meta' );
+			if ( empty( $meta['duedate'] ) ) {
+				return new WP_Error(
+					'rest_missing_duedate',
+					__( 'Due date is required for tasks.', 'decker' ),
+					array( 'status' => 400 )
+				);
+			}
+		}
+		return $prepared_post;
+	}
 }
 
 // Instantiate the class.
