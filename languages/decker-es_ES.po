@@ -1771,4 +1771,3 @@ msgstr "La fecha de vencimiento es obligatoria para las tareas."
 #: includes/models/class-task.php:587
 msgid "Unarchive"
 msgstr "Desarchivar"
-
