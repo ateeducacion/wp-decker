@@ -78,13 +78,14 @@ logs:
 # Install PHP_CodeSniffer and WordPress Coding Standards in the container
 install-phpcs: up
 	@echo "Checking if PHP_CodeSniffer is installed..."
-	@if ! npx wp-env run cli phpcs --version > /dev/null 2>&1; then \
+	@if ! npx wp-env run cli bash -c '[ -x "$$HOME/.composer/vendor/bin/phpcs" ]' > /dev/null 2>&1; then \
 		echo "Installing PHP_CodeSniffer and WordPress Coding Standards..."; \
 		npx wp-env run cli composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true; \
 		npx wp-env run cli composer global require squizlabs/php_codesniffer wp-coding-standards/wpcs --no-interaction; \
 	else \
 		echo "PHP_CodeSniffer is already installed."; \
 	fi
+
 
 # Check code style with PHP Code Sniffer inside the container
 lint: install-phpcs
