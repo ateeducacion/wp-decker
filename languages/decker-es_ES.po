@@ -674,11 +674,13 @@ msgstr "Próximas Tareas"
 msgid "DELAYED"
 msgstr "RETARDADO"
 
+#: includes/models/class-task.php:396
 #: public/app-upcoming.php:157
-#: public/class-decker-public.php:318
+#: public/class-decker-public.php:313
 msgid "Today"
 msgstr "Hoy"
 
+#: includes/models/class-task.php:400
 #: public/app-upcoming.php:172
 msgid "Tomorrow"
 msgstr "Mañana"
@@ -829,8 +831,8 @@ msgstr "Restablecer"
 msgid "Task"
 msgstr "Tarea"
 
-#: public/class-decker-public.php:365
-#: public/class-decker-public.php:393
+#: public/class-decker-public.php:360
+#: public/class-decker-public.php:388
 msgid "Error loading content. Please try again."
 msgstr "Error al cargar el contenido. Por favor, inténtelo de nuevo."
 
@@ -927,23 +929,23 @@ msgstr "Guardar"
 msgid "Toggle Dropdown"
 msgstr "Alternar Desplegable"
 
-#: public/class-decker-public.php:303
+#: public/class-decker-public.php:298
 msgid "Please select a file to upload."
 msgstr "Por favor, seleccione un archivo para subir."
 
-#: public/class-decker-public.php:301
+#: public/class-decker-public.php:296
 msgid "Are you sure you want to archive this task?"
 msgstr "¿Está seguro de que desea archivar esta tarea?"
 
-#: public/class-decker-public.php:302
+#: public/class-decker-public.php:297
 msgid "Failed to archive task."
 msgstr "Error al archivar la tarea."
 
-#: public/class-decker-public.php:306
+#: public/class-decker-public.php:301
 msgid "Error uploading attachment."
 msgstr "Error al subir el archivo adjunto."
 
-#: public/class-decker-public.php:304
+#: public/class-decker-public.php:299
 msgid "Are you sure you want to delete this attachment?"
 msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 
@@ -951,47 +953,47 @@ msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 msgid "Invalid post type."
 msgstr "Tipo de publicación inválido."
 
-#: includes/models/class-task.php:431
+#: includes/models/class-task.php:470
 msgid "🔥"
 msgstr "🔥"
 
-#: includes/models/class-task.php:431
+#: includes/models/class-task.php:470
 msgid "Normal"
 msgstr "Normal"
 
-#: includes/models/class-task.php:433
+#: includes/models/class-task.php:473
 msgid "Undefined date"
 msgstr "Fecha no definida"
 
-#: includes/models/class-task.php:459
+#: includes/models/class-task.php:498
 msgid "Order:"
 msgstr "Orden:"
 
-#: includes/models/class-task.php:554
+#: includes/models/class-task.php:597
 msgid "Edit"
 msgstr "Editar"
 
-#: includes/models/class-task.php:571
+#: includes/models/class-task.php:614
 msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
-#: includes/models/class-task.php:578
+#: includes/models/class-task.php:621
 msgid "Archive"
 msgstr "Archivar"
 
-#: includes/models/class-task.php:587
+#: includes/models/class-task.php:630
 msgid "Assign to me"
 msgstr "Asignarme"
 
-#: includes/models/class-task.php:594
+#: includes/models/class-task.php:637
 msgid "Leave"
 msgstr "Abandonar"
 
-#: includes/models/class-task.php:609
+#: includes/models/class-task.php:652
 msgid "Mark for today"
 msgstr "Marcar para hoy"
 
-#: includes/models/class-task.php:615
+#: includes/models/class-task.php:658
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 
@@ -1019,26 +1021,26 @@ msgstr "Apodo"
 msgid "Date"
 msgstr "Fecha"
 
-#: public/class-decker-public.php:307
+#: public/class-decker-public.php:302
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
 #: public/layouts/task-card.php:395
 msgid "Delete"
 msgstr "Eliminar"
 
-#: public/class-decker-public.php:308
+#: public/class-decker-public.php:303
 msgid "Server response error."
 msgstr "Error en la respuesta del servidor."
 
-#: public/class-decker-public.php:309
+#: public/class-decker-public.php:304
 msgid "An error occurred while saving the task."
 msgstr "Ocurrió un error al guardar la tarea."
 
-#: public/class-decker-public.php:310
+#: public/class-decker-public.php:305
 msgid "Request error."
 msgstr "Error en la solicitud."
 
-#: public/class-decker-public.php:311
+#: public/class-decker-public.php:306
 msgid "Error saving task."
 msgstr "Error al guardar la tarea."
 
@@ -1127,19 +1129,19 @@ msgstr "Perfil de Usuario Mínimo"
 msgid "Send"
 msgstr "Enviar"
 
-#: public/class-decker-public.php:312
+#: public/class-decker-public.php:307
 msgid "Show HTML source"
 msgstr "Mostrar código fuente HTML"
 
-#: public/class-decker-public.php:313
+#: public/class-decker-public.php:308
 msgid "Edit the content in HTML format"
 msgstr "Editar el contenido en formato HTML"
 
-#: public/class-decker-public.php:314
+#: public/class-decker-public.php:309
 msgid "OK"
 msgstr "Aceptar"
 
-#: public/class-decker-public.php:315
+#: public/class-decker-public.php:310
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1177,8 +1179,8 @@ msgstr "No tienes permiso para gestionar etiquetas"
 msgid "You do not have permission to delete labels"
 msgstr "No tienes permiso para borrar etiquetas"
 
-#: public/class-decker-public.php:364
-#: public/class-decker-public.php:392
+#: public/class-decker-public.php:359
+#: public/class-decker-public.php:387
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
@@ -1190,15 +1192,15 @@ msgstr "Error de comprobación."
 msgid "Invalid comment data."
 msgstr "Datos de comentario inválidos."
 
-#: public/class-decker-public.php:298
+#: public/class-decker-public.php:293
 msgid "Are you sure you want to delete this comment?"
 msgstr "¿Esta seguro que quiere eliminar este comentario?"
 
-#: public/class-decker-public.php:299
+#: public/class-decker-public.php:294
 msgid "Failed to delete comment."
 msgstr "Error al eliminar comentario."
 
-#: public/class-decker-public.php:300
+#: public/class-decker-public.php:295
 msgid "Error deleting comment."
 msgstr "Error eliminando comentario."
 
@@ -1226,7 +1228,7 @@ msgstr "Está ejecutando este sitio con datos de demostración."
 msgid "Tasks by Stack from current User"
 msgstr "Mis tareas por Estado"
 
-#: public/class-decker-public.php:305
+#: public/class-decker-public.php:300
 msgid "Failed to delete attachment."
 msgstr "Error al borrar adjunto."
 
@@ -1564,19 +1566,19 @@ msgstr "Por favor, selecciona una categoría para el evento."
 msgid "The category determines the color of the event in the calendar."
 msgstr "La categoría determina el color del evento en el calendario."
 
-#: public/class-decker-public.php:319
+#: public/class-decker-public.php:314
 msgid "Month"
 msgstr "Mes"
 
-#: public/class-decker-public.php:320
+#: public/class-decker-public.php:315
 msgid "Week"
 msgstr "Semana"
 
-#: public/class-decker-public.php:321
+#: public/class-decker-public.php:316
 msgid "Day"
 msgstr "Día"
 
-#: public/class-decker-public.php:322
+#: public/class-decker-public.php:317
 msgid "List"
 msgstr "Lista"
 
@@ -1758,3 +1760,21 @@ msgstr "Seleccionar etiquetas..."
 #: public/layouts/kb-modal.php:221
 msgid "No more labels available"
 msgstr "No hay más etiquetas disponibles"
+
+#: includes/models/class-task.php:385
+msgid "No due date"
+msgstr "Sin fecha de vencimiento"
+
+#: includes/models/class-task.php:398
+msgid "Yesterday"
+msgstr "Ayer"
+
+#. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+#: includes/models/class-task.php:409
+msgid "%s ago"
+msgstr "hace %s"
+
+#. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+#: includes/models/class-task.php:413
+msgid "in %s"
+msgstr "en %s"

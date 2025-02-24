@@ -888,47 +888,76 @@ msgstr ""
 msgid "Invalid post type."
 msgstr ""
 
-#: includes/models/class-task.php:431
+#: includes/models/class-task.php:385
+msgid "No due date"
+msgstr ""
+
+#: includes/models/class-task.php:396
+#: public/app-upcoming.php:157
+#: public/class-decker-public.php:313
+msgid "Today"
+msgstr ""
+
+#: includes/models/class-task.php:398
+msgid "Yesterday"
+msgstr ""
+
+#: includes/models/class-task.php:400
+#: public/app-upcoming.php:172
+msgid "Tomorrow"
+msgstr ""
+
+#. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+#: includes/models/class-task.php:409
+msgid "%s ago"
+msgstr ""
+
+#. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+#: includes/models/class-task.php:413
+msgid "in %s"
+msgstr ""
+
+#: includes/models/class-task.php:470
 msgid "🔥"
 msgstr ""
 
-#: includes/models/class-task.php:431
+#: includes/models/class-task.php:470
 msgid "Normal"
 msgstr ""
 
-#: includes/models/class-task.php:433
+#: includes/models/class-task.php:473
 msgid "Undefined date"
 msgstr ""
 
-#: includes/models/class-task.php:459
+#: includes/models/class-task.php:498
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:554
+#: includes/models/class-task.php:597
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:571
+#: includes/models/class-task.php:614
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:578
+#: includes/models/class-task.php:621
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:587
+#: includes/models/class-task.php:630
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:594
+#: includes/models/class-task.php:637
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:609
+#: includes/models/class-task.php:652
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:615
+#: includes/models/class-task.php:658
 msgid "Unmark for today"
 msgstr ""
 
@@ -1257,15 +1286,6 @@ msgstr ""
 msgid "DELAYED"
 msgstr ""
 
-#: public/app-upcoming.php:157
-#: public/class-decker-public.php:318
-msgid "Today"
-msgstr ""
-
-#: public/app-upcoming.php:172
-msgid "Tomorrow"
-msgstr ""
-
 #: public/app-upcoming.php:185
 msgid "Next 7 Days"
 msgstr ""
@@ -1274,104 +1294,104 @@ msgstr ""
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:298
+#: public/class-decker-public.php:293
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/class-decker-public.php:299
+#: public/class-decker-public.php:294
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/class-decker-public.php:300
+#: public/class-decker-public.php:295
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/class-decker-public.php:301
+#: public/class-decker-public.php:296
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:302
+#: public/class-decker-public.php:297
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/class-decker-public.php:303
+#: public/class-decker-public.php:298
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/class-decker-public.php:304
+#: public/class-decker-public.php:299
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/class-decker-public.php:305
+#: public/class-decker-public.php:300
 msgid "Failed to delete attachment."
 msgstr ""
 
-#: public/class-decker-public.php:306
+#: public/class-decker-public.php:301
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/class-decker-public.php:307
+#: public/class-decker-public.php:302
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
 #: public/layouts/task-card.php:395
 msgid "Delete"
 msgstr ""
 
-#: public/class-decker-public.php:308
+#: public/class-decker-public.php:303
 msgid "Server response error."
 msgstr ""
 
-#: public/class-decker-public.php:309
+#: public/class-decker-public.php:304
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/class-decker-public.php:310
+#: public/class-decker-public.php:305
 msgid "Request error."
 msgstr ""
 
-#: public/class-decker-public.php:311
+#: public/class-decker-public.php:306
 msgid "Error saving task."
 msgstr ""
 
-#: public/class-decker-public.php:312
+#: public/class-decker-public.php:307
 msgid "Show HTML source"
 msgstr ""
 
-#: public/class-decker-public.php:313
+#: public/class-decker-public.php:308
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/class-decker-public.php:314
+#: public/class-decker-public.php:309
 msgid "OK"
 msgstr ""
 
-#: public/class-decker-public.php:315
+#: public/class-decker-public.php:310
 msgid "Cancel"
 msgstr ""
 
-#: public/class-decker-public.php:319
+#: public/class-decker-public.php:314
 msgid "Month"
 msgstr ""
 
-#: public/class-decker-public.php:320
+#: public/class-decker-public.php:315
 msgid "Week"
 msgstr ""
 
-#: public/class-decker-public.php:321
+#: public/class-decker-public.php:316
 msgid "Day"
 msgstr ""
 
-#: public/class-decker-public.php:322
+#: public/class-decker-public.php:317
 msgid "List"
 msgstr ""
 
-#: public/class-decker-public.php:364
-#: public/class-decker-public.php:392
+#: public/class-decker-public.php:359
+#: public/class-decker-public.php:387
 msgid "Loading content. Please wait."
 msgstr ""
 
-#: public/class-decker-public.php:365
-#: public/class-decker-public.php:393
+#: public/class-decker-public.php:360
+#: public/class-decker-public.php:388
 msgid "Error loading content. Please try again."
 msgstr ""
 

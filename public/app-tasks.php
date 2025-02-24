@@ -289,7 +289,30 @@ table#tablaTareas td:nth-child(4) {
 													echo '</div></td>';
 
 													// Remaining time.
-													echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
+													echo '<td data-sort="' . esc_attr( $task->duedate?->format( 'Y-m-d' ) ) . '">';
+													if ( $task->duedate instanceof DateTime ) {
+														$due_midnight = clone $task->duedate;
+														$due_midnight->setTime( 0, 0, 0 );
+														$today_midnight = new DateTime( 'today' );
+
+														// Default: No inline style.
+														$color_style = '';
+
+														if ( $due_midnight == $today_midnight ) {
+															$color_style = 'color: var(--ct-warning-text-emphasis);';
+														} elseif ( $due_midnight < $today_midnight ) {
+															$color_style = 'color: var(--ct-danger-text-emphasis);';
+														}
+
+														// Escapar el valor del estilo, asegurando que se mantiene el formato CSS válido.
+														echo '<span style="' . esc_attr( $color_style ) . '" title="' . esc_attr( $task->duedate->format( 'Y-m-d' ) ) . '">';
+													} else {
+														echo '<span>';
+													}
+
+
+													echo esc_html( $task->get_relative_time() );
+													echo '</span></td>';
 
 													// Context menu.
 													echo '<td class="text-end">';
@@ -336,10 +359,10 @@ table#tablaTareas td:nth-child(4) {
 	<script>
 
 	// Extend Day.js with relativeTime plugin
-	dayjs.extend(dayjs_plugin_relativeTime);
+	// dayjs.extend(dayjs_plugin_relativeTime);
 
 	// Set locale to Spanish
-	dayjs.locale('es');
+	// dayjs.locale('es');
 
 	function setupAllTasksTable() {
 		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
@@ -395,25 +418,20 @@ table#tablaTareas td:nth-child(4) {
 						targets: [4, 5, 7], // Columna 7
 						orderable: false
 					},
-					{
-						targets: 7, // Columna 6 (Remaining Time)
-						render: function(data, type, row, meta) {
-							if(type === 'display') {
-								// Verificar que la fecha sea válida
-								if (!data) {
-									return '';
-								}
-								// Formatear la fecha completa para el tooltip
-								var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
-								// Generar el texto amigable usando Day.js
-								var friendlyText = dayjs(data).fromNow();
-								return '<span title="' + fullDate + '">' + friendlyText + '</span>';
-							}
-							return data; // Para 'sort', 'type' y 'filter'
-						},
-						type: 'date'
-					},
 
+				{
+					targets: 7,
+					type: 'date',
+					render: function(data, type, row, meta) {
+						// Obtener el HTML original del atributo data-display
+						return jQuery(row).find('td:eq(7)').html();
+					},
+					createdCell: function(cell, cellData, rowData, rowIndex, colIndex) {
+						// Almacenar HTML original en atributo data
+						jQuery(cell).attr('data-display', jQuery(cell).html());
+					}
+				}
+					
 				],
 
 				lengthMenu: [

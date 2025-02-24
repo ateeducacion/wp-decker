@@ -375,14 +375,53 @@ class Task {
 		return $history;
 	}
 
-
 	/**
 	 * Retrieves the relative time for the task's due date.
 	 *
 	 * @return string The relative time as a human-readable string.
 	 */
 	public function get_relative_time(): string {
-		return Decker::get_relative_time( $this->duedate );
+		if ( ! $this->duedate instanceof DateTime ) {
+			return __( 'No due date', 'decker' );
+		}
+
+		$due_date = clone $this->duedate;
+		$due_date->setTime( 0, 0, 0 ); // Ignore time.
+
+		$today = new DateTime( 'today' );
+		$yesterday = ( clone $today )->modify( '-1 day' );
+		$tomorrow = ( clone $today )->modify( '+1 day' );
+
+		if ( $due_date == $today ) {
+			return __( 'Today', 'decker' );
+		} elseif ( $due_date == $yesterday ) {
+			return __( 'Yesterday', 'decker' );
+		} elseif ( $due_date == $tomorrow ) {
+			return __( 'Tomorrow', 'decker' );
+		} else {
+			$now = current_time( 'timestamp' ); // Wordpress current time.
+			$due_timestamp = $due_date->getTimestamp();
+			$diff_days = $today->diff( $due_date )->days;
+
+			// Use human_time_diff.
+			if ( $due_date < $today ) {
+				// Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+				return sprintf( __( '%s ago', 'decker' ), human_time_diff( $due_timestamp, $now ) );
+
+			} else {
+				// Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+				return sprintf( __( 'in %s', 'decker' ), human_time_diff( $now, $due_timestamp ) );
+			}
+		}
+	}
+
+	/**
+	 * Get the raw formatted date for sorting
+	 *
+	 * @return string Date in Y-m-d format
+	 */
+	public function get_formatted_date(): string {
+		return $this->duedate ? $this->duedate->format( 'Y-m-d' ) : '';
 	}
 
 	/**
@@ -429,12 +468,12 @@ class Task {
 		);
 		$priority_badge_class = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
 		$priority_label      = $this->max_priority ? __( '🔥', 'decker' ) : __( 'Normal', 'decker' );
-		$formatted_duedate  = $this->get_duedate_as_string();
-		$relative_time      = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined date', 'decker' ) . '</span>';
 
-		if ( ! empty( $this->duedate ) ) {
-			// $relative_time = esc_html( $this->get_relative_time() );
-			$relative_time = $formatted_duedate;
+		$formatted_duedate = $this->get_duedate_as_string();
+		$relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined date', 'decker' ) . '</span>';
+
+		if ( $this->duedate instanceof DateTime ) {
+			$relative_time = esc_html( $this->get_relative_time() );
 		}
 
 		$card_background_color = '';
@@ -461,17 +500,21 @@ class Task {
 
 				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
 					<span class="task-id label-to-hide"  
-							<?php
-							if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
-								$now = new DateTime( 'now' );
-								if ( $now->diff( $this->duedate )->invert == 1 && $now->diff( $this->duedate )->days > 0 ) {
-									echo 'style="color: var(--ct-danger-text-emphasis)"';
-								}
-							}
+						<?php
+						if ( $this->duedate instanceof DateTime ) {
+							$today_midnight = new DateTime( 'today' );
+							$due_midnight = clone $this->duedate;
+							$due_midnight->setTime( 0, 0, 0 );
 
-							?>
-						>
-						<?php echo wp_kses_post( $relative_time ); ?>
+							if ( $due_midnight == $today_midnight ) {
+								echo 'style="color: var(--ct-warning-text-emphasis)"';
+							} elseif ( $due_midnight < $today_midnight ) {
+								echo 'style="color: var(--ct-danger-text-emphasis)"';
+							}
+						}
+						?>
+					>
+						<?php echo esc_html( $this->get_relative_time() ); ?>
 					</span>
 					<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->ID ); ?></span>
 				</small>
