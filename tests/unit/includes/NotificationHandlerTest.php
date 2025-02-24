@@ -49,6 +49,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		parent::set_up();
 
 
+		$this->captured_mail = [];
+
 		// Enable email notifications.
 		update_option(
 			'decker_settings',
@@ -104,6 +106,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		remove_action( 'decker_task_completed', array( $this, 'track_hook' ), 10 );
 		remove_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10 );
 		remove_filter( 'wp_mail', array( $this, 'capture_mail' ) );
+
+		wp_cache_flush();
 
 		parent::tear_down();
 	}
@@ -213,12 +217,20 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		);
 
 		// Assign the task to the test user (for backward compatibility in meta).
-		// $this->task_id = self::factory()->task->update_object(
-		// $this->task_id,
-		// array(
-		// 'assigned_users' => array( $this->test_user ),
-		// )
-		// );
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user ),
+				'stack' => 'done'
+			)
+		);
+
+		// Verificar metadata de prioridad
+		$this->assertEquals(
+		    '0', 
+		    get_post_meta($this->task_id, 'max_priority', true),
+		    'Priority meta not set correctly'
+		);
 
 		// Trigger the completion hook.
 		$this->trigger_notifications( 'decker_task_completed', $this->task_id, $this->test_user );
@@ -227,9 +239,9 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 
 		// Verify email details.
-		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'Recipient does not match.' );
-		$this->assertStringContainsString( 'Task Completed', $this->captured_mail['subject'], 'Subject mismatch.' );
-		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'Task title not found in email body.' );
+		$this->assertEquals( 'test@example.com', $this->captured_mail[0]['to'], 'Recipient does not match.' );
+		$this->assertStringContainsString( 'Task Completed', $this->captured_mail[0]['subject'], 'Subject mismatch.' );
+		$this->assertStringContainsString( 'Test Task', $this->captured_mail[0]['message'], 'Task title not found in email body.' );
 
 		// Verify that a notification was saved for Heartbeat.
 		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
@@ -260,12 +272,15 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
+		$commenter_id = self::factory()->user->create(['role' => 'subscriber']);		
+
 		// Create a comment using the WordPress factory.
 		$comment_id = self::factory()->comment->create(
 			array(
 				'comment_post_ID' => $this->task_id,
 				'comment_content' => 'Test comment',
-				'user_id'         => $this->test_user,
+				'user_id'         => $commenter_id,
+				'comment_approved' => 1,
 			)
 		);
 
@@ -276,15 +291,33 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$this->assertEquals( 'Test comment', $comment->comment_content, 'Comment content mismatch.' );
 
 		// Trigger comment notification.
-		$this->trigger_notifications( 'decker_task_comment_added', $this->task_id, $comment_id, $this->test_user );
+		$this->trigger_notifications( 'decker_task_comment_added', $this->task_id, $comment_id, $commenter_id );
+
+		$comment_notification = null;
+
+
+		// Buscar la notificación de comentario específica
+		foreach ($this->captured_mail as $mail) {
+		    if (str_contains($mail['subject'], 'New Comment')) {
+		        $comment_notification = $mail;
+		        break;
+		    }
+		}
+
+		$this->assertNotNull($comment_notification, 'No se encontró email de comentario');
+		$this->assertEquals('test@example.com', $comment_notification['to']);
+
+
+
+
 
 		// Check that at least one email was captured.
 		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 
 		// Verify email details.
-		$this->assertEquals( 'test@example.com', $this->captured_mail['to'], 'Recipient mismatch.' );
-		$this->assertStringContainsString( 'New Comment', $this->captured_mail['subject'], 'Subject mismatch.' );
-		$this->assertStringContainsString( 'Test Task', $this->captured_mail['message'], 'Task title not found in email body.' );
+		$this->assertEquals( 'test@example.com', $this->captured_mail[0]['to'], 'Recipient mismatch.' );
+		$this->assertStringContainsString( 'New Comment', $this->captured_mail[0]['subject'], 'Subject mismatch.' );
+		$this->assertStringContainsString( 'Test Task', $this->captured_mail[0]['message'], 'Task title not found in email body.' );
 
 		// Verify that a notification was saved for Heartbeat.
 		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
@@ -328,8 +361,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 *
 	 * @return array The same email arguments, unchanged.
 	 */
-	public function capture_mail( $args ) {
-		$this->captured_mail = $args;
-		return $args;
+	public function capture_mail($args) {
+	    $this->captured_mail[] = $args; // Cambiar a array de emails
+	    return $args;
 	}
 }

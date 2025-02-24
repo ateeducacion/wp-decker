@@ -173,6 +173,8 @@ class Decker_Notification_Handler {
 
 			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 			$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
+
+			error_log( 'Email enviado' );
 		}
 	}
 
@@ -186,6 +188,10 @@ class Decker_Notification_Handler {
 	 */
 	public function handle_user_assigned( $task_id, $user_id ) {
 		if ( ! $task_id || ! $user_id ) {
+			return;
+		}
+
+		if ( get_current_user_id() === $user_id ) {
 			return;
 		}
 
@@ -273,6 +279,12 @@ class Decker_Notification_Handler {
 		$finisher = get_userdata( $completed_by );
 
 		foreach ( $assigned_users as $user_id ) {
+
+			// If is the same user that completed the task don't send.
+			if ( $completed_by === $user_id ) {
+				continue;
+			}
+
 			// Heartbeat notification is always saved.
 			$notification_data = array(
 				'type'      => 'task_completed',
@@ -334,6 +346,13 @@ class Decker_Notification_Handler {
 	public function handle_new_comment( $task_id, $comment_id, $commenter_id ) {
 		if ( ! $task_id || ! $comment_id ) {
 			return;
+		}
+
+		$user_id = get_current_user_id();
+
+		// Add user verify before sending.
+		if ( $user_id === $commenter_id ) {
+			return; // Skip self-notifications.
 		}
 
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );

@@ -37,6 +37,7 @@ class Decker_Disable_Comment_Notifications {
 	 * @return string[] Filtered list of email recipients (empty array if decker_task).
 	 */
 	public function disable_comment_notifications( $emails, $comment_id ) {
+
 		$comment = get_comment( $comment_id );
 		if ( $comment && 'decker_task' === get_post_type( $comment->comment_post_ID ) ) {
 			// Return an empty array to disable all notifications for this CPT.
