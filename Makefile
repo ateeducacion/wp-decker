@@ -89,11 +89,11 @@ install-phpcs: up
 
 # Check code style with PHP Code Sniffer inside the container
 lint: install-phpcs
-	npx wp-env run cli phpcs --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+	npx wp-env run cli phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Automatically fix code style with PHP Code Beautifier inside the container
 fix: install-phpcs
-	npx wp-env run cli phpcbf --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+	npx wp-env run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 
 # Finds the CLI container used by wp-env
@@ -115,7 +115,7 @@ fix-no-tty: cli-container
 	) && \
 	echo "Running PHPCBF (no TTY) inside $$CONTAINER_CLI..." && \
 	docker exec -i $$CONTAINER_CLI \
-		phpcbf --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+		phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Lint wihout tty for use on git hooks
 lint-no-tty: cli-container
@@ -126,7 +126,7 @@ lint-no-tty: cli-container
 	) && \
 	echo "Running PHPCS (no TTY) inside $$CONTAINER_CLI..." && \
 	docker exec -i $$CONTAINER_CLI \
-		phpcs --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+		phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 
 # Update Composer dependencies
