@@ -107,7 +107,7 @@ cli-container:
 	)
 
 # Fix wihout tty for use on git hooks
-fix-no-tty: cli-container
+fix-no-tty: cli-container start-if-not-running
 	@CONTAINER_CLI=$$( \
 		docker ps --format "{{.Names}}" \
 		| grep "\-cli\-" \
@@ -118,7 +118,7 @@ fix-no-tty: cli-container
 		phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Lint wihout tty for use on git hooks
-lint-no-tty: cli-container
+lint-no-tty: cli-container start-if-not-running
 	@CONTAINER_CLI=$$( \
 		docker ps --format "{{.Names}}" \
 		| grep "\-cli\-" \
