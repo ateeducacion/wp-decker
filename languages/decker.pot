@@ -222,6 +222,22 @@ msgstr ""
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
+#: includes/class-decker-notification-handler.php:171
+msgid "New task created"
+msgstr ""
+
+#: includes/class-decker-notification-handler.php:225
+msgid "User assigned"
+msgstr ""
+
+#: includes/class-decker-notification-handler.php:286
+msgid "Task completed"
+msgstr ""
+
+#: includes/class-decker-notification-handler.php:350
+msgid "New comment"
+msgstr ""
+
 #: includes/custom-post-types/class-decker-actions.php:37
 msgctxt "taxonomy general name"
 msgid "Actions"

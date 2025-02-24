@@ -1800,3 +1800,19 @@ msgstr "El estado es inválido. Valores permitidos: por hacer, en progreso, hech
 #: public/layouts/topbar.php:188
 msgid "Help"
 msgstr "Ayuda"
+
+#: includes/class-decker-notification-handler.php:171
+msgid "New task created"
+msgstr "Nueva tarea creada"
+
+#: includes/class-decker-notification-handler.php:225
+msgid "User assigned"
+msgstr "Usuario asignado"
+
+#: includes/class-decker-notification-handler.php:286
+msgid "Task completed"
+msgstr "Tarea completada"
+
+#: includes/class-decker-notification-handler.php:350
+msgid "New comment"
+msgstr "Nuevo comentario"
