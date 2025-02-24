@@ -295,24 +295,21 @@ table#tablaTareas td:nth-child(4) {
 														$due_midnight->setTime( 0, 0, 0 );
 														$today_midnight = new DateTime( 'today' );
 
-														// Default: No inline style.
 														$color_style = '';
-
 														if ( $due_midnight == $today_midnight ) {
 															$color_style = 'color: var(--ct-warning-text-emphasis);';
 														} elseif ( $due_midnight < $today_midnight ) {
 															$color_style = 'color: var(--ct-danger-text-emphasis);';
 														}
 
-														// Escapar el valor del estilo, asegurando que se mantiene el formato CSS válido.
+														// Línea corregida con escape adecuado.
 														echo '<span style="' . esc_attr( $color_style ) . '" title="' . esc_attr( $task->duedate->format( 'Y-m-d' ) ) . '">';
 													} else {
 														echo '<span>';
 													}
-
-
 													echo esc_html( $task->get_relative_time() );
 													echo '</span></td>';
+
 
 													// Context menu.
 													echo '<td class="text-end">';
@@ -419,18 +416,20 @@ table#tablaTareas td:nth-child(4) {
 						orderable: false
 					},
 
-				{
-					targets: 7,
-					type: 'date',
-					render: function(data, type, row, meta) {
-						// Obtener el HTML original del atributo data-display
-						return jQuery(row).find('td:eq(7)').html();
-					},
-					createdCell: function(cell, cellData, rowData, rowIndex, colIndex) {
-						// Almacenar HTML original en atributo data
-						jQuery(cell).attr('data-display', jQuery(cell).html());
+
+					{
+						targets: 7, // Columna de tiempo restante
+						type: 'date',
+						render: function(data, type, row) {
+							// Para ordenación usa el data-sort
+							if (type === 'sort') {
+								return jQuery(row).find('td:eq(7)').data('sort');
+							}
+							// Para mostrar el contenido HTML original
+							return jQuery(row).find('td:eq(7)').html();
+						}
 					}
-				}
+
 					
 				],
 
