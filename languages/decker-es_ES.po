@@ -21,32 +21,10 @@ msgstr "Área de Tecnología Educativa"
 
 #. Plugin Name of the plugin
 #: decker.php
-#: admin/class-decker-admin-export.php:60
 #: admin/class-decker-admin-settings.php:208
 #: public/app-calendar.php:40
 msgid "Decker"
 msgstr "Decker"
-
-#: admin/class-decker-admin-import.php:50
-msgid "Decker Tasks from NextCloud"
-msgstr "Tareas Decker desde NextCloud"
-
-#: admin/class-decker-admin-import.php:51
-msgid "Import tasks, labels, and boards from NextCloud."
-msgstr "Importar tareas, etiquetas y tableros desde NextCloud"
-
-#: admin/class-decker-admin-import.php:62
-msgid "Import Decker Tasks from NextCloud"
-msgstr "Importar tareas desde NextCloud"
-
-#: admin/class-decker-admin-import.php:104
-msgid "Import Now"
-msgstr "Importar ahora"
-
-#: admin/class-decker-admin-import.php:107
-#, fuzzy
-msgid "Import Progress"
-msgstr "En Progreso"
 
 #: admin/class-decker-admin-settings.php:207
 #: includes/custom-post-types/class-decker-user-extended.php:87
@@ -421,10 +399,6 @@ msgstr "Decker es un complemento de WordPress enfocado en presentar de manera ef
 #: decker.php
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 msgstr "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
-
-#: admin/class-decker-admin-import.php:99
-msgid "If checked, tasks that already exist in the system will be skipped and not updated."
-msgstr "Si está marcado, las tareas que ya existen en el sistema se omitirán y no se actualizarán."
 
 #: admin/class-decker-admin-settings.php:46
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
@@ -1136,42 +1110,6 @@ msgstr "Slug incorrecto. Eliminación cancelada."
 #: public/layouts/left-sidebar.php:302
 msgid "Utilities"
 msgstr "Utilidades"
-
-#: admin/class-decker-admin-import.php:68
-msgid "NextCloud URL Base"
-msgstr "URL Base de NextCloud"
-
-#: admin/class-decker-admin-import.php:71
-msgid "The base URL of your NextCloud instance"
-msgstr "La URL base de tu instancia de NextCloud"
-
-#: admin/class-decker-admin-import.php:75
-msgid "NextCloud Username"
-msgstr "Usuario de NextCloud"
-
-#: admin/class-decker-admin-import.php:78
-msgid "Your NextCloud username"
-msgstr "Tu nombre de usuario de NextCloud"
-
-#: admin/class-decker-admin-import.php:82
-msgid "NextCloud Access Token"
-msgstr "Token de Acceso de NextCloud"
-
-#: admin/class-decker-admin-import.php:85
-msgid "Your NextCloud access token"
-msgstr "Tu token de acceso de NextCloud"
-
-#: admin/class-decker-admin-import.php:89
-msgid "Ignored Board IDs"
-msgstr "IDs de Tableros Ignorados"
-
-#: admin/class-decker-admin-import.php:92
-msgid "Comma-separated list of board IDs to ignore"
-msgstr "Lista de IDs de tableros a ignorar, separados por comas"
-
-#: admin/class-decker-admin-import.php:96
-msgid "Skip Existing Tasks"
-msgstr "Omitir Tareas Existentes"
 
 #: admin/class-decker-admin-settings.php:257
 msgid "Configure the Decker plugin settings."
