@@ -61,7 +61,7 @@ class DeckerEventsIntegrationTest extends Decker_Test_Base {
 		$post_type = get_post_type_object( 'decker_event' );
 		$this->assertNotNull( $post_type );
 		$this->assertEquals( 'decker_event', $post_type->name );
-		$this->assertTrue( $post_type->public );
+		$this->assertFalse( $post_type->public );
 		$this->assertTrue( $post_type->show_in_rest );
 	}
 

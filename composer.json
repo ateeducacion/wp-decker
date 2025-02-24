@@ -1,6 +1,5 @@
 {    
     "require": {
-        "erusev/parsedown": ">=1.7.4",
         "erseco/mime-mail-parser": "^1.0"
     },
     "require-dev": {
@@ -14,14 +13,10 @@
     },
     "scripts": {
         "post-install-cmd": [
-            "rm -rf admin/vendor/parsedown",
-            "cp -r vendor/erusev/parsedown admin/vendor/",
             "rm -rf admin/vendor/mime-mail-parser",
             "cp -r vendor/erseco/mime-mail-parser admin/vendor/"
         ],
         "post-update-cmd": [
-            "rm -rf admin/vendor/parsedown",
-            "cp -r vendor/erusev/parsedown admin/vendor/",
             "rm -rf admin/vendor/mime-mail-parser",
             "cp -r vendor/erseco/mime-mail-parser admin/vendor/"
         ],

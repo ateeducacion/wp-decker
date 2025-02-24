@@ -21,32 +21,10 @@ msgstr "Área de Tecnología Educativa"
 
 #. Plugin Name of the plugin
 #: decker.php
-#: admin/class-decker-admin-export.php:60
 #: admin/class-decker-admin-settings.php:224
 #: public/app-calendar.php:40
 msgid "Decker"
 msgstr "Decker"
-
-#: admin/class-decker-admin-import.php:50
-msgid "Decker Tasks from NextCloud"
-msgstr "Tareas Decker desde NextCloud"
-
-#: admin/class-decker-admin-import.php:51
-msgid "Import tasks, labels, and boards from NextCloud."
-msgstr "Importar tareas, etiquetas y tableros desde NextCloud"
-
-#: admin/class-decker-admin-import.php:62
-msgid "Import Decker Tasks from NextCloud"
-msgstr "Importar tareas desde NextCloud"
-
-#: admin/class-decker-admin-import.php:104
-msgid "Import Now"
-msgstr "Importar ahora"
-
-#: admin/class-decker-admin-import.php:107
-#, fuzzy
-msgid "Import Progress"
-msgstr "En Progreso"
 
 #: admin/class-decker-admin-settings.php:223
 #: includes/custom-post-types/class-decker-user-extended.php:87
@@ -315,7 +293,7 @@ msgstr "Adjuntos"
 
 #: includes/custom-post-types/class-decker-tasks.php:1086
 #: public/app-priority.php:170
-#: public/app-priority.php:402
+#: public/app-priority.php:408
 #: public/app-tasks.php:203
 #: public/layouts/task-card.php:199
 #, fuzzy
@@ -334,7 +312,7 @@ msgstr "Máxima Prioridad"
 #: includes/custom-post-types/class-decker-tasks.php:205
 #: includes/custom-post-types/class-decker-tasks.php:1119
 #: public/app-priority.php:171
-#: public/app-priority.php:403
+#: public/app-priority.php:409
 #: public/app-tasks.php:204
 #: public/layouts/task-card.php:245
 msgid "Stack"
@@ -421,10 +399,6 @@ msgstr "Decker es un complemento de WordPress enfocado en presentar de manera ef
 #: decker.php
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 msgstr "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
-
-#: admin/class-decker-admin-import.php:99
-msgid "If checked, tasks that already exist in the system will be skipped and not updated."
-msgstr "Si está marcado, las tareas que ya existen en el sistema se omitirán y no se actualizarán."
 
 #: admin/class-decker-admin-settings.php:46
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
@@ -600,7 +574,7 @@ msgid "Yes"
 msgstr "Sí"
 
 #: public/app-priority.php:154
-#: public/app-priority.php:392
+#: public/app-priority.php:398
 #: public/app-term-manager.php:290
 #: public/layouts/event-card.php:253
 #: public/layouts/kb-modal.php:82
@@ -615,7 +589,7 @@ msgstr "MÁXIMA PRIORIDAD"
 #: public/app-event-manager.php:63
 #: public/app-knowledge-base.php:87
 #: public/app-priority.php:172
-#: public/app-priority.php:404
+#: public/app-priority.php:410
 #: public/layouts/event-card.php:116
 #: public/layouts/event-card.php:117
 #: public/layouts/kb-modal.php:29
@@ -623,19 +597,19 @@ msgstr "MÁXIMA PRIORIDAD"
 msgid "Title"
 msgstr "Título"
 
-#: public/app-priority.php:209
+#: public/app-priority.php:215
 msgid "No board assigned"
 msgstr "Ningún tablero asignado"
 
-#: public/app-priority.php:350
+#: public/app-priority.php:356
 msgid "No tasks for today."
 msgstr "No hay tareas para hoy."
 
-#: public/app-priority.php:391
+#: public/app-priority.php:397
 msgid "Select tasks to import"
 msgstr "Seleccionar tareas para importar"
 
-#: public/app-priority.php:432
+#: public/app-priority.php:438
 msgid "There are no tasks from previous days to import."
 msgstr "No hay tareas de días anteriores para importar."
 
@@ -910,7 +884,6 @@ msgstr "Por favor, seleccione una fecha de vencimiento."
 msgid "Assign to"
 msgstr "Asignar a"
 
-#: includes/models/class-task.php:492
 #: public/layouts/task-card.php:311
 msgid "Comments"
 msgstr "Comentarios"
@@ -995,35 +968,35 @@ msgstr "Normal"
 msgid "Undefined date"
 msgstr "Fecha no definida"
 
-#: includes/models/class-task.php:454
+#: includes/models/class-task.php:459
 msgid "Order:"
 msgstr "Orden:"
 
-#: includes/models/class-task.php:545
+#: includes/models/class-task.php:554
 msgid "Edit"
 msgstr "Editar"
 
-#: includes/models/class-task.php:562
+#: includes/models/class-task.php:571
 msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
-#: includes/models/class-task.php:569
+#: includes/models/class-task.php:578
 msgid "Archive"
 msgstr "Archivar"
 
-#: includes/models/class-task.php:578
+#: includes/models/class-task.php:587
 msgid "Assign to me"
 msgstr "Asignarme"
 
-#: includes/models/class-task.php:585
+#: includes/models/class-task.php:594
 msgid "Leave"
 msgstr "Abandonar"
 
-#: includes/models/class-task.php:600
+#: includes/models/class-task.php:609
 msgid "Mark for today"
 msgstr "Marcar para hoy"
 
-#: includes/models/class-task.php:606
+#: includes/models/class-task.php:615
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 
@@ -1147,42 +1120,6 @@ msgstr "Slug incorrecto. Eliminación cancelada."
 #: public/layouts/left-sidebar.php:302
 msgid "Utilities"
 msgstr "Utilidades"
-
-#: admin/class-decker-admin-import.php:68
-msgid "NextCloud URL Base"
-msgstr "URL Base de NextCloud"
-
-#: admin/class-decker-admin-import.php:71
-msgid "The base URL of your NextCloud instance"
-msgstr "La URL base de tu instancia de NextCloud"
-
-#: admin/class-decker-admin-import.php:75
-msgid "NextCloud Username"
-msgstr "Usuario de NextCloud"
-
-#: admin/class-decker-admin-import.php:78
-msgid "Your NextCloud username"
-msgstr "Tu nombre de usuario de NextCloud"
-
-#: admin/class-decker-admin-import.php:82
-msgid "NextCloud Access Token"
-msgstr "Token de Acceso de NextCloud"
-
-#: admin/class-decker-admin-import.php:85
-msgid "Your NextCloud access token"
-msgstr "Tu token de acceso de NextCloud"
-
-#: admin/class-decker-admin-import.php:89
-msgid "Ignored Board IDs"
-msgstr "IDs de Tableros Ignorados"
-
-#: admin/class-decker-admin-import.php:92
-msgid "Comma-separated list of board IDs to ignore"
-msgstr "Lista de IDs de tableros a ignorar, separados por comas"
-
-#: admin/class-decker-admin-import.php:96
-msgid "Skip Existing Tasks"
-msgstr "Omitir Tareas Existentes"
 
 #: admin/class-decker-admin-settings.php:274
 msgid "Configure the Decker plugin settings."
@@ -1311,18 +1248,6 @@ msgstr "Mis tareas por Estado"
 msgid "Failed to delete attachment."
 msgstr "Error al borrar adjunto."
 
-#: admin/class-decker-admin-settings.php:64
-msgid "Enable email notifications for all plugin events."
-msgstr "Activar notificaciones por correo electrónico para todos los eventos del plugin."
-
-#: admin/class-decker-admin-settings.php:66
-msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
-msgstr "Esta configuración permite a los usuarios gestionar las notificaciones por correo electrónico en su perfil. Por defecto, todas las notificaciones están activadas."
-
-#: admin/class-decker-admin-settings.php:251
-msgid "Allow Email Notifications"
-msgstr "Permitir notificaciones por correo electrónico"
-
 #: includes/custom-post-types/class-decker-user-extended.php:193
 msgid "Email Notifications"
 msgstr "Notificaciones por correo electrónico"
@@ -1338,10 +1263,6 @@ msgstr "Notificarme cuando se complete una tarea asignada a mí."
 #: includes/custom-post-types/class-decker-user-extended.php:207
 msgid "Notify me when someone comments on a task I am assigned to."
 msgstr "Notificarme cuando alguien comente en una tarea que tengo asignada."
-
-#: public/layouts/topbar.php:188
-msgid "Help"
-msgstr "Ayuda"
 
 #: includes/custom-post-types/class-decker-tasks.php:1132
 #: public/app-tasks.php:207
@@ -1854,14 +1775,28 @@ msgstr "Seleccionar etiquetas..."
 
 #: public/layouts/kb-modal.php:221
 msgid "No more labels available"
-msgstr ""
-"No hay más etiquetas disponibles\n"
-"fd2e30c211f12feceb826f3145d75496d913f444"
+msgstr "No hay más etiquetas disponibles"
+
+#: admin/class-decker-admin-settings.php:64
+msgid "Enable email notifications for all plugin events."
+msgstr "Habilitar notificaciones por correo electrónico para todos los eventos del plugin."
+
+#: admin/class-decker-admin-settings.php:66
+msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
+msgstr "Esta configuración permite a los usuarios gestionar las notificaciones por correo electrónico en su perfil. Por defecto, todas las notificaciones están habilitadas."
+
+#: admin/class-decker-admin-settings.php:251
+msgid "Allow Email Notifications"
+msgstr "Permitir notificaciones por correo electrónico"
 
 #: includes/class-decker-mailer.php:129
 msgid "This email was automatically sent by Decker"
-msgstr "Este email fue enviado automáticamente por Decker"
+msgstr "Este correo fue enviado automáticamente por Decker"
 
 #: includes/custom-post-types/class-decker-tasks.php:1940
 msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
-msgstr "La columna es inválida. Los tipos permitodos son: to-do, in-progress, done."
+msgstr "El estado es inválido. Valores permitidos: por hacer, en progreso, hecho."
+
+#: public/layouts/topbar.php:188
+msgid "Help"
+msgstr "Ayuda"

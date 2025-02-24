@@ -112,8 +112,7 @@ class Decker_Notification_Handler {
 	 */
 	public function handle_task_created( $task_id ) {
 
-			error_log("Intentando enviar emails");
-
+			error_log( 'Intentando enviar emails' );
 
 		// Fetch assigned users.
 		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
@@ -134,7 +133,7 @@ class Decker_Notification_Handler {
 		// For each assigned user, send an email if their preferences allow it.
 		foreach ( $assigned_users as $user_id ) {
 
-			error_log("Intentando enviar email al usuario: $user_id");
+			error_log( "Intentando enviar email al usuario: $user_id" );
 
 			// Heartbeat notification is always saved, regardless of preferences.
 			$notification_data = array(

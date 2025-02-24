@@ -133,7 +133,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';
 
-
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
 		/**

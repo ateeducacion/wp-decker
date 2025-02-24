@@ -178,10 +178,16 @@ if ( ! $has_today_tasks ) {
 									// Get task with max_priority.
 									$args = array(
 										'meta_query' => array(
+											'relation'  => 'AND',
 											array(
 												'key'     => 'max_priority',
 												'value'   => '1',
 												'compare' => '=',
+											),
+											array(
+												'key'       => 'hidden',
+												'value'     => '1',
+												'compare'   => '!=',
 											),
 										),
 									);
@@ -296,7 +302,7 @@ if ( ! $has_today_tasks ) {
 									),
 								),
 							);
-							$user_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $user->ID, 0 );
+							$user_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $user->ID, 0, false );
 							?>
 							<div class="col-xl-6">
 								<div class="<?php echo esc_attr( $card_class ); ?>">
