@@ -1754,19 +1754,19 @@ msgstr "No hay más etiquetas disponibles"
 
 #: includes/custom-post-types/class-decker-tasks.php:1956
 msgid "Title is required for tasks."
-msgstr "El título es obligatorio para las tareas."
+msgstr "El título es requerido para las tareas"
 
 #: includes/custom-post-types/class-decker-tasks.php:1972
 msgid "Board is required for tasks."
-msgstr "El tablero es obligatorio para las tareas."
+msgstr "El tablero es requerido para las tareas"
 
 #: includes/custom-post-types/class-decker-tasks.php:1982
 msgid "Stack is required for tasks."
-msgstr "La pila es obligatoria para las tareas."
+msgstr "La pila es requerida para las tareas"
 
 #: includes/custom-post-types/class-decker-tasks.php:1992
 msgid "Due date is required for tasks."
-msgstr "La fecha de vencimiento es obligatoria para las tareas."
+msgstr "La fecha de finalizacion es requerida para las tareas"
 
 #: includes/models/class-task.php:587
 msgid "Unarchive"
