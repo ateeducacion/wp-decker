@@ -15,7 +15,6 @@ msgstr ""
 
 #. Plugin Name of the plugin
 #: decker.php
-#: admin/class-decker-admin-export.php:60
 #: admin/class-decker-admin-settings.php:208
 #: public/app-calendar.php:40
 msgid "Decker"
@@ -39,66 +38,6 @@ msgstr ""
 #. Author URI of the plugin
 #: decker.php
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:50
-msgid "Decker Tasks from NextCloud"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:51
-msgid "Import tasks, labels, and boards from NextCloud."
-msgstr ""
-
-#: admin/class-decker-admin-import.php:62
-msgid "Import Decker Tasks from NextCloud"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:68
-msgid "NextCloud URL Base"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:71
-msgid "The base URL of your NextCloud instance"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:75
-msgid "NextCloud Username"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:78
-msgid "Your NextCloud username"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:82
-msgid "NextCloud Access Token"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:85
-msgid "Your NextCloud access token"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:89
-msgid "Ignored Board IDs"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:92
-msgid "Comma-separated list of board IDs to ignore"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:96
-msgid "Skip Existing Tasks"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:99
-msgid "If checked, tasks that already exist in the system will be skipped and not updated."
-msgstr ""
-
-#: admin/class-decker-admin-import.php:104
-msgid "Import Now"
-msgstr ""
-
-#: admin/class-decker-admin-import.php:107
-msgid "Import Progress"
 msgstr ""
 
 #: admin/class-decker-admin-settings.php:46
