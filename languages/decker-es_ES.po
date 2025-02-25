@@ -1831,7 +1831,7 @@ msgstr "hace %s"
 #. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
 #: includes/models/class-task.php:413
 msgid "in %s"
-msgstr en %s"
+msgstr "en %s\""
 
 #: includes/class-decker-notification-handler.php:350
 msgid "New comment"
