@@ -97,3 +97,10 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     max-height: 65vh; /* Adjust based on header/footer size */
     padding: 1rem; /* Prevents content from touching edges */
 }
+
+
+
+/* Estilos para fechas */
+.due-today { color: var(--ct-warning-text-emphasis); }  /* Amarillo */
+.due-past  { color: var(--ct-danger-text-emphasis); }   /* Rojo */
+.due-none  { color: #6c757d; font-style: italic; }      /* Gris para sin fecha */

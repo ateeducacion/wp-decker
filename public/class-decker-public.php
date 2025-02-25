@@ -169,11 +169,6 @@ class Decker_Public {
 				// Simplebar.
 				'https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.js',
 
-				// Day.js.
-				'https://unpkg.com/dayjs/dayjs.min.js',
-				'https://unpkg.com/dayjs/plugin/relativeTime.js',
-				'https://unpkg.com/dayjs/locale/es.js',
-
 				// Font Awesome.
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
 
