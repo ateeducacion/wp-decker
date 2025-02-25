@@ -249,7 +249,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		<!-- Due date -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_duedate_as_string() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_formatted_date() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
 				<label class="form-label" for="task-due-date"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
 				<div class="invalid-feedback"><?php esc_html_e( 'Please select a due date.', 'decker' ); ?></div>
 			</div>

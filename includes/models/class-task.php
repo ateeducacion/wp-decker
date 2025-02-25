@@ -418,40 +418,14 @@ class Task {
 	/**
 	 * Get the raw formatted date for sorting
 	 *
+	 * Checks if the 'duedate' property is a DateTime object or a string
+	 * and formats it as 'Y-m-d'. Returns an empty string if 'duedate' is not set.
+	 *
 	 * @return string Date in Y-m-d format
 	 */
 	public function get_formatted_date(): string {
 		return $this->duedate ? $this->duedate->format( 'Y-m-d' ) : '';
 	}
-
-	/**
-	 * Converts the due date of the task to a formatted string.
-	 *
-	 * Checks if the 'duedate' property is a DateTime object or a string
-	 * and formats it as 'Y-m-d'. Returns an empty string if 'duedate' is not set.
-	 *
-	 * @return string The formatted due date as 'Y-m-d', or an empty string if not set.
-	 */
-	public function get_duedate_as_string(): string {
-
-		// Initialize $duedate to an empty string.
-		$duedate = '';
-
-		// Check if 'duedate' property exists and is a DateTime object.
-		if ( isset( $this->duedate ) && $this->duedate instanceof DateTime ) {
-			// Format the DateTime object to 'Y-m-d'.
-			$duedate = $this->duedate->format( 'Y-m-d' );
-		} elseif ( isset( $this->duedate ) && is_string( $this->duedate ) ) {
-			// If 'duedate' is a string, attempt to parse it to 'Y-m-d'.
-			$date = date_create( $this->duedate );
-			if ( $date ) {
-				$duedate = $date->format( 'Y-m-d' );
-			}
-		}
-
-		return $duedate;
-	}
-
 
 	/**
 	 * Render the current task card for Kanban.
@@ -469,7 +443,7 @@ class Task {
 		$priority_badge_class = $this->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
 		$priority_label      = $this->max_priority ? __( '🔥', 'decker' ) : __( 'Normal', 'decker' );
 
-		$formatted_duedate = $this->get_duedate_as_string();
+		$formatted_duedate = $this->get_formatted_date();
 		$relative_time = '<span class="badge bg-danger"><i class="ri-error-warning-line"></i> ' . __( 'Undefined date', 'decker' ) . '</span>';
 
 		if ( $this->duedate instanceof DateTime ) {
@@ -498,26 +472,26 @@ class Task {
 					<span class="menu-order label-to-show" style="display: none;"><?php esc_html_e( 'Order:', 'decker' ); ?> <?php echo esc_html( $this->order ); ?></span>
 				</span>
 
-<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
-	<span class="task-id label-to-hide 
-		<?php
-		if ( $this->duedate instanceof DateTime ) {
-			$today_midnight = new DateTime( 'today' );
-			$due_midnight = clone $this->duedate;
-			$due_midnight->setTime( 0, 0, 0 );
+				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
+					<span class="task-id label-to-hide 
+						<?php
+						if ( $this->duedate instanceof DateTime ) {
+							$today_midnight = new DateTime( 'today' );
+							$due_midnight = clone $this->duedate;
+							$due_midnight->setTime( 0, 0, 0 );
 
-			if ( $due_midnight == $today_midnight ) {
-				echo 'due-today';
-			} elseif ( $due_midnight < $today_midnight ) {
-				echo 'due-past';
-			}
-		}
-		?>
-		">
-		<?php echo esc_html( $this->get_relative_time() ); ?>
-	</span>
-	<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->ID ); ?></span>
-</small>
+							if ( $due_midnight == $today_midnight ) {
+								echo 'due-today';
+							} elseif ( $due_midnight < $today_midnight ) {
+								echo 'due-past';
+							}
+						}
+						?>
+						">
+						<?php echo esc_html( $this->get_relative_time() ); ?>
+					</span>
+					<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->ID ); ?></span>
+				</small>
 
 				<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $this->ID ); ?>">
 					<a href="<?php echo esc_url( $task_url ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="text-body" data-task-id="<?php echo esc_attr( $this->ID ); ?>">

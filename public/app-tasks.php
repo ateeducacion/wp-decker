@@ -411,18 +411,13 @@ table#tablaTareas td:nth-child(4) {
 						}
 					},
 					{
-						targets: [4, 5, 7], // Columna 7
+						targets: [4, 5],
 						orderable: false
 					},
-
-
 					{
-						targets: 7, // Columna de fecha
+						targets: 7, // due-date column
 						type: 'date',
-						data: 'order' // Usa data-order automáticamente
 					}
-
-					
 				],
 
 				lengthMenu: [
