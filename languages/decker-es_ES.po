@@ -953,47 +953,47 @@ msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 msgid "Invalid post type."
 msgstr "Tipo de publicación inválido."
 
-#: includes/models/class-task.php:470
+#: includes/models/class-task.php:444
 msgid "🔥"
 msgstr "🔥"
 
-#: includes/models/class-task.php:470
+#: includes/models/class-task.php:444
 msgid "Normal"
 msgstr "Normal"
 
-#: includes/models/class-task.php:473
+#: includes/models/class-task.php:447
 msgid "Undefined date"
 msgstr "Fecha no definida"
 
-#: includes/models/class-task.php:498
+#: includes/models/class-task.php:472
 msgid "Order:"
 msgstr "Orden:"
 
-#: includes/models/class-task.php:597
+#: includes/models/class-task.php:571
 msgid "Edit"
 msgstr "Editar"
 
-#: includes/models/class-task.php:614
+#: includes/models/class-task.php:588
 msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
-#: includes/models/class-task.php:621
+#: includes/models/class-task.php:595
 msgid "Archive"
 msgstr "Archivar"
 
-#: includes/models/class-task.php:630
+#: includes/models/class-task.php:604
 msgid "Assign to me"
 msgstr "Asignarme"
 
-#: includes/models/class-task.php:637
+#: includes/models/class-task.php:611
 msgid "Leave"
 msgstr "Abandonar"
 
-#: includes/models/class-task.php:652
+#: includes/models/class-task.php:626
 msgid "Mark for today"
 msgstr "Marcar para hoy"
 
-#: includes/models/class-task.php:658
+#: includes/models/class-task.php:632
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 
