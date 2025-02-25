@@ -376,4 +376,108 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
 			wp_delete_post( $event_id, true );
 		}
 	}
+
+
+/**
+	 * Test that unauthenticated users cannot create events via REST
+	 */
+	public function test_unauthenticated_rest_cannot_create_event() {
+		// Do NOT set current user, simulating unauthenticated access
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+		$request->set_param( 'title', 'Unauthenticated Event' );
+		$request->set_param( 'status', 'publish' );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() ); // Or 403 depending on your auth implementation
+	}
+
+	/**
+	 * Test that unauthenticated users cannot update events via REST
+	 */
+	public function test_unauthenticated_rest_cannot_update_event() {
+		// Create an event first that we can try to update
+		wp_set_current_user( $this->editor );
+		$create_request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+		$create_request->set_param( 'title', 'Event to Update' );
+		$create_request->set_param( 'status', 'publish' );
+		$create_response = $this->server->dispatch( $create_request );
+		$this->event_id = $create_response->get_data()['id'];
+		wp_set_current_user( null ); // Clear current user for unauthenticated test
+
+		$request = new WP_REST_Request( 'PUT', '/wp/v2/decker_event/' . $this->event_id );
+		$request->set_param( 'title', 'Unauthenticated Update' );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() ); // Or 403
+	}
+
+	/**
+	 * Test that unauthenticated users cannot delete events via REST
+	 */
+	public function test_unauthenticated_rest_cannot_delete_event() {
+		// Create an event first that we can try to delete
+		wp_set_current_user( $this->editor );
+		$create_request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+		$create_request->set_param( 'title', 'Event to Delete' );
+		$create_request->set_param( 'status', 'publish' );
+		$create_response = $this->server->dispatch( $create_request );
+		$this->event_id = $create_response->get_data()['id'];
+		wp_set_current_user( null ); // Clear current user for unauthenticated test
+
+		$request = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() ); // Or 403
+	}
+
+	/**
+	 * Test that unauthenticated users cannot read a collection of events via REST
+	 */
+	public function test_unauthenticated_rest_cannot_read_events() {
+		// Do NOT set current user, simulating unauthenticated access
+
+		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event' );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() ); // Or 403, or maybe even 200 with empty list depending on requirements
+	}
+
+	/**
+	 * Test that unauthenticated users cannot read a single event via REST
+	 */
+	public function test_unauthenticated_rest_cannot_read_event() {
+		// Create an event first that we can try to read
+		wp_set_current_user( $this->editor );
+		$create_request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+		$create_request->set_param( 'title', 'Event to Read' );
+		$create_request->set_param( 'status', 'publish' );
+		$create_response = $this->server->dispatch( $create_request );
+		$this->event_id = $create_response->get_data()['id'];
+		wp_set_current_user( null ); // Clear current user for unauthenticated test
+
+		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event/' . $this->event_id );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() ); // Or 403
+	}
+
+	/**
+	 * Test that unauthenticated users cannot access the schema via REST
+	 */
+	public function test_unauthenticated_rest_cannot_access_schema() {
+		// Do NOT set current user, simulating unauthenticated access
+
+		$request = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
+
+		$response = $this->server->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() ); // Or 403, or maybe 200 depending on requirements
+	}
+
 }
