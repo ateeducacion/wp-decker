@@ -514,7 +514,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 			<button type="submit" class="btn btn-primary" id="save-task" onclick="sendFormByAjax(event);" disabled>
 				<i class="ri-save-line"></i> <?php esc_html_e( 'Save', 'decker' ); ?>
 			</button>
-			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( $disabled || 0 == $task_id ); ?>>
+			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( 0 == $task_id ); ?>>
 				<span class="visually-hidden"><?php esc_html_e( 'Toggle Dropdown', 'decker' ); ?></span>
 			</button>
 			<?php
