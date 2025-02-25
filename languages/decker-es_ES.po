@@ -1827,12 +1827,8 @@ msgid "Enable email notifications for all plugin events."
 msgstr "Habilitar notificaciones por correo electrónico para todos los eventos del plugin."
 
 #: admin/class-decker-admin-settings.php:66
-msgid ""
-"This setting allows users to manage email notifications in their profile. By "
-"default, all notifications are enabled."
-msgstr ""
-"Esta configuración permite a los usuarios gestionar las notificaciones por correo "
-"electrónico en su perfil. Por defecto, todas las notificaciones están habilitadas."
+msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
+msgstr "Esta configuración permite a los usuarios gestionar las notificaciones por correo electrónico en su perfil. Por defecto, todas las notificaciones están habilitadas."
 
 #: admin/class-decker-admin-settings.php:251
 msgid "Allow Email Notifications"
@@ -1865,4 +1861,3 @@ msgstr "La pila es inválida. Valores permitidos: por hacer, en progreso, hecho.
 #: public/layouts/topbar.php:188
 msgid "Help"
 msgstr "Ayuda"
-
