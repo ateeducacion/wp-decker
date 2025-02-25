@@ -190,6 +190,10 @@ class Decker_Public {
 				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js',
 				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css',
 
+				// sweetalert2.js.
+				'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js',
+				'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css',
+
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.min.css',
@@ -242,10 +246,6 @@ class Decker_Public {
 
 				wp_enqueue_editor();
 
-				// sweetalert2.js.
-				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js';
-				$resources[] = 'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css';
-
 			}
 
 			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
@@ -293,8 +293,16 @@ class Decker_Public {
 					'confirm_delete_comment' => __( 'Are you sure you want to delete this comment?', 'decker' ),
 					'failed_delete_comment' => __( 'Failed to delete comment.', 'decker' ),
 					'error_deleting_comment' => __( 'Error deleting comment.', 'decker' ),
-					'confirm_archive_task' => __( 'Are you sure you want to archive this task?', 'decker' ),
+					'confirm_archive_task_title' => __( 'Are you sure you want to archive this task?', 'decker' ),
+					'confirm_archive_task_text' => __( 'This action will move the task to the archive.', 'decker' ),
+					'confirm_unarchive_task_title' => __( 'Are you sure you want to unarchive this task?', 'decker' ),
+					'confirm_unarchive_task_text' => __( 'This action will restore the task.', 'decker' ),
+					'archive_task' => __( 'Archive', 'decker' ),
+					'unarchive_task' => __( 'Unarchive', 'decker' ),
 					'failed_archive_task' => __( 'Failed to archive task.', 'decker' ),
+					'task_archived_success' => __( 'The task has been successfully archived.', 'decker' ),
+					'task_unarchived_success' => __( 'The task has been successfully unarchived.', 'decker' ),
+					'error_archiving_task' => __( 'An error occurred while archiving the task.', 'decker' ),
 					'please_select_file' => __( 'Please select a file to upload.', 'decker' ),
 					'confirm_delete_attachment' => __( 'Are you sure you want to delete this attachment?', 'decker' ),
 					'failed_delete_attachment' => __( 'Failed to delete attachment.', 'decker' ),
@@ -308,14 +316,13 @@ class Decker_Public {
 					'edit_html_content' => __( 'Edit the content in HTML format', 'decker' ),
 					'ok' => __( 'OK', 'decker' ),
 					'cancel' => __( 'Cancel', 'decker' ),
-					// Añade más strings según sea necesario.
-
-					 'today' => __( 'Today', 'decker' ),
+					'success' => __( 'Success', 'decker' ),
+					'error' => __( 'Error', 'decker' ),
+					'today' => __( 'Today', 'decker' ),
 					'month' => __( 'Month', 'decker' ),
 					'week' => __( 'Week', 'decker' ),
 					'day' => __( 'Day', 'decker' ),
 					'list' => __( 'List', 'decker' ),
-
 				),
 				'disabled' => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id' => get_current_user_id(),

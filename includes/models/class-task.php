@@ -590,11 +590,22 @@ class Task {
 			);
 		}
 
-		// Add 'Archive' menu item.
-		$menu_items[] = sprintf(
-			'<a href="#" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
-			esc_attr( $this->ID )
-		);
+		if ( 'publish' == $this->status ) {
+			// Add 'Archive' menu item.
+			$menu_items[] = sprintf(
+				'<a href="#" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
+				esc_attr( $this->ID )
+			);
+
+		} else {
+
+			// Add 'Unarchive' menu item.
+			$menu_items[] = sprintf(
+				'<a href="#" class="dropdown-item unarchive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Unarchive', 'decker' ) . '</a>',
+				esc_attr( $this->ID )
+			);
+
+		}
 
 		if ( ! $card ) {
 
