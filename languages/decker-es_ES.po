@@ -1835,4 +1835,4 @@ msgstr "en %s"
 
 #: includes/class-decker-notification-handler.php:350
 msgid "New comment"
-msgstr "Nuevo comentarios"
+msgstr "Nuevo comentario"
