@@ -289,23 +289,22 @@ table#tablaTareas td:nth-child(4) {
 													echo '</div></td>';
 
 													// Remaining time.
-													echo '<td data-sort="' . esc_attr( $task->duedate?->format( 'Y-m-d' ) ) . '">';
+													echo '<td data-order="' . esc_attr( $task->duedate?->format( 'Y-m-d' ) ) . '" class="due-date">';
 													if ( $task->duedate instanceof DateTime ) {
 														$due_midnight = clone $task->duedate;
 														$due_midnight->setTime( 0, 0, 0 );
 														$today_midnight = new DateTime( 'today' );
 
-														$color_style = '';
+														$date_class = '';
 														if ( $due_midnight == $today_midnight ) {
-															$color_style = 'color: var(--ct-warning-text-emphasis);';
+															$date_class = 'due-today';
 														} elseif ( $due_midnight < $today_midnight ) {
-															$color_style = 'color: var(--ct-danger-text-emphasis);';
+															$date_class = 'due-past';
 														}
 
-														// Línea corregida con escape adecuado.
-														echo '<span style="' . esc_attr( $color_style ) . '" title="' . esc_attr( $task->duedate->format( 'Y-m-d' ) ) . '">';
+														echo '<span class="' . esc_attr( $date_class ) . '" title="' . esc_attr( $task->duedate->format( 'Y-m-d' ) ) . '">';
 													} else {
-														echo '<span>';
+														echo '<span class="due-none">';
 													}
 													echo esc_html( $task->get_relative_time() );
 													echo '</span></td>';
@@ -418,16 +417,9 @@ table#tablaTareas td:nth-child(4) {
 
 
 					{
-						targets: 7, // Columna de tiempo restante
+						targets: 7, // Columna de fecha
 						type: 'date',
-						render: function(data, type, row) {
-							// Para ordenación usa el data-sort
-							if (type === 'sort') {
-								return jQuery(row).find('td:eq(7)').data('sort');
-							}
-							// Para mostrar el contenido HTML original
-							return jQuery(row).find('td:eq(7)').html();
-						}
+						data: 'order' // Usa data-order automáticamente
 					}
 
 					

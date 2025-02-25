@@ -498,26 +498,26 @@ class Task {
 					<span class="menu-order label-to-show" style="display: none;"><?php esc_html_e( 'Order:', 'decker' ); ?> <?php echo esc_html( $this->order ); ?></span>
 				</span>
 
-				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
-					<span class="task-id label-to-hide"  
-						<?php
-						if ( $this->duedate instanceof DateTime ) {
-							$today_midnight = new DateTime( 'today' );
-							$due_midnight = clone $this->duedate;
-							$due_midnight->setTime( 0, 0, 0 );
+<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
+	<span class="task-id label-to-hide 
+		<?php
+		if ( $this->duedate instanceof DateTime ) {
+			$today_midnight = new DateTime( 'today' );
+			$due_midnight = clone $this->duedate;
+			$due_midnight->setTime( 0, 0, 0 );
 
-							if ( $due_midnight == $today_midnight ) {
-								echo 'style="color: var(--ct-warning-text-emphasis)"';
-							} elseif ( $due_midnight < $today_midnight ) {
-								echo 'style="color: var(--ct-danger-text-emphasis)"';
-							}
-						}
-						?>
-					>
-						<?php echo esc_html( $this->get_relative_time() ); ?>
-					</span>
-					<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->ID ); ?></span>
-				</small>
+			if ( $due_midnight == $today_midnight ) {
+				echo 'due-today';
+			} elseif ( $due_midnight < $today_midnight ) {
+				echo 'due-past';
+			}
+		}
+		?>
+		">
+		<?php echo esc_html( $this->get_relative_time() ); ?>
+	</span>
+	<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->ID ); ?></span>
+</small>
 
 				<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $this->ID ); ?>">
 					<a href="<?php echo esc_url( $task_url ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="text-body" data-task-id="<?php echo esc_attr( $this->ID ); ?>">
