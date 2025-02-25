@@ -411,7 +411,7 @@ table#tablaTareas td:nth-child(4) {
 						}
 					},
 					{
-						targets: [4, 5],
+						targets: [4, 5, 8],
 						orderable: false
 					},
 					{
