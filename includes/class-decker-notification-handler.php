@@ -151,8 +151,7 @@ class Decker_Notification_Handler {
 				array(
 					'type'       => 'task_created',
 					'task_id'    => $task_id,
-					/* translators: %s is the title of the task. */
-					'title'      => sprintf( __( 'New Task: %s', 'decker' ), $task->post_title ),
+					'title'      => $task->post_title,
 					'action'     => __( 'Task Created', 'decker' ),
 					'time'       => gmdate( 'Y-m-d H:i:s' ),
 					'url'        => esc_url( $this->build_task_url( $task_id ) ),
@@ -220,8 +219,7 @@ class Decker_Notification_Handler {
 			array(
 				'type'       => 'task_assigned',
 				'task_id'    => $task_id,
-				/* translators: %s is the title of the task. */
-				'title'      => sprintf( __( 'Task Assigned: %s', 'decker' ), $task->post_title ),
+				'title'      => $task->post_title,
 				'action'     => __( 'You have been assigned a task', 'decker' ),
 				'time'       => gmdate( 'Y-m-d H:i:s' ),
 				'url'        => esc_url( $this->build_task_url( $task_id ) ),
@@ -297,8 +295,7 @@ class Decker_Notification_Handler {
 				array(
 					'type'       => 'task_completed',
 					'task_id'    => $task_id,
-					/* translators: %s is the title of the task. */
-					'title'      => sprintf( __( 'Task Completed: %s', 'decker' ), $task->post_title ),
+					'title'      => $task->post_title,
 					/* translators: %s is the name of the user who completed the task. */
 					'action'     => sprintf( __( 'Completed by %s', 'decker' ), $finisher ? $finisher->display_name : __( 'Unknown user', 'decker' ) ),
 					'time'       => gmdate( 'Y-m-d H:i:s' ),
