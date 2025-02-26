@@ -1831,53 +1831,38 @@ msgstr "Ayuda"
 #. translators: %s is the name of the user who completed the task.
 #. translators: %s is the name of the user who commented on the task.
 #: includes/class-decker-notification-handler.php:145
-#: includes/class-decker-notification-handler.php:303
-#: includes/class-decker-notification-handler.php:327
-#: includes/class-decker-notification-handler.php:379
-#: includes/class-decker-notification-handler.php:404
+#: includes/class-decker-notification-handler.php:300
+#: includes/class-decker-notification-handler.php:324
+#: includes/class-decker-notification-handler.php:376
+#: includes/class-decker-notification-handler.php:401
 msgid "Unknown user"
 msgstr "Usuario desconocido"
 
-#. translators: %s is the title of the task.
 #: includes/class-decker-notification-handler.php:155
-msgid "New Task: %s"
-msgstr "Nueva tarea: %s"
-
-#: includes/class-decker-notification-handler.php:156
 msgid "Task Created"
 msgstr "Tarea creada"
 
 #. translators: 1: Task title, 2: Task URL, 3: Creator name
-#: includes/class-decker-notification-handler.php:177
+#: includes/class-decker-notification-handler.php:176
 msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
 msgstr "Se ha creado una nueva tarea \"%1$s\" por %3$s. <a href=\"%2$s\">Haz clic aquí para ver la tarea</a>."
 
-#. translators: %s is the title of the task.
-#: includes/class-decker-notification-handler.php:224
-msgid "Task Assigned: %s"
-msgstr "Tarea asignada: %s"
-
-#: includes/class-decker-notification-handler.php:225
+#: includes/class-decker-notification-handler.php:223
 msgid "You have been assigned a task"
 msgstr "Te han asignado una tarea"
 
-#. translators: %s is the title of the task.
-#: includes/class-decker-notification-handler.php:301
-msgid "Task Completed: %s"
-msgstr "Tarea completada: %s"
-
 #. translators: %s is the name of the user who completed the task.
-#: includes/class-decker-notification-handler.php:303
+#: includes/class-decker-notification-handler.php:300
 msgid "Completed by %s"
 msgstr "Completada por %s"
 
 #. translators: %s is the title of the task.
-#: includes/class-decker-notification-handler.php:377
+#: includes/class-decker-notification-handler.php:374
 msgid "New Comment on Task: %s"
 msgstr "Nuevo comentario en la tarea: %s"
 
 #. translators: %s is the name of the user who commented on the task.
-#: includes/class-decker-notification-handler.php:379
+#: includes/class-decker-notification-handler.php:376
 msgid "Comment by %s"
 msgstr "Comentario de %s"
 
