@@ -11,6 +11,9 @@
     const disabled = deckerVars.disabled;
     const userId = deckerVars.current_user_id;
 
+    // Variable global para indicar si hay cambios sin guardar
+    window.deckerHasUnsavedChanges = false;
+
     let quill = null;
 
     // Start of comment part
@@ -282,6 +285,8 @@
         // Función para habilitar el botón de guardar cuando cualquier campo cambia
         const enableSaveButton = function() {
             saveButton.disabled = false;
+            // Marcar que hay cambios sin guardar
+            window.deckerHasUnsavedChanges = true;
         };
 
         const form = context.querySelector('#task-form');
@@ -307,6 +312,7 @@
         if (quill) {
             quill.on('text-change', function() {
                 saveButton.disabled = false;
+                window.deckerHasUnsavedChanges = true;
             });
         }
 
@@ -531,6 +537,7 @@
             if (xhr.status >= 200 && xhr.status < 400) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
+                    window.deckerHasUnsavedChanges = false;
                     const modalElement = document.querySelector('.task-modal.show'); // Selecciona el modal abierto, o null si no está en un modal
                     if (modalElement) {
                         var modalInstance = bootstrap.Modal.getInstance(modalElement);

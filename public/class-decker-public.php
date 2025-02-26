@@ -328,6 +328,10 @@ class Decker_Public {
 					'week'                        => __( 'Week', 'decker' ),
 					'day'                         => __( 'Day', 'decker' ),
 					'list'                        => __( 'List', 'decker' ),
+					'unsaved_changes_title'       => __( 'Unsaved changes', 'decker' ),
+					'unsaved_changes_text'        => __( 'You have unsaved changes. Close without saving?', 'decker' ),
+					'close_anyway'                => __( 'Close anyway', 'decker' ),
+
 				),
 				'disabled'       => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id' => get_current_user_id(),
