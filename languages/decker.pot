@@ -1475,13 +1475,25 @@ msgstr ""
 msgid "List"
 msgstr ""
 
-#: public/class-decker-public.php:374
-#: public/class-decker-public.php:414
+#: public/class-decker-public.php:331
+msgid "Unsaved changes"
+msgstr ""
+
+#: public/class-decker-public.php:332
+msgid "You have unsaved changes. Close without saving?"
+msgstr ""
+
+#: public/class-decker-public.php:333
+msgid "Close anyway"
+msgstr ""
+
+#: public/class-decker-public.php:378
+#: public/class-decker-public.php:418
 msgid "Loading content. Please wait."
 msgstr ""
 
-#: public/class-decker-public.php:375
-#: public/class-decker-public.php:415
+#: public/class-decker-public.php:379
+#: public/class-decker-public.php:419
 msgid "Error loading content. Please try again."
 msgstr ""
 

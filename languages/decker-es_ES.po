@@ -831,8 +831,8 @@ msgstr "Restablecer"
 msgid "Task"
 msgstr "Tarea"
 
-#: public/class-decker-public.php:375
-#: public/class-decker-public.php:415
+#: public/class-decker-public.php:379
+#: public/class-decker-public.php:419
 msgid "Error loading content. Please try again."
 msgstr "Error al cargar el contenido. Por favor, inténtelo de nuevo."
 
@@ -1180,8 +1180,8 @@ msgstr "No tienes permiso para gestionar etiquetas"
 msgid "You do not have permission to delete labels"
 msgstr "No tienes permiso para borrar etiquetas"
 
-#: public/class-decker-public.php:374
-#: public/class-decker-public.php:414
+#: public/class-decker-public.php:378
+#: public/class-decker-public.php:418
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
@@ -1877,3 +1877,15 @@ msgstr "Notificaciones"
 #: public/layouts/topbar.php:67
 msgid "Clear All"
 msgstr "Borrar todo"
+
+#: public/class-decker-public.php:331
+msgid "Unsaved changes"
+msgstr "Cambios no guardados"
+
+#: public/class-decker-public.php:332
+msgid "You have unsaved changes. Close without saving?"
+msgstr "Tienes cambios sin guardar. ¿Cerrar sin guardar?"
+
+#: public/class-decker-public.php:333
+msgid "Close anyway"
+msgstr "Cerrar de todos modos"
