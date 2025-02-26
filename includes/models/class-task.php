@@ -601,7 +601,7 @@ class Task {
 
 			// Add 'Unarchive' menu item.
 			$menu_items[] = sprintf(
-				'<a href="#" class="dropdown-item unarchive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Unarchive', 'decker' ) . '</a>',
+				'<a href="#" class="dropdown-item unarchive-task" data-task-id="%d"><i class="ri-inbox-unarchive-line me-1"></i>' . __( 'Unarchive', 'decker' ) . '</a>',
 				esc_attr( $this->ID )
 			);
 

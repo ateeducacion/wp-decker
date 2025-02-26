@@ -3,8 +3,6 @@
     console.log('loading event-card.js');
 
     // Global variables received from PHP
-    const restUrl = deckerVars.rest_url;
-    const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
 
     // Function to delete an event

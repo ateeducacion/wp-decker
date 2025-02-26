@@ -5,9 +5,8 @@ on:
   push:
     branches:
       - main  # Or the branch you use for documentation
-  pull_request:
     paths:
-      - "docs/**"  # Only trigger if there are changes in the documentation folder
+      - "docs/**" # Only trigger if there are changes in the documentation folder
 
 jobs:
   build-docs:

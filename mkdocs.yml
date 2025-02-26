@@ -54,16 +54,11 @@ theme:
 
 nav:
   - Home: index.md
-  - User Guide: user-guide.md
   - Getting Started:
     - Installation: installation.md
     - Configuration: configuration.md
-  - Development:
-    - Contributing: contributing.md
-    - Development Guide: development.md
-  - Reference:
-    - API Reference: api-reference.md
-    - FAQ: faq.md
+  - User Guide: user-guide.md
+  - Development: development.md
 
 markdown_extensions:
   - admonition

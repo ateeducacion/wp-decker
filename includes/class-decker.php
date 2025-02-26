@@ -128,7 +128,12 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
+
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';
+
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
 		/**
 		 * The class responsible for defining the MVC.
@@ -199,6 +204,9 @@ class Decker {
 	 * Run the loader to execute all of the hooks with WordPress.
 	 */
 	public function run() {
+		// Initialize notification handler.
+		new Decker_Notification_Handler();
+
 		$this->loader->run();
 	}
 
@@ -325,6 +333,13 @@ class Decker {
 			'blockquote' => array(),
 			'code' => array(),
 			'pre' => array(),
+			'img' => array(
+				'src' => array(),
+				'alt' => array(),
+				'style' => $allowed_css_properties,
+				'width' => array(),
+				'height' => array(),
+			),
 			// Add more basic tags if needed.
 		);
 
