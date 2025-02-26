@@ -59,7 +59,7 @@ class Decker_Notification_Handler {
 		add_action( 'decker_task_completed', array( $this, 'handle_task_completed' ), 10, 3 );
 
 		// Triggered when a new comment is added to a task.
-		add_action( 'decker_task_comment_added', array( $this, 'handle_new_comment' ), 10, 3 );
+		add_action( 'wp_insert_comment', array( $this, 'handle_new_comment' ), 10, 2 );
 
 		// Triggered when a responsable is changed.
 		add_action( 'decker_task_responsable_changed', array( $this, 'handle_responsable_changed' ), 10, 3 );
@@ -74,7 +74,7 @@ class Decker_Notification_Handler {
 	 * @return array Modified Heartbeat settings with a new interval.
 	 */
 	public function modify_heartbeat_settings( $settings ) {
-		$settings['interval'] = 1; // Changed to 15 seconds.
+		$settings['interval'] = 15; // Changed to 15 seconds.
 		return $settings;
 	}
 
@@ -200,7 +200,7 @@ class Decker_Notification_Handler {
 	 */
 	public function handle_user_assigned( $task_id, $user_id ) {
 
-		error_log( 'Entering in handle_user_assigned()...........' );
+		/* error_log( 'Entering in handle_user_assigned()...........' ); */
 
 		if ( ! $task_id || ! $user_id ) {
 			return;
@@ -216,7 +216,7 @@ class Decker_Notification_Handler {
 			return;
 		}
 
-		error_log( 'Adding notification in handle_user_assigned() for user: ' . $user_id );
+		/* error_log( 'Adding notification in handle_user_assigned() for user: ' . $user_id ); */
 
 		// Store notification in user meta for Heartbeat and UI.
 		$this->add_notification_to_user(
@@ -270,7 +270,7 @@ class Decker_Notification_Handler {
 	 */
 	public function handle_task_completed( $task_id, $target_stack, $completing_user_id ) {
 
-		error_log( 'Entering in handle_task_completed()...........' );
+		/* error_log( 'Entering in handle_task_completed()' ); */
 
 		if ( ! $task_id ) {
 			return;
@@ -292,7 +292,7 @@ class Decker_Notification_Handler {
 
 		foreach ( $assigned_users as $user_id ) {
 
-			error_log( 'Adding notification in handle_task_completed() for user: ' . $user_id );
+			/* error_log( 'Adding notification in handle_task_completed() for user: ' . $user_id ); */
 
 			// Store notification in user meta for Heartbeat and UI.
 			$this->add_notification_to_user(
@@ -336,30 +336,30 @@ class Decker_Notification_Handler {
 	}
 
 	/**
-	 * Handles new comment notifications.
+	 * Captures comments inserted via REST.
 	 *
-	 * This is triggered by the 'decker_task_comment_added' hook.
-	 *
-	 * @param int $task_id The ID of the task on which the comment is added.
-	 * @param int $comment_id The comment ID.
-	 * @param int $commenter_id The user ID who made the comment.
+	 * @param int    $comment_id The inserted comment ID.
+	 * @param object $comment    The comment object.
 	 */
-	public function handle_new_comment( $task_id, $comment_id, $commenter_id ) {
-		if ( ! $task_id || ! $comment_id ) {
+	public function handle_new_comment( $comment_id, $comment ) {
+		// Define the commenter ID.
+		$commenter_id = (int) $comment->user_id;
+		/* error_log( 'Handling comment in handle_new_comment() for user: ' . $commenter_id ); */
+
+		$post_id   = $comment->comment_post_ID;
+		$post_type = get_post_type( $post_id );
+
+		// Only proceed if the post type is decker_task.
+		if ( 'decker_task' !== $post_type ) {
 			return;
 		}
 
-		// Skip self-notifications.
-		if ( get_current_user_id() === $commenter_id ) {
-			return;
-		}
-
-		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
+		$assigned_users = get_post_meta( $post_id, 'assigned_users', true );
 		if ( empty( $assigned_users ) || ! is_array( $assigned_users ) ) {
 			return;
 		}
 
-		$task    = get_post( $task_id );
+		$task   = get_post( $post_id );
 		$comment = get_comment( $comment_id );
 		$author  = get_userdata( $commenter_id );
 
@@ -373,14 +373,14 @@ class Decker_Notification_Handler {
 			$this->add_notification_to_user(
 				$user_id,
 				array(
-					'type'       => 'task_comment',
-					'task_id'    => $task_id,
-					/* translators: %s is the title of the task. */
-					'title'      => sprintf( __( 'New Comment on Task: %s', 'decker' ), $task->post_title ),
-					/* translators: %s is the name of the user who commented on the task. */
-					'action'     => sprintf( __( 'Comment by %s', 'decker' ), $author ? $author->display_name : __( 'Unknown user', 'decker' ) ),
-					'time'       => gmdate( 'Y-m-d H:i:s' ),
-					'url'        => esc_url( $this->build_task_url( $task_id ) ),
+					'type'    => 'task_comment',
+					'task_id' => $post_id,
+					// Translators: %s is the task title.
+					'title'   => sprintf( __( 'New Comment on Task: %s', 'decker' ), $task->post_title ),
+					// Translators: %s is the task author.
+					'action'  => sprintf( __( 'Comment by %s', 'decker' ), $author ? $author->display_name : __( 'Unknown user', 'decker' ) ),
+					'time'    => gmdate( 'Y-m-d H:i:s' ),
+					'url'     => esc_url( $this->build_task_url( $post_id ) ),
 				)
 			);
 
@@ -398,19 +398,21 @@ class Decker_Notification_Handler {
 			if ( ! $user ) {
 				continue;
 			}
-
+			// Translators: %s is the task title.
 			$subject = sprintf( 'New Comment on Task: %s', $task->post_title );
 			$content = sprintf(
+				// translators: 1: Task title, 2: Author name, 3: Task URL.
 				'A new comment has been added to the task "%1$s" by %2$s. Click here to view it: %3$s',
 				$task->post_title,
 				$author ? $author->display_name : __( 'Unknown user', 'decker' ),
-				$this->build_task_url( $task_id )
+				$this->build_task_url( $post_id )
 			);
 
 			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
 			$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
 		}
 	}
+
 
 	/**
 	 * Handle notification when the task responsible changes.

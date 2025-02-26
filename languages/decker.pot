@@ -223,12 +223,12 @@ msgid "This email was automatically sent by Decker"
 msgstr ""
 
 #. translators: %s is the name of the user who completed the task.
-#. translators: %s is the name of the user who commented on the task.
+#. Translators: %s is the task author.
 #: includes/class-decker-notification-handler.php:145
 #: includes/class-decker-notification-handler.php:305
 #: includes/class-decker-notification-handler.php:329
 #: includes/class-decker-notification-handler.php:381
-#: includes/class-decker-notification-handler.php:406
+#: includes/class-decker-notification-handler.php:407
 msgid "Unknown user"
 msgstr ""
 
@@ -250,12 +250,12 @@ msgstr ""
 msgid "Completed by %s"
 msgstr ""
 
-#. translators: %s is the title of the task.
+#. Translators: %s is the task title.
 #: includes/class-decker-notification-handler.php:379
 msgid "New Comment on Task: %s"
 msgstr ""
 
-#. translators: %s is the name of the user who commented on the task.
+#. Translators: %s is the task author.
 #: includes/class-decker-notification-handler.php:381
 msgid "Comment by %s"
 msgstr ""
