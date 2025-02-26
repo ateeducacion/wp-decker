@@ -288,7 +288,7 @@ class Decker_Tasks {
 
 			// If the target stack is "done", trigger a specific hook for task completion.
 			if ( 'done' === $target_stack ) {
-				do_action( 'decker_task_completed', $task_id, $target_stack );
+				do_action( 'decker_task_completed', $task_id, $target_stack, get_current_user_id() );
 			}
 		}
 
@@ -1909,6 +1909,8 @@ class Decker_Tasks {
 		// Determinar si es una actualización o creación.
 		if ( $id > 0 ) {
 
+			$old_responsable = get_post_meta( $id, 'responsable', true );
+
 			// Retrieve the current stack value as a string.
 			$source_stack = get_post_meta( $id, 'stack', true );
 
@@ -1924,13 +1926,21 @@ class Decker_Tasks {
 
 				// If the target stack is "done", trigger a specific hook for task completion.
 				if ( 'done' === $stack ) {
-					do_action( 'decker_task_completed', $id, $stack );
+					do_action( 'decker_task_completed', $id, $stack, get_current_user_id() );
 				}
 			}
 
 			// Trigger a hook after a task has been updated.
 			do_action( 'decker_task_updated', $task_id );
 
+			if ( $old_responsable != $responsable ) {
+				do_action( 'decker_task_responsable_changed', $id, (int) $old_responsable, (int) $responsable );
+			}
+
+			// Disparar el evento para cada usuario nuevo.
+			foreach ( $new_users as $new_user_id ) {
+				do_action( 'decker_user_assigned', $task_id, $new_user_id );
+			}
 		} else {
 			// Crear un nuevo post.
 			$task_id = wp_insert_post( $post_data );
@@ -1942,11 +1952,6 @@ class Decker_Tasks {
 
 		if ( is_wp_error( $task_id ) ) {
 			return $task_id; // Retornar el error para manejarlo externamente.
-		}
-
-		// Disparar el evento para cada usuario nuevo.
-		foreach ( $new_users as $new_user_id ) {
-			do_action( 'decker_user_assigned', $task_id, $new_user_id );
 		}
 
 		// Retornar el ID de la tarea creada o actualizada.

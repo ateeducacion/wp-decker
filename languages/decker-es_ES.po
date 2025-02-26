@@ -28,7 +28,7 @@ msgstr "Decker"
 
 #: admin/class-decker-admin-settings.php:223
 #: includes/custom-post-types/class-decker-user-extended.php:87
-#: public/layouts/topbar.php:181
+#: public/layouts/topbar.php:180
 msgid "Decker Settings"
 msgstr "Configuración de Decker"
 
@@ -676,7 +676,7 @@ msgstr "RETARDADO"
 
 #: includes/models/class-task.php:396
 #: public/app-upcoming.php:157
-#: public/class-decker-public.php:324
+#: public/class-decker-public.php:326
 msgid "Today"
 msgstr "Hoy"
 
@@ -831,8 +831,8 @@ msgstr "Restablecer"
 msgid "Task"
 msgstr "Tarea"
 
-#: public/class-decker-public.php:373
-#: public/class-decker-public.php:442
+#: public/class-decker-public.php:375
+#: public/class-decker-public.php:415
 msgid "Error loading content. Please try again."
 msgstr "Error al cargar el contenido. Por favor, inténtelo de nuevo."
 
@@ -848,7 +848,7 @@ msgstr "¡Bienvenido!"
 msgid "My Profile"
 msgstr "Mi Perfil"
 
-#: public/layouts/topbar.php:193
+#: public/layouts/topbar.php:208
 msgid "Logout"
 msgstr "Cerrar Sesión"
 
@@ -929,28 +929,23 @@ msgstr "Guardar"
 msgid "Toggle Dropdown"
 msgstr "Alternar Desplegable"
 
-#: public/class-decker-public.php:309
-#: public/class-decker-public.php:410
+#: public/class-decker-public.php:299
 msgid "Please select a file to upload."
 msgstr "Por favor, seleccione un archivo para subir."
 
-#: public/class-decker-public.php:299
-#: public/class-decker-public.php:408
+#: public/class-decker-public.php:313
 msgid "Are you sure you want to archive this task?"
 msgstr "¿Está seguro de que desea archivar esta tarea?"
 
-#: public/class-decker-public.php:305
-#: public/class-decker-public.php:409
+#: public/class-decker-public.php:319
 msgid "Failed to archive task."
 msgstr "Error al archivar la tarea."
 
-#: public/class-decker-public.php:312
-#: public/class-decker-public.php:413
+#: public/class-decker-public.php:302
 msgid "Error uploading attachment."
 msgstr "Error al subir el archivo adjunto."
 
-#: public/class-decker-public.php:310
-#: public/class-decker-public.php:411
+#: public/class-decker-public.php:300
 msgid "Are you sure you want to delete this attachment?"
 msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 
@@ -983,7 +978,7 @@ msgid "Edit in WordPress"
 msgstr "Editar en WordPress"
 
 #: includes/models/class-task.php:596
-#: public/class-decker-public.php:303
+#: public/class-decker-public.php:317
 msgid "Archive"
 msgstr "Archivar"
 
@@ -1027,31 +1022,26 @@ msgstr "Apodo"
 msgid "Date"
 msgstr "Fecha"
 
-#: public/class-decker-public.php:313
-#: public/class-decker-public.php:414
+#: public/class-decker-public.php:303
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
 #: public/layouts/task-card.php:395
 msgid "Delete"
 msgstr "Eliminar"
 
-#: public/class-decker-public.php:314
-#: public/class-decker-public.php:415
+#: public/class-decker-public.php:304
 msgid "Server response error."
 msgstr "Error en la respuesta del servidor."
 
-#: public/class-decker-public.php:315
-#: public/class-decker-public.php:416
+#: public/class-decker-public.php:305
 msgid "An error occurred while saving the task."
 msgstr "Ocurrió un error al guardar la tarea."
 
-#: public/class-decker-public.php:316
-#: public/class-decker-public.php:417
+#: public/class-decker-public.php:306
 msgid "Request error."
 msgstr "Error en la solicitud."
 
-#: public/class-decker-public.php:317
-#: public/class-decker-public.php:418
+#: public/class-decker-public.php:307
 msgid "Error saving task."
 msgstr "Error al guardar la tarea."
 
@@ -1140,23 +1130,19 @@ msgstr "Perfil de Usuario Mínimo"
 msgid "Send"
 msgstr "Enviar"
 
-#: public/class-decker-public.php:318
-#: public/class-decker-public.php:419
+#: public/class-decker-public.php:308
 msgid "Show HTML source"
 msgstr "Mostrar código fuente HTML"
 
-#: public/class-decker-public.php:319
-#: public/class-decker-public.php:420
+#: public/class-decker-public.php:309
 msgid "Edit the content in HTML format"
 msgstr "Editar el contenido en formato HTML"
 
-#: public/class-decker-public.php:320
-#: public/class-decker-public.php:421
+#: public/class-decker-public.php:310
 msgid "OK"
 msgstr "Aceptar"
 
-#: public/class-decker-public.php:321
-#: public/class-decker-public.php:422
+#: public/class-decker-public.php:311
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1194,23 +1180,20 @@ msgstr "No tienes permiso para gestionar etiquetas"
 msgid "You do not have permission to delete labels"
 msgstr "No tienes permiso para borrar etiquetas"
 
-#: public/class-decker-public.php:372
-#: public/class-decker-public.php:441
+#: public/class-decker-public.php:374
+#: public/class-decker-public.php:414
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
 
 #: public/class-decker-public.php:296
-#: public/class-decker-public.php:405
 msgid "Are you sure you want to delete this comment?"
 msgstr "¿Esta seguro que quiere eliminar este comentario?"
 
 #: public/class-decker-public.php:297
-#: public/class-decker-public.php:406
 msgid "Failed to delete comment."
 msgstr "Error al eliminar comentario."
 
 #: public/class-decker-public.php:298
-#: public/class-decker-public.php:407
 msgid "Error deleting comment."
 msgstr "Error eliminando comentario."
 
@@ -1238,8 +1221,7 @@ msgstr "Está ejecutando este sitio con datos de demostración."
 msgid "Tasks by Stack from current User"
 msgstr "Mis tareas por Estado"
 
-#: public/class-decker-public.php:311
-#: public/class-decker-public.php:412
+#: public/class-decker-public.php:301
 msgid "Failed to delete attachment."
 msgstr "Error al borrar adjunto."
 
@@ -1380,7 +1362,7 @@ msgid "Danger"
 msgstr "Peligro"
 
 #: includes/custom-post-types/class-decker-events.php:384
-#: public/class-decker-public.php:322
+#: public/class-decker-public.php:324
 #: public/layouts/kb-modal.php:262
 msgid "Success"
 msgstr "Éxito"
@@ -1578,19 +1560,19 @@ msgstr "Por favor, selecciona una categoría para el evento."
 msgid "The category determines the color of the event in the calendar."
 msgstr "La categoría determina el color del evento en el calendario."
 
-#: public/class-decker-public.php:325
+#: public/class-decker-public.php:327
 msgid "Month"
 msgstr "Mes"
 
-#: public/class-decker-public.php:326
+#: public/class-decker-public.php:328
 msgid "Week"
 msgstr "Semana"
 
-#: public/class-decker-public.php:327
+#: public/class-decker-public.php:329
 msgid "Day"
 msgstr "Día"
 
-#: public/class-decker-public.php:328
+#: public/class-decker-public.php:330
 msgid "List"
 msgstr "Lista"
 
@@ -1741,7 +1723,7 @@ msgstr "Sin artículo principal (nivel superior)"
 msgid "Order"
 msgstr "Orden"
 
-#: public/class-decker-public.php:323
+#: public/class-decker-public.php:325
 #: public/layouts/kb-modal.php:160
 #: public/layouts/kb-modal.php:168
 #: public/layouts/kb-modal.php:270
@@ -1794,31 +1776,31 @@ msgid "in %s"
 msgstr "en %s"
 
 #: includes/models/class-task.php:604
-#: public/class-decker-public.php:304
+#: public/class-decker-public.php:318
 msgid "Unarchive"
 msgstr "Desarchivar"
 
-#: public/class-decker-public.php:300
+#: public/class-decker-public.php:314
 msgid "This action will move the task to the archive."
 msgstr "Esta acción moverá la tarea al archivo."
 
-#: public/class-decker-public.php:301
+#: public/class-decker-public.php:315
 msgid "Are you sure you want to unarchive this task?"
 msgstr "¿Estás seguro de que quieres desarchivar esta tarea?"
 
-#: public/class-decker-public.php:302
+#: public/class-decker-public.php:316
 msgid "This action will restore the task."
 msgstr "Esta acción restaurará la tarea."
 
-#: public/class-decker-public.php:306
+#: public/class-decker-public.php:320
 msgid "The task has been successfully archived."
 msgstr "La tarea se ha archivado correctamente."
 
-#: public/class-decker-public.php:307
+#: public/class-decker-public.php:321
 msgid "The task has been successfully unarchived."
 msgstr "La tarea se ha desarchivado correctamente."
 
-#: public/class-decker-public.php:308
+#: public/class-decker-public.php:322
 msgid "An error occurred while archiving the task."
 msgstr "Se ha producido un error al archivar la tarea."
 
@@ -1838,26 +1820,67 @@ msgstr "Permitir notificaciones por correo electrónico"
 msgid "This email was automatically sent by Decker"
 msgstr "Este correo electrónico fue enviado automáticamente por Decker"
 
-#: includes/class-decker-notification-handler.php:171
-msgid "New task created"
-msgstr "Nueva tarea creada"
-
-#: includes/class-decker-notification-handler.php:225
-msgid "User assigned"
-msgstr "Usuario asignado"
-
-#: includes/class-decker-notification-handler.php:286
-msgid "Task completed"
-msgstr "Tarea completada"
-
-#: includes/class-decker-notification-handler.php:350
-msgid "New comment"
-msgstr "Nuevo comentario"
-
 #: includes/custom-post-types/class-decker-tasks.php:1826
 msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
 msgstr "La pila es inválida. Valores permitidos: por hacer, en progreso, hecho."
 
-#: public/layouts/topbar.php:188
+#: public/layouts/topbar.php:203
 msgid "Help"
 msgstr "Ayuda"
+
+#. translators: %s is the name of the user who completed the task.
+#. translators: %s is the name of the user who commented on the task.
+#: includes/class-decker-notification-handler.php:145
+#: includes/class-decker-notification-handler.php:303
+#: includes/class-decker-notification-handler.php:327
+#: includes/class-decker-notification-handler.php:379
+#: includes/class-decker-notification-handler.php:404
+msgid "Unknown user"
+msgstr "Usuario desconocido"
+
+#. translators: %s is the title of the task.
+#: includes/class-decker-notification-handler.php:155
+msgid "New Task: %s"
+msgstr "Nueva tarea: %s"
+
+#: includes/class-decker-notification-handler.php:156
+msgid "Task Created"
+msgstr "Tarea creada"
+
+#. translators: 1: Task title, 2: Task URL, 3: Creator name
+#: includes/class-decker-notification-handler.php:177
+msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
+msgstr "Se ha creado una nueva tarea \"%1$s\" por %3$s. <a href=\"%2$s\">Haz clic aquí para ver la tarea</a>."
+
+#. translators: %s is the title of the task.
+#: includes/class-decker-notification-handler.php:224
+msgid "Task Assigned: %s"
+msgstr "Tarea asignada: %s"
+
+#: includes/class-decker-notification-handler.php:225
+msgid "You have been assigned a task"
+msgstr "Te han asignado una tarea"
+
+#. translators: %s is the title of the task.
+#: includes/class-decker-notification-handler.php:301
+msgid "Task Completed: %s"
+msgstr "Tarea completada: %s"
+
+#. translators: %s is the name of the user who completed the task.
+#: includes/class-decker-notification-handler.php:303
+msgid "Completed by %s"
+msgstr "Completada por %s"
+
+#. translators: %s is the title of the task.
+#: includes/class-decker-notification-handler.php:377
+msgid "New Comment on Task: %s"
+msgstr "Nuevo comentario en la tarea: %s"
+
+#. translators: %s is the name of the user who commented on the task.
+#: includes/class-decker-notification-handler.php:379
+msgid "Comment by %s"
+msgstr "Comentario de %s"
+
+#: public/layouts/topbar.php:191
+msgid "Test Notification"
+msgstr "Notificación de prueba"

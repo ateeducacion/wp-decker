@@ -86,7 +86,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		// Track hooks being fired.
 		add_action( 'decker_user_assigned', array( $this, 'track_hook' ), 10, 2 );
-		add_action( 'decker_task_completed', array( $this, 'track_hook' ), 10, 2 );
+		add_action( 'decker_task_completed', array( $this, 'track_hook' ), 10, 3 );
 		add_action( 'decker_task_comment_added', array( $this, 'track_hook' ), 10, 3 );
 	}
 
@@ -139,7 +139,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$response = array();
 		$data     = array();
 
-		$result = $this->notifications->heartbeat_received( $response, $data );
+		$result = $this->notifications->heartbeat_received( $response, $data, null );
 
 		$this->assertEquals( $response, $result, 'Response should not be modified when no notifications exist.' );
 	}
@@ -149,11 +149,14 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 */
 	public function test_heartbeat_with_notifications() {
 		$notification = array(
-			'type'       => 'task_assigned',
-			'task_id'    => $this->task_id,
-			'task_title' => 'Test Task',
-			'timestamp'  => current_time( 'timestamp' ),
-			'message'    => 'Test notification message',
+			'url'       => '#',
+			'taskId'    => 0,
+			'iconColor' => 'primary',
+			'iconClass' => 'ri-add-line',
+			'title'     => 'New Notification',
+			'action'    => '',
+			'time'      => '',
+			'type'		=> 'task_created'
 		);
 
 		update_user_meta( $this->test_user, 'decker_pending_notifications', array( $notification ) );
@@ -161,7 +164,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$response = array();
 		$data     = array();
 
-		$result = $this->notifications->heartbeat_received( $response, $data );
+		$result = $this->notifications->heartbeat_received( $response, $data, null );
 
 		$this->assertArrayHasKey( 'decker_notifications', $result, 'Response should include notifications.' );
 		$this->assertEquals( array( $notification ), $result['decker_notifications'], 'Notifications should match.' );
@@ -200,7 +203,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	/**
 	 * Tests task completion notification.
 	 */
-	public function test_task_completed_notification() {
+	public function test_task_completed_notification_own_user() {
 
 		// Set user preferences.
 		update_user_meta(
@@ -233,22 +236,77 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		);
 
 		// Trigger the completion hook.
-		$this->trigger_notifications( 'decker_task_completed', $this->task_id, $this->test_user );
+		$this->trigger_notifications( 'decker_task_completed', $this->task_id, 'done', $this->test_user );
+
+		// Check that at least one email was captured.
+		$this->assertEmpty( $this->captured_mail, 'Email was captured.' );
+
+		// Verify that a notification was saved for Heartbeat.
+		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
+		$this->assertEmpty( $pending, 'Notification was saved for Heartbeat.' );
+	}
+
+
+	/**
+	 * Tests task completion notification.
+	 */
+	public function test_task_completed_notification_other_user() {
+
+		// Set user preferences.
+		update_user_meta(
+			$this->test_user,
+			'decker_notification_preferences',
+			array(
+				'notify_completed' => true,
+				'notify_created'   => false,
+				'notify_assigned'  => false,
+				'notify_completed' => true,
+				'notify_comments'  => false,
+
+			)
+		);
+
+		$other_user = $this->factory->user->create(
+			array(
+				'role'       => 'editor',
+				'user_email' => 'test2@example.com',
+			)
+		);
+
+		// Assign the task to the test user (for backward compatibility in meta).
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user, $other_user),
+				'stack' => 'done'
+			)
+		);
+
+		// Verificar metadata de prioridad
+		$this->assertEquals(
+		    '0', 
+		    get_post_meta($this->task_id, 'max_priority', true),
+		    'Priority meta not set correctly'
+		);
+
+		// Trigger the completion hook.
+		$this->trigger_notifications( 'decker_task_completed', $this->task_id, 'done', $this->test_user );
 
 		// Check that at least one email was captured.
 		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
 
 		// Verify email details.
-		$this->assertEquals( 'test@example.com', $this->captured_mail[0]['to'], 'Recipient does not match.' );
+		$this->assertEquals( 'test2@example.com', $this->captured_mail[0]['to'], 'Recipient does not match.' );
 		$this->assertStringContainsString( 'Task Completed', $this->captured_mail[0]['subject'], 'Subject mismatch.' );
 		$this->assertStringContainsString( 'Test Task', $this->captured_mail[0]['message'], 'Task title not found in email body.' );
 
 		// Verify that a notification was saved for Heartbeat.
-		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
+		$pending = get_user_meta( $other_user, 'decker_pending_notifications', true );
 		$this->assertNotEmpty( $pending, 'No notification was saved for Heartbeat.' );
 		$this->assertEquals( 'task_completed', $pending[0]['type'], 'Notification type mismatch.' );
 		$this->assertEquals( $this->task_id, $pending[0]['task_id'], 'Task ID mismatch.' );
 	}
+
 
 	/**
 	 * Tests task comment notification.
@@ -347,7 +405,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		// Trigger notifications that should be ignored for self-actions.
 		$this->trigger_notifications( 'decker_user_assigned', $this->task_id, $this->test_user );
-		$this->trigger_notifications( 'decker_task_completed', $this->task_id, $this->test_user );
+		$this->trigger_notifications( 'decker_task_completed', $this->task_id, 'done', $this->test_user );
 		$this->trigger_notifications( 'decker_task_comment_added', $this->task_id, 1, $this->test_user );
 
 		// Verify that no email was sent.

@@ -166,28 +166,43 @@ defined( 'ABSPATH' ) || exit;
 						<h6 class="text-overflow m-0"><?php esc_html_e( 'Welcome !', 'decker' ); ?></h6>
 					</div>
 
-					<!-- item-->
+					<!-- item my-profile -->
 					<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>" class="dropdown-item">
 						<i class="ri-account-circle-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'My Profile', 'decker' ); ?></span>
 					</a>
-					<!-- item-->
 
 					<?php if ( current_user_can( 'manage_options' ) ) { ?> 
 
-					<!-- item-->
+					<!-- item decker settings -->
 					<a href="<?php echo esc_url( admin_url( 'options-general.php?page=decker_settings' ) ); ?>" class="dropdown-item">
 						<i class="ri-settings-4-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'Decker Settings', 'decker' ); ?></span>
 					</a>
 
 					<?php } ?>
-					<!-- item-->
+
+
+					<?php if ( current_user_can( 'manage_options' ) ) { ?>
+
+					<!-- item test notification -->
+					<a href="#" id="sendTestNotification" class="dropdown-item">
+					    <i class="ri-megaphone-line fs-18 align-middle me-1"></i>
+					    <span><?php esc_html_e( 'Test Notification', 'decker' ); ?></span>
+					</a>
+
+
+					<?php } ?>
+
+
+
+
+					<!-- item help -->
 					<a href="https://ateeducacion.github.io/wp-decker/" class="dropdown-item" target="_blank">
 						<i class="ri-question-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'Help', 'decker' ); ?></span>
 					</a>
-					<!-- item-->
+					<!-- item logout -->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">
 						<i class="ri-logout-box-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'Logout', 'decker' ); ?></span>
@@ -197,3 +212,4 @@ defined( 'ABSPATH' ) || exit;
 		</ul>
 	</div>
 </div>
+
