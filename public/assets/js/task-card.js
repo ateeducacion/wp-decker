@@ -246,12 +246,57 @@
         }
 
         if (context.querySelector('#task-labels')) {
-            labelsSelect = new Choices(context.querySelector('#task-labels'), { 
-                removeItemButton: true, 
-                allowHTML: true,
-                searchEnabled: true,
-                shouldSort: true,
-            });
+            // labelsSelect = new Choices(context.querySelector('#task-labels'), { 
+            //     removeItemButton: true, 
+            //     allowHTML: true,
+            //     searchEnabled: true,
+            //     shouldSort: true,
+            // });
+
+
+            labelsSelect = new Choices(context.querySelector('#task-labels'), {
+            removeItemButton: true,
+            allowHTML: true,
+            searchEnabled: true,
+            shouldSort: true,
+            callbackOnCreateTemplates: function (strToEl, escapeForTemplate, getClassNames) {
+                const defaultTemplates = Choices.defaults.templates;
+                
+
+
+                return {
+                    ...defaultTemplates,
+                    item: (classNames, data) => {
+                        // 1. Tomar el elemento que genera la plantilla por defecto
+                        const el = defaultTemplates.item.call(this, classNames, data);
+
+                        // 2. Aplicar color de fondo según la taxonomía
+                        el.style.backgroundColor = data.customProperties?.color || 'blue';
+
+                        // 3. Asegurar que, si removeItemButton=true, se configure el elemento como "deletable"
+                        if (this.config.removeItemButton) {
+                            el.setAttribute('data-deletable', '');
+
+                            // Si la plantilla por defecto no generó ya el botón, crearlo aquí
+                            if (!el.querySelector('[data-button]')) {
+                                const button = document.createElement('button');
+                                button.type = 'button';
+                                button.className = this.config.classNames.button;
+                                button.setAttribute('data-button', '');
+                                button.setAttribute('aria-label', `Remove item: ${data.value}`);
+                                button.innerHTML = '×';
+                                el.appendChild(button);
+                            }
+                        }
+
+                        return el;
+                    }
+                }
+
+            }
+        });
+
+
         }
 
         var uploadFileButton = context.querySelector('#upload-file');

@@ -293,7 +293,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 				<?php
 				$labels = LabelManager::get_all_labels();
 				foreach ( $labels as $label ) {
-					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) ) ) . '>' . esc_html( $label->name ) . '</option>';
+					echo '<option value="' . esc_attr( $label->id ) . '" data-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) ) ) . '>' . esc_html( $label->name ) . '</option>';
 				}
 				?>
 			</select>
