@@ -60,74 +60,18 @@ defined( 'ABSPATH' ) || exit;
 					<div class="p-2 border-top-0 border-start-0 border-end-0 border-dashed border">
 					    <div class="row align-items-center">
 					        <div class="col">
-					            <h6 class="m-0 fs-16 fw-semibold"> Notification</h6>
+					            <h6 class="m-0 fs-16 fw-semibold"> <?php esc_html_e( 'Notifications', 'decker' ); ?></h6>
 					        </div>
 					        <div class="col-auto">
 					            <a href="javascript: void(0);" class="text-dark text-decoration-underline">
-					                <small>Clear All</small>
+					                <small><?php esc_html_e( 'Clear All', 'decker' ); ?></small>
 					            </a>
 					        </div>
 					    </div>
 					</div>
 
 		            <div id="notification-list" style="max-height: 300px; overflow-y: auto;">
-		            	<?php /*
-		                <!-- Notificación 1 -->
-		                <!-- <a href="#" class="dropdown-item notify-item">
-		                    <div class="d-flex align-items-center">
-		                        <div class="notify-icon bg-primary">
-		                            <i class="ri-message-3-line fs-18"></i>
-		                        </div>
-		                        <div class="ms-2">
-		                            <h5 class="fw-semibold">Datacorp</h5>
-		                            <small class="text-muted">1 min ago</small>
-		                        </div>
-		                    </div>
-		                </a> -->
-		                <!-- Agrega más notificaciones aquí para probar -->
-
-
-						<a href="http://localhost:8888/?decker_page=task&id=4" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="4" class="dropdown-item notify-item">
-					        <div class="d-flex align-items-center">
-					            <div class="notify-icon bg-primary">
-					                <i class="ri-message-3-line fs-18"></i>
-					            </div>
-					            <div class="ms-2">
-					                <h5 class="fw-semibold">Tarea Creada: </h5>
-					                <h7>Implementar la interfaz de usuario</h7><br>
-					                <small class="text-muted">Hace 1 minuto</small>
-					            </div>
-					        </div>
-					    </a>
-
-					    <a href="http://localhost:8888/?decker_page=task&id=5" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="5" class="dropdown-item notify-item">
-					        <div class="d-flex align-items-center">
-					            <div class="notify-icon bg-warning">
-					                <i class="ri-user-add-line fs-18"></i>
-					            </div>
-					            <div class="ms-2">
-					                <h5 class="fw-semibold">Usuario Asignado: Diseñar la base de datos</h5>
-					                <small class="text-muted">Hace 5 minutos</small>
-					            </div>
-					        </div>
-					    </a>
-
-					    <a href="http://localhost:8888/?decker_page=task&id=6" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="6" class="dropdown-item notify-item">
-					        <div class="d-flex align-items-center">
-					            <div class="notify-icon bg-success">
-					                <i class="ri-checkbox-circle-line fs-18"></i>
-					            </div>
-					            <div class="ms-2">
-					                <h5 class="fw-semibold">Tarea Completada: Probar la API</h5>
-					                <small class="text-muted">Hace 10 minutos</small>
-					            </div>
-					        </div>
-					    </a>
-						*/
-					    ?>
-
-
-
+		            
 
 		            </div>
 

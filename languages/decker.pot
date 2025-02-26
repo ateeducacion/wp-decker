@@ -66,7 +66,7 @@ msgstr ""
 
 #: admin/class-decker-admin-settings.php:223
 #: includes/custom-post-types/class-decker-user-extended.php:87
-#: public/layouts/topbar.php:180
+#: public/layouts/topbar.php:124
 msgid "Decker Settings"
 msgstr ""
 
@@ -225,38 +225,38 @@ msgstr ""
 #. translators: %s is the name of the user who completed the task.
 #. translators: %s is the name of the user who commented on the task.
 #: includes/class-decker-notification-handler.php:145
-#: includes/class-decker-notification-handler.php:300
-#: includes/class-decker-notification-handler.php:324
-#: includes/class-decker-notification-handler.php:376
-#: includes/class-decker-notification-handler.php:401
+#: includes/class-decker-notification-handler.php:305
+#: includes/class-decker-notification-handler.php:329
+#: includes/class-decker-notification-handler.php:381
+#: includes/class-decker-notification-handler.php:406
 msgid "Unknown user"
 msgstr ""
 
-#: includes/class-decker-notification-handler.php:155
+#: includes/class-decker-notification-handler.php:160
 msgid "Task Created"
 msgstr ""
 
 #. translators: 1: Task title, 2: Task URL, 3: Creator name
-#: includes/class-decker-notification-handler.php:176
+#: includes/class-decker-notification-handler.php:181
 msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
 msgstr ""
 
-#: includes/class-decker-notification-handler.php:223
+#: includes/class-decker-notification-handler.php:228
 msgid "You have been assigned a task"
 msgstr ""
 
 #. translators: %s is the name of the user who completed the task.
-#: includes/class-decker-notification-handler.php:300
+#: includes/class-decker-notification-handler.php:305
 msgid "Completed by %s"
 msgstr ""
 
 #. translators: %s is the title of the task.
-#: includes/class-decker-notification-handler.php:374
+#: includes/class-decker-notification-handler.php:379
 msgid "New Comment on Task: %s"
 msgstr ""
 
 #. translators: %s is the name of the user who commented on the task.
-#: includes/class-decker-notification-handler.php:376
+#: includes/class-decker-notification-handler.php:381
 msgid "Comment by %s"
 msgstr ""
 
@@ -1841,26 +1841,34 @@ msgstr ""
 msgid "Task"
 msgstr ""
 
-#: public/layouts/topbar.php:138
+#: public/layouts/topbar.php:63
+msgid "Notifications"
+msgstr ""
+
+#: public/layouts/topbar.php:67
+msgid "Clear All"
+msgstr ""
+
+#: public/layouts/topbar.php:82
 msgid "Theme Mode"
 msgstr ""
 
-#: public/layouts/topbar.php:166
+#: public/layouts/topbar.php:110
 msgid "Welcome !"
 msgstr ""
 
-#: public/layouts/topbar.php:172
+#: public/layouts/topbar.php:116
 msgid "My Profile"
 msgstr ""
 
-#: public/layouts/topbar.php:191
+#: public/layouts/topbar.php:135
 msgid "Test Notification"
 msgstr ""
 
-#: public/layouts/topbar.php:203
+#: public/layouts/topbar.php:147
 msgid "Help"
 msgstr ""
 
-#: public/layouts/topbar.php:208
+#: public/layouts/topbar.php:152
 msgid "Logout"
 msgstr ""

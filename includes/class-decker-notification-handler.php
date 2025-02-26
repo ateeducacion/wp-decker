@@ -145,6 +145,11 @@ class Decker_Notification_Handler {
 		$creator_name = $creator ? $creator->display_name : __( 'Unknown user', 'decker' );
 
 		foreach ( $assigned_users as $user_id ) {
+			// Skip notification for the creator of the task.
+			if ( $user_id == $creator_id ) {
+				continue;
+			}
+
 			// Store notification in user meta for Heartbeat and UI.
 			$this->add_notification_to_user(
 				$user_id,
@@ -497,9 +502,15 @@ class Decker_Notification_Handler {
 			$all_notifications = array();
 		}
 
+		// Reverse so newest is at the front.
+		usort(
+			$all_notifications,
+			function ( $a, $b ) {
+				return strtotime( $a['time'] ) - strtotime( $b['time'] );
+			}
+		);
 		// Return only the last 15 (most recent first).
-		$last_notifications = array_reverse( $all_notifications ); // Reverse so newest is at the front.
-		$last_notifications = array_slice( $last_notifications, 0, self::MAX_NOTIFICATIONS );
+		$last_notifications = array_slice( $all_notifications, 0, self::MAX_NOTIFICATIONS );
 
 		// Map them to the same structure used in JS.
 		$formatted = array();
