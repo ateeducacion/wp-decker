@@ -64,11 +64,11 @@ check-all: check
 
 # Run unit tests with PHPUnit
 tests: test
-test:
+test: start-if-not-running
 # 	npx wp-env start
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
-test-verbose:
+test-verbose: start-if-not-running
 # 	npx wp-env start
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=always
 
@@ -89,11 +89,11 @@ install-phpcs: up
 
 # Check code style with PHP Code Sniffer inside the container
 lint: install-phpcs
-	npx wp-env run cli phpcs --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+	npx wp-env run cli phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Automatically fix code style with PHP Code Beautifier inside the container
 fix: install-phpcs
-	npx wp-env run cli phpcbf --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+	npx wp-env run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 
 # Finds the CLI container used by wp-env
@@ -107,7 +107,7 @@ cli-container:
 	)
 
 # Fix wihout tty for use on git hooks
-fix-no-tty: cli-container
+fix-no-tty: cli-container start-if-not-running
 	@CONTAINER_CLI=$$( \
 		docker ps --format "{{.Names}}" \
 		| grep "\-cli\-" \
@@ -115,10 +115,10 @@ fix-no-tty: cli-container
 	) && \
 	echo "Running PHPCBF (no TTY) inside $$CONTAINER_CLI..." && \
 	docker exec -i $$CONTAINER_CLI \
-		phpcbf --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+		phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Lint wihout tty for use on git hooks
-lint-no-tty: cli-container
+lint-no-tty: cli-container start-if-not-running
 	@CONTAINER_CLI=$$( \
 		docker ps --format "{{.Names}}" \
 		| grep "\-cli\-" \
@@ -126,7 +126,7 @@ lint-no-tty: cli-container
 	) && \
 	echo "Running PHPCS (no TTY) inside $$CONTAINER_CLI..." && \
 	docker exec -i $$CONTAINER_CLI \
-		phpcs --standard=/var/www/html/wp-content/plugins/decker/.phpcs.xml.dist /var/www/html/wp-content/plugins/decker
+		phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 
 # Update Composer dependencies

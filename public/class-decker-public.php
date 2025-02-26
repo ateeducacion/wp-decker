@@ -202,6 +202,7 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
+
 			);
 
 			if ( 'analytics' == $decker_page ) {
@@ -266,6 +267,8 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
+
 			$users = get_users(
 				array(
 					'fields' => array( 'ID', 'display_name' ), // Campos nativos.
@@ -277,62 +280,67 @@ class Decker_Public {
 				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real.
 			}
 
-			// Preparar los datos a pasar al JS.
+			// Unified localized data.
 			$localized_data = array(
-				'ajax_url' => admin_url( 'admin-ajax.php' ),
-				'rest_url' => rest_url( 'decker/v1/' ), // Ajusta según tus endpoints.
-				'home_url' => home_url( '/' ),
-				'nonces' => array(
-					'task_comment_nonce' => wp_create_nonce( 'task_comment_nonce' ),
-					'wp_rest_nonce' => wp_create_nonce( 'wp_rest' ),
-					'upload_attachment_nonce' => wp_create_nonce( 'upload_attachment_nonce' ),
-					'delete_attachment_nonce' => wp_create_nonce( 'delete_attachment_nonce' ),
-					'save_decker_task_nonce' => wp_create_nonce( 'save_decker_task_nonce' ),
+				'ajax_url'  => admin_url( 'admin-ajax.php' ),
+				'home_url'  => home_url( '/' ),
+				'nonces'    => array(
+					'task_comment_nonce'       => wp_create_nonce( 'task_comment_nonce' ),
+					'wp_rest_nonce'            => wp_create_nonce( 'wp_rest' ),
+					'upload_attachment_nonce'  => wp_create_nonce( 'upload_attachment_nonce' ),
+					'delete_attachment_nonce'  => wp_create_nonce( 'delete_attachment_nonce' ),
+					'save_decker_task_nonce'   => wp_create_nonce( 'save_decker_task_nonce' ),
 				),
-				'strings' => array(
-					'confirm_delete_comment' => __( 'Are you sure you want to delete this comment?', 'decker' ),
-					'failed_delete_comment' => __( 'Failed to delete comment.', 'decker' ),
-					'error_deleting_comment' => __( 'Error deleting comment.', 'decker' ),
-					'confirm_archive_task_title' => __( 'Are you sure you want to archive this task?', 'decker' ),
-					'confirm_archive_task_text' => __( 'This action will move the task to the archive.', 'decker' ),
-					'confirm_unarchive_task_title' => __( 'Are you sure you want to unarchive this task?', 'decker' ),
-					'confirm_unarchive_task_text' => __( 'This action will restore the task.', 'decker' ),
-					'archive_task' => __( 'Archive', 'decker' ),
-					'unarchive_task' => __( 'Unarchive', 'decker' ),
-					'failed_archive_task' => __( 'Failed to archive task.', 'decker' ),
-					'task_archived_success' => __( 'The task has been successfully archived.', 'decker' ),
-					'task_unarchived_success' => __( 'The task has been successfully unarchived.', 'decker' ),
-					'error_archiving_task' => __( 'An error occurred while archiving the task.', 'decker' ),
-					'please_select_file' => __( 'Please select a file to upload.', 'decker' ),
-					'confirm_delete_attachment' => __( 'Are you sure you want to delete this attachment?', 'decker' ),
-					'failed_delete_attachment' => __( 'Failed to delete attachment.', 'decker' ),
-					'error_uploading_attachment' => __( 'Error uploading attachment.', 'decker' ),
-					'delete' => __( 'Delete', 'decker' ),
-					'server_response_error' => __( 'Server response error.', 'decker' ),
+				'strings'   => array(
+					// Common strings.
+					'confirm_delete_comment'      => __( 'Are you sure you want to delete this comment?', 'decker' ),
+					'failed_delete_comment'       => __( 'Failed to delete comment.', 'decker' ),
+					'error_deleting_comment'      => __( 'Error deleting comment.', 'decker' ),
+					'please_select_file'          => __( 'Please select a file to upload.', 'decker' ),
+					'confirm_delete_attachment'   => __( 'Are you sure you want to delete this attachment?', 'decker' ),
+					'failed_delete_attachment'    => __( 'Failed to delete attachment.', 'decker' ),
+					'error_uploading_attachment'  => __( 'Error uploading attachment.', 'decker' ),
+					'delete'                      => __( 'Delete', 'decker' ),
+					'server_response_error'       => __( 'Server response error.', 'decker' ),
 					'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
-					'request_error' => __( 'Request error.', 'decker' ),
-					'error_saving_task' => __( 'Error saving task.', 'decker' ),
-					'show_html_source' => __( 'Show HTML source', 'decker' ),
-					'edit_html_content' => __( 'Edit the content in HTML format', 'decker' ),
-					'ok' => __( 'OK', 'decker' ),
-					'cancel' => __( 'Cancel', 'decker' ),
-					'success' => __( 'Success', 'decker' ),
-					'error' => __( 'Error', 'decker' ),
-					'today' => __( 'Today', 'decker' ),
-					'month' => __( 'Month', 'decker' ),
-					'week' => __( 'Week', 'decker' ),
-					'day' => __( 'Day', 'decker' ),
-					'list' => __( 'List', 'decker' ),
+					'request_error'               => __( 'Request error.', 'decker' ),
+					'error_saving_task'           => __( 'Error saving task.', 'decker' ),
+					'show_html_source'            => __( 'Show HTML source', 'decker' ),
+					'edit_html_content'           => __( 'Edit the content in HTML format', 'decker' ),
+					'ok'                          => __( 'OK', 'decker' ),
+					'cancel'                      => __( 'Cancel', 'decker' ),
+					// Additional strings (from first version).
+					'confirm_archive_task_title'  => __( 'Are you sure you want to archive this task?', 'decker' ),
+					'confirm_archive_task_text'   => __( 'This action will move the task to the archive.', 'decker' ),
+					'confirm_unarchive_task_title' => __( 'Are you sure you want to unarchive this task?', 'decker' ),
+					'confirm_unarchive_task_text'  => __( 'This action will restore the task.', 'decker' ),
+					'archive_task'                => __( 'Archive', 'decker' ),
+					'unarchive_task'              => __( 'Unarchive', 'decker' ),
+					'failed_archive_task'         => __( 'Failed to archive task.', 'decker' ),
+					'task_archived_success'       => __( 'The task has been successfully archived.', 'decker' ),
+					'task_unarchived_success'     => __( 'The task has been successfully unarchived.', 'decker' ),
+					'error_archiving_task'        => __( 'An error occurred while archiving the task.', 'decker' ),
+					// Extra keys from first version.
+					'success'                     => __( 'Success', 'decker' ),
+					'error'                       => __( 'Error', 'decker' ),
+					'today'                       => __( 'Today', 'decker' ),
+					'month'                       => __( 'Month', 'decker' ),
+					'week'                        => __( 'Week', 'decker' ),
+					'day'                         => __( 'Day', 'decker' ),
+					'list'                        => __( 'List', 'decker' ),
 				),
-				'disabled' => isset( $disabled ) && $disabled ? true : false,
+				'disabled'       => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id' => get_current_user_id(),
-				'users' => $users,
+				'users'          => $users,
 			);
 
 			$last_handle = '';
 
 			// Add the bundled jQuery library.
 			wp_enqueue_script( 'jquery' );
+
+			// Asegurar que el script de Heartbeat esté encolado.
+			wp_enqueue_script( 'heartbeat' );
 
 			// Add the bundled Backbone library.
 			wp_enqueue_script( 'wp-api' );
@@ -358,14 +366,14 @@ class Decker_Public {
 
 			// Localize the script with new data.
 			wp_localize_script(
-				'task-modal', // task-modal script handle.
+				'task-modal',
 				'jsdata_task',
 				array(
-					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
-					'url'          => esc_url( plugins_url( 'public/layouts/task-card.php', __DIR__ ) ),
+					'ajaxUrl'        => esc_url( admin_url( 'admin-ajax.php' ) ),
+					'url'            => esc_url( plugins_url( 'public/layouts/task-card.php', __DIR__ ) ),
 					'loadingMessage' => esc_html__( 'Loading content. Please wait.', 'decker' ),
-					'errorMessage' => esc_html__( 'Error loading content. Please try again.', 'decker' ),
-					'nonce'        => wp_create_nonce( 'decker_task_card' ),
+					'errorMessage'   => esc_html__( 'Error loading content. Please try again.', 'decker' ),
+					'nonce'          => wp_create_nonce( 'decker_task_card' ),
 				)
 			);
 
@@ -382,18 +390,30 @@ class Decker_Public {
 			);
 
 			wp_localize_script( 'decker-public', 'deckerData', $script_data );
+
+			// Use unified $localized_data for task-card and other scripts.
 			wp_localize_script( 'task-card', 'deckerVars', $localized_data );
+
+			// Localize the script so that it has ajaxurl and nonce.
+			wp_localize_script(
+				'decker-heartbeat',
+				'DeckerData',
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'heartbeat-nonce' ),
+				)
+			);
 
 			// Localize the script with new data.
 			wp_localize_script(
-				'event-modal', // event-modal script handle.
+				'event-modal',
 				'jsdata_event',
 				array(
-					'ajaxUrl'      => esc_url( admin_url( 'admin-ajax.php' ) ),
-					'url'          => esc_url( plugins_url( 'public/layouts/event-card.php', __DIR__ ) ),
+					'ajaxUrl'        => esc_url( admin_url( 'admin-ajax.php' ) ),
+					'url'            => esc_url( plugins_url( 'public/layouts/event-card.php', __DIR__ ) ),
 					'loadingMessage' => esc_html__( 'Loading content. Please wait.', 'decker' ),
-					'errorMessage' => esc_html__( 'Error loading content. Please try again.', 'decker' ),
-					'nonce'        => wp_create_nonce( 'decker_event_card' ),
+					'errorMessage'   => esc_html__( 'Error loading content. Please try again.', 'decker' ),
+					'nonce'          => wp_create_nonce( 'decker_event_card' ),
 				)
 			);
 
