@@ -3,6 +3,8 @@ stages:
   # - build
   # - upload
   - release
+  - sonarqube-check
+  - sonarqube-vulnerability-report
 
 variables:
   # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
@@ -60,3 +62,10 @@ release:
           # url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
           url: "https://github.com/ateeducacion/wp-decker/releases/download/${PACKAGE_VERSION}/${PACKAGE_BINARY}.zip"
 
+
+sonarqube-check:
+  stage: sonarqube-check
+  image: 
+    name: sonarsource/sonar-scanner-cli:5.0
+    entrypoint: [""]
+  variables:
