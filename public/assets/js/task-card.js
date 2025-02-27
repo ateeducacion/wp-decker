@@ -16,6 +16,9 @@
 
     let quill = null;
 
+    let assigneesSelect = null;
+    let labelsSelect = null;
+
     // Start of comment part
     var replyToCommentId = null;
 
