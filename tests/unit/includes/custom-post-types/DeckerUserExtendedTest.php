@@ -41,7 +41,7 @@ class DeckerUserExtendedTest extends Decker_Test_Base {
 
 		foreach ( $user_ids as $index => $user_id ) {
 			// Assign favorite color.
-			$color = sprintf( '#%06X', mt_rand( 0, 0xFFFFFF ) );
+			$color = sprintf( '#%06X', random_int( 0, 0xFFFFFF ) );
 			update_user_meta( $user_id, 'decker_color', $color );
 
 			// Assign default board.

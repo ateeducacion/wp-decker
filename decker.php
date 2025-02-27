@@ -77,7 +77,7 @@ add_action( 'upgrader_process_complete', 'decker_update_handler', 10, 2 );
  * The core plugin class that is used to define internationalization,
  * admin-specific hooks, and public-facing site hooks.
  */
-require plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
 
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
