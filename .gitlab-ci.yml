@@ -66,6 +66,6 @@ release:
 sonarqube-check:
   stage: sonarqube-check
   image: 
-    name: sonarsource/sonar-scanner-cli:5.0
+    name: sonarsource/sonar-scanner-cli:11.2
     entrypoint: [""]
   variables:
