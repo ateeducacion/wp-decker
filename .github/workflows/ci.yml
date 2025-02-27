@@ -133,9 +133,11 @@ jobs:
                 description: "Playground environment ready"
               });
             }
+
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -144,3 +146,5 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v4
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  
