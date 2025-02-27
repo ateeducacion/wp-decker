@@ -4,7 +4,7 @@ stages:
   # - upload
   - release
   - sonarqube-check
-  - sonarqube-vulnerability-report
+#  - sonarqube-vulnerability-report
 
 variables:
   # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
@@ -66,6 +66,6 @@ release:
 sonarqube-check:
   stage: sonarqube-check
   image: 
-    name: sonarsource/sonar-scanner-cli:5.0
+    name: sonarsource/sonar-scanner-cli:11.2
     entrypoint: [""]
-  variables:
+ # variables:
