@@ -239,12 +239,12 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function update_task_stack_and_order( $request ) {
-		$task_id = $request['id'];
-		$board_id     = $request->get_param( 'board_id' );
-		$source_stack = $request->get_param( 'source_stack' );
-		$target_stack = $request->get_param( 'target_stack' );
-		$source_order = $request->get_param( 'source_order' );
-		$target_order = $request->get_param( 'target_order' );
+		$task_id      = intval( $request['id'] );
+		$board_id     = intval( $request->get_param( 'board_id' ) );
+		$source_stack = sanitize_text_field( $request->get_param( 'source_stack' ) );
+		$target_stack = sanitize_text_field( $request->get_param( 'target_stack' ) );
+		$source_order = intval( $request->get_param( 'source_order' ) );
+		$target_order = intval( $request->get_param( 'target_order' ) );
 
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
@@ -315,7 +315,16 @@ class Decker_Tasks {
 		// Verifica si la actualización fue exitosa.
 		if ( false === $updated ) {
 			// Manejo de error, por ejemplo, registro de error.
-			error_log( 'Error updating menu_order for task ID ' . $task_id . ': ' . $wpdb->last_error );
+			 // Evita concatenación directa de datos de usuario en logs.
+			error_log(
+				'Error updating menu_order for task ID: ' . wp_json_encode(
+					array(
+						'task_id' => $task_id,
+						'error' => $wpdb->last_error,
+					)
+				)
+			);
+
 		}
 
 		// Reorder tasks in the source stack.
