@@ -233,7 +233,7 @@ if ( ! $has_today_tasks ) {
 														array(
 															'decker_page' => 'task',
 															'id'          => esc_attr( $task->ID ),
-														),<?php } ?>
+														),
 														home_url( '/' )
 													)
 												);
