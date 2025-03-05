@@ -170,6 +170,7 @@ if ( ! $has_today_tasks ) {
 										<th data-sort-default style="width: 10%;"><?php esc_html_e( 'Board', 'decker' ); ?></th>
 										<th class="d-none d-md-table-cell" style="width: 10%;"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
 										<th style="width: auto;"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+										<th style="width: 10%;"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
 										<th style="width: 15%;" data-sort-method='none'><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
 									</tr>
 								</thead>
@@ -240,6 +241,20 @@ if ( ! $has_today_tasks ) {
 															" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
 													<?php echo esc_html( $task->title ); ?>
 												</a>
+											</td>
+											<td>
+												<div class="avatar-group mt-2">
+													<?php if ( null != $task->responsable ) { ?>
+													<a href="#" class="avatar-group-item position-relative <?php echo ( $task->responsable )->today ? ' today' : ''; ?>"
+													   data-bs-toggle="tooltip" data-bs-placement="top" 
+													   title="<?php echo esc_attr( ( $task->responsable )->display_name ); ?>">
+													   <span class="badge badge_avatar"><i class="ri-star-s-fill"></i></span>
+														<img src="<?php echo esc_url( get_avatar_url( ( $task->responsable )->ID ) ); ?>" alt=""
+																 class="rounded-circle avatar-xs">
+
+													</a>
+													<?php } ?>
+												</div>
 											</td>
 											<td>
 												<div class="avatar-group mt-2">

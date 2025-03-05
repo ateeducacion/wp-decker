@@ -173,6 +173,7 @@ class Task {
 			// Only assign if $user_object is a WP_User.
 			if ( $user_object instanceof WP_User ) {
 				$this->responsable = $user_object;
+				 $this->responsable->today = $this->is_today_assigned( $responsable_id, $meta );
 			}
 
 			$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];
@@ -522,13 +523,26 @@ class Task {
 				<?php $this->render_task_menu(); ?>
 
 				<div class="avatar-group mt-2">
-					<?php foreach ( $this->assigned_users as $user_info ) : ?>
-						<a href="#" class="avatar-group-item <?php echo $user_info->today ? ' today' : ''; ?>"
-						   data-bs-toggle="tooltip" data-bs-placement="top"
-						   title="<?php echo esc_attr( $user_info->display_name ); ?>">
-							<img src="<?php echo esc_url( get_avatar_url( $user_info->ID ) ); ?>" alt=""
+					<?php if ( null != $this->responsable ) { ?>
+						<a href="#" class="avatar-group-item position-relative <?php echo ( $this->responsable )->today ? ' today' : ''; ?>"
+						   data-bs-toggle="tooltip" data-bs-placement="top" 
+						   title="<?php echo esc_attr( ( $this->responsable )->display_name ); ?>">
+						   <span class="badge badge_avatar"><i class="ri-star-s-fill"></i></span>
+							<img src="<?php echo esc_url( get_avatar_url( ( $this->responsable )->ID ) ); ?>" alt=""
 								 class="rounded-circle avatar-xs">
+
 						</a>
+						
+					<?php } ?>
+					<?php foreach ( $this->assigned_users as $user_info ) : ?>
+						<?php if ( ( $this->responsable )->ID != $user_info->ID ) { ?>
+							<a href="#" class="avatar-group-item position-relative <?php echo $user_info->today ? ' today' : ''; ?>"
+							   data-bs-toggle="tooltip" data-bs-placement="top"
+							   title="<?php echo esc_attr( $user_info->display_name ); ?>">
+								<img src="<?php echo esc_url( get_avatar_url( $user_info->ID ) ); ?>" alt=""
+									 class="rounded-circle avatar-xs">
+							</a>
+						<?php } ?>
 					<?php endforeach; ?>
 				</div>
 			</div> <!-- end card-body -->

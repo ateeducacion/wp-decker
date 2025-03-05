@@ -257,7 +257,7 @@ function handleAssignToMe(element) {
 	  const avatarGroup = taskCard.querySelector('.avatar-group');
 	  const newAvatar = document.createElement('a');
 	  newAvatar.href = 'javascript: void(0);';
-	  newAvatar.className = 'avatar-group-item';
+	  newAvatar.className = 'avatar-group-item position-relative';
 	  newAvatar.setAttribute('data-bs-toggle', 'tooltip');
 	  newAvatar.setAttribute('data-bs-placement', 'top');
 	  newAvatar.setAttribute('data-bs-original-title', '<?php echo esc_html( get_userdata( get_current_user_id() )->display_name ); ?>');
