@@ -173,7 +173,7 @@ class Task {
 			// Only assign if $user_object is a WP_User.
 			if ( $user_object instanceof WP_User ) {
 				$this->responsable = $user_object;
-				( $this->responsable )->today = $this->is_today_assigned( $responsable_id, $meta );
+				 $this->responsable->today = $this->is_today_assigned( $responsable_id, $meta );
 			}
 
 			$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];

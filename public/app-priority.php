@@ -233,7 +233,7 @@ if ( ! $has_today_tasks ) {
 														array(
 															'decker_page' => 'task',
 															'id'          => esc_attr( $task->ID ),
-														),
+														),<?php } ?>
 														home_url( '/' )
 													)
 												);
@@ -244,6 +244,7 @@ if ( ! $has_today_tasks ) {
 											</td>
 											<td>
 												<div class="avatar-group mt-2">
+													<?php if ( null != $task->responsable ) { ?>
 													<a href="#" class="avatar-group-item position-relative <?php echo ( $task->responsable )->today ? ' today' : ''; ?>"
 													   data-bs-toggle="tooltip" data-bs-placement="top" 
 													   title="<?php echo esc_attr( ( $task->responsable )->display_name ); ?>">
@@ -252,6 +253,7 @@ if ( ! $has_today_tasks ) {
 																 class="rounded-circle avatar-xs">
 
 													</a>
+													<?php } ?>
 												</div>
 											</td>
 											<td>
