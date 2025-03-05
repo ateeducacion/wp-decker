@@ -535,7 +535,7 @@ class Task {
 						
 					<?php } ?>
 					<?php foreach ( $this->assigned_users as $user_info ) : ?>
-						<?php if ( $user_info->ID != ( $this->responsable )->ID ) { ?>
+						<?php if ( ( $this->responsable )->ID != $user_info->ID ) { ?>
 							<a href="#" class="avatar-group-item position-relative <?php echo $user_info->today ? ' today' : ''; ?>"
 							   data-bs-toggle="tooltip" data-bs-placement="top"
 							   title="<?php echo esc_attr( $user_info->display_name ); ?>">
