@@ -51,6 +51,22 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render Allow Email Notifications Field.
+	 *
+	 * Outputs the HTML for the allow_email_notifications field.
+	 */
+	public function allow_email_notifications_render() {
+		$options = get_option( 'decker_settings', array() );
+		$checked = isset( $options['allow_email_notifications'] ) && '1' === $options['allow_email_notifications'];
+
+		echo '<label>';
+		echo '<input type="checkbox" name="decker_settings[allow_email_notifications]" value="1" ' . checked( $checked, true, false ) . '>';
+		echo esc_html__( 'Enable email notifications for all plugin events.', 'decker' );
+		echo '</label>';
+		echo '<p class="description">' . esc_html__( 'This setting allows users to manage email notifications in their profile. By default, all notifications are enabled.', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render User Profile Field.
 	 *
 	 * Outputs the HTML for the minimum_user_profile field, displaying only roles with edit permissions.
@@ -232,6 +248,7 @@ class Decker_Admin_Settings {
 			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field.
 			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
 			'shared_key'            => __( 'Shared Key', 'decker' ),
+			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),
 
@@ -340,6 +357,9 @@ class Decker_Admin_Settings {
 
 		// Validate shared key.
 		$input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
+
+		// Validate allow email notifications.
+		$input['allow_email_notifications'] = isset( $input['allow_email_notifications'] ) && '1' === $input['allow_email_notifications'] ? '1' : '0';
 
 		// Validate alert color.
 		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
