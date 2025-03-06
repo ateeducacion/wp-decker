@@ -73,6 +73,9 @@ class Decker_Events {
 
 		// Hide visibility options.
 		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
+
+		//Regiter REST API routes
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 	}
 
 	/**
@@ -206,7 +209,23 @@ class Decker_Events {
 		return $use_block_editor;
 	}
 
+	/**
+	 * Register REST API routes for decker_task.
+	 */
+	public function register_rest_routes() {
 
+		register_rest_route(
+			'decker/v1',
+			'/events/(?P<id>\d+)/update',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'update_decker_event' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			)
+		);
+	}	
 
 	/**
 	 * Restricts REST API access for decker_event post type.
@@ -231,6 +250,54 @@ class Decker_Events {
 		}
 
 		return $result;
+	}
+
+	function update_decker_event(WP_REST_Request $request) {
+	    // Step 1: Retrieve parameters from request
+	    $event_id = $request->get_param('id');
+
+	    // Check if the event exists
+	    if (!get_post($event_id) || get_post_type($event_id) !== 'decker_event') {
+	        return new WP_REST_Response([
+	        	'error' => 'Invalid event ID',
+	        	], 404);
+	    }
+
+
+    	// Define meta fields and sanitization functions
+	    $meta_fields = array(
+	        'event_allday' => 'rest_sanitize_boolean',
+	        'event_start' => 'sanitize_text_field',
+	        'event_end' => 'sanitize_text_field',
+	        'event_location' => 'sanitize_text_field',
+	        'event_url' => 'esc_url_raw',
+	        'event_category' => 'sanitize_text_field',
+	        'event_assigned_users' => function($users) {
+	            return array_map('absint', is_string($users) ? explode(',', $users) : (array) $users);
+	        }
+	    );
+
+	    // Step 2: Validate input (Ensure required fields are present)
+
+
+	    // Step 3: Update event in WP
+		$updated_meta = [];
+
+	    // Loop through meta fields and update if present
+	    foreach ($meta_fields as $key => $sanitize_callback) {
+	        if ($request->has_param($key)) {
+	            $value = call_user_func($sanitize_callback, $request->get_param($key));
+	            update_post_meta($event_id, $key, $value);
+	            $updated_meta[$key] = $value;
+	        }
+	    }
+
+	    return new WP_REST_Response([
+	        'message' => 'Event meta updated successfully',
+	        'updated_meta' => $updated_meta
+	    ], 200);
+		    // Step 4: Return response based on success or failure
+
 	}
 
 

@@ -95,7 +95,6 @@
                                 event_assigned_users: [deckerVars.current_user_id]
                             }
                         };
-
                         // Create event via REST API
                         fetch(wpApiSettings.root + 'wp/v2/decker_event', {
                             method: 'POST',
@@ -118,6 +117,40 @@
                             console.error('Error:', error);
                             alert(deckerVars.strings.error_saving_event);
                         });
+                    },
+                    eventDrop: function(info){
+                        console.log('evento interno dropeado:',info);
+
+                        const eventData = {
+                            event_allday: true,
+                            event_start: info.event.start.toISOString().split('T')[0],
+                            event_end: info.event.start.toISOString().split('T')[0]
+                        };
+                        const eventId=info.event.id.replace('event_', '');
+                        // Create event via REST API
+                        fetch(wpApiSettings.root + 'decker/v1/events/' + encodeURIComponent(eventId) + '/update' , {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-WP-Nonce': wpApiSettings.nonce
+                            },
+                            body: JSON.stringify(eventData)
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText);
+                            }
+                            return response.json();
+                        })
+                        .then(() => {
+                            // location.reload();
+                            console.log('evento interno dropeado ok:',info.event);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert(deckerVars.strings.error_saving_event);
+                        });
+
                     },
                     eventDidMount: function(info) {
                         const titleEl = info.el.querySelector('.fc-event-title');
