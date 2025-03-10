@@ -1,3 +1,51 @@
+/**
+ * EventCalendar Script
+ * 
+ * This script initializes and manages a FullCalendar instance within a web application.
+ * It provides functionality for event creation, dragging, dropping, and updating via a REST API for Plugin Decker.
+ * @link       https://github.com/ateeducacion/wp-decker
+ * @since      1.0.0
+ *
+ * @package    Decker
+ * @subpackage Decker/public/assets/js
+ * 
+ * Features:
+ * - Initializes FullCalendar with various views and configurations.
+ * - Handles event creation through user interaction (clicking, dragging).
+ * - Supports updating events and tasks via API calls.
+ * - Implements a tooltip notification system on event updates.
+ * - Enhances the event UI with dynamic styles and icons.
+ * 
+ * Dependencies:
+ * - jQuery
+ * - FullCalendar.js
+ * - Bootstrap (for modals)
+ * - WordPress REST API (for event persistence)
+ * 
+ */
+
+/**
+ * Displays a tooltip in the center of the screen with a given message.
+ *
+ * @param {string} message - The text to display inside the tooltip.
+ * @param {number} [duration=2000] - The time in milliseconds before the tooltip disappears (default: 2000ms).
+ */
+function showTootip(message, duration = 2000){
+       
+    document.querySelectorAll(".fc-tooltip-calendar").forEach(el => el.remove());
+    // Create a new tooltip
+    let tooltip = document.createElement("div");
+    tooltip.className = "fc-tooltip-calendar";
+    tooltip.innerText = message;
+        // Position tooltip near the event
+    tooltip.style.top = `${window.innerHeight - 60}px`;  // Middle of screen (vertically)
+    tooltip.style.left = `${window.innerWidth / 2}px`;   // Middle of screen (horizontally)
+    tooltip.style.transform = "translate(-50%, -50%)";   // Perfect centering
+    document.body.appendChild(tooltip);-
+      // Remove tooltip after 2 seconds
+    setTimeout(() => tooltip.remove(), duration);
+}
+
 (function($) {
     'use strict';
 
@@ -119,22 +167,40 @@
                         });
                     },
                     eventDrop: function(info){
-                        console.log('evento interno dropeado:',info);
 
-                        const eventData = {
-                            event_allday: true,
-                            event_start: info.event.start.toISOString().split('T')[0],
-                            event_end: info.event.start.toISOString().split('T')[0]
-                        };
-                        const eventId=info.event.id.replace('event_', '');
+                        var start_adjusted = info.event.start 
+                            ? new Date(info.event.start.getTime() - (info.event.start.getTimezoneOffset() * 60000)) 
+                            : null;
+
+                        var end_adjusted = info.event.end 
+                            ? new Date(info.event.end.getTime() - (info.event.end.getTimezoneOffset() * 60000)) 
+                            : null;
+
+                        if ( 'event' == info.event.extendedProps.type   ) {
+                            var eventId=info.event.id.replace('event_', '');
+                            var restroute=wpApiSettings.root + 'decker/v1/events/' + encodeURIComponent(eventId) + '/update';    
+                            var restData = {
+                                event_allday: info.event.allDay,
+                                event_start: start_adjusted ? start_adjusted.toISOString().split('T')[0] : null,
+                                event_end: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : end_adjusted.toISOString().split('T')[0]
+                            };
+
+                        } else if ('task' == info.event.extendedProps.type ) {
+                            var eventId=info.event.id.replace('task_', '');
+                            var restroute=wpApiSettings.root + 'decker/v1/tasks/' + encodeURIComponent(eventId) + '/update_due_date'; 
+                            var restData = {
+                                    duedate: start_adjusted.toISOString().split('T')[0]
+                                };
+                        }
+                        
                         // Create event via REST API
-                        fetch(wpApiSettings.root + 'decker/v1/events/' + encodeURIComponent(eventId) + '/update' , {
+                        fetch(restroute , {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-WP-Nonce': wpApiSettings.nonce
                             },
-                            body: JSON.stringify(eventData)
+                            body: JSON.stringify(restData)
                         })
                         .then(response => {
                             if (!response.ok) {
@@ -142,9 +208,15 @@
                             }
                             return response.json();
                         })
-                        .then(() => {
-                            // location.reload();
-                            console.log('evento interno dropeado ok:',info.event);
+                        .then(response => {
+                            
+                            if ( 'event' == info.event.extendedProps.type ) {
+                                var message = `Event moved to ${info.event.start.toLocaleString().split(',')[0]}`;
+                            } else if ( 'task' == info.event.extendedProps.type ){
+                                var message = `Task moved to ${info.event.start.toLocaleString().split(',')[0]}`;
+                            }
+                            showTootip(message, 1500);
+
                         })
                         .catch(error => {
                             console.error('Error:', error);
@@ -173,9 +245,11 @@
                                 titleEl.insertBefore(svg, titleEl.firstChild);
                             }
                         } else if (info.event.extendedProps.type === 'event') {
+                            console.log('evento interno dropeado 2:',info);
                             // Set background color based on category class
                             info.el.style.backgroundColor = info.event.classNames[0];
                             info.el.style.opacity = '0.7'; // Make it lighter
+
 
                             // For events, add assigned users before title
                             const users = info.event.extendedProps.assigned_users || [];
