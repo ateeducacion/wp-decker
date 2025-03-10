@@ -45,7 +45,18 @@
 	padding-top: 3px;
 }
 
-
+.fc-tooltip-calendar {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
 
 th[role=columnheader]:not(.no-sort) {
 	cursor: pointer;

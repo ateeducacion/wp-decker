@@ -606,6 +606,18 @@ class Decker_Tasks {
 				},
 			)
 		);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/(?P<id>\d+)/update_due_date',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'update_task_due_date' ),
+				'permission_callback' => function () {
+					return current_user_can( 'manage_options' );
+				},
+			)
+		);
 	}
 
 	/**
@@ -789,8 +801,52 @@ class Decker_Tasks {
 			200
 		);
 	}
+	/**
+	 * Handle update the due date of task using REST API.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function update_task_due_date( WP_REST_Request $request ) {
 
+		$task_id = $request->get_param( 'id' );
 
+		// Check if the task exists, if not return error response.
+
+		if ( ! get_post( $task_id ) || get_post_type( $task_id ) !== 'decker_task' ) {
+			return new WP_REST_Response(
+				array(
+					'error' => 'Invalid event ID',
+				),
+				404
+			);
+		}
+
+		$meta_fields = array(
+			'duedate' => 'sanitize_text_field',
+		);
+
+		 // Update event in WP.
+		$updated_meta = array();
+
+		 // Loop through meta fields and update if present.
+		foreach ( $meta_fields as $key => $sanitize_callback ) {
+			if ( $request->has_param( $key ) ) {
+				 $value = call_user_func( $sanitize_callback, $request->get_param( $key ) );
+				 update_post_meta( $task_id, $key, $value );
+				 $updated_meta[ $key ] = $value;
+			}
+		}
+
+		 // Step 4: Return response.
+		return new WP_REST_Response(
+			array(
+				'message' => 'Event meta updated successfully',
+				'updated_meta' => $updated_meta,
+			),
+			200
+		);
+	}
 
 	/**
 	 * Register the decker_task post type.
