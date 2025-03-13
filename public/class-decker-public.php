@@ -331,7 +331,7 @@ class Decker_Public {
 					'unsaved_changes_title'       => __( 'Unsaved changes', 'decker' ),
 					'unsaved_changes_text'        => __( 'You have unsaved changes. Close without saving?', 'decker' ),
 					'close_anyway'                => __( 'Close anyway', 'decker' ),
-					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' )
+					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' ),
 
 				),
 				'disabled'       => isset( $disabled ) && $disabled ? true : false,

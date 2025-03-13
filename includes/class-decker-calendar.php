@@ -160,7 +160,7 @@ class Decker_Calendar {
 			$board = $task->get_board();
 			$board_color = $board ? $board->color : '';
 
-			// Only add tasks that have a due date.
+			// Only add tasks that have a due date .
 			if ( $task->duedate ) {
 				$events[] = array(
 					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.

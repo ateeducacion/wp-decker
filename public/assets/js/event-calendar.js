@@ -133,7 +133,6 @@ function showTootip(message, duration = 2000){
                     eventClick: this.onEventClick.bind(this),
                     eventReceive: function(info) {
                         console.log("Event automatically added by FullCalendar:", info.event);
-                        //info.event.setProp("display","none");
                         info.event.remove();
 
                     },
@@ -150,7 +149,7 @@ function showTootip(message, duration = 2000){
                                 event_assigned_users: [deckerVars.current_user_id]
                             }
                         };
-                        // Create event via REST API
+                        // Create event via REST API.
                         fetch(wpApiSettings.root + 'wp/v2/decker_event', {
                             method: 'POST',
                             headers: {

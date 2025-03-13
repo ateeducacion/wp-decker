@@ -372,7 +372,7 @@ class Decker_Events {
 					// Ocultar campos de hora
 					$('#event_start_time_container, #event_end_time_container').hide();
 				} else {
-					// Mostrar campos de hora
+					// Mostrar campos de hora.
 					$('#event_start_time_container, #event_end_time_container').show();
 				}
 				validateDates(); // Validar fechas cada vez que se cambia el estado
