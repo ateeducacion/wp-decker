@@ -76,6 +76,7 @@ function showTootip(message, duration = 2000){
                     eventData: function(eventEl) {
                         return {
                             title: eventEl.innerText,
+                            allDay: true,
                             className: $(eventEl).data('class')
                         };
                     }
@@ -130,6 +131,12 @@ function showTootip(message, duration = 2000){
                     selectable: true,
                     dateClick: this.onSelect.bind(this),
                     eventClick: this.onEventClick.bind(this),
+                    eventReceive: function(info) {
+                        console.log("Event automatically added by FullCalendar:", info.event);
+                        //info.event.setProp("display","none");
+                        info.event.remove();
+
+                    },
                     drop: function(info) {
                         // Create event data
                         const eventData = {
@@ -158,8 +165,25 @@ function showTootip(message, duration = 2000){
                             }
                             return response.json();
                         })
-                        .then(() => {
-                            // location.reload();
+                        .then((data) => {
+
+                            const newEvent = {
+                                id : 'event_' + data.id,
+                                title: info.draggedEl.innerText, 
+                                start: info.date, 
+                                end: info.allDay ? null : end_date.toISOString(),
+                                allDay: info.allDay,
+                                extendedProps: {
+                                    assigned_users: [deckerVars.current_user_id],
+                                    description: "",
+                                    location: "",
+                                    type: "event"
+                                },
+                                className: info.draggedEl.dataset.class
+                            };  
+                            console.log(info);
+
+                            info.view.calendar.addEvent(newEvent);
                         })
                         .catch(error => {
                             console.error('Error:', error);
@@ -167,13 +191,20 @@ function showTootip(message, duration = 2000){
                         });
                     },
                     eventDrop: function(info){
+                        console.log('evento interno dropeado ED:',info);
+                        //Prevent null in event.end
+                        if ( null == info.event.end ){
+                            var event_end =  info.event.allDay ? null : new Date( info.event.start.getTime() + 45*60000 );
+                        } else {
+                            var event_end = info.event.end;
+                        }
 
                         var start_adjusted = info.event.start 
                             ? new Date(info.event.start.getTime() - (info.event.start.getTimezoneOffset() * 60000)) 
                             : null;
 
-                        var end_adjusted = info.event.end 
-                            ? new Date(info.event.end.getTime() - (info.event.end.getTimezoneOffset() * 60000)) 
+                        var end_adjusted = event_end 
+                            ? new Date(event_end.getTime() - (event_end.getTimezoneOffset() * 60000)) 
                             : null;
 
                         if ( 'event' == info.event.extendedProps.type   ) {
@@ -181,8 +212,8 @@ function showTootip(message, duration = 2000){
                             var restroute=wpApiSettings.root + 'decker/v1/events/' + encodeURIComponent(eventId) + '/update';    
                             var restData = {
                                 event_allday: info.event.allDay,
-                                event_start: start_adjusted ? start_adjusted.toISOString().split('T')[0] : null,
-                                event_end: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : end_adjusted.toISOString().split('T')[0]
+                                event_start: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : start_adjusted.toISOString(),
+                                event_end: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : end_adjusted.toISOString()
                             };
 
                         } else if ('task' == info.event.extendedProps.type ) {
@@ -245,7 +276,7 @@ function showTootip(message, duration = 2000){
                                 titleEl.insertBefore(svg, titleEl.firstChild);
                             }
                         } else if (info.event.extendedProps.type === 'event') {
-                            console.log('evento interno dropeado 2:',info);
+                            //console.log("evento cargado:",info);
                             // Set background color based on category class
                             info.el.style.backgroundColor = info.event.classNames[0];
                             info.el.style.opacity = '0.7'; // Make it lighter

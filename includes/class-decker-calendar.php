@@ -139,7 +139,7 @@ class Decker_Calendar {
 					'title'          => $post->post_title,
 					'description'    => $post->post_content,
 
-					'all_day'        => isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false,
+					'allDay'        => isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false,
 					'start'          => isset( $meta['event_start'] ) ? $meta['event_start'][0] : '',
 					'end'            => isset( $meta['event_end'] ) ? $meta['event_end'][0] : '',
 					'location'       => isset( $meta['event_location'] ) ? $meta['event_location'][0] : '',
@@ -166,7 +166,7 @@ class Decker_Calendar {
 					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
 					'title'          => $task->title,
 					'description'    => $task->description,
-					'all_day'        => true,
+					'allDay'        => true,
 					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'color'          => $board_color,
