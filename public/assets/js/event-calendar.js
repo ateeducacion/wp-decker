@@ -132,12 +132,11 @@ function showTootip(message, duration = 2000){
                     dateClick: this.onSelect.bind(this),
                     eventClick: this.onEventClick.bind(this),
                     eventReceive: function(info) {
-                        console.log("Event automatically added by FullCalendar:", info.event);
                         info.event.remove();
 
                     },
                     drop: function(info) {
-                        // Create event data
+                        // Create event data.
                         const eventData = {
                             title: info.draggedEl.innerText,
                             status: 'publish',
@@ -180,7 +179,6 @@ function showTootip(message, duration = 2000){
                                 },
                                 className: info.draggedEl.dataset.class
                             };  
-                            console.log(info);
 
                             info.view.calendar.addEvent(newEvent);
                         })
@@ -190,7 +188,6 @@ function showTootip(message, duration = 2000){
                         });
                     },
                     eventDrop: function(info){
-                        console.log('evento interno dropeado ED:',info);
                         //Prevent null in event.end
                         if ( null == info.event.end ){
                             var event_end =  info.event.allDay ? null : new Date( info.event.start.getTime() + 45*60000 );
@@ -275,11 +272,9 @@ function showTootip(message, duration = 2000){
                                 titleEl.insertBefore(svg, titleEl.firstChild);
                             }
                         } else if (info.event.extendedProps.type === 'event') {
-                            //console.log("evento cargado:",info);
                             // Set background color based on category class
                             info.el.style.backgroundColor = info.event.classNames[0];
                             info.el.style.opacity = '0.7'; // Make it lighter
-
 
                             // For events, add assigned users before title
                             const users = info.event.extendedProps.assigned_users || [];
