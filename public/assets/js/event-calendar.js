@@ -133,17 +133,17 @@ function showTootip(message, duration = 2000){
                     eventClick: this.onEventClick.bind(this),
                     eventReceive: function(info) {
                         info.event.remove();
-
                     },
                     drop: function(info) {
                         // Create event data.
+                        var end_date =  info.allDay ? null : new Date( info.date.getTime() + 45*60000 );
                         const eventData = {
                             title: info.draggedEl.innerText,
                             status: 'publish',
                             meta: {
-                                event_allday: true,
-                                event_start: info.date.toISOString().split('T')[0],
-                                event_end: info.date.toISOString().split('T')[0],
+                                event_allday: info.allDay,
+                                event_start: info.allDay ? info.date.toISOString().split('T')[0] : info.date.toISOString(),
+                                event_end: info.allDay ? null : end_date.toISOString(),
                                 event_category: info.draggedEl.dataset.class,
                                 event_assigned_users: [deckerVars.current_user_id]
                             }
@@ -179,7 +179,6 @@ function showTootip(message, duration = 2000){
                                 },
                                 className: info.draggedEl.dataset.class
                             };  
-
                             info.view.calendar.addEvent(newEvent);
                         })
                         .catch(error => {
