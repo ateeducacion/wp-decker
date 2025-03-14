@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             success: function (data) {
                 modal.find('#event-modal-body').html(data);
-
                 // Después de cargar el contenido, inicializar las funciones JS
                 if (typeof window.initializeEventCard === 'function') {
                     window.initializeEventCard(modal[0]);
