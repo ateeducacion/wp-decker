@@ -68,4 +68,13 @@ sonarqube-check:
   image: 
     name: sonarsource/sonar-scanner-cli:11.2
     entrypoint: [""]
- # variables:
+  # variables:
+  #   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  #   GIT_DEPTH: "0"
+  # cache:
+  #   key: "${CI_JOB_NAME}"
+  #   paths:
+  #     - .sonar/cache
+  script:
+    - sonar-scanner
+  when: manual
