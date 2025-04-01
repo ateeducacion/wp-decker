@@ -135,6 +135,7 @@ function showTootip(message, duration = 2000){
                         info.event.remove();
                     },
                     drop: function(info) {
+                        console.log("drop:", info)
                         // Create event data.
                         var end_date =  info.allDay ? null : new Date( info.date.getTime() + 45*60000 );
                         const eventData = {
@@ -188,6 +189,7 @@ function showTootip(message, duration = 2000){
                     },
                     eventDrop: function(info){
                         //Prevent null in event.end
+                        console.log("event_drop:", info);
                         if ( null == info.event.end ){
                             var event_end =  info.event.allDay ? null : new Date( info.event.start.getTime() + 45*60000 );
                         } else {
@@ -251,6 +253,7 @@ function showTootip(message, duration = 2000){
 
                     },
                     eventDidMount: function(info) {
+                        //console.log("event_mount:", info);
                         const titleEl = info.el.querySelector('.fc-event-title');
                         if (!titleEl) return;
 

@@ -416,7 +416,6 @@
         // Append the file with key "file" as expected by wp/v2/media
         formData.append('file', file);
         formData.append('post', getTaskId());
-
         // Optionally, you can add additional data (e.g. title) via formData.append()
 
         fetch(`${restUrl}media`, {
@@ -433,7 +432,8 @@
         .then(data => {
             if (data.id) {
                 // Use data.source_url as the attachment URL and data.title.rendered for the title
-                const extension = data.mime_type.split('/')[1]; // "png"
+                //const extension = data.mime_type.split('/')[1]; // "png"
+                const extension = file.name.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)[1];
                 addAttachmentToList(data.id, data.source_url, data.title.rendered, extension, context);
                 context.querySelector('#file-input').value = '';
             } else {
