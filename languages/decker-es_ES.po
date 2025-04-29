@@ -199,7 +199,7 @@ msgstr "Nombre de la Nueva Etiqueta"
 #: public/app-term-manager.php:120
 #: public/layouts/kb-modal.php:67
 #: public/layouts/left-sidebar.php:324
-#: public/layouts/task-card.php:291
+#: public/layouts/task-card.php:290
 msgid "Labels"
 msgstr "Etiquetas"
 
@@ -287,7 +287,7 @@ msgid "Task User and Date"
 msgstr "Usuario y Fecha de la Tarea"
 
 #: includes/custom-post-types/class-decker-tasks.php:1019
-#: public/layouts/task-card.php:317
+#: public/layouts/task-card.php:316
 msgid "Attachments"
 msgstr "Adjuntos"
 
@@ -295,13 +295,13 @@ msgstr "Adjuntos"
 #: public/app-priority.php:170
 #: public/app-priority.php:423
 #: public/app-tasks.php:203
-#: public/layouts/task-card.php:199
+#: public/layouts/task-card.php:198
 #, fuzzy
 msgid "Board"
 msgstr "Tablero"
 
 #: includes/custom-post-types/class-decker-tasks.php:1062
-#: public/layouts/task-card.php:253
+#: public/layouts/task-card.php:252
 msgid "Due Date"
 msgstr "Fecha de Vencimiento"
 
@@ -314,7 +314,7 @@ msgstr "Máxima Prioridad"
 #: public/app-priority.php:171
 #: public/app-priority.php:424
 #: public/app-tasks.php:204
-#: public/layouts/task-card.php:245
+#: public/layouts/task-card.php:244
 msgid "Stack"
 msgstr "Columna"
 
@@ -325,14 +325,14 @@ msgstr "Por Hacer"
 #: includes/custom-post-types/class-decker-tasks.php:1073
 #: public/app-kanban-my.php:100
 #: public/app-kanban.php:150
-#: public/layouts/task-card.php:242
+#: public/layouts/task-card.php:241
 msgid "In Progress"
 msgstr "En Progreso"
 
 #: includes/custom-post-types/class-decker-tasks.php:1074
 #: public/app-kanban-my.php:115
 #: public/app-kanban.php:165
-#: public/layouts/task-card.php:243
+#: public/layouts/task-card.php:242
 msgid "Done"
 msgstr "Hecho"
 
@@ -341,7 +341,7 @@ msgid "Nextcloud Card ID"
 msgstr "ID de Tarjeta de Nextcloud"
 
 #: includes/custom-post-types/class-decker-tasks.php:1141
-#: public/layouts/task-card.php:188
+#: public/layouts/task-card.php:187
 #, fuzzy
 msgid "Select Board"
 msgstr "Buscar Tableros"
@@ -651,7 +651,7 @@ msgstr "P."
 #: public/app-term-manager.php:284
 #: public/layouts/event-card.php:208
 #: public/layouts/event-card.php:209
-#: public/layouts/task-card.php:307
+#: public/layouts/task-card.php:306
 msgid "Description"
 msgstr "Descripción"
 
@@ -874,27 +874,27 @@ msgstr "Máxima Prioridad"
 msgid "For today"
 msgstr "Para hoy"
 
-#: public/layouts/task-card.php:241
+#: public/layouts/task-card.php:240
 msgid "To Do"
 msgstr "Por Hacer"
 
-#: public/layouts/task-card.php:254
+#: public/layouts/task-card.php:253
 msgid "Please select a due date."
 msgstr "Por favor, seleccione una fecha de vencimiento."
 
-#: public/layouts/task-card.php:264
+#: public/layouts/task-card.php:263
 msgid "Assign to"
 msgstr "Asignar a"
 
-#: public/layouts/task-card.php:311
+#: public/layouts/task-card.php:310
 msgid "Comments"
 msgstr "Comentarios"
 
-#: public/layouts/task-card.php:329
+#: public/layouts/task-card.php:328
 msgid "History"
 msgstr "Historial"
 
-#: public/layouts/task-card.php:335
+#: public/layouts/task-card.php:334
 msgid "Gantt"
 msgstr "Gantt"
 
@@ -902,30 +902,30 @@ msgstr "Gantt"
 msgid "Task title"
 msgstr "Título de la tarea"
 
-#: public/layouts/task-card.php:252
+#: public/layouts/task-card.php:251
 msgid "Select date"
 msgstr "Seleccionar fecha"
 
-#: public/layouts/task-card.php:200
+#: public/layouts/task-card.php:199
 msgid "Please select a board."
 msgstr "Seleccione una tabla."
 
 #: public/app-knowledge-base.php:89
-#: public/layouts/task-card.php:499
+#: public/layouts/task-card.php:498
 msgid "Author"
 msgstr "Autor"
 
-#: public/layouts/task-card.php:455
+#: public/layouts/task-card.php:454
 msgid "Under construction..."
 msgstr "En construcción..."
 
 #: public/app-term-manager.php:291
 #: public/layouts/event-card.php:257
-#: public/layouts/task-card.php:515
+#: public/layouts/task-card.php:514
 msgid "Save"
 msgstr "Guardar"
 
-#: public/layouts/task-card.php:518
+#: public/layouts/task-card.php:517
 msgid "Toggle Dropdown"
 msgstr "Alternar Desplegable"
 
@@ -998,34 +998,34 @@ msgstr "Marcar para hoy"
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 
-#: public/layouts/task-card.php:358
+#: public/layouts/task-card.php:357
 msgid "No comments yet."
 msgstr "No hay comentarios todavía."
 
-#: public/layouts/task-card.php:366
+#: public/layouts/task-card.php:365
 msgid "Replying to"
 msgstr "Respondiendo a"
 
-#: public/layouts/task-card.php:369
+#: public/layouts/task-card.php:368
 msgid "Write your comment..."
 msgstr "Escribe tu comentario..."
 
-#: public/layouts/task-card.php:403
+#: public/layouts/task-card.php:402
 msgid "Upload"
 msgstr "Subir"
 
-#: public/layouts/task-card.php:413
+#: public/layouts/task-card.php:412
 msgid "Nickname"
 msgstr "Apodo"
 
-#: public/layouts/task-card.php:414
+#: public/layouts/task-card.php:413
 msgid "Date"
 msgstr "Fecha"
 
 #: public/class-decker-public.php:303
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
-#: public/layouts/task-card.php:395
+#: public/layouts/task-card.php:394
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1197,11 +1197,11 @@ msgstr "Error al eliminar comentario."
 msgid "Error deleting comment."
 msgstr "Error eliminando comentario."
 
-#: public/layouts/task-card.php:370
+#: public/layouts/task-card.php:369
 msgid "Please enter a comment."
 msgstr "Por favor, introduzca un comentario."
 
-#: public/layouts/task-card.php:372
+#: public/layouts/task-card.php:371
 msgid "Comment"
 msgstr "Comentar"
 
@@ -1244,23 +1244,23 @@ msgstr "Notificarme cuando alguien comente en una tarea que tengo asignada."
 #: includes/custom-post-types/class-decker-tasks.php:1083
 #: public/app-priority.php:173
 #: public/app-tasks.php:207
-#: public/layouts/task-card.php:232
+#: public/layouts/task-card.php:231
 msgid "Responsable"
 msgstr "Responsable"
 
-#: public/layouts/task-card.php:210
+#: public/layouts/task-card.php:209
 msgid "Select Responsable"
 msgstr "Seleccione responsable"
 
-#: public/layouts/task-card.php:233
+#: public/layouts/task-card.php:232
 msgid "Please select a responsable."
 msgstr "Seleccione un responsable."
 
-#: public/layouts/task-card.php:338
+#: public/layouts/task-card.php:337
 msgid "Information"
 msgstr "Información"
 
-#: public/layouts/task-card.php:479
+#: public/layouts/task-card.php:478
 msgid "Created"
 msgstr "Creado"
 
@@ -1272,11 +1272,11 @@ msgstr "Solo se permite formato HTML básico (i, b, em, strong, br)"
 msgid "Hidden"
 msgstr "Ocultar"
 
-#: public/layouts/task-card.php:467
+#: public/layouts/task-card.php:466
 msgid "Hidden task"
 msgstr "Tarea oculta"
 
-#: public/layouts/task-card.php:468
+#: public/layouts/task-card.php:467
 msgid "(Hidden tasks are not shown in task listings)"
 msgstr "(Las tareas ocultas simplemente no se muestran en los listados)"
 
