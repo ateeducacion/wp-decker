@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile
+
 /**
  * File topbar
  *
@@ -25,6 +27,7 @@ defined( 'ABSPATH' ) || exit;
 					<span class="logo-sm">
 						<img src="<?php echo esc_url( plugins_url( 'assets/images/logo-sm.png', __DIR__ ) ); ?>" alt="small logo">
 					</span>
+
 				</a>
 
 			</div>
@@ -46,6 +49,34 @@ defined( 'ABSPATH' ) || exit;
 
 		<ul class="topbar-menu d-flex align-items-center gap-3">
 
+			<li class="dropdown notification-list">
+                <a class="nav-link dropdown-toggle arrow-none" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                    <i class="ri-notification-3-line fs-22"></i>
+                    <span class="noti-icon-badge"></span>
+                </a>
+
+				<div class="dropdown-menu dropdown-menu-end dropdown-menu-animated dropdown-lg py-0">
+
+					<div class="p-2 border-top-0 border-start-0 border-end-0 border-dashed border">
+					    <div class="row align-items-center">
+					        <div class="col">
+					            <h6 class="m-0 fs-16 fw-semibold"> <?php esc_html_e( 'Notifications', 'decker' ); ?></h6>
+					        </div>
+					        <div class="col-auto">
+					            <a href="javascript: void(0);" class="text-dark text-decoration-underline">
+					                <small><?php esc_html_e( 'Clear All', 'decker' ); ?></small>
+					            </a>
+					        </div>
+					    </div>
+					</div>
+
+		            <div id="notification-list" style="max-height: 300px; overflow-y: auto;">
+		            
+
+		            </div>
+
+		        </div>
+            </li>
 
 			<li class="d-none d-sm-inline-block">
 				<div class="nav-link" id="light-dark-mode" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attr_e( 'Theme Mode', 'decker' ); ?>">
@@ -79,23 +110,43 @@ defined( 'ABSPATH' ) || exit;
 						<h6 class="text-overflow m-0"><?php esc_html_e( 'Welcome !', 'decker' ); ?></h6>
 					</div>
 
-					<!-- item-->
+					<!-- item my-profile -->
 					<a href="<?php echo esc_url( admin_url( 'profile.php' ) ); ?>" class="dropdown-item">
 						<i class="ri-account-circle-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'My Profile', 'decker' ); ?></span>
 					</a>
-					<!-- item-->
 
 					<?php if ( current_user_can( 'manage_options' ) ) { ?> 
 
-					<!-- item-->
+					<!-- item decker settings -->
 					<a href="<?php echo esc_url( admin_url( 'options-general.php?page=decker_settings' ) ); ?>" class="dropdown-item">
 						<i class="ri-settings-4-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'Decker Settings', 'decker' ); ?></span>
 					</a>
 
 					<?php } ?>
-					<!-- item-->
+
+
+					<?php if ( current_user_can( 'manage_options' ) ) { ?>
+
+					<!-- item test notification -->
+					<a href="#" id="sendTestNotification" class="dropdown-item">
+					    <i class="ri-megaphone-line fs-18 align-middle me-1"></i>
+					    <span><?php esc_html_e( 'Test Notification', 'decker' ); ?></span>
+					</a>
+
+
+					<?php } ?>
+
+
+
+
+					<!-- item help -->
+					<a href="https://ateeducacion.github.io/wp-decker/" class="dropdown-item" target="_blank">
+						<i class="ri-question-line fs-18 align-middle me-1"></i>
+						<span><?php esc_html_e( 'Help', 'decker' ); ?></span>
+					</a>
+					<!-- item logout -->
 					<a href="<?php echo esc_url( wp_logout_url() ); ?>" class="dropdown-item">
 						<i class="ri-logout-box-line fs-18 align-middle me-1"></i>
 						<span><?php esc_html_e( 'Logout', 'decker' ); ?></span>
@@ -105,3 +156,4 @@ defined( 'ABSPATH' ) || exit;
 		</ul>
 	</div>
 </div>
+

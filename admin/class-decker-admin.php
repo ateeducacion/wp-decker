@@ -97,14 +97,10 @@ class Decker_Admin {
 	 */
 	private function load_dependencies() {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin-settings.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin-export.php';
-		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin-import.php';
 
 		if ( ! has_action( 'admin_menu', array( 'Decker_Admin_Settings', 'create_menu' ) ) ) {
 			new Decker_Admin_Settings();
 		}
-		new Decker_Admin_Export();
-		new Decker_Admin_Import();
 	}
 
 

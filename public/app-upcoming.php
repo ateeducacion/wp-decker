@@ -19,7 +19,7 @@ $one_year_ago_date = ( new DateTime() )->modify( '-1 year' );
 
 $task_manager = new TaskManager();
 
-$tasks = $task_manager->get_upcoming_tasks_by_date( $one_year_ago_date, $next_7_days_date ); // TODO: Change this to a function getTaskByDate(from, until).
+$tasks = $task_manager->get_upcoming_tasks_by_date( $one_year_ago_date, $next_7_days_date, false ); // TODO: Change this to a function getTaskByDate(from, until).
 
 // Initialize DateTime objects for current date and specific ranges.
 
@@ -128,7 +128,7 @@ foreach ( $tasks as $task ) {
 
 									</div>
 									<h4 class="page-title"><?php esc_html_e( 'Upcoming Tasks', 'decker' ); ?>
-										<a href="#" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
+										<a href="#" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Task', 'decker' ); ?></a></h4>
 								</div>
 							</div>
 						</div>     

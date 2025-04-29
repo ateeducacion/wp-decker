@@ -4,70 +4,82 @@
 
     // Variables globales recibidas desde PHP
     const ajaxUrl = deckerVars.ajax_url;
-    const restUrl = deckerVars.rest_url;
+    const restUrl = wpApiSettings.root + wpApiSettings.versionString;
     const homeUrl = deckerVars.home_url;
     const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
     const disabled = deckerVars.disabled;
     const userId = deckerVars.current_user_id;
 
+    // Variable global para indicar si hay cambios sin guardar
+    window.deckerHasUnsavedChanges = false;
+
     let quill = null;
+
+    let assigneesSelect = null;
+    let labelsSelect = null;
 
     // Start of comment part
     var replyToCommentId = null;
 
-    // Función para inicializar el envío de comentarios dentro del contexto dado
+    // Function to initialize comment submission within the given context
     function initializeSendComments(context) {
-        // Comprobar si ya se ha inicializado en este contexto
-        if ( context.dataset && context.dataset.sendCommentsInitialized === 'true') return;
-        if ( context.dataset) context.dataset.sendCommentsInitialized = 'true';
+        // Check if already initialized in this context
+        if (context.dataset && context.dataset.sendCommentsInitialized === 'true') return;
+        if (context.dataset) context.dataset.sendCommentsInitialized = 'true';
 
         const commentTextArea = context.querySelector('#comment-text');
         const submitButton = context.querySelector('#submit-comment');
 
         if (commentTextArea && submitButton) {
-            // Habilitar/deshabilitar el botón de enviar basado en el contenido del textarea
+            // Enable/disable the submit button based on textarea content
             commentTextArea.addEventListener('input', function() {
                 submitButton.disabled = this.value.trim() === '';
             });
 
-            // Manejar la sumisión de comentarios
+            // Handle comment submission
             submitButton.addEventListener('click', function() {
-                const commentText = commentTextArea.value;
-                const parentId = replyToCommentId;
+                const commentText = commentTextArea.value.trim();
+                const parentId = replyToCommentId || 0;
 
-                if (commentText.trim() === '') {
+                if (commentText === '') {
                     return;
                 }
 
-                // Mostrar estado de carga
+                // Show loading state
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<i class="ri-loader-2-line ri-spin me-1"></i> Sending...';
 
-                const formData = new FormData();
                 const taskId = getTaskId();
-                formData.append('action', 'add_task_comment');
-                formData.append('task_id', taskId);
-                formData.append('comment_content', commentText);
-                formData.append('parent_id', parentId || 0);
-                formData.append('nonce', nonces.task_comment_nonce);
+                const payload = {
+                    post: taskId,
+                    content: commentText,
+                    parent: parentId
+                };
 
-                fetch(ajaxUrl, {
+                fetch(`${restUrl}comments`, {
                     method: 'POST',
-                    body: formData,
+                    headers: {
+                        'X-WP-Nonce': wpApiSettings.nonce,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
                     credentials: 'same-origin'
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        // Limpiar el formulario
+                    // Check for errors returned by the REST API
+                    if (data.code) {
+                        alert(data.message || 'Error adding comment.');
+                    } else {
+                        // Clear the form
                         commentTextArea.value = '';
                         if (replyToCommentId) {
                             context.querySelector('#reply-indicator').classList.add('d-none');
                             replyToCommentId = null;
                         }
 
-                        // Añadir el nuevo comentario a la lista
+                        // Add the new comment to the list
                         const commentsList = context.querySelector('#comments-list');
                         const newComment = document.createElement('div');
                         newComment.className = 'd-flex align-items-start mb-2';
@@ -75,36 +87,40 @@
                             newComment.style.marginLeft = '20px';
                         }
 
+                        const avatarUrl = data.author_avatar_urls && data.author_avatar_urls['48'] ? data.author_avatar_urls['48'] : '';
+
                         newComment.innerHTML = `
-                            <img class="me-2 rounded-circle" src="${data.data.avatar_url}" alt="Avatar" height="32" />
+                            <img class="me-2 rounded-circle" src="${avatarUrl}" alt="Avatar" height="32" />
                             <div class="w-100">
-                                <h5 class="mt-0">${data.data.author} <small class="text-muted float-end">${data.data.date}</small></h5>
-                                ${data.data.content}
+                                <h5 class="mt-0">${data.author_name} <small class="text-muted float-end">${data.date}</small></h5>
+                                ${data.content.rendered}
                                 <br />
-                                <a href="javascript:void(0);" onclick="deleteComment(${data.data.comment_id});" 
+                                <a href="javascript:void(0);" onclick="deleteComment(${data.id});" 
                                    class="text-muted d-inline-block mt-2 comment-delete" 
-                                   data-comment-id="${data.data.comment_id}">
+                                   data-comment-id="${data.id}">
                                     <i class="ri-delete-bin-line"></i> ${strings.delete}
                                 </a>
                             </div>
                         `;
 
                         if (parentId) {
-                            // Encontrar el comentario padre y añadir después
-                            const parentComment = commentsList.querySelector(`[data-comment-id="${parentId}"]`).closest('.d-flex');
-                            parentComment.after(newComment);
+                            // Find the parent comment and insert after it
+                            const parentComment = commentsList.querySelector(`[data-comment-id="${parentId}"]`)?.closest('.d-flex');
+                            if (parentComment) {
+                                parentComment.after(newComment);
+                            } else {
+                                commentsList.appendChild(newComment);
+                            }
                         } else {
-                            // Añadir al final de la lista principal
+                            // Append to the main list
                             commentsList.appendChild(newComment);
                         }
 
-                        // Actualizar el contador de comentarios
+                        // Update the comment count
                         const commentCount = context.querySelector('#comment-count');
                         if (commentCount) {
                             commentCount.textContent = parseInt(commentCount.textContent) + 1;
                         }
-                    } else {
-                        alert(data.message || 'Error adding comment.');
                     }
                 })
                 .catch(error => {
@@ -112,7 +128,7 @@
                     alert('Error adding comment. Please try again.');
                 })
                 .finally(() => {
-                    // Reiniciar el estado del botón
+                    // Reset the submit button state
                     submitButton.disabled = commentTextArea.value.trim() === '';
                     submitButton.innerHTML = '<i class="ri-chat-1-line me-1"></i> Comment';
                 });
@@ -120,7 +136,7 @@
         }
     }
 
-    // Función para borrar un comentario
+    // Function to delete a comment
     function deleteComment(commentId) {
         if (!confirm(strings.confirm_delete_comment)) {
             return;
@@ -129,19 +145,19 @@
         fetch(`${restUrl}comments/${commentId}`, {
             method: 'DELETE',
             headers: {
-                'Content-Type': 'application/json',
-                'X-WP-Nonce': nonces.wp_rest_nonce
+                'X-WP-Nonce': wpApiSettings.nonce,
+                'Content-Type': 'application/json'
             }
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'trash') {
-                // Encontrar y eliminar el elemento del comentario
-                const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`).closest('.d-flex');
+            if (data.status === 'trash' || data.deleted) {
+                // Find and remove the comment element
+                const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`)?.closest('.d-flex');
                 if (commentElement) {
                     commentElement.remove();
 
-                    // Actualizar el contador de comentarios
+                    // Update the comment count
                     const commentCount = document.getElementById('comment-count');
                     if (commentCount) {
                         const currentCount = parseInt(commentCount.textContent);
@@ -233,12 +249,57 @@
         }
 
         if (context.querySelector('#task-labels')) {
-            labelsSelect = new Choices(context.querySelector('#task-labels'), { 
-                removeItemButton: true, 
-                allowHTML: true,
-                searchEnabled: true,
-                shouldSort: true,
-            });
+            // labelsSelect = new Choices(context.querySelector('#task-labels'), { 
+            //     removeItemButton: true, 
+            //     allowHTML: true,
+            //     searchEnabled: true,
+            //     shouldSort: true,
+            // });
+
+
+            labelsSelect = new Choices(context.querySelector('#task-labels'), {
+            removeItemButton: true,
+            allowHTML: true,
+            searchEnabled: true,
+            shouldSort: true,
+            callbackOnCreateTemplates: function (strToEl, escapeForTemplate, getClassNames) {
+                const defaultTemplates = Choices.defaults.templates;
+                
+
+
+                return {
+                    ...defaultTemplates,
+                    item: (classNames, data) => {
+                        // 1. Tomar el elemento que genera la plantilla por defecto
+                        const el = defaultTemplates.item.call(this, classNames, data);
+
+                        // 2. Aplicar color de fondo según la taxonomía
+                        el.style.backgroundColor = data.customProperties?.color || 'blue';
+
+                        // 3. Asegurar que, si removeItemButton=true, se configure el elemento como "deletable"
+                        if (this.config.removeItemButton) {
+                            el.setAttribute('data-deletable', '');
+
+                            // Si la plantilla por defecto no generó ya el botón, crearlo aquí
+                            if (!el.querySelector('[data-button]')) {
+                                const button = document.createElement('button');
+                                button.type = 'button';
+                                button.className = this.config.classNames.button;
+                                button.setAttribute('data-button', '');
+                                button.setAttribute('aria-label', `Remove item: ${data.value}`);
+                                button.innerHTML = '×';
+                                el.appendChild(button);
+                            }
+                        }
+
+                        return el;
+                    }
+                }
+
+            }
+        });
+
+
         }
 
         var uploadFileButton = context.querySelector('#upload-file');
@@ -272,6 +333,8 @@
         // Función para habilitar el botón de guardar cuando cualquier campo cambia
         const enableSaveButton = function() {
             saveButton.disabled = false;
+            // Marcar que hay cambios sin guardar
+            window.deckerHasUnsavedChanges = true;
         };
 
         const form = context.querySelector('#task-form');
@@ -297,6 +360,7 @@
         if (quill) {
             quill.on('text-change', function() {
                 saveButton.disabled = false;
+                window.deckerHasUnsavedChanges = true;
             });
         }
 
@@ -308,7 +372,7 @@
             labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
         }        
 
-        document.querySelectorAll('.archive-task').forEach((element) => {
+        document.querySelectorAll('.archive-task,.unarchive-task').forEach((element) => {
 
           element.removeEventListener('click', archiveTaskHandler);
           element.addEventListener('click', archiveTaskHandler);
@@ -346,41 +410,40 @@
         }
     }
 
-    // Función para subir adjuntos
+    // Function to upload attachments via the native WP REST API
     function uploadAttachment(file, context) {
         var formData = new FormData();
-        const taskId = getTaskId();
-        formData.append('action', 'upload_task_attachment');
-        formData.append('task_id', taskId);
-        formData.append('attachment', file);
-        formData.append('nonce', nonces.upload_attachment_nonce);
+        // Append the file with key "file" as expected by wp/v2/media
+        formData.append('file', file);
+        formData.append('post', getTaskId());
+        // Optionally, you can add additional data (e.g. title) via formData.append()
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', ajaxUrl, true);
-
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    // Añadir el nuevo adjunto a la lista en la interfaz
-                    addAttachmentToList(response.data.attachment_id, response.data.attachment_url, response.data.attachment_title, response.data.attachment_extension, context);
-                    // Limpiar el input de archivo
-                    context.querySelector('#file-input').value = '';
-                } else {
-                    alert(response.data.message || strings.error_uploading_attachment);
-                }
+        fetch(`${restUrl}media`, {
+            method: 'POST',
+            headers: {
+                'X-WP-Nonce': wpApiSettings.nonce,
+                // Set Content-Disposition with the file name
+                'Content-Disposition': 'attachment; filename="' + file.name + '"'
+            },
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.id) {
+                // Use data.source_url as the attachment URL and data.title.rendered for the title
+                //const extension = data.mime_type.split('/')[1]; // "png"
+                const extension = file.name.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)[1];
+                addAttachmentToList(data.id, data.source_url, data.title.rendered, extension, context);
+                context.querySelector('#file-input').value = '';
             } else {
-                console.error('Server error.');
-                alert('An error occurred while uploading the attachment.');
+                alert(data.message || strings.error_uploading_attachment);
             }
-        };
-
-        xhr.onerror = function() {
-            console.error('Request error.');
-            alert('An error occurred while uploading the attachment.');
-        };
-
-        xhr.send(formData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error uploading attachment.');
+        });
     }
 
     // Función para añadir un adjunto a la lista
@@ -421,46 +484,33 @@
         }
     });
 
-    // Función para eliminar un adjunto
+    // Function to delete an attachment using the REST API
     function deleteAttachment(attachmentId, listItem, context) {
         if (!confirm(strings.confirm_delete_attachment)) {
             return;
         }
 
-        var formData = new FormData();
-        const taskId = getTaskId();
-        formData.append('action', 'delete_task_attachment');
-        formData.append('task_id', taskId);
-        formData.append('attachment_id', attachmentId);
-        formData.append('nonce', nonces.delete_attachment_nonce);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', ajaxUrl, true);
-
-        xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                var response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    // Eliminar el adjunto de la lista en la interfaz
-                    listItem.remove();
-
-                    // Actualizar el contador de adjuntos
-                    updateAttachmentCount(context, -1); // Decrementar en 1                
-                } else {
-                    alert(response.data.message || 'Error deleting attachment.');
-                }
+        fetch(`${restUrl}media/${attachmentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-WP-Nonce': wpApiSettings.nonce // Required for authentication
+            },
+            body: JSON.stringify({ force: true }) // Force delete the attachment
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.deleted) {
+                listItem.remove();
+                updateAttachmentCount(context, -1);
             } else {
-                console.error('Server error.');
-                alert('An error occurred while deleting the attachment.');
+                alert(data.message || 'Error deleting attachment.');
             }
-        };
-
-        xhr.onerror = function() {
-            console.error('Request error.');
+        })
+        .catch(error => {
+            console.error('Request error:', error);
             alert('An error occurred while deleting the attachment.');
-        };
-
-        xhr.send(formData);
+        });
     }
 
     // Función para actualizar el contador de adjuntos
@@ -535,6 +585,7 @@
             if (xhr.status >= 200 && xhr.status < 400) {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
+                    window.deckerHasUnsavedChanges = false;
                     const modalElement = document.querySelector('.task-modal.show'); // Selecciona el modal abierto, o null si no está en un modal
                     if (modalElement) {
                         var modalInstance = bootstrap.Modal.getInstance(modalElement);

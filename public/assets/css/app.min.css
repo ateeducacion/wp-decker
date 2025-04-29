@@ -26,6 +26,15 @@
 	box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
 }
 
+.badge_avatar {
+            position: absolute;
+            top: 0;
+            left: -4px; /* Moved to the left */
+            color: yellow;
+            align-items: center;
+            justify-content: center;
+}
+
 /* Fix para la fuente cuando se ponen los headers de WP */
 :root {
     --wp--preset--font-family--heading: inherit; /* O puedes usar otra fuente predeterminada */
@@ -36,7 +45,18 @@
 	padding-top: 3px;
 }
 
-
+.fc-tooltip-calendar {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
 
 th[role=columnheader]:not(.no-sort) {
 	cursor: pointer;

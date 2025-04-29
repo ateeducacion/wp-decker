@@ -6,6 +6,8 @@ languages/*.po             export-ignore
 languages/*.pot            export-ignore
 
 # Exclude development files
+*.css.map 				   export-ignore
+/vendor/                   export-ignore
 blueprint.json             export-ignore
 CHANGELOG.md               export-ignore
 CODE_OF_CONDUCT.md         export-ignore
@@ -15,7 +17,7 @@ CONVENTIONS.md             export-ignore
 docker-compose.yml         export-ignore
 docs/                      export-ignore
 Makefile                   export-ignore
-mkdocs.yml                 export-ignore	
+mkdocs.yml                 export-ignore
 node_modules/              export-ignore
 package-lock.json          export-ignore
 package.json               export-ignore
@@ -25,6 +27,6 @@ README.md                  export-ignore
 README.md                  export-ignore
 renovate.json              export-ignore
 sftp-config.json           export-ignore
+sonar-project.properties   export-ignore
 test.php                   export-ignore
 tests/                     export-ignore
-/vendor/                   export-ignore

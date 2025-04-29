@@ -138,7 +138,7 @@ if ( ! $has_today_tasks ) {
 										</ol>
 									</div>
 									<h4 class="page-title"><?php esc_html_e( 'Priority', 'decker' ); ?>
-										<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
+										<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Task', 'decker' ); ?></a></h4>
 								</div>
 							</div>
 						</div>     
@@ -170,6 +170,7 @@ if ( ! $has_today_tasks ) {
 										<th data-sort-default style="width: 10%;"><?php esc_html_e( 'Board', 'decker' ); ?></th>
 										<th class="d-none d-md-table-cell" style="width: 10%;"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
 										<th style="width: auto;"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+										<th style="width: 10%;"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
 										<th style="width: 15%;" data-sort-method='none'><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
 									</tr>
 								</thead>
@@ -178,10 +179,16 @@ if ( ! $has_today_tasks ) {
 									// Get task with max_priority.
 									$args = array(
 										'meta_query' => array(
+											'relation'  => 'AND',
 											array(
 												'key'     => 'max_priority',
 												'value'   => '1',
 												'compare' => '=',
+											),
+											array(
+												'key'       => 'hidden',
+												'value'     => '1',
+												'compare'   => '!=',
 											),
 										),
 									);
@@ -234,6 +241,20 @@ if ( ! $has_today_tasks ) {
 															" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
 													<?php echo esc_html( $task->title ); ?>
 												</a>
+											</td>
+											<td>
+												<div class="avatar-group mt-2">
+													<?php if ( null != $task->responsable ) { ?>
+													<a href="#" class="avatar-group-item position-relative <?php echo ( $task->responsable )->today ? ' today' : ''; ?>"
+													   data-bs-toggle="tooltip" data-bs-placement="top" 
+													   title="<?php echo esc_attr( ( $task->responsable )->display_name ); ?>">
+													   <span class="badge badge_avatar"><i class="ri-star-s-fill"></i></span>
+														<img src="<?php echo esc_url( get_avatar_url( ( $task->responsable )->ID ) ); ?>" alt=""
+																 class="rounded-circle avatar-xs">
+
+													</a>
+													<?php } ?>
+												</div>
 											</td>
 											<td>
 												<div class="avatar-group mt-2">
@@ -296,7 +317,7 @@ if ( ! $has_today_tasks ) {
 									),
 								),
 							);
-							$user_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $user->ID, 0 );
+							$user_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $user->ID, 0, false );
 							?>
 							<div class="col-xl-6">
 								<div class="<?php echo esc_attr( $card_class ); ?>">

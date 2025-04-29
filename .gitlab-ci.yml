@@ -1,0 +1,80 @@
+stages:
+  # Disabled build and upload stages until get internet connection on Gitlab Runner  
+  # - build
+  # - upload
+  - release
+  - sonarqube-check
+#  - sonarqube-vulnerability-report
+
+variables:
+  # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
+  # See https://docs.gitlab.com/ee/user/packages/generic_packages/#publish-a-package-file
+  PACKAGE_VERSION: "${CI_COMMIT_TAG}"
+  PACKAGE_BINARY: "decker-${PACKAGE_VERSION}"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
+
+# Disabled build and upload stages until get internet connection on Gitlab Runner
+# build:
+#   stage: build
+#   only:
+#     - tags
+#   before_script:
+#     - apt-get update && apt-get install -y make zip composer
+#     - composer --version
+#   script:
+#     - make package VERSION="${PACKAGE_VERSION}"
+#     - ls -lh "decker-${PACKAGE_VERSION}.zip"
+#   artifacts:
+#     paths:
+#       - "decker-${PACKAGE_VERSION}.zip"
+#     expire_in: 1 week
+
+# upload:
+#   stage: upload
+#   image: curlimages/curl:latest
+#   only:
+#     - tags
+#   needs: ["build"]
+#   script:
+#     - |
+#       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+#            --upload-file "${PACKAGE_BINARY}.zip" \
+#            "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  only:
+    - tags
+  # Disabled build and upload stages until get internet connection on Gitlab Runner      
+  # needs: ["upload"]
+
+  script:
+    - echo "Creating GitLab release for tag ${PACKAGE_VERSION}"
+  release:
+    name: "Release ${PACKAGE_VERSION}"
+    tag_name: "${CI_COMMIT_TAG}"
+    description: "Release for ${PACKAGE_VERSION}"
+    assets:
+      links:
+        - name: "${PACKAGE_BINARY}.zip"
+          # Disabled build and upload stages until get internet connection on Gitlab Runner
+          # url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
+          url: "https://github.com/ateeducacion/wp-decker/releases/download/${PACKAGE_VERSION}/${PACKAGE_BINARY}.zip"
+
+
+sonarqube-check:
+  stage: sonarqube-check
+  image: 
+    name: sonarsource/sonar-scanner-cli:11.3
+    entrypoint: [""]
+  # variables:
+  #   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  #   GIT_DEPTH: "0"
+  # cache:
+  #   key: "${CI_JOB_NAME}"
+  #   paths:
+  #     - .sonar/cache
+  script:
+    - sonar-scanner
+  when: manual

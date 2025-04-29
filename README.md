@@ -18,7 +18,6 @@ Try Decker instantly in your browser using WordPress Playground! The demo includ
 
 ### Key Features
 
-- **Import from Nextcloud Deck through API**: Imports boards and cards from Nextcloud.
 - **Customization**: Adjustable settings available in the WordPress admin panel.
 - **Multisite Support**: Fully compatible with WordPress multisite installations.
 - **WordPress Coding Standards Compliance**: Adheres to [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards) for quality and security.

@@ -20,16 +20,15 @@ function include_wp_load( $max_levels = 10 ) {
 			require_once $dir . '/wp-load.php';
 			return true;
 		}
-		// Move up one level in the directory structure.
 		$parent_dir = dirname( $dir );
 		if ( $parent_dir === $dir ) {
-			// Reached the root directory of the file system.
 			break;
 		}
 		$dir = $parent_dir;
 	}
 	return false;
 }
+
 
 // Attempt to include wp-load.php, required when we are loading the task-card in a Bootstrap modal.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -249,7 +248,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		<!-- Due date -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_duedate_as_string() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_formatted_date() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
 				<label class="form-label" for="task-due-date"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
 				<div class="invalid-feedback"><?php esc_html_e( 'Please select a due date.', 'decker' ); ?></div>
 			</div>
@@ -293,7 +292,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 				<?php
 				$labels = LabelManager::get_all_labels();
 				foreach ( $labels as $label ) {
-					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) ) ) . '>' . esc_html( $label->name ) . '</option>';
+					echo '<option value="' . esc_attr( $label->id ) . '" data-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\' ' . selected( in_array( $label->id, array_column( $task->labels, 'id' ) ) ) . '>' . esc_html( $label->name ) . '</option>';
 				}
 				?>
 			</select>
@@ -514,7 +513,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 			<button type="submit" class="btn btn-primary" id="save-task" onclick="sendFormByAjax(event);" disabled>
 				<i class="ri-save-line"></i> <?php esc_html_e( 'Save', 'decker' ); ?>
 			</button>
-			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( $disabled || 0 == $task_id ); ?>>
+			<button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split dropup" id="save-task-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" <?php disabled( 0 == $task_id ); ?>>
 				<span class="visually-hidden"><?php esc_html_e( 'Toggle Dropdown', 'decker' ); ?></span>
 			</button>
 			<?php

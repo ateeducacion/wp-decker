@@ -172,7 +172,7 @@ table#tablaTareas td:nth-child(4) {
 								$class_disabled = ' disabled';
 							}
 							?>
-								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><?php esc_html_e( 'Add New', 'decker' ); ?></a></h4>
+								<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'task' ), home_url( '/' ) ) ); ?>" class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal"><i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Task', 'decker' ); ?></a></h4>
 
 								<div class="d-flex align-items-center">
 									<div id="searchBuilderContainer" class="me-2"></div>
@@ -289,7 +289,26 @@ table#tablaTareas td:nth-child(4) {
 													echo '</div></td>';
 
 													// Remaining time.
-													echo '<td>' . esc_html( $task->duedate?->format( 'Y-m-d H:i:s' ) ) . '</td>';
+													echo '<td data-order="' . esc_attr( $task->duedate?->format( 'Y-m-d' ) ) . '" class="due-date">';
+													if ( $task->duedate instanceof DateTime ) {
+														$due_midnight = clone $task->duedate;
+														$due_midnight->setTime( 0, 0, 0 );
+														$today_midnight = new DateTime( 'today' );
+
+														$date_class = '';
+														if ( $due_midnight == $today_midnight ) {
+															$date_class = 'due-today';
+														} elseif ( $due_midnight < $today_midnight ) {
+															$date_class = 'due-past';
+														}
+
+														echo '<span class="' . esc_attr( $date_class ) . '" title="' . esc_attr( $task->duedate->format( 'Y-m-d' ) ) . '">';
+													} else {
+														echo '<span class="due-none">';
+													}
+													echo esc_html( $task->get_relative_time() );
+													echo '</span></td>';
+
 
 													// Context menu.
 													echo '<td class="text-end">';
@@ -336,10 +355,10 @@ table#tablaTareas td:nth-child(4) {
 	<script>
 
 	// Extend Day.js with relativeTime plugin
-	dayjs.extend(dayjs_plugin_relativeTime);
+	// dayjs.extend(dayjs_plugin_relativeTime);
 
 	// Set locale to Spanish
-	dayjs.locale('es');
+	// dayjs.locale('es');
 
 	function setupAllTasksTable() {
 		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
@@ -364,6 +383,18 @@ table#tablaTareas td:nth-child(4) {
 						extend: 'print',
 						className: 'd-none d-md-block', // Ocultar en móviles
 					},
+					{
+						extend: 'csv',
+						className: 'd-none d-md-block', // Ocultar en móviles
+					},
+					// {
+					// 	extend: 'excel',
+					// 	className: 'd-none d-md-block', // Ocultar en móviles
+					// },
+					// {
+					// 	extend: 'pdf',
+					// 	className: 'd-none d-md-block', // Ocultar en móviles
+					// },
 				],
 				dom: '<"ms-2"l><"d-flex justify-content-between align-items-center"<"me-2"B>f>rtip', // Ajustar layout
 				columnDefs: [
@@ -380,28 +411,13 @@ table#tablaTareas td:nth-child(4) {
 						}
 					},
 					{
-						targets: [4, 5, 7], // Columna 7
+						targets: [4, 5, 8],
 						orderable: false
 					},
 					{
-						targets: 7, // Columna 6 (Remaining Time)
-						render: function(data, type, row, meta) {
-							if(type === 'display') {
-								// Verificar que la fecha sea válida
-								if (!data) {
-									return '';
-								}
-								// Formatear la fecha completa para el tooltip
-								var fullDate = dayjs(data).format('DD/MM/YYYY'); // Ajusta el formato según tus necesidades
-								// Generar el texto amigable usando Day.js
-								var friendlyText = dayjs(data).fromNow();
-								return '<span title="' + fullDate + '">' + friendlyText + '</span>';
-							}
-							return data; // Para 'sort', 'type' y 'filter'
-						},
-						type: 'date'
-					},
-
+						targets: 7, // due-date column
+						type: 'date',
+					}
 				],
 
 				lengthMenu: [

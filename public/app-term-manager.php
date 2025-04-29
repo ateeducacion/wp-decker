@@ -152,7 +152,7 @@ if ( 'board' === $selected_type ) {
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 		
-										<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><?php echo esc_html( $add_new_text ); ?></a></h4>
+										<h4 class="page-title"><?php echo esc_html( $page_title ); ?> <a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#term-modal"><i class="ri-add-circle-fill"></i> <?php echo esc_html( $add_new_text ); ?></a></h4>
 
 
 								<div class="page-title-right">

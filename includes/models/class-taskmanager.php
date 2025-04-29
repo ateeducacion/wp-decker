@@ -45,6 +45,13 @@ class TaskManager {
 		);
 		$query_args = array_merge( $default_args, $args );
 		$posts      = get_posts( $query_args );
+
+		// Carga todos los metadatos en caché de una sola vez.
+		$post_ids = wp_list_pluck( $posts, 'ID' );
+		if ( ! empty( $post_ids ) ) {
+			update_meta_cache( 'post', $post_ids ); // 1 consulta para todos los metadatos.
+		}
+
 		$tasks      = array();
 
 		foreach ( $posts as $post ) {
@@ -100,10 +107,16 @@ class TaskManager {
 	public function get_tasks_by_user( int $user_id ): array {
 		$args = array(
 			'meta_query' => array(
+				'relation' => 'OR',
 				array(
 					'key'     => 'assigned_users',
 					'value'   => $user_id,
 					'compare' => 'LIKE',
+				),
+				array(
+					'key'     => 'responsable',
+					'value'   => $user_id,
+					'compare' => '=',
 				),
 			),
 			'meta_key'  => 'max_priority', // Define field to use in order.
@@ -116,21 +129,27 @@ class TaskManager {
 
 		$tasks = $this->get_tasks( $args );
 
-		// Additional filtering to ensure only tasks assigned to the user are returned.
-		// Filtering serialized data with a LIKE or REGEXP can lead to false positives due to serialization quirks.
-		// This extra step ensures we accurately check for the assigned user.
+		/**
+		 * Additional filtering ensures the user truly appears in the assigned_users array
+		 * or is the responsable. Serializing data with a LIKE can sometimes cause false positives.
+		 */
 		$filtered_tasks = array_filter(
 			$tasks,
 			function ( $task ) use ( $user_id ) {
+				$is_assigned = false;
 				if ( is_array( $task->assigned_users ) ) {
 					foreach ( $task->assigned_users as $assigned_user ) {
-						// Compare the user ID directly.
 						if ( (int) $assigned_user->ID === $user_id ) {
-							return true;
+							$is_assigned = true;
+							break;
 						}
 					}
 				}
-				return false;
+				$is_responsable = (
+					isset( $task->responsable->ID ) &&
+					( (int) $task->responsable->ID === $user_id )
+				);
+				return $is_assigned || $is_responsable;
 			}
 		);
 
@@ -215,6 +234,12 @@ class TaskManager {
 
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids = get_posts( $args );
+
+		// Optimización: Cargar metadatos en caché.
+		if ( ! empty( $post_ids ) ) {
+			update_meta_cache( 'post', $post_ids );
+		}
+
 		$today    = ( new DateTime() )->format( 'Y-m-d' );
 
 		// Additional filtering: Check tasks that are not truly assigned to the specified user.
@@ -245,9 +270,10 @@ class TaskManager {
 	 *
 	 * @param DateTime $from The start date of the range to filter tasks by.
 	 * @param DateTime $until The end date of the range to filter tasks by.
+	 * @param bool     $show_hidden_task Switch to show/not show hidden task. Default is true.
 	 * @return Task[] List of Task objects that meet the specified criteria.
 	 */
-	public function get_upcoming_tasks_by_date( DateTime $from, DateTime $until ): array {
+	public function get_upcoming_tasks_by_date( DateTime $from, DateTime $until, bool $show_hidden_task = true ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -270,6 +296,13 @@ class TaskManager {
 				),
 			),
 		);
+		if ( ! $show_hidden_task ) {
+			$args['meta_query'][] = array(
+				'key'       => 'hidden',
+				'value'     => '1',
+				'compare'   => '!=',
+			);
+		}
 		return $this->get_tasks( $args );
 	}
 
@@ -279,17 +312,18 @@ class TaskManager {
 	 * The function fetches tasks assigned to the given user and filters them based on user-date relations.
 	 * It returns tasks where the user has a relation date between the start date (today minus $days) and today.
 	 *
-	 * @param int $user_id The ID of the user.
-	 * @param int $days Number of days to look back from today. Pass 0 to get tasks for today only.
+	 * @param int  $user_id The ID of the user.
+	 * @param int  $days Number of days to look back from today. Pass 0 to get tasks for today only.
+	 * @param bool $show_hidden_task Switch to show/not show hidden task. Default is true.
 	 * @return Task[] List of Task objects within the specified time range.
 	 */
-	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days ): array {
+	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days, bool $show_hidden_task = true ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
 			'numberposts' => -1,
 			'fields'      => 'ids', // Only retrieve IDs for performance optimization.
-			'meta_query'  => array(
+			'meta_query' => array(
 				'relation' => 'AND',
 				array(
 					'key'     => 'assigned_users',
@@ -303,8 +337,24 @@ class TaskManager {
 			),
 		);
 
+		// Not showing hidden task if the parameter show_hidden_task is false.
+
+		if ( ! $show_hidden_task ) {
+			$args['meta_query'][] = array(
+				'key'     => 'hidden',
+				'value'   => '1',
+				'compare' => '!=',
+			);
+		}
+
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids   = get_posts( $args );
+
+		// Optimización: Cargar metadatos en caché.
+		if ( ! empty( $post_ids ) ) {
+			update_meta_cache( 'post', $post_ids );
+		}
+
 		$tasks      = array();
 		$today      = ( new DateTime() )->setTime( 23, 59 );
 		$start_date = ( new DateTime() )->setTime( 0, 0 )->modify( "-$days days" );
