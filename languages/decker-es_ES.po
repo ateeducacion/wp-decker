@@ -1643,59 +1643,59 @@ msgstr "Artículo padre:"
 msgid "No articles found."
 msgstr "No se encontraron artículos."
 
-#: includes/class-decker-demo-data.php:338
+#: includes/class-decker-demo-data.php:336
 msgid "Team Meeting"
 msgstr "Reunión de equipo"
 
-#: includes/class-decker-demo-data.php:339
+#: includes/class-decker-demo-data.php:337
 msgid "Project Review"
 msgstr "Revisión de proyecto"
 
-#: includes/class-decker-demo-data.php:340
+#: includes/class-decker-demo-data.php:338
 msgid "Training Session"
 msgstr "Sesión de formación"
 
-#: includes/class-decker-demo-data.php:341
+#: includes/class-decker-demo-data.php:339
 msgid "Client Presentation"
 msgstr "Presentación al cliente"
 
-#: includes/class-decker-demo-data.php:342
+#: includes/class-decker-demo-data.php:340
 msgid "Sprint Planning"
 msgstr "Planificación del sprint"
 
-#: includes/class-decker-demo-data.php:343
+#: includes/class-decker-demo-data.php:341
 msgid "Code Review"
 msgstr "Revisión de código"
 
-#: includes/class-decker-demo-data.php:344
+#: includes/class-decker-demo-data.php:342
 msgid "Release Day"
 msgstr "Día de lanzamiento"
 
-#: includes/class-decker-demo-data.php:345
+#: includes/class-decker-demo-data.php:343
 msgid "Maintenance Window"
 msgstr "Ventana de mantenimiento"
 
-#: includes/class-decker-demo-data.php:349
+#: includes/class-decker-demo-data.php:347
 msgid "Meeting Room A"
 msgstr "Sala de reuniones A"
 
-#: includes/class-decker-demo-data.php:350
+#: includes/class-decker-demo-data.php:348
 msgid "Conference Room"
 msgstr "Sala de conferencias"
 
-#: includes/class-decker-demo-data.php:351
+#: includes/class-decker-demo-data.php:349
 msgid "Training Center"
 msgstr "Centro de formación"
 
-#: includes/class-decker-demo-data.php:352
+#: includes/class-decker-demo-data.php:350
 msgid "Virtual Meeting"
 msgstr "Reunión virtual"
 
-#: includes/class-decker-demo-data.php:353
+#: includes/class-decker-demo-data.php:351
 msgid "Main Office"
 msgstr "Oficina principal"
 
-#: includes/class-decker-demo-data.php:417
+#: includes/class-decker-demo-data.php:415
 msgid "Demo event created automatically."
 msgstr "Evento de demostración creado automáticamente."
 

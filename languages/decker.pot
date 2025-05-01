@@ -157,59 +157,59 @@ msgstr ""
 msgid "You are running this site with demo data."
 msgstr ""
 
-#: includes/class-decker-demo-data.php:338
+#: includes/class-decker-demo-data.php:336
 msgid "Team Meeting"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:339
+#: includes/class-decker-demo-data.php:337
 msgid "Project Review"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:340
+#: includes/class-decker-demo-data.php:338
 msgid "Training Session"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:341
+#: includes/class-decker-demo-data.php:339
 msgid "Client Presentation"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:342
+#: includes/class-decker-demo-data.php:340
 msgid "Sprint Planning"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:343
+#: includes/class-decker-demo-data.php:341
 msgid "Code Review"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:344
+#: includes/class-decker-demo-data.php:342
 msgid "Release Day"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:345
+#: includes/class-decker-demo-data.php:343
 msgid "Maintenance Window"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:349
+#: includes/class-decker-demo-data.php:347
 msgid "Meeting Room A"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:350
+#: includes/class-decker-demo-data.php:348
 msgid "Conference Room"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:351
+#: includes/class-decker-demo-data.php:349
 msgid "Training Center"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:352
+#: includes/class-decker-demo-data.php:350
 msgid "Virtual Meeting"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:353
+#: includes/class-decker-demo-data.php:351
 msgid "Main Office"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:417
+#: includes/class-decker-demo-data.php:415
 msgid "Demo event created automatically."
 msgstr ""
 
