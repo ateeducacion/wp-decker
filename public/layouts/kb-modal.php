@@ -227,25 +227,36 @@ defined( 'ABSPATH' ) || exit;
 				// Check if there's a board parameter in the URL
 				const boardSlug = getUrlParameter('board');
 				if (boardSlug) {
-					// Find the board ID by slug
-					$.ajax({
-						url: wpApiSettings.root + 'wp/v2/decker_board',
-						method: 'GET',
-						beforeSend: function(xhr) {
-							xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
-						},
-						data: {
-							slug: boardSlug
-						},
-						success: function(boards) {
-							if (boards && boards.length > 0) {
-								const boardId = boards[0].id;
-								$('#article-board').val(boardId);
-								// Trigger change event to load parent articles for this board
-								$('#article-board').trigger('change');
-							}
+					// Find the board by slug directly from our available boards
+					const boardSelect = document.getElementById('article-board');
+					const boardOptions = Array.from(boardSelect.options);
+					
+					// Get all boards from PHP
+					<?php
+					$boards_data = array();
+					foreach ($boards as $board) {
+						if ($board->show_in_kb) {
+							$boards_data[] = array(
+								'id' => $board->id,
+								'slug' => $board->slug,
+								'name' => $board->name
+							);
 						}
-					});
+					}
+					?>
+					
+					// Use the PHP data
+					const availableBoards = <?php echo json_encode($boards_data); ?>;
+					const matchingBoard = availableBoards.find(board => board.slug === boardSlug);
+					
+					if (matchingBoard) {
+						$('#article-board').val(matchingBoard.id);
+						// Trigger change event to load parent articles for this board
+						$('#article-board').trigger('change');
+					} else {
+						// Reset board if not found
+						$('#article-board').val('');
+					}
 				} else {
 					// Reset board
 					$('#article-board').val('');

@@ -42,6 +42,9 @@ class Decker_Boards {
 		// Enforce capability checks.
 		add_filter( 'pre_insert_term', array( $this, 'prevent_term_creation' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'prevent_term_deletion' ), 10, 2 );
+		
+		// Register REST field for term meta
+		add_action( 'rest_api_init', array( $this, 'register_rest_fields' ) );
 	}
 
 	/**
@@ -69,8 +72,8 @@ class Decker_Boards {
 			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
 			'rewrite'            => array( 'slug' => 'decker_board' ),
-			'show_in_rest'       => false,
-			'rest_base'          => 'boards',
+			'show_in_rest'       => true,
+			'rest_base'          => 'decker_board',
 			'can_export'         => true,
 			'capabilities'       => array(
 				'manage_terms' => 'edit_posts',
@@ -303,6 +306,36 @@ class Decker_Boards {
 			$content = '<span style="display:inline-block;width:20px;height:20px;background-color:' . esc_attr( $color ) . ';"></span>';
 		}
 		return $content;
+	}
+	
+	/**
+	 * Register REST fields for term meta
+	 */
+	public function register_rest_fields() {
+		register_rest_field(
+			'decker_board',
+			'meta',
+			array(
+				'get_callback'    => array( $this, 'get_term_meta' ),
+				'update_callback' => null,
+				'schema'          => null,
+			)
+		);
+	}
+	
+	/**
+	 * Get term meta for REST API
+	 *
+	 * @param array $object Term object array.
+	 * @return array Term meta values.
+	 */
+	public function get_term_meta( $object ) {
+		$term_id = $object['id'];
+		return array(
+			'term-color' => get_term_meta( $term_id, 'term-color', true ),
+			'term-show-in-boards' => get_term_meta( $term_id, 'term-show-in-boards', true ),
+			'term-show-in-kb' => get_term_meta( $term_id, 'term-show-in-kb', true ),
+		);
 	}
 }
 
