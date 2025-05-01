@@ -13,26 +13,26 @@ defined( 'ABSPATH' ) || exit;
 include 'layouts/main.php';
 
 // Get filter parameters
-$board_slug = isset($_GET['board']) ? sanitize_text_field($_GET['board']) : '';
-$view = isset($_GET['view']) ? sanitize_text_field($_GET['view']) : '';
+$board_slug = isset( $_GET['board'] ) ? sanitize_text_field( $_GET['board'] ) : '';
+$view = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : '';
 
 // Get articles based on filters
 $args = array();
-if (!empty($board_slug) && $view !== 'all') {
-    // Filter by board
-    $board_term = get_term_by('slug', $board_slug, 'decker_board');
-    if ($board_term) {
-        $args['tax_query'] = array(
-            array(
-                'taxonomy' => 'decker_board',
-                'field'    => 'slug',
-                'terms'    => $board_slug,
-            ),
-        );
-    }
+if ( ! empty( $board_slug ) && $view !== 'all' ) {
+	// Filter by board
+	$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
+	if ( $board_term ) {
+		$args['tax_query'] = array(
+			array(
+				'taxonomy' => 'decker_board',
+				'field'    => 'slug',
+				'terms'    => $board_slug,
+			),
+		);
+	}
 }
 
-$kb_data = Decker_Kb::get_articles($args);
+$kb_data = Decker_Kb::get_articles( $args );
 
 /*
 // Test.
@@ -65,15 +65,15 @@ die();
 							
 								<?php
 								$page_title = __( 'Knowledge Base', 'decker' );
-								
+
 								// Add board name to title if filtering by board
-								if (!empty($board_slug)) {
-									$board_term = get_term_by('slug', $board_slug, 'decker_board');
-									if ($board_term) {
+								if ( ! empty( $board_slug ) ) {
+									$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
+									if ( $board_term ) {
 										$page_title .= ' - ' . $board_term->name;
 									}
-								} elseif ($view === 'all') {
-									$page_title .= ' - ' . __('All Articles', 'decker');
+								} elseif ( $view === 'all' ) {
+									$page_title .= ' - ' . __( 'All Articles', 'decker' );
 								}
 								?>
 
@@ -88,7 +88,19 @@ die();
 
 								<div class="d-flex align-items-center">
 									<div class="me-2">
-										<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base', 'view' => 'all' ), home_url( '/' ) ) ); ?>" 
+										<a href="
+										<?php
+										echo esc_url(
+											add_query_arg(
+												array(
+													'decker_page' => 'knowledge-base',
+													'view' => 'all',
+												),
+												home_url( '/' )
+											)
+										);
+										?>
+										" 
 										   class="btn btn-outline-primary btn-sm <?php echo $view === 'all' ? 'active' : ''; ?>">
 											<?php esc_html_e( 'All Articles', 'decker' ); ?>
 										</a>
@@ -121,7 +133,7 @@ die();
 												<thead>
 													<tr>
 														<th class="col-4"><?php esc_html_e( 'Title', 'decker' ); ?></th>
-														<?php if ($view === 'all'): ?>
+														<?php if ( $view === 'all' ) : ?>
 														<th class="col-1"><?php esc_html_e( 'Board', 'decker' ); ?></th>
 														<?php endif; ?>
 														<th class="col-2"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
@@ -149,7 +161,7 @@ die();
 														$board_color = get_term_meta( $board->term_id, 'term-color', true );
 														$board_data = array(
 															'name' => $board->name,
-															'color' => $board_color
+															'color' => $board_color,
 														);
 													}
 
@@ -159,16 +171,16 @@ die();
 														"'" . esc_js( $article->post_content ) . "', " .
 														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "', " .
 														"'" . esc_js( json_encode( $board_data ) ) . "'";
-													
+
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
-														'<a href="javascript:void(0);" onclick="viewArticle(' . $view_params . ')">' . 
+														'<a href="javascript:void(0);" onclick="viewArticle(' . $view_params . ')">' .
 														esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
-													
+
 													// Show board column when viewing all articles
-													if ($view === 'all') {
+													if ( $view === 'all' ) {
 														echo '<td>';
 														$board_terms = wp_get_post_terms( $article->ID, 'decker_board' );
 														if ( ! empty( $board_terms ) ) {
@@ -218,7 +230,7 @@ die();
 													// Actions.
 													echo '<td class="text-end">';
 													// View button.
-													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' . 
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' .
 														$view_params . ')"><i class="ri-eye-line"></i></button>';
 													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
@@ -262,7 +274,7 @@ die();
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
-	// Common function to generate the viewArticle parameters
+	// Common function to generate the viewArticle parameters.
 	function getViewArticleParams(articleId, title, content, labels, board) {
 		return `${articleId}, '${title}', '${content}', '${labels}', '${board}'`;
 	}
@@ -276,9 +288,9 @@ die();
 	}
 	
 	jQuery(document).ready(function () {
-		// Determine the index of the hidden content column based on view
+		// Determine the index of the hidden content column based on view.
 		const isViewAll = <?php echo $view === 'all' ? 'true' : 'false'; ?>;
-		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise
+		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise.
 		
 		jQuery('#tablaKB').DataTable({
 			language: { 
@@ -293,7 +305,7 @@ die();
 			order: [[4, 'desc']],
 			columnDefs: [
 				{
-					targets: [hiddenContentColumnIndex], // Dynamic hidden content column index
+					targets: [hiddenContentColumnIndex], // Dynamic hidden content column index.
 					visible: false,
 					searchable: true
 				}
