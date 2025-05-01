@@ -12,14 +12,14 @@ defined( 'ABSPATH' ) || exit;
 
 include 'layouts/main.php';
 
-// Get filter parameters
-$board_slug = isset( $_GET['board'] ) ? sanitize_text_field( $_GET['board'] ) : '';
-$view = isset( $_GET['view'] ) ? sanitize_text_field( $_GET['view'] ) : '';
+// Get filter parameters.
+$board_slug = isset( $_GET['board'] ) ? sanitize_text_field( wp_unslash( $_GET['board'] ) ) : '';
+$view = isset( $_GET['view'] ) ? sanitize_text_field( wp_unslash( $_GET['view'] ) ) : '';
 
-// Get articles based on filters
+// Get articles based on filters.
 $args = array();
-if ( ! empty( $board_slug ) && $view !== 'all' ) {
-	// Filter by board
+if ( ! empty( $board_slug ) && 'all' !== $view ) {
+	// Filter by board.
 	$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
 	if ( $board_term ) {
 		$args['tax_query'] = array(
@@ -66,13 +66,13 @@ die();
 								<?php
 								$page_title = __( 'Knowledge Base', 'decker' );
 
-								// Add board name to title if filtering by board
+								// Add board name to title if filtering by board.
 								if ( ! empty( $board_slug ) ) {
 									$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
 									if ( $board_term ) {
 										$page_title .= ' - ' . $board_term->name;
 									}
-								} elseif ( $view === 'all' ) {
+								} elseif ( 'all' === $view ) {
 									$page_title .= ' - ' . __( 'All Articles', 'decker' );
 								}
 								?>
@@ -133,7 +133,7 @@ die();
 												<thead>
 													<tr>
 														<th class="col-4"><?php esc_html_e( 'Title', 'decker' ); ?></th>
-														<?php if ( $view === 'all' ) : ?>
+														<?php if ( 'all' === $view ) : ?>
 														<th class="col-1"><?php esc_html_e( 'Board', 'decker' ); ?></th>
 														<?php endif; ?>
 														<th class="col-2"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
@@ -180,8 +180,8 @@ die();
 
 													echo '</td>';
 
-													// Show board column when viewing all articles
-													if ( $view === 'all' ) {
+													// Show board column when viewing all articles.
+													if ( 'all' === $view ) {
 														echo '<td>';
 														$board_terms = wp_get_post_terms( $article->ID, 'decker_board' );
 														if ( ! empty( $board_terms ) ) {
