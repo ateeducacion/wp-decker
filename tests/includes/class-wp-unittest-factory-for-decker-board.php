@@ -48,12 +48,14 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Thing
 	 * Create a decker_board term object.
 	 *
 	 * @param array $args Arguments for the term creation.
-	 *                    Must include 'name' key. Optional: 'color'.
+	 *                    Must include 'name' key. Optional: 'color', 'show_in_boards', 'show_in_kb'.
 	 * @return int|WP_Error The term ID on success, or WP_Error on failure.
 	 */
 	public function create_object( $args ) {
 		$name  = isset( $args['name'] ) ? $args['name'] : 'Default Board';
 		$color = isset( $args['color'] ) ? $args['color'] : '#000000';
+		$show_in_boards = isset( $args['show_in_boards'] ) ? $args['show_in_boards'] : true;
+		$show_in_kb = isset( $args['show_in_kb'] ) ? $args['show_in_kb'] : true;
 
 		// Use WordPress's internal capability checks via the prevent_term_creation hook.
 		$decker_boards = new Decker_Boards();
@@ -70,6 +72,14 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Thing
 		// Save color meta through Decker_Boards logic.
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 		$_POST['term-color'] = $color;
+		
+		// Set visibility options
+		if ($show_in_boards) {
+			$_POST['term-show-in-boards'] = '1';
+		}
+		if ($show_in_kb) {
+			$_POST['term-show-in-kb'] = '1';
+		}
 
 		// Ensure the save_color_meta function handles the meta update.
 		$decker_boards->save_color_meta( $term_id );
@@ -82,7 +92,7 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Thing
 	 *
 	 * @param int   $term_id Term ID to update.
 	 * @param array $fields  Fields to update.
-	 *                       Can include 'name', 'color'.
+	 *                       Can include 'name', 'color', 'show_in_boards', 'show_in_kb'.
 	 * @return int|WP_Error Updated term ID on success, or WP_Error on failure.
 	 */
 	public function update_object( $term_id, $fields ) {
@@ -108,12 +118,32 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Thing
 			$term_id = $result['term_id'];
 		}
 
+		// Set up POST data for the meta update
+		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
+		
 		// Update color meta through Decker_Boards logic.
 		if ( isset( $fields['color'] ) ) {
-			$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 			$_POST['term-color'] = $fields['color'];
-			$decker_boards->save_color_meta( $term_id );
 		}
+		
+		// Update visibility settings
+		if ( isset( $fields['show_in_boards'] ) ) {
+			if ( $fields['show_in_boards'] ) {
+				$_POST['term-show-in-boards'] = '1';
+			} else {
+				unset( $_POST['term-show-in-boards'] );
+			}
+		}
+		
+		if ( isset( $fields['show_in_kb'] ) ) {
+			if ( $fields['show_in_kb'] ) {
+				$_POST['term-show-in-kb'] = '1';
+			} else {
+				unset( $_POST['term-show-in-kb'] );
+			}
+		}
+		
+		$decker_boards->save_color_meta( $term_id );
 
 		return $term_id;
 	}

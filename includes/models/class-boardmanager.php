@@ -115,6 +115,13 @@ class BoardManager {
 		$id = $result['term_id'];
 
 		update_term_meta( $id, 'term-color', sanitize_hex_color( $data['color'] ) );
+		
+		// Save visibility settings
+		$show_in_boards = isset( $data['show_in_boards'] ) ? '1' : '0';
+		$show_in_kb = isset( $data['show_in_kb'] ) ? '1' : '0';
+		
+		update_term_meta( $id, 'term-show-in-boards', $show_in_boards );
+		update_term_meta( $id, 'term-show-in-kb', $show_in_kb );
 
 		return array(
 			'success' => true,

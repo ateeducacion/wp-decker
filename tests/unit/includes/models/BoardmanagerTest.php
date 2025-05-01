@@ -96,6 +96,8 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 			'name' => 'New Test Board',
 			'slug' => 'new-test-board',
 			'color' => '#00ff00',
+			'show_in_boards' => true,
+			'show_in_kb' => false,
 		);
 
 		$result = BoardManager::save_board( $new_board_data, 0 );
@@ -107,6 +109,8 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 		$this->assertNotFalse( $term );
 		$this->assertEquals( 'new-test-board', $term->slug );
 		$this->assertEquals( '#00ff00', get_term_meta( $term->term_id, 'term-color', true ) );
+		$this->assertEquals( '1', get_term_meta( $term->term_id, 'term-show-in-boards', true ) );
+		$this->assertEquals( '0', get_term_meta( $term->term_id, 'term-show-in-kb', true ) );
 
 		// Clean up
 		wp_delete_term( $term->term_id, 'decker_board' );
@@ -118,6 +122,8 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 			'name' => 'Updated Test Board',
 			'slug' => 'updated-test-board',
 			'color' => '#0000ff',
+			'show_in_boards' => false,
+			'show_in_kb' => true,
 		);
 
 		$result = BoardManager::save_board( $updated_data, $this->test_board_id );
@@ -129,6 +135,8 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 		$this->assertEquals( 'Updated Test Board', $term->name );
 		$this->assertEquals( 'updated-test-board', $term->slug );
 		$this->assertEquals( '#0000ff', get_term_meta( $term->term_id, 'term-color', true ) );
+		$this->assertEquals( '0', get_term_meta( $term->term_id, 'term-show-in-boards', true ) );
+		$this->assertEquals( '1', get_term_meta( $term->term_id, 'term-show-in-kb', true ) );
 	}
 
 	public function test_delete_board() {

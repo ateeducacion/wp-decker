@@ -86,6 +86,12 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		// Verify the color meta was saved
 		$color = get_term_meta( $term_id, 'term-color', true );
 		$this->assertEquals( '#ff5733', $color, 'The term color should match.' );
+		
+		// Verify the visibility settings default to true
+		$show_in_boards = get_term_meta( $term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term_id, 'term-show-in-kb', true );
+		$this->assertTrue(empty($show_in_boards) || $show_in_boards === '1', 'Show in boards should default to true.');
+		$this->assertTrue(empty($show_in_kb) || $show_in_kb === '1', 'Show in knowledge base should default to true.');
 
 		wp_set_current_user( 0 );
 	}
