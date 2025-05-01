@@ -73,11 +73,23 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 				board = null;
 			}
 			
-			const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
-			
-			const labelsHtml = Array.isArray(labels) ? labels.map(label => 
-				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
-			).join('') : '';
+			// Generate labels HTML
+			let labelsHtml = '';
+			if (Array.isArray(labels)) {
+				// If labels is an array of objects with name and color
+				if (labels.length > 0 && typeof labels[0] === 'object' && labels[0].name) {
+					labelsHtml = labels.map(label => 
+						`<span class="badge me-1" style="background-color: ${label.color || '#6c757d'};">${label.name}</span>`
+					).join('');
+				} 
+				// If labels is an array of strings (names only)
+				else {
+					const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
+					labelsHtml = labels.map(label => 
+						`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
+					).join('');
+				}
+			}
 			
 			// Add board badge if available (to the left of labels)
 			let finalHtml = '';
