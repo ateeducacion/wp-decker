@@ -197,7 +197,7 @@ msgstr "Nombre de la Nueva Etiqueta"
 #: includes/custom-post-types/class-decker-labels.php:61
 #: includes/custom-post-types/class-decker-tasks.php:1028
 #: public/app-term-manager.php:126
-#: public/layouts/kb-modal.php:82
+#: public/layouts/kb-modal.php:69
 #: public/layouts/left-sidebar.php:371
 #: public/layouts/task-card.php:294
 msgid "Labels"
@@ -580,7 +580,7 @@ msgstr "Sí"
 #: public/app-priority.php:413
 #: public/app-term-manager.php:331
 #: public/layouts/event-card.php:253
-#: public/layouts/kb-modal.php:97
+#: public/layouts/kb-modal.php:84
 #: public/layouts/kb-view-modal.php:30
 msgid "Close"
 msgstr "Cerrar"
@@ -1371,7 +1371,7 @@ msgstr "Peligro"
 
 #: includes/custom-post-types/class-decker-events.php:460
 #: public/class-decker-public.php:324
-#: public/layouts/kb-modal.php:369
+#: public/layouts/kb-modal.php:415
 msgid "Success"
 msgstr "Éxito"
 
@@ -1603,7 +1603,7 @@ msgstr "Base de conocimiento"
 #: includes/custom-post-types/class-decker-kb.php:221
 #: public/app-knowledge-base.php:85
 #: public/layouts/kb-modal.php:18
-#: public/layouts/kb-modal.php:213
+#: public/layouts/kb-modal.php:204
 msgid "Add New Article"
 msgstr "Agregar nuevo artículo"
 
@@ -1612,7 +1612,7 @@ msgid "New Article"
 msgstr "Nuevo artículo"
 
 #: includes/custom-post-types/class-decker-kb.php:223
-#: public/layouts/kb-modal.php:209
+#: public/layouts/kb-modal.php:200
 msgid "Edit Article"
 msgstr "Editar artículo"
 
@@ -1631,7 +1631,7 @@ msgstr "Base de conocimiento"
 msgid "Last Updated"
 msgstr "Ultima modificación"
 
-#: public/layouts/kb-modal.php:98
+#: public/layouts/kb-modal.php:85
 msgid "Save Article"
 msgstr "Guardar artículo"
 
@@ -1724,31 +1724,32 @@ msgid "Parent Article"
 msgstr "Artículo principal"
 
 #: public/layouts/kb-modal.php:51
+#: public/layouts/kb-modal.php:274
 msgid "No parent (top level)"
 msgstr "Sin artículo principal (nivel superior)"
 
-#: public/layouts/kb-modal.php:69
+#: public/layouts/kb-modal.php:56
 msgid "Order"
 msgstr "Orden"
 
 #: public/app-knowledge-base.php:430
 #: public/class-decker-public.php:325
-#: public/layouts/kb-modal.php:182
-#: public/layouts/kb-modal.php:190
-#: public/layouts/kb-modal.php:377
-#: public/layouts/kb-modal.php:385
+#: public/layouts/kb-modal.php:173
+#: public/layouts/kb-modal.php:181
+#: public/layouts/kb-modal.php:423
+#: public/layouts/kb-modal.php:431
 msgid "Error"
 msgstr "Error"
 
-#: public/layouts/kb-modal.php:191
+#: public/layouts/kb-modal.php:182
 msgid "Could not load article"
 msgstr "No se pudo cargar el artículo"
 
-#: public/layouts/kb-modal.php:328
+#: public/layouts/kb-modal.php:366
 msgid "Search for parent article..."
 msgstr "Buscar artículo principal..."
 
-#: public/layouts/kb-modal.php:386
+#: public/layouts/kb-modal.php:432
 msgid "Could not save article"
 msgstr "No se pudo guardar el artículo"
 
@@ -1758,11 +1759,11 @@ msgstr "No se pudo guardar el artículo"
 msgid "You do not have permission to access this resource."
 msgstr "No tienes permiso para acceder a este recurso."
 
-#: public/layouts/kb-modal.php:280
+#: public/layouts/kb-modal.php:318
 msgid "Select labels..."
 msgstr "Seleccionar etiquetas..."
 
-#: public/layouts/kb-modal.php:281
+#: public/layouts/kb-modal.php:319
 msgid "No more labels available"
 msgstr "No hay más etiquetas disponibles"
 
@@ -1997,10 +1998,10 @@ msgstr "En tableros"
 msgid "In KB"
 msgstr "En la base de conocimientos"
 
-#: public/layouts/kb-modal.php:326
+#: public/layouts/kb-modal.php:364
 msgid "Select parent..."
 msgstr "Seleccionar superior..."
 
-#: public/layouts/kb-modal.php:327
+#: public/layouts/kb-modal.php:365
 msgid "No more articles available"
 msgstr "No hay más artículos disponibles"
