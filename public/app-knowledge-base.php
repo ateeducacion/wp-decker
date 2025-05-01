@@ -267,6 +267,14 @@ die();
 		return `${articleId}, '${title}', '${content}', '${labels}', '${board}'`;
 	}
 	
+	// Get URL parameters
+	function getUrlParameter(name) {
+		name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+		var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+		var results = regex.exec(location.search);
+		return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+	}
+	
 	jQuery(document).ready(function () {
 		// Determine the index of the hidden content column based on view
 		const isViewAll = <?php echo $view === 'all' ? 'true' : 'false'; ?>;

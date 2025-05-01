@@ -224,8 +224,32 @@ defined( 'ABSPATH' ) || exit;
 				window.parentSelect.setChoiceByValue('0');
 				window.parentSelect.clearInput();
 				
-				// Reset board
-				$('#article-board').val(0);
+				// Check if there's a board parameter in the URL
+				const boardSlug = getUrlParameter('board');
+				if (boardSlug) {
+					// Find the board ID by slug
+					$.ajax({
+						url: wpApiSettings.root + 'wp/v2/decker_board',
+						method: 'GET',
+						beforeSend: function(xhr) {
+							xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+						},
+						data: {
+							slug: boardSlug
+						},
+						success: function(boards) {
+							if (boards && boards.length > 0) {
+								const boardId = boards[0].id;
+								$('#article-board').val(boardId);
+								// Trigger change event to load parent articles for this board
+								$('#article-board').trigger('change');
+							}
+						}
+					});
+				} else {
+					// Reset board
+					$('#article-board').val('');
+				}
 			}
 		});
 
