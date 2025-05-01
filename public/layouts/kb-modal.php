@@ -286,10 +286,18 @@ defined( 'ABSPATH' ) || exit;
 		labelsSelect = new Choices('#article-labels', choicesConfig);
 		window.labelsSelect = labelsSelect;
 
-		parentSelect = new Choices('#article-parent', {
-			...choicesConfig,
+		// Parent select should not use the same template customization as labels
+		const parentChoicesConfig = {
+			removeItemButton: true,
+			allowHTML: true,
+			searchEnabled: true,
+			shouldSort: true,
+			placeholderValue: '<?php esc_html_e( 'Select parent...', 'decker' ); ?>',
+			noChoicesText: '<?php esc_html_e( 'No more articles available', 'decker' ); ?>',
 			searchPlaceholderValue: '<?php esc_html_e( 'Search for parent article...', 'decker' ); ?>'
-		});
+		};
+		
+		parentSelect = new Choices('#article-parent', parentChoicesConfig);
 		window.parentSelect = parentSelect;
 
 		// Handle form submission
