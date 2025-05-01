@@ -49,20 +49,7 @@ defined( 'ABSPATH' ) || exit;
 			<label for="article-parent" class="form-label"><?php esc_html_e( 'Parent Article', 'decker' ); ?></label>
 			<select class="form-select" id="article-parent" name="parent_id">
 				<option value="0"><?php esc_html_e( 'No parent (top level)', 'decker' ); ?></option>
-				<?php
-				$articles = get_posts(
-					array(
-						'post_type' => 'decker_kb',
-						'posts_per_page' => -1,
-						'orderby' => 'menu_order title',
-						'order' => 'ASC',
-						'post_status' => 'publish',
-					)
-				);
-				foreach ( $articles as $article ) {
-					echo '<option value="' . esc_attr( $article->ID ) . '">' . esc_html( $article->post_title ) . '</option>';
-				}
-				?>
+				<!-- Parent articles will be loaded dynamically based on selected board -->
 			</select>
 		</div>
 		<div class="col-md-1">
@@ -169,11 +156,15 @@ defined( 'ABSPATH' ) || exit;
 						window.labelsSelect.setChoiceByValue(article.labels.map(String));
 
 
-						window.parentSelect.setChoiceByValue(article.parent_id.toString());
-						
-						// Set board
+						// Set board first so parent articles can be loaded
 						if (article.board) {
 							$('#article-board').val(article.board);
+							// Load parent articles for this board
+							loadParentArticles(article.board);
+							// Then set the parent value after articles are loaded
+							setTimeout(() => {
+								window.parentSelect.setChoiceByValue(article.parent_id.toString());
+							}, 500);
 						} else {
 							$('#article-board').val(0);
 						}
@@ -249,6 +240,9 @@ defined( 'ABSPATH' ) || exit;
 						$('#article-board').val(matchingBoard.id);
 						// Trigger change event to load parent articles for this board
 						$('#article-board').trigger('change');
+						
+						// Load parent articles for this board
+						loadParentArticles(matchingBoard.id);
 					} else {
 						// Reset board if not found
 						$('#article-board').val('');
@@ -271,6 +265,50 @@ defined( 'ABSPATH' ) || exit;
 
 		let labelsSelect, parentSelect;
 
+		// Function to load parent articles based on selected board
+		function loadParentArticles(boardId) {
+			// Clear current parent options except the default one
+			parentSelect.clearStore();
+			parentSelect.setChoices([{
+				value: '0',
+				label: '<?php esc_html_e( 'No parent (top level)', 'decker' ); ?>',
+				selected: true
+			}]);
+			
+			if (!boardId) return;
+			
+			// Get all articles for this board
+			$.ajax({
+				url: wpApiSettings.root + 'wp/v2/decker_kb',
+				method: 'GET',
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+				},
+				data: {
+					per_page: 100,
+					decker_board: boardId,
+					orderby: 'menu_order',
+					order: 'asc'
+				},
+				success: function(articles) {
+					if (articles && articles.length > 0) {
+						const currentArticleId = $('#article-id').val();
+						const parentChoices = articles
+							.filter(article => article.id != currentArticleId) // Don't include current article
+							.map(article => ({
+								value: article.id.toString(),
+								label: article.title.rendered
+							}));
+						
+						parentSelect.setChoices(parentChoices, 'value', 'label', true);
+					}
+				},
+				error: function(error) {
+					console.error('Error loading parent articles:', error);
+				}
+			});
+		}
+		
 		// Initialize Choices.js for labels and parent
 		const choicesConfig = {
 			removeItemButton: true,
@@ -331,6 +369,14 @@ defined( 'ABSPATH' ) || exit;
 		parentSelect = new Choices('#article-parent', parentChoicesConfig);
 		window.parentSelect = parentSelect;
 
+		// Handle board change to update parent articles
+		$('#article-board').on('change', function() {
+			const boardId = $(this).val();
+			if (boardId) {
+				loadParentArticles(boardId);
+			}
+		});
+		
 		// Handle form submission
 		$('#guardar-articulo').on('click', function() {
 			const form = $('#article-form')[0];
