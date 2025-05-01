@@ -190,15 +190,6 @@ die();
 													} else {
 														echo '<span class="text-muted">' . esc_html__( 'Uncategorized', 'decker' ) . '</span>';
 													}
-													
-													// Show board if assigned
-													$board_terms = wp_get_post_terms( $article->ID, 'decker_board' );
-													if ( ! empty( $board_terms ) ) {
-														$board = $board_terms[0];
-														$board_color = get_term_meta( $board->term_id, 'term-color', true );
-														echo ' <span class="badge bg-secondary ms-1" style="background-color: ' . esc_attr( $board_color ) . '!important;">' . esc_html( $board->name ) . '</span>';
-													}
-													
 													echo '</td>';
 
 													// Author with avatar.
