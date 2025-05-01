@@ -54,18 +54,21 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
 			).join('');
 			
-			// Add board badge if available
+			// Add board badge if available (to the left of labels)
+			let finalHtml = '';
 			if (boardJson) {
 				const board = JSON.parse(boardJson);
 				if (board && board.name) {
-					const boardHtml = `<span class="badge bg-secondary ms-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
-					modal.find('#kb-view-labels').html(labelsHtml + boardHtml);
+					const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
+					finalHtml = boardHtml + labelsHtml;
 				} else {
-					modal.find('#kb-view-labels').html(labelsHtml);
+					finalHtml = labelsHtml;
 				}
 			} else {
-				modal.find('#kb-view-labels').html(labelsHtml);
+				finalHtml = labelsHtml;
 			}
+			
+			modal.find('#kb-view-labels').html(finalHtml);
 		}
 	});
 	
