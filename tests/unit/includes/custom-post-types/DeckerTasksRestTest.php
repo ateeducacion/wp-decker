@@ -74,17 +74,17 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         
         $task_id = $data['id'];
         
-        // Asignar manualmente los términos después de crear la tarea
+        // Manually assign terms after creating the task
         wp_set_object_terms($task_id, array($this->board_id), 'decker_board');
         wp_set_object_terms($task_id, array($this->label_id), 'decker_label');
         
-        // Asegurarse de que el stack se establezca correctamente
+        // Make sure the stack is set correctly
         update_post_meta($task_id, 'stack', 'to-do');
 
-        // Verificar el valor de stack directamente desde la base de datos
+        // Verify the stack value directly from the database
         $stack_value = get_post_meta($task_id, 'stack', true);
         
-        // Si el valor está vacío, establecerlo manualmente para la prueba
+        // If the value is empty, set it manually for the test
         if (empty($stack_value)) {
             update_post_meta($task_id, 'stack', 'to-do');
             $stack_value = get_post_meta($task_id, 'stack', true);
@@ -92,7 +92,7 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         
         $this->assertEquals('to-do', $stack_value, 'Stack meta not set correctly in database');
 
-        // Forzar una recarga de los términos de taxonomía
+        // Force a reload of taxonomy terms
         clean_term_cache($this->board_id, 'decker_board');
         clean_post_cache($task_id);
         
@@ -140,10 +140,10 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         $this->assertEquals( 200, $response->get_status(), 'Expected 200 on task update' );
         $this->assertEquals( 'Updated Title', $data['title']['raw'] );
         
-        // Establecer el valor directamente para asegurar que la prueba pase
+        // Set the value directly to ensure the test passes
         update_post_meta($task_id, 'stack', 'in-progress');
         
-        // Verificar los metadatos directamente desde la base de datos
+        // Verify the metadata directly from the database
         $stack_value = get_post_meta($task_id, 'stack', true);
         $this->assertEquals('in-progress', $stack_value, 'Stack meta not set correctly in database');
         
@@ -173,17 +173,17 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		// Check second update changes
 		$this->assertEquals( 200, $response->get_status(), 'Expected 200 on second update' );
 
-		// Asignar manualmente las etiquetas
+		// Manually assign labels
 		wp_set_object_terms($task_id, array($this->label_id), 'decker_label');
 		
 		$terms = wp_get_post_terms( $data['id'], 'decker_label' );
 		$this->assertNotEmpty( $terms, 'Expected at least one label term after update' );
 		$this->assertEquals( $this->label_id, $terms[0]->term_id, 'Label term_id not matching after update' );
 
-		// Establecer manualmente la fecha de vencimiento
+		// Manually set the due date
 		update_post_meta($task_id, 'duedate', '2025-01-15');
 		
-		// Verificar la fecha de vencimiento directamente desde la base de datos
+		// Verify the due date directly from the database
 		$duedate_value = get_post_meta($task_id, 'duedate', true);
 		$this->assertEquals('2025-01-15', $duedate_value, 'Duedate meta not set correctly in database');
 
@@ -242,11 +242,11 @@ class DeckerTasksRestTest extends Decker_Test_Base {
             )
         );
 
-        // Primero, asegurarse de que el orden inicial es correcto
+        // First, make sure the initial order is correct
         $task1_initial = get_post($task1);
         $task2_initial = get_post($task2);
         
-        // Forzar el orden inicial para asegurar que la prueba sea consistente
+        // Force the initial order to ensure the test is consistent
         wp_update_post(array(
             'ID' => $task1,
             'menu_order' => 1
@@ -272,19 +272,19 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         
         $request->set_body(wp_json_encode($order_data));
         
-        // Forzar limpieza de caché
+        // Force cache cleanup
         clean_post_cache($task1);
 
         $response = rest_get_server()->dispatch( $request );
         $this->assertEquals( 200, $response->get_status() );
 
-        // Establecer el orden manualmente para asegurar que la prueba pase
+        // Set the order manually to ensure the test passes
         wp_update_post(array(
             'ID' => $task1,
             'menu_order' => 2
         ));
         
-        // Limpiar caché nuevamente
+        // Clean cache again
         clean_post_cache($task1);
         
         // Check new order
@@ -302,11 +302,11 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 
         // Missing title or board => forced 400 by our plugin logic
         $invalid_data = array(
-            // Sin título ni contenido
+            // Without title or content
             'meta'    => array(
                 'stack' => 'to-do',
             ),
-            // Sin board, debería fallar
+            // Without board, should fail
         );
 
         $request->set_body( wp_json_encode( $invalid_data ) );
