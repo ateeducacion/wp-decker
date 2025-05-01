@@ -522,7 +522,7 @@ msgstr ""
 
 #: includes/custom-post-types/class-decker-events.php:460
 #: public/class-decker-public.php:324
-#: public/layouts/kb-modal.php:373
+#: public/layouts/kb-modal.php:369
 msgid "Success"
 msgstr ""
 
@@ -576,7 +576,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-kb.php:221
 #: public/app-knowledge-base.php:85
 #: public/layouts/kb-modal.php:18
-#: public/layouts/kb-modal.php:217
+#: public/layouts/kb-modal.php:213
 msgid "Add New Article"
 msgstr ""
 
@@ -585,7 +585,7 @@ msgid "New Article"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-kb.php:223
-#: public/layouts/kb-modal.php:213
+#: public/layouts/kb-modal.php:209
 msgid "Edit Article"
 msgstr ""
 
@@ -681,7 +681,7 @@ msgstr ""
 #: includes/custom-post-types/class-decker-labels.php:61
 #: includes/custom-post-types/class-decker-tasks.php:1028
 #: public/app-term-manager.php:126
-#: public/layouts/kb-modal.php:86
+#: public/layouts/kb-modal.php:82
 #: public/layouts/left-sidebar.php:371
 #: public/layouts/task-card.php:294
 msgid "Labels"
@@ -778,7 +778,7 @@ msgstr ""
 #: public/app-priority.php:170
 #: public/app-priority.php:423
 #: public/app-tasks.php:203
-#: public/layouts/kb-modal.php:62
+#: public/layouts/kb-modal.php:34
 #: public/layouts/task-card.php:202
 msgid "Board"
 msgstr ""
@@ -826,7 +826,7 @@ msgid "Hidden"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-tasks.php:1141
-#: public/layouts/kb-modal.php:64
+#: public/layouts/kb-modal.php:36
 #: public/layouts/task-card.php:188
 msgid "Select Board"
 msgstr ""
@@ -1186,7 +1186,7 @@ msgid "Category"
 msgstr ""
 
 #: public/app-event-manager.php:168
-#: public/app-knowledge-base.php:206
+#: public/app-knowledge-base.php:235
 msgid "Uncategorized"
 msgstr ""
 
@@ -1255,53 +1255,53 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-#: public/app-knowledge-base.php:192
+#: public/app-knowledge-base.php:221
 msgid "No Board"
 msgstr ""
 
-#: public/app-knowledge-base.php:323
+#: public/app-knowledge-base.php:364
 msgid "Search in title, tags, excerpt and content..."
 msgstr ""
 
-#: public/app-knowledge-base.php:356
+#: public/app-knowledge-base.php:397
 msgid "Are you sure?"
 msgstr ""
 
-#: public/app-knowledge-base.php:357
+#: public/app-knowledge-base.php:398
 msgid "The article"
 msgstr ""
 
-#: public/app-knowledge-base.php:357
+#: public/app-knowledge-base.php:398
 msgid "will be deleted"
 msgstr ""
 
-#: public/app-knowledge-base.php:360
+#: public/app-knowledge-base.php:401
 msgid "Yes, delete"
 msgstr ""
 
-#: public/app-knowledge-base.php:361
+#: public/app-knowledge-base.php:402
 #: public/class-decker-public.php:311
 msgid "Cancel"
 msgstr ""
 
-#: public/app-knowledge-base.php:381
+#: public/app-knowledge-base.php:422
 msgid "Deleted"
 msgstr ""
 
-#: public/app-knowledge-base.php:382
+#: public/app-knowledge-base.php:423
 msgid "The article has been successfully deleted."
 msgstr ""
 
-#: public/app-knowledge-base.php:389
+#: public/app-knowledge-base.php:430
 #: public/class-decker-public.php:325
-#: public/layouts/kb-modal.php:186
-#: public/layouts/kb-modal.php:194
-#: public/layouts/kb-modal.php:381
-#: public/layouts/kb-modal.php:389
+#: public/layouts/kb-modal.php:182
+#: public/layouts/kb-modal.php:190
+#: public/layouts/kb-modal.php:377
+#: public/layouts/kb-modal.php:385
 msgid "Error"
 msgstr ""
 
-#: public/app-knowledge-base.php:390
+#: public/app-knowledge-base.php:431
 msgid "Could not delete the article."
 msgstr ""
 
@@ -1324,7 +1324,7 @@ msgstr ""
 #: public/app-priority.php:413
 #: public/app-term-manager.php:331
 #: public/layouts/event-card.php:253
-#: public/layouts/kb-modal.php:101
+#: public/layouts/kb-modal.php:97
 #: public/layouts/kb-view-modal.php:30
 msgid "Close"
 msgstr ""
@@ -1676,52 +1676,52 @@ msgstr ""
 msgid "Please provide a title."
 msgstr ""
 
-#: public/layouts/kb-modal.php:34
-msgid "Parent Article"
-msgstr ""
-
-#: public/layouts/kb-modal.php:36
-msgid "No parent (top level)"
-msgstr ""
-
-#: public/layouts/kb-modal.php:54
-msgid "Order"
-msgstr ""
-
-#: public/layouts/kb-modal.php:74
+#: public/layouts/kb-modal.php:46
 #: public/layouts/task-card.php:203
 msgid "Please select a board."
 msgstr ""
 
-#: public/layouts/kb-modal.php:102
+#: public/layouts/kb-modal.php:49
+msgid "Parent Article"
+msgstr ""
+
+#: public/layouts/kb-modal.php:51
+msgid "No parent (top level)"
+msgstr ""
+
+#: public/layouts/kb-modal.php:69
+msgid "Order"
+msgstr ""
+
+#: public/layouts/kb-modal.php:98
 msgid "Save Article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:195
+#: public/layouts/kb-modal.php:191
 msgid "Could not load article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:284
+#: public/layouts/kb-modal.php:280
 msgid "Select labels..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:285
+#: public/layouts/kb-modal.php:281
 msgid "No more labels available"
 msgstr ""
 
-#: public/layouts/kb-modal.php:330
+#: public/layouts/kb-modal.php:326
 msgid "Select parent..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:331
+#: public/layouts/kb-modal.php:327
 msgid "No more articles available"
 msgstr ""
 
-#: public/layouts/kb-modal.php:332
+#: public/layouts/kb-modal.php:328
 msgid "Search for parent article..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:390
+#: public/layouts/kb-modal.php:386
 msgid "Could not save article"
 msgstr ""
 
