@@ -311,6 +311,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		$term_id = self::factory()->board->create(
 			array(
 				'name' => 'Visibility Test Board',
+				'slug' => 'visibility-test-board',
 				'color' => '#123456',
 				'show_in_boards' => false,
 				'show_in_kb' => true,
@@ -353,6 +354,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 			array(
 				'name' => 'Board Both Visible',
 				'slug' => 'board-both-visible',
+				'color' => '#aabbcc',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			)
@@ -365,6 +367,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 			array(
 				'name' => 'Board Both Hidden',
 				'slug' => 'board-both-hidden',
+				'color' => '#ddeeff',
 				'show_in_boards' => false,
 				'show_in_kb' => false,
 			)
@@ -377,6 +380,7 @@ class DeckerBoardsTest extends Decker_Test_Base {
 			array(
 				'name' => 'Board Mixed Visibility',
 				'slug' => 'board-mixed-visibility',
+				'color' => '#112233',
 				'show_in_boards' => true,
 				'show_in_kb' => false,
 			)
