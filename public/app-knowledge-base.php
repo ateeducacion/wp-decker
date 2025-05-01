@@ -170,8 +170,17 @@ die();
 														'id' => $article->ID,
 														'title' => $article->post_title,
 														'content' => $article->post_content,
-														'labels' => wp_json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ),
-														'board' => wp_json_encode( $board_data ),
+														'labels' => wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ),
+														'board' => $board_data,
+													);
+													
+													// JSON encode for data attributes
+													$article_data_json = array(
+														'id' => $article->ID,
+														'title' => $article->post_title,
+														'content' => $article->post_content,
+														'labels' => wp_json_encode( $article_data['labels'] ),
+														'board' => wp_json_encode( $article_data['board'] ),
 													);
 
 													// Sanitize and output the article title with hierarchy.
@@ -180,8 +189,8 @@ die();
 														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
 														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
 														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
-														'data-labels="' . esc_attr( $article_data['labels'] ) . '" ' .
-														'data-board="' . esc_attr( $article_data['board'] ) . '" ' .
+														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
+														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\' ' .
 														'title="' . esc_attr( $article->post_title ) . '">' .
 														esc_html( $article->post_title ) . '</a>';
 
@@ -242,8 +251,8 @@ die();
 														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
 														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
 														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
-														'data-labels="' . esc_attr( $article_data['labels'] ) . '" ' .
-														'data-board="' . esc_attr( $article_data['board'] ) . '">' .
+														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
+														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\'>' .
 														'<i class="ri-eye-line"></i></button>';
 													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
@@ -303,10 +312,10 @@ die();
 			const id = $this.data('id');
 			const title = $this.data('title');
 			const content = $this.data('content');
-			const labels = $this.data('labels');
-			const board = $this.data('board');
+			const labelsJson = $this.data('labels');
+			const boardJson = $this.data('board');
 			
-			viewArticle(id, title, content, labels, board);
+			viewArticle(id, title, content, labelsJson, boardJson);
 		});
 		// Determine the index of the hidden content column based on view.
 		const isViewAll = <?php echo 'all' === $view ? 'true' : 'false'; ?>;

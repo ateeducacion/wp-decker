@@ -52,8 +52,10 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 			
 			// Safely parse JSON with error handling
 			try {
-				if (labelsJson) {
+				if (labelsJson && typeof labelsJson === 'string') {
 					labels = JSON.parse(labelsJson);
+				} else if (Array.isArray(labelsJson)) {
+					labels = labelsJson;
 				}
 			} catch (e) {
 				console.error('Error parsing labels JSON:', e);
@@ -61,8 +63,10 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 			}
 			
 			try {
-				if (boardJson) {
+				if (boardJson && typeof boardJson === 'string') {
 					board = JSON.parse(boardJson);
+				} else if (boardJson && typeof boardJson === 'object') {
+					board = boardJson;
 				}
 			} catch (e) {
 				console.error('Error parsing board JSON:', e);
