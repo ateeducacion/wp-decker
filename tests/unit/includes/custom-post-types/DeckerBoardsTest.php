@@ -358,6 +358,9 @@ class DeckerBoardsTest extends Decker_Test_Base {
 			)
 		);
 		
+		// Force a reset of the BoardManager to ensure it reloads from DB
+		BoardManager::reset_instance();
+		
 		$board2_id = self::factory()->board->create(
 			array(
 				'name' => 'Board Both Hidden',
@@ -367,6 +370,9 @@ class DeckerBoardsTest extends Decker_Test_Base {
 			)
 		);
 		
+		// Force a reset of the BoardManager to ensure it reloads from DB
+		BoardManager::reset_instance();
+		
 		$board3_id = self::factory()->board->create(
 			array(
 				'name' => 'Board Mixed Visibility',
@@ -375,6 +381,9 @@ class DeckerBoardsTest extends Decker_Test_Base {
 				'show_in_kb' => false,
 			)
 		);
+		
+		// Force a reset of the BoardManager to ensure it reloads from DB
+		BoardManager::reset_instance();
 		
 		// Get Board objects and verify visibility properties
 		$board1 = BoardManager::get_board_by_slug('board-both-visible');

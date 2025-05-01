@@ -76,9 +76,16 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Thing
 		// Set visibility options
 		if ($show_in_boards) {
 			$_POST['term-show-in-boards'] = '1';
+		} else {
+			// Explicitly unset to ensure it's not set
+			unset($_POST['term-show-in-boards']);
 		}
+		
 		if ($show_in_kb) {
 			$_POST['term-show-in-kb'] = '1';
+		} else {
+			// Explicitly unset to ensure it's not set
+			unset($_POST['term-show-in-kb']);
 		}
 
 		// Ensure the save_color_meta function handles the meta update.
