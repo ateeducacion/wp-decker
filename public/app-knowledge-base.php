@@ -173,7 +173,7 @@ die();
 														'labels' => wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ),
 														'board' => $board_data,
 													);
-													
+
 													// JSON encode for data attributes
 													$article_data_json = array(
 														'id' => $article->ID,
@@ -185,7 +185,7 @@ die();
 
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
-														'<a href="javascript:void(0);" class="view-article-link" ' . 
+														'<a href="javascript:void(0);" class="view-article-link" ' .
 														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
 														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
 														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
