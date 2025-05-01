@@ -1912,66 +1912,95 @@ msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
 msgid "Show in Boards"
 msgstr "Mostrar en tableros"
 
+#: includes/custom-post-types/class-decker-boards.php:104
+#: includes/custom-post-types/class-decker-boards.php:150
+#: public/app-term-manager.php:319
 msgid "Display this board in the Boards section of the sidebar"
 msgstr "Mostrar este tablero en la sección de tableros de la barra lateral"
 
+#: includes/custom-post-types/class-decker-boards.php:109
+#: includes/custom-post-types/class-decker-boards.php:154
+#: public/app-term-manager.php:324
 msgid "Show in Knowledge Base"
 msgstr "Mostrar en la base de conocimientos"
 
+#: includes/custom-post-types/class-decker-boards.php:111
+#: includes/custom-post-types/class-decker-boards.php:156
+#: public/app-term-manager.php:326
 msgid "Display this board in the Knowledge Base section of the sidebar"
 msgstr "Mostrar este tablero en la sección de base de conocimientos de la barra lateral"
 
+#: includes/custom-post-types/class-decker-boards.php:144
+#: public/app-term-manager.php:313
 msgid "Visibility"
 msgstr "Visibilidad"
 
+#: includes/custom-post-types/class-decker-kb.php:83
 msgid "Board is required"
 msgstr "Se requiere un tablero"
 
+#: includes/custom-post-types/class-decker-kb.php:129
 msgid "Invalid board ID"
 msgstr "ID de tablero no válido"
 
+#: includes/custom-post-types/class-decker-kb.php:304
 msgid "No date"
 msgstr "Sin fecha"
 
+#: includes/models/class-boardmanager.php:114
 msgid "You do not have permission to create terms."
 msgstr "No tienes permiso para crear términos."
 
+#: public/app-knowledge-base.php:76
+#: public/app-knowledge-base.php:105
+#: public/layouts/left-sidebar.php:293
 msgid "All Articles"
 msgstr "Todos los artículos"
 
+#: public/app-knowledge-base.php:192
 msgid "No Board"
 msgstr "Sin tablero"
 
+#: public/app-knowledge-base.php:356
 msgid "Are you sure?"
 msgstr "¿Estás seguro?"
 
+#: public/app-knowledge-base.php:357
 msgid "The article"
 msgstr "El artículo"
 
+#: public/app-knowledge-base.php:357
 msgid "will be deleted"
 msgstr "será eliminado"
 
+#: public/app-knowledge-base.php:360
 msgid "Yes, delete"
 msgstr "Sí, eliminar"
 
+#: public/app-knowledge-base.php:381
 msgid "Deleted"
 msgstr "Eliminado"
 
+#: public/app-knowledge-base.php:382
 msgid "The article has been successfully deleted."
 msgstr "El artículo se ha eliminado correctamente."
 
+#: public/app-knowledge-base.php:390
 msgid "Could not delete the article."
 msgstr "No se pudo eliminar el artículo."
 
+#: public/app-term-manager.php:199
 msgid "In Boards"
 msgstr "En tableros"
 
+#: public/app-term-manager.php:200
 msgid "In KB"
 msgstr "En la base de conocimientos"
 
+#: public/layouts/kb-modal.php:330
 msgid "Select parent..."
 msgstr "Seleccionar superior..."
 
+#: public/layouts/kb-modal.php:331
 msgid "No more articles available"
 msgstr "No hay más artículos disponibles"
-
