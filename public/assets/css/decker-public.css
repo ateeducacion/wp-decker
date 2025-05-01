@@ -98,6 +98,17 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     padding: 1rem; /* Prevents content from touching edges */
 }
 
+/* Style for labels in KB table */
+#tablaKB td .badge {
+    display: inline-block;
+    margin-bottom: 0.25rem;
+    margin-right: 0.25rem;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
 
 
 /* Estilos para fechas */

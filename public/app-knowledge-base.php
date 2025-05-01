@@ -200,7 +200,7 @@ die();
 													if ( ! empty( $labels ) ) {
 														foreach ( $labels as $label ) {
 															$color = get_term_meta( $label->term_id, 'term-color', true );
-															echo '<span class="badge me-1" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $label->name ) . '</span> ';
+															echo '<span class="badge me-1 mb-1 d-inline-block" style="background-color: ' . esc_attr( $color ) . ';">' . esc_html( $label->name ) . '</span>';
 														}
 													} else {
 														echo '<span class="text-muted">' . esc_html__( 'Uncategorized', 'decker' ) . '</span>';
