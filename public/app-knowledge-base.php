@@ -272,6 +272,10 @@ die();
 
 	<script>
 	jQuery(document).ready(function () {
+		// Determine the index of the hidden content column based on view
+		const isViewAll = <?php echo $view === 'all' ? 'true' : 'false'; ?>;
+		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise
+		
 		jQuery('#tablaKB').DataTable({
 			language: { 
 				url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json',
@@ -285,7 +289,7 @@ die();
 			order: [[4, 'desc']],
 			columnDefs: [
 				{
-					targets: [6], // Hidden content column.
+					targets: [hiddenContentColumnIndex], // Dynamic hidden content column index
 					visible: false,
 					searchable: true
 				}
