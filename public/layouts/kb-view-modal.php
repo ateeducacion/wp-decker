@@ -94,7 +94,7 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 			// Add board badge if available (to the left of labels)
 			let finalHtml = '';
 			if (board && board.name) {
-				const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
+				const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>|&nbsp;&nbsp;`;
 				finalHtml = boardHtml + labelsHtml;
 			} else {
 				finalHtml = labelsHtml;
