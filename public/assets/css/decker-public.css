@@ -110,6 +110,26 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     width: fit-content;
 }
 
+/* Adjust column widths for KB table */
+#tablaKB th.col-3,
+#tablaKB th.col-1 {
+    width: auto !important;
+}
+
+#tablaKB td:nth-child(1) {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#tablaKB td:nth-child(5) {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 
 
 /* Estilos para fechas */

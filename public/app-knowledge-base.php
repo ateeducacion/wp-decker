@@ -132,15 +132,15 @@ die();
 											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
 												<thead>
 													<tr>
-														<th class="col-4"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+														<th class="col-3"><?php esc_html_e( 'Title', 'decker' ); ?></th>
 														<?php if ( 'all' === $view ) : ?>
 														<th class="col-1"><?php esc_html_e( 'Board', 'decker' ); ?></th>
 														<?php endif; ?>
 														<th class="col-2"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
 														<th class="col-1"><?php esc_html_e( 'Author', 'decker' ); ?></th>
-														<th class="col-2"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
-														<th class="col-1"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
-														<th class="col-1 text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
+														<th class="col-1"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
+														<th class="col-2"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th class="col-2 text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 														<th class="d-none"><?php esc_html_e( 'Content', 'decker' ); ?></th>
 													</tr>
 												</thead>
