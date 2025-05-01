@@ -165,7 +165,7 @@ die();
 														);
 													}
 
-													// Get labels with colors
+													// Get labels with colors.
 													$labels_data = array();
 													$labels = wp_get_post_terms( $article->ID, 'decker_label' );
 													if ( ! empty( $labels ) ) {
@@ -177,7 +177,7 @@ die();
 															);
 														}
 													}
-													
+
 													// Store article data as data attributes.
 													$article_data = array(
 														'id' => $article->ID,
@@ -186,8 +186,8 @@ die();
 														'labels' => $labels_data,
 														'board' => $board_data,
 													);
-													
-													// JSON encode for data attributes
+
+													// JSON encode for data attributes.
 													$article_data_json = array(
 														'id' => $article->ID,
 														'title' => $article->post_title,
