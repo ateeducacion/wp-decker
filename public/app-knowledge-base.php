@@ -102,13 +102,26 @@ die();
 													// Article Title with hierarchy.
 													echo '<td>';
 
+													// Get board data for the article
+													$board_data = null;
+													$board_terms = wp_get_post_terms( $article->ID, 'decker_board' );
+													if ( ! empty( $board_terms ) ) {
+														$board = $board_terms[0];
+														$board_color = get_term_meta( $board->term_id, 'term-color', true );
+														$board_data = array(
+															'name' => $board->name,
+															'color' => $board_color
+														);
+													}
+
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
 														'<a href="javascript:void(0);" onclick="viewArticle(' .
 														esc_attr( $article->ID ) . ', ' .
 														"'" . esc_js( $article->post_title ) . "', " .
 														"'" . esc_js( $article->post_content ) . "', " .
-														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "'" .
+														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "', " .
+														"'" . esc_js( json_encode( $board_data ) ) . "'" .
 														')">' . esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';

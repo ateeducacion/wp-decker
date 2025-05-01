@@ -59,9 +59,9 @@ defined( 'ABSPATH' ) || exit;
 	<div class="row mb-3">
 		<!-- Board -->
 		<div class="col-md-12">
-			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?></label>
-			<select class="form-select" id="article-board" name="board">
-				<option value="0"><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
+			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?> *</label>
+			<select class="form-select" id="article-board" name="board" required>
+				<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 				<?php
 				$boards = BoardManager::get_all_boards();
 				foreach ( $boards as $board ) {
@@ -71,6 +71,7 @@ defined( 'ABSPATH' ) || exit;
 				}
 				?>
 			</select>
+			<div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
 		</div>
 	</div>
 
@@ -268,6 +269,12 @@ defined( 'ABSPATH' ) || exit;
 				return;
 			}
 
+			const boardValue = $('#article-board').val();
+			if (!boardValue || boardValue === "0" || boardValue === "") {
+				$('#article-board').addClass('is-invalid');
+				return;
+			}
+
 			const data = {
 				id: $('#article-id').val(),
 				title: $('#article-title').val(),
@@ -275,7 +282,7 @@ defined( 'ABSPATH' ) || exit;
 				labels: window.labelsSelect.getValue().map(choice => choice.value),
 				parent_id: $('#article-parent').val(),
 				menu_order: $('#article-order').val(),
-				board: $('#article-board').val()
+				board: boardValue
 			};
 
 			$.ajax({

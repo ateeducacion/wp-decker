@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
 </div>
 
 <script>
-function viewArticle(id, title, content, labelsJson) {
+function viewArticle(id, title, content, labelsJson, boardJson) {
 	const modal = jQuery('#kb-view-modal');
 	modal.find('#kb-view-modalLabel').text(title);
 	modal.find('#kb-view-content').html(content);
@@ -54,7 +54,18 @@ function viewArticle(id, title, content, labelsJson) {
 				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
 			).join('');
 			
-			modal.find('#kb-view-labels').html(labelsHtml);
+			// Add board badge if available
+			if (boardJson) {
+				const board = JSON.parse(boardJson);
+				if (board && board.name) {
+					const boardHtml = `<span class="badge bg-secondary ms-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
+					modal.find('#kb-view-labels').html(labelsHtml + boardHtml);
+				} else {
+					modal.find('#kb-view-labels').html(labelsHtml);
+				}
+			} else {
+				modal.find('#kb-view-labels').html(labelsHtml);
+			}
 		}
 	});
 	
