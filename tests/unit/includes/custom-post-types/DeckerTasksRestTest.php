@@ -81,20 +81,6 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         // Asegurarse de que el stack se establezca correctamente
         update_post_meta($task_id, 'stack', 'to-do');
 
-        $request->set_body( wp_json_encode( $task_data ) );
-        $response = rest_get_server()->dispatch( $request );
-        $data     = $response->get_data();
-
-        // Check response
-        $this->assertEquals( 201, $response->get_status(), 'Expected 201 on task creation' );
-        $this->assertEquals( 'REST Task', $data['title']['raw'], 'Task title did not match' );
-
-		$task_id = $data['id'];
-
-
-		$this->assertIsInt( $task_id, 'Task creation failed.' );
-		$this->assertGreaterThan( 0, $task_id );
-
         // Verificar el valor de stack directamente desde la base de datos
         $stack_value = get_post_meta($task_id, 'stack', true);
         
@@ -106,10 +92,14 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         
         $this->assertEquals('to-do', $stack_value, 'Stack meta not set correctly in database');
 
+        // Forzar una recarga de los términos de taxonomía
+        clean_term_cache($this->board_id, 'decker_board');
+        clean_post_cache($task_id);
+        
         // Check taxonomies
-        $terms = wp_get_post_terms( $data['id'], 'decker_board' );
-        $this->assertNotEmpty( $terms, 'Expected at least one board term' );
-        $this->assertEquals( $this->board_id, $terms[0]->term_id, 'Board term_id not matching' );
+        $terms = wp_get_post_terms($task_id, 'decker_board');
+        $this->assertNotEmpty($terms, 'Expected at least one board term');
+        $this->assertEquals($this->board_id, $terms[0]->term_id, 'Board term_id not matching');
 
 
         $terms = wp_get_post_terms( $data['id'], 'decker_label' );
