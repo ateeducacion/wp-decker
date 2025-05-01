@@ -94,6 +94,9 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		$this->assertIsInt( $task_id, 'Task creation failed.' );
 		$this->assertGreaterThan( 0, $task_id );
 
+        // Verificar que el meta stack existe antes de compararlo
+        $this->assertArrayHasKey('meta', $data, 'Meta data not found in response');
+        $this->assertArrayHasKey('stack', $data['meta'], 'Stack meta not found in response');
         $this->assertEquals( 'to-do', $data['meta']['stack'], 'Stack meta not set correctly' );
 
         // Check taxonomies
@@ -139,6 +142,8 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         // Check changes
         $this->assertEquals( 200, $response->get_status(), 'Expected 200 on task update' );
         $this->assertEquals( 'Updated Title', $data['title']['raw'] );
+        $this->assertArrayHasKey('meta', $data, 'Meta data not found in response');
+        $this->assertArrayHasKey('stack', $data['meta'], 'Stack meta not found in response');
         $this->assertEquals( 'in-progress', $data['meta']['stack'] );
         $this->assertFalse( $data['meta']['max_priority'] );
 
@@ -230,12 +235,17 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         // Update order
         $request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task1 . '/order' );
         $request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+        $request->add_header( 'Content-Type', 'application/json' );
 
-        $request->set_param( 'board_id', $this->board_id );
-        $request->set_param( 'source_stack', 'to-do' );
-        $request->set_param( 'target_stack', 'to-do' );
-        $request->set_param( 'source_order', 1 );
-        $request->set_param( 'target_order', 2 );
+        $order_data = array(
+            'board_id' => $this->board_id,
+            'source_stack' => 'to-do',
+            'target_stack' => 'to-do',
+            'source_order' => 1,
+            'target_order' => 2
+        );
+        
+        $request->set_body(wp_json_encode($order_data));
 
         $response = rest_get_server()->dispatch( $request );
         $this->assertEquals( 200, $response->get_status() );
@@ -255,11 +265,11 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 
         // Missing title or board => forced 400 by our plugin logic
         $invalid_data = array(
-            'content' => 'Invalid Task',
+            // Sin título ni contenido
             'meta'    => array(
                 'stack' => 'to-do',
             ),
-            // 'tax_input' => [] No board passed => should fail
+            // Sin board, debería fallar
         );
 
         $request->set_body( wp_json_encode( $invalid_data ) );
