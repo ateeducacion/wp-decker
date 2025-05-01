@@ -135,12 +135,6 @@ class Decker_Demo_Data {
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
-			// Board 10: Visible in both.
-			array(
-				'name' => 'Board 10',
-				'show_in_boards' => true,
-				'show_in_kb' => true,
-			),
 		);
 
 		foreach ( $visibility_settings as $board_config ) {
@@ -235,93 +229,97 @@ class Decker_Demo_Data {
 			),
 		);
 
-		foreach ( $categories as $main_title => $subcategories ) {
-			// Assign a random KB-visible board.
-			$board_term = $kb_boards[ array_rand( $kb_boards ) ];
+		// Create articles for each KB-visible board
+		foreach ( $kb_boards as $board_term ) {
+			// For each board, create a set of articles
+			foreach ( $categories as $main_title => $subcategories ) {
+				// Create a unique title for this board
+				$board_main_title = $main_title . ' - ' . $board_term->name;
 
-			// Create main category article.
-			$main_post_id = wp_insert_post(
-				array(
-					'post_type' => 'decker_kb',
-					'post_title' => $main_title,
-					'post_content' => $lorem_ipsum['short'],
-					'post_status' => 'publish',
-					'menu_order' => 0,
-				)
-			);
+				// Create main category article.
+				$main_post_id = wp_insert_post(
+					array(
+						'post_type' => 'decker_kb',
+						'post_title' => $board_main_title,
+						'post_content' => $lorem_ipsum['short'],
+						'post_status' => 'publish',
+						'menu_order' => 0,
+					)
+				);
 
-			// Assign random labels (1-2) to main category.
-			$main_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-			wp_set_object_terms( $main_post_id, $main_labels, 'decker_label' );
+				// Assign random labels (1-2) to main category.
+				$main_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+				wp_set_object_terms( $main_post_id, $main_labels, 'decker_label' );
 
-			// Assign the board.
-			wp_set_object_terms( $main_post_id, array( $board_term->term_id ), 'decker_board' );
+				// Assign the board.
+				wp_set_object_terms( $main_post_id, array( $board_term->term_id ), 'decker_board' );
 
-			$order = 0;
-			foreach ( $subcategories as $sub_title => $content ) {
-				if ( is_array( $content ) ) {
-					// This is a subcategory with its own children.
-					$sub_post_id = wp_insert_post(
-						array(
-							'post_type' => 'decker_kb',
-							'post_title' => $sub_title,
-							'post_content' => $lorem_ipsum['medium'],
-							'post_status' => 'publish',
-							'post_parent' => $main_post_id,
-							'menu_order' => $order,
-						)
-					);
-
-					// Assign random labels to subcategory.
-					$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-					wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-
-					// Assign the same board as parent.
-					wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
-
-					// Assign the same board as parent.
-					wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
-
-					$sub_order = 0;
-					foreach ( $content as $child_title => $child_content ) {
-						$child_post_id = wp_insert_post(
+				$order = 0;
+				foreach ( $subcategories as $sub_title => $content ) {
+					if ( is_array( $content ) ) {
+						// This is a subcategory with its own children.
+						$sub_post_id = wp_insert_post(
 							array(
 								'post_type' => 'decker_kb',
-								'post_title' => $child_title,
-								'post_content' => $child_content,
+								'post_title' => $sub_title,
+								'post_content' => $lorem_ipsum['medium'],
 								'post_status' => 'publish',
-								'post_parent' => $sub_post_id,
-								'menu_order' => $sub_order,
+								'post_parent' => $main_post_id,
+								'menu_order' => $order,
 							)
 						);
 
-						// Assign random labels to child.
-						$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-						wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
+						// Assign random labels to subcategory.
+						$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+						wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
 
 						// Assign the same board as parent.
-						wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
+						wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
 
-						$sub_order++;
+						$sub_order = 0;
+						foreach ( $content as $child_title => $child_content ) {
+							$child_post_id = wp_insert_post(
+								array(
+									'post_type' => 'decker_kb',
+									'post_title' => $child_title,
+									'post_content' => $child_content,
+									'post_status' => 'publish',
+									'post_parent' => $sub_post_id,
+									'menu_order' => $sub_order,
+								)
+							);
+
+							// Assign random labels to child.
+							$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+							wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
+
+							// Assign the same board as parent.
+							wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
+
+							$sub_order++;
+						}
+					} else {
+						// This is a direct subcategory.
+						$sub_post_id = wp_insert_post(
+							array(
+								'post_type' => 'decker_kb',
+								'post_title' => $sub_title,
+								'post_content' => $content,
+								'post_status' => 'publish',
+								'post_parent' => $main_post_id,
+								'menu_order' => $order,
+							)
+						);
+
+						// Assign random labels to subcategory.
+						$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+						wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
+						
+						// Assign the same board as parent.
+						wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
 					}
-				} else {
-					// This is a direct subcategory.
-					$sub_post_id = wp_insert_post(
-						array(
-							'post_type' => 'decker_kb',
-							'post_title' => $sub_title,
-							'post_content' => $content,
-							'post_status' => 'publish',
-							'post_parent' => $main_post_id,
-							'menu_order' => $order,
-						)
-					);
-
-					// Assign random labels to subcategory.
-					$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-					wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
+					$order++;
 				}
-				$order++;
 			}
 		}
 	}
