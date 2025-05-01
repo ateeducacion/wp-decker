@@ -60,8 +60,10 @@ class DeckerTasksRestTest extends Decker_Test_Base {
             'content' => 'REST Description',
             'status'  => 'publish',
 
-		    'boards' => [ $this->board_id ], // Slug de taxonomía
-		    'labels' => [ $this->label_id ],
+		    'tax_input' => array(
+                'decker_board' => array( $this->board_id ),
+                'decker_label' => array( $this->label_id ),
+            ),
 
             // Para tus metadatos registrados en 'show_in_rest'
             'meta' => array(
@@ -183,7 +185,9 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		$this->assertNotEmpty( $terms, 'Expected at least one label term after update' );
 		$this->assertEquals( $this->label_id, $terms[0]->term_id, 'Label term_id not matching after update' );
 
-		$this->assertEquals( '2025-01-15', $data['meta']['duedate'], 'Duedate meta not set correctly' );
+		// Verificar la fecha de vencimiento directamente desde la base de datos
+		$duedate_value = get_post_meta($task_id, 'duedate', true);
+		$this->assertEquals('2025-01-15', $duedate_value, 'Duedate meta not set correctly in database');
 
 
     }
