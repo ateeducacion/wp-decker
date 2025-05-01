@@ -24,11 +24,26 @@ defined( 'ABSPATH' ) || exit;
 <form id="article-form" class="needs-validation" novalidate>
 	<input type="hidden" name="article_id" id="article-id" value="">
 	<div class="row mb-3">
-		<!-- Title, Parent and Order -->
-		<div class="col-md-7">
+		<!-- Title, Board, Parent and Order -->
+		<div class="col-md-4">
 			<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?> *</label>
 			<input type="text" class="form-control" id="article-title" name="title" required style="min-height: 45px;">
 			<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
+		</div>
+		<div class="col-md-3">
+			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?> *</label>
+			<select class="form-select" id="article-board" name="board" required>
+				<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
+				<?php
+				$boards = BoardManager::get_all_boards();
+				foreach ( $boards as $board ) {
+					if ( $board->show_in_kb ) {
+						echo '<option value="' . esc_attr( $board->id ) . '">' . esc_html( $board->name ) . '</option>';
+					}
+				}
+				?>
+			</select>
+			<div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
 		</div>
 		<div class="col-md-4">
 			<label for="article-parent" class="form-label"><?php esc_html_e( 'Parent Article', 'decker' ); ?></label>
@@ -53,25 +68,6 @@ defined( 'ABSPATH' ) || exit;
 		<div class="col-md-1">
 			<label for="article-order" class="form-label"><?php esc_html_e( 'Order', 'decker' ); ?></label>
 			<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0" style="min-height: 45px;">
-		</div>
-	</div>
-	
-	<div class="row mb-3">
-		<!-- Board -->
-		<div class="col-md-12">
-			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?> *</label>
-			<select class="form-select" id="article-board" name="board" required>
-				<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
-				<?php
-				$boards = BoardManager::get_all_boards();
-				foreach ( $boards as $board ) {
-					if ( $board->show_in_kb ) {
-						echo '<option value="' . esc_attr( $board->id ) . '">' . esc_html( $board->name ) . '</option>';
-					}
-				}
-				?>
-			</select>
-			<div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
 		</div>
 	</div>
 
