@@ -47,23 +47,39 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 			xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
 		},
 		success: function(response) {
-			const labels = JSON.parse(labelsJson);
+			let labels = [];
+			let board = null;
+			
+			// Safely parse JSON with error handling
+			try {
+				if (labelsJson) {
+					labels = JSON.parse(labelsJson);
+				}
+			} catch (e) {
+				console.error('Error parsing labels JSON:', e);
+				labels = [];
+			}
+			
+			try {
+				if (boardJson) {
+					board = JSON.parse(boardJson);
+				}
+			} catch (e) {
+				console.error('Error parsing board JSON:', e);
+				board = null;
+			}
+			
 			const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
 			
-			const labelsHtml = labels.map(label => 
+			const labelsHtml = Array.isArray(labels) ? labels.map(label => 
 				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
-			).join('');
+			).join('') : '';
 			
 			// Add board badge if available (to the left of labels)
 			let finalHtml = '';
-			if (boardJson) {
-				const board = JSON.parse(boardJson);
-				if (board && board.name) {
-					const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
-					finalHtml = boardHtml + labelsHtml;
-				} else {
-					finalHtml = labelsHtml;
-				}
+			if (board && board.name) {
+				const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
+				finalHtml = boardHtml + labelsHtml;
 			} else {
 				finalHtml = labelsHtml;
 			}
