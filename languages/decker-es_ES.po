@@ -89,8 +89,8 @@ msgstr "Nombre de la Nueva Acción"
 
 #: includes/custom-post-types/class-decker-actions.php:45
 #: public/app-event-manager.php:68
-#: public/app-knowledge-base.php:92
-#: public/app-term-manager.php:192
+#: public/app-knowledge-base.php:143
+#: public/app-term-manager.php:202
 msgid "Actions"
 msgstr "Acciones"
 
@@ -102,59 +102,59 @@ msgstr "Los términos en la taxonomía de Acciones no pueden tener más de dos n
 msgid "You are not authorized to access this resource."
 msgstr "No estás autorizado para acceder a este recurso."
 
-#: includes/custom-post-types/class-decker-boards.php:52
+#: includes/custom-post-types/class-decker-boards.php:55
 msgctxt "taxonomy general name"
 msgid "Boards"
 msgstr "Tableros"
 
-#: includes/custom-post-types/class-decker-boards.php:53
+#: includes/custom-post-types/class-decker-boards.php:56
 msgctxt "taxonomy singular name"
 msgid "Board"
 msgstr "Tablero"
 
-#: includes/custom-post-types/class-decker-boards.php:54
+#: includes/custom-post-types/class-decker-boards.php:57
 msgid "Search Boards"
 msgstr "Buscar Tableros"
 
-#: includes/custom-post-types/class-decker-boards.php:55
+#: includes/custom-post-types/class-decker-boards.php:58
 #: public/app-tasks.php:180
 msgid "All Boards"
 msgstr "Todos los Tableros"
 
-#: includes/custom-post-types/class-decker-boards.php:56
+#: includes/custom-post-types/class-decker-boards.php:59
 msgid "Edit Board"
 msgstr "Editar Tablero"
 
-#: includes/custom-post-types/class-decker-boards.php:57
+#: includes/custom-post-types/class-decker-boards.php:60
 msgid "Update Board"
 msgstr "Actualizar Tablero"
 
-#: includes/custom-post-types/class-decker-boards.php:58
-#: public/app-term-manager.php:117
+#: includes/custom-post-types/class-decker-boards.php:61
+#: public/app-term-manager.php:123
 msgid "Add New Board"
 msgstr "Agregar Nuevo Tablero"
 
-#: includes/custom-post-types/class-decker-boards.php:59
+#: includes/custom-post-types/class-decker-boards.php:62
 msgid "New Board Name"
 msgstr "Nombre del Nuevo Tablero"
 
-#: includes/custom-post-types/class-decker-boards.php:60
-#: public/app-term-manager.php:116
+#: includes/custom-post-types/class-decker-boards.php:63
+#: public/app-term-manager.php:122
 #: public/layouts/left-sidebar.php:227
-#: public/layouts/left-sidebar.php:338
+#: public/layouts/left-sidebar.php:385
 msgid "Boards"
 msgstr "Tableros"
 
-#: includes/custom-post-types/class-decker-boards.php:93
-#: includes/custom-post-types/class-decker-boards.php:111
-#: includes/custom-post-types/class-decker-boards.php:237
+#: includes/custom-post-types/class-decker-boards.php:96
+#: includes/custom-post-types/class-decker-boards.php:138
+#: includes/custom-post-types/class-decker-boards.php:287
 #: includes/custom-post-types/class-decker-labels.php:95
 #: includes/custom-post-types/class-decker-labels.php:113
 #: includes/custom-post-types/class-decker-labels.php:208
 #: includes/custom-post-types/class-decker-user-extended.php:144
 #: includes/custom-post-types/class-decker-user-extended.php:286
-#: public/app-term-manager.php:191
-#: public/app-term-manager.php:279
+#: public/app-term-manager.php:197
+#: public/app-term-manager.php:303
 msgid "Color"
 msgstr "Color"
 
@@ -173,7 +173,7 @@ msgid "Search Labels"
 msgstr "Buscar Etiquetas"
 
 #: includes/custom-post-types/class-decker-labels.php:56
-#: public/app-knowledge-base.php:61
+#: public/app-knowledge-base.php:109
 msgid "All Labels"
 msgstr "Todas las Etiquetas"
 
@@ -186,7 +186,7 @@ msgid "Update Label"
 msgstr "Actualizar Etiqueta"
 
 #: includes/custom-post-types/class-decker-labels.php:59
-#: public/app-term-manager.php:121
+#: public/app-term-manager.php:127
 msgid "Add New Label"
 msgstr "Agregar Nueva Etiqueta"
 
@@ -196,10 +196,10 @@ msgstr "Nombre de la Nueva Etiqueta"
 
 #: includes/custom-post-types/class-decker-labels.php:61
 #: includes/custom-post-types/class-decker-tasks.php:1028
-#: public/app-term-manager.php:120
-#: public/layouts/kb-modal.php:67
-#: public/layouts/left-sidebar.php:324
-#: public/layouts/task-card.php:291
+#: public/app-term-manager.php:126
+#: public/layouts/kb-modal.php:86
+#: public/layouts/left-sidebar.php:371
+#: public/layouts/task-card.php:294
 msgid "Labels"
 msgstr "Etiquetas"
 
@@ -287,21 +287,23 @@ msgid "Task User and Date"
 msgstr "Usuario y Fecha de la Tarea"
 
 #: includes/custom-post-types/class-decker-tasks.php:1019
-#: public/layouts/task-card.php:317
+#: public/layouts/task-card.php:320
 msgid "Attachments"
 msgstr "Adjuntos"
 
 #: includes/custom-post-types/class-decker-tasks.php:1037
+#: public/app-knowledge-base.php:137
 #: public/app-priority.php:170
 #: public/app-priority.php:423
 #: public/app-tasks.php:203
-#: public/layouts/task-card.php:199
+#: public/layouts/kb-modal.php:62
+#: public/layouts/task-card.php:202
 #, fuzzy
 msgid "Board"
 msgstr "Tablero"
 
 #: includes/custom-post-types/class-decker-tasks.php:1062
-#: public/layouts/task-card.php:253
+#: public/layouts/task-card.php:256
 msgid "Due Date"
 msgstr "Fecha de Vencimiento"
 
@@ -314,7 +316,7 @@ msgstr "Máxima Prioridad"
 #: public/app-priority.php:171
 #: public/app-priority.php:424
 #: public/app-tasks.php:204
-#: public/layouts/task-card.php:245
+#: public/layouts/task-card.php:248
 msgid "Stack"
 msgstr "Columna"
 
@@ -325,14 +327,14 @@ msgstr "Por Hacer"
 #: includes/custom-post-types/class-decker-tasks.php:1073
 #: public/app-kanban-my.php:100
 #: public/app-kanban.php:150
-#: public/layouts/task-card.php:242
+#: public/layouts/task-card.php:245
 msgid "In Progress"
 msgstr "En Progreso"
 
 #: includes/custom-post-types/class-decker-tasks.php:1074
 #: public/app-kanban-my.php:115
 #: public/app-kanban.php:165
-#: public/layouts/task-card.php:243
+#: public/layouts/task-card.php:246
 msgid "Done"
 msgstr "Hecho"
 
@@ -341,6 +343,7 @@ msgid "Nextcloud Card ID"
 msgstr "ID de Tarjeta de Nextcloud"
 
 #: includes/custom-post-types/class-decker-tasks.php:1141
+#: public/layouts/kb-modal.php:64
 #: public/layouts/task-card.php:188
 #, fuzzy
 msgid "Select Board"
@@ -488,7 +491,7 @@ msgstr "Panel de Análisis"
 
 #: public/app-analytics.php:46
 #: public/app-analytics.php:49
-#: public/layouts/left-sidebar.php:275
+#: public/layouts/left-sidebar.php:322
 msgid "Analytics"
 msgstr "Analíticas"
 
@@ -531,7 +534,7 @@ msgstr "Tablero Kanban"
 #: public/app-event-manager.php:48
 #: public/app-kanban-my.php:66
 #: public/app-kanban.php:76
-#: public/app-term-manager.php:167
+#: public/app-term-manager.php:173
 #: public/app-upcoming.php:115
 msgid "Search..."
 msgstr "Buscar..."
@@ -539,7 +542,7 @@ msgstr "Buscar..."
 #: public/app-event-manager.php:49
 #: public/app-kanban-my.php:66
 #: public/app-kanban.php:76
-#: public/app-term-manager.php:167
+#: public/app-term-manager.php:173
 #: public/app-upcoming.php:115
 msgid "Search"
 msgstr "Buscar"
@@ -575,9 +578,9 @@ msgstr "Sí"
 
 #: public/app-priority.php:154
 #: public/app-priority.php:413
-#: public/app-term-manager.php:290
+#: public/app-term-manager.php:331
 #: public/layouts/event-card.php:253
-#: public/layouts/kb-modal.php:82
+#: public/layouts/kb-modal.php:101
 #: public/layouts/kb-view-modal.php:30
 msgid "Close"
 msgstr "Cerrar"
@@ -587,7 +590,7 @@ msgid "MAX PRIORITY"
 msgstr "MÁXIMA PRIORIDAD"
 
 #: public/app-event-manager.php:63
-#: public/app-knowledge-base.php:87
+#: public/app-knowledge-base.php:135
 #: public/app-priority.php:172
 #: public/app-priority.php:425
 #: public/layouts/event-card.php:116
@@ -620,7 +623,7 @@ msgstr "Detalle de Tareas"
 #: public/app-task-full.php:45
 #: public/app-tasks.php:20
 #: public/app-tasks.php:164
-#: public/app-term-manager.php:127
+#: public/app-term-manager.php:133
 #: public/layouts/left-sidebar.php:140
 msgid "Tasks"
 msgstr "Tareas"
@@ -648,14 +651,14 @@ msgid "P."
 msgstr "P."
 
 #: public/app-tasks.php:205
-#: public/app-term-manager.php:284
+#: public/app-term-manager.php:308
 #: public/layouts/event-card.php:208
 #: public/layouts/event-card.php:209
-#: public/layouts/task-card.php:307
+#: public/layouts/task-card.php:310
 msgid "Description"
 msgstr "Descripción"
 
-#: public/app-knowledge-base.php:88
+#: public/app-knowledge-base.php:139
 #: public/app-tasks.php:206
 msgid "Tags"
 msgstr "Etiquetas"
@@ -674,12 +677,14 @@ msgstr "Próximas Tareas"
 msgid "DELAYED"
 msgstr "RETARDADO"
 
+#: includes/custom-post-types/class-decker-kb.php:315
 #: includes/models/class-task.php:397
 #: public/app-upcoming.php:157
 #: public/class-decker-public.php:326
 msgid "Today"
 msgstr "Hoy"
 
+#: includes/custom-post-types/class-decker-kb.php:319
 #: includes/models/class-task.php:401
 #: public/app-upcoming.php:172
 msgid "Tomorrow"
@@ -874,27 +879,27 @@ msgstr "Máxima Prioridad"
 msgid "For today"
 msgstr "Para hoy"
 
-#: public/layouts/task-card.php:241
+#: public/layouts/task-card.php:244
 msgid "To Do"
 msgstr "Por Hacer"
 
-#: public/layouts/task-card.php:254
+#: public/layouts/task-card.php:257
 msgid "Please select a due date."
 msgstr "Por favor, seleccione una fecha de vencimiento."
 
-#: public/layouts/task-card.php:264
+#: public/layouts/task-card.php:267
 msgid "Assign to"
 msgstr "Asignar a"
 
-#: public/layouts/task-card.php:311
+#: public/layouts/task-card.php:314
 msgid "Comments"
 msgstr "Comentarios"
 
-#: public/layouts/task-card.php:329
+#: public/layouts/task-card.php:332
 msgid "History"
 msgstr "Historial"
 
-#: public/layouts/task-card.php:335
+#: public/layouts/task-card.php:338
 msgid "Gantt"
 msgstr "Gantt"
 
@@ -902,30 +907,31 @@ msgstr "Gantt"
 msgid "Task title"
 msgstr "Título de la tarea"
 
-#: public/layouts/task-card.php:252
+#: public/layouts/task-card.php:255
 msgid "Select date"
 msgstr "Seleccionar fecha"
 
-#: public/layouts/task-card.php:200
+#: public/layouts/kb-modal.php:74
+#: public/layouts/task-card.php:203
 msgid "Please select a board."
 msgstr "Seleccione una tabla."
 
-#: public/app-knowledge-base.php:89
-#: public/layouts/task-card.php:499
+#: public/app-knowledge-base.php:140
+#: public/layouts/task-card.php:502
 msgid "Author"
 msgstr "Autor"
 
-#: public/layouts/task-card.php:455
+#: public/layouts/task-card.php:458
 msgid "Under construction..."
 msgstr "En construcción..."
 
-#: public/app-term-manager.php:291
+#: public/app-term-manager.php:332
 #: public/layouts/event-card.php:257
-#: public/layouts/task-card.php:515
+#: public/layouts/task-card.php:518
 msgid "Save"
 msgstr "Guardar"
 
-#: public/layouts/task-card.php:518
+#: public/layouts/task-card.php:521
 msgid "Toggle Dropdown"
 msgstr "Alternar Desplegable"
 
@@ -998,34 +1004,34 @@ msgstr "Marcar para hoy"
 msgid "Unmark for today"
 msgstr "Desmarcar para hoy"
 
-#: public/layouts/task-card.php:358
+#: public/layouts/task-card.php:361
 msgid "No comments yet."
 msgstr "No hay comentarios todavía."
 
-#: public/layouts/task-card.php:366
+#: public/layouts/task-card.php:369
 msgid "Replying to"
 msgstr "Respondiendo a"
 
-#: public/layouts/task-card.php:369
+#: public/layouts/task-card.php:372
 msgid "Write your comment..."
 msgstr "Escribe tu comentario..."
 
-#: public/layouts/task-card.php:403
+#: public/layouts/task-card.php:406
 msgid "Upload"
 msgstr "Subir"
 
-#: public/layouts/task-card.php:413
+#: public/layouts/task-card.php:416
 msgid "Nickname"
 msgstr "Apodo"
 
-#: public/layouts/task-card.php:414
+#: public/layouts/task-card.php:417
 msgid "Date"
 msgstr "Fecha"
 
 #: public/class-decker-public.php:303
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
-#: public/layouts/task-card.php:395
+#: public/layouts/task-card.php:398
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1051,15 +1057,15 @@ msgstr "Error al guardar la tarea."
 msgid "My Board"
 msgstr "Mi Tablero"
 
-#: includes/models/class-boardmanager.php:121
+#: includes/models/class-boardmanager.php:164
 msgid "Board updated successfully"
 msgstr "Tablero actualizado correctamente"
 
-#: includes/models/class-boardmanager.php:121
+#: includes/models/class-boardmanager.php:164
 msgid "Board created successfully"
 msgstr "Tablero creado correctamente"
 
-#: includes/models/class-boardmanager.php:151
+#: includes/models/class-boardmanager.php:194
 msgid "Board deleted successfully"
 msgstr "Tablero eliminado correctamente"
 
@@ -1075,42 +1081,42 @@ msgstr "Etiqueta creada correctamente"
 msgid "Label deleted successfully"
 msgstr "Etiqueta eliminada correctamente"
 
-#: public/app-term-manager.php:189
-#: public/app-term-manager.php:270
+#: public/app-term-manager.php:195
+#: public/app-term-manager.php:294
 msgid "Name"
 msgstr "Nombre"
 
-#: public/app-term-manager.php:190
-#: public/app-term-manager.php:274
+#: public/app-term-manager.php:196
+#: public/app-term-manager.php:298
 msgid "Slug"
 msgstr "Slug"
 
-#: public/app-term-manager.php:260
-#: public/app-term-manager.php:330
+#: public/app-term-manager.php:284
+#: public/app-term-manager.php:371
 msgid "Add New Term"
 msgstr "Añadir Nuevo Término"
 
-#: public/app-term-manager.php:276
+#: public/app-term-manager.php:300
 msgid "Leave empty for automatic generation from name"
 msgstr "Dejar vacío para generación automática desde el nombre"
 
-#: public/app-term-manager.php:344
+#: public/app-term-manager.php:385
 msgid "Edit Term"
 msgstr "Editar Término"
 
-#: public/app-term-manager.php:359
+#: public/app-term-manager.php:409
 msgid "To confirm deletion, please enter the term slug:"
 msgstr "Para confirmar la eliminación, por favor introduce el slug del término:"
 
-#: public/app-term-manager.php:361
+#: public/app-term-manager.php:411
 msgid "WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board."
 msgstr "¡ADVERTENCIA: ¡Eliminar un tablero es peligroso! Todas las tareas asignadas a este tablero se quedarán sin tablero."
 
-#: public/app-term-manager.php:377
+#: public/app-term-manager.php:427
 msgid "Incorrect slug. Deletion cancelled."
 msgstr "Slug incorrecto. Eliminación cancelada."
 
-#: public/layouts/left-sidebar.php:302
+#: public/layouts/left-sidebar.php:349
 msgid "Utilities"
 msgstr "Utilidades"
 
@@ -1142,6 +1148,7 @@ msgstr "Editar el contenido en formato HTML"
 msgid "OK"
 msgstr "Aceptar"
 
+#: public/app-knowledge-base.php:361
 #: public/class-decker-public.php:311
 msgid "Cancel"
 msgstr "Cancelar"
@@ -1168,7 +1175,7 @@ msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s
 msgid "Access denied"
 msgstr "Acceso denegado"
 
-#: includes/models/class-boardmanager.php:136
+#: includes/models/class-boardmanager.php:179
 msgid "You do not have permission to delete boards"
 msgstr "No tienes permiso para borrar tableros"
 
@@ -1197,11 +1204,11 @@ msgstr "Error al eliminar comentario."
 msgid "Error deleting comment."
 msgstr "Error eliminando comentario."
 
-#: public/layouts/task-card.php:370
+#: public/layouts/task-card.php:373
 msgid "Please enter a comment."
 msgstr "Por favor, introduzca un comentario."
 
-#: public/layouts/task-card.php:372
+#: public/layouts/task-card.php:375
 msgid "Comment"
 msgstr "Comentar"
 
@@ -1244,27 +1251,27 @@ msgstr "Notificarme cuando alguien comente en una tarea que tengo asignada."
 #: includes/custom-post-types/class-decker-tasks.php:1083
 #: public/app-priority.php:173
 #: public/app-tasks.php:207
-#: public/layouts/task-card.php:232
+#: public/layouts/task-card.php:235
 msgid "Responsable"
 msgstr "Responsable"
 
-#: public/layouts/task-card.php:210
+#: public/layouts/task-card.php:213
 msgid "Select Responsable"
 msgstr "Seleccione responsable"
 
-#: public/layouts/task-card.php:233
+#: public/layouts/task-card.php:236
 msgid "Please select a responsable."
 msgstr "Seleccione un responsable."
 
-#: public/layouts/task-card.php:338
+#: public/layouts/task-card.php:341
 msgid "Information"
 msgstr "Información"
 
-#: public/layouts/task-card.php:479
+#: public/layouts/task-card.php:482
 msgid "Created"
 msgstr "Creado"
 
-#: public/app-term-manager.php:286
+#: public/app-term-manager.php:310
 msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
 msgstr "Solo se permite formato HTML básico (i, b, em, strong, br)"
 
@@ -1272,11 +1279,11 @@ msgstr "Solo se permite formato HTML básico (i, b, em, strong, br)"
 msgid "Hidden"
 msgstr "Ocultar"
 
-#: public/layouts/task-card.php:467
+#: public/layouts/task-card.php:470
 msgid "Hidden task"
 msgstr "Tarea oculta"
 
-#: public/layouts/task-card.php:468
+#: public/layouts/task-card.php:471
 msgid "(Hidden tasks are not shown in task listings)"
 msgstr "(Las tareas ocultas simplemente no se muestran en los listados)"
 
@@ -1326,7 +1333,7 @@ msgstr "Ver Evento"
 #: includes/custom-post-types/class-decker-events.php:96
 #: public/app-event-manager.php:20
 #: public/app-event-manager.php:37
-#: public/layouts/left-sidebar.php:342
+#: public/layouts/left-sidebar.php:389
 msgid "Events"
 msgstr "Eventos"
 
@@ -1364,7 +1371,7 @@ msgstr "Peligro"
 
 #: includes/custom-post-types/class-decker-events.php:460
 #: public/class-decker-public.php:324
-#: public/layouts/kb-modal.php:262
+#: public/layouts/kb-modal.php:373
 msgid "Success"
 msgstr "Éxito"
 
@@ -1502,7 +1509,7 @@ msgid "All Day"
 msgstr "Todo el Día"
 
 #: public/app-event-manager.php:168
-#: public/app-knowledge-base.php:125
+#: public/app-knowledge-base.php:206
 msgid "Uncategorized"
 msgstr "Sin Categorizar"
 
@@ -1577,138 +1584,138 @@ msgstr "Día"
 msgid "List"
 msgstr "Lista"
 
-#: includes/custom-post-types/class-decker-kb.php:187
+#: includes/custom-post-types/class-decker-kb.php:217
 msgctxt "post type general name"
 msgid "Knowledge Base"
 msgstr "Base de conocimiento"
 
-#: includes/custom-post-types/class-decker-kb.php:188
+#: includes/custom-post-types/class-decker-kb.php:218
 msgctxt "post type singular name"
 msgid "Article"
 msgstr "Artículo"
 
-#: includes/custom-post-types/class-decker-kb.php:189
+#: includes/custom-post-types/class-decker-kb.php:219
 msgctxt "admin menu"
 msgid "Knowledge Base"
 msgstr "Base de conocimiento"
 
-#: includes/custom-post-types/class-decker-kb.php:190
-#: includes/custom-post-types/class-decker-kb.php:191
-#: public/app-knowledge-base.php:55
+#: includes/custom-post-types/class-decker-kb.php:220
+#: includes/custom-post-types/class-decker-kb.php:221
+#: public/app-knowledge-base.php:85
 #: public/layouts/kb-modal.php:18
-#: public/layouts/kb-modal.php:191
+#: public/layouts/kb-modal.php:217
 msgid "Add New Article"
 msgstr "Agregar nuevo artículo"
 
-#: includes/custom-post-types/class-decker-kb.php:192
+#: includes/custom-post-types/class-decker-kb.php:222
 msgid "New Article"
 msgstr "Nuevo artículo"
 
-#: includes/custom-post-types/class-decker-kb.php:193
-#: public/layouts/kb-modal.php:187
+#: includes/custom-post-types/class-decker-kb.php:223
+#: public/layouts/kb-modal.php:213
 msgid "Edit Article"
 msgstr "Editar artículo"
 
-#: includes/custom-post-types/class-decker-kb.php:194
+#: includes/custom-post-types/class-decker-kb.php:224
 msgid "View Article"
 msgstr "Ver artículo"
 
-#: includes/custom-post-types/class-decker-kb.php:195
-#: public/app-knowledge-base.php:26
-#: public/app-knowledge-base.php:47
-#: public/layouts/left-sidebar.php:266
+#: includes/custom-post-types/class-decker-kb.php:225
+#: public/app-knowledge-base.php:46
+#: public/app-knowledge-base.php:67
+#: public/layouts/left-sidebar.php:274
 msgid "Knowledge Base"
 msgstr "Base de conocimiento"
 
-#: public/app-knowledge-base.php:91
+#: public/app-knowledge-base.php:142
 msgid "Last Updated"
 msgstr "Ultima modificación"
 
-#: public/layouts/kb-modal.php:83
+#: public/layouts/kb-modal.php:102
 msgid "Save Article"
 msgstr "Guardar artículo"
 
-#: includes/custom-post-types/class-decker-kb.php:196
+#: includes/custom-post-types/class-decker-kb.php:226
 msgid "Parent Article:"
 msgstr "Artículo padre:"
 
-#: includes/custom-post-types/class-decker-kb.php:197
+#: includes/custom-post-types/class-decker-kb.php:227
 msgid "No articles found."
 msgstr "No se encontraron artículos."
 
-#: includes/class-decker-demo-data.php:234
+#: includes/class-decker-demo-data.php:338
 msgid "Team Meeting"
 msgstr "Reunión de equipo"
 
-#: includes/class-decker-demo-data.php:235
+#: includes/class-decker-demo-data.php:339
 msgid "Project Review"
 msgstr "Revisión de proyecto"
 
-#: includes/class-decker-demo-data.php:236
+#: includes/class-decker-demo-data.php:340
 msgid "Training Session"
 msgstr "Sesión de formación"
 
-#: includes/class-decker-demo-data.php:237
+#: includes/class-decker-demo-data.php:341
 msgid "Client Presentation"
 msgstr "Presentación al cliente"
 
-#: includes/class-decker-demo-data.php:238
+#: includes/class-decker-demo-data.php:342
 msgid "Sprint Planning"
 msgstr "Planificación del sprint"
 
-#: includes/class-decker-demo-data.php:239
+#: includes/class-decker-demo-data.php:343
 msgid "Code Review"
 msgstr "Revisión de código"
 
-#: includes/class-decker-demo-data.php:240
+#: includes/class-decker-demo-data.php:344
 msgid "Release Day"
 msgstr "Día de lanzamiento"
 
-#: includes/class-decker-demo-data.php:241
+#: includes/class-decker-demo-data.php:345
 msgid "Maintenance Window"
 msgstr "Ventana de mantenimiento"
 
-#: includes/class-decker-demo-data.php:245
+#: includes/class-decker-demo-data.php:349
 msgid "Meeting Room A"
 msgstr "Sala de reuniones A"
 
-#: includes/class-decker-demo-data.php:246
+#: includes/class-decker-demo-data.php:350
 msgid "Conference Room"
 msgstr "Sala de conferencias"
 
-#: includes/class-decker-demo-data.php:247
+#: includes/class-decker-demo-data.php:351
 msgid "Training Center"
 msgstr "Centro de formación"
 
-#: includes/class-decker-demo-data.php:248
+#: includes/class-decker-demo-data.php:352
 msgid "Virtual Meeting"
 msgstr "Reunión virtual"
 
-#: includes/class-decker-demo-data.php:249
+#: includes/class-decker-demo-data.php:353
 msgid "Main Office"
 msgstr "Oficina principal"
 
-#: includes/class-decker-demo-data.php:313
+#: includes/class-decker-demo-data.php:417
 msgid "Demo event created automatically."
 msgstr "Evento de demostración creado automáticamente."
 
-#: includes/custom-post-types/class-decker-kb.php:111
+#: includes/custom-post-types/class-decker-kb.php:138
 msgid "Article saved successfully"
 msgstr "Artículo guardado correctamente"
 
-#: includes/custom-post-types/class-decker-kb.php:158
+#: includes/custom-post-types/class-decker-kb.php:185
 msgid "Article not found"
 msgstr "Artículo no encontrado"
 
-#: public/app-knowledge-base.php:90
+#: public/app-knowledge-base.php:141
 msgid "Excerpt"
 msgstr "Extracto"
 
-#: public/app-knowledge-base.php:93
+#: public/app-knowledge-base.php:144
 msgid "Content"
 msgstr "Contenido"
 
-#: public/app-knowledge-base.php:227
+#: public/app-knowledge-base.php:323
 msgid "Search in title, tags, excerpt and content..."
 msgstr "Buscar en título, etiquetas, extracto y contenido..."
 
@@ -1724,37 +1731,38 @@ msgstr "Sin artículo principal (nivel superior)"
 msgid "Order"
 msgstr "Orden"
 
+#: public/app-knowledge-base.php:389
 #: public/class-decker-public.php:325
-#: public/layouts/kb-modal.php:160
-#: public/layouts/kb-modal.php:168
-#: public/layouts/kb-modal.php:270
-#: public/layouts/kb-modal.php:278
+#: public/layouts/kb-modal.php:186
+#: public/layouts/kb-modal.php:194
+#: public/layouts/kb-modal.php:381
+#: public/layouts/kb-modal.php:389
 msgid "Error"
 msgstr "Error"
 
-#: public/layouts/kb-modal.php:169
+#: public/layouts/kb-modal.php:195
 msgid "Could not load article"
 msgstr "No se pudo cargar el artículo"
 
-#: public/layouts/kb-modal.php:230
+#: public/layouts/kb-modal.php:332
 msgid "Search for parent article..."
 msgstr "Buscar artículo principal..."
 
-#: public/layouts/kb-modal.php:279
+#: public/layouts/kb-modal.php:390
 msgid "Could not save article"
 msgstr "No se pudo guardar el artículo"
 
 #: includes/custom-post-types/class-decker-events.php:246
-#: includes/custom-post-types/class-decker-kb.php:134
+#: includes/custom-post-types/class-decker-kb.php:161
 #: includes/custom-post-types/class-decker-tasks.php:915
 msgid "You do not have permission to access this resource."
 msgstr "No tienes permiso para acceder a este recurso."
 
-#: public/layouts/kb-modal.php:220
+#: public/layouts/kb-modal.php:284
 msgid "Select labels..."
 msgstr "Seleccionar etiquetas..."
 
-#: public/layouts/kb-modal.php:221
+#: public/layouts/kb-modal.php:285
 msgid "No more labels available"
 msgstr "No hay más etiquetas disponibles"
 
@@ -1820,16 +1828,19 @@ msgstr "La pila no es válida. Valores permitidos: pendiente, en curso, hecho."
 msgid "No due date"
 msgstr "Sin fecha límite"
 
+#: includes/custom-post-types/class-decker-kb.php:317
 #: includes/models/class-task.php:399
 msgid "Yesterday"
 msgstr "Ayer"
 
 #. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+#: includes/custom-post-types/class-decker-kb.php:327
 #: includes/models/class-task.php:410
 msgid "%s ago"
 msgstr "hace %s"
 
 #. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+#: includes/custom-post-types/class-decker-kb.php:330
 #: includes/models/class-task.php:414
 msgid "in %s"
 msgstr "en %s"
@@ -1894,3 +1905,73 @@ msgstr "Ayuda"
 #: public/class-decker-public.php:334
 msgid "Are you sure you want to delete this event?"
 msgstr "¿Está seguro de que desea eliminar este archivo adjunto?"
+
+#: includes/custom-post-types/class-decker-boards.php:102
+#: includes/custom-post-types/class-decker-boards.php:148
+#: public/app-term-manager.php:317
+msgid "Show in Boards"
+msgstr "Mostrar en tableros"
+
+msgid "Display this board in the Boards section of the sidebar"
+msgstr "Mostrar este tablero en la sección de tableros de la barra lateral"
+
+msgid "Show in Knowledge Base"
+msgstr "Mostrar en la base de conocimientos"
+
+msgid "Display this board in the Knowledge Base section of the sidebar"
+msgstr "Mostrar este tablero en la sección de base de conocimientos de la barra lateral"
+
+msgid "Visibility"
+msgstr "Visibilidad"
+
+msgid "Board is required"
+msgstr "Se requiere un tablero"
+
+msgid "Invalid board ID"
+msgstr "ID de tablero no válido"
+
+msgid "No date"
+msgstr "Sin fecha"
+
+msgid "You do not have permission to create terms."
+msgstr "No tienes permiso para crear términos."
+
+msgid "All Articles"
+msgstr "Todos los artículos"
+
+msgid "No Board"
+msgstr "Sin tablero"
+
+msgid "Are you sure?"
+msgstr "¿Estás seguro?"
+
+msgid "The article"
+msgstr "El artículo"
+
+msgid "will be deleted"
+msgstr "será eliminado"
+
+msgid "Yes, delete"
+msgstr "Sí, eliminar"
+
+msgid "Deleted"
+msgstr "Eliminado"
+
+msgid "The article has been successfully deleted."
+msgstr "El artículo se ha eliminado correctamente."
+
+msgid "Could not delete the article."
+msgstr "No se pudo eliminar el artículo."
+
+msgid "In Boards"
+msgstr "En tableros"
+
+msgid "In KB"
+msgstr "En la base de conocimientos"
+
+msgid "Select parent..."
+msgstr "Seleccionar superior..."
+
+msgid "No more articles available"
+msgstr "No hay más artículos disponibles"
+

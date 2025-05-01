@@ -65,7 +65,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 				$boards = BoardManager::get_all_boards();
 				foreach ( $boards as $board ) {
-					if ($board->show_in_kb) {
+					if ( $board->show_in_kb ) {
 						echo '<option value="' . esc_attr( $board->id ) . '">' . esc_html( $board->name ) . '</option>';
 					}
 				}
@@ -234,19 +234,19 @@ defined( 'ABSPATH' ) || exit;
 					// Get all boards from PHP
 					<?php
 					$boards_data = array();
-					foreach ($boards as $board) {
-						if ($board->show_in_kb) {
+					foreach ( $boards as $board ) {
+						if ( $board->show_in_kb ) {
 							$boards_data[] = array(
 								'id' => $board->id,
 								'slug' => $board->slug,
-								'name' => $board->name
+								'name' => $board->name,
 							);
 						}
 					}
 					?>
 					
 					// Use the PHP data
-					const availableBoards = <?php echo json_encode($boards_data); ?>;
+					const availableBoards = <?php echo json_encode( $boards_data ); ?>;
 					const matchingBoard = availableBoards.find(board => board.slug === boardSlug);
 					
 					if (matchingBoard) {

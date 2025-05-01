@@ -82,14 +82,14 @@ class Board {
 			// Avoid short ternaries by using a complete ternary expression.
 			$color = get_term_meta( $term->term_id, 'term-color', true );
 			$this->color = $color ? $color : null;
-			
-			// Get visibility settings with default true if not set
+
+			// Get visibility settings with default true if not set.
 			$show_in_boards = get_term_meta( $term->term_id, 'term-show-in-boards', true );
 			$show_in_kb = get_term_meta( $term->term_id, 'term-show-in-kb', true );
-			
-			// Convert to boolean - '1' or empty string should be true, '0' should be false
-			$this->show_in_boards = $show_in_boards === '0' ? false : true;
-			$this->show_in_kb = $show_in_kb === '0' ? false : true;
+
+			// Convert to boolean - '1' or empty string should be true, '0' should be false.
+			$this->show_in_boards = '0' === $show_in_boards ? false : true;
+			$this->show_in_kb = '0' === $show_in_kb ? false : true;
 
 		} else {
 			throw new Exception( 'Invalid board term.' );

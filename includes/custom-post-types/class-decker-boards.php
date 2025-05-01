@@ -42,8 +42,8 @@ class Decker_Boards {
 		// Enforce capability checks.
 		add_filter( 'pre_insert_term', array( $this, 'prevent_term_creation' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'prevent_term_deletion' ), 10, 2 );
-		
-		// Register REST field for term meta
+
+		// Register REST field for term meta.
 		add_action( 'rest_api_init', array( $this, 'register_rest_fields' ) );
 	}
 
@@ -125,8 +125,8 @@ class Decker_Boards {
 		$color   = get_term_meta( $term_id, 'term-color', true );
 		$show_in_boards = get_term_meta( $term_id, 'term-show-in-boards', true );
 		$show_in_kb = get_term_meta( $term_id, 'term-show-in-kb', true );
-		
-		// Default to true if not set
+
+		// Default to true if not set.
 		if ( '' === $show_in_boards ) {
 			$show_in_boards = '1';
 		}
@@ -184,11 +184,11 @@ class Decker_Boards {
 			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
 			update_term_meta( $term_id, 'term-color', $term_color );
 		}
-		
-		// Save visibility settings
+
+		// Save visibility settings.
 		$show_in_boards = isset( $_POST['term-show-in-boards'] ) ? '1' : '0';
 		$show_in_kb = isset( $_POST['term-show-in-kb'] ) ? '1' : '0';
-		
+
 		update_term_meta( $term_id, 'term-show-in-boards', $show_in_boards );
 		update_term_meta( $term_id, 'term-show-in-kb', $show_in_kb );
 	}
@@ -307,9 +307,9 @@ class Decker_Boards {
 		}
 		return $content;
 	}
-	
+
 	/**
-	 * Register REST fields for term meta
+	 * Register REST fields for term meta.
 	 */
 	public function register_rest_fields() {
 		register_rest_field(
@@ -322,7 +322,7 @@ class Decker_Boards {
 			)
 		);
 	}
-	
+
 	/**
 	 * Get term meta for REST API
 	 *

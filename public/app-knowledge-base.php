@@ -175,7 +175,7 @@ die();
 
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
-														'<a href="javascript:void(0);" onclick="viewArticle(' . $view_params . ')">' .
+														'<a href="javascript:void(0);" onclick="viewArticle(' . esc_js( $view_params ) . ')">' .
 														esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
@@ -231,7 +231,7 @@ die();
 													// Actions.
 													echo '<td class="text-end">';
 													// View button.
-													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' . 
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' .
 														esc_attr( $view_params ) . ')"><i class="ri-eye-line"></i></button>';
 													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';

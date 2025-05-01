@@ -65,8 +65,8 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 	}
 
 	$data['description'] = $description;
-	
-	// Add visibility settings for boards
+
+	// Add visibility settings for boards.
 	if ( 'board' === $term_type ) {
 		$data['show_in_boards'] = isset( $_POST['term-show-in-boards'] );
 		$data['show_in_kb'] = isset( $_POST['term-show-in-kb'] );
@@ -215,18 +215,18 @@ if ( 'board' === $selected_type ) {
 														echo '</td>';
 														echo '<td class="term-slug">' . esc_html( $item->slug ) . '</td>';
 														echo '<td class="term-color"><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
-														
-														// Add visibility columns for boards
+
+														// Add visibility columns for boards.
 														if ( 'board' === $selected_type ) {
 															echo '<td class="term-show-in-boards-display text-center">';
 															echo $item->show_in_boards ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>';
 															echo '</td>';
-															
+
 															echo '<td class="term-show-in-kb-display text-center">';
 															echo $item->show_in_kb ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>';
 															echo '</td>';
 														}
-														
+
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';
@@ -389,7 +389,7 @@ jQuery(document).ready(function($) {
 		$('#term-color').val(hexColor);
 		$('#term-description').val(description);
 		
-		// Set visibility checkboxes for boards
+		// Set visibility checkboxes for boards.
 		if ($(this).data('type') === 'board') {
 			const showInBoards = row.find('.term-show-in-boards').text().trim() === '1';
 			const showInKb = row.find('.term-show-in-kb').text().trim() === '1';

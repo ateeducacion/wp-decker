@@ -191,8 +191,8 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 						$boards = BoardManager::get_all_boards();
 
 					foreach ( $boards as $board ) {
-						// Only show boards that have show_in_boards set to true
-						if ($board->show_in_boards) {
+						// Only show boards that have show_in_boards set to true.
+						if ( $board->show_in_boards ) {
 							echo '<option value="' . esc_attr( $board->id ) . '" ' . selected( $task->board && $task->board->id == $board->id ) . ' ' . selected( $board_slug, $board->slug ) . '>' . esc_html( $board->name ) . '</option>';
 						}
 					}

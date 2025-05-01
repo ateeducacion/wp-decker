@@ -81,41 +81,81 @@ class Decker_Demo_Data {
 	private function create_boards() {
 		$boards = array();
 		$visibility_settings = array(
-			// Board 1: Visible in both Boards and KB
-			array('name' => 'Board 1', 'show_in_boards' => true, 'show_in_kb' => true),
-			// Board 2: Visible only in Boards
-			array('name' => 'Board 2', 'show_in_boards' => true, 'show_in_kb' => false),
-			// Board 3: Visible only in KB
-			array('name' => 'Board 3', 'show_in_boards' => false, 'show_in_kb' => true),
-			// Board 4: Not visible in either (hidden)
-			array('name' => 'Board 4', 'show_in_boards' => false, 'show_in_kb' => false),
-			// Board 5: Visible in both
-			array('name' => 'Board 5', 'show_in_boards' => true, 'show_in_kb' => true),
-			// Board 6: Visible in both
-			array('name' => 'Board 6', 'show_in_boards' => true, 'show_in_kb' => true),
-			// Board 7: Visible only in Boards
-			array('name' => 'Board 7', 'show_in_boards' => true, 'show_in_kb' => false),
-			// Board 8: Visible only in KB
-			array('name' => 'Board 8', 'show_in_boards' => false, 'show_in_kb' => true),
-			// Board 9: Visible in both
-			array('name' => 'Board 9', 'show_in_boards' => true, 'show_in_kb' => true),
-			// Board 10: Visible in both
-			array('name' => 'Board 10', 'show_in_boards' => true, 'show_in_kb' => true),
+			// Board 1: Visible in both Boards and KB.
+			array(
+				'name' => 'Board 1',
+				'show_in_boards' => true,
+				'show_in_kb' => true,
+			),
+			// Board 2: Visible only in Boards.
+			array(
+				'name' => 'Board 2',
+				'show_in_boards' => true,
+				'show_in_kb' => false,
+			),
+			// Board 3: Visible only in KB.
+			array(
+				'name' => 'Board 3',
+				'show_in_boards' => false,
+				'show_in_kb' => true,
+			),
+			// Board 4: Not visible in either (hidden).
+			array(
+				'name' => 'Board 4',
+				'show_in_boards' => false,
+				'show_in_kb' => false,
+			),
+			// Board 5: Visible in both.
+			array(
+				'name' => 'Board 5',
+				'show_in_boards' => true,
+				'show_in_kb' => true,
+			),
+			// Board 6: Visible in both.
+			array(
+				'name' => 'Board 6',
+				'show_in_boards' => true,
+				'show_in_kb' => true,
+			),
+			// Board 7: Visible only in Boards.
+			array(
+				'name' => 'Board 7',
+				'show_in_boards' => true,
+				'show_in_kb' => false,
+			),
+			// Board 8: Visible only in KB.
+			array(
+				'name' => 'Board 8',
+				'show_in_boards' => false,
+				'show_in_kb' => true,
+			),
+			// Board 9: Visible in both.
+			array(
+				'name' => 'Board 9',
+				'show_in_boards' => true,
+				'show_in_kb' => true,
+			),
+			// Board 10: Visible in both.
+			array(
+				'name' => 'Board 10',
+				'show_in_boards' => true,
+				'show_in_kb' => true,
+			),
 		);
 
-		foreach ($visibility_settings as $board_config) {
+		foreach ( $visibility_settings as $board_config ) {
 			$term_name = $board_config['name'];
-			$term_slug = sanitize_title($term_name);
+			$term_slug = sanitize_title( $term_name );
 			$term_color = $this->generate_random_color();
 			$show_in_boards = $board_config['show_in_boards'];
 			$show_in_kb = $board_config['show_in_kb'];
 
 			// Check if the board already exists.
-			$existing_term = term_exists($term_slug, 'decker_board');
-			if ($existing_term) {
-				// Update visibility settings for existing board
-				update_term_meta($existing_term['term_id'], 'term-show-in-boards', $show_in_boards ? '1' : '0');
-				update_term_meta($existing_term['term_id'], 'term-show-in-kb', $show_in_kb ? '1' : '0');
+			$existing_term = term_exists( $term_slug, 'decker_board' );
+			if ( $existing_term ) {
+				// Update visibility settings for existing board.
+				update_term_meta( $existing_term['term_id'], 'term-show-in-boards', $show_in_boards ? '1' : '0' );
+				update_term_meta( $existing_term['term_id'], 'term-show-in-kb', $show_in_kb ? '1' : '0' );
 				$boards[] = $existing_term['term_id'];
 				continue;
 			}
@@ -128,10 +168,10 @@ class Decker_Demo_Data {
 				)
 			);
 
-			if (!is_wp_error($term)) {
-				add_term_meta($term['term_id'], 'term-color', $term_color, true);
-				add_term_meta($term['term_id'], 'term-show-in-boards', $show_in_boards ? '1' : '0', true);
-				add_term_meta($term['term_id'], 'term-show-in-kb', $show_in_kb ? '1' : '0', true);
+			if ( ! is_wp_error( $term ) ) {
+				add_term_meta( $term['term_id'], 'term-color', $term_color, true );
+				add_term_meta( $term['term_id'], 'term-show-in-boards', $show_in_boards ? '1' : '0', true );
+				add_term_meta( $term['term_id'], 'term-show-in-kb', $show_in_kb ? '1' : '0', true );
 				$boards[] = $term['term_id'];
 			}
 		}
@@ -150,20 +190,22 @@ class Decker_Demo_Data {
 			'long' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
 		);
 
-		// Get boards that are visible in KB
-		$kb_boards = get_terms(array(
-			'taxonomy' => 'decker_board',
-			'hide_empty' => false,
-			'meta_query' => array(
-				array(
-					'key' => 'term-show-in-kb',
-					'value' => '1',
-					'compare' => '=',
+		// Get boards that are visible in KB.
+		$kb_boards = get_terms(
+			array(
+				'taxonomy' => 'decker_board',
+				'hide_empty' => false,
+				'meta_query' => array(
+					array(
+						'key' => 'term-show-in-kb',
+						'value' => '1',
+						'compare' => '=',
+					),
 				),
-			),
-		));
+			)
+		);
 
-		if (empty($kb_boards)) {
+		if ( empty( $kb_boards ) ) {
 			return;
 		}
 
@@ -194,9 +236,9 @@ class Decker_Demo_Data {
 		);
 
 		foreach ( $categories as $main_title => $subcategories ) {
-			// Assign a random KB-visible board
-			$board_term = $kb_boards[array_rand($kb_boards)];
-			
+			// Assign a random KB-visible board.
+			$board_term = $kb_boards[ array_rand( $kb_boards ) ];
+
 			// Create main category article.
 			$main_post_id = wp_insert_post(
 				array(
@@ -211,9 +253,9 @@ class Decker_Demo_Data {
 			// Assign random labels (1-2) to main category.
 			$main_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
 			wp_set_object_terms( $main_post_id, $main_labels, 'decker_label' );
-			
-			// Assign the board
-			wp_set_object_terms( $main_post_id, array($board_term->term_id), 'decker_board' );
+
+			// Assign the board.
+			wp_set_object_terms( $main_post_id, array( $board_term->term_id ), 'decker_board' );
 
 			$order = 0;
 			foreach ( $subcategories as $sub_title => $content ) {
@@ -233,12 +275,12 @@ class Decker_Demo_Data {
 					// Assign random labels to subcategory.
 					$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
 					wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-					
-					// Assign the same board as parent
-					wp_set_object_terms( $sub_post_id, array($board_term->term_id), 'decker_board' );
-					
-					// Assign the same board as parent
-					wp_set_object_terms( $sub_post_id, array($board_term->term_id), 'decker_board' );
+
+					// Assign the same board as parent.
+					wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
+
+					// Assign the same board as parent.
+					wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
 
 					$sub_order = 0;
 					foreach ( $content as $child_title => $child_content ) {
@@ -256,9 +298,9 @@ class Decker_Demo_Data {
 						// Assign random labels to child.
 						$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
 						wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
-						
-						// Assign the same board as parent
-						wp_set_object_terms( $child_post_id, array($board_term->term_id), 'decker_board' );
+
+						// Assign the same board as parent.
+						wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
 
 						$sub_order++;
 					}
@@ -411,39 +453,45 @@ class Decker_Demo_Data {
 		}
 		$user_ids = wp_list_pluck( $users, 'ID' );
 
-		// Get boards that are visible in Boards section
-		$visible_boards = get_terms(array(
-			'taxonomy' => 'decker_board',
-			'hide_empty' => false,
-			'meta_query' => array(
-				array(
-					'key' => 'term-show-in-boards',
-					'value' => '1',
-					'compare' => '=',
+		// Get boards that are visible in Boards section.
+		$visible_boards = get_terms(
+			array(
+				'taxonomy' => 'decker_board',
+				'hide_empty' => false,
+				'meta_query' => array(
+					array(
+						'key' => 'term-show-in-boards',
+						'value' => '1',
+						'compare' => '=',
+					),
 				),
-			),
-		));
-		
-		$visible_board_ids = wp_list_pluck($visible_boards, 'term_id');
+			)
+		);
+
+		$visible_board_ids = wp_list_pluck( $visible_boards, 'term_id' );
 
 		foreach ( $boards as $board_id ) {
 			$board = get_term( $board_id, 'decker_board' );
 			if ( is_wp_error( $board ) ) {
 				continue;
 			}
-			
-			// Check if this board is visible in Boards section
-			$show_in_boards = get_term_meta($board_id, 'term-show-in-boards', true);
-			
-			// Number of tasks to create depends on visibility
-			$num_tasks = $show_in_boards === '1' ? 10 : 3; // Create fewer tasks for hidden boards
-			
+
+			// Check if this board is visible in Boards section.
+			$show_in_boards = get_term_meta( $board_id, 'term-show-in-boards', true );
+
+			// Depending on board visibility, the number of tasks to create is set.
+			if ( '1' === $show_in_boards ) {
+				$num_tasks = 10;
+			} else {
+				$num_tasks = 3; // Fewer tasks are created if the board is hidden.
+			}
+
 			for ( $j = 1; $j <= $num_tasks; $j++ ) {
 				$post_title = "Task $j for {$board->name}";
 				$post_content = "Content for task $j in board {$board->name}.";
-				
-				if ($show_in_boards !== '1') {
-					$post_title .= " (Hidden Board)";
+
+				if ( '1' !== $show_in_boards ) {
+					$post_title .= ' (Hidden Board)';
 				}
 
 				// Assign random labels (0 to 3 labels).
