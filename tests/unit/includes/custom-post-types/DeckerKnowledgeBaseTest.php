@@ -65,4 +65,50 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$taxonomy = get_taxonomy( 'decker_board' );
 		$this->assertContains( 'decker_kb', $taxonomy->object_type );
 	}
+	
+	public function test_get_articles_with_board_filter() {
+		wp_set_current_user( $this->administrator );
+		
+		// Create a board
+		$board_id = wp_insert_term( 'Test Board', 'decker_board', array(
+			'slug' => 'test-board'
+		) );
+		
+		// Create an article with the board
+		$article_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Test Article with Board',
+				'post_status' => 'publish',
+			)
+		);
+		
+		wp_set_object_terms( $article_id, array( $board_id['term_id'] ), 'decker_board' );
+		
+		// Create another article without the board
+		$article2_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Test Article without Board',
+				'post_status' => 'publish',
+			)
+		);
+		
+		// Test filtering by board
+		$args = array(
+			'tax_query' => array(
+				array(
+					'taxonomy' => 'decker_board',
+					'field'    => 'slug',
+					'terms'    => 'test-board',
+				),
+			),
+		);
+		
+		$filtered_articles = Decker_Kb::get_articles($args);
+		
+		// Should only return the article with the board
+		$this->assertEquals(1, count($filtered_articles));
+		$this->assertEquals($article_id, $filtered_articles[0]->ID);
+	}
 }
