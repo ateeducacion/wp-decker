@@ -257,7 +257,7 @@ class DeckerTasksRestTest extends Decker_Test_Base {
             'menu_order' => 2
         ));
         
-        // Actualizar el orden
+        // Updates order
         $request = new WP_REST_Request('PUT', '/decker/v1/tasks/' . $task1 . '/order');
         $request->set_header('X-WP-Nonce', wp_create_nonce('wp_rest'));
         $request->add_header('Content-Type', 'application/json');
