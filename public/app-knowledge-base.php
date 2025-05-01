@@ -165,17 +165,24 @@ die();
 														);
 													}
 
-													// Get view article parameters.
-													$view_params_id = esc_attr( $article->ID );
-													$view_params_title = "'" . esc_js( $article->post_title ) . "'";
-													$view_params_content = "'" . esc_js( $article->post_content ) . "'";
-													$view_params_labels = "'" . esc_js( wp_json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "'";
-													$view_params_board = "'" . esc_js( wp_json_encode( $board_data ) ) . "'";
-													$view_params = $view_params_id . ', ' . $view_params_title . ', ' . $view_params_content . ', ' . $view_params_labels . ', ' . $view_params_board;
+													// Store article data as data attributes.
+													$article_data = array(
+														'id' => $article->ID,
+														'title' => $article->post_title,
+														'content' => $article->post_content,
+														'labels' => wp_json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ),
+														'board' => wp_json_encode( $board_data ),
+													);
 
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
-														'<a href="javascript:void(0);" onclick="viewArticle(' . esc_js( $view_params ) . ')" title="' . esc_attr( $article->post_title ) . '">' .
+														'<a href="javascript:void(0);" class="view-article-link" ' . 
+														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
+														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
+														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
+														'data-labels="' . esc_attr( $article_data['labels'] ) . '" ' .
+														'data-board="' . esc_attr( $article_data['board'] ) . '" ' .
+														'title="' . esc_attr( $article->post_title ) . '">' .
 														esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
@@ -231,8 +238,13 @@ die();
 													// Actions.
 													echo '<td class="text-end">';
 													// View button.
-													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' .
-														esc_attr( $view_params ) . ')"><i class="ri-eye-line"></i></button>';
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2 view-article-btn" ' .
+														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
+														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
+														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
+														'data-labels="' . esc_attr( $article_data['labels'] ) . '" ' .
+														'data-board="' . esc_attr( $article_data['board'] ) . '">' .
+														'<i class="ri-eye-line"></i></button>';
 													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
 													// Delete button.
@@ -275,11 +287,6 @@ die();
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
-	// Common function to generate the viewArticle parameters.
-	function getViewArticleParams(articleId, title, content, labels, board) {
-		return `${articleId}, '${title}', '${content}', '${labels}', '${board}'`;
-	}
-	
 	// Get URL parameters
 	function getUrlParameter(name) {
 		name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -289,6 +296,18 @@ die();
 	}
 	
 	jQuery(document).ready(function () {
+		// Handle article view links and buttons
+		jQuery(document).on('click', '.view-article-link, .view-article-btn', function(e) {
+			e.preventDefault();
+			const $this = jQuery(this);
+			const id = $this.data('id');
+			const title = $this.data('title');
+			const content = $this.data('content');
+			const labels = $this.data('labels');
+			const board = $this.data('board');
+			
+			viewArticle(id, title, content, labels, board);
+		});
 		// Determine the index of the hidden content column based on view.
 		const isViewAll = <?php echo 'all' === $view ? 'true' : 'false'; ?>;
 		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise.
