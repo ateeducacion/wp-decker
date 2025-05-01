@@ -208,8 +208,10 @@ die();
 													echo esc_html( wp_trim_words( $excerpt, 10, '...' ) );
 													echo '</td>';
 
-													// Last Updated.
-													echo '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $article->ID ) ) . '</td>';
+													// Last Updated with friendly date.
+													$exact_date = get_the_modified_date( 'Y-m-d', $article->ID );
+													$relative_date = Decker_Kb::get_relative_time( $article->ID );
+													echo '<td title="' . esc_attr( $exact_date ) . '">' . esc_html( $relative_date ) . '</td>';
 
 													// Actions.
 													echo '<td class="text-end">';

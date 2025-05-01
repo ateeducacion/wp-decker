@@ -273,6 +273,47 @@ class Decker_Kb {
 
 
 	/**
+	 * Get relative time for a post's modified date
+	 *
+	 * @param int $post_id The post ID
+	 * @return string The relative time as a human-readable string
+	 */
+	public static function get_relative_time( $post_id ): string {
+		$modified_date = get_post_modified_time( 'U', false, $post_id );
+		
+		if ( !$modified_date ) {
+			return __( 'No date', 'decker' );
+		}
+
+		$modified_date_obj = new DateTime( '@' . $modified_date );
+		$modified_date_obj->setTime( 0, 0, 0 ); // Ignore time.
+
+		$today = new DateTime( 'today' );
+		$yesterday = ( clone $today )->modify( '-1 day' );
+		$tomorrow = ( clone $today )->modify( '+1 day' );
+
+		if ( $modified_date_obj == $today ) {
+			return __( 'Today', 'decker' );
+		} elseif ( $modified_date_obj == $yesterday ) {
+			return __( 'Yesterday', 'decker' );
+		} elseif ( $modified_date_obj == $tomorrow ) {
+			return __( 'Tomorrow', 'decker' );
+		} else {
+			$now = current_time( 'timestamp' ); // WordPress current time.
+			$diff_days = $today->diff( $modified_date_obj )->days;
+
+			// Use human_time_diff.
+			if ( $modified_date_obj < $today ) {
+				// Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+				return sprintf( __( '%s ago', 'decker' ), human_time_diff( $modified_date, $now ) );
+			} else {
+				// Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+				return sprintf( __( 'in %s', 'decker' ), human_time_diff( $now, $modified_date ) );
+			}
+		}
+	}
+
+	/**
 	 * Get all articles in hierarchical order.
 	 *
 	 * @param array $args Optional. Additional arguments for WP_Query.
