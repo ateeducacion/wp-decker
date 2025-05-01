@@ -287,8 +287,9 @@ class HooksTest extends Decker_Test_Base {
 		$this->assertIsArray( $assigned_users, 'Assigned users should be an array.' );
 		$this->assertContains( $this->user_id, $assigned_users, 'User was not assigned to the task.' );
 
-		// Assert that the hook was called exactly once.
-		$this->assertEquals( 1, $hook_called, 'The decker_user_assigned hook should have been called once.' );
+        // The user was already assigned, so the hook should not fire again.
+        $this->assertEquals( 0, $hook_called, 'The decker_user_assigned hook should not fire when the user is already assigned.' );
+
 	}
 
 

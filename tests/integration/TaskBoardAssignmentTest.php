@@ -4,430 +4,213 @@ namespace Decker\Tests\Integration;
 
 use Decker_Tasks;
 use Decker_Test_Base;
+use WP_Post; // Make sure to import WP_Post
 
 /**
  * Test class for verifying task board assignment behavior
  */
 class TaskBoardAssignmentTest extends Decker_Test_Base {
 
-	private $taskManager;
-	private $testTaskId;
-	private $originalBoardId;
-	private $newBoardId;
+    private $user_id;
+    private $board1_id;
+    private $board2_id;
+    private $board3_id; // For tests with more boards/stacks
 
-	protected function setUp(): void {
-		parent::setUp();
+    protected function setUp(): void {
+        parent::setUp();
+        // Create a user and set as current user.
+        $this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
+        wp_set_current_user( $this->user_id );
+        // Create test boards using the factory
+        $this->board1_id = self::factory()->board->create( array( 'name' => 'Test Board 1' ) );
+        $this->board2_id = self::factory()->board->create( array( 'name' => 'Test Board 2' ) );
+        $this->board3_id = self::factory()->board->create( array( 'name' => 'Test Board 3' ) );
+    }
 
-		// Create a user and set as current user.
-		$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
-		wp_set_current_user( $this->user_id );
+    // --- Helper function to get current order ---
+    private function get_current_order($task_id) {
+        clean_post_cache($task_id);
+        $post = get_post($task_id);
+        return $post ? (int) $post->menu_order : -1; // Return -1 if the post doesn't exist
+    }
 
-		// Create test boards using the factory
-		$this->originalBoardId = self::factory()->board->create( array( 'name' => 'Test Board 1' ) );
-		$this->newBoardId = self::factory()->board->create( array( 'name' => 'Test Board 2' ) );
+    // --- Tests ---
+    public function testExplicitlyChangingBoardShouldWork() {
+        // Create initial task in board 1
+        $taskA_to_move = self::factory()->task->create( array( 'post_title' => 'Task A To Move', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'Task B', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'Task C', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskD = self::factory()->task->create( array( 'post_title' => 'Task D B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
+        $taskE = self::factory()->task->create( array( 'post_title' => 'Task E B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
 
-		// Create a test task using the factory
-		$this->testTaskId = self::factory()->task->create(
-			array(
-				'post_title' => 'Original Title',
-				'post_content' => 'Original Description',
-				'stack' => 'to-do',
-				'max_priority' => false,
-				'board' => $this->originalBoardId,
-			)
-		);
-	}
+        // Verify initial order
+        $this->assertEquals(1, $this->get_current_order($taskA_to_move), 'Initial order TTM');
+        $this->assertEquals(2, $this->get_current_order($taskB), 'Initial order B');
+        $this->assertEquals(3, $this->get_current_order($taskC), 'Initial order C');
+        $this->assertEquals(1, $this->get_current_order($taskD), 'Initial order D');
+        $this->assertEquals(2, $this->get_current_order($taskE), 'Initial order E');
 
-	protected function tearDown(): void {
-		// Clean up test data
-		wp_delete_post( $this->testTaskId, true );
-		wp_delete_term( $this->originalBoardId, 'decker_board' );
-		wp_delete_term( $this->newBoardId, 'decker_board' );
+        // Move the task
+        self::factory()->task->update_object( $taskA_to_move, array( 'board' => $this->board2_id ) );
 
-		parent::tearDown();
-	}
+        // Verify the term was changed
+        $currentBoardId = wp_get_post_terms( $taskA_to_move, 'decker_board' )[0]->term_id;
+        $this->assertEquals( $this->board2_id, $currentBoardId, 'Board should change' );
 
-	public function testExplicitlyChangingBoardShouldWork() {
-		// Create three tasks in the original board's to-do stack
-		for ( $i = 1; $i <= 3; $i++ ) {
-			self::factory()->task->create(
-				array(
-					'post_title' => "Task $i",
-						'stack' => 'to-do',
-						'max_priority' => false,
-						'board' => $this->originalBoardId,
-				)
-			);
-		}
+        // Verify order in Board 1 (B=1, C=2)
+        $this->assertEquals(1, $this->get_current_order($taskB), 'Task B should be 1 in Board 1 after move');
+        $this->assertEquals(2, $this->get_current_order($taskC), 'Task C should be 2 in Board 1 after move');
 
-		// 2) Verificamos que la tarea principal sigue teniendo menu_order = 1
-		//    (es la primera creada, antes de las 3 que acabamos de añadir)
-		$initial_menu_order = get_post_field( 'menu_order', $this->testTaskId );
-		$this->assertEquals(
-		    1,
-		    $initial_menu_order,
-		    'Initial task should have menu_order = 1 before changing board.'
-		);
+        // Verify order in Board 2 (D=1, E=2, TTM=3)
+        $this->assertEquals(1, $this->get_current_order($taskD), 'Task D should be 1 in Board 2 after move');
+        $this->assertEquals(2, $this->get_current_order($taskE), 'Task E should be 2 in Board 2 after move');
+        $this->assertEquals(3, $this->get_current_order($taskA_to_move), 'Moved Task should be 3 in Board 2 after move');
+    }
 
+    public function testInsertingTaskReordersOthersWithMaxOrder() {
+        $taskA = self::factory()->task->create( array( 'post_title' => 'A', 'board' => $this->board1_id, 'stack' => 'to-do', 'max_priority' => false ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'B', 'board' => $this->board1_id, 'stack' => 'to-do', 'max_priority' => true ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'C', 'board' => $this->board1_id, 'stack' => 'to-do', 'max_priority' => false ) );
+        $taskD = self::factory()->task->create( array( 'post_title' => 'D', 'board' => $this->board2_id, 'stack' => 'to-do', 'max_priority' => false ) );
+        $taskE = self::factory()->task->create( array( 'post_title' => 'E', 'board' => $this->board2_id, 'stack' => 'to-do', 'max_priority' => false ) );
 
-		// Create two tasks in the new board's to-do stack
-		for ( $i = 1; $i <= 2; $i++ ) {
-			self::factory()->task->create(
-				array(
-					'post_title' => "New Board Task $i",
-					'stack' => 'to-do',
-					'max_priority' => false,
-					'board' => $this->newBoardId,
-				)
-			);
-		}
+        $this->assertEquals(2, $this->get_current_order($taskA), 'Initial A order after reorder');
+        $this->assertEquals(1, $this->get_current_order($taskB), 'Task B should be first in Board 1 due to max_order');
+        $this->assertEquals(3, $this->get_current_order($taskC), 'Initial C order after reorder');
 
-		// Update the board explicitly using the factory
-		self::factory()->task->update_object(
-			$this->testTaskId,
-			array(
-				'post_title' => 'Original Title',
-				'post_content' => 'Original Description',
-				'stack' => 'to-do',
-				'max_priority' => false,
-				'board' => $this->newBoardId,
-			)
-		);
+        // Move B (max_priority) to Board 2
+        self::factory()->task->update_object( $taskB, array( 'board' => $this->board2_id ) );
 
-		// Verify initial menu_order is 1 (first task in original board)
-		$initial_menu_order = get_post_field( 'menu_order', $this->testTaskId );
-		$this->assertEquals( 1, $initial_menu_order, 'Initial task should have menu_order 1' );
+        // Verify Board 1: A(1), C(2)
+        $this->assertEquals(1, $this->get_current_order($taskA), 'Task A should become 1 in Board 1');
+        $this->assertEquals(2, $this->get_current_order($taskC), 'Task C should become 2 in Board 1');
 
-		// Get the current board ID and verify board changed
-		$currentBoardId = wp_get_post_terms( $this->testTaskId, 'decker_board' )[0]->term_id;
-		$this->assertEquals(
-			$this->newBoardId,
-			$currentBoardId,
-			'Board should change when explicitly updated'
-		);
+        // Verify Board 2: B(1), D(2), E(3)
+        $this->assertEquals(1, $this->get_current_order($taskB), 'Task B should be 1 in Board 2 due to max_order');
+        $this->assertEquals(2, $this->get_current_order($taskD), 'Task D should become 2 in Board 2');
+        $this->assertEquals(3, $this->get_current_order($taskE), 'Task E should become 3 in Board 2');
+    }
 
-		// Get all tasks in the new board's to-do stack
-		$tasks_in_new_board = get_posts(
-			array(
-				'post_type' => 'decker_task',
-				'orderby' => 'menu_order',
-				'order' => 'ASC',
-				'tax_query' => array(
-					array(
-						'taxonomy' => 'decker_board',
-						'field' => 'term_id',
-						'terms' => $this->newBoardId,
-					),
-				),
-				'meta_query' => array(
-					array(
-						'key' => 'stack',
-						'value' => 'to-do',
-						'compare' => '=',
-					),
-				),
-				'posts_per_page' => -1,
-				'fields' => 'ids',
-			)
-		);
+    public function testInsertingTaskReordersOthers() {
+        $taskA = self::factory()->task->create( array( 'post_title' => 'A', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'B', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'C', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskD = self::factory()->task->create( array( 'post_title' => 'D', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
+        $taskE = self::factory()->task->create( array( 'post_title' => 'E', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
 
-	// Confirmamos que la tarea aparece en la lista de tareas del nuevo board
-	$this->assertContains(
-	    $this->testTaskId,
-	    $tasks_in_new_board,
-	    'Task should now be in the new board\'s to-do stack'
-	);
+        // Move B to Board 2
+        self::factory()->task->update_object( $taskB, array( 'board' => $this->board2_id ) );
 
-		// // Verify the moved task is the last one in the list
-		// $this->assertEquals(
-		// 	$this->testTaskId,
-		// 	end( $tasks ),
-		// 	'Task should be placed at the end of the stack in the new board'
-		// );
+        // Verify Board 1: A(1), C(2)
+        $this->assertEquals( 1, $this->get_current_order($taskA), 'Task A should remain first in Board 1' );
+        $this->assertEquals( 2, $this->get_current_order($taskC), 'Task C should shift to second in Board 1' );
 
-		// // Verify final menu_order is 3 (after 2 existing tasks in new board)
-		// $final_menu_order = get_post_field( 'menu_order', $this->testTaskId );
-		// $this->assertEquals( 3, $final_menu_order, 'Task should have menu_order 3 after moving to new board' );
-	}
+        $this->assertEquals( 1, $this->get_current_order($taskD), 'Task D should remain first in Board 2' );
+        $this->assertEquals( 2, $this->get_current_order($taskE), 'Task E should remain second in Board 2' );
+        $this->assertEquals( 3, $this->get_current_order($taskB), 'Task B should be added as third in Board 2' );
+    }
 
-/**
- * Tests that inserting a task at a specific menu_order increments subsequent tasks.
- */
-// public function testInsertingTaskReordersOthers() {
-//     // 1) Create one board for all tasks.
-//     $board_id = self::factory()->board->create( array( 'name' => 'Reorder Board' ) );
+    public function testMoveFirstTask() {
+        $taskA = self::factory()->task->create( array( 'post_title' => 'A First', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'B Middle', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'C Last', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskD = self::factory()->task->create( array( 'post_title' => 'D First B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
+        $taskE = self::factory()->task->create( array( 'post_title' => 'E Last B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
 
-//     // 2) Create three tasks in 'to-do' stack. They should get menu_order 1,2,3 automatically (based on your logic).
-//     $taskA = self::factory()->task->create(
-//         array(
-//             'post_title'   => 'Task A',
-//             'stack'        => 'to-do',
-//             'board'        => $board_id,
-//         )
-//     );
-//     $taskB = self::factory()->task->create(
-//         array(
-//             'post_title'   => 'Task B',
-//             'stack'        => 'to-do',
-//             'board'        => $board_id,
-//         )
-//     );
-//     $taskC = self::factory()->task->create(
-//         array(
-//             'post_title'   => 'Task C',
-//             'stack'        => 'to-do',
-//             'board'        => $board_id,
-//         )
-//     );
+        // Move A (the first) to Board 2
+        self::factory()->task->update_object( $taskA, array( 'board' => $this->board2_id ) );
 
-//     // Fetch their initial menu_order for clarity.
-//     // This test assumes each new task is appended at the end by default.
-//     // (Task A = 1, B = 2, C = 3).
-//     $orderA = get_post_field( 'menu_order', $taskA );
-//     $orderB = get_post_field( 'menu_order', $taskB );
-//     $orderC = get_post_field( 'menu_order', $taskC );
+        // Verify Board 1: B(1), C(2)
+        $this->assertEquals(1, $this->get_current_order($taskB), 'Task B should become 1 in Board 1');
+        $this->assertEquals(2, $this->get_current_order($taskC), 'Task C should become 2 in Board 1');
 
-//     // Verify they are 1, 2, 3
-//     $this->assertEquals( 1, (int) $orderA, 'Task A should have menu_order = 1' );
-//     $this->assertEquals( 2, (int) $orderB, 'Task B should have menu_order = 2' );
-//     $this->assertEquals( 3, (int) $orderC, 'Task C should have menu_order = 3' );
+        // Verify Board 2: D(1), E(2), A(3)
+        $this->assertEquals(1, $this->get_current_order($taskD), 'Task D should remain 1 in Board 2');
+        $this->assertEquals(2, $this->get_current_order($taskE), 'Task E should remain 2 in Board 2');
+        $this->assertEquals(3, $this->get_current_order($taskA), 'Moved Task A should become 3 in Board 2');
+    }
 
-//     // 3) Create (or update) a new task D and force it into "position 2" within the stack.
-//     // Depending on your plugin's actual reordering logic, you might do:
-//     // - an update_object() with a custom 'menu_order' param
-//     // - a custom function that sets its position
-//     // The snippet below is hypothetical. Adjust to match your plugin.
-//     $taskD = $this->testTaskId;
+    public function testMoveLastTask() {
+        $taskA = self::factory()->task->create( array( 'post_title' => 'A First', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'B Middle', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'C Last', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskD = self::factory()->task->create( array( 'post_title' => 'D First B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
+        $taskE = self::factory()->task->create( array( 'post_title' => 'E Last B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
 
-//     //  self::factory()->task->create(
-//     //     array(
-//     //         'post_title'   => 'Task D',
-//     //         'stack'        => 'to-do',
-//     //         'board'        => $board_id,
-//     //         // Hypothetical approach: we rely on your plugin's reorder logic if it respects 'menu_order'
-//     //         'menu_order'   => 2, // We want it inserted at position 2
-//     //     )
-//     // );
+        // Move C (the last) to Board 2
+        self::factory()->task->update_object( $taskC, array( 'board' => $this->board2_id ) );
 
-//     // 4) Now fetch the new menu_order for all tasks again.
-//     $orderA = get_post_field( 'menu_order', $taskA );
-//     $orderB = get_post_field( 'menu_order', $taskB );
-//     $orderC = get_post_field( 'menu_order', $taskC );
-//     $orderD = get_post_field( 'menu_order', $taskD );
+        // Verify Board 1: A(1), B(2)
+        $this->assertEquals(1, $this->get_current_order($taskA), 'Task A should remain 1 in Board 1');
+        $this->assertEquals(2, $this->get_current_order($taskB), 'Task B should remain 2 in Board 1');
 
-//     // 5) We expect:
-//     // - A remains 1
-//     // - D is now 2
-//     // - B has shifted to 3
-//     // - C has shifted to 4
-//     $this->assertEquals(
-//         1,
-//         (int) $orderA,
-//         'Task A remains in position 1'
-//     );
-//     $this->assertEquals(
-//         2,
-//         (int) $orderD,
-//         'Task D is inserted at position 2'
-//     );
-//     $this->assertEquals(
-//         3,
-//         (int) $orderB,
-//         'Task B shifts from position 2 to 3'
-//     );
-//     $this->assertEquals(
-//         4,
-//         (int) $orderC,
-//         'Task C shifts from position 3 to 4'
-//     );
-// }
+        // Verify Board 2: D(1), E(2), C(3)
+        $this->assertEquals(1, $this->get_current_order($taskD), 'Task D should remain 1 in Board 2');
+        $this->assertEquals(2, $this->get_current_order($taskE), 'Task E should remain 2 in Board 2');
+        $this->assertEquals(3, $this->get_current_order($taskC), 'Moved Task C should become 3 in Board 2');
+    }
 
-public function testInsertingTaskReordersOthersWithMaxOrder() {
-    // Crear el primer board y añadir tres tareas.
-    $board1 = self::factory()->board->create( array( 'name' => 'Board 1' ) );
-    $taskA = self::factory()->task->create(
-        array(
-            'post_title' => 'Task A',
-            'stack'      => 'to-do',
-            'board'      => $board1,
-        )
-    );
-    $taskB = self::factory()->task->create(
-        array(
-            'post_title'   => 'Task B',
-            'stack'        => 'to-do',
-            'board'        => $board1,
-            'max_priority' => true,
-        )
-    );
-    $taskC = self::factory()->task->create(
-        array(
-            'post_title' => 'Task C',
-            'stack'      => 'to-do',
-            'board'      => $board1,
-        )
-    );
+    public function testChangeStackSameBoard() {
+        // This test may fail if changing only the stack does not trigger reordering.
+        // If it fails, and you want it to reorder, you will need to add a hook to `update_post_meta` for 'stack'.
+        $taskA = self::factory()->task->create( array( 'post_title' => 'A todo', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'B todo', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'C progress', 'board' => $this->board1_id, 'stack' => 'in-progress' ) );
 
-    // Crear el segundo board y añadir cuatro tareas.
-    $board2 = self::factory()->board->create( array( 'name' => 'Board 2' ) );
-    $taskD = self::factory()->task->create(
-        array(
-            'post_title' => 'Task D',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
-    $taskE = self::factory()->task->create(
-        array(
-            'post_title' => 'Task E',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
-    $taskF = self::factory()->task->create(
-        array(
-            'post_title' => 'Task F',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
-    $taskG = self::factory()->task->create(
-        array(
-            'post_title' => 'Task G',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
+        // Move B from 'to-do' to 'in-progress'
+        self::factory()->task->update_object( $taskB, array( 'stack' => 'in-progress' ) );
 
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskB ), 'Task B should be first in Board 1 due to max_order' );
+        // Verify Board 1, stack 'to-do': A(1)
+        $this->assertEquals(1, $this->get_current_order($taskA), 'Task A should remain 1 in todo stack');
 
-    // Mover la tarea B desde el primer board al segundo, manteniendo max_order = true.
-    self::factory()->task->update_object(
-        $taskB,
-        array(
-            'board' => $board2,
-            'stack' => 'to-do',
-        )
-    );
+        // Verify Board 1, stack 'in-progress': C(1), B(2) (assuming B was created after C)
+        $this->assertEquals(1, $this->get_current_order($taskC), 'Task C should be 1 in progress stack');
+        $this->assertEquals(2, $this->get_current_order($taskB), 'Task B should be 2 in progress stack');
+    }
 
-    // Verificar el nuevo board de la tarea B.
-    $currentBoardId = wp_get_post_terms( $taskB, 'decker_board' )[0]->term_id;
-    $this->assertEquals(
-        $board2,
-        $currentBoardId,
-        'Board should change when explicitly updated.'
-    );
+    public function testChangeStackAndBoard() {
+        $taskA = self::factory()->task->create( array( 'post_title' => 'A todo B1', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskB = self::factory()->task->create( array( 'post_title' => 'B todo B1', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskC = self::factory()->task->create( array( 'post_title' => 'C progress B2', 'board' => $this->board2_id, 'stack' => 'in-progress' ) );
 
-    // Verificar el nuevo orden en el Board 1 (Task A y Task C).
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskA ), 'Task A should remain first in Board 1' );
-    $this->assertEquals( 2, get_post_field( 'menu_order', $taskC ), 'Task C should shift to second in Board 1' );
+        // Move B to Board 2 and to stack 'in-progress'
+        self::factory()->task->update_object( $taskB, array( 'board' => $this->board2_id, 'stack' => 'in-progress' ) );
 
-    // Verificar el nuevo orden en el Board 2.
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskB ), 'Task B should be first in Board 2 due to max_order' );
-    $this->assertEquals( 2, get_post_field( 'menu_order', $taskD ), 'Task D should shift to second in Board 2' );
-    $this->assertEquals( 3, get_post_field( 'menu_order', $taskE ), 'Task E should shift to third in Board 2' );
-    $this->assertEquals( 4, get_post_field( 'menu_order', $taskF ), 'Task F should shift to fourth in Board 2' );
-    $this->assertEquals( 5, get_post_field( 'menu_order', $taskG ), 'Task G should shift to fifth in Board 2' );
-}
+        // Verify Board 1, stack 'to-do': A(1)
+        $this->assertEquals(1, $this->get_current_order($taskA), 'Task A should remain 1 in Board 1 todo');
 
+        // Verify Board 2, stack 'in-progress': C(1), B(2)
+        $this->assertEquals(1, $this->get_current_order($taskC), 'Task C should be 1 in Board 2 progress');
+        $this->assertEquals(2, $this->get_current_order($taskB), 'Task B should be 2 in Board 2 progress');
+    }
 
-public function testInsertingTaskReordersOthers() {
-    // Crear el primer board y añadir tres tareas.
-    $board1 = self::factory()->board->create( array( 'name' => 'Board 1' ) );
-    $taskA = self::factory()->task->create(
-        array(
-            'post_title' => 'Task A',
-            'stack'      => 'to-do',
-            'board'      => $board1,
-        )
-    );
-    $taskB = self::factory()->task->create(
-        array(
-            'post_title' => 'Task B',
-            'stack'      => 'to-do',
-            'board'      => $board1,
-        )
-    );
-    $taskC = self::factory()->task->create(
-        array(
-            'post_title' => 'Task C',
-            'stack'      => 'to-do',
-            'board'      => $board1,
-        )
-    );
+    public function testMovingTasksAcrossThreeBoardsMaintainsOrder() {
+        // Create tasks in each board
+        $taskA1 = self::factory()->task->create( array( 'post_title' => 'A1', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
+        $taskA2 = self::factory()->task->create( array( 'post_title' => 'A2', 'board' => $this->board1_id, 'stack' => 'to-do' ) );
 
-    // Crear el segundo board y añadir cuatro tareas.
-    $board2 = self::factory()->board->create( array( 'name' => 'Board 2' ) );
-    $taskD = self::factory()->task->create(
-        array(
-            'post_title' => 'Task D',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
-    $taskE = self::factory()->task->create(
-        array(
-            'post_title' => 'Task E',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
-    $taskF = self::factory()->task->create(
-        array(
-            'post_title' => 'Task F',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
-    $taskG = self::factory()->task->create(
-        array(
-            'post_title' => 'Task G',
-            'stack'      => 'to-do',
-            'board'      => $board2,
-        )
-    );
+        $taskB1 = self::factory()->task->create( array( 'post_title' => 'B1', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
+        $taskB2 = self::factory()->task->create( array( 'post_title' => 'B2', 'board' => $this->board2_id, 'stack' => 'to-do' ) );
 
-    // Verificar el orden inicial en ambos boards.
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskA ), 'Task A should be first in Board 1' );
-    $this->assertEquals( 2, get_post_field( 'menu_order', $taskB ), 'Task B should be second in Board 1' );
-    $this->assertEquals( 3, get_post_field( 'menu_order', $taskC ), 'Task C should be third in Board 1' );
+        $taskC1 = self::factory()->task->create( array( 'post_title' => 'C1', 'board' => $this->board3_id, 'stack' => 'to-do' ) );
+        $taskC2 = self::factory()->task->create( array( 'post_title' => 'C2', 'board' => $this->board3_id, 'stack' => 'to-do' ) );
 
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskD ), 'Task D should be first in Board 2' );
-    $this->assertEquals( 2, get_post_field( 'menu_order', $taskE ), 'Task E should be second in Board 2' );
-    $this->assertEquals( 3, get_post_field( 'menu_order', $taskF ), 'Task F should be third in Board 2' );
-    $this->assertEquals( 4, get_post_field( 'menu_order', $taskG ), 'Task G should be fourth in Board 2' );
+        // Move one task from each board to a different board
+        self::factory()->task->update_object( $taskA1, array( 'board' => $this->board2_id ) ); // board1 → board2
+        self::factory()->task->update_object( $taskB2, array( 'board' => $this->board3_id ) ); // board2 → board3
+        self::factory()->task->update_object( $taskC1, array( 'board' => $this->board1_id ) ); // board3 → board1
 
-    // Mover la tarea B desde el primer board al segundo.
-	// Update the board explicitly using the factory
-	self::factory()->task->update_object(
-		$taskB,
-		array(
-			'board' => $board2,
-			'stack' => 'to-do',
-		)
-	);
+        // Assert order in board1 (originally A1, A2) → now A2, C1
+        $this->assertEquals(1, $this->get_current_order($taskA2), 'A2 should be first in Board 1');
+        $this->assertEquals(2, $this->get_current_order($taskC1), 'C1 should be second in Board 1');
 
+        // Assert order in board2 (originally B1, B2) → now B1, A1
+        $this->assertEquals(1, $this->get_current_order($taskB1), 'B1 should be first in Board 2');
+        $this->assertEquals(2, $this->get_current_order($taskA1), 'A1 should be second in Board 2');
 
-	// Get the current board ID and verify board changed
-	$currentBoardId = wp_get_post_terms( $taskB, 'decker_board' )[0]->term_id;
-	$this->assertEquals(
-		$board2,
-		$currentBoardId,
-		'Board should change when explicitly updated'
-	);
-
-
-    // Verificar el nuevo orden en el Board 1 (Task A y Task C).
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskA ), 'Task A should remain first in Board 1' );
-    $this->assertEquals( 2, get_post_field( 'menu_order', $taskC ), 'Task C should shift to second in Board 1' );
-
-    // Verificar el nuevo orden en el Board 2.
-    $this->assertEquals( 1, get_post_field( 'menu_order', $taskD ), 'Task D should remain first in Board 2' );
-
-    $this->assertEquals( 2, get_post_field( 'menu_order', $taskE ), 'Task E should remain second in Board 2' );
-    $this->assertEquals( 3, get_post_field( 'menu_order', $taskF ), 'Task F should remain third in Board 2' );
-    $this->assertEquals( 4, get_post_field( 'menu_order', $taskG ), 'Task G should remain fourth in Board 2' );
-    $this->assertEquals( 5, get_post_field( 'menu_order', $taskB ), 'Task B should be added as fifth in Board 2' );
-}
+        // Assert order in board3 (originally C1, C2) → now C2, B2
+        $this->assertEquals(1, $this->get_current_order($taskC2), 'C2 should be first in Board 3');
+        $this->assertEquals(2, $this->get_current_order($taskB2), 'B2 should be second in Board 3');
+    }
 
 }
