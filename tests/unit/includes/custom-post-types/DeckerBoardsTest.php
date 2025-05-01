@@ -300,4 +300,98 @@ class DeckerBoardsTest extends Decker_Test_Base {
 		// Clean up
 		wp_set_current_user( 0 );
 	}
+	
+	/**
+	 * Tests that visibility settings can be set and updated.
+	 */
+	public function test_board_visibility_settings() {
+		wp_set_current_user( $this->editor );
+		
+		// Create a board with explicit visibility settings
+		$term_id = self::factory()->board->create(
+			array(
+				'name' => 'Visibility Test Board',
+				'color' => '#123456',
+				'show_in_boards' => false,
+				'show_in_kb' => true,
+			)
+		);
+		
+		// Verify the visibility settings were saved correctly
+		$show_in_boards = get_term_meta( $term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term_id, 'term-show-in-kb', true );
+		$this->assertEquals( '0', $show_in_boards, 'Show in boards should be false.' );
+		$this->assertEquals( '1', $show_in_kb, 'Show in knowledge base should be true.' );
+		
+		// Update the visibility settings
+		self::factory()->board->update_object(
+			$term_id,
+			array(
+				'show_in_boards' => true,
+				'show_in_kb' => false,
+			)
+		);
+		
+		// Verify the updated settings
+		$show_in_boards = get_term_meta( $term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term_id, 'term-show-in-kb', true );
+		$this->assertEquals( '1', $show_in_boards, 'Show in boards should now be true.' );
+		$this->assertEquals( '0', $show_in_kb, 'Show in knowledge base should now be false.' );
+		
+		// Clean up
+		wp_delete_term( $term_id, 'decker_board' );
+	}
+	
+	/**
+	 * Tests that Board objects correctly reflect visibility settings.
+	 */
+	public function test_board_object_visibility() {
+		wp_set_current_user( $this->editor );
+		
+		// Create boards with different visibility combinations
+		$board1_id = self::factory()->board->create(
+			array(
+				'name' => 'Board Both Visible',
+				'slug' => 'board-both-visible',
+				'show_in_boards' => true,
+				'show_in_kb' => true,
+			)
+		);
+		
+		$board2_id = self::factory()->board->create(
+			array(
+				'name' => 'Board Both Hidden',
+				'slug' => 'board-both-hidden',
+				'show_in_boards' => false,
+				'show_in_kb' => false,
+			)
+		);
+		
+		$board3_id = self::factory()->board->create(
+			array(
+				'name' => 'Board Mixed Visibility',
+				'slug' => 'board-mixed-visibility',
+				'show_in_boards' => true,
+				'show_in_kb' => false,
+			)
+		);
+		
+		// Get Board objects and verify visibility properties
+		$board1 = BoardManager::get_board_by_slug('board-both-visible');
+		$this->assertTrue($board1->show_in_boards, 'Board 1 should be visible in boards.');
+		$this->assertTrue($board1->show_in_kb, 'Board 1 should be visible in knowledge base.');
+		
+		$board2 = BoardManager::get_board_by_slug('board-both-hidden');
+		$this->assertFalse($board2->show_in_boards, 'Board 2 should be hidden in boards.');
+		$this->assertFalse($board2->show_in_kb, 'Board 2 should be hidden in knowledge base.');
+		
+		$board3 = BoardManager::get_board_by_slug('board-mixed-visibility');
+		$this->assertTrue($board3->show_in_boards, 'Board 3 should be visible in boards.');
+		$this->assertFalse($board3->show_in_kb, 'Board 3 should be hidden in knowledge base.');
+		
+		// Clean up
+		wp_delete_term( $board1_id, 'decker_board' );
+		wp_delete_term( $board2_id, 'decker_board' );
+		wp_delete_term( $board3_id, 'decker_board' );
+	}
 }
