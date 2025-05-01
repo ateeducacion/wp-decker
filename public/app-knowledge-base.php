@@ -101,7 +101,7 @@ die();
 										);
 										?>
 										" 
-										   class="btn btn-outline-primary btn-sm <?php echo $view === 'all' ? 'active' : ''; ?>">
+										   class="btn btn-outline-primary btn-sm <?php echo 'all' === $view ? 'active' : ''; ?>">
 											<?php esc_html_e( 'All Articles', 'decker' ); ?>
 										</a>
 									</div>
@@ -153,7 +153,7 @@ die();
 													// Article Title with hierarchy.
 													echo '<td>';
 
-													// Get board data for the article
+													// Get board data for the article.
 													$board_data = null;
 													$board_terms = wp_get_post_terms( $article->ID, 'decker_board' );
 													if ( ! empty( $board_terms ) ) {
@@ -165,12 +165,13 @@ die();
 														);
 													}
 
-													// Get view article parameters
-													$view_params = esc_attr( $article->ID ) . ', ' .
-														"'" . esc_js( $article->post_title ) . "', " .
-														"'" . esc_js( $article->post_content ) . "', " .
-														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "', " .
-														"'" . esc_js( json_encode( $board_data ) ) . "'";
+													// Get view article parameters.
+													$view_params_id = esc_attr( $article->ID );
+													$view_params_title = "'" . esc_js( $article->post_title ) . "'";
+													$view_params_content = "'" . esc_js( $article->post_content ) . "'";
+													$view_params_labels = "'" . esc_js( wp_json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "'";
+													$view_params_board = "'" . esc_js( wp_json_encode( $board_data ) ) . "'";
+													$view_params = $view_params_id . ', ' . $view_params_title . ', ' . $view_params_content . ', ' . $view_params_labels . ', ' . $view_params_board;
 
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
@@ -230,8 +231,8 @@ die();
 													// Actions.
 													echo '<td class="text-end">';
 													// View button.
-													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' .
-														$view_params . ')"><i class="ri-eye-line"></i></button>';
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' . 
+														esc_attr( $view_params ) . ')"><i class="ri-eye-line"></i></button>';
 													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
 													// Delete button.
@@ -289,7 +290,7 @@ die();
 	
 	jQuery(document).ready(function () {
 		// Determine the index of the hidden content column based on view.
-		const isViewAll = <?php echo $view === 'all' ? 'true' : 'false'; ?>;
+		const isViewAll = <?php echo 'all' === $view ? 'true' : 'false'; ?>;
 		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise.
 		
 		jQuery('#tablaKB').DataTable({
@@ -352,12 +353,12 @@ die();
 
 	function deleteArticle(id, title) {
 		Swal.fire({
-			title: '¿Estás seguro?',
-			text: 'Se eliminará el artículo "' + title + '"',
+			title: '<?php esc_html_e( 'Are you sure?', 'decker' ); ?>',
+			text: '<?php esc_html_e( 'The article', 'decker' ); ?> "' + title + '" <?php esc_html_e( 'will be deleted', 'decker' ); ?>',
 			icon: 'warning',
 			showCancelButton: true,
-			confirmButtonText: 'Sí, eliminar',
-			cancelButtonText: 'Cancelar',
+			confirmButtonText: '<?php esc_html_e( 'Yes, delete', 'decker' ); ?>',
+			cancelButtonText: '<?php esc_html_e( 'Cancel', 'decker' ); ?>',
 			confirmButtonColor: '#d33',
 			cancelButtonColor: '#3085d6'
 		}).then((result) => {
@@ -376,12 +377,19 @@ die();
 					return response.json();
 				})
 				.then(() => {
-					Swal.fire('Eliminado', 'El artículo ha sido eliminado correctamente.', 'success')
-						.then(() => location.reload());
+					Swal.fire(
+						'<?php esc_html_e( 'Deleted', 'decker' ); ?>', 
+						'<?php esc_html_e( 'The article has been successfully deleted.', 'decker' ); ?>', 
+						'success'
+					).then(() => location.reload());
 				})
 				.catch(error => {
 					console.error('Error:', error);
-					Swal.fire('Error', 'No se pudo eliminar el artículo.', 'error');
+					Swal.fire(
+						'<?php esc_html_e( 'Error', 'decker' ); ?>', 
+						'<?php esc_html_e( 'Could not delete the article.', 'decker' ); ?>', 
+						'error'
+					);
 				});
 			}
 		});
