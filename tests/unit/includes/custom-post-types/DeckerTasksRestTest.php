@@ -115,7 +115,7 @@ class DeckerTasksRestTest extends Decker_Test_Base {
         $task_id = self::factory()->task->create(
             array(
                 'post_title' => 'Original Title',
-                // Asumiendo que la factoría asigne 'board' => $this->board_id de algún modo:
+                // Assuming the factory assigns 'board' => $this->board_id somehow:
                 'board'      => $this->board_id,
             )
         );
