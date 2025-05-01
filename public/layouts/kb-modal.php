@@ -32,7 +32,7 @@ defined( 'ABSPATH' ) || exit;
 		</div>
 		<div class="col-md-3">
 			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?> *</label>
-			<select class="form-select" id="article-board" name="board" required>
+			<select class="form-select" id="article-board" name="board" required style="min-height: 45px;">
 				<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 				<?php
 				$boards = BoardManager::get_all_boards();
