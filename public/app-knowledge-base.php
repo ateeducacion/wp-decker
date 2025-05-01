@@ -175,7 +175,7 @@ die();
 
 													// Sanitize and output the article title with hierarchy.
 													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
-														'<a href="javascript:void(0);" onclick="viewArticle(' . esc_js( $view_params ) . ')">' .
+														'<a href="javascript:void(0);" onclick="viewArticle(' . esc_js( $view_params ) . ')" title="' . esc_attr( $article->post_title ) . '">' .
 														esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
