@@ -75,6 +75,17 @@ class Decker_Kb {
 	public function save_article( $request ) {
 		$params = $request->get_params();
 
+		// Validate that board is provided
+		if ( empty( $params['board'] ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Board is required', 'decker' ),
+				),
+				400
+			);
+		}
+
 		$post_data = array(
 			'post_type'    => 'decker_kb',
 			'post_title'   => sanitize_text_field( $params['title'] ),
@@ -105,12 +116,20 @@ class Decker_Kb {
 			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
 		}
 		
-		// Handle board.
-		if ( ! empty( $params['board'] ) ) {
-			$board_id = intval( $params['board'] );
-			if ( $board_id > 0 ) {
-				wp_set_object_terms( $post_id, array( $board_id ), 'decker_board' );
-			}
+		// Handle board (required).
+		$board_id = intval( $params['board'] );
+		if ( $board_id > 0 ) {
+			wp_set_object_terms( $post_id, array( $board_id ), 'decker_board' );
+		} else {
+			// If somehow we got here with an invalid board ID, delete the post and return an error
+			wp_delete_post( $post_id, true );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Invalid board ID', 'decker' ),
+				),
+				400
+			);
 		}
 
 		return new WP_REST_Response(

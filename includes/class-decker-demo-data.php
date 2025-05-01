@@ -91,6 +91,16 @@ class Decker_Demo_Data {
 			array('name' => 'Board 4', 'show_in_boards' => false, 'show_in_kb' => false),
 			// Board 5: Visible in both
 			array('name' => 'Board 5', 'show_in_boards' => true, 'show_in_kb' => true),
+			// Board 6: Visible in both
+			array('name' => 'Board 6', 'show_in_boards' => true, 'show_in_kb' => true),
+			// Board 7: Visible only in Boards
+			array('name' => 'Board 7', 'show_in_boards' => true, 'show_in_kb' => false),
+			// Board 8: Visible only in KB
+			array('name' => 'Board 8', 'show_in_boards' => false, 'show_in_kb' => true),
+			// Board 9: Visible in both
+			array('name' => 'Board 9', 'show_in_boards' => true, 'show_in_kb' => true),
+			// Board 10: Visible in both
+			array('name' => 'Board 10', 'show_in_boards' => true, 'show_in_kb' => true),
 		);
 
 		foreach ($visibility_settings as $board_config) {
