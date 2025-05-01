@@ -195,6 +195,10 @@ if ( 'board' === $selected_type ) {
 														<th data-sort-default><?php esc_html_e( 'Name', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Slug', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Color', 'decker' ); ?></th>
+														<?php if ( 'board' === $selected_type ) : ?>
+														<th data-sort-method='none'><?php esc_html_e( 'In Boards', 'decker' ); ?></th>
+														<th data-sort-method='none'><?php esc_html_e( 'In KB', 'decker' ); ?></th>
+														<?php endif; ?>
 														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
@@ -211,6 +215,18 @@ if ( 'board' === $selected_type ) {
 														echo '</td>';
 														echo '<td class="term-slug">' . esc_html( $item->slug ) . '</td>';
 														echo '<td class="term-color"><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
+														
+														// Add visibility columns for boards
+														if ( 'board' === $selected_type ) {
+															echo '<td class="term-show-in-boards-display text-center">';
+															echo $item->show_in_boards ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>';
+															echo '</td>';
+															
+															echo '<td class="term-show-in-kb-display text-center">';
+															echo $item->show_in_kb ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>';
+															echo '</td>';
+														}
+														
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';
