@@ -153,15 +153,17 @@ die();
 														);
 													}
 
-													// Sanitize and output the article title with hierarchy.
-													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
-														'<a href="javascript:void(0);" onclick="viewArticle(' .
-														esc_attr( $article->ID ) . ', ' .
+													// Get view article parameters
+													$view_params = esc_attr( $article->ID ) . ', ' .
 														"'" . esc_js( $article->post_title ) . "', " .
 														"'" . esc_js( $article->post_content ) . "', " .
 														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "', " .
-														"'" . esc_js( json_encode( $board_data ) ) . "'" .
-														')">' . esc_html( $article->post_title ) . '</a>';
+														"'" . esc_js( json_encode( $board_data ) ) . "'";
+													
+													// Sanitize and output the article title with hierarchy.
+													echo esc_html( str_repeat( '— ', intval( $article->depth ) ) ) .
+														'<a href="javascript:void(0);" onclick="viewArticle(' . $view_params . ')">' . 
+														esc_html( $article->post_title ) . '</a>';
 
 													echo '</td>';
 													
@@ -216,12 +218,8 @@ die();
 													// Actions.
 													echo '<td class="text-end">';
 													// View button.
-													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' .
-														esc_attr( $article->ID ) . ', ' .
-														"'" . esc_js( $article->post_title ) . "', " .
-														"'" . esc_js( $article->post_content ) . "', " .
-														"'" . esc_js( json_encode( wp_list_pluck( wp_get_post_terms( $article->ID, 'decker_label' ), 'name' ) ) ) . "'" .
-														')"><i class="ri-eye-line"></i></button>';
+													echo '<button type="button" class="btn btn-sm btn-secondary me-2" onclick="viewArticle(' . 
+														$view_params . ')"><i class="ri-eye-line"></i></button>';
 													// Edit button.
 													echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
 													// Delete button.
@@ -264,6 +262,11 @@ die();
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
+	// Common function to generate the viewArticle parameters
+	function getViewArticleParams(articleId, title, content, labels, board) {
+		return `${articleId}, '${title}', '${content}', '${labels}', '${board}'`;
+	}
+	
 	jQuery(document).ready(function () {
 		// Determine the index of the hidden content column based on view
 		const isViewAll = <?php echo $view === 'all' ? 'true' : 'false'; ?>;
