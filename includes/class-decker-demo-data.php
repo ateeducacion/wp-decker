@@ -229,11 +229,11 @@ class Decker_Demo_Data {
 			),
 		);
 
-		// Create articles for each KB-visible board
+		// Create articles for each KB-visible board.
 		foreach ( $kb_boards as $board_term ) {
-			// For each board, create a set of articles
+			// For each board, create a set of articles.
 			foreach ( $categories as $main_title => $subcategories ) {
-				// Create a unique title for this board
+				// Create a unique title for this board.
 				$board_main_title = $main_title . ' - ' . $board_term->name;
 
 				// Create main category article.
@@ -314,7 +314,7 @@ class Decker_Demo_Data {
 						// Assign random labels to subcategory.
 						$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
 						wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-						
+
 						// Assign the same board as parent.
 						wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
 					}
