@@ -60,4 +60,9 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$child_post = get_post( $child_id );
 		$this->assertEquals( $parent_id, $child_post->post_parent );
 	}
+	
+	public function test_board_taxonomy_connection() {
+		$taxonomy = get_taxonomy( 'decker_board' );
+		$this->assertContains( 'decker_kb', $taxonomy->object_type );
+	}
 }

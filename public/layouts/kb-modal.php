@@ -55,6 +55,24 @@ defined( 'ABSPATH' ) || exit;
 			<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0" style="min-height: 45px;">
 		</div>
 	</div>
+	
+	<div class="row mb-3">
+		<!-- Board -->
+		<div class="col-md-12">
+			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?></label>
+			<select class="form-select" id="article-board" name="board">
+				<option value="0"><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
+				<?php
+				$boards = BoardManager::get_all_boards();
+				foreach ( $boards as $board ) {
+					if ($board->show_in_kb) {
+						echo '<option value="' . esc_attr( $board->id ) . '">' . esc_html( $board->name ) . '</option>';
+					}
+				}
+				?>
+			</select>
+		</div>
+	</div>
 
 	<div class="row">
 		<div class="col-md-12 mb-3">
@@ -155,6 +173,13 @@ defined( 'ABSPATH' ) || exit;
 
 
 						window.parentSelect.setChoiceByValue(article.parent_id.toString());
+						
+						// Set board
+						if (article.board) {
+							$('#article-board').val(article.board);
+						} else {
+							$('#article-board').val(0);
+						}
 					} else {
 						Swal.fire({
 							title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
@@ -197,6 +222,9 @@ defined( 'ABSPATH' ) || exit;
 
 				window.parentSelect.setChoiceByValue('0');
 				window.parentSelect.clearInput();
+				
+				// Reset board
+				$('#article-board').val(0);
 			}
 		});
 
@@ -246,7 +274,8 @@ defined( 'ABSPATH' ) || exit;
 				content: editor.getContent(),
 				labels: window.labelsSelect.getValue().map(choice => choice.value),
 				parent_id: $('#article-parent').val(),
-				menu_order: $('#article-order').val()
+				menu_order: $('#article-order').val(),
+				board: $('#article-board').val()
 			};
 
 			$.ajax({

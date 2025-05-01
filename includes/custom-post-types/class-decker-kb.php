@@ -104,6 +104,14 @@ class Decker_Kb {
 		if ( ! empty( $params['labels'] ) ) {
 			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
 		}
+		
+		// Handle board.
+		if ( ! empty( $params['board'] ) ) {
+			$board_id = intval( $params['board'] );
+			if ( $board_id > 0 ) {
+				wp_set_object_terms( $post_id, array( $board_id ), 'decker_board' );
+			}
+		}
 
 		return new WP_REST_Response(
 			array(
@@ -162,6 +170,8 @@ class Decker_Kb {
 		}
 
 		$labels = wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) );
+		$board_terms = wp_get_object_terms( $article_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$board_id = !empty($board_terms) ? $board_terms[0] : 0;
 
 		return new WP_REST_Response(
 			array(
@@ -171,6 +181,7 @@ class Decker_Kb {
 					'title'      => $post->post_title,
 					'content'    => $post->post_content,
 					'labels'     => $labels,
+					'board'      => $board_id,
 					'parent_id'  => $post->post_parent,
 					'menu_order' => $post->menu_order,
 				),
@@ -219,10 +230,11 @@ class Decker_Kb {
 	}
 
 	/**
-	 * Link existing Decker Labels taxonomy
+	 * Link existing Decker taxonomies
 	 */
 	public function register_taxonomy() {
 		register_taxonomy_for_object_type( 'decker_label', 'decker_kb' );
+		register_taxonomy_for_object_type( 'decker_board', 'decker_kb' );
 	}
 
 	/**
