@@ -170,7 +170,8 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
       - name: Run PHP_CodeSniffer for WordPress Coding Standards
-        run: vendor/bin/phpcs --standard=.phpcs.xml.dist --report=checkstyle --report-file=phpcs-report.xml .
+        run: vendor/bin/phpcs --standard=.phpcs.xml.dist --report=json --report-file=phpcs-report.json .
+        
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
