@@ -129,7 +129,7 @@ die();
 									<div class="card">
 										<div class="card-body table-responsive">
 
-											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
+											<table id="tableKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
 												<thead>
 													<tr>
 														<th class="col-3"><?php esc_html_e( 'Title', 'decker' ); ?></th>
@@ -335,7 +335,7 @@ die();
 		const isViewAll = <?php echo 'all' === $view ? 'true' : 'false'; ?>;
 		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise.
 		
-		jQuery('#tablaKB').DataTable({
+		jQuery('#tableKB').DataTable({
 			language: { 
 				url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json',
 				searchBuilder: {
@@ -368,7 +368,7 @@ die();
 		});
 
 		jQuery('#categoryFilter').on('change', function () {
-			jQuery('#tablaKB').DataTable().column(1).search(this.value).draw();
+			jQuery('#tableKB').DataTable().column(1).search(this.value).draw();
 		});
 	});
 
