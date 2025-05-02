@@ -62,9 +62,14 @@ check: fix lint check-plugin test check-untranslated mo
 
 check-all: check
 
+# Generate a tests config from the sample one
+test-config:
+	curl -sL \
+	  https://raw.githubusercontent.com/WordPress/wordpress-develop/master/wp-tests-config-sample.php \
+	  -o wp-tests-config.php
 # Run unit tests with PHPUnit
 tests: test
-test: start-if-not-running
+test: test-config start-if-not-running
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
 test-verbose: start-if-not-running
