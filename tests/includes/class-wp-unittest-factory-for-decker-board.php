@@ -28,6 +28,8 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
 			'name'  => new WP_UnitTest_Generator_Sequence( 'Board name %s' ),
 			'slug' => new WP_UnitTest_Generator_Sequence( 'board-%s' ),
 			'color' => '#000000', // Default color black, can be overridden in tests.
+			'show_in_boards' => true,
+			'show_in_kb' => true,
 		);
 	}
 
@@ -39,13 +41,6 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
 	 * @return int|WP_Error The term ID on success, or WP_Error on failure.
 	 */
 	public function create_object( $args ) {
-<<<<<<< HEAD
-		$name  = isset( $args['name'] ) ? $args['name'] : 'Default Board';
-		$color = isset( $args['color'] ) ? $args['color'] : '#000000';
-		$show_in_boards = isset( $args['show_in_boards'] ) ? $args['show_in_boards'] : true;
-		$show_in_kb = isset( $args['show_in_kb'] ) ? $args['show_in_kb'] : true;
-=======
->>>>>>> 88210f481061f4a1965135a2d2acfb6c8a571b08
 
         // Ensure current user can manage boards.
         if ( ! current_user_can( 'edit_posts' ) ) {
@@ -56,29 +51,28 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
         // Create term via parent to ensure proper cleanup
         $term_id = parent::create_object( array(
             'name' => $args['name'],
-<<<<<<< HEAD
-            'slug' => isset($args['slug']) ? $args['slug'] : null,
-=======
             'slug' => $args['slug'],
->>>>>>> 88210f481061f4a1965135a2d2acfb6c8a571b08
+            'color' => $args['color'],
+            'show_in_boards' => $args['show_in_boards'],
+            'show_in_kb' => $args['show_in_kb'],
         ) );
+
         if ( is_wp_error( $term_id ) ) {
             return $term_id;
         }
 
         // Save color meta through Decker_Boards logic
         $_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-<<<<<<< HEAD
-        $_POST['term-color']        = $color;
+        $_POST['term-color']        = $args['color'];
         
         // Set visibility options
-        if ($show_in_boards) {
+        if ($args['show_in_boards']) {
             $_POST['term-show-in-boards'] = '1';
         } else {
             unset($_POST['term-show-in-boards']);
         }
         
-        if ($show_in_kb) {
+        if ($args['show_in_kb']) {
             $_POST['term-show-in-kb'] = '1';
         } else {
             unset($_POST['term-show-in-kb']);
@@ -86,11 +80,6 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
 
         ( new Decker_Boards() )->save_color_meta( $term_id );
 
-=======
-        $_POST['term-color']        = $args['color'];
-        ( new Decker_Boards() )->save_color_meta( $term_id );
-
->>>>>>> 88210f481061f4a1965135a2d2acfb6c8a571b08
         return $term_id;
 	}
 
@@ -130,7 +119,6 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
             }
         }
 
-<<<<<<< HEAD
         // Set up POST data for the meta update
         $_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
         
@@ -159,14 +147,6 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
         ( new Decker_Boards() )->save_color_meta( $term_id );
         
         return $term_id;
-=======
-        // Update color
-        if ( isset( $fields['color'] ) ) {
-            $_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
-            $_POST['term-color']        = $fields['color'];
-            ( new Decker_Boards() )->save_color_meta( $term_id );
-        }
 
->>>>>>> 88210f481061f4a1965135a2d2acfb6c8a571b08
 	}
 }
