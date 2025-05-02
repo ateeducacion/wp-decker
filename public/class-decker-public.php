@@ -157,23 +157,23 @@ class Decker_Public {
 				'wp-api',
 
 				// Bootstrap 5.
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css',
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js',
 
 				// Remix Icons.
-				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css',
+				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css',
 
 				// Tablesort.
 				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
 
 				// Simplebar.
-				'https://cdn.jsdelivr.net/npm/simplebar@6.2.7/dist/simplebar.min.js',
+				'https://cdn.jsdelivr.net/npm/simplebar@6.3.0/dist/simplebar.min.js',
 
 				// Font Awesome.
-				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
+				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.5/css/all.min.css',
 
 				// SortableJS.
-				'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js',
+				'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js',
 
 				/*
 				// Highlight.
@@ -187,16 +187,17 @@ class Decker_Public {
 				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
 
 				// Choices.js.
-				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js',
-				'https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css',
+				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
+				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
 
 				// sweetalert2.js.
-				'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.all.min.js',
-				'https://cdn.jsdelivr.net/npm/sweetalert2/dist/sweetalert2.min.css',
+				'hhttps://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
+				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.css',
 
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
-				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.min.css',
+				plugin_dir_url( __FILE__ ) . '../public/assets/css/attex.css',
+				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.css',
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
@@ -207,7 +208,7 @@ class Decker_Public {
 
 			if ( 'analytics' == $decker_page ) {
 				// Chart.js.
-				$resources[] = 'https://cdn.jsdelivr.net/npm/chart.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js';
 			}
 
 			if ( 'board' == $decker_page ) {
@@ -218,7 +219,7 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page ) {
 
 				// FullCalendar.
-				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js';
+				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.15/index.global.min.js';
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
 
@@ -227,9 +228,9 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page || 'event-manager' == $decker_page ) {
 
 				// Flatpickr.
-				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js';
-				$resources[] = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css';
-				$resources[] = 'https://npmcdn.com/flatpickr@4.6.13/dist/l10n/es.js';
+				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js';
+				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css';
+				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js';
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
@@ -251,14 +252,14 @@ class Decker_Public {
 
 			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
-				$resources[] = 'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js';
+				$resources[] = 'https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
 				$resources[] = 'https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js';
 				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js';
 				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js';
 				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js';
 
-				$resources[] = 'https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css';
+				$resources[] = 'https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/css/searchBuilder.dataTables.min.css';
 				$resources[] = 'https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css';
 				$resources[] = 'https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css';

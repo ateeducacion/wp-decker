@@ -1,106 +1,3 @@
-@charset "UTF-8";
-/*
-Template Name: Attex - Responsive Bootstrap 5 Admin Dashboard
-Version: 1.0.0
-Author: CoderThemes
-Email: support@coderthemes.com
-File: Main Css File
-*/
-@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap");
-:root {
-  --ct-logo-lg-height: 22px;
-  --ct-logo-sm-height: 22px;
-  --ct-leftbar-width: 240px;
-  --ct-leftbar-width-md: 160px;
-  --ct-leftbar-width-sm: 70px;
-  --ct-leftbar-condensed-height: 1500px;
-  --ct-topbar-height: 70px;
-  --ct-menu-item-icon-size: 1.1rem;
-  --ct-menu-item-icon-width: 40px;
-  --ct-menu-item-font-size: 0.925rem;
-  --ct-menu-item-padding-x: 8px;
-  --ct-menu-item-padding-y: 9px;
-  --ct-footer-height: 60px;
-  --ct-theme-card-border-width: 0px;
-}
-
-html[data-menu-color=light] {
-  --ct-menu-bg: #ffffff;
-  --ct-menu-item-color: #495057;
-  --ct-menu-item-hover-color: #3e60d5;
-  --ct-menu-item-active-color: #3e60d5;
-  --ct-menu-condensed-link-bg: #313a46;
-  --ct-help-box-bg: #3e60d5;
-}
-
-html[data-menu-color=dark] {
-  --ct-menu-bg: #212529;
-  --ct-menu-item-color: #8391a2;
-  --ct-menu-item-hover-color: #bccee4;
-  --ct-menu-item-active-color: #ffffff;
-  --ct-menu-condensed-link-bg: #313a46;
-  --ct-help-box-bg: rgba(255, 255, 255, 0.07);
-}
-
-html[data-menu-color=brand] {
-  --ct-menu-bg: linear-gradient(135deg, #6379c3 0%, #3e60d5 60%);
-  --ct-menu-item-color: #cedce4;
-  --ct-menu-item-hover-color: #ffffff;
-  --ct-menu-item-active-color: #ffffff;
-  --ct-menu-condensed-link-bg: #313a46;
-  --ct-help-box-bg: rgba(255, 255, 255, 0.07);
-}
-
-html[data-bs-theme=dark][data-menu-color=light],
-html[data-bs-theme=dark][data-menu-color=dark] {
-  --ct-menu-bg: #313a46;
-  --ct-menu-item-color: #8391a2;
-  --ct-menu-item-hover-color: #bccee4;
-  --ct-menu-item-active-color: #ffffff;
-  --ct-menu-condensed-link-bg: #313a46;
-  --ct-help-box-bg: rgba(255, 255, 255, 0.07);
-}
-
-html[data-topbar-color=light] {
-  --ct-topbar-bg: #ffffff;
-  --ct-topbar-item-color: #495057;
-  --ct-topbar-item-hover-color: #3e60d5;
-  --ct-topbar-search-bg: #f3f3f8;
-  --ct-topbar-user-bg: #fbfcfc;
-  --ct-topbar-user-border: #eef2f7;
-}
-
-html[data-topbar-color=dark] {
-  --ct-topbar-bg: #313a46;
-  --ct-topbar-item-color: #8391a2;
-  --ct-topbar-item-hover-color: #bccee4;
-  --ct-topbar-search-bg: #464f5b;
-  --ct-topbar-user-bg: #3c4655;
-  --ct-topbar-user-border: #414d5d;
-}
-
-html[data-topbar-color=brand] {
-  --ct-topbar-bg: linear-gradient(135deg, #6379c3 0%, #3e60d5 60%);
-  --ct-topbar-item-color: rgba(255, 255, 255, 0.7);
-  --ct-topbar-item-hover-color: #ffffff;
-  --ct-topbar-search-bg: rgba(255, 255, 255, 0.1);
-  --ct-topbar-user-bg: rgba(255, 255, 255, 0.1);
-  --ct-topbar-user-border: rgba(255, 255, 255, 0.15);
-}
-
-html[data-bs-theme=dark][data-topbar-color=light],
-html[data-bs-theme=dark][data-topbar-color=dark] {
-  --ct-topbar-bg: #2f3742;
-  --ct-topbar-item-color: #8391a2;
-  --ct-topbar-item-hover-color: #bccee4;
-  --ct-topbar-search-bg: #363f4a;
-  --ct-topbar-user-bg: #363f4a;
-  --ct-topbar-user-border: #414d5d;
-}
-
-.border-dashed {
-  border-style: dashed !important;
-}
 
 /* Estilo para los avatares seleccionados */
 .avatar-group-item.selected .rounded-circle {
@@ -124,4 +21,90 @@ html[data-bs-theme=dark][data-topbar-color=dark] {
 
 .wrapper {
     margin-top: -32px;
+}
+
+/* Estilo para los avatares seleccionados */
+.avatar-group-item.selected .rounded-circle {
+  position: relative;
+  border: 2px solid transparent; /* Evita que el tamaño de la imagen cambie */
+}
+
+/* Aureola verde alrededor de los avatares seleccionados */
+
+/* Estilo base para los avatares con clase .today */
+.avatar-group-item.selected.today .rounded-circle {
+  box-shadow: 0 0 0 4px rgba(0, 255, 1, 0.7); /* Ajusta el tamaño y color de la aureola */
+  border: 0px solid transparent; /* Mantén el borde actual */
+}
+
+
+/* Si también quieres una aureola en los divs que no tienen imagen (letras iniciales o contadores) */
+.today {
+  box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
+}
+
+.badge_avatar {
+            position: absolute;
+            top: 0;
+            left: -4px; /* Moved to the left */
+            color: yellow;
+            align-items: center;
+            justify-content: center;
+}
+
+/* Fix para la fuente cuando se ponen los headers de WP */
+:root {
+    --wp--preset--font-family--heading: inherit; /* O puedes usar otra fuente predeterminada */
+}
+
+/* Corregir posicion por si se muestra la brra de wp en debug */
+.leftside-menu { 
+  padding-top: 3px;
+}
+
+.fc-tooltip-calendar {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+th[role=columnheader]:not(.no-sort) {
+  cursor: pointer;
+}
+
+th[role=columnheader]:not(.no-sort):after {
+  content: '';
+  float: right;
+  margin-top: 7px;
+  border-width: 0 4px 4px;
+  border-style: solid;
+  border-color: #404040 transparent;
+  visibility: hidden;
+  opacity: 0;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+th[aria-sort=ascending]:not(.no-sort):after {
+  border-bottom: none;
+  border-width: 4px 4px 0;
+}
+
+th[aria-sort]:not(.no-sort):after {
+  visibility: visible;
+  opacity: 0.4;
+}
+
+th[role=columnheader]:not(.no-sort):hover:after {
+  visibility: visible;
+  opacity: 1;
 }
