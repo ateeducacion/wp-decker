@@ -129,7 +129,7 @@ die();
 									<div class="card">
 										<div class="card-body table-responsive">
 
-											<table id="tablaKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
+											<table id="tableKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
 												<thead>
 													<tr>
 														<th class="col-3"><?php esc_html_e( 'Title', 'decker' ); ?></th>
@@ -139,7 +139,7 @@ die();
 														<th class="col-2"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
 														<th class="col-1"><?php esc_html_e( 'Author', 'decker' ); ?></th>
 														<th class="col-1"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
-														<th class="col-2"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th class="col-2"><?php esc_html_e( 'Updated', 'decker' ); ?></th>
 														<th class="col-2 text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 														<th class="d-none"><?php esc_html_e( 'Content', 'decker' ); ?></th>
 													</tr>
@@ -248,8 +248,9 @@ die();
 
 													// Excerpt.
 													$excerpt = wp_strip_all_tags( $article->post_content );
-													echo '<td title="' . esc_html( wp_trim_words( $excerpt, 50, '...' ) ) . '">';
-													echo esc_html( wp_trim_words( $excerpt, 10, '...' ) );
+													echo '<td title="' . esc_html( wp_trim_words( $excerpt, 100, '...' ) ) . '">';
+													echo '<div class="kb-excerpt">' . esc_html( wp_trim_words( $excerpt, 30, '...' ) );
+													echo '</div>';
 													echo '</td>';
 
 													// Last Updated with friendly date.
@@ -334,7 +335,7 @@ die();
 		const isViewAll = <?php echo 'all' === $view ? 'true' : 'false'; ?>;
 		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise.
 		
-		jQuery('#tablaKB').DataTable({
+		jQuery('#tableKB').DataTable({
 			language: { 
 				url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json',
 				searchBuilder: {
@@ -367,7 +368,7 @@ die();
 		});
 
 		jQuery('#categoryFilter').on('change', function () {
-			jQuery('#tablaKB').DataTable().column(1).search(this.value).draw();
+			jQuery('#tableKB').DataTable().column(1).search(this.value).draw();
 		});
 	});
 

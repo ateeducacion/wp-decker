@@ -8,6 +8,11 @@ on:
     paths:
       - "docs/**" # Only trigger if there are changes in the documentation folder
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-docs:
     runs-on: ubuntu-latest
