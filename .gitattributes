@@ -30,3 +30,4 @@ sftp-config.json           export-ignore
 sonar-project.properties   export-ignore
 test.php                   export-ignore
 tests/                     export-ignore
+wp-test-config.ph          export-ignore
