@@ -191,7 +191,7 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
 
 				// sweetalert2.js.
-				'hhttps://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
+				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.css',
 
 				// Custom files.
