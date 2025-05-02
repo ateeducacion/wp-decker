@@ -9,6 +9,12 @@ on:
     branches:
       - '*' 
 
+permissions:
+  contents: read
+  pull-requests: write
+  deployments: write
+  checks: write
+
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
@@ -164,7 +170,7 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
       - name: Run PHP_CodeSniffer for WordPress Coding Standards
-        run: vendor/bin/phpcs --standard=.phpcs.xml.dist --report=checkstyle --report-file=phpcs.xml .
+        run: vendor/bin/phpcs --standard=.phpcs.xml.dist --report=checkstyle --report-file=phpcs-report.xml .
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:
