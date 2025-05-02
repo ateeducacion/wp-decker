@@ -455,14 +455,28 @@
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
         li.setAttribute('data-attachment-id', attachmentId);
 
-        li.innerHTML = `
-            <a href="${attachmentUrl}" target="_blank" download="${attachmentFilename}">
-                ${attachmentFilename} <i class="bi bi-box-arrow-up-right ms-2"></i>
-            </a>
-            <div>
-                <button type="button" class="btn btn-sm btn-danger me-2 remove-attachment"${disabled ? ' disabled' : ''}>${strings.delete}</button>
-            </div>
-        `;
+        const link = document.createElement('a');
+        link.href = attachmentUrl;
+        link.target = '_blank';
+        link.download = attachmentFilename;
+        link.textContent = attachmentFilename;
+
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-box-arrow-up-right ms-2';
+        link.appendChild(icon);
+
+        const buttonContainer = document.createElement('div');
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'btn btn-sm btn-danger me-2 remove-attachment';
+        if (disabled) {
+            deleteButton.disabled = true;
+        }
+        deleteButton.textContent = strings.delete;
+        buttonContainer.appendChild(deleteButton);
+
+        li.appendChild(link);
+        li.appendChild(buttonContainer);
 
         attachmentsList.appendChild(li);
 
