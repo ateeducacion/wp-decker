@@ -36,6 +36,7 @@ sftp-config.json
 .phpunit.result.cache
 /behat.yml
 .php-cs-fixer.cache
+wp-tests-config-sample.php
 
 decker/
 .aider*
