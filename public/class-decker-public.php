@@ -170,7 +170,7 @@ class Decker_Public {
 				'https://cdn.jsdelivr.net/npm/simplebar@6.3.0/dist/simplebar.min.js',
 
 				// Font Awesome.
-				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.5/css/all.min.css',
+				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
 
 				// SortableJS.
 				'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js',
