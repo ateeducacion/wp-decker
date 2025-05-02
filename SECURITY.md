@@ -22,8 +22,3 @@ Once reported:
 - If the issue is critical and affects users broadly, we may issue a security advisory and notify on the GitHub releases page.
 
 Do not report security issues via public channels (e.g., Twitter, public issues, discussions).
-
----
-
-**Project:** [ateeducacion/wp-decker](https://github.com/ateeducacion/wp-decker/)  
-**Maintainer:** @ateeducacion
