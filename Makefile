@@ -16,7 +16,7 @@ install-requirements:
 	npm -g i @wordpress/env
 
 start-if-not-running:
-	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8888)" = "000" ]; then \
+	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8889)" = "000" ]; then \
 		echo "wp-env is NOT running. Starting (previous updating) containers..."; \
 		npx wp-env start --update; \
 		npx wp-env run cli wp plugin activate decker; \
@@ -24,13 +24,8 @@ start-if-not-running:
 		echo "wp-env is already running, skipping start."; \
 	fi
 
-
 # Bring up Docker containers
 up: check-docker start-if-not-running
-# 	npx wp-env start --update
-# 	$(MAKE) create-user USER=test1 EMAIL=test1@example.org ROLE=editor PASSWORD=password
-# 	$(MAKE) create-user USER=test2 EMAIL=test2@example.org ROLE=editor PASSWORD=password
-# 	npx wp-env run cli wp plugin activate decker
 
 # Function to create a user only if it does not exist
 create-user:
@@ -62,14 +57,10 @@ check: fix lint check-plugin test check-untranslated mo
 
 check-all: check
 
-# Generate a tests config from the sample one
-test-config:
-	curl -sL \
-	  https://raw.githubusercontent.com/WordPress/wordpress-develop/master/wp-tests-config-sample.php \
-	  -o wp-tests-config.php
-# Run unit tests with PHPUnit
 tests: test
-test: test-config start-if-not-running
+
+# Run unit tests with PHPUnit	
+test: start-if-not-running
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
 test-verbose: start-if-not-running
