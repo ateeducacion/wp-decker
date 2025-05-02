@@ -24,30 +24,32 @@ defined( 'ABSPATH' ) || exit;
 <form id="article-form" class="needs-validation" novalidate>
 	<input type="hidden" name="article_id" id="article-id" value="">
 	<div class="row mb-3">
-		<!-- Title, Parent and Order -->
-		<div class="col-md-7">
+		<!-- Title, Board, Parent and Order -->
+		<div class="col-md-4">
 			<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?> *</label>
 			<input type="text" class="form-control" id="article-title" name="title" required style="min-height: 45px;">
 			<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
+		</div>
+		<div class="col-md-3">
+			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?> *</label>
+			<select class="form-select" id="article-board" name="board" required style="min-height: 45px;">
+				<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
+				<?php
+				$boards = BoardManager::get_all_boards();
+				foreach ( $boards as $board ) {
+					if ( $board->show_in_kb ) {
+						echo '<option value="' . esc_attr( $board->id ) . '">' . esc_html( $board->name ) . '</option>';
+					}
+				}
+				?>
+			</select>
+			<div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
 		</div>
 		<div class="col-md-4">
 			<label for="article-parent" class="form-label"><?php esc_html_e( 'Parent Article', 'decker' ); ?></label>
 			<select class="form-select" id="article-parent" name="parent_id">
 				<option value="0"><?php esc_html_e( 'No parent (top level)', 'decker' ); ?></option>
-				<?php
-				$articles = get_posts(
-					array(
-						'post_type' => 'decker_kb',
-						'posts_per_page' => -1,
-						'orderby' => 'menu_order title',
-						'order' => 'ASC',
-						'post_status' => 'publish',
-					)
-				);
-				foreach ( $articles as $article ) {
-					echo '<option value="' . esc_attr( $article->ID ) . '">' . esc_html( $article->post_title ) . '</option>';
-				}
-				?>
+				<!-- Parent articles will be loaded dynamically based on selected board -->
 			</select>
 		</div>
 		<div class="col-md-1">
@@ -69,7 +71,7 @@ defined( 'ABSPATH' ) || exit;
 				<?php
 				$labels = LabelManager::get_all_labels();
 				foreach ( $labels as $label ) {
-					echo '<option value="' . esc_attr( $label->id ) . '" data-choice-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\'>' . esc_html( $label->name ) . '</option>';
+					echo '<option value="' . esc_attr( $label->id ) . '" data-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\'>' . esc_html( $label->name ) . '</option>';
 				}
 				?>
 			</select>
@@ -154,7 +156,18 @@ defined( 'ABSPATH' ) || exit;
 						window.labelsSelect.setChoiceByValue(article.labels.map(String));
 
 
-						window.parentSelect.setChoiceByValue(article.parent_id.toString());
+						// Set board first so parent articles can be loaded
+						if (article.board) {
+							$('#article-board').val(article.board);
+							// Load parent articles for this board
+							loadParentArticles(article.board);
+							// Then set the parent value after articles are loaded
+							setTimeout(() => {
+								window.parentSelect.setChoiceByValue(article.parent_id.toString());
+							}, 500);
+						} else {
+							$('#article-board').val(0);
+						}
 					} else {
 						Swal.fire({
 							title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
@@ -197,6 +210,47 @@ defined( 'ABSPATH' ) || exit;
 
 				window.parentSelect.setChoiceByValue('0');
 				window.parentSelect.clearInput();
+				
+				// Check if there's a board parameter in the URL
+				const boardSlug = getUrlParameter('board');
+				if (boardSlug) {
+					// Find the board by slug directly from our available boards
+					const boardSelect = document.getElementById('article-board');
+					const boardOptions = Array.from(boardSelect.options);
+					
+					// Get all boards from PHP
+					<?php
+					$boards_data = array();
+					foreach ( $boards as $board ) {
+						if ( $board->show_in_kb ) {
+							$boards_data[] = array(
+								'id' => $board->id,
+								'slug' => $board->slug,
+								'name' => $board->name,
+							);
+						}
+					}
+					?>
+					
+					// Use the PHP data
+					const availableBoards = <?php echo json_encode( $boards_data ); ?>;
+					const matchingBoard = availableBoards.find(board => board.slug === boardSlug);
+					
+					if (matchingBoard) {
+						$('#article-board').val(matchingBoard.id);
+						// Trigger change event to load parent articles for this board
+						$('#article-board').trigger('change');
+						
+						// Load parent articles for this board
+						loadParentArticles(matchingBoard.id);
+					} else {
+						// Reset board if not found
+						$('#article-board').val('');
+					}
+				} else {
+					// Reset board
+					$('#article-board').val('');
+				}
 			}
 		});
 
@@ -211,6 +265,50 @@ defined( 'ABSPATH' ) || exit;
 
 		let labelsSelect, parentSelect;
 
+		// Function to load parent articles based on selected board
+		function loadParentArticles(boardId) {
+			// Clear current parent options except the default one
+			parentSelect.clearStore();
+			parentSelect.setChoices([{
+				value: '0',
+				label: '<?php esc_html_e( 'No parent (top level)', 'decker' ); ?>',
+				selected: true
+			}]);
+			
+			if (!boardId) return;
+			
+			// Get all articles for this board
+			$.ajax({
+				url: wpApiSettings.root + 'wp/v2/decker_kb',
+				method: 'GET',
+				beforeSend: function(xhr) {
+					xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
+				},
+				data: {
+					per_page: 100,
+					decker_board: boardId,
+					orderby: 'menu_order',
+					order: 'asc'
+				},
+				success: function(articles) {
+					if (articles && articles.length > 0) {
+						const currentArticleId = $('#article-id').val();
+						const parentChoices = articles
+							.filter(article => article.id != currentArticleId) // Don't include current article
+							.map(article => ({
+								value: article.id.toString(),
+								label: article.title.rendered
+							}));
+						
+						parentSelect.setChoices(parentChoices, 'value', 'label', true);
+					}
+				},
+				error: function(error) {
+					console.error('Error loading parent articles:', error);
+				}
+			});
+		}
+		
 		// Initialize Choices.js for labels and parent
 		const choicesConfig = {
 			removeItemButton: true,
@@ -218,19 +316,67 @@ defined( 'ABSPATH' ) || exit;
 			searchEnabled: true,
 			shouldSort: true,
 			placeholderValue: '<?php esc_html_e( 'Select labels...', 'decker' ); ?>',
-			noChoicesText: '<?php esc_html_e( 'No more labels available', 'decker' ); ?>'
+			noChoicesText: '<?php esc_html_e( 'No more labels available', 'decker' ); ?>',
+			callbackOnCreateTemplates: function (strToEl, escapeForTemplate, getClassNames) {
+				const defaultTemplates = Choices.defaults.templates;
+				
+				return {
+					...defaultTemplates,
+					item: (classNames, data) => {
+						// 1. Take the element generated by the default template
+						const el = defaultTemplates.item.call(this, classNames, data);
+
+						// 2. Apply background color based on the taxonomy
+						el.style.backgroundColor = data.customProperties?.color || '#6c757d';
+
+						// 3. Ensure that, if removeItemButton=true, the element is configured as "deletable"
+						if (this.config.removeItemButton) {
+							el.setAttribute('data-deletable', '');
+
+							// If the default template hasn't already generated the button, create it here
+							if (!el.querySelector('[data-button]')) {
+								const button = document.createElement('button');
+								button.type = 'button';
+								button.className = this.config.classNames.button;
+								button.setAttribute('data-button', '');
+								button.setAttribute('aria-label', `Remove item: ${data.value}`);
+								button.innerHTML = '×';
+								el.appendChild(button);
+							}
+						}
+
+						return el;
+					}
+				}
+			}
 		};
 
 		// Initial labels setup
 		labelsSelect = new Choices('#article-labels', choicesConfig);
 		window.labelsSelect = labelsSelect;
 
-		parentSelect = new Choices('#article-parent', {
-			...choicesConfig,
+		// Parent select should not use the same template customization as labels
+		const parentChoicesConfig = {
+			removeItemButton: true,
+			allowHTML: true,
+			searchEnabled: true,
+			shouldSort: true,
+			placeholderValue: '<?php esc_html_e( 'Select parent...', 'decker' ); ?>',
+			noChoicesText: '<?php esc_html_e( 'No more articles available', 'decker' ); ?>',
 			searchPlaceholderValue: '<?php esc_html_e( 'Search for parent article...', 'decker' ); ?>'
-		});
+		};
+		
+		parentSelect = new Choices('#article-parent', parentChoicesConfig);
 		window.parentSelect = parentSelect;
 
+		// Handle board change to update parent articles
+		$('#article-board').on('change', function() {
+			const boardId = $(this).val();
+			if (boardId) {
+				loadParentArticles(boardId);
+			}
+		});
+		
 		// Handle form submission
 		$('#guardar-articulo').on('click', function() {
 			const form = $('#article-form')[0];
@@ -240,13 +386,20 @@ defined( 'ABSPATH' ) || exit;
 				return;
 			}
 
+			const boardValue = $('#article-board').val();
+			if (!boardValue || boardValue === "0" || boardValue === "") {
+				$('#article-board').addClass('is-invalid');
+				return;
+			}
+
 			const data = {
 				id: $('#article-id').val(),
 				title: $('#article-title').val(),
 				content: editor.getContent(),
 				labels: window.labelsSelect.getValue().map(choice => choice.value),
 				parent_id: $('#article-parent').val(),
-				menu_order: $('#article-order').val()
+				menu_order: $('#article-order').val(),
+				board: boardValue
 			};
 
 			$.ajax({

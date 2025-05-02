@@ -42,6 +42,9 @@ class Decker_Boards {
 		// Enforce capability checks.
 		add_filter( 'pre_insert_term', array( $this, 'prevent_term_creation' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'prevent_term_deletion' ), 10, 2 );
+
+		// Register REST field for term meta.
+		add_action( 'rest_api_init', array( $this, 'register_rest_fields' ) );
 	}
 
 	/**
@@ -69,8 +72,8 @@ class Decker_Boards {
 			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
 			'rewrite'            => array( 'slug' => 'decker_board' ),
-			'show_in_rest'       => false,
-			'rest_base'          => 'boards',
+			'show_in_rest'       => true,
+			'rest_base'          => 'decker_board',
 			'can_export'         => true,
 			'capabilities'       => array(
 				'manage_terms' => 'edit_posts',
@@ -93,6 +96,20 @@ class Decker_Boards {
 			<label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label>
 			<input name="term-color" id="term-color" type="color" value="">
 		</div>
+		<div class="form-field term-show-in-boards-wrap">
+			<label for="term-show-in-boards">
+				<input type="checkbox" name="term-show-in-boards" id="term-show-in-boards" value="1" checked>
+				<?php esc_html_e( 'Show in Boards', 'decker' ); ?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Display this board in the Boards section of the sidebar', 'decker' ); ?></p>
+		</div>
+		<div class="form-field term-show-in-kb-wrap">
+			<label for="term-show-in-kb">
+				<input type="checkbox" name="term-show-in-kb" id="term-show-in-kb" value="1" checked>
+				<?php esc_html_e( 'Show in Knowledge Base', 'decker' ); ?>
+			</label>
+			<p class="description"><?php esc_html_e( 'Display this board in the Knowledge Base section of the sidebar', 'decker' ); ?></p>
+		</div>
 		<?php
 	}
 
@@ -106,11 +123,37 @@ class Decker_Boards {
 
 		$term_id = $term->term_id;
 		$color   = get_term_meta( $term_id, 'term-color', true );
+		$show_in_boards = get_term_meta( $term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term_id, 'term-show-in-kb', true );
+
+		// Default to true if not set.
+		if ( '' === $show_in_boards ) {
+			$show_in_boards = '1';
+		}
+		if ( '' === $show_in_kb ) {
+			$show_in_kb = '1';
+		}
 		?>
 		<tr class="form-field term-color-wrap">
 			<th scope="row"><label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
 			<td>
 				<input name="term-color" id="term-color" type="color" value="<?php echo esc_attr( $color ) ? esc_attr( $color ) : ''; ?>">
+			</td>
+		</tr>
+		<tr class="form-field term-show-in-boards-wrap">
+			<th scope="row"><?php esc_html_e( 'Visibility', 'decker' ); ?></th>
+			<td>
+				<label for="term-show-in-boards">
+					<input type="checkbox" name="term-show-in-boards" id="term-show-in-boards" value="1" <?php checked( $show_in_boards, '1' ); ?>>
+					<?php esc_html_e( 'Show in Boards', 'decker' ); ?>
+				</label>
+				<p class="description"><?php esc_html_e( 'Display this board in the Boards section of the sidebar', 'decker' ); ?></p>
+				
+				<label for="term-show-in-kb">
+					<input type="checkbox" name="term-show-in-kb" id="term-show-in-kb" value="1" <?php checked( $show_in_kb, '1' ); ?>>
+					<?php esc_html_e( 'Show in Knowledge Base', 'decker' ); ?>
+				</label>
+				<p class="description"><?php esc_html_e( 'Display this board in the Knowledge Base section of the sidebar', 'decker' ); ?></p>
 			</td>
 		</tr>
 		<?php
@@ -141,6 +184,13 @@ class Decker_Boards {
 			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
 			update_term_meta( $term_id, 'term-color', $term_color );
 		}
+
+		// Save visibility settings.
+		$show_in_boards = isset( $_POST['term-show-in-boards'] ) ? '1' : '0';
+		$show_in_kb = isset( $_POST['term-show-in-kb'] ) ? '1' : '0';
+
+		update_term_meta( $term_id, 'term-show-in-boards', $show_in_boards );
+		update_term_meta( $term_id, 'term-show-in-kb', $show_in_kb );
 	}
 
 	/**
@@ -256,6 +306,36 @@ class Decker_Boards {
 			$content = '<span style="display:inline-block;width:20px;height:20px;background-color:' . esc_attr( $color ) . ';"></span>';
 		}
 		return $content;
+	}
+
+	/**
+	 * Register REST fields for term meta.
+	 */
+	public function register_rest_fields() {
+		register_rest_field(
+			'decker_board',
+			'meta',
+			array(
+				'get_callback'    => array( $this, 'get_term_meta' ),
+				'update_callback' => null,
+				'schema'          => null,
+			)
+		);
+	}
+
+	/**
+	 * Get term meta for REST API
+	 *
+	 * @param array $object Term object array.
+	 * @return array Term meta values.
+	 */
+	public function get_term_meta( $object ) {
+		$term_id = $object['id'];
+		return array(
+			'term-color' => get_term_meta( $term_id, 'term-color', true ),
+			'term-show-in-boards' => get_term_meta( $term_id, 'term-show-in-boards', true ),
+			'term-show-in-kb' => get_term_meta( $term_id, 'term-show-in-kb', true ),
+		);
 	}
 }
 

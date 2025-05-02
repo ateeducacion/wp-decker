@@ -267,10 +267,12 @@ table#tablaTareas td:nth-child(4) {
 													echo '<td>';
 													echo '<div class="avatar-group">';
 
-													echo '<a href="javascript: void(0);" class="avatar-group-item avatar-group-item-responsable" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $task->responsable->display_name ) . '" data-bs-original-title="' . esc_attr( $task->responsable->display_name ) . '">';
-													echo '<span class="d-none">' . esc_attr( $task->responsable->display_name ) . '</span>';
-													echo '<img src="' . esc_url( get_avatar_url( $task->responsable->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
-													echo '</a>';
+													if ( $task->responsable ) {
+														echo '<a href="javascript: void(0);" class="avatar-group-item avatar-group-item-responsable" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $task->responsable->display_name ) . '" data-bs-original-title="' . esc_attr( $task->responsable->display_name ) . '">';
+														echo '<span class="d-none">' . esc_attr( $task->responsable->display_name ) . '</span>';
+														echo '<img src="' . esc_url( get_avatar_url( $task->responsable->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
+														echo '</a>';
+													}
 
 													echo '</div></td>';
 

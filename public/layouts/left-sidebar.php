@@ -240,18 +240,20 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			$boards = BoardManager::get_all_boards();
 			foreach ( $boards as $board ) {
-
-				echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
-					esc_url(
-						add_query_arg(
-							array(
-								'decker_page' => 'board',
-								'slug'        => $board->slug,
-							),
-							home_url( '/' )
+				// Only show boards that have show_in_boards set to true.
+				if ( $board->show_in_boards ) {
+					echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
+						esc_url(
+							add_query_arg(
+								array(
+									'decker_page' => 'board',
+									'slug'        => $board->slug,
+								),
+								home_url( '/' )
+							)
 						)
-					)
-				) . '">' . esc_html( $board->name ) . '</a></li>';
+					) . '">' . esc_html( $board->name ) . '</a></li>';
+				}
 			}
 			?>
 
@@ -261,11 +263,56 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 		<!-- Knowledge Base -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'knowledge-base' ) ); ?>">
-			<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" class="side-nav-link">
-			<i class="ri-database-2-line"></i>
-			  <span><?php esc_html_e( 'Knowledge Base', 'decker' ); ?></span>
+			<a 
+				data-bs-toggle="collapse"
+				href="#sidebarKnowledgeBase"
+				aria-expanded="false"
+				aria-controls="sidebarKnowledgeBase"
+				class="side-nav-link"
+			>
+				<i class="ri-database-2-line"></i>
+				<span><?php esc_html_e( 'Knowledge Base', 'decker' ); ?></span>
+				<span class="menu-arrow"></span>
 			</a>
-			</a>
+			<div class="collapse<?php echo ( 'knowledge-base' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarKnowledgeBase">
+				<ul class="side-nav-second-level">
+					<li class="<?php echo esc_attr( decker_is_active_subpage( 'view', 'all' ) ); ?>">
+						<a href="
+						<?php
+						echo esc_url(
+							add_query_arg(
+								array(
+									'decker_page' => 'knowledge-base',
+									'view' => 'all',
+								),
+								home_url( '/' )
+							)
+						);
+						?>
+						">
+							<?php esc_html_e( 'All Articles', 'decker' ); ?>
+						</a>
+					</li>
+					
+					<?php
+					// Display boards that have show_in_kb set to true.
+					$boards = BoardManager::get_all_boards();
+					foreach ( $boards as $board ) {
+						if ( $board->show_in_kb ) {
+							echo '<li class="' . esc_attr( decker_is_active_subpage( 'board', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
+								add_query_arg(
+									array(
+										'decker_page' => 'knowledge-base',
+										'board'       => $board->slug,
+									),
+									home_url( '/' )
+								)
+							) . '">' . esc_html( $board->name ) . '</a></li>';
+						}
+					}
+					?>
+				</ul>
+			</div>
 	  </li>
 
 	  <!-- Analytics -->

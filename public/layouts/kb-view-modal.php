@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
 </div>
 
 <script>
-function viewArticle(id, title, content, labelsJson) {
+function viewArticle(id, title, content, labelsJson, boardJson) {
 	const modal = jQuery('#kb-view-modal');
 	modal.find('#kb-view-modalLabel').text(title);
 	modal.find('#kb-view-content').html(content);
@@ -47,14 +47,60 @@ function viewArticle(id, title, content, labelsJson) {
 			xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
 		},
 		success: function(response) {
-			const labels = JSON.parse(labelsJson);
-			const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
+			let labels = [];
+			let board = null;
 			
-			const labelsHtml = labels.map(label => 
-				`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
-			).join('');
+			// Safely parse JSON with error handling
+			try {
+				if (labelsJson && typeof labelsJson === 'string') {
+					labels = JSON.parse(labelsJson);
+				} else if (Array.isArray(labelsJson)) {
+					labels = labelsJson;
+				}
+			} catch (e) {
+				console.error('Error parsing labels JSON:', e);
+				labels = [];
+			}
 			
-			modal.find('#kb-view-labels').html(labelsHtml);
+			try {
+				if (boardJson && typeof boardJson === 'string') {
+					board = JSON.parse(boardJson);
+				} else if (boardJson && typeof boardJson === 'object') {
+					board = boardJson;
+				}
+			} catch (e) {
+				console.error('Error parsing board JSON:', e);
+				board = null;
+			}
+			
+			// Generate labels HTML
+			let labelsHtml = '';
+			if (Array.isArray(labels)) {
+				// If labels is an array of objects with name and color
+				if (labels.length > 0 && typeof labels[0] === 'object' && labels[0].name) {
+					labelsHtml = labels.map(label => 
+						`<span class="badge me-1" style="background-color: ${label.color || '#6c757d'};">${label.name}</span>`
+					).join('');
+				} 
+				// If labels is an array of strings (names only)
+				else {
+					const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
+					labelsHtml = labels.map(label => 
+						`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
+					).join('');
+				}
+			}
+			
+			// Add board badge if available (to the left of labels)
+			let finalHtml = '';
+			if (board && board.name) {
+				const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>|&nbsp;&nbsp;`;
+				finalHtml = boardHtml + labelsHtml;
+			} else {
+				finalHtml = labelsHtml;
+			}
+			
+			modal.find('#kb-view-labels').html(finalHtml);
 		}
 	});
 	

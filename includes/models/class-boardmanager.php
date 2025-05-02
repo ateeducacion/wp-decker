@@ -32,6 +32,15 @@ class BoardManager {
 	private static array $boards           = array();
 
 	/**
+	 * Reset the instance and boards array.
+	 * This is useful for testing and when we need to reload boards from the database.
+	 */
+	public static function reset_instance() {
+		self::$instance = null;
+		self::$boards = array();
+	}
+
+	/**
 	 * Initializes the BoardManager by loading all boards from the 'decker_board' taxonomy.
 	 */
 	private function __construct() {
@@ -59,6 +68,15 @@ class BoardManager {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
+
+		// Reset the instance if the board doesn't exist.
+		// This ensures we reload all boards from the database.
+		if ( ! isset( self::$boards[ $slug ] ) ) {
+			self::$instance = null;
+			self::$boards = array();
+			self::$instance = new self();
+		}
+
 		return self::$boards[ $slug ] ?? null;
 	}
 
@@ -71,6 +89,13 @@ class BoardManager {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 		}
+
+		// If no boards are loaded, reset the instance to reload from database.
+		if ( empty( self::$boards ) ) {
+			self::$instance = null;
+			self::$instance = new self();
+		}
+
 		return array_values( self::$boards );
 	}
 
@@ -82,6 +107,13 @@ class BoardManager {
 	 * @return array Response array with success status and message.
 	 */
 	public static function save_board( array $data, int $id ): array {
+		// Check if user has permission to edit posts.
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'You do not have permission to create terms.', 'decker' ),
+			);
+		}
 		$args = array(
 			'name' => sanitize_text_field( $data['name'] ),
 		);
@@ -115,6 +147,17 @@ class BoardManager {
 		$id = $result['term_id'];
 
 		update_term_meta( $id, 'term-color', sanitize_hex_color( $data['color'] ) );
+
+		// Save visibility settings.
+		$show_in_boards = isset( $data['show_in_boards'] ) && $data['show_in_boards'] ? '1' : '0';
+		$show_in_kb = isset( $data['show_in_kb'] ) && $data['show_in_kb'] ? '1' : '0';
+
+		update_term_meta( $id, 'term-show-in-boards', $show_in_boards );
+		update_term_meta( $id, 'term-show-in-kb', $show_in_kb );
+
+		// Reset the instance to reload boards from database.
+		self::$instance = null;
+		self::$boards = array();
 
 		return array(
 			'success' => true,

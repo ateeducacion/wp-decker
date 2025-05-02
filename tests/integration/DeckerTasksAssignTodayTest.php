@@ -160,7 +160,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		remove_filter( 'decker_save_task_send_response', '__return_false' );
 
 		$this->assertTrue( $response_data['success'] );
-		$this->assertEquals( 'Tarea guardada exitosamente.', $response_data['message'] );
+		$this->assertEquals( 'Task saved successfully.', $response_data['message'] );
 
 		$post = get_post( $this->task_id );
 		$this->assertEquals( 'Test Task', $post->post_title, 'Task title mismatch.' );

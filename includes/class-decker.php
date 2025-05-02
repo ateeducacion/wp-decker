@@ -68,21 +68,8 @@ class Decker {
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
-		add_action( 'init', array( $this, 'maybe_flush_permalinks' ), 999 );
-
 		// Hook demo data creation to init.
 		add_action( 'init', array( $this, 'maybe_create_demo_data' ) );
-	}
-
-	/**
-	 * Checks if flush_rewrite_rules() should be executed.
-	 */
-	public function maybe_flush_permalinks() {
-		// Only flush if the option is set.
-		if ( get_option( 'decker_flush_rewrites' ) ) {
-			flush_rewrite_rules();
-			delete_option( 'decker_flush_rewrites' );
-		}
 	}
 
 
