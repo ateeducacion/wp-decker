@@ -98,6 +98,38 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     padding: 1rem; /* Prevents content from touching edges */
 }
 
+/* Style for labels in KB table */
+#tablaKB td .badge {
+    display: block;
+    margin-bottom: 0.25rem;
+    margin-right: 0.25rem;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.2;
+    word-break: break-word;
+    width: fit-content;
+}
+
+/* Adjust column widths for KB table */
+#tablaKB th.col-3,
+#tablaKB th.col-1 {
+    width: auto !important;
+}
+
+#tablaKB td:nth-child(1) {
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#tablaKB td:nth-child(5) {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 
 
 /* Estilos para fechas */

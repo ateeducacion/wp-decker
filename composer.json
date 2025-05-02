@@ -25,12 +25,13 @@
         "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/,tests/ --colors --warning-severity=0 --extensions=php",
         "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php", 
         "make-pot": "wp i18n make-pot . languages/decker.pot --domain=decker --exclude=vendor,assets,node_modules,tests,wp,wp-content --include=**/*.php",
+        "pot-remove-refs": "sed -i.bak '/^#: /d' languages/decker.pot && rm languages/decker.pot.bak",      
         "update-po": "wp i18n update-po languages/decker.pot languages/decker-es_ES.po",
         "make-mo": "wp i18n make-mo languages/ languages/",
         "pot-remove-ctime": "sed -i.bak '/POT-Creation-Date:/d' languages/decker.pot && rm languages/decker.pot.bak",
         "untranslated": "msgattrib --untranslated languages/decker-es_ES.po && [ $(msgattrib --untranslated languages/decker-es_ES.po | wc -l) -eq 0 ]",
         "make-i18n-json": "wp i18n make-json languages/decker-es_ES.po languages/ --purge --pretty-print",
-        "check-untranslated": "composer make-pot && composer pot-remove-ctime && composer update-po && composer untranslated && composer make-mo"
+        "check-untranslated": "composer make-pot && composer pot-remove-ctime && composer pot-remove-refs && composer update-po && composer untranslated && composer make-mo"
     },
     "config": {
         "allow-plugins": {

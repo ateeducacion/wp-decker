@@ -75,6 +75,17 @@ class Decker_Kb {
 	public function save_article( $request ) {
 		$params = $request->get_params();
 
+		// Validate that board is provided.
+		if ( empty( $params['board'] ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Board is required', 'decker' ),
+				),
+				400
+			);
+		}
+
 		$post_data = array(
 			'post_type'    => 'decker_kb',
 			'post_title'   => sanitize_text_field( $params['title'] ),
@@ -103,6 +114,22 @@ class Decker_Kb {
 		// Handle labels.
 		if ( ! empty( $params['labels'] ) ) {
 			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
+		}
+
+		// Handle board (required).
+		$board_id = intval( $params['board'] );
+		if ( $board_id > 0 ) {
+			wp_set_object_terms( $post_id, array( $board_id ), 'decker_board' );
+		} else {
+			// If somehow we got here with an invalid board ID, delete the post and return an error.
+			wp_delete_post( $post_id, true );
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Invalid board ID', 'decker' ),
+				),
+				400
+			);
 		}
 
 		return new WP_REST_Response(
@@ -162,6 +189,8 @@ class Decker_Kb {
 		}
 
 		$labels = wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) );
+		$board_terms = wp_get_object_terms( $article_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$board_id = ! empty( $board_terms ) ? $board_terms[0] : 0;
 
 		return new WP_REST_Response(
 			array(
@@ -171,6 +200,7 @@ class Decker_Kb {
 					'title'      => $post->post_title,
 					'content'    => $post->post_content,
 					'labels'     => $labels,
+					'board'      => $board_id,
 					'parent_id'  => $post->post_parent,
 					'menu_order' => $post->menu_order,
 				),
@@ -219,10 +249,11 @@ class Decker_Kb {
 	}
 
 	/**
-	 * Link existing Decker Labels taxonomy
+	 * Link existing Decker taxonomies
 	 */
 	public function register_taxonomy() {
 		register_taxonomy_for_object_type( 'decker_label', 'decker_kb' );
+		register_taxonomy_for_object_type( 'decker_board', 'decker_kb' );
 	}
 
 	/**
@@ -259,6 +290,47 @@ class Decker_Kb {
 		);
 	}
 
+
+	/**
+	 * Get relative time for a post's modified date.
+	 *
+	 * @param int $post_id The post ID.
+	 * @return string The relative time as a human-readable string.
+	 */
+	public static function get_relative_time( $post_id ): string {
+		$modified_date = get_post_modified_time( 'U', false, $post_id );
+
+		if ( ! $modified_date ) {
+			return __( 'No date', 'decker' );
+		}
+
+		$modified_date_obj = new DateTime( '@' . $modified_date );
+		$modified_date_obj->setTime( 0, 0, 0 ); // Ignore time.
+
+		$today = new DateTime( 'today' );
+		$yesterday = ( clone $today )->modify( '-1 day' );
+		$tomorrow = ( clone $today )->modify( '+1 day' );
+
+		if ( $modified_date_obj == $today ) {
+			return __( 'Today', 'decker' );
+		} elseif ( $modified_date_obj == $yesterday ) {
+			return __( 'Yesterday', 'decker' );
+		} elseif ( $modified_date_obj == $tomorrow ) {
+			return __( 'Tomorrow', 'decker' );
+		} else {
+			$now = current_time( 'timestamp' ); // WordPress current time.
+			$diff_days = $today->diff( $modified_date_obj )->days;
+
+			// Use human_time_diff.
+			if ( $modified_date_obj < $today ) {
+				// Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+				return sprintf( __( '%s ago', 'decker' ), human_time_diff( $modified_date, $now ) );
+			} else {
+				// Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+				return sprintf( __( 'in %s', 'decker' ), human_time_diff( $now, $modified_date ) );
+			}
+		}
+	}
 
 	/**
 	 * Get all articles in hierarchical order.

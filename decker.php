@@ -31,13 +31,15 @@ define( 'DECKER_PLUGIN_FILE', __FILE__ );
  * The code that runs during plugin activation.
  */
 function activate_decker() {
-	// Configurar la estructura de los permalinks si es necesario.
+	// Set the permalink structure if necessary.
 	if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
 		update_option( 'permalink_structure', '/%postname%/' );
 	}
 
-	// En vez de llamar flush_rewrite_rules() aquí, establecemos una opción.
+	flush_rewrite_rules();
+
 	update_option( 'decker_flush_rewrites', true );
+	update_option( 'decker_version', DECKER_VERSION );
 }
 
 /**
@@ -72,6 +74,23 @@ function decker_update_handler( $upgrader_object, $options ) {
 register_activation_hook( __FILE__, 'activate_decker' );
 register_deactivation_hook( __FILE__, 'deactivate_decker' );
 add_action( 'upgrader_process_complete', 'decker_update_handler', 10, 2 );
+
+
+/**
+ * Maybe flush rewrite rules on init if needed.
+ */
+function decker_maybe_flush_rewrite_rules() {
+	$saved_version = get_option( 'decker_version' );
+
+	// If plugin version changed, or a flag has been set (e.g. on activation), flush rules.
+	if ( DECKER_VERSION !== $saved_version || get_option( 'decker_flush_rewrites' ) ) {
+		flush_rewrite_rules();
+		update_option( 'decker_version', DECKER_VERSION );
+		delete_option( 'decker_flush_rewrites' );
+	}
+}
+add_action( 'init', 'decker_maybe_flush_rewrite_rules', 999 );
+
 
 /**
  * The core plugin class that is used to define internationalization,

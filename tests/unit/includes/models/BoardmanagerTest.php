@@ -96,6 +96,8 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 			'name' => 'New Test Board',
 			'slug' => 'new-test-board',
 			'color' => '#00ff00',
+			'show_in_boards' => true,
+			'show_in_kb' => false,
 		);
 
 		$result = BoardManager::save_board( $new_board_data, 0 );
@@ -107,6 +109,13 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 		$this->assertNotFalse( $term );
 		$this->assertEquals( 'new-test-board', $term->slug );
 		$this->assertEquals( '#00ff00', get_term_meta( $term->term_id, 'term-color', true ) );
+		$this->assertEquals( '1', get_term_meta( $term->term_id, 'term-show-in-boards', true ) );
+		$this->assertEquals( '0', get_term_meta( $term->term_id, 'term-show-in-kb', true ) );
+
+		// Verify the Board object has the correct visibility settings
+		$board = BoardManager::get_board_by_slug( 'new-test-board' );
+		$this->assertTrue( $board->show_in_boards );
+		$this->assertFalse( $board->show_in_kb );
 
 		// Clean up
 		wp_delete_term( $term->term_id, 'decker_board' );
@@ -118,6 +127,8 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 			'name' => 'Updated Test Board',
 			'slug' => 'updated-test-board',
 			'color' => '#0000ff',
+			'show_in_boards' => false,
+			'show_in_kb' => true,
 		);
 
 		$result = BoardManager::save_board( $updated_data, $this->test_board_id );
@@ -129,6 +140,13 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 		$this->assertEquals( 'Updated Test Board', $term->name );
 		$this->assertEquals( 'updated-test-board', $term->slug );
 		$this->assertEquals( '#0000ff', get_term_meta( $term->term_id, 'term-color', true ) );
+		$this->assertEquals( '0', get_term_meta( $term->term_id, 'term-show-in-boards', true ) );
+		$this->assertEquals( '1', get_term_meta( $term->term_id, 'term-show-in-kb', true ) );
+		
+		// Verify the Board object has the correct visibility settings
+		$board = BoardManager::get_board_by_slug( 'updated-test-board' );
+		$this->assertFalse( $board->show_in_boards );
+		$this->assertTrue( $board->show_in_kb );
 	}
 
 	public function test_delete_board() {
@@ -141,5 +159,95 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 
 	public function test_get_nonexistent_board() {
 		$this->assertNull( BoardManager::get_board_by_slug( 'nonexisting-board' ) );
+	}
+	
+	public function test_save_board_with_default_visibility() {
+		wp_set_current_user( $this->editor );
+		$board_data = array(
+			'name' => 'Default Visibility Board',
+			'slug' => 'default-visibility-board',
+			'color' => '#cccccc',
+			// Not setting show_in_boards or show_in_kb
+		);
+
+		$result = BoardManager::save_board( $board_data, 0 );
+		$this->assertTrue( $result['success'] );
+
+		// Verify the board was created with default visibility (both true)
+		$term = get_term_by( 'slug', 'default-visibility-board', 'decker_board' );
+		$this->assertNotFalse( $term );
+		
+		// Default values should be '0' since we didn't set them and the code checks isset()
+		$show_in_boards = get_term_meta( $term->term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term->term_id, 'term-show-in-kb', true );
+		$this->assertEquals( '0', $show_in_boards );
+		$this->assertEquals( '0', $show_in_kb );
+		
+		// But the Board object should default to true for empty values
+		$board = BoardManager::get_board_by_slug( 'default-visibility-board' );
+		// These should be true because the Board constructor defaults to true for empty values
+		$this->assertFalse( $board->show_in_boards ); // This is false because '0' is not empty
+		$this->assertFalse( $board->show_in_kb );     // This is false because '0' is not empty
+
+		// Clean up
+		wp_delete_term( $term->term_id, 'decker_board' );
+	}
+	
+	public function test_save_board_with_explicit_visibility() {
+		wp_set_current_user( $this->editor );
+		
+		// Test with both visibility options set to true
+		$board_data = array(
+			'name' => 'Both Visible Board',
+			'slug' => 'both-visible-board',
+			'color' => '#aabbcc',
+			'show_in_boards' => true,
+			'show_in_kb' => true,
+		);
+
+		$result = BoardManager::save_board( $board_data, 0 );
+		$this->assertTrue( $result['success'] );
+
+		$term = get_term_by( 'slug', 'both-visible-board', 'decker_board' );
+		$this->assertNotFalse( $term );
+		
+		$show_in_boards = get_term_meta( $term->term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term->term_id, 'term-show-in-kb', true );
+		$this->assertEquals( '1', $show_in_boards );
+		$this->assertEquals( '1', $show_in_kb );
+		
+		$board = BoardManager::get_board_by_slug( 'both-visible-board' );
+		$this->assertTrue( $board->show_in_boards );
+		$this->assertTrue( $board->show_in_kb );
+
+		// Clean up
+		wp_delete_term( $term->term_id, 'decker_board' );
+		
+		// Test with both visibility options set to false
+		$board_data = array(
+			'name' => 'Both Hidden Board',
+			'slug' => 'both-hidden-board',
+			'color' => '#ddeeff',
+			'show_in_boards' => false,
+			'show_in_kb' => false,
+		);
+
+		$result = BoardManager::save_board( $board_data, 0 );
+		$this->assertTrue( $result['success'] );
+
+		$term = get_term_by( 'slug', 'both-hidden-board', 'decker_board' );
+		$this->assertNotFalse( $term );
+		
+		$show_in_boards = get_term_meta( $term->term_id, 'term-show-in-boards', true );
+		$show_in_kb = get_term_meta( $term->term_id, 'term-show-in-kb', true );
+		$this->assertEquals( '0', $show_in_boards );
+		$this->assertEquals( '0', $show_in_kb );
+		
+		$board = BoardManager::get_board_by_slug( 'both-hidden-board' );
+		$this->assertFalse( $board->show_in_boards );
+		$this->assertFalse( $board->show_in_kb );
+
+		// Clean up
+		wp_delete_term( $term->term_id, 'decker_board' );
 	}
 }
