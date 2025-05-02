@@ -65,7 +65,6 @@ check-all: check
 # Run unit tests with PHPUnit
 tests: test
 test: start-if-not-running
-# 	npx wp-env start
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
 test-verbose: start-if-not-running
