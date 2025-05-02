@@ -492,7 +492,7 @@ msgid "Danger"
 msgstr ""
 
 #: includes/custom-post-types/class-decker-events.php:460
-#: public/class-decker-public.php:324
+#: public/class-decker-public.php:325
 #: public/layouts/kb-modal.php:262
 msgid "Success"
 msgstr ""
@@ -947,7 +947,7 @@ msgstr ""
 
 #: includes/models/class-task.php:397
 #: public/app-upcoming.php:157
-#: public/class-decker-public.php:326
+#: public/class-decker-public.php:327
 msgid "Today"
 msgstr ""
 
@@ -995,12 +995,12 @@ msgid "Edit in WordPress"
 msgstr ""
 
 #: includes/models/class-task.php:610
-#: public/class-decker-public.php:317
+#: public/class-decker-public.php:318
 msgid "Archive"
 msgstr ""
 
 #: includes/models/class-task.php:618
-#: public/class-decker-public.php:318
+#: public/class-decker-public.php:319
 msgid "Unarchive"
 msgstr ""
 
@@ -1353,106 +1353,106 @@ msgstr ""
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:296
+#: public/class-decker-public.php:297
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/class-decker-public.php:297
+#: public/class-decker-public.php:298
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/class-decker-public.php:298
+#: public/class-decker-public.php:299
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/class-decker-public.php:299
+#: public/class-decker-public.php:300
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/class-decker-public.php:300
+#: public/class-decker-public.php:301
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/class-decker-public.php:301
+#: public/class-decker-public.php:302
 msgid "Failed to delete attachment."
 msgstr ""
 
-#: public/class-decker-public.php:302
+#: public/class-decker-public.php:303
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/class-decker-public.php:303
+#: public/class-decker-public.php:304
 #: public/layouts/event-card.php:245
 #: public/layouts/task-card.php:135
 #: public/layouts/task-card.php:395
 msgid "Delete"
 msgstr ""
 
-#: public/class-decker-public.php:304
+#: public/class-decker-public.php:305
 msgid "Server response error."
 msgstr ""
 
-#: public/class-decker-public.php:305
+#: public/class-decker-public.php:306
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/class-decker-public.php:306
+#: public/class-decker-public.php:307
 msgid "Request error."
 msgstr ""
 
-#: public/class-decker-public.php:307
+#: public/class-decker-public.php:308
 msgid "Error saving task."
 msgstr ""
 
-#: public/class-decker-public.php:308
+#: public/class-decker-public.php:309
 msgid "Show HTML source"
 msgstr ""
 
-#: public/class-decker-public.php:309
+#: public/class-decker-public.php:310
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/class-decker-public.php:310
+#: public/class-decker-public.php:311
 msgid "OK"
 msgstr ""
 
-#: public/class-decker-public.php:311
+#: public/class-decker-public.php:312
 msgid "Cancel"
 msgstr ""
 
-#: public/class-decker-public.php:313
+#: public/class-decker-public.php:314
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:314
+#: public/class-decker-public.php:315
 msgid "This action will move the task to the archive."
 msgstr ""
 
-#: public/class-decker-public.php:315
+#: public/class-decker-public.php:316
 msgid "Are you sure you want to unarchive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:316
+#: public/class-decker-public.php:317
 msgid "This action will restore the task."
 msgstr ""
 
-#: public/class-decker-public.php:319
+#: public/class-decker-public.php:320
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/class-decker-public.php:320
+#: public/class-decker-public.php:321
 msgid "The task has been successfully archived."
 msgstr ""
 
-#: public/class-decker-public.php:321
+#: public/class-decker-public.php:322
 msgid "The task has been successfully unarchived."
 msgstr ""
 
-#: public/class-decker-public.php:322
+#: public/class-decker-public.php:323
 msgid "An error occurred while archiving the task."
 msgstr ""
 
-#: public/class-decker-public.php:325
+#: public/class-decker-public.php:326
 #: public/layouts/kb-modal.php:160
 #: public/layouts/kb-modal.php:168
 #: public/layouts/kb-modal.php:270
@@ -1460,45 +1460,45 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: public/class-decker-public.php:327
+#: public/class-decker-public.php:328
 msgid "Month"
 msgstr ""
 
-#: public/class-decker-public.php:328
+#: public/class-decker-public.php:329
 msgid "Week"
 msgstr ""
 
-#: public/class-decker-public.php:329
+#: public/class-decker-public.php:330
 msgid "Day"
 msgstr ""
 
-#: public/class-decker-public.php:330
+#: public/class-decker-public.php:331
 msgid "List"
 msgstr ""
 
-#: public/class-decker-public.php:331
+#: public/class-decker-public.php:332
 msgid "Unsaved changes"
 msgstr ""
 
-#: public/class-decker-public.php:332
+#: public/class-decker-public.php:333
 msgid "You have unsaved changes. Close without saving?"
 msgstr ""
 
-#: public/class-decker-public.php:333
+#: public/class-decker-public.php:334
 msgid "Close anyway"
 msgstr ""
 
-#: public/class-decker-public.php:334
+#: public/class-decker-public.php:335
 msgid "Are you sure you want to delete this event?"
-msgstr ""
-
-#: public/class-decker-public.php:379
-#: public/class-decker-public.php:419
-msgid "Loading content. Please wait."
 msgstr ""
 
 #: public/class-decker-public.php:380
 #: public/class-decker-public.php:420
+msgid "Loading content. Please wait."
+msgstr ""
+
+#: public/class-decker-public.php:381
+#: public/class-decker-public.php:421
 msgid "Error loading content. Please try again."
 msgstr ""
 
