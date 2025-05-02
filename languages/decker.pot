@@ -14,1989 +14,1351 @@ msgstr ""
 "X-Domain: decker\n"
 
 #. Plugin Name of the plugin
-#: decker.php
-#: admin/class-decker-admin-settings.php:224
-#: public/app-calendar.php:40
 msgid "Decker"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: decker.php
 msgid "https://github.com/ateeducacion/wp-decker"
 msgstr ""
 
 #. Description of the plugin
-#: decker.php
 msgid "Decker is a WordPress plugin focused on efficiently and structurally presenting a list of tasks. It is a simple task management plugin that utilizes a Kanban board and a unique priority system."
 msgstr ""
 
 #. Author of the plugin
-#: decker.php
 msgid "Área de Tecnología Educativa"
 msgstr ""
 
 #. Author URI of the plugin
-#: decker.php
 msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:46
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:64
 msgid "Enable email notifications for all plugin events."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:66
 msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:100
 msgid "Select the minimum user profile that can use Decker."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:113
 msgid "Enter the alert message to display as a banner. Supports HTML. Leave empty to hide."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:138
 msgid "Select the color for the alert message."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:223
-#: includes/custom-post-types/class-decker-user-extended.php:87
-#: public/layouts/topbar.php:124
 msgid "Decker Settings"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:241
 msgid "Decker Configuration"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:247
 msgid "Alert Color"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:248
 msgid "Alert Message"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:249
 msgid "Minimum User Profile"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:250
 msgid "Shared Key"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:251
 msgid "Allow Email Notifications"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:252
-#: admin/class-decker-admin-settings.php:304
 msgid "Clear All Data"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:253
 msgid "Ignored Users"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:274
 msgid "Configure the Decker plugin settings."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:293
 msgid "Please enter comma-separated user IDs (numbers only)"
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:294
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:304
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:305
 msgid "Click the button to delete all Decker labels, tasks, and boards."
 msgstr ""
 
-#: admin/class-decker-admin-settings.php:332
 msgid "All Decker records have been deleted."
 msgstr ""
 
 #. Translators: %s is a list of invalid user IDs that have been removed.
-#: admin/class-decker-admin-settings.php:340
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr ""
 
-#: admin/class-decker-admin.php:63
 msgid "Settings"
 msgstr ""
 
-#: admin/class-decker-admin.php:81
-#: admin/class-decker-admin.php:84
 msgid "Go to Decker"
 msgstr ""
 
-#: includes/class-decker-calendar.php:86
 msgid "You do not have permissions to access this data."
 msgstr ""
 
-#: includes/class-decker-demo-data.php:34
-#: includes/custom-post-types/class-decker-events.php:464
-#: public/app-calendar.php:66
-#: public/app-event-manager.php:157
-#: public/layouts/event-card.php:226
 msgid "Warning"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:34
 msgid "You are running this site with demo data."
 msgstr ""
 
-#: includes/class-decker-demo-data.php:336
 msgid "Team Meeting"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:337
 msgid "Project Review"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:338
 msgid "Training Session"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:339
 msgid "Client Presentation"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:340
 msgid "Sprint Planning"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:341
 msgid "Code Review"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:342
 msgid "Release Day"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:343
 msgid "Maintenance Window"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:347
 msgid "Meeting Room A"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:348
 msgid "Conference Room"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:349
 msgid "Training Center"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:350
 msgid "Virtual Meeting"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:351
 msgid "Main Office"
 msgstr ""
 
-#: includes/class-decker-demo-data.php:415
 msgid "Demo event created automatically."
 msgstr ""
 
-#: includes/class-decker-email-to-post.php:50
-#: includes/class-decker-email-to-post.php:55
 msgid "Access denied"
 msgstr ""
 
-#: includes/class-decker-mailer.php:129
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
 #. translators: %s is the name of the user who completed the task.
 #. Translators: %s is the task author.
-#: includes/class-decker-notification-handler.php:145
-#: includes/class-decker-notification-handler.php:305
-#: includes/class-decker-notification-handler.php:329
-#: includes/class-decker-notification-handler.php:381
-#: includes/class-decker-notification-handler.php:407
 msgid "Unknown user"
 msgstr ""
 
-#: includes/class-decker-notification-handler.php:160
 msgid "Task Created"
 msgstr ""
 
 #. translators: 1: Task title, 2: Task URL, 3: Creator name
-#: includes/class-decker-notification-handler.php:181
 msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
 msgstr ""
 
-#: includes/class-decker-notification-handler.php:228
 msgid "You have been assigned a task"
 msgstr ""
 
 #. translators: %s is the name of the user who completed the task.
-#: includes/class-decker-notification-handler.php:305
 msgid "Completed by %s"
 msgstr ""
 
 #. Translators: %s is the task title.
-#: includes/class-decker-notification-handler.php:379
 msgid "New Comment on Task: %s"
 msgstr ""
 
 #. Translators: %s is the task author.
-#: includes/class-decker-notification-handler.php:381
 msgid "Comment by %s"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:37
 msgctxt "taxonomy general name"
 msgid "Actions"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:38
 msgctxt "taxonomy singular name"
 msgid "Action"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:39
 msgid "Search Actions"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:40
 msgid "All Actions"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:41
 msgid "Edit Action"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:42
 msgid "Update Action"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:43
 msgid "Add New Action"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:44
 msgid "New Action Name"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:45
-#: public/app-event-manager.php:68
-#: public/app-knowledge-base.php:143
-#: public/app-term-manager.php:202
 msgid "Actions"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:99
 msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-actions.php:137
 msgid "You are not authorized to access this resource."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:55
 msgctxt "taxonomy general name"
 msgid "Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:56
 msgctxt "taxonomy singular name"
 msgid "Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:57
 msgid "Search Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:58
-#: public/app-tasks.php:180
 msgid "All Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:59
 msgid "Edit Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:60
 msgid "Update Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:61
-#: public/app-term-manager.php:123
 msgid "Add New Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:62
 msgid "New Board Name"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:63
-#: public/app-term-manager.php:122
-#: public/layouts/left-sidebar.php:227
-#: public/layouts/left-sidebar.php:385
 msgid "Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:96
-#: includes/custom-post-types/class-decker-boards.php:138
-#: includes/custom-post-types/class-decker-boards.php:287
-#: includes/custom-post-types/class-decker-labels.php:95
-#: includes/custom-post-types/class-decker-labels.php:113
-#: includes/custom-post-types/class-decker-labels.php:208
-#: includes/custom-post-types/class-decker-user-extended.php:144
-#: includes/custom-post-types/class-decker-user-extended.php:286
-#: public/app-term-manager.php:197
-#: public/app-term-manager.php:303
 msgid "Color"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:102
-#: includes/custom-post-types/class-decker-boards.php:148
-#: public/app-term-manager.php:317
 msgid "Show in Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:104
-#: includes/custom-post-types/class-decker-boards.php:150
-#: public/app-term-manager.php:319
 msgid "Display this board in the Boards section of the sidebar"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:109
-#: includes/custom-post-types/class-decker-boards.php:154
-#: public/app-term-manager.php:324
 msgid "Show in Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:111
-#: includes/custom-post-types/class-decker-boards.php:156
-#: public/app-term-manager.php:326
 msgid "Display this board in the Knowledge Base section of the sidebar"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-boards.php:144
-#: public/app-term-manager.php:313
 msgid "Visibility"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:87
 msgctxt "post type general name"
 msgid "Events"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:88
 msgctxt "post type singular name"
 msgid "Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:89
 msgctxt "admin menu"
 msgid "Events"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:90
 msgctxt "add new on admin bar"
 msgid "Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:91
 msgctxt "event"
 msgid "Add New"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:92
-#: public/app-calendar.php:48
-#: public/app-event-manager.php:39
 msgid "Add New Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:93
 msgid "New Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:94
 msgid "Edit Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:95
 msgid "View Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:96
-#: public/app-event-manager.php:20
-#: public/app-event-manager.php:37
-#: public/layouts/left-sidebar.php:389
 msgid "Events"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:97
 msgid "Search Events"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:98
 msgid "No events found."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:99
 msgid "No events found in Trash."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:246
-#: includes/custom-post-types/class-decker-kb.php:161
-#: includes/custom-post-types/class-decker-tasks.php:915
 msgid "You do not have permission to access this resource."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:319
 msgid "Event Details"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:328
-#: includes/custom-post-types/class-decker-tasks.php:1001
-#: public/app-priority.php:174
-#: public/app-tasks.php:208
-#: public/layouts/event-card.php:161
-#: public/layouts/event-card.php:164
 msgid "Assigned Users"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:356
-#: public/layouts/event-card.php:129
 msgid "All Day Event"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:362
 msgid "End Date must be after Start Date."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:419
 msgid "Please ensure that the End Date is after the Start Date."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:427
 msgid "Start Date:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:432
 msgid "Start Time:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:437
 msgid "End Date:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:442
 msgid "End Time:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:447
 msgid "Location:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:452
 msgid "URL:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:457
 msgid "Category:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:459
 msgid "Danger"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:460
-#: public/class-decker-public.php:324
-#: public/layouts/kb-modal.php:415
 msgid "Success"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:461
 msgid "Primary"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:462
 msgid "Info"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-events.php:463
-#: public/layouts/right-sidebar.php:49
-#: public/layouts/right-sidebar.php:88
-#: public/layouts/right-sidebar.php:108
 msgid "Dark"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:83
 msgid "Board is required"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:129
 msgid "Invalid board ID"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:138
 msgid "Article saved successfully"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:185
 msgid "Article not found"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:217
 msgctxt "post type general name"
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:218
 msgctxt "post type singular name"
 msgid "Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:219
 msgctxt "admin menu"
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:220
-#: includes/custom-post-types/class-decker-kb.php:221
-#: public/app-knowledge-base.php:85
-#: public/layouts/kb-modal.php:18
-#: public/layouts/kb-modal.php:204
 msgid "Add New Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:222
 msgid "New Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:223
-#: public/layouts/kb-modal.php:200
 msgid "Edit Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:224
 msgid "View Article"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:225
-#: public/app-knowledge-base.php:46
-#: public/app-knowledge-base.php:67
-#: public/layouts/left-sidebar.php:274
 msgid "Knowledge Base"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:226
 msgid "Parent Article:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:227
 msgid "No articles found."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:304
 msgid "No date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:315
-#: includes/models/class-task.php:397
-#: public/app-upcoming.php:157
-#: public/class-decker-public.php:326
 msgid "Today"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:317
-#: includes/models/class-task.php:399
 msgid "Yesterday"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-kb.php:319
-#: includes/models/class-task.php:401
-#: public/app-upcoming.php:172
 msgid "Tomorrow"
 msgstr ""
 
 #. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
-#: includes/custom-post-types/class-decker-kb.php:327
-#: includes/models/class-task.php:410
 msgid "%s ago"
 msgstr ""
 
 #. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
-#: includes/custom-post-types/class-decker-kb.php:330
-#: includes/models/class-task.php:414
 msgid "in %s"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:53
 msgctxt "taxonomy general name"
 msgid "Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:54
 msgctxt "taxonomy singular name"
 msgid "Label"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:55
 msgid "Search Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:56
-#: public/app-knowledge-base.php:109
 msgid "All Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:57
 msgid "Edit Label"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:58
 msgid "Update Label"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:59
-#: public/app-term-manager.php:127
 msgid "Add New Label"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:60
 msgid "New Label Name"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-labels.php:61
-#: includes/custom-post-types/class-decker-tasks.php:1028
-#: public/app-term-manager.php:126
-#: public/layouts/kb-modal.php:69
-#: public/layouts/left-sidebar.php:371
-#: public/layouts/task-card.php:294
 msgid "Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:140
-#: includes/custom-post-types/class-decker-tasks.php:1070
-#: public/app-priority.php:171
-#: public/app-priority.php:424
-#: public/app-tasks.php:204
-#: public/layouts/task-card.php:248
 msgid "Stack"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:856
 msgctxt "post type general name"
 msgid "Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:857
 msgctxt "post type singular name"
 msgid "Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:858
 msgctxt "admin menu"
 msgid "Decker"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:859
 msgid "Edit Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:860
 msgid "View Task"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:861
 msgid "All Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:862
 msgid "Search Tasks"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:863
 msgid "Parent Tasks:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:864
 msgid "No tasks found."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:865
 msgid "No tasks found in Trash."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:931
 msgctxt "post status"
 msgid "Archived"
 msgstr ""
 
 #. translators: %s: Number of items
-#: includes/custom-post-types/class-decker-tasks.php:937
 msgid "Archived <span class=\"count\">(%s)</span>"
 msgid_plural "Archived <span class=\"count\">(%s)</span>"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/custom-post-types/class-decker-tasks.php:952
-#: includes/custom-post-types/class-decker-tasks.php:956
 msgid "Archived"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:958
 msgid "Archivado"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:992
 msgid "Task Details"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1010
 msgid "Task User and Date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1019
-#: public/layouts/task-card.php:320
 msgid "Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1037
-#: public/app-knowledge-base.php:137
-#: public/app-priority.php:170
-#: public/app-priority.php:423
-#: public/app-tasks.php:203
-#: public/layouts/kb-modal.php:34
-#: public/layouts/task-card.php:202
 msgid "Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1062
-#: public/layouts/task-card.php:256
 msgid "Due Date"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1066
 msgid "Max Priority"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1072
 msgid "To-Do"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1073
-#: public/app-kanban-my.php:100
-#: public/app-kanban.php:150
-#: public/layouts/task-card.php:245
 msgid "In Progress"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1074
-#: public/app-kanban-my.php:115
-#: public/app-kanban.php:165
-#: public/layouts/task-card.php:246
 msgid "Done"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1078
 msgid "Nextcloud Card ID"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1083
-#: public/app-priority.php:173
-#: public/app-tasks.php:207
-#: public/layouts/task-card.php:235
 msgid "Responsable"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1088
 msgid "Hidden"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1141
-#: public/layouts/kb-modal.php:36
-#: public/layouts/task-card.php:188
 msgid "Select Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1192
 msgid "Assign User:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1194
 msgid "-- Select User --"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1205
 msgid "Assign Date:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1211
 msgid "Add Relation"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1220
 msgid "Unknown User"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1225
-#: includes/custom-post-types/class-decker-tasks.php:1266
-#: includes/custom-post-types/class-decker-tasks.php:1351
-#: includes/custom-post-types/class-decker-tasks.php:1385
 msgid "Remove"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1247
 msgid "Please select a user and date."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1256
 msgid "This user and date combination already exists."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1335
-#: includes/custom-post-types/class-decker-tasks.php:1373
 msgid "Add Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1371
 msgid "Select Attachments"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1640
 msgid "Show All Boards"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1641
 msgid "Show All Labels"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1694
 msgid "Status"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1882
+msgid "Task saved successfully."
+msgstr ""
+
 msgid "The title is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1885
 msgid "The stack is required."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1891
 msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1895
 msgid "The board is required and must be a positive integer."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-tasks.php:1901
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:92
 msgid "Calendar Token"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:103
 msgid "Generate New Token"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:113
 msgid "Subscribe to Decker calendar:"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:117
 msgid "Google Calendar"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:122
 msgid "iCalendar"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:126
-#: public/app-calendar.php:16
-#: public/app-calendar.php:41
-#: public/app-calendar.php:45
-#: public/layouts/left-sidebar.php:122
 msgid "Calendar"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:130
 msgid "Outlook 365"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:135
 msgid "Export .ics file"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:148
 msgid "Select your favorite color."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:153
 msgid "Default Board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:156
 msgid "Select a board"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:171
 msgid "Select your default board."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:193
 msgid "Email Notifications"
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:197
 msgid "Notify me when a task is assigned to me."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:202
 msgid "Notify me when a task assigned to me is completed."
 msgstr ""
 
-#: includes/custom-post-types/class-decker-user-extended.php:207
 msgid "Notify me when someone comments on a task I am assigned to."
 msgstr ""
 
-#: includes/models/class-boardmanager.php:114
 msgid "You do not have permission to create terms."
 msgstr ""
 
-#: includes/models/class-boardmanager.php:164
 msgid "Board updated successfully"
 msgstr ""
 
-#: includes/models/class-boardmanager.php:164
 msgid "Board created successfully"
 msgstr ""
 
-#: includes/models/class-boardmanager.php:179
 msgid "You do not have permission to delete boards"
 msgstr ""
 
-#: includes/models/class-boardmanager.php:194
 msgid "Board deleted successfully"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:117
 msgid "You do not have permission to manage labels"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:151
 msgid "Label updated successfully"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:151
 msgid "Label created successfully"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:165
 msgid "You do not have permission to delete labels"
 msgstr ""
 
-#: includes/models/class-labelmanager.php:179
 msgid "Label deleted successfully"
 msgstr ""
 
-#: includes/models/class-task.php:157
 msgid "Invalid post type."
 msgstr ""
 
-#: includes/models/class-task.php:386
 msgid "No due date"
 msgstr ""
 
-#: includes/models/class-task.php:445
 msgid "🔥"
 msgstr ""
 
-#: includes/models/class-task.php:445
 msgid "Normal"
 msgstr ""
 
-#: includes/models/class-task.php:448
 msgid "Undefined date"
 msgstr ""
 
-#: includes/models/class-task.php:473
 msgid "Order:"
 msgstr ""
 
-#: includes/models/class-task.php:585
 msgid "Edit"
 msgstr ""
 
-#: includes/models/class-task.php:602
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/models/class-task.php:610
-#: public/class-decker-public.php:317
 msgid "Archive"
 msgstr ""
 
-#: includes/models/class-task.php:618
-#: public/class-decker-public.php:318
 msgid "Unarchive"
 msgstr ""
 
-#: includes/models/class-task.php:629
 msgid "Assign to me"
 msgstr ""
 
-#: includes/models/class-task.php:636
 msgid "Leave"
 msgstr ""
 
-#: includes/models/class-task.php:651
 msgid "Mark for today"
 msgstr ""
 
-#: includes/models/class-task.php:657
 msgid "Unmark for today"
 msgstr ""
 
-#: public/app-analytics.php:17
 msgid "Analytics Dashboard"
 msgstr ""
 
-#: public/app-analytics.php:46
-#: public/app-analytics.php:49
-#: public/layouts/left-sidebar.php:322
 msgid "Analytics"
 msgstr ""
 
-#: public/app-analytics.php:61
-#: public/app-tasks.php:167
-#: public/layouts/left-sidebar.php:169
 msgid "Active Tasks"
 msgstr ""
 
-#: public/app-analytics.php:69
 msgid "Total Users"
 msgstr ""
 
-#: public/app-analytics.php:77
-#: public/app-tasks.php:171
-#: public/layouts/left-sidebar.php:195
 msgid "Archived Tasks"
 msgstr ""
 
-#: public/app-analytics.php:85
 msgid "Total Boards"
 msgstr ""
 
-#: public/app-analytics.php:101
 msgid "Tasks by Board"
 msgstr ""
 
-#: public/app-analytics.php:110
 msgid "Tasks by User"
 msgstr ""
 
-#: public/app-analytics.php:121
 msgid "Tasks by Stack"
 msgstr ""
 
-#: public/app-analytics.php:130
 msgid "Tasks by Stack from current User"
 msgstr ""
 
-#: public/app-calendar.php:63
 msgid "Drag and drop your event or click in the calendar"
 msgstr ""
 
-#: public/app-calendar.php:64
-#: public/app-event-manager.php:151
-#: public/layouts/event-card.php:220
 msgid "Meeting"
 msgstr ""
 
-#: public/app-calendar.php:65
-#: public/app-event-manager.php:154
-#: public/layouts/event-card.php:223
 msgid "Holidays"
 msgstr ""
 
-#: public/app-calendar.php:67
-#: public/app-event-manager.php:160
-#: public/layouts/event-card.php:229
 msgid "Alert"
 msgstr ""
 
-#: public/app-event-manager.php:48
-#: public/app-kanban-my.php:66
-#: public/app-kanban.php:76
-#: public/app-term-manager.php:173
-#: public/app-upcoming.php:115
 msgid "Search..."
 msgstr ""
 
-#: public/app-event-manager.php:49
-#: public/app-kanban-my.php:66
-#: public/app-kanban.php:76
-#: public/app-term-manager.php:173
-#: public/app-upcoming.php:115
 msgid "Search"
 msgstr ""
 
-#: public/app-event-manager.php:63
-#: public/app-knowledge-base.php:135
-#: public/app-priority.php:172
-#: public/app-priority.php:425
-#: public/layouts/event-card.php:116
-#: public/layouts/event-card.php:117
-#: public/layouts/kb-modal.php:29
-#: public/layouts/task-card.php:161
 msgid "Title"
 msgstr ""
 
-#: public/app-event-manager.php:64
 msgid "All Day"
 msgstr ""
 
-#: public/app-event-manager.php:65
 msgid "Start"
 msgstr ""
 
-#: public/app-event-manager.php:66
 msgid "End"
 msgstr ""
 
-#: public/app-event-manager.php:67
-#: public/layouts/event-card.php:232
 msgid "Category"
 msgstr ""
 
-#: public/app-event-manager.php:168
-#: public/app-knowledge-base.php:235
 msgid "Uncategorized"
 msgstr ""
 
-#: public/app-kanban-my.php:33
-#: public/app-kanban-my.php:72
-#: public/layouts/left-sidebar.php:107
 msgid "My Board"
 msgstr ""
 
-#: public/app-kanban-my.php:73
-#: public/app-kanban.php:114
-#: public/app-priority.php:141
-#: public/app-tasks.php:175
-#: public/app-upcoming.php:131
 msgid "Add New Task"
 msgstr ""
 
-#: public/app-kanban-my.php:86
-#: public/app-kanban.php:136
 msgid "TO-DO"
 msgstr ""
 
 #. translators: %s: Board slug that was not found
-#: public/app-kanban.php:23
 msgid "Error: The board %s does not exist."
 msgstr ""
 
-#: public/app-kanban.php:43
 msgid "Kanban Board"
 msgstr ""
 
-#: public/app-kanban.php:80
-#: public/app-upcoming.php:119
 msgid "All Users"
 msgstr ""
 
-#: public/app-kanban.php:118
 msgid "Fix Order"
 msgstr ""
 
-#: public/app-knowledge-base.php:76
-#: public/app-knowledge-base.php:105
-#: public/layouts/left-sidebar.php:293
 msgid "All Articles"
 msgstr ""
 
-#: public/app-knowledge-base.php:139
-#: public/app-tasks.php:206
 msgid "Tags"
 msgstr ""
 
-#: public/app-knowledge-base.php:140
-#: public/layouts/task-card.php:502
 msgid "Author"
 msgstr ""
 
-#: public/app-knowledge-base.php:141
 msgid "Excerpt"
 msgstr ""
 
-#: public/app-knowledge-base.php:142
 msgid "Last Updated"
 msgstr ""
 
-#: public/app-knowledge-base.php:144
 msgid "Content"
 msgstr ""
 
-#: public/app-knowledge-base.php:221
 msgid "No Board"
 msgstr ""
 
-#: public/app-knowledge-base.php:364
 msgid "Search in title, tags, excerpt and content..."
 msgstr ""
 
-#: public/app-knowledge-base.php:397
 msgid "Are you sure?"
 msgstr ""
 
-#: public/app-knowledge-base.php:398
 msgid "The article"
 msgstr ""
 
-#: public/app-knowledge-base.php:398
 msgid "will be deleted"
 msgstr ""
 
-#: public/app-knowledge-base.php:401
 msgid "Yes, delete"
 msgstr ""
 
-#: public/app-knowledge-base.php:402
-#: public/class-decker-public.php:311
 msgid "Cancel"
 msgstr ""
 
-#: public/app-knowledge-base.php:422
 msgid "Deleted"
 msgstr ""
 
-#: public/app-knowledge-base.php:423
 msgid "The article has been successfully deleted."
 msgstr ""
 
-#: public/app-knowledge-base.php:430
-#: public/class-decker-public.php:325
-#: public/layouts/kb-modal.php:173
-#: public/layouts/kb-modal.php:181
-#: public/layouts/kb-modal.php:423
-#: public/layouts/kb-modal.php:431
 msgid "Error"
 msgstr ""
 
-#: public/app-knowledge-base.php:431
 msgid "Could not delete the article."
 msgstr ""
 
-#: public/app-priority.php:59
-#: public/app-priority.php:137
-#: public/app-priority.php:140
-#: public/layouts/left-sidebar.php:86
 msgid "Priority"
 msgstr ""
 
-#: public/app-priority.php:152
 msgid "You have no tasks defined for today. Do you want to import those from the previous day?"
 msgstr ""
 
-#: public/app-priority.php:153
 msgid "Yes"
 msgstr ""
 
-#: public/app-priority.php:154
-#: public/app-priority.php:413
-#: public/app-term-manager.php:331
-#: public/layouts/event-card.php:253
-#: public/layouts/kb-modal.php:84
-#: public/layouts/kb-view-modal.php:30
 msgid "Close"
 msgstr ""
 
-#: public/app-priority.php:162
 msgid "MAX PRIORITY"
 msgstr ""
 
-#: public/app-priority.php:216
 msgid "No board assigned"
 msgstr ""
 
-#: public/app-priority.php:371
 msgid "No tasks for today."
 msgstr ""
 
-#: public/app-priority.php:412
 msgid "Select tasks to import"
 msgstr ""
 
-#: public/app-priority.php:453
 msgid "There are no tasks from previous days to import."
 msgstr ""
 
-#: public/app-task-full.php:17
 msgid "Tasks Detail"
 msgstr ""
 
-#: public/app-task-full.php:45
-#: public/app-tasks.php:20
-#: public/app-tasks.php:164
-#: public/app-term-manager.php:133
-#: public/layouts/left-sidebar.php:140
 msgid "Tasks"
 msgstr ""
 
-#: public/app-task-full.php:46
 msgid "Task Detail"
 msgstr ""
 
-#: public/app-task-full.php:51
-#: public/layouts/left-sidebar.php:208
 msgid "New task"
 msgstr ""
 
-#: public/app-task-full.php:61
 msgid "Task not found"
 msgstr ""
 
-#: public/app-tasks.php:169
-#: public/layouts/left-sidebar.php:182
 msgid "My Tasks"
 msgstr ""
 
-#: public/app-tasks.php:202
 msgid "P."
 msgstr ""
 
-#: public/app-tasks.php:205
-#: public/app-term-manager.php:308
-#: public/layouts/event-card.php:208
-#: public/layouts/event-card.php:209
-#: public/layouts/task-card.php:310
 msgid "Description"
 msgstr ""
 
-#: public/app-tasks.php:209
 msgid "Remaining Time"
 msgstr ""
 
-#: public/app-term-manager.php:195
-#: public/app-term-manager.php:294
 msgid "Name"
 msgstr ""
 
-#: public/app-term-manager.php:196
-#: public/app-term-manager.php:298
 msgid "Slug"
 msgstr ""
 
-#: public/app-term-manager.php:199
 msgid "In Boards"
 msgstr ""
 
-#: public/app-term-manager.php:200
 msgid "In KB"
 msgstr ""
 
-#: public/app-term-manager.php:284
-#: public/app-term-manager.php:371
 msgid "Add New Term"
 msgstr ""
 
-#: public/app-term-manager.php:300
 msgid "Leave empty for automatic generation from name"
 msgstr ""
 
-#: public/app-term-manager.php:310
 msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
 msgstr ""
 
-#: public/app-term-manager.php:332
-#: public/layouts/event-card.php:257
-#: public/layouts/task-card.php:518
 msgid "Save"
 msgstr ""
 
-#: public/app-term-manager.php:385
 msgid "Edit Term"
 msgstr ""
 
-#: public/app-term-manager.php:409
 msgid "To confirm deletion, please enter the term slug:"
 msgstr ""
 
-#: public/app-term-manager.php:411
 msgid "WARNING: Deleting a board is dangerous! All tasks assigned to this board will be left without a board."
 msgstr ""
 
-#: public/app-term-manager.php:427
 msgid "Incorrect slug. Deletion cancelled."
 msgstr ""
 
-#: public/app-upcoming.php:81
-#: public/app-upcoming.php:130
-#: public/layouts/left-sidebar.php:95
 msgid "Upcoming Tasks"
 msgstr ""
 
-#: public/app-upcoming.php:143
 msgid "DELAYED"
 msgstr ""
 
-#: public/app-upcoming.php:185
 msgid "Next 7 Days"
 msgstr ""
 
-#: public/class-decker-public.php:116
 msgid "You do not have permission to view this page."
 msgstr ""
 
-#: public/class-decker-public.php:296
 msgid "Are you sure you want to delete this comment?"
 msgstr ""
 
-#: public/class-decker-public.php:297
 msgid "Failed to delete comment."
 msgstr ""
 
-#: public/class-decker-public.php:298
 msgid "Error deleting comment."
 msgstr ""
 
-#: public/class-decker-public.php:299
 msgid "Please select a file to upload."
 msgstr ""
 
-#: public/class-decker-public.php:300
 msgid "Are you sure you want to delete this attachment?"
 msgstr ""
 
-#: public/class-decker-public.php:301
 msgid "Failed to delete attachment."
 msgstr ""
 
-#: public/class-decker-public.php:302
 msgid "Error uploading attachment."
 msgstr ""
 
-#: public/class-decker-public.php:303
-#: public/layouts/event-card.php:245
-#: public/layouts/task-card.php:135
-#: public/layouts/task-card.php:398
 msgid "Delete"
 msgstr ""
 
-#: public/class-decker-public.php:304
 msgid "Server response error."
 msgstr ""
 
-#: public/class-decker-public.php:305
 msgid "An error occurred while saving the task."
 msgstr ""
 
-#: public/class-decker-public.php:306
 msgid "Request error."
 msgstr ""
 
-#: public/class-decker-public.php:307
 msgid "Error saving task."
 msgstr ""
 
-#: public/class-decker-public.php:308
 msgid "Show HTML source"
 msgstr ""
 
-#: public/class-decker-public.php:309
 msgid "Edit the content in HTML format"
 msgstr ""
 
-#: public/class-decker-public.php:310
 msgid "OK"
 msgstr ""
 
-#: public/class-decker-public.php:313
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:314
 msgid "This action will move the task to the archive."
 msgstr ""
 
-#: public/class-decker-public.php:315
 msgid "Are you sure you want to unarchive this task?"
 msgstr ""
 
-#: public/class-decker-public.php:316
 msgid "This action will restore the task."
 msgstr ""
 
-#: public/class-decker-public.php:319
 msgid "Failed to archive task."
 msgstr ""
 
-#: public/class-decker-public.php:320
 msgid "The task has been successfully archived."
 msgstr ""
 
-#: public/class-decker-public.php:321
 msgid "The task has been successfully unarchived."
 msgstr ""
 
-#: public/class-decker-public.php:322
 msgid "An error occurred while archiving the task."
 msgstr ""
 
-#: public/class-decker-public.php:327
 msgid "Month"
 msgstr ""
 
-#: public/class-decker-public.php:328
 msgid "Week"
 msgstr ""
 
-#: public/class-decker-public.php:329
 msgid "Day"
 msgstr ""
 
-#: public/class-decker-public.php:330
 msgid "List"
 msgstr ""
 
-#: public/class-decker-public.php:331
 msgid "Unsaved changes"
 msgstr ""
 
-#: public/class-decker-public.php:332
 msgid "You have unsaved changes. Close without saving?"
 msgstr ""
 
-#: public/class-decker-public.php:333
 msgid "Close anyway"
 msgstr ""
 
-#: public/class-decker-public.php:334
 msgid "Are you sure you want to delete this event?"
 msgstr ""
 
-#: public/class-decker-public.php:379
-#: public/class-decker-public.php:419
 msgid "Loading content. Please wait."
 msgstr ""
 
-#: public/class-decker-public.php:380
-#: public/class-decker-public.php:420
 msgid "Error loading content. Please try again."
 msgstr ""
 
-#: public/layouts/event-card.php:119
 msgid "Please enter a title for the event."
 msgstr ""
 
-#: public/layouts/event-card.php:138
-#: public/layouts/event-card.php:139
 msgid "Start Date and Time"
 msgstr ""
 
-#: public/layouts/event-card.php:141
 msgid "Please select a start date and time."
 msgstr ""
 
-#: public/layouts/event-card.php:149
-#: public/layouts/event-card.php:150
 msgid "End Date and Time"
 msgstr ""
 
-#: public/layouts/event-card.php:152
 msgid "Please select an end date and time."
 msgstr ""
 
-#: public/layouts/event-card.php:179
 msgid "Please select at least one user."
 msgstr ""
 
-#: public/layouts/event-card.php:187
-#: public/layouts/event-card.php:188
 msgid "Location"
 msgstr ""
 
-#: public/layouts/event-card.php:190
 msgid "Please enter the event location."
 msgstr ""
 
-#: public/layouts/event-card.php:198
-#: public/layouts/event-card.php:199
 msgid "Event URL"
 msgstr ""
 
-#: public/layouts/event-card.php:201
 msgid "Please enter a valid URL."
 msgstr ""
 
-#: public/layouts/event-card.php:211
 msgid "Please enter a description for the event."
 msgstr ""
 
-#: public/layouts/event-card.php:218
 msgid "Select Category"
 msgstr ""
 
-#: public/layouts/event-card.php:234
 msgid "Please select a category for the event."
 msgstr ""
 
-#: public/layouts/event-card.php:237
 msgid "The category determines the color of the event in the calendar."
 msgstr ""
 
-#: public/layouts/event-modal.php:19
 msgid "Event"
 msgstr ""
 
-#: public/layouts/footer.php:24
 msgid "Version"
 msgstr ""
 
-#: public/layouts/kb-modal.php:31
-#: public/layouts/task-card.php:162
 msgid "Please provide a title."
 msgstr ""
 
-#: public/layouts/kb-modal.php:46
-#: public/layouts/task-card.php:203
 msgid "Please select a board."
 msgstr ""
 
-#: public/layouts/kb-modal.php:49
 msgid "Parent Article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:51
-#: public/layouts/kb-modal.php:274
 msgid "No parent (top level)"
 msgstr ""
 
-#: public/layouts/kb-modal.php:56
 msgid "Order"
 msgstr ""
 
-#: public/layouts/kb-modal.php:85
 msgid "Save Article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:182
 msgid "Could not load article"
 msgstr ""
 
-#: public/layouts/kb-modal.php:318
 msgid "Select labels..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:319
 msgid "No more labels available"
 msgstr ""
 
-#: public/layouts/kb-modal.php:364
 msgid "Select parent..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:365
 msgid "No more articles available"
 msgstr ""
 
-#: public/layouts/kb-modal.php:366
 msgid "Search for parent article..."
 msgstr ""
 
-#: public/layouts/kb-modal.php:432
 msgid "Could not save article"
 msgstr ""
 
-#: public/layouts/left-sidebar.php:64
 msgid "Show Full Sidebar"
 msgstr ""
 
-#: public/layouts/left-sidebar.php:80
 msgid "Navigation"
 msgstr ""
 
-#: public/layouts/left-sidebar.php:113
 msgid "Apps"
 msgstr ""
 
-#: public/layouts/left-sidebar.php:349
 msgid "Utilities"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:16
 msgid "Theme Settings"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:24
 msgid "Customize"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:24
 msgid "the overall color scheme, sidebar menu, etc."
 msgstr ""
 
-#: public/layouts/right-sidebar.php:27
 msgid "Choose Layout"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:31
 msgid "Vertical"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:35
 msgid "Horizontal"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:39
 msgid "Color Scheme"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:44
-#: public/layouts/right-sidebar.php:83
-#: public/layouts/right-sidebar.php:103
 msgid "Light"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:54
 msgid "Layout Mode"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:59
 msgid "Fluid"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:65
 msgid "Boxed"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:72
 msgid "Detached"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:78
 msgid "Topbar Color"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:93
-#: public/layouts/right-sidebar.php:112
 msgid "Brand"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:98
 msgid "Menu Color"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:118
 msgid "Sidebar Size"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:123
 msgid "Default"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:128
 msgid "Compact"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:133
 msgid "Condensed"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:138
 msgid "Hover View"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:143
 msgid "Full Layout"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:148
 msgid "Fullscreen Layout"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:154
 msgid "Layout Position"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:158
 msgid "Fixed"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:161
 msgid "Scrollable"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:167
 msgid "Sidebar User Info"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:181
 msgid "Reset"
 msgstr ""
 
-#: public/layouts/right-sidebar.php:184
 msgid "Send"
 msgstr ""
 
-#: public/layouts/task-card.php:160
 msgid "Task title"
 msgstr ""
 
-#: public/layouts/task-card.php:161
 msgid "MAXIMUM PRIORITY"
 msgstr ""
 
-#: public/layouts/task-card.php:170
 msgid "Maximum Priority"
 msgstr ""
 
-#: public/layouts/task-card.php:175
 msgid "For today"
 msgstr ""
 
-#: public/layouts/task-card.php:213
 msgid "Select Responsable"
 msgstr ""
 
-#: public/layouts/task-card.php:236
 msgid "Please select a responsable."
 msgstr ""
 
-#: public/layouts/task-card.php:244
 msgid "To Do"
 msgstr ""
 
-#: public/layouts/task-card.php:255
 msgid "Select date"
 msgstr ""
 
-#: public/layouts/task-card.php:257
 msgid "Please select a due date."
 msgstr ""
 
-#: public/layouts/task-card.php:267
 msgid "Assign to"
 msgstr ""
 
-#: public/layouts/task-card.php:314
 msgid "Comments"
 msgstr ""
 
-#: public/layouts/task-card.php:332
 msgid "History"
 msgstr ""
 
-#: public/layouts/task-card.php:338
 msgid "Gantt"
 msgstr ""
 
-#: public/layouts/task-card.php:341
 msgid "Information"
 msgstr ""
 
-#: public/layouts/task-card.php:361
 msgid "No comments yet."
 msgstr ""
 
-#: public/layouts/task-card.php:369
 msgid "Replying to"
 msgstr ""
 
-#: public/layouts/task-card.php:372
 msgid "Write your comment..."
 msgstr ""
 
-#: public/layouts/task-card.php:373
 msgid "Please enter a comment."
 msgstr ""
 
-#: public/layouts/task-card.php:375
 msgid "Comment"
 msgstr ""
 
-#: public/layouts/task-card.php:406
 msgid "Upload"
 msgstr ""
 
-#: public/layouts/task-card.php:416
 msgid "Nickname"
 msgstr ""
 
-#: public/layouts/task-card.php:417
 msgid "Date"
 msgstr ""
 
-#: public/layouts/task-card.php:458
 msgid "Under construction..."
 msgstr ""
 
-#: public/layouts/task-card.php:470
 msgid "Hidden task"
 msgstr ""
 
-#: public/layouts/task-card.php:471
 msgid "(Hidden tasks are not shown in task listings)"
 msgstr ""
 
-#: public/layouts/task-card.php:482
 msgid "Created"
 msgstr ""
 
-#: public/layouts/task-card.php:521
 msgid "Toggle Dropdown"
 msgstr ""
 
-#: public/layouts/task-modal.php:19
 msgid "Task"
 msgstr ""
 
-#: public/layouts/topbar.php:63
 msgid "Notifications"
 msgstr ""
 
-#: public/layouts/topbar.php:67
 msgid "Clear All"
 msgstr ""
 
-#: public/layouts/topbar.php:82
 msgid "Theme Mode"
 msgstr ""
 
-#: public/layouts/topbar.php:110
 msgid "Welcome !"
 msgstr ""
 
-#: public/layouts/topbar.php:116
 msgid "My Profile"
 msgstr ""
 
-#: public/layouts/topbar.php:135
 msgid "Test Notification"
 msgstr ""
 
-#: public/layouts/topbar.php:147
 msgid "Help"
 msgstr ""
 
-#: public/layouts/topbar.php:152
 msgid "Logout"
 msgstr ""
