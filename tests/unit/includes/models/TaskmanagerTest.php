@@ -38,12 +38,19 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		// Create a board term for the tasks.
 		wp_set_current_user( $this->editor );
 
+		// switch to admin to create the board
+		wp_set_current_user( 1 );
+
 		$this->board = self::factory()->board->create_and_get(
 			array(
 				'name'     => 'Test Board',
 				'slug'     => 'test-board',
 			)
 		);
+		$this->assertInstanceOf( 'WP_Term', $this->board, 'Board factory failed, expected WP_Term instance' );
+
+		// back to editor for the rest of the tests
+		wp_set_current_user( $this->editor );
 	}
 
 	/**

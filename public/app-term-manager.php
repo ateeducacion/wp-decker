@@ -66,6 +66,12 @@ if ( isset( $_POST['decker_term_nonce'] ) ) {
 
 	$data['description'] = $description;
 
+	// Add visibility settings for boards.
+	if ( 'board' === $term_type ) {
+		$data['show_in_boards'] = isset( $_POST['term-show-in-boards'] );
+		$data['show_in_kb'] = isset( $_POST['term-show-in-kb'] );
+	}
+
 	$result = array(
 		'success' => false,
 		'message' => '',
@@ -189,6 +195,10 @@ if ( 'board' === $selected_type ) {
 														<th data-sort-default><?php esc_html_e( 'Name', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Slug', 'decker' ); ?></th>
 														<th><?php esc_html_e( 'Color', 'decker' ); ?></th>
+														<?php if ( 'board' === $selected_type ) : ?>
+														<th data-sort-method='none'><?php esc_html_e( 'In Boards', 'decker' ); ?></th>
+														<th data-sort-method='none'><?php esc_html_e( 'In KB', 'decker' ); ?></th>
+														<?php endif; ?>
 														<th data-sort-method='none'><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 													</tr>
 												</thead>
@@ -205,6 +215,18 @@ if ( 'board' === $selected_type ) {
 														echo '</td>';
 														echo '<td class="term-slug">' . esc_html( $item->slug ) . '</td>';
 														echo '<td class="term-color"><span class="color-box" style="display: inline-block; width: 20px; height: 20px; background-color: ' . esc_attr( $item->color ) . ';"></span> ' . esc_html( $item->color ) . '</td>';
+
+														// Add visibility columns for boards.
+														if ( 'board' === $selected_type ) {
+															echo '<td class="term-show-in-boards-display text-center">';
+															echo $item->show_in_boards ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>';
+															echo '</td>';
+
+															echo '<td class="term-show-in-kb-display text-center">';
+															echo $item->show_in_kb ? '<span class="text-success">✓</span>' : '<span class="text-danger">✗</span>';
+															echo '</td>';
+														}
+
 														echo '<td>';
 														echo '<a href="#" class="btn btn-sm btn-info me-2 edit-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-pencil-line"></i></a>';
 														echo '<a href="#" class="btn btn-sm btn-danger delete-term" data-type="' . esc_attr( $selected_type ) . '" data-id="' . esc_attr( $item->id ) . '"><i class="ri-delete-bin-line"></i></a>';
@@ -212,6 +234,8 @@ if ( 'board' === $selected_type ) {
 														// Hidden span with the term-description (for boards).
 														if ( 'board' === $selected_type ) {
 															echo '<span class="term-description d-none">' . esc_html( $item->description ) . '</span>';
+															echo '<span class="term-show-in-boards d-none">' . esc_attr( $item->show_in_boards ? '1' : '0' ) . '</span>';
+															echo '<span class="term-show-in-kb d-none">' . esc_attr( $item->show_in_kb ? '1' : '0' ) . '</span>';
 														}
 														echo '</td>';
 														echo '</tr>';
@@ -285,6 +309,23 @@ if ( 'board' === $selected_type ) {
 							<textarea class="form-control" id="term-description" name="term_description" rows="3"></textarea>
 							<div class="form-text"><?php esc_html_e( 'Only basic HTML formatting is allowed (i, b, em, strong, br)', 'decker' ); ?></div>
 						</div>
+						<div class="mb-3">
+							<label class="form-label"><?php esc_html_e( 'Visibility', 'decker' ); ?></label>
+							<div class="form-check">
+								<input type="checkbox" class="form-check-input" id="term-show-in-boards" name="term-show-in-boards" value="1" checked>
+								<label class="form-check-label" for="term-show-in-boards">
+									<?php esc_html_e( 'Show in Boards', 'decker' ); ?>
+								</label>
+								<div class="form-text"><?php esc_html_e( 'Display this board in the Boards section of the sidebar', 'decker' ); ?></div>
+							</div>
+							<div class="form-check mt-2">
+								<input type="checkbox" class="form-check-input" id="term-show-in-kb" name="term-show-in-kb" value="1" checked>
+								<label class="form-check-label" for="term-show-in-kb">
+									<?php esc_html_e( 'Show in Knowledge Base', 'decker' ); ?>
+								</label>
+								<div class="form-text"><?php esc_html_e( 'Display this board in the Knowledge Base section of the sidebar', 'decker' ); ?></div>
+							</div>
+						</div>
 						<?php endif; ?>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
@@ -347,6 +388,15 @@ jQuery(document).ready(function($) {
 		$('#term-slug').val(slug);
 		$('#term-color').val(hexColor);
 		$('#term-description').val(description);
+		
+		// Set visibility checkboxes for boards.
+		if ($(this).data('type') === 'board') {
+			const showInBoards = row.find('.term-show-in-boards').text().trim() === '1';
+			const showInKb = row.find('.term-show-in-kb').text().trim() === '1';
+			$('#term-show-in-boards').prop('checked', showInBoards);
+			$('#term-show-in-kb').prop('checked', showInKb);
+		}
+		
 		termModal.show();
 	});
 

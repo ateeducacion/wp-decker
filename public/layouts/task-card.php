@@ -183,15 +183,17 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		<!-- Boards -->
 		<div class="col-md-4 mb-3">
 			<div class="form-floating">
-				<?php // TODO: Allow changing the board. ?>
-				<select class="form-select" id="task-board" required <?php disabled( $disabled || $task_id ); ?>>
+				<select class="form-select" id="task-board" required <?php disabled( $disabled ); ?>>
 					<option value="" disabled selected><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 					<?php
 
 						$boards = BoardManager::get_all_boards();
 
 					foreach ( $boards as $board ) {
-						echo '<option value="' . esc_attr( $board->id ) . '" ' . selected( $task->board && $task->board->id == $board->id ) . ' ' . selected( $board_slug, $board->slug ) . '>' . esc_html( $board->name ) . '</option>';
+						// Only show boards that have show_in_boards set to true.
+						if ( $board->show_in_boards ) {
+							echo '<option value="' . esc_attr( $board->id ) . '" ' . selected( $task->board && $task->board->id == $board->id ) . ' ' . selected( $board_slug, $board->slug ) . '>' . esc_html( $board->name ) . '</option>';
+						}
 					}
 					?>
 
