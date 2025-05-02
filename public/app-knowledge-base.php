@@ -139,7 +139,7 @@ die();
 														<th class="col-2"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
 														<th class="col-1"><?php esc_html_e( 'Author', 'decker' ); ?></th>
 														<th class="col-1"><?php esc_html_e( 'Excerpt', 'decker' ); ?></th>
-														<th class="col-2"><?php esc_html_e( 'Last Updated', 'decker' ); ?></th>
+														<th class="col-2"><?php esc_html_e( 'Updated', 'decker' ); ?></th>
 														<th class="col-2 text-end"><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 														<th class="d-none"><?php esc_html_e( 'Content', 'decker' ); ?></th>
 													</tr>
