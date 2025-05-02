@@ -11,7 +11,7 @@ Only the latest version of the plugin is supported with security updates. `wp-de
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in the Decker plugin, please report it privately and responsibly.
+If you discover a security vulnerability in the plugin, please report it privately and responsibly.
 
 - **Preferred method:** Open an issue marked as `security` and do not include sensitive details.
 - **Alternative:** Email the maintainer directly at `ate.educacion@gobiernodecanarias.org`.
@@ -22,8 +22,3 @@ Once reported:
 - If the issue is critical and affects users broadly, we may issue a security advisory and notify on the GitHub releases page.
 
 Do not report security issues via public channels (e.g., Twitter, public issues, discussions).
-
----
-
-**Project:** [ateeducacion/wp-decker](https://github.com/ateeducacion/wp-decker/)  
-**Maintainer:** @ateeducacion
