@@ -832,7 +832,7 @@ msgstr ""
 msgid "Excerpt"
 msgstr ""
 
-msgid "Last Updated"
+msgid "Updated"
 msgstr ""
 
 msgid "Content"

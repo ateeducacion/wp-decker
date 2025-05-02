@@ -1099,9 +1099,6 @@ msgstr "Ver artículo"
 msgid "Knowledge Base"
 msgstr "Base de conocimiento"
 
-msgid "Last Updated"
-msgstr "Ultima modificación"
-
 msgid "Save Article"
 msgstr "Guardar artículo"
 
@@ -1367,3 +1364,6 @@ msgstr "Tarea guardada exitosamente."
 
 msgid "Are you sure you want to delete this event?"
 msgstr "¿Está seguro que desea eliminar este evento?"
+
+msgid "Updated"
+msgstr "Fecha"

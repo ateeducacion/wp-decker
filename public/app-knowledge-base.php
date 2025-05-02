@@ -248,8 +248,9 @@ die();
 
 													// Excerpt.
 													$excerpt = wp_strip_all_tags( $article->post_content );
-													echo '<td title="' . esc_html( wp_trim_words( $excerpt, 50, '...' ) ) . '">';
-													echo esc_html( wp_trim_words( $excerpt, 10, '...' ) );
+													echo '<td title="' . esc_html( wp_trim_words( $excerpt, 100, '...' ) ) . '">';
+													echo '<div class="kb-excerpt">' . esc_html( wp_trim_words( $excerpt, 30, '...' ) );
+													echo '</div>';
 													echo '</td>';
 
 													// Last Updated with friendly date.
