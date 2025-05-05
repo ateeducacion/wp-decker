@@ -10,10 +10,10 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-// Start output buffering to prevent "headers already sent" errors
+// Start output buffering to prevent "headers already sent" errors.
 ob_start();
 
-// Process form submission before any output
+// Process form submission before any output.
 if ( isset( $_POST['import_tasks_nonce'] ) ) {
 	$import_tasks_nonce = sanitize_text_field( wp_unslash( $_POST['import_tasks_nonce'] ) );
 	if ( wp_verify_nonce( $import_tasks_nonce, 'import_tasks' ) ) {
@@ -39,7 +39,7 @@ if ( isset( $_POST['import_tasks_nonce'] ) ) {
 	}
 }
 
-// Include layout after processing form
+// Include layout after processing form.
 include 'layouts/main.php';
 
 $previous_tasks  = array();
@@ -51,27 +51,27 @@ $has_today_tasks = $task_manager->has_user_today_tasks();
 
 // Si no hay tareas para hoy, cargar las tareas de días previos.
 if ( ! $has_today_tasks ) {
-	// Find the latest date the user marked tasks (limited to 7 days back)
-	$latest_date = $task_manager->get_latest_user_task_date($current_user_id, 7);
-	
-	if ($latest_date) {
-		// If we found a date, load tasks from that specific date
+	// Find the latest date the user marked tasks (limited to 7 days back).
+	$latest_date = $task_manager->get_latest_user_task_date( $current_user_id, 7 );
+
+	if ( $latest_date ) {
+		// If we found a date, load tasks from that specific date.
 		$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days(
-			$current_user_id, 
-			0, 
-			true, 
+			$current_user_id,
+			0,
+			true,
 			$latest_date
 		);
 	} else {
-		// Fallback to the old logic if no date was found, but limit to 7 days
-		$days_to_load = ( 1 == gmdate( 'N' ) ) ? min(3, 7) : min(2, 7); // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
+		// Fallback to the old logic if no date was found, but limit to 7 days.
+		$days_to_load = ( 1 == gmdate( 'N' ) ) ? min( 3, 7 ) : min( 2, 7 ); // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
 		$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $current_user_id, $days_to_load );
 	}
-	
-	// Get available dates for the date picker (only if we need to show the import modal)
-	$available_dates = $task_manager->get_user_task_dates($current_user_id, 7);
+
+	// Get available dates for the date picker (only if we need to show the import modal).
+	$available_dates = $task_manager->get_user_task_dates( $current_user_id, 7 );
 } else {
-	// If there are tasks for today, we don't need to load previous dates
+	// If there are tasks for today, we don't need to load previous dates.
 	$available_dates = array();
 }
 
@@ -435,16 +435,17 @@ if ( ! $has_today_tasks ) {
 		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
 		</div>
 		<div class="modal-body">
-		  <?php if (!empty($available_dates)): ?>
+		  <?php if ( ! empty( $available_dates ) ) : ?>
 		  <div class="mb-3">
-			<label for="task-date-selector" class="form-label"><?php esc_html_e('Select date to import from:', 'decker'); ?></label>
+			<label for="task-date-selector" class="form-label"><?php esc_html_e( 'Select date to import from:', 'decker' ); ?></label>
 			<select id="task-date-selector" class="form-select">
-				<?php foreach ($available_dates as $date_str): 
-					$date_obj = DateTime::createFromFormat('Y-m-d', $date_str);
-					// Use date_i18n to get the localized date format
-					$formatted_date = $date_obj ? date_i18n(get_option('date_format'), $date_obj->getTimestamp()) : $date_str;
-				?>
-					<option value="<?php echo esc_attr($date_str); ?>"><?php echo esc_html($formatted_date); ?></option>
+				<?php
+				foreach ( $available_dates as $date_str ) :
+					$date_obj = DateTime::createFromFormat( 'Y-m-d', $date_str );
+					// Use date_i18n to get the localized date format.
+					$formatted_date = $date_obj ? date_i18n( get_option( 'date_format' ), $date_obj->getTimestamp() ) : $date_str;
+					?>
+					<option value="<?php echo esc_attr( $date_str ); ?>"><?php echo esc_html( $formatted_date ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		  </div>
@@ -505,7 +506,7 @@ if ( ! $has_today_tasks ) {
 <!-- JavaScript para el comportamiento de los checkboxes y el botón Importar -->
 <script>
 	// Define ajaxurl for front-end use
-	var ajaxurl = '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+	var ajaxurl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
 	
 	document.addEventListener('DOMContentLoaded', function() {
 		const selectAllCheckbox = document.getElementById('selectAllCheckbox');
@@ -530,7 +531,7 @@ if ( ! $has_today_tasks ) {
 		function loadTasksFromDate(dateStr) {
 			// Show loading indicator
 			const tableBody = document.querySelector('#taskModal tbody');
-			tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e("Loading tasks...", "decker"); ?></td></tr>';
+			tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e( 'Loading tasks...', 'decker' ); ?></td></tr>';
 			
 			// Make AJAX request to load tasks for the selected date
 			jQuery.ajax({
@@ -539,8 +540,8 @@ if ( ! $has_today_tasks ) {
 				data: {
 					action: 'load_tasks_by_date',
 					date: dateStr,
-					user_id: <?php echo esc_js(get_current_user_id()); ?>,
-					nonce: '<?php echo esc_js(wp_create_nonce('load_tasks_by_date_nonce')); ?>'
+					user_id: <?php echo esc_js( get_current_user_id() ); ?>,
+					nonce: '<?php echo esc_js( wp_create_nonce( 'load_tasks_by_date_nonce' ) ); ?>'
 				},
 				success: function(response) {
 					if (response.success) {
@@ -574,11 +575,11 @@ if ( ! $has_today_tasks ) {
 						
 						updateImportButton();
 					} else {
-						tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e("Error loading tasks.", "decker"); ?></td></tr>';
+						tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e( 'Error loading tasks.', 'decker' ); ?></td></tr>';
 					}
 				},
 				error: function() {
-					tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e("Error loading tasks.", "decker"); ?></td></tr>';
+					tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e( 'Error loading tasks.', 'decker' ); ?></td></tr>';
 				}
 			});
 		}

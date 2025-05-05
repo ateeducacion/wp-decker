@@ -1367,3 +1367,15 @@ msgstr "¿Está seguro que desea eliminar este evento?"
 
 msgid "Updated"
 msgstr "Fecha"
+
+msgid "No tasks found for this date."
+msgstr "No se encontraron tareas para esta fecha."
+
+msgid "Select date to import from:"
+msgstr "Selecciona la fecha desde la que importar:"
+
+msgid "Loading tasks..."
+msgstr "Cargando tareas..."
+
+msgid "Error loading tasks."
+msgstr "Error al cargar las tareas."

@@ -32,32 +32,32 @@ class Decker_Ajax_Handlers {
 	}
 
 	/**
-	 * AJAX handler to load tasks by date
+	 * AJAX handler to load tasks by date.
 	 */
 	public function load_tasks_by_date() {
-		// Verify nonce
+		// Verify nonce.
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'load_tasks_by_date_nonce' ) ) {
 			wp_send_json_error( 'Invalid security token' );
 		}
 
-		// Get parameters
+		// Get parameters.
 		$date = isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : '';
 		$user_id = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : get_current_user_id();
 
-		// Validate date format
+		// Validate date format.
 		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
 			wp_send_json_error( 'Invalid date format' );
 		}
 
-		// Verify user permissions
-		if ( $user_id !== get_current_user_id() && ! current_user_can( 'edit_users' ) ) {
+		// Verify user permissions.
+		if ( get_current_user_id() !== $user_id && ! current_user_can( 'edit_users' ) ) {
 			wp_send_json_error( 'Permission denied' );
 		}
 
-		// Get tasks for the specified date
+		// Get tasks for the specified date.
 		$task_manager = new TaskManager();
 		$date_obj = DateTime::createFromFormat( 'Y-m-d', $date );
-		
+
 		if ( ! $date_obj ) {
 			wp_send_json_error( 'Invalid date' );
 		}
@@ -104,5 +104,5 @@ class Decker_Ajax_Handlers {
 	}
 }
 
-// Initialize the class
+// Initialize the class.
 new Decker_Ajax_Handlers();
