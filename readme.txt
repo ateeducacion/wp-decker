@@ -2,7 +2,7 @@
 Contributors: ateeducacion, erseco
 Tags: ate, tasks, board, kanban
 Requires at least: 6.1
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 8.4
 Stable tag: 0.0.0
 License: GPL-3.0
