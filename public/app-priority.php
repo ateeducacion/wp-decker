@@ -10,9 +10,10 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-include 'layouts/main.php';
+// Start output buffering to prevent "headers already sent" errors
+ob_start();
 
-
+// Process form submission before any output
 if ( isset( $_POST['import_tasks_nonce'] ) ) {
 	$import_tasks_nonce = sanitize_text_field( wp_unslash( $_POST['import_tasks_nonce'] ) );
 	if ( wp_verify_nonce( $import_tasks_nonce, 'import_tasks' ) ) {
@@ -32,11 +33,14 @@ if ( isset( $_POST['import_tasks_nonce'] ) ) {
 		// Redirect to avoid form resubmission.
 		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
 			$redirect_url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-			wp_redirect( esc_url( $redirect_url ) );
+			wp_safe_redirect( esc_url( $redirect_url ) );
 			exit;
 		}
 	}
 }
+
+// Include layout after processing form
+include 'layouts/main.php';
 
 $previous_tasks  = array();
 $task_manager    = new TaskManager();
