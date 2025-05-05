@@ -312,12 +312,13 @@ class TaskManager {
 	 * The function fetches tasks assigned to the given user and filters them based on user-date relations.
 	 * It returns tasks where the user has a relation date between the start date (today minus $days) and today.
 	 *
-	 * @param int  $user_id The ID of the user.
-	 * @param int  $days Number of days to look back from today. Pass 0 to get tasks for today only.
-	 * @param bool $show_hidden_task Switch to show/not show hidden task. Default is true.
+	 * @param int       $user_id The ID of the user.
+	 * @param int       $days Number of days to look back from today. Pass 0 to get tasks for today only.
+	 * @param bool      $show_hidden_task Switch to show/not show hidden task. Default is true.
+	 * @param ?DateTime $specific_date Optional specific date to load tasks from. If provided, $days is ignored.
 	 * @return Task[] List of Task objects within the specified time range.
 	 */
-	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days, bool $show_hidden_task = true ): array {
+	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days, bool $show_hidden_task = true, ?DateTime $specific_date = null ): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -355,9 +356,20 @@ class TaskManager {
 			update_meta_cache( 'post', $post_ids );
 		}
 
-		$tasks      = array();
-		$today      = ( new DateTime() )->setTime( 23, 59 );
-		$start_date = ( new DateTime() )->setTime( 0, 0 )->modify( "-$days days" );
+		$tasks = array();
+		$today = ( new DateTime() )->setTime( 23, 59 );
+		
+		if ($specific_date) {
+			// If a specific date is provided, use it as both start and end date
+			$start_date = clone $specific_date;
+			$start_date->setTime(0, 0);
+			$end_date = clone $specific_date;
+			$end_date->setTime(23, 59);
+		} else {
+			// Otherwise use the days parameter
+			$start_date = ( new DateTime() )->setTime( 0, 0 )->modify( "-$days days" );
+			$end_date = $today;
+		}
 
 		// Additional filtering: Remove tasks that are not truly assigned to the specified user.
 		// Filtering serialized data can be risky and unreliable due to how data is stored.
@@ -375,7 +387,7 @@ class TaskManager {
 						if ( isset( $relation['user_id'], $relation['date'] ) && $relation['user_id'] == $user_id ) {
 							$relation_date = DateTime::createFromFormat( 'Y-m-d', $relation['date'] );
 							if (
-								$relation_date && $relation_date >= $start_date && $relation_date <= $today
+								$relation_date && $relation_date >= $start_date && $relation_date <= ($specific_date ? $end_date : $today)
 							) {
 								$tasks[] = new Task( $post_id );
 								break; // No need to check more dates for this task.
@@ -387,5 +399,134 @@ class TaskManager {
 		}
 
 		return $tasks;
+	}
+	
+	/**
+	 * Finds the latest date when a user marked tasks.
+	 *
+	 * @param int $user_id The ID of the user.
+	 * @param int $max_days_back Maximum number of days to look back (default: 30).
+	 * @return ?DateTime The latest date found or null if no dates found.
+	 */
+	public function get_latest_user_task_date(int $user_id, int $max_days_back = 30): ?DateTime {
+		$args = array(
+			'post_type'   => 'decker_task',
+			'post_status' => 'publish',
+			'numberposts' => -1,
+			'fields'      => 'ids',
+			'meta_query'  => array(
+				'relation' => 'AND',
+				array(
+					'key'     => 'assigned_users',
+					'value'   => $user_id,
+					'compare' => 'LIKE',
+				),
+				array(
+					'key'     => '_user_date_relations',
+					'compare' => 'EXISTS',
+				),
+			),
+		);
+		
+		$post_ids = get_posts($args);
+		
+		if (empty($post_ids)) {
+			return null;
+		}
+		
+		update_meta_cache('post', $post_ids);
+		
+		$latest_date = null;
+		$today = new DateTime();
+		$min_date = (clone $today)->modify("-$max_days_back days");
+		
+		foreach ($post_ids as $post_id) {
+			$user_date_relations = get_post_meta($post_id, '_user_date_relations', true);
+			
+			if (is_array($user_date_relations)) {
+				foreach ($user_date_relations as $relation) {
+					if (isset($relation['user_id'], $relation['date']) && $relation['user_id'] == $user_id) {
+						$relation_date = DateTime::createFromFormat('Y-m-d', $relation['date']);
+						
+						// Skip dates that are today or in the future
+						if ($relation_date && $relation_date < $today && $relation_date >= $min_date) {
+							if (!$latest_date || $relation_date > $latest_date) {
+								$latest_date = $relation_date;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return $latest_date;
+	}
+	
+	/**
+	 * Gets available dates when a user marked tasks in the past.
+	 *
+	 * @param int $user_id The ID of the user.
+	 * @param int $max_days_back Maximum number of days to look back (default: 30).
+	 * @return array Array of dates in Y-m-d format.
+	 */
+	public function get_user_task_dates(int $user_id, int $max_days_back = 30): array {
+		$args = array(
+			'post_type'   => 'decker_task',
+			'post_status' => 'publish',
+			'numberposts' => -1,
+			'fields'      => 'ids',
+			'meta_query'  => array(
+				'relation' => 'AND',
+				array(
+					'key'     => 'assigned_users',
+					'value'   => $user_id,
+					'compare' => 'LIKE',
+				),
+				array(
+					'key'     => '_user_date_relations',
+					'compare' => 'EXISTS',
+				),
+			),
+		);
+		
+		$post_ids = get_posts($args);
+		
+		if (empty($post_ids)) {
+			return array();
+		}
+		
+		update_meta_cache('post', $post_ids);
+		
+		$dates = array();
+		$today = new DateTime();
+		$min_date = (clone $today)->modify("-$max_days_back days");
+		$today_str = $today->format('Y-m-d');
+		
+		foreach ($post_ids as $post_id) {
+			$user_date_relations = get_post_meta($post_id, '_user_date_relations', true);
+			
+			if (is_array($user_date_relations)) {
+				foreach ($user_date_relations as $relation) {
+					if (isset($relation['user_id'], $relation['date']) && $relation['user_id'] == $user_id) {
+						$date_str = $relation['date'];
+						$relation_date = DateTime::createFromFormat('Y-m-d', $date_str);
+						
+						// Skip dates that are today or in the future
+						if ($relation_date && $date_str != $today_str && $relation_date >= $min_date) {
+							if (!in_array($date_str, $dates)) {
+								$dates[] = $date_str;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		// Sort dates in descending order (newest first)
+		usort($dates, function($a, $b) {
+			return strcmp($b, $a);
+		});
+		
+		return $dates;
 	}
 }
