@@ -508,10 +508,17 @@ if ( ! $has_today_tasks ) {
 		const importButton = document.querySelector('.import-selected-tasks');
 		const dateSelector = document.getElementById('task-date-selector');
 
+		// This function definition is moved up before loadTasksFromDate
+
 		// Función para actualizar el estado del botón "Importar"
 		function updateImportButton() {
-			const anyChecked = Array.from(taskCheckboxes).some(checkbox => checkbox.checked);
-			importButton.disabled = !anyChecked;
+			// Get all checkboxes currently in the DOM
+			const currentCheckboxes = document.querySelectorAll('.task-checkbox');
+			const anyChecked = Array.from(currentCheckboxes).some(checkbox => checkbox.checked);
+			
+			if (importButton) {
+				importButton.disabled = !anyChecked;
+			}
 		}
 
 		// Función para cargar tareas de una fecha específica
@@ -537,7 +544,9 @@ if ( ! $has_today_tasks ) {
 						// Reinitialize event listeners for the new checkboxes
 						const newTaskCheckboxes = document.querySelectorAll('.task-checkbox');
 						newTaskCheckboxes.forEach(checkbox => {
-							checkbox.addEventListener('change', updateImportButton);
+							checkbox.addEventListener('change', function() {
+								updateImportButton();
+							});
 						});
 						
 						// Reinitialize row click handlers
@@ -545,8 +554,10 @@ if ( ! $has_today_tasks ) {
 							row.addEventListener('click', function(event) {
 								if (event.target.tagName !== 'INPUT') {
 									const checkbox = this.querySelector('.task-checkbox');
-									checkbox.checked = !checkbox.checked;
-									updateImportButton();
+									if (checkbox) {
+										checkbox.checked = !checkbox.checked;
+										updateImportButton();
+									}
 								}
 							});
 						});
@@ -600,11 +611,13 @@ if ( ! $has_today_tasks ) {
 		}
 
 		// Evento para actualizar el estado del botón "Importar" cuando se cambia un checkbox individual
-		taskCheckboxes.forEach(checkbox => {
-			checkbox.addEventListener('change', updateImportButton);
-		});
+		if (taskCheckboxes.length > 0) {
+			taskCheckboxes.forEach(checkbox => {
+				checkbox.addEventListener('change', updateImportButton);
+			});
+		}
 
-		// Actualiza el botón "Importar" cuando se carga la página/modal (por si acaso)
+		// Actualiza el botón "Importar" cuando se carga la página/modal
 		updateImportButton();
 		
 		// Hacer clic en cualquier parte de la fila para marcar el checkbox
