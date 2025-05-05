@@ -496,6 +496,9 @@ $available_dates = $task_manager->get_user_task_dates($current_user_id);
 
 <!-- JavaScript para el comportamiento de los checkboxes y el botón Importar -->
 <script>
+	// Define ajaxurl for front-end use
+	var ajaxurl = '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+	
 	document.addEventListener('DOMContentLoaded', function() {
 		const selectAllCheckbox = document.getElementById('selectAllCheckbox');
 		const taskCheckboxes = document.querySelectorAll('.task-checkbox');
