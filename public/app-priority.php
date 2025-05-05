@@ -47,8 +47,8 @@ $has_today_tasks = $task_manager->has_user_today_tasks();
 
 // Si no hay tareas para hoy, cargar las tareas de días previos.
 if ( ! $has_today_tasks ) {
-	// Find the latest date the user marked tasks
-	$latest_date = $task_manager->get_latest_user_task_date($current_user_id);
+	// Find the latest date the user marked tasks (limited to 7 days back)
+	$latest_date = $task_manager->get_latest_user_task_date($current_user_id, 7);
 	
 	if ($latest_date) {
 		// If we found a date, load tasks from that specific date
@@ -59,14 +59,17 @@ if ( ! $has_today_tasks ) {
 			$latest_date
 		);
 	} else {
-		// Fallback to the old logic if no date was found
-		$days_to_load = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
+		// Fallback to the old logic if no date was found, but limit to 7 days
+		$days_to_load = ( 1 == gmdate( 'N' ) ) ? min(3, 7) : min(2, 7); // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
 		$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $current_user_id, $days_to_load );
 	}
+	
+	// Get available dates for the date picker (only if we need to show the import modal)
+	$available_dates = $task_manager->get_user_task_dates($current_user_id, 7);
+} else {
+	// If there are tasks for today, we don't need to load previous dates
+	$available_dates = array();
 }
-
-// Get available dates for the date picker
-$available_dates = $task_manager->get_user_task_dates($current_user_id);
 
 ?>
 <head>

@@ -405,10 +405,10 @@ class TaskManager {
 	 * Finds the latest date when a user marked tasks.
 	 *
 	 * @param int $user_id The ID of the user.
-	 * @param int $max_days_back Maximum number of days to look back (default: 30).
+	 * @param int $max_days_back Maximum number of days to look back (default: 7).
 	 * @return ?DateTime The latest date found or null if no dates found.
 	 */
-	public function get_latest_user_task_date(int $user_id, int $max_days_back = 30): ?DateTime {
+	public function get_latest_user_task_date(int $user_id, int $max_days_back = 7): ?DateTime {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -448,7 +448,7 @@ class TaskManager {
 					if (isset($relation['user_id'], $relation['date']) && $relation['user_id'] == $user_id) {
 						$relation_date = DateTime::createFromFormat('Y-m-d', $relation['date']);
 						
-						// Skip dates that are today or in the future
+						// Skip dates that are today or in the future, and limit to max_days_back
 						if ($relation_date && $relation_date < $today && $relation_date >= $min_date) {
 							if (!$latest_date || $relation_date > $latest_date) {
 								$latest_date = $relation_date;
@@ -466,10 +466,10 @@ class TaskManager {
 	 * Gets available dates when a user marked tasks in the past.
 	 *
 	 * @param int $user_id The ID of the user.
-	 * @param int $max_days_back Maximum number of days to look back (default: 30).
+	 * @param int $max_days_back Maximum number of days to look back (default: 7).
 	 * @return array Array of dates in Y-m-d format.
 	 */
-	public function get_user_task_dates(int $user_id, int $max_days_back = 30): array {
+	public function get_user_task_dates(int $user_id, int $max_days_back = 7): array {
 		$args = array(
 			'post_type'   => 'decker_task',
 			'post_status' => 'publish',
@@ -511,8 +511,8 @@ class TaskManager {
 						$date_str = $relation['date'];
 						$relation_date = DateTime::createFromFormat('Y-m-d', $date_str);
 						
-						// Skip dates that are today or in the future
-						if ($relation_date && $date_str != $today_str && $relation_date >= $min_date) {
+						// Skip dates that are today or in the future, and limit to max_days_back
+						if ($relation_date && $date_str != $today_str && $relation_date < $today && $relation_date >= $min_date) {
 							if (!in_array($date_str, $dates)) {
 								$dates[] = $date_str;
 							}
