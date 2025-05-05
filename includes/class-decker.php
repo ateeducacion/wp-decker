@@ -103,6 +103,11 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-i18n.php';
 
 		/**
+		 * The class for handling AJAX requests
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/ajax/class-decker-ajax-handlers.php';
+
+		/**
 		 * The classes responsible for defining the custom-post-types.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
