@@ -17,7 +17,9 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "RELEASE_TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+          RAW_TAG="${GITHUB_REF##*/}"
+          VERSION_TAG="${RAW_TAG#v}"  # Delete the initial 'v' if exists
+          echo "RELEASE_TAG=${VERSION_TAG}" >> $GITHUB_ENV
 
       - name: Create package using the Makefile
         run: make package VERSION=${RELEASE_TAG}
