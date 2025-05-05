@@ -441,7 +441,8 @@ if ( ! $has_today_tasks ) {
 			<select id="task-date-selector" class="form-select">
 				<?php foreach ($available_dates as $date_str): 
 					$date_obj = DateTime::createFromFormat('Y-m-d', $date_str);
-					$formatted_date = $date_obj ? $date_obj->format(get_option('date_format')) : $date_str;
+					// Use date_i18n to get the localized date format
+					$formatted_date = $date_obj ? date_i18n(get_option('date_format'), $date_obj->getTimestamp()) : $date_str;
 				?>
 					<option value="<?php echo esc_attr($date_str); ?>"><?php echo esc_html($formatted_date); ?></option>
 				<?php endforeach; ?>
