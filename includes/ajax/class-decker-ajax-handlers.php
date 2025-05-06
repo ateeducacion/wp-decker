@@ -159,7 +159,7 @@ class Decker_Ajax_Handlers {
 	 * @return bool Whether the date format is valid.
 	 */
 	private function is_valid_date_format( $date ) {
-		// Simple validation for YYYY-MM-DD format
+		// Simple validation for YYYY-MM-DD format.
 		return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date );
 	}
 
