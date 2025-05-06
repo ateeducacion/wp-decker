@@ -110,10 +110,12 @@ class Decker_Ajax_Handlers {
 	 * @return bool Whether the nonce is valid.
 	 */
 	private function verify_nonce() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This is the verification function itself
 		if ( ! isset( $_POST['nonce'] ) ) {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- This is the verification function itself
 		$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
 		return wp_verify_nonce( $nonce, 'load_tasks_by_date_nonce' );
 	}
@@ -125,10 +127,12 @@ class Decker_Ajax_Handlers {
 	 */
 	private function get_date_param() {
 		// Nonce is already verified in validate_task_date_request before this method is called.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in validate_task_date_request
 		if ( ! isset( $_POST['date'] ) ) {
 			return '';
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in validate_task_date_request
 		return sanitize_text_field( wp_unslash( $_POST['date'] ) );
 	}
 
@@ -139,10 +143,12 @@ class Decker_Ajax_Handlers {
 	 */
 	private function get_user_id_param() {
 		// Nonce is already verified in validate_task_date_request before this method is called.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in validate_task_date_request
 		if ( ! isset( $_POST['user_id'] ) ) {
 			return get_current_user_id();
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce already verified in validate_task_date_request
 		return intval( $_POST['user_id'] );
 	}
 
@@ -153,6 +159,7 @@ class Decker_Ajax_Handlers {
 	 * @return bool Whether the date format is valid.
 	 */
 	private function is_valid_date_format( $date ) {
+		// Simple validation for YYYY-MM-DD format
 		return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date );
 	}
 
