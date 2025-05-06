@@ -475,56 +475,89 @@ class TaskManager {
 	 * @return ?DateTime The latest date found or null if no dates found.
 	 */
 	public function get_latest_user_task_date( int $user_id, int $max_days_back = 7 ): ?DateTime {
-		$args = array(
-			'post_type'   => 'decker_task',
-			'post_status' => 'publish',
-			'numberposts' => -1,
-			'fields'      => 'ids',
-			'meta_query'  => array(
-				'relation' => 'AND',
-				array(
-					'key'     => 'assigned_users',
-					'value'   => $user_id,
-					'compare' => 'LIKE',
-				),
-				array(
-					'key'     => '_user_date_relations',
-					'compare' => 'EXISTS',
-				),
-			),
-		);
-
-		$post_ids = get_posts( $args );
-
+		// Get task post IDs that match the criteria
+		$post_ids = $this->get_task_post_ids_for_user( $user_id, true );
+		
 		if ( empty( $post_ids ) ) {
 			return null;
 		}
-
-		update_meta_cache( 'post', $post_ids );
-
-		$latest_date = null;
+		
+		// Get date constraints
+		$date_constraints = $this->get_date_constraints( $max_days_back );
+		
+		// Find the latest date
+		return $this->find_latest_date_in_relations( $post_ids, $user_id, $date_constraints['today'], $date_constraints['min_date'] );
+	}
+	
+	/**
+	 * Gets date constraints for filtering.
+	 *
+	 * @param int $max_days_back Maximum number of days to look back.
+	 * @return array Array with today and min_date.
+	 */
+	private function get_date_constraints( int $max_days_back ): array {
 		$today = new DateTime();
 		$min_date = ( clone $today )->modify( "-$max_days_back days" );
-
+		
+		return array(
+			'today' => $today,
+			'min_date' => $min_date,
+		);
+	}
+	
+	/**
+	 * Finds the latest date in user-date relations.
+	 *
+	 * @param array    $post_ids Array of post IDs.
+	 * @param int      $user_id The ID of the user.
+	 * @param DateTime $today Today's date.
+	 * @param DateTime $min_date Minimum date to consider.
+	 * @return ?DateTime The latest date found or null if no dates found.
+	 */
+	private function find_latest_date_in_relations( array $post_ids, int $user_id, DateTime $today, DateTime $min_date ): ?DateTime {
+		$latest_date = null;
+		
 		foreach ( $post_ids as $post_id ) {
 			$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
-
-			if ( is_array( $user_date_relations ) ) {
-				foreach ( $user_date_relations as $relation ) {
-					if ( isset( $relation['user_id'], $relation['date'] ) && $relation['user_id'] == $user_id ) {
-						$relation_date = DateTime::createFromFormat( 'Y-m-d', $relation['date'] );
-
-						// Skip dates that are today or in the future, and limit to max_days_back.
-						if ( $relation_date && $relation_date < $today && $relation_date >= $min_date ) {
-							if ( ! $latest_date || $relation_date > $latest_date ) {
-								$latest_date = $relation_date;
-							}
-						}
-					}
-				}
+			
+			if ( ! is_array( $user_date_relations ) ) {
+				continue;
+			}
+			
+			$latest_date = $this->update_latest_date( $user_date_relations, $user_id, $today, $min_date, $latest_date );
+		}
+		
+		return $latest_date;
+	}
+	
+	/**
+	 * Updates the latest date based on user-date relations.
+	 *
+	 * @param array     $relations Array of user-date relations.
+	 * @param int       $user_id The ID of the user.
+	 * @param DateTime  $today Today's date.
+	 * @param DateTime  $min_date Minimum date to consider.
+	 * @param ?DateTime $latest_date Current latest date.
+	 * @return ?DateTime Updated latest date.
+	 */
+	private function update_latest_date( array $relations, int $user_id, DateTime $today, DateTime $min_date, ?DateTime $latest_date ): ?DateTime {
+		foreach ( $relations as $relation ) {
+			if ( ! isset( $relation['user_id'], $relation['date'] ) || $relation['user_id'] != $user_id ) {
+				continue;
+			}
+			
+			$relation_date = DateTime::createFromFormat( 'Y-m-d', $relation['date'] );
+			
+			// Skip dates that are today or in the future, and limit to max_days_back.
+			if ( ! $relation_date || $relation_date >= $today || $relation_date < $min_date ) {
+				continue;
+			}
+			
+			if ( ! $latest_date || $relation_date > $latest_date ) {
+				$latest_date = $relation_date;
 			}
 		}
-
+		
 		return $latest_date;
 	}
 
