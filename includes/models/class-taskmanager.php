@@ -660,7 +660,7 @@ class TaskManager {
 			}
 
 			$date_str = $relation['date'];
-			
+
 			if ( $this->is_valid_date_for_collection( $date_str, $today, $min_date, $today_str ) && ! in_array( $date_str, $dates ) ) {
 				$dates[] = $date_str;
 			}
@@ -689,12 +689,12 @@ class TaskManager {
 	 */
 	private function is_valid_date_for_collection( string $date_str, DateTime $today, DateTime $min_date, string $today_str ): bool {
 		$relation_date = DateTime::createFromFormat( 'Y-m-d', $date_str );
-		
+
 		// Skip dates that are today or in the future, and limit to max_days_back.
 		if ( ! $relation_date || $date_str == $today_str || $relation_date >= $today || $relation_date < $min_date ) {
 			return false;
 		}
-		
+
 		return true;
 	}
 }
