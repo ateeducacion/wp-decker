@@ -106,6 +106,9 @@ msgstr ""
 msgid "Go to Decker"
 msgstr ""
 
+msgid "No tasks found for this date."
+msgstr ""
+
 msgid "You do not have permissions to access this data."
 msgstr ""
 
@@ -895,7 +898,16 @@ msgstr ""
 msgid "Select tasks to import"
 msgstr ""
 
+msgid "Select date to import from:"
+msgstr ""
+
 msgid "There are no tasks from previous days to import."
+msgstr ""
+
+msgid "Loading tasks..."
+msgstr ""
+
+msgid "Error loading tasks."
 msgstr ""
 
 msgid "Tasks Detail"

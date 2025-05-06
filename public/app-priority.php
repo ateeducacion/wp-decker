@@ -10,9 +10,10 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-include 'layouts/main.php';
+// Start output buffering to prevent "headers already sent" errors.
+ob_start();
 
-
+// Process form submission before any output.
 if ( isset( $_POST['import_tasks_nonce'] ) ) {
 	$import_tasks_nonce = sanitize_text_field( wp_unslash( $_POST['import_tasks_nonce'] ) );
 	if ( wp_verify_nonce( $import_tasks_nonce, 'import_tasks' ) ) {
@@ -32,25 +33,46 @@ if ( isset( $_POST['import_tasks_nonce'] ) ) {
 		// Redirect to avoid form resubmission.
 		if ( isset( $_SERVER['REQUEST_URI'] ) ) {
 			$redirect_url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-			wp_redirect( esc_url( $redirect_url ) );
+			wp_safe_redirect( esc_url( $redirect_url ) );
 			exit;
 		}
 	}
 }
 
+// Include layout after processing form.
+include 'layouts/main.php';
+
 $previous_tasks  = array();
 $task_manager    = new TaskManager();
+$current_user_id = get_current_user_id();
 
 // Verificar si hay tareas para hoy.
 $has_today_tasks = $task_manager->has_user_today_tasks();
 
 // Si no hay tareas para hoy, cargar las tareas de días previos.
 if ( ! $has_today_tasks ) {
+	// Find the latest date the user marked tasks (limited to 7 days back).
+	$latest_date = $task_manager->get_latest_user_task_date( $current_user_id, 7 );
 
-	$current_user_id = get_current_user_id();
-	$days_to_load    = ( 1 == gmdate( 'N' ) ) ? 3 : 2; // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
+	if ( $latest_date ) {
+		// If we found a date, load tasks from that specific date.
+		$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days(
+			$current_user_id,
+			0,
+			true,
+			$latest_date
+		);
+	} else {
+		// Fallback to the old logic if no date was found, but limit to 7 days.
+		$days_to_load = ( 1 == gmdate( 'N' ) ) ? min( 3, 7 ) : min( 2, 7 ); // Si es lunes, carga 3 días previos; de lo contrario, 2 días previos.
+		$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $current_user_id, $days_to_load );
+	}
 
-	$previous_tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days( $current_user_id, $days_to_load );
+	// Get available dates for the date picker (only if we need to show the import modal).
+	$available_dates = $task_manager->get_user_task_dates( $current_user_id, 7 );
+} else {
+	// If there are tasks for today, we don't need to load previous dates.
+	$available_dates = array();
 }
 
 ?>
@@ -413,7 +435,22 @@ if ( ! $has_today_tasks ) {
 		  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
 		</div>
 		<div class="modal-body">
-		  <!-- Aquí se insertarán dinámicamente las tareas con checkboxes -->
+		  <?php if ( ! empty( $available_dates ) ) : ?>
+		  <div class="mb-3">
+			<label for="task-date-selector" class="form-label"><?php esc_html_e( 'Select date to import from:', 'decker' ); ?></label>
+			<select id="task-date-selector" class="form-select">
+				<?php
+				foreach ( $available_dates as $date_str ) :
+					$date_obj = DateTime::createFromFormat( 'Y-m-d', $date_str );
+					// Use date_i18n to get the localized date format.
+					$formatted_date = $date_obj ? date_i18n( get_option( 'date_format' ), $date_obj->getTimestamp() ) : $date_str;
+					?>
+					<option value="<?php echo esc_attr( $date_str ); ?>"><?php echo esc_html( $formatted_date ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		  </div>
+		  <?php endif; ?>
+		  <!-- Tasks will be loaded here -->
 		  <table class="table table-striped table-hover">
 			<thead class="table thead-sticky bg-light">
 				<tr>
@@ -468,61 +505,127 @@ if ( ! $has_today_tasks ) {
 
 <!-- JavaScript para el comportamiento de los checkboxes y el botón Importar -->
 <script>
+	// Define ajaxurl for front-end use
+	var ajaxurl = '<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>';
+	
 	document.addEventListener('DOMContentLoaded', function() {
 		const selectAllCheckbox = document.getElementById('selectAllCheckbox');
 		const taskCheckboxes = document.querySelectorAll('.task-checkbox');
 		const importButton = document.querySelector('.import-selected-tasks');
+		const dateSelector = document.getElementById('task-date-selector');
+
+		// This function definition is moved up before loadTasksFromDate
 
 		// Función para actualizar el estado del botón "Importar"
 		function updateImportButton() {
-			const anyChecked = Array.from(taskCheckboxes).some(checkbox => checkbox.checked);
-			importButton.disabled = !anyChecked;
+			// Get all checkboxes currently in the DOM
+			const currentCheckboxes = document.querySelectorAll('.task-checkbox');
+			const anyChecked = Array.from(currentCheckboxes).some(checkbox => checkbox.checked);
+			
+			if (importButton) {
+				importButton.disabled = !anyChecked;
+			}
 		}
 
-		// Función para cargar tareas de días anteriores
-		function loadPreviousTasks() {
-			const today = new Date();
-			let daysToLoad = 1; // Cargar un día anterior por defecto
+		// Función para cargar tareas de una fecha específica
+		function loadTasksFromDate(dateStr) {
+			// Show loading indicator
+			const tableBody = document.querySelector('#taskModal tbody');
+			tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e( 'Loading tasks...', 'decker' ); ?></td></tr>';
+			
+			// Make AJAX request to load tasks for the selected date
+			jQuery.ajax({
+				url: ajaxurl,
+				type: 'POST',
+				data: {
+					action: 'load_tasks_by_date',
+					date: dateStr,
+					user_id: <?php echo esc_js( get_current_user_id() ); ?>,
+					nonce: '<?php echo esc_js( wp_create_nonce( 'load_tasks_by_date_nonce' ) ); ?>'
+				},
+				success: function(response) {
+					if (response.success) {
+						tableBody.innerHTML = response.data;
+						
+						// Reinitialize event listeners for the new checkboxes
+						const newTaskCheckboxes = document.querySelectorAll('.task-checkbox');
+						newTaskCheckboxes.forEach(checkbox => {
+							checkbox.addEventListener('change', function() {
+								updateImportButton();
+							});
+						});
+						
+						// Reinitialize row click handlers
+						document.querySelectorAll('.task-row').forEach(row => {
+							row.addEventListener('click', function(event) {
+								if (event.target.tagName !== 'INPUT') {
+									const checkbox = this.querySelector('.task-checkbox');
+									if (checkbox) {
+										checkbox.checked = !checkbox.checked;
+										updateImportButton();
+									}
+								}
+							});
+						});
+						
+						// Update select all checkbox
+						if (selectAllCheckbox) {
+							selectAllCheckbox.checked = false;
+						}
+						
+						updateImportButton();
+					} else {
+						tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e( 'Error loading tasks.', 'decker' ); ?></td></tr>';
+					}
+				},
+				error: function() {
+					tableBody.innerHTML = '<tr><td colspan="4"><?php esc_html_e( 'Error loading tasks.', 'decker' ); ?></td></tr>';
+				}
+			});
+		}
 
-			// Si es lunes, cargar los tres días anteriores
-			if (today.getDay() === 1) {
-				daysToLoad = 3;
-			}
-
-			const previousDates = [];
-			for (let i = 1; i <= daysToLoad; i++) {
-				const previousDate = new Date(today);
-				previousDate.setDate(today.getDate() - i);
-				previousDates.push(previousDate.toISOString().split('T')[0]);
-			}
-
-			// Aquí puedes implementar la lógica para cargar las tareas de las fechas anteriores
-			console.log('Cargando tareas de las fechas:', previousDates);
+		// Event handler for date selector change
+		if (dateSelector) {
+			dateSelector.addEventListener('change', function() {
+				loadTasksFromDate(this.value);
+			});
 		}
 
 		// Evento para el botón "Sí" en el mensaje de importación
-
 		const importTodayYesButton = document.querySelector('.import-today');
 		if (importTodayYesButton) {
+			importTodayYesButton.addEventListener('click', function() {
+				// If we have a date selector with values, we'll use the first date
+				if (dateSelector && dateSelector.options.length > 0) {
+					dateSelector.selectedIndex = 0;
+					// Trigger the change event to load tasks
+					const event = new Event('change');
+					dateSelector.dispatchEvent(event);
+				}
+			});
+		}
 
-			document.querySelector('.import-today').addEventListener('click', loadPreviousTasks);
+		// Select all checkbox functionality
+		if (selectAllCheckbox) {
 			selectAllCheckbox.addEventListener('change', function() {
 				const isChecked = this.checked;
-				taskCheckboxes.forEach(checkbox => {
+				document.querySelectorAll('.task-checkbox').forEach(checkbox => {
 					checkbox.checked = isChecked;
 				});
-				updateImportButton(); // Actualiza el estado del botón después de seleccionar/desmarcar todos
+				updateImportButton();
 			});
-
 		}
 
 		// Evento para actualizar el estado del botón "Importar" cuando se cambia un checkbox individual
-		taskCheckboxes.forEach(checkbox => {
-			checkbox.addEventListener('change', updateImportButton);
-		});
+		if (taskCheckboxes.length > 0) {
+			taskCheckboxes.forEach(checkbox => {
+				checkbox.addEventListener('change', updateImportButton);
+			});
+		}
 
-		// Actualiza el botón "Importar" cuando se carga la página/modal (por si acaso)
+		// Actualiza el botón "Importar" cuando se carga la página/modal
 		updateImportButton();
+		
 		// Hacer clic en cualquier parte de la fila para marcar el checkbox
 		document.querySelectorAll('.task-row').forEach(row => {
 			row.addEventListener('click', function(event) {
@@ -533,6 +636,11 @@ if ( ! $has_today_tasks ) {
 				}
 			});
 		});
+		
+		// Initialize with the first date if available
+		if (dateSelector && dateSelector.options.length > 0 && typeof loadTasksFromDate === 'function') {
+			loadTasksFromDate(dateSelector.value);
+		}
 	});
 </script>
 
