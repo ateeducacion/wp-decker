@@ -75,12 +75,16 @@ class TaskManager {
 	public function get_tasks_by_status( string $status ): array {
 		$args = array(
 			'post_status' => $status,
-			'meta_key'    => 'max_priority', // Define field to use in order.
-			'meta_type'   => 'BOOL',
-			'orderby'     => array(
+		);
+		
+		// Only apply additional filters for published tasks
+		if ( $status === 'publish' ) {
+			$args['meta_key'] = 'max_priority'; // Define field to use in order.
+			$args['meta_type'] = 'BOOL';
+			$args['orderby'] = array(
 				'max_priority' => 'DESC',
-			),
-			'meta_query'  => array(
+			);
+			$args['meta_query'] = array(
 				'relation' => 'OR', // Relationship between the meta query conditions.
 				array(
 					'key'     => 'hidden', // Meta field 'hidden'.
@@ -91,8 +95,8 @@ class TaskManager {
 					'value'   => '1', // Value indicating that the task is hidden.
 					'compare' => '!=', // Exclude tasks where 'hidden' is equal to '1'.
 				),
-			),
-		);
+			);
+		}
 
 		$tasks = $this->get_tasks( $args );
 		return $tasks;
