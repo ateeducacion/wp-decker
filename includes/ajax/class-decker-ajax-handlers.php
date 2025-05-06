@@ -76,12 +76,12 @@ class Decker_Ajax_Handlers {
 	 * @return WP_Error|array Error object or array with date object and user ID.
 	 */
 	private function validate_task_date_request() {
-		// Verify nonce.
+		// Verify nonce first before processing any form data.
 		if ( ! $this->verify_nonce() ) {
 			return new WP_Error( 'invalid_nonce', 'Invalid security token' );
 		}
 
-		// Get parameters.
+		// Now that nonce is verified, we can safely get parameters.
 		$date = $this->get_date_param();
 		$user_id = $this->get_user_id_param();
 
@@ -110,10 +110,12 @@ class Decker_Ajax_Handlers {
 	 * @return bool Whether the nonce is valid.
 	 */
 	private function verify_nonce() {
-		return isset( $_POST['nonce'] ) && wp_verify_nonce(
-			sanitize_text_field( wp_unslash( $_POST['nonce'] ) ),
-			'load_tasks_by_date_nonce'
-		);
+		if ( ! isset( $_POST['nonce'] ) ) {
+			return false;
+		}
+		
+		$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
+		return wp_verify_nonce( $nonce, 'load_tasks_by_date_nonce' );
 	}
 
 	/**
@@ -122,7 +124,12 @@ class Decker_Ajax_Handlers {
 	 * @return string The date parameter.
 	 */
 	private function get_date_param() {
-		return isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : '';
+		// Nonce is already verified in validate_task_date_request before this method is called.
+		if ( ! isset( $_POST['date'] ) ) {
+			return '';
+		}
+		
+		return sanitize_text_field( wp_unslash( $_POST['date'] ) );
 	}
 
 	/**
@@ -131,7 +138,12 @@ class Decker_Ajax_Handlers {
 	 * @return int The user ID.
 	 */
 	private function get_user_id_param() {
-		return isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : get_current_user_id();
+		// Nonce is already verified in validate_task_date_request before this method is called.
+		if ( ! isset( $_POST['user_id'] ) ) {
+			return get_current_user_id();
+		}
+		
+		return intval( $_POST['user_id'] );
 	}
 
 	/**
