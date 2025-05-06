@@ -39,23 +39,35 @@ class Decker_Ajax_Handlers {
 		$validation_result = $this->validate_task_date_request();
 		if ( is_wp_error( $validation_result ) ) {
 			wp_send_json_error( $validation_result->get_error_message() );
+			return;
 		}
 		
 		list( $date_obj, $user_id ) = $validation_result;
 		
 		// Get tasks for the specified date.
-		$task_manager = new TaskManager();
-		$tasks = $task_manager->get_user_tasks_marked_for_today_for_previous_days(
-			$user_id,
-			0,
-			false,
-			$date_obj
-		);
+		$tasks = $this->get_tasks_for_date( $date_obj, $user_id );
 
 		// Generate HTML for the tasks.
 		$html = $this->generate_tasks_html( $tasks );
 		
 		wp_send_json_success( $html );
+	}
+	
+	/**
+	 * Gets tasks for a specific date and user.
+	 *
+	 * @param DateTime $date_obj The date to get tasks for.
+	 * @param int      $user_id  The user ID.
+	 * @return array Array of Task objects.
+	 */
+	private function get_tasks_for_date( DateTime $date_obj, int $user_id ) {
+		$task_manager = new TaskManager();
+		return $task_manager->get_user_tasks_marked_for_today_for_previous_days(
+			$user_id,
+			0,
+			false,
+			$date_obj
+		);
 	}
 	
 	/**
@@ -65,21 +77,21 @@ class Decker_Ajax_Handlers {
 	 */
 	private function validate_task_date_request() {
 		// Verify nonce.
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'load_tasks_by_date_nonce' ) ) {
+		if ( ! $this->verify_nonce() ) {
 			return new WP_Error( 'invalid_nonce', 'Invalid security token' );
 		}
 
 		// Get parameters.
-		$date = isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : '';
-		$user_id = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : get_current_user_id();
+		$date = $this->get_date_param();
+		$user_id = $this->get_user_id_param();
 
 		// Validate date format.
-		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+		if ( ! $this->is_valid_date_format( $date ) ) {
 			return new WP_Error( 'invalid_date_format', 'Invalid date format' );
 		}
 
 		// Verify user permissions.
-		if ( get_current_user_id() !== $user_id && ! current_user_can( 'edit_users' ) ) {
+		if ( ! $this->user_has_permission( $user_id ) ) {
 			return new WP_Error( 'permission_denied', 'Permission denied' );
 		}
 
@@ -90,6 +102,56 @@ class Decker_Ajax_Handlers {
 		}
 		
 		return array( $date_obj, $user_id );
+	}
+	
+	/**
+	 * Verifies the nonce for the AJAX request.
+	 *
+	 * @return bool Whether the nonce is valid.
+	 */
+	private function verify_nonce() {
+		return isset( $_POST['nonce'] ) && wp_verify_nonce( 
+			sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 
+			'load_tasks_by_date_nonce' 
+		);
+	}
+	
+	/**
+	 * Gets the date parameter from the request.
+	 *
+	 * @return string The date parameter.
+	 */
+	private function get_date_param() {
+		return isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : '';
+	}
+	
+	/**
+	 * Gets the user ID parameter from the request.
+	 *
+	 * @return int The user ID.
+	 */
+	private function get_user_id_param() {
+		return isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : get_current_user_id();
+	}
+	
+	/**
+	 * Checks if the date format is valid.
+	 *
+	 * @param string $date The date string to check.
+	 * @return bool Whether the date format is valid.
+	 */
+	private function is_valid_date_format( $date ) {
+		return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date );
+	}
+	
+	/**
+	 * Checks if the current user has permission to view tasks for the specified user.
+	 *
+	 * @param int $user_id The user ID to check permissions for.
+	 * @return bool Whether the current user has permission.
+	 */
+	private function user_has_permission( $user_id ) {
+		return get_current_user_id() === $user_id || current_user_can( 'edit_users' );
 	}
 	
 	/**
@@ -105,13 +167,20 @@ class Decker_Ajax_Handlers {
 				$this->render_task_row( $task );
 			}
 		} else {
-			?>
-			<tr>
-				<td colspan="4"><?php esc_html_e( 'No tasks found for this date.', 'decker' ); ?></td>
-			</tr>
-			<?php
+			$this->render_empty_row();
 		}
 		return ob_get_clean();
+	}
+	
+	/**
+	 * Renders an empty row when no tasks are found.
+	 */
+	private function render_empty_row() {
+		?>
+		<tr>
+			<td colspan="4"><?php esc_html_e( 'No tasks found for this date.', 'decker' ); ?></td>
+		</tr>
+		<?php
 	}
 	
 	/**
@@ -120,12 +189,39 @@ class Decker_Ajax_Handlers {
 	 * @param Task $task Task object.
 	 */
 	private function render_task_row( $task ) {
+		$board_info = $this->get_board_info( $task );
+		$this->output_task_row_html( $task, $board_info['color'], $board_info['name'] );
+	}
+	
+	/**
+	 * Gets board information for a task.
+	 *
+	 * @param Task $task Task object.
+	 * @return array Board information (color and name).
+	 */
+	private function get_board_info( $task ) {
 		$board_color = 'red';
 		$board_name = 'Unassigned';
+		
 		if ( $task->board ) {
 			$board_color = $task->board->color;
 			$board_name = $task->board->name;
 		}
+		
+		return array(
+			'color' => $board_color,
+			'name' => $board_name,
+		);
+	}
+	
+	/**
+	 * Outputs the HTML for a task row.
+	 *
+	 * @param Task   $task        Task object.
+	 * @param string $board_color Board color.
+	 * @param string $board_name  Board name.
+	 */
+	private function output_task_row_html( $task, $board_color, $board_name ) {
 		?>
 		<tr class="task-row" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
 			<td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( $task->ID ); ?>"></td>
