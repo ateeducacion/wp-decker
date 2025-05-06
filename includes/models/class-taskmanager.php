@@ -497,30 +497,11 @@ class TaskManager {
 
 		update_meta_cache( 'post', $post_ids );
 
-		$dates = array();
 		$today = new DateTime();
 		$min_date = ( clone $today )->modify( "-$max_days_back days" );
 		$today_str = $today->format( 'Y-m-d' );
-
-		foreach ( $post_ids as $post_id ) {
-			$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
-
-			if ( is_array( $user_date_relations ) ) {
-				foreach ( $user_date_relations as $relation ) {
-					if ( isset( $relation['user_id'], $relation['date'] ) && $relation['user_id'] == $user_id ) {
-						$date_str = $relation['date'];
-						$relation_date = DateTime::createFromFormat( 'Y-m-d', $date_str );
-
-						// Skip dates that are today or in the future, and limit to max_days_back.
-						if ( $relation_date && $date_str != $today_str && $relation_date < $today && $relation_date >= $min_date ) {
-							if ( ! in_array( $date_str, $dates ) ) {
-								$dates[] = $date_str;
-							}
-						}
-					}
-				}
-			}
-		}
+		
+		$dates = $this->extract_valid_dates_from_posts( $post_ids, $user_id, $today, $min_date, $today_str );
 
 		// Sort dates in descending order (newest first).
 		usort(
@@ -530,6 +511,48 @@ class TaskManager {
 			}
 		);
 
+		return $dates;
+	}
+	
+	/**
+	 * Extract valid dates from post metadata.
+	 *
+	 * @param array    $post_ids Array of post IDs.
+	 * @param int      $user_id The ID of the user.
+	 * @param DateTime $today Today's date.
+	 * @param DateTime $min_date Minimum date to consider.
+	 * @param string   $today_str Today's date as string.
+	 * @return array Array of valid dates in Y-m-d format.
+	 */
+	private function extract_valid_dates_from_posts( array $post_ids, int $user_id, DateTime $today, DateTime $min_date, string $today_str ): array {
+		$dates = array();
+		
+		foreach ( $post_ids as $post_id ) {
+			$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
+			
+			if ( ! is_array( $user_date_relations ) ) {
+				continue;
+			}
+			
+			foreach ( $user_date_relations as $relation ) {
+				if ( ! isset( $relation['user_id'], $relation['date'] ) || $relation['user_id'] != $user_id ) {
+					continue;
+				}
+				
+				$date_str = $relation['date'];
+				$relation_date = DateTime::createFromFormat( 'Y-m-d', $date_str );
+				
+				// Skip dates that are today or in the future, and limit to max_days_back.
+				if ( ! $relation_date || $date_str == $today_str || $relation_date >= $today || $relation_date < $min_date ) {
+					continue;
+				}
+				
+				if ( ! in_array( $date_str, $dates ) ) {
+					$dates[] = $date_str;
+				}
+			}
+		}
+		
 		return $dates;
 	}
 }
