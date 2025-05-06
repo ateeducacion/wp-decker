@@ -41,18 +41,18 @@ class Decker_Ajax_Handlers {
 			wp_send_json_error( $validation_result->get_error_message() );
 			return;
 		}
-		
+
 		list( $date_obj, $user_id ) = $validation_result;
-		
+
 		// Get tasks for the specified date.
 		$tasks = $this->get_tasks_for_date( $date_obj, $user_id );
 
 		// Generate HTML for the tasks.
 		$html = $this->generate_tasks_html( $tasks );
-		
+
 		wp_send_json_success( $html );
 	}
-	
+
 	/**
 	 * Gets tasks for a specific date and user.
 	 *
@@ -69,7 +69,7 @@ class Decker_Ajax_Handlers {
 			$date_obj
 		);
 	}
-	
+
 	/**
 	 * Validates the task date request parameters.
 	 *
@@ -100,22 +100,22 @@ class Decker_Ajax_Handlers {
 		if ( ! $date_obj ) {
 			return new WP_Error( 'invalid_date', 'Invalid date' );
 		}
-		
+
 		return array( $date_obj, $user_id );
 	}
-	
+
 	/**
 	 * Verifies the nonce for the AJAX request.
 	 *
 	 * @return bool Whether the nonce is valid.
 	 */
 	private function verify_nonce() {
-		return isset( $_POST['nonce'] ) && wp_verify_nonce( 
-			sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 
-			'load_tasks_by_date_nonce' 
+		return isset( $_POST['nonce'] ) && wp_verify_nonce(
+			sanitize_text_field( wp_unslash( $_POST['nonce'] ) ),
+			'load_tasks_by_date_nonce'
 		);
 	}
-	
+
 	/**
 	 * Gets the date parameter from the request.
 	 *
@@ -124,7 +124,7 @@ class Decker_Ajax_Handlers {
 	private function get_date_param() {
 		return isset( $_POST['date'] ) ? sanitize_text_field( wp_unslash( $_POST['date'] ) ) : '';
 	}
-	
+
 	/**
 	 * Gets the user ID parameter from the request.
 	 *
@@ -133,7 +133,7 @@ class Decker_Ajax_Handlers {
 	private function get_user_id_param() {
 		return isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : get_current_user_id();
 	}
-	
+
 	/**
 	 * Checks if the date format is valid.
 	 *
@@ -143,7 +143,7 @@ class Decker_Ajax_Handlers {
 	private function is_valid_date_format( $date ) {
 		return preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date );
 	}
-	
+
 	/**
 	 * Checks if the current user has permission to view tasks for the specified user.
 	 *
@@ -153,7 +153,7 @@ class Decker_Ajax_Handlers {
 	private function user_has_permission( $user_id ) {
 		return get_current_user_id() === $user_id || current_user_can( 'edit_users' );
 	}
-	
+
 	/**
 	 * Generates HTML for the task list.
 	 *
@@ -171,7 +171,7 @@ class Decker_Ajax_Handlers {
 		}
 		return ob_get_clean();
 	}
-	
+
 	/**
 	 * Renders an empty row when no tasks are found.
 	 */
@@ -182,7 +182,7 @@ class Decker_Ajax_Handlers {
 		</tr>
 		<?php
 	}
-	
+
 	/**
 	 * Renders a single task row.
 	 *
@@ -192,7 +192,7 @@ class Decker_Ajax_Handlers {
 		$board_info = $this->get_board_info( $task );
 		$this->output_task_row_html( $task, $board_info['color'], $board_info['name'] );
 	}
-	
+
 	/**
 	 * Gets board information for a task.
 	 *
@@ -202,18 +202,18 @@ class Decker_Ajax_Handlers {
 	private function get_board_info( $task ) {
 		$board_color = 'red';
 		$board_name = 'Unassigned';
-		
+
 		if ( $task->board ) {
 			$board_color = $task->board->color;
 			$board_name = $task->board->name;
 		}
-		
+
 		return array(
 			'color' => $board_color,
 			'name' => $board_name,
 		);
 	}
-	
+
 	/**
 	 * Outputs the HTML for a task row.
 	 *
