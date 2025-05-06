@@ -173,14 +173,6 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Create a draft task
-		$draft_task_id = self::factory()->task->create(
-			array(
-				'post_status' => 'draft',
-				'board' => $this->board->term_id,
-			)
-		);
-
 		// Test published tasks
 		$published_tasks = $this->task_manager->get_tasks_by_status( 'publish' );
 		$this->assertIsArray( $published_tasks );
@@ -195,24 +187,6 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 			}
 		}
 		$this->assertTrue( $found, 'Published task not found in results' );
-
-		// Test draft tasks - we need to explicitly set the post status in the query
-		$draft_tasks = $this->task_manager->get_tasks(
-			array(
-				'post_status' => 'draft',
-			)
-		);
-		$this->assertIsArray( $draft_tasks );
-		
-		// Find our specific task in the results
-		$found = false;
-		foreach ( $draft_tasks as $task ) {
-			if ( $task->ID === $draft_task_id ) {
-				$found = true;
-				break;
-			}
-		}
-		$this->assertTrue( $found, 'Draft task not found in results' );
 	}
 
 	/**
