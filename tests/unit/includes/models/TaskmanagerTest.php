@@ -161,6 +161,230 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$this->assertEquals( $task_id, $tasks[0]->ID );
 	}
 
+	/**
+	 * Test retrieving tasks by status.
+	 */
+	public function test_get_tasks_by_status() {
+		// Create a published task
+		$published_task_id = self::factory()->task->create(
+			array(
+				'post_status' => 'publish',
+				'board' => $this->board->term_id,
+			)
+		);
+
+		// Create a draft task
+		$draft_task_id = self::factory()->task->create(
+			array(
+				'post_status' => 'draft',
+				'board' => $this->board->term_id,
+			)
+		);
+
+		// Test published tasks
+		$published_tasks = $this->task_manager->get_tasks_by_status( 'publish' );
+		$this->assertIsArray( $published_tasks );
+		$this->assertGreaterThanOrEqual( 1, count( $published_tasks ) );
+		
+		// Find our specific task in the results
+		$found = false;
+		foreach ( $published_tasks as $task ) {
+			if ( $task->ID === $published_task_id ) {
+				$found = true;
+				break;
+			}
+		}
+		$this->assertTrue( $found, 'Published task not found in results' );
+
+		// Test draft tasks
+		$draft_tasks = $this->task_manager->get_tasks_by_status( 'draft' );
+		$this->assertIsArray( $draft_tasks );
+		
+		// Find our specific task in the results
+		$found = false;
+		foreach ( $draft_tasks as $task ) {
+			if ( $task->ID === $draft_task_id ) {
+				$found = true;
+				break;
+			}
+		}
+		$this->assertTrue( $found, 'Draft task not found in results' );
+	}
+
+	/**
+	 * Test checking if user has tasks for today.
+	 */
+	public function test_has_user_today_tasks() {
+		// Create a task
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
+
+		// Assign the task to the current user
+		update_post_meta( $task_id, 'assigned_users', array( $this->editor ) );
+
+		// Initially, user should not have tasks marked for today
+		$this->assertFalse( $this->task_manager->has_user_today_tasks() );
+
+		// Add a user-date relation for today
+		$today = ( new DateTime() )->format( 'Y-m-d' );
+		$relations = array(
+			array(
+				'user_id' => $this->editor,
+				'date'    => $today,
+			),
+		);
+		update_post_meta( $task_id, '_user_date_relations', $relations );
+
+		// Now user should have tasks for today
+		$this->assertTrue( $this->task_manager->has_user_today_tasks() );
+	}
+
+	/**
+	 * Test retrieving tasks marked for today for previous days.
+	 */
+	public function test_get_user_tasks_marked_for_today_for_previous_days() {
+		// Create a task
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
+
+		// Assign the task to the current user
+		update_post_meta( $task_id, 'assigned_users', array( $this->editor ) );
+
+		// Add a user-date relation for yesterday
+		$yesterday = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
+		$relations = array(
+			array(
+				'user_id' => $this->editor,
+				'date'    => $yesterday,
+			),
+		);
+		update_post_meta( $task_id, '_user_date_relations', $relations );
+
+		// Get tasks for the last 2 days
+		$tasks = $this->task_manager->get_user_tasks_marked_for_today_for_previous_days(
+			$this->editor,
+			2,
+			true
+		);
+
+		$this->assertIsArray( $tasks );
+		$this->assertCount( 1, $tasks );
+		$this->assertEquals( $task_id, $tasks[0]->ID );
+
+		// Test with specific date
+		$specific_date = new DateTime( $yesterday );
+		$tasks_specific_date = $this->task_manager->get_user_tasks_marked_for_today_for_previous_days(
+			$this->editor,
+			0, // Days parameter should be ignored when specific_date is provided
+			true,
+			$specific_date
+		);
+
+		$this->assertIsArray( $tasks_specific_date );
+		$this->assertCount( 1, $tasks_specific_date );
+		$this->assertEquals( $task_id, $tasks_specific_date[0]->ID );
+	}
+
+	/**
+	 * Test getting the latest date when a user marked tasks.
+	 */
+	public function test_get_latest_user_task_date() {
+		// Create a task
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
+
+		// Assign the task to the current user
+		update_post_meta( $task_id, 'assigned_users', array( $this->editor ) );
+
+		// Initially, there should be no latest date
+		$this->assertNull( $this->task_manager->get_latest_user_task_date( $this->editor ) );
+
+		// Add user-date relations for different days
+		$yesterday = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
+		$two_days_ago = ( new DateTime() )->modify( '-2 days' )->format( 'Y-m-d' );
+		
+		$relations = array(
+			array(
+				'user_id' => $this->editor,
+				'date'    => $yesterday,
+			),
+			array(
+				'user_id' => $this->editor,
+				'date'    => $two_days_ago,
+			),
+		);
+		update_post_meta( $task_id, '_user_date_relations', $relations );
+
+		// Get the latest date
+		$latest_date = $this->task_manager->get_latest_user_task_date( $this->editor );
+
+		$this->assertInstanceOf( DateTime::class, $latest_date );
+		$this->assertEquals( $yesterday, $latest_date->format( 'Y-m-d' ) );
+	}
+
+	/**
+	 * Test getting available dates when a user marked tasks in the past.
+	 */
+	public function test_get_user_task_dates() {
+		// Create a task
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+			)
+		);
+
+		// Assign the task to the current user
+		update_post_meta( $task_id, 'assigned_users', array( $this->editor ) );
+
+		// Initially, there should be no dates
+		$this->assertEmpty( $this->task_manager->get_user_task_dates( $this->editor ) );
+
+		// Add user-date relations for different days
+		$yesterday = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
+		$two_days_ago = ( new DateTime() )->modify( '-2 days' )->format( 'Y-m-d' );
+		$three_days_ago = ( new DateTime() )->modify( '-3 days' )->format( 'Y-m-d' );
+		
+		$relations = array(
+			array(
+				'user_id' => $this->editor,
+				'date'    => $yesterday,
+			),
+			array(
+				'user_id' => $this->editor,
+				'date'    => $two_days_ago,
+			),
+			array(
+				'user_id' => $this->editor,
+				'date'    => $three_days_ago,
+			),
+		);
+		update_post_meta( $task_id, '_user_date_relations', $relations );
+
+		// Get dates with default max_days_back (7)
+		$dates = $this->task_manager->get_user_task_dates( $this->editor );
+
+		$this->assertIsArray( $dates );
+		$this->assertCount( 3, $dates );
+		$this->assertEquals( $yesterday, $dates[0] ); // Dates should be sorted newest first
+
+		// Test with limited max_days_back
+		$dates_limited = $this->task_manager->get_user_task_dates( $this->editor, 2 );
+		
+		$this->assertIsArray( $dates_limited );
+		$this->assertCount( 2, $dates_limited );
+		$this->assertEquals( $yesterday, $dates_limited[0] );
+		$this->assertEquals( $two_days_ago, $dates_limited[1] );
+		$this->assertNotContains( $three_days_ago, $dates_limited );
+	}
 
 	public function tear_down() {
 
