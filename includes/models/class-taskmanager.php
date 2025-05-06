@@ -76,9 +76,9 @@ class TaskManager {
 		$args = array(
 			'post_status' => $status,
 		);
-		
-		// Only apply additional filters for published tasks
-		if ( $status === 'publish' ) {
+
+		// Only apply additional filters for published tasks.
+		if ( 'publish' === $status ) {
 			$args['meta_key'] = 'max_priority'; // Define field to use in order.
 			$args['meta_type'] = 'BOOL';
 			$args['orderby'] = array(
@@ -323,17 +323,17 @@ class TaskManager {
 	 * @return Task[] List of Task objects within the specified time range.
 	 */
 	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days, bool $show_hidden_task = true, ?DateTime $specific_date = null ): array {
-		// Get task post IDs that match the criteria
+		// Get task post IDs that match the criteria.
 		$post_ids = $this->get_task_post_ids_for_user( $user_id, $show_hidden_task );
 
 		if ( empty( $post_ids ) ) {
 			return array();
 		}
 
-		// Calculate date range
+		// Calculate date range.
 		$date_range = $this->calculate_date_range( $days, $specific_date );
 
-		// Filter tasks by date relations
+		// Filter tasks by date relations.
 		return $this->filter_tasks_by_date_relations( $post_ids, $user_id, $date_range['start'], $date_range['end'] );
 	}
 
@@ -479,17 +479,17 @@ class TaskManager {
 	 * @return ?DateTime The latest date found or null if no dates found.
 	 */
 	public function get_latest_user_task_date( int $user_id, int $max_days_back = 7 ): ?DateTime {
-		// Get task post IDs that match the criteria
+		// Get task post IDs that match the criteria.
 		$post_ids = $this->get_task_post_ids_for_user( $user_id, true );
 
 		if ( empty( $post_ids ) ) {
 			return null;
 		}
 
-		// Get date constraints
+		// Get date constraints.
 		$date_constraints = $this->get_date_constraints( $max_days_back );
 
-		// Find the latest date
+		// Find the latest date.
 		return $this->find_latest_date_in_relations( $post_ids, $user_id, $date_constraints['today'], $date_constraints['min_date'] );
 	}
 

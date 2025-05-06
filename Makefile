@@ -90,6 +90,9 @@ lint: install-phpcs
 fix: install-phpcs
 	npx wp-env run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
+# Run PHP Mess Detector ignoring vendor and node_modules
+phpmd:
+	phpmd . text cleancode,codesize,controversial,design,naming,unusedcode --exclude vendor,node_modules,tests
 
 # Finds the CLI container used by wp-env
 cli-container:

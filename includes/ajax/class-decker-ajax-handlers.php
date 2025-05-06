@@ -113,7 +113,7 @@ class Decker_Ajax_Handlers {
 		if ( ! isset( $_POST['nonce'] ) ) {
 			return false;
 		}
-		
+
 		$nonce = sanitize_text_field( wp_unslash( $_POST['nonce'] ) );
 		return wp_verify_nonce( $nonce, 'load_tasks_by_date_nonce' );
 	}
@@ -128,7 +128,7 @@ class Decker_Ajax_Handlers {
 		if ( ! isset( $_POST['date'] ) ) {
 			return '';
 		}
-		
+
 		return sanitize_text_field( wp_unslash( $_POST['date'] ) );
 	}
 
@@ -142,7 +142,7 @@ class Decker_Ajax_Handlers {
 		if ( ! isset( $_POST['user_id'] ) ) {
 			return get_current_user_id();
 		}
-		
+
 		return intval( $_POST['user_id'] );
 	}
 
