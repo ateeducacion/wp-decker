@@ -637,25 +637,64 @@ class TaskManager {
 				continue;
 			}
 
-			foreach ( $user_date_relations as $relation ) {
-				if ( ! isset( $relation['user_id'], $relation['date'] ) || $relation['user_id'] != $user_id ) {
-					continue;
-				}
-
-				$date_str = $relation['date'];
-				$relation_date = DateTime::createFromFormat( 'Y-m-d', $date_str );
-
-				// Skip dates that are today or in the future, and limit to max_days_back.
-				if ( ! $relation_date || $date_str == $today_str || $relation_date >= $today || $relation_date < $min_date ) {
-					continue;
-				}
-
-				if ( ! in_array( $date_str, $dates ) ) {
-					$dates[] = $date_str;
-				}
-			}
+			$this->process_user_date_relations( $user_date_relations, $user_id, $today, $min_date, $today_str, $dates );
 		}
 
 		return $dates;
+	}
+
+	/**
+	 * Process user date relations and collect valid dates.
+	 *
+	 * @param array    $relations Array of user-date relations.
+	 * @param int      $user_id The ID of the user.
+	 * @param DateTime $today Today's date.
+	 * @param DateTime $min_date Minimum date to consider.
+	 * @param string   $today_str Today's date as string.
+	 * @param array    $dates Array to collect valid dates.
+	 */
+	private function process_user_date_relations( array $relations, int $user_id, DateTime $today, DateTime $min_date, string $today_str, array &$dates ): void {
+		foreach ( $relations as $relation ) {
+			if ( ! $this->is_valid_user_relation( $relation, $user_id ) ) {
+				continue;
+			}
+
+			$date_str = $relation['date'];
+			
+			if ( $this->is_valid_date_for_collection( $date_str, $today, $min_date, $today_str ) && ! in_array( $date_str, $dates ) ) {
+				$dates[] = $date_str;
+			}
+		}
+	}
+
+	/**
+	 * Check if a relation is valid for the specified user.
+	 *
+	 * @param array $relation The relation to check.
+	 * @param int   $user_id The user ID to check against.
+	 * @return bool Whether the relation is valid.
+	 */
+	private function is_valid_user_relation( array $relation, int $user_id ): bool {
+		return isset( $relation['user_id'], $relation['date'] ) && $relation['user_id'] == $user_id;
+	}
+
+	/**
+	 * Check if a date is valid for collection.
+	 *
+	 * @param string   $date_str The date string to check.
+	 * @param DateTime $today Today's date.
+	 * @param DateTime $min_date Minimum date to consider.
+	 * @param string   $today_str Today's date as string.
+	 * @return bool Whether the date is valid for collection.
+	 */
+	private function is_valid_date_for_collection( string $date_str, DateTime $today, DateTime $min_date, string $today_str ): bool {
+		$relation_date = DateTime::createFromFormat( 'Y-m-d', $date_str );
+		
+		// Skip dates that are today or in the future, and limit to max_days_back.
+		if ( ! $relation_date || $date_str == $today_str || $relation_date >= $today || $relation_date < $min_date ) {
+			return false;
+		}
+		
+		return true;
 	}
 }
