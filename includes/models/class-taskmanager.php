@@ -321,18 +321,18 @@ class TaskManager {
 	public function get_user_tasks_marked_for_today_for_previous_days( int $user_id, int $days, bool $show_hidden_task = true, ?DateTime $specific_date = null ): array {
 		// Get task post IDs that match the criteria
 		$post_ids = $this->get_task_post_ids_for_user( $user_id, $show_hidden_task );
-		
+
 		if ( empty( $post_ids ) ) {
 			return array();
 		}
-		
+
 		// Calculate date range
 		$date_range = $this->calculate_date_range( $days, $specific_date );
-		
+
 		// Filter tasks by date relations
 		return $this->filter_tasks_by_date_relations( $post_ids, $user_id, $date_range['start'], $date_range['end'] );
 	}
-	
+
 	/**
 	 * Gets task post IDs for a specific user.
 	 *
@@ -376,10 +376,10 @@ class TaskManager {
 		if ( ! empty( $post_ids ) ) {
 			update_meta_cache( 'post', $post_ids );
 		}
-		
+
 		return $post_ids;
 	}
-	
+
 	/**
 	 * Calculates the date range for task filtering.
 	 *
@@ -389,7 +389,7 @@ class TaskManager {
 	 */
 	private function calculate_date_range( int $days, ?DateTime $specific_date = null ): array {
 		$today = ( new DateTime() )->setTime( 23, 59 );
-		
+
 		if ( $specific_date ) {
 			// If a specific date is provided, use it as both start and end date.
 			$start_date = clone $specific_date;
@@ -401,13 +401,13 @@ class TaskManager {
 			$start_date = ( new DateTime() )->setTime( 0, 0 )->modify( "-$days days" );
 			$end_date = $today;
 		}
-		
+
 		return array(
 			'start' => $start_date,
 			'end'   => $end_date,
 		);
 	}
-	
+
 	/**
 	 * Filters tasks by date relations.
 	 *
@@ -419,29 +419,29 @@ class TaskManager {
 	 */
 	private function filter_tasks_by_date_relations( array $post_ids, int $user_id, DateTime $start_date, DateTime $end_date ): array {
 		$tasks = array();
-		
+
 		foreach ( $post_ids as $post_id ) {
 			// Retrieve the assigned users for the task.
 			$assigned_users = get_post_meta( $post_id, 'assigned_users', true );
-			
+
 			if ( ! is_array( $assigned_users ) || ! in_array( $user_id, $assigned_users ) ) {
 				continue;
 			}
-			
+
 			$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
-			
+
 			if ( ! is_array( $user_date_relations ) ) {
 				continue;
 			}
-			
+
 			if ( $this->has_relation_in_date_range( $user_date_relations, $user_id, $start_date, $end_date ) ) {
 				$tasks[] = new Task( $post_id );
 			}
 		}
-		
+
 		return $tasks;
 	}
-	
+
 	/**
 	 * Checks if a user has a relation within a date range.
 	 *
@@ -456,14 +456,14 @@ class TaskManager {
 			if ( ! isset( $relation['user_id'], $relation['date'] ) || $relation['user_id'] != $user_id ) {
 				continue;
 			}
-			
+
 			$relation_date = DateTime::createFromFormat( 'Y-m-d', $relation['date'] );
-			
+
 			if ( $relation_date && $relation_date >= $start_date && $relation_date <= $end_date ) {
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -477,18 +477,18 @@ class TaskManager {
 	public function get_latest_user_task_date( int $user_id, int $max_days_back = 7 ): ?DateTime {
 		// Get task post IDs that match the criteria
 		$post_ids = $this->get_task_post_ids_for_user( $user_id, true );
-		
+
 		if ( empty( $post_ids ) ) {
 			return null;
 		}
-		
+
 		// Get date constraints
 		$date_constraints = $this->get_date_constraints( $max_days_back );
-		
+
 		// Find the latest date
 		return $this->find_latest_date_in_relations( $post_ids, $user_id, $date_constraints['today'], $date_constraints['min_date'] );
 	}
-	
+
 	/**
 	 * Gets date constraints for filtering.
 	 *
@@ -498,13 +498,13 @@ class TaskManager {
 	private function get_date_constraints( int $max_days_back ): array {
 		$today = new DateTime();
 		$min_date = ( clone $today )->modify( "-$max_days_back days" );
-		
+
 		return array(
 			'today' => $today,
 			'min_date' => $min_date,
 		);
 	}
-	
+
 	/**
 	 * Finds the latest date in user-date relations.
 	 *
@@ -516,20 +516,20 @@ class TaskManager {
 	 */
 	private function find_latest_date_in_relations( array $post_ids, int $user_id, DateTime $today, DateTime $min_date ): ?DateTime {
 		$latest_date = null;
-		
+
 		foreach ( $post_ids as $post_id ) {
 			$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
-			
+
 			if ( ! is_array( $user_date_relations ) ) {
 				continue;
 			}
-			
+
 			$latest_date = $this->update_latest_date( $user_date_relations, $user_id, $today, $min_date, $latest_date );
 		}
-		
+
 		return $latest_date;
 	}
-	
+
 	/**
 	 * Updates the latest date based on user-date relations.
 	 *
@@ -545,19 +545,19 @@ class TaskManager {
 			if ( ! isset( $relation['user_id'], $relation['date'] ) || $relation['user_id'] != $user_id ) {
 				continue;
 			}
-			
+
 			$relation_date = DateTime::createFromFormat( 'Y-m-d', $relation['date'] );
-			
+
 			// Skip dates that are today or in the future, and limit to max_days_back.
 			if ( ! $relation_date || $relation_date >= $today || $relation_date < $min_date ) {
 				continue;
 			}
-			
+
 			if ( ! $latest_date || $relation_date > $latest_date ) {
 				$latest_date = $relation_date;
 			}
 		}
-		
+
 		return $latest_date;
 	}
 
@@ -599,7 +599,7 @@ class TaskManager {
 		$today = new DateTime();
 		$min_date = ( clone $today )->modify( "-$max_days_back days" );
 		$today_str = $today->format( 'Y-m-d' );
-		
+
 		$dates = $this->extract_valid_dates_from_posts( $post_ids, $user_id, $today, $min_date, $today_str );
 
 		// Sort dates in descending order (newest first).
@@ -612,7 +612,7 @@ class TaskManager {
 
 		return $dates;
 	}
-	
+
 	/**
 	 * Extract valid dates from post metadata.
 	 *
@@ -625,33 +625,33 @@ class TaskManager {
 	 */
 	private function extract_valid_dates_from_posts( array $post_ids, int $user_id, DateTime $today, DateTime $min_date, string $today_str ): array {
 		$dates = array();
-		
+
 		foreach ( $post_ids as $post_id ) {
 			$user_date_relations = get_post_meta( $post_id, '_user_date_relations', true );
-			
+
 			if ( ! is_array( $user_date_relations ) ) {
 				continue;
 			}
-			
+
 			foreach ( $user_date_relations as $relation ) {
 				if ( ! isset( $relation['user_id'], $relation['date'] ) || $relation['user_id'] != $user_id ) {
 					continue;
 				}
-				
+
 				$date_str = $relation['date'];
 				$relation_date = DateTime::createFromFormat( 'Y-m-d', $date_str );
-				
+
 				// Skip dates that are today or in the future, and limit to max_days_back.
 				if ( ! $relation_date || $date_str == $today_str || $relation_date >= $today || $relation_date < $min_date ) {
 					continue;
 				}
-				
+
 				if ( ! in_array( $date_str, $dates ) ) {
 					$dates[] = $date_str;
 				}
 			}
 		}
-		
+
 		return $dates;
 	}
 }
