@@ -9,10 +9,8 @@ stages:
 variables:
   # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
   # See https://docs.gitlab.com/ee/user/packages/generic_packages/#publish-a-package-file
-  # Strip leading 'v' from tag, so 'v2.2.2' → '2.2.2'
-  PACKAGE_VERSION: "${CI_COMMIT_TAG#v}"
-  PACKAGE_BINARY: "decker-${PACKAGE_VERSION}"
-  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${CI_COMMIT_TAG#v}"
+
 
 # Disabled build and upload stages until get internet connection on Gitlab Runner
 # build:
@@ -49,6 +47,13 @@ release:
     - tags
   # Disabled build and upload stages until get internet connection on Gitlab Runner      
   # needs: ["upload"]
+
+  before_script:
+    # Strip leading 'v' from CI_COMMIT_TAG, e.g. "v2.0.25" → "2.0.25"
+    - export PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+    # Compute binary name
+    - export PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
+    - echo "Computed PACKAGE_VERSION=${PACKAGE_VERSION}, PACKAGE_BINARY=${PACKAGE_BINARY}"
 
   script:
     - echo "Creating GitLab release for tag ${PACKAGE_VERSION}"
