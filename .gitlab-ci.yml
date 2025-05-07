@@ -1,18 +1,13 @@
 stages:
-  # Disabled build and upload stages until get internet connection on Gitlab Runner  
+  # Disabled build and upload stages until get internet connection on Gitlab Runner
   # - build
   # - upload
   - release
   - sonarqube-check
-#  - sonarqube-vulnerability-report
+  # - sonarqube-vulnerability-report
 
-variables:
-  # Package version should match \A(\.?[\w\+-]+\.?)+\z regular expresion.
-  # See https://docs.gitlab.com/ee/user/packages/generic_packages/#publish-a-package-file
-  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${CI_COMMIT_TAG#v}"
+# Uncomment the following jobs when Internet access is restored on the Runner
 
-
-# Disabled build and upload stages until get internet connection on Gitlab Runner
 # build:
 #   stage: build
 #   only:
@@ -21,11 +16,11 @@ variables:
 #     - apt-get update && apt-get install -y make zip composer
 #     - composer --version
 #   script:
-#     - make package VERSION="${PACKAGE_VERSION}"
-#     - ls -lh "decker-${PACKAGE_VERSION}.zip"
+#     - make package VERSION="${CI_COMMIT_TAG#v}"
+#     - ls -lh "decker-${CI_COMMIT_TAG#v}.zip"
 #   artifacts:
 #     paths:
-#       - "decker-${PACKAGE_VERSION}.zip"
+#       - "decker-${CI_COMMIT_TAG#v}.zip"
 #     expire_in: 1 week
 
 # upload:
@@ -33,7 +28,14 @@ variables:
 #   image: curlimages/curl:latest
 #   only:
 #     - tags
-#   needs: ["build"]
+#   needs:
+#     - build
+#   before_script:
+#     # Compute version and binary name
+#     - export PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+#     - export PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
+#     # Construct registry URL
+#     - export PACKAGE_REGISTRY_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
 #   script:
 #     - |
 #       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
@@ -45,16 +47,12 @@ release:
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   only:
     - tags
-  # Disabled build and upload stages until get internet connection on Gitlab Runner      
-  # needs: ["upload"]
-
   before_script:
-    # Strip leading 'v' from CI_COMMIT_TAG, e.g. "v2.0.25" → "2.0.25"
+    # Strip leading 'v' from CI_COMMIT_TAG, e.g. "v2.0.26" → "2.0.26"
     - export PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
     # Compute binary name
     - export PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
     - echo "Computed PACKAGE_VERSION=${PACKAGE_VERSION}, PACKAGE_BINARY=${PACKAGE_BINARY}"
-
   script:
     - echo "Creating GitLab release for tag ${PACKAGE_VERSION}"
   release:
@@ -64,23 +62,14 @@ release:
     assets:
       links:
         - name: "${PACKAGE_BINARY}.zip"
-          # Disabled build and upload stages until get internet connection on Gitlab Runner
-          # url: "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
           url: "https://github.com/ateeducacion/wp-decker/releases/download/${CI_COMMIT_TAG}/${PACKAGE_BINARY}.zip"
-
 
 sonarqube-check:
   stage: sonarqube-check
-  image: 
+  image:
     name: sonarsource/sonar-scanner-cli:11.3
     entrypoint: [""]
-  # variables:
-  #   SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
-  #   GIT_DEPTH: "0"
-  # cache:
-  #   key: "${CI_JOB_NAME}"
-  #   paths:
-  #     - .sonar/cache
   script:
     - sonar-scanner
   when: manual
+
