@@ -1,13 +1,13 @@
 stages:
-  # Disabled build and upload stages until get internet connection on Gitlab Runner
+  # Habilita estos dos cuando tu runner vuelva a tener salida a Internet
   # - build
   # - upload
   - release
   - sonarqube-check
-  # - sonarqube-vulnerability-report
 
-# Uncomment the following jobs when Internet access is restored on the Runner
-
+# ------------------------------------------
+# build (opcional, comentado por ahora)
+# ------------------------------------------
 # build:
 #   stage: build
 #   only:
@@ -16,54 +16,56 @@ stages:
 #     - apt-get update && apt-get install -y make zip composer
 #     - composer --version
 #   script:
-#     - make package VERSION="${CI_COMMIT_TAG#v}"
+#     # Elimina la “v” inicial y pásala al Makefile
+#     - VERSION="${CI_COMMIT_TAG#v}" make package
 #     - ls -lh "decker-${CI_COMMIT_TAG#v}.zip"
 #   artifacts:
 #     paths:
 #       - "decker-${CI_COMMIT_TAG#v}.zip"
 #     expire_in: 1 week
 
+# ------------------------------------------
+# upload (opcional, comentado por ahora)
+# ------------------------------------------
 # upload:
 #   stage: upload
 #   image: curlimages/curl:latest
 #   only:
 #     - tags
-#   needs:
-#     - build
-#   before_script:
-#     # Compute version and binary name
-#     - export PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
-#     - export PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
-#     # Construct registry URL
-#     - export PACKAGE_REGISTRY_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
+#   needs: [build]
 #   script:
+#     - PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+#     - PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
+#     - PACKAGE_REGISTRY_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/decker/${PACKAGE_VERSION}"
 #     - |
 #       curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
 #            --upload-file "${PACKAGE_BINARY}.zip" \
 #            "${PACKAGE_REGISTRY_URL}/${PACKAGE_BINARY}.zip"
 
+# ------------------------------------------
+# release
+# ------------------------------------------
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   only:
     - tags
-  before_script:
-    # Strip leading 'v' from CI_COMMIT_TAG, e.g. "v2.0.26" → "2.0.26"
-    - export PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
-    # Compute binary name
-    - export PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
-    - echo "Computed PACKAGE_VERSION=${PACKAGE_VERSION}, PACKAGE_BINARY=${PACKAGE_BINARY}"
   script:
-    - echo "Creating GitLab release for tag ${PACKAGE_VERSION}"
-  release:
-    name: "Release ${PACKAGE_VERSION}"
-    tag_name: "${CI_COMMIT_TAG}"
-    description: "Release for ${PACKAGE_VERSION}"
-    assets:
-      links:
-        - name: "${PACKAGE_BINARY}.zip"
-          url: "https://github.com/ateeducacion/wp-decker/releases/download/${CI_COMMIT_TAG}/${PACKAGE_BINARY}.zip"
+    # Calcula versión y binario en shell (sí admite “#v”)
+    - PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+    - PACKAGE_BINARY="decker-${PACKAGE_VERSION}"
+    - echo "Creating release for ${PACKAGE_BINARY}.zip"
+    # Crea la release y añade el asset link correcto
+    - |
+      release-cli create \
+        --name "Release ${PACKAGE_VERSION}" \
+        --tag-name "${CI_COMMIT_TAG}" \
+        --description "Release for ${PACKAGE_VERSION}" \
+        --assets-link "{\"name\":\"${PACKAGE_BINARY}.zip\",\"url\":\"https://github.com/ateeducacion/wp-decker/releases/download/${CI_COMMIT_TAG}/${PACKAGE_BINARY}.zip\"}"
 
+# ------------------------------------------
+# sonarqube-check
+# ------------------------------------------
 sonarqube-check:
   stage: sonarqube-check
   image:
