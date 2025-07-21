@@ -288,12 +288,22 @@ class Decker_Calendar {
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 
-			// Convertir fechas a UTC.
-			$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
-			$dtend   = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
+			// Formatear fechas para eventos de día completo o con hora.
+			if ( ! empty( $event['allDay'] ) && ( $event['allDay'] === true || $event['allDay'] === '1' || $event['allDay'] === 1 ) ) {
+				// Para eventos de día completo, usar formato VALUE=DATE y DTEND al día siguiente.
+				$start_date = date( 'Ymd', strtotime( $event['start'] ) );
+				$end_date = date( 'Ymd', strtotime( $event['end'] . ' +1 day' ) );
 
-			$ical .= 'DTSTART:' . $dtstart . "\r\n";
-			$ical .= 'DTEND:' . $dtend . "\r\n";
+				$ical .= 'DTSTART;VALUE=DATE:' . $start_date . "\r\n";
+				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";
+			} else {
+				// Convertir fechas a UTC para eventos con hora.
+				$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
+				$dtend   = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
+
+				$ical .= 'DTSTART:' . $dtstart . "\r\n";
+				$ical .= 'DTEND:' . $dtend . "\r\n";
+			}
 
 			$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
 			// Split description into 75 character chunks.
