@@ -289,10 +289,10 @@ class Decker_Calendar {
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 
 			// Formatear fechas para eventos de día completo o con hora.
-			if ( ! empty( $event['allDay'] ) && ( $event['allDay'] === true || $event['allDay'] === '1' || $event['allDay'] === 1 ) ) {
+			if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
 				// Para eventos de día completo, usar formato VALUE=DATE y DTEND al día siguiente.
-				$start_date = date( 'Ymd', strtotime( $event['start'] ) );
-				$end_date = date( 'Ymd', strtotime( $event['end'] . ' +1 day' ) );
+				$start_date = gmdate( 'Ymd', strtotime( $event['start'] ) );
+				$end_date = gmdate( 'Ymd', strtotime( $event['end'] . ' +1 day' ) );
 
 				$ical .= 'DTSTART;VALUE=DATE:' . $start_date . "\r\n";
 				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";

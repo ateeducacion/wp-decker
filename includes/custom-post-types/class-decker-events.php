@@ -147,6 +147,7 @@ class Decker_Events {
 				'schema' => array(
 					'type' => 'string',
 					'format' => 'date-time',
+					'nullable' => true,
 				),
 			),
 			'event_location' => array(

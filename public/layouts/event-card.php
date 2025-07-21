@@ -122,7 +122,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 
 	<!-- Fechas -->
 	<div class="mb-3">
-		<div class="form-check form-switch mb-3">
+		<div class="form-check mb-3">
 			<input class="form-check-input" type="checkbox" id="event-allday" name="event_allday" 
 				   <?php echo $allday ? 'checked' : ''; ?>>
 			<label class="form-check-label" for="event-allday">
