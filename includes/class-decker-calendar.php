@@ -14,6 +14,18 @@
  */
 class Decker_Calendar {
 
+       /**
+        * Mapping between slug event types and stored category values.
+        *
+        * @var array
+        */
+       private $type_map = array(
+               'meeting'  => 'bg-success',
+               'holidays' => 'bg-info',
+               'warning'  => 'bg-warning',
+               'alert'    => 'bg-danger',
+       );
+
 	/**
 	 * Initialize the class and set its properties.
 	 */
@@ -25,17 +37,33 @@ class Decker_Calendar {
 	/**
 	 * Register REST API routes
 	 */
-	public function register_rest_routes() {
-		register_rest_route(
-			'decker/v1',
-			'/calendar',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_calendar_json' ),
-				'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
-			)
-		);
-	}
+        public function register_rest_routes() {
+                register_rest_route(
+                        'decker/v1',
+                        '/calendar',
+                        array(
+                                'methods'             => 'GET',
+                                'callback'            => array( $this, 'get_calendar_json' ),
+                                'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
+                        )
+                );
+
+               // Register dedicated endpoints for each event type.
+               foreach ( array_keys( $this->type_map ) as $type_slug ) {
+                       register_rest_route(
+                               'decker/v1',
+                               '/calendar/' . $type_slug,
+                               array(
+                                       'methods'             => 'GET',
+                                       'callback'            => function( WP_REST_Request $request ) use ( $type_slug ) {
+                                               $request->set_param( 'type', $type_slug );
+                                               return $this->get_calendar_json( $request );
+                                       },
+                                       'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
+                               )
+                       );
+               }
+        }
 
 	/**
 	 * Add rewrite rule for iCal endpoint
@@ -94,23 +122,26 @@ class Decker_Calendar {
 	 * @param WP_REST_Request $request The request object.
 	 * @return WP_REST_Response
 	 */
-	public function get_calendar_json( $request ) {
-		$events = $this->get_events();
-		return rest_ensure_response( $events );
-	}
+       public function get_calendar_json( $request ) {
+               $type   = $request->get_param( 'type' );
+               $events = $this->get_events( $type );
+               return rest_ensure_response( $events );
+       }
 
 	/**
 	 * Handle iCal calendar request
 	 */
-	public function handle_ical_request() {
-		global $wp_query;
+       public function handle_ical_request() {
+               global $wp_query;
 
-		if ( ! isset( $wp_query->query_vars['decker-calendar'] ) ) {
-			return;
-		}
+               if ( ! isset( $wp_query->query_vars['decker-calendar'] ) ) {
+                       return;
+               }
 
-		$events = $this->get_events();
-		$ical = $this->generate_ical( $events );
+               $type   = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
+
+               $events = $this->get_events( $type );
+               $ical = $this->generate_ical( $events );
 
 		header( 'Content-Type: text/calendar; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
@@ -123,11 +154,22 @@ class Decker_Calendar {
 	 *
 	 * @return array
 	 */
-	private function get_events() {
-		$events = array();
+       private function get_events( $type = '' ) {
+               $events = array();
 
-		// Get regular events.
-		$event_posts = Decker_Events::get_events();
+               $event_args = array();
+
+               if ( $type && isset( $this->type_map[ $type ] ) ) {
+                       $event_args['meta_query'] = array(
+                               array(
+                                       'key'   => 'event_category',
+                                       'value' => $this->type_map[ $type ],
+                               ),
+                       );
+               }
+
+               // Get regular events.
+               $event_posts = Decker_Events::get_events( $event_args );
 		foreach ( $event_posts as $event_data ) {
 			$post = $event_data['post'];
 			$meta = $event_data['meta'];
