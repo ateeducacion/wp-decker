@@ -154,7 +154,7 @@ class Decker_Calendar {
 		$type = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
 
 		$events = $this->get_events( $type );
-		$ical   = $this->generate_ical( $events );
+		$ical   = $this->generate_ical( $events, $type );
 
 		header( 'Content-Type: text/calendar; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
@@ -245,7 +245,7 @@ class Decker_Calendar {
 	 * @param array $events Array of events.
 	 * @return string
 	 */
-	private function generate_ical( $events ) {
+	private function generate_ical( $events, $type = '' ) {
 		$ical  = "BEGIN:VCALENDAR\r\n";
 		$ical .= "VERSION:2.0\r\n";
 		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";
