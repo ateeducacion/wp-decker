@@ -114,8 +114,6 @@ class Decker_Calendar {
 		if ( $nonce && wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return true;
 		}
-			return true;
-		}
 
 		// If not logged in, check for token.
 		$token = $request->get_param( 'token' );
@@ -168,8 +166,8 @@ class Decker_Calendar {
 		$events = $this->get_events( $type );
 		$ical   = $this->generate_ical( $events, $type );
 
-		// Evitar advertencias de cabeceras en el entorno de pruebas.
-		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
+		// Evitar advertencias de cabeceras si estas ya fueron enviadas.
+		if ( ! headers_sent() ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
 		}
