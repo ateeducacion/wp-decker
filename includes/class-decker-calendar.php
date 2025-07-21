@@ -27,6 +27,18 @@ class Decker_Calendar {
 	);
 
 	/**
+	 * Mapping between slug event types and human-readable names.
+	 *
+	 * @var array
+	 */
+	private $type_names = array(
+		'meeting'  => __( 'Meetings', 'decker' ),
+		'holidays' => __( 'Holidays', 'decker' ),
+		'warning'  => __( 'Warnings', 'decker' ),
+		'alert'    => __( 'Alerts', 'decker' ),
+	);
+
+	/**
 	 * Initialize the class and set its properties.
 	 */
 	public function __construct() {
@@ -237,6 +249,13 @@ class Decker_Calendar {
 		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";
 		$ical .= "CALSCALE:GREGORIAN\r\n";
 		$ical .= "METHOD:PUBLISH\r\n";
+
+		// Add calendar name property
+		$calendar_name = 'Decker';
+		if ( $type && isset( $this->type_names[ $type ] ) ) {
+			$calendar_name = 'Decker - ' . $this->type_names[ $type ];
+		}
+		$ical .= "X-WR-CALNAME:" . $this->ical_escape( $calendar_name ) . "\r\n";
 
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
