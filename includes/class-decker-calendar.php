@@ -1,30 +1,30 @@
 <?php
 /**
- * Calendar functionality for Decker
+ * Calendar functionality for Decker.
  *
- * @link       https://github.com/ateeducacion/wp-decker
- * @since      1.0.0
+ * @link    https://github.com/ateeducacion/wp-decker
+ * @since   1.0.0
  *
- * @package    Decker
+ * @package Decker
  * @subpackage Decker/includes
  */
 
 /**
- * Calendar class to handle iCal and JSON endpoints
+ * Calendar class to handle iCal and JSON endpoints.
  */
 class Decker_Calendar {
 
-       /**
-        * Mapping between slug event types and stored category values.
-        *
-        * @var array
-        */
-       private $type_map = array(
-               'meeting'  => 'bg-success',
-               'holidays' => 'bg-info',
-               'warning'  => 'bg-warning',
-               'alert'    => 'bg-danger',
-       );
+	/**
+	 * Mapping between slug event types and stored category values.
+	 *
+	 * @var array
+	 */
+	private $type_map = array(
+		'meeting'  => 'bg-success',
+		'holidays' => 'bg-info',
+		'warning'  => 'bg-warning',
+		'alert'    => 'bg-danger',
+	);
 
 	/**
 	 * Initialize the class and set its properties.
@@ -35,38 +35,38 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Register REST API routes
+	 * Register REST API routes.
 	 */
-        public function register_rest_routes() {
-                register_rest_route(
-                        'decker/v1',
-                        '/calendar',
-                        array(
-                                'methods'             => 'GET',
-                                'callback'            => array( $this, 'get_calendar_json' ),
-                                'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
-                        )
-                );
+	public function register_rest_routes() {
+		register_rest_route(
+			'decker/v1',
+			'/calendar',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'get_calendar_json' ),
+				'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
+			)
+		);
 
-               // Register dedicated endpoints for each event type.
-               foreach ( array_keys( $this->type_map ) as $type_slug ) {
-                       register_rest_route(
-                               'decker/v1',
-                               '/calendar/' . $type_slug,
-                               array(
-                                       'methods'             => 'GET',
-                                       'callback'            => function( WP_REST_Request $request ) use ( $type_slug ) {
-                                               $request->set_param( 'type', $type_slug );
-                                               return $this->get_calendar_json( $request );
-                                       },
-                                       'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
-                               )
-                       );
-               }
-        }
+		// Register dedicated endpoints for each event type.
+		foreach ( array_keys( $this->type_map ) as $type_slug ) {
+			register_rest_route(
+				'decker/v1',
+				'/calendar/' . $type_slug,
+				array(
+					'methods'             => 'GET',
+					'callback'            => function( WP_REST_Request $request ) use ( $type_slug ) {
+						$request->set_param( 'type', $type_slug );
+						return $this->get_calendar_json( $request );
+					},
+					'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
+				)
+			);
+		}
+	}
 
 	/**
-	 * Add rewrite rule for iCal endpoint
+	 * Add rewrite rule for iCal endpoint.
 	 */
 	public function add_ical_endpoint() {
 		add_rewrite_endpoint( 'decker-calendar', EP_ROOT );
@@ -74,13 +74,12 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Check if user has permission to access calendar data
+	 * Check if user has permission to access calendar data.
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
-
 		// Verificar nonce de REST API primero.
 		$nonce = $request->get_header( 'X-WP-Nonce' );
 		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
@@ -98,9 +97,9 @@ class Decker_Calendar {
 			// Look for a user with this calendar token.
 			$users = get_users(
 				array(
-					'meta_key' => 'decker_calendar_token',
+					'meta_key'   => 'decker_calendar_token',
 					'meta_value' => $token,
-					'number' => 1,
+					'number'     => 1,
 				)
 			);
 
@@ -117,31 +116,31 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Handle JSON calendar request
+	 * Handle JSON calendar request.
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 * @return WP_REST_Response
 	 */
-       public function get_calendar_json( $request ) {
-               $type   = $request->get_param( 'type' );
-               $events = $this->get_events( $type );
-               return rest_ensure_response( $events );
-       }
+	public function get_calendar_json( $request ) {
+		$type   = $request->get_param( 'type' );
+		$events = $this->get_events( $type );
+		return rest_ensure_response( $events );
+	}
 
 	/**
-	 * Handle iCal calendar request
+	 * Handle iCal calendar request.
 	 */
-       public function handle_ical_request() {
-               global $wp_query;
+	public function handle_ical_request() {
+		global $wp_query;
 
-               if ( ! isset( $wp_query->query_vars['decker-calendar'] ) ) {
-                       return;
-               }
+		if ( ! isset( $wp_query->query_vars['decker-calendar'] ) ) {
+			return;
+		}
 
-               $type   = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
+		$type = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
 
-               $events = $this->get_events( $type );
-               $ical = $this->generate_ical( $events );
+		$events = $this->get_events( $type );
+		$ical   = $this->generate_ical( $events );
 
 		header( 'Content-Type: text/calendar; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
@@ -150,26 +149,26 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Get events from the decker_event post type
+	 * Get events from the decker_event post type.
 	 *
+	 * @param string $type Event type.
 	 * @return array
 	 */
-       private function get_events( $type = '' ) {
-               $events = array();
+	private function get_events( $type = '' ) {
+		$events     = array();
+		$event_args = array();
 
-               $event_args = array();
+		if ( $type && isset( $this->type_map[ $type ] ) ) {
+			$event_args['meta_query'] = array(
+				array(
+					'key'   => 'event_category',
+					'value' => $this->type_map[ $type ],
+				),
+			);
+		}
 
-               if ( $type && isset( $this->type_map[ $type ] ) ) {
-                       $event_args['meta_query'] = array(
-                               array(
-                                       'key'   => 'event_category',
-                                       'value' => $this->type_map[ $type ],
-                               ),
-                       );
-               }
-
-               // Get regular events.
-               $event_posts = Decker_Events::get_events( $event_args );
+		// Get regular events.
+		$event_posts = Decker_Events::get_events( $event_args );
 		foreach ( $event_posts as $event_data ) {
 			$post = $event_data['post'];
 			$meta = $event_data['meta'];
@@ -180,15 +179,13 @@ class Decker_Calendar {
 					'id'             => 'event_' . $post->ID, // Prefijo para distinguir de tareas.
 					'title'          => $post->post_title,
 					'description'    => $post->post_content,
-
-					'allDay'        => isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false,
+					'allDay'         => isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false,
 					'start'          => isset( $meta['event_start'] ) ? $meta['event_start'][0] : '',
 					'end'            => isset( $meta['event_end'] ) ? $meta['event_end'][0] : '',
 					'location'       => isset( $meta['event_location'] ) ? $meta['event_location'][0] : '',
 					'url'            => isset( $meta['event_url'] ) ? $meta['event_url'][0] : '',
 					'className'      => isset( $meta['event_category'] ) ? $meta['event_category'][0] : '',
 					'assigned_users' => isset( $meta['event_assigned_users'][0] ) ? maybe_unserialize( $meta['event_assigned_users'][0] ) : array(),
-
 					'type'           => 'event',
 				);
 			}
@@ -196,26 +193,26 @@ class Decker_Calendar {
 
 		// Get published tasks.
 		$task_manager = new TaskManager();
-		$tasks = $task_manager->get_tasks_by_status( 'publish' );
+		$tasks        = $task_manager->get_tasks_by_status( 'publish' );
 
 		foreach ( $tasks as $task ) {
-			$board = $task->get_board();
+			$board       = $task->get_board();
 			$board_color = $board ? $board->color : '';
 
-			// Only add tasks that have a due date .
+			// Only add tasks that have a due date.
 			if ( $task->duedate ) {
 				$events[] = array(
 					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
 					'title'          => $task->title,
 					'description'    => $task->description,
-					'allDay'        => true,
+					'allDay'         => true,
 					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
 					'color'          => $board_color,
 					'className'      => $board_color,
 					'max_priority'   => $task->max_priority,
 					'assigned_users' => array_map(
-						function ( $user ) {
+						function( $user ) {
 							return intval( $user->ID );
 						},
 						$task->assigned_users
@@ -229,13 +226,13 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Generate iCal format from events
+	 * Generate iCal format from events.
 	 *
 	 * @param array $events Array of events.
 	 * @return string
 	 */
 	private function generate_ical( $events ) {
-		$ical = "BEGIN:VCALENDAR\r\n";
+		$ical  = "BEGIN:VCALENDAR\r\n";
 		$ical .= "VERSION:2.0\r\n";
 		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";
 		$ical .= "CALSCALE:GREGORIAN\r\n";
@@ -248,7 +245,7 @@ class Decker_Calendar {
 
 			// Convertir fechas a UTC.
 			$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
-			$dtend = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
+			$dtend   = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
 
 			$ical .= 'DTSTART:' . $dtstart . "\r\n";
 			$ical .= 'DTEND:' . $dtend . "\r\n";
@@ -265,18 +262,18 @@ class Decker_Calendar {
 			}
 
 			if ( ! empty( $event['location'] ) ) {
-				$location = $this->ical_escape( $event['location'] );
+				$location   = $this->ical_escape( $event['location'] );
 				$loc_chunks = str_split( $location, 74 );
-				$ical .= 'LOCATION:' . array_shift( $loc_chunks ) . "\r\n";
+				$ical      .= 'LOCATION:' . array_shift( $loc_chunks ) . "\r\n";
 				foreach ( $loc_chunks as $chunk ) {
 					$ical .= ' ' . $chunk . "\r\n";
 				}
 			}
 
 			if ( ! empty( $event['url'] ) ) {
-				$url = esc_url_raw( $event['url'] );
+				$url        = esc_url_raw( $event['url'] );
 				$url_chunks = str_split( $url, 74 );
-				$ical .= 'URL:' . array_shift( $url_chunks ) . "\r\n";
+				$ical      .= 'URL:' . array_shift( $url_chunks ) . "\r\n";
 				foreach ( $url_chunks as $chunk ) {
 					$ical .= ' ' . $chunk . "\r\n";
 				}
@@ -287,10 +284,10 @@ class Decker_Calendar {
 				foreach ( $event['assigned_users'] as $user_id ) {
 					$user = get_userdata( $user_id );
 					if ( $user && $user->user_email ) {
-						$attendee = 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;'
+						$attendee   = 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;'
 							. 'RSVP=TRUE:mailto:' . $user->user_email;
 						$att_chunks = str_split( $attendee, 74 );
-						$ical .= array_shift( $att_chunks ) . "\r\n";
+						$ical      .= array_shift( $att_chunks ) . "\r\n";
 						foreach ( $att_chunks as $chunk ) {
 							$ical .= ' ' . $chunk . "\r\n";
 						}
@@ -306,7 +303,7 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Escape special characters for iCal format
+	 * Escape special characters for iCal format.
 	 *
 	 * @param string $string The string to escape.
 	 * @return string
