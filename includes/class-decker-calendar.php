@@ -177,7 +177,7 @@ class Decker_Calendar {
 	 * @param string $type Event type.
 	 * @return array
 	 */
-	private function get_events( $type = '' ) {
+	public function get_events( $type = '' ) {
 		$events     = array();
 		$event_args = array();
 
@@ -254,7 +254,7 @@ class Decker_Calendar {
 	 * @param array $events Array of events.
 	 * @return string
 	 */
-	private function generate_ical( $events, $type = '' ) {
+	public function generate_ical( $events, $type = '' ) {
 		$ical  = "BEGIN:VCALENDAR\r\n";
 		$ical .= "VERSION:2.0\r\n";
 		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";

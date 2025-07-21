@@ -74,7 +74,11 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                 $request  = new WP_REST_Request( 'GET', '/decker/v1/calendar' );
                 $request->set_param( 'type', $type );
                 $response = rest_get_server()->dispatch( $request );
-                $data     = $response->get_data();
+                // Verificar si la respuesta es un error
+                if ( is_wp_error( $response ) ) {
+                    $this->fail( 'REST request failed: ' . $response->get_error_message() );
+                }
+                $data = $response->get_data();
 
                 $ids = wp_list_pluck( $data, 'id' );
                 $this->assertContains( 'event_' . $current_type_id, $ids );
@@ -120,9 +124,11 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         ),
                 ) );
 
-                // Simular solicitud ICS
+                // Simular solicitud ICS usando el endpoint público
                 $_GET['type'] = $type;
-                $ical = $calendar->generate_ical( $calendar->get_events($type), $type );
+                ob_start();
+                $calendar->handle_ical_request();
+                $ical = ob_get_clean();
 
                 // Verificar que solo el evento del tipo actual está presente
                 $this->assertStringContainsString( 'event_' . $current_type_id, $ical );
