@@ -73,6 +73,8 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 
                 $request  = new WP_REST_Request( 'GET', '/decker/v1/calendar' );
                 $request->set_param( 'type', $type );
+                $nonce = wp_create_nonce( 'wp_rest' );
+                $request->set_header( 'X-WP-Nonce', $nonce );
                 $response = rest_get_server()->dispatch( $request );
                 // Verificar si la respuesta es un error
                 if ( is_wp_error( $response ) ) {
@@ -125,6 +127,8 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                 ) );
 
                 // Simular solicitud ICS usando el endpoint público
+                global $wp_query;
+                $wp_query->query_vars['decker-calendar'] = true;
                 $_GET['type'] = $type;
                 ob_start();
                 $calendar->handle_ical_request();
