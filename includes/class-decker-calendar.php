@@ -35,6 +35,15 @@ class Decker_Calendar {
 	}
 
 	/**
+	 * Get the type mapping for event categories.
+	 *
+	 * @return array
+	 */
+	public function get_type_map() {
+		return $this->type_map;
+	}
+
+	/**
 	 * Get human-readable names for event types with translations.
 	 *
 	 * @return array

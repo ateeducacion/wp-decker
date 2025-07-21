@@ -46,7 +46,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         'meta_input'  => array(
                                 'event_start'    => '2025-01-01T10:00:00',
                                 'event_end'      => '2025-01-01T11:00:00',
-                                'event_category' => $calendar->type_map[$type],
+                                'event_category' => $calendar->get_type_map()[$type],
                         ),
                 ) );
 
@@ -58,7 +58,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         'meta_input'  => array(
                                 'event_start'    => '2025-01-02T10:00:00',
                                 'event_end'      => '2025-01-02T11:00:00',
-                                'event_category' => $calendar->type_map[$other_type],
+                                'event_category' => $calendar->get_type_map()[$other_type],
                         ),
                 ) );
 
@@ -95,7 +95,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         'meta_input'  => array(
                                 'event_start'    => '2025-01-01T10:00:00',
                                 'event_end'      => '2025-01-01T11:00:00',
-                                'event_category' => $calendar->type_map[$type],
+                                'event_category' => $calendar->get_type_map()[$type],
                         ),
                 ) );
 
@@ -107,7 +107,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         'meta_input'  => array(
                                 'event_start'    => '2025-01-02T10:00:00',
                                 'event_end'      => '2025-01-02T11:00:00',
-                                'event_category' => $calendar->type_map[$other_type],
+                                'event_category' => $calendar->get_type_map()[$other_type],
                         ),
                 ) );
 
