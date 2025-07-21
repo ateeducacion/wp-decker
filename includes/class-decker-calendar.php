@@ -230,32 +230,32 @@ class Decker_Calendar {
 			$tasks        = $task_manager->get_tasks_by_status( 'publish' );
 
 			foreach ( $tasks as $task ) {
-			$board       = $task->get_board();
-			$board_color = $board ? $board->color : '';
+				$board       = $task->get_board();
+				$board_color = $board ? $board->color : '';
 
-			// Only add tasks that have a due date.
-			if ( $task->duedate ) {
-				$events[] = array(
-					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
-					'title'          => $task->title,
-					'description'    => $task->description,
-					'allDay'         => true,
-					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
-					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
-					'color'          => $board_color,
-					'className'      => $board_color,
-					'max_priority'   => $task->max_priority,
-					'assigned_users' => array_map(
-						function ( $user ) {
-							return intval( $user->ID );
-						},
-						$task->assigned_users
-					),
-					'type'           => 'task',
-				);
+				// Only add tasks that have a due date.
+				if ( $task->duedate ) {
+					$events[] = array(
+						'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
+						'title'          => $task->title,
+						'description'    => $task->description,
+						'allDay'         => true,
+						'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+						'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+						'color'          => $board_color,
+						'className'      => $board_color,
+						'max_priority'   => $task->max_priority,
+						'assigned_users' => array_map(
+							function ( $user ) {
+								return intval( $user->ID );
+							},
+							$task->assigned_users
+						),
+						'type'           => 'task',
+					);
+				}
 			}
-		}
-	} // Fin condicional tareas
+		} // Fin condicional tareas
 
 		return $events;
 	}
@@ -279,7 +279,7 @@ class Decker_Calendar {
 		if ( $type && isset( $type_names[ $type ] ) ) {
 			$calendar_name = 'Decker - ' . $type_names[ $type ];
 		}
-		$ical .= "X-WR-CALNAME:" . $this->ical_escape( $calendar_name ) . "\r\n";
+		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
