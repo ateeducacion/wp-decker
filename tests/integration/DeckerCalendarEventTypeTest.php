@@ -79,6 +79,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                 // Verificar si la respuesta es un error
                 if ( is_wp_error( $response ) ) {
                     $this->fail( 'REST request failed: ' . $response->get_error_message() );
+                    return; // Evitar continuar con un objeto WP_Error.
                 }
                 $data = $response->get_data();
 
@@ -128,7 +129,11 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 
                 // Generar directamente el contenido ICS sin pasar por headers.
                 $events = $calendar->get_events( $type );
-                $ical   = $calendar->generate_ical( $events, $type );
+                if ( is_wp_error( $events ) ) {
+                    $this->fail( 'Failed to get events: ' . $events->get_error_message() );
+                    return;
+                }
+                $ical = $calendar->generate_ical( $events, $type );
 
                 // Verificar que solo el evento del tipo actual está presente
                 $this->assertStringContainsString( 'event_' . $current_type_id, $ical );
