@@ -1379,3 +1379,6 @@ msgstr "Cargando tareas..."
 
 msgid "Error loading tasks."
 msgstr "Error al cargar las tareas."
+
+msgid "Event type feeds:"
+msgstr "Calendarios por tipo de evento:"

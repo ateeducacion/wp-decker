@@ -55,7 +55,7 @@ class Decker_Calendar {
 				'/calendar/' . $type_slug,
 				array(
 					'methods'             => 'GET',
-					'callback'            => function( WP_REST_Request $request ) use ( $type_slug ) {
+					'callback'            => function ( WP_REST_Request $request ) use ( $type_slug ) {
 						$request->set_param( 'type', $type_slug );
 						return $this->get_calendar_json( $request );
 					},
@@ -212,7 +212,7 @@ class Decker_Calendar {
 					'className'      => $board_color,
 					'max_priority'   => $task->max_priority,
 					'assigned_users' => array_map(
-						function( $user ) {
+						function ( $user ) {
 							return intval( $user->ID );
 						},
 						$task->assigned_users

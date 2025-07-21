@@ -133,29 +133,29 @@ class Decker_User_Extended {
 								class="button" target="_blank" rel="noopener noreferrer">
 								<span class="dashicons dashicons-download" style="vertical-align: middle;"></span> ' .
 								esc_html__( 'Export .ics file', 'decker' ) . '</a>';
-                                                echo '</div>';
+												echo '</div>';
 
-                                               $types = array(
-                                                       'meeting'  => __( 'Meeting', 'decker' ),
-                                                       'holidays' => __( 'Holidays', 'decker' ),
-                                                       'warning'  => __( 'Warning', 'decker' ),
-                                                       'alert'    => __( 'Alert', 'decker' ),
-                                               );
-                                               echo '<div class="calendar-links" style="margin-top:10px;">';
-                                               echo '<p style="margin-bottom:5px;">' . esc_html__( 'Event type feeds:', 'decker' ) . '</p>';
-                                               foreach ( $types as $slug => $label ) {
-                                                       $type_url = add_query_arg(
-                                                               array(
-                                                                       'token' => $calendar_token,
-                                                                       'type'  => $slug,
-                                                               ),
-                                                               home_url( 'decker-calendar' )
-                                                       );
-                                                       $type_url = str_replace( array( 'http://', 'https://' ), 'webcal://', $type_url );
-                                                       echo '<p><strong>' . esc_html( $label ) . ':</strong> <code>' . esc_url( $type_url ) . '</code></p>';
-                                               }
-                                               echo '</div>';
-						?>
+											   $types = array(
+												   'meeting'  => __( 'Meeting', 'decker' ),
+												   'holidays' => __( 'Holidays', 'decker' ),
+												   'warning'  => __( 'Warning', 'decker' ),
+												   'alert'    => __( 'Alert', 'decker' ),
+											   );
+											   echo '<div class="calendar-links" style="margin-top:10px;">';
+											   echo '<p style="margin-bottom:5px;">' . esc_html__( 'Event type feeds:', 'decker' ) . '</p>';
+											   foreach ( $types as $slug => $label ) {
+													$type_url = add_query_arg(
+														array(
+															'token' => $calendar_token,
+															'type'  => $slug,
+														),
+														home_url( 'decker-calendar' )
+													);
+													   $type_url = str_replace( array( 'http://', 'https://' ), 'webcal://', $type_url );
+													   echo '<p><strong>' . esc_html( $label ) . ':</strong> <code>' . esc_url( $type_url ) . '</code></p>';
+											   }
+											   echo '</div>';
+												?>
 					</span>
 				</td>
 			</tr>
