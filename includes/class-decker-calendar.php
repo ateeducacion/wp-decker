@@ -27,25 +27,25 @@ class Decker_Calendar {
 	);
 
 	/**
-	 * Mapping between slug event types and human-readable names.
-	 *
-	 * @var array
-	 */
-	private $type_names;
-
-	/**
 	 * Initialize the class and set its properties.
 	 */
 	public function __construct() {
-		$this->type_names = array(
+		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		add_action( 'init', array( $this, 'add_ical_endpoint' ) );
+	}
+
+	/**
+	 * Get human-readable names for event types with translations.
+	 *
+	 * @return array
+	 */
+	private function get_type_names() {
+		return array(
 			'meeting'  => __( 'Meetings', 'decker' ),
 			'holidays' => __( 'Holidays', 'decker' ),
 			'warning'  => __( 'Warnings', 'decker' ),
 			'alert'    => __( 'Alerts', 'decker' ),
 		);
-
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		add_action( 'init', array( $this, 'add_ical_endpoint' ) );
 	}
 
 	/**
@@ -254,8 +254,9 @@ class Decker_Calendar {
 
 		// Add calendar name property
 		$calendar_name = 'Decker';
-		if ( $type && isset( $this->type_names[ $type ] ) ) {
-			$calendar_name = 'Decker - ' . $this->type_names[ $type ];
+		$type_names = $this->get_type_names();
+		if ( $type && isset( $type_names[ $type ] ) ) {
+			$calendar_name = 'Decker - ' . $type_names[ $type ];
 		}
 		$ical .= "X-WR-CALNAME:" . $this->ical_escape( $calendar_name ) . "\r\n";
 
