@@ -103,14 +103,17 @@ class Decker_Calendar {
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
-		// Verificar nonce de REST API primero.
-		$nonce = $request->get_header( 'X-WP-Nonce' );
-		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+		// Prioridad 1 – si el usuario está autenticado y puede leer, permitir.
+		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
 			return true;
 		}
 
-		// First check if user is logged in.
-		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
+		// Prioridad 2 – verificar nonce REST (esto requiere usuario autenticado,
+		// pero se mantiene por compatibilidad).
+		$nonce = $request->get_header( 'X-WP-Nonce' );
+		if ( $nonce && wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return true;
+		}
 			return true;
 		}
 
@@ -165,8 +168,11 @@ class Decker_Calendar {
 		$events = $this->get_events( $type );
 		$ical   = $this->generate_ical( $events, $type );
 
-		header( 'Content-Type: text/calendar; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
+		// Evitar advertencias de cabeceras en el entorno de pruebas.
+		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
+			header( 'Content-Type: text/calendar; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
+		}
 		echo wp_kses_post( $ical );
 		exit;
 	}
