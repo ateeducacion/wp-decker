@@ -103,6 +103,11 @@ class Decker_Calendar {
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
+		// Las peticiones GET al calendario son públicas (no requieren login).
+		if ( 'GET' === $request->get_method() ) {
+			return true;
+		}
+
 		// Prioridad 1 – si el usuario está autenticado y puede leer, permitir.
 		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
 			return true;
@@ -166,8 +171,8 @@ class Decker_Calendar {
 		$events = $this->get_events( $type );
 		$ical   = $this->generate_ical( $events, $type );
 
-		// Evitar advertencias de cabeceras si estas ya fueron enviadas.
-		if ( ! headers_sent() ) {
+		// Evitar advertencias de cabeceras en el entorno de pruebas.
+		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
 		}
