@@ -14,6 +14,18 @@
  */
 class Decker_Calendar {
 
+       /**
+        * Mapping between feed types and the event_category meta value.
+        *
+        * @var array
+        */
+       private $type_map = array(
+               'meeting'  => 'bg-success',
+               'holidays' => 'bg-info',
+               'warning'  => 'bg-warning',
+               'alert'    => 'bg-danger',
+       );
+
 	/**
 	 * Initialize the class and set its properties.
 	 */
@@ -26,15 +38,20 @@ class Decker_Calendar {
 	 * Register REST API routes
 	 */
 	public function register_rest_routes() {
-		register_rest_route(
-			'decker/v1',
-			'/calendar',
-			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'get_calendar_json' ),
-				'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
-			)
-		);
+               register_rest_route(
+                       'decker/v1',
+                       '/calendar',
+                       array(
+                               'methods'             => 'GET',
+                               'callback'            => array( $this, 'get_calendar_json' ),
+                               'permission_callback' => array( $this, 'get_calendar_permissions_check' ),
+                               'args'               => array(
+                                       'type' => array(
+                                               'sanitize_callback' => 'sanitize_key',
+                                       ),
+                               ),
+                       )
+               );
 	}
 
 	/**
@@ -94,10 +111,11 @@ class Decker_Calendar {
 	 * @param WP_REST_Request $request The request object.
 	 * @return WP_REST_Response
 	 */
-	public function get_calendar_json( $request ) {
-		$events = $this->get_events();
-		return rest_ensure_response( $events );
-	}
+       public function get_calendar_json( $request ) {
+               $type   = $request->get_param( 'type' );
+               $events = $this->get_events( $type );
+               return rest_ensure_response( $events );
+       }
 
 	/**
 	 * Handle iCal calendar request
@@ -109,8 +127,9 @@ class Decker_Calendar {
 			return;
 		}
 
-		$events = $this->get_events();
-		$ical = $this->generate_ical( $events );
+               $type   = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : null;
+               $events = $this->get_events( $type );
+               $ical = $this->generate_ical( $events );
 
 		header( 'Content-Type: text/calendar; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
@@ -123,11 +142,20 @@ class Decker_Calendar {
 	 *
 	 * @return array
 	 */
-	private function get_events() {
-		$events = array();
+       private function get_events( $type = null ) {
+               $events     = array();
+               $event_args = array();
+               if ( $type && isset( $this->type_map[ $type ] ) ) {
+                       $event_args['meta_query'] = array(
+                               array(
+                                       'key'   => 'event_category',
+                                       'value' => $this->type_map[ $type ],
+                               ),
+                       );
+               }
 
-		// Get regular events.
-		$event_posts = Decker_Events::get_events();
+               // Get regular events.
+               $event_posts = Decker_Events::get_events( $event_args );
 		foreach ( $event_posts as $event_data ) {
 			$post = $event_data['post'];
 			$meta = $event_data['meta'];
@@ -152,13 +180,14 @@ class Decker_Calendar {
 			}
 		}
 
-		// Get published tasks.
-		$task_manager = new TaskManager();
-		$tasks = $task_manager->get_tasks_by_status( 'publish' );
+               // Get published tasks only when no specific event type is requested.
+               if ( null === $type ) {
+                       $task_manager = new TaskManager();
+                       $tasks        = $task_manager->get_tasks_by_status( 'publish' );
 
-		foreach ( $tasks as $task ) {
-			$board = $task->get_board();
-			$board_color = $board ? $board->color : '';
+                       foreach ( $tasks as $task ) {
+                               $board       = $task->get_board();
+                               $board_color = $board ? $board->color : '';
 
 			// Only add tasks that have a due date .
 			if ( $task->duedate ) {
@@ -181,10 +210,11 @@ class Decker_Calendar {
 					'type'           => 'task',
 				);
 			}
-		}
+                }
+               }
 
-		return $events;
-	}
+                return $events;
+        }
 
 	/**
 	 * Generate iCal format from events

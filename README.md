@@ -38,4 +38,8 @@ For development, you can bring up a local WordPress environment with the plugin 
 make up
 ```
 
-This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`. 
+This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`.
+
+## Calendar Feeds
+
+The user profile screen provides a personal calendar URL that aggregates all events. Additional links are now available for specific event types (Meeting, Holidays, Warning and Alert). Copy the Webcal link under your profile to subscribe in external applications.
