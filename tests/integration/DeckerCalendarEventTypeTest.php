@@ -126,13 +126,9 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         ),
                 ) );
 
-                // Simular solicitud ICS usando el endpoint público
-                global $wp_query;
-                $wp_query->query_vars['decker-calendar'] = true;
-                $_GET['type'] = $type;
-                ob_start();
-                $calendar->handle_ical_request();
-                $ical = ob_get_clean();
+                // Generar directamente el contenido ICS sin pasar por headers.
+                $events = $calendar->get_events( $type );
+                $ical   = $calendar->generate_ical( $events, $type );
 
                 // Verificar que solo el evento del tipo actual está presente
                 $this->assertStringContainsString( 'event_' . $current_type_id, $ical );

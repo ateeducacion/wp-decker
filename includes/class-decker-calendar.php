@@ -223,11 +223,13 @@ class Decker_Calendar {
 			}
 		}
 
-		// Get published tasks.
-		$task_manager = new TaskManager();
-		$tasks        = $task_manager->get_tasks_by_status( 'publish' );
+		// Añadir tareas solo cuando no se está filtrando por un tipo concreto.
+		if ( empty( $type ) ) {
+			// Get published tasks.
+			$task_manager = new TaskManager();
+			$tasks        = $task_manager->get_tasks_by_status( 'publish' );
 
-		foreach ( $tasks as $task ) {
+			foreach ( $tasks as $task ) {
 			$board       = $task->get_board();
 			$board_color = $board ? $board->color : '';
 
@@ -253,6 +255,7 @@ class Decker_Calendar {
 				);
 			}
 		}
+	} // Fin condicional tareas
 
 		return $events;
 	}
