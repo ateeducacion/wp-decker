@@ -31,17 +31,19 @@ class Decker_Calendar {
 	 *
 	 * @var array
 	 */
-	private $type_names = array(
-		'meeting'  => __( 'Meetings', 'decker' ),
-		'holidays' => __( 'Holidays', 'decker' ),
-		'warning'  => __( 'Warnings', 'decker' ),
-		'alert'    => __( 'Alerts', 'decker' ),
-	);
+	private $type_names;
 
 	/**
 	 * Initialize the class and set its properties.
 	 */
 	public function __construct() {
+		$this->type_names = array(
+			'meeting'  => __( 'Meetings', 'decker' ),
+			'holidays' => __( 'Holidays', 'decker' ),
+			'warning'  => __( 'Warnings', 'decker' ),
+			'alert'    => __( 'Alerts', 'decker' ),
+		);
+
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 		add_action( 'init', array( $this, 'add_ical_endpoint' ) );
 	}
