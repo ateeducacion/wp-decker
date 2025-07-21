@@ -109,6 +109,18 @@ msgstr ""
 msgid "No tasks found for this date."
 msgstr ""
 
+msgid "Meetings"
+msgstr ""
+
+msgid "Holidays"
+msgstr ""
+
+msgid "Warnings"
+msgstr ""
+
+msgid "Alerts"
+msgstr ""
+
 msgid "You do not have permissions to access this data."
 msgstr ""
 
@@ -640,9 +652,6 @@ msgid "Export .ics file"
 msgstr ""
 
 msgid "Meeting"
-msgstr ""
-
-msgid "Holidays"
 msgstr ""
 
 msgid "Alert"

@@ -274,7 +274,7 @@ class Decker_Calendar {
 		$ical .= "CALSCALE:GREGORIAN\r\n";
 		$ical .= "METHOD:PUBLISH\r\n";
 
-		// Add calendar name property
+		// Add calendar name property.
 		$calendar_name = 'Decker';
 		$type_names = $this->get_type_names();
 		if ( $type && isset( $type_names[ $type ] ) ) {
