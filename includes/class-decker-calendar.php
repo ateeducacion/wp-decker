@@ -263,7 +263,8 @@ class Decker_Calendar {
 	/**
 	 * Generate iCal format from events.
 	 *
-	 * @param array $events Array of events.
+	 * @param array  $events Array of events.
+	 * @param string $type   Event type.
 	 * @return string
 	 */
 	public function generate_ical( $events, $type = '' ) {
@@ -279,6 +280,7 @@ class Decker_Calendar {
 		if ( $type && isset( $type_names[ $type ] ) ) {
 			$calendar_name = 'Decker - ' . $type_names[ $type ];
 		}
+		// Añadir punto final a comentario.
 		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 
 		foreach ( $events as $event ) {
