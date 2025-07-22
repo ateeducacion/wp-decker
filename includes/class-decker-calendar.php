@@ -21,7 +21,7 @@ class Decker_Calendar {
 	 */
 	private $type_map = array(
 		'meeting'  => 'bg-success',
-		'absences' => 'bg-info',
+		'absence'  => 'bg-info',
 		'warning'  => 'bg-warning',
 		'alert'    => 'bg-danger',
 	);
@@ -51,7 +51,7 @@ class Decker_Calendar {
 	private function get_type_names() {
 		return array(
 			'meeting'  => __( 'Meetings', 'decker' ),
-			'absences' => __( 'Absences', 'decker' ),
+			'absence'  => __( 'Absences', 'decker' ),
 			'warning'  => __( 'Warnings', 'decker' ),
 			'alert'    => __( 'Alerts', 'decker' ),
 		);

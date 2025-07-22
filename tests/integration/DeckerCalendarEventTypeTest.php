@@ -51,7 +51,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                 ) );
 
                 // Crear evento de un tipo diferente (usar meeting si no es el tipo actual)
-                $other_type = ($type === 'meeting') ? 'absence' : 'meeting';
+                $other_type = ($type === 'meeting') ? 'warning' : 'meeting';
                 $other_type_id = self::factory()->post->create( array(
                         'post_type'   => 'decker_event',
                         'post_status' => 'publish',
@@ -107,7 +107,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                 ) );
 
                 // Crear evento de un tipo diferente
-                $other_type = ($type === 'meeting') ? 'absence' : 'meeting';
+                $other_type = ($type === 'meeting') ? 'warning' : 'meeting';
                 $other_type_id = self::factory()->post->create( array(
                         'post_type'   => 'decker_event',
                         'post_status' => 'publish',
