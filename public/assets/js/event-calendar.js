@@ -254,6 +254,7 @@ function showTootip(message, duration = 2000){
                     },
                     eventDidMount: function(info) {
                         //console.log("event_mount:", info);
+                        info.el.classList.add('event-type-' + info.event.extendedProps.type);
                         const titleEl = info.el.querySelector('.fc-event-title');
                         if (!titleEl) return;
 

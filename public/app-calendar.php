@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const searchText = searchInput.value.toLowerCase().trim();
 		const selectedUser = boardUserFilter.value.toLowerCase().trim();
 		const selectedType = eventTypeFilter.value.toLowerCase().trim();
-		const typeClass = getEventTypeClass(selectedType);
+		// const typeClass = getEventTypeClass(selectedType);
 
 		document.querySelectorAll('.fc-event').forEach(event => {
 			const titleElement = event.querySelector('.fc-event-title');
@@ -175,7 +175,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			const matchesSearch = !searchText || title.includes(searchText) || nicknames.some(nickname => nickname.includes(searchText));
 			const matchesUser = !selectedUser || nicknames.includes(selectedUser);
-			const matchesType = !selectedType || classes.includes(typeClass);
+			// const matchesType = !selectedType || classes.includes(typeClass);
+			const matchesType = !selectedType || event.classList.contains('event-type-' + selectedType);
+
 
 			event.style.display = (matchesSearch && matchesUser && matchesType) ? '' : 'none';
 		});
