@@ -21,7 +21,7 @@ class Decker_Calendar {
 	 */
 	private $type_map = array(
 		'meeting'  => 'bg-success',
-		'holidays' => 'bg-info',
+		'absences' => 'bg-info',
 		'warning'  => 'bg-warning',
 		'alert'    => 'bg-danger',
 	);
@@ -51,7 +51,7 @@ class Decker_Calendar {
 	private function get_type_names() {
 		return array(
 			'meeting'  => __( 'Meetings', 'decker' ),
-			'holidays' => __( 'Holidays', 'decker' ),
+			'absences' => __( 'Absences', 'decker' ),
 			'warning'  => __( 'Warnings', 'decker' ),
 			'alert'    => __( 'Alerts', 'decker' ),
 		);
@@ -268,11 +268,19 @@ class Decker_Calendar {
 	 * @return string
 	 */
 	public function generate_ical( $events, $type = '' ) {
+
+		$timezone_string = get_option( 'timezone_string' );
+		if ( ! $timezone_string ) {
+			$timezone_string = 'UTC';
+		}
+
 		$ical  = "BEGIN:VCALENDAR\r\n";
 		$ical .= "VERSION:2.0\r\n";
 		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";
 		$ical .= "CALSCALE:GREGORIAN\r\n";
 		$ical .= "METHOD:PUBLISH\r\n";
+
+		$ical .= $this->generate_vtimezone( $timezone_string );
 
 		// Add calendar name property.
 		$calendar_name = 'Decker';
@@ -297,15 +305,44 @@ class Decker_Calendar {
 				$ical .= 'DTSTART;VALUE=DATE:' . $start_date . "\r\n";
 				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";
 			} else {
-				// Convertir fechas a UTC para eventos con hora.
-				$dtstart = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
-				$dtend   = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
 
-				$ical .= 'DTSTART:' . $dtstart . "\r\n";
-				$ical .= 'DTEND:' . $dtend . "\r\n";
+				$dtstart = date_create( $event['start'], new DateTimeZone( $timezone_string ) );
+				$dtend   = date_create( $event['end'], new DateTimeZone( $timezone_string ) );
+
+				if ( $dtstart && $dtend ) {
+					// Aquí chequeas y corriges DTEND si es anterior o igual a DTSTART.
+					if ( $dtend <= $dtstart ) {
+						// Para eventos allDay añade 1 día, para otros añade 1 hora.
+						if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
+							$dtend->modify( '+1 day' );
+						} else {
+							$dtend->modify( '+1 hour' );
+						}
+					}
+
+					$ical .= 'DTSTART;TZID=' . $timezone_string . ':' . $dtstart->format( 'Ymd\THis' ) . "\r\n";
+					$ical .= 'DTEND;TZID=' . $timezone_string . ':' . $dtend->format( 'Ymd\THis' ) . "\r\n";
+				}
 			}
 
-			$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
+			// Add assigned users as prefix to the event title (but not on tasks).
+			$users_prefix = '';
+			if ( ! empty( $type ) && ! empty( $event['assigned_users'] ) ) {
+				$display_names = array();
+				foreach ( $event['assigned_users'] as $user_id ) {
+					$user = get_userdata( $user_id );
+					if ( $user && $user->user_email ) {
+
+						// Collect display names.
+						$display_names[] = $user->display_name;
+
+					}
+				}
+				// We use » because : had codification problemas on ical.
+				$users_prefix = implode( ', ', $display_names ) . ' » ';
+			}
+
+			$ical .= 'SUMMARY:' . $this->ical_escape( $users_prefix . $event['title'] ) . "\r\n";
 			// Split description into 75 character chunks.
 			$description = $this->ical_escape( $event['description'] );
 			$desc_chunks = str_split( $description, 74 ); // 74 to account for the space after continuation.
@@ -355,6 +392,68 @@ class Decker_Calendar {
 
 		$ical .= 'END:VCALENDAR';
 		return $ical;
+	}
+
+	/**
+	 * Generate the VTIMEZONE component for the iCal feed.
+	 *
+	 * This method builds a VTIMEZONE section based on the given timezone string,
+	 * including both STANDARD and DAYLIGHT subcomponents with transitions.
+	 * It calculates offsets and properly formats the timezone information
+	 * required for compatibility with iCal consumers (like Google Calendar or Outlook).
+	 *
+	 * @param string $timezone_string The timezone identifier (e.g. 'Europe/Madrid').
+	 * @return string The generated VTIMEZONE component as a string.
+	 */
+	public function generate_vtimezone( $timezone_string ) {
+
+		$timezone = new DateTimeZone( $timezone_string );
+		$transitions = $timezone->getTransitions( time() - 31536000, time() + 31536000 );
+
+		$vtimezone = "BEGIN:VTIMEZONE\r\n";
+		$vtimezone .= "TZID:$timezone_string\r\n";
+
+		$prev_offset = null;
+
+		foreach ( $transitions as $trans ) {
+			// Usar timestamp para DTSTART (en UTC).
+			$dtstart = gmdate( 'Ymd\THis\Z', $trans['ts'] );
+
+			// Offset en segundos.
+			$offset = $trans['offset'];
+			$offset_hours = floor( abs( $offset ) / 3600 );
+			$offset_minutes = ( abs( $offset ) % 3600 ) / 60;
+			$sign = ( $offset >= 0 ) ? '+' : '-';
+			$offset_formatted = sprintf( '%s%02d%02d', $sign, $offset_hours, $offset_minutes );
+
+			// Para TZOFFSETFROM se usa el offset previo si existe, para TZOFFSETTO el actual.
+			$offset_from = null !== $prev_offset ? $prev_offset : $offset_formatted;
+			$offset_to = $offset_formatted;
+
+			$tzname = isset( $trans['abbr'] ) ? $trans['abbr'] : ( $trans['isdst'] ? 'DST' : 'STD' );
+
+			if ( $trans['isdst'] ) {
+				$vtimezone .= "BEGIN:DAYLIGHT\r\n";
+				$vtimezone .= "DTSTART:$dtstart\r\n";
+				$vtimezone .= "TZOFFSETFROM:$offset_from\r\n";
+				$vtimezone .= "TZOFFSETTO:$offset_to\r\n";
+				$vtimezone .= "TZNAME:$tzname\r\n";
+				$vtimezone .= "END:DAYLIGHT\r\n";
+			} else {
+				$vtimezone .= "BEGIN:STANDARD\r\n";
+				$vtimezone .= "DTSTART:$dtstart\r\n";
+				$vtimezone .= "TZOFFSETFROM:$offset_from\r\n";
+				$vtimezone .= "TZOFFSETTO:$offset_to\r\n";
+				$vtimezone .= "TZNAME:$tzname\r\n";
+				$vtimezone .= "END:STANDARD\r\n";
+			}
+
+			$prev_offset = $offset_formatted;
+		}
+
+		$vtimezone .= "END:VTIMEZONE\r\n";
+
+		return $vtimezone;
 	}
 
 	/**

@@ -1009,8 +1009,11 @@ msgstr "Exportar archivo .ics"
 msgid "Meeting"
 msgstr "Reunión"
 
-msgid "Holidays"
-msgstr "Vacaciones"
+msgid "Absence"
+msgstr "Ausencia"
+
+msgid "Absences"
+msgstr "Ausencias"
 
 msgid "Alert"
 msgstr "Alerta"
@@ -1391,3 +1394,6 @@ msgstr "Advertencias"
 
 msgid "Alerts"
 msgstr "Alertas"
+
+msgid "All Types"
+msgstr "Todos los tipos"

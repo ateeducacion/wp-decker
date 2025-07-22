@@ -22,7 +22,7 @@ Try Decker instantly in your browser using WordPress Playground! The demo includ
 - **Multisite Support**: Fully compatible with WordPress multisite installations.
 - **WordPress Coding Standards Compliance**: Adheres to [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards) for quality and security.
 - **Continuous Integration Pipeline**: Set up for automated code verification and release generation on GitLab.
-- **Individual Calendar Feeds**: Subscribe to event-type specific calendar URLs (Meeting, Holidays, Warning and Alert).
+- **Individual Calendar Feeds**: Subscribe to event-type specific calendar URLs (Meeting, Absence, Warning and Alert).
 
 ## Installation
 

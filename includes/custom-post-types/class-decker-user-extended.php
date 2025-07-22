@@ -137,7 +137,7 @@ class Decker_User_Extended {
 
 											   $types = array(
 												   'meeting'  => __( 'Meeting', 'decker' ),
-												   'holidays' => __( 'Holidays', 'decker' ),
+												   'absence' => __( 'Absence', 'decker' ),
 												   'warning'  => __( 'Warning', 'decker' ),
 												   'alert'    => __( 'Alert', 'decker' ),
 											   );

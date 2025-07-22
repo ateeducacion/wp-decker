@@ -147,7 +147,6 @@ class Decker_Events {
 				'schema' => array(
 					'type' => 'string',
 					'format' => 'date-time',
-					'nullable' => true,
 				),
 			),
 			'event_location' => array(
@@ -397,7 +396,7 @@ class Decker_Events {
 				const start = new Date(startDate);
 				const end = new Date(endDate);
 				
-				if (end <= start) {
+				if (end < start) {
 					$('#event_date_error').show();
 					return false;
 				} else {
@@ -502,7 +501,6 @@ class Decker_Events {
 
 		// Save all-day event status.
 		$allday = isset( $_POST['event_allday'] ) ? 1 : 0;
-		update_post_meta( $post_id, 'event_allday', $allday );
 
 		// Special processing for dates.
 		// Handle date formatting.
@@ -520,11 +518,10 @@ class Decker_Events {
 
 		// Validar que end date es mayor que start date.
 		if ( strtotime( $end ) <= strtotime( $start ) ) {
-			// You can either add an error or simply not save the dates.
-			// For simplicity, we'll just skip saving invalid dates.
-			// You could also add an error message using admin_notices.
-			return;
+			$end = $start;
 		}
+
+		update_post_meta( $post_id, 'event_allday', $allday );
 
 		update_post_meta( $post_id, 'event_start', $start );
 		update_post_meta( $post_id, 'event_end', $end );
@@ -554,17 +551,20 @@ class Decker_Events {
 	}
 
 	/**
-	 * Formats the event date.
+	 * Formats an event date for storage.
 	 *
-	 * @param string $date The date to format.
-	 * @param bool   $allday Whether the event is all-day.
-	 * @return string The formatted date.
+	 * @param string $date    Human-readable date.
+	 * @param bool   $allday  True when the event is all-day.
+	 * @return string         ISO-8601 date string.
 	 */
 	private function format_event_date( $date, $allday ) {
+		// All-day: store only the calendar day.
 		if ( $allday ) {
-			return gmdate( 'Y-m-d', strtotime( $date ) ) . 'T00:00:00';
+			return gmdate( 'Y-m-d', strtotime( $date ) );
 		}
-		return gmdate( 'Y-m-d\TH:i:s', strtotime( $date ) );
+
+		// Timed: store RFC 3339 in UTC.
+		return gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $date ) );
 	}
 
 	/**

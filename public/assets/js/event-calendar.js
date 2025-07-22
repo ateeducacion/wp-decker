@@ -137,14 +137,14 @@ function showTootip(message, duration = 2000){
                     drop: function(info) {
                         console.log("drop:", info)
                         // Create event data.
-                        var end_date =  info.allDay ? null : new Date( info.date.getTime() + 45*60000 );
+                        var end_date =  new Date( info.date.getTime() + 45*60000 );
                         const eventData = {
                             title: info.draggedEl.innerText,
                             status: 'publish',
                             meta: {
                                 event_allday: info.allDay,
-                                event_start: info.allDay ? info.date.toISOString().split('T')[0] : info.date.toISOString(),
-                                event_end: info.allDay ? null : end_date.toISOString(),
+                                event_start: info.date,
+                                event_end: end_date,
                                 event_category: info.draggedEl.dataset.class,
                                 event_assigned_users: [deckerVars.current_user_id]
                             }
@@ -170,7 +170,7 @@ function showTootip(message, duration = 2000){
                                 id : 'event_' + data.id,
                                 title: info.draggedEl.innerText, 
                                 start: info.date, 
-                                end: info.allDay ? null : end_date.toISOString(),
+                                end: end_date,
                                 allDay: info.allDay,
                                 extendedProps: {
                                     assigned_users: [deckerVars.current_user_id],
@@ -200,17 +200,17 @@ function showTootip(message, duration = 2000){
                             ? new Date(info.event.start.getTime() - (info.event.start.getTimezoneOffset() * 60000)) 
                             : null;
 
-                        var end_adjusted = event_end 
-                            ? new Date(event_end.getTime() - (event_end.getTimezoneOffset() * 60000)) 
-                            : null;
+                        // var end_adjusted = event_end 
+                        //     ? new Date(event_end.getTime() - (event_end.getTimezoneOffset() * 60000)) 
+                        //     : null;
 
                         if ( 'event' == info.event.extendedProps.type   ) {
                             var eventId=info.event.id.replace('event_', '');
                             var restroute=wpApiSettings.root + 'decker/v1/events/' + encodeURIComponent(eventId) + '/update';    
                             var restData = {
                                 event_allday: info.event.allDay,
-                                event_start: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : start_adjusted.toISOString(),
-                                event_end: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : end_adjusted.toISOString()
+                                event_start: info.event.start,
+                                event_end: info.event.end,
                             };
 
                         } else if ('task' == info.event.extendedProps.type ) {
@@ -257,6 +257,20 @@ function showTootip(message, duration = 2000){
                         const titleEl = info.el.querySelector('.fc-event-title');
                         if (!titleEl) return;
 
+                        const users = info.event.extendedProps.assigned_users || [];
+
+                        if (users.length > 0) {
+                            const nicknames = users.map(userId => {
+                                const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+                                const user = deckerVars.users.find(u => u.id == id);
+                                return user?.nickname || '';
+                            }).filter(Boolean);
+
+                            if (nicknames.length > 0) {
+                                info.el.setAttribute('data-user-nicknames', nicknames.join(','));
+                            }
+                        }
+
                         if (info.event.extendedProps.type === 'task') {
                             info.el.style.backgroundColor = info.event.classNames[0];
                             info.event.setAllDay(true);
@@ -274,6 +288,9 @@ function showTootip(message, duration = 2000){
                                 titleEl.insertBefore(svg, titleEl.firstChild);
                             }
                         } else if (info.event.extendedProps.type === 'event') {
+
+
+
                             // Set background color based on category class
                             info.el.style.backgroundColor = info.event.classNames[0];
                             info.el.style.opacity = '0.7'; // Make it lighter

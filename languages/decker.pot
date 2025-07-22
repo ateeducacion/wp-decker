@@ -112,7 +112,7 @@ msgstr ""
 msgid "Meetings"
 msgstr ""
 
-msgid "Holidays"
+msgid "Absences"
 msgstr ""
 
 msgid "Warnings"
@@ -654,6 +654,9 @@ msgstr ""
 msgid "Meeting"
 msgstr ""
 
+msgid "Absence"
+msgstr ""
+
 msgid "Alert"
 msgstr ""
 
@@ -786,13 +789,22 @@ msgstr ""
 msgid "Tasks by Stack from current User"
 msgstr ""
 
-msgid "Drag and drop your event or click in the calendar"
-msgstr ""
-
 msgid "Search..."
 msgstr ""
 
 msgid "Search"
+msgstr ""
+
+msgid "All Types"
+msgstr ""
+
+msgid "Task"
+msgstr ""
+
+msgid "All Users"
+msgstr ""
+
+msgid "Drag and drop your event or click in the calendar"
 msgstr ""
 
 msgid "Title"
@@ -827,9 +839,6 @@ msgid "Error: The board %s does not exist."
 msgstr ""
 
 msgid "Kanban Board"
-msgstr ""
-
-msgid "All Users"
 msgstr ""
 
 msgid "Fix Order"
@@ -1358,9 +1367,6 @@ msgid "Created"
 msgstr ""
 
 msgid "Toggle Dropdown"
-msgstr ""
-
-msgid "Task"
 msgstr ""
 
 msgid "Notifications"

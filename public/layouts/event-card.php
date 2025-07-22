@@ -220,7 +220,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 				<?php esc_html_e( 'Meeting', 'decker' ); ?>
 			</option>
 			<option value="bg-info" <?php echo 'bg-info' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Holidays', 'decker' ); ?>
+				<?php esc_html_e( 'Absence', 'decker' ); ?>
 			</option>
 			<option value="bg-warning" <?php echo 'bg-warning' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Warning', 'decker' ); ?>
