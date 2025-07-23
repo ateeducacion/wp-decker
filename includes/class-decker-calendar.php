@@ -305,23 +305,10 @@ class Decker_Calendar {
 				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";
 			} else {
 
-				$dtstart = date_create( $event['start'], new DateTimeZone( $timezone_string ) );
-				$dtend   = date_create( $event['end'], new DateTimeZone( $timezone_string ) );
-
-				if ( $dtstart && $dtend ) {
-					// Aquí chequeas y corriges DTEND si es anterior o igual a DTSTART.
-					if ( $dtend <= $dtstart ) {
-						// Para eventos allDay añade 1 día, para otros añade 1 hora.
-						if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
-							$dtend->modify( '+1 day' );
-						} else {
-							$dtend->modify( '+1 hour' );
-						}
-					}
-
-					$ical .= 'DTSTART;TZID=' . $timezone_string . ':' . $dtstart->format( 'Ymd\THis' ) . "\r\n";
-					$ical .= 'DTEND;TZID=' . $timezone_string . ':' . $dtend->format( 'Ymd\THis' ) . "\r\n";
-				}
+				$start = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
+				$end   = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
+				$ical .= 'DTSTART:' . $start . "\r\n";
+				$ical .= 'DTEND:' . $end . "\r\n";
 			}
 
 			// Add assigned users as prefix to the event title (but not on tasks).
