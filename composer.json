@@ -45,7 +45,10 @@
             "Decker\\": "includes/",
             "Decker\\Admin\\": "admin/",
             "Decker\\Public\\": "public/"
-        }
+        },
+        "files": [
+            "vendor/om/icalparser/ICal.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
