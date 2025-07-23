@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-use ICal\ICal;
+use om\IcalParser;
 
 class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
@@ -35,7 +35,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		$ical_content = ob_get_clean();
 
 		// Parse the ICS content.
-		$ical = new ICal();
+		$ical = new IcalParser();
 		$ical->initString( $ical_content );
 
 		// Verify the parsed event.
@@ -79,7 +79,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		$ical_content = ob_get_clean();
 
 		// Parse the ICS content.
-		$ical = new ICal();
+		$ical = new IcalParser();
 		$ical->initString( $ical_content );
 
 		// Verify the parsed events.
@@ -112,7 +112,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		$ical_content = ob_get_clean();
 
 		// Parse the ICS content.
-		$ical = new ICal();
+		$ical = new IcalParser();
 		$ical->initString( $ical_content );
 
 		// Verify the all-day event formatting.
