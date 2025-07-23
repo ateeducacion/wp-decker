@@ -34,6 +34,7 @@ require "{$_tests_dir}/includes/bootstrap.php";
 require_once __DIR__ . '/includes/class-wp-unittest-factory-for-decker-board.php';
 require_once __DIR__ . '/includes/class-wp-unittest-factory-for-decker-label.php';
 require_once __DIR__ . '/includes/class-wp-unittest-factory-for-decker-task.php';
+require_once __DIR__ . '/includes/class-wp-unittest-factory-for-decker-event.php';
 
 // Include the custom base test class.
 require_once __DIR__ . '/includes/class-wp-unittest-decker-test-base.php';
