@@ -179,8 +179,8 @@ msgstr ""
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
-#. translators: %s is the name of the user who completed the task.
-#. Translators: %s is the task author.
+#. translators: %s is a username.
+#. Translators: %s is a username.
 msgid "Unknown user"
 msgstr ""
 
@@ -195,7 +195,7 @@ msgstr ""
 msgid "You have been assigned a task"
 msgstr ""
 
-#. translators: %s is the name of the user who completed the task.
+#. translators: %s is a username.
 #, php-format
 msgid "Completed by %s"
 msgstr ""
@@ -205,7 +205,7 @@ msgstr ""
 msgid "New Comment on Task: %s"
 msgstr ""
 
-#. Translators: %s is the task author.
+#. Translators: %s is a username.
 #, php-format
 msgid "Comment by %s"
 msgstr ""
