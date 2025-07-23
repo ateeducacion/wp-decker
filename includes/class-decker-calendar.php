@@ -169,14 +169,13 @@ class Decker_Calendar {
 		$type = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
 
 		$events = $this->get_events( $type );
-		$ical   = $this->generate_ical( $events, $type );
+		$ical = $this->generate_ical( $events, $type );
 
-		// Evitar advertencias de cabeceras en el entorno de pruebas.
 		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
 		}
-		echo wp_kses_post( $ical );
+		echo $ical;
 		exit;
 	}
 
@@ -300,7 +299,7 @@ class Decker_Calendar {
 			if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
 				// Para eventos de día completo, usar formato VALUE=DATE y DTEND al día siguiente.
 				$start_date = gmdate( 'Ymd', strtotime( $event['start'] ) );
-				$end_date = gmdate( 'Ymd', strtotime( $event['end'] . ' +1 day' ) );
+				$end_date = gmdate( 'Ymd', strtotime( $event['end'] ) );
 
 				$ical .= 'DTSTART;VALUE=DATE:' . $start_date . "\r\n";
 				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";
