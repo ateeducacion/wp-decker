@@ -301,7 +301,7 @@ class Decker_Notification_Handler {
 					'type'       => 'task_completed',
 					'task_id'    => $task_id,
 					'title'      => $task->post_title,
-					/* translators: %s is the name of the user who completed the task. */
+					/* translators: %s is a username. */
 					'action'     => sprintf( __( 'Completed by %s', 'decker' ), $finisher ? $finisher->display_name : __( 'Unknown user', 'decker' ) ),
 					'time'       => gmdate( 'Y-m-d H:i:s' ),
 					'url'        => esc_url( $this->build_task_url( $task_id ) ),
@@ -377,7 +377,7 @@ class Decker_Notification_Handler {
 					'task_id' => $post_id,
 					// Translators: %s is the task title.
 					'title'   => sprintf( __( 'New Comment on Task: %s', 'decker' ), $task->post_title ),
-					// Translators: %s is the task author.
+					// Translators: %s is a username.
 					'action'  => sprintf( __( 'Comment by %s', 'decker' ), $author ? $author->display_name : __( 'Unknown user', 'decker' ) ),
 					'time'    => gmdate( 'Y-m-d H:i:s' ),
 					'url'     => esc_url( $this->build_task_url( $post_id ) ),

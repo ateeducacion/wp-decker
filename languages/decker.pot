@@ -10,7 +10,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.11.0\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: decker\n"
 
 #. Plugin Name of the plugin
@@ -97,6 +97,7 @@ msgid "All Decker records have been deleted."
 msgstr ""
 
 #. Translators: %s is a list of invalid user IDs that have been removed.
+#, php-format
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr ""
 
@@ -187,6 +188,7 @@ msgid "Task Created"
 msgstr ""
 
 #. translators: 1: Task title, 2: Task URL, 3: Creator name
+#, php-format
 msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
 msgstr ""
 
@@ -194,14 +196,17 @@ msgid "You have been assigned a task"
 msgstr ""
 
 #. translators: %s is the name of the user who completed the task.
+#, php-format
 msgid "Completed by %s"
 msgstr ""
 
 #. Translators: %s is the task title.
+#, php-format
 msgid "New Comment on Task: %s"
 msgstr ""
 
 #. Translators: %s is the task author.
+#, php-format
 msgid "Comment by %s"
 msgstr ""
 
@@ -443,10 +448,12 @@ msgid "Tomorrow"
 msgstr ""
 
 #. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+#, php-format
 msgid "%s ago"
 msgstr ""
 
 #. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+#, php-format
 msgid "in %s"
 msgstr ""
 
@@ -520,6 +527,7 @@ msgid "Archived"
 msgstr ""
 
 #. translators: %s: Number of items
+#, php-format
 msgid "Archived <span class=\"count\">(%s)</span>"
 msgid_plural "Archived <span class=\"count\">(%s)</span>"
 msgstr[0] ""
@@ -835,6 +843,7 @@ msgid "TO-DO"
 msgstr ""
 
 #. translators: %s: Board slug that was not found
+#, php-format
 msgid "Error: The board %s does not exist."
 msgstr ""
 
