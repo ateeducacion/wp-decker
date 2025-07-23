@@ -47,7 +47,7 @@
             "Decker\\Public\\": "public/"
         },
         "files": [
-            "vendor/om/icalparser/ICal.php"
+            "vendor/om/icalparser/src/IcalParser.php"
         ]
     },
     "autoload-dev": {
