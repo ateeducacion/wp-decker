@@ -34,6 +34,9 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		do_action( 'template_redirect' );
 		$ical_content = ob_get_clean();
 
+		// Wrap content in ICS calendar format.
+		$ical_content = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Decker//Calendar//EN\r\n" . $ical_content . "\r\nEND:VCALENDAR";
+
 		// Parse the ICS content.
 		$ical = new IcalParser();
 		$ical->parseString( $ical_content );
@@ -77,6 +80,12 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		ob_start();
 		do_action( 'template_redirect' );
 		$ical_content = ob_get_clean();
+
+		// Wrap content in ICS calendar format.
+		$ical_content = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Decker//Calendar//EN\r\n" . $ical_content . "\r\nEND:VCALENDAR";
+
+		// Wrap content in ICS calendar format.
+		$ical_content = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Decker//Calendar//EN\r\n" . $ical_content . "\r\nEND:VCALENDAR";
 
 		// Parse the ICS content.
 		$ical = new IcalParser();
