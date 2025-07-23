@@ -3,6 +3,7 @@
         "erseco/mime-mail-parser": "^1.0"
     },
     "require-dev": {
+        "om/icalparser": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
         "squizlabs/php_codesniffer": "^3.11",
