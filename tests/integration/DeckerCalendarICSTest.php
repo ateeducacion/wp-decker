@@ -36,17 +36,17 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
 		// Parse the ICS content.
 		$ical = new IcalParser();
-		$ical->initString( $ical_content );
+		$ical->parseString( $ical_content );
 
 		// Verify the parsed event.
-		$events = $ical->events();
+		$events = $ical->getEvents();
 		$this->assertCount( 1, $events );
-		$this->assertEquals( 'Test Event', $events[0]->summary );
-		$this->assertEquals( 'Event Description', $events[0]->description );
-		$this->assertEquals( '20250101T100000Z', $events[0]->dtstart );
-		$this->assertEquals( '20250101T120000Z', $events[0]->dtend );
-		$this->assertEquals( 'Test Location', $events[0]->location );
-		$this->assertEquals( 'https://example.com', $events[0]->url );
+		$this->assertEquals( 'Test Event', $events[0]['SUMMARY'] );
+		$this->assertEquals( 'Event Description', $events[0]['DESCRIPTION'] );
+		$this->assertEquals( '20250101T100000Z', $events[0]['DTSTART'] );
+		$this->assertEquals( '20250101T120000Z', $events[0]['DTEND'] );
+		$this->assertEquals( 'Test Location', $events[0]['LOCATION'] );
+		$this->assertEquals( 'https://example.com', $events[0]['URL'] );
 	}
 
 	/**
@@ -80,13 +80,13 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
 		// Parse the ICS content.
 		$ical = new IcalParser();
-		$ical->initString( $ical_content );
+		$ical->parseString( $ical_content );
 
 		// Verify the parsed events.
-		$events = $ical->events();
+		$events = $ical->getEvents();
 		$this->assertCount( 2, $events );
-		$this->assertEquals( 'Event 1', $events[0]->summary );
-		$this->assertEquals( 'Event 2', $events[1]->summary );
+		$this->assertEquals( 'Event 1', $events[0]['SUMMARY'] );
+		$this->assertEquals( 'Event 2', $events[1]['SUMMARY'] );
 	}
 
 	/**
@@ -113,12 +113,12 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
 		// Parse the ICS content.
 		$ical = new IcalParser();
-		$ical->initString( $ical_content );
+		$ical->parseString( $ical_content );
 
 		// Verify the all-day event formatting.
-		$events = $ical->events();
+		$events = $ical->getEvents();
 		$this->assertCount( 1, $events );
-		$this->assertEquals( '20250101', $events[0]->dtstart );
-		$this->assertEquals( '20250102', $events[0]->dtend );
+		$this->assertEquals( '20250101', $events[0]['DTSTART'] );
+		$this->assertEquals( '20250102', $events[0]['DTEND'] );
 	}
 }
