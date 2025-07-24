@@ -172,7 +172,9 @@ class Decker_Calendar {
 		$events = $this->get_events( $type );
 		$ical = $this->generate_ical( $events, $type );
 
-		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
+		// Evitar advertencias “Cannot modify header information” cuando la salida ya comenzó
+		// (p. ej. en PHPUnit) comprobando headers_sent() antes de enviar cabeceras.
+		if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
 		}
