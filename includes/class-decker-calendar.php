@@ -291,6 +291,15 @@ class Decker_Calendar {
 		// Añadir punto final a comentario.
 		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 
+		// Ordenar eventos por fecha de inicio ascendente para garantizar resultados
+		// deterministas y alinear con las expectativas de las pruebas.
+		usort(
+			$events,
+			function ( $a, $b ) {
+				return strtotime( $a['start'] ) <=> strtotime( $b['start'] );
+			}
+		);
+
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
@@ -377,7 +386,7 @@ class Decker_Calendar {
 			$ical .= "END:VEVENT\r\n";
 		}
 
-		$ical .= 'END:VCALENDAR';
+		$ical .= "END:VCALENDAR\r\n";
 		return $ical;
 	}
 
