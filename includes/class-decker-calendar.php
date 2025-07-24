@@ -180,7 +180,14 @@ class Decker_Calendar {
 		}
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
 		echo $ical;
-		exit;
+
+		// Durante PHPUnit no debemos detener la ejecución completa.
+		if ( ! defined( 'WP_TESTS_RUNNING' ) || ! WP_TESTS_RUNNING ) {
+			exit;
+		}
+
+		// Permitir que el flujo de pruebas continúe.
+		return;
 	}
 
 	/**
