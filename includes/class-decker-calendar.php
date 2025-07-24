@@ -182,7 +182,8 @@ class Decker_Calendar {
 		echo $ical;
 
 		// Durante PHPUnit no debemos detener la ejecución completa.
-		if ( ! defined( 'WP_TESTS_RUNNING' ) || ! WP_TESTS_RUNNING ) {
+		// Solo salimos cuando NO estamos ejecutando las pruebas.
+		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			exit;
 		}
 
