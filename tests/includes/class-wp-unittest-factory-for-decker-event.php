@@ -32,6 +32,7 @@ class WP_UnitTest_Factory_For_Decker_Event extends WP_UnitTest_Factory_For_Post 
                 'post_content' => new WP_UnitTest_Generator_Sequence( 'Event description %s' ),
                 'post_author'  => 1, // Default to user ID 1 (admin).
                 'post_type'    => 'decker_event',
+                'post_status'  => 'publish',  // Asegura que los eventos estén publicados para que los consulte el calendario.
                 'event_allday' => false,
                 'event_start'  => date( 'Y-m-d H:i:s', strtotime( '+1 day' ) ),
                 'event_end'    => date( 'Y-m-d H:i:s', strtotime( '+1 day 2 hours' ) ),
