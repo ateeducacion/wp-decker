@@ -217,7 +217,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		<select class="form-select" id="event-category" name="event_category" required>
 			<option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
 			<option value="bg-success" <?php echo 'bg-success' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Meeting', 'decker' ); ?>
+				<?php esc_html_e( 'Event', 'decker' ); ?>
 			</option>
 			<option value="bg-info" <?php echo 'bg-info' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Absence', 'decker' ); ?>
@@ -225,9 +225,10 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 			<option value="bg-warning" <?php echo 'bg-warning' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Warning', 'decker' ); ?>
 			</option>
+			<!-- temporary disabled for simplicity 
 			<option value="bg-danger" <?php echo 'bg-danger' === $category ? 'selected' : ''; ?>>
 				<?php esc_html_e( 'Alert', 'decker' ); ?>
-			</option>
+			</option> -->
 		</select>
 		<label for="event-category"><?php esc_html_e( 'Category', 'decker' ); ?> <span class="text-danger">*</span></label>
 		<div class="invalid-feedback">

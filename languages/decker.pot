@@ -659,15 +659,6 @@ msgstr ""
 msgid "Export .ics file"
 msgstr ""
 
-msgid "Meeting"
-msgstr ""
-
-msgid "Absence"
-msgstr ""
-
-msgid "Alert"
-msgstr ""
-
 msgid "Event type feeds:"
 msgstr ""
 
@@ -806,13 +797,22 @@ msgstr ""
 msgid "All Types"
 msgstr ""
 
-msgid "Task"
+msgid "Tasks"
 msgstr ""
 
 msgid "All Users"
 msgstr ""
 
 msgid "Drag and drop your event or click in the calendar"
+msgstr ""
+
+msgid "Event"
+msgstr ""
+
+msgid "Absence"
+msgstr ""
+
+msgid "Alert"
 msgstr ""
 
 msgid "Title"
@@ -828,6 +828,9 @@ msgid "End"
 msgstr ""
 
 msgid "Category"
+msgstr ""
+
+msgid "Meeting"
 msgstr ""
 
 msgid "Uncategorized"
@@ -941,9 +944,6 @@ msgid "Error loading tasks."
 msgstr ""
 
 msgid "Tasks Detail"
-msgstr ""
-
-msgid "Tasks"
 msgstr ""
 
 msgid "Task Detail"
@@ -1154,9 +1154,6 @@ msgid "Please select a category for the event."
 msgstr ""
 
 msgid "The category determines the color of the event in the calendar."
-msgstr ""
-
-msgid "Event"
 msgstr ""
 
 msgid "Version"
@@ -1376,6 +1373,9 @@ msgid "Created"
 msgstr ""
 
 msgid "Toggle Dropdown"
+msgstr ""
+
+msgid "Task"
 msgstr ""
 
 msgid "Notifications"

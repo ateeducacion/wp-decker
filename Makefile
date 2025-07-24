@@ -20,6 +20,7 @@ start-if-not-running:
 		echo "wp-env is NOT running. Starting (previous updating) containers..."; \
 		npx wp-env start --update; \
 		npx wp-env run cli wp plugin activate decker; \
+		open "http://localhost:8888/?decker_page=priority"; \
 	else \
 		echo "wp-env is already running, skipping start."; \
 	fi
@@ -169,7 +170,6 @@ package:
 # Show help with available commands
 help:
 	@echo "Available commands:"
-	@echo "  up                 - Bring up Docker containers in interactive mode"
 	@echo "  up                 - Bring up Docker containers in interactive mode"
 	@echo "  down               - Stop and remove Docker containers"
 	@echo "  logs               - Show the docker container logs"

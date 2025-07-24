@@ -53,6 +53,9 @@
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
             minuteIncrement: 15,
+            altInput: true,
+            altFormat: "d/m/Y H:i",
+
             // defaultDate: selectedDate || undefined
         };
 
@@ -80,9 +83,11 @@
             // Function to handle all-day mode changes
             const handleAllDayChange = function(isAllDay) {
                 startPicker.set('enableTime', !isAllDay);
-                startPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+                // startPicker.set('altFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+                startPicker.set('altFormat', isAllDay ? "d-m-Y" : "d-m-Y H:i");                
                 endPicker.set('enableTime', !isAllDay);
-                endPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+                // endPicker.set('altFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
+                endPicker.set('altFormat', isAllDay ? "d-m-Y" : "d-m-Y H:i");
 
                 // Adjust existing dates
                 if (isAllDay) {

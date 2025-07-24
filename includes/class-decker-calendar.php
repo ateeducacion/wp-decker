@@ -175,6 +175,7 @@ class Decker_Calendar {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
 		}
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
 		echo $ical;
 		exit;
 	}

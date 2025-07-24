@@ -50,11 +50,12 @@ include 'layouts/main.php';
 											<!-- Select de tipo -->
 											<select id="eventTypeFilter" class="form-select ms-2">
 												<option value=""><?php esc_html_e( 'All Types', 'decker' ); ?></option>
-												<option value="meeting"><?php esc_html_e( 'Meeting', 'decker' ); ?></option>
-												<option value="absence"><?php esc_html_e( 'Absence', 'decker' ); ?></option>
-												<option value="warning"><?php esc_html_e( 'Warning', 'decker' ); ?></option>
-												<option value="alert"><?php esc_html_e( 'Alert', 'decker' ); ?></option>
-												<option value="task"><?php esc_html_e( 'Task', 'decker' ); ?></option>
+												<option value="event"><?php esc_html_e( 'Events', 'decker' ); ?></option>
+												<option value="absence"><?php esc_html_e( 'Absences', 'decker' ); ?></option>
+												<option value="warning"><?php esc_html_e( 'Warnings', 'decker' ); ?></option>
+												<!-- temporary disabled for simplicity 
+												<option value="alert"><?php esc_html_e( 'Alerts', 'decker' ); ?></option> -->
+												<option value="task"><?php esc_html_e( 'Tasks', 'decker' ); ?></option>
 											</select>
 
 
@@ -93,10 +94,11 @@ include 'layouts/main.php';
 										<div class="col-lg-2 d-none d-lg-block">
 											<div id="external-events" class="mt-3">
 												<p class="text-muted"><?php esc_html_e( 'Drag and drop your event or click in the calendar', 'decker' ); ?></p>
-												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Meeting', 'decker' ); ?></div>
+												<div class="external-event bg-success-subtle text-success" data-class="bg-success"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Event', 'decker' ); ?></div>
 												<div class="external-event bg-info-subtle text-info" data-class="bg-info"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Absence', 'decker' ); ?></div>
 												<div class="external-event bg-warning-subtle text-warning" data-class="bg-warning"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Warning', 'decker' ); ?></div>
-												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Alert', 'decker' ); ?></div>
+												<!-- temporary disabled for simplicity 
+												<div class="external-event bg-danger-subtle text-danger" data-class="bg-danger"><i class="ri-focus-fill me-2 vertical-middle"></i><?php esc_html_e( 'Alert', 'decker' ); ?></div> -->
 											</div>
 
 										</div> <!-- end col-->
@@ -145,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	function getEventTypeClass(type) {
 		switch (type) {
+			case 'event':
 			case 'meeting':
 				return 'bg-success';
 			case 'absence':
@@ -164,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const searchText = searchInput.value.toLowerCase().trim();
 		const selectedUser = boardUserFilter.value.toLowerCase().trim();
 		const selectedType = eventTypeFilter.value.toLowerCase().trim();
-		// const typeClass = getEventTypeClass(selectedType);
+		const typeClass = getEventTypeClass(selectedType);
 
 		document.querySelectorAll('.fc-event').forEach(event => {
 			const titleElement = event.querySelector('.fc-event-title');
@@ -175,10 +178,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 			const matchesSearch = !searchText || title.includes(searchText) || nicknames.some(nickname => nickname.includes(searchText));
 			const matchesUser = !selectedUser || nicknames.includes(selectedUser);
-			// const matchesType = !selectedType || classes.includes(typeClass);
-			const matchesType = !selectedType || event.classList.contains('event-type-' + selectedType);
-
-
+			let matchesType = !selectedType || classes.includes(typeClass);
+			if (selectedType == 'task' &&  event.classList.contains('event-type-task')) {
+				matchesType = true;
+			}
 			event.style.display = (matchesSearch && matchesUser && matchesType) ? '' : 'none';
 		});
 	}

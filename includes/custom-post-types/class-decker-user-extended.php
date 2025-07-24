@@ -136,10 +136,10 @@ class Decker_User_Extended {
 												echo '</div>';
 
 											   $types = array(
-												   'meeting'  => __( 'Meeting', 'decker' ),
-												   'absence' => __( 'Absence', 'decker' ),
-												   'warning'  => __( 'Warning', 'decker' ),
-												   'alert'    => __( 'Alert', 'decker' ),
+												   'event'  => __( 'Events', 'decker' ),
+												   'absence' => __( 'Absences', 'decker' ),
+												   'warning'  => __( 'Warnings', 'decker' ),
+												   // 'alert'    => __( 'Alert', 'decker' ),
 											   );
 											   echo '<div class="calendar-links" style="margin-top:10px;">';
 											   echo '<p style="margin-bottom:5px;">' . esc_html__( 'Event type feeds:', 'decker' ) . '</p>';
