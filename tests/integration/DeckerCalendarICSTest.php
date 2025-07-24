@@ -10,6 +10,24 @@ use om\IcalParser;
 class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
 	/**
+	 * Parsea contenido ICS y, si falla, muestra el ICS completo para depuración.
+	 *
+	 * @param string $ical_content Contenido ICS bruto.
+	 * @return array Eventos parseados.
+	 */
+	private function parse_ics_with_debug( $ical_content ) {
+		$ical = new IcalParser();
+		try {
+			$ical->parseString( $ical_content );
+		} catch ( InvalidArgumentException $e ) {
+			$this->fail(
+				"ICS parse error: {$e->getMessage()}\n\n--- ICS BEGIN ---\n{$ical_content}\n---  ICS END  ---"
+			);
+		}
+		return $ical->getEvents();
+	}
+
+	/**
 	 * Test ICS download for a single event.
 	 */
 	public function test_single_event_ics_download() {
@@ -34,12 +52,8 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		do_action( 'template_redirect' );
 		$ical_content = ob_get_clean();
 
-		// Parse the ICS content.
-		$ical = new IcalParser();
-		$ical->parseString( $ical_content );
-
-		// Verify the parsed event.
-		$events = $ical->getEvents();
+		// Parse the ICS content (con depuración).
+		$events = $this->parse_ics_with_debug( $ical_content );
 		$this->assertCount( 1, $events );
 		$this->assertEquals( 'Test Event', $events[0]['SUMMARY'] );
 		$this->assertEquals( 'Event Description', $events[0]['DESCRIPTION'] );
@@ -78,12 +92,8 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		do_action( 'template_redirect' );
 		$ical_content = ob_get_clean();
 
-		// Parse the ICS content.
-		$ical = new IcalParser();
-		$ical->parseString( $ical_content );
-
-		// Verify the parsed events.
-		$events = $ical->getEvents();
+		// Parse the ICS content (con depuración).
+		$events = $this->parse_ics_with_debug( $ical_content );
 		$this->assertCount( 2, $events );
 		$this->assertEquals( 'Event 1', $events[0]['SUMMARY'] );
 		$this->assertEquals( 'Event 2', $events[1]['SUMMARY'] );
@@ -111,12 +121,8 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		do_action( 'template_redirect' );
 		$ical_content = ob_get_clean();
 
-		// Parse the ICS content.
-		$ical = new IcalParser();
-		$ical->parseString( $ical_content );
-
-		// Verify the all-day event formatting.
-		$events = $ical->getEvents();
+		// Parse the ICS content (con depuración).
+		$events = $this->parse_ics_with_debug( $ical_content );
 		$this->assertCount( 1, $events );
 		$this->assertEquals( '20250101', $events[0]['DTSTART'] );
 		$this->assertEquals( '20250102', $events[0]['DTEND'] );
