@@ -181,13 +181,12 @@ class Decker_Calendar {
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
 		echo $ical;
 
-		// Durante PHPUnit no debemos detener la ejecución completa.
-		// Solo salimos cuando NO estamos ejecutando las pruebas.
-		if ( ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
+		// Durante las pruebas (CLI/PHPUnit o WP-CLI) no detenemos la ejecución.
+		// Solo salimos en peticiones web normales para evitar contenido extra.
+		if ( php_sapi_name() !== 'cli' && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
 			exit;
 		}
 
-		// Permitir que el flujo de pruebas continúe.
 		return;
 	}
 
