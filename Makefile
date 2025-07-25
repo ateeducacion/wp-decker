@@ -7,6 +7,12 @@ else
   SED_INPLACE = sed -i
 endif
 
+# Optional variables
+# TEST: PHPUnit --filter pattern, e.g., make test TEST=UserTest
+TEST ?=
+# VERBOSE: set to 1 to run verbose PHPUnit output via test-verbose
+VERBOSE ?= 0
+
 
 # Check if Docker is running
 check-docker:
@@ -61,12 +67,27 @@ check-all: check
 tests: test
 
 # Run unit tests with PHPUnit	
-test: start-if-not-running
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
+# test: start-if-not-running
+# 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
 
+# test-verbose: start-if-not-running
+# # 	npx wp-env start
+# 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=always
+
+
+# Run unit tests with PHPUnit. Use TEST to filter specific tests.
+test: start-if-not-running
+	@CMD="./vendor/bin/phpunit"; \
+	if [ -n "$(TEST)" ]; then CMD="$$CMD --filter $(TEST)"; fi; \
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
+
+# Run unit tests in verbose mode. Honor TEST filter if provided.
 test-verbose: start-if-not-running
-# 	npx wp-env start
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=always
+	@CMD="./vendor/bin/phpunit"; \
+	if [ -n "$(TEST)" ]; then CMD="$$CMD --filter $(TEST)"; fi; \
+	CMD="$$CMD --debug --verbose"; \
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
+
 
 logs:
 	npx wp-env logs

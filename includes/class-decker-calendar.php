@@ -162,7 +162,7 @@ class Decker_Calendar {
 	public function handle_ical_request() {
 		global $wp_query;
 
-		// Aceptar tanto query var interno como parámetro GET (?decker-calendar)
+		// Aceptar tanto query var interno como parámetro GET (?decker-calendar).
 		if ( ! isset( $wp_query->query_vars['decker-calendar'] ) && ! isset( $_GET['decker-calendar'] ) ) {
 			return;
 		}

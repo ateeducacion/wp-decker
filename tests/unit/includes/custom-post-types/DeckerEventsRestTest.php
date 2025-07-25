@@ -5,7 +5,7 @@
  * @package Decker
  */
 
-class DeckerEventsTest extends WP_Test_REST_TestCase {
+class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 
 	private $administrator;
 	private $editor;

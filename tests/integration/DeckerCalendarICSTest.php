@@ -32,7 +32,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 	 */
 	public function test_single_event_ics_download() {
 		// Create a test event.
-		$event = self::factory()->event->create(
+		$event = self::factory()->post->create(
 			array(
 				'post_title'   => 'Test Event',
 				'post_content' => 'Event Description',
@@ -68,7 +68,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 	 */
 	public function test_multiple_events_ics_download() {
 		// Create test events.
-		$event1 = self::factory()->event->create(
+		$event1 = self::factory()->post->create(
 			array(
 				'post_title'   => 'Event 1',
 				'event_start'  => '2025-01-01 09:00:00',
@@ -76,7 +76,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 			)
 		);
 
-		$event2 = self::factory()->event->create(
+		$event2 = self::factory()->post->create(
 			array(
 				'post_title'   => 'Event 2',
 				'event_start'  => '2025-01-02 14:00:00',
@@ -104,7 +104,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 	 */
 	public function test_all_day_event_ics_download() {
 		// Create an all-day event.
-		$event = self::factory()->event->create(
+		$event = self::factory()->post->create(
 			array(
 				'post_title'   => 'All Day Event',
 				'event_allday' => true,
