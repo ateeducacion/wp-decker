@@ -100,30 +100,46 @@ class WP_UnitTest_Factory_For_Decker_Event extends WP_UnitTest_Factory_For_Post 
      * @return int|WP_Error Updated event ID or WP_Error on failure.
      */
     public function update_object( $event_id, $fields ) {
-        // Update basic post fields and capture result.
-        $result = parent::update_object( $event_id, $fields );
-        if ( is_wp_error( $result ) ) {
-            // Propagar el error para que el test pueda detectarlo.
-            return $result;
-        }
-        // Mantener la ID devuelta, ya que podría cambiar en algunos contextos.
-        $event_id = $result;
 
-        // Update custom meta fields
-        $meta_fields = array(
-            'event_allday',
-            'event_start',
-            'event_end',
-            'event_location',
-            'event_url',
-            'event_category',
-            'event_assigned_users'
+        // -------------------------------
+        // 1) Separar campos de post y meta
+        // -------------------------------
+        $core_post_fields = array(
+            'post_title', 'post_content', 'post_excerpt', 'post_status',
+            'post_author', 'post_date', 'post_date_gmt', 'post_name',
+            'post_parent', 'menu_order', 'comment_status', 'ping_status',
+            'post_password', 'post_type'
         );
 
-        foreach ( $meta_fields as $field ) {
-            if ( isset( $fields[ $field ] ) ) {
-                update_post_meta( $event_id, $field, $fields[ $field ] );
+        $post_updates = array();
+        $meta_updates = array();
+
+        foreach ( $fields as $key => $value ) {
+            if ( in_array( $key, $core_post_fields, true ) ) {
+                $post_updates[ $key ] = $value;
+            } else {
+                $meta_updates[ $key ] = $value;
             }
+        }
+
+        // -------------------------------
+        // 2) Actualizar el post básico
+        // -------------------------------
+        $result = parent::update_object( $event_id, $post_updates );
+
+        if ( is_wp_error( $result ) ) {
+            // Devolver el error para que el test lo muestre.
+            return $result;
+        }
+
+        // Asegurarnos de usar el ID correcto (por si cambia).
+        $event_id = $result;
+
+        // -------------------------------
+        // 3) Actualizar meta personalizados
+        // -------------------------------
+        foreach ( $meta_updates as $key => $value ) {
+            update_post_meta( $event_id, $key, $value );
         }
 
         return $event_id;
