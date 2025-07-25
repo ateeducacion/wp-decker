@@ -111,6 +111,11 @@ class DeckerEventsTest extends Decker_Test_Base {
             )
         );
 
+        // Asegurar que no se devolvió un WP_Error y mostrar su mensaje si ocurre.
+        $this->assertNotWPError(
+            $updated_id,
+            is_wp_error( $updated_id ) ? $updated_id->get_error_message() : ''
+        );
         $this->assertEquals( $this->event_id, $updated_id, 'Update should return same event ID' );
 
         // Verify updates

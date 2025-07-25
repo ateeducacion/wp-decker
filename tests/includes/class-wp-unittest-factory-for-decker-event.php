@@ -100,8 +100,14 @@ class WP_UnitTest_Factory_For_Decker_Event extends WP_UnitTest_Factory_For_Post 
      * @return int|WP_Error Updated event ID or WP_Error on failure.
      */
     public function update_object( $event_id, $fields ) {
-        // Update basic post fields
-        parent::update_object( $event_id, $fields );
+        // Update basic post fields and capture result.
+        $result = parent::update_object( $event_id, $fields );
+        if ( is_wp_error( $result ) ) {
+            // Propagar el error para que el test pueda detectarlo.
+            return $result;
+        }
+        // Mantener la ID devuelta, ya que podría cambiar en algunos contextos.
+        $event_id = $result;
 
         // Update custom meta fields
         $meta_fields = array(
