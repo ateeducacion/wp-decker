@@ -76,6 +76,10 @@ class Decker_Events {
 
 		// Regiter REST API routes.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+
+		// Add columns to admin.
+		add_filter( 'manage_decker_event_posts_columns', array( $this, 'add_custom_columns' ) );
+		add_action( 'manage_decker_event_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 	}
 
 	/**
@@ -451,7 +455,7 @@ class Decker_Events {
 			<p>
 	<label>
 		<input type="checkbox" name="event_allday" id="event_allday" <?php checked( $allday, '1' ); ?>>
-		<?php esc_html_e( 'All Day Event', 'decker' ); ?>
+		<?php esc_html_e( 'All Day Event Event', 'decker' ); ?>
 	</label>
 </p>
 
@@ -533,6 +537,54 @@ class Decker_Events {
 			</select>
 		</p>
 		<?php
+	}
+
+	/**
+	 * Add custom columns to the event admin list table.
+	 *
+	 * @param array $columns Existing columns.
+	 * @return array Modified columns.
+	 */
+	public function add_custom_columns( $columns ) {
+		unset( $columns['date'] ); // Opcional: quitar la columna de fecha por defecto.
+
+		$columns['event_allday'] = __( 'All Day Event', 'decker' );
+		$columns['event_start'] = __( 'Start', 'decker' );
+		$columns['event_end']   = __( 'End', 'decker' );
+		$columns['event_category'] = __( 'Category', 'decker' );
+
+		$columns['date'] = __( 'Date', 'decker' ); // Añadirla de nuevo al final.
+		return $columns;
+	}
+
+	/**
+	 * Render content for custom columns in the event admin list.
+	 *
+	 * @param string $column  Column name.
+	 * @param int    $post_id Post ID.
+	 */
+	public function render_custom_columns( $column, $post_id ) {
+		switch ( $column ) {
+			case 'event_allday':
+				$allday = get_post_meta( $post_id, 'event_allday', true );
+				printf(
+					'<input type="checkbox" disabled %s>',
+					checked( $allday, '1', false )
+				);
+				break;
+			case 'event_start':
+				$start = get_post_meta( $post_id, 'event_start', true );
+				echo esc_html( $start );
+				break;
+			case 'event_end':
+				$end = get_post_meta( $post_id, 'event_end', true );
+				echo esc_html( $end );
+				break;
+			case 'event_category':
+				$category = get_post_meta( $post_id, 'event_category', true );
+				echo esc_html( $category );
+				break;
+		}
 	}
 
 

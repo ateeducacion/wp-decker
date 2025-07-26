@@ -86,6 +86,12 @@ function showTootip(message, duration = 2000){
                     slotDuration: '00:15:00',
                     slotMinTime: '08:00:00',
                     slotMaxTime: '19:00:00',
+                    slotLabelFormat: deckerVars.timeFormat24h 
+                        ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                        : { hour: 'numeric', minute: '2-digit', hour12: true },
+                    eventTimeFormat: deckerVars.timeFormat24h 
+                        ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                        : { hour: 'numeric', minute: '2-digit', hour12: true },
                     themeSystem: 'bootstrap',
                     bootstrapFontAwesome: false,
                     buttonText: {
@@ -325,6 +331,10 @@ function showTootip(message, duration = 2000){
         },
 
         onEventClick: function(info) {
+
+            // Evitar que se abra la URL (si existe)
+            info.jsEvent.preventDefault();
+
             if (info.event.extendedProps.type === 'task') {
                 // For tasks, open the task modal
                 const taskId = info.event.id.replace('task_', '');

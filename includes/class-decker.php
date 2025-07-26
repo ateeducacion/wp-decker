@@ -56,7 +56,7 @@ class Decker {
 	 * Define the core functionality of the plugin.
 	 *
 	 * Set the plugin name and the plugin version that can be used throughout the plugin.
-	 * Load the dependencies, define the locale, and set the hooks for the admin area and
+	 * Load the dependencies, and set the hooks for the admin area and
 	 * the public-facing side of the site.
 	 */
 	public function __construct() {
@@ -64,7 +64,6 @@ class Decker {
 		$this->plugin_name = 'decker';
 
 		$this->load_dependencies();
-		$this->set_locale();
 		$this->define_admin_hooks();
 		$this->define_public_hooks();
 
@@ -79,7 +78,6 @@ class Decker {
 	 * Include the following files that make up the plugin:
 	 *
 	 * - Decker_Loader. Orchestrates the hooks of the plugin.
-	 * - Decker_i18n. Defines internationalization functionality.
 	 * - Decker_Admin. Defines all hooks for the admin area.
 	 * - Decker_Public. Defines all hooks for the public side of the site.
 	 *
@@ -95,12 +93,6 @@ class Decker {
 		 * core plugin.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-loader.php';
-
-		/**
-		 * The class responsible for defining internationalization functionality
-		 * of the plugin.
-		 */
-		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-i18n.php';
 
 		/**
 		 * The class for handling AJAX requests
@@ -150,21 +142,6 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'public/class-decker-public.php';
 
 		$this->loader = new Decker_Loader();
-	}
-
-	/**
-	 * Define the locale for this plugin for internationalization.
-	 *
-	 * Uses the Decker_i18n class in order to set the domain and to register the hook
-	 * with WordPress.
-	 *
-	 * @access   private
-	 */
-	private function set_locale() {
-
-		$plugin_i18n = new Decker_i18n();
-
-		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 	}
 
 	/**

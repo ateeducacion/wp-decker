@@ -20,7 +20,7 @@ class Decker_Calendar {
 	 * @var array
 	 */
 	private $type_map = array(
-		'meeting'  => 'bg-success',
+		'event'  => 'bg-success',
 		'absence'  => 'bg-info',
 		'warning'  => 'bg-warning',
 		'alert'    => 'bg-danger',
@@ -50,7 +50,7 @@ class Decker_Calendar {
 	 */
 	private function get_type_names() {
 		return array(
-			'meeting'  => __( 'Meetings', 'decker' ),
+			'event'  => __( 'Events', 'decker' ),
 			'absence'  => __( 'Absences', 'decker' ),
 			'warning'  => __( 'Warnings', 'decker' ),
 			'alert'    => __( 'Alerts', 'decker' ),
@@ -89,34 +89,30 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Add rewrite rule for iCal endpoint.
+	 * Add rewrite rule for iCal endpoint
 	 */
 	public function add_ical_endpoint() {
 		add_rewrite_endpoint( 'decker-calendar', EP_ROOT );
 		add_action( 'template_redirect', array( $this, 'handle_ical_request' ) );
 	}
 
+
 	/**
-	 * Check if user has permission to access calendar data.
+	 * Check if user has permission to access calendar data
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 * @return bool|WP_Error
 	 */
 	public function get_calendar_permissions_check( $request ) {
-		// Las peticiones GET al calendario son públicas (no requieren login).
-		if ( 'GET' === $request->get_method() ) {
-			return true;
-		}
 
-		// Prioridad 1 – si el usuario está autenticado y puede leer, permitir.
-		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
-			return true;
-		}
-
-		// Prioridad 2 – verificar nonce REST (esto requiere usuario autenticado,
-		// pero se mantiene por compatibilidad).
+		// Verificar nonce de REST API primero.
 		$nonce = $request->get_header( 'X-WP-Nonce' );
-		if ( $nonce && wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+			return true;
+		}
+
+		// First check if user is logged in.
+		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
 			return true;
 		}
 
@@ -126,9 +122,9 @@ class Decker_Calendar {
 			// Look for a user with this calendar token.
 			$users = get_users(
 				array(
-					'meta_key'   => 'decker_calendar_token',
+					'meta_key' => 'decker_calendar_token',
 					'meta_value' => $token,
-					'number'     => 1,
+					'number' => 1,
 				)
 			);
 
@@ -472,6 +468,17 @@ class Decker_Calendar {
 		$string = str_replace( array( "\r\n", "\n", "\r" ), "\\n", $string );
 		$string = str_replace( array( ',', ';', ':' ), array( '\,', '\;', '\:' ), $string );
 		return $string;
+	}
+
+	/**
+	 * Generate iCal string without headers (for unit tests).
+	 *
+	 * @param string $type Optional type filter.
+	 * @return string
+	 */
+	public function generate_ical_string( $type = '' ) {
+		$events = $this->get_events( $type );
+		return $this->generate_ical( $events, $type );
 	}
 }
 

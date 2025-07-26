@@ -18,7 +18,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 
         public function test_rest_route_registered() {
                 $routes = rest_get_server()->get_routes();
-                $this->assertArrayHasKey( '/decker/v1/calendar/meeting', $routes );
+                $this->assertArrayHasKey( '/decker/v1/calendar/event', $routes );
                 $this->assertArrayHasKey( '/decker/v1/calendar/absence', $routes );
                 $this->assertArrayHasKey( '/decker/v1/calendar/warning', $routes );
                 $this->assertArrayHasKey( '/decker/v1/calendar/alert', $routes );
@@ -26,7 +26,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 
         public function event_type_provider() {
                 return [
-                        ['meeting'],
+                        ['event'],
                         ['absence'],
                         ['warning'],
                         ['alert'],
@@ -50,8 +50,8 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                         ),
                 ) );
 
-                // Crear evento de un tipo diferente (usar meeting si no es el tipo actual)
-                $other_type = ($type === 'meeting') ? 'warning' : 'meeting';
+                // Crear evento de un tipo diferente (usar event si no es el tipo actual)
+                $other_type = ($type === 'event') ? 'warning' : 'event';
                 $other_type_id = self::factory()->post->create( array(
                         'post_type'   => 'decker_event',
                         'post_status' => 'publish',
@@ -107,7 +107,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                 ) );
 
                 // Crear evento de un tipo diferente
-                $other_type = ($type === 'meeting') ? 'warning' : 'meeting';
+                $other_type = ($type === 'event') ? 'warning' : 'event';
                 $other_type_id = self::factory()->post->create( array(
                         'post_type'   => 'decker_event',
                         'post_status' => 'publish',

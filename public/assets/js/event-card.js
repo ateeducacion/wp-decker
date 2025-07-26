@@ -100,7 +100,21 @@ if (allDaySwitch && startInput && endInput) {
             startInput.type = 'datetime-local';
             endInput.type = 'datetime-local';
 
-            currentStart.setHours(9, 0, 0, 0);
+
+            const now = new Date();
+            now.setSeconds(0, 0);
+
+            // Redondear a la siguiente media hora
+            const minutes = now.getMinutes();
+            const remainder = minutes % 30;
+            if (remainder !== 0) {
+                now.setMinutes(minutes + (30 - remainder));
+            }
+
+            const start = new Date(now);
+
+
+            currentStart.setHours(start);
             currentEnd.setHours(currentStart.getHours() + 1);
 
             startInput.value = toLocalDatetimeString(currentStart);
@@ -162,10 +176,10 @@ if (allDaySwitch && startInput && endInput) {
                 let startValue = formData.get('event_start');
                 let endValue = formData.get('event_end');
 
-                if (isAllDay) {
-                    startValue = `${startValue}T00:00`;
-                    endValue = `${endValue}T23:59`;
-                }
+                // if (isAllDay) {
+                //     startValue = `${startValue}T00:00`;
+                //     endValue = `${endValue}T23:59`;
+                // }
 
 
                 // Prepare event data
@@ -174,8 +188,8 @@ if (allDaySwitch && startInput && endInput) {
                     status: 'publish',
                     meta: {
                         // Convert data to UTC
-                        event_start: new Date(startValue).toISOString(),
-                        event_end: new Date(endValue).toISOString(),
+                        event_start: startValue,
+                        event_end: endValue,
                         event_allday: formData.get('event_allday') === 'on',
                         event_category: formData.get('event_category'),
                         event_assigned_users: formData.getAll('event_assigned_users[]').map(Number),

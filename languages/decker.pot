@@ -110,7 +110,7 @@ msgstr ""
 msgid "No tasks found for this date."
 msgstr ""
 
-msgid "Meetings"
+msgid "Events"
 msgstr ""
 
 msgid "Absences"
@@ -324,9 +324,6 @@ msgstr ""
 msgid "View Event"
 msgstr ""
 
-msgid "Events"
-msgstr ""
-
 msgid "Search Events"
 msgstr ""
 
@@ -345,7 +342,7 @@ msgstr ""
 msgid "Assigned Users"
 msgstr ""
 
-msgid "All Day Event"
+msgid "All Day Event Event"
 msgstr ""
 
 msgid "End Date must be after Start Date."
@@ -379,6 +376,21 @@ msgid "Info"
 msgstr ""
 
 msgid "Dark"
+msgstr ""
+
+msgid "All Day Event"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "End"
+msgstr ""
+
+msgid "Category"
+msgstr ""
+
+msgid "Date"
 msgstr ""
 
 msgid "Board is required"
@@ -812,15 +824,6 @@ msgstr ""
 msgid "All Day"
 msgstr ""
 
-msgid "Start"
-msgstr ""
-
-msgid "End"
-msgstr ""
-
-msgid "Category"
-msgstr ""
-
 msgid "Meeting"
 msgstr ""
 
@@ -1105,6 +1108,12 @@ msgstr ""
 msgid "Error loading content. Please try again."
 msgstr ""
 
+msgid "Select Category"
+msgstr ""
+
+msgid "Please select a category for the event."
+msgstr ""
+
 msgid "Please enter a title for the event."
 msgstr ""
 
@@ -1136,15 +1145,6 @@ msgid "Please enter a valid URL."
 msgstr ""
 
 msgid "Please enter a description for the event."
-msgstr ""
-
-msgid "Select Category"
-msgstr ""
-
-msgid "Please select a category for the event."
-msgstr ""
-
-msgid "The category determines the color of the event in the calendar."
 msgstr ""
 
 msgid "Version"
@@ -1346,9 +1346,6 @@ msgid "Upload"
 msgstr ""
 
 msgid "Nickname"
-msgstr ""
-
-msgid "Date"
 msgstr ""
 
 msgid "Under construction..."

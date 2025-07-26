@@ -1048,9 +1048,6 @@ msgstr "Seleccionar Categoría"
 msgid "Please select a category for the event."
 msgstr "Por favor, selecciona una categoría para el evento."
 
-msgid "The category determines the color of the event in the calendar."
-msgstr "La categoría determina el color del evento en el calendario."
-
 msgid "Month"
 msgstr "Mes"
 
@@ -1380,9 +1377,6 @@ msgstr "Error al cargar las tareas."
 msgid "Event type feeds:"
 msgstr "Calendarios por tipo de evento:"
 
-msgid "Meetings"
-msgstr "Reuniones"
-
 msgid "Warnings"
 msgstr "Advertencias"
 
@@ -1397,3 +1391,6 @@ msgstr "Inicio:"
 
 msgid "End:"
 msgstr "Fin:"
+
+msgid "All Day Event Event"
+msgstr "Evento de todo el día"

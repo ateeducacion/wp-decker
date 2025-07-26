@@ -335,9 +335,10 @@ class Decker_Public {
 					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' ),
 
 				),
-				'disabled'       => isset( $disabled ) && $disabled ? true : false,
-				'current_user_id' => get_current_user_id(),
-				'users'          => $users,
+				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
+				'disabled'          => isset( $disabled ) && $disabled ? true : false,
+				'current_user_id'   => get_current_user_id(),
+				'users'             => $users,
 			);
 
 			$last_handle = '';

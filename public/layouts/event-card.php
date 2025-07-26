@@ -137,15 +137,49 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 	<input type="hidden" name="event_id" id="event-id" value="<?php echo esc_attr( $event_id ); ?>">
 	<?php wp_nonce_field( 'decker_event_action', 'decker_event_nonce' ); ?>
 
-	<!-- Título -->
-	<div class="form-floating mb-3">
-		<input type="text" class="form-control" id="event-title" name="event_title" 
-			   value="<?php echo esc_attr( $event_title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
-		<label for="event-title"><?php esc_html_e( 'Title', 'decker' ); ?> <span class="text-danger">*</span></label>
-		<div class="invalid-feedback">
-			<?php esc_html_e( 'Please enter a title for the event.', 'decker' ); ?>
+
+<div class="row g-3 mb-3">
+
+	<!-- Categoría -->
+	<div class="col-md-4">
+		<div class="form-floating">
+			<select class="form-select" id="event-category" name="event_category" required>
+				<option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
+				<option value="bg-success" <?php selected( $category, 'bg-success' ); ?>>
+					<?php esc_html_e( 'Event', 'decker' ); ?>
+				</option>
+				<option value="bg-info" <?php selected( $category, 'bg-info' ); ?>>
+					<?php esc_html_e( 'Absence', 'decker' ); ?>
+				</option>
+				<option value="bg-warning" <?php selected( $category, 'bg-warning' ); ?>>
+					<?php esc_html_e( 'Warning', 'decker' ); ?>
+				</option>
+				<!-- temporary disabled for simplicity 
+				<option value="bg-danger" <?php selected( $category, 'bg-danger' ); ?>>
+					<?php esc_html_e( 'Alert', 'decker' ); ?>
+				</option>
+				-->
+			</select>
+			<label for="event-category"><?php esc_html_e( 'Category', 'decker' ); ?> <span class="text-danger">*</span></label>
+			<div class="invalid-feedback">
+				<?php esc_html_e( 'Please select a category for the event.', 'decker' ); ?>
+			</div>
 		</div>
 	</div>
+
+	<!-- Título -->
+	<div class="col-md-8">
+		<div class="form-floating">
+			<input type="text" class="form-control" id="event-title" name="event_title" 
+				   value="<?php echo esc_attr( $event_title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
+			<label for="event-title"><?php esc_html_e( 'Title', 'decker' ); ?> <span class="text-danger">*</span></label>
+			<div class="invalid-feedback">
+				<?php esc_html_e( 'Please enter a title for the event.', 'decker' ); ?>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 	<!-- Fechas -->
 	<div class="mb-3">
@@ -239,32 +273,6 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		</div>
 	</div>
 
-	<!-- Categoría -->
-	<div class="form-floating mb-4">
-		<select class="form-select" id="event-category" name="event_category" required>
-			<option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
-			<option value="bg-success" <?php echo 'bg-success' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Event', 'decker' ); ?>
-			</option>
-			<option value="bg-info" <?php echo 'bg-info' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Absence', 'decker' ); ?>
-			</option>
-			<option value="bg-warning" <?php echo 'bg-warning' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Warning', 'decker' ); ?>
-			</option>
-			<!-- temporary disabled for simplicity 
-			<option value="bg-danger" <?php echo 'bg-danger' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Alert', 'decker' ); ?>
-			</option> -->
-		</select>
-		<label for="event-category"><?php esc_html_e( 'Category', 'decker' ); ?> <span class="text-danger">*</span></label>
-		<div class="invalid-feedback">
-			<?php esc_html_e( 'Please select a category for the event.', 'decker' ); ?>
-		</div>
-		<small class="form-text text-muted mt-1">
-			<?php esc_html_e( 'The category determines the color of the event in the calendar.', 'decker' ); ?>
-		</small>
-	</div>
 
 	<!-- Botones -->
 	<div class="modal-footer d-flex justify-content-between w-100">
