@@ -66,8 +66,8 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 			'title' => 'Test Event',
 			'status' => 'publish',
 			'meta' => array(
-				'event_start' => '2024-02-01T10:00:00',
-				'event_end' => '2024-02-01T11:00:00',
+				'event_start' => '2024-02-01 10:00:00',
+				'event_end' => '2024-02-01 11:00:00',
 				'event_location' => 'Test Location',
 				'event_url' => 'https://example.com',
 				'event_category' => 'bg-primary',
@@ -143,8 +143,8 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 
 		// Update event with new title and meta
 		$updated_meta = array(
-			'event_start' => '2024-02-01T14:00:00',
-			'event_end' => '2024-02-01T15:00:00',
+			'event_start' => '2024-02-01 14:00:00',
+			'event_end' => '2024-02-01 15:00:00',
 			'event_location' => 'Updated Location',
 			'event_url' => 'https://updated-example.com',
 			'event_category' => 'bg-success',
@@ -480,4 +480,103 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$this->assertEquals( 403, $response->get_status() ); // Or 403, or maybe 200 depending on requirements
 	}
 
+
+
+/**
+ * Test REST API event creation with all-day event
+ */
+public function test_rest_create_allday_event() {
+    wp_set_current_user($this->editor);
+    
+    $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
+    $request->set_body_params([
+        'title' => 'All Day REST Event',
+        'meta' => [
+            'event_allday' => true,
+            'event_start'  => '2025-01-01',
+            'event_end'    => '2025-01-01',
+        ]
+    ]);
+    
+    $response = rest_get_server()->dispatch($request);
+    $data = $response->get_data();
+    
+    $this->assertEquals(201, $response->get_status());
+    $this->assertEquals('2025-01-01', $data['meta']['event_start']);
+    $this->assertEquals('2025-01-01', $data['meta']['event_end']);
 }
+
+/**
+ * Test REST API event update with time change
+ */
+public function test_rest_update_event_time() {
+    // Create initial event
+    wp_set_current_user($this->editor);
+    $event_id = self::factory()->event->create([
+        'post_title' => 'REST Update Test',
+        'meta_input' => [
+            'event_start' => '2025-01-01 10:00:00',
+            'event_end'   => '2025-01-01 11:00:00',
+        ]
+    ]);
+    
+    // Update via REST
+    $request = new WP_REST_Request('PUT', "/wp/v2/decker_event/{$event_id}");
+    $request->set_body_params([
+        'meta' => [
+            'event_start' => '2025-01-01 14:00:00',
+            'event_end'   => '2025-01-01 15:30:00',
+        ]
+    ]);
+    
+    $response = rest_get_server()->dispatch($request);
+    $data = $response->get_data();
+    
+    $this->assertEquals(200, $response->get_status());
+    $this->assertEquals('2025-01-01 14:00:00', $data['meta']['event_start']);
+    $this->assertEquals('2025-01-01 15:30:00', $data['meta']['event_end']);
+}
+
+/**
+ * Test event with no end date specified
+ */
+public function test_missing_end_date() {
+    update_option('timezone_string', 'UTC');
+    
+    $event_id = self::factory()->event->create([
+        'meta_input' => [
+            'event_start' => '2025-01-01 10:00:00',
+            // No end date
+        ]
+    ]);
+    
+    $end = get_post_meta($event_id, 'event_end', true);
+    $expected_end = '2025-01-01 11:00:00';
+    
+    $this->assertEquals($expected_end, $end);
+}
+
+/**
+ * Test invalid date handling
+ */
+public function test_invalid_date_handling() {
+    update_option('timezone_string', 'UTC');
+    
+    $event_id = self::factory()->event->create([
+        'meta_input' => [
+            'event_start' => 'invalid-date',
+            'event_end'   => 'another-invalid',
+        ]
+    ]);
+    
+    $start = get_post_meta($event_id, 'event_start', true);
+    $end   = get_post_meta($event_id, 'event_end', true);
+    
+    $this->assertEquals('1970-01-01 00:00:00', $start);
+    $this->assertEquals('1970-01-01 01:00:00', $end);
+}
+
+
+}
+
+

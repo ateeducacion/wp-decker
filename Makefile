@@ -88,9 +88,19 @@ test-verbose: start-if-not-running
 	CMD="$$CMD --debug --verbose"; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
 
+test-e2e:
+	npm run test:e2e
+
+test-e2e-visual:
+	npm run test:e2e -- --ui
+
 
 logs:
 	npx wp-env logs
+
+logs-test:
+	npx wp-env logs --environment=tests
+
 
 # Install PHP_CodeSniffer and WordPress Coding Standards in the container
 install-phpcs: up

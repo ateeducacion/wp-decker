@@ -87,15 +87,42 @@ function round_to_nearest_half_hour( $date ) {
 	return gmdate( 'Y-m-d H:i', $timestamp );
 }
 
-// Establecer la fecha de inicio.
-$start_date = isset( $meta['event_start'][0] ) ?
-	gmdate( 'Y-m-d H:i', strtotime( $meta['event_start'][0] ) ) :
-	round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) );
 
-// Establecer la fecha de fin.
-$end_date = isset( $meta['event_end'][0] ) ?
-	gmdate( 'Y-m-d H:i', strtotime( $meta['event_end'][0] ) ) :
-	gmdate( 'Y-m-d H:i', strtotime( $start_date . ' +1 hour' ) );
+/**
+ * Convierte una fecha en UTC a la hora local configurada en WordPress.
+ *
+ * @param string $datetime_utc Fecha en formato UTC (Y-m-d H:i:s o similar).
+ * @return string Fecha local en formato 'Y-m-d\TH:i' compatible con datetime-local.
+ */
+function convert_utc_to_local( $datetime_utc ) {
+	$gmt_offset = get_option( 'gmt_offset' );
+	$timestamp_utc = strtotime( $datetime_utc );
+	$offset_seconds = $gmt_offset * HOUR_IN_SECONDS;
+	$timestamp_local = $timestamp_utc + $offset_seconds;
+	return gmdate( 'Y-m-d\TH:i', $timestamp_local );
+}
+
+
+// Fecha de inicio.
+$start_date = isset( $meta['event_start'][0] )
+	? convert_utc_to_local( $meta['event_start'][0] )
+	: convert_utc_to_local( round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) ) );
+
+// Fecha de fin.
+$end_date = isset( $meta['event_end'][0] )
+	? convert_utc_to_local( $meta['event_end'][0] )
+	: convert_utc_to_local( gmdate( 'Y-m-d H:i', strtotime( $start_date ) ) );
+
+
+// // Establecer la fecha de inicio.
+// $start_date = isset( $meta['event_start'][0] ) ?
+// gmdate( 'Y-m-d H:i', strtotime( $meta['event_start'][0] ) ) :
+// round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) );
+
+// // Establecer la fecha de fin.
+// $end_date = isset( $meta['event_end'][0] ) ?
+// gmdate( 'Y-m-d H:i', strtotime( $meta['event_end'][0] ) ) :
+// gmdate( 'Y-m-d H:i', strtotime( $start_date . ' +1 hour' ) );
 
 $assigned_users = isset( $meta['event_assigned_users'][0] ) ?
 	maybe_unserialize( $meta['event_assigned_users'][0] ) :
@@ -133,7 +160,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		<div class="row g-3">
 			<div class="col-md-6">
 				<div class="form-floating">
-					<input type="text" class="form-control flatpickr" id="event-start" name="event_start" 
+					<input type="datetime-local" class="form-control" id="event-start" name="event_start" 
 						   value="<?php echo esc_attr( $start_date ); ?>" required 
 						   placeholder="<?php esc_attr_e( 'Start Date and Time', 'decker' ); ?>">
 					<label for="event-start"><?php esc_html_e( 'Start Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
@@ -144,7 +171,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 			</div>
 			<div class="col-md-6">
 				<div class="form-floating">
-					<input type="text" class="form-control flatpickr" id="event-end" name="event_end" 
+					<input type="datetime-local" class="form-control" id="event-end" name="event_end" 
 						   value="<?php echo esc_attr( $end_date ); ?>" required 
 						   placeholder="<?php esc_attr_e( 'End Date and Time', 'decker' ); ?>">
 					<label for="event-end"><?php esc_html_e( 'End Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>

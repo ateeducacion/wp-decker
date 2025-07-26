@@ -351,19 +351,10 @@ msgstr ""
 msgid "End Date must be after Start Date."
 msgstr ""
 
-msgid "Please ensure that the End Date is after the Start Date."
+msgid "Start:"
 msgstr ""
 
-msgid "Start Date:"
-msgstr ""
-
-msgid "Start Time:"
-msgstr ""
-
-msgid "End Date:"
-msgstr ""
-
-msgid "End Time:"
+msgid "End:"
 msgstr ""
 
 msgid "Location:"

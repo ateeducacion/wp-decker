@@ -973,21 +973,6 @@ msgstr "Evento de Todo el Día"
 msgid "End Date must be after Start Date."
 msgstr "La fecha de fin debe ser posterior a la fecha de inicio."
 
-msgid "Please ensure that the End Date is after the Start Date."
-msgstr "Por favor, asegúrate de que la fecha de fin sea posterior a la fecha de inicio."
-
-msgid "Start Date:"
-msgstr "Fecha de Inicio:"
-
-msgid "Start Time:"
-msgstr "Hora de Inicio:"
-
-msgid "End Date:"
-msgstr "Fecha de Fin:"
-
-msgid "End Time:"
-msgstr "Hora de Fin:"
-
 msgid "Calendar Token"
 msgstr "Token del Calendario"
 
@@ -1406,3 +1391,9 @@ msgstr "Alertas"
 
 msgid "All Types"
 msgstr "Todos los tipos"
+
+msgid "Start:"
+msgstr "Inicio:"
+
+msgid "End:"
+msgstr "Fin:"
