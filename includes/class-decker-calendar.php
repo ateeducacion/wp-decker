@@ -302,6 +302,7 @@ class Decker_Calendar {
 		}
 		// Añadir punto final a comentario.
 		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
+		$ical .= 'X-NAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 
 		// Ordenar eventos por fecha de inicio ascendente para garantizar resultados
 		// deterministas y alinear con las expectativas de las pruebas.

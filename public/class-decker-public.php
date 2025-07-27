@@ -339,6 +339,7 @@ class Decker_Public {
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id'   => get_current_user_id(),
 				'users'             => $users,
+				'locale' => substr( get_user_locale(), 0, 2 ), // Ej: "es_ES" → "es".
 			);
 
 			$last_handle = '';

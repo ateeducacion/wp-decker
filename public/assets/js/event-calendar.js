@@ -103,10 +103,12 @@ function showTooltip(message, duration = 2000){
 
                 const uses24h = is24HourFormat();
                 const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const fcLocale = (deckerVars.locale || 'en').toLowerCase();
 
 
                 this.$calendarObj = new FullCalendar.Calendar(this.$calendar[0], {
                     timeZone: 'local',
+                    locale: fcLocale,
                     slotDuration: '00:15:00',
                     slotMinTime: '07:00:00',
                     slotMaxTime: '19:00:00',
