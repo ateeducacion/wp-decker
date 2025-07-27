@@ -213,13 +213,24 @@ class Decker_Calendar {
 
 			// Asegurarse de que las fechas sean válidas antes de agregarlas.
 			if ( ! empty( $meta['event_start'] ) && ! empty( $meta['event_end'] ) ) {
+
+				$all_day = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
+
+				if ( ! $all_day ) {
+					$start_iso = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $meta['event_start'][0] ) );
+					$end_iso   = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $meta['event_end'][0] ) );
+				} else {
+					$start_iso = $meta['event_start'][0]; // YYYY-MM-DD.
+					$end_iso   = $meta['event_end'][0];
+				}
+
 				$events[] = array(
 					'id'             => 'event_' . $post->ID, // Prefijo para distinguir de tareas.
 					'title'          => $post->post_title,
 					'description'    => $post->post_content,
-					'allDay'         => isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false,
-					'start'          => isset( $meta['event_start'] ) ? $meta['event_start'][0] : '',
-					'end'            => isset( $meta['event_end'] ) ? $meta['event_end'][0] : '',
+					'allDay'         => $all_day,
+					'start'          => $start_iso,
+					'end'            => $end_iso,
 					'location'       => isset( $meta['event_location'] ) ? $meta['event_location'][0] : '',
 					'url'            => isset( $meta['event_url'] ) ? $meta['event_url'][0] : '',
 					'className'      => isset( $meta['event_category'] ) ? $meta['event_category'][0] : '',

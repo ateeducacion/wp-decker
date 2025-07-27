@@ -219,23 +219,23 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
         // Create a timed event
         $this->event_id = self::factory()->event->create( [
             'meta_input' => [
-                'event_start' => '2025-02-10T08:00:00',
-                'event_end'   => '2025-02-10T09:00:00',
+                'event_start' => '2025-02-10T08:00:00Z',
+                'event_end'   => '2025-02-10T09:00:00Z',
             ],
         ] );
 
         // Update via REST
         $request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$this->event_id}" );
         $request->set_param( 'meta', [
-            'event_start' => '2025-02-10T14:30:00',
-            'event_end'   => '2025-02-10T16:00:00',
+            'event_start' => '2025-02-10T14:30:00Z',
+            'event_end'   => '2025-02-10T16:00:00Z',
         ] );
         $response = rest_get_server()->dispatch( $request );
         $this->assertSame( 200, $response->get_status() );
 
         // Confirm stored in UTC (Madrid is UTC+1 in February)
         $stored = get_post_meta( $this->event_id, 'event_start', true );
-        $expected = get_gmt_from_date( '2025-02-10 14:30:00', 'Y-m-d H:i:s' );
+        $expected = '2025-02-10 14:30:00';
         $this->assertEquals( $expected, $stored, 'REST update should convert local time to UTC.' );
     }
 
@@ -274,5 +274,407 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 
 		$this->assertNotWPError( $event_id );
 	}
+
+	/* ---------------------------------------------------------------------
+	 *  NUEVOS TESTS → manejo de “all‑day” vs horas y segundos
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * All‑day = true pero se envía una fecha con hora → debe guardarse solo la fecha.
+	 */
+	public function test_create_all_day_strips_time() {
+		$event_id = self::factory()->event->create( [
+			'meta_input' => [
+				'event_allday' => true,
+				'event_start'  => '2025-12-24 13:45:59',
+				'event_end'    => '2025-12-25 07:00:12',
+			],
+		] );
+		$this->assertNotWPError( $event_id );
+
+		$this->assertSame( '2025-12-24', get_post_meta( $event_id, 'event_start', true ) );
+		$this->assertSame( '2025-12-25', get_post_meta( $event_id, 'event_end',   true ) );
+	}
+
+	/**
+	 * All‑day = false pero se envía solo fecha → debe añadirse 00:00:00
+	 * (y end será start + 1 h según la lógica de process_and_save_meta()).
+	 */
+	public function test_create_datetime_with_date_only_sets_midnight() {
+		$event_id = self::factory()->event->create( [
+			'meta_input' => [
+				'event_allday' => false,
+				'event_start'  => '2025-05-10',
+				'event_end'    => '',
+			],
+		] );
+		$this->assertNotWPError( $event_id );
+
+		$this->assertSame( '2025-05-10 00:00:00', get_post_meta( $event_id, 'event_start', true ) );
+		$this->assertSame( '2025-05-10 01:00:00', get_post_meta( $event_id, 'event_end',   true ) );
+	}
+
+	/**
+	 * REST create: all‑day con hora → el API debe devolver y almacenar solo la fecha.
+	 */
+	public function test_rest_create_all_day_strips_time() {
+		wp_set_current_user( $this->editor );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+		$request->set_param( 'title', 'REST All‑Day Strip' );
+		$request->set_param( 'status', 'publish' );
+		$request->set_param( 'meta', [
+			'event_allday' => true,
+			'event_start'  => '2026-01-02T09:30:00Z',
+			'event_end'    => '2026-01-02T11:00:00Z',
+		] );
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertSame( 201, $response->get_status() );
+		$this->assertSame( '2026-01-02', get_post_meta( $data['id'], 'event_start', true ) );
+		$this->assertSame( '2026-01-02', $data['meta']['event_start'] );
+		$this->assertSame( '2026-01-02', get_post_meta( $data['id'], 'event_end', true ) );
+		$this->assertSame( '2026-01-02', $data['meta']['event_end'] );
+
+
+	}
+
+	/**
+	 * REST update: datetime → se pasa solo fecha → debe corregir a 00:00:00.
+	 */
+	public function test_rest_update_datetime_with_date_only_sets_midnight() {
+		/* 1 · Creamos evento con hora correcta */
+		$event_id = self::factory()->event->create( [
+			'meta_input' => [
+				'event_allday' => false,
+				'event_start'  => '2025-11-05 15:00:00',
+				'event_end'    => '2025-11-05 16:00:00',
+			],
+		] );
+
+		/* 2 · Actualizamos vía REST mandando solo la fecha */
+		wp_set_current_user( $this->editor );
+		$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
+		$request->set_param( 'meta', [
+			'event_allday' => false,
+			'event_start'  => '2025-11-06', // solo fecha
+			'event_end'    => '2025-11-06', // solo fecha
+		] );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+
+		$this->assertSame( '2025-11-06 00:00:00', get_post_meta( $event_id, 'event_start', true ) );
+		$this->assertSame( '2025-11-06 01:00:00', get_post_meta( $event_id, 'event_end',   true ) );
+	}
+
+/**
+ * Crear, actualizar y verificar almacenamiento y salida REST de eventos.
+ */
+public function test_rest_create_and_update_datetime_event_check_db_and_rest() {
+	wp_set_current_user( $this->editor );
+
+	// Crear evento vía REST.
+	$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+	$request->set_param( 'title', 'REST Timed Event' );
+	$request->set_param( 'status', 'publish' );
+	$request->set_param( 'meta', [
+		'event_allday' => false,
+		'event_start'  => '2025-10-05T14:00:00Z',
+		'event_end'    => '2025-10-05T15:30:00Z',
+	] );
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( 201, $response->get_status() );
+	$event_id = $data['id'];
+
+	// Verificar en base de datos (debe estar en UTC sin la Z).
+	$this->assertSame( '2025-10-05 14:00:00', get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertSame( '2025-10-05 15:30:00', get_post_meta( $event_id, 'event_end', true ) );
+
+	// Verificar en la respuesta REST (debería tener formato ISO8601 con Z).
+	$this->assertSame( '2025-10-05 14:00:00', $data['meta']['event_start'] );
+	$this->assertSame( '2025-10-05 15:30:00', $data['meta']['event_end'] );
+
+	// Actualizar vía REST solo la hora de inicio.
+	$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
+	$request->set_param( 'meta', [
+		'event_start' => '2025-10-05T18:00:00Z',
+	] );
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( 200, $response->get_status() );
+
+	// Verificación tras la actualización.
+	$this->assertSame( '2025-10-05 18:00:00', get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertSame( '2025-10-05 18:00:00', $data['meta']['event_start'] );
+}
+
+/**
+ * Crea un evento directamente y luego lo actualiza (sin REST).
+ */
+public function test_direct_update_event_datetime() {
+	$this->event_id = self::factory()->event->create( [
+		'meta_input' => [
+			'event_allday' => false,
+			'event_start' => '2025-08-01 09:00:00',
+			'event_end'   => '2025-08-01 10:00:00',
+		],
+	] );
+
+	// Verificar formato almacenado.
+	$this->assertSame( '2025-08-01 09:00:00', get_post_meta( $this->event_id, 'event_start', true ) );
+
+	// Actualizar valores directamente.
+	update_post_meta( $this->event_id, 'event_start', '2025-08-01 12:00:00' );
+	update_post_meta( $this->event_id, 'event_end', '2025-08-01 13:00:00' );
+
+	$this->assertSame( '2025-08-01 12:00:00', get_post_meta( $this->event_id, 'event_start', true ) );
+	$this->assertSame( '2025-08-01 13:00:00', get_post_meta( $this->event_id, 'event_end', true ) );
+}
+
+/**
+ * Crea y actualiza un evento all-day vía REST, y verifica que almacene solo la fecha.
+ */
+public function test_rest_update_all_day_event_strips_time() {
+	wp_set_current_user( $this->editor );
+
+	$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+	$request->set_param( 'title', 'REST Update All-Day' );
+	$request->set_param( 'status', 'publish' );
+	$request->set_param( 'meta', [
+		'event_allday' => true,
+		'event_start'  => '2026-03-15',
+		'event_end'    => '2026-03-16',
+	] );
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+	$event_id = $data['id'];
+
+	$this->assertSame( 201, $response->get_status() );
+	$this->assertSame( '2026-03-15', get_post_meta( $event_id, 'event_start', true ) );
+
+	// Ahora actualizar mandando una fecha con hora (debe ignorar la hora)
+	$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
+	$request->set_param( 'meta', [
+		'event_start' => '2026-03-17T10:30:00Z',
+	] );
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( '2026-03-17', get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertSame( '2026-03-17', $data['meta']['event_start'] );
+}
+
+public function test_create_multiple_events_back_to_back() {
+    $id1 = self::factory()->event->create([
+        'meta_input' => [
+            'event_allday' => false,
+            'event_start'  => '2025-10-01 10:00:00',
+            'event_end'    => '2025-10-01 11:00:00',
+        ],
+    ]);
+
+    $id2 = self::factory()->event->create([
+        'meta_input' => [
+            'event_allday' => true,
+            'event_start'  => '2025-10-02',
+            'event_end'    => '2025-10-02',
+        ],
+    ]);
+
+    $this->assertNotWPError( $id1 );
+    $this->assertNotWPError( $id2 );
+    $this->assertNotSame( $id1, $id2 );
+}
+
+public function test_rest_create_missing_event_start() {
+    wp_set_current_user( $this->editor );
+
+    $request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+    $request->set_param( 'title', 'Missing Start' );
+    $request->set_param( 'status', 'publish' );
+    $request->set_param( 'meta', [
+        'event_end' => '2026-01-01T12:00:00Z',
+    ]);
+
+    $response = rest_get_server()->dispatch( $request );
+    $this->assertSame( 201, $response->get_status() );
+
+    $data = $response->get_data();
+    $this->assertEmpty( get_post_meta( $data['id'], 'event_start', true ) );
+}
+
+public function test_create_missing_event_end() {
+    $event_id = self::factory()->event->create([
+        'meta_input' => [
+            'event_allday' => false,
+            'event_start' => '2025-09-01 14:00:00',
+        ],
+    ]);
+
+    $this->assertNotWPError( $event_id );
+
+    // End should be start + 1 h
+    $expected_end = '2025-09-01 15:00:00';
+    $this->assertSame( $expected_end, get_post_meta( $event_id, 'event_end', true ) );
+}
+
+public function test_create_event_with_invalid_start_date() {
+    $event_id = self::factory()->event->create([
+        'meta_input' => [
+            'event_allday' => false,
+            'event_start'  => 'not-a-date',
+            'event_end'    => '2025-01-01 10:00:00',
+        ],
+    ]);
+
+    $this->assertNotWPError( $event_id );
+
+    // Se debería forzar a 1970-01-01 00:00:00 según la lógica del plugin
+    $this->assertSame( '1970-01-01 00:00:00', get_post_meta( $event_id, 'event_start', true ) );
+}
+
+
+public function test_rest_update_invalid_event_end() {
+    $this->event_id = self::factory()->event->create([
+        'meta_input' => [
+            'event_start' => '2025-06-01 08:00:00',
+            'event_end'   => '2025-06-01 09:00:00',
+        ],
+    ]);
+
+    wp_set_current_user( $this->editor );
+    $request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$this->event_id}" );
+    $request->set_param( 'meta', [
+        'event_end' => 'invalid-end',
+    ]);
+
+    $response = rest_get_server()->dispatch( $request );
+    $this->assertSame( 200, $response->get_status() );
+
+    // Se debería corregir automáticamente
+    $end = get_post_meta( $this->event_id, 'event_end', true );
+    $this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $end );
+}
+
+/**
+ * Test updating an all-day event via REST API.
+ */
+public function test_rest_update_all_day_event() {
+	wp_set_current_user( $this->editor );
+
+	// Create initial event
+	$event_id = self::factory()->event->create( [
+		'meta_input' => [
+			'event_allday' => true,
+			'event_start' => '2025-04-10',
+			'event_end'   => '2025-04-11',
+		],
+	] );
+
+	// Send PUT request
+	$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/$event_id" );
+	$request->set_param( 'meta', [
+		'event_start'  => '2025-04-12',
+		'event_end'    => '2025-04-13',
+		'event_allday' => true,
+	] );
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( 200, $response->get_status() );
+	$this->assertSame( '2025-04-12', get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertSame( '2025-04-13', get_post_meta( $event_id, 'event_end', true ) );
+	$this->assertSame( '2025-04-12', $data['meta']['event_start'] );
+	$this->assertSame( '2025-04-13', $data['meta']['event_end'] );
+}
+
+/**
+ * Test updating a datetime event via REST API.
+ */
+public function test_rest_update_datetime_event() {
+	wp_set_current_user( $this->editor );
+
+	// Create timed event
+	$event_id = self::factory()->event->create( [
+		'meta_input' => [
+			'event_allday' => false,
+			'event_start' => '2025-06-01 10:00:00',
+			'event_end'   => '2025-06-01 11:00:00',
+		],
+	] );
+
+	$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/$event_id" );
+	$request->set_param( 'meta', [
+		'event_start' => '2025-06-02T15:30:00Z',
+		'event_end'   => '2025-06-02T17:00:00Z',
+	] );
+
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( 200, $response->get_status() );
+	$this->assertSame( '2025-06-02 15:30:00', get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertSame( '2025-06-02 17:00:00', get_post_meta( $event_id, 'event_end', true ) );
+	$this->assertSame( '2025-06-02 15:30:00', $data['meta']['event_start'] );
+	$this->assertSame( '2025-06-02 17:00:00', $data['meta']['event_end'] );
+}
+
+/**
+ * Test that malformed date input doesn't crash the endpoint.
+ */
+public function test_rest_update_with_invalid_date() {
+	wp_set_current_user( $this->editor );
+
+	$event_id = self::factory()->event->create();
+
+	$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/$event_id" );
+	$request->set_param( 'meta', [
+		'event_start' => 'no-es-una-fecha',
+		'event_end'   => 'tampoco-es-valida',
+	] );
+
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( 200, $response->get_status() );
+	$this->assertNotInstanceOf( WP_Error::class, get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertEmpty( get_post_meta( $event_id, 'event_start', true ) );
+}
+
+/**
+ * Test updating only one field (partial update).
+ */
+public function test_rest_partial_update_only_start() {
+	wp_set_current_user( $this->editor );
+
+	$event_id = self::factory()->event->create( [
+		'meta_input' => [
+			'event_start' => '2025-07-01 10:00:00',
+			'event_end'   => '2025-07-01 12:00:00',
+		],
+	] );
+
+	$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/$event_id" );
+	$request->set_param( 'meta', [
+		'event_start' => '2025-07-01T14:00:00Z',
+	] );
+
+	$response = rest_get_server()->dispatch( $request );
+	$data = $response->get_data();
+
+	$this->assertSame( 200, $response->get_status() );
+	$this->assertSame( '2025-07-01 14:00:00', get_post_meta( $event_id, 'event_start', true ) );
+	$this->assertSame( '2025-07-01 14:00:00', $data['meta']['event_start'] );
+	$this->assertSame( '2025-07-01 15:00:00', get_post_meta( $event_id, 'event_end', true ) );
+
+}
+
+
+
 
 }
