@@ -69,7 +69,7 @@ release:
 sonarqube-check:
   stage: sonarqube-check
   image:
-    name: sonarsource/sonar-scanner-cli:11.3
+    name: sonarsource/sonar-scanner-cli:11.4
     entrypoint: [""]
   script:
     - sonar-scanner
