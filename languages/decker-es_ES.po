@@ -1394,3 +1394,6 @@ msgstr "Fin:"
 
 msgid "All Day Event Event"
 msgstr "Evento de todo el día"
+
+msgid "Time is stored in UTC. Adjust accordingly."
+msgstr "La hora se guarda en UTC. Ajusta si es necesario."

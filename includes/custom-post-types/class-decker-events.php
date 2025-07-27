@@ -489,6 +489,10 @@ class Decker_Events {
 		   name="event_start"
 		   value="<?php echo esc_attr( $start_for_input ); ?>"
 		   class="widefat">
+	<small class="description">
+		<?php esc_html_e( 'Time is stored in UTC. Adjust accordingly.', 'decker' ); ?>
+	</small>
+
 </p>
 <p>
 	<label for="event_end"><?php esc_html_e( 'End:', 'decker' ); ?></label><br>
@@ -497,6 +501,10 @@ class Decker_Events {
 		   name="event_end"
 		   value="<?php echo esc_attr( $end_for_input ); ?>"
 		   class="widefat">
+	<small class="description">
+		<?php esc_html_e( 'Time is stored in UTC. Adjust accordingly.', 'decker' ); ?>
+	</small>
+		   
 </p>
 
 		<p>

@@ -351,6 +351,9 @@ msgstr ""
 msgid "Start:"
 msgstr ""
 
+msgid "Time is stored in UTC. Adjust accordingly."
+msgstr ""
+
 msgid "End:"
 msgstr ""
 
