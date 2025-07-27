@@ -492,4 +492,107 @@ class DeckerEventsTest extends Decker_Test_Base {
 		$this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $start );
 		$this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $end );
 	}
+
+	public function test_can_update_assigned_users() {
+		wp_set_current_user( $this->editor );
+
+		$other_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+
+		// Crear evento con un usuario asignado
+		$this->event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor ),
+				),
+			)
+		);
+
+		// Confirmar asignación inicial
+		$this->assertEquals(
+			array( $this->editor ),
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'Initial assigned users should match.'
+		);
+
+		// Actualizar usuarios asignados
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor, $other_user ),
+				),
+			)
+		);
+
+		$this->assertEquals(
+			array( $this->editor, $other_user ),
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'Updated assigned users should match.'
+		);
+	}
+
+	public function test_can_clear_assigned_users() {
+		wp_set_current_user( $this->editor );
+
+		$this->event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor ),
+				),
+			)
+		);
+
+		$this->assertNotEmpty(
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'There should be at least one assigned user initially.'
+		);
+
+		// Eliminar todos los usuarios asignados
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array(),
+				),
+			)
+		);
+
+		$this->assertEquals(
+			array(),
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'Assigned users should be empty after clearing.'
+		);
+	}
+
+	public function test_assigned_users_unchanged_if_omitted_on_update() {
+		wp_set_current_user( $this->editor );
+
+		$other_user = self::factory()->user->create( array( 'role' => 'author' ) );
+
+		$this->event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor, $other_user ),
+				),
+			)
+		);
+
+		$before = get_post_meta( $this->event_id, 'event_assigned_users', true );
+
+		// Actualizar el evento sin tocar assigned_users
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'post_title' => 'Updated title only',
+			)
+		);
+
+		$after = get_post_meta( $this->event_id, 'event_assigned_users', true );
+
+		$this->assertEquals(
+			$before,
+			$after,
+			'Assigned users should not change if field is omitted.'
+		);
+	}
 }

@@ -11,21 +11,6 @@ use om\IcalParser;
 
 class Decker_Calendar_ICS_TDD_Test extends Decker_Test_Base {
 
-	// /**
-	//  * Parser helper – throws useful messages when the ICS is malformed.
-	//  *
-	//  * @param string $ics
-	//  * @return array Parsed events
-	//  */
-	// private function parse_ics( $ics ) {
-	//  $parser = new IcalParser();
-	//  try {
-	//      $parser->parseString( $ics );
-	//  } catch ( Exception $e ) {
-	//      $this->fail( "Malformed iCal: " . $e->getMessage() . "\n---\n$ics\n---" );
-	//  }
-	//  return $parser->getEvents();
-	// }
 	/**
 	 * Parse ICS and return a plain array of events with *string* values.
 	 *
@@ -257,5 +242,96 @@ class Decker_Calendar_ICS_TDD_Test extends Decker_Test_Base {
 
 		$titles = array_column( $events, 'SUMMARY' );
 		$this->assertNotContains( 'Should not appear', $titles );
+	}
+
+	/** @test */
+	public function event_with_assigned_users_should_include_prefix_and_attendees() {
+
+		$user_id1 = self::factory()->user->create(
+			array(
+				'display_name' => 'Alice',
+				'user_email'   => 'alice@example.com',
+				'role'         => 'author', // Must be at least author.
+			)
+		);
+		$user_id2 = self::factory()->user->create(
+			array(
+				'display_name' => 'Bob',
+				'user_email'   => 'bob@example.com',
+				'role'         => 'author', // Must be at least author.
+			)
+		);
+
+		self::factory()->event->create(
+			array(
+				'post_title' => 'Evento con gente',
+				'meta_input' => array(
+					'event_start'          => '2025-07-26 09:00:00',
+					'event_end'            => '2025-07-26 10:00:00',
+					'event_category'       => 'bg-success',
+					'event_assigned_users' => array( $user_id1, $user_id2 ),
+				),
+			)
+		);
+
+		$ics = ( new Decker_Calendar() )->generate_ical_string( 'event' );
+
+		// error_log( "[DECKER EVENTS] " . print_r( $ics, true ) );
+
+		$events = $this->parse_ics( $ics );
+
+		// error_log( "[ICS EVENTS] " . print_r( $events, true ) );
+
+		$this->assertCount( 1, $events );
+		$this->assertStringStartsWith( 'Alice, Bob » ', $events[0]['SUMMARY'] );
+		$this->assertArrayHasKey( 'ATTENDEE', $events[0] );
+
+		$this->assertCount( 1, $events );
+		$event = $events[0];
+
+		$this->assertArrayHasKey( 'ATTENDEES', $event );
+		$this->assertCount( 2, $event['ATTENDEES'] );
+		$this->assertSame( 'mailto:alice@example.com', $event['ATTENDEES'][0]['VALUE'] );
+		$this->assertSame( 'mailto:bob@example.com', $event['ATTENDEES'][1]['VALUE'] );
+	}
+
+
+	/** @test */
+	public function task_with_assigned_users_should_not_include_prefix_but_include_attendees() {
+		$user_id = self::factory()->user->create(
+			array(
+				'display_name' => 'Charlie',
+				'role'         => 'editor', // Must be at least author.
+				'user_email'   => 'charlie@example.com',
+			)
+		);
+		wp_set_current_user( $user_id );
+
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title'     => 'Important task',
+				'stack'          => 'in-progress',
+				'duedate'        => '2025-07-27',
+				'assigned_users' => array( $user_id ),
+			)
+		);
+
+		$ics    = ( new Decker_Calendar() )->generate_ical_string();
+		$events = $this->parse_ics( $ics );
+
+		// Filtramos por la tarea.
+		$task = array_filter(
+			$events,
+			function ( $e ) {
+				return isset( $e['SUMMARY'] ) && str_contains( $e['SUMMARY'], 'Important task' );
+			}
+		);
+		$task = array_values( $task )[0];
+
+		$this->assertSame( 'Important task', $task['SUMMARY'] );
+		$this->assertArrayHasKey( 'ATTENDEE', $task );
+
+		$attendees = (array) $task['ATTENDEE'];
+		$this->assertContains( 'mailto:' . get_userdata( $user_id )->user_email, $attendees );
 	}
 }

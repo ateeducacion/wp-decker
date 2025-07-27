@@ -235,6 +235,7 @@ class Decker_Calendar {
 					'url'            => isset( $meta['event_url'] ) ? $meta['event_url'][0] : '',
 					'className'      => isset( $meta['event_category'] ) ? $meta['event_category'][0] : '',
 					'assigned_users' => isset( $meta['event_assigned_users'][0] ) ? maybe_unserialize( $meta['event_assigned_users'][0] ) : array(),
+					// 'assigned_users' => $this->normalize_assigned_users( $meta ),
 					'type'           => 'event',
 				);
 			}
