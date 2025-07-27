@@ -275,18 +275,12 @@ class Decker_Calendar {
 	 */
 	public function generate_ical( $events, $type = '' ) {
 
-		$timezone_string = get_option( 'timezone_string' );
-		if ( ! $timezone_string ) {
-			$timezone_string = 'UTC';
-		}
-
 		$ical  = "BEGIN:VCALENDAR\r\n";
 		$ical .= "VERSION:2.0\r\n";
 		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";
 		$ical .= "CALSCALE:GREGORIAN\r\n";
 		$ical .= "METHOD:PUBLISH\r\n";
-
-		$ical .= $this->generate_vtimezone( $timezone_string );
+		$ical .= "X-WR-TIMEZONE:UTC\r\n";
 
 		// Add calendar name property.
 		$calendar_name = 'Decker';
@@ -394,68 +388,6 @@ class Decker_Calendar {
 
 		$ical .= "END:VCALENDAR\r\n";
 		return $ical;
-	}
-
-	/**
-	 * Generate the VTIMEZONE component for the iCal feed.
-	 *
-	 * This method builds a VTIMEZONE section based on the given timezone string,
-	 * including both STANDARD and DAYLIGHT subcomponents with transitions.
-	 * It calculates offsets and properly formats the timezone information
-	 * required for compatibility with iCal consumers (like Google Calendar or Outlook).
-	 *
-	 * @param string $timezone_string The timezone identifier (e.g. 'Europe/Madrid').
-	 * @return string The generated VTIMEZONE component as a string.
-	 */
-	public function generate_vtimezone( $timezone_string ) {
-
-		$timezone = new DateTimeZone( $timezone_string );
-		$transitions = $timezone->getTransitions( time() - 31536000, time() + 31536000 );
-
-		$vtimezone = "BEGIN:VTIMEZONE\r\n";
-		$vtimezone .= "TZID:$timezone_string\r\n";
-
-		$prev_offset = null;
-
-		foreach ( $transitions as $trans ) {
-			// Usar timestamp para DTSTART (en UTC).
-			$dtstart = gmdate( 'Ymd\THis\Z', $trans['ts'] );
-
-			// Offset en segundos.
-			$offset = $trans['offset'];
-			$offset_hours = floor( abs( $offset ) / 3600 );
-			$offset_minutes = ( abs( $offset ) % 3600 ) / 60;
-			$sign = ( $offset >= 0 ) ? '+' : '-';
-			$offset_formatted = sprintf( '%s%02d%02d', $sign, $offset_hours, $offset_minutes );
-
-			// Para TZOFFSETFROM se usa el offset previo si existe, para TZOFFSETTO el actual.
-			$offset_from = null !== $prev_offset ? $prev_offset : $offset_formatted;
-			$offset_to = $offset_formatted;
-
-			$tzname = isset( $trans['abbr'] ) ? $trans['abbr'] : ( $trans['isdst'] ? 'DST' : 'STD' );
-
-			if ( $trans['isdst'] ) {
-				$vtimezone .= "BEGIN:DAYLIGHT\r\n";
-				$vtimezone .= "DTSTART:$dtstart\r\n";
-				$vtimezone .= "TZOFFSETFROM:$offset_from\r\n";
-				$vtimezone .= "TZOFFSETTO:$offset_to\r\n";
-				$vtimezone .= "TZNAME:$tzname\r\n";
-				$vtimezone .= "END:DAYLIGHT\r\n";
-			} else {
-				$vtimezone .= "BEGIN:STANDARD\r\n";
-				$vtimezone .= "DTSTART:$dtstart\r\n";
-				$vtimezone .= "TZOFFSETFROM:$offset_from\r\n";
-				$vtimezone .= "TZOFFSETTO:$offset_to\r\n";
-				$vtimezone .= "TZNAME:$tzname\r\n";
-				$vtimezone .= "END:STANDARD\r\n";
-			}
-
-			$prev_offset = $offset_formatted;
-		}
-
-		$vtimezone .= "END:VTIMEZONE\r\n";
-
-		return $vtimezone;
 	}
 
 	/**

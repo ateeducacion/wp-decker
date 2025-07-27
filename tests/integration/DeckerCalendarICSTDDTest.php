@@ -168,9 +168,6 @@ private function parse_ics( string $ics ): array {
 		$ics    = ( new Decker_Calendar() )->generate_ical_string();
 		$events = $this->parse_ics( $ics );
 
-		// Debug: vuelca el contenido al log
-		error_log( 'DEBUG: events = ' . var_export( $events, true ) );
-
 		$titles = array_column( $events, 'SUMMARY' );
 		$this->assertContains( 'Event', $titles );
 		$this->assertContains( 'Task',  $titles );

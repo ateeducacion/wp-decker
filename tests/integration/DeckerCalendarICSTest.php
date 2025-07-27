@@ -16,9 +16,6 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 public function set_up() {
     parent::set_up();
 
-    // (Optional) switch to a known timezone
-    update_option( 'timezone_string', 'Europe/Madrid' );
-
     // Re-register CPT and endpoints (init has already fired in bootstrap)
     do_action( 'init' );
 
@@ -97,25 +94,14 @@ public function set_up() {
 		$this->assertSame( 'Event Description', $events[0]['DESCRIPTION'] );
 
 
-	    // Convert local time (Europe/Madrid) to UTC for comparison.
-	    $expected_start = ( new DateTime( '2025-01-01 10:00:00', new DateTimeZone( 'Europe/Madrid' ) ) )
-	        ->setTimezone( new DateTimeZone( 'UTC' ) )
-	        ->format( 'Ymd\THis\Z' );
-	    $expected_end   = ( new DateTime( '2025-01-01 12:00:00', new DateTimeZone( 'Europe/Madrid' ) ) )
-	        ->setTimezone( new DateTimeZone( 'UTC' ) )
-	        ->format( 'Ymd\THis\Z' );
+		$this->assertStringNotContainsString( 'VTIMEZONE', $ics );
+		$this->assertStringContainsString( 'X-WR-TIMEZONE:UTC', $ics );
 
-	    $this->assertSame( $expected_start, $events[0]['DTSTART'] );
-	    $this->assertSame( $expected_end,   $events[0]['DTEND'] );
-	    $this->assertSame( 'Test Location', $events[0]['LOCATION'] );
-	    $this->assertSame( 'https://example.com', $events[0]['URL'] );
-
-
-
-		// $this->assertSame( '20250101T100000Z', $events[0]['DTSTART'] );
-		// $this->assertSame( '20250101T120000Z', $events[0]['DTEND'] );
-		// $this->assertSame( 'Test Location', $events[0]['LOCATION'] );
-		// $this->assertSame( 'https://example.com', $events[0]['URL'] );
+	    // Use UTC for comparison.
+		$this->assertSame( '20250101T100000Z', $events[0]['DTSTART'] );
+		$this->assertSame( '20250101T120000Z', $events[0]['DTEND'] );
+		$this->assertSame( 'Test Location', $events[0]['LOCATION'] );
+		$this->assertSame( 'https://example.com', $events[0]['URL'] );
 	}
 
 	/** @test */

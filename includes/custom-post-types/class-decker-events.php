@@ -126,6 +126,35 @@ class Decker_Events {
 	}
 
 	/**
+	 * Prepare a stored UTC datetime for REST output.
+	 *
+	 * @param string  $value     The raw DB value, e.g. "2025-07-26 13:00:00".
+	 * @param WP_Post $post      The current post object.
+	 * @param string  $field_name Meta key ("event_start" or "event_end").
+	 * @return string|null  ISO 8601 UTC string with "Z", or null if empty.
+	 */
+	public static function prepare_datetime_utc( $value, $post, $field_name ) {
+		if ( empty( $value ) ) {
+			return null;
+		}
+
+		// Parse the MySQL datetime in UTC.
+		$dt = DateTime::createFromFormat(
+			'Y-m-d H:i:s',
+			$value,
+			new DateTimeZone( 'UTC' )
+		);
+
+		if ( false === $dt ) {
+			return null;
+		}
+
+		// Output as ISO8601 ending in Z (always UTC).
+		return $dt->format( 'Y-m-d\TH:i:s\Z' );
+	}
+
+
+	/**
 	 * Register the custom post type meta fields
 	 */
 	public function register_post_meta() {
@@ -133,28 +162,29 @@ class Decker_Events {
 			'event_allday' => array(
 				'type' => 'boolean',
 				'sanitize_callback' => 'rest_sanitize_boolean',
-				// 'sanitize_callback' => array( __CLASS__, 'sanitize_event_allday' ),
 				'schema' => array(
 					'type' => 'boolean',
 				),
 			),
 			'event_start' => array(
 				'type' => 'string',
-				// 'sanitize_callback' => 'sanitize_text_field',
 				'sanitize_callback' => array( __CLASS__, 'sanitize_event_datetime' ),
 				'schema' => array(
 					'type' => 'string',
 					'format' => 'date-time',
 				),
+				// Prepare for REST: always output "YYYY‑MM‑DDTHH:MM:SSZ".
+				'prepare_callback' => array( __CLASS__, 'prepare_datetime_utc' ),
 			),
 			'event_end' => array(
 				'type' => 'string',
-				// 'sanitize_callback' => 'sanitize_text_field',
 				'sanitize_callback' => array( __CLASS__, 'sanitize_event_datetime' ),
 				'schema' => array(
 					'type' => 'string',
 					'format' => 'date-time',
 				),
+				// Prepare for REST: always output "YYYY‑MM‑DDTHH:MM:SSZ".
+				'prepare_callback' => array( __CLASS__, 'prepare_datetime_utc' ),
 			),
 			'event_location' => array(
 				'type' => 'string',
@@ -285,8 +315,8 @@ class Decker_Events {
 		// Define meta fields and sanitization functions.
 		$meta_fields = array(
 			'event_allday' => 'rest_sanitize_boolean',
-			// 'event_start' => 'sanitize_text_field', // Not adding the data here, because is saved out of the foreach.
-			// 'event_end' => 'sanitize_text_field', // Not adding the data here, because is saved out of the foreach.
+			'event_start' => 'sanitize_text_field',
+			'event_end' => 'sanitize_text_field',
 			'event_location' => 'sanitize_text_field',
 			'event_url' => 'esc_url_raw',
 			'event_category' => 'sanitize_text_field',
@@ -294,35 +324,6 @@ class Decker_Events {
 				return array_map( 'absint', is_string( $users ) ? explode( ',', $users ) : (array) $users );
 			},
 		);
-
-		$is_all_day = $request->get_param( 'event_allday' );
-		if ( $is_all_day ) {
-			// Procesamiento para todo el día.
-			$date = sanitize_text_field( $request->get_param( 'event_start' ) );
-
-			update_post_meta( $event_id, 'event_start', $date );
-			update_post_meta( $event_id, 'event_end', $date );
-
-			$timezone = new DateTimeZone( wp_timezone_string() );
-			$start = new DateTime( $date, $timezone );
-			$start->setTime( 0, 0, 0 );
-
-			$end = new DateTime( $date, $timezone );
-			$end->setTime( 23, 59, 59 );
-
-			$start_utc = $start->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' );
-			$end_utc = $end->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' );
-
-			update_post_meta( $event_id, 'event_start', $start_utc );
-			update_post_meta( $event_id, 'event_end', $end_utc );
-		} else {
-			// Procesamiento normal para eventos con hora.
-			$start = get_gmt_from_date( $request->get_param( 'event_start' ) );
-			$end = get_gmt_from_date( $request->get_param( 'event_end' ) );
-
-			update_post_meta( $event_id, 'event_start', $start );
-			update_post_meta( $event_id, 'event_end', $end );
-		}
 
 		// Update event in WP.
 		$updated_meta = array();
@@ -346,56 +347,41 @@ class Decker_Events {
 		);
 	}
 
-
-
 	/**
-	 * Sanitize callback for the all-day flag.
+	 * Sanitize a UTC date-time.
 	 *
-	 * Always returns the string '1' or '0'.
+	 * Accepts:
+	 *   - "2025-07-26"                    (all-day)
+	 *   - "2025-07-26 15:30:00"           (UTC datetime)
+	 *   - "2025-07-26T15:30:00Z"          (ISO-8601 UTC)
 	 *
-	 * @param mixed $value the value.
-	 * @return string
-	 */
-	public static function sanitize_event_allday( $value ) {
-		$bool = filter_var( $value, FILTER_VALIDATE_BOOLEAN );
-		return $bool ? '1' : '0';
-	}
-
-	/**
-	 * Sanitize callback for date/time meta.
+	 * Always returns the value in UTC format:
+	 *   - "2025-07-26" for all-day events
+	 *   - "2025-07-26 15:30:00" for timed events
 	 *
-	 * - If date-only (YYYY-MM-DD), returns as-is.
-	 * - Otherwise parses in site timezone, converts to UTC, and returns MySQL datetime.
-	 *
-	 * @param string $value the value.
-	 * @return string
+	 * @param string $value Raw input string.
+	 * @return string Sanitized UTC string.
 	 */
 	public static function sanitize_event_datetime( $value ) {
-		$value = sanitize_text_field( $value );
+		$value = sanitize_text_field( trim( $value ) );
 
-		// If exactly YYYY-MM-DD, treat as all-day.
+		// All-day events — date only.
 		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $value ) ) {
 			return $value;
 		}
 
-		// Normalize ISO8601 to space‑separated.
-		$value = str_replace( 'T', ' ', $value );
+		// Normalize ISO-8601 to MySQL format.
+		$value = str_replace( 'T', ' ', rtrim( $value, 'Z' ) );
 
-		// Parse in site timezone.
-		$tz_local = new DateTimeZone( wp_timezone_string() );
-		try {
-			$dt = new DateTime( $value, $tz_local );
-		} catch ( Exception $e ) {
-			// Fallback to system timezone.
-			$dt = new DateTime( $value );
-		}
+		// Validate against UTC.
+		$dt = DateTime::createFromFormat(
+			'Y-m-d H:i:s',
+			$value,
+			new DateTimeZone( 'UTC' )
+		);
 
-		// Convert to UTC and format.
-		$dt->setTimezone( new DateTimeZone( 'UTC' ) );
-		return $dt->format( 'Y-m-d H:i:s' );
+		return $dt ? $dt->format( 'Y-m-d H:i:s' ) : '';
 	}
-
-
 
 	/**
 	 * Add meta boxes for event details
@@ -441,14 +427,12 @@ class Decker_Events {
 		$input_type      = $allday ? 'date' : 'datetime-local';
 
 		if ( $allday ) {
-			// Para 'all-day', el valor es Y-m-d, no necesita conversión.
 			$start_for_input = $start_utc;
 			$end_for_input   = $end_utc;
 		} elseif ( $start_utc ) {
-			// Para eventos con hora, convertimos de UTC a la zona horaria local.
-			// El formato 'Y-m-d\TH:i:s' es el que espera <input type="datetime-local">.
-			$start_for_input = get_date_from_gmt( $start_utc, 'Y-m-d\TH:i:s' );
-			$end_for_input   = get_date_from_gmt( $end_utc, 'Y-m-d\TH:i:s' );
+			// Already UTC; just format for <input type="datetime-local">.
+			$start_for_input = str_replace( ' ', 'T', $start_utc );
+			$end_for_input   = str_replace( ' ', 'T', $end_utc );
 		}
 
 		?>
@@ -607,13 +591,13 @@ class Decker_Events {
 
 		// a missing event_end is copied from start + 1 h.
 		if ( ! $allday && '' === $end_input && '' !== $start_input ) {
-			$end_input = gmdate( 'Y-m-d H:i:s', strtotime( $start_input ) + HOUR_IN_SECONDS );
+			$end_input = gmdate( 'Y-m-d H:i:s', strtotime( $start_input . ' UTC' ) + HOUR_IN_SECONDS );
 		}
 
 		if ( $allday ) {
 			// Only date part matters.
-			$start_date = $start_input ? gmdate( 'Y-m-d', strtotime( $start_input ) ) : '';
-			$end_date   = $end_input ? gmdate( 'Y-m-d', strtotime( $end_input ) ) : '';
+			$start_date = $start_input ? gmdate( 'Y-m-d', strtotime( $start_input . ' UTC' ) ) : '';
+			$end_date   = $end_input ? gmdate( 'Y-m-d', strtotime( $end_input . ' UTC' ) ) : '';
 
 			// Enforce end ≥ start.
 			if ( $start_date && $end_date && strtotime( $end_date ) < strtotime( $start_date ) ) {
@@ -626,39 +610,26 @@ class Decker_Events {
 			update_post_meta( $post_id, 'event_start', $start_date );
 			update_post_meta( $post_id, 'event_end', $end_date );
 		} else {
-			 // Timed event: if end missing or end ≤ start, default to start +1h (local).
-			// 2a) Completely malformed start?.
-			if ( $start_input && false === strtotime( $start_input ) ) {
-				// epoch start +1h for end.
+			// Timed event: if end missing or end ≤ start, default to start + 1 h (UTC).
+			// 2a) Malformed start?
+			if ( $start_input && false === strtotime( $start_input . ' UTC' ) ) {
 				$start_input = gmdate( 'Y-m-d H:i:s', 0 );
 				$end_input   = gmdate( 'Y-m-d H:i:s', HOUR_IN_SECONDS );
 			} else {
-				// 2b) Missing end → start +1h.
+				// 2b) Missing end → start + 1 h.
 				if ( $start_input && ! $end_input ) {
-					try {
-						$dt = new DateTime( $start_input, new DateTimeZone( wp_timezone_string() ) );
-						$dt->modify( '+1 hour' );
-						$end_input = $dt->format( 'Y-m-d H:i:s' );
-					} catch ( Exception $e ) {
-						// fallback to epoch+1h.
-						$end_input = gmdate( 'Y-m-d H:i:s', HOUR_IN_SECONDS );
-					}
+					$start_ts = strtotime( $start_input . ' UTC' );
+					$end_input = gmdate( 'Y-m-d H:i:s', $start_ts + HOUR_IN_SECONDS );
 				}
 
-				// 2c) End ≤ start → adjust to start +1h.
-				if ( $start_input && $end_input && strtotime( $end_input ) <= strtotime( $start_input ) ) {
-					try {
-						$dt = new DateTime( $start_input, new DateTimeZone( wp_timezone_string() ) );
-						$dt->modify( '+1 hour' );
-						$end_input = $dt->format( 'Y-m-d H:i:s' );
-					} catch ( Exception $e ) {
-						$end_input = gmdate( 'Y-m-d H:i:s', strtotime( $start_input ) + HOUR_IN_SECONDS );
-					}
+				// 2c) End ≤ start → adjust to start + 1 h.
+				if ( $start_input && $end_input && strtotime( $end_input . ' UTC' ) <= strtotime( $start_input . ' UTC' ) ) {
+					$start_ts  = strtotime( $start_input . ' UTC' );
+					$end_input = gmdate( 'Y-m-d H:i:s', $start_ts + HOUR_IN_SECONDS );
 				}
 			}
 
-			// Save raw local strings; our REST sanitizer will convert them on save,
-			// and our unit‐test factory uses process_and_save_meta too, so it benefits.
+			// Save raw UTC strings.
 			update_post_meta( $post_id, 'event_start', $start_input );
 			update_post_meta( $post_id, 'event_end', $end_input );
 		}

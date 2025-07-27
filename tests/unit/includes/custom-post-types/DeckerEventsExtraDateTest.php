@@ -26,9 +26,6 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
     public function set_up() {
         parent::set_up();
 
-        // Configurar zona horaria consistente para pruebas
-        update_option('timezone_string', 'Europe/Madrid');
-
         // Register custom post types.
         do_action( 'init' );
 
@@ -109,37 +106,6 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		if ( '' === $end_local ) {
 			$this->assertSame( $stored_start, $stored_end );
 		}
-	}
-
-	/**
-	 * Creating a datetime event stores UTC datetime.
-	 *
-	 * @dataProvider dp_datetime_valid
-	 */
-	public function test_create_datetime_event_stores_utc( $start_local, $end_local, $tz ) {
-		update_option( 'timezone_string', $tz );
-
-		$event_id = self::factory()->event->create(
-			array(
-				'meta_input' => array(
-					'event_allday' => false,
-					'event_start'  => $start_local,
-					'event_end'    => $end_local,
-				),
-			)
-		);
-
-		$this->assertNotWPError( $event_id );
-
-		$stored_start = get_post_meta( $event_id, 'event_start', true );
-		$stored_end   = get_post_meta( $event_id, 'event_end', true );
-
-		// Must be MySQL format.
-		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $stored_start );
-		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $stored_end );
-
-		// Ensure end > start.
-		$this->assertGreaterThan( strtotime( $stored_start ), strtotime( $stored_end ) );
 	}
 
 	/**
@@ -274,49 +240,6 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
     }
 
 	/**
-	 * REST: update datetime event via API.
-	 */
-	public function test_rest_update_datetime2() {
-		wp_set_current_user( $this->editor );
-
-		// Create.
-		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$request->set_param( 'title', 'REST DateTime' );
-		$request->set_param( 'status', 'publish' );
-		$request->set_param(
-			'meta',
-			array(
-				'event_allday' => false,
-				'event_start'  => '2025-02-10T08:00:00',
-				'event_end'    => '2025-02-10T09:00:00',
-			)
-		);
-		$response = rest_get_server()->dispatch( $request );
-		$data     = $response->get_data();
-		$event_id = $data['id'];
-		$this->assertSame( 201, $response->get_status() );
-
-		// Update.
-		$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
-		$request->set_param(
-			'meta',
-			array(
-				'event_start' => '2025-02-10T14:30:00',
-				'event_end'   => '2025-02-10T16:00:00',
-			)
-		);
-		$response = rest_get_server()->dispatch( $request );
-		$data     = $response->get_data();
-		$this->assertSame( 200, $response->get_status() );
-
-		// Stored in UTC.
-		$stored = get_post_meta( $event_id, 'event_start', true );
-		$this->assertEquals( get_gmt_from_date( '2025-02-10 14:30:00' ), $stored );
-
-		wp_delete_post( $event_id, true );
-	}
-
-	/**
 	 * REST: delete an event.
 	 */
 	public function test_rest_delete_event() {
@@ -352,29 +275,4 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$this->assertNotWPError( $event_id );
 	}
 
-	/**
-	 * DST jump: 2h30m event crossing “spring forward”.
-	 */
-	public function test_dst_spring_forward() {
-		update_option( 'timezone_string', 'Europe/Berlin' );
-
-		// 2025-03-30 01:30 -> 03:00 (clocks jump from 02:00 to 03:00)
-		$event_id = self::factory()->event->create(
-			array(
-				'meta_input' => array(
-					'event_allday' => false,
-					'event_start'  => '2025-03-30 01:30:00',
-					'event_end'    => '2025-03-30 03:00:00',
-				),
-			)
-		);
-
-		$this->assertNotWPError( $event_id );
-
-		$start_utc = get_post_meta( $event_id, 'event_start', true );
-		$end_utc   = get_post_meta( $event_id, 'event_end', true );
-
-		$duration = strtotime( $end_utc ) - strtotime( $start_utc );
-		$this->assertEquals( 30 * MINUTE_IN_SECONDS, $duration ); // 30 real minutes.
-	}
 }

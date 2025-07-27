@@ -26,9 +26,6 @@ class DeckerEventsTest extends Decker_Test_Base {
     public function set_up() {
         parent::set_up();
 
-        // Configurar zona horaria consistente para pruebas
-        update_option('timezone_string', 'Europe/Madrid');
-
         // Register custom post types.
         do_action( 'init' );
 
@@ -48,49 +45,14 @@ class DeckerEventsTest extends Decker_Test_Base {
         parent::tear_down();
     }
 
-
-    /**
-     * Data-provider: valid pairs of local start / end strings for all-day events.
-     */
-    public function dp_all_day_valid() {
-        return array(
-            'same day'      => array( '2025-01-01', '2025-01-01' ),
-            'different day' => array( '2025-01-01', '2025-01-03' ),
-            'empty end'     => array( '2025-12-31', '' ), // should copy start
-        );
-    }
-
-    /**
-     * Data-provider: valid pairs for datetime events.
-     */
-    public function dp_datetime_valid() {
-        return array(
-            'same tz winter' => array( '2025-01-01 08:00:00', '2025-01-01 09:30:00', 'Europe/Berlin' ),
-            'same tz summer' => array( '2025-07-01 08:00:00', '2025-07-01 09:30:00', 'Europe/Berlin' ),
-            'NY winter'      => array( '2025-01-01 08:00:00', '2025-01-01 09:30:00', 'America/New_York' ),
-            'UTC'            => array( '2025-01-01 08:00:00', '2025-01-01 09:30:00', 'UTC' ),
-        );
-    }
-
-    /**
-     * Data-provider: invalid end < start.
-     */
-    public function dp_end_before_start() {
-        return array(
-            'all-day'  => array( true, '2025-01-02', '2025-01-01' ),
-            'datetime' => array( false, '2025-01-01 12:00:00', '2025-01-01 11:00:00' ),
-        );
-    }
-
-
     /**
      * An editor should be able to create an event.
      */
     public function test_editor_can_create_event() {
         wp_set_current_user( $this->editor );
 
-        $start_local = '2025-01-01 10:00:00';
-        $end_local   = '2025-01-01 11:00:00';
+        $expected_start_utc = '2025-01-01 10:00:00'; // already UTC
+        $expected_end_utc   = '2025-01-01 11:00:00'; // already UTC
 
         // Create the event via factory->create()
         $event_result = self::factory()->event->create( [
@@ -99,8 +61,8 @@ class DeckerEventsTest extends Decker_Test_Base {
             'post_author'  => $this->editor,
             'meta_input'   => [
                 'event_allday'           => false,
-                'event_start'  => $start_local,
-                'event_end'    => $end_local,
+                'event_start'  => $expected_start_utc,
+                'event_end'    => $expected_end_utc,
                 'event_location'         => 'Test Location',
                 'event_url'              => 'https://example.com',
                 'event_category'         => 'bg-primary',
@@ -111,10 +73,6 @@ class DeckerEventsTest extends Decker_Test_Base {
         // Ensure creation succeeded
         $this->assertNotWPError( $event_result, 'The event should be created successfully.' );
         $this->event_id = $event_result;
-
-        // Calcular el valor UTC esperado dinámicamente
-        $expected_start_utc = get_gmt_from_date( $start_local, 'Y-m-d H:i:s' );
-        $expected_end_utc   = get_gmt_from_date( $end_local, 'Y-m-d H:i:s' );
 
         // Fetch the post and verify core fields
         $event = get_post( $this->event_id );
@@ -463,90 +421,6 @@ public function test_end_date_is_adjusted_on_update_if_before_start() {
         }
     }
 
-public function test_timezone_conversion_allday() {
-    // Configurar zona horaria diferente
-    update_option('timezone_string', 'America/New_York');
-    
-    $event_id = self::factory()->event->create([
-        'meta_input' => [
-            'event_allday' => true,
-            'event_start'  => '2025-01-01 10:00:00', // Hora local (NY)
-            'event_end'    => '2025-01-01 11:00:00',
-        ]
-    ]);
-    
-    $start_utc = get_post_meta($event_id, 'event_start', true);
-    $this->assertStringNotContainsString('T', $start_utc); // No debe tener componente de tiempo
-    $this->assertStringNotContainsString('Z', $start_utc); // No debe terminar con Z (UTC)
-}
-
-
-// En tu clase DeckerEventsTest
-
-public function test_timezone_conversion() {
-    // Set a different timezone for the test
-    update_option('timezone_string', 'America/New_York'); // UTC-5 (or -4 in summer)
-    
-    $local_start_time = '2025-01-01 10:00:00'; // 10 AM in New York
-    
-    $event_id = self::factory()->event->create([
-        'meta_input' => [
-            'event_allday' => false,
-            'event_start'  => $local_start_time,
-            'event_end'    => '2025-01-01 11:00:00',
-        ]
-    ]);
-    
-    // Get the expected UTC time using the same function the code uses.
-    $expected_utc_start_time = get_gmt_from_date( $local_start_time, 'Y-m-d H:i:s' );
-    // This will be '2025-01-01 15:00:00' in winter
-
-    $stored_start_utc = get_post_meta($event_id, 'event_start', true);
-    
-    // Assert that the stored value matches the expected UTC conversion.
-    $this->assertEquals($expected_utc_start_time, $stored_start_utc);
-    
-    // Also assert it's a valid MySQL datetime format.
-    $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $stored_start_utc);
-}
-
-public function test_daylight_saving_time() {
-    // Un evento que cruza el cambio de horario
-    $event_id = self::factory()->event->create([
-        'meta_input' => [
-            'event_start'  => '2025-03-09 01:30:00', // Antes del cambio
-            'event_end'    => '2025-03-09 03:30:00', // Después del cambio
-        ]
-    ]);
-    
-    $start_utc = get_post_meta($event_id, 'event_start', true);
-    $end_utc = get_post_meta($event_id, 'event_end', true);
-    
-    // Verificar que la diferencia es correcta (2 horas en lugar de 3)
-    $start_ts = strtotime($start_utc);
-    $end_ts = strtotime($end_utc);
-    $this->assertEquals(2 * 3600, $end_ts - $start_ts);
-}
-
-public function test_allday_event_timezone() {
-    update_option('timezone_string', 'Pacific/Auckland');
-    
-    $event_id = self::factory()->event->create([
-        'meta_input' => [
-            'event_allday' => true,
-            'event_start'  => '2025-01-01',
-        ]
-    ]);
-    
-    $start = get_post_meta($event_id, 'event_start', true);
-    $end = get_post_meta($event_id, 'event_end', true);
-    
-    $this->assertEquals('2025-01-01', $start);
-    $this->assertEquals('2025-01-01', $end);
-}
-
-
-
     /**
      * Test all-day event creation and storage
      */
@@ -568,50 +442,7 @@ public function test_allday_event_timezone() {
         $this->assertEquals('2025-01-01', $end);
     }
 
-    /**
-     * Test conversion between timezones for timed events
-     */
-    public function test_timezone_conversion_timed_event() {
-        update_option('timezone_string', 'America/New_York');
-        
-        $event_id = self::factory()->event->create([
-            'meta_input' => [
-                'event_allday' => false,
-                'event_start'  => '2025-01-01 10:00:00',
-                'event_end'    => '2025-01-01 11:00:00',
-            ]
-        ]);
-        
-        $start_utc = get_post_meta($event_id, 'event_start', true);
-        $end_utc   = get_post_meta($event_id, 'event_end', true);
-        
-        // EST is UTC-5, so 10:00 EST = 15:00 UTC
-        $this->assertEquals('2025-01-01 15:00:00', $start_utc);
-        $this->assertEquals('2025-01-01 16:00:00', $end_utc);
-    }
-
-    /**
-     * Test daylight saving time handling
-     */
-    public function test_daylight_saving_time_transition() {
-        update_option('timezone_string', 'America/New_York');
-        
-        // Event spanning DST change (March 9, 2025 - clocks spring forward)
-        $event_id = self::factory()->event->create([
-            'meta_input' => [
-                'event_start' => '2025-03-09 01:30:00',
-                'event_end'   => '2025-03-09 03:30:00',
-            ]
-        ]);
-        
-        $start_utc = get_post_meta($event_id, 'event_start', true);
-        $end_utc   = get_post_meta($event_id, 'event_end', true);
-        
-        // Should be 6:30 UTC to 7:30 UTC (1 hour duration after DST adjustment)
-        $this->assertEquals('2025-03-09 06:30:00', $start_utc);
-        $this->assertEquals('2025-03-09 07:30:00', $end_utc);
-    }
-
+  
     /**
      * Test event update from all-day to timed
      */
