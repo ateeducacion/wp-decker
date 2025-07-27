@@ -31,11 +31,11 @@ class DeckerEventsIntegrationTest extends Decker_Test_Base {
 		$this->assertNotEquals( 0, $event_id );
 
 		// Add event meta
-		$start_date = '2024-01-24T10:00';
-		$end_date = '2024-01-24T11:00';
-		$location = 'Test Location';
-		$url = 'https://example.com';
-		$category = 'bg-primary';
+		$start_date     = '2024-01-24T10:00';
+		$end_date       = '2024-01-24T11:00';
+		$location       = 'Test Location';
+		$url            = 'https://example.com';
+		$category       = 'bg-primary';
 		$assigned_users = array( $user_id );
 
 		update_post_meta( $event_id, '_event_start', $start_date );

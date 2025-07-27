@@ -51,7 +51,7 @@ class DeckerAdminEmailSettingsTest extends WP_UnitTestCase {
 	 * Test invalid value for email notifications.
 	 */
 	public function test_invalid_email_notifications_value() {
-		$settings = array( 'allow_email_notifications' => 'invalid_value' );
+		$settings  = array( 'allow_email_notifications' => 'invalid_value' );
 		$validated = ( new Decker_Admin_Settings() )->settings_validate( $settings );
 
 		$this->assertEquals( '0', $validated['allow_email_notifications'], 'Invalid values should be reset to "0".' );

@@ -26,14 +26,14 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 		// error_log( print_r( $editor_role, true ) );
 
 		// Create users for testing
-		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$this->editor     = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
 		// Create a board using the factory
 		wp_set_current_user( $this->editor );
 		$board_result = self::factory()->board->create(
 			array(
-				'name' => 'DeckerTaskAttachmentsTest Board',
+				'name'  => 'DeckerTaskAttachmentsTest Board',
 				'color' => '#ff5733',
 			)
 		);
@@ -47,10 +47,10 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 		// Create a test task using the factory
 		$task_result = self::factory()->task->create(
 			array(
-				'post_title' => 'Test attachment Task',
+				'post_title'  => 'Test attachment Task',
 				'post_author' => $this->editor,
-				'board' => $this->board_id,
-				'stack' => 'to-do',
+				'board'       => $this->board_id,
+				'stack'       => 'to-do',
 			)
 		);
 
@@ -73,7 +73,7 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	public function test_editor_can_add_attachments() {
 		wp_set_current_user( $this->editor );
 
-		$attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
+		$attachment_id          = $this->create_attachment( $this->test_file['file'], $this->task_id );
 		$this->uploaded_files[] = $attachment_id;
 
 		$this->assertNotEquals( 0, $attachment_id );
@@ -87,7 +87,7 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	public function test_subscriber_can_add_attachments() {
 		wp_set_current_user( $this->subscriber );
 
-		$attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
+		$attachment_id          = $this->create_attachment( $this->test_file['file'], $this->task_id );
 		$this->uploaded_files[] = $attachment_id;
 
 		// Changed assertion: subscriber should NOT be able to add attachments
@@ -101,13 +101,13 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	public function test_attachment_permissions() {
 		// Editor uploads an attachment
 		wp_set_current_user( $this->editor );
-		$editor_attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
+		$editor_attachment_id   = $this->create_attachment( $this->test_file['file'], $this->task_id );
 		$this->uploaded_files[] = $editor_attachment_id;
 
 		// Subscriber uploads an attachment
 		wp_set_current_user( $this->subscriber );
 		$subscriber_attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
-		$this->uploaded_files[] = $subscriber_attachment_id;
+		$this->uploaded_files[]   = $subscriber_attachment_id;
 
 		// Test editor permissions
 		wp_set_current_user( $this->editor );
@@ -126,11 +126,11 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 	public function test_attachment_metadata() {
 		wp_set_current_user( $this->editor );
 
-		$attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
+		$attachment_id          = $this->create_attachment( $this->test_file['file'], $this->task_id );
 		$this->uploaded_files[] = $attachment_id;
 
 		$attachment = get_post( $attachment_id );
-		$metadata = wp_get_attachment_metadata( $attachment_id );
+		$metadata   = wp_get_attachment_metadata( $attachment_id );
 
 		$this->assertEquals( 'text/plain', get_post_mime_type( $attachment_id ) );
 		$this->assertEquals( $this->task_id, $attachment->post_parent );
@@ -146,15 +146,15 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 		// Upload multiple attachments
 		$attachment_ids = array();
 		for ( $i = 0; $i < 3; $i++ ) {
-			$attachment_id = $this->create_attachment( $this->test_file['file'], $this->task_id );
-			$attachment_ids[] = $attachment_id;
+			$attachment_id          = $this->create_attachment( $this->test_file['file'], $this->task_id );
+			$attachment_ids[]       = $attachment_id;
 			$this->uploaded_files[] = $attachment_id;
 		}
 
 		// Get attachments for the task
 		$attachments = get_posts(
 			array(
-				'post_type' => 'attachment',
+				'post_type'   => 'attachment',
 				'post_parent' => $this->task_id,
 				'numberposts' => -1,
 			)
@@ -178,11 +178,11 @@ class DeckerTaskAttachmentsTest extends Decker_Test_Base {
 
 		return self::factory()->attachment->create(
 			array(
-				'file' => $file,
+				'file'           => $file,
 				'post_mime_type' => $filetype['type'],
-				'post_title' => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
-				'post_parent' => $parent_post_id,
-				'post_author' => get_current_user_id(),
+				'post_title'     => preg_replace( '/\.[^.]+$/', '', basename( $file ) ),
+				'post_parent'    => $parent_post_id,
+				'post_author'    => get_current_user_id(),
 			)
 		);
 	}

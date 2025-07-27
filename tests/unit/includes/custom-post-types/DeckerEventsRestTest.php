@@ -29,8 +29,8 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 
 		// Create users for testing
 		$this->administrator = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
-		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$this->editor        = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$this->subscriber    = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 	}
 
 	/**
@@ -63,14 +63,14 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		wp_set_current_user( $this->editor );
 
 		$event_data = array(
-			'title' => 'Test Event',
+			'title'  => 'Test Event',
 			'status' => 'publish',
-			'meta' => array(
-				'event_start' => '2024-02-01 10:00:00',
-				'event_end' => '2024-02-01 11:00:00',
-				'event_location' => 'Test Location',
-				'event_url' => 'https://example.com',
-				'event_category' => 'bg-primary',
+			'meta'   => array(
+				'event_start'          => '2024-02-01 10:00:00',
+				'event_end'            => '2024-02-01 11:00:00',
+				'event_location'       => 'Test Location',
+				'event_url'            => 'https://example.com',
+				'event_category'       => 'bg-primary',
 				'event_assigned_users' => array( $this->editor ),
 			),
 		);
@@ -81,7 +81,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		}
 
 		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 
 		// Check response status and basic data
 		$this->assertEquals( 201, $response->get_status() );
@@ -125,11 +125,11 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		wp_set_current_user( $this->editor );
 
 		$initial_meta = array(
-			'event_start' => '2024-02-01T10:00:00',
-			'event_end' => '2024-02-01T11:00:00',
-			'event_location' => 'Initial Location',
-			'event_url' => 'https://example.com',
-			'event_category' => 'bg-primary',
+			'event_start'          => '2024-02-01T10:00:00',
+			'event_end'            => '2024-02-01T11:00:00',
+			'event_location'       => 'Initial Location',
+			'event_url'            => 'https://example.com',
+			'event_category'       => 'bg-primary',
 			'event_assigned_users' => array( $this->editor ),
 		);
 
@@ -138,16 +138,16 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$request->set_param( 'status', 'publish' );
 		$request->set_param( 'meta', $initial_meta );
 
-		$response = $this->server->dispatch( $request );
+		$response       = $this->server->dispatch( $request );
 		$this->event_id = $response->get_data()['id'];
 
 		// Update event with new title and meta
 		$updated_meta = array(
-			'event_start' => '2024-02-01 14:00:00',
-			'event_end' => '2024-02-01 15:00:00',
-			'event_location' => 'Updated Location',
-			'event_url' => 'https://updated-example.com',
-			'event_category' => 'bg-success',
+			'event_start'          => '2024-02-01 14:00:00',
+			'event_end'            => '2024-02-01 15:00:00',
+			'event_location'       => 'Updated Location',
+			'event_url'            => 'https://updated-example.com',
+			'event_category'       => 'bg-success',
 			'event_assigned_users' => array( $this->administrator, $this->editor ),
 		);
 
@@ -156,7 +156,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$request->set_param( 'meta', $updated_meta );
 
 		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 
 		// Verify response status and title
 		$this->assertEquals( 200, $response->get_status() );
@@ -201,13 +201,13 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$request->set_param( 'title', 'Event to Delete' );
 		$request->set_param( 'status', 'publish' );
 
-		$response = $this->server->dispatch( $request );
+		$response       = $this->server->dispatch( $request );
 		$this->event_id = $response->get_data()['id'];
 
 		// Try to delete as subscriber (should fail)
 		wp_set_current_user( $this->subscriber );
 
-		$request = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
+		$request  = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
 		$response = $this->server->dispatch( $request );
 
 		$this->assertEquals( 403, $response->get_status() );
@@ -231,9 +231,9 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 	public function test_rest_api_schema() {
 		wp_set_current_user( $this->editor );
 
-		$request = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
+		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
 		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 
 		// Check schema exists
 		$this->assertArrayHasKey( 'schema', $data );
@@ -272,9 +272,9 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 	public function test_rest_api_collection_params() {
 		wp_set_current_user( $this->editor );
 
-		$request = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
+		$request  = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
 		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 
 		// Check collection parameters
 		$this->assertArrayHasKey( 'endpoints', $data );
@@ -338,8 +338,8 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 			$request->set_param(
 				'meta',
 				array(
-					'event_start' => "2024-02-0{$i}T10:00:00",
-					'event_end' => "2024-02-0{$i}T11:00:00",
+					'event_start'    => "2024-02-0{$i}T10:00:00",
+					'event_end'      => "2024-02-0{$i}T11:00:00",
 					'event_location' => "Location $i",
 					'event_category' => 'bg-primary',
 				)
@@ -350,9 +350,9 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		}
 
 		// Test collection response
-		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event' );
+		$request  = new WP_REST_Request( 'GET', '/wp/v2/decker_event' );
 		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 
 		// Check response headers
 		$headers = $response->get_headers();
@@ -378,9 +378,9 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 	}
 
 
-/**
-	 * Test that unauthenticated users cannot create events via REST
-	 */
+	/**
+		 * Test that unauthenticated users cannot create events via REST
+		 */
 	public function test_unauthenticated_rest_cannot_create_event() {
 		// Do NOT set current user, simulating unauthenticated access
 
@@ -403,7 +403,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$create_request->set_param( 'title', 'Event to Update' );
 		$create_request->set_param( 'status', 'publish' );
 		$create_response = $this->server->dispatch( $create_request );
-		$this->event_id = $create_response->get_data()['id'];
+		$this->event_id  = $create_response->get_data()['id'];
 		wp_set_current_user( null ); // Clear current user for unauthenticated test
 
 		$request = new WP_REST_Request( 'PUT', '/wp/v2/decker_event/' . $this->event_id );
@@ -424,7 +424,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$create_request->set_param( 'title', 'Event to Delete' );
 		$create_request->set_param( 'status', 'publish' );
 		$create_response = $this->server->dispatch( $create_request );
-		$this->event_id = $create_response->get_data()['id'];
+		$this->event_id  = $create_response->get_data()['id'];
 		wp_set_current_user( null ); // Clear current user for unauthenticated test
 
 		$request = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
@@ -457,7 +457,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		$create_request->set_param( 'title', 'Event to Read' );
 		$create_request->set_param( 'status', 'publish' );
 		$create_response = $this->server->dispatch( $create_request );
-		$this->event_id = $create_response->get_data()['id'];
+		$this->event_id  = $create_response->get_data()['id'];
 		wp_set_current_user( null ); // Clear current user for unauthenticated test
 
 		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event/' . $this->event_id );
@@ -482,101 +482,107 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 
 
 
-/**
- * Test REST API event creation with all-day event
- */
-public function test_rest_create_allday_event() {
-    wp_set_current_user($this->editor);
-    
-    $request = new WP_REST_Request('POST', '/wp/v2/decker_event');
-    $request->set_body_params([
-        'title' => 'All Day REST Event',
-        'meta' => [
-            'event_allday' => true,
-            'event_start'  => '2025-01-01',
-            'event_end'    => '2025-01-01',
-        ]
-    ]);
-    
-    $response = rest_get_server()->dispatch($request);
-    $data = $response->get_data();
-    
-    $this->assertEquals(201, $response->get_status());
-    $this->assertEquals('2025-01-01', $data['meta']['event_start']);
-    $this->assertEquals('2025-01-01', $data['meta']['event_end']);
+	/**
+	 * Test REST API event creation with all-day event
+	 */
+	public function test_rest_create_allday_event() {
+		wp_set_current_user( $this->editor );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
+		$request->set_body_params(
+			array(
+				'title' => 'All Day REST Event',
+				'meta'  => array(
+					'event_allday' => true,
+					'event_start'  => '2025-01-01',
+					'event_end'    => '2025-01-01',
+				),
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 201, $response->get_status() );
+		$this->assertEquals( '2025-01-01', $data['meta']['event_start'] );
+		$this->assertEquals( '2025-01-01', $data['meta']['event_end'] );
+	}
+
+	/**
+	 * Test REST API event update with time change
+	 */
+	public function test_rest_update_event_time() {
+		// Create initial event
+		wp_set_current_user( $this->editor );
+		$event_id = self::factory()->event->create(
+			array(
+				'post_title' => 'REST Update Test',
+				'meta_input' => array(
+					'event_start' => '2025-01-01 10:00:00',
+					'event_end'   => '2025-01-01 11:00:00',
+				),
+			)
+		);
+
+		// Update via REST
+		$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
+		$request->set_body_params(
+			array(
+				'meta' => array(
+					'event_start' => '2025-01-01 14:00:00',
+					'event_end'   => '2025-01-01 15:30:00',
+				),
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( '2025-01-01 14:00:00', $data['meta']['event_start'] );
+		$this->assertEquals( '2025-01-01 15:30:00', $data['meta']['event_end'] );
+	}
+
+	/**
+	 * Test event with no end date specified
+	 */
+	public function test_missing_end_date() {
+		update_option( 'timezone_string', 'UTC' );
+
+		$event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_start' => '2025-01-01 10:00:00',
+				// No end date
+				),
+			)
+		);
+
+		$end          = get_post_meta( $event_id, 'event_end', true );
+		$expected_end = '2025-01-01 11:00:00';
+
+		$this->assertEquals( $expected_end, $end );
+	}
+
+	/**
+	 * Test invalid date handling
+	 */
+	public function test_invalid_date_handling() {
+		update_option( 'timezone_string', 'UTC' );
+
+		$event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_start' => 'invalid-date',
+					'event_end'   => 'another-invalid',
+				),
+			)
+		);
+
+		$start = get_post_meta( $event_id, 'event_start', true );
+		$end   = get_post_meta( $event_id, 'event_end', true );
+
+		$this->assertEquals( '1970-01-01 00:00:00', $start );
+		$this->assertEquals( '1970-01-01 01:00:00', $end );
+	}
 }
-
-/**
- * Test REST API event update with time change
- */
-public function test_rest_update_event_time() {
-    // Create initial event
-    wp_set_current_user($this->editor);
-    $event_id = self::factory()->event->create([
-        'post_title' => 'REST Update Test',
-        'meta_input' => [
-            'event_start' => '2025-01-01 10:00:00',
-            'event_end'   => '2025-01-01 11:00:00',
-        ]
-    ]);
-    
-    // Update via REST
-    $request = new WP_REST_Request('PUT', "/wp/v2/decker_event/{$event_id}");
-    $request->set_body_params([
-        'meta' => [
-            'event_start' => '2025-01-01 14:00:00',
-            'event_end'   => '2025-01-01 15:30:00',
-        ]
-    ]);
-    
-    $response = rest_get_server()->dispatch($request);
-    $data = $response->get_data();
-    
-    $this->assertEquals(200, $response->get_status());
-    $this->assertEquals('2025-01-01 14:00:00', $data['meta']['event_start']);
-    $this->assertEquals('2025-01-01 15:30:00', $data['meta']['event_end']);
-}
-
-/**
- * Test event with no end date specified
- */
-public function test_missing_end_date() {
-    update_option('timezone_string', 'UTC');
-    
-    $event_id = self::factory()->event->create([
-        'meta_input' => [
-            'event_start' => '2025-01-01 10:00:00',
-            // No end date
-        ]
-    ]);
-    
-    $end = get_post_meta($event_id, 'event_end', true);
-    $expected_end = '2025-01-01 11:00:00';
-    
-    $this->assertEquals($expected_end, $end);
-}
-
-/**
- * Test invalid date handling
- */
-public function test_invalid_date_handling() {
-    update_option('timezone_string', 'UTC');
-    
-    $event_id = self::factory()->event->create([
-        'meta_input' => [
-            'event_start' => 'invalid-date',
-            'event_end'   => 'another-invalid',
-        ]
-    ]);
-    
-    $start = get_post_meta($event_id, 'event_start', true);
-    $end   = get_post_meta($event_id, 'event_end', true);
-    
-    $this->assertEquals('1970-01-01 00:00:00', $start);
-    $this->assertEquals('1970-01-01 01:00:00', $end);
-}
-
-
-}
-
-

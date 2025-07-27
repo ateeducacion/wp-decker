@@ -1,9 +1,46 @@
+
+
+
 (function() {
     'use strict';
     console.log('loading event-card.js');
 
     // Global variables received from PHP
     const strings = deckerVars.strings;
+
+    /**
+     * Devuelve un string ISO UTC acabado en “Z”.
+     * @param {string} localValue - 'YYYY‑MM‑DDTHH:MM'
+     */
+    function localToUtc(localValue){
+        const d = new Date(localValue);
+        return d.toISOString();           // ⇒ 2025‑07‑27T10:00:00.000Z
+    }
+
+    /**
+     * Convierte UTC → valor para el <input>.
+     *  ─ Si llega 'YYYY‑MM‑DD' (all‑day) la devuelve tal cual.
+     *  ─ Si llega 'YYYY‑MM‑DD HH:MM:SS' añade la “T” y la “Z”.
+     *  ─ Si llega ISO con “Z” la pasa a local y corta segundos.
+     */
+function utcToLocalValue(utcStr){
+    if (!utcStr) return '';
+
+    // all‑day → sin cambios
+    if (/^\d{4}-\d{2}-\d{2}$/.test(utcStr)) return utcStr;
+
+    // admitir "YYYY‑MM‑DD HH:MM:SS"
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(utcStr)){
+        utcStr = utcStr.replace(' ', 'T') + 'Z';
+    }
+
+    const d = new Date(utcStr);          // sigue estando en UTC
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+         + `T${pad(d.getHours())}:${pad(d.getMinutes())}`;   // **local**
+}
+
+
 
     // Function to delete an event
     function deleteEvent(id, title) {
@@ -35,8 +72,53 @@
      */
     function initializeEventCard(context = document) {
 
+
+     
+
+
+
         const startInput = context.querySelector('#event-start');
         const endInput = context.querySelector('#event-end');
+
+   // ---------- valores por defecto ---------- //
+        (function setDefaultTimes(){
+            if (startInput.value) return;                // se abre un evento existente
+
+            // a) si FullCalendar pasó un día (click en celda vacía)…
+            const modal     = document.querySelector('#event-modal');
+            const clickDate = modal?.dataset.tempEventDate
+                ? (() => {
+                    const [y, m, d] = modal.dataset.tempEventDate.split('-').map(Number);
+                    return new Date(y, m - 1, d);  // ← esta versión usa la hora local
+                })()
+                : null;
+
+            // b) …o si no, usa ahora mismo
+            const base = new Date();
+
+            if (clickDate) {
+                base.setFullYear(clickDate.getFullYear());
+                base.setMonth(clickDate.getMonth());
+                base.setDate(clickDate.getDate());
+            }
+
+
+            // redondea base a la siguiente :00 o :30 y +1 h
+            base.setSeconds(0,0);
+            const m = base.getMinutes();
+            if (m % 30) base.setMinutes(m + (30 - m % 30));
+
+            const start = new Date(base);
+            const end   = new Date(start.getTime() + 60*60*1000);
+
+            startInput.value = toLocalDatetimeString(start);
+            endInput.value   = toLocalDatetimeString(end);
+        })();
+
+
+
+
+
 
         // Sincroniza fechas: el "to" no puede ser menor que el "from"
         if (startInput && endInput) {
@@ -51,6 +133,18 @@
 
 
         let assignedUsersChoices = null;
+
+
+        document.querySelectorAll('[data-utc]').forEach(input => {
+            const raw = input.dataset.utc;
+            if (!raw) return;
+
+            // Si el input es type="date" pone la fecha tal cual,
+            // en otro caso usa la función de conversión.
+            input.value = (input.type === 'date')
+                ? raw
+                : utcToLocalValue(raw);
+        });
 
 function toLocalDatetimeString(date) {
     const pad = n => String(n).padStart(2, '0');
@@ -172,32 +266,58 @@ if (allDaySwitch && startInput && endInput) {
                 const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (isEdit ? '/' + eventId : '');
                 const method = isEdit ? 'PUT' : 'POST';
 
-                const isAllDay = form.querySelector('#event-allday').checked;
-                let startValue = formData.get('event_start');
-                let endValue = formData.get('event_end');
 
-                // if (isAllDay) {
-                //     startValue = `${startValue}T00:00`;
-                //     endValue = `${endValue}T23:59`;
-                // }
+const isAllDay = form.querySelector('#event-allday').checked;
+
+const startUtc = isAllDay
+    ? startInput.value            // 'YYYY‑MM‑DD'
+    : localToUtc(startInput.value);
+
+const endUtc   = isAllDay
+    ? endInput.value
+    : localToUtc(endInput.value);
+
+const eventData = {
+    title : formData.get('event_title'),
+    status: 'publish',
+    meta  : {
+        event_start      : startUtc,
+        event_end        : endUtc,
+        event_allday     : isAllDay,
+        event_category   : formData.get('event_category'),
+        event_assigned_users : formData.getAll('event_assigned_users[]').map(Number),
+        event_location   : formData.get('event_location'),
+        event_url        : formData.get('event_url')
+    },
+    content: formData.get('event_description')
+};
+
+                // const isAllDay = form.querySelector('#event-allday').checked;
+                // let startValue = formData.get('event_start');
+                // let endValue = formData.get('event_end');
+
+                // // if (isAllDay) {
+                // //     startValue = `${startValue}T00:00`;
+                // //     endValue = `${endValue}T23:59`;
+                // // }
 
 
-                // Prepare event data
-                const eventData = {
-                    title: formData.get('event_title'),
-                    status: 'publish',
-                    meta: {
-                        // Convert data to UTC
-                        event_start: startValue,
-                        event_end: endValue,
-                        event_allday: formData.get('event_allday') === 'on',
-                        event_category: formData.get('event_category'),
-                        event_assigned_users: formData.getAll('event_assigned_users[]').map(Number),
-                        event_location: formData.get('event_location'),
-                        event_url: formData.get('event_url')
-                    },
-                    content: formData.get('event_description')
-                };
+                // // Prepare event data
+                // const eventData = {
+                //     title: formData.get('event_title'),
+                //     status: 'publish',
+                //     meta: {
+                //         // Convert data to UTC
+                //         event_start: startValue,
+                //         event_end: endValue,
+                //         event_allday: formData.get('event_allday') === 'on',
+                //         event_category: formData.get('event_category'),
+                //         event_assigned_users: formData.getAll('event_assigned_users[]').map(Number),
+                //         event_location: formData.get('event_location'),
+                //         event_url: formData.get('event_url')
+                //     },
+                //     content: formData.get('event_description')
+                // };
 
                 try {
                     const response = await fetch(url, {
@@ -244,6 +364,7 @@ if (allDaySwitch && startInput && endInput) {
         if (eventForm && !eventForm.closest('.event-modal')) { // Asegurarse de que no está dentro de un modal
             initializeEventCard(document);
         }
+
 
     });
 

@@ -26,8 +26,8 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 
 		$result = $this->factory->label->create(
 			array(
-				'name' => 'Test Label',
-				'slug' => 'test-label',
+				'name'  => 'Test Label',
+				'slug'  => 'test-label',
 				'color' => '#ff0000',
 			)
 		);
@@ -78,8 +78,8 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 		wp_set_current_user( 0 );
 
 		$new_label_data = array(
-			'name' => 'New Test Label',
-			'slug' => 'new-test-label',
+			'name'  => 'New Test Label',
+			'slug'  => 'new-test-label',
 			'color' => '#00ff00',
 		);
 
@@ -102,8 +102,8 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 	public function test_save_label_create() {
 		wp_set_current_user( $this->editor );
 		$new_label_data = array(
-			'name' => 'New Test Label',
-			'slug' => 'new-test-label',
+			'name'  => 'New Test Label',
+			'slug'  => 'new-test-label',
 			'color' => '#00ff00',
 		);
 
@@ -124,8 +124,8 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 	public function test_save_label_update() {
 		wp_set_current_user( $this->editor );
 		$updated_data = array(
-			'name' => 'Updated Test Label',
-			'slug' => 'updated-test-label',
+			'name'  => 'Updated Test Label',
+			'slug'  => 'updated-test-label',
 			'color' => '#0000ff',
 		);
 

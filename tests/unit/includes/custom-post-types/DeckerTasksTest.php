@@ -58,16 +58,16 @@ class DeckerTasksTest extends Decker_Test_Base {
 		// Create a task using our custom factory with all available fields
 		$task_result = self::factory()->task->create(
 			array(
-				'post_title' => 'Test Task',
-				'post_content' => 'Task description',
-				'post_author' => $this->editor,
-				'author' => $this->editor,
-				'board' => $this->board_id,
-				'stack' => 'to-do',
-				'max_priority' => false,
-				'duedate' => null,
+				'post_title'     => 'Test Task',
+				'post_content'   => 'Task description',
+				'post_author'    => $this->editor,
+				'author'         => $this->editor,
+				'board'          => $this->board_id,
+				'stack'          => 'to-do',
+				'max_priority'   => false,
+				'duedate'        => null,
 				'assigned_users' => array( $this->editor ),
-				'labels' => array( $this->label_id ),
+				'labels'         => array( $this->label_id ),
 			)
 		);
 
@@ -111,18 +111,18 @@ class DeckerTasksTest extends Decker_Test_Base {
 		// Create additional labels using our custom factory
 		$label_ids = array( $this->label_id );
 		for ( $i = 0; $i < 2; $i++ ) {
-			$label_ids[]  = self::factory()->label->create();
+			$label_ids[] = self::factory()->label->create();
 		}
 
 		// Create a task with multiple boards and labels using our custom factory
 		$task_result = self::factory()->task->create(
 			array(
-				'post_title' => 'Task with Multiple Terms',
+				'post_title'   => 'Task with Multiple Terms',
 				'post_content' => 'Task with multiple boards and labels',
-				'post_author' => $this->editor,
-				'board' => $board_ids[0], // Primary board
-				'stack' => 'to-do',
-				'labels' => $label_ids,
+				'post_author'  => $this->editor,
+				'board'        => $board_ids[0], // Primary board
+				'stack'        => 'to-do',
+				'labels'       => $label_ids,
 			)
 		);
 
@@ -171,18 +171,18 @@ class DeckerTasksTest extends Decker_Test_Base {
 		// Verify order.
 		$tasks = get_posts(
 			array(
-				'post_type'   => 'decker_task',
-				'orderby'     => 'menu_order',
-				'order'       => 'ASC',
-				'fields'      => 'ids',
-				'tax_query'   => array(
+				'post_type'  => 'decker_task',
+				'orderby'    => 'menu_order',
+				'order'      => 'ASC',
+				'fields'     => 'ids',
+				'tax_query'  => array(
 					array(
 						'taxonomy' => 'decker_board',
 						'field'    => 'term_id',
 						'terms'    => $board_id,
 					),
 				),
-				'meta_query'  => array(
+				'meta_query' => array(
 					array(
 						'key'     => 'stack',
 						'value'   => 'to-do',
@@ -198,18 +198,18 @@ class DeckerTasksTest extends Decker_Test_Base {
 		wp_delete_post( $task1_id );
 		$tasks = get_posts(
 			array(
-				'post_type'   => 'decker_task',
-				'orderby'     => 'menu_order',
-				'order'       => 'ASC',
-				'fields'      => 'ids',
-				'tax_query'   => array(
+				'post_type'  => 'decker_task',
+				'orderby'    => 'menu_order',
+				'order'      => 'ASC',
+				'fields'     => 'ids',
+				'tax_query'  => array(
 					array(
 						'taxonomy' => 'decker_board',
 						'field'    => 'term_id',
 						'terms'    => $board_id,
 					),
 				),
-				'meta_query'  => array(
+				'meta_query' => array(
 					array(
 						'key'     => 'stack',
 						'value'   => 'to-do',
@@ -236,7 +236,7 @@ class DeckerTasksTest extends Decker_Test_Base {
 
 		// Create user and date for relation.
 		$user_id = $this->factory->user->create();
-		$date = '2024-11-30';
+		$date    = '2024-11-30';
 
 		// Add a user-date relation.
 		$relation = array(

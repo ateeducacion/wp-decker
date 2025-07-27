@@ -62,6 +62,9 @@ $meta = $event_id ? get_post_meta( $event_id ) : array();
 // Process metas.
 $allday = isset( $meta['event_allday'][0] ) ? $meta['event_allday'][0] : '';
 
+$start_raw = $event_id ? $meta['event_start'][0] ?? '' : '';
+$end_raw   = $event_id ? $meta['event_end'][0] ?? '' : '';
+
 /**
  * Función para redondear a la media hora más cercana.
  *
@@ -194,8 +197,10 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		<div class="row g-3">
 			<div class="col-md-6">
 				<div class="form-floating">
+
 					<input type="datetime-local" class="form-control" id="event-start" name="event_start" 
-						   value="<?php echo esc_attr( $start_date ); ?>" required 
+						   value="" required 
+						   data-utc="<?php echo esc_attr( $start_raw ); ?>"
 						   placeholder="<?php esc_attr_e( 'Start Date and Time', 'decker' ); ?>">
 					<label for="event-start"><?php esc_html_e( 'Start Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
 					<div class="invalid-feedback">
@@ -206,7 +211,9 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 			<div class="col-md-6">
 				<div class="form-floating">
 					<input type="datetime-local" class="form-control" id="event-end" name="event_end" 
-						   value="<?php echo esc_attr( $end_date ); ?>" required 
+						   value="" required 
+						   data-utc="<?php echo esc_attr( $end_raw ); ?>"
+
 						   placeholder="<?php esc_attr_e( 'End Date and Time', 'decker' ); ?>">
 					<label for="event-end"><?php esc_html_e( 'End Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
 					<div class="invalid-feedback">

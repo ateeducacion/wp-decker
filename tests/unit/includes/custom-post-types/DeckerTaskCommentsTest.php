@@ -20,14 +20,14 @@ class DeckerTaskCommentsTest extends Decker_Test_Base {
 
 		// Create users for testing using WordPress factory
 		$this->administrator = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
-		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$this->editor        = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$this->subscriber    = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
 		// Create a board using our custom factory
 		wp_set_current_user( $this->administrator );
 		$board_result = self::factory()->board->create(
 			array(
-				'name' => 'Test Comments Board',
+				'name'  => 'Test Comments Board',
 				'color' => '#ff5733',
 			)
 		);
@@ -41,10 +41,10 @@ class DeckerTaskCommentsTest extends Decker_Test_Base {
 		// Create a test task using our custom factory
 		$task_result = self::factory()->task->create(
 			array(
-				'post_title' => 'Test Comments Task',
+				'post_title'  => 'Test Comments Task',
 				'post_author' => $this->administrator,
-				'board' => $this->board_id,
-				'stack' => 'to-do',
+				'board'       => $this->board_id,
+				'stack'       => 'to-do',
 			)
 		);
 

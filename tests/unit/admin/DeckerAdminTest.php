@@ -32,7 +32,7 @@ class DeckerAdminTest extends WP_UnitTestCase {
 	}
 
 	public function test_add_settings_link() {
-		$links = array();
+		$links     = array();
 		$new_links = $this->admin->add_settings_link( $links );
 
 		$this->assertIsArray( $new_links );
@@ -55,8 +55,8 @@ class DeckerAdminTest extends WP_UnitTestCase {
 				$this->callback(
 					function ( $args ) {
 						return $args['id'] === 'decker_frontend_link' &&
-						  strpos( $args['title'], 'Go to Decker' ) !== false &&
-						  $args['href'] === home_url( '/?decker_page=priority' );
+							strpos( $args['title'], 'Go to Decker' ) !== false &&
+							$args['href'] === home_url( '/?decker_page=priority' );
 					}
 				)
 			);
@@ -94,14 +94,13 @@ class DeckerAdminTest extends WP_UnitTestCase {
 
 	public function test_load_dependencies() {
 		$reflection = new ReflectionClass( $this->admin );
-		$method = $reflection->getMethod( 'load_dependencies' );
+		$method     = $reflection->getMethod( 'load_dependencies' );
 		$method->setAccessible( true );
 
 		// Call the method again to test multiple loads
 		$method->invoke( $this->admin );
 
 		$this->assertTrue( class_exists( 'Decker_Admin_Settings' ) );
-
 	}
 
 	public function tear_down() {

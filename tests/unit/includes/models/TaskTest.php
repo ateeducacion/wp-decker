@@ -57,7 +57,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 	public function test_task_metadata() {
 		$task_id = self::factory()->task->create(
 			array(
-				'stack'         => 'in-progress',
+				'stack'        => 'in-progress',
 				'max_priority' => true,
 			)
 		);
@@ -115,7 +115,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'board' => $board_id,
+				'board'  => $board_id,
 				'labels' => $label_ids,
 			)
 		);
@@ -144,7 +144,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 	 */
 	public function test_task_attachments() {
 
-		$task_id = self::factory()->task->create();
+		$task_id       = self::factory()->task->create();
 		$attachment_id = self::factory()->attachment->create_upload_object( __DIR__ . '/../../../fixtures/sample-1.pdf', 0 );
 
 		update_post_meta( $task_id, 'attachments', array( $attachment_id ) );

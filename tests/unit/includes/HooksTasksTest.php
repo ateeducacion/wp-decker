@@ -21,7 +21,7 @@ class HooksTasksTest extends Decker_Test_Base {
 		parent::set_up();
 
 		$this->decker_tasks = new Decker_Tasks();
-		$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$this->user_id      = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->user_id );
 		$this->board_id = self::factory()->board->create();
 	}
@@ -104,7 +104,7 @@ class HooksTasksTest extends Decker_Test_Base {
 	 */
 	public function test_user_assignment_hook() {
 		$assigned_users = array();
-		$new_users = array( self::factory()->user->create(), self::factory()->user->create() );
+		$new_users      = array( self::factory()->user->create(), self::factory()->user->create() );
 
 		add_action(
 			'decker_user_assigned',
@@ -167,7 +167,7 @@ class HooksTasksTest extends Decker_Test_Base {
 	 */
 	public function test_user_assignment_only_new_users() {
 		$existing_user = self::factory()->user->create();
-		$hook_called = 0;
+		$hook_called   = 0;
 
 		// The task should be created before the hook is binded.
 		$task_id = $this->createTestTask( 'to-do', $this->board_id, array( $existing_user ) );
@@ -242,8 +242,8 @@ class HooksTasksTest extends Decker_Test_Base {
 	private function createTestTask( $stack = 'to-do', $board = null, $users = array() ) {
 		return self::factory()->task->create(
 			array(
-				'stack' => $stack,
-				'decker_board' => $board ?: $this->board_id,
+				'stack'          => $stack,
+				'decker_board'   => $board ?: $this->board_id,
 				'assigned_users' => $users,
 			)
 		);
