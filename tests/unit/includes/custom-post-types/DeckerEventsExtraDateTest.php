@@ -574,7 +574,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 
 		$this->assertNotWPError( $event_id );
 
-		// Se debería forzar a 1970-01-01 00:00:00 según la lógica del plugin
+		// It should be forced to 1970-01-01 00:00:00 according to the plugin's logic
 		$this->assertSame( '1970-01-01 00:00:00', get_post_meta( $event_id, 'event_start', true ) );
 	}
 
