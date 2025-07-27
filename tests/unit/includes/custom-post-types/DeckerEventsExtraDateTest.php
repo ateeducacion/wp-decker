@@ -601,7 +601,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertSame( 200, $response->get_status() );
 
-		// Se debería corregir automáticamente
+		// It should be automatically corrected
 		$end = get_post_meta( $this->event_id, 'event_end', true );
 		$this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $end );
 	}
