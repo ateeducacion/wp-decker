@@ -187,77 +187,54 @@ if (allDaySwitch && startInput && endInput) {
     }
 
     // Handle changes when the checkbox is toggled manually
-    // allDaySwitch.addEventListener('change', () => {
-    //     const isAllDay = allDaySwitch.checked;
-
-    //     const currentStart = new Date(startInput.value);
-    //     const currentEnd = new Date(endInput.value || startInput.value);
-
-    //     if (isAllDay) {
-    //         startInput.type = 'date';
-    //         endInput.type = 'date';
-
-    //         startInput.value = toLocalDateString(currentStart);
-    //         endInput.value = toLocalDateString(currentEnd);
-    //     } else {
-    //         startInput.type = 'datetime-local';
-    //         endInput.type = 'datetime-local';
-
-
-    //         const now = new Date();
-    //         now.setSeconds(0, 0);
-
-    //         // Redondear a la siguiente media hora
-    //         const minutes = now.getMinutes();
-    //         const remainder = minutes % 30;
-    //         if (remainder !== 0) {
-    //             now.setMinutes(minutes + (30 - remainder));
-    //         }
-
-    //         const start = new Date(now);
-
-
-    //         currentStart.setHours(start);
-    //         currentEnd.setHours(currentStart.getHours() + 1);
-
-    //         startInput.value = toLocalDatetimeString(currentStart);
-    //         endInput.value = toLocalDatetimeString(currentEnd);
-    //     }
-    // });
+ 
 
 
 allDaySwitch.addEventListener('change', () => {
     const isAllDay = allDaySwitch.checked;
 
-    // Asegura valores válidos antes de convertir
     const safeParse = (value) => {
-        if (!value) return new Date(); // fallback
-        // Si solo es fecha, añadir T00:00
+        if (!value) return null;
         if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
             value += 'T00:00';
         }
         const d = new Date(value);
-        return isNaN(d.getTime()) ? new Date() : d;
+        return isNaN(d.getTime()) ? null : d;
     };
 
     const currentStart = safeParse(startInput.value);
-    const currentEnd = safeParse(endInput.value || startInput.value);
+    const currentEnd   = safeParse(endInput.value || startInput.value);
 
     if (isAllDay) {
         startInput.type = 'date';
         endInput.type = 'date';
 
-        startInput.value = toLocalDateString(currentStart);
-        endInput.value = toLocalDateString(currentEnd);
+        startInput.value = toLocalDateString(currentStart || new Date());
+        endInput.value   = toLocalDateString(currentEnd   || new Date());
     } else {
         startInput.type = 'datetime-local';
-        endInput.type = 'datetime-local';
+        endInput.type   = 'datetime-local';
 
-        startInput.value = toLocalDatetimeString(currentStart);
-        endInput.value = toLocalDatetimeString(currentEnd);
+        // Mantener el día y redondear la hora
+        const base = currentStart || new Date();
+        const now = new Date();
+        now.setSeconds(0, 0);
+
+        const minutes = now.getMinutes();
+        if (minutes % 30 !== 0) {
+            now.setMinutes(minutes + (30 - (minutes % 30)));
+        }
+
+        // Combinar el día original con la hora redondeada
+        const start = new Date(base);
+        start.setHours(now.getHours(), now.getMinutes(), 0, 0);
+
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+
+        startInput.value = toLocalDatetimeString(start);
+        endInput.value   = toLocalDatetimeString(end);
     }
 });
-
 
 }
 
