@@ -117,7 +117,16 @@ function utcToLocalValue(utcStr){
 
 
 
+const isAllDay = context.querySelector('#event-allday')?.checked;
 
+// Establecer el tipo de los inputs antes de asignar los valores
+if (isAllDay) {
+    startInput.type = 'date';
+    endInput.type = 'date';
+} else {
+    startInput.type = 'datetime-local';
+    endInput.type = 'datetime-local';
+}
 
 
         // Sincroniza fechas: el "to" no puede ser menor que el "from"
@@ -178,43 +187,78 @@ if (allDaySwitch && startInput && endInput) {
     }
 
     // Handle changes when the checkbox is toggled manually
-    allDaySwitch.addEventListener('change', () => {
-        const isAllDay = allDaySwitch.checked;
+    // allDaySwitch.addEventListener('change', () => {
+    //     const isAllDay = allDaySwitch.checked;
 
-        const currentStart = new Date(startInput.value);
-        const currentEnd = new Date(endInput.value || startInput.value);
+    //     const currentStart = new Date(startInput.value);
+    //     const currentEnd = new Date(endInput.value || startInput.value);
 
-        if (isAllDay) {
-            startInput.type = 'date';
-            endInput.type = 'date';
+    //     if (isAllDay) {
+    //         startInput.type = 'date';
+    //         endInput.type = 'date';
 
-            startInput.value = toLocalDateString(currentStart);
-            endInput.value = toLocalDateString(currentEnd);
-        } else {
-            startInput.type = 'datetime-local';
-            endInput.type = 'datetime-local';
-
-
-            const now = new Date();
-            now.setSeconds(0, 0);
-
-            // Redondear a la siguiente media hora
-            const minutes = now.getMinutes();
-            const remainder = minutes % 30;
-            if (remainder !== 0) {
-                now.setMinutes(minutes + (30 - remainder));
-            }
-
-            const start = new Date(now);
+    //         startInput.value = toLocalDateString(currentStart);
+    //         endInput.value = toLocalDateString(currentEnd);
+    //     } else {
+    //         startInput.type = 'datetime-local';
+    //         endInput.type = 'datetime-local';
 
 
-            currentStart.setHours(start);
-            currentEnd.setHours(currentStart.getHours() + 1);
+    //         const now = new Date();
+    //         now.setSeconds(0, 0);
 
-            startInput.value = toLocalDatetimeString(currentStart);
-            endInput.value = toLocalDatetimeString(currentEnd);
+    //         // Redondear a la siguiente media hora
+    //         const minutes = now.getMinutes();
+    //         const remainder = minutes % 30;
+    //         if (remainder !== 0) {
+    //             now.setMinutes(minutes + (30 - remainder));
+    //         }
+
+    //         const start = new Date(now);
+
+
+    //         currentStart.setHours(start);
+    //         currentEnd.setHours(currentStart.getHours() + 1);
+
+    //         startInput.value = toLocalDatetimeString(currentStart);
+    //         endInput.value = toLocalDatetimeString(currentEnd);
+    //     }
+    // });
+
+
+allDaySwitch.addEventListener('change', () => {
+    const isAllDay = allDaySwitch.checked;
+
+    // Asegura valores válidos antes de convertir
+    const safeParse = (value) => {
+        if (!value) return new Date(); // fallback
+        // Si solo es fecha, añadir T00:00
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            value += 'T00:00';
         }
-    });
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? new Date() : d;
+    };
+
+    const currentStart = safeParse(startInput.value);
+    const currentEnd = safeParse(endInput.value || startInput.value);
+
+    if (isAllDay) {
+        startInput.type = 'date';
+        endInput.type = 'date';
+
+        startInput.value = toLocalDateString(currentStart);
+        endInput.value = toLocalDateString(currentEnd);
+    } else {
+        startInput.type = 'datetime-local';
+        endInput.type = 'datetime-local';
+
+        startInput.value = toLocalDatetimeString(currentStart);
+        endInput.value = toLocalDatetimeString(currentEnd);
+    }
+});
+
+
 }
 
         // Initialize Choices.js
