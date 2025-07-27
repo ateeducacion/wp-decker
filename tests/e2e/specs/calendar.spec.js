@@ -18,4 +18,12 @@ test.describe( 'Decker Calendar', () => {
 			page.getByText( 'Drag and drop your event or click in the calendar', { exact: false } )
 		).toBeVisible();
 	} );
+
+
+	test.afterAll
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin( 'decker' );
+	} );
+
 } );
