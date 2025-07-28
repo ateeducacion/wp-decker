@@ -254,12 +254,22 @@ class Decker_Tasks {
 	public function update_task_stack_and_order( $request ) {
 		$task_id      = intval( $request['id'] );
 
-		$params       = $request->get_json_params();
-		$board_id     = intval( $params['board_id'] ?? intval( $request->get_param( 'board_id' ) ) );
-		$source_stack = sanitize_text_field( $params['source_stack'] ?? $request->get_param( 'source_stack' ) );
-		$target_stack = sanitize_text_field( $params['target_stack'] ?? $request->get_param( 'target_stack' ) );
-		$source_order = intval( $params['source_order'] ?? $request->get_param( 'source_order' ) );
-		$target_order = intval( $params['target_order'] ?? $request->get_param( 'target_order' ) );
+
+		$params = $request->get_json_params();
+		$board_id = isset($params['board_id']) ? intval($params['board_id']) : intval( $request->get_param( 'board_id' ) );
+		$source_stack = isset($params['source_stack']) ? sanitize_text_field($params['source_stack']) : sanitize_text_field( $request->get_param( 'source_stack' ) );
+		$target_stack = isset($params['target_stack']) ? sanitize_text_field($params['target_stack']) : sanitize_text_field( $request->get_param( 'target_stack' ) );
+		$source_order = isset($params['source_order']) ? intval($params['source_order']) : intval( $request->get_param( 'source_order' ) );
+		$target_order = isset($params['target_order']) ? intval($params['target_order']) : intval( $request->get_param( 'target_order' ) );
+
+
+
+		// $params       = $request->get_json_params();
+		// $board_id     = intval( $params['board_id'] ?? intval( $request->get_param( 'board_id' ) ) );
+		// $source_stack = sanitize_text_field( $params['source_stack'] ?? $request->get_param( 'source_stack' ) );
+		// $target_stack = sanitize_text_field( $params['target_stack'] ?? $request->get_param( 'target_stack' ) );
+		// $source_order = intval( $params['source_order'] ?? $request->get_param( 'source_order' ) );
+		// $target_order = intval( $params['target_order'] ?? $request->get_param( 'target_order' ) );
 
 		error_log( 'SOURCE: ' . $source_stack );
 		error_log( 'TARGET: ' . $target_stack );
@@ -270,6 +280,14 @@ class Decker_Tasks {
 		error_log( 'target_stack: ' . $request->get_param( 'target_stack' ) );
 		error_log( 'source_order: ' . $request->get_param( 'source_order' ) );
 		error_log( 'target_order: ' . $request->get_param( 'target_order' ) );
+		
+		error_log('BODY RAW: ' . file_get_contents('php://input'));
+
+
+		error_log( '[REQUEST - get_body] ' . $request->get_body() );
+		error_log( '[REQUEST - get_params] ' . print_r( $request->get_params(), true ) );
+		error_log( '[REQUEST - get_json_params] ' . print_r( $request->get_json_params(), true ) );
+		error_log( '[REQUEST - all headers] ' . print_r( $request->get_headers(), true ) );
 
 
 		error_log( print_r( $request->get_json_params(), true ) );
