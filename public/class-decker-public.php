@@ -233,7 +233,7 @@ class Decker_Public {
 
 			}
 
-			if ( 'knowledge-base' == $decker_page ) {
+			if ( 'knowledge-base' == $decker_page || 'task' == $decker_page ) {
 				wp_enqueue_media(); // Obligatorio para subida de medios.
 			}
 

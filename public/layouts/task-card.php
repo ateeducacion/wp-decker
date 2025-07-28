@@ -344,7 +344,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 	<div class="tab-content">
 		<!-- Description (WordPress Classic Editor) -->
 		<div class="tab-pane show active" id="description-tab">
-			<textarea name="description" id="task-description" rows="12" class="form-control"></textarea>
+			<textarea name="description" id="task-description" rows="12" class="form-control"><?php echo esc_textarea( $task_id ? $task->description : $initial_description ); ?></textarea>
 		</div>
 
 		<!-- Comments -->
