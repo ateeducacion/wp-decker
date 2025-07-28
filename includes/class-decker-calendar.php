@@ -364,6 +364,7 @@ class Decker_Calendar {
 				}
 
 				$events[] = array(
+					'post_id'        => $post->ID,
 					'id'             => 'event_' . $post->ID, // Prefijo para distinguir de tareas.
 					'title'          => $post->post_title,
 					'description'    => $post->post_content,
@@ -393,6 +394,7 @@ class Decker_Calendar {
 				// Only add tasks that have a due date.
 				if ( $task->duedate ) {
 					$events[] = array(
+						'post_id' => $task->ID,
 						'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
 						'title'          => $task->title,
 						'description'    => $task->description,
@@ -464,7 +466,7 @@ class Decker_Calendar {
 			$ical .= "BEGIN:VEVENT\r\n";
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
 			// Important to let the clients to update an event if modified.
-			$ical .= 'SEQUENCE:' . get_post_modified_time( 'U', true, $post->ID ) . "\r\n";
+			$ical .= 'SEQUENCE:' . get_post_modified_time( 'U', true, $event['post_id'] ) . "\r\n";
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 
 			// Formatear fechas para eventos de día completo o con hora.
