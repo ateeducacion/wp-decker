@@ -379,8 +379,8 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 
 
 	/**
-		 * Test that unauthenticated users cannot create events via REST
-		 */
+	 * Test that unauthenticated users cannot create events via REST
+	 */
 	public function test_unauthenticated_rest_cannot_create_event() {
 		// Do NOT set current user, simulating unauthenticated access
 

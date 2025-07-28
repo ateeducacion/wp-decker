@@ -280,7 +280,8 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$this->assertNotWPError( $event_id );
 	}
 
-	/* ---------------------------------------------------------------------
+	/*
+	 ---------------------------------------------------------------------
 	 *  NUEVOS TESTS → manejo de “all‑day” vs horas y segundos
 	 * ------------------------------------------------------------------ */
 

@@ -323,9 +323,9 @@ class DeckerEventsTest extends Decker_Test_Base {
 
 		// Optional: assert the actual string value if you want to be strict
 		// $this->assertEquals(
-		//     '2025-01-01 12:00:00',
-		//     $end,
-		//     'End date should be equal to start date after adjustment.'
+		// '2025-01-01 12:00:00',
+		// $end,
+		// 'End date should be equal to start date after adjustment.'
 		// );
 
 		$this->assertEquals( $start_ts + HOUR_IN_SECONDS, $end_ts, 'End date should be adjusted to 1 hour after start.' );

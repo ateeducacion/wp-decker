@@ -109,7 +109,7 @@ class Decker_Calendar {
 		$events  = $this->get_events( $type );
 		$ics     = $this->generate_ical( $events, $type );
 
-		// Store in cache; object-cache users get it persistente, otros usan options.
+		// Store in cache; object-cache users get it persistent, otros usan options.
 		set_transient( $key, $ics, self::CACHE_TTL );
 
 		return $ics;
@@ -308,6 +308,10 @@ class Decker_Calendar {
 		if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
+			// Ignore cache, because we are going to cache using traseints.
+			header( 'Cache-Control: no-cache, must-revalidate' );
+			header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' ); // Date in past.
+			header( 'Pragma: no-cache' );
 		}
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
 		echo $ical;
@@ -424,10 +428,6 @@ class Decker_Calendar {
 
 		$ical  = "BEGIN:VCALENDAR\r\n";
 		$ical .= "VERSION:2.0\r\n";
-		$ical .= "PRODID:-//Decker//WordPress//EN\r\n";
-		$ical .= "CALSCALE:GREGORIAN\r\n";
-		$ical .= "METHOD:PUBLISH\r\n";
-		$ical .= "X-WR-TIMEZONE:UTC\r\n";
 
 		// Add calendar name property.
 		$calendar_name = 'Decker';
@@ -435,6 +435,18 @@ class Decker_Calendar {
 		if ( $type && isset( $type_names[ $type ] ) ) {
 			$calendar_name = 'Decker - ' . $type_names[ $type ];
 		}
+
+		$ical .= 'PRODID:-//' . $this->ical_escape( $calendar_name ) . "//NONSGML Decker//EN\r\n"; // ¡Clave!
+
+		$ical .= "CALSCALE:GREGORIAN\r\n";
+		$ical .= "METHOD:PUBLISH\r\n";
+		$ical .= "X-WR-TIMEZONE:UTC\r\n";
+
+		// Set the refresch interval.
+		$ttl = 'PT1H'; // 1h.
+		$ical .= "REFRESH-INTERVAL;VALUE=DURATION:$ttl\r\n";
+		$ical .= "X-PUBLISHED-TTL:$ttl\r\n";
+
 		// Añadir punto final a comentario.
 		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 		$ical .= 'X-NAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
@@ -451,6 +463,8 @@ class Decker_Calendar {
 		foreach ( $events as $event ) {
 			$ical .= "BEGIN:VEVENT\r\n";
 			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
+			// Important to let the clients to update an event if modified.
+			$ical .= 'SEQUENCE:' . get_post_modified_time( 'U', true, $post->ID ) . "\r\n";
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 
 			// Formatear fechas para eventos de día completo o con hora.

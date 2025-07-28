@@ -25,7 +25,10 @@ start-if-not-running:
 	fi
 
 # Bring up Docker containers
-up: check-docker start-if-not-running
+up: check-docker start-if-not-running flush-permalinks
+
+flush-permalinks:
+	npx wp-env run cli wp rewrite flush --hard
 
 # Function to create a user only if it does not exist
 create-user:
@@ -48,7 +51,7 @@ destroy:
 	npx wp-env destroy
 
 # Pass the wp plugin-check
-check-plugin: up
+check-plugin: check-docker start-if-not-running
 	npx wp-env run cli wp plugin install plugin-check --activate --color
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
 
@@ -88,7 +91,7 @@ logs-test:
 
 
 # Install PHP_CodeSniffer and WordPress Coding Standards in the container
-install-phpcs: up
+install-phpcs: check-docker start-if-not-running
 	@echo "Checking if PHP_CodeSniffer is installed..."
 	@if ! npx wp-env run cli bash -c '[ -x "$$HOME/.composer/vendor/bin/phpcs" ]' > /dev/null 2>&1; then \
 		echo "Installing PHP_CodeSniffer and WordPress Coding Standards..."; \
@@ -194,6 +197,7 @@ help:
 	@echo "  logs-test          - Show logs from test environment"
 	@echo "  clean              - Clean up WordPress environment"
 	@echo "  destroy            - Destroy the WordPress environment"
+	@echo "  flush-permalinks   - Flush the created permalinks"
 	@echo "  create-user        - Create a WordPress user if it doesn't exist."
 	@echo "                       Usage: make create-user USER=<username> EMAIL=<email> ROLE=<role> PASSWORD=<password>"
 	@echo ""
