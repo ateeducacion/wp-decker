@@ -362,7 +362,7 @@ table#tablaTareas td:nth-child(4) {
 	// Set locale to Spanish
 	// dayjs.locale('es');
 
-	function setupAllTasksTable() {
+	function setupAllTasksTable(initialBoard) {
 		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
 			// Initialize DataTables only if it hasn't been initialized yet
 			tablaElement = jQuery('#tablaTareas').DataTable({
@@ -434,19 +434,53 @@ table#tablaTareas td:nth-child(4) {
 					// Move SearchBuilder to the desired location
 					var searchBuilderButton = jQuery('.dt-buttons .dt-button');
 					jQuery('#searchBuilderContainer').append(searchBuilderButton);
+					
+					// Aplicar filtro inicial si existe
+					if (initialBoard) {
+						tablaElement.column(1).search(initialBoard).draw();
+					}
 				}
 			});
 
 			// Filter by board using combobox
 			jQuery('#boardFilter').on('change', function () {
-				tablaElement.column(1).search(this.value).draw();
+				const boardValue = this.value;
+				tablaElement.column(1).search(boardValue).draw();
+				// Actualizar URL con el nuevo filtro
+				updateUrlWithFilters(boardValue);
 			});
 		}
 	}
 
+	// Función para actualizar la URL con los parámetros de filtro
+	function updateUrlWithFilters(boardFilter) {
+		const url = new URL(window.location);
+		if (boardFilter) {
+			url.searchParams.set('board', boardFilter);
+		} else {
+			url.searchParams.delete('board');
+		}
+		window.history.replaceState(null, '', url);
+	}
+
+	// Función para leer parámetros de la URL
+	function getUrlParam(name) {
+		const urlParams = new URLSearchParams(window.location.search);
+		return urlParams.get(name);
+	}
+
 	// Call setup function when document is ready
 	jQuery(document).ready(function () {
-		setupAllTasksTable();
+		// Leer parámetros de la URL
+		const initialBoard = getUrlParam('board');
+		
+		setupAllTasksTable(initialBoard);
+
+		// Si hay un filtro de tablero en la URL, aplicarlo
+		if (initialBoard) {
+			jQuery('#boardFilter').val(initialBoard);
+		}
+
 		// Manejar el evento de clic en el checkbox "Today"
 		document.querySelectorAll('.today-checkbox').forEach(checkbox => {
 			checkbox.addEventListener('change', function() {
