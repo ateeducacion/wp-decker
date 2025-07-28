@@ -105,6 +105,17 @@ function showTooltip(message, duration = 2000){
                 const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 const fcLocale = (deckerVars.locale || 'en').toLowerCase();
 
+                // Compute initial view from URL or localStorage
+                const urlParams = new URLSearchParams(window.location.search);
+                let initialView = urlParams.get('view');
+                const validViews = ['dayGridMonth', 'timeGridWeek', 'timeGridDay', 'listMonth'];
+                if (!validViews.includes(initialView)) {
+                    initialView = localStorage.getItem('deckerCalendarView');
+                    if (!validViews.includes(initialView)) {
+                        initialView = 'dayGridMonth'; // default
+                    }
+                }
+
 
                 this.$calendarObj = new FullCalendar.Calendar(this.$calendar[0], {
                     timeZone: 'local',
@@ -133,7 +144,7 @@ function showTooltip(message, duration = 2000){
                         prev: '<',
                         next: '>',
                     },
-                    initialView: 'dayGridMonth',
+                    initialView: initialView,
                     handleWindowResize: true,
                     height: $(window).height() - 200,
                     dayMaxEvents: 4,
@@ -354,6 +365,10 @@ function showTooltip(message, duration = 2000){
 
                         }
                         titleEl.setAttribute('title', info.event.title);
+                    },
+                    viewDidMount: function(info) {
+                        const currentView = info.view.type;
+                        localStorage.setItem('deckerCalendarView', currentView);
                     }
                 });
 
