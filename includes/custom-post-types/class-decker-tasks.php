@@ -264,6 +264,17 @@ class Decker_Tasks {
 		error_log( 'SOURCE: ' . $source_stack );
 		error_log( 'TARGET: ' . $target_stack );
 
+		error_log( 'task_id: ' . $request->get_param( 'id' ) );
+		error_log( 'board_id: ' . $request->get_param( 'board_id' ) );
+		error_log( 'source_stack: ' . $request->get_param( 'source_stack' ) );
+		error_log( 'target_stack: ' . $request->get_param( 'target_stack' ) );
+		error_log( 'source_order: ' . $request->get_param( 'source_order' ) );
+		error_log( 'target_order: ' . $request->get_param( 'target_order' ) );
+
+
+		error_log( print_r( $request->get_json_params(), true ) );
+		error_log( print_r( $request->get_params(), true ) );
+
 
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
