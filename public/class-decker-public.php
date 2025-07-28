@@ -261,6 +261,7 @@ class Decker_Public {
 			// Cargar scripts de editor para todas las páginas
 			wp_enqueue_script('editor');
 			wp_enqueue_script('wp-tinymce');
+			wp_enqueue_script('heartbeat');
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
 

@@ -16,9 +16,48 @@
 
     let assigneesSelect = null;
     let labelsSelect = null;
+    let taskEditor = null;
+    let taskEditorInitPromise = null;
 
     // Start of comment part
     var replyToCommentId = null;
+
+    function initializeTaskEditor() {
+        if (taskEditor && taskEditor.initialized) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const config = {
+                tinymce: {
+                    wpautop: true,
+                    container: 'description-tab',
+                    toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright wp_adv',
+                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    menubar: false,
+                    setup: function(ed) {
+                        taskEditor = ed;
+                        ed.on('change', function() {
+                            // Mark the form as having unsaved changes
+                            const saveButton = document.querySelector('#save-task');
+                            if (saveButton) {
+                                saveButton.disabled = false;
+                                window.deckerHasUnsavedChanges = true;
+                            }
+                        });
+                        ed.on('init', function() {
+                            taskEditor.initialized = true;
+                            resolve();
+                        });
+                    }
+                },
+                quicktags: true,
+                mediaButtons: true
+            };
+
+            wp.editor.initialize('task-description', config);
+        });
+    }
 
     // Function to initialize comment submission within the given context
     function initializeSendComments(context) {
@@ -202,14 +241,6 @@
         }
 
         if (context.querySelector('#task-labels')) {
-            // labelsSelect = new Choices(context.querySelector('#task-labels'), { 
-            //     removeItemButton: true, 
-            //     allowHTML: true,
-            //     searchEnabled: true,
-            //     shouldSort: true,
-            // });
-
-
             labelsSelect = new Choices(context.querySelector('#task-labels'), {
             removeItemButton: true,
             allowHTML: true,
@@ -218,8 +249,6 @@
             callbackOnCreateTemplates: function (strToEl, escapeForTemplate, getClassNames) {
                 const defaultTemplates = Choices.defaults.templates;
                 
-
-
                 return {
                     ...defaultTemplates,
                     item: (classNames, data) => {
@@ -248,11 +277,8 @@
                         return el;
                     }
                 }
-
             }
         });
-
-
         }
 
         var uploadFileButton = context.querySelector('#upload-file');
@@ -323,6 +349,9 @@
           element.addEventListener('click', archiveTaskHandler);
 
         });
+
+        // Pre-inicializar el editor de tareas
+        initializeTaskEditor();
 
     }
 
@@ -573,11 +602,27 @@
             alert(strings.error_saving_task);
         };
 
+        // Obtener el contenido del editor si está inicializado
+        if (taskEditor) {
+            formData.description = taskEditor.getContent();
+        } else {
+            formData.description = document.querySelector('#task-description').value;
+        }
+
         const encodedData = Object.keys(formData)
             .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
             .join('&');
 
         xhr.send(encodedData);
+    }
+
+    // Función para destruir el editor cuando se cierra el modal
+    function destroyTaskEditor() {
+        if (taskEditor && taskEditor.initialized) {
+            wp.editor.remove('task-description');
+            taskEditor.initialized = false;
+            taskEditor = null;
+        }
     }
 
     // Obtener el task_id desde el input hidden
@@ -597,6 +642,7 @@
     window.sendFormByAjax = sendFormByAjax;
     window.deleteComment = deleteComment;
     window.togglePriorityLabel = togglePriorityLabel;
+    window.destroyTaskEditor = destroyTaskEditor;
 
     // Inicializar automáticamente si el contenido está cargado directamente en la página
     document.addEventListener('DOMContentLoaded', function() {
@@ -606,19 +652,18 @@
             initializeTaskPage(document);
             initializeSendComments(document);
         }
+    });
 
-        // Inicializar TinyMCE si existe en la página
-        if (typeof tinymce !== 'undefined' && tinymce.editors.length > 0) {
-            tinymce.editors.forEach(function(editor) {
-                editor.on('change', function() {
-                    const saveButton = document.querySelector('#save-task');
-                    if (saveButton) {
-                        saveButton.disabled = false;
-                        window.deckerHasUnsavedChanges = true;
-                    }
-                });
-            });
-        }
+    // Pre-inicializar el editor cuando se hace clic en el botón de edición
+    document.querySelectorAll('[data-bs-target="#task-modal"]').forEach((button) => {
+        button.addEventListener('click', function() {
+            initializeTaskEditor();
+        });
+    });
+
+    // Destruir el editor cuando se cierra el modal
+    document.getElementById('task-modal')?.addEventListener('hidden.bs.modal', function() {
+        destroyTaskEditor();
     });
 
 })();
