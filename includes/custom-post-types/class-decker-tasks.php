@@ -253,11 +253,12 @@ class Decker_Tasks {
 	 */
 	public function update_task_stack_and_order( $request ) {
 		$task_id      = intval( $request['id'] );
-		$board_id     = intval( $request->get_param( 'board_id' ) );
-		$source_stack = sanitize_text_field( $request->get_param( 'source_stack' ) );
-		$target_stack = sanitize_text_field( $request->get_param( 'target_stack' ) );
-		$source_order = intval( $request->get_param( 'source_order' ) );
-		$target_order = intval( $request->get_param( 'target_order' ) );
+		$params       = $request->get_json_params();
+		$board_id     = intval( $params['board_id'] ?? 0 );
+		$source_stack = sanitize_text_field( $params['source_stack'] ?? '' );
+		$target_stack = sanitize_text_field( $params['target_stack'] ?? '' );
+		$source_order = intval( $params['source_order'] ?? 0 );
+		$target_order = intval( $params['target_order'] ?? 0 );
 
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
