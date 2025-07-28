@@ -327,12 +327,6 @@ function() {
 				}
 				window.history.replaceState(null, '', url);
 				
-				// Save to localStorage for persistence across sessions
-				if (user) {
-					localStorage.setItem('kanban_user_filter', user);
-				} else {
-					localStorage.removeItem('kanban_user_filter');
-				}
 			}
 
 			// Function to get URL parameters
@@ -345,8 +339,8 @@ function() {
 				const searchInput = document.getElementById('searchInput');
 				const boardUserFilter = document.getElementById('boardUserFilter');
 				
-				// Get initial user filter from URL or localStorage
-				const initialUser = getUrlParam('user') || localStorage.getItem('kanban_user_filter');
+				// Get initial user filter from URL
+				const initialUser = getUrlParam('user');
 				if (initialUser) {
 					boardUserFilter.value = initialUser;
 				}

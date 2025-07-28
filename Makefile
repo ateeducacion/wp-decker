@@ -25,10 +25,11 @@ start-if-not-running:
 	fi
 
 # Bring up Docker containers
-up: check-docker start-if-not-running flush-permalinks
+up: check-docker start-if-not-running
 
 flush-permalinks:
-	npx wp-env run cli wp rewrite flush --hard
+	#npx wp-env run cli wp rewrite flush --hard
+	npx wp-env run cli wp rewrite structure '/%postname%/'
 
 # Function to create a user only if it does not exist
 create-user:
