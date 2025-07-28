@@ -258,8 +258,8 @@ class Decker_Tasks {
 		$board_id     = intval( $params['board_id'] ?? intval( $request->get_param( 'board_id' ) ) );
 		$source_stack = sanitize_text_field( $params['source_stack'] ?? $request->get_param( 'source_stack' ) );
 		$target_stack = sanitize_text_field( $params['target_stack'] ?? $request->get_param( 'target_stack' ) );
-		$source_order = intval( $params['source_order'] ?? $request->get_param( 'source_order'  );
-		$target_order = intval( $params['target_order'] ?? $request->get_param( 'target_order'  );
+		$source_order = intval( $params['source_order'] ?? $request->get_param( 'source_order' ) );
+		$target_order = intval( $params['target_order'] ?? $request->get_param( 'target_order' ) );
 
 		error_log( 'SOURCE: ' . $source_stack );
 		error_log( 'TARGET: ' . $target_stack );
