@@ -326,7 +326,6 @@ function() {
 					url.searchParams.delete('user');
 				}
 				window.history.replaceState(null, '', url);
-				
 			}
 
 			// Function to get URL parameters
