@@ -227,10 +227,10 @@ class Decker_Public {
 
 			if ( 'calendar' == $decker_page || 'event-manager' == $decker_page ) {
 
-				// Flatpickr.
-				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js';
-				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css';
-				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js';
+				// // Flatpickr.
+				// $resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js';
+				// $resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css';
+				// $resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/es.min.js';
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
@@ -335,9 +335,11 @@ class Decker_Public {
 					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' ),
 
 				),
-				'disabled'       => isset( $disabled ) && $disabled ? true : false,
-				'current_user_id' => get_current_user_id(),
-				'users'          => $users,
+				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
+				'disabled'          => isset( $disabled ) && $disabled ? true : false,
+				'current_user_id'   => get_current_user_id(),
+				'users'             => $users,
+				'locale' => substr( get_user_locale(), 0, 2 ), // Ej: "es_ES" → "es".
 			);
 
 			$last_handle = '';

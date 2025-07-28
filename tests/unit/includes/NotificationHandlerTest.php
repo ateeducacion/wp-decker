@@ -48,8 +48,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	public function set_up(): void {
 		parent::set_up();
 
-
-		$this->captured_mail = [];
+		$this->captured_mail = array();
 
 		// Enable email notifications.
 		update_option(
@@ -80,7 +79,6 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-
 		// Initialize the notifications handler.
 		$this->notifications = new Decker_Notification_Handler();
 
@@ -99,7 +97,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		wp_delete_user( $this->test_user );
 		delete_option( 'decker_settings' );
 
-		$this->fired_hooks  = array();
+		$this->fired_hooks   = array();
 		$this->captured_mail = array();
 
 		remove_action( 'decker_user_assigned', array( $this, 'track_hook' ), 10 );
@@ -156,7 +154,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			'title'     => 'New Notification',
 			'action'    => '',
 			'time'      => '',
-			'type'		=> 'task_created'
+			'type'      => 'task_created',
 		);
 
 		update_user_meta( $this->test_user, 'decker_pending_notifications', array( $notification ) );
@@ -224,15 +222,15 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			$this->task_id,
 			array(
 				'assigned_users' => array( $this->test_user ),
-				'stack' => 'done'
+				'stack'          => 'done',
 			)
 		);
 
 		// Verificar metadata de prioridad
 		$this->assertEquals(
-		    '0', 
-		    get_post_meta($this->task_id, 'max_priority', true),
-		    'Priority meta not set correctly'
+			'0',
+			get_post_meta( $this->task_id, 'max_priority', true ),
+			'Priority meta not set correctly'
 		);
 
 		// Trigger the completion hook.
@@ -277,16 +275,16 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$this->task_id = self::factory()->task->update_object(
 			$this->task_id,
 			array(
-				'assigned_users' => array( $this->test_user, $other_user),
-				'stack' => 'done'
+				'assigned_users' => array( $this->test_user, $other_user ),
+				'stack'          => 'done',
 			)
 		);
 
 		// Verificar metadata de prioridad
 		$this->assertEquals(
-		    '0', 
-		    get_post_meta($this->task_id, 'max_priority', true),
-		    'Priority meta not set correctly'
+			'0',
+			get_post_meta( $this->task_id, 'max_priority', true ),
+			'Priority meta not set correctly'
 		);
 
 		// Trigger the completion hook.
@@ -330,14 +328,14 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		$commenter_id = self::factory()->user->create(['role' => 'subscriber']);		
+		$commenter_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
 		// Create a comment using the WordPress factory.
 		$comment_id = self::factory()->comment->create(
 			array(
-				'comment_post_ID' => $this->task_id,
-				'comment_content' => 'Test comment',
-				'user_id'         => $commenter_id,
+				'comment_post_ID'  => $this->task_id,
+				'comment_content'  => 'Test comment',
+				'user_id'          => $commenter_id,
 				'comment_approved' => 1,
 			)
 		);
@@ -353,21 +351,16 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		$comment_notification = null;
 
-
 		// Buscar la notificación de comentario específica
-		foreach ($this->captured_mail as $mail) {
-		    if (str_contains($mail['subject'], 'New Comment')) {
-		        $comment_notification = $mail;
-		        break;
-		    }
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'New Comment' ) ) {
+				$comment_notification = $mail;
+				break;
+			}
 		}
 
-		$this->assertNotNull($comment_notification, 'No se encontró email de comentario');
-		$this->assertEquals('test@example.com', $comment_notification['to']);
-
-
-
-
+		$this->assertNotNull( $comment_notification, 'No se encontró email de comentario' );
+		$this->assertEquals( 'test@example.com', $comment_notification['to'] );
 
 		// Check that at least one email was captured.
 		$this->assertNotEmpty( $this->captured_mail, 'No email was captured.' );
@@ -419,8 +412,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 *
 	 * @return array The same email arguments, unchanged.
 	 */
-	public function capture_mail($args) {
-	    $this->captured_mail[] = $args; // Cambiar a array de emails
-	    return $args;
+	public function capture_mail( $args ) {
+		$this->captured_mail[] = $args; // Cambiar a array de emails
+		return $args;
 	}
 }

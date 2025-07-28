@@ -1,9 +1,46 @@
+
+
+
 (function() {
     'use strict';
     console.log('loading event-card.js');
 
     // Global variables received from PHP
     const strings = deckerVars.strings;
+
+    /**
+     * Devuelve un string ISO UTC acabado en “Z”.
+     * @param {string} localValue - 'YYYY‑MM‑DDTHH:MM'
+     */
+    function localToUtc(localValue){
+        const d = new Date(localValue);
+        return d.toISOString();           // ⇒ 2025‑07‑27T10:00:00.000Z
+    }
+
+    /**
+     * Convierte UTC → valor para el <input>.
+     *  ─ Si llega 'YYYY‑MM‑DD' (all‑day) la devuelve tal cual.
+     *  ─ Si llega 'YYYY‑MM‑DD HH:MM:SS' añade la “T” y la “Z”.
+     *  ─ Si llega ISO con “Z” la pasa a local y corta segundos.
+     */
+function utcToLocalValue(utcStr){
+    if (!utcStr) return '';
+
+    // all‑day → sin cambios
+    if (/^\d{4}-\d{2}-\d{2}$/.test(utcStr)) return utcStr;
+
+    // admitir "YYYY‑MM‑DD HH:MM:SS"
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(utcStr)){
+        utcStr = utcStr.replace(' ', 'T') + 'Z';
+    }
+
+    const d = new Date(utcStr);          // sigue estando en UTC
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+         + `T${pad(d.getHours())}:${pad(d.getMinutes())}`;   // **local**
+}
+
+
 
     // Function to delete an event
     function deleteEvent(id, title) {
@@ -35,78 +72,171 @@
      */
     function initializeEventCard(context = document) {
 
-        flatpickr.localize(flatpickr.l10ns.es);
-        flatpickr.l10ns.default.firstDayOfWeek = 1; // Monday
 
-        // Get selected date from modal if available
-        // Obtener el modal
-        const modal = document.querySelector('#event-modal');
-        // Recuperar la fecha guardada
-        const selectedDate = modal?.dataset.tempEventDate;
-        
-        // Limpiar el dato temporal si es necesario
-        if (modal && selectedDate) delete modal.dataset.tempEventDate;
+     
 
-        // Flatpickr configuration
-        const flatpickrConfig = {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-            time_24hr: true,
-            minuteIncrement: 15,
-            // defaultDate: selectedDate || undefined
-        };
 
-        const startPicker = flatpickr("#event-start", flatpickrConfig);
-        const endPicker = flatpickr("#event-end", flatpickrConfig);
-        let assignedUsersChoices = null;
 
-        // If we have a selected date, update both pickers while keeping their current times
-        if (selectedDate) {
-            const startInput = context.querySelector("#event-start");
-            const endInput = context.querySelector("#event-end");
-            
-            if (startInput && endInput) {
-                const startTime = startInput.value.split(' ')[1] || '';
-                const endTime = endInput.value.split(' ')[1] || '';
-                
-                startPicker.setDate(selectedDate + (startTime ? ' ' + startTime : ''));
-                endPicker.setDate(selectedDate + (endTime ? ' ' + endTime : ''));
+        const startInput = context.querySelector('#event-start');
+        const endInput = context.querySelector('#event-end');
+
+   // ---------- valores por defecto ---------- //
+        (function setDefaultTimes(){
+            if (startInput.value) return;                // se abre un evento existente
+
+            // a) si FullCalendar pasó un día (click en celda vacía)…
+            const modal     = document.querySelector('#event-modal');
+            const clickDate = modal?.dataset.tempEventDate
+                ? (() => {
+                    const [y, m, d] = modal.dataset.tempEventDate.split('-').map(Number);
+                    return new Date(y, m - 1, d);  // ← esta versión usa la hora local
+                })()
+                : null;
+
+            // b) …o si no, usa ahora mismo
+            const base = new Date();
+
+            if (clickDate) {
+                base.setFullYear(clickDate.getFullYear());
+                base.setMonth(clickDate.getMonth());
+                base.setDate(clickDate.getDate());
             }
-        }
 
-        // All Day Event handler
-        const allDaySwitch = context.querySelector('#event-allday');
-        if (allDaySwitch) {
-            // Function to handle all-day mode changes
-            const handleAllDayChange = function(isAllDay) {
-                startPicker.set('enableTime', !isAllDay);
-                startPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
-                endPicker.set('enableTime', !isAllDay);
-                endPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
 
-                // Adjust existing dates
-                if (isAllDay) {
-                    if (startPicker.selectedDates.length > 0) {
-                        const startDate = new Date(startPicker.selectedDates[0]);
-                        startDate.setHours(0, 0, 0, 0);
-                        startPicker.setDate(startDate);
-                    }
-                    if (endPicker.selectedDates.length > 0) {
-                        const endDate = new Date(endPicker.selectedDates[0]);
-                        endDate.setHours(23, 59, 0, 0);
-                        endPicker.setDate(endDate);
-                    }
-                }
-            };
+            // redondea base a la siguiente :00 o :30 y +1 h
+            base.setSeconds(0,0);
+            const m = base.getMinutes();
+            if (m % 30) base.setMinutes(m + (30 - m % 30));
 
-            // Initial setup based on current state
-            handleAllDayChange(allDaySwitch.checked);
+            const start = new Date(base);
+            const end   = new Date(start.getTime() + 60*60*1000);
 
-            // Handle changes
-            allDaySwitch.addEventListener('change', function() {
-                handleAllDayChange(this.checked);
+            startInput.value = toLocalDatetimeString(start);
+            endInput.value   = toLocalDatetimeString(end);
+        })();
+
+
+
+const isAllDay = context.querySelector('#event-allday')?.checked;
+
+// Establecer el tipo de los inputs antes de asignar los valores
+if (isAllDay) {
+    startInput.type = 'date';
+    endInput.type = 'date';
+} else {
+    startInput.type = 'datetime-local';
+    endInput.type = 'datetime-local';
+}
+
+
+        // Sincroniza fechas: el "to" no puede ser menor que el "from"
+        if (startInput && endInput) {
+            startInput.addEventListener('change', () => {
+                endInput.min = startInput.value;
+            });
+
+            endInput.addEventListener('change', () => {
+                startInput.max = endInput.value;
             });
         }
+
+
+        let assignedUsersChoices = null;
+
+
+        document.querySelectorAll('[data-utc]').forEach(input => {
+            const raw = input.dataset.utc;
+            if (!raw) return;
+
+            // Si el input es type="date" pone la fecha tal cual,
+            // en otro caso usa la función de conversión.
+            input.value = (input.type === 'date')
+                ? raw
+                : utcToLocalValue(raw);
+        });
+
+function toLocalDatetimeString(date) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function toLocalDateString(date) {
+    const pad = n => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+
+
+const allDaySwitch = context.querySelector('#event-allday');
+// const startInput = context.querySelector('#event-start');
+// const endInput = context.querySelector('#event-end');
+
+if (allDaySwitch && startInput && endInput) {
+    // Set the correct input types on load based on all-day checkbox
+    if (allDaySwitch.checked) {
+        startInput.value = startInput.value.split('T')[0] || // venimos de datetime‑local
+                           new Date().toISOString().slice(0, 10);
+        endInput.value   = endInput.value.split('T')[0]   ||
+                           startInput.value;
+
+        startInput.type = 'date';
+        endInput.type = 'date';
+    } else {
+        startInput.type = 'datetime-local';
+        endInput.type = 'datetime-local';
+    }
+
+    // Handle changes when the checkbox is toggled manually
+ 
+
+
+allDaySwitch.addEventListener('change', () => {
+    const isAllDay = allDaySwitch.checked;
+
+    const safeParse = (value) => {
+        if (!value) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            value += 'T00:00';
+        }
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+    };
+
+    const currentStart = safeParse(startInput.value);
+    const currentEnd   = safeParse(endInput.value || startInput.value);
+
+    if (isAllDay) {
+        startInput.type = 'date';
+        endInput.type = 'date';
+
+        startInput.value = toLocalDateString(currentStart || new Date());
+        endInput.value   = toLocalDateString(currentEnd   || new Date());
+    } else {
+        startInput.type = 'datetime-local';
+        endInput.type   = 'datetime-local';
+
+        // Mantener el día y redondear la hora
+        const base = currentStart || new Date();
+        const now = new Date();
+        now.setSeconds(0, 0);
+
+        const minutes = now.getMinutes();
+        if (minutes % 30 !== 0) {
+            now.setMinutes(minutes + (30 - (minutes % 30)));
+        }
+
+        // Combinar el día original con la hora redondeada
+        const start = new Date(base);
+        start.setHours(now.getHours(), now.getMinutes(), 0, 0);
+
+        const end = new Date(start.getTime() + 60 * 60 * 1000);
+
+        startInput.value = toLocalDatetimeString(start);
+        endInput.value   = toLocalDatetimeString(end);
+    }
+});
+
+}
 
         // Initialize Choices.js
         const assignedUsersSelect = context.querySelector('#event-assigned-users');
@@ -138,43 +268,7 @@
             });
         }
 
-
-
-
-
-        // const startPicker = flatpickr("#event-start", flatpickrConfig);
-        // const endPicker = flatpickr("#event-end", flatpickrConfig);
-
-        // // Manejar el cambio del switch "All Day Event"
-        // const allDaySwitch = context.querySelector('#event-allday');
-        // if (allDaySwitch) {
-        //     allDaySwitch.addEventListener('change', function() {
-        //         const isAllDay = this.checked;
-
-        //         // Actualizar la configuración de flatpickr según el estado del switch
-        //         startPicker.set('enableTime', !isAllDay);
-        //         startPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
-
-        //         endPicker.set('enableTime', !isAllDay);
-        //         endPicker.set('dateFormat', isAllDay ? "Y-m-d" : "Y-m-d H:i");
-
-        //         // Ajustar las fechas si es un evento de todo el día
-        //         if (isAllDay) {
-        //             if (startPicker.selectedDates[0]) {
-        //                 const startDate = startPicker.selectedDates[0];
-        //                 startDate.setHours(0, 0, 0, 0);
-        //                 startPicker.setDate(startDate);
-        //             }
-        //             if (endPicker.selectedDates[0]) {
-        //                 const endDate = endPicker.selectedDates[0];
-        //                 endDate.setHours(23, 59, 0, 0);
-        //                 endPicker.setDate(endDate);
-        //             }
-        //         }
-        //     });
-        // }
-
-      // Form submission handler
+        // Form submission handler
         const form = context.querySelector('#form-event');
         if (form) {
             form.addEventListener('submit', async function(e) {
@@ -193,21 +287,58 @@
                 const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (isEdit ? '/' + eventId : '');
                 const method = isEdit ? 'PUT' : 'POST';
 
-                // Prepare event data
-                const eventData = {
-                    title: formData.get('event_title'),
-                    status: 'publish',
-                    meta: {
-                        event_start: formData.get('event_start'),
-                        event_end: formData.get('event_end'),
-                        event_allday: formData.get('event_allday') === 'on',
-                        event_category: formData.get('event_category'),
-                        event_assigned_users: formData.getAll('event_assigned_users[]').map(Number),
-                        event_location: formData.get('event_location'),
-                        event_url: formData.get('event_url')
-                    },
-                    content: formData.get('event_description')
-                };
+
+const isAllDay = form.querySelector('#event-allday').checked;
+
+const startUtc = isAllDay
+    ? startInput.value            // 'YYYY‑MM‑DD'
+    : localToUtc(startInput.value);
+
+const endUtc   = isAllDay
+    ? endInput.value
+    : localToUtc(endInput.value);
+
+const eventData = {
+    title : formData.get('event_title'),
+    status: 'publish',
+    meta  : {
+        event_start      : startUtc,
+        event_end        : endUtc,
+        event_allday     : isAllDay,
+        event_category   : formData.get('event_category'),
+        event_assigned_users : formData.getAll('event_assigned_users[]').map(Number),
+        event_location   : formData.get('event_location'),
+        event_url        : formData.get('event_url')
+    },
+    content: formData.get('event_description')
+};
+
+                // const isAllDay = form.querySelector('#event-allday').checked;
+                // let startValue = formData.get('event_start');
+                // let endValue = formData.get('event_end');
+
+                // // if (isAllDay) {
+                // //     startValue = `${startValue}T00:00`;
+                // //     endValue = `${endValue}T23:59`;
+                // // }
+
+
+                // // Prepare event data
+                // const eventData = {
+                //     title: formData.get('event_title'),
+                //     status: 'publish',
+                //     meta: {
+                //         // Convert data to UTC
+                //         event_start: startValue,
+                //         event_end: endValue,
+                //         event_allday: formData.get('event_allday') === 'on',
+                //         event_category: formData.get('event_category'),
+                //         event_assigned_users: formData.getAll('event_assigned_users[]').map(Number),
+                //         event_location: formData.get('event_location'),
+                //         event_url: formData.get('event_url')
+                //     },
+                //     content: formData.get('event_description')
+                // };
 
                 try {
                     const response = await fetch(url, {
@@ -242,108 +373,7 @@
             });
         });
     }
-        
-
-    //     // Inicializar Choices.js para el campo de usuarios asignados
-    //     const assignedUsersSelect = context.querySelector('#event-assigned-users');
-    //     if (assignedUsersSelect) {
-    //         new Choices(assignedUsersSelect, { 
-    //             removeItemButton: true,
-    //             searchEnabled: true,
-    //             shouldSort: true,
-    //             placeholder: true,
-    //             placeholderValue: strings.select_users_placeholder,
-    //             searchPlaceholderValue: strings.search_users_placeholder
-    //         });
-    //     }
-
-    //     // Manejar el envío del formulario
-    //     const form = context.querySelector('#form-event');
-    //     if (form) {
-    //         form.addEventListener('submit', async function(e) {
-    //             e.preventDefault();
-
-    //             // Validar el formulario
-    //             if (!form.checkValidity()) {
-    //                 e.stopPropagation();
-    //                 form.classList.add('was-validated');
-    //                 return;
-    //             }
-
-    //             form.classList.add('was-validated');
-
-    //             // Recopilar los datos del formulario
-    //             const formData = new FormData(form);
-    //             const eventId = formData.get('event_id');
-    //             const isEdit = eventId && parseInt(eventId) > 0;
-
-    //             // Construir el objeto de datos del evento
-    //             const eventData = {
-    //                 title: formData.get('event_title'),
-    //                 status: 'publish',
-    //                 meta: {
-    //                     event_start: formData.get('event_start'),
-    //                     event_end: formData.get('event_end'),
-    //                     event_allday: formData.get('event_allday') === 'on',
-    //                     event_category: formData.get('event_category'),
-    //                     event_assigned_users: formData.getAll('event_assigned_users[]').map(id => parseInt(id)),
-    //                     event_location: formData.get('event_location'),
-    //                     event_url: formData.get('event_url') || ''
-    //                 },
-    //                 content: formData.get('event_description') || ''
-    //             };
-
-    //             // Definir la URL según si es creación o actualización
-    //             const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (id > 0 ? '/' + id : '');
-
-    //             try {
-    //                 const response = await fetch(url, {
-    //                     method: 'POST',
-    //                     headers: {
-    //                         'X-WP-Nonce': wpApiSettings.nonce,
-    //                         'Content-Type': 'application/json'
-    //                     },
-    //                     body: JSON.stringify(eventData)
-    //                 });
-
-    //                 if (!response.ok) {
-    //                     const errorData = await response.json();
-    //                     throw new Error(errorData.message || strings.error_saving_event);
-    //                 }
-
-    //                 // Recargar la página para reflejar los cambios
-    //                 location.reload();
-    //             } catch (error) {
-    //                 console.error('Error:', error);
-    //                 alert(error.message || strings.error_saving_event);
-    //             }
-    //         });
-    //     }
     
-        
-    //     // Handle select all users
-    //     context.querySelectorAll('#event-assigned-users-select-all').forEach(button => {
-    //         button.addEventListener('click', function(e) {
-    //             e.preventDefault();
-    //             context.querySelectorAll('#event_assigned_users option').forEach(option => {
-    //                 option.selected = true;
-    //             });
-    //         });
-    //     });
-
-    //     // Handle delete event buttons
-    //     context.querySelectorAll('.delete-event').forEach(button => {
-    //         button.addEventListener('click', function(e) {
-    //             e.preventDefault();
-    //             const id = this.dataset.id;
-    //             const titleElement = this.closest('tr')?.querySelector('.event-title') || 
-    //                                document.querySelector('#event-title');
-    //             const title = titleElement ? titleElement.value || titleElement.textContent.trim() : '';
-    //             deleteEvent(id, title);
-    //         });
-    //     });
-    // }
-
     // Exportar funciones globalmente para que puedan ser llamadas desde HTML
     window.initializeEventCard = initializeEventCard;
 
@@ -356,36 +386,7 @@
             initializeEventCard(document);
         }
 
+
     });
-
-
-    // // Initialize when document is ready - only for standalone pages
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     // Only initialize if we're not in a modal context
-    //     const modalContext = document.querySelector('.modal.show');
-    //     if (!modalContext) {
-    //         console.log('Initializing event card in standalone context');
-    //         initializeEventCard();
-    //     } else {
-    //         console.log('Skipping initialization in modal context');
-    //     }
-    // });
-
-    // // Export for use in modal and make it handle initialization tracking
-    // window.initializeEventCard = function(context = document) {
-    //     // Check if already initialized in this context
-    //     if (context instanceof Element && context.hasAttribute('data-event-initialized')) {
-    //         console.log('Event card already initialized in this context');
-    //         return;
-    //     }
-
-    //     // Initialize the event card
-    //     initializeEventCard(context);
-
-    //     // Mark as initialized
-    //     if (context instanceof Element) {
-    //         context.setAttribute('data-event-initialized', 'true');
-    //     }
-    // };
 
 })();

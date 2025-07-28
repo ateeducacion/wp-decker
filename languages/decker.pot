@@ -10,7 +10,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.11.0\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: decker\n"
 
 #. Plugin Name of the plugin
@@ -97,6 +97,7 @@ msgid "All Decker records have been deleted."
 msgstr ""
 
 #. Translators: %s is a list of invalid user IDs that have been removed.
+#, php-format
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr ""
 
@@ -107,6 +108,18 @@ msgid "Go to Decker"
 msgstr ""
 
 msgid "No tasks found for this date."
+msgstr ""
+
+msgid "Events"
+msgstr ""
+
+msgid "Absences"
+msgstr ""
+
+msgid "Warnings"
+msgstr ""
+
+msgid "Alerts"
 msgstr ""
 
 msgid "You do not have permissions to access this data."
@@ -166,8 +179,8 @@ msgstr ""
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
-#. translators: %s is the name of the user who completed the task.
-#. Translators: %s is the task author.
+#. translators: %s is a username.
+#. Translators: %s is a username.
 msgid "Unknown user"
 msgstr ""
 
@@ -175,21 +188,25 @@ msgid "Task Created"
 msgstr ""
 
 #. translators: 1: Task title, 2: Task URL, 3: Creator name
+#, php-format
 msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
 msgstr ""
 
 msgid "You have been assigned a task"
 msgstr ""
 
-#. translators: %s is the name of the user who completed the task.
+#. translators: %s is a username.
+#, php-format
 msgid "Completed by %s"
 msgstr ""
 
 #. Translators: %s is the task title.
+#, php-format
 msgid "New Comment on Task: %s"
 msgstr ""
 
-#. Translators: %s is the task author.
+#. Translators: %s is a username.
+#, php-format
 msgid "Comment by %s"
 msgstr ""
 
@@ -307,9 +324,6 @@ msgstr ""
 msgid "View Event"
 msgstr ""
 
-msgid "Events"
-msgstr ""
-
 msgid "Search Events"
 msgstr ""
 
@@ -328,25 +342,19 @@ msgstr ""
 msgid "Assigned Users"
 msgstr ""
 
-msgid "All Day Event"
+msgid "All Day Event Event"
 msgstr ""
 
 msgid "End Date must be after Start Date."
 msgstr ""
 
-msgid "Please ensure that the End Date is after the Start Date."
+msgid "Start:"
 msgstr ""
 
-msgid "Start Date:"
+msgid "Time is stored in UTC. Adjust accordingly."
 msgstr ""
 
-msgid "Start Time:"
-msgstr ""
-
-msgid "End Date:"
-msgstr ""
-
-msgid "End Time:"
+msgid "End:"
 msgstr ""
 
 msgid "Location:"
@@ -371,6 +379,21 @@ msgid "Info"
 msgstr ""
 
 msgid "Dark"
+msgstr ""
+
+msgid "All Day Event"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "End"
+msgstr ""
+
+msgid "Category"
+msgstr ""
+
+msgid "Date"
 msgstr ""
 
 msgid "Board is required"
@@ -431,10 +454,12 @@ msgid "Tomorrow"
 msgstr ""
 
 #. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+#, php-format
 msgid "%s ago"
 msgstr ""
 
 #. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+#, php-format
 msgid "in %s"
 msgstr ""
 
@@ -508,6 +533,7 @@ msgid "Archived"
 msgstr ""
 
 #. translators: %s: Number of items
+#, php-format
 msgid "Archived <span class=\"count\">(%s)</span>"
 msgid_plural "Archived <span class=\"count\">(%s)</span>"
 msgstr[0] ""
@@ -639,6 +665,9 @@ msgstr ""
 msgid "Export .ics file"
 msgstr ""
 
+msgid "Event type feeds:"
+msgstr ""
+
 msgid "Select your favorite color."
 msgstr ""
 
@@ -765,22 +794,31 @@ msgstr ""
 msgid "Tasks by Stack from current User"
 msgstr ""
 
-msgid "Drag and drop your event or click in the calendar"
-msgstr ""
-
-msgid "Meeting"
-msgstr ""
-
-msgid "Holidays"
-msgstr ""
-
-msgid "Alert"
-msgstr ""
-
 msgid "Search..."
 msgstr ""
 
 msgid "Search"
+msgstr ""
+
+msgid "All Types"
+msgstr ""
+
+msgid "Tasks"
+msgstr ""
+
+msgid "All Users"
+msgstr ""
+
+msgid "Drag and drop your event or click in the calendar"
+msgstr ""
+
+msgid "Event"
+msgstr ""
+
+msgid "Absence"
+msgstr ""
+
+msgid "Alert"
 msgstr ""
 
 msgid "Title"
@@ -789,13 +827,7 @@ msgstr ""
 msgid "All Day"
 msgstr ""
 
-msgid "Start"
-msgstr ""
-
-msgid "End"
-msgstr ""
-
-msgid "Category"
+msgid "Meeting"
 msgstr ""
 
 msgid "Uncategorized"
@@ -811,13 +843,11 @@ msgid "TO-DO"
 msgstr ""
 
 #. translators: %s: Board slug that was not found
+#, php-format
 msgid "Error: The board %s does not exist."
 msgstr ""
 
 msgid "Kanban Board"
-msgstr ""
-
-msgid "All Users"
 msgstr ""
 
 msgid "Fix Order"
@@ -911,9 +941,6 @@ msgid "Error loading tasks."
 msgstr ""
 
 msgid "Tasks Detail"
-msgstr ""
-
-msgid "Tasks"
 msgstr ""
 
 msgid "Task Detail"
@@ -1084,6 +1111,12 @@ msgstr ""
 msgid "Error loading content. Please try again."
 msgstr ""
 
+msgid "Select Category"
+msgstr ""
+
+msgid "Please select a category for the event."
+msgstr ""
+
 msgid "Please enter a title for the event."
 msgstr ""
 
@@ -1115,18 +1148,6 @@ msgid "Please enter a valid URL."
 msgstr ""
 
 msgid "Please enter a description for the event."
-msgstr ""
-
-msgid "Select Category"
-msgstr ""
-
-msgid "Please select a category for the event."
-msgstr ""
-
-msgid "The category determines the color of the event in the calendar."
-msgstr ""
-
-msgid "Event"
 msgstr ""
 
 msgid "Version"
@@ -1328,9 +1349,6 @@ msgid "Upload"
 msgstr ""
 
 msgid "Nickname"
-msgstr ""
-
-msgid "Date"
 msgstr ""
 
 msgid "Under construction..."

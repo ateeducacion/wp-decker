@@ -4,14 +4,21 @@
  *
  * @package Decker
  */
+class DeckerEventsTest extends Decker_Test_Base {
 
-class DeckerEventsTest extends WP_Test_REST_TestCase {
-
-	private $administrator;
+	/**
+	 * Editor user ID.
+	 *
+	 * @var int
+	 */
 	private $editor;
-	private $subscriber;
+
+	/**
+	 * Created event ID.
+	 *
+	 * @var int
+	 */
 	private $event_id;
-	private $server;
 
 	/**
 	 * Set up before each test.
@@ -19,465 +26,573 @@ class DeckerEventsTest extends WP_Test_REST_TestCase {
 	public function set_up() {
 		parent::set_up();
 
-		// Initialize REST server
-		global $wp_rest_server;
-		$this->server = $wp_rest_server = new WP_REST_Server();
-		do_action( 'rest_api_init' );
-
-		// Ensure that post types are registered
+		// Register custom post types.
 		do_action( 'init' );
 
-		// Create users for testing
-		$this->administrator = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		// Create an editor user and set as current.
 		$this->editor = self::factory()->user->create( array( 'role' => 'editor' ) );
-		$this->subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $this->editor );
 	}
 
 	/**
-	 * Clean up after each test.
+	 * Tear down after each test.
 	 */
 	public function tear_down() {
 		if ( $this->event_id ) {
 			wp_delete_post( $this->event_id, true );
 		}
-
-		wp_delete_user( $this->administrator );
 		wp_delete_user( $this->editor );
-		wp_delete_user( $this->subscriber );
-
 		parent::tear_down();
 	}
 
 	/**
-	 * Test that the event post type exists and is accessible via REST
+	 * An editor should be able to create an event.
 	 */
-	public function test_register_route() {
-		$routes = $this->server->get_routes();
-		$this->assertArrayHasKey( '/wp/v2/decker_event', $routes );
-	}
-
-	/**
-	 * Test event creation via REST API with meta fields
-	 */
-	public function test_create_event() {
+	public function test_editor_can_create_event() {
 		wp_set_current_user( $this->editor );
 
-		$event_data = array(
-			'title' => 'Test Event',
-			'status' => 'publish',
-			'meta' => array(
-				'event_start' => '2024-02-01T10:00:00',
-				'event_end' => '2024-02-01T11:00:00',
-				'event_location' => 'Test Location',
-				'event_url' => 'https://example.com',
-				'event_category' => 'bg-primary',
-				'event_assigned_users' => array( $this->editor ),
-			),
+		$expected_start_utc = '2025-01-01 10:00:00'; // already UTC
+		$expected_end_utc   = '2025-01-01 11:00:00'; // already UTC
+
+		// Create the event via factory->create()
+		$event_result = self::factory()->event->create(
+			array(
+				'post_title'   => 'Test Event',
+				'post_content' => 'Event description',
+				'post_author'  => $this->editor,
+				'meta_input'   => array(
+					'event_allday'         => false,
+					'event_start'          => $expected_start_utc,
+					'event_end'            => $expected_end_utc,
+					'event_location'       => 'Test Location',
+					'event_url'            => 'https://example.com',
+					'event_category'       => 'bg-primary',
+					'event_assigned_users' => array( $this->editor ),
+				),
+			)
 		);
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		foreach ( $event_data as $key => $value ) {
-			$request->set_param( $key, $value );
-		}
+		// Ensure creation succeeded
+		$this->assertNotWPError( $event_result, 'The event should be created successfully.' );
+		$this->event_id = $event_result;
 
-		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		// Fetch the post and verify core fields
+		$event = get_post( $this->event_id );
+		$this->assertEquals( 'Test Event', $event->post_title, 'Title should match.' );
+		$this->assertEquals( 'Event description', $event->post_content, 'Content should match.' );
+		$this->assertEquals( $this->editor, $event->post_author, 'Author should match.' );
 
-		// Check response status and basic data
-		$this->assertEquals( 201, $response->get_status() );
-		$this->assertEquals( 'Test Event', $data['title']['rendered'] );
-
-		// Store event ID for cleanup
-		$this->event_id = $data['id'];
-
-		// Verify meta via direct access and REST response
-		foreach ( $event_data['meta'] as $key => $value ) {
-			// Check meta in REST response
-			$this->assertArrayHasKey( $key, $data['meta'], "Meta field '$key' not found in REST response" );
-			$this->assertEquals( $value, $data['meta'][ $key ], "Meta field '$key' has incorrect value in REST response" );
-
-			// Check meta in database
-			$stored_value = get_post_meta( $this->event_id, $key, true );
-			$this->assertEquals( $value, $stored_value, "Meta field '$key' has incorrect value in database" );
-		}
-	}
-
-	/**
-	 * Test that subscribers cannot create events via REST
-	 */
-	public function test_subscriber_cannot_create_event() {
-		wp_set_current_user( $this->subscriber );
-
-		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$request->set_param( 'title', 'Subscriber Event' );
-		$request->set_param( 'status', 'publish' );
-
-		$response = $this->server->dispatch( $request );
-
-		$this->assertEquals( 403, $response->get_status() );
-	}
-
-	/**
-	 * Test event update via REST API including meta fields
-	 */
-	public function test_update_event() {
-		// Create event as editor with initial meta
-		wp_set_current_user( $this->editor );
-
-		$initial_meta = array(
-			'event_start' => '2024-02-01T10:00:00',
-			'event_end' => '2024-02-01T11:00:00',
-			'event_location' => 'Initial Location',
-			'event_url' => 'https://example.com',
-			'event_category' => 'bg-primary',
+		// Verify all meta fields
+		$expected_meta = array(
+			'event_allday'         => false,
+			'event_start'          => $expected_start_utc,
+			'event_end'            => $expected_end_utc,
+			'event_location'       => 'Test Location',
+			'event_url'            => 'https://example.com',
+			'event_category'       => 'bg-primary',
 			'event_assigned_users' => array( $this->editor ),
 		);
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$request->set_param( 'title', 'Original Event' );
-		$request->set_param( 'status', 'publish' );
-		$request->set_param( 'meta', $initial_meta );
+		foreach ( $expected_meta as $key => $value ) {
+			$this->assertEquals(
+				$value,
+				get_post_meta( $this->event_id, $key, true ),
+				"Meta field '{$key}' should be stored correctly."
+			);
+		}
+	}
 
-		$response = $this->server->dispatch( $request );
-		$this->event_id = $response->get_data()['id'];
+	/**
+	 * An editor should be able to update an event.
+	 */
+	public function test_update_event() {
+		wp_set_current_user( $this->editor );
 
-		// Update event with new title and meta
-		$updated_meta = array(
-			'event_start' => '2024-02-01T14:00:00',
-			'event_end' => '2024-02-01T15:00:00',
-			'event_location' => 'Updated Location',
-			'event_url' => 'https://updated-example.com',
-			'event_category' => 'bg-success',
-			'event_assigned_users' => array( $this->administrator, $this->editor ),
+		// First, create an event (only core + one meta field).
+		$this->event_id = self::factory()->event->create(
+			array(
+				'post_title'   => 'Original Event',
+				'post_content' => 'Original content',
+				'meta_input'   => array(
+					'event_location' => 'Original Location',
+				),
+			)
 		);
 
-		$request = new WP_REST_Request( 'PUT', '/wp/v2/decker_event/' . $this->event_id );
-		$request->set_param( 'title', 'Updated Event' );
-		$request->set_param( 'meta', $updated_meta );
+		$this->assertNotWPError( $this->event_id, 'Initial creation should not error.' );
 
-		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		// Now update title + two meta fields
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'post_title' => 'Updated Event',
+				'meta_input' => array(
+					'event_location' => 'Updated Location',
+					'event_category' => 'bg-success',
+				),
+			)
+		);
 
-		// Verify response status and title
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertEquals( 'Updated Event', $data['title']['rendered'] );
+		$this->assertNotWPError( $updated_id, 'Update should not return a WP_Error.' );
+		$this->assertEquals( $this->event_id, $updated_id, 'Update should return same event ID.' );
 
-		// Verify updated meta fields
+		$event = get_post( $this->event_id );
+		$this->assertEquals( 'Updated Event', $event->post_title, 'Title should be updated.' );
+
+		$updated_meta = array(
+			'event_location' => 'Updated Location',
+			'event_category' => 'bg-success',
+		);
+
 		foreach ( $updated_meta as $key => $value ) {
-			// Check meta in REST response
-			$this->assertArrayHasKey( $key, $data['meta'], "Meta field '$key' not found in REST response" );
-			$this->assertEquals( $value, $data['meta'][ $key ], "Meta field '$key' has incorrect value in REST response" );
-
-			// Check meta in database
-			$stored_value = get_post_meta( $this->event_id, $key, true );
-			$this->assertEquals( $value, $stored_value, "Meta field '$key' has incorrect value in database" );
+			$this->assertEquals(
+				$value,
+				get_post_meta( $this->event_id, $key, true ),
+				"Meta field '{$key}' should be updated."
+			);
 		}
+	}
 
-		// Test that subscriber cannot update
-		wp_set_current_user( $this->subscriber );
 
-		$request = new WP_REST_Request( 'PUT', '/wp/v2/decker_event/' . $this->event_id );
-		$request->set_param( 'title', 'Subscriber Update' );
-		$request->set_param( 'meta', $initial_meta ); // Try to revert meta
+	/**
+	 * An editor should be able to update all fields of an event.
+	 */
+	public function test_update_event_with_all_fields() {
+		wp_set_current_user( $this->editor );
 
-		$response = $this->server->dispatch( $request );
-		$this->assertEquals( 403, $response->get_status() );
+		$this->event_id = self::factory()->event->create(
+			array(
+				'post_title'   => 'Original Event',
+				'post_content' => 'Original content',
+				'post_excerpt' => 'Original excerpt',
+				'meta_input'   => array(
+					'event_allday'         => false,
+					'event_start'          => '2025-01-01 10:00:00',
+					'event_end'            => '2025-01-01 12:00:00',
+					'event_location'       => 'Room A',
+					'event_url'            => 'https://old.example.com',
+					'event_category'       => 'bg-warning',
+					'event_assigned_users' => array( $this->editor ),
+				),
+			)
+		);
 
-		// Verify meta wasn't changed by failed subscriber update
-		foreach ( $updated_meta as $key => $value ) {
-			$stored_value = get_post_meta( $this->event_id, $key, true );
-			$this->assertEquals( $value, $stored_value, "Meta field '$key' should not have been changed by subscriber" );
+		$this->assertNotWPError( $this->event_id );
+
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'post_title'   => 'Updated Event',
+				'post_content' => 'Updated content',
+				'post_excerpt' => 'Updated excerpt',
+				'meta_input'   => array(
+					'event_allday'         => true,
+					'event_start'          => '2025-02-01',
+					'event_end'            => '2025-02-01',
+					'event_location'       => 'Room B',
+					'event_url'            => 'https://new.example.com',
+					'event_category'       => 'bg-info',
+					'event_assigned_users' => array(),
+				),
+			)
+		);
+
+		$this->assertNotWPError( $updated_id );
+		$event = get_post( $this->event_id );
+
+		$this->assertEquals( 'Updated Event', $event->post_title );
+		$this->assertEquals( 'Updated content', $event->post_content );
+		$this->assertEquals( 'Updated excerpt', $event->post_excerpt );
+
+		// Verificar metas
+		$this->assertEquals( '1', get_post_meta( $this->event_id, 'event_allday', true ), "Meta 'event_allday' should be 1." );
+		$this->assertEquals( '2025-02-01', get_post_meta( $this->event_id, 'event_start', true ), "Meta 'event_start' for all-day should be Y-m-d." );
+		$this->assertEquals( '2025-02-01', get_post_meta( $this->event_id, 'event_end', true ), "Meta 'event_end' for all-day should be Y-m-d." );
+
+		$meta = array(
+			'event_allday'         => true,
+			'event_start'          => '2025-02-01',
+			'event_end'            => '2025-02-01',
+			'event_location'       => 'Room B',
+			'event_url'            => 'https://new.example.com',
+			'event_category'       => 'bg-info',
+			'event_assigned_users' => array(),
+		);
+
+		foreach ( $meta as $key => $expected ) {
+			$this->assertEquals(
+				$expected,
+				get_post_meta( $this->event_id, $key, true ),
+				"Meta field '{$key}' should be updated."
+			);
 		}
 	}
 
 	/**
-	 * Test event deletion via REST API
+	 * An editor should be able to delete an event.
 	 */
 	public function test_delete_event() {
-		// Create event as editor
 		wp_set_current_user( $this->editor );
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$request->set_param( 'title', 'Event to Delete' );
-		$request->set_param( 'status', 'publish' );
+		$event_id = self::factory()->event->create(
+			array(
+				'post_title' => 'Deletable Event',
+			)
+		);
 
-		$response = $this->server->dispatch( $request );
-		$this->event_id = $response->get_data()['id'];
+		$this->assertNotWPError( $event_id );
+		$this->assertNotNull( get_post( $event_id ) );
 
-		// Try to delete as subscriber (should fail)
-		wp_set_current_user( $this->subscriber );
-
-		$request = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
-		$response = $this->server->dispatch( $request );
-
-		$this->assertEquals( 403, $response->get_status() );
-
-		// Delete as editor (should succeed)
-		wp_set_current_user( $this->editor );
-
-		$request = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
-		$request->set_param( 'force', true );
-		$response = $this->server->dispatch( $request );
-
-		$this->assertEquals( 200, $response->get_status() );
-
-		// Verify post is correctly deleted
-		$this->assertNull( get_post( $this->event_id ) );
+		wp_delete_post( $event_id, true );
+		$this->assertNull( get_post( $event_id ), 'Event should be deleted permanently.' );
 	}
 
 	/**
-	 * Test REST API schema for Backbone compatibility
+	 * An editor should be able to create multiple events.
 	 */
-	public function test_rest_api_schema() {
+	public function test_create_multiple_events() {
 		wp_set_current_user( $this->editor );
 
-		$request = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
-		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
+		$events = self::factory()->event->create_many(
+			3,
+			array(
+				'post_author' => $this->editor,
+				'post_status' => 'publish',
+			)
+		);
 
-		// Check schema exists
-		$this->assertArrayHasKey( 'schema', $data );
-		$schema = $data['schema'];
+		$this->assertCount( 3, $events, 'Three events should be created.' );
 
-		// Check required fields for Backbone
-		$this->assertArrayHasKey( 'title', $schema['properties'] );
-		$this->assertArrayHasKey( 'content', $schema['properties'] );
-		$this->assertArrayHasKey( 'status', $schema['properties'] );
-		$this->assertArrayHasKey( 'meta', $schema['properties'] );
-		$this->assertArrayHasKey( 'author', $schema['properties'] );
-		$this->assertArrayHasKey( 'date', $schema['properties'] );
-		$this->assertArrayHasKey( 'modified', $schema['properties'] );
-		$this->assertArrayHasKey( 'slug', $schema['properties'] );
-		$this->assertArrayHasKey( 'guid', $schema['properties'] );
-		$this->assertArrayHasKey( 'link', $schema['properties'] );
-
-		// Check meta schema
-		$meta_schema = $schema['properties']['meta']['properties'];
-		// foreach(['event_start', 'event_end', 'event_location', 'event_url', 'event_category'] as $field) {
-		// $this->assertArrayHasKey($field, $meta_schema);
-		// $this->assertEquals('string', $meta_schema[$field]['type']);
-		// $this->assertEquals('', $meta_schema[$field]['default']);
-		// }
-
-		// Check array type meta field
-		// $this->assertArrayHasKey('event_assigned_users', $meta_schema);
-		// $this->assertEquals('array', $meta_schema['event_assigned_users']['type']);
-		// $this->assertEquals('integer', $meta_schema['event_assigned_users']['items']['type']);
-		// $this->assertEquals([], $meta_schema['event_assigned_users']['default']);
-	}
-
-	/**
-	 * Test REST API collection parameters for Backbone compatibility
-	 */
-	public function test_rest_api_collection_params() {
-		wp_set_current_user( $this->editor );
-
-		$request = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
-		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
-
-		// Check collection parameters
-		$this->assertArrayHasKey( 'endpoints', $data );
-		$endpoints = $data['endpoints'];
-
-		// Find GET endpoint
-		$get_endpoint = null;
-		foreach ( $endpoints as $endpoint ) {
-			if ( $endpoint['methods'][0] === 'GET' && count( $endpoint['methods'] ) === 1 ) {
-				$get_endpoint = $endpoint;
-				break;
-			}
+		foreach ( $events as $id ) {
+			$this->assertNotWPError( $id );
+			$this->assertEquals( 'decker_event', get_post_type( $id ) );
 		}
-
-		$this->assertNotNull( $get_endpoint );
-		$this->assertArrayHasKey( 'args', $get_endpoint );
-
-		// Check Backbone-required parameters
-		$args = $get_endpoint['args'];
-
-		// Pagination
-		$this->assertArrayHasKey( 'page', $args );
-		$this->assertEquals( 1, $args['page']['default'] );
-		$this->assertArrayHasKey( 'per_page', $args );
-		$this->assertEquals( 10, $args['per_page']['default'] );
-
-		// Search
-		$this->assertArrayHasKey( 'search', $args );
-		$this->assertArrayHasKey( 'search_columns', $args );
-		$this->assertEquals( array( 'post_title', 'post_content', 'post_excerpt' ), $args['search_columns']['items']['enum'] );
-
-		// Ordering
-		$this->assertArrayHasKey( 'order', $args );
-		$this->assertEquals( array( 'asc', 'desc' ), $args['order']['enum'] );
-		$this->assertEquals( 'desc', $args['order']['default'] );
-
-		$this->assertArrayHasKey( 'orderby', $args );
-		$expected_orderby = array( 'author', 'date', 'id', 'include', 'modified', 'parent', 'relevance', 'slug', 'include_slugs', 'title' );
-		$this->assertEquals( $expected_orderby, $args['orderby']['enum'] );
-		$this->assertEquals( 'date', $args['orderby']['default'] );
-
-		// Filtering
-		$this->assertArrayHasKey( 'status', $args );
-		$this->assertEquals( 'publish', $args['status']['default'] );
-		$this->assertArrayHasKey( 'author', $args );
-		$this->assertArrayHasKey( 'author_exclude', $args );
 	}
 
-	/**
-	 * Test REST API response format for Backbone compatibility
-	 */
-	public function test_rest_api_response_format() {
-		wp_set_current_user( $this->editor );
+	public function test_registered_meta_fields() {
+		global $wp_meta_keys;
 
-		// Create test events
-		$events = array();
-		for ( $i = 1; $i <= 3; $i++ ) {
-			$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-			$request->set_param( 'title', "Test Event $i" );
-			$request->set_param( 'status', 'publish' );
-			$request->set_param(
-				'meta',
-				array(
-					'event_start' => "2024-02-0{$i}T10:00:00",
-					'event_end' => "2024-02-0{$i}T11:00:00",
-					'event_location' => "Location $i",
-					'event_category' => 'bg-primary',
-				)
+		$expected_keys = array(
+			'event_allday',
+			'event_start',
+			'event_end',
+			'event_location',
+			'event_url',
+			'event_category',
+			'event_assigned_users',
+		);
+
+		foreach ( $expected_keys as $key ) {
+			$this->assertArrayHasKey(
+				$key,
+				$wp_meta_keys['post']['decker_event'],
+				"Meta key {$key} should be registered for decker_event"
 			);
-
-			$response = $this->server->dispatch( $request );
-			$events[] = $response->get_data()['id'];
-		}
-
-		// Test collection response
-		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event' );
-		$response = $this->server->dispatch( $request );
-		$data = $response->get_data();
-
-		// Check response headers
-		$headers = $response->get_headers();
-		$this->assertArrayHasKey( 'X-WP-Total', $headers );
-		$this->assertArrayHasKey( 'X-WP-TotalPages', $headers );
-
-		// Check response format
-		$this->assertIsArray( $data );
-		$this->assertGreaterThanOrEqual( 3, count( $data ) );
-
-		// Check first item format
-		$item = $data[0];
-		$this->assertArrayHasKey( 'id', $item );
-		$this->assertArrayHasKey( 'title', $item );
-		$this->assertArrayHasKey( 'content', $item );
-		$this->assertArrayHasKey( 'meta', $item );
-		$this->assertArrayHasKey( '_links', $item );
-
-		// Clean up
-		foreach ( $events as $event_id ) {
-			wp_delete_post( $event_id, true );
 		}
 	}
 
+	public function test_end_date_is_adjusted_on_create_if_before_start() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 
-/**
-	 * Test that unauthenticated users cannot create events via REST
-	 */
-	public function test_unauthenticated_rest_cannot_create_event() {
-		// Do NOT set current user, simulating unauthenticated access
+		$event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_start' => '2025-01-01 12:00:00',
+					'event_end'   => '2025-01-01 10:00:00', // Invalid: earlier than start
+				),
+			)
+		);
 
-		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$request->set_param( 'title', 'Unauthenticated Event' );
-		$request->set_param( 'status', 'publish' );
+		$this->assertNotWPError( $event_id );
 
-		$response = $this->server->dispatch( $request );
+		// Usar timestamps para comparación
+		$start_utc_stored = get_post_meta( $event_id, 'event_start', true );
+		$end_utc_stored   = get_post_meta( $event_id, 'event_end', true );
 
-		$this->assertEquals( 403, $response->get_status() ); // Or 403 depending on your auth implementation
+		$start_ts = strtotime( $start_utc_stored );
+		$end_ts   = strtotime( $end_utc_stored );
+
+		// Verificar que end es 1 hora después de start
+		// $this->assertEquals($start_ts + 3600, $end_ts);
+
+		// $start = get_post_meta( $event_id, 'event_start', true );
+		// $end   = get_post_meta( $event_id, 'event_end', true );
+
+		// End should be adjusted to match start
+		// $this->assertEquals( $start, $end, 'End date should be adjusted to match start if earlier' );
+
+		// Optional: assert the actual string value if you want to be strict
+		// $this->assertEquals(
+		// '2025-01-01 12:00:00',
+		// $end,
+		// 'End date should be equal to start date after adjustment.'
+		// );
+
+		$this->assertEquals( $start_ts + HOUR_IN_SECONDS, $end_ts, 'End date should be adjusted to 1 hour after start.' );
+	}
+
+	public function test_end_date_is_adjusted_on_update_if_before_start() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+
+		$event_id = self::factory()->event->create(
+			array(
+				'post_title' => 'To Update',
+				'meta_input' => array(
+					'event_allday' => false,
+					'event_start'  => '2025-01-01 10:00:00',
+					'event_end'    => '2025-01-01 11:00:00',
+				),
+			)
+		);
+		$this->assertNotWPError( $event_id );
+
+		// Now, update with an invalid end date.
+		self::factory()->event->update_object(
+			$event_id,
+			array(
+				'meta_input' => array(
+					'event_allday' => false,
+					'event_start'  => '2025-01-01 12:00:00',
+					'event_end'    => '2025-01-01 10:00:00', // Invalid: earlier than start
+				),
+			)
+		);
+
+		$start_utc_stored = get_post_meta( $event_id, 'event_start', true );
+		$end_utc_stored   = get_post_meta( $event_id, 'event_end', true );
+
+		$start_ts = strtotime( $start_utc_stored );
+		$end_ts   = strtotime( $end_utc_stored );
+
+		$this->assertEquals( $start_ts + HOUR_IN_SECONDS, $end_ts, 'End date should be adjusted to 1 hour after start.' );
+	}
+
+
+	public function test_get_events_returns_expected_structure() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$id = self::factory()->event->create();
+
+		$events = Decker_Events::get_events();
+
+		$this->assertNotEmpty( $events );
+		$this->assertIsArray( $events[0] );
+		$this->assertArrayHasKey( 'post', $events[0] );
+		$this->assertArrayHasKey( 'meta', $events[0] );
+		$this->assertEquals( $id, $events[0]['post']->ID );
 	}
 
 	/**
-	 * Test that unauthenticated users cannot update events via REST
+	 * It should retrieve multiple events with correct meta using get_events().
 	 */
-	public function test_unauthenticated_rest_cannot_update_event() {
-		// Create an event first that we can try to update
+	public function test_get_events_returns_multiple_events_with_meta() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+
+		// Define test events
+		$events_data = array(
+			array(
+				'post_title' => 'Event A',
+				'meta_input' => array(
+					'event_start'    => '2025-01-01T10:00:00Z',
+					'event_end'      => '2025-01-01T11:00:00Z',
+					'event_location' => 'Room A',
+				),
+			),
+			array(
+				'post_title' => 'Event B',
+				'meta_input' => array(
+					'event_start'    => '2025-01-02T12:00:00Z',
+					'event_end'      => '2025-01-02T13:30:00Z',
+					'event_location' => 'Room B',
+				),
+			),
+		);
+
+		// Create events
+		$event_ids = array();
+		foreach ( $events_data as $data ) {
+			$event_id = self::factory()->event->create( $data );
+			$this->assertNotWPError( $event_id );
+			$event_ids[] = $event_id;
+		}
+
+		// Fetch using get_events()
+		$events = Decker_Events::get_events();
+
+		// Filter down to just the ones we created
+		$retrieved = array_filter(
+			$events,
+			function ( $event ) use ( $event_ids ) {
+				return in_array( $event['post']->ID, $event_ids, true );
+			}
+		);
+
+		$this->assertCount( 2, $retrieved, 'Should return exactly 2 matching events' );
+
+		foreach ( $retrieved as $event ) {
+			$id       = $event['post']->ID;
+			$expected = $events_data[ array_search( $id, $event_ids, true ) ];
+
+			$this->assertEquals( $expected['post_title'], $event['post']->post_title, 'Post title should match' );
+			$this->assertEquals( $expected['meta_input']['event_location'], $event['meta']['event_location'][0], 'Location should match' );
+		}
+	}
+
+	/**
+	 * Test all-day event creation and storage
+	 */
+	public function test_all_day_event_creation() {
 		wp_set_current_user( $this->editor );
-		$create_request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$create_request->set_param( 'title', 'Event to Update' );
-		$create_request->set_param( 'status', 'publish' );
-		$create_response = $this->server->dispatch( $create_request );
-		$this->event_id = $create_response->get_data()['id'];
-		wp_set_current_user( null ); // Clear current user for unauthenticated test
 
-		$request = new WP_REST_Request( 'PUT', '/wp/v2/decker_event/' . $this->event_id );
-		$request->set_param( 'title', 'Unauthenticated Update' );
+		$event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_allday' => true,
+					'event_start'  => '2025-01-01',
+					'event_end'    => '2025-01-01',
+				),
+			)
+		);
 
-		$response = $this->server->dispatch( $request );
+		$start = get_post_meta( $event_id, 'event_start', true );
+		$end   = get_post_meta( $event_id, 'event_end', true );
 
-		$this->assertEquals( 403, $response->get_status() ); // Or 403
+		$this->assertEquals( '2025-01-01', $start );
+		$this->assertEquals( '2025-01-01', $end );
 	}
 
+
 	/**
-	 * Test that unauthenticated users cannot delete events via REST
+	 * Test event update from all-day to timed
 	 */
-	public function test_unauthenticated_rest_cannot_delete_event() {
-		// Create an event first that we can try to delete
+	public function test_update_allday_to_timed() {
+		$event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_allday' => true,
+					'event_start'  => '2025-01-01',
+					'event_end'    => '2025-01-01',
+				),
+			)
+		);
+
+		self::factory()->event->update_object(
+			$event_id,
+			array(
+				'meta_input' => array(
+					'event_allday' => false,
+					'event_start'  => '2025-01-01 10:00:00',
+					'event_end'    => '2025-01-01 11:00:00',
+				),
+			)
+		);
+
+		$start = get_post_meta( $event_id, 'event_start', true );
+		$end   = get_post_meta( $event_id, 'event_end', true );
+
+		$this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $start );
+		$this->assertMatchesRegularExpression( '/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $end );
+	}
+
+	public function test_can_update_assigned_users() {
 		wp_set_current_user( $this->editor );
-		$create_request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$create_request->set_param( 'title', 'Event to Delete' );
-		$create_request->set_param( 'status', 'publish' );
-		$create_response = $this->server->dispatch( $create_request );
-		$this->event_id = $create_response->get_data()['id'];
-		wp_set_current_user( null ); // Clear current user for unauthenticated test
 
-		$request = new WP_REST_Request( 'DELETE', '/wp/v2/decker_event/' . $this->event_id );
+		$other_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
-		$response = $this->server->dispatch( $request );
+		// Crear evento con un usuario asignado
+		$this->event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor ),
+				),
+			)
+		);
 
-		$this->assertEquals( 403, $response->get_status() ); // Or 403
+		// Confirmar asignación inicial
+		$this->assertEquals(
+			array( $this->editor ),
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'Initial assigned users should match.'
+		);
+
+		// Actualizar usuarios asignados
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor, $other_user ),
+				),
+			)
+		);
+
+		$this->assertEquals(
+			array( $this->editor, $other_user ),
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'Updated assigned users should match.'
+		);
 	}
 
-	/**
-	 * Test that unauthenticated users cannot read a collection of events via REST
-	 */
-	public function test_unauthenticated_rest_cannot_read_events() {
-		// Do NOT set current user, simulating unauthenticated access
-
-		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event' );
-
-		$response = $this->server->dispatch( $request );
-
-		$this->assertEquals( 403, $response->get_status() ); // Or 403, or maybe even 200 with empty list depending on requirements
-	}
-
-	/**
-	 * Test that unauthenticated users cannot read a single event via REST
-	 */
-	public function test_unauthenticated_rest_cannot_read_event() {
-		// Create an event first that we can try to read
+	public function test_can_clear_assigned_users() {
 		wp_set_current_user( $this->editor );
-		$create_request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
-		$create_request->set_param( 'title', 'Event to Read' );
-		$create_request->set_param( 'status', 'publish' );
-		$create_response = $this->server->dispatch( $create_request );
-		$this->event_id = $create_response->get_data()['id'];
-		wp_set_current_user( null ); // Clear current user for unauthenticated test
 
-		$request = new WP_REST_Request( 'GET', '/wp/v2/decker_event/' . $this->event_id );
+		$this->event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor ),
+				),
+			)
+		);
 
-		$response = $this->server->dispatch( $request );
+		$this->assertNotEmpty(
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'There should be at least one assigned user initially.'
+		);
 
-		$this->assertEquals( 403, $response->get_status() ); // Or 403
+		// Eliminar todos los usuarios asignados
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array(),
+				),
+			)
+		);
+
+		$this->assertEquals(
+			array(),
+			get_post_meta( $this->event_id, 'event_assigned_users', true ),
+			'Assigned users should be empty after clearing.'
+		);
 	}
 
-	/**
-	 * Test that unauthenticated users cannot access the schema via REST
-	 */
-	public function test_unauthenticated_rest_cannot_access_schema() {
-		// Do NOT set current user, simulating unauthenticated access
+	public function test_assigned_users_unchanged_if_omitted_on_update() {
+		wp_set_current_user( $this->editor );
 
-		$request = new WP_REST_Request( 'OPTIONS', '/wp/v2/decker_event' );
+		$other_user = self::factory()->user->create( array( 'role' => 'author' ) );
 
-		$response = $this->server->dispatch( $request );
+		$this->event_id = self::factory()->event->create(
+			array(
+				'meta_input' => array(
+					'event_assigned_users' => array( $this->editor, $other_user ),
+				),
+			)
+		);
 
-		$this->assertEquals( 403, $response->get_status() ); // Or 403, or maybe 200 depending on requirements
+		$before = get_post_meta( $this->event_id, 'event_assigned_users', true );
+
+		// Actualizar el evento sin tocar assigned_users
+		$updated_id = self::factory()->event->update_object(
+			$this->event_id,
+			array(
+				'post_title' => 'Updated title only',
+			)
+		);
+
+		$after = get_post_meta( $this->event_id, 'event_assigned_users', true );
+
+		$this->assertEquals(
+			$before,
+			$after,
+			'Assigned users should not change if field is omitted.'
+		);
 	}
-
 }

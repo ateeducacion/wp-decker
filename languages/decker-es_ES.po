@@ -174,6 +174,7 @@ msgid "Archived"
 msgstr "Archivado"
 
 #. translators: %s: Number of items
+#, php-format
 msgid "Archived <span class=\"count\">(%s)</span>"
 msgid_plural "Archived <span class=\"count\">(%s)</span>"
 msgstr[0] "Archivado <span class=\"count\">(%s)</span>"
@@ -565,6 +566,7 @@ msgid "Logout"
 msgstr "Cerrar Sesión"
 
 #. translators: %s: Board slug that was not found
+#, php-format
 msgid "Error: The board %s does not exist."
 msgstr "Error: El tablero %s no existe."
 
@@ -785,6 +787,7 @@ msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr "Introduzca IDs de usuario separados por comas para ignorar de la funcionalidad de Decker."
 
 #. Translators: %s is a list of invalid user IDs that have been removed.
+#, php-format
 msgid "The following user IDs were invalid and have been removed: %s"
 msgstr "Los siguientes IDs de usuario no eran válidos y han sido eliminados: %s"
 
@@ -970,21 +973,6 @@ msgstr "Evento de Todo el Día"
 msgid "End Date must be after Start Date."
 msgstr "La fecha de fin debe ser posterior a la fecha de inicio."
 
-msgid "Please ensure that the End Date is after the Start Date."
-msgstr "Por favor, asegúrate de que la fecha de fin sea posterior a la fecha de inicio."
-
-msgid "Start Date:"
-msgstr "Fecha de Inicio:"
-
-msgid "Start Time:"
-msgstr "Hora de Inicio:"
-
-msgid "End Date:"
-msgstr "Fecha de Fin:"
-
-msgid "End Time:"
-msgstr "Hora de Fin:"
-
 msgid "Calendar Token"
 msgstr "Token del Calendario"
 
@@ -1009,8 +997,11 @@ msgstr "Exportar archivo .ics"
 msgid "Meeting"
 msgstr "Reunión"
 
-msgid "Holidays"
-msgstr "Vacaciones"
+msgid "Absence"
+msgstr "Ausencia"
+
+msgid "Absences"
+msgstr "Ausencias"
 
 msgid "Alert"
 msgstr "Alerta"
@@ -1056,9 +1047,6 @@ msgstr "Seleccionar Categoría"
 
 msgid "Please select a category for the event."
 msgstr "Por favor, selecciona una categoría para el evento."
-
-msgid "The category determines the color of the event in the calendar."
-msgstr "La categoría determina el color del evento en el calendario."
 
 msgid "Month"
 msgstr "Mes"
@@ -1207,8 +1195,8 @@ msgstr "Permitir notificaciones por correo electrónico"
 msgid "This email was automatically sent by Decker"
 msgstr "Este correo electrónico ha sido enviado automáticamente por Decker"
 
-#. translators: %s is the name of the user who completed the task.
-#. Translators: %s is the task author.
+#. translators: %s is a username.
+#. Translators: %s is a username.
 msgid "Unknown user"
 msgstr "Usuario desconocido"
 
@@ -1216,21 +1204,25 @@ msgid "Task Created"
 msgstr "Tarea creada"
 
 #. translators: 1: Task title, 2: Task URL, 3: Creator name
+#, php-format
 msgid "A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to view the task</a>."
 msgstr "Una nueva tarea \"%1$s\" ha sido creada por %3$s. <a href=\"%2$s\">Haga clic aquí para ver la tarea</a>."
 
 msgid "You have been assigned a task"
 msgstr "Se le ha asignado una tarea"
 
-#. translators: %s is the name of the user who completed the task.
+#. translators: %s is a username.
+#, php-format
 msgid "Completed by %s"
 msgstr "Completado por %s"
 
 #. Translators: %s is the task title.
+#, php-format
 msgid "New Comment on Task: %s"
 msgstr "Nuevo comentario sobre la tarea: %s"
 
-#. Translators: %s is the task author.
+#. Translators: %s is a username.
+#, php-format
 msgid "Comment by %s"
 msgstr "Comentario por %s"
 
@@ -1244,10 +1236,12 @@ msgid "Yesterday"
 msgstr "Ayer"
 
 #. Translators: %s is the time elapsed (e.g., "2 hours", "3 days").
+#, php-format
 msgid "%s ago"
 msgstr "hace %s"
 
 #. Translators: %s is the time remaining until the due date (e.g., "in 2 hours", "in 3 days").
+#, php-format
 msgid "in %s"
 msgstr "en %s"
 
@@ -1379,3 +1373,27 @@ msgstr "Cargando tareas..."
 
 msgid "Error loading tasks."
 msgstr "Error al cargar las tareas."
+
+msgid "Event type feeds:"
+msgstr "Calendarios por tipo de evento:"
+
+msgid "Warnings"
+msgstr "Advertencias"
+
+msgid "Alerts"
+msgstr "Alertas"
+
+msgid "All Types"
+msgstr "Todos los tipos"
+
+msgid "Start:"
+msgstr "Inicio:"
+
+msgid "End:"
+msgstr "Fin:"
+
+msgid "All Day Event Event"
+msgstr "Evento de todo el día"
+
+msgid "Time is stored in UTC. Adjust accordingly."
+msgstr "La hora se guarda en UTC. Ajusta si es necesario."

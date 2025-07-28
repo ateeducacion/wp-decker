@@ -7,7 +7,6 @@ else
   SED_INPLACE = sed -i
 endif
 
-
 # Check if Docker is running
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
@@ -20,12 +19,16 @@ start-if-not-running:
 		echo "wp-env is NOT running. Starting (previous updating) containers..."; \
 		npx wp-env start --update; \
 		npx wp-env run cli wp plugin activate decker; \
+		open "http://localhost:8888/?decker_page=priority" || true; \
 	else \
 		echo "wp-env is already running, skipping start."; \
 	fi
 
 # Bring up Docker containers
-up: check-docker start-if-not-running
+up: check-docker start-if-not-running flush-permalinks
+
+flush-permalinks:
+	npx wp-env run cli wp rewrite flush --hard
 
 # Function to create a user only if it does not exist
 create-user:
@@ -48,7 +51,7 @@ destroy:
 	npx wp-env destroy
 
 # Pass the wp plugin-check
-check-plugin: up
+check-plugin: check-docker start-if-not-running
 	npx wp-env run cli wp plugin install plugin-check --activate --color
 	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
 
@@ -59,19 +62,36 @@ check-all: check
 
 tests: test
 
-# Run unit tests with PHPUnit	
+# Run unit tests with PHPUnit. Use FILE or FILTER (or both).
 test: start-if-not-running
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --testdox --colors=always
+	@CMD="./vendor/bin/phpunit"; \
+	if [ -n "$(FILE)" ]; then CMD="$$CMD $(FILE)"; fi; \
+	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
 
+# Run unit tests in verbose mode. Honor TEST filter if provided.
 test-verbose: start-if-not-running
-# 	npx wp-env start
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit --debug --verbose --colors=always
+	@CMD="./vendor/bin/phpunit"; \
+	if [ -n "$(TEST)" ]; then CMD="$$CMD --filter $(TEST)"; fi; \
+	CMD="$$CMD --debug --verbose"; \
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
+
+test-e2e:
+	npm run test:e2e
+
+test-e2e-visual:
+	npm run test:e2e -- --ui
+
 
 logs:
 	npx wp-env logs
 
+logs-test:
+	npx wp-env logs --environment=tests
+
+
 # Install PHP_CodeSniffer and WordPress Coding Standards in the container
-install-phpcs: up
+install-phpcs: check-docker start-if-not-running
 	@echo "Checking if PHP_CodeSniffer is installed..."
 	@if ! npx wp-env run cli bash -c '[ -x "$$HOME/.composer/vendor/bin/phpcs" ]' > /dev/null 2>&1; then \
 		echo "Installing PHP_CodeSniffer and WordPress Coding Standards..."; \
@@ -169,26 +189,50 @@ package:
 # Show help with available commands
 help:
 	@echo "Available commands:"
-	@echo "  up                 - Bring up Docker containers in interactive mode"
+	@echo ""
+	@echo "General:"
 	@echo "  up                 - Bring up Docker containers in interactive mode"
 	@echo "  down               - Stop and remove Docker containers"
 	@echo "  logs               - Show the docker container logs"
-	@echo "  fix                - Automatically fix code style with PHP-CS-Fixer"
-	@echo "  lint               - Check code style with PHP-CS-Fixer"
-	@echo "  check-plugin       - Run WordPress plugin-check tests"
-	@echo "  test               - Run unit tests"
-	@echo "  check-untranslated - Check the untranslated strings"
-	@echo "  check/check-all    - Run fix, lint, check-pugin, test, check-untraslated, mo"
-	@echo "  update             - Update Composer dependencies"
-	@echo "  package            - Generate a .zip package"
-	@echo "  destroy            - Destroy the WordPress environment"
-	@echo "  create-user        - Create a WordPress user if it doesn't exist. Usage: make create-user USER=<username> EMAIL=<email> ROLE=<role> PASSWORD=<password>"
+	@echo "  logs-test          - Show logs from test environment"
 	@echo "  clean              - Clean up WordPress environment"
-	@echo "  help               - Show help with available commands"
+	@echo "  destroy            - Destroy the WordPress environment"
+	@echo "  flush-permalinks   - Flush the created permalinks"
+	@echo "  create-user        - Create a WordPress user if it doesn't exist."
+	@echo "                       Usage: make create-user USER=<username> EMAIL=<email> ROLE=<role> PASSWORD=<password>"
+	@echo ""
+	@echo "Linting & Code Quality:"
+	@echo "  fix                - Automatically fix code style with PHP_CodeSniffer"
+	@echo "  lint               - Check code style with PHP_CodeSniffer"
+	@echo "  fix-no-tty         - Same as 'fix' but without TTY (for git hooks)"
+	@echo "  lint-no-tty        - Same as 'lint' but without TTY (for git hooks)"
+	@echo "  check-plugin       - Run WordPress plugin-check tests"
+	@echo "  check-untranslated - Check for untranslated strings"
+	@echo "  check              - Run fix, lint, plugin-check, tests, untranslated, and mo"
+	@echo "  check-all          - Alias for 'check'"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test               - Run PHPUnit tests. Accepts optional variables:"
+	@echo "                       FILTER=<pattern> (run tests matching the pattern)"
+	@echo "                       FILE=<path>      (run tests in specific file)"
+	@echo "                       Examples:"
+	@echo "                         make test FILTER=MyTest"
+	@echo "                         make test FILE=tests/MyTest.php"
+	@echo "                         make test FILE=tests/MyTest.php FILTER=test_my_feature"
+	@echo ""
+	@echo "  test-e2e           - Run E2E tests (non-interactive)"
+	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
+	@echo ""
+	@echo "Translations:"
 	@echo "  pot                - Generate a .pot file for translations"
 	@echo "  po                 - Update .po files from .pot file"
 	@echo "  mo                 - Generate .mo files from .po files"
-
+	@echo ""
+	@echo "Packaging & Updates:"
+	@echo "  update             - Update Composer dependencies"
+	@echo "  package            - Create ZIP package. Usage: make package VERSION=x.y.z"
+	@echo ""
+	@echo "  help               - Show this help message"
 
 # Set help as the default target if no target is specified
 .DEFAULT_GOAL := help

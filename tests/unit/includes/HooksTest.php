@@ -52,7 +52,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'in-progress',
+				'stack'          => 'in-progress',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -61,7 +61,7 @@ class HooksTest extends Decker_Test_Base {
 		$task_id = self::factory()->task->update_object(
 			$task_id,
 			array(
-				'stack' => 'done',
+				'stack'          => 'done',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -80,7 +80,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'to-do',
+				'stack'          => 'to-do',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -105,7 +105,7 @@ class HooksTest extends Decker_Test_Base {
 		$task_id = self::factory()->task->update_object(
 			$task_id,
 			array(
-				'stack' => 'in-progress',
+				'stack'          => 'in-progress',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -139,7 +139,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'done',
+				'stack'          => 'done',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -183,7 +183,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'to-do',
+				'stack'          => 'to-do',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -219,7 +219,7 @@ class HooksTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'done',
+				'stack'          => 'done',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -265,14 +265,14 @@ class HooksTest extends Decker_Test_Base {
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'done',
+				'stack'          => 'done',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
 
 		// Simulate assigning a user to the task via REST API.
 		$task_instance = new Decker_Tasks();
-		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $task_id . '/assign' );
+		$request       = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $task_id . '/assign' );
 		$request->set_param( 'id', $task_id );
 		$request->set_param( 'user_id', $this->user_id );
 
@@ -287,9 +287,8 @@ class HooksTest extends Decker_Test_Base {
 		$this->assertIsArray( $assigned_users, 'Assigned users should be an array.' );
 		$this->assertContains( $this->user_id, $assigned_users, 'User was not assigned to the task.' );
 
-        // The user was already assigned, so the hook should not fire again.
-        $this->assertEquals( 0, $hook_called, 'The decker_user_assigned hook should not fire when the user is already assigned.' );
-
+		// The user was already assigned, so the hook should not fire again.
+		$this->assertEquals( 0, $hook_called, 'The decker_user_assigned hook should not fire when the user is already assigned.' );
 	}
 
 
@@ -300,14 +299,14 @@ class HooksTest extends Decker_Test_Base {
 		$hook_called = 0;
 
 		// Create additional users.
-		$user_2 = self::factory()->user->create( array( 'role' => 'editor' ) );
-		$user_3 = self::factory()->user->create( array( 'role' => 'author' ) );
+		$user_2         = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$user_3         = self::factory()->user->create( array( 'role' => 'author' ) );
 		$assigned_users = array( $this->user_id, $user_2, $user_3 );
 
 		// Create the task.
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'to-do',
+				'stack'          => 'to-do',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);
@@ -350,14 +349,14 @@ class HooksTest extends Decker_Test_Base {
 		$hook_called = 0;
 
 		// Add additional users.
-		$user_2 = self::factory()->user->create( array( 'role' => 'editor' ) );
-		$user_3 = self::factory()->user->create( array( 'role' => 'author' ) );
+		$user_2         = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$user_3         = self::factory()->user->create( array( 'role' => 'author' ) );
 		$existing_users = array( $this->user_id );
-		$new_users = array( $user_2, $user_3 );
+		$new_users      = array( $user_2, $user_3 );
 
 		$task_id = self::factory()->task->create(
 			array(
-				'stack' => 'to-do',
+				'stack'          => 'to-do',
 				'assigned_users' => array( $this->user_id ),
 			)
 		);

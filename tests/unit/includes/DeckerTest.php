@@ -47,7 +47,7 @@ class DeckerTest extends Decker_Test_Base {
 	 */
 	protected function get_private_property( $object, $property ) {
 		$reflection = new ReflectionClass( get_class( $object ) );
-		$property = $reflection->getProperty( $property );
+		$property   = $reflection->getProperty( $property );
 		$property->setAccessible( true );
 		return $property->getValue( $object );
 	}
@@ -60,8 +60,8 @@ class DeckerTest extends Decker_Test_Base {
 		update_option( 'decker_settings', array( 'minimum_user_profile' => 'editor' ) );
 
 		// Crear usuarios con roles estándar
-		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
-		$editor = $this->factory->user->create( array( 'role' => 'editor' ) );
+		$admin      = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		$editor     = $this->factory->user->create( array( 'role' => 'editor' ) );
 		$subscriber = $this->factory->user->create( array( 'role' => 'subscriber' ) );
 
 		// Probar con un administrador

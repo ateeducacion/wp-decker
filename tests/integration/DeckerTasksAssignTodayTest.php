@@ -26,10 +26,10 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 			array(
 				'post_type'   => 'decker_task',
 				'post_status' => 'publish',
-				'tax_input'    => array(
+				'tax_input'   => array(
 					'decker_board' => array( $board_id ),
 				),
-				'meta_input'   => array(
+				'meta_input'  => array(
 					'stack' => 'to-do',
 				),
 			)

@@ -1,11 +1,14 @@
 {
   "devDependencies": {
-    "@wordpress/env": "^10.12.0"
+    "@wordpress/e2e-test-utils-playwright": "^1.27.0",
+    "@wordpress/env": "^10.12.0",
+    "@wordpress/scripts": "^30.20.0"
   },
   "scripts": {
     "wp-env": "wp-env",
     "composer": "wp-env run cli --env-cwd=wp-content/plugins/decker composer",
     "composer:tests-cli": "wp-env run tests-cli --env-cwd=wp-content/plugins/decker composer",
+    "test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.js",
     "test:unit": "wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit"
   }
 }

@@ -1,9 +1,9 @@
 <?php
- /**
-  * Class DeckerKnowledgeBaseIntegrationTest
-  *
-  * @package Decker
-  */
+/**
+ * Class DeckerKnowledgeBaseIntegrationTest
+ *
+ * @package Decker
+ */
 
 class DeckerKnowledgeBaseIntegrationTest extends Decker_Test_Base {
 

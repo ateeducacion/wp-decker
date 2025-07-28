@@ -57,7 +57,7 @@ class MailerTest extends WP_UnitTestCase {
 	 * Test email sending and verify captured HTML content.
 	 */
 	public function test_mail_sending() {
-		$to = 'recipient@example.com';
+		$to      = 'recipient@example.com';
 		$subject = 'Test Subject';
 		$content = '<p>This is a test email.</p>';
 
@@ -83,7 +83,7 @@ class MailerTest extends WP_UnitTestCase {
 	 * Test email with special characters.
 	 */
 	public function test_mail_with_special_characters() {
-		$to = 'test@example.com';
+		$to      = 'test@example.com';
 		$subject = 'Special Chars Test áéíóú';
 		$content = '<p>Content with special chars: áéíóú ñÑ</p>';
 
@@ -103,7 +103,7 @@ class MailerTest extends WP_UnitTestCase {
 	 * Test email template structure.
 	 */
 	public function test_email_template_structure() {
-		$to = 'test@example.com';
+		$to      = 'test@example.com';
 		$subject = 'Template Test';
 		$content = '<p>Test Content</p>';
 

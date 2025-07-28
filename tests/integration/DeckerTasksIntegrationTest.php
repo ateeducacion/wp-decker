@@ -143,13 +143,13 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 
 		// Definir valores para los metadatos.
-		$title = 'Test Task with Metadata';
-		$description = 'Testing all saved meta fields';
-		$stack = 'to-do';
-		$max_priority = true;
-		$duedate = new DateTime( '2024-12-25' ); // Fecha ejemplo
+		$title          = 'Test Task with Metadata';
+		$description    = 'Testing all saved meta fields';
+		$stack          = 'to-do';
+		$max_priority   = true;
+		$duedate        = new DateTime( '2024-12-25' ); // Fecha ejemplo
 		$assigned_users = array( $user_id );
-		$labels = array( $label1_id, $label2_id );
+		$labels         = array( $label1_id, $label2_id );
 
 		// Crear la tarea.
 		$task_id = $this->create_task(

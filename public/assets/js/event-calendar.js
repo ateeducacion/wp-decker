@@ -30,7 +30,7 @@
  * @param {string} message - The text to display inside the tooltip.
  * @param {number} [duration=2000] - The time in milliseconds before the tooltip disappears (default: 2000ms).
  */
-function showTootip(message, duration = 2000){
+function showTooltip(message, duration = 2000){
        
     document.querySelectorAll(".fc-tooltip-calendar").forEach(el => el.remove());
     // Create a new tooltip
@@ -41,7 +41,7 @@ function showTootip(message, duration = 2000){
     tooltip.style.top = `${window.innerHeight - 60}px`;  // Middle of screen (vertically)
     tooltip.style.left = `${window.innerWidth / 2}px`;   // Middle of screen (horizontally)
     tooltip.style.transform = "translate(-50%, -50%)";   // Perfect centering
-    document.body.appendChild(tooltip);-
+    document.body.appendChild(tooltip);
       // Remove tooltip after 2 seconds
     setTimeout(() => tooltip.remove(), duration);
 }
@@ -63,6 +63,25 @@ function showTootip(message, duration = 2000){
         this.init();
     }
 
+    function is24HourFormat() {
+        const formatter = new Intl.DateTimeFormat(undefined, {
+            hour: 'numeric'
+        });
+        const parts = formatter.formatToParts(new Date());
+        return !parts.some(part => part.type === 'dayPeriod'); // If no AM/PM → uses 24h
+    }
+
+    function formatDateForStorage(date, allDay) {
+        if (!date) return null;
+        if (allDay) {
+            // Devuelve YYYY-MM-DD en local
+            return date.toLocaleDateString('sv-SE'); // formato ISO (2025-10-10)
+        } else {
+            // Devuelve ISO UTC con Z
+            return date.toISOString();
+        }
+    }
+
     EventCalendar.prototype = {
         init: function() {
             this.initCalendar();
@@ -82,10 +101,27 @@ function showTootip(message, duration = 2000){
                     }
                 });
 
+                const uses24h = is24HourFormat();
+                const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const fcLocale = (deckerVars.locale || 'en').toLowerCase();
+
+
                 this.$calendarObj = new FullCalendar.Calendar(this.$calendar[0], {
+                    timeZone: 'local',
+                    locale: fcLocale,
                     slotDuration: '00:15:00',
-                    slotMinTime: '08:00:00',
+                    slotMinTime: '07:00:00',
                     slotMaxTime: '19:00:00',
+                    slotLabelFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: !uses24h
+                    },
+                    eventTimeFormat: {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: !uses24h
+                    },
                     themeSystem: 'bootstrap',
                     bootstrapFontAwesome: false,
                     buttonText: {
@@ -137,14 +173,20 @@ function showTootip(message, duration = 2000){
                     drop: function(info) {
                         console.log("drop:", info)
                         // Create event data.
-                        var end_date =  info.allDay ? null : new Date( info.date.getTime() + 45*60000 );
+                        const startStr = formatDateForStorage(info.date, info.allDay);
+                        const endStr   = formatDateForStorage(
+                            new Date(info.date.getTime() + 45 * 60000),
+                            info.allDay
+                        );
+
                         const eventData = {
                             title: info.draggedEl.innerText,
                             status: 'publish',
                             meta: {
                                 event_allday: info.allDay,
-                                event_start: info.allDay ? info.date.toISOString().split('T')[0] : info.date.toISOString(),
-                                event_end: info.allDay ? null : end_date.toISOString(),
+                                event_start: startStr,
+                                event_end:   endStr,
+
                                 event_category: info.draggedEl.dataset.class,
                                 event_assigned_users: [deckerVars.current_user_id]
                             }
@@ -169,8 +211,8 @@ function showTootip(message, duration = 2000){
                             const newEvent = {
                                 id : 'event_' + data.id,
                                 title: info.draggedEl.innerText, 
-                                start: info.date, 
-                                end: info.allDay ? null : end_date.toISOString(),
+                                start: startStr, 
+                                end: endStr,
                                 allDay: info.allDay,
                                 extendedProps: {
                                     assigned_users: [deckerVars.current_user_id],
@@ -188,42 +230,40 @@ function showTootip(message, duration = 2000){
                         });
                     },
                     eventDrop: function(info){
-                        //Prevent null in event.end
                         console.log("event_drop:", info);
-                        if ( null == info.event.end ){
-                            var event_end =  info.event.allDay ? null : new Date( info.event.start.getTime() + 45*60000 );
-                        } else {
-                            var event_end = info.event.end;
-                        }
 
-                        var start_adjusted = info.event.start 
-                            ? new Date(info.event.start.getTime() - (info.event.start.getTimezoneOffset() * 60000)) 
-                            : null;
-
-                        var end_adjusted = event_end 
-                            ? new Date(event_end.getTime() - (event_end.getTimezoneOffset() * 60000)) 
-                            : null;
+                        const startStr = formatDateForStorage(info.event.start, info.event.allDay);
+                        const endStr   = formatDateForStorage(
+                            info.event.end ?? new Date(info.event.start.getTime() + 45 * 60000),
+                            info.event.allDay
+                        );
 
                         if ( 'event' == info.event.extendedProps.type   ) {
                             var eventId=info.event.id.replace('event_', '');
-                            var restroute=wpApiSettings.root + 'decker/v1/events/' + encodeURIComponent(eventId) + '/update';    
+                            var restroute = wpApiSettings.root + 'wp/v2/decker_event/' + encodeURIComponent(eventId);
                             var restData = {
-                                event_allday: info.event.allDay,
-                                event_start: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : start_adjusted.toISOString(),
-                                event_end: info.event.allDay ? start_adjusted.toISOString().split('T')[0] : end_adjusted.toISOString()
+                                meta: {
+                                    event_allday : info.event.allDay,
+                                    event_start  : startStr,
+                                    event_end    : endStr,
+                                },
                             };
+
+                            var method = 'PUT';
 
                         } else if ('task' == info.event.extendedProps.type ) {
                             var eventId=info.event.id.replace('task_', '');
                             var restroute=wpApiSettings.root + 'decker/v1/tasks/' + encodeURIComponent(eventId) + '/update_due_date'; 
+                            const start_adjusted = new Date(info.event.start.getTime() - (info.event.start.getTimezoneOffset() * 60000));
                             var restData = {
                                     duedate: start_adjusted.toISOString().split('T')[0]
                                 };
+                            var method = 'POST';
                         }
                         
                         // Create event via REST API
                         fetch(restroute , {
-                            method: 'POST',
+                            method: method,
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-WP-Nonce': wpApiSettings.nonce
@@ -243,7 +283,7 @@ function showTootip(message, duration = 2000){
                             } else if ( 'task' == info.event.extendedProps.type ){
                                 var message = `Task moved to ${info.event.start.toLocaleString().split(',')[0]}`;
                             }
-                            showTootip(message, 1500);
+                            showTooltip(message, 1500);
 
                         })
                         .catch(error => {
@@ -254,8 +294,23 @@ function showTootip(message, duration = 2000){
                     },
                     eventDidMount: function(info) {
                         //console.log("event_mount:", info);
+                        info.el.classList.add('event-type-' + info.event.extendedProps.type);
                         const titleEl = info.el.querySelector('.fc-event-title');
                         if (!titleEl) return;
+
+                        const users = info.event.extendedProps.assigned_users || [];
+
+                        if (users.length > 0) {
+                            const nicknames = users.map(userId => {
+                                const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+                                const user = deckerVars.users.find(u => u.id == id);
+                                return user?.nickname || '';
+                            }).filter(Boolean);
+
+                            if (nicknames.length > 0) {
+                                info.el.setAttribute('data-user-nicknames', nicknames.join(','));
+                            }
+                        }
 
                         if (info.event.extendedProps.type === 'task') {
                             info.el.style.backgroundColor = info.event.classNames[0];
@@ -274,12 +329,12 @@ function showTootip(message, duration = 2000){
                                 titleEl.insertBefore(svg, titleEl.firstChild);
                             }
                         } else if (info.event.extendedProps.type === 'event') {
+
+
+
                             // Set background color based on category class
                             info.el.style.backgroundColor = info.event.classNames[0];
                             info.el.style.opacity = '0.7'; // Make it lighter
-
-                            // For events, add assigned users before title
-                            const users = info.event.extendedProps.assigned_users || [];
 
                             if (users.length > 0) {
                                 const userNicknames = users.map(userId => {
@@ -307,6 +362,10 @@ function showTootip(message, duration = 2000){
         },
 
         onEventClick: function(info) {
+
+            // Evitar que se abra la URL (si existe)
+            info.jsEvent.preventDefault();
+
             if (info.event.extendedProps.type === 'task') {
                 // For tasks, open the task modal
                 const taskId = info.event.id.replace('task_', '');

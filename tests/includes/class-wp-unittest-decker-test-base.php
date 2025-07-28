@@ -29,6 +29,10 @@ class Decker_Test_Base extends WP_UnitTestCase {
 			$factory->task = new WP_UnitTest_Factory_For_Decker_Task( $factory );
 		}
 
+		if ( ! isset( $factory->event ) ) {
+			$factory->event = new WP_UnitTest_Factory_For_Decker_Event( $factory );
+		}
+
 		return $factory;
 	}
 

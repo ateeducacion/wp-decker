@@ -153,24 +153,24 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Create terms for boards and labels.
 		$board_id = $this->factory->board->create();
 		$label_id = $this->factory->label->create();
-		$post_id = $this->factory->task->create();
+		$post_id  = $this->factory->task->create();
 
 		// Ensure data exists.
 		$this->assertNotFalse( get_post( $post_id ), 'Post should exist before deletion.' );
 		$terms = get_terms(
 			array(
-				'taxonomy' => 'decker_board',
+				'taxonomy'   => 'decker_board',
 				'hide_empty' => false,
 			)
 		);
 		$this->assertNotEmpty( $terms, 'Terms should exist before deletion.' );
 
 		// Simulate form submission.
-		$_POST['decker_clear_all_data'] = '1';
+		$_POST['decker_clear_all_data']       = '1';
 		$_POST['decker_clear_all_data_nonce'] = wp_create_nonce( 'decker_clear_all_data_action' );
 
 		// Ensur that $_REQUEST has the same values.
-		$_REQUEST['decker_clear_all_data'] = $_POST['decker_clear_all_data'];
+		$_REQUEST['decker_clear_all_data']       = $_POST['decker_clear_all_data'];
 		$_REQUEST['decker_clear_all_data_nonce'] = $_POST['decker_clear_all_data_nonce'];
 
 		// Set the request method.
@@ -195,7 +195,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		// Assert that the term is deleted.
 		$terms = get_terms(
 			array(
-				'taxonomy' => 'decker_board',
+				'taxonomy'   => 'decker_board',
 				'hide_empty' => false,
 			)
 		);

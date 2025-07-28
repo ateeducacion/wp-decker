@@ -67,7 +67,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Create a term using the factory with color
 		$term_id = self::factory()->label->create(
 			array(
-				'name' => 'Sprint 1',
+				'name'  => 'Sprint 1',
 				'color' => '#ff5733',
 			)
 		);
@@ -93,7 +93,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Attempt to create a term using the factory
 		$term = self::factory()->label->create_and_get(
 			array(
-				'name' => 'Sprint 2',
+				'name'  => 'Sprint 2',
 				'color' => '#33ff57',
 			)
 		);
@@ -113,7 +113,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Create a term using the factory
 		$term_id = self::factory()->label->create(
 			array(
-				'name' => 'Sprint 3',
+				'name'  => 'Sprint 3',
 				'color' => '#33ff57',
 			)
 		);
@@ -141,7 +141,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Create a term using the factory
 		$term_id = self::factory()->label->create(
 			array(
-				'name' => 'Sprint 4',
+				'name'  => 'Sprint 4',
 				'color' => '#5733ff',
 			)
 		);
@@ -173,7 +173,7 @@ class DeckerLabelsTest extends Decker_Test_Base {
 		// Set current user as editor
 		wp_set_current_user( $this->editor );
 
-		$terms = array( 'Label A', 'Label B', 'Label C' );
+		$terms    = array( 'Label A', 'Label B', 'Label C' );
 		$term_ids = array();
 
 		// Create multiple terms

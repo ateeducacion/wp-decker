@@ -62,6 +62,9 @@ $meta = $event_id ? get_post_meta( $event_id ) : array();
 // Process metas.
 $allday = isset( $meta['event_allday'][0] ) ? $meta['event_allday'][0] : '';
 
+$start_raw = $event_id ? $meta['event_start'][0] ?? '' : '';
+$end_raw   = $event_id ? $meta['event_end'][0] ?? '' : '';
+
 /**
  * Función para redondear a la media hora más cercana.
  *
@@ -87,16 +90,34 @@ function round_to_nearest_half_hour( $date ) {
 	return gmdate( 'Y-m-d H:i', $timestamp );
 }
 
-// Establecer la fecha de inicio.
-$start_date = isset( $meta['event_start'][0] ) ?
-	gmdate( 'Y-m-d H:i', strtotime( $meta['event_start'][0] ) ) :
-	round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) );
 
-// Establecer la fecha de fin.
-$end_date = isset( $meta['event_end'][0] ) ?
-	gmdate( 'Y-m-d H:i', strtotime( $meta['event_end'][0] ) ) :
-	gmdate( 'Y-m-d H:i', strtotime( $start_date . ' +1 hour' ) );
+/**
+ * Convierte una fecha en UTC a la hora local configurada en WordPress.
+ *
+ * @param string $datetime_utc Fecha en formato UTC (Y-m-d H:i:s o similar).
+ * @return string Fecha local en formato 'Y-m-d\TH:i' compatible con datetime-local.
+ */
+function convert_utc_to_local( $datetime_utc ) {
+	$gmt_offset = get_option( 'gmt_offset' );
+	$timestamp_utc = strtotime( $datetime_utc );
+	$offset_seconds = $gmt_offset * HOUR_IN_SECONDS;
+	$timestamp_local = $timestamp_utc + $offset_seconds;
+	return gmdate( 'Y-m-d\TH:i', $timestamp_local );
+}
 
+
+// Fecha de inicio.
+$start_date = isset( $meta['event_start'][0] )
+	? convert_utc_to_local( $meta['event_start'][0] )
+	: convert_utc_to_local( round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) ) );
+
+// Fecha de fin.
+$end_date = isset( $meta['event_end'][0] )
+	? convert_utc_to_local( $meta['event_end'][0] )
+	: convert_utc_to_local( gmdate( 'Y-m-d H:i', strtotime( $start_date ) ) );
+
+
+// Removed redundant commented-out code for maintainability.
 $assigned_users = isset( $meta['event_assigned_users'][0] ) ?
 	maybe_unserialize( $meta['event_assigned_users'][0] ) :
 	array( get_current_user_id() );
@@ -110,19 +131,53 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 	<input type="hidden" name="event_id" id="event-id" value="<?php echo esc_attr( $event_id ); ?>">
 	<?php wp_nonce_field( 'decker_event_action', 'decker_event_nonce' ); ?>
 
-	<!-- Título -->
-	<div class="form-floating mb-3">
-		<input type="text" class="form-control" id="event-title" name="event_title" 
-			   value="<?php echo esc_attr( $event_title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
-		<label for="event-title"><?php esc_html_e( 'Title', 'decker' ); ?> <span class="text-danger">*</span></label>
-		<div class="invalid-feedback">
-			<?php esc_html_e( 'Please enter a title for the event.', 'decker' ); ?>
+
+<div class="row g-3 mb-3">
+
+	<!-- Categoría -->
+	<div class="col-md-4">
+		<div class="form-floating">
+			<select class="form-select" id="event-category" name="event_category" required>
+				<option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
+				<option value="bg-success" <?php selected( $category, 'bg-success' ); ?>>
+					<?php esc_html_e( 'Event', 'decker' ); ?>
+				</option>
+				<option value="bg-info" <?php selected( $category, 'bg-info' ); ?>>
+					<?php esc_html_e( 'Absence', 'decker' ); ?>
+				</option>
+				<option value="bg-warning" <?php selected( $category, 'bg-warning' ); ?>>
+					<?php esc_html_e( 'Warning', 'decker' ); ?>
+				</option>
+				<!-- temporary disabled for simplicity 
+				<option value="bg-danger" <?php selected( $category, 'bg-danger' ); ?>>
+					<?php esc_html_e( 'Alert', 'decker' ); ?>
+				</option>
+				-->
+			</select>
+			<label for="event-category"><?php esc_html_e( 'Category', 'decker' ); ?> <span class="text-danger">*</span></label>
+			<div class="invalid-feedback">
+				<?php esc_html_e( 'Please select a category for the event.', 'decker' ); ?>
+			</div>
 		</div>
 	</div>
 
+	<!-- Título -->
+	<div class="col-md-8">
+		<div class="form-floating">
+			<input type="text" class="form-control" id="event-title" name="event_title" 
+				   value="<?php echo esc_attr( $event_title ); ?>" required placeholder="<?php esc_attr_e( 'Title', 'decker' ); ?>">
+			<label for="event-title"><?php esc_html_e( 'Title', 'decker' ); ?> <span class="text-danger">*</span></label>
+			<div class="invalid-feedback">
+				<?php esc_html_e( 'Please enter a title for the event.', 'decker' ); ?>
+			</div>
+		</div>
+	</div>
+</div>
+
+
 	<!-- Fechas -->
 	<div class="mb-3">
-		<div class="form-check form-switch mb-3">
+		<div class="form-check mb-3">
 			<input class="form-check-input" type="checkbox" id="event-allday" name="event_allday" 
 				   <?php echo $allday ? 'checked' : ''; ?>>
 			<label class="form-check-label" for="event-allday">
@@ -133,8 +188,10 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		<div class="row g-3">
 			<div class="col-md-6">
 				<div class="form-floating">
-					<input type="text" class="form-control flatpickr" id="event-start" name="event_start" 
-						   value="<?php echo esc_attr( $start_date ); ?>" required 
+
+					<input type="datetime-local" class="form-control" id="event-start" name="event_start" 
+						   value="" required 
+						   data-utc="<?php echo esc_attr( $start_raw ); ?>"
 						   placeholder="<?php esc_attr_e( 'Start Date and Time', 'decker' ); ?>">
 					<label for="event-start"><?php esc_html_e( 'Start Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
 					<div class="invalid-feedback">
@@ -144,8 +201,10 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 			</div>
 			<div class="col-md-6">
 				<div class="form-floating">
-					<input type="text" class="form-control flatpickr" id="event-end" name="event_end" 
-						   value="<?php echo esc_attr( $end_date ); ?>" required 
+					<input type="datetime-local" class="form-control" id="event-end" name="event_end" 
+						   value="" required 
+						   data-utc="<?php echo esc_attr( $end_raw ); ?>"
+
 						   placeholder="<?php esc_attr_e( 'End Date and Time', 'decker' ); ?>">
 					<label for="event-end"><?php esc_html_e( 'End Date and Time', 'decker' ); ?> <span class="text-danger">*</span></label>
 					<div class="invalid-feedback">
@@ -212,31 +271,6 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		</div>
 	</div>
 
-	<!-- Categoría -->
-	<div class="form-floating mb-4">
-		<select class="form-select" id="event-category" name="event_category" required>
-			<option value="" disabled selected><?php esc_html_e( 'Select Category', 'decker' ); ?></option>
-			<option value="bg-success" <?php echo 'bg-success' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Meeting', 'decker' ); ?>
-			</option>
-			<option value="bg-info" <?php echo 'bg-info' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Holidays', 'decker' ); ?>
-			</option>
-			<option value="bg-warning" <?php echo 'bg-warning' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Warning', 'decker' ); ?>
-			</option>
-			<option value="bg-danger" <?php echo 'bg-danger' === $category ? 'selected' : ''; ?>>
-				<?php esc_html_e( 'Alert', 'decker' ); ?>
-			</option>
-		</select>
-		<label for="event-category"><?php esc_html_e( 'Category', 'decker' ); ?> <span class="text-danger">*</span></label>
-		<div class="invalid-feedback">
-			<?php esc_html_e( 'Please select a category for the event.', 'decker' ); ?>
-		</div>
-		<small class="form-text text-muted mt-1">
-			<?php esc_html_e( 'The category determines the color of the event in the calendar.', 'decker' ); ?>
-		</small>
-	</div>
 
 	<!-- Botones -->
 	<div class="modal-footer d-flex justify-content-between w-100">

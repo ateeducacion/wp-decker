@@ -85,16 +85,16 @@ class DeckerUserExtendedTest extends Decker_Test_Base {
 	 * Test default email notification settings.
 	 */
 	public function test_default_email_notification_settings() {
-		$user_id = $this->factory->user->create();
+		$user_id             = $this->factory->user->create();
 		$email_notifications = get_user_meta( $user_id, 'decker_email_notifications', true );
 
 		$this->assertEmpty( $email_notifications, 'Email notification settings should be empty by default.' );
 
 		// Ensure defaults are applied when retrieved.
-		$default_settings = array(
-			'task_assigned'   => '1',
-			'task_completed'  => '1',
-			'task_commented'  => '1',
+		$default_settings    = array(
+			'task_assigned'  => '1',
+			'task_completed' => '1',
+			'task_commented' => '1',
 		);
 		$email_notifications = wp_parse_args( $email_notifications, $default_settings );
 
@@ -109,9 +109,9 @@ class DeckerUserExtendedTest extends Decker_Test_Base {
 
 		// Simulate saving settings.
 		$settings = array(
-			'task_assigned'   => '0',
-			'task_completed'  => '1',
-			'task_commented'  => '0',
+			'task_assigned'  => '0',
+			'task_completed' => '1',
+			'task_commented' => '0',
 		);
 
 		update_user_meta( $user_id, 'decker_email_notifications', $settings );
@@ -132,9 +132,9 @@ class DeckerUserExtendedTest extends Decker_Test_Base {
 
 		// Simulate invalid settings.
 		$invalid_settings = array(
-			'task_assigned'   => 'invalid',
-			'task_completed'  => '1',
-			'task_commented'  => null,
+			'task_assigned'  => 'invalid',
+			'task_completed' => '1',
+			'task_commented' => null,
 		);
 
 		// Set the POST data to simulate saving invalid settings.

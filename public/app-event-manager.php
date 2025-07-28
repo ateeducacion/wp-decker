@@ -151,7 +151,7 @@ foreach ( $events_data as $event_data ) :
 						esc_html_e( 'Meeting', 'decker' );
 						break;
 					case 'bg-info':
-						esc_html_e( 'Holidays', 'decker' );
+						esc_html_e( 'Absence', 'decker' );
 						break;
 					case 'bg-warning':
 						esc_html_e( 'Warning', 'decker' );

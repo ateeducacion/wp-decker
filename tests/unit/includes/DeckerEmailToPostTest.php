@@ -32,7 +32,7 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		// Create test user
 		$this->user_id = $this->factory->user->create(
 			array(
-				'role' => 'administrator',
+				'role'       => 'administrator',
 				'user_email' => 'test@example.com',
 			)
 		);
@@ -43,7 +43,7 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 	}
 
 	public function test_endpoint_requires_authorization() {
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request  = new WP_REST_Request( 'POST', $this->endpoint );
 		$response = rest_get_server()->dispatch( $request );
 
 		$this->assertEquals( 403, $response->get_status() );
@@ -64,7 +64,7 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 	public function test_handles_user_without_default_board() {
 		// Don't set default board for user
 
-		$email_content = "From: test@example.com\r\n";
+		$email_content  = "From: test@example.com\r\n";
 		$email_content .= "To: decker@example.com\r\n";
 		$email_content .= "Subject: Test Task No Board\r\n";
 		$email_content .= "Content-Type: text/plain\r\n\r\n";
@@ -78,11 +78,11 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 				array(
 					'rawEmail' => base64_encode( $email_content ),
 					'metadata' => array(
-						'from' => 'test@example.com',
-						'to' => 'decker@example.com',
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
 						'subject' => 'Test Task No Board',
-						'cc' => array(),
-						'bcc' => array(),
+						'cc'      => array(),
+						'bcc'     => array(),
 					),
 				)
 			)
@@ -112,11 +112,11 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 				array(
 					'rawEmail' => base64_encode( $email_content ),
 					'metadata' => array(
-						'from' => 'test@example.com',
-						'to' => 'decker@example.com',
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
 						'subject' => 'Test Task',
-						'cc' => array(),
-						'bcc' => array(),
+						'cc'      => array(),
+						'bcc'     => array(),
 					),
 				)
 			)
@@ -152,11 +152,11 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 				array(
 					'rawEmail' => base64_encode( $email_content ),
 					'metadata' => array(
-						'from' => 'test@example.com',
-						'to' => 'decker@example.com',
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
 						'subject' => 'Test Full Task',
-						'cc' => array(),
-						'bcc' => array(),
+						'cc'      => array(),
+						'bcc'     => array(),
 					),
 				)
 			)
@@ -191,11 +191,11 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 				array(
 					'rawEmail' => base64_encode( $email_content ),
 					'metadata' => array(
-						'from' => 'test@example.com',
-						'to' => 'decker@example.com',
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
 						'subject' => 'Task with Attachment',
-						'cc' => array(),
-						'bcc' => array(),
+						'cc'      => array(),
+						'bcc'     => array(),
 					),
 				)
 			)

@@ -43,8 +43,8 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 
 		$this->board = self::factory()->board->create_and_get(
 			array(
-				'name'     => 'Test Board',
-				'slug'     => 'test-board',
+				'name' => 'Test Board',
+				'slug' => 'test-board',
 			)
 		);
 		$this->assertInstanceOf( 'WP_Term', $this->board, 'Board factory failed, expected WP_Term instance' );
@@ -60,7 +60,7 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$task_id = self::factory()->task->create(
 			array(
 				'post_title' => 'Test Task',
-				'board' => $this->board->term_id,
+				'board'      => $this->board->term_id,
 			)
 		);
 
@@ -169,7 +169,7 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$published_task_id = self::factory()->task->create(
 			array(
 				'post_status' => 'publish',
-				'board' => $this->board->term_id,
+				'board'       => $this->board->term_id,
 			)
 		);
 
@@ -177,7 +177,7 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$published_tasks = $this->task_manager->get_tasks_by_status( 'publish' );
 		$this->assertIsArray( $published_tasks );
 		$this->assertGreaterThanOrEqual( 1, count( $published_tasks ) );
-		
+
 		// Find our specific task in the results
 		$found = false;
 		foreach ( $published_tasks as $task ) {
@@ -207,7 +207,7 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$this->assertFalse( $this->task_manager->has_user_today_tasks() );
 
 		// Add a user-date relation for today
-		$today = ( new DateTime() )->format( 'Y-m-d' );
+		$today     = ( new DateTime() )->format( 'Y-m-d' );
 		$relations = array(
 			array(
 				'user_id' => $this->editor,
@@ -256,7 +256,7 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$this->assertEquals( $task_id, $tasks[0]->ID );
 
 		// Test with specific date
-		$specific_date = new DateTime( $yesterday );
+		$specific_date       = new DateTime( $yesterday );
 		$tasks_specific_date = $this->task_manager->get_user_tasks_marked_for_today_for_previous_days(
 			$this->editor,
 			0, // Days parameter should be ignored when specific_date is provided
@@ -287,9 +287,9 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$this->assertNull( $this->task_manager->get_latest_user_task_date( $this->editor ) );
 
 		// Add user-date relations for different days
-		$yesterday = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
+		$yesterday    = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
 		$two_days_ago = ( new DateTime() )->modify( '-2 days' )->format( 'Y-m-d' );
-		
+
 		$relations = array(
 			array(
 				'user_id' => $this->editor,
@@ -327,10 +327,10 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 		$this->assertEmpty( $this->task_manager->get_user_task_dates( $this->editor ) );
 
 		// Add user-date relations for different days
-		$yesterday = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
-		$two_days_ago = ( new DateTime() )->modify( '-2 days' )->format( 'Y-m-d' );
+		$yesterday      = ( new DateTime() )->modify( '-1 day' )->format( 'Y-m-d' );
+		$two_days_ago   = ( new DateTime() )->modify( '-2 days' )->format( 'Y-m-d' );
 		$three_days_ago = ( new DateTime() )->modify( '-3 days' )->format( 'Y-m-d' );
-		
+
 		$relations = array(
 			array(
 				'user_id' => $this->editor,
@@ -356,7 +356,7 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 
 		// Test with limited max_days_back
 		$dates_limited = $this->task_manager->get_user_task_dates( $this->editor, 2 );
-		
+
 		$this->assertIsArray( $dates_limited );
 		// Check that we have at least the yesterday date
 		$this->assertContains( $yesterday, $dates_limited );
