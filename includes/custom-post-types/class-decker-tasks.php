@@ -459,7 +459,7 @@ class Decker_Tasks {
 			$this->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
 		}
 
-		do_action( 'decker_task_updated', $post_id ); // Invalidates .ics “all”.
+		// do_action( 'decker_task_updated', $post_id ); // Invalidates .ics “all”.
 	}
 
 	/**
@@ -876,7 +876,7 @@ class Decker_Tasks {
 			}
 		}
 
-		do_action( 'decker_task_updated', $task_id ); // Invalidates .ics “all”.
+		// do_action( 'decker_task_updated', $task_id ); // Invalidates .ics “all”.
 
 		 // Step 4: Return response.
 		return new WP_REST_Response(
