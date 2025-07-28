@@ -317,9 +317,32 @@ function() {
 		</script>
 
 		<script>
+			// Function to update URL with filter parameters
+			function updateUrlWithUserFilter(user) {
+				const url = new URL(window.location);
+				if (user) {
+					url.searchParams.set('user', user);
+				} else {
+					url.searchParams.delete('user');
+				}
+				window.history.replaceState(null, '', url);
+			}
+
+			// Function to get URL parameters
+			function getUrlParam(name) {
+				const urlParams = new URLSearchParams(window.location.search);
+				return urlParams.get(name);
+			}
+
 			document.addEventListener('DOMContentLoaded', function () {
 				const searchInput = document.getElementById('searchInput');
 				const boardUserFilter = document.getElementById('boardUserFilter');
+				
+				// Get initial user filter from URL
+				const initialUser = getUrlParam('user');
+				if (initialUser) {
+					boardUserFilter.value = initialUser;
+				}
 
 				function filterTasks() {
 					const searchText = searchInput.value.toLowerCase();
@@ -340,8 +363,16 @@ function() {
 					});
 				}
 
+				// Event listeners
 				searchInput.addEventListener('input', filterTasks);
-				boardUserFilter.addEventListener('change', filterTasks);
+				boardUserFilter.addEventListener('change', function() {
+					const selectedUser = this.value;
+					updateUrlWithUserFilter(selectedUser);
+					filterTasks();
+				});
+				
+				// Apply initial filter
+				filterTasks();
 			});
 		</script>
 
