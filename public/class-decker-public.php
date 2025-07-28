@@ -181,7 +181,6 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/default.min.css',
 				*/
 
-
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
@@ -233,11 +232,8 @@ class Decker_Public {
 
 			}
 
-			if ( 'knowledge-base' == $decker_page || 'task' == $decker_page ) {
-				wp_enqueue_media(); // Obligatorio para subida de medios.
-			}
-
-			// Cargar editor clásico en todas las páginas de Decker
+			wp_enqueue_media(); // Obligatorio para subida de medios.
+			// Cargar editor clásico en todas las páginas de Decker.
 			wp_enqueue_editor();
 
 			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
@@ -258,10 +254,10 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
-			// Cargar scripts de editor para todas las páginas
-			wp_enqueue_script('editor');
-			wp_enqueue_script('wp-tinymce');
-			wp_enqueue_script('heartbeat');
+			// Cargar scripts de editor para todas las páginas.
+			wp_enqueue_script( 'editor' );
+			wp_enqueue_script( 'wp-tinymce' );
+			wp_enqueue_script( 'heartbeat' );
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
 
