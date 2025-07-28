@@ -23,8 +23,11 @@
     var replyToCommentId = null;
 
     function initializeTaskEditor() {
+        // Destruir el editor existente antes de inicializar uno nuevo
         if (taskEditor && taskEditor.initialized) {
-            return Promise.resolve();
+            wp.editor.remove('task-description');
+            taskEditor.initialized = false;
+            taskEditor = null;
         }
 
         return new Promise((resolve) => {
@@ -47,6 +50,13 @@
                         });
                         ed.on('init', function() {
                             taskEditor.initialized = true;
+                            
+                            // Cargar el contenido en el editor después de inicializar
+                            const content = document.querySelector('#task-description').value;
+                            if (content) {
+                                ed.setContent(content);
+                            }
+                            
                             resolve();
                         });
                     }
