@@ -342,11 +342,24 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 	</ul>
 
 	<div class="tab-content">
-		<!-- Description (Quill Editor) -->
+		<!-- Description (WordPress Classic Editor) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor-container">
-				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
-			</div>
+			<?php
+			$editor_id = 'task-description';
+			$editor_content = $task_id ? $task->description : $initial_description;
+			$settings = array(
+				'textarea_name' => 'description',
+				'editor_height' => 200,
+				'teeny' => true,
+				'media_buttons' => false,
+				'quicktags' => false,
+				'tinymce' => array(
+					'toolbar1' => 'bold,italic,underline,strikethrough,link,blockquote,code',
+					'toolbar2' => '',
+				),
+			);
+			wp_editor( wp_kses_post( $editor_content ), $editor_id, $settings );
+			?>
 		</div>
 
 		<!-- Comments -->

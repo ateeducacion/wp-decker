@@ -14,8 +14,6 @@
     // Variable global para indicar si hay cambios sin guardar
     window.deckerHasUnsavedChanges = false;
 
-    let quill = null;
-
     let assigneesSelect = null;
     let labelsSelect = null;
 
@@ -189,51 +187,6 @@
             console.log('Task ID not found in data-task-id');
         }
 
-        if (context.querySelector('#editor')) {
-            if (quill === null) {
-                // Registrar el módulo HTML Edit Button
-                Quill.register('modules/htmlEditButton', htmlEditButton);
-
-            }
-
-            quill = new Quill(context.querySelector('#editor'), {
-                theme: 'snow',
-                readOnly: disabled,
-                modules: {
-                    toolbar: { 
-                        container: [
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['link', 'blockquote', 'code-block'],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-                            [{ 'indent': '-1' }, { 'indent': '+1' }],
-                            ['clean'],
-                            ['fullscreen'],
-                        ],
-                        handlers: {
-                            'fullscreen': function() {
-                                var editorContainer = context.querySelector('#editor-container');
-                                if (!document.fullscreenElement) {
-                                    editorContainer.requestFullscreen().catch(err => {
-                                        alert('Error attempting to enable full-screen mode: ' + err.message);
-                                    });
-                                } else {
-                                    document.exitFullscreen();
-                                }
-                            }
-                        }
-                    },  
-                    htmlEditButton: {
-                        syntax: false,
-                        buttonTitle: strings.show_html_source,
-                        msg: strings.edit_html_content,
-                        okText: strings.ok,
-                        cancelText: strings.cancel,
-                        closeOnClickOverlay: false,
-                    },                   
-                }
-            });
-        
-        }
 
         // Inicializar Choices.js para los selectores de asignados y etiquetas
         if (context.querySelector('#task-assignees')) {
@@ -356,14 +309,6 @@
             togglePriorityLabel(taskMaxPriorityCheck);
         }
         
-        // Para el Editor Quill
-        if (quill) {
-            quill.on('text-change', function() {
-                saveButton.disabled = false;
-                window.deckerHasUnsavedChanges = true;
-            });
-        }
-
         // Para los selectores de Choices.js
         if (assigneesSelect) {
             assigneesSelect.passedElement.element.addEventListener('change', enableSaveButton);
@@ -585,7 +530,7 @@
             hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
             assignees: selectedAssigneesValues,
             labels: selectedLabelsValues,
-            description: quill.root.innerHTML,
+            description: form.querySelector('#task-description').value,
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
         };
@@ -660,6 +605,19 @@
         if (taskForm && !taskForm.closest('.task-modal')) { // Asegurarse de que no está dentro de un modal
             initializeTaskPage(document);
             initializeSendComments(document);
+        }
+
+        // Inicializar TinyMCE si existe en la página
+        if (typeof tinymce !== 'undefined' && tinymce.editors.length > 0) {
+            tinymce.editors.forEach(function(editor) {
+                editor.on('change', function() {
+                    const saveButton = document.querySelector('#save-task');
+                    if (saveButton) {
+                        saveButton.disabled = false;
+                        window.deckerHasUnsavedChanges = true;
+                    }
+                });
+            });
         }
     });
 
