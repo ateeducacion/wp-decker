@@ -35,9 +35,12 @@
                 tinymce: {
                     wpautop: true,
                     container: 'description-tab',
-                    toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright wp_adv',
+                    toolbar1: 'formatselect bold italic link bullist numlist blockquote alignleft aligncenter alignright wp_adv',
                     toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
                     menubar: false,
+                    valid_elements: '*[*]', // permite todos los elementos con cualquier atributo
+                    extended_valid_elements: 'input[type|name|value|checked|disabled|class|id|style],a[href|target|rel|class|id|style]',
+
                     setup: function(ed) {
                         taskEditor = ed;
                         ed.on('change', function() {
