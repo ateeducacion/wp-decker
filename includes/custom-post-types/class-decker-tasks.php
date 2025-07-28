@@ -552,13 +552,13 @@ class Decker_Tasks {
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
-				'args' => [
-			        'board_id'      => [ 'required' => true ],
-			        'source_stack'  => [ 'required' => true ],
-			        'target_stack'  => [ 'required' => true ],
-			        'source_order'  => [ 'required' => true ],
-			        'target_order'  => [ 'required' => true ],
-			    ]				
+				'args' => array(
+					'board_id'      => array( 'required' => true ),
+					'source_stack'  => array( 'required' => true ),
+					'target_stack'  => array( 'required' => true ),
+					'source_order'  => array( 'required' => true ),
+					'target_order'  => array( 'required' => true ),
+				),
 			)
 		);
 
@@ -571,13 +571,13 @@ class Decker_Tasks {
 				'permission_callback' => function () {
 					return current_user_can( 'read' );
 				},
-				'args' => [
-			        'board_id'      => [ 'required' => true ],
-			        'source_stack'  => [ 'required' => true ],
-			        'target_stack'  => [ 'required' => true ],
-			        'source_order'  => [ 'required' => true ],
-			        'target_order'  => [ 'required' => true ],
-			    ]
+				'args' => array(
+					'board_id'      => array( 'required' => true ),
+					'source_stack'  => array( 'required' => true ),
+					'target_stack'  => array( 'required' => true ),
+					'source_order'  => array( 'required' => true ),
+					'target_order'  => array( 'required' => true ),
+				),
 			)
 		);
 
