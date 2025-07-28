@@ -261,6 +261,9 @@ class Decker_Tasks {
 
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
+		error_log( 'SOURCE: ' . $source_stack );
+		error_log( 'TARGET: ' . $target_stack );
+
 		if ( ! in_array( $source_stack, $valid_stacks ) || ! in_array( $target_stack, $valid_stacks ) ) {
 			return new WP_REST_Response(
 				array(
