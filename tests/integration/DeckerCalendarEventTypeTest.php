@@ -39,7 +39,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 	public function test_json_feed_returns_only_events_of_type( $type ) {
 			$calendar = new Decker_Calendar();
 
-			// Crear evento del tipo actual
+			// Create an event of the current type
 			$current_type_id = self::factory()->post->create(
 				array(
 					'post_type'   => 'decker_event',

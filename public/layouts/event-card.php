@@ -117,16 +117,7 @@ $end_date = isset( $meta['event_end'][0] )
 	: convert_utc_to_local( gmdate( 'Y-m-d H:i', strtotime( $start_date ) ) );
 
 
-// // Establecer la fecha de inicio.
-// $start_date = isset( $meta['event_start'][0] ) ?
-// gmdate( 'Y-m-d H:i', strtotime( $meta['event_start'][0] ) ) :
-// round_to_nearest_half_hour( gmdate( 'Y-m-d H:i' ) );
-
-// // Establecer la fecha de fin.
-// $end_date = isset( $meta['event_end'][0] ) ?
-// gmdate( 'Y-m-d H:i', strtotime( $meta['event_end'][0] ) ) :
-// gmdate( 'Y-m-d H:i', strtotime( $start_date . ' +1 hour' ) );
-
+// Removed redundant commented-out code for maintainability.
 $assigned_users = isset( $meta['event_assigned_users'][0] ) ?
 	maybe_unserialize( $meta['event_assigned_users'][0] ) :
 	array( get_current_user_id() );
