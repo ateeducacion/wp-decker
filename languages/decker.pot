@@ -1351,9 +1351,6 @@ msgstr ""
 msgid "Nickname"
 msgstr ""
 
-msgid "Under construction..."
-msgstr ""
-
 msgid "Hidden task"
 msgstr ""
 
