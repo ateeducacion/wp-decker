@@ -206,10 +206,10 @@ class Decker_Public {
 
 			);
 
-			if ( 'analytics' == $decker_page ) {
+			// if ( 'analytics' == $decker_page ) {
 				// Chart.js.
 				$resources[] = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js';
-			}
+			// }
 
 			if ( 'board' == $decker_page ) {
 				// Dragula.
