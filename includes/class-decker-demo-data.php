@@ -530,7 +530,7 @@ class Decker_Demo_Data {
 					$stack,
 					$board_id,
 					$max_priority,
-					$end_date, // due date is end of task
+					$end_date, // due date is end of task.
 					1,
 					1,
 					false,
@@ -542,21 +542,24 @@ class Decker_Demo_Data {
 				);
 
 				if ( $task_id && ! is_wp_error( $task_id ) ) {
-					// Generate user-date relations for each day in the task duration
+					// Generate user-date relations for each day in the task duration.
 					$relations = array();
 					$period_start = clone $start_date;
 					$period_end = clone $end_date;
-					$period_end->modify( '+1 day' ); // to include end date
+					$period_end->modify( '+1 day' ); // to include end date.
 
 					$interval = new DateInterval( 'P1D' );
 					$period = new DatePeriod( $period_start, $interval, $period_end );
 
 					foreach ( $period as $day ) {
 						foreach ( $assigned_users as $user_id ) {
-							$relations[] = array(
-								'user_id' => $user_id,
-								'date'    => $day->format( 'Y-m-d' ),
-							);
+							// 60% chance to create a relation.
+							if ( $this->random_boolean( 0.6 ) ) {
+								$relations[] = array(
+									'user_id' => $user_id,
+									'date'    => $day->format( 'Y-m-d' ),
+								);
+							}
 						}
 					}
 
