@@ -553,8 +553,11 @@ class Decker_Demo_Data {
 
 					foreach ( $period as $day ) {
 						foreach ( $assigned_users as $user_id ) {
-							// 70% chance to create a relation.
-							if ( $this->random_boolean( 0.7 ) ) {
+							$dates = iterator_to_array( $period );
+							$days_to_assign = $this->custom_rand( 1, count( $dates ) );
+							$random_dates = $this->wp_rand_elements( $dates, $days_to_assign );
+
+							foreach ( $random_dates as $day ) {
 								$relations[] = array(
 									'user_id' => $user_id,
 									'date'    => $day->format( 'Y-m-d' ),
