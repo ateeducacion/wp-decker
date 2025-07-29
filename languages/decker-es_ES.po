@@ -612,9 +612,6 @@ msgstr "Seleccione una tabla."
 msgid "Author"
 msgstr "Autor"
 
-msgid "Under construction..."
-msgstr "En construcción..."
-
 msgid "Save"
 msgstr "Guardar"
 

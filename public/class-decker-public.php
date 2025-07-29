@@ -194,6 +194,9 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.css',
 
+				// Chart.js.
+				'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
+
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/attex.css',
@@ -205,11 +208,6 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
 
 			);
-
-			if ( 'analytics' == $decker_page ) {
-				// Chart.js.
-				$resources[] = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js';
-			}
 
 			if ( 'board' == $decker_page ) {
 				// Dragula.
