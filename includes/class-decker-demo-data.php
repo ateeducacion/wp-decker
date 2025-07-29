@@ -517,17 +517,20 @@ class Decker_Demo_Data {
 				$max_priority = $this->random_boolean( 0.2 );
 				$archived = $this->random_boolean( 0.2 );
 				$creation_date = $this->random_date( '-2 months', 'now' );
-				$due_date = $this->random_date( $creation_date->format( 'Y-m-d' ), '+3 months' );
+				$start_date = $this->random_date( '-2 months', 'now' );
+				$duration = $this->custom_rand( 1, 14 );
+				$end_date = clone $start_date;
+				$end_date->modify( "+{$duration} days" );
 				$stack = $this->random_stack();
 
-				Decker_Tasks::create_or_update_task(
+				$task_id = Decker_Tasks::create_or_update_task(
 					0,
 					$post_title,
 					$post_content,
 					$stack,
 					$board_id,
 					$max_priority,
-					$due_date,
+					$end_date, // due date is end of task
 					1,
 					1,
 					false,
@@ -537,6 +540,29 @@ class Decker_Demo_Data {
 					$archived,
 					0
 				);
+
+				if ( $task_id && ! is_wp_error( $task_id ) ) {
+					// Generate user-date relations for each day in the task duration
+					$relations = array();
+					$period_start = clone $start_date;
+					$period_end = clone $end_date;
+					$period_end->modify( '+1 day' ); // to include end date
+
+					$interval = new DateInterval( 'P1D' );
+					$period = new DatePeriod( $period_start, $interval, $period_end );
+
+					foreach ( $period as $day ) {
+						foreach ( $assigned_users as $user_id ) {
+							$relations[] = array(
+								'user_id' => $user_id,
+								'date'    => $day->format( 'Y-m-d' ),
+							);
+						}
+					}
+
+					update_post_meta( $task_id, '_user_date_relations', $relations );
+					update_post_meta( $task_id, 'startdate', $start_date->format( 'Y-m-d' ) );
+				}
 			}
 		}
 	}
