@@ -53,19 +53,46 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * @param array $assoc_args Associative arguments.
 		 */
 		public function create( $args, $assoc_args ) {
+			$result = $this->create_journal_entry( $assoc_args );
+			if ( $result['success'] ) {
+				WP_CLI::success( $result['message'] );
+			} else {
+				if ( 'warning' === $result['type'] ) {
+					WP_CLI::warning( $result['message'] );
+				} else {
+					WP_CLI::error( $result['message'] );
+				}
+			}
+		}
+
+		/**
+		 * Logic for creating a journal entry.
+		 *
+		 * @param array $assoc_args Associative arguments from the CLI command.
+		 * @return array Status array with success bool and message.
+		 */
+		public function create_journal_entry( $assoc_args ) {
 			$board_arg = WP_CLI\Utils\get_flag_value( $assoc_args, 'board' );
 			$date      = WP_CLI\Utils\get_flag_value( $assoc_args, 'date', gmdate( 'Y-m-d' ) );
 			$title     = WP_CLI\Utils\get_flag_value( $assoc_args, 'title' );
 			$force     = WP_CLI\Utils\get_flag_value( $assoc_args, 'force', false );
 
 			if ( ! $board_arg || ! $title ) {
-				WP_CLI::error( __( "'board' and 'title' are required arguments.", 'decker' ) );
+				return array(
+					'success' => false,
+					'message' => __( "'board' and 'title' are required arguments.", 'decker' ),
+					'type'    => 'error',
+				);
 			}
 
 			// Validate and get board term ID.
 			$board_term = is_numeric( $board_arg ) ? get_term( $board_arg, 'decker_board' ) : get_term_by( 'slug', $board_arg, 'decker_board' );
 			if ( ! $board_term || is_wp_error( $board_term ) ) {
-				WP_CLI::error( __( 'Board not found.', 'decker' ) );
+				return array(
+					'success' => false,
+					'message' => __( 'Board not found.', 'decker' ),
+					'type'    => 'error',
+				);
 			}
 			$board_id = $board_term->term_id;
 
@@ -89,8 +116,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				);
 
 				if ( $query->have_posts() ) {
-					WP_CLI::warning( __( 'A journal entry for this board and date already exists. Use --force to override.', 'decker' ) );
-					return;
+					return array(
+						'success' => false,
+						'message' => __( 'A journal entry for this board and date already exists. Use --force to override.', 'decker' ),
+						'type'    => 'warning',
+					);
 				}
 			}
 
@@ -104,7 +134,11 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			$post_id = wp_insert_post( $post_data, true );
 
 			if ( is_wp_error( $post_id ) ) {
-				WP_CLI::error( $post_id->get_error_message() );
+				return array(
+					'success' => false,
+					'message' => $post_id->get_error_message(),
+					'type'    => 'error',
+				);
 			}
 
 			// Set board taxonomy.
@@ -141,7 +175,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				}
 			}
 
-			WP_CLI::success( "Journal entry created successfully! ID: $post_id" );
+			return array(
+				'success' => true,
+				'message' => "Journal entry created successfully! ID: $post_id",
+			);
 		}
 	}
 }

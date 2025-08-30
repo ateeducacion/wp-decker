@@ -30,6 +30,7 @@ class Decker_Journal_Editor {
 		add_filter( 'default_content', array( $this, 'set_default_editor_content' ), 10, 2 );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 		add_action( 'save_post_decker_journal', array( $this, 'save_meta_box_data' ), 10, 2 );
+		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
 	}
 
 	/**
@@ -159,12 +160,40 @@ class Decker_Journal_Editor {
 		if ( ! isset( $_POST['decker_journal_meta_box_nonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['decker_journal_meta_box_nonce'] ), 'decker_journal_meta_box' ) ) {
 			return;
 		}
-
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
-
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// Validation for admin editor.
+		$board_id = isset( $_POST['decker_board'] ) ? absint( $_POST['decker_board'] ) : 0;
+		if ( empty( $board_id ) ) {
+			set_transient( 'decker_journal_error', __( 'A board is required to save a journal entry.', 'decker' ) );
+			return;
+		}
+
+		$journal_date = isset( $_POST['journal_date'] ) ? sanitize_text_field( wp_unslash( $_POST['journal_date'] ) ) : '';
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'decker_journal',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
+				'post__not_in'   => array( $post_id ),
+				'meta_key'       => 'journal_date',
+				'meta_value'     => $journal_date,
+				'tax_query'      => array(
+					array(
+						'taxonomy' => 'decker_board',
+						'field'    => 'term_id',
+						'terms'    => $board_id,
+					),
+				),
+				'posts_per_page' => 1,
+			)
+		);
+		if ( $query->have_posts() ) {
+			set_transient( 'decker_journal_error', __( 'A journal entry for this board and date already exists.', 'decker' ) );
 			return;
 		}
 
@@ -196,9 +225,22 @@ class Decker_Journal_Editor {
 		}
 
 		// Save the board taxonomy.
-		$board_id = isset( $_POST['decker_board'] ) ? absint( $_POST['decker_board'] ) : 0;
 		if ( ! empty( $board_id ) ) {
 			wp_set_post_terms( $post_id, $board_id, 'decker_board', false );
+		}
+	}
+
+	/**
+	 * Display admin notices.
+	 */
+	public function display_admin_notices() {
+		if ( $message = get_transient( 'decker_journal_error' ) ) {
+			?>
+			<div class="notice notice-error is-dismissible">
+				<p><?php echo esc_html( $message ); ?></p>
+			</div>
+			<?php
+			delete_transient( 'decker_journal_error' );
 		}
 	}
 }

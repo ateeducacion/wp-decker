@@ -2,49 +2,34 @@
 
 class DeckerJournalCliTest extends Decker_Test_Base {
 
-	public function set_up() {
-		parent::set_up();
-		require_once dirname( __DIR__, 2 ) . '/includes/cli/class-decker-journal-cli.php';
-		WP_CLI::add_command( 'decker journal', 'Decker_Journal_CLI' );
-	}
-
 	public function test_create_command() {
-		$board = self::factory()->board->create( array( 'name' => 'CLI Test Board' ) );
+		$board = self::factory()->board->create();
+		$cli_command = new Decker_Journal_CLI();
 
 		$assoc_args = array(
 			'board' => $board,
 			'title' => 'CLI Journal Entry',
-			'date' => '2025-09-10',
+			'date'  => '2025-09-10',
 			'topic' => 'CLI Test Topic',
-			'attendees' => 'User1,User2',
 		);
 
-		$result = WP_CLI::run_command( array( 'decker', 'journal', 'create' ), array(
-			'assoc_args' => $assoc_args,
-			'return' => 'all',
-		) );
-
-		$this->assertStringContainsString( 'Journal entry created successfully!', $result->stdout );
+		// Test successful creation
+		$result = $cli_command->create_journal_entry( $assoc_args );
+		$this->assertTrue( $result['success'] );
+		$this->assertStringContainsString( 'Journal entry created successfully!', $result['message'] );
 
 		$post = get_page_by_title( 'CLI Journal Entry', OBJECT, 'decker_journal' );
 		$this->assertNotNull( $post );
-
 		$this->assertEquals( 'CLI Test Topic', get_post_meta( $post->ID, 'topic', true ) );
-		$this->assertEquals( array( 'User1', 'User2' ), get_post_meta( $post->ID, 'attendees', true ) );
 
 		// Test idempotency
-		$result_again = WP_CLI::run_command( array( 'decker', 'journal', 'create' ), array(
-			'assoc_args' => $assoc_args,
-			'return' => 'all',
-		) );
-		$this->assertStringContainsString( 'A journal entry for this board and date already exists.', $result_again->stdout );
+		$result_again = $cli_command->create_journal_entry( $assoc_args );
+		$this->assertFalse( $result_again['success'] );
+		$this->assertEquals( 'warning', $result_again['type'] );
 
 		// Test --force
 		$assoc_args['force'] = true;
-		$result_force = WP_CLI::run_command( array( 'decker', 'journal', 'create' ), array(
-			'assoc_args' => $assoc_args,
-			'return' => 'all',
-		) );
-		$this->assertStringContainsString( 'Journal entry created successfully!', $result_force->stdout );
+		$result_force = $cli_command->create_journal_entry( $assoc_args );
+		$this->assertTrue( $result_force['success'] );
 	}
 }

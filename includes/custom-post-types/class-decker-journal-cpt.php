@@ -30,7 +30,7 @@ class Decker_Journal_CPT {
 		add_action( 'init', array( $this, 'register_post_type' ) );
 		add_action( 'init', array( $this, 'register_meta_fields' ) );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		add_filter( 'wp_insert_post_data', array( $this, 'validate_journal_data' ), 10, 2 );
+		add_filter( 'rest_pre_insert_decker_journal', array( $this, 'rest_validate_journal' ), 10, 2 );
 	}
 
 	/**
@@ -380,69 +380,75 @@ class Decker_Journal_CPT {
 	}
 
 	/**
-	 * Validate journal data before saving.
+	 * Validate journal data from a REST request.
 	 *
-	 * @param array $data    The sanitized post data.
-	 * @param array $postarr The original post data.
-	 * @return array|WP_Error The modified post data or a WP_Error on failure.
+	 * @param stdClass        $prepared_post An object representing a single post prepared for inserting or updating.
+	 * @param WP_REST_Request $request       The request object.
+	 * @return WP_Error|true
 	 */
-	public function validate_journal_data( $data, $postarr ) {
-		if ( 'decker_journal' !== $data['post_type'] ) {
-			return $data;
-		}
-
-		// Skip validation for auto-drafts to allow the editor to load.
-		if ( 'auto-draft' === $data['post_status'] ) {
-			return $data;
-		}
-
+	public function rest_validate_journal( $prepared_post, $request ) {
 		$board_id = 0;
-		// For REST API and direct wp_insert_post calls.
-		if ( ! empty( $postarr['decker_board'] ) ) {
-			$board_id = absint( $postarr['decker_board'] );
-		} elseif ( ! empty( $postarr['tax_input']['decker_board'] ) ) {
-			// For admin editor saves.
-			$board_id = absint( $postarr['tax_input']['decker_board'] );
+		if ( ! empty( $request['decker_board'] ) ) {
+			$board_id = absint( $request['decker_board'] );
 		}
 
 		$journal_date = '';
-		// For REST API and direct wp_insert_post calls.
-		if ( ! empty( $postarr['meta_input']['journal_date'] ) ) {
-			$journal_date = sanitize_text_field( $postarr['meta_input']['journal_date'] );
-		} elseif ( isset( $_POST['journal_date'] ) && isset( $_POST['decker_journal_meta_box_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['decker_journal_meta_box_nonce'] ), 'decker_journal_meta_box' ) ) {
-			// For admin editor saves, with nonce verification.
-			$journal_date = sanitize_text_field( wp_unslash( $_POST['journal_date'] ) );
+		if ( ! empty( $request['meta']['journal_date'] ) ) {
+			$journal_date = sanitize_text_field( $request['meta']['journal_date'] );
 		}
 
 		// 1. Board is required.
 		if ( empty( $board_id ) ) {
-			return new WP_Error( 'board_required', __( 'A board is required to save a journal entry.', 'decker' ) );
+			return new WP_Error( 'board_required', __( 'A board is required to save a journal entry.', 'decker' ), array( 'status' => 400 ) );
 		}
 
 		// 2. Uniqueness (Board + Date).
-		$query = new WP_Query(
-			array(
-				'post_type'      => 'decker_journal',
-				'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
-				'post__not_in'   => isset( $postarr['ID'] ) ? array( $postarr['ID'] ) : array(),
-				'meta_key'       => 'journal_date',
-				'meta_value'     => $journal_date,
-				'tax_query'      => array(
-					array(
-						'taxonomy' => 'decker_board',
-						'field'    => 'term_id',
-						'terms'    => $board_id,
-					),
+		$query_args = array(
+			'post_type'      => 'decker_journal',
+			'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
+			'meta_key'       => 'journal_date',
+			'meta_value'     => $journal_date,
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'decker_board',
+					'field'    => 'term_id',
+					'terms'    => $board_id,
 				),
-				'posts_per_page' => 1,
-			)
+			),
+			'posts_per_page' => 1,
 		);
 
-		if ( $query->have_posts() ) {
-			return new WP_Error( 'duplicate_journal', __( 'A journal entry for this board and date already exists.', 'decker' ) );
+		if ( ! empty( $request['id'] ) ) {
+			$query_args['post__not_in'] = array( $request['id'] );
 		}
 
-		return $data;
+		$query = new WP_Query( $query_args );
+
+		if ( $query->have_posts() ) {
+			return new WP_Error( 'duplicate_journal', __( 'A journal entry for this board and date already exists.', 'decker' ), array( 'status' => 400 ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Get journal entries.
+	 *
+	 * @param array $args WP_Query arguments.
+	 * @return array Array of post objects.
+	 */
+	public static function get_journals( $args = array() ) {
+		$default_args = array(
+			'post_type'      => 'decker_journal',
+			'posts_per_page' => -1,
+			'post_status'    => 'publish',
+			'orderby'        => 'meta_value',
+			'meta_key'       => 'journal_date',
+			'order'          => 'DESC',
+		);
+
+		$args = wp_parse_args( $args, $default_args );
+		return get_posts( $args );
 	}
 }
 
