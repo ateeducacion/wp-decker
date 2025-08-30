@@ -13,9 +13,9 @@ class DeckerJournalCliTest extends Decker_Test_Base {
 			'attendees' => 'User1,User2',
 		);
 
-		$result = WP_CLI::run_command( 'decker journal create', array(
+		$result = WP_CLI::run_command( array( 'decker', 'journal', 'create' ), array(
 			'assoc_args' => $assoc_args,
-			'return' => 'all'
+			'return' => 'all',
 		) );
 
 		$this->assertStringContainsString( 'Journal entry created successfully!', $result->stdout );
@@ -27,17 +27,17 @@ class DeckerJournalCliTest extends Decker_Test_Base {
 		$this->assertEquals( array( 'User1', 'User2' ), get_post_meta( $post->ID, 'attendees', true ) );
 
 		// Test idempotency
-		$result_again = WP_CLI::run_command( 'decker journal create', array(
+		$result_again = WP_CLI::run_command( array( 'decker', 'journal', 'create' ), array(
 			'assoc_args' => $assoc_args,
-			'return' => 'all'
+			'return' => 'all',
 		) );
 		$this->assertStringContainsString( 'A journal entry for this board and date already exists.', $result_again->stdout );
 
 		// Test --force
 		$assoc_args['force'] = true;
-		$result_force = WP_CLI::run_command( 'decker journal create', array(
+		$result_force = WP_CLI::run_command( array( 'decker', 'journal', 'create' ), array(
 			'assoc_args' => $assoc_args,
-			'return' => 'all'
+			'return' => 'all',
 		) );
 		$this->assertStringContainsString( 'Journal entry created successfully!', $result_force->stdout );
 	}

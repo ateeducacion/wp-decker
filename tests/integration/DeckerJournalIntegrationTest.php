@@ -23,10 +23,10 @@ class DeckerJournalIntegrationTest extends Decker_Test_Base {
 		$this->assertEquals( 'decker_journal', $cpt->capability_type );
 		$this->assertContains( 'decker_board', $cpt->taxonomies );
 		$this->assertContains( 'decker_label', $cpt->taxonomies );
-		$this->assertContains( 'title', $cpt->supports );
-		$this->assertContains( 'editor', $cpt->supports );
-		$this->assertContains( 'author', $cpt->supports );
-		$this->assertContains( 'revisions', $cpt->supports );
+		$this->assertTrue( post_type_supports( 'decker_journal', 'title' ) );
+		$this->assertTrue( post_type_supports( 'decker_journal', 'editor' ) );
+		$this->assertTrue( post_type_supports( 'decker_journal', 'author' ) );
+		$this->assertTrue( post_type_supports( 'decker_journal', 'revisions' ) );
 	}
 
 	public function test_meta_fields_are_registered() {

@@ -63,6 +63,15 @@ class Decker_Journal_CPT {
 			'rewrite'            => array( 'slug' => 'decker-journals' ),
 			'capability_type'    => 'decker_journal',
 			'map_meta_cap'       => true,
+			'capabilities'       => array(
+				'edit_post'          => 'edit_decker_journal',
+				'read_post'          => 'read_decker_journal',
+				'delete_post'        => 'delete_decker_journal',
+				'edit_posts'         => 'edit_decker_journals',
+				'edit_others_posts'  => 'edit_others_decker_journals',
+				'publish_posts'      => 'publish_decker_journals',
+				'read_private_posts' => 'read_private_decker_journals',
+			),
 			'has_archive'        => true,
 			'hierarchical'       => false,
 			'menu_position'      => null,
@@ -84,7 +93,7 @@ class Decker_Journal_CPT {
 			'journal_date' => array(
 				'type'              => 'string',
 				'description'       => __( 'The date of the journal entry in YYYY-MM-DD format.', 'decker' ),
-				'sanitize_callback' => array( $this, 'sanitize_date' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_date' ),
 				'single'            => true,
 				'show_in_rest'      => array(
 					'schema' => array(
@@ -105,7 +114,7 @@ class Decker_Journal_CPT {
 						),
 					),
 				),
-				'sanitize_callback' => array( $this, 'sanitize_string_array' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_string_array' ),
 			),
 			'topic' => array(
 				'type'              => 'string',
@@ -126,7 +135,7 @@ class Decker_Journal_CPT {
 						),
 					),
 				),
-				'sanitize_callback' => array( $this, 'sanitize_string_array' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_string_array' ),
 			),
 			'derived_tasks' => array(
 				'type'              => 'array',
@@ -155,7 +164,7 @@ class Decker_Journal_CPT {
 						),
 					),
 				),
-				'sanitize_callback' => array( $this, 'sanitize_derived_tasks' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_derived_tasks' ),
 			),
 			'notes' => array(
 				'type'              => 'array',
@@ -173,7 +182,7 @@ class Decker_Journal_CPT {
 						),
 					),
 				),
-				'sanitize_callback' => array( $this, 'sanitize_notes' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_notes' ),
 			),
 			'related_task_ids' => array(
 				'type'              => 'array',
@@ -187,7 +196,7 @@ class Decker_Journal_CPT {
 						),
 					),
 				),
-				'sanitize_callback' => array( $this, 'sanitize_integer_array' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_integer_array' ),
 			),
 		);
 
