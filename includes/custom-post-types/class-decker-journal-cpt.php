@@ -138,10 +138,19 @@ class Decker_Journal_CPT {
 						'items' => array(
 							'type'       => 'object',
 							'properties' => array(
-								'description'      => array( 'type' => 'string' ),
-								'responsible_team' => array( 'type' => 'string' ),
-								'task_post_id'     => array( 'type' => 'integer' ),
-								'task_link'        => array( 'type' => 'string', 'format' => 'uri' ),
+								'description'      => array(
+									'type' => 'string',
+								),
+								'responsible_team' => array(
+									'type' => 'string',
+								),
+								'task_post_id'     => array(
+									'type' => 'integer',
+								),
+								'task_link'        => array(
+									'type'   => 'string',
+									'format' => 'uri',
+								),
 							),
 						),
 					),
@@ -189,6 +198,9 @@ class Decker_Journal_CPT {
 
 	/**
 	 * Sanitize a date string.
+	 *
+	 * @param string $value The date string to sanitize.
+	 * @return string|null
 	 */
 	public static function sanitize_date( $value ) {
 		if ( ! is_string( $value ) ) {
@@ -200,6 +212,9 @@ class Decker_Journal_CPT {
 
 	/**
 	 * Sanitize an array of strings.
+	 *
+	 * @param array $value The array to sanitize.
+	 * @return array
 	 */
 	public static function sanitize_string_array( $value ) {
 		if ( ! is_array( $value ) ) {
@@ -210,6 +225,9 @@ class Decker_Journal_CPT {
 
 	/**
 	 * Sanitize an array of integers.
+	 *
+	 * @param array $value The array to sanitize.
+	 * @return array
 	 */
 	public static function sanitize_integer_array( $value ) {
 		if ( ! is_array( $value ) ) {
@@ -220,6 +238,9 @@ class Decker_Journal_CPT {
 
 	/**
 	 * Sanitize the derived_tasks meta field.
+	 *
+	 * @param array $tasks The array of tasks to sanitize.
+	 * @return array
 	 */
 	public static function sanitize_derived_tasks( $tasks ) {
 		if ( ! is_array( $tasks ) ) {
@@ -247,6 +268,9 @@ class Decker_Journal_CPT {
 
 	/**
 	 * Sanitize the notes meta field.
+	 *
+	 * @param array $notes The array of notes to sanitize.
+	 * @return array
 	 */
 	public static function sanitize_notes( $notes ) {
 		if ( ! is_array( $notes ) ) {
@@ -270,24 +294,28 @@ class Decker_Journal_CPT {
 	 * Register custom REST API routes.
 	 */
 	public function register_rest_routes() {
-		register_rest_route( 'decker/v1', '/journals', array(
-			'methods'             => WP_REST_Server::READABLE,
-			'callback'            => array( $this, 'get_journal_by_board_and_date' ),
-			'permission_callback' => array( $this, 'can_read_journals' ),
-			'args'                => array(
-				'board' => array(
-					'required'          => true,
-					'description'       => __( 'Board ID or slug.', 'decker' ),
-					'type'              => 'string',
+		register_rest_route(
+			'decker/v1',
+			'/journals',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_journal_by_board_and_date' ),
+				'permission_callback' => array( $this, 'can_read_journals' ),
+				'args'                => array(
+					'board' => array(
+						'required'    => true,
+						'description' => __( 'Board ID or slug.', 'decker' ),
+						'type'        => 'string',
+					),
+					'date'  => array(
+						'required'    => true,
+						'description' => __( 'Date in YYYY-MM-DD format.', 'decker' ),
+						'type'        => 'string',
+						'format'      => 'date',
+					),
 				),
-				'date' => array(
-					'required'          => true,
-					'description'       => __( 'Date in YYYY-MM-DD format.', 'decker' ),
-					'type'              => 'string',
-					'format'            => 'date',
-				),
-			),
-		) );
+			)
+		);
 	}
 
 	/**
@@ -305,20 +333,22 @@ class Decker_Journal_CPT {
 			return new WP_Error( 'rest_board_not_found', __( 'Board not found.', 'decker' ), array( 'status' => 404 ) );
 		}
 
-		$query = new WP_Query( array(
-			'post_type'      => 'decker_journal',
-			'post_status'    => 'publish',
-			'posts_per_page' => 1,
-			'meta_key'       => 'journal_date',
-			'meta_value'     => $date,
-			'tax_query'      => array(
-				array(
-					'taxonomy' => 'decker_board',
-					'field'    => 'term_id',
-					'terms'    => $board_term->term_id,
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'decker_journal',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'meta_key'       => 'journal_date',
+				'meta_value'     => $date,
+				'tax_query'      => array(
+					array(
+						'taxonomy' => 'decker_board',
+						'field'    => 'term_id',
+						'terms'    => $board_term->term_id,
+					),
 				),
-			),
-		) );
+			)
+		);
 
 		if ( ! $query->have_posts() ) {
 			return new WP_Error( 'rest_journal_not_found', __( 'Journal entry not found.', 'decker' ), array( 'status' => 404 ) );
@@ -358,22 +388,20 @@ class Decker_Journal_CPT {
 		}
 
 		$board_id = 0;
-		// For REST API and direct wp_insert_post calls
+		// For REST API and direct wp_insert_post calls.
 		if ( ! empty( $postarr['decker_board'] ) ) {
 			$board_id = absint( $postarr['decker_board'] );
-		}
-		// For admin editor saves
-		elseif ( ! empty( $postarr['tax_input']['decker_board'] ) ) {
+		} elseif ( ! empty( $postarr['tax_input']['decker_board'] ) ) {
+			// For admin editor saves.
 			$board_id = absint( $postarr['tax_input']['decker_board'] );
 		}
 
 		$journal_date = '';
-		// For REST API and direct wp_insert_post calls
+		// For REST API and direct wp_insert_post calls.
 		if ( ! empty( $postarr['meta_input']['journal_date'] ) ) {
 			$journal_date = sanitize_text_field( $postarr['meta_input']['journal_date'] );
-		}
-		// For admin editor saves
-		elseif ( ! empty( $_POST['journal_date'] ) ) {
+		} elseif ( isset( $_POST['journal_date'] ) && isset( $_POST['decker_journal_meta_box_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['decker_journal_meta_box_nonce'] ), 'decker_journal_meta_box' ) ) {
+			// For admin editor saves, with nonce verification.
 			$journal_date = sanitize_text_field( wp_unslash( $_POST['journal_date'] ) );
 		}
 
@@ -383,21 +411,23 @@ class Decker_Journal_CPT {
 		}
 
 		// 2. Uniqueness (Board + Date).
-		$query = new WP_Query( array(
-			'post_type'      => 'decker_journal',
-			'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
-			'post__not_in'   => isset( $postarr['ID'] ) ? array( $postarr['ID'] ) : array(),
-			'meta_key'       => 'journal_date',
-			'meta_value'     => $journal_date,
-			'tax_query'      => array(
-				array(
-					'taxonomy' => 'decker_board',
-					'field'    => 'term_id',
-					'terms'    => $board_id,
+		$query = new WP_Query(
+			array(
+				'post_type'      => 'decker_journal',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'future' ),
+				'post__not_in'   => isset( $postarr['ID'] ) ? array( $postarr['ID'] ) : array(),
+				'meta_key'       => 'journal_date',
+				'meta_value'     => $journal_date,
+				'tax_query'      => array(
+					array(
+						'taxonomy' => 'decker_board',
+						'field'    => 'term_id',
+						'terms'    => $board_id,
+					),
 				),
-			),
-			'posts_per_page' => 1,
-		) );
+				'posts_per_page' => 1,
+			)
+		);
 
 		if ( $query->have_posts() ) {
 			return new WP_Error( 'duplicate_journal', __( 'A journal entry for this board and date already exists.', 'decker' ) );

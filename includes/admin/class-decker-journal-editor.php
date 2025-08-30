@@ -41,7 +41,7 @@ class Decker_Journal_Editor {
 	 */
 	public function set_default_editor_content( $content, $post ) {
 		if ( 'decker_journal' === $post->post_type ) {
-			$today_date = date( 'd/m/Y' );
+			$today_date = gmdate( 'd/m/Y' );
 			$title_placeholder = 'xxx'; // The user will enter the real title.
 
 			$template = "[[TOC]]\n";
@@ -87,11 +87,16 @@ class Decker_Journal_Editor {
 	public function render_meta_box( $post ) {
 		wp_nonce_field( 'decker_journal_meta_box', 'decker_journal_meta_box_nonce' );
 
-		$journal_date = get_post_meta( $post->ID, 'journal_date', true ) ?: date( 'Y-m-d' );
-		$attendees = get_post_meta( $post->ID, 'attendees', true ) ?: array();
+		$journal_date = get_post_meta( $post->ID, 'journal_date', true ) ? get_post_meta( $post->ID, 'journal_date', true ) : gmdate( 'Y-m-d' );
+		$attendees = get_post_meta( $post->ID, 'attendees', true ) ? get_post_meta( $post->ID, 'attendees', true ) : array();
 		$topic = get_post_meta( $post->ID, 'topic', true );
-		$agreements = get_post_meta( $post->ID, 'agreements', true ) ?: array();
-		$board_terms = get_terms( array( 'taxonomy' => 'decker_board', 'hide_empty' => false ) );
+		$agreements = get_post_meta( $post->ID, 'agreements', true ) ? get_post_meta( $post->ID, 'agreements', true ) : array();
+		$board_terms = get_terms(
+			array(
+				'taxonomy' => 'decker_board',
+				'hide_empty' => false,
+			)
+		);
 		$assigned_board = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
 		$assigned_board = ! empty( $assigned_board ) ? $assigned_board[0] : '';
 		?>
@@ -125,9 +130,9 @@ class Decker_Journal_Editor {
 		<?php
 		// NOTE: Derived Tasks, Notes, and Related Tasks will be simple textareas for now.
 		// A more advanced UI will be built with JavaScript later if needed.
-		$derived_tasks = get_post_meta( $post->ID, 'derived_tasks', true ) ?: array();
-		$notes = get_post_meta( $post->ID, 'notes', true ) ?: array();
-		$related_task_ids = get_post_meta( $post->ID, 'related_task_ids', true ) ?: array();
+		$derived_tasks = get_post_meta( $post->ID, 'derived_tasks', true ) ? get_post_meta( $post->ID, 'derived_tasks', true ) : array();
+		$notes = get_post_meta( $post->ID, 'notes', true ) ? get_post_meta( $post->ID, 'notes', true ) : array();
+		$related_task_ids = get_post_meta( $post->ID, 'related_task_ids', true ) ? get_post_meta( $post->ID, 'related_task_ids', true ) : array();
 		?>
 		<p>
 			<label for="derived_tasks"><?php esc_html_e( 'Derived Tasks (JSON format):', 'decker' ); ?></label>
@@ -174,7 +179,7 @@ class Decker_Journal_Editor {
 		);
 
 		foreach ( $fields as $field ) {
-			if ( isset( $_POST[ $field ] ) ) {
+			if ( isset( $_POST[ $field ] ) ) { // WPCS: input var ok, CSRF ok.
 				$value = wp_unslash( $_POST[ $field ] );
 				switch ( $field ) {
 					case 'attendees':
@@ -201,7 +206,7 @@ class Decker_Journal_Editor {
 
 		// Save the board taxonomy.
 		$board_id = isset( $_POST['decker_board'] ) ? absint( $_POST['decker_board'] ) : 0;
-		if( ! empty( $board_id ) ) {
+		if ( ! empty( $board_id ) ) {
 			wp_set_post_terms( $post_id, $board_id, 'decker_board', false );
 		}
 	}

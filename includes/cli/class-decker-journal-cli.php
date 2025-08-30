@@ -48,53 +48,58 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		 * ## EXAMPLES
 		 *
 		 *     wp decker journal create --board=my-board --title="Daily Standup" --attendees="Fran,Humberto" --topic="Sync"
+		 *
+		 * @param array $args Positional arguments.
+		 * @param array $assoc_args Associative arguments.
 		 */
 		public function create( $args, $assoc_args ) {
 			$board_arg = WP_CLI\Utils\get_flag_value( $assoc_args, 'board' );
-			$date = WP_CLI\Utils\get_flag_value( $assoc_args, 'date', date( 'Y-m-d' ) );
-			$title = WP_CLI\Utils\get_flag_value( $assoc_args, 'title' );
-			$force = WP_CLI\Utils\get_flag_value( $assoc_args, 'force', false );
+			$date      = WP_CLI\Utils\get_flag_value( $assoc_args, 'date', gmdate( 'Y-m-d' ) );
+			$title     = WP_CLI\Utils\get_flag_value( $assoc_args, 'title' );
+			$force     = WP_CLI\Utils\get_flag_value( $assoc_args, 'force', false );
 
 			if ( ! $board_arg || ! $title ) {
 				WP_CLI::error( __( "'board' and 'title' are required arguments.", 'decker' ) );
 			}
 
-			// Validate and get board term ID
+			// Validate and get board term ID.
 			$board_term = is_numeric( $board_arg ) ? get_term( $board_arg, 'decker_board' ) : get_term_by( 'slug', $board_arg, 'decker_board' );
 			if ( ! $board_term || is_wp_error( $board_term ) ) {
-				WP_CLI::error( __( "Board not found.", 'decker' ) );
+				WP_CLI::error( __( 'Board not found.', 'decker' ) );
 			}
 			$board_id = $board_term->term_id;
 
-			// Check for duplicates if --force is not used
+			// Check for duplicates if --force is not used.
 			if ( ! $force ) {
-				$query = new WP_Query( array(
-					'post_type'      => 'decker_journal',
-					'post_status'    => 'any',
-					'meta_key'       => 'journal_date',
-					'meta_value'     => $date,
-					'tax_query'      => array(
-						array(
-							'taxonomy' => 'decker_board',
-							'field'    => 'term_id',
-							'terms'    => $board_id,
+				$query = new WP_Query(
+					array(
+						'post_type'      => 'decker_journal',
+						'post_status'    => 'any',
+						'meta_key'       => 'journal_date',
+						'meta_value'     => $date,
+						'tax_query'      => array(
+							array(
+								'taxonomy' => 'decker_board',
+								'field'    => 'term_id',
+								'terms'    => $board_id,
+							),
 						),
-					),
-					'posts_per_page' => 1,
-				) );
+						'posts_per_page' => 1,
+					)
+				);
 
 				if ( $query->have_posts() ) {
-					WP_CLI::warning( __( "A journal entry for this board and date already exists. Use --force to override.", 'decker' ) );
+					WP_CLI::warning( __( 'A journal entry for this board and date already exists. Use --force to override.', 'decker' ) );
 					return;
 				}
 			}
 
-			// Create post
+			// Create post.
 			$post_data = array(
-				'post_type'    => 'decker_journal',
-				'post_title'   => $title,
-				'post_status'  => 'publish',
-				'post_author'  => get_current_user_id(),
+				'post_type'   => 'decker_journal',
+				'post_title'  => $title,
+				'post_status' => 'publish',
+				'post_author' => get_current_user_id(),
 			);
 			$post_id = wp_insert_post( $post_data, true );
 
@@ -102,10 +107,10 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				WP_CLI::error( $post_id->get_error_message() );
 			}
 
-			// Set board taxonomy
+			// Set board taxonomy.
 			wp_set_post_terms( $post_id, $board_id, 'decker_board' );
 
-			// Update meta fields
+			// Update meta fields.
 			update_post_meta( $post_id, 'journal_date', $date );
 
 			if ( isset( $assoc_args['topic'] ) ) {
@@ -124,7 +129,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				if ( json_last_error() === JSON_ERROR_NONE ) {
 					update_post_meta( $post_id, 'derived_tasks', Decker_Journal_CPT::sanitize_derived_tasks( $derived_tasks ) );
 				} else {
-					WP_CLI::warning( "Invalid JSON for derived_tasks." );
+					WP_CLI::warning( 'Invalid JSON for derived_tasks.' );
 				}
 			}
 			if ( isset( $assoc_args['notes'] ) ) {
@@ -132,7 +137,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 				if ( json_last_error() === JSON_ERROR_NONE ) {
 					update_post_meta( $post_id, 'notes', Decker_Journal_CPT::sanitize_notes( $notes ) );
 				} else {
-					WP_CLI::warning( "Invalid JSON for notes." );
+					WP_CLI::warning( 'Invalid JSON for notes.' );
 				}
 			}
 
