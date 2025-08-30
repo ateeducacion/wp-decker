@@ -2,6 +2,12 @@
 
 class DeckerJournalCliTest extends Decker_Test_Base {
 
+	public function set_up() {
+		parent::set_up();
+		require_once dirname( __DIR__, 2 ) . '/includes/cli/class-decker-journal-cli.php';
+		WP_CLI::add_command( 'decker journal', 'Decker_Journal_CLI' );
+	}
+
 	public function test_create_command() {
 		$board = self::factory()->board->create( array( 'name' => 'CLI Test Board' ) );
 

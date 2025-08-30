@@ -8,6 +8,19 @@ class DeckerJournalIntegrationTest extends Decker_Test_Base {
 		parent::set_up();
 		$this->editor_user_id = $this->factory->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->editor_user_id );
+
+		// Manually register CPT and meta for the test
+		$cpt = new Decker_Journal_CPT();
+		$cpt->register_post_type();
+		$cpt->register_meta_fields();
+
+		// Manually grant capabilities for the test
+		$editor_role = get_role( 'editor' );
+		if ( $editor_role ) {
+			$editor_role->add_cap( 'publish_decker_journals' );
+			$editor_role->add_cap( 'edit_decker_journals' );
+			$editor_role->add_cap( 'edit_others_decker_journals' );
+		}
 	}
 
 	public function test_cpt_is_registered() {
