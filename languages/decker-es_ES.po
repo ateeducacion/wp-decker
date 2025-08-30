@@ -1394,3 +1394,122 @@ msgstr "Evento de todo el día"
 
 msgid "Time is stored in UTC. Adjust accordingly."
 msgstr "La hora se guarda en UTC. Ajusta si es necesario."
+
+msgid "Journal Details"
+msgstr "Detalles de la Entrada de Diario"
+
+msgid "Board:"
+msgstr "Tablero:"
+
+msgid "Select a Board (required)"
+msgstr "Selecciona un Tablero (requerido)"
+
+msgid "Journal Date:"
+msgstr "Fecha de la Entrada:"
+
+msgid "Topic (Asunto):"
+msgstr "Asunto:"
+
+msgid "Attendees (one per line):"
+msgstr "Asistentes (uno por línea):"
+
+msgid "Agreements (one per line):"
+msgstr "Acuerdos (uno por línea):"
+
+msgid "Derived Tasks (JSON format):"
+msgstr "Tareas Derivadas (formato JSON):"
+
+msgid "Notes (JSON format):"
+msgstr "Notas (formato JSON):"
+
+msgid "Related Task IDs (comma-separated):"
+msgstr "IDs de Tareas Relacionadas (separados por comas):"
+
+msgid "'board' and 'title' are required arguments."
+msgstr "Los argumentos 'board' y 'title' son obligatorios."
+
+msgid "Board not found."
+msgstr "Tablero no encontrado."
+
+msgid "A journal entry for this board and date already exists. Use --force to override."
+msgstr "Ya existe una entrada de diario para este tablero y fecha. Usa --force para sobreescribir."
+
+msgctxt "post type general name"
+msgid "Journal Entries"
+msgstr "Entradas de Diario"
+
+msgctxt "post type singular name"
+msgid "Journal Entry"
+msgstr "Entrada de Diario"
+
+msgctxt "admin menu"
+msgid "Journal Entries"
+msgstr "Entradas de Diario"
+
+msgctxt "add new on admin bar"
+msgid "Journal Entry"
+msgstr "Entrada de Diario"
+
+msgctxt "journal entry"
+msgid "Add New"
+msgstr "Añadir Nueva"
+
+msgid "Add New Journal Entry"
+msgstr "Añadir Nueva Entrada de Diario"
+
+msgid "New Journal Entry"
+msgstr "Nueva Entrada de Diario"
+
+msgid "Edit Journal Entry"
+msgstr "Editar Entrada de Diario"
+
+msgid "View Journal Entry"
+msgstr "Ver Entrada de Diario"
+
+msgid "All Journal Entries"
+msgstr "Todas las Entradas de Diario"
+
+msgid "Search Journal Entries"
+msgstr "Buscar Entradas de Diario"
+
+msgid "No journal entries found."
+msgstr "No se encontraron entradas de diario."
+
+msgid "No journal entries found in Trash."
+msgstr "No se encontraron entradas de diario en la Papelera."
+
+msgid "The date of the journal entry in YYYY-MM-DD format."
+msgstr "La fecha de la entrada de diario en formato AAAA-MM-DD."
+
+msgid "List of attendees."
+msgstr "Lista de asistentes."
+
+msgid "The main topic of the journal entry."
+msgstr "El asunto principal de la entrada de diario."
+
+msgid "List of agreements."
+msgstr "Lista de acuerdos."
+
+msgid "Tasks derived from the journal entry."
+msgstr "Tareas derivadas de la entrada de diario."
+
+msgid "Checklist of notes."
+msgstr "Lista de notas."
+
+msgid "List of related task IDs."
+msgstr "Lista de IDs de tareas relacionadas."
+
+msgid "Board ID or slug."
+msgstr "ID o slug del tablero."
+
+msgid "Date in YYYY-MM-DD format."
+msgstr "Fecha en formato AAAA-MM-DD."
+
+msgid "Journal entry not found."
+msgstr "Entrada de diario no encontrada."
+
+msgid "A board is required to save a journal entry."
+msgstr "Se requiere un tablero para guardar una entrada de diario."
+
+msgid "A journal entry for this board and date already exists."
+msgstr "Ya existe una entrada de diario para este tablero y fecha."
