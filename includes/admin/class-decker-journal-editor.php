@@ -168,40 +168,31 @@ class Decker_Journal_Editor {
 			return;
 		}
 
-		$fields = array(
-			'journal_date',
-			'topic',
-			'attendees',
-			'agreements',
-			'derived_tasks',
-			'notes',
-			'related_task_ids',
-		);
-
-		foreach ( $fields as $field ) {
-			if ( isset( $_POST[ $field ] ) ) { // WPCS: input var ok, CSRF ok.
-				$value = wp_unslash( $_POST[ $field ] );
-				switch ( $field ) {
-					case 'attendees':
-					case 'agreements':
-						$value = array_map( 'sanitize_text_field', explode( "\n", $value ) );
-						break;
-					case 'derived_tasks':
-					case 'notes':
-						$value = json_decode( $value, true );
-						break;
-					case 'related_task_ids':
-						$value = array_map( 'absint', explode( ',', $value ) );
-						break;
-					case 'topic':
-						$value = sanitize_text_field( $value );
-						break;
-					case 'journal_date':
-						$value = sanitize_text_field( $value );
-						break;
-				}
-				update_post_meta( $post_id, $field, $value );
-			}
+		if ( isset( $_POST['journal_date'] ) ) {
+			update_post_meta( $post_id, 'journal_date', sanitize_text_field( wp_unslash( $_POST['journal_date'] ) ) );
+		}
+		if ( isset( $_POST['topic'] ) ) {
+			update_post_meta( $post_id, 'topic', sanitize_text_field( wp_unslash( $_POST['topic'] ) ) );
+		}
+		if ( isset( $_POST['attendees'] ) ) {
+			$attendees = array_map( 'sanitize_text_field', explode( "\n", wp_unslash( $_POST['attendees'] ) ) );
+			update_post_meta( $post_id, 'attendees', $attendees );
+		}
+		if ( isset( $_POST['agreements'] ) ) {
+			$agreements = array_map( 'sanitize_text_field', explode( "\n", wp_unslash( $_POST['agreements'] ) ) );
+			update_post_meta( $post_id, 'agreements', $agreements );
+		}
+		if ( isset( $_POST['derived_tasks'] ) ) {
+			$derived_tasks = json_decode( wp_unslash( $_POST['derived_tasks'] ), true );
+			update_post_meta( $post_id, 'derived_tasks', $derived_tasks );
+		}
+		if ( isset( $_POST['notes'] ) ) {
+			$notes = json_decode( wp_unslash( $_POST['notes'] ), true );
+			update_post_meta( $post_id, 'notes', $notes );
+		}
+		if ( isset( $_POST['related_task_ids'] ) ) {
+			$related_task_ids = array_map( 'absint', explode( ',', wp_unslash( $_POST['related_task_ids'] ) ) );
+			update_post_meta( $post_id, 'related_task_ids', $related_task_ids );
 		}
 
 		// Save the board taxonomy.
