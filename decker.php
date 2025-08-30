@@ -36,6 +36,27 @@ function activate_decker() {
 		update_option( 'permalink_structure', '/%postname%/' );
 	}
 
+	// Grant capabilities for decker_journal CPT.
+	$roles = array( 'editor', 'administrator' );
+	foreach ( $roles as $role_name ) {
+		$role = get_role( $role_name );
+		if ( $role ) {
+			$role->add_cap( 'edit_decker_journal' );
+			$role->add_cap( 'read_decker_journal' );
+			$role->add_cap( 'delete_decker_journal' );
+			$role->add_cap( 'edit_decker_journals' );
+			$role->add_cap( 'edit_others_decker_journals' );
+			$role->add_cap( 'publish_decker_journals' );
+			$role->add_cap( 'read_private_decker_journals' );
+			$role->add_cap( 'delete_decker_journals' );
+			$role->add_cap( 'delete_private_decker_journals' );
+			$role->add_cap( 'delete_published_decker_journals' );
+			$role->add_cap( 'delete_others_decker_journals' );
+			$role->add_cap( 'edit_private_decker_journals' );
+			$role->add_cap( 'edit_published_decker_journals' );
+		}
+	}
+
 	flush_rewrite_rules();
 
 	update_option( 'decker_flush_rewrites', true );

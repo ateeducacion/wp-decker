@@ -23,6 +23,7 @@ Try Decker instantly in your browser using WordPress Playground! The demo includ
 - **WordPress Coding Standards Compliance**: Adheres to [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards) for quality and security.
 - **Continuous Integration Pipeline**: Set up for automated code verification and release generation on GitLab.
 - **Individual Calendar Feeds**: Subscribe to event-type specific calendar URLs (Meeting, Absence, Warning and Alert).
+- **Board Journals**: Create daily journal entries for each board, with fields for attendees, topics, agreements, and derived tasks.
 
 ## Installation
 
@@ -39,4 +40,64 @@ For development, you can bring up a local WordPress environment with the plugin 
 make up
 ```
 
-This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`. 
+This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`.
+
+## Advanced Usage
+
+### REST API
+
+The Board Journal feature provides a REST API for programmatic access.
+
+**Get Journal Entry by Board and Date**
+
+*   **Endpoint**: `GET /decker/v1/journals`
+*   **Permission**: `read`
+*   **Query Parameters**:
+    *   `board` (string|integer, required): The slug or ID of the board.
+    *   `date` (string, required): The date in `YYYY-MM-DD` format.
+*   **Example Request**:
+    ```bash
+    curl -X GET "http://localhost:8888/wp-json/decker/v1/journals?board=my-board&date=2025-08-30" -u "admin:password"
+    ```
+*   **Example Response**:
+    ```json
+    {
+        "id": 123,
+        "date": "2025-08-30T11:45:00",
+        "title": { "raw": "Daily Standup" },
+        "meta": {
+            "journal_date": "2025-08-30",
+            "attendees": ["Fran", "Humberto"],
+            "topic": "Project Sync",
+            "agreements": ["Review PRs by EOD."],
+            "derived_tasks": [],
+            "notes": [],
+            "related_task_ids": []
+        }
+        // ... other post fields
+    }
+    ```
+
+### WP-CLI
+
+You can create journal entries from the command line using WP-CLI.
+
+**Create a Journal Entry**
+
+*   **Command**: `wp decker journal create`
+*   **Usage**:
+    ```bash
+    wp decker journal create --board=<slug|id> --title=<title> [--date=<YYYY-MM-DD>] [--topic=...] [--attendees=...] [--agreements=...]
+    ```
+*   **Parameters**:
+    *   `--board`: (Required) The slug or ID of the board.
+    *   `--title`: (Required) The title of the journal entry.
+    *   `--date`: The date of the entry (defaults to today).
+    *   `--topic`: The topic of the entry.
+    *   `--attendees`: Comma-separated list of attendees.
+    *   `--agreements`: Pipe-separated list of agreements.
+    *   `--force`: Force creation even if an entry for the same board and date already exists.
+*   **Example**:
+    ```bash
+    wp decker journal create --board=my-board --title="Afternoon Sync" --attendees="Fran,Humberto,Ernesto" --topic="Review new designs"
+    ```
