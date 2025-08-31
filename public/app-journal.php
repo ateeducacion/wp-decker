@@ -146,8 +146,10 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 				$('#journal-form')[0].reset();
 				$('#journal-id').val('');
 				quill.setText('');
-				userChoices.clearStore();
-				labelChoices.clearStore();
+				userChoices.clearInput();
+				userChoices.setValue([]);
+				labelChoices.clearInput();
+				labelChoices.setValue([]);
 				$('#journalModalLabel').text('<?php esc_html_e( "New Journal Entry", "decker" ); ?>');
 			});
 
@@ -218,11 +220,11 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 					content: quill.root.innerHTML,
 					status: 'publish',
 					decker_board: $('#journal-board').val(),
-					decker_label: $(labelChoices.getValue(true)),
+					decker_label: labelChoices.getValue(true),
 					meta: {
 						journal_date: $('#journal-date').val(),
 						topic: $('#journal-topic').val(),
-						assigned_users: $(userChoices.getValue(true)),
+						assigned_users: userChoices.getValue(true),
 						agreements: $('#journal-agreements').val().split('\\n'),
 					}
 				};
