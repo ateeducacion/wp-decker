@@ -31,7 +31,7 @@
 							<?php
 							$boards = BoardManager::get_all_boards();
 							foreach ( $boards as $board ) {
-								echo '<option value="' . esc_attr( $board->term_id ) . '">' . esc_html( $board->name ) . '</option>';
+								echo '<option value="' . esc_attr( $board->id ) . '">' . esc_html( $board->name ) . '</option>';
 							}
 							?>
 						</select>
