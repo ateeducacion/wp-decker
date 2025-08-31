@@ -102,7 +102,7 @@ class Decker_Journal_CPT {
 					),
 				),
 			),
-			'journal_users' => array(
+			'assigned_users' => array(
 				'type'              => 'array',
 				'description'       => __( 'List of users associated with the journal.', 'decker' ),
 				'single'            => true,

@@ -134,6 +134,7 @@ class Decker_Public {
 			'upcoming'       => 'public/app-upcoming.php',
 			'event-manager'  => 'public/app-event-manager.php',
 			'knowledge-base' => 'public/app-knowledge-base.php',
+			'journal'        => 'public/app-journal.php',
 		);
 
 		if ( array_key_exists( $decker_page, $include_files ) ) {

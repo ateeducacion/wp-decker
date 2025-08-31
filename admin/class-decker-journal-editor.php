@@ -230,9 +230,9 @@ class Decker_Journal_Editor {
 		if ( isset( $_POST['topic'] ) ) {
 			update_post_meta( $post_id, 'topic', sanitize_text_field( wp_unslash( $_POST['topic'] ) ) );
 		}
-		if ( isset( $_POST['journal_users'] ) ) {
-			$journal_users = array_map( 'absint', wp_unslash( $_POST['journal_users'] ) );
-			update_post_meta( $post_id, 'journal_users', $journal_users );
+		if ( isset( $_POST['assigned_users'] ) ) {
+			$assigned_users = array_map( 'absint', wp_unslash( $_POST['assigned_users'] ) );
+			update_post_meta( $post_id, 'assigned_users', $assigned_users );
 		}
 		if ( isset( $_POST['decker_labels'] ) ) {
 			wp_set_post_terms( $post_id, array_map( 'intval', wp_unslash( $_POST['decker_labels'] ) ), 'decker_label', false );
@@ -283,14 +283,14 @@ class Decker_Journal_Editor {
 	 */
 	public function render_users_meta_box( $post ) {
 		$users = get_users( array( 'orderby' => 'display_name' ) );
-		$assigned_users = get_post_meta( $post->ID, 'journal_users', true );
+		$assigned_users = get_post_meta( $post->ID, 'assigned_users', true );
 		?>
 		<div id="assigned-users" class="categorydiv">
 			<ul class="categorychecklist form-no-clear">
 				<?php foreach ( $users as $user ) { ?>
 					<li>
 						<label class="selectit">
-							<input type="checkbox" name="journal_users[]" value="<?php echo esc_attr( $user->ID ); ?>" <?php checked( is_array( $assigned_users ) && in_array( $user->ID, $assigned_users ) ); ?>>
+							<input type="checkbox" name="assigned_users[]" value="<?php echo esc_attr( $user->ID ); ?>" <?php checked( is_array( $assigned_users ) && in_array( $user->ID, $assigned_users ) ); ?>>
 							<?php echo esc_html( $user->display_name ); ?>
 						</label>
 					</li>

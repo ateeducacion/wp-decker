@@ -66,7 +66,7 @@ class DeckerJournalIntegrationTest extends Decker_Test_Base {
 			'decker_label' => array( $label ),
 			'meta' => array(
 				'journal_date' => '2025-08-30',
-				'journal_users' => array( $this->editor_user_id ),
+				'assigned_users' => array( $this->editor_user_id ),
 				'topic' => 'Test Topic',
 				'agreements' => array( 'Agreement 1', 'Agreement 2' ),
 				'derived_tasks' => array(
@@ -99,7 +99,7 @@ class DeckerJournalIntegrationTest extends Decker_Test_Base {
 
 		$this->assertEquals( 'Test Journal Entry', $read_data['title']['raw'] );
 		$this->assertEquals( '2025-08-30', $read_data['meta']['journal_date'] );
-		$this->assertContains( $this->editor_user_id, $read_data['meta']['journal_users'] );
+		$this->assertContains( $this->editor_user_id, $read_data['meta']['assigned_users'] );
 		$this->assertEquals( 'Test Topic', $read_data['meta']['topic'] );
 		$this->assertEquals( 'Derived Task 1', $read_data['meta']['derived_tasks'][0]['description'] );
 		$this->assertTrue( $read_data['meta']['notes'][1]['checked'] );
