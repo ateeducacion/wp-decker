@@ -51,7 +51,12 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 
 					<div class="row">
 						<div class="col-xxl-12">
-							<h4 class="page-title"><?php esc_html_e( 'Board Journals', 'decker' ); ?></h4>
+							<h4 class="page-title">
+								<?php esc_html_e( 'Board Journals', 'decker' ); ?>
+								<a href="#" class="btn btn-success btn-sm ms-3" data-bs-toggle="modal" data-bs-target="#journal-modal">
+									<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Journal Entry', 'decker' ); ?>
+								</a>
+							</h4>
 						</div>
 					</div>
 
@@ -65,7 +70,8 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 												<th><?php esc_html_e( 'Date', 'decker' ); ?></th>
 												<th><?php esc_html_e( 'Title', 'decker' ); ?></th>
 												<th><?php esc_html_e( 'Topic', 'decker' ); ?></th>
-												<th><?php esc_html_e( 'Attendees', 'decker' ); ?></th>
+												<th><?php esc_html_e( 'Users', 'decker' ); ?></th>
+												<th><?php esc_html_e( 'Actions', 'decker' ); ?></th>
 											</tr>
 										</thead>
 										<tbody>
@@ -74,7 +80,22 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 													<td><?php echo esc_html( get_post_meta( $journal->ID, 'journal_date', true ) ); ?></td>
 													<td><a href="<?php echo esc_url( get_permalink( $journal->ID ) ); ?>"><?php echo esc_html( $journal->post_title ); ?></a></td>
 													<td><?php echo esc_html( get_post_meta( $journal->ID, 'topic', true ) ); ?></td>
-													<td><?php echo esc_html( implode( ', ', get_post_meta( $journal->ID, 'attendees', true ) ) ); ?></td>
+													<td>
+														<?php
+														$users = get_post_meta( $journal->ID, 'assigned_users', true );
+														if ( ! empty( $users ) ) {
+															$user_names = array_map(
+																function( $user_id ) {
+																	$user = get_userdata( $user_id );
+																	return $user ? $user->display_name : '';
+																},
+																$users
+															);
+															echo esc_html( implode( ', ', $user_names ) );
+														}
+														?>
+													</td>
+													<td><!-- Action buttons placeholder --></td>
 												</tr>
 											<?php endforeach; ?>
 										</tbody>
@@ -95,6 +116,7 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 	</div>
 
 	<?php include 'layouts/right-sidebar.php'; ?>
+	<?php include 'layouts/journal-modal.php'; ?>
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
