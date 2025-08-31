@@ -20,6 +20,11 @@ class DeckerJournalIntegrationTest extends Decker_Test_Base {
 		}
 
 		wp_set_current_user( $this->editor_user_id );
+
+		// Manually register CPT and meta for the test
+		$cpt = new Decker_Journal_CPT();
+		$cpt->register_post_type();
+		$cpt->register_meta_fields();
 	}
 
 	public function test_cpt_is_registered() {

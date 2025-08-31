@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname( __DIR__, 2 ) . '/includes/cli/class-decker-journal-cli.php';
+
 class DeckerJournalCliTest extends Decker_Test_Base {
 
 	public function test_create_command() {

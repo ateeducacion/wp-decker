@@ -428,7 +428,7 @@ class Decker_Journal_CPT {
 			return new WP_Error( 'duplicate_journal', __( 'A journal entry for this board and date already exists.', 'decker' ), array( 'status' => 400 ) );
 		}
 
-		return true;
+		return $prepared_post;
 	}
 
 	/**
