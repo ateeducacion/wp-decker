@@ -95,7 +95,11 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 														}
 														?>
 													</td>
-													<td><!-- Action buttons placeholder --></td>
+													<td>
+														<button type="button" class="btn btn-sm btn-secondary me-2 view-journal-btn" data-journal-id="<?php echo esc_attr( $journal->ID ); ?>"><i class="ri-eye-line"></i></button>
+														<button type="button" class="btn btn-sm btn-info me-2 edit-journal-btn" data-journal-id="<?php echo esc_attr( $journal->ID ); ?>"><i class="ri-pencil-line"></i></button>
+														<button type="button" class="btn btn-sm btn-danger delete-journal-btn" data-journal-id="<?php echo esc_attr( $journal->ID ); ?>"><i class="ri-delete-bin-line"></i></button>
+													</td>
 												</tr>
 											<?php endforeach; ?>
 										</tbody>
@@ -117,17 +121,139 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 
 	<?php include 'layouts/right-sidebar.php'; ?>
 	<?php include 'layouts/journal-modal.php'; ?>
+	<?php include 'layouts/journal-view-modal.php'; ?>
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
-		jQuery(document).ready(function () {
-			jQuery('#table-journals').DataTable({
+		jQuery(document).ready(function ($) {
+			var journalTable = $('#table-journals').DataTable({
 				language: {
 					url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json',
 				},
 				pageLength: 50,
 				responsive: true,
 				order: [[0, 'desc']],
+			});
+
+			var journalModal = new bootstrap.Modal(document.getElementById('journal-modal'));
+			var viewModal = new bootstrap.Modal(document.getElementById('journal-view-modal'));
+			var quill = new Quill('#journal-description-editor', { theme: 'snow' });
+			var userChoices = new Choices('#journal-users', { removeItemButton: true });
+			var labelChoices = new Choices('#journal-labels', { removeItemButton: true });
+
+			// Handle Add New button
+			$('[data-bs-target="#journal-modal"]').on('click', function() {
+				$('#journal-form')[0].reset();
+				$('#journal-id').val('');
+				quill.setText('');
+				userChoices.clearStore();
+				labelChoices.clearStore();
+				$('#journalModalLabel').text('<?php esc_html_e( "New Journal Entry", "decker" ); ?>');
+			});
+
+			// Handle Edit button
+			$('#table-journals').on('click', '.edit-journal-btn', function() {
+				var journalId = $(this).data('journal-id');
+				$.ajax({
+					url: wpApiSettings.root + 'wp/v2/decker-journals/' + journalId + '?_embed',
+					method: 'GET',
+					beforeSend: function ( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+					},
+					success: function(data) {
+						$('#journal-id').val(data.id);
+						$('#journal-title').val(data.title.rendered);
+						$('#journal-date').val(data.meta.journal_date);
+						$('#journal-topic').val(data.meta.topic);
+						$('#journal-agreements').val(data.meta.agreements.join('\\n'));
+						quill.root.innerHTML = data.content.rendered;
+
+						userChoices.setValue(data.meta.assigned_users.map(String));
+						labelChoices.setValue(data.decker_label.map(String));
+
+						var boardId = data.decker_board.length > 0 ? data.decker_board[0] : '';
+						$('#journal-board').val(boardId);
+
+						$('#journalModalLabel').text('<?php esc_html_e( "Edit Journal Entry", "decker" ); ?>');
+						journalModal.show();
+					}
+				});
+			});
+
+			// Handle View button
+			$('#table-journals').on('click', '.view-journal-btn', function() {
+				var journalId = $(this).data('journal-id');
+				$.ajax({
+					url: wpApiSettings.root + 'wp/v2/decker-journals/' + journalId,
+					method: 'GET',
+					beforeSend: function ( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+					},
+					success: function(data) {
+						$('#journalViewModalLabel').html(data.title.rendered);
+						$('#journal-view-content').html(data.content.rendered);
+						viewModal.show();
+					}
+				});
+			});
+
+			// Handle Save button
+			$('#save-journal-btn').on('click', function() {
+				var journalId = $('#journal-id').val();
+				var method = journalId ? 'POST' : 'POST';
+				var url = journalId ? wpApiSettings.root + 'wp/v2/decker-journals/' + journalId : wpApiSettings.root + 'wp/v2/decker-journals';
+
+				var data = {
+					title: $('#journal-title').val(),
+					content: quill.root.innerHTML,
+					status: 'publish',
+					decker_board: $('#journal-board').val(),
+					decker_label: $(labelChoices.getValue(true)),
+					meta: {
+						journal_date: $('#journal-date').val(),
+						topic: $('#journal-topic').val(),
+						assigned_users: $(userChoices.getValue(true)),
+						agreements: $('#journal-agreements').val().split('\\n'),
+					}
+				};
+
+				$.ajax({
+					url: url,
+					method: method,
+					beforeSend: function ( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+					},
+					data: JSON.stringify(data),
+					contentType: 'application/json; charset=utf-8',
+					success: function() {
+						journalModal.hide();
+						location.reload();
+					},
+					error: function(response) {
+						alert(response.responseJSON.message);
+					}
+				});
+			});
+
+			// Handle Delete button
+			$('#table-journals').on('click', '.delete-journal-btn', function() {
+				if ( ! confirm('<?php esc_html_e( "Are you sure you want to delete this journal entry?", "decker" ); ?>') ) {
+					return;
+				}
+				var journalId = $(this).data('journal-id');
+				$.ajax({
+					url: wpApiSettings.root + 'wp/v2/decker-journals/' + journalId,
+					method: 'DELETE',
+					beforeSend: function ( xhr ) {
+						xhr.setRequestHeader( 'X-WP-Nonce', wpApiSettings.nonce );
+					},
+					success: function() {
+						location.reload();
+					},
+					error: function(response) {
+						alert(response.responseJSON.message);
+					}
+				});
 			});
 		});
 	</script>
