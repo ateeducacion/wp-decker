@@ -199,6 +199,16 @@ $journal_data = Decker_Journal_CPT::get_journals( $args );
 
 			// Handle Save button
 			$('#save-journal-btn').on('click', function() {
+				// Client-side validation
+				if ( ! $('#journal-board').val() ) {
+					alert('<?php esc_html_e( "Please select a board.", "decker" ); ?>');
+					return;
+				}
+				if ( ! $('#journal-title').val() ) {
+					alert('<?php esc_html_e( "Please enter a title.", "decker" ); ?>');
+					return;
+				}
+
 				var journalId = $('#journal-id').val();
 				var method = journalId ? 'POST' : 'POST';
 				var url = journalId ? wpApiSettings.root + 'wp/v2/decker-journals/' + journalId : wpApiSettings.root + 'wp/v2/decker-journals';
