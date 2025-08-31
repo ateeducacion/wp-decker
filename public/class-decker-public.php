@@ -249,7 +249,7 @@ class Decker_Public {
 
 			}
 
-			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
+			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page || 'journal' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
