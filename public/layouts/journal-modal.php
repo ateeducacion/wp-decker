@@ -48,17 +48,27 @@
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label"><?php esc_html_e( 'Users', 'decker' ); ?></label>
-						<div id="journal-users-container">
-							<!-- User checkboxes will be populated here -->
-						</div>
+						<label for="journal-users" class="form-label"><?php esc_html_e( 'Users', 'decker' ); ?></label>
+						<select class="form-control" id="journal-users" name="assigned_users[]" multiple>
+							<?php
+							$users = get_users( array( 'fields' => array( 'ID', 'display_name' ) ) );
+							foreach ( $users as $user ) {
+								echo '<option value="' . esc_attr( $user->ID ) . '">' . esc_html( $user->display_name ) . '</option>';
+							}
+							?>
+						</select>
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
-						<div id="journal-labels-container">
-							<!-- Label checkboxes will be populated here -->
-						</div>
+						<label for="journal-labels" class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
+						<select class="form-control" id="journal-labels" name="decker_labels[]" multiple>
+							<?php
+							$labels = get_terms( array( 'taxonomy' => 'decker_label', 'hide_empty' => false ) );
+							foreach ( $labels as $label ) {
+								echo '<option value="' . esc_attr( $label->term_id ) . '">' . esc_html( $label->name ) . '</option>';
+							}
+							?>
+						</select>
 					</div>
 
 					<div class="mb-3">
@@ -81,3 +91,32 @@
 		</div>
 	</div>
 </div>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function () {
+		if (document.getElementById('journal-users')) {
+			new Choices('#journal-users', {
+				removeItemButton: true,
+			});
+		}
+		if (document.getElementById('journal-labels')) {
+			new Choices('#journal-labels', {
+				removeItemButton: true,
+			});
+		}
+		if (document.getElementById('journal-description-editor')) {
+			new Quill('#journal-description-editor', {
+				theme: 'snow',
+				modules: {
+					toolbar: [
+						[{ 'header': [1, 2, 3, false] }],
+						['bold', 'italic', 'underline'],
+						[{ 'list': 'ordered'}, { 'list': 'bullet' }],
+						['link', 'blockquote'],
+						['clean']
+					]
+				}
+			});
+		}
+	});
+</script>
