@@ -102,19 +102,19 @@ class Decker_Journal_CPT {
 					),
 				),
 			),
-			'attendees' => array(
+			'journal_users' => array(
 				'type'              => 'array',
-				'description'       => __( 'List of attendees.', 'decker' ),
+				'description'       => __( 'List of users associated with the journal.', 'decker' ),
 				'single'            => true,
 				'show_in_rest'      => array(
 					'schema' => array(
 						'type'  => 'array',
 						'items' => array(
-							'type' => 'string',
+							'type' => 'integer',
 						),
 					),
 				),
-				'sanitize_callback' => array( __CLASS__, 'sanitize_string_array' ),
+				'sanitize_callback' => array( __CLASS__, 'sanitize_integer_array' ),
 			),
 			'topic' => array(
 				'type'              => 'string',

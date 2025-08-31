@@ -27,6 +27,7 @@ class Decker_Journal_Editor {
 	 * Define Hooks.
 	 */
 	private function define_hooks() {
+		add_filter( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 		add_filter( 'default_content', array( $this, 'set_default_editor_content' ), 10, 2 );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 		add_action( 'save_post_decker_journal', array( $this, 'save_meta_box_data' ), 10, 2 );
@@ -67,6 +68,20 @@ class Decker_Journal_Editor {
 	}
 
 	/**
+	 * Disable Gutenberg editor for journal entries.
+	 *
+	 * @param bool   $current_status The current status.
+	 * @param string $post_type      The post type.
+	 * @return bool
+	 */
+	public function disable_gutenberg( $current_status, $post_type ) {
+		if ( 'decker_journal' === $post_type ) {
+			return false;
+		}
+		return $current_status;
+	}
+
+	/**
 	 * Add meta box to the journal editor screen.
 	 */
 	public function add_meta_box() {
@@ -77,6 +92,22 @@ class Decker_Journal_Editor {
 			'decker_journal',
 			'normal',
 			'high'
+		);
+		add_meta_box(
+			'decker_journal_users',
+			__( 'Users', 'decker' ),
+			array( $this, 'render_users_meta_box' ),
+			'decker_journal',
+			'side',
+			'default'
+		);
+		add_meta_box(
+			'decker_journal_labels',
+			__( 'Labels', 'decker' ),
+			array( $this, 'render_labels_meta_box' ),
+			'decker_journal',
+			'side',
+			'default'
 		);
 	}
 
@@ -119,10 +150,6 @@ class Decker_Journal_Editor {
 		<p>
 			<label for="topic"><?php esc_html_e( 'Topic (Asunto):', 'decker' ); ?></label>
 			<input type="text" id="topic" name="topic" value="<?php echo esc_attr( $topic ); ?>" class="widefat" />
-		</p>
-		<p>
-			<label for="attendees"><?php esc_html_e( 'Attendees (one per line):', 'decker' ); ?></label>
-			<textarea id="attendees" name="attendees" class="widefat" rows="5"><?php echo esc_textarea( implode( "\n", $attendees ) ); ?></textarea>
 		</p>
 		<p>
 			<label for="agreements"><?php esc_html_e( 'Agreements (one per line):', 'decker' ); ?></label>
@@ -203,9 +230,14 @@ class Decker_Journal_Editor {
 		if ( isset( $_POST['topic'] ) ) {
 			update_post_meta( $post_id, 'topic', sanitize_text_field( wp_unslash( $_POST['topic'] ) ) );
 		}
-		if ( isset( $_POST['attendees'] ) ) {
-			$attendees = array_map( 'sanitize_text_field', explode( "\n", wp_unslash( $_POST['attendees'] ) ) );
-			update_post_meta( $post_id, 'attendees', $attendees );
+		if ( isset( $_POST['journal_users'] ) ) {
+			$journal_users = array_map( 'absint', wp_unslash( $_POST['journal_users'] ) );
+			update_post_meta( $post_id, 'journal_users', $journal_users );
+		}
+		if ( isset( $_POST['decker_labels'] ) ) {
+			wp_set_post_terms( $post_id, array_map( 'intval', wp_unslash( $_POST['decker_labels'] ) ), 'decker_label', false );
+		} else {
+			wp_set_post_terms( $post_id, array(), 'decker_label', false );
 		}
 		if ( isset( $_POST['agreements'] ) ) {
 			$agreements = array_map( 'sanitize_text_field', explode( "\n", wp_unslash( $_POST['agreements'] ) ) );
@@ -242,6 +274,59 @@ class Decker_Journal_Editor {
 			<?php
 			delete_transient( 'decker_journal_error' );
 		}
+	}
+
+	/**
+	 * Render the users meta box.
+	 *
+	 * @param WP_Post $post The post object.
+	 */
+	public function render_users_meta_box( $post ) {
+		$users = get_users( array( 'orderby' => 'display_name' ) );
+		$assigned_users = get_post_meta( $post->ID, 'journal_users', true );
+		?>
+		<div id="assigned-users" class="categorydiv">
+			<ul class="categorychecklist form-no-clear">
+				<?php foreach ( $users as $user ) { ?>
+					<li>
+						<label class="selectit">
+							<input type="checkbox" name="journal_users[]" value="<?php echo esc_attr( $user->ID ); ?>" <?php checked( is_array( $assigned_users ) && in_array( $user->ID, $assigned_users ) ); ?>>
+							<?php echo esc_html( $user->display_name ); ?>
+						</label>
+					</li>
+				<?php } ?>
+			</ul>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the labels meta box.
+	 *
+	 * @param WP_Post $post The post object.
+	 */
+	public function render_labels_meta_box( $post ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'decker_label',
+				'hide_empty' => false,
+			)
+		);
+		$assigned_labels = wp_get_post_terms( $post->ID, 'decker_label', array( 'fields' => 'ids' ) );
+		?>
+		<div id="decker-labels" class="categorydiv">
+			<ul class="categorychecklist form-no-clear">
+				<?php foreach ( $terms as $term ) { ?>
+					<li>
+						<label class="selectit">
+							<input type="checkbox" name="decker_labels[]" value="<?php echo esc_attr( $term->term_id ); ?>" <?php checked( is_array( $assigned_labels ) && in_array( $term->term_id, $assigned_labels ) ); ?>>
+							<?php echo esc_html( $term->name ); ?>
+						</label>
+					</li>
+				<?php } ?>
+			</ul>
+		</div>
+		<?php
 	}
 }
 

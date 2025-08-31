@@ -8,11 +8,13 @@ class DeckerJournalCliTest extends Decker_Test_Base {
 		$board = self::factory()->board->create();
 		$cli_command = new Decker_Journal_CLI();
 
+		$user = self::factory()->user->create_and_get();
 		$assoc_args = array(
 			'board' => $board,
 			'title' => 'CLI Journal Entry',
 			'date'  => '2025-09-10',
 			'topic' => 'CLI Test Topic',
+			'journal_users' => $user->ID,
 		);
 
 		// Test successful creation
@@ -23,6 +25,7 @@ class DeckerJournalCliTest extends Decker_Test_Base {
 		$post = get_page_by_title( 'CLI Journal Entry', OBJECT, 'decker_journal' );
 		$this->assertNotNull( $post );
 		$this->assertEquals( 'CLI Test Topic', get_post_meta( $post->ID, 'topic', true ) );
+		$this->assertEquals( array( $user->ID ), get_post_meta( $post->ID, 'journal_users', true ) );
 
 		// Test idempotency
 		$result_again = $cli_command->create_journal_entry( $assoc_args );
