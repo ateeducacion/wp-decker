@@ -91,32 +91,3 @@
 		</div>
 	</div>
 </div>
-
-<script>
-	document.addEventListener('DOMContentLoaded', function () {
-		if (document.getElementById('journal-users')) {
-			new Choices('#journal-users', {
-				removeItemButton: true,
-			});
-		}
-		if (document.getElementById('journal-labels')) {
-			new Choices('#journal-labels', {
-				removeItemButton: true,
-			});
-		}
-		if (document.getElementById('journal-description-editor')) {
-			new Quill('#journal-description-editor', {
-				theme: 'snow',
-				modules: {
-					toolbar: [
-						[{ 'header': [1, 2, 3, false] }],
-						['bold', 'italic', 'underline'],
-						[{ 'list': 'ordered'}, { 'list': 'bullet' }],
-						['link', 'blockquote'],
-						['clean']
-					]
-				}
-			});
-		}
-	});
-</script>
