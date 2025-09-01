@@ -29,7 +29,8 @@ class DeckerRestDailyTest extends Decker_Test_Base {
 		$board = self::factory()->board->create();
 		$user = self::factory()->user->create();
 		$date = '2025-09-15';
-		$task = self::factory()->task->create();
+		$task = self::factory()->task->create( array( 'meta_input' => array( 'stack' => 'to-do' ) ) );
+		$this->assertNotWPError( $task );
 		wp_set_post_terms( $task, $board, 'decker_board' );
 		add_post_meta( $task, '_user_date_relations', array( array( 'user_id' => $user, 'date' => $date ) ) );
 

@@ -121,7 +121,7 @@ class Decker_Daily_Service {
 		}
 	}
 
-	private static function get_journal_post( int $board_term_id, string $ymd ) {
+	public static function get_journal_post_for_date( int $board_term_id, string $ymd ) {
 		$query = new WP_Query(
 			array(
 				'post_type'      => 'decker_journal',

@@ -54,6 +54,21 @@ class Decker_REST_Daily {
 						),
 					),
 				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array( $this, 'delete_daily_notes' ),
+					'permission_callback' => array( $this, 'edit_permissions_check' ),
+					'args'                => array(
+						'board' => array(
+							'required' => true,
+							'validate_callback' => array( $this, 'is_valid_board' ),
+						),
+						'date' => array(
+							'required' => true,
+							'pattern' => '^\\d{4}-\\d{2}-\\d{2}$',
+						),
+					),
+				),
 			)
 		);
 	}
@@ -121,5 +136,28 @@ class Decker_REST_Daily {
 			),
 			200
 		);
+	}
+
+	public function delete_daily_notes( $request ) {
+		$board_id = $this->get_board_id_from_param( $request['board'] );
+		$date = sanitize_text_field( $request['date'] );
+
+		if ( ! $board_id ) {
+			return new WP_Error( 'rest_board_not_found', __( 'Board not found.', 'decker' ), array( 'status' => 404 ) );
+		}
+
+		$journal_post = Decker_Daily_Service::get_journal_post_for_date( $board_id, $date );
+
+		if ( ! $journal_post ) {
+			return new WP_Error( 'journal_not_found', __( 'No journal entry to delete.', 'decker' ), array( 'status' => 404 ) );
+		}
+
+		$result = wp_delete_post( $journal_post->ID, true );
+
+		if ( ! $result ) {
+			return new WP_Error( 'delete_failed', __( 'Failed to delete journal entry.', 'decker' ), array( 'status' => 500 ) );
+		}
+
+		return new WP_REST_Response( array( 'ok' => true ), 200 );
 	}
 }

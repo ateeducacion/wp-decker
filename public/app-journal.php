@@ -46,17 +46,6 @@ $boards = BoardManager::get_all_boards();
 								<div class="d-flex align-items-center">
 									<form class="row gy-2 gx-2 align-items-center me-2" id="daily-view-form">
 										<div class="col-auto">
-											<label for="board-select" class="visually-hidden">Board</label>
-											<select class="form-select" id="board-select">
-												<option value=""><?php esc_html_e( 'Select a Board...', 'decker' ); ?></option>
-												<?php foreach ( $boards as $board ) : ?>
-													<option value="<?php echo esc_attr( $board->slug ); ?>" <?php selected( $current_board_slug, $board->slug ); ?>>
-														<?php echo esc_html( $board->name ); ?>
-													</option>
-												<?php endforeach; ?>
-											</select>
-										</div>
-										<div class="col-auto">
 											<label for="date-select" class="visually-hidden">Date</label>
 											<input class="form-control" type="date" id="date-select" value="<?php echo esc_attr( $current_date ); ?>">
 										</div>
@@ -79,7 +68,10 @@ $boards = BoardManager::get_all_boards();
 							</div>
 							<div class="card" id="notes-card">
 								<div class="card-body">
-									<h5 class="card-title mb-3"><?php esc_html_e( 'Comments/Observations', 'decker' ); ?></h5>
+									<div class="d-flex justify-content-between align-items-center mb-3">
+										<h5 class="card-title mb-0"><?php esc_html_e( 'Comments/Observations', 'decker' ); ?></h5>
+										<button class="btn btn-danger btn-sm d-none" id="delete-notes-btn"><?php esc_html_e( 'Delete Notes', 'decker' ); ?></button>
+									</div>
 									<?php
 									$settings = array(
 										'media_buttons' => false,
@@ -120,7 +112,6 @@ $boards = BoardManager::get_all_boards();
 
 	<script>
 		jQuery(document).ready(function($) {
-			const boardSelect = $('#board-select');
 			const dateSelect = $('#date-select');
 			const searchInput = $('#task-search-input');
 			const dailyViewContent = $('#daily-view-content');
@@ -129,9 +120,10 @@ $boards = BoardManager::get_all_boards();
 			const notesCard = $('#notes-card');
 			const noTasksAlert = $('#no-tasks-alert');
 			const saveNotesBtn = $('#save-notes-btn');
+			const deleteNotesBtn = $('#delete-notes-btn');
 
-			async function loadDailyData() {
-				const boardSlug = boardSelect.val();
+			function loadDailyData() {
+				const boardSlug = '<?php echo esc_js( $current_board_slug ); ?>';
 				const date = dateSelect.val();
 
 				if (!boardSlug || !date) {
@@ -140,23 +132,25 @@ $boards = BoardManager::get_all_boards();
 				}
 
 				const url = `${wpApiSettings.root}decker/v1/daily?board=${encodeURIComponent(boardSlug)}&date=${date}`;
-				try {
-					const response = await fetch(url, {
-						headers: { 'X-WP-Nonce': wpApiSettings.nonce }
-					});
-					const data = await response.json();
-
+				fetch(url, {
+					headers: { 'X-WP-Nonce': wpApiSettings.nonce }
+				})
+				.then(response => {
 					if (!response.ok) {
-						throw new Error(data.message);
+						return response.json().then(err => { throw new Error(err.message) });
 					}
+					return response.json();
+				})
+				.then(data => {
 
 					// Render Users
 					dailyUsersList.empty();
 					if (data.users && data.users.length > 0) {
 						const userPromises = data.users.map(userId => fetch(`${wpApiSettings.root}wp/v2/users/${userId}`).then(res => res.json()));
-						const usersData = await Promise.all(userPromises);
-						usersData.forEach(user => {
-							dailyUsersList.append(`<li class="list-group-item">${user.name}</li>`);
+						Promise.all(userPromises).then(usersData => {
+							usersData.forEach(user => {
+								dailyUsersList.append(`<li class="list-group-item">${user.name}</li>`);
+							});
 						});
 					}
 
@@ -164,14 +158,21 @@ $boards = BoardManager::get_all_boards();
 					dailyTasksList.empty();
 					if (data.tasks && data.tasks.length > 0) {
 						const taskPromises = data.tasks.map(taskId => fetch(`${wpApiSettings.root}wp/v2/tasks/${taskId}`).then(res => res.json()));
-						const tasksData = await Promise.all(taskPromises);
-						tasksData.forEach(task => {
-							dailyTasksList.append(`<li class="list-group-item"><a href="/decker/task/${task.id}" target="_blank">${task.title.rendered}</a></li>`);
+						Promise.all(taskPromises).then(tasksData => {
+							tasksData.forEach(task => {
+								dailyTasksList.append(`<li class="list-group-item"><a href="/decker/task/${task.id}" target="_blank">${task.title.rendered}</a></li>`);
+							});
 						});
+
 						notesCard.removeClass('d-none');
 						noTasksAlert.addClass('d-none');
 						if (tinymce.get('journal_notes_editor')) {
 							tinymce.get('journal_notes_editor').setContent(data.notes || '');
+						}
+						if (data.notes) {
+							deleteNotesBtn.removeClass('d-none');
+						} else {
+							deleteNotesBtn.addClass('d-none');
 						}
 					} else {
 						notesCard.addClass('d-none');
@@ -179,33 +180,38 @@ $boards = BoardManager::get_all_boards();
 					}
 
 					dailyViewContent.removeClass('d-none');
-				} catch (error) {
+				})
+				.catch(error => {
 					console.error('Error fetching daily data:', error);
 					alert('Error fetching data: ' + error.message);
-				}
+				});
 			}
 
-			async function saveNotes() {
-				const boardSlug = boardSelect.val();
+			function saveNotes() {
+				const boardSlug = '<?php echo esc_js( $current_board_slug ); ?>';
 				const date = dateSelect.val();
 				const notes = tinymce.get('journal_notes_editor') ? tinymce.get('journal_notes_editor').getContent() : '';
 
 				const url = `${wpApiSettings.root}decker/v1/daily`;
-				try {
-					const response = await fetch(url, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': wpApiSettings.nonce },
-						body: JSON.stringify({ board: boardSlug, date: date, notes: notes })
-					});
-					const data = await res.json();
+				fetch(url, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': wpApiSettings.nonce },
+					body: JSON.stringify({ board: boardSlug, date: date, notes: notes })
+				})
+				.then(response => {
 					if (!response.ok) {
-						throw new Error(data.message || 'Error saving notes.');
+						return response.json().then(err => { throw new Error(err.message) });
 					}
+					return response.json();
+				})
+				.then(data => {
 					// Maybe show a success message
-				} catch (error) {
+					location.reload(); // Simple reload on success
+				})
+				.catch(error => {
 					console.error('Error saving notes:', error);
 					alert('Error saving notes: ' + error.message);
-				}
+				});
 			}
 
 			function filterTasks() {
@@ -220,23 +226,42 @@ $boards = BoardManager::get_all_boards();
 				});
 			}
 
-			boardSelect.on('change', function() {
-				const newBoardSlug = $(this).val();
-				if (newBoardSlug) {
-					window.location.href = `?decker_page=journal&board=${newBoardSlug}&date=${dateSelect.val()}`;
+			function deleteNotes() {
+				if ( ! confirm('<?php esc_html_e( "Are you sure you want to delete the notes for this day?", "decker" ); ?>') ) {
+					return;
 				}
-			});
+				const boardSlug = '<?php echo esc_js( $current_board_slug ); ?>';
+				const date = dateSelect.val();
+				const url = `${wpApiSettings.root}decker/v1/daily?board=${encodeURIComponent(boardSlug)}&date=${date}`;
+				fetch(url, {
+					method: 'DELETE',
+					headers: { 'X-WP-Nonce': wpApiSettings.nonce },
+				})
+				.then(response => {
+					if (!response.ok) {
+						return response.json().then(err => { throw new Error(err.message) });
+					}
+					location.reload();
+				})
+				.catch(error => {
+					console.error('Error deleting notes:', error);
+					alert('Error deleting notes: ' + error.message);
+				});
+			}
+
 			dateSelect.on('change', function() {
 				const newDate = $(this).val();
-				if (newDate) {
-					window.location.href = `?decker_page=journal&board=${boardSelect.val()}&date=${newDate}`;
+				const boardSlug = '<?php echo esc_js( $current_board_slug ); ?>';
+				if (newDate && boardSlug) {
+					window.location.href = `?decker_page=journal&board=${boardSlug}&date=${newDate}`;
 				}
 			});
 			saveNotesBtn.on('click', saveNotes);
+			deleteNotesBtn.on('click', deleteNotes);
 			searchInput.on('keyup', filterTasks);
 
 			// Initial load if board is selected
-			if (boardSelect.val()) {
+			if ('<?php echo esc_js( $current_board_slug ); ?>') {
 				loadDailyData();
 			}
 		});
