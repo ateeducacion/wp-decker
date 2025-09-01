@@ -12,13 +12,14 @@ defined( 'ABSPATH' ) || exit;
 include 'layouts/main.php';
 
 $current_board_slug = isset( $_GET['board'] ) ? sanitize_text_field( wp_unslash( $_GET['board'] ) ) : '';
+$current_board = $current_board_slug ? BoardManager::get_board_by_slug( $current_board_slug ) : null;
 $current_date = isset( $_GET['date'] ) ? sanitize_text_field( wp_unslash( $_GET['date'] ) ) : ( new DateTime( 'now', wp_timezone() ) )->format( 'Y-m-d' );
 $boards = BoardManager::get_all_boards();
 
 ?>
 
 <head>
-	<title><?php esc_html_e( 'Daily Journal', 'decker' ); ?> | Decker</title>
+	<title><?php echo esc_html( $current_board ? $current_board->name : __( 'Daily Journal', 'decker' ) ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 	<?php include 'layouts/head-css.php'; ?>
 </head>
@@ -31,17 +32,19 @@ $boards = BoardManager::get_all_boards();
 				<div class="container-fluid">
 					<div class="row">
 						<div class="col-12">
-							<div class="page-title-box">
-								<h4 class="page-title"><?php esc_html_e( 'Daily Journal', 'decker' ); ?></h4>
-							</div>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="col-12">
-							<div class="card">
-								<div class="card-body">
-									<form class="row gy-2 gx-2 align-items-center" id="daily-view-form">
+							<div class="page-title-box d-flex align-items-center justify-content-between">
+								<h4 class="page-title">
+									<?php
+									if ( $current_board ) {
+										/* translators: %s: board name */
+										printf( esc_html__( 'Journal for %s', 'decker' ), esc_html( $current_board->name ) );
+									} else {
+										esc_html_e( 'Daily Journal', 'decker' );
+									}
+									?>
+								</h4>
+								<div class="d-flex align-items-center">
+									<form class="row gy-2 gx-2 align-items-center me-2" id="daily-view-form">
 										<div class="col-auto">
 											<label for="board-select" class="visually-hidden">Board</label>
 											<select class="form-select" id="board-select">
@@ -58,6 +61,9 @@ $boards = BoardManager::get_all_boards();
 											<input class="form-control" type="date" id="date-select" value="<?php echo esc_attr( $current_date ); ?>">
 										</div>
 									</form>
+									<div class="col-auto">
+										<input id="task-search-input" type="search" class="form-control" placeholder="<?php esc_attr_e( 'Search tasks...', 'decker' ); ?>">
+									</div>
 								</div>
 							</div>
 						</div>
@@ -74,7 +80,18 @@ $boards = BoardManager::get_all_boards();
 							<div class="card" id="notes-card">
 								<div class="card-body">
 									<h5 class="card-title mb-3"><?php esc_html_e( 'Comments/Observations', 'decker' ); ?></h5>
-									<div id="notes-editor" style="height: 300px;"></div>
+									<?php
+									$settings = array(
+										'media_buttons' => false,
+										'textarea_name' => 'journal_notes',
+										'textarea_rows' => 10,
+										'tinymce'       => array(
+											'toolbar1' => 'bold,italic,underline,bullist,numlist,link,unlink,undo,redo',
+											'toolbar2' => '',
+										),
+									);
+									wp_editor( '', 'journal_notes_editor', $settings );
+									?>
 									<button class="btn btn-primary mt-2" id="save-notes-btn"><?php esc_html_e( 'Save Notes', 'decker' ); ?></button>
 								</div>
 							</div>
@@ -105,22 +122,13 @@ $boards = BoardManager::get_all_boards();
 		jQuery(document).ready(function($) {
 			const boardSelect = $('#board-select');
 			const dateSelect = $('#date-select');
+			const searchInput = $('#task-search-input');
 			const dailyViewContent = $('#daily-view-content');
 			const dailyTasksList = $('#daily-tasks-list');
 			const dailyUsersList = $('#daily-users-list');
 			const notesCard = $('#notes-card');
 			const noTasksAlert = $('#no-tasks-alert');
 			const saveNotesBtn = $('#save-notes-btn');
-			let notesEditor;
-
-			function initializeQuill() {
-				if (!notesEditor) {
-					notesEditor = new Quill('#notes-editor', {
-						theme: 'snow',
-						modules: { toolbar: [[{ 'header': [1, 2, false] }], ['bold', 'italic', 'underline'], ['link', 'blockquote']] }
-					});
-				}
-			}
 
 			async function loadDailyData() {
 				const boardSlug = boardSelect.val();
@@ -155,15 +163,16 @@ $boards = BoardManager::get_all_boards();
 					// Render Tasks
 					dailyTasksList.empty();
 					if (data.tasks && data.tasks.length > 0) {
-						const taskPromises = data.tasks.map(taskId => fetch(`${wpApiSettings.root}wp/v2/decker_task/${taskId}`).then(res => res.json()));
+						const taskPromises = data.tasks.map(taskId => fetch(`${wpApiSettings.root}wp/v2/tasks/${taskId}`).then(res => res.json()));
 						const tasksData = await Promise.all(taskPromises);
 						tasksData.forEach(task => {
 							dailyTasksList.append(`<li class="list-group-item"><a href="/decker/task/${task.id}" target="_blank">${task.title.rendered}</a></li>`);
 						});
 						notesCard.removeClass('d-none');
 						noTasksAlert.addClass('d-none');
-						initializeQuill();
-						notesEditor.root.innerHTML = data.notes || '';
+						if (tinymce.get('journal_notes_editor')) {
+							tinymce.get('journal_notes_editor').setContent(data.notes || '');
+						}
 					} else {
 						notesCard.addClass('d-none');
 						noTasksAlert.removeClass('d-none');
@@ -179,7 +188,7 @@ $boards = BoardManager::get_all_boards();
 			async function saveNotes() {
 				const boardSlug = boardSelect.val();
 				const date = dateSelect.val();
-				const notes = notesEditor.root.innerHTML;
+				const notes = tinymce.get('journal_notes_editor') ? tinymce.get('journal_notes_editor').getContent() : '';
 
 				const url = `${wpApiSettings.root}decker/v1/daily`;
 				try {
@@ -199,9 +208,32 @@ $boards = BoardManager::get_all_boards();
 				}
 			}
 
-			boardSelect.on('change', loadDailyData);
-			dateSelect.on('change', loadDailyData);
+			function filterTasks() {
+				const searchTerm = searchInput.val().toLowerCase();
+				$('#daily-tasks-list li').each(function() {
+					const taskTitle = $(this).text().toLowerCase();
+					if (taskTitle.includes(searchTerm)) {
+						$(this).show();
+					} else {
+						$(this).hide();
+					}
+				});
+			}
+
+			boardSelect.on('change', function() {
+				const newBoardSlug = $(this).val();
+				if (newBoardSlug) {
+					window.location.href = `?decker_page=journal&board=${newBoardSlug}&date=${dateSelect.val()}`;
+				}
+			});
+			dateSelect.on('change', function() {
+				const newDate = $(this).val();
+				if (newDate) {
+					window.location.href = `?decker_page=journal&board=${boardSelect.val()}&date=${newDate}`;
+				}
+			});
 			saveNotesBtn.on('click', saveNotes);
+			searchInput.on('keyup', filterTasks);
 
 			// Initial load if board is selected
 			if (boardSelect.val()) {

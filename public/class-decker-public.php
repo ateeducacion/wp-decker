@@ -236,7 +236,7 @@ class Decker_Public {
 
 			}
 
-			if ( 'knowledge-base' == $decker_page ) {
+			if ( 'knowledge-base' == $decker_page || 'journal' == $decker_page ) {
 
 				wp_enqueue_media(); // Obligatorio para subida de medios.
 				// wp_enqueue_script('editor');
