@@ -60,7 +60,4 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 	// Registrar el comando principal que agrupa los subcomandos.
 	WP_CLI::add_command( 'decker', 'Decker_WPCLI' );
-
-	require_once plugin_dir_path( __FILE__ ) . 'cli/class-decker-journal-cli.php';
-	WP_CLI::add_command( 'decker journal', 'Decker_Journal_CLI' );
 }
