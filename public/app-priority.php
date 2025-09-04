@@ -103,17 +103,10 @@ if ( ! $has_today_tasks ) {
 }
 
 .table th, .table td, .descripcion {
-	white-space: normal; /* Permite que el texto se desborde en varias líneas */
-	word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
-	word-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
-	overflow-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
-}
-}
-
-@media (max-width: 768px) {
-	.table th:nth-child(2), .table td:nth-child(2) {
-		display: none; /* Oculta la columna "Status" en dispositivos móviles */
-	}
+		white-space: normal; /* Permite que el texto se desborde en varias líneas */
+		word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
+		word-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
+		overflow-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
 }
 
 .avatar-group {
@@ -190,8 +183,7 @@ if ( ! $has_today_tasks ) {
 								<thead>
 									<tr>
 										<th data-sort-default style="width: 10%;"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-										<th class="d-none d-md-table-cell" style="width: 10%;"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
-										<th style="width: auto;"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+																				<th style="width: auto;"><?php esc_html_e( 'Title', 'decker' ); ?></th>
 										<th style="width: 10%;"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
 										<th style="width: 15%;" data-sort-method='none'><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
 									</tr>
@@ -246,9 +238,8 @@ if ( ! $has_today_tasks ) {
 										?>
 										<tr>
 											<td><?php echo wp_kses_post( $board ); ?></td>
-											<td class="d-none d-md-table-cell"><?php echo esc_html( $task->stack ); ?></td>
 											<td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr( $task->title ); ?>">
-												<a href="
+																								<a href="
 												<?php
 												echo esc_url(
 													add_query_arg(
@@ -261,7 +252,8 @@ if ( ! $has_today_tasks ) {
 												);
 												?>
 															" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
-													<?php echo esc_html( $task->title ); ?>
+																										<?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+																										<?php echo esc_html( $task->title ); ?>
 												</a>
 											</td>
 											<td>
@@ -367,23 +359,24 @@ if ( ! $has_today_tasks ) {
 													?>
 														<tr>
 															<td><?php echo wp_kses_post( $board_display ); ?></td>
-															<td>
-																<a href="
-																<?php
-																echo esc_url(
-																	add_query_arg(
-																		array(
-																			'decker_page' => 'task',
-																			'id'          => esc_attr( $task->ID ),
-																		),
-																		home_url( '/' )
-																	)
-																);
-																?>
-																" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
-																	<?php echo esc_html( $task->title ); ?>
-																</a>
-															</td>
+																														<td>
+																															   <a href="
+																															   <?php
+																																echo esc_url(
+																																	add_query_arg(
+																																		array(
+																																			'decker_page' => 'task',
+																																			'id'          => esc_attr( $task->ID ),
+																																		),
+																																		home_url( '/' )
+																																	)
+																																);
+																																?>
+																															   " data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+																															   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+																															   <?php echo esc_html( $task->title ); ?>
+																															   </a>
+																														</td>
 														</tr>
 														<?php
 												}
@@ -457,9 +450,8 @@ if ( ! $has_today_tasks ) {
 					<th scope="col" style="width: 50px;">
 						<input type="checkbox" id="selectAllCheckbox" class="">
 					</th>                        
-					<th scope="col"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Board', 'decker' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Title', 'decker' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -481,14 +473,16 @@ if ( ! $has_today_tasks ) {
 								<?php echo esc_html( $board_name ); ?>
 							</span>
 						</td>
-						<td><?php echo esc_html( $task->stack ); ?></td>
-						<td><?php echo esc_html( $task->title ); ?></td>
+												<td>
+														<?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+														<?php echo esc_html( $task->title ); ?>
+												</td>
 					</tr>
 				<?php endforeach; ?>
 			<?php else : ?>
-				<tr>
-					<td colspan="4"><?php esc_html_e( 'There are no tasks from previous days to import.', 'decker' ); ?></td>
-				</tr>
+								<tr>
+										<td colspan="3"><?php esc_html_e( 'There are no tasks from previous days to import.', 'decker' ); ?></td>
+								</tr>
 			<?php endif; ?>
 			</tbody>
 		  </table>
