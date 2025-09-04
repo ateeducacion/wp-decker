@@ -246,7 +246,7 @@ if ( ! $has_today_tasks ) {
 										?>
 										<tr>
 											<td><?php echo wp_kses_post( $board ); ?></td>
-											<td class="d-none d-md-table-cell"><?php echo esc_html( $task->stack ); ?></td>
+                                                                                       <td class="d-none d-md-table-cell"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?></td>
 											<td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr( $task->title ); ?>">
 												<a href="
 												<?php
@@ -481,7 +481,7 @@ if ( ! $has_today_tasks ) {
 								<?php echo esc_html( $board_name ); ?>
 							</span>
 						</td>
-						<td><?php echo esc_html( $task->stack ); ?></td>
+                                               <td><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?></td>
 						<td><?php echo esc_html( $task->title ); ?></td>
 					</tr>
 				<?php endforeach; ?>

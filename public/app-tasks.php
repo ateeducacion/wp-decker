@@ -239,8 +239,8 @@ table#tablaTareas td:nth-child(4) {
 													}
 													echo '</td>';
 
-													// Task stack.
-													echo '<td>' . esc_html( $task->stack ) . '</td>';
+                                                                                                       // Task stack.
+                                                                                                       echo '<td>' . wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ) . '</td>';
 
 
 													// Task title.

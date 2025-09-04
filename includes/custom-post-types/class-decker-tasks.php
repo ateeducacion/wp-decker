@@ -2189,9 +2189,28 @@ class Decker_Tasks {
 			$this->reorder_tasks_in_stack( $board_id, $old_stack, $post_id );
 		}
 
-		// Save current stack as “previous” for the next move.
-		update_post_meta( $post_id, '_decker_prev_stack', $new_stack );
-	}
+                // Save current stack as “previous” for the next move.
+                update_post_meta( $post_id, '_decker_prev_stack', $new_stack );
+        }
+
+       /**
+        * Get HTML icon for a given stack.
+        *
+        * @param string $stack Stack slug.
+        * @return string HTML markup for the stack icon with tooltip.
+        */
+       public static function get_stack_icon_html( string $stack ): string {
+               switch ( $stack ) {
+                       case 'to-do':
+                               return '<i class="ri-checkbox-blank-circle-line text-secondary me-2" title="' . esc_attr__( 'To Do', 'decker' ) . '"></i>';
+                       case 'in-progress':
+                               return '<i class="ri-progress-3-line text-warning me-2" title="' . esc_attr__( 'In Progress', 'decker' ) . '"></i>';
+                       case 'done':
+                               return '<i class="ri-checkbox-circle-line text-success me-2" title="' . esc_attr__( 'Done', 'decker' ) . '"></i>';
+                       default:
+                               return esc_html( $stack );
+               }
+       }
 }
 
 // Instantiate the class.

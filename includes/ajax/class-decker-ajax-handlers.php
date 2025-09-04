@@ -249,7 +249,7 @@ class Decker_Ajax_Handlers {
 					<?php echo esc_html( $board_name ); ?>
 				</span>
 			</td>
-			<td><?php echo esc_html( $task->stack ); ?></td>
+                       <td><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?></td>
 			<td><?php echo esc_html( $task->title ); ?></td>
 		</tr>
 		<?php
