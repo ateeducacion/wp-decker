@@ -238,6 +238,7 @@ if ( ! $has_today_tasks ) {
 												<div class="list-group list-group-flush">
 													<?php foreach ( $group['tasks'] as $task ) : ?>
 														<div class="list-group-item task-item">
+																						   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
 															<a href="
 															<?php
 															echo esc_url(
@@ -290,7 +291,6 @@ if ( ! $has_today_tasks ) {
 										<thead>
 											<tr>
 												<th data-sort-default style="width: 10%;"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-												<th class="d-none d-md-table-cell" style="width: 10%;"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
 												<th style="width: auto;"><?php esc_html_e( 'Title', 'decker' ); ?></th>
 												<th class="d-none d-md-table-cell" style="width: 10%;"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
 												<th style="width: 15%;" data-sort-method='none'><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
@@ -310,8 +310,8 @@ if ( ! $has_today_tasks ) {
 												?>
 												<tr>
 													<td><?php echo wp_kses_post( $board ); ?></td>
-													<td class="d-none d-md-table-cell"><?php echo esc_html( $task->stack ); ?></td>
 													<td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr( $task->title ); ?>">
+																				   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
 														<a href="
 														<?php
 														echo esc_url(
