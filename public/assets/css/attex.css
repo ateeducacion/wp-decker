@@ -5680,7 +5680,6 @@ textarea.form-control-lg {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
-  min-height: calc(100% - var(--ct-modal-margin) * 2);
 }
 
 
