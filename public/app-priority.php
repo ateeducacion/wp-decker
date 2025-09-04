@@ -79,6 +79,48 @@ if ( ! $has_today_tasks ) {
 	<title><?php esc_html_e( 'Priority', 'decker' ); ?> | Decker</title>
 	<?php include 'layouts/title-meta.php'; ?>
 	<?php include 'layouts/head-css.php'; ?>
+
+
+<style type="text/css">
+.custom-badge {
+	display: inline-block;
+	padding: 0.5em 0.75em;
+	font-size: 0.75em;
+	line-height: 1;
+	color: #fff;
+	text-align: center;
+	white-space: normal; /* Permite que el texto se desborde en varias líneas */
+	vertical-align: baseline;
+	border-radius: 10rem;
+	word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
+}
+	
+.table-responsive {
+	overflow-x: auto;
+}
+
+.table th, .table td, .descripcion {
+		white-space: normal; /* Permite que el texto se desborde en varias líneas */
+		word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
+		word-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
+		overflow-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
+}
+
+.avatar-group {
+	flex-wrap: wrap; /* Asegura que los avatares se ajusten al espacio disponible */
+}
+
+.priority-id-table td {
+	max-width: 100%; /* Asegura que las celdas ocupen todo el ancho disponible */
+}
+
+
+
+
+
+</style>
+
+
 </head>
 
 <body <?php body_class(); ?>>
@@ -131,6 +173,7 @@ if ( ! $has_today_tasks ) {
 								<div class="d-flex card-header justify-content-between align-items-center">
 									<h4 class="header-title"><?php esc_html_e( 'MAX PRIORITY', 'decker' ); ?> 🔥</h4>
 								</div>
+
 
 								<?php
 								// Get all tasks with max_priority.
@@ -375,23 +418,25 @@ if ( ! $has_today_tasks ) {
 														?>
 														<tr>
 															<td><?php echo wp_kses_post( $board_display ); ?></td>
-															<td>
-																<a href="
-																<?php
-																echo esc_url(
-																	add_query_arg(
-																		array(
-																			'decker_page' => 'task',
-																			'id' => $task->ID,
-																		),
-																		home_url( '/' )
-																	)
-																);
-																?>
-																			" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
-																	<?php echo esc_html( $task->title ); ?>
-																</a>
-															</td>
+
+																														<td>
+																															   <a href="
+																															   <?php
+																																echo esc_url(
+																																	add_query_arg(
+																																		array(
+																																			'decker_page' => 'task',
+																																			'id'          => esc_attr( $task->ID ),
+																																		),
+																																		home_url( '/' )
+																																	)
+																																);
+																																?>
+																															   " data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+																															   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+																															   <?php echo esc_html( $task->title ); ?>
+																															   </a>
+																														</td>
 														</tr>
 														<?php
 													}
@@ -469,6 +514,73 @@ if ( ! $has_today_tasks ) {
 				</form>
 			</div>
 		</div>
+
+		<div class="modal-body">
+		  <?php if ( ! empty( $available_dates ) ) : ?>
+		  <div class="mb-3">
+			<label for="task-date-selector" class="form-label"><?php esc_html_e( 'Select date to import from:', 'decker' ); ?></label>
+			<select id="task-date-selector" class="form-select">
+				<?php
+				foreach ( $available_dates as $date_str ) :
+					$date_obj = DateTime::createFromFormat( 'Y-m-d', $date_str );
+					// Use date_i18n to get the localized date format.
+					$formatted_date = $date_obj ? date_i18n( get_option( 'date_format' ), $date_obj->getTimestamp() ) : $date_str;
+					?>
+					<option value="<?php echo esc_attr( $date_str ); ?>"><?php echo esc_html( $formatted_date ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		  </div>
+		  <?php endif; ?>
+		  <!-- Tasks will be loaded here -->
+		  <table class="table table-striped table-hover">
+			<thead class="table thead-sticky bg-light">
+				<tr>
+					<th scope="col" style="width: 50px;">
+						<input type="checkbox" id="selectAllCheckbox" class="">
+					</th>                        
+										<th scope="col"><?php esc_html_e( 'Board', 'decker' ); ?></th>
+										<th scope="col"><?php esc_html_e( 'Title', 'decker' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php if ( ! $has_today_tasks ) : ?>
+				<?php foreach ( $previous_tasks as $task ) : ?>
+					<tr class="task-row" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+						<?php
+							$board_color = 'red';
+						$board_name                      = 'Unassigned';
+						if ( $task->board ) {
+							$board_color = $task->board->color;
+							$board_name  = $task->board->name;
+						}
+						?>
+
+						<td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( $task->ID ); ?>"></td>
+						<td>
+							<span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr( $board_color ); ?>;">
+								<?php echo esc_html( $board_name ); ?>
+							</span>
+						</td>
+												<td>
+														<?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+														<?php echo esc_html( $task->title ); ?>
+												</td>
+					</tr>
+				<?php endforeach; ?>
+			<?php else : ?>
+								<tr>
+										<td colspan="3"><?php esc_html_e( 'There are no tasks from previous days to import.', 'decker' ); ?></td>
+								</tr>
+			<?php endif; ?>
+			</tbody>
+		  </table>
+		</div>
+		<div class="modal-footer">
+		  <?php wp_nonce_field( 'import_tasks', 'import_tasks_nonce' ); ?>
+		  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+		  <button type="submit" class="btn btn-primary import-selected-tasks" disabled>Importar</button>
+		</div>
+	  </form>
 	</div>
 	<!-- END Import Modal -->
 

@@ -242,16 +242,18 @@ class Decker_Ajax_Handlers {
 	 */
 	private function output_task_row_html( $task, $board_color, $board_name ) {
 		?>
-		<tr class="task-row" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
-			<td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( $task->ID ); ?>"></td>
-			<td>
-				<span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr( $board_color ); ?>;">
-					<?php echo esc_html( $board_name ); ?>
-				</span>
-			</td>
-			<td><?php echo esc_html( $task->stack ); ?></td>
-			<td><?php echo esc_html( $task->title ); ?></td>
-		</tr>
+				<tr class="task-row" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+						<td><input type="checkbox" name="task_ids[]" class="task-checkbox" value="<?php echo esc_attr( $task->ID ); ?>"></td>
+						<td>
+								<span class="custom-badge overflow-visible" style="background-color: <?php echo esc_attr( $board_color ); ?>;">
+										<?php echo esc_html( $board_name ); ?>
+								</span>
+						</td>
+						<td>
+								<?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+								<?php echo esc_html( $task->title ); ?>
+						</td>
+				</tr>
 		<?php
 	}
 }

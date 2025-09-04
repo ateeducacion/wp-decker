@@ -1397,3 +1397,16 @@ msgstr "No se encontraron tareas de alta prioridad."
 
 msgid "Import"
 msgstr "Importar"
+
+msgid "Copy Task URL"
+msgstr "Copiar URL de la tarea"
+
+msgid "Task URL copied!"
+msgstr "¡URL de la tarea copiada!"
+
+msgid "Could not copy URL. Please copy it manually:"
+msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
+
+msgid "There are no tasks from previous days to import."
+msgstr "No hay tareas de días anteriores para importar."
+
