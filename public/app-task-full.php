@@ -52,15 +52,25 @@ include 'layouts/main.php';
 								$valid_task                                = true;
 
 								// TODO: Change to use Task class.
-								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+								$task_id   = get_query_var( 'task_id' ) ? get_query_var( 'task_id' ) : ( isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0 );
+								$task_slug = get_query_var( 'task_slug' );
+
 								if ( $task_id ) {
 									$task = get_post( $task_id );
-									if ( $task && 'decker_task' === $task->post_type ) {
-										$task_title = $task->post_title;
-									} else {
-										$task_title      = __( 'Task not found', 'decker' );
-										$valid_task = false;
+								} elseif ( $task_slug ) {
+									$task = get_page_by_path( $task_slug, OBJECT, 'decker_task' );
+									if ( $task ) {
+										$task_id = $task->ID;
 									}
+								} else {
+									$task = null;
+								}
+
+								if ( $task && 'decker_task' === $task->post_type ) {
+									$task_title = $task->post_title;
+								} elseif ( $task_id || $task_slug ) {
+									$task_title = __( 'Task not found', 'decker' );
+									$valid_task = false;
 								}
 								?>
 

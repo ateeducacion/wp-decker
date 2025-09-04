@@ -120,6 +120,11 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
 		/**
+		 * The class responsible for handling permalinks.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-permalinks.php';
+
+		/**
 		 * The class responsible for defining the MVC.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
@@ -167,6 +172,7 @@ class Decker {
 	private function define_public_hooks() {
 
 		$plugin_public = new Decker_Public( $this->get_plugin_name(), $this->get_version() );
+		new Decker_Permalinks();
 	}
 
 	/**

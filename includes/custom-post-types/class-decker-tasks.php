@@ -879,14 +879,17 @@ class Decker_Tasks {
 
 		$args = array(
 			'labels'             => $labels,
-			'public'             => false,
-			'publicly_queryable' => false,
+			'public'             => true,
+			'publicly_queryable' => true,
 			'show_ui'            => true,
 			'show_in_menu'       => true,
 			'query_var'          => true,
-			'rewrite'            => false,
+			'rewrite'            => array(
+				'slug'       => 'tasks',
+				'with_front' => false,
+			),
 			'capability_type'    => 'post',
-			'has_archive'        => true,
+			'has_archive'        => 'tasks',
 			'hierarchical'       => false,
 			'menu_position'      => null,
 			'menu_icon'          => 'dashicons-welcome-widgets-menus',

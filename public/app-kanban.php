@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 include 'layouts/main.php';
 
 // Obtener el slug del board desde la URL.
-$board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
+$board_slug = get_query_var( 'board_slug' ) ? get_query_var( 'board_slug' ) : ( isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '' );
 
 // Retrieve the Board based on the slug.
 $main_board = BoardManager::get_board_by_slug( $board_slug );

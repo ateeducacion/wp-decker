@@ -52,11 +52,8 @@ class Decker_Public {
 	 */
 	public function decker_add_rewrite_rules() {
 		add_rewrite_rule( '^decker/?$', 'index.php?decker_page=priority', 'top' );
-		add_rewrite_rule( '^decker/board/([^/]+)/?$', 'index.php?decker_page=board&slug=$matches[1]', 'top' );
 		add_rewrite_rule( '^decker/analytics/?$', 'index.php?decker_page=analytics', 'top' );
 		add_rewrite_rule( '^decker/task/new/?$', 'index.php?decker_page=task', 'top' );
-		add_rewrite_rule( '^decker/task/([^/]+)/?$', 'index.php?decker_page=task&id=$matches[1]', 'top' );
-		add_rewrite_rule( '^decker/tasks/?$', 'index.php?decker_page=tasks&type=active', 'top' );
 		add_rewrite_rule( '^decker/tasks/active/?$', 'index.php?decker_page=tasks&type=active', 'top' );
 		add_rewrite_rule( '^decker/tasks/my/?$', 'index.php?decker_page=tasks_my', 'top' );
 		add_rewrite_rule( '^decker/tasks/archived/?$', 'index.php?decker_page=tasks_archived', 'top' );
@@ -70,7 +67,6 @@ class Decker_Public {
 	 */
 	public function decker_query_vars( $vars ) {
 		$vars[] = 'decker_page';
-		$vars[] = 'board_slug';
 		return $vars;
 	}
 

@@ -71,9 +71,12 @@ class Decker_Boards {
 			'query_var'          => true,
 			'show_tagcloud'      => false,
 			'show_in_quick_edit' => false,
-			'rewrite'            => array( 'slug' => 'decker_board' ),
+			'rewrite'            => array(
+				'slug'       => 'board',
+				'with_front' => false,
+			),
 			'show_in_rest'       => true,
-			'rest_base'          => 'decker_board',
+			'rest_base'          => 'boards',
 			'can_export'         => true,
 			'capabilities'       => array(
 				'manage_terms' => 'edit_posts',
