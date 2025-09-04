@@ -88,16 +88,19 @@ class Decker_Public {
 			return;
 		}
 
+		$decker_task_id = $query->get( 'decker_task' );
+
 		// Check if we are viewing a single 'decker_task' via its canonical URL.
-		if ( $query->is_singular( 'decker_task' ) || ! empty( $query->get( 'decker_task' ) ) ) {
+		if ( $query->is_singular( 'decker_task' ) || ! empty( $decker_task_id ) ) {
 			// Set 'decker_page' to 'task' so our other hooks recognize it.
 			$query->set( 'decker_page', 'task' );
 
-			// If the ID isn't set via a pretty permalink, get it from the query var.
-			if ( empty( $_GET['id'] ) && ! empty( $query->get( 'decker_task' ) ) ) {
-				$_GET['id'] = $query->get( 'decker_task' );
-			} elseif ( empty( $_GET['id'] ) ) {
-				$_GET['id'] = $query->get_queried_object_id();
+			// Get the task ID, whether from a pretty permalink or a plain one.
+			$task_id_to_set = ! empty( $decker_task_id ) ? $decker_task_id : $query->get_queried_object_id();
+
+			// Set the 'id' query var so get_query_var('id') will work in the template.
+			if ( $task_id_to_set ) {
+				$query->set( 'id', $task_id_to_set );
 			}
 		}
 	}

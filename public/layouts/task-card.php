@@ -56,6 +56,8 @@ $initial_max_priority = false;
 
 if ( isset( $_GET['id'] ) ) {
 	$task_id = intval( $_GET['id'] );
+} else {
+	$task_id = get_query_var( 'id' ) ? intval( get_query_var( 'id' ) ) : 0;
 }
 
 // Handle URL parameters for new task creation.
