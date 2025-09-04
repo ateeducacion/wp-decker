@@ -144,7 +144,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     line-height: 1;
     color: #fff;
     text-align: center;
-    white-space: nowrap; /* Hacemos que se mantenga en una línea por defecto */
+    white-space: nowrap; /* Ensures it stays on a single line by default */
     vertical-align: baseline;
     border-radius: 10rem; /* Esto crea la forma de "chip" redondeado */
     word-break: break-word;
