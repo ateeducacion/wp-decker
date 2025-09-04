@@ -1394,3 +1394,12 @@ msgstr "Evento de todo el día"
 
 msgid "Time is stored in UTC. Adjust accordingly."
 msgstr "La hora se guarda en UTC. Ajusta si es necesario."
+
+msgid "Copy Task URL"
+msgstr "Copiar URL de la tarea"
+
+msgid "Task URL copied!"
+msgstr "¡URL de la tarea copiada!"
+
+msgid "Could not copy URL. Please copy it manually:"
+msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"

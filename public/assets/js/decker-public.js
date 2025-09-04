@@ -1,6 +1,35 @@
 // Log when this script is loaded
 console.log('loading decker-public.js');
 
+document.addEventListener('DOMContentLoaded', function () {
+    document.body.addEventListener('click', function (event) {
+        if (event.target.closest('.copy-task-url')) {
+            event.preventDefault();
+            const link = event.target.closest('.copy-task-url');
+            const url = link.getAttribute('data-task-url');
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(function () {
+                    Swal.fire({
+                        title: deckerVars.strings.task_url_copied,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        icon: 'success'
+                    });
+                }, function (err) {
+                    window.prompt(deckerVars.strings.task_url_copy_error, url);
+                });
+            } else {
+                window.prompt(deckerVars.strings.task_url_copy_error, url);
+            }
+        }
+    });
+});
+
+
 // Code for the Gantt chart on tasks
 (function () {
 	let chart = null;
