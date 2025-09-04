@@ -671,15 +671,9 @@ class Task {
 			);
 		} else {
 			printf(
-				'<div class="dropdown float-end mt-2">
-		            <a href="#" class="dropdown-toggle text-muted arrow-none" data-bs-toggle="dropdown" aria-expanded="false">
-		                <i class="ri-more-2-fill fs-18"></i>
-		            </a>
-		            <div class="dropdown-menu dropdown-menu-end">%s</div>
-		        </div>',
+				'<div class="dropdown-menu dropdown-menu-end">%s</div>',
 				wp_kses_post( implode( '', $menu_items ) )
 			);
-
 		}
 	}
 }

@@ -333,6 +333,7 @@ class Decker_Public {
 					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' ),
 					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
 					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
+					'copy_task_url'               => __( 'Copy Task URL', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
