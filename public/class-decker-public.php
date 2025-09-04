@@ -61,6 +61,9 @@ class Decker_Public {
 		add_rewrite_rule( '^decker/tasks/active/?$', 'index.php?decker_page=tasks&type=active', 'top' );
 		add_rewrite_rule( '^decker/tasks/my/?$', 'index.php?decker_page=tasks_my', 'top' );
 		add_rewrite_rule( '^decker/tasks/archived/?$', 'index.php?decker_page=tasks_archived', 'top' );
+
+		// Short task URL.
+		add_rewrite_rule( '^t/(\d+)/?$', 'index.php?decker_page=task&id=$matches[1]', 'top' );
 	}
 
 	/**
@@ -71,7 +74,7 @@ class Decker_Public {
 	 */
 	public function decker_query_vars( $vars ) {
 		$vars[] = 'decker_page';
-		$vars[] = 'board_slug';
+		$vars[] = 'slug';
 		$vars[] = 'decker_task';
 		$vars[] = 'id';
 		return $vars;
