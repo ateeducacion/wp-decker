@@ -267,7 +267,9 @@ if ( ! $has_today_tasks ) {
 																<?php endif; ?>
 																<?php foreach ( $task->assigned_users as $user_info ) : ?>
 																	<?php
+																	if ( $task->responsable && $task->responsable->ID == $user_info->ID ) {
 																		continue;
+																	}
 																	?>
 																	<a href="javascript: void(0);" class="avatar-group-item <?php echo $user_info->today ? ' today' : ''; ?>"
 																	   data-bs-toggle="tooltip" data-bs-placement="top" 
