@@ -44,6 +44,7 @@ class Decker_Public {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'init', array( $this, 'decker_add_rewrite_rules' ) );
 		add_filter( 'query_vars', array( $this, 'decker_query_vars' ) );
+		add_action( 'pre_get_posts', array( $this, 'decker_pre_get_posts' ) );
 		add_action( 'template_redirect', array( $this, 'decker_template_redirect' ) );
 	}
 
@@ -71,7 +72,34 @@ class Decker_Public {
 	public function decker_query_vars( $vars ) {
 		$vars[] = 'decker_page';
 		$vars[] = 'board_slug';
+		$vars[] = 'decker_task';
+		$vars[] = 'id';
 		return $vars;
+	}
+
+	/**
+	 * Modify the main query for Decker pages before it runs.
+	 *
+	 * @param WP_Query $query The WP_Query instance (passed by reference).
+	 */
+	public function decker_pre_get_posts( $query ) {
+		// Only modify the main query on the front-end.
+		if ( is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		// Check if we are viewing a single 'decker_task' via its canonical URL.
+		if ( $query->is_singular( 'decker_task' ) || ! empty( $query->get( 'decker_task' ) ) ) {
+			// Set 'decker_page' to 'task' so our other hooks recognize it.
+			$query->set( 'decker_page', 'task' );
+
+			// If the ID isn't set via a pretty permalink, get it from the query var.
+			if ( empty( $_GET['id'] ) && ! empty( $query->get( 'decker_task' ) ) ) {
+				$_GET['id'] = $query->get( 'decker_task' );
+			} elseif ( empty( $_GET['id'] ) ) {
+				$_GET['id'] = $query->get_queried_object_id();
+			}
+		}
 	}
 
 	/**
@@ -98,6 +126,7 @@ class Decker_Public {
 			exit;
 		}
 	}
+
 
 	/**
 	 * Redirect the user to the login page.
@@ -340,6 +369,9 @@ class Decker_Public {
 				'current_user_id'   => get_current_user_id(),
 				'users'             => $users,
 				'locale' => substr( get_user_locale(), 0, 2 ), // Ej: "es_ES" → "es".
+				'taskPermalinkStructure' => get_option( 'permalink_structure' )
+					? home_url( '/decker/task/%d/' )
+					: home_url( '/?decker_task=%d' ),
 			);
 
 			$last_handle = '';

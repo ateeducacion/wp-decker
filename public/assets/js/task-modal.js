@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const modalTitle = modal.find('#NewTaskModalLabel');
                 if (taskId && taskId != 0) {
-                    const permalink = deckerVars.home_url + 'decker/task/' + taskId + '/';
+                    const permalink = deckerVars.taskPermalinkStructure.replace('%d', taskId);                    
                     const newTitle = `Task #${taskId} <a href="#" class="copy-task-url" data-task-url="${permalink}" title="${deckerVars.strings.copy_task_url}"><i class="ri-clipboard-line"></i></a>`;
                     modalTitle.html(newTitle);
                 } else {

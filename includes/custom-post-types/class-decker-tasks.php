@@ -80,6 +80,8 @@ class Decker_Tasks {
 			10,
 			4
 		);
+
+		add_filter( 'post_type_link', array( $this, 'custom_task_permalink' ), 10, 2 );
 	}
 
 	/**
@@ -2191,6 +2193,31 @@ class Decker_Tasks {
 
 		// Save current stack as “previous” for the next move.
 		update_post_meta( $post_id, '_decker_prev_stack', $new_stack );
+	}
+
+	/**
+	 * Customize the permalink for the 'decker_task' post type.
+	 *
+	 * This function ensures the correct URL format is used whether pretty
+	 * permalinks are enabled or not.
+	 *
+	 * @param string  $post_link The post's permalink.
+	 * @param WP_Post $post      The post object.
+	 * @return string The customized permalink.
+	 */
+	public function custom_task_permalink( $post_link, $post ) {
+		if ( 'decker_task' === $post->post_type && 'publish' === $post->post_status ) {
+			// Check if pretty permalinks are enabled.
+			if ( get_option( 'permalink_structure' ) ) {
+				// Pretty permalinks are enabled. Build the pretty URL.
+				// This matches the ^decker/task/([^/]+)/?$ rewrite rule.
+				return home_url( '/decker/task/' . $post->ID . '/' );
+			} else {
+				// Plain permalinks. Build the query arg URL.
+				return home_url( '?decker_task=' . $post->ID );
+			}
+		}
+		return $post_link;
 	}
 }
 
