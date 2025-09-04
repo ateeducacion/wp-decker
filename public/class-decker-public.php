@@ -331,7 +331,8 @@ class Decker_Public {
 					'unsaved_changes_text'        => __( 'You have unsaved changes. Close without saving?', 'decker' ),
 					'close_anyway'                => __( 'Close anyway', 'decker' ),
 					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' ),
-
+					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
+					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,

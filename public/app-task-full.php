@@ -64,7 +64,14 @@ include 'layouts/main.php';
 								}
 								?>
 
-								<h4 class="page-title"><?php echo esc_html( $task_title ); ?></h4>
+								<h4 class="page-title">
+									<?php echo esc_html( $task_title ); ?>
+									<?php if ( $valid_task ) : ?>
+										<a href="#" class="copy-task-url" data-task-url="<?php echo esc_url( get_permalink( $task_id ) ); ?>" title="<?php esc_attr_e( 'Copy Task URL', 'decker' ); ?>">
+											<i class="ri-clipboard-line"></i>
+										</a>
+									<?php endif; ?>
+								</h4>
 
 							</div>
 						</div>
