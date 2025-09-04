@@ -44,6 +44,7 @@ class Decker_Public {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'init', array( $this, 'decker_add_rewrite_rules' ) );
 		add_filter( 'query_vars', array( $this, 'decker_query_vars' ) );
+		add_action( 'pre_get_posts', array( $this, 'decker_pre_get_posts' ) );
 		add_action( 'template_redirect', array( $this, 'decker_template_redirect' ) );
 	}
 
@@ -60,6 +61,9 @@ class Decker_Public {
 		add_rewrite_rule( '^decker/tasks/active/?$', 'index.php?decker_page=tasks&type=active', 'top' );
 		add_rewrite_rule( '^decker/tasks/my/?$', 'index.php?decker_page=tasks_my', 'top' );
 		add_rewrite_rule( '^decker/tasks/archived/?$', 'index.php?decker_page=tasks_archived', 'top' );
+
+		// Short task URL.
+		add_rewrite_rule( '^t/(\d+)/?$', 'index.php?decker_page=task&id=$matches[1]', 'top' );
 	}
 
 	/**
@@ -70,8 +74,38 @@ class Decker_Public {
 	 */
 	public function decker_query_vars( $vars ) {
 		$vars[] = 'decker_page';
-		$vars[] = 'board_slug';
+		$vars[] = 'slug';
+		$vars[] = 'decker_task';
+		$vars[] = 'id';
 		return $vars;
+	}
+
+	/**
+	 * Modify the main query for Decker pages before it runs.
+	 *
+	 * @param WP_Query $query The WP_Query instance (passed by reference).
+	 */
+	public function decker_pre_get_posts( $query ) {
+		// Only modify the main query on the front-end.
+		if ( is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		$decker_task_id = $query->get( 'decker_task' );
+
+		// Check if we are viewing a single 'decker_task' via its canonical URL.
+		if ( $query->is_singular( 'decker_task' ) || ! empty( $decker_task_id ) ) {
+			// Set 'decker_page' to 'task' so our other hooks recognize it.
+			$query->set( 'decker_page', 'task' );
+
+			// Get the task ID, whether from a pretty permalink or a plain one.
+			$task_id_to_set = ! empty( $decker_task_id ) ? $decker_task_id : $query->get_queried_object_id();
+
+			// Set the 'id' query var so get_query_var('id') will work in the template.
+			if ( $task_id_to_set ) {
+				$query->set( 'id', $task_id_to_set );
+			}
+		}
 	}
 
 	/**
@@ -98,6 +132,7 @@ class Decker_Public {
 			exit;
 		}
 	}
+
 
 	/**
 	 * Redirect the user to the login page.
@@ -332,13 +367,18 @@ class Decker_Public {
 					'unsaved_changes_text'        => __( 'You have unsaved changes. Close without saving?', 'decker' ),
 					'close_anyway'                => __( 'Close anyway', 'decker' ),
 					'confirm_delete_event'        => __( 'Are you sure you want to delete this event?', 'decker' ),
-
+					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
+					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
+					'copy_task_url'               => __( 'Copy Task URL', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id'   => get_current_user_id(),
 				'users'             => $users,
 				'locale' => substr( get_user_locale(), 0, 2 ), // Ej: "es_ES" → "es".
+				'taskPermalinkStructure' => get_option( 'permalink_structure' )
+					? home_url( '/decker/task/%d/' )
+					: home_url( '/?decker_task=%d' ),
 			);
 
 			$last_handle = '';

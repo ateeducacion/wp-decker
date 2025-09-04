@@ -376,9 +376,6 @@ msgstr "POR HACER"
 msgid "Priority"
 msgstr "Prioridad"
 
-msgid "You have no tasks defined for today. Do you want to import those from the previous day?"
-msgstr "No tienes tareas definidas para hoy. ¿Quieres importar las del día anterior?"
-
 msgid "Yes"
 msgstr "Sí"
 
@@ -399,9 +396,6 @@ msgstr "No hay tareas para hoy."
 
 msgid "Select tasks to import"
 msgstr "Seleccionar tareas para importar"
-
-msgid "There are no tasks from previous days to import."
-msgstr "No hay tareas de días anteriores para importar."
 
 msgid "Tasks Detail"
 msgstr "Detalle de Tareas"
@@ -1394,3 +1388,24 @@ msgstr "Evento de todo el día"
 
 msgid "Time is stored in UTC. Adjust accordingly."
 msgstr "La hora se guarda en UTC. Ajusta si es necesario."
+
+msgid "You have no tasks defined for today. Do you want to import tasks from a previous day?"
+msgstr "No tienes tareas definidas para hoy. ¿Quieres importar tareas de un día anterior?"
+
+msgid "No high priority tasks found."
+msgstr "No se encontraron tareas de alta prioridad."
+
+msgid "Import"
+msgstr "Importar"
+
+msgid "Copy Task URL"
+msgstr "Copiar URL"
+
+msgid "Task URL copied!"
+msgstr "¡URL de la tarea copiada!"
+
+msgid "Could not copy URL. Please copy it manually:"
+msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
+
+msgid "There are no tasks from previous days to import."
+msgstr "No hay tareas de días anteriores para importar."
