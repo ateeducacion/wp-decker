@@ -345,7 +345,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		<!-- Description (Quill Editor) -->
 		<div class="tab-pane show active" id="description-tab">
 			<div id="editor-container">
-				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
+				<div id="editor"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
 			</div>
 		</div>
 
