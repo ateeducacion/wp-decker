@@ -52,7 +52,7 @@ include 'layouts/main.php';
 								$valid_task                                = true;
 
 								// TODO: Change to use Task class.
-								$task_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+								$task_id = get_query_var( 'id' ) ? intval( get_query_var( 'id' ) ) : 0;
 								if ( $task_id ) {
 									$task = get_post( $task_id );
 									if ( $task && 'decker_task' === $task->post_type ) {
@@ -64,7 +64,14 @@ include 'layouts/main.php';
 								}
 								?>
 
-								<h4 class="page-title"><?php echo esc_html( $task_title ); ?></h4>
+								<h4 class="page-title">
+									<?php echo esc_html( $task_title ); ?>
+									<?php if ( $valid_task && $task_id ) : ?>
+										<a href="#" class="copy-task-url" data-task-url="<?php echo esc_url( get_permalink( $task_id ) ); ?>" title="<?php esc_attr_e( 'Copy Task URL', 'decker' ); ?>">
+											<i class="ri-clipboard-line"></i>
+										</a>
+									<?php endif; ?>
+								</h4>
 
 							</div>
 						</div>

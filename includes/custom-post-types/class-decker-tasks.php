@@ -80,6 +80,8 @@ class Decker_Tasks {
 			10,
 			4
 		);
+
+		add_filter( 'post_type_link', array( $this, 'custom_task_permalink' ), 10, 2 );
 	}
 
 	/**
@@ -2189,53 +2191,78 @@ class Decker_Tasks {
 			$this->reorder_tasks_in_stack( $board_id, $old_stack, $post_id );
 		}
 
-                // Save current stack as “previous” for the next move.
-                update_post_meta( $post_id, '_decker_prev_stack', $new_stack );
-        }
+			// Save current stack as “previous” for the next move.
+			update_post_meta( $post_id, '_decker_prev_stack', $new_stack );
+	}
 
-        /**
-         * Get localized label for a given stack.
-         *
-         * @param string $stack Stack slug.
-         * @return string Stack label.
-         */
-        public static function get_stack_label( string $stack ): string {
-                switch ( $stack ) {
-                        case 'to-do':
-                                return __( 'To-Do', 'decker' );
-                        case 'in-progress':
-                                return __( 'In Progress', 'decker' );
-                        case 'done':
-                                return __( 'Done', 'decker' );
-                        default:
-                                return $stack;
-                }
-        }
+	/**
+	 * Get localized label for a given stack.
+	 *
+	 * @param string $stack Stack slug.
+	 * @return string Stack label.
+	 */
+	public static function get_stack_label( string $stack ): string {
+		switch ( $stack ) {
+			case 'to-do':
+				return __( 'To-Do', 'decker' );
+			case 'in-progress':
+				return __( 'In Progress', 'decker' );
+			case 'done':
+				return __( 'Done', 'decker' );
+			default:
+				return $stack;
+		}
+	}
 
-        /**
-         * Get HTML icon for a given stack.
-         *
-         * @param string $stack Stack slug.
-         * @return string HTML markup for the stack icon with tooltip.
-         */
-        public static function get_stack_icon_html( string $stack ): string {
-                $label = self::get_stack_label( $stack );
-                switch ( $stack ) {
-                        case 'to-do':
-                                $icon = '<i class="ri-checkbox-blank-circle-line text-secondary me-2" title="' . esc_attr( $label ) . '"></i>';
-                                break;
-                        case 'in-progress':
-                                $icon = '<i class="ri-progress-3-line text-warning me-2" title="' . esc_attr( $label ) . '"></i>';
-                                break;
-                        case 'done':
-                                $icon = '<i class="ri-checkbox-circle-line text-success me-2" title="' . esc_attr( $label ) . '"></i>';
-                                break;
-                        default:
-                                return esc_html( $stack );
-                }
+	/**
+	 * Get HTML icon for a given stack.
+	 *
+	 * @param string $stack Stack slug.
+	 * @return string HTML markup for the stack icon with tooltip.
+	 */
+	public static function get_stack_icon_html( string $stack ): string {
+			$label = self::get_stack_label( $stack );
+		switch ( $stack ) {
+			case 'to-do':
+					$icon = '<i class="ri-checkbox-blank-circle-line text-secondary me-2" title="' . esc_attr( $label ) . '"></i>';
+				break;
+			case 'in-progress':
+					$icon = '<i class="ri-progress-3-line text-warning me-2" title="' . esc_attr( $label ) . '"></i>';
+				break;
+			case 'done':
+					$icon = '<i class="ri-checkbox-circle-line text-success me-2" title="' . esc_attr( $label ) . '"></i>';
+				break;
+			default:
+				return esc_html( $stack );
+		}
 
-                return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
-        }
+			return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
+	}
+
+	/**
+	 * Customize the permalink for the 'decker_task' post type.
+	 *
+	 * This function ensures the correct URL format is used whether pretty
+	 * permalinks are enabled or not.
+	 *
+	 * @param string  $post_link The post's permalink.
+	 * @param WP_Post $post      The post object.
+	 * @return string The customized permalink.
+	 */
+	public function custom_task_permalink( $post_link, $post ) {
+		if ( 'decker_task' === $post->post_type && 'publish' === $post->post_status ) {
+			// Check if pretty permalinks are enabled.
+			if ( get_option( 'permalink_structure' ) ) {
+				// Pretty permalinks are enabled. Build the pretty URL.
+				// This matches the ^decker/task/([^/]+)/?$ rewrite rule.
+				return home_url( '/decker/task/' . $post->ID . '/' );
+			} else {
+				// Plain permalinks. Build the query arg URL.
+				return home_url( '?decker_task=' . $post->ID );
+			}
+		}
+		return $post_link;
+	}
 }
 
 // Instantiate the class.

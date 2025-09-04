@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 include 'layouts/main.php';
 
 // Obtener el slug del board desde la URL.
-$board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
+$board_slug = get_query_var( 'slug' ) ? sanitize_title( get_query_var( 'slug' ) ) : '';
 
 // Retrieve the Board based on the slug.
 $main_board = BoardManager::get_board_by_slug( $board_slug );
@@ -133,7 +133,7 @@ foreach ( $tasks as $task ) {
 							<div class="col-12">
 								<div class="board">
 									<div class="tasks" data-plugin="dragula" data-containers='["task-list-to-do", "task-list-in-progress", "task-list-done"]'>
-                                                                               <h5 class="mt-0 task-header"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( 'to-do' ) ); ?><?php esc_html_e( 'TO-DO', 'decker' ); ?> (<?php echo esc_html( count( $columns['to-do'] ) ); ?>)</h5>
+																			   <h5 class="mt-0 task-header"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( 'to-do' ) ); ?><?php esc_html_e( 'TO-DO', 'decker' ); ?> (<?php echo esc_html( count( $columns['to-do'] ) ); ?>)</h5>
 										
 										<div id="task-list-to-do" class="task-list-items">
 
@@ -147,7 +147,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-                                                                               <h5 class="mt-0 task-header text-uppercase"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( 'in-progress' ) ); ?><?php esc_html_e( 'In Progress', 'decker' ); ?> (<?php echo esc_html( count( $columns['in-progress'] ) ); ?>)</h5>
+																			   <h5 class="mt-0 task-header text-uppercase"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( 'in-progress' ) ); ?><?php esc_html_e( 'In Progress', 'decker' ); ?> (<?php echo esc_html( count( $columns['in-progress'] ) ); ?>)</h5>
 										
 										<div id="task-list-in-progress" class="task-list-items">
 
@@ -162,7 +162,7 @@ foreach ( $tasks as $task ) {
 									</div>
 
 									<div class="tasks">
-                                                                               <h5 class="mt-0 task-header text-uppercase"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( 'done' ) ); ?><?php esc_html_e( 'Done', 'decker' ); ?> (<?php echo esc_html( count( $columns['done'] ) ); ?>)</h5>
+																			   <h5 class="mt-0 task-header text-uppercase"><?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( 'done' ) ); ?><?php esc_html_e( 'Done', 'decker' ); ?> (<?php echo esc_html( count( $columns['done'] ) ); ?>)</h5>
 										<div id="task-list-done" class="task-list-items">
 
 											<?php foreach ( $columns['done'] as $task ) : ?>
