@@ -452,6 +452,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		</div>
 
 		<!-- Gantt -->
+		<div class="tab-pane" id="gantt-tab">
 <?php
 /**
  * Generate Gantt chart data from _user_date_relations post meta.
@@ -551,11 +552,11 @@ foreach ( $user_dates as $user_id => $dates ) {
 
 // Output global JS variable for use by Chart.js.
 ?>
-<script type="text/javascript">
-	window.deckerGanttData = <?php echo wp_json_encode( $task_data ); ?>;
-</script>
-<canvas id="work-days-chart"></canvas>
-
+			<script type="text/javascript">
+				window.deckerGanttData = <?php echo wp_json_encode( $task_data ); ?>;
+			</script>
+			<canvas id="work-days-chart"></canvas>
+		</div>
 
 
 		<!-- Information -->
