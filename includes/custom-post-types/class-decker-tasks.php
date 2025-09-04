@@ -2234,7 +2234,7 @@ class Decker_Tasks {
                                 return esc_html( $stack );
                 }
 
-                return $icon . '<span class="d-none">' . esc_html( $label ) . '</span>';
+                return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
         }
 }
 
