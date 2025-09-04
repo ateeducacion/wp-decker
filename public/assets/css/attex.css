@@ -17060,6 +17060,11 @@ html[data-theme=dark] .auth-brand .logo-dark {
   padding-top: 1rem;
 }
 
+.task-modal #editor {
+	height: auto !important;
+	min-height: 200px;
+}
+
 
 .task-list-items {
   min-height: 100px;
