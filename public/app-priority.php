@@ -25,14 +25,12 @@ if ( isset( $_POST['import_tasks_nonce'] ) ) {
 
 		// Sanitize and validate task IDs to ensure they are integers.
 		$task_ids = isset( $_POST['task_ids'] ) ? array_map( 'intval', wp_unslash( $_POST['task_ids'] ) ) : array();
-
-		$today           = gmdate( 'Y-m-d' );
 		$current_user_id = get_current_user_id();
 
 		// Mark selected tasks for today for the current user.
 		foreach ( $task_ids as $task_id ) {
 			$decker_tasks = new Decker_Tasks();
-			$decker_tasks->add_user_date_relation( $task_id, $current_user_id, $today );
+			$decker_tasks->add_user_date_relation( $task_id, $current_user_id );
 		}
 
 		// Redirect to the same page to avoid form resubmission on refresh.
@@ -269,7 +267,6 @@ if ( ! $has_today_tasks ) {
 																<?php foreach ( $task->assigned_users as $user_info ) : ?>
 																	<?php
 																		continue;
-																	}
 																	?>
 																	<a href="javascript: void(0);" class="avatar-group-item <?php echo $user_info->today ? ' today' : ''; ?>"
 																	   data-bs-toggle="tooltip" data-bs-placement="top" 
