@@ -125,8 +125,8 @@ class Decker_Calendar {
 	}
 
 	/**
-	 * Flush ONLY the cache that matches the event's current category,
-	 * plus the global «all» variante.
+        * Flush ONLY the cache that matches the event's current category,
+        * plus the global «all» variant.
 	 *
 	 * @param int|WP_Post $post_id Post ID or object.
 	 */
@@ -438,13 +438,13 @@ class Decker_Calendar {
 			$calendar_name = 'Decker - ' . $type_names[ $type ];
 		}
 
-		$ical .= 'PRODID:-//' . $this->ical_escape( $calendar_name ) . "//NONSGML Decker//EN\r\n"; // ¡Clave!
+                $ical .= 'PRODID:-//' . $this->ical_escape( $calendar_name ) . "//NONSGML Decker//EN\r\n"; // Key property.
 
 		$ical .= "CALSCALE:GREGORIAN\r\n";
 		$ical .= "METHOD:PUBLISH\r\n";
 		$ical .= "X-WR-TIMEZONE:UTC\r\n";
 
-		// Set the refresch interval.
+                // Set the refresh interval.
 		$ttl = 'PT1H'; // 1h.
 		$ical .= "REFRESH-INTERVAL;VALUE=DURATION:$ttl\r\n";
 		$ical .= "X-PUBLISHED-TTL:$ttl\r\n";
@@ -498,7 +498,7 @@ class Decker_Calendar {
 
 					}
 				}
-				// We use » because : had codification problemas on ical.
+                                // We use » because : had encoding problems in iCal.
 				$users_prefix = implode( ', ', $display_names ) . ' » ';
 			}
 

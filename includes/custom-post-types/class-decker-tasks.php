@@ -765,7 +765,7 @@ class Decker_Tasks {
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
 
-		$date = new DateTime(); // Fecha y hora actuales.
+                $date = new DateTime(); // Current date and time.
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();

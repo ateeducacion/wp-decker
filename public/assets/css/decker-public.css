@@ -14,9 +14,9 @@
 
 /* Style for Choice.js disabled items */
 div.choices__item[aria-disabled="true"] {
-    color: red; /* Cambia el color del texto a rojo */
-    background-color: #f8d7da; /* Fondo rojo claro */
-    border: 1px solid #f5c6cb; /* Borde a juego */
+    color: red; /* Change text color to red */
+    background-color: #f8d7da; /* Light red background */
+    border: 1px solid #f5c6cb; /* Matching border */
     font-weight: bold; /* Optional: Highlight more */
 }
 
@@ -45,13 +45,13 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .notify-item .notification-content {
     display: flex;
-    flex-direction: column; /* Alinea verticalmente */
-    width: 80%; /* Asegura que ocupa todo el ancho disponible */
+    flex-direction: column; /* Align vertically */
+    width: 80%; /* Ensures it occupies all available width */
 }
 
 .notify-item .fw-semibold {
     overflow: hidden;
-    text-overflow: ellipsis; /* Trunca el texto con puntos suspensivos */
+    text-overflow: ellipsis; /* Truncates text with ellipsis */
     white-space: nowrap; /* Prevents text from wrapping onto multiple lines */
     margin-bottom: 2px; /* Space between title and action */
 }
@@ -59,7 +59,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .notify-item .notification-action {
     color: #6c757d; /* Grayish color for the action */
     display: flex;
-    justify-content: space-between; /*Alinea la hora a la derecha*/
+    justify-content: space-between; /*Aligns the time to the right*/
     align-items: center;
 }
 
@@ -70,15 +70,15 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .notify-icon {
     margin-right: 10px; /* Spacing between the icon and the text */
-    display: flex; /* Para centrar verticalmente el icono */
-    align-items: center; /* Centrar verticalmente */
-    justify-content: center; /* Centra horizontalmente */
-    align-items: center; /* Centra verticalmente */
+    display: flex; /* To vertically center the icon */
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
 
 }
 
 .notify-item .d-flex{
-    align-items: flex-start; /*Alinear arriba el contenido*/
+    align-items: flex-start; /*Align content at the top*/
 }
 
 
@@ -125,15 +125,15 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 }
 
 
-/* Estilos para fechas */
-.due-today { color: var(--ct-warning-text-emphasis); }  /* Amarillo */
-.due-past  { color: var(--ct-danger-text-emphasis); }   /* Rojo */
-.due-none  { color: #6c757d; font-style: italic; }      /* Gris para sin fecha */
+/* Styles for dates */
+.due-today { color: var(--ct-warning-text-emphasis); }  /* Yellow */
+.due-past  { color: var(--ct-danger-text-emphasis); }   /* Red */
+.due-none  { color: #6c757d; font-style: italic; }      /* Gray for no date */
 
 
 
 /* =================================================================
-   Estilos base para los "chips" de Tableros y Etiquetas
+   Base styles for board and label "chips"
    ================================================================= */
 
 .custom-badge {
@@ -146,7 +146,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     text-align: center;
     white-space: nowrap; /* Ensures it stays on a single line by default */
     vertical-align: baseline;
-    border-radius: 10rem; /* Esto crea la forma de "chip" redondeado */
+    border-radius: 10rem; /* This creates the rounded "chip" shape */
     word-break: break-word;
 }
 
@@ -201,7 +201,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
         white-space: normal; /* Allow the board text to wrap onto multiple lines if it's long */
     }
 
-    /* --- 2. Mejora para las tarjetas de Tareas (Kanban y otras vistas) --- */
+    /* --- 2. Improvement for Task cards (Kanban and other views) --- */
     .task .card-body {
         display: flex;
         flex-direction: column;
