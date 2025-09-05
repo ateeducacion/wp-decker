@@ -262,7 +262,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 	</div>
 
 
-        <!-- Assignees and Tags with preselected examples -->
+		<!-- Assignees and Tags with preselected examples -->
 	<div class="row">
 		<div class="mb-3">
 			<label for="task-assignees" class="form-label"><?php esc_html_e( 'Assign to', 'decker' ); ?></label>

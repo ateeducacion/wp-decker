@@ -75,8 +75,8 @@ foreach ( $tasks as $task ) {
 																						<!-- Search field with a clear (X) button inside -->
 											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
-                                                                                        <!-- User selector -->
-                                                                                        <select id="boardUserFilter" class="form-select ms-2">
+																						<!-- User selector -->
+																						<select id="boardUserFilter" class="form-select ms-2">
 												<option value=""><?php esc_html_e( 'All Users', 'decker' ); ?></option>
 												<?php
 												$users = get_users();

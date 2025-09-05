@@ -242,7 +242,7 @@ class Decker_Events {
 	 *
 	 * - Raw date (YYYY‑MM‑DD) → treat as all‑day, keep it as is.
 	 * - ISO‑8601 UTC with “Z” → keep as is.
-         * - Anything else → normalize to 'Y-m-d H:i:s' (UTC).
+	 * - Anything else → normalize to 'Y-m-d H:i:s' (UTC).
 	 *
 	 * @param string $value      Raw input.
 	 * @param string $meta_key   Meta key (unused, needed for callback signature).
@@ -383,7 +383,7 @@ class Decker_Events {
 			$end_for_input   = str_replace( ' ', 'T', $end_utc );
 		}
 
-                $step_attr  = $allday ? '' : ' step="60s"';          // 60s ⇒ hides seconds.
+				$step_attr  = $allday ? '' : ' step="60s"';          // 60s ⇒ hides seconds.
 		$value_attr = $allday
 			? esc_attr( $start_utc )
 			: esc_attr( gmdate( 'Y-m-d\TH:i', strtotime( $start_utc . ' UTC' ) ) );

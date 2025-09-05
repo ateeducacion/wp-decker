@@ -765,7 +765,7 @@ class Decker_Tasks {
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
 
-                $date = new DateTime(); // Current date and time.
+				$date = new DateTime(); // Current date and time.
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();
@@ -2091,7 +2091,7 @@ class Decker_Tasks {
 			// Reorder tasks in the new board (including the moved task).
 			// 1. Reorder new board.
 			if ( $new_board_term_id > 0 ) {
-                                // error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
+								// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
 				// Call the static function to reorder.
 				$this->reorder_tasks_in_stack( $new_board_term_id, $current_stack );
 			}
@@ -2099,7 +2099,7 @@ class Decker_Tasks {
 			// Reorder tasks in the old board (excluding the moved task).
 			// 2. Reorder old board.
 			if ( $old_board_term_id > 0 ) {
-                                // error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
+								// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
 				// Call the static function to reorder.
 				$this->reorder_tasks_in_stack( $old_board_term_id, $current_stack, $object_id );
 			}
