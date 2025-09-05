@@ -414,7 +414,7 @@ class Decker_Events {
 				const newInput = this.cloneNode();
 				newInput.type = type;
 
-				// Reasignar valor (convertir si es necesario)
+				// Reassign value (convert if necessary)
 				if (type === 'date') {
 					newInput.value = value.split('T')[0];
 				} else {

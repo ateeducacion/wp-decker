@@ -183,7 +183,7 @@ function archiveTaskHandler_old(event) {
 		// element.classList.toggle('unarchive-task', newStatus === 'archived');
 		// element.classList.toggle('archive-task', newStatus !== 'archived');
 		
-		// Opcional: Mostrar feedback visual
+		// Optional: Show visual feedback
 		// showToast(newStatus === 'archived' ? 'Task archived' : 'Task unarchived');
 
 			  // Reload the page if the request was successful
