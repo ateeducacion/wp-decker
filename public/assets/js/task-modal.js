@@ -47,6 +47,15 @@ document.addEventListener('DOMContentLoaded', function () {
             success: function (data) {
                 modal.find('#task-modal-body').html(data);
 
+                const modalTitle = modal.find('#NewTaskModalLabel');
+                if (taskId && taskId != 0) {
+                    const permalink = deckerVars.taskPermalinkStructure.replace('%d', taskId);                    
+                    const newTitle = `Task #${taskId} <a href="#" class="copy-task-url" data-task-url="${permalink}" title="${deckerVars.strings.copy_task_url}"><i class="ri-clipboard-line"></i></a>`;
+                    modalTitle.html(newTitle);
+                } else {
+                    modalTitle.text('Task');
+                }
+
                 // Después de cargar el contenido, inicializar las funciones JS
                 if (typeof window.initializeSendComments === 'function' && typeof window.initializeTaskPage === 'function') {
                     window.initializeSendComments(modal[0]);

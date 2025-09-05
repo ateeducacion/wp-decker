@@ -740,6 +740,9 @@ msgstr ""
 msgid "Order:"
 msgstr ""
 
+msgid "Copy Task URL"
+msgstr ""
+
 msgid "Edit"
 msgstr ""
 
@@ -907,7 +910,7 @@ msgstr ""
 msgid "Priority"
 msgstr ""
 
-msgid "You have no tasks defined for today. Do you want to import those from the previous day?"
+msgid "You have no tasks defined for today. Do you want to import tasks from a previous day?"
 msgstr ""
 
 msgid "Yes"
@@ -917,6 +920,9 @@ msgid "Close"
 msgstr ""
 
 msgid "MAX PRIORITY"
+msgstr ""
+
+msgid "No high priority tasks found."
 msgstr ""
 
 msgid "No board assigned"
@@ -929,6 +935,9 @@ msgid "Select tasks to import"
 msgstr ""
 
 msgid "Select date to import from:"
+msgstr ""
+
+msgid "Import"
 msgstr ""
 
 msgid "There are no tasks from previous days to import."
@@ -1103,6 +1112,12 @@ msgid "Close anyway"
 msgstr ""
 
 msgid "Are you sure you want to delete this event?"
+msgstr ""
+
+msgid "Task URL copied!"
+msgstr ""
+
+msgid "Could not copy URL. Please copy it manually:"
 msgstr ""
 
 msgid "Loading content. Please wait."
@@ -1349,9 +1364,6 @@ msgid "Upload"
 msgstr ""
 
 msgid "Nickname"
-msgstr ""
-
-msgid "Under construction..."
 msgstr ""
 
 msgid "Hidden task"

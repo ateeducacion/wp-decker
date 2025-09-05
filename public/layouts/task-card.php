@@ -56,6 +56,8 @@ $initial_max_priority = false;
 
 if ( isset( $_GET['id'] ) ) {
 	$task_id = intval( $_GET['id'] );
+} else {
+	$task_id = get_query_var( 'id' ) ? intval( get_query_var( 'id' ) ) : 0;
 }
 
 // Handle URL parameters for new task creation.
@@ -164,8 +166,8 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 		</div>
 
 		<!-- Maximum priority and For today -->
-		<div class="col-md-3 mb-2 d-flex flex-column align-items-start">
-			<div class="form-check form-switch mb-2">
+		<div class="col-md-3 mb-2 d-flex flex-row flex-md-column justify-content-center align-items-center align-items-md-start">
+			<div class="form-check form-switch me-3 me-md-0 mb-md-2">
 				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task_id ? $task->max_priority : $initial_max_priority ); ?> <?php disabled( $disabled ); ?>>
 				<label class="form-check-label" for="task-max-priority"><?php esc_html_e( 'Maximum Priority', 'decker' ); ?></label>
 			</div>
@@ -451,10 +453,111 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 
 		<!-- Gantt -->
 		<div class="tab-pane" id="gantt-tab">
-			<div class="tab-pane" id="gantt-tab">
-				<p class="text-muted"><?php esc_html_e( 'Under construction...', 'decker' ); ?></p>
-			</div>
+<?php
+/**
+ * Generate Gantt chart data from _user_date_relations post meta.
+ *
+ * Output a JavaScript variable `window.deckerGanttData` with structure:
+ * [
+ *   { user: "Full Name", dates: ["2024-10-14", "2024-10-15", ...] },
+ *   ...
+ * ]
+ */
+
+// -------------------------------------------------------------------------
+// 1.  Recuperar y preparar los datos
+// -------------------------------------------------------------------------
+
+$relations = get_post_meta( $task_id, '_user_date_relations', true );
+$relations = is_array( $relations ) ? $relations : array();
+
+$user_dates = array(); // [ user_id => [ 'YYYY‑MM‑DD', … ] ]
+
+foreach ( $relations as $relation ) {
+	$user_id = intval( $relation['user_id'] );
+	$date    = sanitize_text_field( $relation['date'] );
+
+	if ( ! isset( $user_dates[ $user_id ] ) ) {
+		$user_dates[ $user_id ] = array();
+	}
+	$user_dates[ $user_id ][] = $date;
+}
+
+$task_data = array();  // [{ user, dates[] }, …]
+
+foreach ( $user_dates as $user_id => $dates ) {
+	$user = get_userdata( $user_id );
+
+	// Skip invalid users.
+	if ( ! $user ) {
+		continue;
+	}
+
+	// Ordenar y eliminar duplicados.
+	$dates = array_values( array_unique( $dates ) );
+	sort( $dates );
+
+	$task_data[] = array(
+		'user'  => $user->display_name,
+		'dates' => $dates,
+	);
+}
+
+// Rango de fechas para el subtítulo (si existen datos).
+$all_dates = array();
+foreach ( $task_data as $entry ) {
+	$all_dates = array_merge( $all_dates, $entry['dates'] );
+}
+sort( $all_dates );
+$range_start = $all_dates ? reset( $all_dates ) : '';
+$range_end   = $all_dates ? end( $all_dates ) : '';
+
+?>
+<?php
+/**
+ * Output task user-date relations for Gantt chart as global JS variable.
+ */
+
+$relations = get_post_meta( $task_id, '_user_date_relations', true );
+$relations = is_array( $relations ) ? $relations : array();
+
+$user_dates = array();
+
+foreach ( $relations as $relation ) {
+	$user_id = intval( $relation['user_id'] );
+	$date    = sanitize_text_field( $relation['date'] );
+
+	if ( ! isset( $user_dates[ $user_id ] ) ) {
+		$user_dates[ $user_id ] = array();
+	}
+	$user_dates[ $user_id ][] = $date;
+}
+
+$task_data = array();
+
+foreach ( $user_dates as $user_id => $dates ) {
+	$user = get_userdata( $user_id );
+	if ( ! $user ) {
+		continue;
+	}
+
+	$dates = array_values( array_unique( $dates ) );
+	sort( $dates );
+
+	$task_data[] = array(
+		'user'  => $user->display_name,
+		'dates' => $dates,
+	);
+}
+
+// Output global JS variable for use by Chart.js.
+?>
+			<script type="text/javascript">
+				window.deckerGanttData = <?php echo wp_json_encode( $task_data ); ?>;
+			</script>
+			<canvas id="work-days-chart"></canvas>
 		</div>
+
 
 		<!-- Information -->
 		<div class="tab-pane" id="info-tab">

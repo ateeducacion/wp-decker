@@ -559,25 +559,22 @@ class Task {
 	public function render_task_menu( bool $card = false ): void {
 		$menu_items = array();
 
-		$task_url = add_query_arg(
-			array(
-				'decker_page' => 'task',
-				'id'          => esc_attr( $this->ID ),
-			),
-			home_url( '/' )
+		$task_url = get_permalink( $this->ID );
+		if ( ! $task_url || is_wp_error( $task_url ) ) {
+			$task_url = add_query_arg(
+				array(
+					'decker_page' => 'task',
+					'id'          => esc_attr( $this->ID ),
+				),
+				home_url( '/' )
+			);
+		}
+
+		$menu_items[] = sprintf(
+			'<a href="#" class="dropdown-item copy-task-url" data-task-url="%s"><i class="ri-clipboard-line me-1"></i>%s</a>',
+			esc_url( $task_url ),
+			__( 'Copy Task URL', 'decker' )
 		);
-
-		/*
-		TO-DO: Study if this is useful, we can use the next option to get the link
-		// Add 'Share URL' menu item at the top.
-		// $menu_items[] = sprintf(
-		//  '<a href="%s" class="dropdown-item"><i class="ri-share-line me-1"></i>' . __( 'View Task', 'decker' ) . '</a>',
-		//  esc_url( $task_url )
-		// );
-
-		// // Add divider after Share URL.
-		// $menu_items[] = '<div class="dropdown-divider"></div>';
-		*/
 
 		if ( ! $card ) {
 			// Add 'Edit' menu item.
@@ -674,12 +671,9 @@ class Task {
 			);
 		} else {
 			printf(
-				'<div class="dropdown float-end mt-2">
-		            <div class="dropdown-menu dropdown-menu-end">%s</div>
-		        </div>',
+				'<div class="dropdown-menu dropdown-menu-end">%s</div>',
 				wp_kses_post( implode( '', $menu_items ) )
 			);
-
 		}
 	}
 }

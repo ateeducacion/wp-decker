@@ -129,3 +129,118 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .due-today { color: var(--ct-warning-text-emphasis); }  /* Amarillo */
 .due-past  { color: var(--ct-danger-text-emphasis); }   /* Rojo */
 .due-none  { color: #6c757d; font-style: italic; }      /* Gris para sin fecha */
+
+
+
+/* =================================================================
+   Estilos base para los "chips" de Tableros y Etiquetas
+   ================================================================= */
+
+.custom-badge {
+    display: inline-block;
+    padding: 0.5em 0.75em;
+    font-size: 0.8em;
+    font-weight: 500;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap; /* Ensures it stays on a single line by default */
+    vertical-align: baseline;
+    border-radius: 10rem; /* Esto crea la forma de "chip" redondeado */
+    word-break: break-word;
+}
+
+
+/* =================================================================
+   Mejoras responsivas para la vista de Prioridad en MÓVIL
+   ================================================================= */
+
+@media (max-width: 768px) {
+
+    /* --- 1. Estilos para la nueva vista agrupada de "Máxima Prioridad" --- */
+    .priority-mobile-view .board-group-header {
+        padding: 0.75rem 1rem;
+        background-color: var(--ct-tertiary-bg);
+        border-bottom: 1px solid var(--ct-border-color);
+        border-radius: .375rem .375rem 0 0;
+        margin-bottom: 0;
+    }
+
+    .priority-mobile-view .board-group {
+        border: 1px solid var(--ct-border-color);
+        border-radius: .375rem;
+        background-color: var(--ct-card-bg);
+        box-shadow: var(--ct-box-shadow);
+    }
+
+    .priority-mobile-view .list-group-item.task-item {
+        padding: 1rem;
+        background-color: transparent;
+        border-bottom: 1px solid var(--ct-border-color-translucent);
+    }
+    
+    .priority-mobile-view .list-group-item.task-item:last-child {
+        border-bottom: none;
+    }
+
+    .priority-mobile-view .task-title-link {
+        font-weight: 500;
+        color: var(--ct-body-color);
+        text-decoration: none;
+        display: block;
+    }
+    .priority-mobile-view .task-title-link:hover {
+        color: var(--ct-primary);
+    }
+
+    .priority-mobile-view .avatar-group {
+        justify-content: flex-start;
+    }
+    
+    .priority-mobile-view .custom-badge {
+        white-space: normal; /* Permitimos que el texto del tablero se divida en varias líneas si es largo */
+    }
+
+    /* --- 2. Mejora para las tarjetas de Tareas (Kanban y otras vistas) --- */
+    .task .card-body {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .task .card-body p.mb-0 {
+        order: 1;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .task .card-body .text-muted.relative-time-badge {
+        order: 2;
+    }
+
+    .task .card-body h5 {
+        order: 3;
+        font-size: 1rem !important;
+    }
+
+    .task .card-body .avatar-group {
+        order: 4;
+    }
+    
+    .task .card-body .dropdown {
+        order: 5;
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .task .card-body .float-end.badge {
+       display: none;
+    }
+    
+    .task .card-body .float-end.badge.bg-danger-subtle {
+       display: inline-block;
+       position: absolute;
+       top: 1rem;
+       left: 1rem;
+    }
+}
