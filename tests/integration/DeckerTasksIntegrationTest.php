@@ -132,26 +132,26 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 	}
 
 	public function test_task_saved_meta() {
-		// Crear un término para el tablero.
+           // Create a term for the board.
 		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
 
-		// Crear etiquetas.
+               // Create labels.
 		$label1_id = self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) );
 		$label2_id = self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) );
 
-		// Crear un usuario para asignar a la tarea.
+               // Create a user to assign to the task.
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 
-		// Definir valores para los metadatos.
+               // Define values for the metadata.
 		$title          = 'Test Task with Metadata';
 		$description    = 'Testing all saved meta fields';
 		$stack          = 'to-do';
 		$max_priority   = true;
-		$duedate        = new DateTime( '2024-12-25' ); // Fecha ejemplo
+               $duedate        = new DateTime( '2024-12-25' ); // Example date
 		$assigned_users = array( $user_id );
 		$labels         = array( $label1_id, $label2_id );
 
-		// Crear la tarea.
+               // Create the task.
 		$task_id = $this->create_task(
 			$title,
 			$description,
@@ -163,7 +163,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 			$duedate
 		);
 
-		// Verificar que la tarea se creó correctamente.
+           // Verify that the task was created correctly.
 		$this->assertIsInt( $task_id, 'Task creation failed.' );
 
 		// Comprobar que los metadatos se guardaron correctamente.
@@ -172,9 +172,9 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 		$this->assertEquals( $duedate->format( 'Y-m-d' ), get_post_meta( $task_id, 'duedate', true ), 'Due date meta mismatch.' );
 		$this->assertEquals( $assigned_users, get_post_meta( $task_id, 'assigned_users', true ), 'Assigned users meta mismatch.' );
 
-		// Comprobar etiquetas y términos.
+           // Check labels and terms.
 		$saved_labels = wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) );
-		sort( $saved_labels ); // Asegurarse de que el orden no afecte la comparación.
+           sort( $saved_labels ); // Ensure that the order doesn't affect the comparison.
 		sort( $labels );
 		$this->assertEquals( $labels, $saved_labels, 'Labels meta mismatch.' );
 

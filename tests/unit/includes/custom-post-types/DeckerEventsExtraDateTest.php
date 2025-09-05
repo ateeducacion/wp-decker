@@ -286,7 +286,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	 * ------------------------------------------------------------------ */
 
 	/**
-	 * All‑day = true pero se envía una fecha con hora → debe guardarse solo la fecha.
+ * All‑day = true but a date with time is sent → only the date must be saved.
 	 */
 	public function test_create_all_day_strips_time() {
 		$event_id = self::factory()->event->create(
@@ -305,8 +305,8 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * All‑day = false pero se envía solo fecha → debe añadirse 00:00:00
-	 * (y end será start + 1 h según la lógica de process_and_save_meta()).
+ * All-day = false but only a date is sent → 00:00:00 must be added
+ * (and end will be start + 1 h according to the logic of process_and_save_meta()).
 	 */
 	public function test_create_datetime_with_date_only_sets_midnight() {
 		$event_id = self::factory()->event->create(
@@ -325,7 +325,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * REST create: all‑day con hora → el API debe devolver y almacenar solo la fecha.
+     * REST create: all-day with time → the API should return and store only the date.
 	 */
 	public function test_rest_create_all_day_strips_time() {
 		wp_set_current_user( $this->editor );
@@ -353,7 +353,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * REST update: datetime → se pasa solo fecha → debe corregir a 00:00:00.
+     * REST update: datetime → only a date is sent → it should adjust to 00:00:00.
 	 */
 	public function test_rest_update_datetime_with_date_only_sets_midnight() {
 		/* 1 · Creamos evento con hora correcta */
@@ -367,7 +367,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 			)
 		);
 
-		/* 2 · Actualizamos vía REST mandando solo la fecha */
+           /* 2 · Update via REST sending only the date */
 		wp_set_current_user( $this->editor );
 		$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
 		$request->set_param(
@@ -391,7 +391,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	public function test_rest_create_and_update_datetime_event_check_db_and_rest() {
 		wp_set_current_user( $this->editor );
 
-		// Crear evento vía REST.
+           // Create event via REST.
 		$request = new WP_REST_Request( 'POST', '/wp/v2/decker_event' );
 		$request->set_param( 'title', 'REST Timed Event' );
 		$request->set_param( 'status', 'publish' );
@@ -409,15 +409,15 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$this->assertSame( 201, $response->get_status() );
 		$event_id = $data['id'];
 
-		// Verificar en base de datos (debe estar en UTC sin la Z).
+           // Verify in the database (should be in UTC without the Z).
 		$this->assertSame( '2025-10-05 14:00:00', get_post_meta( $event_id, 'event_start', true ) );
 		$this->assertSame( '2025-10-05 15:30:00', get_post_meta( $event_id, 'event_end', true ) );
 
-		// Verificar en la respuesta REST (debería tener formato ISO8601 con Z).
+           // Verify in the REST response (it should have ISO8601 format with Z).
 		$this->assertSame( '2025-10-05 14:00:00', $data['meta']['event_start'] );
 		$this->assertSame( '2025-10-05 15:30:00', $data['meta']['event_end'] );
 
-		// Actualizar vía REST solo la hora de inicio.
+           // Update via REST only the start time.
 		$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
 		$request->set_param(
 			'meta',
@@ -430,7 +430,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 
 		$this->assertSame( 200, $response->get_status() );
 
-		// Verificación tras la actualización.
+           // Verification after the update.
 		$this->assertSame( '2025-10-05 18:00:00', get_post_meta( $event_id, 'event_start', true ) );
 		$this->assertSame( '2025-10-05 18:00:00', $data['meta']['event_start'] );
 	}
@@ -449,10 +449,10 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 			)
 		);
 
-		// Verificar formato almacenado.
+           // Verify stored format.
 		$this->assertSame( '2025-08-01 09:00:00', get_post_meta( $this->event_id, 'event_start', true ) );
 
-		// Actualizar valores directamente.
+           // Update values directly.
 		update_post_meta( $this->event_id, 'event_start', '2025-08-01 12:00:00' );
 		update_post_meta( $this->event_id, 'event_end', '2025-08-01 13:00:00' );
 
@@ -461,7 +461,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Crea y actualiza un evento all-day vía REST, y verifica que almacene solo la fecha.
+ * Creates and updates an all-day event via REST, and verifies that it stores only the date.
 	 */
 	public function test_rest_update_all_day_event_strips_time() {
 		wp_set_current_user( $this->editor );
@@ -484,7 +484,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$this->assertSame( 201, $response->get_status() );
 		$this->assertSame( '2026-03-15', get_post_meta( $event_id, 'event_start', true ) );
 
-		// Ahora actualizar mandando una fecha con hora (debe ignorar la hora)
+           // Now update by sending a date with time (should ignore the time)
 		$request = new WP_REST_Request( 'PUT', "/wp/v2/decker_event/{$event_id}" );
 		$request->set_param(
 			'meta',

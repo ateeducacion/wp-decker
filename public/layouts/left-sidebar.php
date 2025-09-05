@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 <?php
 
 /**
- * Determina si la página actual de Decker coincide con la proporcionada.
+ * Determines if the current Decker page matches the provided one.
  *
  * @param string $page El valor de `decker_page` a verificar.
  * @return string 'menuitem-active' if it matches, otherwise an empty string.
@@ -30,7 +30,7 @@ function decker_is_active_page( $page ) {
 }
 
 /**
- * Determina si la subpágina actual de Decker coincide con la proporcionada.
+ * Determines if the current Decker subpage matches the provided one.
  *
  * @param string $get_parameter The GET parameter to check.
  * @param string $page El valor de `decker_page` a verificar.
@@ -235,7 +235,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			<?php
 
-				// Obtener el slug del board desde la URL.
+                           // Get the board slug from the URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
 			$boards = BoardManager::get_all_boards();

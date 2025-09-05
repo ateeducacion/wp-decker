@@ -17,7 +17,7 @@ div.choices__item[aria-disabled="true"] {
     color: red; /* Cambia el color del texto a rojo */
     background-color: #f8d7da; /* Fondo rojo claro */
     border: 1px solid #f5c6cb; /* Borde a juego */
-    font-weight: bold; /* Opcional: Resaltar más */
+    font-weight: bold; /* Optional: Highlight more */
 }
 
 /* Hide disabled options from the Choice.js dropdown */
@@ -52,12 +52,12 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .notify-item .fw-semibold {
     overflow: hidden;
     text-overflow: ellipsis; /* Trunca el texto con puntos suspensivos */
-    white-space: nowrap; /* Evita que el texto se ajuste a varias líneas */
-    margin-bottom: 2px; /* Espacio entre título y acción */
+    white-space: nowrap; /* Prevents text from wrapping onto multiple lines */
+    margin-bottom: 2px; /* Space between title and action */
 }
 
 .notify-item .notification-action {
-    color: #6c757d; /* Color grisáceo para la acción */
+    color: #6c757d; /* Grayish color for the action */
     display: flex;
     justify-content: space-between; /*Alinea la hora a la derecha*/
     align-items: center;
@@ -65,11 +65,11 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .notify-item .notification-time {
     font-size: 0.8rem;
-    color: #6c757d; /* Mismo color que la acción */
+    color: #6c757d; /* Same color as the action */
 }
 
 .notify-icon {
-    margin-right: 10px; /* Separación entre el icono y el texto */
+    margin-right: 10px; /* Spacing between the icon and the text */
     display: flex; /* Para centrar verticalmente el icono */
     align-items: center; /* Centrar verticalmente */
     justify-content: center; /* Centra horizontalmente */
@@ -157,7 +157,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 @media (max-width: 768px) {
 
-    /* --- 1. Estilos para la nueva vista agrupada de "Máxima Prioridad" --- */
+    /* --- 1. Styles for the new "Highest Priority" grouped view --- */
     .priority-mobile-view .board-group-header {
         padding: 0.75rem 1rem;
         background-color: var(--ct-tertiary-bg);
@@ -198,7 +198,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     }
     
     .priority-mobile-view .custom-badge {
-        white-space: normal; /* Permitimos que el texto del tablero se divida en varias líneas si es largo */
+        white-space: normal; /* Allow the board text to wrap onto multiple lines if it's long */
     }
 
     /* --- 2. Mejora para las tarjetas de Tareas (Kanban y otras vistas) --- */

@@ -305,14 +305,14 @@ class DeckerEventsTest extends Decker_Test_Base {
 
 		$this->assertNotWPError( $event_id );
 
-		// Usar timestamps para comparación
+           // Use timestamps for comparison
 		$start_utc_stored = get_post_meta( $event_id, 'event_start', true );
 		$end_utc_stored   = get_post_meta( $event_id, 'event_end', true );
 
 		$start_ts = strtotime( $start_utc_stored );
 		$end_ts   = strtotime( $end_utc_stored );
 
-		// Verificar que end es 1 hora después de start
+           // Verify that end is 1 hour after start
 		// $this->assertEquals($start_ts + 3600, $end_ts);
 
 		// $start = get_post_meta( $event_id, 'event_start', true );
@@ -507,7 +507,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 			)
 		);
 
-		// Confirmar asignación inicial
+           // Confirm initial assignment
 		$this->assertEquals(
 			array( $this->editor ),
 			get_post_meta( $this->event_id, 'event_assigned_users', true ),
@@ -579,7 +579,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 
 		$before = get_post_meta( $this->event_id, 'event_assigned_users', true );
 
-		// Actualizar el evento sin tocar assigned_users
+           // Update the event without touching assigned_users
 		$updated_id = self::factory()->event->update_object(
 			$this->event_id,
 			array(

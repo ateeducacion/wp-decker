@@ -35,7 +35,7 @@ include 'layouts/main.php';
 				<!-- Start Content-->
 				<div class="container-fluid">
 
-					<!-- Encabezado de la página -->
+                                    <!-- Page header -->
 					<div class="row">
 						<div class="col-12">
 							<div class="page-title-box">

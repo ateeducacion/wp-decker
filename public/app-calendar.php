@@ -39,15 +39,15 @@ include 'layouts/main.php';
 									<div class="page-title-right">
 
 										<div class="input-group mb-3">
-											<!-- Icono de búsqueda integrado en el campo -->
+                                                                                        <!-- Search icon integrated into the field -->
 											<span class="input-group-text bg-white border-end-0">
 												<i class="ri-search-line"></i>
 											</span>
 											
-											<!-- Campo de búsqueda con botón de borrar (X) dentro -->
+                                                                                        <!-- Search field with a clear (X) button inside -->
 											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
-											<!-- Select de tipo -->
+                                                                                        <!-- Type select -->
 											<select id="eventTypeFilter" class="form-select ms-2">
 												<option value=""><?php esc_html_e( 'All Types', 'decker' ); ?></option>
 												<option value="event"><?php esc_html_e( 'Events', 'decker' ); ?></option>

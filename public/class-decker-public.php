@@ -272,12 +272,12 @@ class Decker_Public {
 
 			if ( 'knowledge-base' == $decker_page ) {
 
-				wp_enqueue_media(); // Obligatorio para subida de medios.
+                               wp_enqueue_media(); // Required for media uploads.
 				// wp_enqueue_script('editor');
 				// wp_enqueue_script('thickbox');
 				// wp_enqueue_style('editor-buttons');
 				// wp_enqueue_style('thickbox');
-				// wp_enqueue_script('wp-tinymce'); // Script principal de TinyMCE.
+                               // wp_enqueue_script('wp-tinymce'); // Main TinyMCE script.
 
 				wp_enqueue_editor();
 
@@ -309,9 +309,9 @@ class Decker_Public {
 				)
 			);
 
-			// Añadir el nickname a cada usuario.
+                   // Add the nickname to each user.
 			foreach ( $users as &$user ) {
-				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real.
+                               $user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Replace 'alias' with your real meta key.
 			}
 
 			// Unified localized data.
@@ -385,7 +385,7 @@ class Decker_Public {
 			// Add the bundled jQuery library.
 			wp_enqueue_script( 'jquery' );
 
-			// Asegurar que el script de Heartbeat esté encolado.
+                   // Ensure that the Heartbeat script is enqueued.
 			wp_enqueue_script( 'heartbeat' );
 
 			// Add the bundled Backbone library.
