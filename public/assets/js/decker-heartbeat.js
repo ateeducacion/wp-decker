@@ -363,11 +363,11 @@ function formatNotificationTime(timeString) {
      */
     $(document).on('heartbeat-tick', function(event, data) {
 
-        console.log('Datos recibidos del heartbeat:', data); // Debug completo
+        console.log('Heartbeat data received:', data); // Full debug
 
         if (data.decker_notifications && Array.isArray(data.decker_notifications)) {
 
-            console.log('Notificaciones recibidas:', data.decker_notifications);
+            console.log('Notifications received:', data.decker_notifications);
 
             data.decker_notifications.forEach(function(notification) {
                 // showAlert = true for new incoming notifications
