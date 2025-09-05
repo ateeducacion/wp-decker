@@ -152,7 +152,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 
 /* =================================================================
-   Mejoras responsivas para la vista de Prioridad en MÓVIL
+   Responsive improvements for the Priority view on MOBILE
    ================================================================= */
 
 @media (max-width: 768px) {

@@ -396,7 +396,7 @@ class Decker_Events {
 	</label>
 </p>
 
-<!-- Contenedor para mensajes de error -->
+<!-- Container for error messages -->
 <div id="event_date_error" style="color: red; display: none;">
 		<?php esc_html_e( 'End Date must be after Start Date.', 'decker' ); ?>
 </div>
