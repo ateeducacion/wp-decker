@@ -344,11 +344,9 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 	</ul>
 
 	<div class="tab-content">
-		<!-- Description (Quill Editor) -->
+		<!-- Description (WordPress Classic Editor) -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor-container">
-				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
-			</div>
+			<textarea name="description" id="task-description" rows="12" class="form-control"><?php echo esc_textarea( $task_id ? $task->description : $initial_description ); ?></textarea>
 		</div>
 
 		<!-- Comments -->

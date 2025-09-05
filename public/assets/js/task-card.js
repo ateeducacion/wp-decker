@@ -14,13 +14,63 @@
     // Variable global para indicar si hay cambios sin guardar
     window.deckerHasUnsavedChanges = false;
 
-    let quill = null;
-
     let assigneesSelect = null;
     let labelsSelect = null;
+    let taskEditor = null;
+    let taskEditorInitPromise = null;
 
     // Start of comment part
     var replyToCommentId = null;
+
+    function initializeTaskEditor() {
+        // Destruir el editor existente antes de inicializar uno nuevo
+        if (taskEditor && taskEditor.initialized) {
+            wp.editor.remove('task-description');
+            taskEditor.initialized = false;
+            taskEditor = null;
+        }
+
+        return new Promise((resolve) => {
+            const config = {
+                tinymce: {
+                    wpautop: true,
+                    container: 'description-tab',
+                    toolbar1: 'formatselect bold italic link bullist numlist blockquote alignleft aligncenter alignright wp_adv fullscreen fullscreen emoji',
+                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    menubar: false,
+                    valid_elements: '*[*]', // permite todos los elementos con cualquier atributo
+                    extended_valid_elements: 'input[type|name|value|checked|disabled|class|id|style],a[href|target|rel|class|id|style]',
+                    // plugins: 'emoticons',
+                    setup: function(ed) {
+                        taskEditor = ed;
+                        ed.on('change', function() {
+                            // Mark the form as having unsaved changes
+                            const saveButton = document.querySelector('#save-task');
+                            if (saveButton) {
+                                saveButton.disabled = false;
+                                window.deckerHasUnsavedChanges = true;
+                            }
+                        });
+                        ed.on('init', function() {
+                            taskEditor.initialized = true;
+                            
+                            // Cargar el contenido en el editor después de inicializar
+                            const content = document.querySelector('#task-description').value;
+                            if (content) {
+                                ed.setContent(content);
+                            }
+                            
+                            resolve();
+                        });
+                    }
+                },
+                quicktags: true,
+                mediaButtons: true
+            };
+
+            wp.editor.initialize('task-description', config);
+        });
+    }
 
     // Function to initialize comment submission within the given context
     function initializeSendComments(context) {
@@ -189,51 +239,6 @@
             console.log('Task ID not found in data-task-id');
         }
 
-        if (context.querySelector('#editor')) {
-            if (quill === null) {
-                // Registrar el módulo HTML Edit Button
-                Quill.register('modules/htmlEditButton', htmlEditButton);
-
-            }
-
-            quill = new Quill(context.querySelector('#editor'), {
-                theme: 'snow',
-                readOnly: disabled,
-                modules: {
-                    toolbar: { 
-                        container: [
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['link', 'blockquote', 'code-block'],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-                            [{ 'indent': '-1' }, { 'indent': '+1' }],
-                            ['clean'],
-                            ['fullscreen'],
-                        ],
-                        handlers: {
-                            'fullscreen': function() {
-                                var editorContainer = context.querySelector('#editor-container');
-                                if (!document.fullscreenElement) {
-                                    editorContainer.requestFullscreen().catch(err => {
-                                        alert('Error attempting to enable full-screen mode: ' + err.message);
-                                    });
-                                } else {
-                                    document.exitFullscreen();
-                                }
-                            }
-                        }
-                    },  
-                    htmlEditButton: {
-                        syntax: false,
-                        buttonTitle: strings.show_html_source,
-                        msg: strings.edit_html_content,
-                        okText: strings.ok,
-                        cancelText: strings.cancel,
-                        closeOnClickOverlay: false,
-                    },                   
-                }
-            });
-        
-        }
 
         // Inicializar Choices.js para los selectores de asignados y etiquetas
         if (context.querySelector('#task-assignees')) {
@@ -249,14 +254,6 @@
         }
 
         if (context.querySelector('#task-labels')) {
-            // labelsSelect = new Choices(context.querySelector('#task-labels'), { 
-            //     removeItemButton: true, 
-            //     allowHTML: true,
-            //     searchEnabled: true,
-            //     shouldSort: true,
-            // });
-
-
             labelsSelect = new Choices(context.querySelector('#task-labels'), {
             removeItemButton: true,
             allowHTML: true,
@@ -265,8 +262,6 @@
             callbackOnCreateTemplates: function (strToEl, escapeForTemplate, getClassNames) {
                 const defaultTemplates = Choices.defaults.templates;
                 
-
-
                 return {
                     ...defaultTemplates,
                     item: (classNames, data) => {
@@ -295,11 +290,8 @@
                         return el;
                     }
                 }
-
             }
         });
-
-
         }
 
         var uploadFileButton = context.querySelector('#upload-file');
@@ -356,14 +348,6 @@
             togglePriorityLabel(taskMaxPriorityCheck);
         }
         
-        // Para el Editor Quill
-        if (quill) {
-            quill.on('text-change', function() {
-                saveButton.disabled = false;
-                window.deckerHasUnsavedChanges = true;
-            });
-        }
-
         // Para los selectores de Choices.js
         if (assigneesSelect) {
             assigneesSelect.passedElement.element.addEventListener('change', enableSaveButton);
@@ -378,6 +362,9 @@
           element.addEventListener('click', archiveTaskHandler);
 
         });
+
+        // Pre-inicializar el editor de tareas
+        initializeTaskEditor();
 
     }
 
@@ -585,7 +572,7 @@
             hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
             assignees: selectedAssigneesValues,
             labels: selectedLabelsValues,
-            description: quill.root.innerHTML,
+            description: form.querySelector('#task-description').value,
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
         };
@@ -628,11 +615,27 @@
             alert(strings.error_saving_task);
         };
 
+        // Obtener el contenido del editor si está inicializado
+        if (taskEditor) {
+            formData.description = taskEditor.getContent();
+        } else {
+            formData.description = document.querySelector('#task-description').value;
+        }
+
         const encodedData = Object.keys(formData)
             .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
             .join('&');
 
         xhr.send(encodedData);
+    }
+
+    // Función para destruir el editor cuando se cierra el modal
+    function destroyTaskEditor() {
+        if (taskEditor && taskEditor.initialized) {
+            wp.editor.remove('task-description');
+            taskEditor.initialized = false;
+            taskEditor = null;
+        }
     }
 
     // Obtener el task_id desde el input hidden
@@ -652,6 +655,7 @@
     window.sendFormByAjax = sendFormByAjax;
     window.deleteComment = deleteComment;
     window.togglePriorityLabel = togglePriorityLabel;
+    window.destroyTaskEditor = destroyTaskEditor;
 
     // Inicializar automáticamente si el contenido está cargado directamente en la página
     document.addEventListener('DOMContentLoaded', function() {
@@ -661,6 +665,18 @@
             initializeTaskPage(document);
             initializeSendComments(document);
         }
+    });
+
+    // Pre-inicializar el editor cuando se hace clic en el botón de edición
+    document.querySelectorAll('[data-bs-target="#task-modal"]').forEach((button) => {
+        button.addEventListener('click', function() {
+            initializeTaskEditor();
+        });
+    });
+
+    // Destruir el editor cuando se cierra el modal
+    document.getElementById('task-modal')?.addEventListener('hidden.bs.modal', function() {
+        destroyTaskEditor();
     });
 
 })();

@@ -95,5 +95,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.quill) {
             window.quill = null; // Asumiendo que quill no necesita destrucción explícita
         }
+
+        // Destruir el editor de WordPress si existe
+        if (typeof window.destroyTaskEditor === 'function') {
+            window.destroyTaskEditor();
+        }
     });
 });
