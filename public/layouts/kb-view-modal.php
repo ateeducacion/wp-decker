@@ -107,7 +107,7 @@ function viewArticle(id, title, content, labelsJson, boardJson) {
 	modal.modal('show');
 }
 
-// Función para copiar el contenido del modal al portapapeles usando Swal
+// Function to copy the modal content to the clipboard using Swal
 jQuery(document).ready(function($) {
 	$('#copy-kb-content').on('click', function() {
 		const textToCopy = $('#kb-view-content').text().trim();

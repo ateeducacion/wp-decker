@@ -220,12 +220,12 @@ function formatNotificationTime(timeString) {
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Meses van de 0 a 11
 
-    // Si es el mismo día, mostrar solo HH:mm
+    // If it's the same day, show only HH:mm
     if (date.toDateString() === now.toDateString()) {
         return `${hours}:${minutes}`;
     }
 
-    // Si es un día anterior, mostrar DD/MM HH:mm
+    // If it's a previous day, show DD/MM HH:mm
     return `${day}/${month} ${hours}:${minutes}`;
 }
 

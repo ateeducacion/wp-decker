@@ -87,7 +87,7 @@ if ( ! $has_today_tasks ) {
 	line-height: 1;
 	color: #fff;
 	text-align: center;
-	white-space: normal; /* Permite que el texto se desborde en varias líneas */
+	white-space: normal; /* Allows the text to wrap onto multiple lines */
 	vertical-align: baseline;
 	border-radius: 10rem;
 	word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
@@ -98,7 +98,7 @@ if ( ! $has_today_tasks ) {
 }
 
 .table th, .table td, .descripcion {
-		white-space: normal; /* Permite que el texto se desborde en varias líneas */
+		   white-space: normal; /* Allows the text to wrap onto multiple lines */
 		word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
 		word-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
 		overflow-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */

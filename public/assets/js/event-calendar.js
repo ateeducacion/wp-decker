@@ -155,7 +155,7 @@ function showTooltip(message, duration = 2000){
                         right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth',
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
-                        // Hacer la petición manualmente con fetch
+                       // Make the request manually with fetch
                         fetch(wpApiSettings.root + 'decker/v1/calendar', {
                             method: 'GET',
                             headers: {
@@ -349,10 +349,10 @@ function showTooltip(message, duration = 2000){
 
                             if (users.length > 0) {
                                 const userNicknames = users.map(userId => {
-                                    // Convertir a número si es necesario (depende de cómo vengan los IDs)
+                                   // Convert to a number if needed (depends on how the IDs come)
                                     const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
-                                    // Buscar el usuario por ID en el array
-                                    const user = deckerVars.users.find(u => u.id == id); // == para compatibilidad string/number
+                                   // Find the user by ID in the array
+                                    const user = deckerVars.users.find(u => u.id == id); // == for string/number compatibility
                                     return user?.nickname || '';
                                 }).filter(Boolean);
                                 

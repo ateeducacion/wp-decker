@@ -154,7 +154,7 @@ class Decker_Kb {
 		$route = $request->get_route();
 
 		if ( strpos( $route, '/wp/v2/decker_kb' ) === 0 ) {
-			// Usa la capacidad específica del CPT.
+				   // Use the specific capability of the CPT.
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				return new WP_Error(
 					'rest_forbidden',

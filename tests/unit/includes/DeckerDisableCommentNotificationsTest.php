@@ -19,7 +19,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 
 		$this->notification_disabler = new Decker_Disable_Comment_Notifications();
 
-		// Crear usuario de prueba
+               // Create test user
 		$this->user_id = self::factory()->user->create(
 			array(
 				'role'       => 'administrator',
@@ -29,7 +29,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 
 		wp_set_current_user( $this->user_id );
 
-		// Crear contenido de prueba
+               // Create test content
 		$this->task_post_id = self::factory()->task->create(
 			array(
 				// 'post_type' => 'decker_task',
@@ -108,7 +108,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 			)
 		);
 
-		// Verificar filtro de moderación
+           // Verify moderation filter
 		$recipients = apply_filters(
 			'comment_moderation_recipients',
 			array( 'admin@example.com' ),
@@ -125,7 +125,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 	 * Test that email sending is prevented at the source
 	 */
 	public function test_email_sending_prevention() {
-		// 1. Mock de wp_mail()
+           // 1. Mock wp_mail()
 		$mailer = $this->getMockBuilder( Decker_Mailer::class )
 			->onlyMethods( array( 'send_email' ) )
 			->getMock();
@@ -141,7 +141,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 			)
 		);
 
-		// 3. Forzar notificación
+           // 3. Force notification
 		do_action( 'comment_post', $comment_id, 1 );
 	}
 }

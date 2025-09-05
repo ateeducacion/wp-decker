@@ -224,7 +224,7 @@ class Decker_Events {
 		$route = $request->get_route();
 
 		if ( strpos( $route, '/wp/v2/decker_event' ) === 0 ) {
-			// Usa la capacidad específica del CPT.
+				   // Use the specific capability of the CPT.
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				return new WP_Error(
 					'rest_forbidden',
@@ -278,12 +278,12 @@ class Decker_Events {
 	}
 
 	/**
-	 * Normaliza los metadatos de fecha tras una operación REST.
+	 * Normalize date metadata after a REST operation.
 	 *
 	 * – Para all‑day: corta la hora.
 	 * – Para eventos con hora:
 	 *     · Convierte ISO (‘T…Z’) a ‘Y-m-d H:i:s’.
-	 *     · Si llega solo la fecha añade ‘00:00:00’.
+	 *     · If only the date arrives, add '00:00:00'.
 	 *     · Si end ≤ start, ajusta end = start + 1h.
 	 *
 	 * @param WP_Post         $post the post.
@@ -324,7 +324,7 @@ class Decker_Events {
 			update_post_meta( $post->ID, $meta, $$var );
 		}
 
-		// c) end vacío o ≤ start  →  +1h.
+		   // c) end empty or ≤ start  →  +1h.
 		if ( ! $end || strtotime( $end ) <= strtotime( $start ) ) {
 			$end = gmdate( 'Y-m-d H:i:s', strtotime( $start ) + HOUR_IN_SECONDS );
 			update_post_meta( $post->ID, 'event_end', $end );
@@ -401,7 +401,7 @@ class Decker_Events {
 		<?php esc_html_e( 'End Date must be after Start Date.', 'decker' ); ?>
 </div>
 
-<!-- Script para manejar la visibilidad de campos y validación -->
+<!-- Script to handle field visibility and validation -->
 <script>
 (function($) {
 	$(document).ready(function() {
@@ -491,14 +491,14 @@ class Decker_Events {
 	 * @return array Modified columns.
 	 */
 	public function add_custom_columns( $columns ) {
-		unset( $columns['date'] ); // Opcional: quitar la columna de fecha por defecto.
+		   unset( $columns['date'] ); // Optional: remove the default date column.
 
 		$columns['event_allday'] = __( 'All Day Event', 'decker' );
 		$columns['event_start'] = __( 'Start', 'decker' );
 		$columns['event_end']   = __( 'End', 'decker' );
 		$columns['event_category'] = __( 'Category', 'decker' );
 
-		$columns['date'] = __( 'Date', 'decker' ); // Añadirla de nuevo al final.
+		   $columns['date'] = __( 'Date', 'decker' ); // Add it again at the end.
 		return $columns;
 	}
 
@@ -576,12 +576,12 @@ class Decker_Events {
 			update_post_meta( $post_id, 'event_end', $end_date );
 		} else {
 
-			// Si viene en formato YYYY‑MM‑DD → añádele 00:00:00.
+				   // If it comes in YYYY‑MM‑DD format → append 00:00:00.
 			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $start_input ) ) {
 				$start_input .= ' 00:00:00';
 			}
 			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end_input ) ) {
-				$end_input .= ' 01:00:00'; // será corregido más abajo si corresponde.
+						   $end_input .= ' 01:00:00'; // will be corrected below if appropriate.
 			}
 
 			// Timed event: if end missing or end ≤ start, default to start + 1 h (UTC).
@@ -677,7 +677,7 @@ class Decker_Events {
 
 		// After getting posts, load all metadata into cache at once.
 		$post_ids = wp_list_pluck( $posts, 'ID' );
-		update_meta_cache( 'post', $post_ids ); // 1 consulta extra para todos los metadatos
+		   update_meta_cache( 'post', $post_ids ); // One extra query for all metadata.
 
 		// Avoid modifying native WP_Post objects.
 		$events = array();

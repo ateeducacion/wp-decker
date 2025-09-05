@@ -20,7 +20,7 @@
     /**
      * Convierte UTC → valor para el <input>.
      *  ─ Si llega 'YYYY‑MM‑DD' (all‑day) la devuelve tal cual.
-     *  ─ Si llega 'YYYY‑MM‑DD HH:MM:SS' añade la “T” y la “Z”.
+ *  ─ If 'YYYY‑MM‑DD HH:MM:SS' arrives, add the “T” and “Z”.
      *  ─ Si llega ISO con “Z” la pasa a local y corta segundos.
      */
 function utcToLocalValue(utcStr){
@@ -80,16 +80,16 @@ function utcToLocalValue(utcStr){
         const startInput = context.querySelector('#event-start');
         const endInput = context.querySelector('#event-end');
 
-   // ---------- valores por defecto ---------- //
+   // ---------- default values ---------- //
         (function setDefaultTimes(){
             if (startInput.value) return;                // se abre un evento existente
 
-            // a) si FullCalendar pasó un día (click en celda vacía)…
+           // a) if FullCalendar passed a day (click on an empty cell)…
             const modal     = document.querySelector('#event-modal');
             const clickDate = modal?.dataset.tempEventDate
                 ? (() => {
                     const [y, m, d] = modal.dataset.tempEventDate.split('-').map(Number);
-                    return new Date(y, m - 1, d);  // ← esta versión usa la hora local
+                   return new Date(y, m - 1, d);  // ← this version uses the local time
                 })()
                 : null;
 
@@ -119,7 +119,7 @@ function utcToLocalValue(utcStr){
 
 const isAllDay = context.querySelector('#event-allday')?.checked;
 
-// Establecer el tipo de los inputs antes de asignar los valores
+// Set the type of the inputs before assigning values
 if (isAllDay) {
     startInput.type = 'date';
     endInput.type = 'date';
@@ -149,7 +149,7 @@ if (isAllDay) {
             if (!raw) return;
 
             // Si el input es type="date" pone la fecha tal cual,
-            // en otro caso usa la función de conversión.
+           // otherwise use the conversion function.
             input.value = (input.type === 'date')
                 ? raw
                 : utcToLocalValue(raw);
@@ -215,7 +215,7 @@ allDaySwitch.addEventListener('change', () => {
         startInput.type = 'datetime-local';
         endInput.type   = 'datetime-local';
 
-        // Mantener el día y redondear la hora
+       // Keep the day and round the time
         const base = currentStart || new Date();
         const now = new Date();
         now.setSeconds(0, 0);
@@ -225,7 +225,7 @@ allDaySwitch.addEventListener('change', () => {
             now.setMinutes(minutes + (30 - (minutes % 30)));
         }
 
-        // Combinar el día original con la hora redondeada
+       // Combine the original day with the rounded time
         const start = new Date(base);
         start.setHours(now.getHours(), now.getMinutes(), 0, 0);
 
@@ -374,15 +374,15 @@ const eventData = {
         });
     }
     
-    // Exportar funciones globalmente para que puedan ser llamadas desde HTML
+    // Export functions globally so they can be called from HTML
     window.initializeEventCard = initializeEventCard;
 
 
-    // Inicializar automáticamente si el contenido está cargado directamente en la página
+// Automatically initialize if the content is loaded directly on the page
     document.addEventListener('DOMContentLoaded', function() {
-        // Verificar si existe el formulario de tarea directamente en la página
+       // Check if the task form exists directly on the page
         const eventForm = document.querySelector('#event-form');
-        if (eventForm && !eventForm.closest('.event-modal')) { // Asegurarse de que no está dentro de un modal
+       if (eventForm && !eventForm.closest('.event-modal')) { // Ensure that it is not inside a modal
             initializeEventCard(document);
         }
 

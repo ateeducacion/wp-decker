@@ -131,7 +131,7 @@ document.addEventListener('keyup', function(event) {
   }
 });
 
-// Función para igualar la altura de las columnas del Kanban
+// Function to equalize the height of the Kanban columns
 function equalizeKanbanColumnsHeight() {
   const columns = document.querySelectorAll('.task-list-items');
   if (columns.length === 0) return;
@@ -141,30 +141,30 @@ function equalizeKanbanColumnsHeight() {
     column.style.height = 'auto';
   });
 
-  // Encontrar la altura máxima
+  // Find the maximum height
   let maxHeight = 0;
   columns.forEach(column => {
     const height = column.offsetHeight;
     maxHeight = Math.max(maxHeight, height);
   });
 
-  // Aplicar la altura máxima a todas las columnas
+  // Apply the maximum height to all columns
   columns.forEach(column => {
     column.style.height = `${maxHeight}px`;
   });
 }
 
-// Ejecutar cuando el DOM esté listo
+// Execute when the DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   equalizeKanbanColumnsHeight();
 });
 
-// Ejecutar cuando cambie el tamaño de la ventana
+// Execute when the window size changes
 window.addEventListener('resize', function() {
   equalizeKanbanColumnsHeight();
 });
 
-// Ejecutar cuando se añadan o eliminen tareas
+// Execute when tasks are added or removed
 const observer = new MutationObserver(function(mutations) {
   equalizeKanbanColumnsHeight();
 });

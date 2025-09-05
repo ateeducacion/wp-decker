@@ -2,19 +2,19 @@
 /* Estilo para los avatares seleccionados */
 .avatar-group-item.selected .rounded-circle {
   position: relative;
-  border: 2px solid transparent; /* Evita que el tamaño de la imagen cambie */
+  border: 2px solid transparent; /* Prevents the image size from changing */
 }
 
 /* Aureola verde alrededor de los avatares seleccionados */
 
 /* Estilo base para los avatares con clase .today */
 .avatar-group-item.selected.today .rounded-circle {
-  box-shadow: 0 0 0 4px rgba(0, 255, 1, 0.7); /* Ajusta el tamaño y color de la aureola */
-  border: 0px solid transparent; /* Mantén el borde actual */
+  box-shadow: 0 0 0 4px rgba(0, 255, 1, 0.7); /* Adjust the halo's size and color */
+  border: 0px solid transparent; /* Keep the current border */
 }
 
 
-/* Si también quieres una aureola en los divs que no tienen imagen (letras iniciales o contadores) */
+/* If you also want a halo on divs without images (initial letters or counters) */
 .today {
   box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
 }
@@ -26,19 +26,19 @@
 /* Estilo para los avatares seleccionados */
 .avatar-group-item.selected .rounded-circle {
   position: relative;
-  border: 2px solid transparent; /* Evita que el tamaño de la imagen cambie */
+  border: 2px solid transparent; /* Prevents the image size from changing */
 }
 
 /* Aureola verde alrededor de los avatares seleccionados */
 
 /* Estilo base para los avatares con clase .today */
 .avatar-group-item.selected.today .rounded-circle {
-  box-shadow: 0 0 0 4px rgba(0, 255, 1, 0.7); /* Ajusta el tamaño y color de la aureola */
-  border: 0px solid transparent; /* Mantén el borde actual */
+  box-shadow: 0 0 0 4px rgba(0, 255, 1, 0.7); /* Adjust the halo's size and color */
+  border: 0px solid transparent; /* Keep the current border */
 }
 
 
-/* Si también quieres una aureola en los divs que no tienen imagen (letras iniciales o contadores) */
+/* If you also want a halo on divs without images (initial letters or counters) */
 .today {
   box-shadow: 0 0 0 4px rgba(0, 255, 0, 0.7);
 }

@@ -16,22 +16,22 @@ class DeckerPublicTest extends Decker_Test_Base {
 	protected $decker_public;
 
 	/**
-	 * Configuración antes de cada test.
+     * Setup before each test.
 	 */
 	public function set_up(): void {
 		parent::set_up();
 
-		// Definir la constante WP_TESTS_RUNNING .
+               // Define the WP_TESTS_RUNNING constant.
 		if ( ! defined( 'WP_TESTS_RUNNING' ) ) {
 			define( 'WP_TESTS_RUNNING', true );
 		}
 
-		// Crear una instancia de Decker_Public .
+               // Create an instance of Decker_Public.
 		$this->decker_public = new Decker_Public( 'decker', '1.0.0' );
 	}
 
 	/**
-	 * Limpiar después de cada test.
+     * Clean up after each test.
 	 */
 	public function tear_down(): void {
 		delete_option( 'decker_settings' );
@@ -39,7 +39,7 @@ class DeckerPublicTest extends Decker_Test_Base {
 	}
 
 	public function test_enqueue_scripts() {
-		// Simula un valor de query_var.
+               // Simulate a query_var value.
 		add_filter(
 			'query_vars',
 			function ( $vars ) {

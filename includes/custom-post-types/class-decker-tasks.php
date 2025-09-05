@@ -1993,7 +1993,7 @@ class Decker_Tasks {
 			// Retrieve the current stack value as a string.
 			$source_stack = get_post_meta( $id, 'stack', true );
 
-			// Actualizar el post existente.
+					   // Update the existing post.
 			$post_data['ID'] = $id;
 			$task_id         = wp_update_post( $post_data );
 
@@ -2016,7 +2016,7 @@ class Decker_Tasks {
 				do_action( 'decker_task_responsable_changed', $id, (int) $old_responsable, (int) $responsable );
 			}
 
-			// Disparar el evento para cada usuario nuevo.
+					   // Trigger the event for each new user.
 			foreach ( $new_users as $new_user_id ) {
 				do_action( 'decker_user_assigned', $task_id, $new_user_id );
 			}
@@ -2033,7 +2033,7 @@ class Decker_Tasks {
 			return $task_id; // Return the error to handle it externally.
 		}
 
-		// Retornar el ID de la tarea creada o actualizada.
+			   // Return the ID of the created or updated task.
 		return $task_id;
 	}
 
@@ -2058,7 +2058,7 @@ class Decker_Tasks {
 		}
 
 		// Get the new and old board term IDs.
-		// Asume que solo se asigna un tablero a la vez.
+			   // Assume that only one board is assigned at a time.
 		$new_board_term_id = ! empty( $tt_ids ) ? (int) $tt_ids[0] : 0;
 		$old_board_term_id = ! empty( $old_tt_ids ) ? (int) $old_tt_ids[0] : 0;
 

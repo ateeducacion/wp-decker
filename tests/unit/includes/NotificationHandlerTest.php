@@ -226,7 +226,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Verificar metadata de prioridad
+           // Check priority metadata
 		$this->assertEquals(
 			'0',
 			get_post_meta( $this->task_id, 'max_priority', true ),
@@ -280,7 +280,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Verificar metadata de prioridad
+           // Check priority metadata
 		$this->assertEquals(
 			'0',
 			get_post_meta( $this->task_id, 'max_priority', true ),
@@ -351,7 +351,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		$comment_notification = null;
 
-		// Buscar la notificación de comentario específica
+           // Find the specific comment notification
 		foreach ( $this->captured_mail as $mail ) {
 			if ( str_contains( $mail['subject'], 'New Comment' ) ) {
 				$comment_notification = $mail;
@@ -413,7 +413,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * @return array The same email arguments, unchanged.
 	 */
 	public function capture_mail( $args ) {
-		$this->captured_mail[] = $args; // Cambiar a array de emails
+           $this->captured_mail[] = $args; // Change to an array of emails
 		return $args;
 	}
 }

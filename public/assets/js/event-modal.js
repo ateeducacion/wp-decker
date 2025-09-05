@@ -5,11 +5,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var modal = jQuery(this);
         modal.find('#event-modal-body').html('<p>' + jsdata_event.loadingMessage + '</p>');
 
-        var eventId = jQuery(e.relatedTarget).data('event-id'); // Puede ser 0 (nueva tarea).
+        var eventId = jQuery(e.relatedTarget).data('event-id'); // It can be 0 (new task).
         var url = jsdata_event.url;
 
         const params = new URLSearchParams(window.location.search);
-        const boardSlug = params.get('slug'); // Si existe.
+        const boardSlug = params.get('slug'); // If present.
 
         jQuery.ajax({
             url: url,
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             success: function (data) {
                 modal.find('#event-modal-body').html(data);
-                // Después de cargar el contenido, inicializar las funciones JS
+               // After loading the content, initialize the JS functions
                 if (typeof window.initializeEventCard === 'function') {
                     window.initializeEventCard(modal[0]);
                 }
@@ -34,14 +34,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Limpiar atributos data-* al cerrar el modal para permitir una nueva inicialización
+// Clear data-* attributes when closing the modal to allow reinitialization
     jQuery('#event-modal').on('hidden.bs.modal', function () {
         var modal = jQuery(this);
-        // Remover los atributos data-* utilizados para rastrear inicialización
+       // Remove the data-* attributes used to track initialization
         // modal[0].removeAttribute('data-event-page-initialized');
 
         // // Opcional: destruir instancias de Choices.js o Quill editor si es necesario
-        // // Esto depende de tu implementación y uso de memoria
+       // // This depends on your implementation and memory usage
         // if (window.Choices) {
         //     const assigneesSelectInstance = window.assigneesSelect;
         //     if (assigneesSelectInstance) {

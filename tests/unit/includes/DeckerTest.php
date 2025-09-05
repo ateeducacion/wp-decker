@@ -15,14 +15,14 @@ class DeckerTest extends Decker_Test_Base {
 	public function set_up() {
 		parent::set_up();
 
-		// Forzar la inicialización de taxonomías y roles
+           // Force the initialization of taxonomies and roles
 		do_action( 'init' );
 
-		// Crear un usuario administrador para las pruebas
+               // Create an administrator user for the tests
 		$this->admin_user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $this->admin_user_id );
 
-		// Instanciar el plugin
+               // Instantiate the plugin
 		$this->decker = new Decker();
 	}
 
@@ -33,11 +33,11 @@ class DeckerTest extends Decker_Test_Base {
 	}
 
 	public function test_plugin_dependencies() {
-		// Verificar que el loader existe y está correctamente instanciado
+           // Verify that the loader exists and is properly instantiated
 		$loader = $this->get_private_property( $this->decker, 'loader' );
 		$this->assertInstanceOf( 'Decker_Loader', $loader );
 
-		// Verificar que las propiedades requeridas están configuradas
+           // Verify that the required properties are set
 		$this->assertNotEmpty( $this->get_private_property( $this->decker, 'plugin_name' ) );
 		$this->assertNotEmpty( $this->get_private_property( $this->decker, 'version' ) );
 	}
@@ -56,32 +56,32 @@ class DeckerTest extends Decker_Test_Base {
 	 * Test current_user_has_at_least_minimum_role.
 	 */
 	public function test_current_user_has_at_least_minimum_role() {
-		// Configurar los ajustes de Decker
+               // Configure Decker settings
 		update_option( 'decker_settings', array( 'minimum_user_profile' => 'editor' ) );
 
-		// Crear usuarios con roles estándar
+           // Create users with standard roles
 		$admin      = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		$editor     = $this->factory->user->create( array( 'role' => 'editor' ) );
 		$subscriber = $this->factory->user->create( array( 'role' => 'subscriber' ) );
 
-		// Probar con un administrador
+               // Test with an administrator
 		wp_set_current_user( $admin );
 		$this->assertTrue( Decker::current_user_has_at_least_minimum_role(), 'Administrator should have editor access.' );
 
-		// Probar con un editor
+               // Test with an editor
 		wp_set_current_user( $editor );
 		$this->assertTrue( Decker::current_user_has_at_least_minimum_role(), 'Editor should have editor access.' );
 
-		// Probar con un suscriptor
+               // Test with a subscriber
 		wp_set_current_user( $subscriber );
 		$this->assertFalse( Decker::current_user_has_at_least_minimum_role(), 'Subscriber should not have editor access.' );
 
-		// Restaurar el usuario actual
+               // Restore the current user
 		wp_set_current_user( 0 );
 	}
 
 	public function tear_down() {
-		// Limpiar datos
+               // Clean up data
 		wp_delete_user( $this->admin_user_id );
 		delete_option( 'decker_settings' );
 		parent::tear_down();
