@@ -75,7 +75,7 @@ foreach ( $events_data as $event_data ) :
 	$event_post = $event_data['post'];
 	$meta = $event_data['meta'];
 
-    // Ensure that the $event_post object is valid.
+	// Ensure that the $event_post object is valid.
 	if ( ! $event_post instanceof WP_Post ) {
 		continue;
 	}
@@ -100,7 +100,7 @@ foreach ( $events_data as $event_data ) :
 			$start_formatted = $allday ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
 			error_log( 'Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage() );
-                   $start_formatted = 'Fecha inválida'; // Optional: Friendly message.
+				   $start_formatted = 'Fecha inválida'; // Optional: Friendly message.
 		}
 	}
 
@@ -110,7 +110,7 @@ foreach ( $events_data as $event_data ) :
 			$end_formatted = $allday ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
 			error_log( 'Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage() );
-                   $end_formatted = 'Fecha inválida'; // Optional: Friendly message.
+				   $end_formatted = 'Fecha inválida'; // Optional: Friendly message.
 		}
 	}
 

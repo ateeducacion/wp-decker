@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div id="event-modal-body" class="modal-body">
 				<div id="event-modal-content">
-                                    <!-- Dynamic content from event-card.php will load here -->
+									<!-- Dynamic content from event-card.php will load here -->
 				</div>
 			</div>
 		</div><!-- /.modal-content -->

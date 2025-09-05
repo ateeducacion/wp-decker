@@ -76,10 +76,10 @@ function round_to_nearest_half_hour( $date ) {
 	$minutes = (int) gmdate( 'i', $timestamp );
 	$seconds = (int) gmdate( 's', $timestamp );
 
-       // Round the minutes.
+	   // Round the minutes.
 	$rounded_minutes = round( $minutes / 30 ) * 30;
 
-       // Handle the case where minutes round to 60.
+	   // Handle the case where minutes round to 60.
 	if ( 60 == $rounded_minutes ) {
 		$timestamp = strtotime( '+1 hour', strtotime( gmdate( 'Y-m-d H:00', $timestamp ) ) );
 		$rounded_minutes = 0;
@@ -134,7 +134,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 
 <div class="row g-3 mb-3">
 
-    <!-- Category -->
+	<!-- Category -->
 	<div class="col-md-4">
 		<div class="form-floating">
 			<select class="form-select" id="event-category" name="event_category" required>
@@ -161,7 +161,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		</div>
 	</div>
 
-    <!-- Title -->
+	<!-- Title -->
 	<div class="col-md-8">
 		<div class="form-floating">
 			<input type="text" class="form-control" id="event-title" name="event_title" 
@@ -239,7 +239,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		</div>
 	</div>
 
-    <!-- Location -->
+	<!-- Location -->
 	<div class="form-floating mb-3 d-none">
 		<input type="text" class="form-control" id="event-location" name="event_location" 
 			   value="<?php echo esc_attr( $location ); ?>"  
@@ -261,7 +261,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		</div>
 	</div>
 
-    <!-- Description -->
+	<!-- Description -->
 	<div class="form-floating mb-3">
 		<textarea class="form-control" id="event-description" name="event_description" rows="3" 
 				  placeholder="<?php esc_attr_e( 'Description', 'decker' ); ?>"><?php echo esc_textarea( $description ); ?></textarea>

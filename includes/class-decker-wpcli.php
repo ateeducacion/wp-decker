@@ -58,6 +58,6 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 		}
 	}
 
-    // Register the main command that groups the subcommands.
+	// Register the main command that groups the subcommands.
 	WP_CLI::add_command( 'decker', 'Decker_WPCLI' );
 }

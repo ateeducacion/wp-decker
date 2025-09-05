@@ -234,7 +234,7 @@ class Decker_Calendar {
 	 */
 	public function get_calendar_permissions_check( $request ) {
 
-       // Check REST API nonce first.
+		// Check REST API nonce first.
 		$nonce = $request->get_header( 'X-WP-Nonce' );
 		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
 			return true;
@@ -287,7 +287,7 @@ class Decker_Calendar {
 	public function handle_ical_request() {
 		global $wp_query;
 
-           // Accept both an internal query var and a GET parameter (?decker-calendar).
+		   // Accept both an internal query var and a GET parameter (?decker-calendar).
 		if ( ! isset( $wp_query->query_vars['decker-calendar'] ) && ! isset( $_GET['decker-calendar'] ) ) {
 			return;
 		}
@@ -303,8 +303,8 @@ class Decker_Calendar {
 		// Cached generation.
 		$ical   = $this->get_cached_ical( $type );
 
-           // Avoid “Cannot modify header information” warnings when output has already started
-       // (e.g., in PHPUnit) by checking headers_sent() before sending headers.
+		   // Avoid “Cannot modify header information” warnings when output has already started
+		// (e.g., in PHPUnit) by checking headers_sent() before sending headers.
 		if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
@@ -316,8 +316,8 @@ class Decker_Calendar {
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
 		echo $ical;
 
-           // During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
-       // Only exit on normal web requests to avoid extra content.
+		   // During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
+		// Only exit on normal web requests to avoid extra content.
 		if ( php_sapi_name() !== 'cli' && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
 			exit;
 		}
@@ -350,7 +350,7 @@ class Decker_Calendar {
 			$post = $event_data['post'];
 			$meta = $event_data['meta'];
 
-                   // Ensure that the dates are valid before adding them.
+				   // Ensure that the dates are valid before adding them.
 			if ( ! empty( $meta['event_start'] ) && ! empty( $meta['event_end'] ) ) {
 
 				$all_day = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
@@ -365,7 +365,7 @@ class Decker_Calendar {
 
 				$events[] = array(
 					'post_id'        => $post->ID,
-                               'id'             => 'event_' . $post->ID, // Prefix to distinguish from tasks.
+					'id'             => 'event_' . $post->ID, // Prefix to distinguish from tasks.
 					'title'          => $post->post_title,
 					'description'    => $post->post_content,
 					'allDay'         => $all_day,
@@ -381,7 +381,7 @@ class Decker_Calendar {
 			}
 		}
 
-           // Add tasks only when not filtering by a specific type.
+		   // Add tasks only when not filtering by a specific type.
 		if ( empty( $type ) ) {
 			// Get published tasks.
 			$task_manager = new TaskManager();
@@ -449,12 +449,12 @@ class Decker_Calendar {
 		$ical .= "REFRESH-INTERVAL;VALUE=DURATION:$ttl\r\n";
 		$ical .= "X-PUBLISHED-TTL:$ttl\r\n";
 
-           // Add a period at the end of the comment.
+		   // Add a period at the end of the comment.
 		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 		$ical .= 'X-NAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
 
-       // Sort events by ascending start date to ensure deterministic results
-       // and align with test expectations.
+		// Sort events by ascending start date to ensure deterministic results
+		// and align with test expectations.
 		usort(
 			$events,
 			function ( $a, $b ) {
@@ -469,9 +469,9 @@ class Decker_Calendar {
 			$ical .= 'SEQUENCE:' . get_post_modified_time( 'U', true, $event['post_id'] ) . "\r\n";
 			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
 
-                   // Format dates for all-day events or with time.
+				   // Format dates for all-day events or with time.
 			if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
-                           // For all-day events, use format VALUE=DATE and DTEND on the next day.
+						   // For all-day events, use format VALUE=DATE and DTEND on the next day.
 				$start_date = gmdate( 'Ymd', strtotime( $event['start'] ) );
 				$end_date = gmdate( 'Ymd', strtotime( $event['end'] ) );
 

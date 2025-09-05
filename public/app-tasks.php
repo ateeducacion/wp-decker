@@ -52,23 +52,23 @@ $task_manager = new TaskManager();
 
 #searchBuilderContainer .dt-button,
 #boardFilter {
-       height: 38px; /* Ensures they have the same height */
-       padding: 6px 12px; /* Adjusts padding to align with Bootstrap forms */
-       font-size: 14px; /* Maintains consistent typography */
-       line-height: 1.5;
-       border-radius: 4px; /* Rounded borders */
-       border: 1px solid #ced4da; /* Consistent border color */
-       background-color: #f8f9fa; /* Light background for buttons */
-       color: #495057; /* Text consistent with the theme */
-       white-space: nowrap; /* Prevents text from overflowing */
-       min-width: 120px; /* Minimum width to ensure the text isn't cut off */
+	   height: 38px; /* Ensures they have the same height */
+	   padding: 6px 12px; /* Adjusts padding to align with Bootstrap forms */
+	   font-size: 14px; /* Maintains consistent typography */
+	   line-height: 1.5;
+	   border-radius: 4px; /* Rounded borders */
+	   border: 1px solid #ced4da; /* Consistent border color */
+	   background-color: #f8f9fa; /* Light background for buttons */
+	   color: #495057; /* Text consistent with the theme */
+	   white-space: nowrap; /* Prevents text from overflowing */
+	   min-width: 120px; /* Minimum width to ensure the text isn't cut off */
 }
 
 #searchBuilderContainer .dt-button:hover,
 #boardFilter:hover {
-       background-color: #e2e6ea; /* Background on hover */
-       color: #212529; /* Text on hover */
-       border-color: #dae0e5; /* Border on hover */
+	   background-color: #e2e6ea; /* Background on hover */
+	   color: #212529; /* Text on hover */
+	   border-color: #dae0e5; /* Border on hover */
 }
 
 #searchBuilderContainer {
@@ -77,23 +77,23 @@ $task_manager = new TaskManager();
 }
 
 #searchBuilderContainer .dt-button {
-       margin-right: 8px; /* Space between buttons */
-       width: auto; /* Adjusts the width according to the content */
-       text-align: center; /* Centers the text inside the button */
+	   margin-right: 8px; /* Space between buttons */
+	   width: auto; /* Adjusts the width according to the content */
+	   text-align: center; /* Centers the text inside the button */
 }
 
 .dataTables_wrapper .dataTables_length {
-       margin-bottom: 16px; /* Bottom spacing */
+	   margin-bottom: 16px; /* Bottom spacing */
 }
 
 .dataTables_wrapper .dataTables_length select {
-       width: auto; /* Adjusts width to content */
-       display: inline-block; /* Proper alignment */
-       margin-right: 10px; /* Space between the select and other elements */
+	   width: auto; /* Adjusts width to content */
+	   display: inline-block; /* Proper alignment */
+	   margin-right: 10px; /* Space between the select and other elements */
 }
 
 .dataTables_wrapper .dataTables_filter {
-       margin-bottom: 16px; /* Bottom spacing */
+	   margin-bottom: 16px; /* Bottom spacing */
 }
 
 
@@ -107,17 +107,17 @@ $task_manager = new TaskManager();
 
 table#tablaTareas {
 	width: 100%;
-       table-layout: auto; /* Makes the columns adjust to the content */
+	   table-layout: auto; /* Makes the columns adjust to the content */
 }
 
 table#tablaTareas th,
 table#tablaTareas td {
-       white-space: nowrap; /* Prevents text overflow */
-       word-break: break-word; /* Breaks long words to prevent overflow */
+	   white-space: nowrap; /* Prevents text overflow */
+	   word-break: break-word; /* Breaks long words to prevent overflow */
 }
 
 table#tablaTareas td:nth-child(4) {
-       max-width: 200px; /* Maximum width for the description column */
+	   max-width: 200px; /* Maximum width for the description column */
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -482,7 +482,7 @@ table#tablaTareas td:nth-child(4) {
 			jQuery('#boardFilter').val(initialBoard);
 		}
 
-               // Handle the click event on the "Today" checkbox
+			   // Handle the click event on the "Today" checkbox
 		document.querySelectorAll('.today-checkbox').forEach(checkbox => {
 			checkbox.addEventListener('change', function() {
 				const taskId = this.dataset.taskId;

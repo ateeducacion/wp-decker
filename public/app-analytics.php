@@ -166,13 +166,13 @@ include 'layouts/main.php';
 	<script>
 		<?php
 
-               // Get task data by board and colors.
+			   // Get task data by board and colors.
 		$boards           = BoardManager::get_all_boards();
 		$tasks_by_board_and_stack = array();
 		$board_labels             = array();
 		$board_colors             = array();
 
-               // Get all posts of type decker_task at once.
+			   // Get all posts of type decker_task at once.
 		// TO-DO use the TaskManager.
 		$all_tasks = get_posts(
 			array(
@@ -197,7 +197,7 @@ include 'layouts/main.php';
 			)
 		);
 
-               // Process tasks by board and stack.
+			   // Process tasks by board and stack.
 		foreach ( $boards as $board ) {
 			$board_labels[]                           = $board->name;
 			$board_colors[]                           = $board->color;
@@ -217,7 +217,7 @@ include 'layouts/main.php';
 			}
 		}
 
-               // Get task data by user.
+			   // Get task data by user.
 		$users                   = get_users();
 		$tasks_by_user_and_stack = array();
 		$user_labels             = array();
@@ -239,7 +239,7 @@ include 'layouts/main.php';
 			}
 		}
 
-               // Get task data by stack.
+			   // Get task data by stack.
 		$tasks_by_stack = array(
 			'to-do'       => 0,
 			'in-progress' => 0,
@@ -250,7 +250,7 @@ include 'layouts/main.php';
 			$tasks_by_stack[ $task_stack ]++;
 		}
 
-           // Convert the data to a numeric array for Chart.js.
+		   // Convert the data to a numeric array for Chart.js.
 		$tasks_by_stack_array = array(
 			$tasks_by_stack['to-do'],
 			$tasks_by_stack['in-progress'],
@@ -258,7 +258,7 @@ include 'layouts/main.php';
 		);
 
 
-               // Get task data by state for the current user.
+			   // Get task data by state for the current user.
 		$current_user_id = get_current_user_id();
 		$user_tasks_by_state = array(
 			'to-do'       => 0,
@@ -267,17 +267,17 @@ include 'layouts/main.php';
 		);
 
 		foreach ( $all_tasks as $task ) {
-                   // Switch to 'assigned_users' and check if the current user is assigned.
-                        $assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
-                        if ( is_array( $assigned_users ) && in_array( $current_user_id, $assigned_users ) ) {
-                                $task_state = get_post_meta( $task->ID, 'stack', true ); // Reuse 'stack' for the states.
+				   // Switch to 'assigned_users' and check if the current user is assigned.
+						$assigned_users = get_post_meta( $task->ID, 'assigned_users', true );
+			if ( is_array( $assigned_users ) && in_array( $current_user_id, $assigned_users ) ) {
+					$task_state = get_post_meta( $task->ID, 'stack', true ); // Reuse 'stack' for the states.
 				if ( isset( $user_tasks_by_state[ $task_state ] ) ) {
 					$user_tasks_by_state[ $task_state ]++;
 				}
 			}
 		}
 
-           // Convert the data to a numeric array for Chart.js.
+		   // Convert the data to a numeric array for Chart.js.
 		$user_tasks_by_state_array = array(
 			$user_tasks_by_state['to-do'],
 			$user_tasks_by_state['in-progress'],
@@ -287,7 +287,7 @@ include 'layouts/main.php';
 
 		?>
 
-           // Data for the charts
+		   // Data for the charts
 		const tasksData = {
 			labels: <?php echo wp_json_encode( $board_labels ); ?>,
 			datasets: [

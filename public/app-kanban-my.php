@@ -57,12 +57,12 @@ foreach ( $tasks as $task ) {
 									<div class="page-title-right">
 
 										<div class="input-group mb-3">
-                                                                                        <!-- Search icon integrated into the field -->
+																						<!-- Search icon integrated into the field -->
 											<span class="input-group-text bg-white border-end-0">
 												<i class="ri-search-line"></i>
 											</span>
 											
-                                                                                        <!-- Search field with a clear (X) button inside -->
+																						<!-- Search field with a clear (X) button inside -->
 											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
 										</div>

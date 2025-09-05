@@ -235,7 +235,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 
 			<?php
 
-                           // Get the board slug from the URL.
+						   // Get the board slug from the URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
 			$boards = BoardManager::get_all_boards();

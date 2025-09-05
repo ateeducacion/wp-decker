@@ -65,12 +65,12 @@ class Decker_Email_To_Post {
 	 * @return string.
 	 */
 	private function extract_email( $email ) {
-               // Check if the string contains a "Name <email@example.com>" format.
+			   // Check if the string contains a "Name <email@example.com>" format.
 		if ( preg_match( '/<([^>]+)>/', $email, $matches ) ) {
 			return sanitize_email( $matches[1] );
 		}
 
-               // If there are no brackets, assume it contains only the email.
+			   // If there are no brackets, assume it contains only the email.
 		return sanitize_email( $email );
 	}
 
@@ -225,21 +225,21 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'invalid_post', 'ID de post inválido.' );
 		}
 
-           // Extract only the MIME type without additional parameters.
+		   // Extract only the MIME type without additional parameters.
 		$type = explode( ';', $type )[0];
 
-           // Create a unique filename.
+		   // Create a unique filename.
 		$original_filename = sanitize_file_name( $filename );
 		$extension         = pathinfo( $filename, PATHINFO_EXTENSION );
 		$upload_dir        = wp_upload_dir();
 
-           // Generate a unique file name using the native WordPress function.
+		   // Generate a unique file name using the native WordPress function.
 		$obfuscated_name = wp_unique_filename(
 			$upload_dir['path'],
 			wp_generate_uuid4() . '.' . $extension
 		);
 
-               // Build the full file path.
+			   // Build the full file path.
 		$file_path = $upload_dir['path'] . '/' . $obfuscated_name;
 
 		// Initialize WordPress Filesystem.
@@ -254,17 +254,17 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'file_write_error', 'Error al escribir el archivo.' );
 		}
 
-           // Prepare the attachment info array.
+		   // Prepare the attachment info array.
 		$attachment = array(
 			'guid'           => $upload_dir['url'] . '/' . $obfuscated_name,
 			'post_mime_type' => $type,
 			'post_title'     => preg_replace( '/\.[^.]+$/', '', $original_filename ),
 			'post_content'   => '',
 			'post_status'    => 'inherit',
-                        'post_parent'    => $post_id,  // Set the post parent.
+			'post_parent'    => $post_id,  // Set the post parent.
 		);
 
-               // Insert the attachment into the database.
+			   // Insert the attachment into the database.
 		$attachment_id = wp_insert_attachment( $attachment, $file_path, $post_id );
 
 		if ( is_wp_error( $attachment_id ) ) {
@@ -272,12 +272,12 @@ class Decker_Email_To_Post {
 			return $attachment_id;
 		}
 
-               // Generate attachment metadata.
+			   // Generate attachment metadata.
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		$attachment_data = wp_generate_attachment_metadata( $attachment_id, $file_path );
 		wp_update_attachment_metadata( $attachment_id, $attachment_data );
 
-               // Save the original name in the metadata.
+			   // Save the original name in the metadata.
 		update_post_meta( $attachment_id, '_original_filename', $original_filename );
 
 		return $attachment_id;
