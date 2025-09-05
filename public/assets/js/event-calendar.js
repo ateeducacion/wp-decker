@@ -75,7 +75,7 @@ function showTooltip(message, duration = 2000){
         if (!date) return null;
         if (allDay) {
             // Returns YYYY-MM-DD locally
-            return date.toLocaleDateString('sv-SE'); // formato ISO (2025-10-10)
+            return date.toLocaleDateString('sv-SE'); // ISO format (2025-10-10)
         } else {
             // Returns ISO UTC with Z
             return date.toISOString();

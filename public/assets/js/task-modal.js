@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         modal[0].removeAttribute('data-send-comments-initialized');
         modal[0].removeAttribute('data-task-page-initialized');
 
-        // Opcional: destruir instancias de Choices.js o Quill editor si es necesario
+        // Optional: destroy instances of Choices.js or Quill editor if necessary
        // This depends on your implementation and memory usage
         if (window.Choices) {
             const assigneesSelectInstance = window.assigneesSelect;

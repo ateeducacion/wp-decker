@@ -301,7 +301,7 @@ class Decker_Notification_Handler {
 					'type'       => 'task_completed',
 					'task_id'    => $task_id,
 					'title'      => $task->post_title,
-					/* translators: %s is a username. */
+					/* Translators: %s is a username. */
 					'action'     => sprintf( __( 'Completed by %s', 'decker' ), $finisher ? $finisher->display_name : __( 'Unknown user', 'decker' ) ),
 					'time'       => gmdate( 'Y-m-d H:i:s' ),
 					'url'        => esc_url( $this->build_task_url( $task_id ) ),

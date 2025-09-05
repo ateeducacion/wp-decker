@@ -1186,7 +1186,6 @@ msgstr "Permitir notificaciones por correo electrónico"
 msgid "This email was automatically sent by Decker"
 msgstr "Este correo electrónico ha sido enviado automáticamente por Decker"
 
-#. translators: %s is a username.
 #. Translators: %s is a username.
 msgid "Unknown user"
 msgstr "Usuario desconocido"
@@ -1202,7 +1201,7 @@ msgstr "Una nueva tarea \"%1$s\" ha sido creada por %3$s. <a href=\"%2$s\">Haga 
 msgid "You have been assigned a task"
 msgstr "Se le ha asignado una tarea"
 
-#. translators: %s is a username.
+#. Translators: %s is a username.
 #, php-format
 msgid "Completed by %s"
 msgstr "Completado por %s"

@@ -242,7 +242,7 @@ class Decker_Events {
 	 *
 	 * - Raw date (YYYY‑MM‑DD) → treat as all‑day, keep it as is.
 	 * - ISO‑8601 UTC with “Z” → keep as is.
-	 * - Anything else → normaliza a 'Y-m-d H:i:s' (UTC).
+	 * - Anything else → normalize to 'Y-m-d H:i:s' (UTC).
 	 *
 	 * @param string $value      Raw input.
 	 * @param string $meta_key   Meta key (unused, needed for callback signature).
@@ -383,7 +383,7 @@ class Decker_Events {
 			$end_for_input   = str_replace( ' ', 'T', $end_utc );
 		}
 
-		$step_attr  = $allday ? '' : ' step="60s"';          // 60s ⇒ oculta segundos.
+				$step_attr  = $allday ? '' : ' step="60s"';          // 60s ⇒ hides seconds.
 		$value_attr = $allday
 			? esc_attr( $start_utc )
 			: esc_attr( gmdate( 'Y-m-d\TH:i', strtotime( $start_utc . ' UTC' ) ) );
@@ -396,7 +396,7 @@ class Decker_Events {
 	</label>
 </p>
 
-<!-- Contenedor para mensajes de error -->
+<!-- Container for error messages -->
 <div id="event_date_error" style="color: red; display: none;">
 		<?php esc_html_e( 'End Date must be after Start Date.', 'decker' ); ?>
 </div>
@@ -414,7 +414,7 @@ class Decker_Events {
 				const newInput = this.cloneNode();
 				newInput.type = type;
 
-				// Reasignar valor (convertir si es necesario)
+				// Reassign value (convert if necessary)
 				if (type === 'date') {
 					newInput.value = value.split('T')[0];
 				} else {

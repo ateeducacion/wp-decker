@@ -175,7 +175,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 </div>
 
 
-	<!-- Fechas -->
+		<!-- Dates -->
 	<div class="mb-3">
 		<div class="form-check mb-3">
 			<input class="form-check-input" type="checkbox" id="event-allday" name="event_allday" 
@@ -215,7 +215,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 		</div>
 	</div>
 
-	<!-- Personas Asignadas -->
+		<!-- Assigned Users -->
 	<div class="form-group mb-3">
 		<label for="event-assigned-users"><?php esc_html_e( 'Assigned Users', 'decker' ); ?> (<a id="event-assigned-users-select-all" href="#">select all</a>)</label>
 
@@ -272,7 +272,7 @@ $category = isset( $meta['event_category'][0] ) ? $meta['event_category'][0] : '
 	</div>
 
 
-	<!-- Botones -->
+		<!-- Buttons -->
 	<div class="modal-footer d-flex justify-content-between w-100">
 		<?php if ( $event_id ) : ?>
 			<button type="button" class="btn btn-danger delete-event" data-id="<?php echo esc_attr( $event_id ); ?>">

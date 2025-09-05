@@ -77,8 +77,8 @@ include 'layouts/main.php';
 						</div>
 					</div>
 
-					<!-- Detalles de la tarea -->
-					<div class="row">
+										<!-- Task details -->
+										<div class="row">
 						<div class="col-xl-8 col-lg-7">
 							
 							<div id="task-card" class="card d-block">

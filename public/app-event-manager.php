@@ -99,7 +99,7 @@ foreach ( $events_data as $event_data ) :
 			$start_datetime = new DateTime( $start_date );
 			$start_formatted = $allday ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
-			error_log( 'Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage() );
+						error_log( 'Error parsing the start date for event ID ' . $event_id . ': ' . $e->getMessage() );
 				   $start_formatted = 'Fecha inválida'; // Optional: Friendly message.
 		}
 	}
@@ -109,7 +109,7 @@ foreach ( $events_data as $event_data ) :
 			$end_datetime = new DateTime( $end_date );
 			$end_formatted = $allday ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
-			error_log( 'Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage() );
+						error_log( 'Error parsing the end date for event ID ' . $event_id . ': ' . $e->getMessage() );
 				   $end_formatted = 'Fecha inválida'; // Optional: Friendly message.
 		}
 	}

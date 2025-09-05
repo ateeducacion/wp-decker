@@ -59,8 +59,8 @@ include 'layouts/main.php';
 											</select>
 
 
-											<!-- Select de usuarios -->
-											<select id="boardUserFilter" class="form-select ms-2">
+																						<!-- User selector -->
+																						<select id="boardUserFilter" class="form-select ms-2">
 												<option value=""><?php esc_html_e( 'All Users', 'decker' ); ?></option>
 												<?php
 												$users = get_users();
