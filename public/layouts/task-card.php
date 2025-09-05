@@ -167,7 +167,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 
 		<!-- Maximum priority and For today -->
 		<div class="col-md-3 mb-2 d-flex flex-row flex-md-column justify-content-center align-items-center align-items-md-start">
-			<div class="form-check form-switch me-2 me-md-0 mb-md-2">
+			<div class="form-check form-switch me-3 me-md-0 mb-md-2">
 				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task_id ? $task->max_priority : $initial_max_priority ); ?> <?php disabled( $disabled ); ?>>
 				<label class="form-check-label" for="task-max-priority"><?php esc_html_e( 'Maximum Priority', 'decker' ); ?></label>
 			</div>
