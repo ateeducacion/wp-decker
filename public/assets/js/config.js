@@ -136,7 +136,7 @@ function equalizeKanbanColumnsHeight() {
   const columns = document.querySelectorAll('.task-list-items');
   if (columns.length === 0) return;
 
-  // Primero, resetear las alturas
+  // First, reset the heights
   columns.forEach(column => {
     column.style.height = 'auto';
   });
@@ -169,7 +169,7 @@ const observer = new MutationObserver(function(mutations) {
   equalizeKanbanColumnsHeight();
 });
 
-// Observar cambios en las columnas del Kanban
+// Observe changes in the Kanban columns
 document.addEventListener('DOMContentLoaded', function() {
   const columns = document.querySelectorAll('.task-list-items');
   columns.forEach(column => {

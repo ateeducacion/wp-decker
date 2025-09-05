@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 cancelButtonText: deckerVars.strings.cancel
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // El usuario ha confirmado cerrar y descartar
+                    // The user has confirmed to close and discard
                     window.deckerHasUnsavedChanges = false;
-                    // Forzamos el cierre del modal
+                    // Force closing the modal
                     jQuery('#task-modal').modal('hide');
                 }
             });
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var url = jsdata_task.url;
 
         const params = new URLSearchParams(window.location.search);
-        const boardSlug = params.get('slug'); // Si existe.
+        const boardSlug = params.get('slug'); // If present.
 
         jQuery.ajax({
             url: url,

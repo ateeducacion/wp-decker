@@ -52,7 +52,7 @@ class DeckerPublicTest extends Decker_Test_Base {
 
 		$this->decker_public->enqueue_scripts();
 
-		// Verifica que los scripts se hayan cargado.
-		$this->assertTrue( wp_script_is( 'config', 'enqueued' ) );
+                // Verify that the scripts have been enqueued.
+                $this->assertTrue( wp_script_is( 'config', 'enqueued' ) );
 	}
 }

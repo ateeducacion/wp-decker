@@ -333,7 +333,7 @@
         // Function to enable the save button when any field changes
         const enableSaveButton = function() {
             saveButton.disabled = false;
-            // Marcar que hay cambios sin guardar
+            // Mark that there are unsaved changes
             window.deckerHasUnsavedChanges = true;
         };
 
@@ -356,7 +356,7 @@
             togglePriorityLabel(taskMaxPriorityCheck);
         }
         
-        // Para el Editor Quill
+        // For the Quill editor
         if (quill) {
             quill.on('text-change', function() {
                 saveButton.disabled = false;
@@ -364,7 +364,7 @@
             });
         }
 
-        // Para los selectores de Choices.js
+        // For the Choices.js selectors
         if (assigneesSelect) {
             assigneesSelect.passedElement.element.addEventListener('change', enableSaveButton);
         }
@@ -480,8 +480,8 @@
 
         attachmentsList.appendChild(li);
 
-        // Actualizar el contador de adjuntos
-        updateAttachmentCount(context, 1); // Incrementar en 1    
+        // Update the attachment count
+        updateAttachmentCount(context, 1); // Increase by 1
     }
 
     // Event delegation to delete attachments
@@ -557,10 +557,10 @@
 
         // const form = event.target; // Gets the form that triggered the event
 
-        // Remueve la clase 'was-validated' previamente
+        // Remove the 'was-validated' class beforehand
         form.classList.remove('was-validated');
 
-        // Verifica la validez del formulario
+        // Check the form's validity
         if (!form.checkValidity()) {
             event.stopPropagation();
             form.classList.add('was-validated');
@@ -571,7 +571,7 @@
         const selectedAssigneesValues = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
         const selectedLabelsValues = labelsSelect.getValue().map(item => parseInt(item.value, 10));
 
-        // Recopila los datos del formulario
+        // Gather the form data
         const formData = {
             action: 'save_decker_task',
             nonce: nonces.save_decker_task_nonce,
@@ -635,7 +635,7 @@
         xhr.send(encodedData);
     }
 
-    // Obtener el task_id desde el input hidden
+    // Get the task_id from the hidden input
     function getTaskId() {
         const taskIdInput = document.querySelector('input[name="task_id"]');
         if (taskIdInput) {

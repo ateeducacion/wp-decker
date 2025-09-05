@@ -356,7 +356,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
      * REST update: datetime → only a date is sent → it should adjust to 00:00:00.
 	 */
 	public function test_rest_update_datetime_with_date_only_sets_midnight() {
-		/* 1 · Creamos evento con hora correcta */
+                /* 1 · Create event with correct time */
 		$event_id = self::factory()->event->create(
 			array(
 				'meta_input' => array(
@@ -373,9 +373,9 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$request->set_param(
 			'meta',
 			array(
-				'event_allday' => false,
-				'event_start'  => '2025-11-06', // solo fecha
-				'event_end'    => '2025-11-06', // solo fecha
+                                'event_allday' => false,
+                                'event_start'  => '2025-11-06', // date only
+                                'event_end'    => '2025-11-06', // date only
 			)
 		);
 		$response = rest_get_server()->dispatch( $request );
@@ -386,7 +386,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Crear, actualizar y verificar almacenamiento y salida REST de eventos.
+         * Create, update and verify storage and REST output of events.
 	 */
 	public function test_rest_create_and_update_datetime_event_check_db_and_rest() {
 		wp_set_current_user( $this->editor );
@@ -436,7 +436,7 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Crea un evento directamente y luego lo actualiza (sin REST).
+         * Create an event directly and then update it (without REST).
 	 */
 	public function test_direct_update_event_datetime() {
 		$this->event_id = self::factory()->event->create(
