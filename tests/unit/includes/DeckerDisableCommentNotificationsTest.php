@@ -49,7 +49,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 	 * Test that comment notifications are disabled for decker_task
 	 */
 	public function test_disable_notifications_for_decker_task() {
-		// Crear comentario en tarea
+                // Create comment in task
 		$comment_id = self::factory()->comment->create(
 			array(
 				'comment_post_ID' => $this->task_post_id,
@@ -57,7 +57,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 			)
 		);
 
-		// Obtener destinatarios
+                // Get recipients
 		$recipients = apply_filters(
 			'comment_notification_recipients',
 			array( 'admin@example.com' ),
@@ -74,7 +74,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 	 * Test that notifications work normally for other post types
 	 */
 	public function test_normal_notifications_for_other_posts() {
-		// Crear comentario en post normal
+                // Create comment in a regular post
 		$comment_id = self::factory()->comment->create(
 			array(
 				'comment_post_ID' => $this->regular_post_id,
@@ -82,7 +82,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 			)
 		);
 
-		// Obtener destinatarios
+                // Get recipients
 		$recipients = apply_filters(
 			'comment_notification_recipients',
 			array( 'admin@example.com' ),
@@ -99,7 +99,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 	 * Test moderation emails are also disabled
 	 */
 	public function test_disable_moderation_emails() {
-		// Crear comentario no aprobado en tarea
+                // Create unapproved comment in task
 		$comment_id = self::factory()->comment->create(
 			array(
 				'comment_post_ID'  => $this->task_post_id,
@@ -133,7 +133,7 @@ class DeckerDisableCommentNotificationsTest extends WP_UnitTestCase {
 		$mailer->expects( $this->never() )
 			->method( 'send_email' );
 
-		// 2. Crear comentario en decker_task
+                // 2. Create comment in decker_task
 		$comment_id = self::factory()->comment->create(
 			array(
 				'comment_post_ID'      => $this->task_post_id,

@@ -1915,8 +1915,8 @@ class Decker_Tasks {
 			return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
-		// Convertir objetos DateTime a formato string (si no, pasamos null to undefined).
-		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+				// Convert DateTime objects to string format (otherwise pass null to undefined).
+				$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
 
 		// Prepare the terms for tax_input.
 		$tax_input = array();
@@ -1928,7 +1928,7 @@ class Decker_Tasks {
 			$tax_input['decker_board'] = array( $board );
 		}
 
-		// Incluir etiquetas en tax_input si las hay.
+				// Include labels in tax_input if any.
 		if ( ! empty( $labels ) ) {
 			// Make sure $labels contains valid term IDs.
 			$tax_input['decker_label'] = array_map( 'intval', $labels );
@@ -1941,17 +1941,17 @@ class Decker_Tasks {
 
 			// Store previously assigned users before the update.
 			$previous_assigned_users = array();
-			if ( $id > 0 ) { // Solo si estamos actualizando.
+			if ( $id > 0 ) { // Only if updating.
 				$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
 				$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
 			}
 
-			// Comparar los usuarios nuevos con los previamente asignados.
+						// Compare new users with previously assigned ones.
 			$new_users = array_diff( $assigned_users, $previous_assigned_users );
 
 		}
 
-		// Preparar los metadatos personalizados.
+				// Prepare custom metadata.
 		$meta_input = array(
 			'id_nextcloud_card' => $id_nextcloud_card,
 			'stack'             => sanitize_text_field( $stack ),
@@ -1962,7 +1962,7 @@ class Decker_Tasks {
 			'hidden'            => $hidden,
 		);
 
-		// Preparar los datos del post.
+				// Prepare the post data.
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $title ),
 			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),

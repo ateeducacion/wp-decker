@@ -17,7 +17,7 @@ $task_manager = new TaskManager();
 $tasks       = $task_manager->get_tasks_by_user( $user_id );
 
 
-// Dividir las tareas en columnas.
+// Split tasks into columns.
 $columns = array(
 	'to-do'       => array(),
 	'in-progress' => array(),

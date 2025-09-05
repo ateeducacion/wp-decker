@@ -66,27 +66,27 @@ class DeckerAdminTest extends WP_UnitTestCase {
 	}
 
 	public function test_enqueue_styles() {
-		// Limpia cualquier enqueued style previo
+                // Clear any previously enqueued style
 		wp_dequeue_style( 'decker' );
 
-		// Test con hook no coincidente
+                // Test with non-matching hook
 		$this->admin->enqueue_styles( 'wrong_hook' );
 		$this->assertFalse( wp_style_is( 'decker', 'enqueued' ) );
 
-		// Test con hook coincidente
+                // Test with matching hook
 		$this->admin->enqueue_styles( 'settings_page_decker_settings' );
 		$this->assertTrue( wp_style_is( 'decker', 'enqueued' ) );
 	}
 
 	public function test_enqueue_scripts() {
-		// Limpia cualquier enqueued script previo
+                // Clear any previously enqueued script
 		wp_dequeue_script( 'decker' );
 
-		// Test con hook no coincidente
+                // Test with non-matching hook
 		$this->admin->enqueue_scripts( 'wrong_hook' );
 		$this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
 
-		// Test con hook coincidente
+                // Test with matching hook
 		$this->admin->enqueue_scripts( 'settings_page_decker_settings' );
 		$this->assertTrue( wp_script_is( 'decker', 'enqueued' ) );
 	}

@@ -414,7 +414,7 @@ class Decker_Calendar {
 					);
 				}
 			}
-		} // Fin condicional tareas
+		} // End tasks conditional
 
 		return $events;
 	}

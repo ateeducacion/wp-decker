@@ -85,7 +85,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
                        // Check if the response is an error
 		if ( is_wp_error( $response ) ) {
 			$this->fail( 'REST request failed: ' . $response->get_error_message() );
-			return; // Evitar continuar con un objeto WP_Error.
+                        return; // Avoid continuing with a WP_Error object.
 		}
 			$data = $response->get_data();
 

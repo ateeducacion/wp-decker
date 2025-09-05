@@ -216,7 +216,7 @@ class Decker_Email_To_Post {
 	 * @return int Attachment ID.
 	 */
 	private function upload_attachment( $filename, $content, $type, $post_id ) {
-		// Verificar permisos y datos necesarios.
+				// Verify permissions and required data.
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Error( 'permission_error', 'No tienes permisos para subir archivos.' );
 		}

@@ -9,7 +9,7 @@
     const strings = deckerVars.strings;
 
     /**
-     * Devuelve un string ISO UTC acabado en “Z”.
+     * Returns an ISO UTC string ending with "Z".
      * @param {string} localValue - 'YYYY‑MM‑DDTHH:MM'
      */
     function localToUtc(localValue){
@@ -18,23 +18,23 @@
     }
 
     /**
-     * Convierte UTC → valor para el <input>.
-     *  ─ Si llega 'YYYY‑MM‑DD' (all‑day) la devuelve tal cual.
+     * Converts UTC → value for the <input>.
+     *  ─ If 'YYYY‑MM‑DD' (all-day) arrives, return it as is.
  *  ─ If 'YYYY‑MM‑DD HH:MM:SS' arrives, add the “T” and “Z”.
-     *  ─ Si llega ISO con “Z” la pasa a local y corta segundos.
+     *  ─ If ISO with “Z” arrives, convert to local and trim seconds.
      */
 function utcToLocalValue(utcStr){
     if (!utcStr) return '';
 
-    // all‑day → sin cambios
+    // all‑day → no changes
     if (/^\d{4}-\d{2}-\d{2}$/.test(utcStr)) return utcStr;
 
-    // admitir "YYYY‑MM‑DD HH:MM:SS"
+    // allow "YYYY‑MM‑DD HH:MM:SS"
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(utcStr)){
         utcStr = utcStr.replace(' ', 'T') + 'Z';
     }
 
-    const d = new Date(utcStr);          // sigue estando en UTC
+    const d = new Date(utcStr);          // still in UTC
     const pad = n => String(n).padStart(2,'0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
          + `T${pad(d.getHours())}:${pad(d.getMinutes())}`;   // **local**
@@ -67,8 +67,8 @@ function utcToLocalValue(utcStr){
 
 
     /**
-     * Inicializa las funcionalidades del formulario de eventos.
-     * @param {Element} context - Contexto del DOM donde inicializar (por defecto es document).
+     * Initialize the event form features.
+     * @param {Element} context - DOM context where to initialize (defaults to document).
      */
     function initializeEventCard(context = document) {
 
@@ -82,7 +82,7 @@ function utcToLocalValue(utcStr){
 
    // ---------- default values ---------- //
         (function setDefaultTimes(){
-            if (startInput.value) return;                // se abre un evento existente
+            if (startInput.value) return;                // an existing event is opened
 
            // a) if FullCalendar passed a day (click on an empty cell)…
             const modal     = document.querySelector('#event-modal');
@@ -93,7 +93,7 @@ function utcToLocalValue(utcStr){
                 })()
                 : null;
 
-            // b) …o si no, usa ahora mismo
+            // b) otherwise use the current time
             const base = new Date();
 
             if (clickDate) {
@@ -103,7 +103,7 @@ function utcToLocalValue(utcStr){
             }
 
 
-            // redondea base a la siguiente :00 o :30 y +1 h
+            // round base to the next :00 or :30 and add 1 h
             base.setSeconds(0,0);
             const m = base.getMinutes();
             if (m % 30) base.setMinutes(m + (30 - m % 30));
@@ -129,7 +129,7 @@ if (isAllDay) {
 }
 
 
-        // Sincroniza fechas: el "to" no puede ser menor que el "from"
+        // Synchronize dates: the "to" cannot be earlier than the "from"
         if (startInput && endInput) {
             startInput.addEventListener('change', () => {
                 endInput.min = startInput.value;
@@ -148,7 +148,7 @@ if (isAllDay) {
             const raw = input.dataset.utc;
             if (!raw) return;
 
-            // Si el input es type="date" pone la fecha tal cual,
+            // If the input is type="date" leave the date as is,
            // otherwise use the conversion function.
             input.value = (input.type === 'date')
                 ? raw
@@ -174,7 +174,7 @@ const allDaySwitch = context.querySelector('#event-allday');
 if (allDaySwitch && startInput && endInput) {
     // Set the correct input types on load based on all-day checkbox
     if (allDaySwitch.checked) {
-        startInput.value = startInput.value.split('T')[0] || // venimos de datetime‑local
+        startInput.value = startInput.value.split('T')[0] || // coming from datetime-local
                            new Date().toISOString().slice(0, 10);
         endInput.value   = endInput.value.split('T')[0]   ||
                            startInput.value;

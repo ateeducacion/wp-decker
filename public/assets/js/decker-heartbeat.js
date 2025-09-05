@@ -214,11 +214,11 @@ function formatNotificationTime(timeString) {
     const date = new Date(timeString);
     const now = new Date();
 
-    // Obtener componentes de la fecha
+    // Get date components
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Meses van de 0 a 11
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months go from 0 to 11
 
     // If it's the same day, show only HH:mm
     if (date.toDateString() === now.toDateString()) {
@@ -349,7 +349,7 @@ function formatNotificationTime(timeString) {
         // }
     });
 
-    // Enviamos datos al servidor en cada latido:
+    // Send data to the server on each heartbeat:
     $(document).on('heartbeat-send', function(e, data) {
         data.decker_custom_data = {
             foo: 'bar',

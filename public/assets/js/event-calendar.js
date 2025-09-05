@@ -74,10 +74,10 @@ function showTooltip(message, duration = 2000){
     function formatDateForStorage(date, allDay) {
         if (!date) return null;
         if (allDay) {
-            // Devuelve YYYY-MM-DD en local
+            // Returns YYYY-MM-DD locally
             return date.toLocaleDateString('sv-SE'); // formato ISO (2025-10-10)
         } else {
-            // Devuelve ISO UTC con Z
+            // Returns ISO UTC with Z
             return date.toISOString();
         }
     }
@@ -159,7 +159,7 @@ function showTooltip(message, duration = 2000){
                         fetch(wpApiSettings.root + 'decker/v1/calendar', {
                             method: 'GET',
                             headers: {
-                                'X-WP-Nonce': wpApiSettings.nonce // Usar el nonce de wpApiSettings
+                                'X-WP-Nonce': wpApiSettings.nonce // Use the nonce from wpApiSettings
                             }
                         })
                         .then(response => {
@@ -378,7 +378,7 @@ function showTooltip(message, duration = 2000){
 
         onEventClick: function(info) {
 
-            // Evitar que se abra la URL (si existe)
+            // Prevent the URL (if any) from opening
             info.jsEvent.preventDefault();
 
             if (info.event.extendedProps.type === 'task') {
@@ -418,9 +418,9 @@ function showTooltip(message, duration = 2000){
             document.body.appendChild(eventButton);
             eventButton.click();
 
-            // Guardamos el eventDate
+            // Store the eventDate
             const eventDate = eventButton.dataset.eventDate;
-            document.querySelector('#event-modal').dataset.tempEventDate = eventDate; // Guardar en el moda
+            document.querySelector('#event-modal').dataset.tempEventDate = eventDate; // Store it in the modal
 
             document.body.removeChild(eventButton);
 

@@ -467,7 +467,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
  */
 
 // -------------------------------------------------------------------------
-// 1.  Recuperar y preparar los datos
+// 1.  Retrieve and prepare the data
 // -------------------------------------------------------------------------
 
 $relations = get_post_meta( $task_id, '_user_date_relations', true );
@@ -495,9 +495,9 @@ foreach ( $user_dates as $user_id => $dates ) {
 		continue;
 	}
 
-	// Ordenar y eliminar duplicados.
-	$dates = array_values( array_unique( $dates ) );
-	sort( $dates );
+		// Sort and remove duplicates.
+		$dates = array_values( array_unique( $dates ) );
+		sort( $dates );
 
 	$task_data[] = array(
 		'user'  => $user->display_name,

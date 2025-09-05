@@ -80,7 +80,7 @@ foreach ( $events_data as $event_data ) :
 		continue;
 	}
 
-	// Extraer metadatos con valores predeterminados.
+		// Extract metadata with default values.
 	$event_id = $event_post->ID;
 	$event_title = $event_post->post_title;
 	$allday = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
@@ -89,7 +89,7 @@ foreach ( $events_data as $event_data ) :
 	$category = isset( $meta['event_category'] ) ? $meta['event_category'][0] : '';
 
 
-	// Formatear fechas.
+		// Format dates.
 	$start_formatted = '';
 	$end_formatted = '';
 

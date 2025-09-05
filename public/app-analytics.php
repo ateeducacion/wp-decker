@@ -362,9 +362,9 @@ include 'layouts/main.php';
 					},
 					y: {
 						stacked: true,
-						   ticks: {
-							autoSkip: false, // Asegura que no se omitan etiquetas.
-						},
+												   ticks: {
+														autoSkip: false, // Ensures labels are not skipped.
+												},
 					},
 				},
 			},
@@ -382,9 +382,9 @@ include 'layouts/main.php';
 					},
 					y: {
 						stacked: true,
-						   ticks: {
-							autoSkip: false, // Asegura que no se omitan etiquetas.
-						},
+												   ticks: {
+														autoSkip: false, // Ensures labels are not skipped.
+												},
 					},
 				},
 			},

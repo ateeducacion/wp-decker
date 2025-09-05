@@ -90,7 +90,7 @@ if ( ! $has_today_tasks ) {
 	white-space: normal; /* Allows the text to wrap onto multiple lines */
 	vertical-align: baseline;
 	border-radius: 10rem;
-	word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
+		word-break: break-word; /* Ensures long words break correctly */
 }
 	
 .table-responsive {
@@ -99,17 +99,17 @@ if ( ! $has_today_tasks ) {
 
 .table th, .table td, .descripcion {
 		   white-space: normal; /* Allows the text to wrap onto multiple lines */
-		word-break: break-word; /* Asegura que las palabras largas se corten correctamente */
-		word-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
-		overflow-wrap: break-word; /* Asegura que las palabras largas se corten correctamente */
+				word-break: break-word; /* Ensures long words break correctly */
+				word-wrap: break-word; /* Ensures long words break correctly */
+				overflow-wrap: break-word; /* Ensures long words break correctly */
 }
 
 .avatar-group {
-	flex-wrap: wrap; /* Asegura que los avatares se ajusten al espacio disponible */
+		flex-wrap: wrap; /* Ensures avatars adjust to the available space */
 }
 
 .priority-id-table td {
-	max-width: 100%; /* Asegura que las celdas ocupen todo el ancho disponible */
+		max-width: 100%; /* Ensures cells occupy the full available width */
 }
 
 

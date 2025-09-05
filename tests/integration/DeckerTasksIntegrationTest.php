@@ -166,7 +166,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
            // Verify that the task was created correctly.
 		$this->assertIsInt( $task_id, 'Task creation failed.' );
 
-		// Comprobar que los metadatos se guardaron correctamente.
+                // Verify that the metadata was saved correctly.
 		$this->assertEquals( $stack, get_post_meta( $task_id, 'stack', true ), 'Stack meta mismatch.' );
 		$this->assertEquals( '1', get_post_meta( $task_id, 'max_priority', true ), 'Max priority meta mismatch.' );
 		$this->assertEquals( $duedate->format( 'Y-m-d' ), get_post_meta( $task_id, 'duedate', true ), 'Due date meta mismatch.' );
