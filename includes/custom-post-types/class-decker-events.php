@@ -280,11 +280,11 @@ class Decker_Events {
 	/**
 	 * Normalize date metadata after a REST operation.
 	 *
-         * – For all-day: trim the time.
-         * – For timed events:
-         *     · Convert ISO ('T…Z') to 'Y-m-d H:i:s'.
-         *     · If only the date arrives, add '00:00:00'.
-         *     · If end ≤ start, adjust end = start + 1h.
+	 * – For all-day: trim the time.
+	 * – For timed events:
+	 *     · Convert ISO ('T…Z') to 'Y-m-d H:i:s'.
+	 *     · If only the date arrives, add '00:00:00'.
+	 *     · If end ≤ start, adjust end = start + 1h.
 	 *
 	 * @param WP_Post         $post the post.
 	 * @param WP_REST_Request $request the request.
@@ -316,7 +316,7 @@ class Decker_Events {
 			? str_replace( array( 'T', 'Z' ), array( ' ', '' ), $$var )
 			: $$var;
 
-                        // b) date only → midnight.
+						// b) date only → midnight.
 			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $$var ) ) {
 				$$var .= ' 00:00:00';
 			}

@@ -495,9 +495,9 @@ foreach ( $user_dates as $user_id => $dates ) {
 		continue;
 	}
 
-        // Sort and remove duplicates.
-        $dates = array_values( array_unique( $dates ) );
-        sort( $dates );
+		// Sort and remove duplicates.
+		$dates = array_values( array_unique( $dates ) );
+		sort( $dates );
 
 	$task_data[] = array(
 		'user'  => $user->display_name,
