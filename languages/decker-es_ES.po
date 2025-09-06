@@ -1141,38 +1141,11 @@ msgstr "Extracto"
 msgid "Content"
 msgstr "Contenido"
 
-msgid "Search in title, tags, excerpt and content..."
-msgstr "Buscar en título, etiquetas, extracto y contenido..."
-
-msgid "Parent Article"
-msgstr "Artículo principal"
-
-msgid "No parent (top level)"
-msgstr "Sin artículo principal (nivel superior)"
-
-msgid "Order"
-msgstr "Orden"
-
 msgid "Error"
 msgstr "Error"
 
-msgid "Could not load article"
-msgstr "No se pudo cargar el artículo"
-
-msgid "Search for parent article..."
-msgstr "Buscar artículo principal..."
-
-msgid "Could not save article"
-msgstr "No se pudo guardar el artículo"
-
 msgid "You do not have permission to access this resource."
 msgstr "No tienes permiso para acceder a este recurso."
-
-msgid "Select labels..."
-msgstr "Seleccionar etiquetas..."
-
-msgid "No more labels available"
-msgstr "No hay más etiquetas disponibles"
 
 msgid "Enable email notifications for all plugin events."
 msgstr "Activar las notificaciones por correo electrónico para todos los eventos del plugin."
@@ -1337,12 +1310,6 @@ msgstr "En Tableros"
 msgid "In KB"
 msgstr "En Base Con."
 
-msgid "Select parent..."
-msgstr "Seleccionar superior..."
-
-msgid "No more articles available"
-msgstr "No hay más artículos disponibles"
-
 msgid "Task saved successfully."
 msgstr "Tarea guardada exitosamente."
 
@@ -1408,3 +1375,12 @@ msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
 
 msgid "There are no tasks from previous days to import."
 msgstr "No hay tareas de días anteriores para importar."
+
+msgid "Invalid moved ID."
+msgstr "ID movido no válido."
+
+msgid "Search articles..."
+msgstr "Buscar artículos..."
+
+msgid "Add Child"
+msgstr "Añadir hijo"
