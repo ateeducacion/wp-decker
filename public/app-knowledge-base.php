@@ -15,6 +15,7 @@ include 'layouts/main.php';
 // Get filter parameters.
 $board_slug = isset( $_GET['board'] ) ? sanitize_text_field( wp_unslash( $_GET['board'] ) ) : '';
 $view = isset( $_GET['view'] ) ? sanitize_text_field( wp_unslash( $_GET['view'] ) ) : '';
+$is_all_view = ( 'all' === $view );
 
 // Get articles based on filters.
 $args = array();
@@ -63,27 +64,28 @@ die();
 
 							<div class="page-title-box d-flex align-items-center justify-content-between">
 							
-								<?php
-								$page_title = __( 'Knowledge Base', 'decker' );
+									<?php
+									$page_title = __( 'Knowledge Base', 'decker' );
 
-								// Add board name to title if filtering by board.
-								if ( ! empty( $board_slug ) ) {
-									$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
-									if ( $board_term ) {
-										$page_title .= ' - ' . $board_term->name;
+									// Add board name to title if filtering by board.
+									if ( ! empty( $board_slug ) ) {
+										$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
+										if ( $board_term ) {
+											$page_title .= ' - ' . $board_term->name;
+										}
+									} elseif ( 'all' === $view ) {
+										$page_title .= ' - ' . __( 'All Articles', 'decker' );
 									}
-								} elseif ( 'all' === $view ) {
-									$page_title .= ' - ' . __( 'All Articles', 'decker' );
-								}
-								?>
+									?>
 
 								<h4 class="page-title">
 									<?php echo esc_html( $page_title ); ?>
-									<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" 
-									   class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>" 
-									   data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="">
-										<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Article', 'decker' ); ?>
-									</a>
+								<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'knowledge-base' ), home_url( '/' ) ) ); ?>" 
+								   id="add-root-article-btn"
+								   class="btn btn-success btn-sm ms-3 <?php echo esc_attr( $class_disabled ); ?>"
+								   data-bs-toggle="modal" data-bs-target="#kb-modal" data-parent-id="0">
+									<i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Article', 'decker' ); ?>
+								</a>
 								</h4>
 
 								<div class="d-flex align-items-center">
@@ -129,7 +131,7 @@ die();
 									<div class="card">
 										<div class="card-body table-responsive">
 
-											<table id="tableKB" class="table table-striped table-bordered dt-responsive nowrap w-100">
+												<table id="tableKB" class="table table-striped table-bordered dt-responsive nowrap w-100" style="display:none;">
 												<thead>
 													<tr>
 														<th class="col-3"><?php esc_html_e( 'Title', 'decker' ); ?></th>
@@ -284,6 +286,224 @@ die();
 												</tbody>
 											</table>
 
+											<!-- New KB Tree UI -->
+											<div class="mb-3 mt-2">
+												<input type="text" id="searchInput" class="form-control" placeholder="<?php esc_attr_e( 'Search articles...', 'decker' ); ?>">
+											</div>
+											<?php
+											$roots = array_filter(
+												$kb_data,
+												function ( $p ) {
+													return isset( $p->depth ) && 0 === intval( $p->depth );
+												}
+											);
+											if ( ! function_exists( 'decker_render_kb_node' ) ) {
+												/**
+												 * Render a KB article node with recursive children.
+												 *
+												 * Outputs a list item with actions, optional board badge (in view=all),
+												 * and a collapsible list for children.
+												 *
+												 * @param WP_Post $article            The article post object.
+												 * @param bool    $is_all_view_flag   Whether the current rendering is for the "view=all" mode.
+												 *
+												 * @return void
+												 */
+												function decker_render_kb_node( $article, $is_all_view_flag = false ) {
+													$has_children = isset( $article->children ) && ! empty( $article->children );
+													$labels       = wp_get_post_terms( $article->ID, 'decker_label' );
+													$labels_data  = array();
+													foreach ( $labels as $label ) {
+														$color          = get_term_meta( $label->term_id, 'term-color', true );
+														$labels_data[]  = array(
+															'name' => $label->name,
+															'color' => $color,
+														);
+													}
+													$board_terms  = wp_get_post_terms( $article->ID, 'decker_board' );
+													$board_name   = '';
+													$board_color  = '';
+													$board_id     = 0;
+													if ( ! empty( $board_terms ) ) {
+														$board       = $board_terms[0];
+														$board_name  = $board->name;
+														$board_color = get_term_meta( $board->term_id, 'term-color', true );
+														$board_id    = (int) $board->term_id;
+													}
+													$article_data_json = array(
+														'id'      => $article->ID,
+														'title'   => $article->post_title,
+														'content' => $article->post_content,
+														'labels'  => wp_json_encode( $labels_data ),
+														'board'   => wp_json_encode(
+															array(
+																'name' => $board_name,
+																'color' => $board_color,
+															)
+														),
+													);
+													?>
+											<li class="kb-item list-group-item" data-article-id="<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->post_parent ); ?>" data-menu-order="<?php echo esc_attr( $article->menu_order ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
+														<div class="d-flex align-items-center justify-content-between">
+											<div class="d-flex align-items-center gap-2">
+													<?php
+														// Compute swatch vars once.
+													$swatch_color = $board_color ? $board_color : '#6c757d';
+													$swatch_title = $board_name ? $board_name : __( 'No Board', 'decker' );
+													?>
+													<?php if ( $is_all_view_flag ) : ?>
+													<span class="badge me-2 align-middle"
+														  title="<?php echo esc_attr( $swatch_title ); ?>"
+														  style="background-color: <?php echo esc_attr( $swatch_color ); ?>; color:#fff; border:1px solid rgba(0,0,0,.1); display:inline-block; min-width: 120px; text-align:center;">
+														 <?php echo esc_html( $swatch_title ); ?>
+													</span>
+												<?php endif; ?>
+													<?php if ( $has_children ) : ?>
+													<button class="btn btn-sm btn-outline-secondary kb-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#children-of-<?php echo esc_attr( $article->ID ); ?>" aria-expanded="false" aria-controls="children-of-<?php echo esc_attr( $article->ID ); ?>" title="<?php echo $is_all_view_flag ? esc_attr( $swatch_title ) : ''; ?>">
+														<i class="ri-arrow-right-s-line"></i>
+													</button>
+												<?php else : ?>
+													<span class="btn btn-sm btn-outline-light disabled" aria-hidden="true" title="<?php echo $is_all_view_flag ? esc_attr( $swatch_title ) : ''; ?>">
+														<i class="ri-arrow-right-s-line"></i>
+													</span>
+												<?php endif; ?>
+												<span class="kb-title-text">
+													<a href="#" class="view-article-link"
+														data-id="<?php echo esc_attr( $article->ID ); ?>"
+														data-title="<?php echo esc_attr( $article->post_title ); ?>"
+														data-content="<?php echo esc_attr( $article->post_content ); ?>"
+														data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+														data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'><?php echo esc_html( $article->post_title ); ?></a>
+												</span>
+												<span class="kb-hidden-content d-none"><?php echo esc_html( wp_strip_all_tags( $article->post_content ) ); ?></span>
+															</div>
+												<div class="d-flex align-items-center gap-2">
+													<?php if ( ! empty( $labels_data ) ) : ?>
+														<?php
+														$labels_count   = count( $labels_data );
+														$display_labels = array_slice( $labels_data, 0, 3 );
+														$extra_labels   = max( 0, $labels_count - 3 );
+														?>
+														<div class="kb-labels d-flex align-items-center flex-wrap" style="gap:4px;">
+															<?php foreach ( $display_labels as $ld ) : ?>
+																<span class="badge" style="background-color: <?php echo esc_attr( $ld['color'] ); ?>;">
+																	<?php echo esc_html( $ld['name'] ); ?>
+																</span>
+															<?php endforeach; ?>
+															<?php if ( $extra_labels > 0 ) : ?>
+																<?php $popover_id = 'kb-popover-' . $article->ID; ?>
+																<span class="badge bg-secondary"
+																	  role="button"
+																	  tabindex="0"
+																	  data-bs-toggle="popover"
+																	  data-popover-target="#<?php echo esc_attr( $popover_id ); ?>"
+																	  title="<?php echo esc_attr__( 'Labels', 'decker' ); ?>"
+																>+<?php echo esc_html( $extra_labels ); ?></span>
+																<div id="<?php echo esc_attr( $popover_id ); ?>" class="d-none">
+																	<div class="d-flex align-items-center flex-wrap" style="gap:4px;">
+																		<?php foreach ( $labels_data as $ld_full ) : ?>
+																			<span class="badge me-1 mb-1" style="background-color: <?php echo esc_attr( $ld_full['color'] ); ?>;"><?php echo esc_html( $ld_full['name'] ); ?></span>
+																		<?php endforeach; ?>
+																	</div>
+																</div>
+															<?php endif; ?>
+														</div>
+													<?php endif; ?>
+
+													<img src="<?php echo esc_url( get_avatar_url( $article->post_author, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" class="rounded-circle" style="width:24px;height:24px;" title="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" />
+
+													<div class="btn-group btn-group-sm">
+														<button type="button" class="btn btn-outline-secondary view-article-btn"
+														data-id="<?php echo esc_attr( $article->ID ); ?>"
+														data-title="<?php echo esc_attr( $article->post_title ); ?>"
+														data-content="<?php echo esc_attr( $article->post_content ); ?>"
+														data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+														data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
+														<i class="ri-eye-line"></i>
+														</button>
+														<button type="button" class="btn btn-outline-info kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>">
+														<i class="ri-pencil-line"></i>
+														</button>
+														<button type="button" class="btn btn-outline-success add-child-btn" title="<?php echo esc_attr__( 'Add Child', 'decker' ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal">
+														<i class="ri-add-line"></i>
+														</button>
+														<button type="button" class="btn btn-outline-danger kb-delete-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>" data-article-title="<?php echo esc_attr( $article->post_title ); ?>">
+														<i class="ri-delete-bin-line"></i>
+														</button>
+													</div>
+												</div>
+												</div>
+												<div class="edit-container mt-2" id="edit-container-<?php echo esc_attr( $article->ID ); ?>" style="display: none;"></div>
+												<ul class="list-group list-group-flush collapse kb-children" id="children-of-<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
+															<?php if ( $has_children ) : ?>
+																<?php
+																foreach ( $article->children as $child ) {
+																	decker_render_kb_node( $child, $is_all_view_flag ); }
+																?>
+													<?php endif; ?>
+												</ul>
+												</li>
+															<?php
+												}
+											}
+											?>
+								<?php
+								// Expose current board id (if filtering by board) for JS defaulting in inline creation.
+								$current_board_id = 0;
+								if ( ! empty( $board_slug ) ) {
+									$board_term = get_term_by( 'slug', $board_slug, 'decker_board' );
+									if ( $board_term ) {
+										$current_board_id = (int) $board_term->term_id; }
+								}
+								?>
+								<?php if ( $is_all_view ) : ?>
+									<?php
+									// Group roots by board term id (0 for none).
+									$grouped = array();
+									foreach ( $roots as $r ) {
+										$bterms = wp_get_post_terms( $r->ID, 'decker_board' );
+										$bid = 0;
+										$bname = __( 'No Board', 'decker' );
+										$bcolor = '#6c757d';
+										if ( ! empty( $bterms ) ) {
+											$b = $bterms[0];
+											$bid = (int) $b->term_id;
+											$bname = $b->name;
+											$bcolor = get_term_meta( $b->term_id, 'term-color', true );
+										}
+										if ( ! isset( $grouped[ $bid ] ) ) {
+											$grouped[ $bid ] = array(
+												'name'   => $bname,
+												'color'  => $bcolor,
+												'items'  => array(),
+											);
+										}
+										$grouped[ $bid ]['items'][] = $r;
+									}
+									// Render each board section.
+									foreach ( $grouped as $bid => $info ) :
+										?>
+										<div class="mb-2 mt-3 d-flex align-items-center">
+											<span class="badge" style="background-color: <?php echo esc_attr( $info['color'] ); ?>; color:#fff; border:1px solid rgba(0,0,0,.1); min-width: 140px; text-align:center;">
+												<?php echo esc_html( $info['name'] ); ?>
+											</span>
+										</div>
+										<ul class="list-group kb-root" data-parent-id="0" data-board-id="<?php echo esc_attr( $bid ); ?>">
+											<?php
+											foreach ( $info['items'] as $root ) {
+												decker_render_kb_node( $root, true ); }
+											?>
+										</ul>
+									<?php endforeach; ?>
+								<?php else : ?>
+									<ul class="list-group" id="kb-root" data-parent-id="0" data-current-board-id="<?php echo esc_attr( $current_board_id ); ?>">
+										<?php
+										foreach ( $roots as $root ) {
+											decker_render_kb_node( $root, false ); }
+										?>
+									</ul>
+								<?php endif; ?>
+
 										</div>
 									</div>
 								</div>
@@ -303,10 +523,8 @@ die();
 	</div>
 
 	<?php include 'layouts/right-sidebar.php'; ?>
-	<?php
-	include 'layouts/kb-modal.php';
-	include 'layouts/kb-view-modal.php';
-	?>
+	<?php include 'layouts/kb-view-modal.php'; ?>
+	<?php include 'layouts/kb-modal.php'; ?>
 	<?php include 'layouts/footer-scripts.php'; ?>
 
 	<script>
@@ -318,59 +536,9 @@ die();
 		return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 	}
 	
-	jQuery(document).ready(function () {
-		// Handle article view links and buttons
-		jQuery(document).on('click', '.view-article-link, .view-article-btn', function(e) {
-			e.preventDefault();
-			const $this = jQuery(this);
-			const id = $this.data('id');
-			const title = $this.data('title');
-			const content = $this.data('content');
-			const labelsJson = $this.data('labels');
-			const boardJson = $this.data('board');
-			
-			viewArticle(id, title, content, labelsJson, boardJson);
+		jQuery(document).ready(function () {
+			// The table view is deprecated; interactions are now handled in knowledge-base.js
 		});
-		// Determine the index of the hidden content column based on view.
-		const isViewAll = <?php echo 'all' === $view ? 'true' : 'false'; ?>;
-		const hiddenContentColumnIndex = isViewAll ? 7 : 6; // 7 if view=all (extra board column), 6 otherwise.
-		
-		jQuery('#tableKB').DataTable({
-			language: { 
-				url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json',
-				searchBuilder: {
-					title: 'Búsqueda Avanzada'
-				}
-			},
-			pageLength: 50,
-			responsive: true,
-			ordering: false,
-			order: [[4, 'desc']],
-			columnDefs: [
-				{
-					targets: [hiddenContentColumnIndex], // Dynamic hidden content column index.
-					visible: false,
-					searchable: true
-				}
-			],
-			mark: true, // Enable mark.js.
-			search: {
-				smart: true,
-				regex: false,
-				caseInsensitive: true
-			},
-			initComplete: function() {
-				// Add custom search placeholder.
-				jQuery('.dataTables_filter input')
-					.attr('placeholder', '<?php esc_html_e( 'Search in title, tags, excerpt and content...', 'decker' ); ?>')
-					.css('width', '300px');
-			}
-		});
-
-		jQuery('#categoryFilter').on('change', function () {
-			jQuery('#tableKB').DataTable().column(1).search(this.value).draw();
-		});
-	});
 
 	// Function to delete an event
 	function deleteEvent(id, title) {
@@ -414,7 +582,7 @@ die();
 				})
 				.then(response => {
 					if (!response.ok) {
-						throw new Error('Error en la eliminación');
+						throw new Error('Deletion error');
 					}
 					return response.json();
 				})

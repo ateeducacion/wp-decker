@@ -404,6 +404,9 @@ msgstr ""
 msgid "Article saved successfully"
 msgstr ""
 
+msgid "Invalid moved ID."
+msgstr ""
+
 msgid "Article not found"
 msgstr ""
 
@@ -876,7 +879,10 @@ msgstr ""
 msgid "No Board"
 msgstr ""
 
-msgid "Search in title, tags, excerpt and content..."
+msgid "Search articles..."
+msgstr ""
+
+msgid "Add Child"
 msgstr ""
 
 msgid "Are you sure?"
@@ -1167,43 +1173,13 @@ msgstr ""
 msgid "Version"
 msgstr ""
 
-msgid "Please provide a title."
-msgstr ""
-
 msgid "Please select a board."
 msgstr ""
 
-msgid "Parent Article"
-msgstr ""
-
-msgid "No parent (top level)"
-msgstr ""
-
-msgid "Order"
+msgid "Please provide a title."
 msgstr ""
 
 msgid "Save Article"
-msgstr ""
-
-msgid "Could not load article"
-msgstr ""
-
-msgid "Select labels..."
-msgstr ""
-
-msgid "No more labels available"
-msgstr ""
-
-msgid "Select parent..."
-msgstr ""
-
-msgid "No more articles available"
-msgstr ""
-
-msgid "Search for parent article..."
-msgstr ""
-
-msgid "Could not save article"
 msgstr ""
 
 msgid "Show Full Sidebar"
