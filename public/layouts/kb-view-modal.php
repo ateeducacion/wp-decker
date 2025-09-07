@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 ?>
 
 <div class="modal fade" id="kb-view-modal" tabindex="-1" aria-labelledby="kb-view-modalLabel" aria-hidden="true">
-	<div class="modal-dialog modal-xl">
+	<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
 		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title" id="kb-view-modalLabel"></h5>
@@ -36,75 +36,54 @@ defined( 'ABSPATH' ) || exit;
 <script>
 function viewArticle(id, title, content, labelsJson, boardJson) {
 	const modal = jQuery('#kb-view-modal');
-	modal.find('#kb-view-modalLabel').text(title);
-	modal.find('#kb-view-content').html(content);
-	
-	// Get labels with their colors
+
+	// Fetch latest version from server to ensure freshness
 	jQuery.ajax({
-		url: wpApiSettings.root + 'wp/v2/labels',
+		url: wpApiSettings.root + 'decker/v1/kb',
 		method: 'GET',
-		beforeSend: function(xhr) {
-			xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
-		},
-		success: function(response) {
-			let labels = [];
-			let board = null;
-			
-			// Safely parse JSON with error handling
-			try {
-				if (labelsJson && typeof labelsJson === 'string') {
-					labels = JSON.parse(labelsJson);
-				} else if (Array.isArray(labelsJson)) {
-					labels = labelsJson;
+		data: { id: id },
+		beforeSend: function(xhr) { xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce); },
+		success: function(resp) {
+			if (!resp || !resp.success) return;
+			const art = resp.article || {};
+			modal.find('#kb-view-modalLabel').text(art.title || title || '');
+			modal.find('#kb-view-content').html(art.content || content || '');
+
+			// Resolve labels by ID to their names/colors
+			jQuery.ajax({
+				url: wpApiSettings.root + 'wp/v2/labels?per_page=100&_fields=id,name,meta',
+				method: 'GET',
+				beforeSend: function(xhr) { xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce); },
+				success: function(allLabels) {
+					const mapById = new Map();
+					if (Array.isArray(allLabels)) {
+						allLabels.forEach(l => mapById.set(Number(l.id), { name: l.name, color: l.meta ? l.meta['term-color'] : '#6c757d' }));
+					}
+					const selIds = Array.isArray(art.labels) ? art.labels.map(n => Number(n)) : [];
+					const sel = selIds.map(lid => ({ id: lid, ...(mapById.get(lid) || { name: '', color: '#6c757d' }) }));
+					const labelsHtml = sel.map(l => `<span class="badge me-1" style="background-color: ${l.color || '#6c757d'};">${l.name}</span>`).join('');
+
+					// Use provided board JSON (contains name/color) if present
+					let board = null;
+					try {
+						if (boardJson && typeof boardJson === 'string') board = JSON.parse(boardJson);
+						else if (boardJson && typeof boardJson === 'object') board = boardJson;
+					} catch (e) { board = null; }
+
+					let finalHtml = '';
+					if (board && board.name) {
+						const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>`;
+						finalHtml = boardHtml + labelsHtml;
+					} else {
+						finalHtml = labelsHtml;
+					}
+					modal.find('#kb-view-labels').html(finalHtml);
 				}
-			} catch (e) {
-				console.error('Error parsing labels JSON:', e);
-				labels = [];
-			}
-			
-			try {
-				if (boardJson && typeof boardJson === 'string') {
-					board = JSON.parse(boardJson);
-				} else if (boardJson && typeof boardJson === 'object') {
-					board = boardJson;
-				}
-			} catch (e) {
-				console.error('Error parsing board JSON:', e);
-				board = null;
-			}
-			
-			// Generate labels HTML
-			let labelsHtml = '';
-			if (Array.isArray(labels)) {
-				// If labels is an array of objects with name and color
-				if (labels.length > 0 && typeof labels[0] === 'object' && labels[0].name) {
-					labelsHtml = labels.map(label => 
-						`<span class="badge me-1" style="background-color: ${label.color || '#6c757d'};">${label.name}</span>`
-					).join('');
-				} 
-				// If labels is an array of strings (names only)
-				else {
-					const labelMap = new Map(response.map(l => [l.name, l.meta ? l.meta['term-color'] : '#6c757d']));
-					labelsHtml = labels.map(label => 
-						`<span class="badge me-1" style="background-color: ${labelMap.get(label)};">${label}</span>`
-					).join('');
-				}
-			}
-			
-			// Add board badge if available (to the left of labels)
-			let finalHtml = '';
-			if (board && board.name) {
-				const boardHtml = `<span class="badge bg-secondary me-2" style="background-color: ${board.color || '#6c757d'}!important;">${board.name}</span>|&nbsp;&nbsp;`;
-				finalHtml = boardHtml + labelsHtml;
-			} else {
-				finalHtml = labelsHtml;
-			}
-			
-			modal.find('#kb-view-labels').html(finalHtml);
+			});
+
+			modal.modal('show');
 		}
 	});
-	
-	modal.modal('show');
 }
 
 // Function to copy the modal content to the clipboard using Swal

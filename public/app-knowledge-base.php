@@ -356,7 +356,7 @@ die();
 														$display_labels = array_slice( $labels_data, 0, 3 );
 														$extra_labels   = max( 0, $labels_count - 3 );
 														?>
-														<div class="kb-labels d-flex align-items-center flex-wrap" style="gap:4px;">
+														<div class="kb-labels d-none d-md-flex align-items-center flex-wrap" style="gap:4px;">
 															<?php foreach ( $display_labels as $ld ) : ?>
 																<span class="badge" style="background-color: <?php echo esc_attr( $ld['color'] ); ?>;">
 																	<?php echo esc_html( $ld['name'] ); ?>
@@ -382,7 +382,7 @@ die();
 														</div>
 													<?php endif; ?>
 
-													<img src="<?php echo esc_url( get_avatar_url( $article->post_author, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" class="rounded-circle" style="width:24px;height:24px;" title="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" />
+													<img src="<?php echo esc_url( get_avatar_url( $article->post_author, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" class="d-none d-md-inline-block rounded-circle" style="width:24px;height:24px;" title="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" />
 
 																										 <div class="btn-group btn-group-sm d-none d-md-inline-flex">
 																												 <button type="button" class="btn btn-outline-secondary view-article-btn"
