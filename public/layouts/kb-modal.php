@@ -1,38 +1,32 @@
 <?php
 /**
- * File kb-modal
+ * File kb-modal (creation modal)
+ *
+ * A simplified modal for creating KB articles. Board, parent, and order are set automatically.
  *
  * @package    Decker
  * @subpackage Decker/public/layouts
- * @author     ATE <ate.educacion@gobiernodecanarias.org>
  */
 
-// Exit if accessed directly.
-defined( 'ABSPATH' ) || exit;
-
 ?>
-<div class="modal fade" id="kb-modal" tabindex="-1" aria-labelledby="kb-modalLabel" aria-hidden="true" style="display: none;">
-	<div class="modal-dialog modal-xl">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="kb-modalLabel"><?php esc_html_e( 'Add New Article', 'decker' ); ?></h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
 
-<!-- Article -->
-<form id="article-form" class="needs-validation" novalidate>
-	<input type="hidden" name="article_id" id="article-id" value="">
-	<div class="row mb-3">
-		<!-- Title, Board, Parent and Order -->
-		<div class="col-md-4">
-			<label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?> *</label>
-			<input type="text" class="form-control" id="article-title" name="title" required style="min-height: 45px;">
-			<div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
-		</div>
-		<div class="col-md-3">
-			<label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?> *</label>
-			<select class="form-select" id="article-board" name="board" required style="min-height: 45px;">
+<div class="modal fade" id="kb-modal" tabindex="-1" aria-labelledby="kb-modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+	<div class="modal-content">
+	  <div class="modal-header">
+		<h5 class="modal-title" id="kb-modalLabel"><?php esc_html_e( 'Add New Article', 'decker' ); ?></h5>
+		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	  </div>
+	  <div class="modal-body">
+		<form id="article-form" class="needs-validation" novalidate>
+		  <input type="hidden" name="article_id" id="article-id" value="">
+		  <input type="hidden" name="parent_id" id="article-parent" value="0">
+		  <input type="hidden" name="menu_order" id="article-order" value="0">
+
+		  <div class="row mb-3 align-items-end">
+			<div class="col-md-4">
+			  <label for="article-board" class="form-label"><?php esc_html_e( 'Board', 'decker' ); ?></label>
+			  <select class="form-select" id="article-board" name="board" style="min-height:45px;" required>
 				<option value=""><?php esc_html_e( 'Select Board', 'decker' ); ?></option>
 				<?php
 				$boards = BoardManager::get_all_boards();
@@ -42,398 +36,147 @@ defined( 'ABSPATH' ) || exit;
 					}
 				}
 				?>
-			</select>
-			<div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
-		</div>
-		<div class="col-md-4">
-			<label for="article-parent" class="form-label"><?php esc_html_e( 'Parent Article', 'decker' ); ?></label>
-			<select class="form-select" id="article-parent" name="parent_id">
-				<option value="0"><?php esc_html_e( 'No parent (top level)', 'decker' ); ?></option>
-				<!-- Parent articles will be loaded dynamically based on selected board -->
-			</select>
-		</div>
-		<div class="col-md-1">
-			<label for="article-order" class="form-label"><?php esc_html_e( 'Order', 'decker' ); ?></label>
-			<input type="number" class="form-control" id="article-order" name="menu_order" min="0" value="0" style="min-height: 45px;">
-		</div>
-	</div>
+			  </select>
+			  <div class="invalid-feedback"><?php esc_html_e( 'Please select a board.', 'decker' ); ?></div>
+			</div>
+			<div class="col-md-8">
+			  <label for="article-title" class="form-label"><?php esc_html_e( 'Title', 'decker' ); ?> *</label>
+			  <input type="text" class="form-control" id="article-title" name="title" required style="min-height:45px;">
+			  <div class="invalid-feedback"><?php esc_html_e( 'Please provide a title.', 'decker' ); ?></div>
+			</div>
+		  </div>
 
-	<div class="row">
-		<div class="col-md-12 mb-3">
-			<textarea name="content" id="article-content" rows="12" class="form-control"></textarea>
-		</div>
-	</div>
+		  <div class="row">
+			<div class="col-md-12 mb-3">
+			  <textarea name="content" id="article-content" rows="12" class="form-control"></textarea>
+			</div>
+		  </div>
 
-	<div class="row">
-		<div class="col-md-12 mb-3">
-			<label for="article-labels" class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
-			<select class="form-select" id="article-labels" name="labels[]" multiple>
+		  <div class="row">
+			<div class="col-md-12 mb-3">
+			  <label for="article-labels" class="form-label"><?php esc_html_e( 'Labels', 'decker' ); ?></label>
+			  <select class="form-select" id="article-labels" name="labels[]" multiple>
 				<?php
 				$labels = LabelManager::get_all_labels();
 				foreach ( $labels as $label ) {
 					echo '<option value="' . esc_attr( $label->id ) . '" data-custom-properties=\'{"color": "' . esc_attr( $label->color ) . '"}\'>' . esc_html( $label->name ) . '</option>';
 				}
 				?>
-			</select>
-		</div>
-	</div>
-</form>
-
+			  </select>
 			</div>
-			<div class="modal-footer">
+		  </div>
+		</form>
+	  </div>
+	  <div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
-				<button type="button" class="btn btn-primary" id="guardar-articulo"><?php esc_html_e( 'Save Article', 'decker' ); ?></button>
-			</div>
-		</div>
+				<button type="button" class="btn btn-success" id="guardar-articulo"><i class="ri-save-3-line me-1"></i> <?php esc_html_e( 'Save Article', 'decker' ); ?></button>
+	  </div>
 	</div>
-</div>
+  </div>
+  </div>
 
 <script type="text/javascript">
-	jQuery(document).ready(function($) {
-		let editor;
-		let editorInitPromise;
+jQuery(function($){
+  var labelsSelect = null;
+  var editorInited = false;
 
-		function initializeEditor() {
-			if (editor && editor.initialized) {
-				return Promise.resolve();
-			}
+  function initEditor() {
+	if (editorInited) return;
+	try {
+	  if (window.wp && wp.editor) {
+				wp.editor.initialize('article-content', {
+				  tinymce: { wpautop: true, menubar: false, toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,alignleft,aligncenter,alignright,link,unlink,wp_more,spellchecker,wp_adv', toolbar2: 'strikethrough,hr,forecolor,pastetext,removeformat,charmap,outdent,indent,undo,redo' },
+				  quicktags: true,
+				  mediaButtons: true
+				});
+		editorInited = true;
+	  }
+	} catch (e) {}
+  }
 
-			return new Promise((resolve) => {
-				const config = {
-					tinymce: {
-						wpautop: true,
-						container: 'kb-modal .modal-body',
-						toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright wp_adv',
-						toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
-						menubar: false,
-						setup: function(ed) {
-							editor = ed;
-							ed.on('init', function() {
-								editor.initialized = true;
-								resolve();
-							});
-						}
-					},
-					quicktags: true,
-					mediaButtons: true
-				};
+  function destroyEditor() {
+	try { if (window.wp && wp.editor) { wp.editor.remove('article-content'); editorInited = false; } } catch(e) {}
+  }
 
-				wp.editor.initialize('article-content', config);
-			});
-		}
+  $('#kb-modal').on('show.bs.modal', function (e) {
+	// Prepare form
+	var $btn = $(e.relatedTarget);
+	var parentId = parseInt($btn.data('parent-id') || '0', 10);
+	var boardId = 0;
+	if (parentId > 0) {
+	  var $pli = $('li.kb-item[data-article-id="' + parentId + '"]');
+	  boardId = parseInt($pli.data('board-id') || '0', 10);
+	} else {
+	  var rb = document.getElementById('kb-root');
+	  boardId = rb ? parseInt(rb.getAttribute('data-current-board-id') || '0', 10) : 0;
+	}
 
-		function loadArticle(id) {
-			$.ajax({
-				url: wpApiSettings.root + 'decker/v1/kb',
-				method: 'GET',
-				beforeSend: function(xhr) {
-					xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
-				},
-				data: { id: id },
-				success: function(response) {
-					if (response.success) {
-						const article = response.article;
-						$('#article-id').val(article.id);
-						$('#article-title').val(article.title);
-						$('#article-order').val(article.menu_order);
-						editor.setContent(article.content);
-			
-						// // Reset and set labels
-						// if (labelsSelect) {
-						// 	labelsSelect.destroy();
-						// }
-						// labelsSelect = new Choices('#article-labels', choicesConfig);
-						// if (article.labels && article.labels.length > 0) {
+	$('#article-form')[0].reset();
+	$('#article-id').val('');
+	$('#article-parent').val(String(parentId));
+	// Preselect board and lock if determined by context
+	var $board = $('#article-board');
+	if (boardId > 0) {
+	  $board.val(String(boardId)).prop('disabled', true).removeClass('is-invalid');
+	} else {
+	  $board.val('').prop('disabled', false).removeClass('is-invalid');
+	}
+	$('#article-order').val('0');
+	if (labelsSelect) { try { labelsSelect.removeActiveItems(); labelsSelect.clearInput(); } catch(e){} }
+  });
 
-						// 	labelsSelect.removeActiveItems();
-						// 	labelsSelect.clearInput();
+  $('#kb-modal').on('shown.bs.modal', function(){
+	initEditor();
+	try { if (window.tinymce && tinymce.get('article-content')) { tinymce.get('article-content').setContent(''); } } catch(e) {}
+	$('#article-title').trigger('focus');
 
-						// 	labelsSelect.setChoiceByValue(article.labels.map(String));
-						// }
+	// Init labels choices lazily
+	if (!labelsSelect && window.Choices) {
+	  try {
+		labelsSelect = new Choices('#article-labels', { removeItemButton: true, shouldSort: true });
+	  } catch (e) {}
+	}
+  });
 
-						window.labelsSelect.removeActiveItems();
-						window.labelsSelect.clearInput();
-						window.labelsSelect.setChoiceByValue(article.labels.map(String));
+  $('#kb-modal').on('hidden.bs.modal', function(){
+	destroyEditor();
+  });
 
+  $('#guardar-articulo').on('click', function(){
+	var form = $('#article-form')[0];
+	if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
 
-						// Set board first so parent articles can be loaded
-						if (article.board) {
-							$('#article-board').val(article.board);
-							// Load parent articles for this board
-							loadParentArticles(article.board);
-							// Then set the parent value after articles are loaded
-							setTimeout(() => {
-								window.parentSelect.setChoiceByValue(article.parent_id.toString());
-							}, 500);
-						} else {
-							$('#article-board').val(0);
-						}
-					} else {
-						Swal.fire({
-							title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
-							text: response.message,
-							icon: 'error'
-						});
-					}
-				},
-				error: function() {
-					Swal.fire({
-						title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
-						text: '<?php esc_html_e( 'Could not load article', 'decker' ); ?>',
-						icon: 'error'
-					});
-				}
-			});
-		}
+	var content = '';
+	try {
+	  if (window.wp && wp.editor && wp.editor.get('article-content')) content = wp.editor.get('article-content').getContent();
+	  if (!content && window.tinymce && tinymce.get('article-content')) content = tinymce.get('article-content').getContent();
+	  if (!content) content = ($('#article-content').val() || '');
+	} catch(e) { content = ($('#article-content').val() || ''); }
 
-		// Pre-initialize editor when button is clicked
-		$('[data-bs-target="#kb-modal"]').on('click', function() {
-			initializeEditor();
-		});
+	var $board = $('#article-board');
+	var data = {
+	  title: ($('#article-title').val() || '').toString().trim(),
+	  content: content,
+	  labels: ($('#article-labels').val() || []),
+	  parent_id: $('#article-parent').val() || 0,
+	  menu_order: $('#article-order').val() || 0,
+	  board: $board.val() || ''
+	};
+	if (!data.board) { $board.addClass('is-invalid').trigger('focus'); return; }
 
-		$('#kb-modal').on('shown.bs.modal', function(e) {
-			
-			const button = $(e.relatedTarget);
-			const articleId = button.data('article-id');
-			
-			if (articleId) {
-				$('#kb-modalLabel').text('<?php esc_html_e( 'Edit Article', 'decker' ); ?>');
-				loadArticle(articleId);
-			} else {
-				// New article
-				$('#kb-modalLabel').text('<?php esc_html_e( 'Add New Article', 'decker' ); ?>');
-				$('#article-form')[0].reset();
-				$('#article-id').val('');
-				editor.setContent('');
-				window.labelsSelect.removeActiveItems();
-				window.labelsSelect.clearInput();
-
-				window.parentSelect.setChoiceByValue('0');
-				window.parentSelect.clearInput();
-				
-				// Check if there's a board parameter in the URL
-				const boardSlug = getUrlParameter('board');
-				if (boardSlug) {
-					// Find the board by slug directly from our available boards
-					const boardSelect = document.getElementById('article-board');
-					const boardOptions = Array.from(boardSelect.options);
-					
-					// Get all boards from PHP
-					<?php
-					$boards_data = array();
-					foreach ( $boards as $board ) {
-						if ( $board->show_in_kb ) {
-							$boards_data[] = array(
-								'id' => $board->id,
-								'slug' => $board->slug,
-								'name' => $board->name,
-							);
-						}
-					}
-					?>
-					
-					// Use the PHP data
-					const availableBoards = <?php echo json_encode( $boards_data ); ?>;
-					const matchingBoard = availableBoards.find(board => board.slug === boardSlug);
-					
-					if (matchingBoard) {
-						$('#article-board').val(matchingBoard.id);
-						// Trigger change event to load parent articles for this board
-						$('#article-board').trigger('change');
-						
-						// Load parent articles for this board
-						loadParentArticles(matchingBoard.id);
-					} else {
-						// Reset board if not found
-						$('#article-board').val('');
-					}
-				} else {
-					// Reset board
-					$('#article-board').val('');
-				}
-			}
-		});
-
-		$('#kb-modal').on('hidden.bs.modal', function() {
-			if (editor && editor.initialized) {
-				wp.editor.remove('article-content');
-				editor.initialized = false;
-			}
-			window.labelsSelect.removeActiveItems();
-			window.labelsSelect.clearInput();
-		});
-
-		let labelsSelect, parentSelect;
-
-		// Function to load parent articles based on selected board
-		function loadParentArticles(boardId) {
-			// Clear current parent options except the default one
-			parentSelect.clearStore();
-			parentSelect.setChoices([{
-				value: '0',
-				label: '<?php esc_html_e( 'No parent (top level)', 'decker' ); ?>',
-				selected: true
-			}]);
-			
-			if (!boardId) return;
-			
-			// Get all articles for this board
-			$.ajax({
-				url: wpApiSettings.root + 'wp/v2/decker_kb',
-				method: 'GET',
-				beforeSend: function(xhr) {
-					xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
-				},
-				data: {
-					per_page: 100,
-					decker_board: boardId,
-					orderby: 'menu_order',
-					order: 'asc'
-				},
-				success: function(articles) {
-					if (articles && articles.length > 0) {
-						const currentArticleId = $('#article-id').val();
-						const parentChoices = articles
-							.filter(article => article.id != currentArticleId) // Don't include current article
-							.map(article => ({
-								value: article.id.toString(),
-								label: article.title.rendered
-							}));
-						
-						parentSelect.setChoices(parentChoices, 'value', 'label', true);
-					}
-				},
-				error: function(error) {
-					console.error('Error loading parent articles:', error);
-				}
-			});
-		}
-		
-		// Initialize Choices.js for labels and parent
-		const choicesConfig = {
-			removeItemButton: true,
-			allowHTML: true,
-			searchEnabled: true,
-			shouldSort: true,
-			placeholderValue: '<?php esc_html_e( 'Select labels...', 'decker' ); ?>',
-			noChoicesText: '<?php esc_html_e( 'No more labels available', 'decker' ); ?>',
-			callbackOnCreateTemplates: function (strToEl, escapeForTemplate, getClassNames) {
-				const defaultTemplates = Choices.defaults.templates;
-				
-				return {
-					...defaultTemplates,
-					item: (classNames, data) => {
-						// 1. Take the element generated by the default template
-						const el = defaultTemplates.item.call(this, classNames, data);
-
-						// 2. Apply background color based on the taxonomy
-						el.style.backgroundColor = data.customProperties?.color || '#6c757d';
-
-						// 3. Ensure that, if removeItemButton=true, the element is configured as "deletable"
-						if (this.config.removeItemButton) {
-							el.setAttribute('data-deletable', '');
-
-							// If the default template hasn't already generated the button, create it here
-							if (!el.querySelector('[data-button]')) {
-								const button = document.createElement('button');
-								button.type = 'button';
-								button.className = this.config.classNames.button;
-								button.setAttribute('data-button', '');
-								button.setAttribute('aria-label', `Remove item: ${data.value}`);
-								button.innerHTML = '×';
-								el.appendChild(button);
-							}
-						}
-
-						return el;
-					}
-				}
-			}
-		};
-
-		// Initial labels setup
-		labelsSelect = new Choices('#article-labels', choicesConfig);
-		window.labelsSelect = labelsSelect;
-
-		// Parent select should not use the same template customization as labels
-		const parentChoicesConfig = {
-			removeItemButton: true,
-			allowHTML: true,
-			searchEnabled: true,
-			shouldSort: true,
-			placeholderValue: '<?php esc_html_e( 'Select parent...', 'decker' ); ?>',
-			noChoicesText: '<?php esc_html_e( 'No more articles available', 'decker' ); ?>',
-			searchPlaceholderValue: '<?php esc_html_e( 'Search for parent article...', 'decker' ); ?>'
-		};
-		
-		parentSelect = new Choices('#article-parent', parentChoicesConfig);
-		window.parentSelect = parentSelect;
-
-		// Handle board change to update parent articles
-		$('#article-board').on('change', function() {
-			const boardId = $(this).val();
-			if (boardId) {
-				loadParentArticles(boardId);
-			}
-		});
-		
-		// Handle form submission
-		$('#guardar-articulo').on('click', function() {
-			const form = $('#article-form')[0];
-			
-			if (!form.checkValidity()) {
-				form.classList.add('was-validated');
-				return;
-			}
-
-			const boardValue = $('#article-board').val();
-			if (!boardValue || boardValue === "0" || boardValue === "") {
-				$('#article-board').addClass('is-invalid');
-				return;
-			}
-
-			const data = {
-				id: $('#article-id').val(),
-				title: $('#article-title').val(),
-				content: editor.getContent(),
-				labels: window.labelsSelect.getValue().map(choice => choice.value),
-				parent_id: $('#article-parent').val(),
-				menu_order: $('#article-order').val(),
-				board: boardValue
-			};
-
-			$.ajax({
-				url: wpApiSettings.root + 'decker/v1/kb',
-				method: 'POST',
-				beforeSend: function(xhr) {
-					xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce);
-				},
-				data: data,
-				success: function(response) {
-					if (response.success) {
-						Swal.fire({
-							title: '<?php esc_html_e( 'Success', 'decker' ); ?>',
-							text: response.message,
-							icon: 'success'
-						}).then(() => {
-							window.location.reload();
-						});
-					} else {
-						Swal.fire({
-							title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
-							text: response.message,
-							icon: 'error'
-						});
-					}
-				},
-				error: function() {
-					Swal.fire({
-						title: '<?php esc_html_e( 'Error', 'decker' ); ?>',
-						text: '<?php esc_html_e( 'Could not save article', 'decker' ); ?>',
-						icon: 'error'
-					});
-				}
-			});
-		});
+	$.ajax({
+	  url: wpApiSettings.root + 'decker/v1/kb',
+	  method: 'POST',
+	  beforeSend: function (xhr) { xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce); },
+	  data: data
+	}).then(function(resp){
+	  if (!resp || !resp.success) throw new Error('save failed');
+	  window.location.reload();
+	}).fail(function(){
+	  alert(deckerVars?.strings?.error || 'Error');
 	});
+  });
+  // Remove invalid UI when user selects a board
+  $(document).on('change', '#article-board', function(){ $(this).removeClass('is-invalid'); });
+});
 </script>

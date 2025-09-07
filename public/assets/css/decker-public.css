@@ -98,6 +98,28 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     padding: 1rem; /* Prevents content from touching edges */
 }
 
+/* Knowledge Base inline title editor: allow wider input on desktop */
+.kb-labels { padding-left: 0.5em; }
+.kb-item > .d-flex > .d-flex:first-child {
+    flex: 1 1 auto; /* let left block grow */
+    min-width: 0;   /* allow children to shrink without overflow */
+}
+.kb-item .kb-title-text {
+    flex: 1 1 auto; /* title area grows to available space */
+    min-width: 0;
+}
+.kb-item .kb-title-text .kb-title-input {
+    width: 100%;     /* input stretches within title area */
+    max-width: none; /* remove intrinsic max */
+    margin-right: 6px; /* small gap before labels */
+}
+
+@media (min-width: 992px) { /* desktop */
+    .kb-item .kb-title-text .kb-title-input {
+        font-size: 16px; /* keep readable while expanding */
+    }
+}
+
 /* Style for labels in KB table */
 #tableKB td .badge {
     display: block;
@@ -149,6 +171,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     border-radius: 10rem; /* This creates the rounded "chip" shape */
     word-break: break-word;
 }
+
 
 
 /* =================================================================
