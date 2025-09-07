@@ -88,26 +88,8 @@ die();
 								</a>
 								</h4>
 
-								<div class="d-flex align-items-center">
-									<div class="me-2">
-										<a href="
-										<?php
-										echo esc_url(
-											add_query_arg(
-												array(
-													'decker_page' => 'knowledge-base',
-													'view' => 'all',
-												),
-												home_url( '/' )
-											)
-										);
-										?>
-										" 
-										   class="btn btn-outline-primary btn-sm <?php echo 'all' === $view ? 'active' : ''; ?>">
-											<?php esc_html_e( 'All Articles', 'decker' ); ?>
-										</a>
-									</div>
-									<select id="categoryFilter" class="form-select">
+                                                               <div class="d-flex align-items-center">
+                                                                        <select id="categoryFilter" class="form-select">
 										<option value=""><?php esc_html_e( 'All Labels', 'decker' ); ?></option>
 										<?php
 										$categories = get_terms(
@@ -351,14 +333,7 @@ die();
 													$swatch_color = $board_color ? $board_color : '#6c757d';
 													$swatch_title = $board_name ? $board_name : __( 'No Board', 'decker' );
 													?>
-													<?php if ( $is_all_view_flag ) : ?>
-													<span class="badge me-2 align-middle"
-														  title="<?php echo esc_attr( $swatch_title ); ?>"
-														  style="background-color: <?php echo esc_attr( $swatch_color ); ?>; color:#fff; border:1px solid rgba(0,0,0,.1); display:inline-block; min-width: 120px; text-align:center;">
-														 <?php echo esc_html( $swatch_title ); ?>
-													</span>
-												<?php endif; ?>
-													<?php if ( $has_children ) : ?>
+                                                                                                        <?php if ( $has_children ) : ?>
 													<button class="btn btn-sm btn-outline-secondary kb-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#children-of-<?php echo esc_attr( $article->ID ); ?>" aria-expanded="false" aria-controls="children-of-<?php echo esc_attr( $article->ID ); ?>" title="<?php echo $is_all_view_flag ? esc_attr( $swatch_title ) : ''; ?>">
 														<i class="ri-arrow-right-s-line"></i>
 													</button>

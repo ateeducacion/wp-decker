@@ -527,6 +527,11 @@
       e.preventDefault();
       const id = $(this).data('article-id');
       const $cont = $('#edit-container-' + id);
+      $('.edit-container:visible').not($cont).each(function () {
+        const $c = $(this);
+        restoreTitleFromInput($c.closest('li.kb-item'));
+        $c.slideUp(150);
+      });
       if ($cont.is(':visible')) {
         // On collapsing editor, restore title anchor instead of textbox
         restoreTitleFromInput($cont.closest('li.kb-item'));
