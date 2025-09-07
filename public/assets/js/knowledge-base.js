@@ -69,14 +69,14 @@
       '    <textarea id="' + editorId + '" name="content" rows="8" class="form-control"></textarea>' +
       '  </div>' +
       '  <div class="row g-2 mb-2 align-items-center">' +
-      '    <div class="col-auto">' +
-      '      <button type="button" class="btn btn-danger kb-inline-delete" title="' + (deckerVars?.strings?.delete || 'Eliminar') + '"><i class="ri-delete-bin-line"></i></button>' +
-      '    </div>' +
-      '    <div class="col-md-8">' +
+      '    <div class="col-12 col-md-8 order-1 order-md-2">' +
       '      <select class="form-select" name="labels[]" id="kb-inline-labels-' + article.id + '" multiple>' + labelOptions + '</select>' +
       '    </div>' +
-      '    <div class="col-md-3 text-end">' +
-      '      <button type="button" class="btn btn-success kb-inline-save"><i class="ri-save-3-line me-1"></i> ' + (deckerVars?.strings?.save || 'Save') + '</button>' +
+      '    <div class="col-6 col-md-2 order-2 order-md-1">' +
+      '      <button type="button" class="btn btn-danger w-100 kb-inline-delete" title="' + (deckerVars?.strings?.delete || 'Eliminar') + '"><i class="ri-delete-bin-line"></i></button>' +
+      '    </div>' +
+      '    <div class="col-6 col-md-2 order-3 order-md-3 text-end">' +
+      '      <button type="button" class="btn btn-success w-100 kb-inline-save"><i class="ri-save-3-line me-1"></i> ' + (deckerVars?.strings?.save || 'Save') + '</button>' +
       '    </div>' +
       '  </div>' +
       '</form>'
@@ -88,8 +88,9 @@
     const config = {
       tinymce: {
         wpautop: true,
-        toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright',
         menubar: false,
+        toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,alignleft,aligncenter,alignright,link,unlink,wp_more,spellchecker,wp_adv',
+        toolbar2: 'strikethrough,hr,forecolor,pastetext,removeformat,charmap,outdent,indent,undo,redo'
       },
       quicktags: true,
       mediaButtons: true,

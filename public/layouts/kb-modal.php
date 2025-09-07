@@ -68,8 +68,8 @@
 		</form>
 	  </div>
 	  <div class="modal-footer">
-		<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
-		<button type="button" class="btn btn-primary" id="guardar-articulo"><?php esc_html_e( 'Save Article', 'decker' ); ?></button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
+                <button type="button" class="btn btn-success" id="guardar-articulo"><i class="ri-save-3-line me-1"></i> <?php esc_html_e( 'Save Article', 'decker' ); ?></button>
 	  </div>
 	</div>
   </div>
@@ -84,11 +84,11 @@ jQuery(function($){
 	if (editorInited) return;
 	try {
 	  if (window.wp && wp.editor) {
-		wp.editor.initialize('article-content', {
-		  tinymce: { wpautop: true, menubar: false, toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright' },
-		  quicktags: true,
-		  mediaButtons: true
-		});
+                wp.editor.initialize('article-content', {
+                  tinymce: { wpautop: true, menubar: false, toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,alignleft,aligncenter,alignright,link,unlink,wp_more,spellchecker,wp_adv', toolbar2: 'strikethrough,hr,forecolor,pastetext,removeformat,charmap,outdent,indent,undo,redo' },
+                  quicktags: true,
+                  mediaButtons: true
+                });
 		editorInited = true;
 	  }
 	} catch (e) {}
