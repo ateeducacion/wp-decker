@@ -1384,3 +1384,6 @@ msgstr "Buscar artículos..."
 
 msgid "Add Child"
 msgstr "Añadir hijo"
+
+msgid "View"
+msgstr "Ver"

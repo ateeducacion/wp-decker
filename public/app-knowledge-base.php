@@ -88,8 +88,8 @@ die();
 								</a>
 								</h4>
 
-                                                               <div class="d-flex align-items-center">
-                                                                        <select id="categoryFilter" class="form-select">
+															   <div class="d-flex align-items-center">
+																		<select id="categoryFilter" class="form-select">
 										<option value=""><?php esc_html_e( 'All Labels', 'decker' ); ?></option>
 										<?php
 										$categories = get_terms(
@@ -252,9 +252,9 @@ die();
 														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
 														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\'>' .
 														'<i class="ri-eye-line"></i></button>';
-                                                                                                          // Edit button.
-                                                                                                          echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
-                                                                                                          // Delete button removed to avoid accidental deletions; handled in inline editor.
+																										  // Edit button.
+																										  echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
+																										  // Delete button removed to avoid accidental deletions; handled in inline editor.
 													echo '</td>';
 
 													// Hidden content column for search.
@@ -330,7 +330,7 @@ die();
 													$swatch_color = $board_color ? $board_color : '#6c757d';
 													$swatch_title = $board_name ? $board_name : __( 'No Board', 'decker' );
 													?>
-                                                                                                        <?php if ( $has_children ) : ?>
+																										<?php if ( $has_children ) : ?>
 													<button class="btn btn-sm btn-outline-secondary kb-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#children-of-<?php echo esc_attr( $article->ID ); ?>" aria-expanded="false" aria-controls="children-of-<?php echo esc_attr( $article->ID ); ?>" title="<?php echo $is_all_view_flag ? esc_attr( $swatch_title ) : ''; ?>">
 														<i class="ri-arrow-right-s-line"></i>
 													</button>
@@ -384,42 +384,42 @@ die();
 
 													<img src="<?php echo esc_url( get_avatar_url( $article->post_author, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" class="rounded-circle" style="width:24px;height:24px;" title="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" />
 
-                                                                                                         <div class="btn-group btn-group-sm d-none d-md-inline-flex">
-                                                                                                                 <button type="button" class="btn btn-outline-secondary view-article-btn"
-                                                                                                                 data-id="<?php echo esc_attr( $article->ID ); ?>"
-                                                                                                                 data-title="<?php echo esc_attr( $article->post_title ); ?>"
-                                                                                                                 data-content="<?php echo esc_attr( $article->post_content ); ?>"
-                                                                                                                 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
-                                                                                                                 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
-                                                                                                                 <i class="ri-eye-line"></i>
-                                                                                                                 </button>
-                                                                                                                 <button type="button" class="btn btn-outline-info kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>">
-                                                                                                                 <i class="ri-pencil-line"></i>
-                                                                                                                 </button>
-                                                                                                                 <button type="button" class="btn btn-outline-success add-child-btn" title="<?php echo esc_attr__( 'Add Child', 'decker' ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal">
-                                                                                                                 <i class="ri-add-line"></i>
-                                                                                                                 </button>
-                                                                                                         </div>
-                                                                                                         <div class="dropdown d-md-none">
-                                                                                                                 <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                                                                         <i class="ri-more-2-fill"></i>
-                                                                                                                 </button>
-                                                                                                                 <ul class="dropdown-menu dropdown-menu-end">
-                                                                                                                         <li><button class="dropdown-item view-article-btn"
-                                                                                                                         data-id="<?php echo esc_attr( $article->ID ); ?>"
-                                                                                                                         data-title="<?php echo esc_attr( $article->post_title ); ?>"
-                                                                                                                         data-content="<?php echo esc_attr( $article->post_content ); ?>"
-                                                                                                                         data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
-                                                                                                                         data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
-                                                                                                                         <i class="ri-eye-line me-1"></i><?php esc_html_e( 'View', 'decker' ); ?></button></li>
-                                                                                                                         <li><button class="dropdown-item kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>"><i class="ri-pencil-line me-1"></i><?php esc_html_e( 'Edit', 'decker' ); ?></button></li>
-                                                                                                                         <li><button class="dropdown-item add-child-btn" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal"><i class="ri-add-line me-1"></i><?php esc_html_e( 'Add Child', 'decker' ); ?></button></li>
-                                                                                                                         <li><hr class="dropdown-divider"></li>
-                                                                                                                         <li><button class="dropdown-item text-danger" onclick="deleteArticle(<?php echo esc_attr( $article->ID ); ?>, '<?php echo esc_js( $article->post_title ); ?>')"><i class="ri-delete-bin-line me-1"></i><?php esc_html_e( 'Delete', 'decker' ); ?></button></li>
-                                                                                                                 </ul>
-                                                                                                         </div>
-                                                                                               </div>
-                                                                                               </div>
+																										 <div class="btn-group btn-group-sm d-none d-md-inline-flex">
+																												 <button type="button" class="btn btn-outline-secondary view-article-btn"
+																												 data-id="<?php echo esc_attr( $article->ID ); ?>"
+																												 data-title="<?php echo esc_attr( $article->post_title ); ?>"
+																												 data-content="<?php echo esc_attr( $article->post_content ); ?>"
+																												 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+																												 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
+																												 <i class="ri-eye-line"></i>
+																												 </button>
+																												 <button type="button" class="btn btn-outline-info kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>">
+																												 <i class="ri-pencil-line"></i>
+																												 </button>
+																												 <button type="button" class="btn btn-outline-success add-child-btn" title="<?php echo esc_attr__( 'Add Child', 'decker' ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal">
+																												 <i class="ri-add-line"></i>
+																												 </button>
+																										 </div>
+																										 <div class="dropdown d-md-none">
+																												 <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+																														 <i class="ri-more-2-fill"></i>
+																												 </button>
+																												 <ul class="dropdown-menu dropdown-menu-end">
+																														 <li><button class="dropdown-item view-article-btn"
+																														 data-id="<?php echo esc_attr( $article->ID ); ?>"
+																														 data-title="<?php echo esc_attr( $article->post_title ); ?>"
+																														 data-content="<?php echo esc_attr( $article->post_content ); ?>"
+																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
+																														 <i class="ri-eye-line me-1"></i><?php esc_html_e( 'View', 'decker' ); ?></button></li>
+																														 <li><button class="dropdown-item kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>"><i class="ri-pencil-line me-1"></i><?php esc_html_e( 'Edit', 'decker' ); ?></button></li>
+																														 <li><button class="dropdown-item add-child-btn" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal"><i class="ri-add-line me-1"></i><?php esc_html_e( 'Add Child', 'decker' ); ?></button></li>
+																														 <li><hr class="dropdown-divider"></li>
+																														 <li><button class="dropdown-item text-danger" onclick="deleteArticle(<?php echo esc_attr( $article->ID ); ?>, '<?php echo esc_js( $article->post_title ); ?>')"><i class="ri-delete-bin-line me-1"></i><?php esc_html_e( 'Delete', 'decker' ); ?></button></li>
+																												 </ul>
+																										 </div>
+																							   </div>
+																							   </div>
 												<div class="edit-container mt-2" id="edit-container-<?php echo esc_attr( $article->ID ); ?>" style="display: none;"></div>
 												<ul class="list-group list-group-flush collapse kb-children" id="children-of-<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
 															<?php if ( $has_children ) : ?>
