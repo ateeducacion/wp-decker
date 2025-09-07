@@ -402,12 +402,9 @@ die();
 														<button type="button" class="btn btn-outline-success add-child-btn" title="<?php echo esc_attr__( 'Add Child', 'decker' ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal">
 														<i class="ri-add-line"></i>
 														</button>
-														<button type="button" class="btn btn-outline-danger kb-delete-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>" data-article-title="<?php echo esc_attr( $article->post_title ); ?>">
-														<i class="ri-delete-bin-line"></i>
-														</button>
-													</div>
-												</div>
-												</div>
+                                                                                                        </div>
+                                                                                               </div>
+                                                                                               </div>
 												<div class="edit-container mt-2" id="edit-container-<?php echo esc_attr( $article->ID ); ?>" style="display: none;"></div>
 												<ul class="list-group list-group-flush collapse kb-children" id="children-of-<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
 															<?php if ( $has_children ) : ?>
