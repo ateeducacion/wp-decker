@@ -885,6 +885,12 @@ msgstr ""
 msgid "Add Child"
 msgstr ""
 
+msgid "View"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
 msgid "Are you sure?"
 msgstr ""
 
@@ -1045,9 +1051,6 @@ msgid "Failed to delete attachment."
 msgstr ""
 
 msgid "Error uploading attachment."
-msgstr ""
-
-msgid "Delete"
 msgstr ""
 
 msgid "Server response error."

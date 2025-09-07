@@ -2,6 +2,20 @@
 (function ($) {
   'use strict';
 
+  var kbSortables = [];
+
+  function disableSortables() {
+    kbSortables.forEach(function (s) {
+      try { s.option('disabled', true); } catch (e) {}
+    });
+  }
+
+  function enableSortables() {
+    kbSortables.forEach(function (s) {
+      try { s.option('disabled', false); } catch (e) {}
+    });
+  }
+
   function loadBoards() {
     return $.ajax({
       url: wpApiSettings.root + 'wp/v2/decker_board?per_page=100&_fields=id,name',
@@ -55,15 +69,14 @@
       '    <textarea id="' + editorId + '" name="content" rows="8" class="form-control"></textarea>' +
       '  </div>' +
       '  <div class="row g-2 mb-2 align-items-center">' +
-      '    <div class="col-auto">' +
-      '      <button type="button" class="btn btn-danger kb-inline-delete" title="' + (deckerVars?.strings?.delete || 'Eliminar') + '"><i class="ri-delete-bin-line"></i></button>' +
-      '    </div>' +
-      '    <div class="col-md-8">' +
+      '    <div class="col-12 col-md-8 order-1 order-md-2">' +
       '      <select class="form-select" name="labels[]" id="kb-inline-labels-' + article.id + '" multiple>' + labelOptions + '</select>' +
       '    </div>' +
-      '    <div class="col-md-3 text-end">' +
-      '      <button type="button" class="btn btn-success kb-inline-save"><i class="ri-save-3-line me-1"></i> ' + (deckerVars?.strings?.save || 'Save') + '</button>' +
-      '      <button type="button" class="btn btn-outline-secondary kb-inline-cancel ms-1">' + (deckerVars?.strings?.cancel || 'Cancel') + '</button>' +
+      '    <div class="col-6 col-md-2 order-2 order-md-1">' +
+      '      <button type="button" class="btn btn-danger w-100 kb-inline-delete" title="' + (deckerVars?.strings?.delete || 'Eliminar') + '"><i class="ri-delete-bin-line"></i></button>' +
+      '    </div>' +
+      '    <div class="col-6 col-md-2 order-3 order-md-3 text-end">' +
+      '      <button type="button" class="btn btn-success w-100 kb-inline-save"><i class="ri-save-3-line me-1"></i> ' + (deckerVars?.strings?.save || 'Save') + '</button>' +
       '    </div>' +
       '  </div>' +
       '</form>'
@@ -75,8 +88,9 @@
     const config = {
       tinymce: {
         wpautop: true,
-        toolbar1: 'formatselect bold italic bullist numlist blockquote alignleft aligncenter alignright',
         menubar: false,
+        toolbar1: 'formatselect,bold,italic,bullist,numlist,blockquote,alignleft,aligncenter,alignright,link,unlink,wp_more,spellchecker,wp_adv',
+        toolbar2: 'strikethrough,hr,forecolor,pastetext,removeformat,charmap,outdent,indent,undo,redo'
       },
       quicktags: true,
       mediaButtons: true,
@@ -152,10 +166,12 @@
     // Store original anchor HTML to restore later
     $titleWrap.data('orig', $titleWrap.html());
     // Wider textbox for better UX
-    $titleWrap.html('<input type="text" class="form-control form-control-sm kb-title-input" style="min-width: 360px; width: 420px;" value="' + $('<div>').text(current).html() + '">');
-    // Focus and place cursor at end
+    $titleWrap.html('<input type="text" class="form-control kb-title-input" style="font-size:16px;" value="' + $('<div>').text(current).html() + '">');
+    // Focus desktop only to avoid mobile zoom
     const $input = $titleWrap.find('input.kb-title-input');
-    $input.focus()[0].setSelectionRange(current.length, current.length);
+    if (!window.matchMedia('(max-width: 767px)').matches) {
+      $input.focus()[0].setSelectionRange(current.length, current.length);
+    }
   }
 
   function restoreTitleFromInput($item, newTitle) {
@@ -190,7 +206,9 @@
         // labels is usually the data array as first arg; ensure it's an array
         labels = Array.isArray(labels) ? labels : (labels && Array.isArray(labels[0]) ? labels[0] : []);
         const html = buildInlineForm(article, [], labels, []);
-        $container.html(html).slideDown(150);
+        $container.html(html);
+        disableSortables();
+        $container.slideDown(150);
         const editorId = 'kb-editor-' + article.id;
         initWpEditor(editorId, article.content || '');
         $container.data('initialContent', article.content || '');
@@ -216,17 +234,10 @@
             // Update UI title and restore anchor
             restoreTitleFromInput($item, data.title);
             // Hide editor
-            $container.slideUp(150);
+            $container.slideUp(150, enableSortables);
           }).fail(function () {
             alert(deckerVars?.strings?.error || 'Error');
           });
-        });
-
-        // Cancel
-        $container.on('click.kb', '.kb-inline-cancel', function () {
-          const $item = $container.closest('li.kb-item');
-          restoreTitleFromInput($item);
-          $container.slideUp(150);
         });
 
         // Inline delete
@@ -253,6 +264,7 @@
               headers: { 'Content-Type': 'application/json' }
             }).then(function () {
               $item.remove();
+              enableSortables();
             }).fail(function () {
               Swal.fire(deckerVars?.strings?.error || 'Error', deckerVars?.strings?.could_not_delete || 'Could not delete the article.', 'error');
             });
@@ -280,7 +292,7 @@
     }
 
     function sortableFor(el) {
-      return new Sortable(el, {
+      var s = new Sortable(el, {
         group: {
           name: 'kb',
           put: function(to, from, dragEl) {
@@ -340,6 +352,8 @@
             });
         }
       });
+      kbSortables.push(s);
+      return s;
     }
 
     // Initialize on root lists (single or grouped by board) and all collapsible lists
@@ -527,51 +541,24 @@
       e.preventDefault();
       const id = $(this).data('article-id');
       const $cont = $('#edit-container-' + id);
+      $('.edit-container:visible').not($cont).each(function () {
+        const $c = $(this);
+        restoreTitleFromInput($c.closest('li.kb-item'));
+        $c.slideUp(150);
+      });
       if ($cont.is(':visible')) {
         // On collapsing editor, restore title anchor instead of textbox
         restoreTitleFromInput($cont.closest('li.kb-item'));
-        $cont.slideUp(150);
+        $cont.slideUp(150, enableSortables);
         return;
       }
       if ($cont.is(':empty')) {
         openInlineEditor(id, $cont);
       } else {
         switchTitleToInput($cont.closest('li.kb-item'));
+        disableSortables();
         $cont.slideDown(150);
       }
-    });
-  }
-
-  // Creation handled by Bootstrap modal; no handlers needed here
-
-  function initDeleteHandlers() {
-    $(document).on('click', '.kb-delete-btn', function () {
-      const id = $(this).data('article-id');
-      const title = $(this).data('article-title');
-      if (!window.Swal) return;
-      Swal.fire({
-        title: deckerVars?.strings?.are_you_sure || 'Are you sure?',
-        text: (deckerVars?.strings?.the_article_will_be_deleted || 'The article will be deleted') + ': "' + title + '"',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: deckerVars?.strings?.yes_delete || 'Yes, delete',
-        cancelButtonText: deckerVars?.strings?.cancel || 'Cancel',
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6'
-      }).then(function (result) {
-        if (!result.isConfirmed) return;
-        const base = (typeof wpApiSettings !== 'undefined' && wpApiSettings.versionString) ? wpApiSettings.versionString : 'wp/v2/';
-        $.ajax({
-          url: wpApiSettings.root + base + 'decker_kb/' + id,
-          method: 'DELETE',
-          beforeSend: function (xhr) { xhr.setRequestHeader('X-WP-Nonce', wpApiSettings.nonce); },
-          headers: { 'Content-Type': 'application/json' }
-        }).then(function () {
-          $('li.kb-item[data-article-id="' + id + '"]').remove();
-        }).fail(function () {
-          Swal.fire(deckerVars?.strings?.error || 'Error', deckerVars?.strings?.could_not_delete || 'Could not delete the article.', 'error');
-        });
-      });
     });
   }
 
@@ -582,7 +569,6 @@
     initSearch();
     initCollapseIcons();
     initPopovers();
-    initDeleteHandlers();
   });
 
 })(jQuery);
