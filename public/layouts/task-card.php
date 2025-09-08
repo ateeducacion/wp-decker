@@ -637,13 +637,3 @@ foreach ( $user_dates as $user_id => $dates ) {
 
 </form>
 
-<div class="toast-container position-fixed top-0 end-0 p-3">
-        <div id="save-toast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="polite" aria-atomic="true">
-                <div class="d-flex">
-                        <div class="toast-body"></div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="<?php esc_attr_e( 'Close', 'decker' ); ?>"></button>
-                </div>
-        </div>
-</div>
-
-

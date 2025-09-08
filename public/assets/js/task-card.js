@@ -610,11 +610,16 @@
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
                     window.deckerHasUnsavedChanges = false;
-                    const toastEl = document.getElementById('save-toast');
-                    if (toastEl) {
-                        toastEl.querySelector('.toast-body').textContent = strings.task_saved_success;
-                        const toast = new bootstrap.Toast(toastEl);
-                        toast.show();
+                    if (window.parent && window.parent.Swal) {
+                        window.parent.Swal.fire({
+                            icon: 'success',
+                            title: strings.task_saved_success,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
                     }
                     const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
                     if (modalElement) {
@@ -629,7 +634,7 @@
                             saveDropdown.disabled = false;
                         }
                         setTimeout(function () {
-                            location.reload();
+                            window.location.reload();
                         }, 1500);
                     } else {
                         if (saveButton) {
