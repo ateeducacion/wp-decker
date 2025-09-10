@@ -1387,3 +1387,6 @@ msgstr "Añadir hijo"
 
 msgid "View"
 msgstr "Ver"
+
+msgid "The task has been saved successfully."
+msgstr "La tarea se ha guardado correctamente."

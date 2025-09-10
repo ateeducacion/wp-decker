@@ -342,6 +342,7 @@ class Decker_Public {
 					'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
 					'request_error'               => __( 'Request error.', 'decker' ),
 					'error_saving_task'           => __( 'Error saving task.', 'decker' ),
+					'task_saved_success'          => __( 'The task has been saved successfully.', 'decker' ),
 					'show_html_source'            => __( 'Show HTML source', 'decker' ),
 					'edit_html_content'           => __( 'Edit the content in HTML format', 'decker' ),
 					'ok'                          => __( 'OK', 'decker' ),

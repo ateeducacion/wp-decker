@@ -590,6 +590,16 @@
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
         };
 
+        // Disable save controls to prevent duplicate submissions
+        const saveButton = document.getElementById('save-task');
+        const saveDropdown = document.getElementById('save-task-dropdown');
+        if (saveButton) {
+            saveButton.disabled = true;
+        }
+        if (saveDropdown) {
+            saveDropdown.disabled = true;
+        }
+
         // Send the AJAX request
         const xhr = new XMLHttpRequest();
         xhr.open('POST', ajaxUrl, true);
@@ -600,32 +610,61 @@
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
                     window.deckerHasUnsavedChanges = false;
+                    if (window.parent && window.parent.Swal) {
+                        window.parent.Swal.fire({
+                            icon: 'success',
+                            title: strings.task_saved_success,
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                    }
                     const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
                     if (modalElement) {
                         var modalInstance = bootstrap.Modal.getInstance(modalElement);
                         if (modalInstance) {
                             modalInstance.hide();
                         }
-
+                        
                         // Reload the page if the request was successful
-                        location.reload();   
+                        location.reload();
                     } else {
                         // Redirect or update depending on the response
                         window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
                     }
 
                 } else {
-                    alert(response.data.message || 'Error al guardar la tarea.');
+                    alert(response.data.message || strings.error_saving_task);
+                    if (saveButton) {
+                        saveButton.disabled = false;
+                    }
+                    if (saveDropdown) {
+                        saveDropdown.disabled = false;
+                    }
                 }
             } else {
                 console.error(strings.server_response_error);
                 alert(strings.an_error_occurred_saving_task);
+                if (saveButton) {
+                    saveButton.disabled = false;
+                }
+                if (saveDropdown) {
+                    saveDropdown.disabled = false;
+                }
             }
         };
 
         xhr.onerror = function() {
             console.error(strings.request_error);
             alert(strings.error_saving_task);
+            if (saveButton) {
+                saveButton.disabled = false;
+            }
+            if (saveDropdown) {
+                saveDropdown.disabled = false;
+            }
         };
 
         const encodedData = Object.keys(formData)
