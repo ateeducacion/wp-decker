@@ -591,11 +591,16 @@ foreach ( $user_dates as $user_id => $dates ) {
 					<div class="form-floating">
 						<select class="form-select" id="task-author-info" <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
 							<?php
-							$author_id = get_post_field( 'post_author', $task_id );
+							// Default author to current user for new tasks or missing author.
+							$author_id = ( $task_id > 0 ) ? (int) get_post_field( 'post_author', $task_id ) : 0;
+							if ( ! $author_id ) {
+								$author_id = get_current_user_id();
+							}
+
 							$users = get_users( array( 'orderby' => 'display_name' ) );
 							foreach ( $users as $user ) {
 								echo '<option value="' . esc_attr( $user->ID ) . '" ' .
-									selected( $user->ID, $author_id, false ) . '>' .
+									selected( (int) $user->ID, (int) $author_id, false ) . '>' .
 									esc_html( $user->display_name ) . '</option>';
 							}
 							?>
