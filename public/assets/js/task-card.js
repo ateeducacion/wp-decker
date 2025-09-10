@@ -629,10 +629,10 @@
                         }
                         
                         // Reload the page if the request was successful
-                        location.reload();                           
+                        location.reload();
                     } else {
                         // Redirect or update depending on the response
-                        window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;                        
+                        window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
                     }
 
                 } else {
