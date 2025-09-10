@@ -32,10 +32,10 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+        $board_id = self::factory()->board->create( array( 'name' => 'Test Board 1' ) );
 
-		$label1_id = self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) );
-		$label2_id = self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) );
+		$label1_id = self::factory()->label->create( array( 'name' => 'Test Label 1' ) );
+		$label2_id = self::factory()->label->create( array( 'name' => 'Test Label 2' ) );
 
 		// Create a task.
 		$task_id = $this->create_task(
@@ -64,7 +64,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 	 */
 	public function test_task_menu_order() {
 
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+        $board_id = self::factory()->board->create( array( 'name' => 'Test Board 1' ) );
 
 		// Create tasks
 		$task1_id = $this->create_task(
@@ -132,17 +132,17 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 	}
 
 	public function test_task_saved_meta() {
-           // Create a term for the board.
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+        // Create a term for the board.
+        $board_id = self::factory()->board->create( array( 'name' => 'Test Board 1' ) );
 
-               // Create labels.
-		$label1_id = self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) );
-		$label2_id = self::factory()->term->create( array( 'taxonomy' => 'decker_label' ) );
+        // Create labels.
+		$label1_id = self::factory()->label->create( array( 'name' => 'Test Label 1' ) );
+		$label2_id = self::factory()->label->create( array( 'name' => 'Test Label 2' ) );
 
-               // Create a user to assign to the task.
+        // Create a user to assign to the task.
 		$user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 
-               // Define values for the metadata.
+        // Define values for the metadata.
 		$title          = 'Test Task with Metadata';
 		$description    = 'Testing all saved meta fields';
 		$stack          = 'to-do';
@@ -151,7 +151,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 		$assigned_users = array( $user_id );
 		$labels         = array( $label1_id, $label2_id );
 
-               // Create the task.
+        // Create the task.
 		$task_id = $this->create_task(
 			$title,
 			$description,
@@ -166,7 +166,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
            // Verify that the task was created correctly.
 		$this->assertIsInt( $task_id, 'Task creation failed.' );
 
-                // Verify that the metadata was saved correctly.
+         // Verify that the metadata was saved correctly.
 		$this->assertEquals( $stack, get_post_meta( $task_id, 'stack', true ), 'Stack meta mismatch.' );
 		$this->assertEquals( '1', get_post_meta( $task_id, 'max_priority', true ), 'Max priority meta mismatch.' );
 		$this->assertEquals( $duedate->format( 'Y-m-d' ), get_post_meta( $task_id, 'duedate', true ), 'Due date meta mismatch.' );
@@ -185,7 +185,7 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 
 
 	public function test_create_and_update_task() {
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+        $board_id = self::factory()->board->create( array( 'name' => 'Test Board 1' ) );
 
 		// Create a task.
 		$task_id = $this->create_task(
