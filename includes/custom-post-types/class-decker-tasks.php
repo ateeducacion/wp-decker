@@ -1924,6 +1924,9 @@ class Decker_Tasks {
 				// Convert DateTime objects to string format (otherwise pass null to undefined).
 				$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
 
+		// Note: Author capability enforcement is handled at the request layer (AJAX/REST).
+		// Do not override here to keep programmatic calls (e.g., factories/tests) flexible.
+
 		// Prepare the terms for tax_input.
 		$tax_input = array();
 

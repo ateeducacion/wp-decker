@@ -24,18 +24,19 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 		parent::__construct( $factory );
 
 		// Extend parent's default generation definitions.
-		$this->default_generation_definitions = array_merge(
-			$this->default_generation_definitions,
-			array(
+        $this->default_generation_definitions = array_merge(
+            $this->default_generation_definitions,
+            array(
 				// Custom definitions for decker_task.
 				'post_title'   => new WP_UnitTest_Generator_Sequence( 'Task title %s' ),
 				'post_content' => new WP_UnitTest_Generator_Sequence( 'Task description %s' ),
-				'post_author'  => 1, // Default to user ID 1 (admin).
+                // Default to current user; fallback to 1 if no user is set later in create_object.
+                'post_author'  => 0,
 				'stack'        => 'to-do',
 				'board'        => 0,
 				'max_priority' => false,
-				'author'       => 1,
-				'responsable'  => 1,
+                'author'       => 0,
+                'responsable'  => 0,
 				'hidden'       => false,
 				'post_type'    => 'decker_task',
 				// 'assigned_users' => array(),
@@ -68,8 +69,8 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 	 * @param array $args Arguments for creating the task.
 	 * @return int|WP_Error The created task ID or WP_Error on failure.
 	 */
-	public function create_object( $args ) {
-		// Final adjustments and normalization.
+    public function create_object( $args ) {
+        // Final adjustments and normalization.
 
 		// Parse duedate if provided.
 		if ( isset( $args['duedate'] ) ) {
@@ -116,8 +117,16 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 		// Convert max_priority to boolean if needed.
 		$args['max_priority'] = (bool) $args['max_priority'];
 
-		// Use the method from the plugin.
-		$task_id = Decker_Tasks::create_or_update_task(
+        // Default missing user-related fields to current user if not set.
+        if ( empty( $args['author'] ) ) {
+            $args['author'] = get_current_user_id();
+        }
+        if ( empty( $args['responsable'] ) ) {
+            $args['responsable'] = get_current_user_id();
+        }
+
+        // Use the method from the plugin.
+        $task_id = Decker_Tasks::create_or_update_task(
 			0, // 0 indicates a new task.
 			$args['post_title'],
 			$args['post_content'],
