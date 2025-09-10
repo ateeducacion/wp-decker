@@ -627,25 +627,12 @@
                         if (modalInstance) {
                             modalInstance.hide();
                         }
-                        if (saveButton) {
-                            saveButton.disabled = false;
-                        }
-                        if (saveDropdown) {
-                            saveDropdown.disabled = false;
-                        }
-                        setTimeout(function () {
-                            window.location.reload();
-                        }, 1500);
+                        
+                        // Reload the page if the request was successful
+                        location.reload();                           
                     } else {
-                        if (saveButton) {
-                            saveButton.disabled = false;
-                        }
-                        if (saveDropdown) {
-                            saveDropdown.disabled = false;
-                        }
-                        setTimeout(function () {
-                            window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
-                        }, 1500);
+                        // Redirect or update depending on the response
+                        window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;                        
                     }
 
                 } else {

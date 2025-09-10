@@ -1065,6 +1065,9 @@ msgstr ""
 msgid "Error saving task."
 msgstr ""
 
+msgid "The task has been saved successfully."
+msgstr ""
+
 msgid "Show HTML source"
 msgstr ""
 
