@@ -592,7 +592,7 @@ foreach ( $user_dates as $user_id => $dates ) {
 						<select class="form-select" id="task-author-info" <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
 							<?php
 							// Default author to current user for new tasks or missing author.
-							$author_id = ( $task_id ) ? (int) get_post_field( 'post_author', $task_id ) : 0;
+							$author_id = ( $task_id > 0 ) ? (int) get_post_field( 'post_author', $task_id ) : 0;
 							if ( ! $author_id ) {
 								$author_id = get_current_user_id();
 							}
