@@ -1776,7 +1776,6 @@ class Decker_Tasks {
 		}
 
 		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
-
 		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
 		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
@@ -1917,7 +1916,7 @@ class Decker_Tasks {
 		}
 
 		// Convert DateTime objects to string format (otherwise pass null to undefined).
-		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+		$duedate_str = $duedate ? $duedate->format( 'Y-m-d' ) : null;
 
 		// Prepare the terms for tax_input.
 		$tax_input = array();
@@ -1947,7 +1946,7 @@ class Decker_Tasks {
 				$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
 			}
 
-						// Compare new users with previously assigned ones.
+			// Compare new users with previously assigned ones.
 			$new_users = array_diff( $assigned_users, $previous_assigned_users );
 
 		}
@@ -2059,7 +2058,7 @@ class Decker_Tasks {
 		}
 
 		// Get the new and old board term IDs.
-			   // Assume that only one board is assigned at a time.
+		// Assume that only one board is assigned at a time.
 		$new_board_term_id = ! empty( $tt_ids ) ? (int) $tt_ids[0] : 0;
 		$old_board_term_id = ! empty( $old_tt_ids ) ? (int) $old_tt_ids[0] : 0;
 
@@ -2092,7 +2091,7 @@ class Decker_Tasks {
 			// Reorder tasks in the new board (including the moved task).
 			// 1. Reorder new board.
 			if ( $new_board_term_id > 0 ) {
-								// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
+				// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
 				// Call the static function to reorder.
 				$this->reorder_tasks_in_stack( $new_board_term_id, $current_stack );
 			}
@@ -2100,7 +2099,7 @@ class Decker_Tasks {
 			// Reorder tasks in the old board (excluding the moved task).
 			// 2. Reorder old board.
 			if ( $old_board_term_id > 0 ) {
-								// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
+				// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
 				// Call the static function to reorder.
 				$this->reorder_tasks_in_stack( $old_board_term_id, $current_stack, $object_id );
 			}
