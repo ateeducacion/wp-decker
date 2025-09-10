@@ -1776,6 +1776,12 @@ class Decker_Tasks {
 		}
 
 		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
+
+		// Enforce author: only admins can set a different author; others default to themselves.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$author = get_current_user_id();
+		}
+
 		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
 		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
