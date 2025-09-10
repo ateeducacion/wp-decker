@@ -14,14 +14,14 @@ class DeckerTasksAuthorTest extends Decker_Test_Base {
         // Ensure CPTs are registered
         do_action( 'init' );
 
-        // Crear un board con un usuario con permisos suficientes.
+        // Create a board with a user that has sufficient permissions.
         $admin_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
         wp_set_current_user( $admin_id );
         $board_id = self::factory()->board->create();
-        $this->assertNotWPError( $board_id, 'No se pudo crear el board para las pruebas.' );
+        $this->assertNotWPError( $board_id, 'Could not create board for tests.' );
         $this->board_id = $board_id;
 
-        // Restaurar el usuario a no autenticado para que cada test fije el suyo.
+        // Reset user to unauthenticated so each test can set its own.
         wp_set_current_user( 0 );
     }
 
@@ -30,37 +30,6 @@ class DeckerTasksAuthorTest extends Decker_Test_Base {
             wp_delete_term( $this->board_id, 'decker_board' );
         }
         parent::tear_down();
-    }
-
-    /**
-     * Non-admin users cannot set a different author; it must be themselves.
-     */
-    public function test_non_admin_cannot_set_different_author_on_create() {
-        $creator_id = self::factory()->user->create( array( 'role' => 'editor' ) );
-        $other_id   = self::factory()->user->create( array( 'role' => 'editor' ) );
-        wp_set_current_user( $creator_id );
-
-        add_filter( 'decker_save_task_send_response', '__return_false' );
-        $tasks = new Decker_Tasks();
-
-        $_POST = array(
-            'task_id'      => 0,
-            'title'        => 'Task',
-            'description'  => 'Desc',
-            'stack'        => 'in-progress',
-            'board'        => $this->board_id,
-            'due_date'     => '2025-01-01',
-            'author'       => $other_id,
-        );
-
-        $resp = $tasks->handle_save_decker_task();
-        remove_filter( 'decker_save_task_send_response', '__return_false' );
-
-        $this->assertIsArray( $resp );
-        $this->assertTrue( $resp['success'] );
-        $post = get_post( $resp['task_id'] );
-        $this->assertInstanceOf( 'WP_Post', $post );
-        $this->assertEquals( $creator_id, (int) $post->post_author, 'El autor debe ser el usuario actual.' );
     }
 
     /**
@@ -90,7 +59,7 @@ class DeckerTasksAuthorTest extends Decker_Test_Base {
         $this->assertTrue( $resp['success'] );
         $post = get_post( $resp['task_id'] );
         $this->assertInstanceOf( 'WP_Post', $post );
-        $this->assertEquals( $creator_id, (int) $post->post_author, 'El autor por defecto debe ser el usuario actual.' );
+        $this->assertEquals( $creator_id, (int) $post->post_author, 'Default author must be the current user.' );
     }
 
     /**
@@ -121,6 +90,7 @@ class DeckerTasksAuthorTest extends Decker_Test_Base {
         $this->assertTrue( $resp['success'] );
         $post = get_post( $resp['task_id'] );
         $this->assertInstanceOf( 'WP_Post', $post );
-        $this->assertEquals( $other_id, (int) $post->post_author, 'El administrador puede asignar otro autor.' );
+        $this->assertEquals( $other_id, (int) $post->post_author, 'Administrator can assign another author.' );
+
     }
 }

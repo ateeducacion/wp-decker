@@ -1777,11 +1777,6 @@ class Decker_Tasks {
 
 		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
 
-		// Enforce author: only admins can set a different author; others default to themselves.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			$author = get_current_user_id();
-		}
-
 		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
 		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
@@ -1921,11 +1916,8 @@ class Decker_Tasks {
 			return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
-				// Convert DateTime objects to string format (otherwise pass null to undefined).
-				$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
-
-		// Note: Author capability enforcement is handled at the request layer (AJAX/REST).
-		// Do not override here to keep programmatic calls (e.g., factories/tests) flexible.
+		// Convert DateTime objects to string format (otherwise pass null to undefined).
+		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
 
 		// Prepare the terms for tax_input.
 		$tax_input = array();
