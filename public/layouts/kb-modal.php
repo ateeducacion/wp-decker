@@ -69,7 +69,7 @@
 	  </div>
 	  <div class="modal-footer">
 				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php esc_html_e( 'Close', 'decker' ); ?></button>
-				<button type="button" class="btn btn-success" id="guardar-articulo"><i class="ri-save-3-line me-1"></i> <?php esc_html_e( 'Save Article', 'decker' ); ?></button>
+				<button type="button" class="btn btn-success" id="save-article"><i class="ri-save-3-line me-1"></i> <?php esc_html_e( 'Save Article', 'decker' ); ?></button>
 	  </div>
 	</div>
   </div>
@@ -142,15 +142,18 @@ jQuery(function($){
 	destroyEditor();
   });
 
-  $('#guardar-articulo').on('click', function(){
+  $('#save-article').on('click', function(){
 	var form = $('#article-form')[0];
 	if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
 
+	// Simplified: always prefer TinyMCE editor, fallback to textarea
 	var content = '';
 	try {
-	  if (window.wp && wp.editor && wp.editor.get('article-content')) content = wp.editor.get('article-content').getContent();
-	  if (!content && window.tinymce && tinymce.get('article-content')) content = tinymce.get('article-content').getContent();
-	  if (!content) content = ($('#article-content').val() || '');
+	  if (window.tinymce && tinymce.get('article-content')) {
+		content = tinymce.get('article-content').getContent();
+	  } else {
+		content = ($('#article-content').val() || '');
+	  }
 	} catch(e) { content = ($('#article-content').val() || ''); }
 
 	var $board = $('#article-board');
