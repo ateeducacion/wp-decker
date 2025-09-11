@@ -116,7 +116,7 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
 
         $data = $response->get_data();
         $this->assertArrayHasKey( 'message', $data );
-        $this->assertSame( 'Autenticación requerida para ver este comentario.', $data['message'] );
+        $this->assertSame( 'You are not authorized to access this resource.', $data['message'] );
     }
 
     /**
@@ -132,7 +132,7 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         $response = $this->server->dispatch( $request );
 
         $this->assertEquals( 401, $response->get_status() );
-        $this->assertSame( 'Autenticación requerida para crear comentarios en este tipo de contenido.', $response->get_data()['message'] );
+        $this->assertSame( 'You are not authorized to access this resource.', $response->get_data()['message'] );
     }
 
     /**
