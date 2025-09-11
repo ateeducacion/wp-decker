@@ -209,6 +209,9 @@ msgstr ""
 msgid "Comment by %s"
 msgstr ""
 
+msgid "You are not authorized to access this resource."
+msgstr ""
+
 msgctxt "taxonomy general name"
 msgid "Actions"
 msgstr ""
@@ -239,9 +242,6 @@ msgid "Actions"
 msgstr ""
 
 msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
-msgstr ""
-
-msgid "You are not authorized to access this resource."
 msgstr ""
 
 msgctxt "taxonomy general name"
