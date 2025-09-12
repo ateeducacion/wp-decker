@@ -204,7 +204,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 		$this->assertEquals( 'Updated content', $event->post_content );
 		$this->assertEquals( 'Updated excerpt', $event->post_excerpt );
 
-		// Verificar metas
+                // Check metadata
 		$this->assertEquals( '1', get_post_meta( $this->event_id, 'event_allday', true ), "Meta 'event_allday' should be 1." );
 		$this->assertEquals( '2025-02-01', get_post_meta( $this->event_id, 'event_start', true ), "Meta 'event_start' for all-day should be Y-m-d." );
 		$this->assertEquals( '2025-02-01', get_post_meta( $this->event_id, 'event_end', true ), "Meta 'event_end' for all-day should be Y-m-d." );
@@ -305,14 +305,14 @@ class DeckerEventsTest extends Decker_Test_Base {
 
 		$this->assertNotWPError( $event_id );
 
-		// Usar timestamps para comparación
+           // Use timestamps for comparison
 		$start_utc_stored = get_post_meta( $event_id, 'event_start', true );
 		$end_utc_stored   = get_post_meta( $event_id, 'event_end', true );
 
 		$start_ts = strtotime( $start_utc_stored );
 		$end_ts   = strtotime( $end_utc_stored );
 
-		// Verificar que end es 1 hora después de start
+           // Verify that end is 1 hour after start
 		// $this->assertEquals($start_ts + 3600, $end_ts);
 
 		// $start = get_post_meta( $event_id, 'event_start', true );
@@ -498,7 +498,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 
 		$other_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 
-		// Crear evento con un usuario asignado
+                // Create event with one assigned user
 		$this->event_id = self::factory()->event->create(
 			array(
 				'meta_input' => array(
@@ -507,14 +507,14 @@ class DeckerEventsTest extends Decker_Test_Base {
 			)
 		);
 
-		// Confirmar asignación inicial
+           // Confirm initial assignment
 		$this->assertEquals(
 			array( $this->editor ),
 			get_post_meta( $this->event_id, 'event_assigned_users', true ),
 			'Initial assigned users should match.'
 		);
 
-		// Actualizar usuarios asignados
+                // Update assigned users
 		$updated_id = self::factory()->event->update_object(
 			$this->event_id,
 			array(
@@ -547,7 +547,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 			'There should be at least one assigned user initially.'
 		);
 
-		// Eliminar todos los usuarios asignados
+                // Remove all assigned users
 		$updated_id = self::factory()->event->update_object(
 			$this->event_id,
 			array(
@@ -579,7 +579,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 
 		$before = get_post_meta( $this->event_id, 'event_assigned_users', true );
 
-		// Actualizar el evento sin tocar assigned_users
+           // Update the event without touching assigned_users
 		$updated_id = self::factory()->event->update_object(
 			$this->event_id,
 			array(

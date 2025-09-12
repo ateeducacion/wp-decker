@@ -1141,38 +1141,11 @@ msgstr "Extracto"
 msgid "Content"
 msgstr "Contenido"
 
-msgid "Search in title, tags, excerpt and content..."
-msgstr "Buscar en título, etiquetas, extracto y contenido..."
-
-msgid "Parent Article"
-msgstr "Artículo principal"
-
-msgid "No parent (top level)"
-msgstr "Sin artículo principal (nivel superior)"
-
-msgid "Order"
-msgstr "Orden"
-
 msgid "Error"
 msgstr "Error"
 
-msgid "Could not load article"
-msgstr "No se pudo cargar el artículo"
-
-msgid "Search for parent article..."
-msgstr "Buscar artículo principal..."
-
-msgid "Could not save article"
-msgstr "No se pudo guardar el artículo"
-
 msgid "You do not have permission to access this resource."
 msgstr "No tienes permiso para acceder a este recurso."
-
-msgid "Select labels..."
-msgstr "Seleccionar etiquetas..."
-
-msgid "No more labels available"
-msgstr "No hay más etiquetas disponibles"
 
 msgid "Enable email notifications for all plugin events."
 msgstr "Activar las notificaciones por correo electrónico para todos los eventos del plugin."
@@ -1186,7 +1159,6 @@ msgstr "Permitir notificaciones por correo electrónico"
 msgid "This email was automatically sent by Decker"
 msgstr "Este correo electrónico ha sido enviado automáticamente por Decker"
 
-#. translators: %s is a username.
 #. Translators: %s is a username.
 msgid "Unknown user"
 msgstr "Usuario desconocido"
@@ -1202,7 +1174,7 @@ msgstr "Una nueva tarea \"%1$s\" ha sido creada por %3$s. <a href=\"%2$s\">Haga 
 msgid "You have been assigned a task"
 msgstr "Se le ha asignado una tarea"
 
-#. translators: %s is a username.
+#. Translators: %s is a username.
 #, php-format
 msgid "Completed by %s"
 msgstr "Completado por %s"
@@ -1338,12 +1310,6 @@ msgstr "En Tableros"
 msgid "In KB"
 msgstr "En Base Con."
 
-msgid "Select parent..."
-msgstr "Seleccionar superior..."
-
-msgid "No more articles available"
-msgstr "No hay más artículos disponibles"
-
 msgid "Task saved successfully."
 msgstr "Tarea guardada exitosamente."
 
@@ -1409,3 +1375,109 @@ msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
 
 msgid "There are no tasks from previous days to import."
 msgstr "No hay tareas de días anteriores para importar."
+
+msgid "Invalid moved ID."
+msgstr "ID movido no válido."
+
+msgid "Search articles..."
+msgstr "Buscar artículos..."
+
+msgid "Add Child"
+msgstr "Añadir hijo"
+
+msgid "View"
+msgstr "Ver"
+
+msgid "The task has been saved successfully."
+msgstr "La tarea se ha guardado correctamente."
+
+msgctxt "post type general name"
+msgid "Journal Entries"
+msgstr "Entradas de diario"
+
+msgctxt "post type singular name"
+msgid "Journal Entry"
+msgstr "Entrada de diario"
+
+msgid "The date of the journal entry in YYYY-MM-DD format."
+msgstr "La fecha de la entrada de diario en formato AAAA-MM-DD."
+
+msgid "Board not found."
+msgstr "Tablero no encontrado."
+
+msgid "No journal entry to delete."
+msgstr "No hay entradas de diario para eliminar."
+
+msgid "Failed to delete journal entry."
+msgstr "Error al eliminar la entrada de diario."
+
+msgid "Cannot save notes for a day with no tasks."
+msgstr "No se pueden guardar notas para un día sin tareas."
+
+msgid "Daily Journal"
+msgstr "Diario diario"
+
+#. translators: %s: board name
+#, php-format
+msgid "Journal for %s"
+msgstr "Diario de %s"
+
+msgid "Preview"
+msgstr "Previsualizar"
+
+msgid "Search tasks..."
+msgstr "Buscar tareas..."
+
+msgid "Tasks of the Day"
+msgstr "Tareas del día"
+
+msgid "Comments/Observations"
+msgstr "Comentarios/Observaciones"
+
+msgid "Delete Notes"
+msgstr "Eliminar notas"
+
+msgid "Last saved:"
+msgstr "Último guardado:"
+
+msgid "Save Notes"
+msgstr "Guardar notas"
+
+msgid "No tasks for this board on this date."
+msgstr "No hay tareas para este tablero en esta fecha."
+
+msgid "Users of the Day"
+msgstr "Usuarios del día"
+
+msgid "Daily Notes"
+msgstr "Notas del día"
+
+msgid "Example view with no board selected. Use this mock to review the layout."
+msgstr "Vista de ejemplo sin tablero seleccionado. Use esta maqueta para revisar el diseño."
+
+msgid "Journal Preview"
+msgstr "Previsualización del diario"
+
+msgid "From"
+msgstr "Desde"
+
+msgid "To"
+msgstr "Hasta"
+
+msgid "Print"
+msgstr "Imprimir"
+
+msgid "There is no content to preview in this view."
+msgstr "No hay contenido para previsualizar en esta vista."
+
+msgid "No days available."
+msgstr "No hay días disponibles."
+
+msgid "No results in the selected range."
+msgstr "No hay resultados en el rango seleccionado."
+
+msgid "Are you sure you want to delete the notes for this day?"
+msgstr "¿Está seguro de que desea eliminar las notas de este día?"
+
+msgid "Journals"
+msgstr "Diarios"

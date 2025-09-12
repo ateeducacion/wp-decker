@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 include 'layouts/main.php';
 
-// Obtener el slug del board desde la URL.
+// Retrieve the board slug from the URL.
 $board_slug = get_query_var( 'slug' ) ? sanitize_title( get_query_var( 'slug' ) ) : '';
 
 // Retrieve the Board based on the slug.
@@ -27,7 +27,7 @@ $task_manager = new TaskManager();
 $tasks       = $task_manager->get_tasks_by_board( $main_board );
 
 
-// Dividir las tareas en columnas.
+// Divide the tasks into columns.
 $columns = array(
 	'to-do'       => array(),
 	'in-progress' => array(),
@@ -67,16 +67,16 @@ foreach ( $tasks as $task ) {
 									<div class="page-title-right">
 
 										<div class="input-group mb-3">
-											<!-- Icono de búsqueda integrado en el campo -->
+																						<!-- Search icon integrated into the field -->
 											<span class="input-group-text bg-white border-end-0">
 												<i class="ri-search-line"></i>
 											</span>
 											
-											<!-- Campo de búsqueda con botón de borrar (X) dentro -->
+																						<!-- Search field with a clear (X) button inside -->
 											<input id="searchInput" type="search" class="form-control border-start-0" placeholder="<?php esc_attr_e( 'Search...', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Search', 'decker' ); ?>">
 
-											<!-- Select de usuarios -->
-											<select id="boardUserFilter" class="form-select ms-2">
+																						<!-- User selector -->
+																						<select id="boardUserFilter" class="form-select ms-2">
 												<option value=""><?php esc_html_e( 'All Users', 'decker' ); ?></option>
 												<?php
 												$users = get_users();

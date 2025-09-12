@@ -273,18 +273,21 @@ class Decker_Public {
 
 			if ( 'knowledge-base' == $decker_page || 'journal' == $decker_page ) {
 
-				wp_enqueue_media(); // Obligatorio para subida de medios.
+							   wp_enqueue_media(); // Required for media uploads.
 				// wp_enqueue_script('editor');
 				// wp_enqueue_script('thickbox');
 				// wp_enqueue_style('editor-buttons');
 				// wp_enqueue_style('thickbox');
-				// wp_enqueue_script('wp-tinymce'); // Script principal de TinyMCE.
+							   // wp_enqueue_script('wp-tinymce'); // Main TinyMCE script.
 
-				wp_enqueue_editor();
+					wp_enqueue_editor();
+
+					// Page-specific script for Knowledge Base interactions.
+					$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/knowledge-base.js';
 
 			}
 
-			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page || 'journal' == $decker_page ) { // Only load datatables.net on tasks page.
+			if ( 'tasks' == $decker_page || 'journal' == $decker_page ) { // Only load datatables.net on tasks and journal pages.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
@@ -310,9 +313,9 @@ class Decker_Public {
 				)
 			);
 
-			// Añadir el nickname a cada usuario.
+				   // Add the nickname to each user.
 			foreach ( $users as &$user ) {
-				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real.
+							   $user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Replace 'alias' with your real meta key.
 			}
 
 			// Unified localized data.
@@ -340,6 +343,7 @@ class Decker_Public {
 					'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
 					'request_error'               => __( 'Request error.', 'decker' ),
 					'error_saving_task'           => __( 'Error saving task.', 'decker' ),
+					'task_saved_success'          => __( 'The task has been saved successfully.', 'decker' ),
 					'show_html_source'            => __( 'Show HTML source', 'decker' ),
 					'edit_html_content'           => __( 'Edit the content in HTML format', 'decker' ),
 					'ok'                          => __( 'OK', 'decker' ),
@@ -386,7 +390,7 @@ class Decker_Public {
 			// Add the bundled jQuery library.
 			wp_enqueue_script( 'jquery' );
 
-			// Asegurar que el script de Heartbeat esté encolado.
+				   // Ensure that the Heartbeat script is enqueued.
 			wp_enqueue_script( 'heartbeat' );
 
 			// Add the bundled Backbone library.

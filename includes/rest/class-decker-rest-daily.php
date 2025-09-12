@@ -9,12 +9,36 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * REST controller for Decker Daily endpoints.
+ *
+ * Registers REST API routes for fetching the daily summary as well as
+ * creating and deleting daily notes for a given board and date.
+ *
+ * @since 1.0.0
+ */
 class Decker_REST_Daily {
 
+	/**
+	 * Hooks REST route registration on rest_api_init.
+	 *
+	 * @since 1.0.0
+	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 	}
 
+	/**
+	 * Registers the REST API routes for the Daily feature.
+	 *
+	 * Routes:
+	 * - GET decker/v1/daily: Fetch daily data (summary and metadata).
+	 * - POST decker/v1/daily: Create or update daily notes.
+	 * - DELETE decker/v1/daily: Delete existing daily notes.
+	 *
+	 * @since 1.0.0
+	 * @return void
+	 */
 	public function register_routes() {
 		register_rest_route(
 			'decker/v1',
@@ -73,18 +97,57 @@ class Decker_REST_Daily {
 		);
 	}
 
+	/**
+	 * Permission check for read-only Daily endpoints.
+	 *
+	 * Grants access to users capable of reading.
+	 *
+	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool True if the current user can read, false otherwise.
+	 */
 	public function get_permissions_check( $request ) {
 		return current_user_can( 'read' );
 	}
 
+	/**
+	 * Permission check for mutating Daily endpoints.
+	 *
+	 * Grants access to users capable of editing posts.
+	 *
+	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request object.
+	 * @return bool True if the current user can edit posts, false otherwise.
+	 */
 	public function edit_permissions_check( $request ) {
 		return current_user_can( 'edit_posts' );
 	}
 
+	/**
+	 * Validates the board parameter for REST requests.
+	 *
+	 * Accepts either a numeric term ID or a string slug.
+	 *
+	 * @since 1.0.0
+	 * @param mixed           $param   Raw parameter value.
+	 * @param WP_REST_Request $request Request object.
+	 * @param string          $key     Parameter name.
+	 * @return bool True when the value looks like a valid board reference.
+	 */
 	public function is_valid_board( $param, $request, $key ) {
 		return is_numeric( $param ) || is_string( $param );
 	}
 
+	/**
+	 * Resolves a board parameter to a term ID.
+	 *
+	 * Accepts a numeric ID directly or resolves a slug to its corresponding
+	 * `decker_board` term ID. Returns 0 when no term is found.
+	 *
+	 * @since 1.0.0
+	 * @param int|string $board_param Board ID or slug.
+	 * @return int Term ID or 0 when not found.
+	 */
 	private function get_board_id_from_param( $board_param ) {
 		if ( is_numeric( $board_param ) ) {
 			return (int) $board_param;
@@ -93,6 +156,16 @@ class Decker_REST_Daily {
 		return $term ? $term->term_id : 0;
 	}
 
+	/**
+	 * Handles GET requests for the daily data.
+	 *
+	 * Returns summary information for a board and date. Responds with 404 if the
+	 * board cannot be resolved.
+	 *
+	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error REST response on success, error otherwise.
+	 */
 	public function get_daily_data( $request ) {
 		$board_id = $this->get_board_id_from_param( $request['board'] );
 		$date = sanitize_text_field( $request['date'] );
@@ -114,6 +187,16 @@ class Decker_REST_Daily {
 		return new WP_REST_Response( $response, 200 );
 	}
 
+	/**
+	 * Handles POST requests to create or update daily notes.
+	 *
+	 * Expects a board reference, a date (Y-m-d) and the notes content.
+	 * Returns the journal post ID on success.
+	 *
+	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error REST response on success, error otherwise.
+	 */
 	public function save_daily_notes( $request ) {
 		$board_id = $this->get_board_id_from_param( $request['board'] );
 		$date = sanitize_text_field( $request['date'] );
@@ -138,6 +221,16 @@ class Decker_REST_Daily {
 		);
 	}
 
+	/**
+	 * Handles DELETE requests to remove daily notes.
+	 *
+	 * Deletes the journal post for the given board and date. Returns 404 when
+	 * no journal entry exists and 500 when deletion fails.
+	 *
+	 * @since 1.0.0
+	 * @param WP_REST_Request $request Request object.
+	 * @return WP_REST_Response|WP_Error REST response on success, error otherwise.
+	 */
 	public function delete_daily_notes( $request ) {
 		$board_id = $this->get_board_id_from_param( $request['board'] );
 		$date = sanitize_text_field( $request['date'] );

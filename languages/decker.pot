@@ -179,7 +179,6 @@ msgstr ""
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
-#. translators: %s is a username.
 #. Translators: %s is a username.
 msgid "Unknown user"
 msgstr ""
@@ -195,7 +194,7 @@ msgstr ""
 msgid "You have been assigned a task"
 msgstr ""
 
-#. translators: %s is a username.
+#. Translators: %s is a username.
 #, php-format
 msgid "Completed by %s"
 msgstr ""
@@ -208,6 +207,9 @@ msgstr ""
 #. Translators: %s is a username.
 #, php-format
 msgid "Comment by %s"
+msgstr ""
+
+msgid "You are not authorized to access this resource."
 msgstr ""
 
 msgctxt "taxonomy general name"
@@ -240,9 +242,6 @@ msgid "Actions"
 msgstr ""
 
 msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
-msgstr ""
-
-msgid "You are not authorized to access this resource."
 msgstr ""
 
 msgctxt "taxonomy general name"
@@ -396,6 +395,17 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
+msgctxt "post type general name"
+msgid "Journal Entries"
+msgstr ""
+
+msgctxt "post type singular name"
+msgid "Journal Entry"
+msgstr ""
+
+msgid "The date of the journal entry in YYYY-MM-DD format."
+msgstr ""
+
 msgid "Board is required"
 msgstr ""
 
@@ -403,6 +413,9 @@ msgid "Invalid board ID"
 msgstr ""
 
 msgid "Article saved successfully"
+msgstr ""
+
+msgid "Invalid moved ID."
 msgstr ""
 
 msgid "Article not found"
@@ -767,6 +780,18 @@ msgstr ""
 msgid "Unmark for today"
 msgstr ""
 
+msgid "Board not found."
+msgstr ""
+
+msgid "No journal entry to delete."
+msgstr ""
+
+msgid "Failed to delete journal entry."
+msgstr ""
+
+msgid "Cannot save notes for a day with no tasks."
+msgstr ""
+
 msgid "Analytics Dashboard"
 msgstr ""
 
@@ -836,6 +861,77 @@ msgstr ""
 msgid "Uncategorized"
 msgstr ""
 
+msgid "Daily Journal"
+msgstr ""
+
+#. translators: %s: board name
+#, php-format
+msgid "Journal for %s"
+msgstr ""
+
+msgid "Preview"
+msgstr ""
+
+msgid "Search tasks..."
+msgstr ""
+
+msgid "Tasks of the Day"
+msgstr ""
+
+msgid "Comments/Observations"
+msgstr ""
+
+msgid "Delete Notes"
+msgstr ""
+
+msgid "Last saved:"
+msgstr ""
+
+msgid "Save Notes"
+msgstr ""
+
+msgid "No tasks for this board on this date."
+msgstr ""
+
+msgid "Users of the Day"
+msgstr ""
+
+msgid "Daily Notes"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Example view with no board selected. Use this mock to review the layout."
+msgstr ""
+
+msgid "Journal Preview"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+msgid "Print"
+msgstr ""
+
+msgid "There is no content to preview in this view."
+msgstr ""
+
+msgid "No days available."
+msgstr ""
+
+msgid "No results in the selected range."
+msgstr ""
+
+msgid "Are you sure you want to delete the notes for this day?"
+msgstr ""
+
 msgid "My Board"
 msgstr ""
 
@@ -877,7 +973,16 @@ msgstr ""
 msgid "No Board"
 msgstr ""
 
-msgid "Search in title, tags, excerpt and content..."
+msgid "Search articles..."
+msgstr ""
+
+msgid "Add Child"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Delete"
 msgstr ""
 
 msgid "Are you sure?"
@@ -914,9 +1019,6 @@ msgid "You have no tasks defined for today. Do you want to import tasks from a p
 msgstr ""
 
 msgid "Yes"
-msgstr ""
-
-msgid "Close"
 msgstr ""
 
 msgid "MAX PRIORITY"
@@ -994,9 +1096,6 @@ msgstr ""
 msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
 msgstr ""
 
-msgid "Save"
-msgstr ""
-
 msgid "Edit Term"
 msgstr ""
 
@@ -1042,9 +1141,6 @@ msgstr ""
 msgid "Error uploading attachment."
 msgstr ""
 
-msgid "Delete"
-msgstr ""
-
 msgid "Server response error."
 msgstr ""
 
@@ -1055,6 +1151,9 @@ msgid "Request error."
 msgstr ""
 
 msgid "Error saving task."
+msgstr ""
+
+msgid "The task has been saved successfully."
 msgstr ""
 
 msgid "Show HTML source"
@@ -1168,43 +1267,13 @@ msgstr ""
 msgid "Version"
 msgstr ""
 
-msgid "Please provide a title."
-msgstr ""
-
 msgid "Please select a board."
 msgstr ""
 
-msgid "Parent Article"
-msgstr ""
-
-msgid "No parent (top level)"
-msgstr ""
-
-msgid "Order"
+msgid "Please provide a title."
 msgstr ""
 
 msgid "Save Article"
-msgstr ""
-
-msgid "Could not load article"
-msgstr ""
-
-msgid "Select labels..."
-msgstr ""
-
-msgid "No more labels available"
-msgstr ""
-
-msgid "Select parent..."
-msgstr ""
-
-msgid "No more articles available"
-msgstr ""
-
-msgid "Search for parent article..."
-msgstr ""
-
-msgid "Could not save article"
 msgstr ""
 
 msgid "Show Full Sidebar"
@@ -1214,6 +1283,9 @@ msgid "Navigation"
 msgstr ""
 
 msgid "Apps"
+msgstr ""
+
+msgid "Journals"
 msgstr ""
 
 msgid "Utilities"

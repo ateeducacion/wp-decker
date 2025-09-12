@@ -320,7 +320,7 @@ class Decker_Calendar_ICS_TDD_Test extends Decker_Test_Base {
 		$ics    = ( new Decker_Calendar() )->generate_ical_string();
 		$events = $this->parse_ics( $ics );
 
-		// Filtramos por la tarea.
+           // Filter by the task.
 		$task = array_filter(
 			$events,
 			function ( $e ) {

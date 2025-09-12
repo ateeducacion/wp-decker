@@ -27,7 +27,7 @@ class MailerTest extends WP_UnitTestCase {
 		// Initialize the mailer instance.
 		$this->mailer = new Decker_Mailer();
 
-		// Reemplazar la función wp_mail con nuestra función de prueba.
+               // Replace the wp_mail function with our test function.
 		add_filter( 'pre_wp_mail', array( $this, 'intercept_mail' ), 10, 2 );
 	}
 
@@ -50,7 +50,7 @@ class MailerTest extends WP_UnitTestCase {
 	 */
 	public function intercept_mail( $pre, $args ) {
 		$this->captured_mail = $args;
-		return false; // Previene que se envíe el email real.
+               return false; // Prevents the real email from being sent.
 	}
 
 	/**

@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalElement = document.getElementById('task-modal');
 
     jQuery('#task-modal').on('hide.bs.modal', function (e) {
-        // Si tenemos cambios sin guardar, pedimos confirmación
+       // If we have unsaved changes, ask for confirmation
         if (window.deckerHasUnsavedChanges) {
             e.preventDefault(); // Prevents modal closing
 
@@ -16,9 +16,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 cancelButtonText: deckerVars.strings.cancel
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // El usuario ha confirmado cerrar y descartar
+                    // The user has confirmed to close and discard
                     window.deckerHasUnsavedChanges = false;
-                    // Forzamos el cierre del modal
+                    // Force closing the modal
                     jQuery('#task-modal').modal('hide');
                 }
             });
@@ -29,11 +29,11 @@ document.addEventListener('DOMContentLoaded', function () {
         var modal = jQuery(this);
         modal.find('#task-modal-body').html('<p>' + jsdata_task.loadingMessage + '</p>');
 
-        var taskId = jQuery(e.relatedTarget).data('task-id'); // Puede ser 0 (nueva tarea).
+       var taskId = jQuery(e.relatedTarget).data('task-id'); // It can be 0 (new task).
         var url = jsdata_task.url;
 
         const params = new URLSearchParams(window.location.search);
-        const boardSlug = params.get('slug'); // Si existe.
+        const boardSlug = params.get('slug'); // If present.
 
         jQuery.ajax({
             url: url,
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     modalTitle.text('Task');
                 }
 
-                // Después de cargar el contenido, inicializar las funciones JS
+               // After loading the content, initialize the JS functions
                 if (typeof window.initializeSendComments === 'function' && typeof window.initializeTaskPage === 'function') {
                     window.initializeSendComments(modal[0]);
                     window.initializeTaskPage(modal[0]);
@@ -69,15 +69,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Limpiar atributos data-* al cerrar el modal para permitir una nueva inicialización
+// Clear data-* attributes when closing the modal to allow reinitialization
     jQuery('#task-modal').on('hidden.bs.modal', function () {
         var modal = jQuery(this);
-        // Remover los atributos data-* utilizados para rastrear inicialización
+       // Remove the data-* attributes used to track initialization
         modal[0].removeAttribute('data-send-comments-initialized');
         modal[0].removeAttribute('data-task-page-initialized');
 
-        // Opcional: destruir instancias de Choices.js o Quill editor si es necesario
-        // Esto depende de tu implementación y uso de memoria
+        // Optional: destroy instances of Choices.js or Quill editor if necessary
+       // This depends on your implementation and memory usage
         if (window.Choices) {
             const assigneesSelectInstance = window.assigneesSelect;
             if (assigneesSelectInstance) {
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (window.quill) {
-            window.quill = null; // Asumiendo que quill no necesita destrucción explícita
+           window.quill = null; // Assuming that Quill doesn't need explicit destruction
         }
     });
 });

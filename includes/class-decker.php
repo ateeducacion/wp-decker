@@ -123,6 +123,11 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
 		/**
+		 * The class responsible for protecting comments on custom post types via the REST API.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-rest-comment-protection.php';
+
+		/**
 		 * The class responsible for defining the MVC.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';

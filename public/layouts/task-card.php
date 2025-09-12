@@ -32,7 +32,7 @@ function include_wp_load( $max_levels = 10 ) {
 
 // Attempt to include wp-load.php, required when we are loading the task-card in a Bootstrap modal.
 if ( ! defined( 'ABSPATH' ) ) {
-	if ( ! include_wp_load() ) { // Usa tu función include_wp_load().
+	if ( ! include_wp_load() ) { // Use your include_wp_load() function.
 		exit( 'Error: Unauthorized access.' );
 	}
 }
@@ -95,7 +95,7 @@ $task_comments = array();
 
 if ( $task_id ) {
 
-	// Obtener comentarios asociados al task_id.
+	// Get comments associated with the task_id.
 	$task_comments = get_comments(
 		array(
 			'post_id' => $task_id,
@@ -125,14 +125,14 @@ if ( $task_id ) {
 function render_comments( array $task_comments, int $parent_id, int $current_user_id ) {
 	foreach ( $task_comments as $comment ) {
 		if ( $comment->comment_parent == $parent_id ) {
-			// Obtener respuestas recursivamente.
+				   // Get replies recursively.
 			echo '<div class="d-flex align-items-start mb-2" style="margin-left:' . ( $comment->comment_parent ? '20px' : '0' ) . ';">';
 			echo '<img class="me-2 rounded-circle" src="' . esc_url( get_avatar_url( $comment->user_id, array( 'size' => 48 ) ) ) . '" alt="Avatar" height="32" />';
 			echo '<div class="w-100">';
 			echo '<h5 class="mt-0">' . esc_html( $comment->comment_author ) . ' <small class="text-muted float-end">' . esc_html( get_comment_date( '', $comment ) ) . '</small></h5>';
 			echo wp_kses_post( apply_filters( 'the_content', $comment->comment_content ) );
 
-			// Mostrar enlace de eliminar si el comentario pertenece al usuario actual.
+				   // Show delete link if the comment belongs to the current user.
 			if ( get_current_user_id() == $comment->user_id ) {
 				echo '<a href="javascript:void(0);" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_html__( 'Delete', 'decker' ) . '</a> ';
 
@@ -143,7 +143,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 			echo '</div>';
 			echo '</div>';
 
-			// Llamada recursiva para renderizar respuestas.
+				   // Recursive call to render replies.
 			render_comments( $task_comments, $comment->comment_ID, $current_user_id );
 		}
 	}
@@ -262,7 +262,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 	</div>
 
 
-	<!-- Asignados y Etiquetas con ejemplos preseleccionados -->
+		<!-- Assignees and Tags with preselected examples -->
 	<div class="row">
 		<div class="mb-3">
 			<label for="task-assignees" class="form-label"><?php esc_html_e( 'Assign to', 'decker' ); ?></label>
@@ -321,7 +321,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 			<a href="#attachments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Attachments', 'decker' ); ?> 
 
 			<?php
-			// Obtener los adjuntos asociados con la tarea.
+				   // Get attachments associated with the task.
 
 			$attachments = get_attached_media( '', $task_id );
 
@@ -467,7 +467,7 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
  */
 
 // -------------------------------------------------------------------------
-// 1.  Recuperar y preparar los datos
+// 1.  Retrieve and prepare the data
 // -------------------------------------------------------------------------
 
 $relations = get_post_meta( $task_id, '_user_date_relations', true );
@@ -495,9 +495,9 @@ foreach ( $user_dates as $user_id => $dates ) {
 		continue;
 	}
 
-	// Ordenar y eliminar duplicados.
-	$dates = array_values( array_unique( $dates ) );
-	sort( $dates );
+		// Sort and remove duplicates.
+		$dates = array_values( array_unique( $dates ) );
+		sort( $dates );
 
 	$task_data[] = array(
 		'user'  => $user->display_name,
@@ -505,7 +505,7 @@ foreach ( $user_dates as $user_id => $dates ) {
 	);
 }
 
-// Rango de fechas para el subtítulo (si existen datos).
+// Date range for the subtitle (if data exists).
 $all_dates = array();
 foreach ( $task_data as $entry ) {
 	$all_dates = array_merge( $all_dates, $entry['dates'] );
@@ -591,11 +591,16 @@ foreach ( $user_dates as $user_id => $dates ) {
 					<div class="form-floating">
 						<select class="form-select" id="task-author-info" <?php disabled( ! current_user_can( 'manage_options' ) ); ?>>
 							<?php
-							$author_id = get_post_field( 'post_author', $task_id );
+							// Default author to current user for new tasks or missing author.
+							$author_id = ( $task_id > 0 ) ? (int) get_post_field( 'post_author', $task_id ) : 0;
+							if ( ! $author_id ) {
+								$author_id = get_current_user_id();
+							}
+
 							$users = get_users( array( 'orderby' => 'display_name' ) );
 							foreach ( $users as $user ) {
 								echo '<option value="' . esc_attr( $user->ID ) . '" ' .
-									selected( $user->ID, $author_id, false ) . '>' .
+									selected( (int) $user->ID, (int) $author_id, false ) . '>' .
 									esc_html( $user->display_name ) . '</option>';
 							}
 							?>
@@ -611,7 +616,7 @@ foreach ( $user_dates as $user_id => $dates ) {
 	</div>
 
 
-	<!-- Switch de Prioridad Máxima y Botones de Archive y Guardar -->
+	<!-- Highest Priority switch and Archive and Save buttons -->
 	<div class="d-flex justify-content-end align-items-center mt-3">
 
 
@@ -636,5 +641,4 @@ foreach ( $user_dates as $user_id => $dates ) {
 
 
 </form>
-
 

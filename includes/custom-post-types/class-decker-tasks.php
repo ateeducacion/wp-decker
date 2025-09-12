@@ -765,7 +765,7 @@ class Decker_Tasks {
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
 
-		$date = new DateTime(); // Fecha y hora actuales.
+				$date = new DateTime(); // Current date and time.
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();
@@ -1915,8 +1915,8 @@ class Decker_Tasks {
 			return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
-		// Convertir objetos DateTime a formato string (si no, pasamos null to undefined).
-		$duedate_str       = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+		// Convert DateTime objects to string format (otherwise pass null to undefined).
+		$duedate_str = $duedate ? $duedate->format( 'Y-m-d' ) : null;
 
 		// Prepare the terms for tax_input.
 		$tax_input = array();
@@ -1928,7 +1928,7 @@ class Decker_Tasks {
 			$tax_input['decker_board'] = array( $board );
 		}
 
-		// Incluir etiquetas en tax_input si las hay.
+				// Include labels in tax_input if any.
 		if ( ! empty( $labels ) ) {
 			// Make sure $labels contains valid term IDs.
 			$tax_input['decker_label'] = array_map( 'intval', $labels );
@@ -1941,17 +1941,17 @@ class Decker_Tasks {
 
 			// Store previously assigned users before the update.
 			$previous_assigned_users = array();
-			if ( $id > 0 ) { // Solo si estamos actualizando.
+			if ( $id > 0 ) { // Only if updating.
 				$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
 				$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
 			}
 
-			// Comparar los usuarios nuevos con los previamente asignados.
+			// Compare new users with previously assigned ones.
 			$new_users = array_diff( $assigned_users, $previous_assigned_users );
 
 		}
 
-		// Preparar los metadatos personalizados.
+				// Prepare custom metadata.
 		$meta_input = array(
 			'id_nextcloud_card' => $id_nextcloud_card,
 			'stack'             => sanitize_text_field( $stack ),
@@ -1962,7 +1962,7 @@ class Decker_Tasks {
 			'hidden'            => $hidden,
 		);
 
-		// Preparar los datos del post.
+				// Prepare the post data.
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $title ),
 			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
@@ -1993,7 +1993,7 @@ class Decker_Tasks {
 			// Retrieve the current stack value as a string.
 			$source_stack = get_post_meta( $id, 'stack', true );
 
-			// Actualizar el post existente.
+					   // Update the existing post.
 			$post_data['ID'] = $id;
 			$task_id         = wp_update_post( $post_data );
 
@@ -2016,7 +2016,7 @@ class Decker_Tasks {
 				do_action( 'decker_task_responsable_changed', $id, (int) $old_responsable, (int) $responsable );
 			}
 
-			// Disparar el evento para cada usuario nuevo.
+					   // Trigger the event for each new user.
 			foreach ( $new_users as $new_user_id ) {
 				do_action( 'decker_user_assigned', $task_id, $new_user_id );
 			}
@@ -2033,7 +2033,7 @@ class Decker_Tasks {
 			return $task_id; // Return the error to handle it externally.
 		}
 
-		// Retornar el ID de la tarea creada o actualizada.
+			   // Return the ID of the created or updated task.
 		return $task_id;
 	}
 
@@ -2058,7 +2058,7 @@ class Decker_Tasks {
 		}
 
 		// Get the new and old board term IDs.
-		// Asume que solo se asigna un tablero a la vez.
+		// Assume that only one board is assigned at a time.
 		$new_board_term_id = ! empty( $tt_ids ) ? (int) $tt_ids[0] : 0;
 		$old_board_term_id = ! empty( $old_tt_ids ) ? (int) $old_tt_ids[0] : 0;
 
@@ -2091,7 +2091,7 @@ class Decker_Tasks {
 			// Reorder tasks in the new board (including the moved task).
 			// 1. Reorder new board.
 			if ( $new_board_term_id > 0 ) {
-				// error_log("Decker Reorder Hook: Reordenando tablero NUEVO {$new_board_term_id} / stack {$current_stack}");
+				// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
 				// Call the static function to reorder.
 				$this->reorder_tasks_in_stack( $new_board_term_id, $current_stack );
 			}
@@ -2099,7 +2099,7 @@ class Decker_Tasks {
 			// Reorder tasks in the old board (excluding the moved task).
 			// 2. Reorder old board.
 			if ( $old_board_term_id > 0 ) {
-				// error_log("Decker Reorder Hook: Reordenando tablero ANTIGUO {$old_board_term_id} / stack {$current_stack} (excluyendo {$object_id})");
+				// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
 				// Call the static function to reorder.
 				$this->reorder_tasks_in_stack( $old_board_term_id, $current_stack, $object_id );
 			}

@@ -14,10 +14,10 @@
 
 /* Style for Choice.js disabled items */
 div.choices__item[aria-disabled="true"] {
-    color: red; /* Cambia el color del texto a rojo */
-    background-color: #f8d7da; /* Fondo rojo claro */
-    border: 1px solid #f5c6cb; /* Borde a juego */
-    font-weight: bold; /* Opcional: Resaltar más */
+    color: red; /* Change text color to red */
+    background-color: #f8d7da; /* Light red background */
+    border: 1px solid #f5c6cb; /* Matching border */
+    font-weight: bold; /* Optional: Highlight more */
 }
 
 /* Hide disabled options from the Choice.js dropdown */
@@ -45,40 +45,40 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .notify-item .notification-content {
     display: flex;
-    flex-direction: column; /* Alinea verticalmente */
-    width: 80%; /* Asegura que ocupa todo el ancho disponible */
+    flex-direction: column; /* Align vertically */
+    width: 80%; /* Ensures it occupies all available width */
 }
 
 .notify-item .fw-semibold {
     overflow: hidden;
-    text-overflow: ellipsis; /* Trunca el texto con puntos suspensivos */
-    white-space: nowrap; /* Evita que el texto se ajuste a varias líneas */
-    margin-bottom: 2px; /* Espacio entre título y acción */
+    text-overflow: ellipsis; /* Truncates text with ellipsis */
+    white-space: nowrap; /* Prevents text from wrapping onto multiple lines */
+    margin-bottom: 2px; /* Space between title and action */
 }
 
 .notify-item .notification-action {
-    color: #6c757d; /* Color grisáceo para la acción */
+    color: #6c757d; /* Grayish color for the action */
     display: flex;
-    justify-content: space-between; /*Alinea la hora a la derecha*/
+    justify-content: space-between; /*Aligns the time to the right*/
     align-items: center;
 }
 
 .notify-item .notification-time {
     font-size: 0.8rem;
-    color: #6c757d; /* Mismo color que la acción */
+    color: #6c757d; /* Same color as the action */
 }
 
 .notify-icon {
-    margin-right: 10px; /* Separación entre el icono y el texto */
-    display: flex; /* Para centrar verticalmente el icono */
-    align-items: center; /* Centrar verticalmente */
-    justify-content: center; /* Centra horizontalmente */
-    align-items: center; /* Centra verticalmente */
+    margin-right: 10px; /* Spacing between the icon and the text */
+    display: flex; /* To vertically center the icon */
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
 
 }
 
 .notify-item .d-flex{
-    align-items: flex-start; /*Alinear arriba el contenido*/
+    align-items: flex-start; /*Align content at the top*/
 }
 
 
@@ -96,6 +96,28 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     overflow-y: auto; /* Enables vertical scrolling */
     max-height: 65vh; /* Adjust based on header/footer size */
     padding: 1rem; /* Prevents content from touching edges */
+}
+
+/* Knowledge Base inline title editor: allow wider input on desktop */
+.kb-labels { padding-left: 0.5em; }
+.kb-item > .d-flex > .d-flex:first-child {
+    flex: 1 1 auto; /* let left block grow */
+    min-width: 0;   /* allow children to shrink without overflow */
+}
+.kb-item .kb-title-text {
+    flex: 1 1 auto; /* title area grows to available space */
+    min-width: 0;
+}
+.kb-item .kb-title-text .kb-title-input {
+    width: 100%;     /* input stretches within title area */
+    max-width: none; /* remove intrinsic max */
+    margin-right: 6px; /* small gap before labels */
+}
+
+@media (min-width: 992px) { /* desktop */
+    .kb-item .kb-title-text .kb-title-input {
+        font-size: 16px; /* keep readable while expanding */
+    }
 }
 
 /* Style for labels in KB table */
@@ -125,15 +147,15 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 }
 
 
-/* Estilos para fechas */
-.due-today { color: var(--ct-warning-text-emphasis); }  /* Amarillo */
-.due-past  { color: var(--ct-danger-text-emphasis); }   /* Rojo */
-.due-none  { color: #6c757d; font-style: italic; }      /* Gris para sin fecha */
+/* Styles for dates */
+.due-today { color: var(--ct-warning-text-emphasis); }  /* Yellow */
+.due-past  { color: var(--ct-danger-text-emphasis); }   /* Red */
+.due-none  { color: #6c757d; font-style: italic; }      /* Gray for no date */
 
 
 
 /* =================================================================
-   Estilos base para los "chips" de Tableros y Etiquetas
+   Base styles for board and label "chips"
    ================================================================= */
 
 .custom-badge {
@@ -146,18 +168,19 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     text-align: center;
     white-space: nowrap; /* Ensures it stays on a single line by default */
     vertical-align: baseline;
-    border-radius: 10rem; /* Esto crea la forma de "chip" redondeado */
+    border-radius: 10rem; /* This creates the rounded "chip" shape */
     word-break: break-word;
 }
 
 
+
 /* =================================================================
-   Mejoras responsivas para la vista de Prioridad en MÓVIL
+   Responsive improvements for the Priority view on MOBILE
    ================================================================= */
 
 @media (max-width: 768px) {
 
-    /* --- 1. Estilos para la nueva vista agrupada de "Máxima Prioridad" --- */
+    /* --- 1. Styles for the new "Highest Priority" grouped view --- */
     .priority-mobile-view .board-group-header {
         padding: 0.75rem 1rem;
         background-color: var(--ct-tertiary-bg);
@@ -198,10 +221,10 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     }
     
     .priority-mobile-view .custom-badge {
-        white-space: normal; /* Permitimos que el texto del tablero se divida en varias líneas si es largo */
+        white-space: normal; /* Allow the board text to wrap onto multiple lines if it's long */
     }
 
-    /* --- 2. Mejora para las tarjetas de Tareas (Kanban y otras vistas) --- */
+    /* --- 2. Improvement for Task cards (Kanban and other views) --- */
     .task .card-body {
         display: flex;
         flex-direction: column;
