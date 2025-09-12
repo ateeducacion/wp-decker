@@ -376,13 +376,53 @@
         fallbackOnBody: true,
         swapThreshold: 0.65,
         handle: '.kb-title-text, .kb-toggle',
+        onMove: function(evt, originalEvent) {
+          try {
+            var item = evt.dragged;
+            var related = evt.related;
+            var relLi = related && (related.classList && related.classList.contains('kb-item') ? related : (related.closest ? related.closest('li.kb-item') : null));
+            // Default: clear any previous target
+            if (item && item.dataset) { delete item.dataset.dropTargetParent; }
+            if (!relLi) return true;
+
+            // Only consider leaf nodes (no .kb-toggle button present in left controls)
+            var leftControls = relLi.querySelector(':scope > .d-flex > .d-flex.align-items-center.gap-2');
+            if (!leftControls) return true;
+            var hasToggle = !!leftControls.querySelector(':scope > .kb-toggle');
+            if (hasToggle) return true; // not a final node
+
+            // Ensure same board
+            var itemBoard = parseInt(item.getAttribute('data-board-id') || '0', 10) || 0;
+            var liBoard = parseInt(relLi.getAttribute('data-board-id') || '0', 10) || 0;
+            if (itemBoard !== liBoard) return false;
+
+            // Mark this LI as intended new parent
+            var pid = parseInt(relLi.getAttribute('data-article-id') || '0', 10) || 0;
+            if (pid > 0) { item.dataset.dropTargetParent = String(pid); }
+          } catch (e) {}
+          return true;
+        },
         onStart: function() { document.body.classList.add('kb-dragging'); },
         onEnd: function (evt) {
             const item = evt.item;
             const movedId = parseInt(item.dataset.articleId, 10);
-            const to = evt.to; const from = evt.from;
-            const newParent = parseInt(to.dataset.parentId || '0', 10);
+            let to = evt.to; const from = evt.from;
+            let newParent = parseInt(to.dataset.parentId || '0', 10);
             const oldParent = parseInt(from.dataset.parentId || '0', 10);
+
+            // If user dropped over a final node, redirect insertion into that node's hidden children list
+            try {
+              var targetPid = parseInt(item.dataset.dropTargetParent || '0', 10) || 0;
+              delete item.dataset.dropTargetParent;
+              if (targetPid > 0) {
+                var targetUl = document.getElementById('children-of-' + String(targetPid));
+                if (targetUl && item.parentNode !== targetUl) {
+                  targetUl.appendChild(item);
+                  to = targetUl;
+                  newParent = targetPid;
+                }
+              }
+            } catch (e) {}
 
             // Build sibling order lists (direct children only)
             const toOrder = Array.from(to.children)
@@ -415,6 +455,48 @@
             }).then(function () {
               // Update dataset parent-id on moved node
               item.dataset.parentId = String(newParent);
+
+              // If the item gained a new parent, ensure the parent has a working toggle button
+              try {
+                if (newParent && newParent > 0) {
+                  var $parentLi = $('li.kb-item[data-article-id="' + String(newParent) + '"]');
+                  var $children = $('#children-of-' + String(newParent));
+                  // Upgrade disabled span to real toggle button if needed
+                  var $leftControls = $parentLi.find('> .d-flex > .d-flex.align-items-center.gap-2').first();
+                  var hasToggleBtn = $leftControls.find('> .kb-toggle').length > 0;
+                  if (!hasToggleBtn) {
+                    // Remove disabled span (if present) and insert a kb-toggle button
+                    $leftControls.find('> span.btn.disabled').first().remove();
+                    var btnHtml = '<button class="btn btn-sm btn-outline-secondary kb-toggle" type="button" ' +
+                                  'data-bs-toggle="collapse" data-bs-target="#children-of-' + String(newParent) + '" ' +
+                                  'aria-expanded="false" aria-controls="children-of-' + String(newParent) + '">' +
+                                  '<i class="ri-arrow-right-s-line"></i></button>';
+                    $leftControls.prepend(btnHtml);
+                  }
+                  // Keep node collapsed (no auto-expand). Re-init listeners in case of new toggle
+                  try { initCollapseIcons(); } catch (e) {}
+                }
+
+                // If the old parent lost its last child, downgrade toggle to disabled state
+                if (oldParent && oldParent > 0 && to !== from) {
+                  var $oldChildren = $('#children-of-' + String(oldParent));
+                  var remaining = $oldChildren.children('li.kb-item').length;
+                  if (remaining === 0) {
+                    var $oldLi = $('li.kb-item[data-article-id="' + String(oldParent) + '"]');
+                    var $oldLeft = $oldLi.find('> .d-flex > .d-flex.align-items-center.gap-2').first();
+                    // Replace button with disabled span
+                    var $btn = $oldLeft.find('> .kb-toggle');
+                    if ($btn.length) {
+                      $btn.remove();
+                      $oldLeft.prepend('<span class="btn btn-sm btn-outline-light disabled" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>');
+                    }
+                    // Collapse the now-empty children list
+                    if ($oldChildren.length) {
+                      try { new bootstrap.Collapse($oldChildren[0], { toggle: false }).hide(); } catch (e) { $oldChildren.removeClass('show'); }
+                    }
+                  }
+                }
+              } catch (e) { if (window.console) console.warn('KB toggle refresh failed', e); }
             }).fail(function (jqXhr) {
               if (window.console) console.error('KB reorder failed', jqXhr && jqXhr.responseText ? jqXhr.responseText : jqXhr);
             });
