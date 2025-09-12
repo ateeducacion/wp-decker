@@ -12,6 +12,8 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
     private $public_post_id;
     private $task_comment_id;
     private $public_comment_id;
+    private $page_id;
+    private $page_comment_id;
     private $admin_id;
 
     public function set_up(): void {
@@ -44,11 +46,19 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
             // Author/responsable default to current user if omitted.
         ) );
 
-        // Create a normal public post.
+        // Create a normal public post and a page.
         $this->public_post_id = self::factory()->post->create( array(
             'post_type'   => 'post',
             'post_status' => 'publish',
             'post_title'  => 'Public Post',
+            'comment_status' => 'open',
+        ) );
+
+        $this->page_id = self::factory()->post->create( array(
+            'post_type'   => 'page',
+            'post_status' => 'publish',
+            'post_title'  => 'Public Page',
+            'comment_status' => 'open',
         ) );
 
         // Add one comment on each post.
@@ -62,8 +72,16 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
             'comment_content' => 'Comment on public post',
         ) );
 
+        $this->page_comment_id = self::factory()->comment->create( array(
+            'comment_post_ID' => $this->page_id,
+            'comment_content' => 'Comment on public page',
+        ) );
+
         // Now make requests unauthenticated.
         wp_set_current_user( 0 );
+
+        // Allow anonymous comments over REST for creation checks.
+        add_filter( 'rest_allow_anonymous_comments', '__return_true' );
     }
 
     public function tear_down(): void {
@@ -75,17 +93,83 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         if ( $this->public_comment_id ) {
             wp_delete_comment( $this->public_comment_id, true );
         }
+        if ( $this->page_comment_id ) {
+            wp_delete_comment( $this->page_comment_id, true );
+        }
         if ( $this->task_id ) {
             wp_delete_post( $this->task_id, true );
         }
         if ( $this->public_post_id ) {
             wp_delete_post( $this->public_post_id, true );
         }
+        if ( $this->page_id ) {
+            wp_delete_post( $this->page_id, true );
+        }
         if ( $this->admin_id ) {
             wp_delete_user( $this->admin_id );
         }
 
         parent::tear_down();
+    }
+
+    /**
+     * Public posts: unauthenticated users can list and fetch comments.
+     */
+    public function test_public_post_comments_accessible() {
+        // Collection should include public post comment.
+        $request  = new WP_REST_Request( 'GET', '/wp/v2/comments' );
+        $response = $this->server->dispatch( $request );
+        $this->assertEquals( 200, $response->get_status() );
+        $ids = wp_list_pluck( $response->get_data(), 'id' );
+        $this->assertContains( $this->public_comment_id, $ids );
+
+        // Single GET should be allowed.
+        $get = new WP_REST_Request( 'GET', '/wp/v2/comments/' . $this->public_comment_id );
+        $resp = $this->server->dispatch( $get );
+        $this->assertEquals( 200, $resp->get_status() );
+        $this->assertEquals( $this->public_comment_id, $resp->get_data()['id'] );
+
+        // Anonymous create should succeed with allowed filter.
+        $create = new WP_REST_Request( 'POST', '/wp/v2/comments' );
+        $create->set_param( 'post', $this->public_post_id );
+        $create->set_param( 'content', 'Anon on post' );
+        $create->set_param( 'author_name', 'Anónimo' );
+        $create->set_param( 'author_email', 'anon@example.com' );
+        $resp = $this->server->dispatch( $create );
+        $this->assertEquals( 201, $resp->get_status() );
+        // Cleanup created comment.
+        $new_id = $resp->get_data()['id'];
+        wp_delete_comment( $new_id, true );
+    }
+
+    /**
+     * Pages: unauthenticated users can list and fetch comments.
+     */
+    public function test_public_page_comments_accessible() {
+        // Collection should include page comment.
+        $request  = new WP_REST_Request( 'GET', '/wp/v2/comments' );
+        $response = $this->server->dispatch( $request );
+        $this->assertEquals( 200, $response->get_status() );
+        $ids = wp_list_pluck( $response->get_data(), 'id' );
+        $this->assertContains( $this->page_comment_id, $ids );
+
+        // Single GET should be allowed.
+        $get = new WP_REST_Request( 'GET', '/wp/v2/comments/' . $this->page_comment_id );
+        $resp = $this->server->dispatch( $get );
+        $this->assertEquals( 200, $resp->get_status() );
+        $this->assertEquals( $this->page_comment_id, $resp->get_data()['id'] );
+
+        // Anonymous create should succeed with allowed filter.
+        $create = new WP_REST_Request( 'POST', '/wp/v2/comments' );
+        $create->set_param( 'post', $this->page_id );
+        $create->set_param( 'content', 'Anon on page' );
+        $create->set_param( 'author_name', 'Anónimo' );
+        $create->set_param( 'author_email', 'anon@example.com' );
+        $resp = $this->server->dispatch( $create );
+        $this->assertEquals( 201, $resp->get_status() );
+        // Cleanup created comment.
+        $new_id = $resp->get_data()['id'];
+        wp_delete_comment( $new_id, true );
     }
 
     /**
