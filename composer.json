@@ -6,7 +6,7 @@
         "om/icalparser": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
-        "squizlabs/php_codesniffer": "^3.11",
+        "squizlabs/php_codesniffer": "^4.0",
         "wp-cli/i18n-command": "*",
         "wp-coding-standards/wpcs": "^3.1",
         "yoast/phpunit-polyfills": "*",
