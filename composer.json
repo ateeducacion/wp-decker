@@ -1,14 +1,14 @@
 {    
     "require": {
-        "erseco/mime-mail-parser": "^1.0"
+        "erseco/mime-mail-parser": "*"
     },
     "require-dev": {
         "om/icalparser": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
-        "squizlabs/php_codesniffer": "^4.0",
+        "squizlabs/php_codesniffer": "*",
         "wp-cli/i18n-command": "*",
-        "wp-coding-standards/wpcs": "^3.1",
+        "wp-coding-standards/wpcs": "*",
         "yoast/phpunit-polyfills": "*",
         "yoast/wp-test-utils": "*"
     },
