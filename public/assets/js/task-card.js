@@ -15,6 +15,7 @@
     window.deckerHasUnsavedChanges = false;
 
     let quill = null;
+    let collabSession = null;
 
     let assigneesSelect = null;
     let labelsSelect = null;
@@ -200,7 +201,7 @@
                 theme: 'snow',
                 readOnly: disabled,
                 modules: {
-                    toolbar: { 
+                    toolbar: {
                         container: [
                             ['bold', 'italic', 'underline', 'strike'],
                             ['link', 'blockquote', 'code-block'],
@@ -221,7 +222,7 @@
                                 }
                             }
                         }
-                    },  
+                    },
                     htmlEditButton: {
                         syntax: false,
                         buttonTitle: strings.show_html_source,
@@ -229,10 +230,37 @@
                         okText: strings.ok,
                         cancelText: strings.cancel,
                         closeOnClickOverlay: false,
-                    },                   
+                    },
                 }
             });
-        
+
+            // Initialize collaborative editing if enabled and we have a task ID
+            if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled) {
+                const taskId = getTaskId();
+                if (taskId && taskId !== '' && taskId !== '0') {
+                    // Destroy any previous collaboration session
+                    if (collabSession) {
+                        collabSession.destroy();
+                        collabSession = null;
+                    }
+
+                    // Get initial content before binding
+                    const initialContent = quill.root.innerHTML;
+
+                    // Initialize collaboration
+                    collabSession = window.DeckerCollaboration.init(quill, taskId, context);
+
+                    // If this is the first peer, set the initial content
+                    if (collabSession && initialContent && initialContent !== '<p><br></p>') {
+                        setTimeout(() => {
+                            collabSession.setInitialContent(initialContent);
+                        }, 500);
+                    }
+
+                    console.log('Decker: Collaborative editing initialized for task', taskId);
+                }
+            }
+
         }
 
         // Initialize Choices.js for assignee and label selectors
