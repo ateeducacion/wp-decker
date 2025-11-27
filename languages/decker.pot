@@ -42,6 +42,27 @@ msgstr ""
 msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
 msgstr ""
 
+msgid "Enable real-time collaborative editing for tasks."
+msgstr ""
+
+msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
+msgstr ""
+
+msgid "WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev)."
+msgstr ""
+
+msgid "Public servers:"
+msgstr ""
+
+msgid "(Default - Global)"
+msgstr ""
+
+msgid "(Europe)"
+msgstr ""
+
+msgid "(United States)"
+msgstr ""
+
 msgid "Select the minimum user profile that can use Decker."
 msgstr ""
 
@@ -70,6 +91,12 @@ msgid "Shared Key"
 msgstr ""
 
 msgid "Allow Email Notifications"
+msgstr ""
+
+msgid "Collaborative Editing"
+msgstr ""
+
+msgid "Signaling Server"
 msgstr ""
 
 msgid "Clear All Data"
@@ -1135,6 +1162,18 @@ msgid "Loading content. Please wait."
 msgstr ""
 
 msgid "Error loading content. Please try again."
+msgstr ""
+
+msgid "Connecting..."
+msgstr ""
+
+msgid "Collaborative mode"
+msgstr ""
+
+msgid "Disconnected"
+msgstr ""
+
+msgid "you"
 msgstr ""
 
 msgid "Select Category"

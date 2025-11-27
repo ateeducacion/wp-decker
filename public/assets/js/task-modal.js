@@ -95,5 +95,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.quill) {
            window.quill = null; // Assuming that Quill doesn't need explicit destruction
         }
+
+        // Destroy collaborative editing session if active
+        if (window.DeckerCollaboration) {
+            window.DeckerCollaboration.destroyAll();
+        }
     });
 });

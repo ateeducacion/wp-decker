@@ -178,6 +178,103 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
    Responsive improvements for the Priority view on MOBILE
    ================================================================= */
 
+/* =================================================================
+   Collaborative Editing Styles
+   ================================================================= */
+
+.decker-collab-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background: var(--ct-tertiary-bg, #f8f9fa);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border: 1px solid var(--ct-border-color, #dee2e6);
+}
+
+.decker-collab-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: decker-pulse 2s infinite;
+    flex-shrink: 0;
+}
+
+.decker-collab-status-dot.disconnected {
+    background: #dc3545;
+    animation: none;
+}
+
+.decker-collab-status-dot.connecting {
+    background: #ffc107;
+}
+
+.decker-collab-status-text {
+    color: var(--ct-body-color, #212529);
+}
+
+.decker-collab-users {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.decker-collab-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: default;
+}
+
+@keyframes decker-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Quill remote cursor styles */
+.ql-cursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.ql-cursor .ql-cursor-caret {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+}
+
+.ql-cursor .ql-cursor-name {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    color: white;
+    font-weight: 500;
+}
+
+/* Selection highlight for remote users */
+.ql-cursor .ql-cursor-selection {
+    position: absolute;
+    opacity: 0.3;
+}
+
+
 @media (max-width: 768px) {
 
     /* --- 1. Styles for the new "Highest Priority" grouped view --- */

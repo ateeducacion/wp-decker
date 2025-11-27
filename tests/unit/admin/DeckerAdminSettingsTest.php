@@ -122,6 +122,137 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test collaborative_editing setting validation with enabled value.
+	 */
+	public function test_settings_validate_collaborative_editing_enabled() {
+		$input = array(
+			'collaborative_editing' => '1',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( '1', $validated['collaborative_editing'] );
+	}
+
+	/**
+	 * Test collaborative_editing setting validation with disabled value.
+	 */
+	public function test_settings_validate_collaborative_editing_disabled() {
+		$input = array(
+			'collaborative_editing' => '0',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( '0', $validated['collaborative_editing'] );
+	}
+
+	/**
+	 * Test collaborative_editing setting validation with missing value defaults to disabled.
+	 */
+	public function test_settings_validate_collaborative_editing_missing() {
+		$input = array();
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( '0', $validated['collaborative_editing'] );
+	}
+
+	/**
+	 * Test signaling_server setting validation with valid URL.
+	 */
+	public function test_settings_validate_signaling_server_valid_url() {
+		$input = array(
+			'signaling_server' => 'wss://my-signaling-server.example.com',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'wss://my-signaling-server.example.com', $validated['signaling_server'] );
+	}
+
+	/**
+	 * Test signaling_server setting validation with empty value defaults to public server.
+	 */
+	public function test_settings_validate_signaling_server_empty_defaults() {
+		$input = array(
+			'signaling_server' => '',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
+	}
+
+	/**
+	 * Test signaling_server setting validation with missing value defaults to public server.
+	 */
+	public function test_settings_validate_signaling_server_missing_defaults() {
+		$input = array();
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
+	}
+
+	/**
+	 * Test collaborative_editing_render outputs correct HTML when disabled.
+	 */
+	public function test_collaborative_editing_render_disabled() {
+		update_option( 'decker_settings', array( 'collaborative_editing' => '0' ) );
+
+		ob_start();
+		$this->admin_settings->collaborative_editing_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[collaborative_editing]"', $output );
+		$this->assertStringContainsString( 'value="1"', $output );
+		$this->assertStringNotContainsString( 'checked', $output );
+	}
+
+	/**
+	 * Test collaborative_editing_render outputs correct HTML when enabled.
+	 */
+	public function test_collaborative_editing_render_enabled() {
+		update_option( 'decker_settings', array( 'collaborative_editing' => '1' ) );
+
+		ob_start();
+		$this->admin_settings->collaborative_editing_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[collaborative_editing]"', $output );
+		$this->assertStringContainsString( "checked='checked'", $output );
+	}
+
+	/**
+	 * Test signaling_server_render outputs correct HTML with default value.
+	 */
+	public function test_signaling_server_render_default() {
+		update_option( 'decker_settings', array() );
+
+		ob_start();
+		$this->admin_settings->signaling_server_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[signaling_server]"', $output );
+		$this->assertStringContainsString( 'wss://signaling.yjs.dev', $output );
+		$this->assertStringContainsString( 'placeholder="wss://signaling.yjs.dev"', $output );
+	}
+
+	/**
+	 * Test signaling_server_render outputs correct HTML with custom value.
+	 */
+	public function test_signaling_server_render_custom_value() {
+		update_option( 'decker_settings', array( 'signaling_server' => 'wss://custom-server.example.com' ) );
+
+		ob_start();
+		$this->admin_settings->signaling_server_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'value="wss://custom-server.example.com"', $output );
+	}
+
+	/**
 	 * Test the shared_key_render method when shared_key is empty.
 	 */
 	public function test_shared_key_render_with_empty_shared_key() {
