@@ -1390,3 +1390,42 @@ msgstr "Ver"
 
 msgid "The task has been saved successfully."
 msgstr "La tarea se ha guardado correctamente."
+
+msgid "Enable real-time collaborative editing for tasks."
+msgstr "Activar la edición colaborativa en tiempo real para las tareas."
+
+msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
+msgstr "Al activarlo, varias personas podrán editar la misma tarea a la vez con sincronización en tiempo real mediante WebRTC."
+
+msgid "WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev)."
+msgstr "URL del servidor de señalización WebRTC para la edición colaborativa. Dejar vacío para usar el servidor público por defecto (wss://signaling.yjs.dev)."
+
+msgid "Public servers:"
+msgstr "Servidores públicos:"
+
+msgid "(Default - Global)"
+msgstr "(Por defecto - Global)"
+
+msgid "(Europe)"
+msgstr "(Europa)"
+
+msgid "(United States)"
+msgstr "(Estados Unidos)"
+
+msgid "Collaborative Editing"
+msgstr "Edición colaborativa"
+
+msgid "Signaling Server"
+msgstr "Servidor de señalización"
+
+msgid "Connecting..."
+msgstr "Conectando..."
+
+msgid "Collaborative mode"
+msgstr "Modo colaborativo"
+
+msgid "Disconnected"
+msgstr "Desconectado"
+
+msgid "you"
+msgstr "tú"

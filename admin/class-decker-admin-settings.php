@@ -403,7 +403,8 @@ class Decker_Admin_Settings {
 
 		// Validate signaling server.
 		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {
-			$input['signaling_server'] = esc_url_raw( $input['signaling_server'] );
+			// Include wss protocol for WebSocket signaling servers.
+			$input['signaling_server'] = esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
 		} else {
 			$input['signaling_server'] = 'wss://signaling.yjs.dev';
 		}

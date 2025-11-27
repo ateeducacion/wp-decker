@@ -68,11 +68,11 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 4px 8px;
+                padding: 4px 12px;
                 font-size: 12px;
                 background: #f8f9fa;
                 border-radius: 4px;
-                margin-bottom: 8px;
+                margin-bottom: 0;
             }
             .decker-collab-status-dot {
                 width: 8px;
@@ -87,6 +87,10 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             }
             .decker-collab-status-dot.connecting {
                 background: #ffc107;
+            }
+            .decker-collab-status-dot.disabled {
+                background: #6c757d;
+                animation: none;
             }
             .decker-collab-users {
                 display: flex;
@@ -110,6 +114,84 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0.5; }
             }
+
+            /* Field collaboration indicators */
+            .decker-field-editor {
+                position: absolute;
+                top: -18px;
+                right: 8px;
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 10px;
+                color: white;
+                pointer-events: none;
+                animation: decker-fade-in 0.2s ease;
+                z-index: 10;
+            }
+
+            /* Higher position for Choices.js fields (assignees, labels) */
+            .choices.decker-field-editing-container .decker-field-editor {
+                top: -24px;
+                z-index: 100;
+            }
+
+            /* Ensure choices container allows overflow for indicator */
+            .choices.decker-field-editing-container {
+                overflow: visible !important;
+            }
+
+            .decker-field-editing {
+                box-shadow: 0 0 0 2px var(--editor-color) !important;
+                transition: box-shadow 0.2s ease;
+            }
+
+            .decker-remote-change {
+                animation: decker-flash 0.4s ease;
+            }
+
+            @keyframes decker-fade-in {
+                from { opacity: 0; transform: translateY(5px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            @keyframes decker-flash {
+                0% { background-color: inherit; }
+                30% { background-color: rgba(40, 167, 69, 0.15); }
+                100% { background-color: inherit; }
+            }
+
+            /* Archived task overlay */
+            .decker-archived-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255, 255, 255, 0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                border-radius: 4px;
+            }
+
+            .decker-archived-message {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                padding: 20px 40px;
+                background: #f8d7da;
+                border: 1px solid #f5c6cb;
+                border-radius: 8px;
+                color: #721c24;
+                font-size: 16px;
+                font-weight: 500;
+            }
+
+            .decker-archived-message i {
+                font-size: 32px;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -126,59 +208,97 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             <div class="decker-collab-users"></div>
         `;
 
-        // Insert before the editor
-        const editorContainer = container.querySelector('#editor-container') || container.querySelector('#editor');
-        if (editorContainer && editorContainer.parentNode) {
-            editorContainer.parentNode.insertBefore(statusBar, editorContainer);
+        // Try to insert in the bottom action bar (next to Save button)
+        const actionBar = container.querySelector('.d-flex.justify-content-end.align-items-center');
+        if (actionBar) {
+            // Change justify-content-end to justify-content-between
+            actionBar.classList.remove('justify-content-end');
+            actionBar.classList.add('justify-content-between');
+            // Insert at the beginning
+            actionBar.insertBefore(statusBar, actionBar.firstChild);
+        } else {
+            // Fallback: insert before the editor
+            const editorContainer = container.querySelector('#editor-container') || container.querySelector('#editor');
+            if (editorContainer && editorContainer.parentNode) {
+                editorContainer.parentNode.insertBefore(statusBar, editorContainer);
+            }
         }
 
         return statusBar;
     }
 
     /**
-     * Update the status bar with current users
+     * Check if signaling WebSocket is actually connected
      */
-    function updateStatusBar(statusBar, awareness, provider) {
+    function isSignalingConnected(provider) {
+        // Check if any signaling connection is open
+        if (provider.signalingConns && provider.signalingConns.length > 0) {
+            for (const conn of provider.signalingConns) {
+                if (conn.ws && conn.ws.readyState === WebSocket.OPEN) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Update the status bar with current users
+     * @param {boolean} isDisabled - If true, show "off" state
+     */
+    function updateStatusBar(statusBar, awareness, provider, isDisabled = false) {
         if (!statusBar) return;
 
         const dot = statusBar.querySelector('.decker-collab-status-dot');
         const text = statusBar.querySelector('.decker-collab-status-text');
         const usersContainer = statusBar.querySelector('.decker-collab-users');
 
-        // Update connection status
-        const connected = provider.connected;
-        dot.classList.remove('connecting', 'disconnected');
+        // Clear all status classes
+        dot.classList.remove('connecting', 'disconnected', 'disabled');
 
-        if (connected) {
-            text.textContent = config.strings?.collaborative_mode || 'Collaborative mode';
-        } else {
-            dot.classList.add('disconnected');
-            text.textContent = config.strings?.disconnected || 'Disconnected';
+        if (isDisabled) {
+            // Collaboration disabled after max retries
+            dot.classList.add('disabled');
+            text.textContent = config.strings?.collaborative_mode_off || 'Collaborative mode: off';
+            usersContainer.innerHTML = '';
+            return;
         }
 
-        // Update users list
-        const states = awareness.getStates();
-        usersContainer.innerHTML = '';
+        // Check real signaling connection status
+        const signalingOk = isSignalingConnected(provider);
 
-        states.forEach((state, clientId) => {
-            if (state.user && clientId !== awareness.clientID) {
-                const avatar = document.createElement('div');
-                avatar.className = 'decker-collab-user-avatar';
-                avatar.style.backgroundColor = state.user.color || '#6c757d';
-                avatar.textContent = (state.user.name || 'U').charAt(0).toUpperCase();
-                avatar.title = state.user.name || 'Unknown user';
-                usersContainer.appendChild(avatar);
-            }
-        });
+        if (signalingOk) {
+            text.textContent = config.strings?.collaborative_mode || 'Collaborative mode';
 
-        // Add self indicator
-        const selfAvatar = document.createElement('div');
-        selfAvatar.className = 'decker-collab-user-avatar';
-        selfAvatar.style.backgroundColor = userColor;
-        selfAvatar.style.border = '2px solid #28a745';
-        selfAvatar.textContent = userName.charAt(0).toUpperCase();
-        selfAvatar.title = `${userName} (${config.strings?.you || 'you'})`;
-        usersContainer.appendChild(selfAvatar);
+            // Only show avatars when connected
+            usersContainer.innerHTML = '';
+            const states = awareness.getStates();
+
+            states.forEach((state, clientId) => {
+                if (state.user && clientId !== awareness.clientID) {
+                    const avatar = document.createElement('div');
+                    avatar.className = 'decker-collab-user-avatar';
+                    avatar.style.backgroundColor = state.user.color || '#6c757d';
+                    avatar.textContent = (state.user.name || 'U').charAt(0).toUpperCase();
+                    avatar.title = state.user.name || 'Unknown user';
+                    usersContainer.appendChild(avatar);
+                }
+            });
+
+            // Add self indicator
+            const selfAvatar = document.createElement('div');
+            selfAvatar.className = 'decker-collab-user-avatar';
+            selfAvatar.style.backgroundColor = userColor;
+            selfAvatar.style.border = '2px solid #28a745';
+            selfAvatar.textContent = userName.charAt(0).toUpperCase();
+            selfAvatar.title = `${userName} (${config.strings?.you || 'you'})`;
+            usersContainer.appendChild(selfAvatar);
+        } else {
+            // Not connected - show connecting state, no avatars
+            dot.classList.add('connecting');
+            text.textContent = config.strings?.connecting || 'Connecting...';
+            usersContainer.innerHTML = '';
+        }
     }
 
     /**
@@ -207,6 +327,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
         // Create Yjs document
         const ydoc = new Y.Doc();
         const ytext = ydoc.getText('quill');
+        const formFields = ydoc.getMap('formFields');
 
         // Create WebRTC provider with its built-in awareness
         const provider = new WebrtcProvider(sessionKey, ydoc, {
@@ -233,30 +354,70 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
         // Bind Quill to Yjs
         const binding = new QuillBinding(ytext, quillInstance, awareness);
 
+        // Connection retry tracking
+        let connectionAttempts = 0;
+        let isDisabled = false;
+        const maxRetries = 5;
+        const retryInterval = 2000; // Check every 2 seconds
+
         // Update status on awareness changes
         awareness.on('change', () => {
-            updateStatusBar(statusBar, awareness, provider);
+            if (!isDisabled) {
+                updateStatusBar(statusBar, awareness, provider, false);
+            }
         });
 
-        // Update status on connection changes
-        provider.on('status', ({ connected }) => {
-            updateStatusBar(statusBar, awareness, provider);
+        // Update status on provider status changes
+        provider.on('status', () => {
+            if (!isDisabled) {
+                updateStatusBar(statusBar, awareness, provider, false);
+            }
         });
+
+        // Periodic connection check
+        const connectionChecker = setInterval(() => {
+            if (isDisabled) {
+                clearInterval(connectionChecker);
+                return;
+            }
+
+            const signalingOk = isSignalingConnected(provider);
+
+            if (signalingOk) {
+                // Connected - reset counter
+                connectionAttempts = 0;
+                updateStatusBar(statusBar, awareness, provider, false);
+            } else {
+                // Not connected
+                connectionAttempts++;
+                console.log(`Decker Collaboration: Connection attempt ${connectionAttempts}/${maxRetries}`);
+
+                if (connectionAttempts >= maxRetries) {
+                    // Max retries reached - disable collaboration
+                    isDisabled = true;
+                    clearInterval(connectionChecker);
+                    console.warn('Decker Collaboration: Max retries reached, disabling collaborative mode');
+                    updateStatusBar(statusBar, awareness, provider, true);
+                } else {
+                    updateStatusBar(statusBar, awareness, provider, false);
+                }
+            }
+        }, retryInterval);
 
         // Initial status update
-        setTimeout(() => {
-            updateStatusBar(statusBar, awareness, provider);
-        }, 1000);
+        updateStatusBar(statusBar, awareness, provider, false);
 
         // Create session object
         const session = {
             ydoc,
             ytext,
+            formFields,
             provider,
             awareness,
             binding,
             statusBar,
             documentId,
+            container,
 
             /**
              * Get the current document content
@@ -301,9 +462,27 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             },
 
             /**
+             * Set the currently active (focused) field for this user
+             * @param {string|null} fieldId - The ID of the focused field, or null to clear
+             */
+            setActiveField(fieldId) {
+                awareness.setLocalStateField('activeField', fieldId);
+            },
+
+            /**
+             * Clear the active field for this user
+             */
+            clearActiveField() {
+                awareness.setLocalStateField('activeField', null);
+            },
+
+            /**
              * Destroy the collaboration session
              */
             destroy() {
+                // Clear connection checker interval
+                clearInterval(connectionChecker);
+
                 binding.destroy();
                 provider.disconnect();
                 provider.destroy();

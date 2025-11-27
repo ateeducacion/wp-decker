@@ -499,7 +499,7 @@ class Decker_Public {
 		// Prepare configuration for the collaboration module.
 		$collab_config = array(
 			'enabled'         => true,
-			'signalingServer' => esc_url( $signaling_server ),
+			'signalingServer' => esc_url( $signaling_server, array( 'wss', 'ws', 'https', 'http' ) ),
 			'roomPrefix'      => 'decker-task-' . sanitize_key( wp_parse_url( home_url(), PHP_URL_HOST ) ) . '-',
 			'userName'        => esc_js( $current_user->display_name ),
 			'userColor'       => $user_color,
