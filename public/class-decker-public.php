@@ -522,7 +522,7 @@ class Decker_Public {
 				<script>
 					window.deckerCollabConfig = <?php echo $config_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
 				</script>
-				<script type="module" src="<?php echo $module_url; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>"></script>
+				<script type="module" src="<?php echo $module_url; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript,WordPress.Security.EscapeOutput.OutputNotEscaped -- ES modules require type="module" which wp_enqueue_script doesn't support ?>"></script>
 				<?php
 			},
 			100
