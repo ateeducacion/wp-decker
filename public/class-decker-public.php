@@ -220,6 +220,8 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
 				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.css',
 
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
@@ -504,6 +506,7 @@ class Decker_Public {
 			'userName'        => esc_js( $current_user->display_name ),
 			'userColor'       => $user_color,
 			'userId'          => $current_user->ID,
+			'userAvatar'      => esc_url( get_avatar_url( $current_user->ID, array( 'size' => 32 ) ) ),
 			'strings'         => array(
 				'connecting'         => __( 'Connecting...', 'decker' ),
 				'collaborative_mode' => __( 'Collaborative mode', 'decker' ),
