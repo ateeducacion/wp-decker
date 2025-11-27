@@ -208,16 +208,16 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
         const ydoc = new Y.Doc();
         const ytext = ydoc.getText('quill');
 
-        // Create WebRTC provider
+        // Create WebRTC provider with its built-in awareness
         const provider = new WebrtcProvider(sessionKey, ydoc, {
             signaling: [signalingServer],
             password: null,
-            awareness: new Y.Awareness(ydoc),
             maxConns: 20,
             filterBcConns: true,
             peerOpts: {}
         });
 
+        // Use the provider's built-in awareness
         const awareness = provider.awareness;
 
         // Set local user state
