@@ -7,9 +7,10 @@
  * @package Decker
  */
 
-import * as Y from 'https://esm.sh/yjs@13';
-import { WebrtcProvider } from 'https://esm.sh/y-webrtc@10';
-import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
+// Use esm.sh with shared yjs dependency to avoid "Yjs was already imported" error
+import * as Y from 'https://esm.sh/yjs@13.6.20';
+import { WebrtcProvider } from 'https://esm.sh/y-webrtc@10.3.0?deps=yjs@13.6.20';
+import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
 
 (function() {
     'use strict';
@@ -21,6 +22,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
     const userName = config.userName || 'Anonymous';
     const userColor = config.userColor || getRandomColor();
     const userId = config.userId || 0;
+    const userAvatar = config.userAvatar || null;
 
     // Store for active collaboration sessions
     const sessions = new Map();
@@ -34,6 +36,49 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
         ];
         return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    /**
+     * Create an avatar element (image or fallback to initials)
+     * @param {string|null} avatarUrl - URL of the avatar image
+     * @param {string} name - User's display name
+     * @param {string} color - User's color
+     * @param {boolean} isSelf - Whether this is the current user
+     * @returns {HTMLElement} The avatar element
+     */
+    function createAvatarElement(avatarUrl, name, color, isSelf = false) {
+        const avatar = document.createElement('div');
+        avatar.className = 'decker-collab-user-avatar';
+        avatar.title = name;
+
+        if (avatarUrl) {
+            // Use WordPress avatar image
+            const img = document.createElement('img');
+            img.src = avatarUrl;
+            img.alt = name;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            // Fallback to initials if image fails to load
+            img.onerror = () => {
+                avatar.removeChild(img);
+                avatar.style.backgroundColor = color;
+                avatar.textContent = (name || 'U').charAt(0).toUpperCase();
+            };
+            avatar.appendChild(img);
+        } else {
+            // Fallback to initials
+            avatar.style.backgroundColor = color;
+            avatar.textContent = (name || 'U').charAt(0).toUpperCase();
+        }
+
+        // Add green border for self indicator
+        if (isSelf) {
+            avatar.style.border = '2px solid #28a745';
+        }
+
+        return avatar;
     }
 
     /**
@@ -244,9 +289,10 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
 
     /**
      * Update the status bar with current users
+     * @param {Object} trackingState - Object to track state between updates
      * @param {boolean} isDisabled - If true, show "off" state
      */
-    function updateStatusBar(statusBar, awareness, provider, isDisabled = false) {
+    function updateStatusBar(statusBar, awareness, provider, trackingState, isDisabled = false) {
         if (!statusBar) return;
 
         const dot = statusBar.querySelector('.decker-collab-status-dot');
@@ -260,7 +306,11 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             // Collaboration disabled after max retries
             dot.classList.add('disabled');
             text.textContent = config.strings?.collaborative_mode_off || 'Collaborative mode: off';
-            usersContainer.innerHTML = '';
+            if (trackingState.connectionState !== 'disabled') {
+                usersContainer.innerHTML = '';
+                trackingState.connectionState = 'disabled';
+                trackingState.userIds = null;
+            }
             return;
         }
 
@@ -270,34 +320,56 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
         if (signalingOk) {
             text.textContent = config.strings?.collaborative_mode || 'Collaborative mode';
 
-            // Only show avatars when connected
-            usersContainer.innerHTML = '';
+            // Get current user IDs (excluding self)
             const states = awareness.getStates();
-
+            const currentUserIds = [];
             states.forEach((state, clientId) => {
                 if (state.user && clientId !== awareness.clientID) {
-                    const avatar = document.createElement('div');
-                    avatar.className = 'decker-collab-user-avatar';
-                    avatar.style.backgroundColor = state.user.color || '#6c757d';
-                    avatar.textContent = (state.user.name || 'U').charAt(0).toUpperCase();
-                    avatar.title = state.user.name || 'Unknown user';
-                    usersContainer.appendChild(avatar);
+                    currentUserIds.push(clientId);
                 }
             });
+            // Sort to ensure consistent comparison
+            currentUserIds.sort();
+            const currentUserIdsStr = currentUserIds.join(',');
 
-            // Add self indicator
-            const selfAvatar = document.createElement('div');
-            selfAvatar.className = 'decker-collab-user-avatar';
-            selfAvatar.style.backgroundColor = userColor;
-            selfAvatar.style.border = '2px solid #28a745';
-            selfAvatar.textContent = userName.charAt(0).toUpperCase();
-            selfAvatar.title = `${userName} (${config.strings?.you || 'you'})`;
-            usersContainer.appendChild(selfAvatar);
+            // Only rebuild avatars if users changed or connection state changed
+            if (trackingState.userIds !== currentUserIdsStr || trackingState.connectionState !== 'connected') {
+                usersContainer.innerHTML = '';
+
+                states.forEach((state, clientId) => {
+                    if (state.user && clientId !== awareness.clientID) {
+                        const avatar = createAvatarElement(
+                            state.user.avatar,
+                            state.user.name || 'Unknown user',
+                            state.user.color || '#6c757d'
+                        );
+                        avatar.dataset.clientId = clientId;
+                        usersContainer.appendChild(avatar);
+                    }
+                });
+
+                // Add self indicator
+                const selfAvatar = createAvatarElement(
+                    userAvatar,
+                    `${userName} (${config.strings?.you || 'you'})`,
+                    userColor,
+                    true // isSelf
+                );
+                selfAvatar.dataset.clientId = 'self';
+                usersContainer.appendChild(selfAvatar);
+
+                trackingState.userIds = currentUserIdsStr;
+                trackingState.connectionState = 'connected';
+            }
         } else {
             // Not connected - show connecting state, no avatars
             dot.classList.add('connecting');
             text.textContent = config.strings?.connecting || 'Connecting...';
-            usersContainer.innerHTML = '';
+            if (trackingState.connectionState !== 'connecting') {
+                usersContainer.innerHTML = '';
+                trackingState.connectionState = 'connecting';
+                trackingState.userIds = null;
+            }
         }
     }
 
@@ -345,14 +417,90 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
         awareness.setLocalStateField('user', {
             name: userName,
             color: userColor,
-            id: userId
+            id: userId,
+            avatar: userAvatar
         });
 
         // Create status bar
         const statusBar = createStatusBar(container, awareness);
 
+        // Track state for status bar updates to avoid unnecessary re-renders
+        const statusBarTrackingState = {
+            userIds: null,
+            connectionState: null
+        };
+
         // Bind Quill to Yjs
-        const binding = new QuillBinding(ytext, quillInstance, awareness);
+        // NOTE: Do NOT pass awareness to QuillBinding - y-quill's internal cursor tracking
+        // uses RelativePosition which is incompatible with Quill 2.0 (causes 'tname' error).
+        // We handle cursors manually using quill-cursors module and awareness API directly.
+        const binding = new QuillBinding(ytext, quillInstance);
+
+        // Get the cursors module from Quill (if available)
+        const cursorsModule = quillInstance.getModule('cursors');
+        console.log('Decker Collaboration: cursorsModule =', cursorsModule);
+
+        // Track selection change handler for cleanup
+        let selectionChangeHandler = null;
+
+        // Setup remote cursor management if cursors module is available
+        if (cursorsModule) {
+            console.log('Decker Collaboration: Cursors module detected, enabling remote cursors');
+
+            // Track selection changes and update awareness
+            selectionChangeHandler = (range, oldRange, source) => {
+                if (range) {
+                    // User has focus and selection - update cursor position
+                    awareness.setLocalStateField('cursor', {
+                        index: range.index,
+                        length: range.length
+                    });
+                } else {
+                    // User lost focus (clicked outside editor) - clear cursor
+                    awareness.setLocalStateField('cursor', null);
+                }
+            };
+            quillInstance.on('selection-change', selectionChangeHandler);
+
+            // Listen for awareness changes to update remote cursors
+            awareness.on('change', () => {
+                const states = awareness.getStates();
+
+                // Get current cursor IDs in the module
+                const currentCursorIds = new Set();
+
+                states.forEach((state, clientId) => {
+                    if (clientId === awareness.clientID) return; // Skip self
+                    if (!state.user || !state.cursor) return;
+
+                    const cursorId = `cursor-${clientId}`;
+                    currentCursorIds.add(cursorId);
+
+                    // Create or update cursor
+                    try {
+                        const existingCursor = cursorsModule.cursors().find(c => c.id === cursorId);
+                        if (!existingCursor) {
+                            cursorsModule.createCursor(cursorId, state.user.name, state.user.color);
+                        }
+                        cursorsModule.moveCursor(cursorId, {
+                            index: state.cursor.index,
+                            length: state.cursor.length
+                        });
+                    } catch (e) {
+                        console.warn('Error updating cursor:', e);
+                    }
+                });
+
+                // Remove cursors for disconnected users
+                cursorsModule.cursors().forEach(cursor => {
+                    if (!currentCursorIds.has(cursor.id)) {
+                        cursorsModule.removeCursor(cursor.id);
+                    }
+                });
+            });
+        } else {
+            console.warn('Decker Collaboration: Cursors module NOT found in Quill instance. Remote cursors will not be displayed.');
+        }
 
         // Connection retry tracking
         let connectionAttempts = 0;
@@ -363,14 +511,14 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
         // Update status on awareness changes
         awareness.on('change', () => {
             if (!isDisabled) {
-                updateStatusBar(statusBar, awareness, provider, false);
+                updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
             }
         });
 
         // Update status on provider status changes
         provider.on('status', () => {
             if (!isDisabled) {
-                updateStatusBar(statusBar, awareness, provider, false);
+                updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
             }
         });
 
@@ -386,7 +534,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             if (signalingOk) {
                 // Connected - reset counter
                 connectionAttempts = 0;
-                updateStatusBar(statusBar, awareness, provider, false);
+                updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
             } else {
                 // Not connected
                 connectionAttempts++;
@@ -397,15 +545,15 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
                     isDisabled = true;
                     clearInterval(connectionChecker);
                     console.warn('Decker Collaboration: Max retries reached, disabling collaborative mode');
-                    updateStatusBar(statusBar, awareness, provider, true);
+                    updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, true);
                 } else {
-                    updateStatusBar(statusBar, awareness, provider, false);
+                    updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
                 }
             }
         }, retryInterval);
 
         // Initial status update
-        updateStatusBar(statusBar, awareness, provider, false);
+        updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
 
         // Create session object
         const session = {
@@ -482,6 +630,19 @@ import { QuillBinding } from 'https://esm.sh/y-quill@0.1';
             destroy() {
                 // Clear connection checker interval
                 clearInterval(connectionChecker);
+
+                // Clear cursor from awareness before disconnecting
+                awareness.setLocalStateField('cursor', null);
+
+                // Remove selection change handler if it exists
+                if (selectionChangeHandler) {
+                    quillInstance.off('selection-change', selectionChangeHandler);
+                }
+
+                // Clear all remote cursors from the module
+                if (cursorsModule) {
+                    cursorsModule.clearCursors();
+                }
 
                 binding.destroy();
                 provider.disconnect();

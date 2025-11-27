@@ -561,47 +561,86 @@
         }
 
         if (context.querySelector('#editor')) {
+            // Check if collaborative editing is enabled to include cursors module
+            const collabEnabled = window.deckerCollabConfig && window.deckerCollabConfig.enabled;
+
+            // Register modules only once
             if (quill === null) {
                 // Register the HTML Edit Button module
                 Quill.register('modules/htmlEditButton', htmlEditButton);
 
+                // Register quill-cursors module if available (for collaborative editing)
+                if (typeof QuillCursors !== 'undefined') {
+                    // Try default export first, then module itself
+                    const CursorsModule = QuillCursors.default || QuillCursors;
+                    Quill.register('modules/cursors', CursorsModule);
+                    console.log('Decker: QuillCursors module registered');
+                } else {
+                    console.log('Decker: QuillCursors not available at registration time');
+                }
+            }
+
+            // Build modules configuration
+            const quillModules = {
+                toolbar: {
+                    container: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        ['link', 'blockquote', 'code-block'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                        [{ 'indent': '-1' }, { 'indent': '+1' }],
+                        ['clean'],
+                        ['fullscreen'],
+                    ],
+                    handlers: {
+                        'fullscreen': function() {
+                            var editorContainer = context.querySelector('#editor-container');
+                            if (!document.fullscreenElement) {
+                                editorContainer.requestFullscreen().catch(err => {
+                                    alert('Error attempting to enable full-screen mode: ' + err.message);
+                                });
+                            } else {
+                                document.exitFullscreen();
+                            }
+                        }
+                    }
+                },
+                htmlEditButton: {
+                    syntax: false,
+                    buttonTitle: strings.show_html_source,
+                    msg: strings.edit_html_content,
+                    okText: strings.ok,
+                    cancelText: strings.cancel,
+                    closeOnClickOverlay: false,
+                },
+            };
+
+            // Add cursors module if collaborative editing is enabled and QuillCursors is available
+            // Check again here in case it wasn't available during initial registration
+            if (collabEnabled) {
+                if (typeof QuillCursors !== 'undefined') {
+                    // Register if not already registered
+                    try {
+                        const CursorsModule = QuillCursors.default || QuillCursors;
+                        if (!Quill.imports['modules/cursors']) {
+                            Quill.register('modules/cursors', CursorsModule);
+                            console.log('Decker: QuillCursors module registered (late)');
+                        }
+                        quillModules.cursors = {
+                            transformOnTextChange: true,
+                        };
+                        console.log('Decker: Cursors module enabled in config');
+                    } catch (e) {
+                        console.warn('Decker: Error registering cursors module:', e);
+                    }
+                } else {
+                    console.warn('Decker: QuillCursors not available, remote cursors disabled');
+                }
             }
 
             quill = new Quill(context.querySelector('#editor'), {
                 theme: 'snow',
                 readOnly: disabled,
-                modules: {
-                    toolbar: {
-                        container: [
-                            ['bold', 'italic', 'underline', 'strike'],
-                            ['link', 'blockquote', 'code-block'],
-                            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-                            [{ 'indent': '-1' }, { 'indent': '+1' }],
-                            ['clean'],
-                            ['fullscreen'],
-                        ],
-                        handlers: {
-                            'fullscreen': function() {
-                                var editorContainer = context.querySelector('#editor-container');
-                                if (!document.fullscreenElement) {
-                                    editorContainer.requestFullscreen().catch(err => {
-                                        alert('Error attempting to enable full-screen mode: ' + err.message);
-                                    });
-                                } else {
-                                    document.exitFullscreen();
-                                }
-                            }
-                        }
-                    },
-                    htmlEditButton: {
-                        syntax: false,
-                        buttonTitle: strings.show_html_source,
-                        msg: strings.edit_html_content,
-                        okText: strings.ok,
-                        cancelText: strings.cancel,
-                        closeOnClickOverlay: false,
-                    },
-                }
+                modules: quillModules
             });
 
             // Initialize collaborative editing if enabled and we have a task ID
