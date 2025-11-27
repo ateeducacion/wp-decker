@@ -73,9 +73,11 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             avatar.textContent = (name || 'U').charAt(0).toUpperCase();
         }
 
-        // Add green border for self indicator
+        // Add border: green for self, user's color for others
         if (isSelf) {
             avatar.style.border = '2px solid #28a745';
+        } else {
+            avatar.style.border = `2px solid ${color}`;
         }
 
         return avatar;

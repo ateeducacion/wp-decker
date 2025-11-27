@@ -290,7 +290,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     position: absolute;
     bottom: 100%;
     left: -1px;
-    display: flex;
+    display: flex !important;
     align-items: center;
     padding: 2px 8px;
     border-radius: 4px 4px 4px 0;
@@ -299,15 +299,20 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     white-space: nowrap;
     color: white;
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    opacity: 1;
-    transition: opacity 0.15s ease;
     z-index: 100;
+    pointer-events: none;
 }
 
-/* Show flag on hover or when selection exists */
-.ql-cursor:hover .ql-cursor-flag,
-.ql-cursor.ql-cursor-selection-active .ql-cursor-flag {
-    opacity: 1;
+/* Username text inside flag */
+.ql-cursor-name {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Show flag on hover or when cursor is active */
+.ql-cursor:hover .ql-cursor-flag {
+    opacity: 1 !important;
 }
 
 /* Selection highlight for remote users */

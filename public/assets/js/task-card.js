@@ -627,6 +627,9 @@
                         }
                         quillModules.cursors = {
                             transformOnTextChange: true,
+                            hideDelayMs: 3000,
+                            hideSpeedMs: 400,
+                            selectionChangeSource: null,
                         };
                         console.log('Decker: Cursors module enabled in config');
                     } catch (e) {
