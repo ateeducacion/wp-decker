@@ -178,7 +178,251 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
    Responsive improvements for the Priority view on MOBILE
    ================================================================= */
 
+/* =================================================================
+   Collaborative Editing Styles
+   ================================================================= */
+
+.decker-collab-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background: var(--ct-tertiary-bg, #f8f9fa);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border: 1px solid var(--ct-border-color, #dee2e6);
+}
+
+.decker-collab-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: decker-pulse 2s infinite;
+    flex-shrink: 0;
+}
+
+.decker-collab-status-dot.disconnected {
+    background: #dc3545;
+    animation: none;
+}
+
+.decker-collab-status-dot.connecting {
+    background: #ffc107;
+}
+
+.decker-collab-status-text {
+    color: var(--ct-body-color, #212529);
+}
+
+.decker-collab-users {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+.decker-collab-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: default;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.decker-collab-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@keyframes decker-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Quill remote cursor styles (quill-cursors module) */
+.ql-cursors {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.ql-cursor {
+    position: absolute;
+    pointer-events: none;
+}
+
+/* Cursor caret (the blinking line) */
+.ql-cursor-caret-container {
+    position: absolute;
+    width: 2px;
+}
+
+.ql-cursor-caret {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    animation: ql-cursor-blink 1s step-end infinite;
+}
+
+@keyframes ql-cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* Cursor flag (username label) */
+.ql-cursor-flag {
+    position: absolute;
+    bottom: 100%;
+    left: -1px;
+    display: flex !important;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px 4px 4px 0;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* Username text inside flag */
+.ql-cursor-name {
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Show flag on hover or when cursor is active */
+.ql-cursor:hover .ql-cursor-flag {
+    opacity: 1 !important;
+}
+
+/* Selection highlight for remote users */
+.ql-cursor-selection-block {
+    position: absolute;
+    opacity: 0.35;
+    border-radius: 2px;
+}
+
+/* Ensure editor container has proper positioning for cursors */
+.ql-editor {
+    position: relative;
+}
+
+/* Make sure cursor container is visible */
+.ql-container {
+    position: relative;
+}
+
+/* Field collaboration indicators */
+.decker-field-editor {
+    position: absolute;
+    top: -18px;
+    right: 8px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    color: white;
+    pointer-events: none;
+    animation: decker-fade-in 0.2s ease;
+    z-index: 10;
+}
+
+/* Higher position for Choices.js fields (assignees, labels) */
+.choices.decker-field-editing-container .decker-field-editor {
+    top: -24px;
+    z-index: 100;
+}
+
+/* Ensure choices container allows overflow for indicator */
+.choices.decker-field-editing-container {
+    overflow: visible !important;
+}
+
+.decker-field-editing {
+    box-shadow: 0 0 0 2px var(--editor-color) !important;
+    transition: box-shadow 0.2s ease;
+}
+
+.decker-remote-change {
+    animation: decker-flash 0.4s ease;
+}
+
+@keyframes decker-fade-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes decker-flash {
+    0% { background-color: inherit; }
+    30% { background-color: rgba(40, 167, 69, 0.15); }
+    100% { background-color: inherit; }
+}
+
+/* Archived task overlay for collaborative editing */
+.decker-archived-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 4px;
+}
+
+.decker-archived-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 40px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    color: #721c24;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.decker-archived-message i {
+    font-size: 32px;
+}
+
+/* Status dot disabled state */
+.decker-collab-status-dot.disabled {
+    background: #6c757d;
+    animation: none;
+}
+
+
 @media (max-width: 768px) {
+
+    /* Fix: Show logo-light in topbar on responsive */
+    .logo-topbar .logo-light {
+        display: block;
+    }
 
     /* --- 1. Styles for the new "Highest Priority" grouped view --- */
     .priority-mobile-view .board-group-header {

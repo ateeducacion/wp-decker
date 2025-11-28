@@ -221,6 +221,8 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
 				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.css',
 
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
@@ -306,6 +308,9 @@ class Decker_Public {
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
+
+			// Add collaborative editing module if enabled.
+			$this->maybe_enqueue_collaboration();
 
 			$users = get_users(
 				array(
@@ -472,5 +477,59 @@ class Decker_Public {
 			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
 
 		}
+	}
+
+	/**
+	 * Enqueue collaborative editing module if enabled.
+	 *
+	 * Loads the Yjs-based collaboration module as an ES module.
+	 */
+	private function maybe_enqueue_collaboration() {
+		$options = get_option( 'decker_settings', array() );
+
+		// Check if collaborative editing is enabled.
+		if ( empty( $options['collaborative_editing'] ) || '1' !== $options['collaborative_editing'] ) {
+			return;
+		}
+
+		$current_user = wp_get_current_user();
+		$signaling_server = ! empty( $options['signaling_server'] ) ? $options['signaling_server'] : 'wss://signaling.yjs.dev';
+
+		// Generate a user color based on user ID for consistency.
+		$colors = array( '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9' );
+		$user_color = $colors[ $current_user->ID % count( $colors ) ];
+
+		// Prepare configuration for the collaboration module.
+		$collab_config = array(
+			'enabled'         => true,
+			'signalingServer' => esc_url( $signaling_server, array( 'wss', 'ws', 'https', 'http' ) ),
+			'roomPrefix'      => 'decker-task-' . sanitize_key( wp_parse_url( home_url(), PHP_URL_HOST ) ) . '-',
+			'userName'        => esc_js( $current_user->display_name ),
+			'userColor'       => $user_color,
+			'userId'          => $current_user->ID,
+			'userAvatar'      => esc_url( get_avatar_url( $current_user->ID, array( 'size' => 32 ) ) ),
+			'strings'         => array(
+				'connecting'         => __( 'Connecting...', 'decker' ),
+				'collaborative_mode' => __( 'Collaborative mode', 'decker' ),
+				'disconnected'       => __( 'Disconnected', 'decker' ),
+				'you'                => __( 'you', 'decker' ),
+			),
+		);
+
+		// Add inline script to set configuration before the module loads.
+		add_action(
+			'wp_footer',
+			function () use ( $collab_config ) {
+				$config_json = wp_json_encode( $collab_config );
+				$module_url  = esc_url( plugin_dir_url( __FILE__ ) . 'assets/js/decker-collaboration.js' );
+				?>
+				<script>
+					window.deckerCollabConfig = <?php echo $config_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
+				</script>
+				<script type="module" src="<?php echo $module_url; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript,WordPress.Security.EscapeOutput.OutputNotEscaped -- ES modules require type="module" which wp_enqueue_script doesn't support ?>"></script>
+				<?php
+			},
+			100
+		);
 	}
 }

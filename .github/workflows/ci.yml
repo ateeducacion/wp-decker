@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       # Determine the branch name
       - name: Set branch name for blueprint URL

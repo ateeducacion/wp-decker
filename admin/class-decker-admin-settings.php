@@ -67,6 +67,41 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render Collaborative Editing Field.
+	 *
+	 * Outputs the HTML for the collaborative_editing field.
+	 */
+	public function collaborative_editing_render() {
+		$options = get_option( 'decker_settings', array() );
+		$checked = isset( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
+
+		echo '<label>';
+		echo '<input type="checkbox" name="decker_settings[collaborative_editing]" value="1" ' . checked( $checked, true, false ) . '>';
+		echo esc_html__( 'Enable real-time collaborative editing for tasks.', 'decker' );
+		echo '</label>';
+		echo '<p class="description">' . esc_html__( 'When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC.', 'decker' ) . '</p>';
+	}
+
+	/**
+	 * Render Signaling Server Field.
+	 *
+	 * Outputs the HTML for the signaling_server field.
+	 */
+	public function signaling_server_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value   = isset( $options['signaling_server'] ) ? sanitize_text_field( $options['signaling_server'] ) : 'wss://signaling.yjs.dev';
+
+		echo '<input type="url" name="decker_settings[signaling_server]" class="regular-text" value="' . esc_attr( $value ) . '" placeholder="wss://signaling.yjs.dev">';
+		echo '<p class="description">' . esc_html__( 'WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev).', 'decker' ) . '</p>';
+		echo '<p class="description"><strong>' . esc_html__( 'Public servers:', 'decker' ) . '</strong></p>';
+		echo '<ul class="description" style="list-style: disc; margin-left: 20px;">';
+		echo '<li><code>wss://signaling.yjs.dev</code> ' . esc_html__( '(Default - Global)', 'decker' ) . '</li>';
+		echo '<li><code>wss://y-webrtc-signaling-eu.herokuapp.com</code> ' . esc_html__( '(Europe)', 'decker' ) . '</li>';
+		echo '<li><code>wss://y-webrtc-signaling-us.herokuapp.com</code> ' . esc_html__( '(United States)', 'decker' ) . '</li>';
+		echo '</ul>';
+	}
+
+	/**
 	 * Render User Profile Field.
 	 *
 	 * Outputs the HTML for the minimum_user_profile field, displaying only roles with edit permissions.
@@ -249,6 +284,8 @@ class Decker_Admin_Settings {
 			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
+			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
+			'signaling_server'      => __( 'Signaling Server', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),
 
@@ -360,6 +397,17 @@ class Decker_Admin_Settings {
 
 		// Validate allow email notifications.
 		$input['allow_email_notifications'] = isset( $input['allow_email_notifications'] ) && '1' === $input['allow_email_notifications'] ? '1' : '0';
+
+		// Validate collaborative editing.
+		$input['collaborative_editing'] = isset( $input['collaborative_editing'] ) && '1' === $input['collaborative_editing'] ? '1' : '0';
+
+		// Validate signaling server.
+		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {
+			// Include wss protocol for WebSocket signaling servers.
+			$input['signaling_server'] = esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
+		} else {
+			$input['signaling_server'] = 'wss://signaling.yjs.dev';
+		}
 
 		// Validate alert color.
 		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
