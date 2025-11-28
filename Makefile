@@ -77,11 +77,25 @@ test-verbose: start-if-not-running
 	CMD="$$CMD --debug --verbose"; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
 
-test-e2e:
-	npm run test:e2e
+# Ensure tests environment has admin user and plugin active
+setup-tests-env:
+	@echo "Setting up tests environment..."
+	@npx wp-env run tests-cli wp core install \
+		--url=http://localhost:8889 \
+		--title="Decker Tests" \
+		--admin_user=admin \
+		--admin_password=password \
+		--admin_email=admin@example.com \
+		--skip-email 2>/dev/null || true
+	@npx wp-env run tests-cli wp plugin activate decker 2>/dev/null || true
+	@npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard 2>/dev/null || true
 
-test-e2e-visual:
-	npm run test:e2e -- --ui
+# Run E2E tests with Playwright against wp-env tests environment (port 8889)
+test-e2e: start-if-not-running setup-tests-env
+	WP_BASE_URL=http://localhost:8889 npm run test:e2e
+
+test-e2e-visual: start-if-not-running setup-tests-env
+	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
 
 
 logs:
