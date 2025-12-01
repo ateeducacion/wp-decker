@@ -104,11 +104,11 @@ jobs:
 
 
 
-      - name: Pre-pull Docker images
-        run: |
-          docker pull mariadb:lts
-          docker pull wordpress
-          docker pull wordpress:cli
+      # - name: Pre-pull Docker images
+      #   run: |
+      #     docker pull mariadb:lts
+      #     docker pull wordpress
+      #     docker pull wordpress:cli
 
       - name: PHP setup
         uses: shivammathur/setup-php@v2
