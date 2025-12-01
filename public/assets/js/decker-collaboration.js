@@ -665,11 +665,45 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             initializeContentWithFallback(originalHtml) {
                 // Only set content if Y.js document is empty
                 if (ytext.length === 0 && originalHtml && originalHtml.trim() !== '' && originalHtml !== '<p><br></p>') {
-                    console.log('Decker Collaboration: Y.js empty after sync, initializing with original content');
-                    const delta = quillInstance.clipboard.convert(originalHtml);
-                    ytext.applyDelta(delta.ops);
+                    console.log('Decker Collaboration: Y.js empty after sync, initializing with original content:', originalHtml);
+
+                    try {
+                        // Convert HTML to Quill delta
+                        const delta = quillInstance.clipboard.convert({ html: originalHtml });
+                        console.log('Decker Collaboration: Converted delta:', delta);
+
+                        if (delta && delta.ops && delta.ops.length > 0) {
+                            // Apply delta to Y.js text
+                            ytext.applyDelta(delta.ops);
+                            console.log('Decker Collaboration: Applied delta to Y.js, ytext.length:', ytext.length);
+
+                            // If Quill is still empty after applying to Y.js, set content directly
+                            // This handles cases where the binding doesn't propagate correctly
+                            setTimeout(() => {
+                                const quillText = quillInstance.getText().trim();
+                                if (quillText === '' && ytext.length > 0) {
+                                    console.log('Decker Collaboration: Quill still empty, forcing content from Y.js');
+                                    // Get delta from Y.js and apply to Quill
+                                    const ytextDelta = ytext.toDelta();
+                                    quillInstance.setContents(ytextDelta, 'api');
+                                }
+                            }, 100);
+                        } else {
+                            // Fallback: insert HTML directly if delta conversion failed
+                            console.log('Decker Collaboration: Delta conversion returned empty, using direct insert');
+                            ytext.insert(0, originalHtml.replace(/<[^>]*>/g, ''));
+                        }
+                    } catch (error) {
+                        console.error('Decker Collaboration: Error initializing content:', error);
+                        // Last resort: try to set Quill content directly
+                        try {
+                            quillInstance.clipboard.dangerouslyPasteHTML(0, originalHtml, 'api');
+                        } catch (e) {
+                            console.error('Decker Collaboration: Fallback also failed:', e);
+                        }
+                    }
                 } else if (ytext.length > 0) {
-                    console.log('Decker Collaboration: Y.js has content from sync, keeping it');
+                    console.log('Decker Collaboration: Y.js has content from sync, keeping it. Length:', ytext.length);
                 }
             },
 
