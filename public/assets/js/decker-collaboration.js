@@ -415,6 +415,55 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         // Use the provider's built-in awareness
         const awareness = provider.awareness;
 
+        // Sync state tracking for event-based initialization
+        let isSynced = false;
+        let syncPromiseResolve = null;
+        const syncPromise = new Promise(resolve => {
+            syncPromiseResolve = resolve;
+        });
+
+        // Listen for WebRTC provider sync event
+        provider.on('synced', ({ synced }) => {
+            if (synced && !isSynced) {
+                isSynced = true;
+                console.log('Decker Collaboration: Initial sync completed via synced event');
+                syncPromiseResolve();
+            }
+        });
+
+        // Fallback: Check for single-user case when signaling connects
+        const checkSingleUserSync = () => {
+            const signalingOk = isSignalingConnected(provider);
+            if (signalingOk && !isSynced) {
+                // Give a small window for peers to announce themselves
+                setTimeout(() => {
+                    if (!isSynced && awareness.getStates().size <= 1) {
+                        console.log('Decker Collaboration: Single user mode detected, marking as synced');
+                        isSynced = true;
+                        syncPromiseResolve();
+                    }
+                }, 500);
+            }
+        };
+
+        provider.on('status', ({ status }) => {
+            if (status === 'connected') {
+                checkSingleUserSync();
+            }
+        });
+
+        // Safety timeout: If sync doesn't complete in 5 seconds, resolve anyway
+        const syncTimeout = setTimeout(() => {
+            if (!isSynced) {
+                console.warn('Decker Collaboration: Sync timeout reached, proceeding without sync confirmation');
+                isSynced = true;
+                syncPromiseResolve();
+            }
+        }, 5000);
+
+        // Clear timeout when sync completes normally
+        syncPromise.then(() => clearTimeout(syncTimeout));
+
         // Set local user state
         awareness.setLocalStateField('user', {
             name: userName,
@@ -578,12 +627,49 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
 
             /**
              * Set initial content (only if document is empty)
+             * @deprecated Use onSynced() with initializeContentWithFallback() instead
              */
             setInitialContent(html) {
                 if (ytext.length === 0 && html) {
                     // Use Quill's clipboard to properly convert HTML to Delta
                     const delta = quillInstance.clipboard.convert(html);
                     ytext.applyDelta(delta.ops);
+                }
+            },
+
+            /**
+             * Check if initial sync is complete
+             * @returns {boolean}
+             */
+            isSynced() {
+                return isSynced;
+            },
+
+            /**
+             * Register a callback for when sync completes
+             * @param {Function} callback - Function to call when synced
+             */
+            onSynced(callback) {
+                if (isSynced) {
+                    callback();
+                } else {
+                    syncPromise.then(callback);
+                }
+            },
+
+            /**
+             * Initialize content with fallback to original HTML.
+             * Should be called via onSynced() to ensure proper timing.
+             * @param {string} originalHtml - Original HTML content from server
+             */
+            initializeContentWithFallback(originalHtml) {
+                // Only set content if Y.js document is empty
+                if (ytext.length === 0 && originalHtml && originalHtml.trim() !== '' && originalHtml !== '<p><br></p>') {
+                    console.log('Decker Collaboration: Y.js empty after sync, initializing with original content');
+                    const delta = quillInstance.clipboard.convert(originalHtml);
+                    ytext.applyDelta(delta.ops);
+                } else if (ytext.length > 0) {
+                    console.log('Decker Collaboration: Y.js has content from sync, keeping it');
                 }
             },
 

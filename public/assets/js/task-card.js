@@ -23,6 +23,9 @@
     // Form fields collaboration binding state
     let formFieldsBinding = null;
 
+    // Snapshot of original form values from server (captured before collaboration)
+    let originalValuesSnapshot = null;
+
     // Field mappings for collaboration
     const FIELD_MAPPINGS = [
         { id: 'task-title', key: 'title', type: 'text' },
@@ -33,6 +36,55 @@
         { id: 'task-stack', key: 'stack', type: 'select' },
         { id: 'task-due-date', key: 'dueDate', type: 'date' },
     ];
+
+    /**
+     * Capture all original form values from server-rendered HTML.
+     * Must be called BEFORE Quill and collaboration are initialized.
+     * @param {HTMLElement} context - The container element
+     * @returns {Object} Original values snapshot
+     */
+    function captureOriginalFormValues(context) {
+        const snapshot = {
+            fields: {},
+            choices: {},
+            quillHtml: null,
+            capturedAt: Date.now()
+        };
+
+        // Capture regular fields
+        FIELD_MAPPINGS.forEach(({ id, key, type }) => {
+            const el = context.querySelector(`#${id}`);
+            if (!el) return;
+
+            if (type === 'checkbox') {
+                snapshot.fields[key] = el.checked;
+            } else {
+                snapshot.fields[key] = el.value;
+            }
+        });
+
+        // Capture Quill content BEFORE binding (from raw HTML in #editor)
+        const editorEl = context.querySelector('#editor');
+        if (editorEl) {
+            snapshot.quillHtml = editorEl.innerHTML;
+        }
+
+        // Capture select multiple values (assignees, labels) from raw HTML
+        const assigneesEl = context.querySelector('#task-assignees');
+        if (assigneesEl) {
+            snapshot.choices.assignees = Array.from(assigneesEl.selectedOptions)
+                .map(opt => opt.value);
+        }
+
+        const labelsEl = context.querySelector('#task-labels');
+        if (labelsEl) {
+            snapshot.choices.labels = Array.from(labelsEl.selectedOptions)
+                .map(opt => opt.value);
+        }
+
+        console.log('Decker: Original form values captured:', snapshot);
+        return snapshot;
+    }
 
     /**
      * Disable all form fields (used when task is archived)
@@ -127,13 +179,14 @@
         ];
 
         /**
-         * Initialize form fields from Yjs or populate Yjs from local values.
+         * Initialize form fields from Yjs or populate Yjs from original values.
+         * Uses event-based sync instead of fixed timeout.
          * Only the first user (no other peers) populates Yjs.
          * Subsequent users only receive and apply remote values.
          */
         function initializeFormFieldValues() {
-            // Wait for WebRTC connection and sync
-            setTimeout(() => {
+            // Wait for WebRTC sync to complete before initializing
+            session.onSynced(() => {
                 isRemoteUpdate = true;
 
                 // Check if there are other peers connected (not just myself)
@@ -141,33 +194,39 @@
                 const hasRemoteData = formFields.size > 0;
                 const isFirstUser = connectedPeers <= 1 && !hasRemoteData;
 
-                console.log('Decker: Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Is first user:', isFirstUser);
+                console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Is first user:', isFirstUser);
 
-                if (isFirstUser) {
-                    // First user - populate Yjs with local values
-                    console.log('Decker: First user, populating Yjs with local values');
+                if (isFirstUser && originalValuesSnapshot) {
+                    // First user - populate Yjs with ORIGINAL values from snapshot
+                    console.log('Decker: First user, populating Yjs with original server values');
 
+                    // Use original values from snapshot (guaranteed to be correct)
                     FIELD_MAPPINGS.forEach(({ id, key, type }) => {
+                        const originalValue = originalValuesSnapshot.fields[key];
+                        if (originalValue !== undefined && originalValue !== '') {
+                            formFields.set(key, originalValue);
+                        }
+                        // Also ensure local UI has the value
                         const el = context.querySelector(`#${id}`);
-                        if (!el) return;
-
-                        const localValue = type === 'checkbox' ? el.checked : el.value;
-                        if (localValue !== undefined && localValue !== '') {
-                            formFields.set(key, localValue);
+                        if (el) {
+                            if (type === 'checkbox') {
+                                el.checked = originalValue;
+                            } else if (originalValue) {
+                                el.value = originalValue;
+                            }
                         }
                     });
 
-                    choicesMappings.forEach(({ instance, key }) => {
-                        if (!instance) return;
-
-                        const localValues = instance.getValue(true);
-                        if (localValues && localValues.length > 0) {
-                            formFields.set(key, localValues);
-                        }
-                    });
-                } else {
-                    // Another user has data - only apply remote values, don't overwrite
-                    console.log('Decker: Joining existing session, applying remote values only');
+                    // Choices.js fields from snapshot
+                    if (originalValuesSnapshot.choices.assignees && originalValuesSnapshot.choices.assignees.length > 0) {
+                        formFields.set('assignees', originalValuesSnapshot.choices.assignees);
+                    }
+                    if (originalValuesSnapshot.choices.labels && originalValuesSnapshot.choices.labels.length > 0) {
+                        formFields.set('labels', originalValuesSnapshot.choices.labels);
+                    }
+                } else if (hasRemoteData) {
+                    // Another user has data - apply remote values to local UI
+                    console.log('Decker: Joining existing session, applying remote values');
 
                     // Apply all remote values to local UI
                     FIELD_MAPPINGS.forEach(({ id, key, type }) => {
@@ -202,10 +261,32 @@
                     if (formFields.get('archived') === true) {
                         disableAllFormFields(context, strings.task_is_archived || 'This task is archived');
                     }
+                } else {
+                    // Edge case: No remote data and no snapshot - use current DOM values
+                    console.log('Decker: No remote data, no snapshot - using current DOM values as fallback');
+
+                    FIELD_MAPPINGS.forEach(({ id, key, type }) => {
+                        const el = context.querySelector(`#${id}`);
+                        if (!el) return;
+
+                        const localValue = type === 'checkbox' ? el.checked : el.value;
+                        if (localValue !== undefined && localValue !== '') {
+                            formFields.set(key, localValue);
+                        }
+                    });
+
+                    choicesMappings.forEach(({ instance, key }) => {
+                        if (!instance) return;
+
+                        const localValues = instance.getValue(true);
+                        if (localValues && localValues.length > 0) {
+                            formFields.set(key, localValues);
+                        }
+                    });
                 }
 
                 isRemoteUpdate = false;
-            }, 1000); // Increased timeout to allow WebRTC sync
+            });
         }
 
         /**
@@ -549,6 +630,9 @@
 
     // Function to initialize the tasks page within the given context
     function initializeTaskPage(context) {
+        // CRITICAL: Capture original values BEFORE any collaboration or Quill setup
+        originalValuesSnapshot = captureOriginalFormValues(context);
+
         new Tablesort(context.querySelector('#user-history-table'));
 
         // Check if the task_id is present in data-task-id
@@ -656,17 +740,14 @@
                         collabSession = null;
                     }
 
-                    // Get initial content before binding
-                    const initialContent = quill.root.innerHTML;
-
                     // Initialize collaboration
                     collabSession = window.DeckerCollaboration.init(quill, taskId, context);
 
-                    // If this is the first peer, set the initial content
-                    if (collabSession && initialContent && initialContent !== '<p><br></p>') {
-                        setTimeout(() => {
-                            collabSession.setInitialContent(initialContent);
-                        }, 500);
+                    // Use event-based initialization with original content from snapshot
+                    if (collabSession && originalValuesSnapshot && originalValuesSnapshot.quillHtml) {
+                        collabSession.onSynced(() => {
+                            collabSession.initializeContentWithFallback(originalValuesSnapshot.quillHtml);
+                        });
                     }
 
                     console.log('Decker: Collaborative editing initialized for task', taskId);
