@@ -422,44 +422,57 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             syncPromiseResolve = resolve;
         });
 
-        // Listen for WebRTC provider sync event
+        // Listen for WebRTC provider sync event (fires when synced with peers)
         provider.on('synced', ({ synced }) => {
             if (synced && !isSynced) {
                 isSynced = true;
-                console.log('Decker Collaboration: Initial sync completed via synced event');
+                console.log('Decker Collaboration: Synced with peers');
                 syncPromiseResolve();
             }
         });
 
-        // Fallback: Check for single-user case when signaling connects
-        const checkSingleUserSync = () => {
+        // Fast single-user detection: check periodically until we confirm status
+        let singleUserCheckCount = 0;
+        const maxSingleUserChecks = 10; // Check up to 10 times (100ms * 10 = 1 second max)
+
+        const checkSingleUser = () => {
+            if (isSynced) return; // Already synced, stop checking
+
+            singleUserCheckCount++;
             const signalingOk = isSignalingConnected(provider);
-            if (signalingOk && !isSynced) {
-                // Give a small window for peers to announce themselves
-                setTimeout(() => {
-                    if (!isSynced && awareness.getStates().size <= 1) {
-                        console.log('Decker Collaboration: Single user mode detected, marking as synced');
-                        isSynced = true;
-                        syncPromiseResolve();
-                    }
-                }, 500);
+            const peerCount = awareness.getStates().size;
+
+            // If signaling is connected and we're alone after a few checks, proceed
+            if (signalingOk && peerCount <= 1 && singleUserCheckCount >= 3) {
+                console.log('Decker Collaboration: Single user mode detected (check #' + singleUserCheckCount + ')');
+                isSynced = true;
+                syncPromiseResolve();
+                return;
+            }
+
+            // If we have peers, wait for proper sync
+            if (peerCount > 1) {
+                console.log('Decker Collaboration: Multiple peers detected, waiting for sync');
+                return; // Stop checking, let 'synced' event handle it
+            }
+
+            // Keep checking until max attempts
+            if (singleUserCheckCount < maxSingleUserChecks) {
+                setTimeout(checkSingleUser, 100);
             }
         };
 
-        provider.on('status', ({ status }) => {
-            if (status === 'connected') {
-                checkSingleUserSync();
-            }
-        });
+        // Start checking immediately
+        setTimeout(checkSingleUser, 100);
 
-        // Safety timeout: If sync doesn't complete in 5 seconds, resolve anyway
+        // Safety timeout: reduced to 2 seconds (only as last resort)
         const syncTimeout = setTimeout(() => {
             if (!isSynced) {
-                console.warn('Decker Collaboration: Sync timeout reached, proceeding without sync confirmation');
+                console.warn('Decker Collaboration: Sync timeout (2s), proceeding');
                 isSynced = true;
                 syncPromiseResolve();
             }
-        }, 5000);
+        }, 2000);
 
         // Clear timeout when sync completes normally
         syncPromise.then(() => clearTimeout(syncTimeout));
