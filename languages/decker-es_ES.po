@@ -213,6 +213,9 @@ msgstr "Máxima Prioridad"
 msgid "Stack"
 msgstr "Columna"
 
+msgid "C."
+msgstr "C."
+
 msgid "To-Do"
 msgstr "Por Hacer"
 

@@ -213,7 +213,7 @@ table#tablaTareas td:nth-child(3) {
 													<tr>
 														<th class="c-priority"><?php esc_html_e( 'P.', 'decker' ); ?></th>
 														<th class="c-board"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+														<th class="c-stack"><?php esc_html_e( 'C.', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
 														<th class="c-responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
