@@ -45,7 +45,7 @@ class Decker_Demo_Data {
 	 */
 	private function create_labels() {
 		$labels = array();
-		
+
 		// Create labels with varying lengths for better testing.
 		$label_names = array(
 			'Bug',
@@ -59,7 +59,7 @@ class Decker_Demo_Data {
 			'Backend Development',
 			'Critical Security Issue',
 		);
-		
+
 		foreach ( $label_names as $term_name ) {
 			$term_slug = sanitize_title( $term_name );
 			$term_color = $this->generate_random_color();
@@ -563,7 +563,7 @@ class Decker_Demo_Data {
 					'Deploy',
 					'Test',
 				);
-				
+
 				$medium_titles = array(
 					'Implement new feature',
 					'Refactor database queries',
@@ -571,7 +571,7 @@ class Decker_Demo_Data {
 					'Configure deployment pipeline',
 					'Write unit tests',
 				);
-				
+
 				$long_titles = array(
 					'Investigate performance issues in the production environment',
 					'Develop comprehensive documentation for API endpoints',
@@ -579,7 +579,7 @@ class Decker_Demo_Data {
 					'Optimize database queries for improved application performance',
 					'Create automated testing suite for continuous integration',
 				);
-				
+
 				// Randomly select title length (40% short, 40% medium, 20% long).
 				$rand = $this->custom_rand( 1, 10 );
 				if ( $rand <= 4 ) {
@@ -589,7 +589,7 @@ class Decker_Demo_Data {
 				} else {
 					$post_title = $long_titles[ array_rand( $long_titles ) ] . " - {$board->name}";
 				}
-				
+
 				$post_content = "Content for task $j in board {$board->name}.";
 
 				if ( '1' !== $show_in_boards ) {
