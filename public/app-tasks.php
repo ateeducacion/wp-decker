@@ -116,10 +116,31 @@ table#tablaTareas td {
 	   word-break: break-word; /* Breaks long words to prevent overflow */
 }
 
+/* Description column - allow more space and wrapping */
 table#tablaTareas td:nth-child(4) {
-	   max-width: 200px; /* Maximum width for the description column */
-	overflow: hidden;
-	text-overflow: ellipsis;
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Labels/Tags column - allow wrapping for better display */
+table#tablaTareas td:nth-child(5) {
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Stack column - compact display */
+table#tablaTareas td:nth-child(3) {
+	white-space: nowrap;
+}
+
+/* Priority column - compact display */
+table#tablaTareas td:nth-child(1) {
+	white-space: nowrap;
+	text-align: center;
+}
+
+/* Responsable column - compact display */
+table#tablaTareas td:nth-child(6) {
 	white-space: nowrap;
 }
 
@@ -201,7 +222,7 @@ table#tablaTareas td:nth-child(4) {
 													<tr>
 														<th class="c-priority"><?php esc_html_e( 'P.', 'decker' ); ?></th>
 														<th class="c-board"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+														<th class="c-stack"><?php esc_html_e( 'C.', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
 														<th class="c-responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
@@ -420,6 +441,28 @@ table#tablaTareas td:nth-child(4) {
 					{
 						targets: 7, // due-date column
 						type: 'date',
+					},
+					// Column width adjustments for better distribution
+					// Explicit widths for key columns; remaining columns auto-size
+					{
+						targets: 0, // Priority column
+						width: '3%'
+					},
+					{
+						targets: 2, // Stack column
+						width: '4%'
+					},
+					{
+						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
+						width: '30%'
+					},
+					{
+						targets: 4, // Tags/Labels column
+						width: '15%'
+					},
+					{
+						targets: 5, // Responsable column
+						width: '8%'
 					}
 				],
 
