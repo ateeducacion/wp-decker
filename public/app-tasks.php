@@ -116,10 +116,22 @@ table#tablaTareas td {
 	   word-break: break-word; /* Breaks long words to prevent overflow */
 }
 
+/* Description column - allow more space and wrapping */
 table#tablaTareas td:nth-child(4) {
-	   max-width: 200px; /* Maximum width for the description column */
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Labels/Tags column - constrain width with ellipsis */
+table#tablaTareas td:nth-child(5) {
+	max-width: 150px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Stack column - compact display */
+table#tablaTareas td:nth-child(3) {
 	white-space: nowrap;
 }
 
@@ -420,6 +432,19 @@ table#tablaTareas td:nth-child(4) {
 					{
 						targets: 7, // due-date column
 						type: 'date',
+					},
+					// Column width adjustments for better distribution
+					{
+						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
+						width: '35%'
+					},
+					{
+						targets: 4, // Tags/Labels column
+						width: '12%'
+					},
+					{
+						targets: 2, // Stack column
+						width: '8%'
 					}
 				],
 
