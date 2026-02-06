@@ -434,6 +434,7 @@ table#tablaTareas td:nth-child(3) {
 						type: 'date',
 					},
 					// Column width adjustments for better distribution
+					// Explicit widths for key columns; remaining columns auto-size
 					{
 						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
 						width: '35%'
