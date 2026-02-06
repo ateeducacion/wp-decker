@@ -702,9 +702,12 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
                                 }
                             }, 100);
                         } else {
-                            // Fallback: insert HTML directly if delta conversion failed
+                            // Fallback: insert text-only content if delta conversion failed
                             console.log('Decker Collaboration: Delta conversion returned empty, using direct insert');
-                            ytext.insert(0, originalHtml.replace(/<[^>]*>/g, ''));
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = originalHtml;
+                            const plainText = tempDiv.textContent || '';
+                            ytext.insert(0, plainText);
                         }
                     } catch (error) {
                         console.error('Decker Collaboration: Error initializing content:', error);
