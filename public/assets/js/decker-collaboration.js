@@ -682,7 +682,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
 
                     try {
                         // Convert HTML to Quill delta
-                        const delta = quillInstance.clipboard.convert({ html: originalHtml });
+                        const delta = quillInstance.clipboard.convert(originalHtml);
                         console.log('Decker Collaboration: Converted delta:', delta);
 
                         if (delta && delta.ops && delta.ops.length > 0) {
