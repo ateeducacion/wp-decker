@@ -122,16 +122,25 @@ table#tablaTareas td:nth-child(4) {
 	word-wrap: break-word;
 }
 
-/* Labels/Tags column - constrain width with ellipsis */
+/* Labels/Tags column - allow wrapping for better display */
 table#tablaTareas td:nth-child(5) {
-	max-width: 150px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	white-space: normal;
+	word-wrap: break-word;
 }
 
 /* Stack column - compact display */
 table#tablaTareas td:nth-child(3) {
+	white-space: nowrap;
+}
+
+/* Priority column - compact display */
+table#tablaTareas td:nth-child(1) {
+	white-space: nowrap;
+	text-align: center;
+}
+
+/* Responsable column - compact display */
+table#tablaTareas td:nth-child(6) {
 	white-space: nowrap;
 }
 
@@ -436,15 +445,23 @@ table#tablaTareas td:nth-child(3) {
 					// Column width adjustments for better distribution
 					// Explicit widths for key columns; remaining columns auto-size
 					{
-						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
-						width: '35%'
-					},
-					{
-						targets: 4, // Tags/Labels column
-						width: '12%'
+						targets: 0, // Priority column
+						width: '3%'
 					},
 					{
 						targets: 2, // Stack column
+						width: '4%'
+					},
+					{
+						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
+						width: '30%'
+					},
+					{
+						targets: 4, // Tags/Labels column
+						width: '15%'
+					},
+					{
+						targets: 5, // Responsable column
 						width: '8%'
 					}
 				],
