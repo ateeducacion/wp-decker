@@ -423,7 +423,9 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         });
 
         // Listen for WebRTC provider sync event (fires when synced with peers)
-        provider.on('synced', ({ synced }) => {
+        // y-webrtc may emit a boolean or an object { synced: boolean }
+        provider.on('synced', (event) => {
+            const synced = typeof event === 'boolean' ? event : event?.synced;
             if (synced && !isSynced) {
                 isSynced = true;
                 console.log('Decker Collaboration: Synced with peers');
@@ -434,6 +436,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         // Fast single-user detection: check periodically until we confirm status
         let singleUserCheckCount = 0;
         const maxSingleUserChecks = 10; // Check up to 10 times (100ms * 10 = 1 second max)
+        let singleUserTimerId = null;
 
         const checkSingleUser = () => {
             if (isSynced) return; // Already synced, stop checking
@@ -458,12 +461,16 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
 
             // Keep checking until max attempts
             if (singleUserCheckCount < maxSingleUserChecks) {
-                setTimeout(checkSingleUser, 100);
+                singleUserTimerId = setTimeout(checkSingleUser, 100);
+            } else if (!isSynced) {
+                // All checks exhausted without resolution — resolve sync immediately
+                isSynced = true;
+                syncPromiseResolve();
             }
         };
 
         // Start checking immediately
-        setTimeout(checkSingleUser, 100);
+        singleUserTimerId = setTimeout(checkSingleUser, 100);
 
         // Safety timeout: reduced to 2 seconds (only as last resort)
         const syncTimeout = setTimeout(() => {
@@ -639,18 +646,6 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             },
 
             /**
-             * Set initial content (only if document is empty)
-             * @deprecated Use onSynced() with initializeContentWithFallback() instead
-             */
-            setInitialContent(html) {
-                if (ytext.length === 0 && html) {
-                    // Use Quill's clipboard to properly convert HTML to Delta
-                    const delta = quillInstance.clipboard.convert(html);
-                    ytext.applyDelta(delta.ops);
-                }
-            },
-
-            /**
              * Check if initial sync is complete
              * @returns {boolean}
              */
@@ -682,7 +677,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
 
                     try {
                         // Convert HTML to Quill delta
-                        const delta = quillInstance.clipboard.convert(originalHtml);
+                        const delta = quillInstance.clipboard.convert({ html: originalHtml });
                         console.log('Decker Collaboration: Converted delta:', delta);
 
                         if (delta && delta.ops && delta.ops.length > 0) {
@@ -766,8 +761,11 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
              * Destroy the collaboration session
              */
             destroy() {
-                // Clear connection checker interval
+                // Clear all timers to prevent post-destroy callbacks
                 clearInterval(connectionChecker);
+                clearTimeout(syncTimeout);
+                clearTimeout(singleUserTimerId);
+                isSynced = true; // Prevent any pending callbacks from firing
 
                 // Clear cursor from awareness before disconnecting
                 awareness.setLocalStateField('cursor', null);

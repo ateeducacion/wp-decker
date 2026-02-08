@@ -203,15 +203,17 @@
                     // Use original values from snapshot (guaranteed to be correct)
                     FIELD_MAPPINGS.forEach(({ id, key, type }) => {
                         const originalValue = originalValuesSnapshot.fields[key];
-                        if (originalValue !== undefined && originalValue !== '') {
+                        if (originalValue !== undefined) {
                             formFields.set(key, originalValue);
                         }
                         // Also ensure local UI has the value
                         const el = context.querySelector(`#${id}`);
                         if (el) {
                             if (type === 'checkbox') {
-                                el.checked = originalValue;
-                            } else if (originalValue) {
+                                if (originalValue !== undefined) {
+                                    el.checked = !!originalValue;
+                                }
+                            } else if (originalValue !== undefined) {
                                 el.value = originalValue;
                             }
                         }
@@ -270,7 +272,7 @@
                         if (!el) return;
 
                         const localValue = type === 'checkbox' ? el.checked : el.value;
-                        if (localValue !== undefined && localValue !== '') {
+                        if (localValue !== undefined) {
                             formFields.set(key, localValue);
                         }
                     });

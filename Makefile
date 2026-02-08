@@ -77,6 +77,9 @@ test-verbose: start-if-not-running
 	CMD="$$CMD --debug --verbose"; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
 
+test-js:
+	npm run test:js
+
 test-e2e:
 	npm run test:e2e
 
@@ -221,6 +224,7 @@ help:
 	@echo "                         make test FILE=tests/MyTest.php"
 	@echo "                         make test FILE=tests/MyTest.php FILTER=test_my_feature"
 	@echo ""
+	@echo "  test-js            - Run JavaScript unit tests with Jest"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
 	@echo ""
