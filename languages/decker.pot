@@ -422,6 +422,17 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
+msgctxt "post type general name"
+msgid "Journal Entries"
+msgstr ""
+
+msgctxt "post type singular name"
+msgid "Journal Entry"
+msgstr ""
+
+msgid "The date of the journal entry in YYYY-MM-DD format."
+msgstr ""
+
 msgid "Board is required"
 msgstr ""
 
@@ -796,6 +807,18 @@ msgstr ""
 msgid "Unmark for today"
 msgstr ""
 
+msgid "Board not found."
+msgstr ""
+
+msgid "No journal entry to delete."
+msgstr ""
+
+msgid "Failed to delete journal entry."
+msgstr ""
+
+msgid "Cannot save notes for a day with no tasks."
+msgstr ""
+
 msgid "Analytics Dashboard"
 msgstr ""
 
@@ -863,6 +886,77 @@ msgid "Meeting"
 msgstr ""
 
 msgid "Uncategorized"
+msgstr ""
+
+msgid "Daily Journal"
+msgstr ""
+
+#. translators: %s: board name
+#, php-format
+msgid "Journal for %s"
+msgstr ""
+
+msgid "Preview"
+msgstr ""
+
+msgid "Search tasks..."
+msgstr ""
+
+msgid "Tasks of the Day"
+msgstr ""
+
+msgid "Comments/Observations"
+msgstr ""
+
+msgid "Delete Notes"
+msgstr ""
+
+msgid "Last saved:"
+msgstr ""
+
+msgid "Save Notes"
+msgstr ""
+
+msgid "No tasks for this board on this date."
+msgstr ""
+
+msgid "Users of the Day"
+msgstr ""
+
+msgid "Daily Notes"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Example view with no board selected. Use this mock to review the layout."
+msgstr ""
+
+msgid "Journal Preview"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+msgid "Print"
+msgstr ""
+
+msgid "There is no content to preview in this view."
+msgstr ""
+
+msgid "No days available."
+msgstr ""
+
+msgid "No results in the selected range."
+msgstr ""
+
+msgid "Are you sure you want to delete the notes for this day?"
 msgstr ""
 
 msgid "My Board"
@@ -954,9 +1048,6 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-msgid "Close"
-msgstr ""
-
 msgid "MAX PRIORITY"
 msgstr ""
 
@@ -1030,9 +1121,6 @@ msgid "Leave empty for automatic generation from name"
 msgstr ""
 
 msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
-msgstr ""
-
-msgid "Save"
 msgstr ""
 
 msgid "Edit Term"
@@ -1234,6 +1322,9 @@ msgid "Navigation"
 msgstr ""
 
 msgid "Apps"
+msgstr ""
+
+msgid "Journals"
 msgstr ""
 
 msgid "Utilities"

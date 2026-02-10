@@ -1394,6 +1394,97 @@ msgstr "Ver"
 msgid "The task has been saved successfully."
 msgstr "La tarea se ha guardado correctamente."
 
+msgctxt "post type general name"
+msgid "Journal Entries"
+msgstr "Entradas de diario"
+
+msgctxt "post type singular name"
+msgid "Journal Entry"
+msgstr "Entrada de diario"
+
+msgid "The date of the journal entry in YYYY-MM-DD format."
+msgstr "La fecha de la entrada de diario en formato AAAA-MM-DD."
+
+msgid "Board not found."
+msgstr "Tablero no encontrado."
+
+msgid "No journal entry to delete."
+msgstr "No hay entradas de diario para eliminar."
+
+msgid "Failed to delete journal entry."
+msgstr "Error al eliminar la entrada de diario."
+
+msgid "Cannot save notes for a day with no tasks."
+msgstr "No se pueden guardar notas para un día sin tareas."
+
+msgid "Daily Journal"
+msgstr "Diario diario"
+
+#. translators: %s: board name
+#, php-format
+msgid "Journal for %s"
+msgstr "Diario de %s"
+
+msgid "Preview"
+msgstr "Previsualizar"
+
+msgid "Search tasks..."
+msgstr "Buscar tareas..."
+
+msgid "Tasks of the Day"
+msgstr "Tareas del día"
+
+msgid "Comments/Observations"
+msgstr "Comentarios/Observaciones"
+
+msgid "Delete Notes"
+msgstr "Eliminar notas"
+
+msgid "Last saved:"
+msgstr "Último guardado:"
+
+msgid "Save Notes"
+msgstr "Guardar notas"
+
+msgid "No tasks for this board on this date."
+msgstr "No hay tareas para este tablero en esta fecha."
+
+msgid "Users of the Day"
+msgstr "Usuarios del día"
+
+msgid "Daily Notes"
+msgstr "Notas del día"
+
+msgid "Example view with no board selected. Use this mock to review the layout."
+msgstr "Vista de ejemplo sin tablero seleccionado. Use esta maqueta para revisar el diseño."
+
+msgid "Journal Preview"
+msgstr "Previsualización del diario"
+
+msgid "From"
+msgstr "Desde"
+
+msgid "To"
+msgstr "Hasta"
+
+msgid "Print"
+msgstr "Imprimir"
+
+msgid "There is no content to preview in this view."
+msgstr "No hay contenido para previsualizar en esta vista."
+
+msgid "No days available."
+msgstr "No hay días disponibles."
+
+msgid "No results in the selected range."
+msgstr "No hay resultados en el rango seleccionado."
+
+msgid "Are you sure you want to delete the notes for this day?"
+msgstr "¿Está seguro de que desea eliminar las notas de este día?"
+
+msgid "Journals"
+msgstr "Diarios"
+
 msgid "Enable real-time collaborative editing for tasks."
 msgstr "Activar la edición colaborativa en tiempo real para las tareas."
 

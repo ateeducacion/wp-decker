@@ -108,10 +108,13 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-labels.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-events.php';
+		require_once __DIR__ . '/custom-post-types/class-decker-journal-cpt.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
+		require_once __DIR__ . '/services/class-decker-daily-service.php';
+		require_once __DIR__ . '/rest/class-decker-rest-daily.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
@@ -139,6 +142,9 @@ class Decker {
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin.php';
+
+		new Decker_Daily_Service();
+		new Decker_REST_Daily();
 
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
