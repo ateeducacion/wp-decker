@@ -46,7 +46,7 @@
 						</div>
 						<div class="modal-footer border-0 pt-0 pb-3">
 							<div class="d-flex justify-content-between w-100 small text-muted">
-								<span><kbd>↑</kbd> <kbd>↓</kbd> ${deckerSearchVars.strings.navigate}</span>
+								<span><kbd>&uarr;</kbd> <kbd>&darr;</kbd> ${deckerSearchVars.strings.navigate}</span>
 								<span><kbd>Enter</kbd> ${deckerSearchVars.strings.select}</span>
 								<span><kbd>Esc</kbd> ${deckerSearchVars.strings.close}</span>
 							</div>
