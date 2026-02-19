@@ -225,6 +225,14 @@
 	 * Handle keyboard navigation (arrow keys and Enter)
 	 */
 	function handleKeyNavigation(event) {
+		// Handle Escape key regardless of results
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			modalInstance.hide();
+			return;
+		}
+
+		// Other key navigation requires results
 		if (currentResults.length === 0) {
 			return;
 		}
@@ -247,11 +255,6 @@
 				if (selectedIndex >= 0 && currentResults[selectedIndex]) {
 					navigateToTask(currentResults[selectedIndex].url);
 				}
-				break;
-
-			case 'Escape':
-				event.preventDefault();
-				modalInstance.hide();
 				break;
 		}
 	}
