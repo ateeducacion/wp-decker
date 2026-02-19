@@ -196,7 +196,12 @@
 
                 console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Is first user:', isFirstUser);
 
-                if (isFirstUser && originalValuesSnapshot) {
+                if (isFirstUser) {
+                    if (!originalValuesSnapshot) {
+                        console.warn('Decker: First user detected but originalValuesSnapshot is missing. Skipping initial form value population.');
+                        // Avoid falling through to non-first-user / edge-case branches.
+                        return;
+                    }
                     // First user - populate Yjs with ORIGINAL values from snapshot
                     console.log('Decker: First user, populating Yjs with original server values');
 
