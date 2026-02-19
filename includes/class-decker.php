@@ -136,6 +136,14 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
 
 		/**
+		 * The class responsible for network-level settings in Multisite.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-network-settings.php';
+		if ( is_multisite() ) {
+			new Decker_Network_Settings();
+		}
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin.php';

@@ -31,6 +31,18 @@ define( 'DECKER_PLUGIN_FILE', __FILE__ );
  * The code that runs during plugin activation.
  */
 function activate_decker() {
+	// In a Multisite network, verify the site is in the allowlist.
+	if ( is_multisite() && ! Decker_Network_Settings::is_site_allowed( get_current_blog_id() ) ) {
+		wp_die(
+			esc_html__(
+				'Decker cannot be activated on this site. Please ask your network administrator to add this site to the allowed sites list under Network Admin &gt; Settings &gt; Decker.',
+				'decker'
+			),
+			esc_html__( 'Plugin Activation Error', 'decker' ),
+			array( 'back_link' => true )
+		);
+	}
+
 	// Set the permalink structure if necessary.
 	if ( '/%postname%/' !== get_option( 'permalink_structure' ) ) {
 		update_option( 'permalink_structure', '/%postname%/' );
@@ -91,6 +103,28 @@ function decker_maybe_flush_rewrite_rules() {
 }
 add_action( 'init', 'decker_maybe_flush_rewrite_rules', 999 );
 
+
+/**
+ * Show an admin notice when Decker is active on a site excluded from the
+ * network allowlist, so administrators are aware of the mismatch.
+ */
+function decker_multisite_restriction_notice() {
+	if ( ! is_multisite() ) {
+		return;
+	}
+	if ( ! class_exists( 'Decker_Network_Settings' ) ) {
+		return;
+	}
+	if ( ! Decker_Network_Settings::is_site_allowed( get_current_blog_id() ) ) {
+		echo '<div class="notice notice-warning"><p>' .
+			esc_html__(
+				'Decker is active on this site, but the network administrator has not included it in the allowed sites list. Please contact your network administrator.',
+				'decker'
+			) .
+			'</p></div>';
+	}
+}
+add_action( 'admin_notices', 'decker_multisite_restriction_notice' );
 
 /**
  * The core plugin class that is used to define internationalization,
