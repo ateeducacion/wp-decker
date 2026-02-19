@@ -192,7 +192,7 @@
                 // Check if there are other peers connected (not just myself)
                 const connectedPeers = awareness.getStates().size;
                 const hasRemoteData = formFields.size > 0;
-                const isFirstUser = connectedPeers <= 1 && !hasRemoteData;
+                const isFirstUser = connectedPeers === 1 && !hasRemoteData;
 
                 console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Is first user:', isFirstUser);
 
