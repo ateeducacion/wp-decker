@@ -71,6 +71,11 @@
 		searchInput.addEventListener('input', handleSearchInput);
 		searchInput.addEventListener('keydown', handleKeyNavigation);
 		
+		// Focus input when modal is shown
+		searchModal.addEventListener('shown.bs.modal', function () {
+			searchInput.focus();
+		});
+		
 		// Reset on modal close
 		searchModal.addEventListener('hidden.bs.modal', resetSearch);
 	}
@@ -102,9 +107,6 @@
 	 */
 	function openSearchModal() {
 		modalInstance.show();
-		setTimeout(function () {
-			searchInput.focus();
-		}, 100);
 	}
 
 	/**
