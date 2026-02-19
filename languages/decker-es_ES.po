@@ -1432,3 +1432,30 @@ msgstr "Desconectado"
 
 msgid "you"
 msgstr "tú"
+
+msgid "Unknown"
+msgstr "Desconocido"
+
+msgid "Search tasks..."
+msgstr "Buscar tareas..."
+
+msgid "Type to search tasks by title"
+msgstr "Escribe para buscar tareas por título"
+
+msgid "to navigate"
+msgstr "para navegar"
+
+msgid "to select"
+msgstr "para seleccionar"
+
+msgid "to close"
+msgstr "para cerrar"
+
+msgid "No tasks found"
+msgstr "No se encontraron tareas"
+
+msgid "Error searching tasks"
+msgstr "Error al buscar tareas"
+
+msgid "Search (Ctrl+K)"
+msgstr "Buscar (Ctrl+K)"
