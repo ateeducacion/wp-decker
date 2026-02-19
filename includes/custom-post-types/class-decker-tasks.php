@@ -630,6 +630,25 @@ class Decker_Tasks {
 				},
 			)
 		);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/search',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'search_tasks' ),
+				'permission_callback' => function () {
+					return current_user_can( 'read' );
+				},
+				'args'                => array(
+					'search' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -857,6 +876,87 @@ class Decker_Tasks {
 			array(
 				'message' => 'Event meta updated successfully',
 				'updated_meta' => $updated_meta,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Search tasks by title.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function search_tasks( WP_REST_Request $request ) {
+		$search_term = $request->get_param( 'search' );
+
+		if ( empty( $search_term ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Search term is required.',
+				),
+				400
+			);
+		}
+
+		// Query tasks by title.
+		$args = array(
+			'post_type'      => 'decker_task',
+			'post_status'    => array( 'publish' ),
+			's'              => $search_term,
+			'posts_per_page' => 20,
+			'orderby'        => 'relevance',
+		);
+
+		$query = new WP_Query( $args );
+		$tasks = array();
+
+		if ( $query->have_posts() ) {
+			while ( $query->have_posts() ) {
+				$query->the_post();
+				$task_id = get_the_ID();
+
+				// Get board information.
+				$boards      = wp_get_post_terms( $task_id, 'decker_board' );
+				$board_name  = ! empty( $boards ) ? $boards[0]->name : __( 'No Board', 'decker' );
+				$board_slug  = ! empty( $boards ) ? $boards[0]->slug : '';
+
+				// Get stack information.
+				$stack = get_post_meta( $task_id, 'stack', true );
+				$stack_label = '';
+				switch ( $stack ) {
+					case 'to-do':
+						$stack_label = __( 'To-Do', 'decker' );
+						break;
+					case 'in-progress':
+						$stack_label = __( 'In Progress', 'decker' );
+						break;
+					case 'done':
+						$stack_label = __( 'Done', 'decker' );
+						break;
+					default:
+						$stack_label = __( 'Unknown', 'decker' );
+						break;
+				}
+
+				$tasks[] = array(
+					'id'          => $task_id,
+					'title'       => get_the_title(),
+					'board'       => $board_name,
+					'board_slug'  => $board_slug,
+					'stack'       => $stack,
+					'stack_label' => $stack_label,
+					'url'         => get_permalink( $task_id ),
+				);
+			}
+			wp_reset_postdata();
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'tasks'   => $tasks,
 			),
 			200
 		);

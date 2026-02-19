@@ -308,6 +308,9 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
 
+			// Add global search script.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js';
+
 			// Add collaborative editing module if enabled.
 			$this->maybe_enqueue_collaboration();
 
@@ -474,6 +477,25 @@ class Decker_Public {
 
 			// TODO: This can be removed, review.
 			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
+
+			// Localize the global search script.
+			wp_localize_script(
+				'global-search',
+				'deckerSearchVars',
+				array(
+					'restUrl' => rest_url(),
+					'nonce'   => wp_create_nonce( 'wp_rest' ),
+					'strings' => array(
+						'search_placeholder' => __( 'Search tasks...', 'decker' ),
+						'search_hint'        => __( 'Type to search tasks by title', 'decker' ),
+						'navigate'           => __( 'to navigate', 'decker' ),
+						'select'             => __( 'to select', 'decker' ),
+						'close'              => __( 'to close', 'decker' ),
+						'no_results'         => __( 'No tasks found', 'decker' ),
+						'error'              => __( 'Error searching tasks', 'decker' ),
+					),
+				)
+			);
 
 		}
 	}
