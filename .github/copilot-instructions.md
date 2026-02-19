@@ -41,6 +41,7 @@ Decker is a WordPress plugin for task management with a Kanban board interface. 
 - All user-facing strings must be in **Spanish**
 - Use WordPress translation functions: `__()`, `_e()`, `_n()`, `_x()`
 - Text domain is `decker`
+- **Always add Spanish translations** for every new translatable string to `languages/decker-es_ES.po` in the same commit that introduces the string
 - Always verify no untranslated Spanish strings remain using `make check-untranslated`
 
 ## Development Workflow
@@ -90,7 +91,7 @@ Decker is a WordPress plugin for task management with a Kanban board interface. 
 ### Adding a New Feature
 1. Write failing test(s) first (TDD)
 2. Implement minimal code to pass tests
-3. Ensure Spanish translations are added
+3. Add Spanish translations for every new `__()`, `_e()`, `_n()`, `_x()` call to `languages/decker-es_ES.po`
 4. Run `make lint` and `make fix`
 5. Run `make test` to verify all tests pass
 6. Run `make check-untranslated` to verify translations

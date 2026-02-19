@@ -1459,3 +1459,46 @@ msgstr "Error al buscar tareas"
 
 msgid "Search (Ctrl+K)"
 msgstr "Buscar (Ctrl+K)"
+
+msgid "Decker Network Settings"
+msgstr "Configuración de red de Decker"
+
+msgid "You do not have sufficient permissions to access this page."
+msgstr "No tienes permisos suficientes para acceder a esta página."
+
+msgid "Network settings saved."
+msgstr "Configuración de red guardada."
+
+msgid "Allowed Site IDs"
+msgstr "IDs de sitios permitidos"
+
+msgid "Please enter comma-separated site IDs (numbers only)"
+msgstr "Por favor, introduce IDs de sitios separados por comas (solo números)"
+
+msgid ""
+"Enter comma-separated site IDs where Decker is permitted to be activated. "
+"Leave empty to allow activation on all sites."
+msgstr ""
+"Introduce los IDs de sitios separados por comas donde se permite activar "
+"Decker. Déjalo vacío para permitir la activación en todos los sitios."
+
+msgid "Plugin Activation Error"
+msgstr "Error de activación del plugin"
+
+msgid ""
+"Decker cannot be activated on this site. Please ask your network "
+"administrator to add this site to the allowed sites list under Network Admin "
+"&gt; Settings &gt; Decker."
+msgstr ""
+"Decker no puede activarse en este sitio. Por favor, pide al administrador de "
+"la red que añada este sitio a la lista de sitios permitidos en Administración "
+"de red &gt; Configuración &gt; Decker."
+
+msgid ""
+"Decker is active on this site, but the network administrator has not "
+"included it in the allowed sites list. Please contact your network "
+"administrator."
+msgstr ""
+"Decker está activo en este sitio, pero el administrador de la red no lo ha "
+"incluido en la lista de sitios permitidos. Por favor, contacta con tu "
+"administrador de red."
