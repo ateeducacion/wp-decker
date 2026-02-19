@@ -12,6 +12,8 @@
 	let currentResults = [];
 	let searchTimeout = null;
 	let modalInstance = null;
+	let currentQuery = '';
+	let abortController = null;
 
 	/**
 	 * Initialize the global search functionality
@@ -120,6 +122,15 @@
 			clearTimeout(searchTimeout);
 		}
 
+		// Abort any in-flight request
+		if (abortController) {
+			abortController.abort();
+			abortController = null;
+		}
+
+		// Update current query
+		currentQuery = query;
+
 		// Show loading state
 		if (query.length >= 2) {
 			searchResults.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div></div>';
@@ -139,12 +150,16 @@
 	function performSearch(query) {
 		const url = deckerSearchVars.restUrl + 'decker/v1/tasks/search?search=' + encodeURIComponent(query);
 
+		// Create a new abort controller for this request
+		abortController = new AbortController();
+
 		fetch(url, {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',
 				'X-WP-Nonce': deckerSearchVars.nonce
-			}
+			},
+			signal: abortController.signal
 		})
 		.then(function (response) {
 			if (!response.ok) {
@@ -153,6 +168,12 @@
 			return response.json();
 		})
 		.then(function (data) {
+			// Verify this response is still for the current query
+			if (query !== currentQuery) {
+				// Ignore outdated response
+				return;
+			}
+
 			if (data.success && data.tasks) {
 				displayResults(data.tasks);
 			} else {
@@ -160,8 +181,15 @@
 			}
 		})
 		.catch(function (error) {
+			// Ignore abort errors - they're expected when canceling requests
+			if (error.name === 'AbortError') {
+				return;
+			}
 			console.error('Search error:', error);
-			searchResults.innerHTML = '<div class="alert alert-danger">' + deckerSearchVars.strings.error + '</div>';
+			// Only show error if this is still the current query
+			if (query === currentQuery) {
+				searchResults.innerHTML = '<div class="alert alert-danger">' + deckerSearchVars.strings.error + '</div>';
+			}
 		});
 	}
 
@@ -298,6 +326,7 @@
 	 */
 	function resetSearch() {
 		searchInput.value = '';
+		currentQuery = '';
 		searchResults.innerHTML = `
 			<div class="text-muted text-center py-3">
 				<i class="ri-search-line fs-3"></i>
@@ -306,6 +335,11 @@
 		`;
 		currentResults = [];
 		selectedIndex = -1;
+		// Abort any in-flight request
+		if (abortController) {
+			abortController.abort();
+			abortController = null;
+		}
 	}
 
 	/**
