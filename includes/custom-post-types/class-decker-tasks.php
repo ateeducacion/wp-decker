@@ -638,7 +638,7 @@ class Decker_Tasks {
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'search_tasks' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return current_user_can( 'edit_posts' );
 				},
 				'args'                => array(
 					'search' => array(
