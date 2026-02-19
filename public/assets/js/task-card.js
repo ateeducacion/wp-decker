@@ -276,9 +276,14 @@
                         const el = context.querySelector(`#${id}`);
                         if (!el) return;
 
-                        const localValue = type === 'checkbox' ? el.checked : el.value;
-                        if (localValue !== undefined) {
-                            formFields.set(key, localValue);
+                        if (type === 'checkbox') {
+                            // For checkboxes, always store the boolean checked state
+                            formFields.set(key, el.checked);
+                        } else {
+                            const localValue = el.value;
+                            if (localValue !== undefined && localValue !== '') {
+                                formFields.set(key, localValue);
+                            }
                         }
                     });
 
