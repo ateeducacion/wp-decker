@@ -340,6 +340,32 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Test that subscribers cannot access the task search endpoint
+	 */
+	public function test_search_tasks_authorization() {
+		// Create user with no editing capabilities
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		// Create a task to search for
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Tarea de prueba',
+				'board'      => $this->board_id,
+			)
+		);
+
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'prueba' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		// Subscribers should not be able to search tasks: expecting 403
+		$this->assertEquals( 403, $response->get_status(), 'Expected 403 for subscribers accessing task search endpoint' );
+	}
+
+	/**
 	 * Test search tasks endpoint
 	 */
 	public function test_search_tasks() {
