@@ -447,6 +447,17 @@ class Message implements \JsonSerializable
      */
     protected function addPart(string $currentBody, array $currentBodyHeaders): void
     {
+        $contentType = $currentBodyHeaders['Content-Type'] ?? '';
+        if (str_contains(strtolower($contentType), 'multipart/')) {
+            if (preg_match('/boundary=["\']?([^"\';\s]+)/i', $contentType, $matches)) {
+                $innerMessage = "Content-Type: " . $contentType . "\n\n" . $currentBody;
+                $innerParser = new self($innerMessage);
+                foreach ($innerParser->getParts() as $innerPart) {
+                    $this->parts[] = $innerPart;
+                }
+                return;
+            }
+        }
         $this->parts[] = new MessagePart(trim($currentBody), $currentBodyHeaders);
     }
 }

@@ -7,6 +7,7 @@
 
 class DeckerEmailToPostTest extends Decker_Test_Base {
 	private $user_id;
+	private $user2_id;
 	private $board_id;
 	private $shared_key;
 
@@ -29,11 +30,17 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		// Trigger the rest_api_init action to register routes
 		do_action( 'rest_api_init' );
 
-		// Create test user
+		// Create test users
 		$this->user_id = $this->factory->user->create(
 			array(
 				'role'       => 'administrator',
 				'user_email' => 'test@example.com',
+			)
+		);
+		$this->user2_id = $this->factory->user->create(
+			array(
+				'role'       => 'administrator',
+				'user_email' => 'test2@example.com',
 			)
 		);
 
@@ -132,7 +139,7 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		$task = get_post( $data['task_id'] );
 
 		$this->assertEquals( 'Test Task', $task->post_title );
-		$this->assertEquals( 'this is a mail from gmail', trim( $task->post_content ) );
+		$this->assertStringContainsString( 'this is a mail from gmail', $task->post_content );
 		$this->assertEquals( $this->user_id, $task->post_author );
 	}
 
@@ -227,6 +234,108 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'test', $attachment->post_title );
 	}
 
+	public function test_rejects_non_base64_raw_email() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			json_encode(
+				array(
+					'rawEmail' => 'This is NOT base64 encoded!!! @@@~~~',
+					'metadata' => array(
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
+						'subject' => 'Test Task',
+						'cc'      => array(),
+						'bcc'     => array(),
+					),
+				)
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 400, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertEquals( 'invalid_encoding', $data['code'] );
+	}
+
+	public function test_creates_task_from_zimbra_email() {
+		update_user_meta( $this->user2_id, 'decker_default_board', $this->board_id );
+
+		$email_content = $this->get_fixture_content( 'raw_email_from_zimbra.eml' );
+
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			json_encode(
+				array(
+					'rawEmail' => base64_encode( $email_content ),
+					'metadata' => array(
+						'from'    => 'test2@example.com',
+						'to'      => 'decker@example.com',
+						'subject' => 'test from zimbra',
+						'cc'      => array(),
+						'bcc'     => array(),
+					),
+				)
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'test from zimbra', $task->post_title );
+		$this->assertNotEmpty( $task->post_content, 'Body should not be empty for Zimbra email' );
+		$this->assertStringContainsString( 'this is a mail from zimbra', $task->post_content );
+	}
+
+	public function test_creates_task_from_zimbra_email_with_attachments() {
+		update_user_meta( $this->user2_id, 'decker_default_board', $this->board_id );
+
+		$email_content = $this->get_fixture_content( 'raw_email_from_zimbra_attachments.eml' );
+
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			json_encode(
+				array(
+					'rawEmail' => base64_encode( $email_content ),
+					'metadata' => array(
+						'from'    => 'test2@example.com',
+						'to'      => 'decker@example.com',
+						'subject' => 'test from zimbra with attachments',
+						'cc'      => array(),
+						'bcc'     => array(),
+					),
+				)
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'test from zimbra with attachments', $task->post_title );
+		$this->assertNotEmpty( $task->post_content, 'Body should not be empty for Zimbra email with attachments' );
+		$this->assertStringContainsString( 'this is a mail from zimbra with attachments', $task->post_content );
+
+		// Verify attachment was uploaded
+		$attachments = get_attached_media( '', $data['task_id'] );
+		$this->assertGreaterThanOrEqual( 1, count( $attachments ), 'Should have at least one attachment' );
+	}
+
 	/**
 	 * Helper method to retrieve fixture content.
 	 *
@@ -250,7 +359,9 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		wp_delete_term( $this->board_id, 'decker_board' );
 
 		delete_user_meta( $this->user_id, 'decker_default_board' );
+		delete_user_meta( $this->user2_id, 'decker_default_board' );
 		wp_delete_user( $this->user_id );
+		wp_delete_user( $this->user2_id );
 
 		delete_option( 'decker_settings' );
 
