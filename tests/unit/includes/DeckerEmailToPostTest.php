@@ -179,7 +179,7 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		$task = get_post( $data['task_id'] );
 
 		$this->assertEquals( 'Test Full Task', $task->post_title );
-		$this->assertStringContainsString( 'Les comentamos la incidencia con la que nos encontramos con Decker', trim( $task->post_content ) );
+		$this->assertStringContainsString( 'Les comentamos la incidencia con la que nos encontramos con el Plan de Frutas', trim( $task->post_content ) );
 		$this->assertEquals( $this->user_id, $task->post_author );
 	}
 
