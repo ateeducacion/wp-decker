@@ -82,23 +82,30 @@ class Decker_Email_To_Post {
 	 */
 	public function get_body( Erseco\Message $message ): string {
 
-		// Attempt to get the parts of the message.
-		$parts = $message->getParts();
+		// Prefer HTML part.
+		$html_part = $message->getHtmlPart();
+		if ( $html_part ) {
+			return wp_kses_post( $html_part->getContent() );
+		}
 
+		// Fall back to plain text part.
+		$text_part = $message->getTextPart();
+		if ( $text_part ) {
+			return wp_kses_post( nl2br( esc_html( $text_part->getContent() ) ) );
+		}
+
+		// Fallback: first part.
+		$parts = $message->getParts();
 		if ( count( $parts ) > 0 ) {
 			$content = $parts[0]->getContent();
 			$content_type = $parts[0]->getContentType();
 
-			if ( str_starts_with( strtolower( $content_type ), 'text/plain;' ) ) {
-				// Convert plain text to HTML for better readability.
+			if ( str_starts_with( strtolower( $content_type ), 'text/plain' ) ) {
 				return wp_kses_post( nl2br( esc_html( $content ) ) );
-			} else {
-				// Sanitize and return the HTML content.
-				return wp_kses_post( $content );
 			}
+			return wp_kses_post( $content );
 		}
 
-		// If no parts are available, return an empty string.
 		return '';
 	}
 
@@ -119,7 +126,10 @@ class Decker_Email_To_Post {
 		try {
 
 			// Decode the base64-encoded email content.
-			$raw_email = base64_decode( $payload['rawEmail'] );
+			$raw_email = base64_decode( $payload['rawEmail'], true );
+			if ( false === $raw_email ) {
+				return new WP_Error( 'invalid_encoding', 'rawEmail must be base64 encoded', array( 'status' => 400 ) );
+			}
 
 			// Parse email.
 			$message = $this->parse_email( $raw_email );
