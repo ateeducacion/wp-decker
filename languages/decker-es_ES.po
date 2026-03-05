@@ -1503,6 +1503,9 @@ msgstr ""
 "incluido en la lista de sitios permitidos. Por favor, contacta con tu "
 "administrador de red."
 
+msgid "Task not found."
+msgstr "Tarea no encontrada."
+
 msgid "You do not have permission to clone this task."
 msgstr "No tienes permiso para clonar esta tarea."
 
