@@ -186,13 +186,27 @@ function cloneTaskHandler(event) {
 			})
 			.then(data => {
 				if (data.success) {
-					Swal.fire({
-						title: deckerVars.strings.success,
-						text: deckerVars.strings.task_cloned_success,
-						icon: "success"
-					}).then(() => {
-						location.reload();
-					});
+					// Close any currently open task modal.
+					window.deckerHasUnsavedChanges = false;
+					const taskModal = document.getElementById('task-modal');
+					if (taskModal) {
+						const modalInstance = bootstrap.Modal.getInstance(taskModal);
+						if (modalInstance) {
+							modalInstance.hide();
+						}
+					}
+
+					// Wait for modal to fully close, then open with cloned task.
+					setTimeout(() => {
+						const trigger = document.createElement('button');
+						trigger.setAttribute('data-task-id', data.new_task_id);
+						trigger.setAttribute('data-bs-toggle', 'modal');
+						trigger.setAttribute('data-bs-target', '#task-modal');
+						trigger.style.display = 'none';
+						document.body.appendChild(trigger);
+						trigger.click();
+						trigger.remove();
+					}, 500);
 				}
 			})
 			.catch(error => {
