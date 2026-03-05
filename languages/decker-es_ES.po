@@ -1512,6 +1512,9 @@ msgstr "Tarea clonada correctamente."
 msgid "Invalid task ID."
 msgstr "ID de tarea no válido."
 
+msgid "Untitled"
+msgstr "Sin título"
+
 #. translators: %s: original task title
 #, php-format
 msgid "%s (copy)"

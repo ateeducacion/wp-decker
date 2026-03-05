@@ -749,7 +749,7 @@ class Decker_Tasks {
 		// Build the new title with " (copy)" suffix.
 		$original_title = $post->post_title;
 		if ( empty( trim( $original_title ) ) ) {
-			$original_title = 'Untitled';
+			$original_title = __( 'Untitled', 'decker' );
 		}
 
 		/* translators: %s: original task title */
