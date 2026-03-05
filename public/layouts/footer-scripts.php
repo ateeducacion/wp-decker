@@ -189,15 +189,9 @@ function cloneTaskHandler(event) {
 					// Close any currently open task modal.
 					window.deckerHasUnsavedChanges = false;
 					const taskModal = document.getElementById('task-modal');
-					if (taskModal) {
-						const modalInstance = bootstrap.Modal.getInstance(taskModal);
-						if (modalInstance) {
-							modalInstance.hide();
-						}
-					}
+					const modalInstance = taskModal ? bootstrap.Modal.getInstance(taskModal) : null;
 
-					// Wait for modal to fully close, then open with cloned task.
-					setTimeout(() => {
+					const openClonedTask = () => {
 						const trigger = document.createElement('button');
 						trigger.setAttribute('data-task-id', data.new_task_id);
 						trigger.setAttribute('data-bs-toggle', 'modal');
@@ -206,7 +200,15 @@ function cloneTaskHandler(event) {
 						document.body.appendChild(trigger);
 						trigger.click();
 						trigger.remove();
-					}, 500);
+					};
+
+					if (modalInstance && taskModal.classList.contains('show')) {
+						// Wait for modal to fully close before opening the cloned task.
+						taskModal.addEventListener('hidden.bs.modal', openClonedTask, { once: true });
+						modalInstance.hide();
+					} else {
+						openClonedTask();
+					}
 				}
 			})
 			.catch(error => {
