@@ -47,6 +47,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	});
 
+	document.querySelectorAll('.clone-task').forEach((element) => {
+
+	  element.removeEventListener('click', cloneTaskHandler);
+	  element.addEventListener('click', cloneTaskHandler);
+
+	});
+
 
 	// Add event listener for "Fix Order" button
 	const fixOrderButton = document.getElementById('fix-order-btn');
@@ -143,6 +150,56 @@ function archiveTaskHandler(event) {
 				Swal.fire({
 					title: deckerVars.strings.error,
 					text: deckerVars.strings.error_archiving_task,
+					icon: "error"
+				});
+			});
+		}
+	});
+}
+
+function cloneTaskHandler(event) {
+	event.preventDefault();
+	const element = event.currentTarget;
+	const taskId = element.getAttribute('data-task-id');
+
+	Swal.fire({
+		title: deckerVars.strings.confirm_clone_task_title,
+		text: deckerVars.strings.confirm_clone_task_text,
+		icon: "question",
+		showCancelButton: true,
+		confirmButtonColor: "#3085d6",
+		cancelButtonColor: "#d33",
+		confirmButtonText: deckerVars.strings.clone_task,
+		cancelButtonText: deckerVars.strings.cancel
+	}).then((result) => {
+		if (result.isConfirmed) {
+			fetch(`<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>${encodeURIComponent(taskId)}/clone`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+				}
+			})
+			.then(response => {
+				if (!response.ok) throw new Error('Network response was not ok');
+				return response.json();
+			})
+			.then(data => {
+				if (data.success) {
+					Swal.fire({
+						title: deckerVars.strings.success,
+						text: deckerVars.strings.task_cloned_success,
+						icon: "success"
+					}).then(() => {
+						location.reload();
+					});
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				Swal.fire({
+					title: deckerVars.strings.error,
+					text: deckerVars.strings.error_cloning_task,
 					icon: "error"
 				});
 			});

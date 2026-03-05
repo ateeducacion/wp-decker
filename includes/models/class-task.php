@@ -601,6 +601,14 @@ class Task {
 			);
 		}
 
+		if ( current_user_can( 'edit_post', $this->ID ) ) {
+			// Add 'Clone' menu item.
+			$menu_items[] = sprintf(
+				'<a href="#" class="dropdown-item clone-task" data-task-id="%d"><i class="ri-file-copy-line me-1"></i>' . __( 'Clone', 'decker' ) . '</a>',
+				esc_attr( $this->ID )
+			);
+		}
+
 		if ( 'publish' == $this->status ) {
 			// Add 'Archive' menu item.
 			$menu_items[] = sprintf(
