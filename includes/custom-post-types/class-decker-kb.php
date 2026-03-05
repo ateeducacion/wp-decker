@@ -101,7 +101,7 @@ class Decker_Kb {
 		}
 
 		$current_user_id = get_current_user_id();
-		if ( $current_user_id ) {
+		if ( $current_user_id && current_user_can( 'edit_post', $post_id ) ) {
 			update_post_meta( $post_id, '_last_editor', $current_user_id );
 		}
 	}
