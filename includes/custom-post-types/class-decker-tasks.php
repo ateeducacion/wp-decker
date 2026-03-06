@@ -649,6 +649,173 @@ class Decker_Tasks {
 				),
 			)
 		);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/(?P<id>\d+)/clone',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_clone_task' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			)
+		);
+	}
+
+	/**
+	 * Handle the REST API request to clone a task.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_clone_task( $request ) {
+		$task_id = (int) $request['id'];
+		$post    = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'You do not have permission to clone this task.', 'decker' ),
+				),
+				403
+			);
+		}
+
+		$new_task_id = self::clone_task( $task_id );
+
+		if ( is_wp_error( $new_task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $new_task_id->get_error_message(),
+				),
+				500
+			);
+		}
+
+		$task_url = get_permalink( $new_task_id );
+		if ( ! $task_url || is_wp_error( $task_url ) ) {
+			$task_url = add_query_arg(
+				array(
+					'decker_page' => 'task',
+					'id'          => $new_task_id,
+				),
+				home_url( '/' )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success'     => true,
+				'new_task_id' => $new_task_id,
+				'task_url'    => $task_url,
+				'message'     => __( 'Task cloned successfully.', 'decker' ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Clone a task by creating a new task with the same data.
+	 *
+	 * Copies post title (with " (copy)" suffix), content, status, meta
+	 * fields, and taxonomy terms. Does not copy unique fields like
+	 * id_nextcloud_card or _user_date_relations.
+	 *
+	 * @param int $task_id The ID of the task to clone.
+	 * @return int|WP_Error The ID of the new task, or WP_Error on failure.
+	 */
+	public static function clone_task( $task_id ) {
+		$post = get_post( $task_id );
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_Error(
+				'invalid_task',
+				__( 'Invalid task ID.', 'decker' )
+			);
+		}
+
+		// Build the new title with " (copy)" suffix.
+		$original_title = $post->post_title;
+		if ( empty( trim( $original_title ) ) ) {
+			$original_title = __( 'Untitled', 'decker' );
+		}
+
+		/* translators: %s: original task title */
+		$new_title = sprintf( __( '%s (copy)', 'decker' ), $original_title );
+
+		// Gather meta values.
+		$stack        = get_post_meta( $task_id, 'stack', true );
+		$max_priority = (bool) get_post_meta( $task_id, 'max_priority', true );
+		$hidden       = (bool) get_post_meta( $task_id, 'hidden', true );
+		$responsable  = (int) get_post_meta( $task_id, 'responsable', true );
+		$duedate_raw  = get_post_meta( $task_id, 'duedate', true );
+
+		$duedate = null;
+		if ( ! empty( $duedate_raw ) ) {
+			try {
+				$duedate = new DateTime( $duedate_raw );
+			} catch ( Exception $e ) {
+				$duedate = null;
+			}
+		}
+
+		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
+		if ( ! is_array( $assigned_users ) ) {
+			$assigned_users = array();
+		}
+
+		// Get taxonomy terms.
+		$board_terms = wp_get_post_terms(
+			$task_id,
+			'decker_board',
+			array( 'fields' => 'ids' )
+		);
+		$board = ! empty( $board_terms ) && ! is_wp_error( $board_terms )
+			? (int) $board_terms[0]
+			: 0;
+
+		$label_terms = wp_get_post_terms(
+			$task_id,
+			'decker_label',
+			array( 'fields' => 'ids' )
+		);
+		$labels = ! is_wp_error( $label_terms ) ? $label_terms : array();
+
+		// Determine archived status from original post status.
+		$archived = ( 'archived' === $post->post_status );
+
+		// Create the new task using the existing method.
+		$new_task_id = self::create_or_update_task(
+			0,
+			$new_title,
+			$post->post_content,
+			! empty( $stack ) ? $stack : 'to-do',
+			$board,
+			$max_priority,
+			$duedate,
+			get_current_user_id(),
+			$responsable,
+			$hidden,
+			$assigned_users,
+			$labels,
+			null,
+			$archived,
+			0
+		);
+
+		return $new_task_id;
 	}
 
 	/**

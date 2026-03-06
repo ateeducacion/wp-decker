@@ -1502,3 +1502,38 @@ msgstr ""
 "Decker está activo en este sitio, pero el administrador de la red no lo ha "
 "incluido en la lista de sitios permitidos. Por favor, contacta con tu "
 "administrador de red."
+
+msgid "Task not found."
+msgstr "Tarea no encontrada."
+
+msgid "You do not have permission to clone this task."
+msgstr "No tienes permiso para clonar esta tarea."
+
+msgid "Task cloned successfully."
+msgstr "Tarea clonada correctamente."
+
+msgid "Invalid task ID."
+msgstr "ID de tarea no válido."
+
+msgid "Untitled"
+msgstr "Sin título"
+
+#. translators: %s: original task title
+#, php-format
+msgid "%s (copy)"
+msgstr "%s (copia)"
+
+msgid "Clone"
+msgstr "Clonar"
+
+msgid "Are you sure you want to clone this task?"
+msgstr "¿Estás seguro de que quieres clonar esta tarea?"
+
+msgid "A copy of this task will be created."
+msgstr "Se creará una copia de esta tarea."
+
+msgid "The task has been successfully cloned."
+msgstr "La tarea se ha clonado correctamente."
+
+msgid "An error occurred while cloning the task."
+msgstr "Se produjo un error al clonar la tarea."
