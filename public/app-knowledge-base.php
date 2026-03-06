@@ -220,12 +220,13 @@ die();
 													}
 													echo '</td>';
 
-													// Author with avatar.
+													// Author with avatar (show last editor).
+													$last_editor_id = Decker_Kb::get_last_editor( $article->ID );
 													echo '<td>';
 													echo '<div class="avatar-group">';
-													echo '<a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" data-bs-original-title="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '">';
-													echo '<span class="d-none">' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '</span>';
-													echo '<img src="' . esc_url( get_avatar_url( $article->post_author ) ) . '" alt="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" class="rounded-circle avatar-xs">';
+													echo '<a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '" data-bs-original-title="' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '">';
+													echo '<span class="d-none">' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '</span>';
+													echo '<img src="' . esc_url( get_avatar_url( $last_editor_id ) ) . '" alt="' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '" class="rounded-circle avatar-xs">';
 													echo '</a>';
 													echo '</div>';
 													echo '</td>';

@@ -167,4 +167,114 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$this->assertEquals( 1, count( $filtered_articles ) );
 		$this->assertEquals( $article_id, $filtered_articles[0]->ID );
 	}
+
+	public function test_post_type_supports_comments() {
+		$post_type = get_post_type_object( 'decker_kb' );
+		$this->assertNotNull( $post_type );
+		$this->assertTrue(
+			post_type_supports( 'decker_kb', 'comments' ),
+			'decker_kb should support comments'
+		);
+	}
+
+	public function test_post_type_supports_revisions() {
+		$post_type = get_post_type_object( 'decker_kb' );
+		$this->assertNotNull( $post_type );
+		$this->assertTrue(
+			post_type_supports( 'decker_kb', 'revisions' ),
+			'decker_kb should support revisions'
+		);
+	}
+
+	public function test_post_type_supports_author() {
+		$post_type = get_post_type_object( 'decker_kb' );
+		$this->assertNotNull( $post_type );
+		$this->assertTrue(
+			post_type_supports( 'decker_kb', 'author' ),
+			'decker_kb should support author'
+		);
+	}
+
+	public function test_last_editor_tracked_on_save() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Track Editor Test',
+				'post_status' => 'publish',
+			)
+		);
+
+		$last_editor = get_post_meta( $post_id, '_last_editor', true );
+		$this->assertEquals( $this->administrator, intval( $last_editor ) );
+	}
+
+	public function test_last_editor_updates_on_edit() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Editor Update Test',
+				'post_status' => 'publish',
+			)
+		);
+
+		// Switch to a different user and update the post.
+		wp_set_current_user( $this->editor );
+		wp_update_post(
+			array(
+				'ID'         => $post_id,
+				'post_title' => 'Editor Update Test - Updated',
+			)
+		);
+
+		$last_editor = get_post_meta( $post_id, '_last_editor', true );
+		$this->assertEquals( $this->editor, intval( $last_editor ) );
+	}
+
+	public function test_get_last_editor_returns_meta_value() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Get Last Editor Test',
+				'post_status' => 'publish',
+				'post_author' => $this->administrator,
+			)
+		);
+
+		// Update as editor.
+		wp_set_current_user( $this->editor );
+		wp_update_post(
+			array(
+				'ID'         => $post_id,
+				'post_title' => 'Get Last Editor Test - Updated',
+			)
+		);
+
+		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$this->assertEquals( $this->editor, $last_editor_id );
+	}
+
+	public function test_get_last_editor_fallback_to_post_author() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Fallback Author Test',
+				'post_status' => 'publish',
+				'post_author' => $this->administrator,
+			)
+		);
+
+		// Remove the meta to simulate an article created before this feature.
+		delete_post_meta( $post_id, '_last_editor' );
+
+		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$this->assertEquals( $this->administrator, $last_editor_id );
+	}
 }

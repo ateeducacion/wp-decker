@@ -33,6 +33,9 @@ class Decker_Kb {
 
 		// REST API endpoints.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+
+		// Track last editor.
+		add_action( 'save_post_decker_kb', array( $this, 'track_last_editor' ), 10, 2 );
 	}
 
 	/**
@@ -77,6 +80,47 @@ class Decker_Kb {
 	 */
 	public function check_permissions() {
 		return current_user_can( 'edit_posts' );
+	}
+
+	/**
+	 * Track the last user who edited a KB article.
+	 *
+	 * Stores the current user ID as post meta so the UI can display
+	 * the last editor instead of the original post author.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Post object.
+	 */
+	public function track_last_editor( $post_id, $post ) {
+		// Skip autosaves and revisions.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		$current_user_id = get_current_user_id();
+		if ( $current_user_id && current_user_can( 'edit_post', $post_id ) ) {
+			update_post_meta( $post_id, '_last_editor', $current_user_id );
+		}
+	}
+
+	/**
+	 * Get the last editor user ID for a KB article.
+	 *
+	 * Falls back to the post author if no last editor is recorded.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int User ID of the last editor.
+	 */
+	public static function get_last_editor( $post_id ) {
+		$last_editor = get_post_meta( $post_id, '_last_editor', true );
+		if ( $last_editor ) {
+			return intval( $last_editor );
+		}
+		$post = get_post( $post_id );
+		return $post ? intval( $post->post_author ) : 0;
 	}
 
 	/**
@@ -421,7 +465,7 @@ class Decker_Kb {
 			'has_archive'        => true,
 			'hierarchical'       => true, // Enable hierarchy.
 			'menu_position'       => 25,
-			'supports'           => array( 'title', 'editor', 'page-attributes', 'revisions' ),
+			'supports'           => array( 'title', 'editor', 'author', 'comments', 'page-attributes', 'revisions' ),
 			'show_in_rest'       => true, // Enable Gutenberg.
 			'menu_icon'          => 'dashicons-book',
 		);
