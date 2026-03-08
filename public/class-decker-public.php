@@ -192,23 +192,23 @@ class Decker_Public {
 				'wp-api',
 
 				// Bootstrap 5.
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css',
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js',
 
 				// Remix Icons.
-				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css',
+				'https://cdn.jsdelivr.net/npm/remixicon@4.9.1/fonts/remixicon.min.css',
 
 				// Tablesort.
-				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
+				'https://cdn.jsdelivr.net/gh/tristen/tablesort@5.7.0/dist/tablesort.min.js',
 
 				// Simplebar.
-				'https://cdn.jsdelivr.net/npm/simplebar@6.3.0/dist/simplebar.min.js',
+				'https://cdn.jsdelivr.net/npm/simplebar@6.3.3/dist/simplebar.min.js',
 
-				// Font Awesome.
+				// Font Awesome 5 Free (kept at 5.x; upgrading to 6.x requires icon class changes).
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
 
 				// SortableJS.
-				'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js',
+				'https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js',
 
 				/*
 				// Highlight.
@@ -216,16 +216,23 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/default.min.css',
 				*/
 
+				// Quill.
+				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js',
+				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css',
+				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.css',
+
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
 
-				// sweetalert2.js.
-				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
-				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.css',
+				// SweetAlert2.
+				'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.21/dist/sweetalert2.all.min.js',
+				'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.21/dist/sweetalert2.min.css',
 
 				// Chart.js.
-				'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
+				'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
 
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
@@ -247,7 +254,7 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page ) {
 
 				// FullCalendar.
-				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.15/index.global.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js';
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
 
@@ -265,11 +272,23 @@ class Decker_Public {
 
 			}
 
-			wp_enqueue_media(); // Obligatorio para subida de medios.
-			// Cargar editor clásico en todas las páginas de Decker.
-			wp_enqueue_editor();
+			if ( 'knowledge-base' == $decker_page ) {
 
-			if ( 'tasks' == $decker_page || 'knowledge-base' == $decker_page ) { // Only load datatables.net on tasks page.
+							   wp_enqueue_media(); // Required for media uploads.
+				// wp_enqueue_script('editor');
+				// wp_enqueue_script('thickbox');
+				// wp_enqueue_style('editor-buttons');
+				// wp_enqueue_style('thickbox');
+							   // wp_enqueue_script('wp-tinymce'); // Main TinyMCE script.
+
+					wp_enqueue_editor();
+
+					// Page-specific script for Knowledge Base interactions.
+					$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/knowledge-base.js';
+
+			}
+
+			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
@@ -287,12 +306,13 @@ class Decker_Public {
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
-			// Cargar scripts de editor para todas las páginas.
-			wp_enqueue_script( 'editor' );
-			wp_enqueue_script( 'wp-tinymce' );
-			wp_enqueue_script( 'heartbeat' );
-
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
+
+			// Add global search script.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js';
+
+			// Add collaborative editing module if enabled.
+			$this->maybe_enqueue_collaboration();
 
 			$users = get_users(
 				array(
@@ -300,9 +320,9 @@ class Decker_Public {
 				)
 			);
 
-			// Añadir el nickname a cada usuario.
+				   // Add the nickname to each user.
 			foreach ( $users as &$user ) {
-				$user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Cambia 'alias' por tu meta key real.
+							   $user->nickname = get_user_meta( $user->ID, 'nickname', true ); // Replace 'alias' with your real meta key.
 			}
 
 			// Unified localized data.
@@ -330,6 +350,7 @@ class Decker_Public {
 					'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
 					'request_error'               => __( 'Request error.', 'decker' ),
 					'error_saving_task'           => __( 'Error saving task.', 'decker' ),
+					'task_saved_success'          => __( 'The task has been saved successfully.', 'decker' ),
 					'show_html_source'            => __( 'Show HTML source', 'decker' ),
 					'edit_html_content'           => __( 'Edit the content in HTML format', 'decker' ),
 					'ok'                          => __( 'OK', 'decker' ),
@@ -345,6 +366,12 @@ class Decker_Public {
 					'task_archived_success'       => __( 'The task has been successfully archived.', 'decker' ),
 					'task_unarchived_success'     => __( 'The task has been successfully unarchived.', 'decker' ),
 					'error_archiving_task'        => __( 'An error occurred while archiving the task.', 'decker' ),
+					// Clone task strings.
+					'confirm_clone_task_title'    => __( 'Are you sure you want to clone this task?', 'decker' ),
+					'confirm_clone_task_text'     => __( 'A copy of this task will be created.', 'decker' ),
+					'clone_task'                  => __( 'Clone', 'decker' ),
+					'task_cloned_success'         => __( 'The task has been successfully cloned.', 'decker' ),
+					'error_cloning_task'          => __( 'An error occurred while cloning the task.', 'decker' ),
 					// Extra keys from first version.
 					'success'                     => __( 'Success', 'decker' ),
 					'error'                       => __( 'Error', 'decker' ),
@@ -376,7 +403,7 @@ class Decker_Public {
 			// Add the bundled jQuery library.
 			wp_enqueue_script( 'jquery' );
 
-			// Asegurar que el script de Heartbeat esté encolado.
+				   // Ensure that the Heartbeat script is enqueued.
 			wp_enqueue_script( 'heartbeat' );
 
 			// Add the bundled Backbone library.
@@ -457,6 +484,79 @@ class Decker_Public {
 			// TODO: This can be removed, review.
 			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
 
+			// Localize the global search script.
+			wp_localize_script(
+				'global-search',
+				'deckerSearchVars',
+				array(
+					'restUrl' => rest_url(),
+					'nonce'   => wp_create_nonce( 'wp_rest' ),
+					'strings' => array(
+						'search_placeholder' => __( 'Search tasks...', 'decker' ),
+						'search_hint'        => __( 'Type to search tasks by title', 'decker' ),
+						'navigate'           => __( 'to navigate', 'decker' ),
+						'select'             => __( 'to select', 'decker' ),
+						'close'              => __( 'to close', 'decker' ),
+						'no_results'         => __( 'No tasks found', 'decker' ),
+						'error'              => __( 'Error searching tasks', 'decker' ),
+					),
+				)
+			);
+
 		}
+	}
+
+	/**
+	 * Enqueue collaborative editing module if enabled.
+	 *
+	 * Loads the Yjs-based collaboration module as an ES module.
+	 */
+	private function maybe_enqueue_collaboration() {
+		$options = get_option( 'decker_settings', array() );
+
+		// Check if collaborative editing is enabled.
+		if ( empty( $options['collaborative_editing'] ) || '1' !== $options['collaborative_editing'] ) {
+			return;
+		}
+
+		$current_user = wp_get_current_user();
+		$signaling_server = ! empty( $options['signaling_server'] ) ? $options['signaling_server'] : 'wss://signaling.yjs.dev';
+
+		// Generate a user color based on user ID for consistency.
+		$colors = array( '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9' );
+		$user_color = $colors[ $current_user->ID % count( $colors ) ];
+
+		// Prepare configuration for the collaboration module.
+		$collab_config = array(
+			'enabled'         => true,
+			'signalingServer' => esc_url( $signaling_server, array( 'wss', 'ws', 'https', 'http' ) ),
+			'roomPrefix'      => 'decker-task-' . sanitize_key( wp_parse_url( home_url(), PHP_URL_HOST ) ) . '-',
+			'userName'        => esc_js( $current_user->display_name ),
+			'userColor'       => $user_color,
+			'userId'          => $current_user->ID,
+			'userAvatar'      => esc_url( get_avatar_url( $current_user->ID, array( 'size' => 32 ) ) ),
+			'strings'         => array(
+				'connecting'         => __( 'Connecting...', 'decker' ),
+				'collaborative_mode' => __( 'Collaborative mode', 'decker' ),
+				'disconnected'       => __( 'Disconnected', 'decker' ),
+				'you'                => __( 'you', 'decker' ),
+			),
+		);
+
+		// Add inline script to set configuration before the module loads.
+		add_action(
+			'wp_footer',
+			function () use ( $collab_config ) {
+				$config_json = wp_json_encode( $collab_config );
+				$module_url  = esc_url( plugin_dir_url( __FILE__ ) . 'assets/js/decker-collaboration.js' );
+				?>
+				<script>
+					window.deckerCollabConfig = <?php echo $config_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
+				</script>
+				<script type="module" src="<?php echo $module_url; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript,WordPress.Security.EscapeOutput.OutputNotEscaped -- ES modules require type="module" which wp_enqueue_script doesn't support ?>"></script>
+				<?php
+			},
+			100
+		);
 	}
 }
