@@ -1,29 +1,39 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
+const fs = require( 'fs' );
+const path = require( 'path' );
 
-test('collaboration destroy cleanup unregisters listeners and disables callbacks', () => {
-    const collaborationFile = path.resolve(
-        __dirname,
-        '../../public/assets/js/decker-collaboration.js'
-    );
-    const source = fs.readFileSync(collaborationFile, 'utf8');
+/**
+ * Placeholder test to verify Jest is working.
+ *
+ * @package Decker
+ */
+describe( 'Decker JS test setup', () => {
+	test( 'Jest runs in jsdom environment', () => {
+		expect( typeof document ).toBe( 'object' );
+	} );
 
-    assert.match(source, /let remoteCursorChangeHandler = null;/);
-    assert.match(source, /const awarenessStatusChangeHandler = \(\) => \{/);
-    assert.match(source, /const providerStatusChangeHandler = \(\) => \{/);
-    assert.match(source, /isDisabled = true;/);
-    assert.match(
-        source,
-        /awareness\.off\('change', awarenessStatusChangeHandler\);/
-    );
-    assert.match(
-        source,
-        /awareness\.off\('change', remoteCursorChangeHandler\);/
-    );
-    assert.match(
-        source,
-        /provider\.off\('status', providerStatusChangeHandler\);/
-    );
-});
+	test( 'collaboration destroy cleanup unregisters retained handlers', () => {
+		const collaborationFile = path.resolve(
+			__dirname,
+			'../../public/assets/js/decker-collaboration.js'
+		);
+		const source = fs.readFileSync( collaborationFile, 'utf8' );
+
+		expect( source ).toMatch( /let remoteCursorChangeHandler = null;/ );
+		expect( source ).toMatch(
+			/const awarenessStatusChangeHandler = \(\) => \{/
+		);
+		expect( source ).toMatch(
+			/const providerStatusChangeHandler = \(\) => \{/
+		);
+		expect( source ).toMatch( /isDisabled = true;/ );
+		expect( source ).toMatch(
+			/awareness\.off\('change', awarenessStatusChangeHandler\);/
+		);
+		expect( source ).toMatch(
+			/awareness\.off\('change', remoteCursorChangeHandler\);/
+		);
+		expect( source ).toMatch(
+			/provider\.off\('status', providerStatusChangeHandler\);/
+		);
+	} );
+} );
