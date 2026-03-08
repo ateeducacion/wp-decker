@@ -19,7 +19,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->user_id );
 
-		$board_id = self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) );
+		$board_id = self::factory()->board->create();
 
 		// Create a task.
 		$this->task_id = self::factory()->post->create(
@@ -146,7 +146,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 			'title'          => 'Test Task',
 			'description'    => 'Task Description',
 			'stack'          => 'to-do',
-			'board'          => self::factory()->term->create( array( 'taxonomy' => 'decker_board' ) ),
+			'board'          => self::factory()->board->create(),
 			'mark_for_today' => true,
 			'max_priority'   => true,
 			'due_date'       => '1983-02-04',

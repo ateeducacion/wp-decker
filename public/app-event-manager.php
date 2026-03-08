@@ -75,12 +75,12 @@ foreach ( $events_data as $event_data ) :
 	$event_post = $event_data['post'];
 	$meta = $event_data['meta'];
 
-	// Asegurarse de que el objeto $event_post sea válido.
+	// Ensure that the $event_post object is valid.
 	if ( ! $event_post instanceof WP_Post ) {
 		continue;
 	}
 
-	// Extraer metadatos con valores predeterminados.
+		// Extract metadata with default values.
 	$event_id = $event_post->ID;
 	$event_title = $event_post->post_title;
 	$allday = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
@@ -89,7 +89,7 @@ foreach ( $events_data as $event_data ) :
 	$category = isset( $meta['event_category'] ) ? $meta['event_category'][0] : '';
 
 
-	// Formatear fechas.
+		// Format dates.
 	$start_formatted = '';
 	$end_formatted = '';
 
@@ -99,8 +99,8 @@ foreach ( $events_data as $event_data ) :
 			$start_datetime = new DateTime( $start_date );
 			$start_formatted = $allday ? $start_datetime->format( 'Y-m-d' ) : $start_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
-			error_log( 'Error al analizar la fecha de inicio para el evento ID ' . $event_id . ': ' . $e->getMessage() );
-			$start_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable.
+						error_log( 'Error parsing the start date for event ID ' . $event_id . ': ' . $e->getMessage() );
+				   $start_formatted = 'Fecha inválida'; // Optional: Friendly message.
 		}
 	}
 
@@ -109,8 +109,8 @@ foreach ( $events_data as $event_data ) :
 			$end_datetime = new DateTime( $end_date );
 			$end_formatted = $allday ? $end_datetime->format( 'Y-m-d' ) : $end_datetime->format( 'Y-m-d H:i' );
 		} catch ( Exception $e ) {
-			error_log( 'Error al analizar la fecha de fin para el evento ID ' . $event_id . ': ' . $e->getMessage() );
-			$end_formatted = 'Fecha inválida'; // Opcional: Mensaje amigable.
+						error_log( 'Error parsing the end date for event ID ' . $event_id . ': ' . $e->getMessage() );
+				   $end_formatted = 'Fecha inválida'; // Optional: Friendly message.
 		}
 	}
 

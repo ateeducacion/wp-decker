@@ -295,8 +295,9 @@ class Decker_Public {
 			}
 
 			if ( ! $use_quill_editor ) {
-				// Load the WordPress Classic Editor assets for task descriptions when Quill is not selected.
+				// Load the WordPress Classic Editor assets and media library for task descriptions when Quill is not selected.
 				wp_enqueue_editor();
+				wp_enqueue_media();
 			}
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.

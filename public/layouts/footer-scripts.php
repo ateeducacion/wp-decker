@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 document.addEventListener('DOMContentLoaded', function () {
 
 
-  // Asignar eventos para "Assign to me"
+  // Bind events for "Assign to me"
   document.querySelectorAll('.assign-to-me').forEach((element) => {
 	element.addEventListener('click', function (event) {
 		event.preventDefault();
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
   });
 
-  // Asignar eventos para "Leave task"
+  // Bind events for "Leave task"
   document.querySelectorAll('.leave-task').forEach((element) => {
 	element.addEventListener('click', function (event) {
 		event.preventDefault();
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
   });
 
-  // Asignar eventos para "Mark for today" y "Unmark for today"
+  // Bind events for "Mark for today" and "Unmark for today"
   document.querySelectorAll('.mark-for-today, .unmark-for-today').forEach((element) => {
 	element.addEventListener('click', function (event) {
 		event.preventDefault();
@@ -44,6 +44,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	  element.removeEventListener('click', archiveTaskHandler);
 	  element.addEventListener('click', archiveTaskHandler);
+
+	});
+
+	document.querySelectorAll('.clone-task').forEach((element) => {
+
+	  element.removeEventListener('click', cloneTaskHandler);
+	  element.addEventListener('click', cloneTaskHandler);
 
 	});
 
@@ -95,7 +102,7 @@ function archiveTaskHandler(event) {
 	event.preventDefault();
 	const element = event.currentTarget;
 	const taskId = element.getAttribute('data-task-id');
-	const isArchived = element.classList.contains('unarchive-task'); // Verificar si ya está archivado
+	const isArchived = element.classList.contains('unarchive-task'); // Check if it's already archived
 
 	const newStatus = isArchived ? 'publish' : 'archived';
 
@@ -124,12 +131,17 @@ function archiveTaskHandler(event) {
 			})
 			.then(data => {
 				if (data.status === newStatus) {
+					// Sync archived state to other collaborative users
+					if (!isArchived && typeof window.setTaskArchivedCollab === 'function') {
+						window.setTaskArchivedCollab(true);
+					}
+
 					Swal.fire({
 						title: deckerVars.strings.success,
 						text: isArchived ? deckerVars.strings.task_unarchived_success : deckerVars.strings.task_archived_success,
 						icon: "success"
 					}).then(() => {
-						location.reload(); // Recargar la página tras la confirmación
+						location.reload(); // Reload the page after confirmation
 					});
 				}
 			})
@@ -145,12 +157,78 @@ function archiveTaskHandler(event) {
 	});
 }
 
+function cloneTaskHandler(event) {
+	event.preventDefault();
+	const element = event.currentTarget;
+	const taskId = element.getAttribute('data-task-id');
+
+	Swal.fire({
+		title: deckerVars.strings.confirm_clone_task_title,
+		text: deckerVars.strings.confirm_clone_task_text,
+		icon: "question",
+		showCancelButton: true,
+		confirmButtonColor: "#3085d6",
+		cancelButtonColor: "#d33",
+		confirmButtonText: deckerVars.strings.clone_task,
+		cancelButtonText: deckerVars.strings.cancel
+	}).then((result) => {
+		if (result.isConfirmed) {
+			fetch(`<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>${encodeURIComponent(taskId)}/clone`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+				}
+			})
+			.then(response => {
+				if (!response.ok) throw new Error('Network response was not ok');
+				return response.json();
+			})
+			.then(data => {
+				if (data.success) {
+					// Close any currently open task modal.
+					window.deckerHasUnsavedChanges = false;
+					const taskModal = document.getElementById('task-modal');
+					const modalInstance = taskModal ? bootstrap.Modal.getInstance(taskModal) : null;
+
+					const openClonedTask = () => {
+						const trigger = document.createElement('button');
+						trigger.setAttribute('data-task-id', data.new_task_id);
+						trigger.setAttribute('data-bs-toggle', 'modal');
+						trigger.setAttribute('data-bs-target', '#task-modal');
+						trigger.style.display = 'none';
+						document.body.appendChild(trigger);
+						trigger.click();
+						trigger.remove();
+					};
+
+					if (modalInstance && taskModal.classList.contains('show')) {
+						// Wait for modal to fully close before opening the cloned task.
+						taskModal.addEventListener('hidden.bs.modal', openClonedTask, { once: true });
+						modalInstance.hide();
+					} else {
+						openClonedTask();
+					}
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				Swal.fire({
+					title: deckerVars.strings.error,
+					text: deckerVars.strings.error_cloning_task,
+					icon: "error"
+				});
+			});
+		}
+	});
+}
+
 
 function archiveTaskHandler_old(event) {
   event.preventDefault();
   const element = event.currentTarget;
   const taskId = element.getAttribute('data-task-id');
-  const isArchived = element.classList.contains('unarchive-task'); // Verificar si ya está archivado
+  const isArchived = element.classList.contains('unarchive-task'); // Check if it's already archived
   
   const newStatus = isArchived ? 'publish' : 'archived';
   const confirmationMessage = isArchived 
@@ -174,16 +252,16 @@ function archiveTaskHandler_old(event) {
 	})
 	.then(data => {
 	  if (data.status === newStatus) {
-		// // Actualizar la UI sin recargar
+		// // Update the UI without reloading
 		// const card = element.closest('.task');
 		// card.classList.toggle('archived-task', newStatus === 'archived');
 		
-		// // Cambiar el texto del botón
+		// // Change the button text
 		// element.textContent = newStatus === 'archived' ? 'Unarchive' : 'Archive';
 		// element.classList.toggle('unarchive-task', newStatus === 'archived');
 		// element.classList.toggle('archive-task', newStatus !== 'archived');
 		
-		// Opcional: Mostrar feedback visual
+		// Optional: Show visual feedback
 		// showToast(newStatus === 'archived' ? 'Task archived' : 'Task unarchived');
 
 			  // Reload the page if the request was successful
@@ -264,7 +342,7 @@ function handleAssignToMe(element) {
 	  newAvatar.innerHTML = `<img src="<?php echo esc_url( get_avatar_url( get_current_user_id() ) ); ?>" alt="" class="rounded-circle avatar-xs">`;
 	  avatarGroup.appendChild(newAvatar);
 
-	  // Alternar opciones del menú
+	  // Toggle menu options
 	element.classList.add('hidden');
 	taskCard.querySelector('.leave-task').classList.remove('hidden');
 	taskCard.querySelector('.mark-for-today').classList.remove('hidden');
@@ -303,7 +381,7 @@ function handleLeaveTask(element) {
 		userAvatar.remove();
 	  }
 
-	  // Alternar opciones del menú
+	  // Toggle menu options
 	element.classList.add('hidden');
 	taskCard.querySelector('.assign-to-me').classList.remove('hidden');
 	taskCard.querySelector('.mark-for-today').classList.add('hidden');
@@ -350,7 +428,7 @@ function toggleMarkForToday(taskId, shouldMark, element) {
 	})
 	.then(data => {
 		if (data.success) {
-			// Actualiza la interfaz de usuario según la acción
+			// Update the user interface based on the action
 			const card = element.closest('.task');
 			const markElement = card.querySelector('.mark-for-today');
 			const unmarkElement = card.querySelector('.unmark-for-today');

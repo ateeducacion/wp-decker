@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
 			</div>
 			<div id="task-modal-body"  class="modal-body">
 				<div id="task-modal-content">
-					<!-- Aquí se cargará el contenido dinámico desde task-card.php -->
+									<!-- Dynamic content from task-card.php will load here -->
 				</div>
 			</div>
 		</div><!-- /.modal-content -->

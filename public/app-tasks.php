@@ -52,23 +52,23 @@ $task_manager = new TaskManager();
 
 #searchBuilderContainer .dt-button,
 #boardFilter {
-	height: 38px; /* Asegura que tengan la misma altura */
-	padding: 6px 12px; /* Ajusta el padding para alinearlo con los formularios de Bootstrap */
-	font-size: 14px; /* Mantiene una tipografía coherente */
-	line-height: 1.5;
-	border-radius: 4px; /* Bordes redondeados */
-	border: 1px solid #ced4da; /* Color de borde coherente */
-	background-color: #f8f9fa; /* Fondo claro para los botones */
-	color: #495057; /* Texto coherente con el tema */
-	white-space: nowrap; /* Evita que el texto se desborde */
-	min-width: 120px; /* Ancho mínimo para asegurar que el texto no se corte */
+	   height: 38px; /* Ensures they have the same height */
+	   padding: 6px 12px; /* Adjusts padding to align with Bootstrap forms */
+	   font-size: 14px; /* Maintains consistent typography */
+	   line-height: 1.5;
+	   border-radius: 4px; /* Rounded borders */
+	   border: 1px solid #ced4da; /* Consistent border color */
+	   background-color: #f8f9fa; /* Light background for buttons */
+	   color: #495057; /* Text consistent with the theme */
+	   white-space: nowrap; /* Prevents text from overflowing */
+	   min-width: 120px; /* Minimum width to ensure the text isn't cut off */
 }
 
 #searchBuilderContainer .dt-button:hover,
 #boardFilter:hover {
-	background-color: #e2e6ea; /* Fondo al pasar el cursor */
-	color: #212529; /* Texto al pasar el cursor */
-	border-color: #dae0e5; /* Borde al pasar el cursor */
+	   background-color: #e2e6ea; /* Background on hover */
+	   color: #212529; /* Text on hover */
+	   border-color: #dae0e5; /* Border on hover */
 }
 
 #searchBuilderContainer {
@@ -77,53 +77,81 @@ $task_manager = new TaskManager();
 }
 
 #searchBuilderContainer .dt-button {
-	margin-right: 8px; /* Espacio entre botones */
-	width: auto; /* Ajusta el ancho según el contenido */
-	text-align: center; /* Centra el texto dentro del botón */
+	   margin-right: 8px; /* Space between buttons */
+	   width: auto; /* Adjusts the width according to the content */
+	   text-align: center; /* Centers the text inside the button */
 }
 
 .dataTables_wrapper .dataTables_length {
-	margin-bottom: 16px; /* Espacio inferior */
+	   margin-bottom: 16px; /* Bottom spacing */
 }
 
 .dataTables_wrapper .dataTables_length select {
-	width: auto; /* Ajusta el ancho al contenido */
-	display: inline-block; /* Alineación adecuada */
-	margin-right: 10px; /* Espacio entre el select y otros elementos */
+	   width: auto; /* Adjusts width to content */
+	   display: inline-block; /* Proper alignment */
+	   margin-right: 10px; /* Space between the select and other elements */
 }
 
 .dataTables_wrapper .dataTables_filter {
-	margin-bottom: 16px; /* Espacio inferior */
+	   margin-bottom: 16px; /* Bottom spacing */
 }
 
 
 
 
 
-/* Asegura que la tabla sea responsiva */
+/* Ensures the table is responsive */
 .table-responsive {
 	overflow-x: auto;
 }
 
 table#tablaTareas {
 	width: 100%;
-	table-layout: auto; /* Hace que las columnas se ajusten al contenido */
+	   table-layout: auto; /* Makes the columns adjust to the content */
 }
 
 table#tablaTareas th,
 table#tablaTareas td {
-	white-space: nowrap; /* Evita el desbordamiento del texto */
-	word-break: break-word; /* Rompe las palabras largas para evitar el desbordamiento */
+	   white-space: nowrap; /* Prevents text overflow */
+	   word-break: break-word; /* Breaks long words to prevent overflow */
 }
 
+/* Description column - allow more space and wrapping */
 table#tablaTareas td:nth-child(4) {
-	max-width: 200px; /* Ancho máximo para la columna de descripción */
-	overflow: hidden;
-	text-overflow: ellipsis;
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Labels/Tags column - allow wrapping for better display */
+table#tablaTareas td:nth-child(5) {
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Stack column - compact display */
+table#tablaTareas td:nth-child(3) {
 	white-space: nowrap;
 }
 
-/* Si deseas que se oculte alguna columna en móviles, puedes hacer uso de display: none; */
+/* Priority column - compact display */
+table#tablaTareas td:nth-child(1) {
+	white-space: nowrap;
+	text-align: center;
+}
+
+/* People column - compact display */
+table#tablaTareas td:nth-child(6) {
+	white-space: nowrap;
+}
+
+table#tablaTareas td:nth-child(6) .avatar-group {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	min-width: max-content;
+}
+
+/* If you want to hide a column on mobile, you can use display: none; */
 @media (max-width: 768px) {
 	.d-none.d-md-table-cell {
 		display: none !important;
@@ -201,11 +229,10 @@ table#tablaTareas td:nth-child(4) {
 													<tr>
 														<th class="c-priority"><?php esc_html_e( 'P.', 'decker' ); ?></th>
 														<th class="c-board"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+														<th class="c-stack"><?php esc_html_e( 'C.', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
-														<th class="c-responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
-														<th class="c-users"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
+														<th class="c-people"><?php esc_html_e( 'People', 'decker' ); ?></th>
 														<th class="c-time"><?php esc_html_e( 'Remaining Time', 'decker' ); ?></th>
 														<th class="c-actions text-end"></th>
 													</tr>
@@ -264,32 +291,12 @@ table#tablaTareas td:nth-child(4) {
 													echo '</td>';
 
 
-													// Responsable.
-													echo '<td>';
-													echo '<div class="avatar-group">';
-
-													if ( $task->responsable ) {
-														echo '<a href="javascript: void(0);" class="avatar-group-item avatar-group-item-responsable" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $task->responsable->display_name ) . '" data-bs-original-title="' . esc_attr( $task->responsable->display_name ) . '">';
-														echo '<span class="d-none">' . esc_attr( $task->responsable->display_name ) . '</span>';
-														echo '<img src="' . esc_url( get_avatar_url( $task->responsable->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
-														echo '</a>';
-													}
-
-													echo '</div></td>';
-
-
-													// Assigned users.
-													echo '<td data-users=\'' . esc_attr( wp_json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
-													echo '<div class="avatar-group">';
-
-													foreach ( $task->assigned_users as $user ) {
-														$today_class = $user->today ? ' today' : '';
-														echo '<a href="javascript: void(0);" class="avatar-group-item' . esc_attr( $today_class ) . '" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $user->display_name ) . '" data-bs-original-title="' . esc_attr( $user->display_name ) . '">';
-														echo '<span class="d-none">' . esc_attr( $user->display_name ) . '</span>';
-														echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
-														echo '</a>';
-													}
-													echo '</div></td>';
+													// People.
+													$people_names = $task->get_people_names();
+													$people_text  = implode( ', ', $people_names );
+													echo '<td data-search="' . esc_attr( $people_text ) . '" data-order="' . esc_attr( $people_text ) . '">';
+													$task->render_people_avatars();
+													echo '</td>';
 
 													// Remaining time.
 													echo '<td data-order="' . esc_attr( $task->duedate?->format( 'Y-m-d' ) ) . '" class="due-date">';
@@ -377,35 +384,35 @@ table#tablaTareas td:nth-child(4) {
 						config: {
 							depthLimit: 2,
 							searchBuilder: {
-								columns: [1, 2, 3, 4, 5, 6],
+								columns: [1, 2, 3, 4, 5],
 							},
-							columns: [1, 2, 3, 4, 5, 6],
+							columns: [1, 2, 3, 4, 5],
 						},
 					},
 					{
 						extend: 'print',
-						className: 'd-none d-md-block', // Ocultar en móviles
+						className: 'd-none d-md-block', // Hide on mobile
 					},
 					{
 						extend: 'csv',
-						className: 'd-none d-md-block', // Ocultar en móviles
+						className: 'd-none d-md-block', // Hide on mobile
 					},
 					// {
 					// 	extend: 'excel',
-					// 	className: 'd-none d-md-block', // Ocultar en móviles
+					// 	className: 'd-none d-md-block', // Hide on mobile
 					// },
 					// {
 					// 	extend: 'pdf',
-					// 	className: 'd-none d-md-block', // Ocultar en móviles
+					// 	className: 'd-none d-md-block', // Hide on mobile
 					// },
 				],
-				dom: '<"ms-2"l><"d-flex justify-content-between align-items-center"<"me-2"B>f>rtip', // Ajustar layout
+				dom: '<"ms-2"l><"d-flex justify-content-between align-items-center"<"me-2"B>f>rtip', // Adjust layout
 				columnDefs: [
 					{
 						searchPanes: {
 							show: false,
 						},
-						targets: [1, 7], // Columnas para las cuales SearchPanes está deshabilitado
+						targets: [1, 6], // Columns for which SearchPanes is disabled
 					},
 					{
 						targets: 2, // Columna 3
@@ -414,12 +421,34 @@ table#tablaTareas td:nth-child(4) {
 						}
 					},
 					{
-						targets: [4, 5, 8],
+						targets: [4, 7],
 						orderable: false
 					},
 					{
-						targets: 7, // due-date column
+						targets: 6, // due-date column
 						type: 'date',
+					},
+					// Column width adjustments for better distribution
+					// Explicit widths for key columns; remaining columns auto-size
+					{
+						targets: 0, // Priority column
+						width: '3%'
+					},
+					{
+						targets: 2, // Stack column
+						width: '4%'
+					},
+					{
+						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
+						width: '30%'
+					},
+					{
+						targets: 4, // Tags/Labels column
+						width: '15%'
+					},
+					{
+						targets: 5, // People column width
+						width: '10%'
 					}
 				],
 
@@ -436,7 +465,7 @@ table#tablaTareas td:nth-child(4) {
 					var searchBuilderButton = jQuery('.dt-buttons .dt-button');
 					jQuery('#searchBuilderContainer').append(searchBuilderButton);
 					
-					// Aplicar filtro inicial si existe
+					// Apply initial filter if it exists
 					if (initialBoard) {
 						tablaElement.column(1).search(initialBoard).draw();
 					}
@@ -447,13 +476,13 @@ table#tablaTareas td:nth-child(4) {
 			jQuery('#boardFilter').on('change', function () {
 				const boardValue = this.value;
 				tablaElement.column(1).search(boardValue).draw();
-				// Actualizar URL con el nuevo filtro
+				// Update URL with the new filter
 				updateUrlWithFilters(boardValue);
 			});
 		}
 	}
 
-	// Función para actualizar la URL con los parámetros de filtro
+	// Function to update the URL with filter parameters
 	function updateUrlWithFilters(boardFilter) {
 		const url = new URL(window.location);
 		if (boardFilter) {
@@ -464,7 +493,7 @@ table#tablaTareas td:nth-child(4) {
 		window.history.replaceState(null, '', url);
 	}
 
-	// Función para leer parámetros de la URL
+	// Function to read parameters from the URL
 	function getUrlParam(name) {
 		const urlParams = new URLSearchParams(window.location.search);
 		return urlParams.get(name);
@@ -472,22 +501,22 @@ table#tablaTareas td:nth-child(4) {
 
 	// Call setup function when document is ready
 	jQuery(document).ready(function () {
-		// Leer parámetros de la URL
+		// Read parameters from the URL
 		const initialBoard = getUrlParam('board');
 		
 		setupAllTasksTable(initialBoard);
 
-		// Si hay un filtro de tablero en la URL, aplicarlo
+		// If there is a board filter in the URL, apply it
 		if (initialBoard) {
 			jQuery('#boardFilter').val(initialBoard);
 		}
 
-		// Manejar el evento de clic en el checkbox "Today"
+			   // Handle the click event on the "Today" checkbox
 		document.querySelectorAll('.today-checkbox').forEach(checkbox => {
 			checkbox.addEventListener('change', function() {
 				const taskId = this.dataset.taskId;
 				const isChecked = this.checked;
-				// Aquí puedes implementar la lógica AJAX para actualizar el estado de la tarea
+				// Here you can implement the AJAX logic to update the task status
 				console.log(`Task ID: ${taskId}, Today: ${isChecked}`);
 			});
 		});
@@ -496,11 +525,11 @@ table#tablaTareas td:nth-child(4) {
 
 document.querySelectorAll('#tablaTareas tbody a[data-bs-toggle="modal"]').forEach(function (link) {
 	link.addEventListener('click', function (event) {
-		const taskTitle = event.target.textContent; // Obtén el título de la tarea
+		const taskTitle = event.target.textContent; // Get the task title
 		const modalTitle = document.querySelector('#task-modal .modal-title');
-		modalTitle.textContent = taskTitle; // Cambia el título del modal
+		modalTitle.textContent = taskTitle; // Change the modal title
 		
-		// Aquí puedes agregar lógica para cambiar el contenido del modal según la tarea.
+		// Here you can add logic to change the modal content according to the task.
 	});
 });
 

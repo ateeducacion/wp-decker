@@ -194,6 +194,9 @@ msgstr "Detalles de la Tarea"
 msgid "Assigned Users"
 msgstr "Usuarios asignados"
 
+msgid "People"
+msgstr "Personas"
+
 msgid "Task User and Date"
 msgstr "Usuario y Fecha de la Tarea"
 
@@ -212,6 +215,9 @@ msgstr "Máxima Prioridad"
 
 msgid "Stack"
 msgstr "Columna"
+
+msgid "C."
+msgstr "C."
 
 msgid "To-Do"
 msgstr "Por Hacer"
@@ -1141,38 +1147,11 @@ msgstr "Extracto"
 msgid "Content"
 msgstr "Contenido"
 
-msgid "Search in title, tags, excerpt and content..."
-msgstr "Buscar en título, etiquetas, extracto y contenido..."
-
-msgid "Parent Article"
-msgstr "Artículo principal"
-
-msgid "No parent (top level)"
-msgstr "Sin artículo principal (nivel superior)"
-
-msgid "Order"
-msgstr "Orden"
-
 msgid "Error"
 msgstr "Error"
 
-msgid "Could not load article"
-msgstr "No se pudo cargar el artículo"
-
-msgid "Search for parent article..."
-msgstr "Buscar artículo principal..."
-
-msgid "Could not save article"
-msgstr "No se pudo guardar el artículo"
-
 msgid "You do not have permission to access this resource."
 msgstr "No tienes permiso para acceder a este recurso."
-
-msgid "Select labels..."
-msgstr "Seleccionar etiquetas..."
-
-msgid "No more labels available"
-msgstr "No hay más etiquetas disponibles"
 
 msgid "Enable email notifications for all plugin events."
 msgstr "Activar las notificaciones por correo electrónico para todos los eventos del plugin."
@@ -1186,7 +1165,6 @@ msgstr "Permitir notificaciones por correo electrónico"
 msgid "This email was automatically sent by Decker"
 msgstr "Este correo electrónico ha sido enviado automáticamente por Decker"
 
-#. translators: %s is a username.
 #. Translators: %s is a username.
 msgid "Unknown user"
 msgstr "Usuario desconocido"
@@ -1202,7 +1180,7 @@ msgstr "Una nueva tarea \"%1$s\" ha sido creada por %3$s. <a href=\"%2$s\">Haga 
 msgid "You have been assigned a task"
 msgstr "Se le ha asignado una tarea"
 
-#. translators: %s is a username.
+#. Translators: %s is a username.
 #, php-format
 msgid "Completed by %s"
 msgstr "Completado por %s"
@@ -1338,12 +1316,6 @@ msgstr "En Tableros"
 msgid "In KB"
 msgstr "En Base Con."
 
-msgid "Select parent..."
-msgstr "Seleccionar superior..."
-
-msgid "No more articles available"
-msgstr "No hay más artículos disponibles"
-
 msgid "Task saved successfully."
 msgstr "Tarea guardada exitosamente."
 
@@ -1410,23 +1382,62 @@ msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
 msgid "There are no tasks from previous days to import."
 msgstr "No hay tareas de días anteriores para importar."
 
+msgid "Invalid moved ID."
+msgstr "ID movido no válido."
+
+msgid "Search articles..."
+msgstr "Buscar artículos..."
+
+msgid "Add Child"
+msgstr "Añadir hijo"
+
+msgid "View"
+msgstr "Ver"
+
 msgid "The task has been saved successfully."
 msgstr "La tarea se ha guardado correctamente."
 
-msgid "Are you sure you want to clone this task?"
-msgstr "¿Seguro que quieres clonar esta tarea?"
+msgid "Enable real-time collaborative editing for tasks."
+msgstr "Activar la edición colaborativa en tiempo real para las tareas."
 
-msgid "A copy of this task will be created."
-msgstr "Se creará una copia de esta tarea."
+msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
+msgstr "Al activarlo, varias personas podrán editar la misma tarea a la vez con sincronización en tiempo real mediante WebRTC."
 
-msgid "Clone"
-msgstr "Clonar"
+msgid "WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev)."
+msgstr "URL del servidor de señalización WebRTC para la edición colaborativa. Dejar vacío para usar el servidor público por defecto (wss://signaling.yjs.dev)."
 
-msgid "The task has been successfully cloned."
-msgstr "La tarea se ha clonado correctamente."
+msgid "Public servers:"
+msgstr "Servidores públicos:"
 
-msgid "An error occurred while cloning the task."
-msgstr "Se ha producido un error al clonar la tarea."
+msgid "(Default - Global)"
+msgstr "(Por defecto - Global)"
+
+msgid "(Europe)"
+msgstr "(Europa)"
+
+msgid "(United States)"
+msgstr "(Estados Unidos)"
+
+msgid "Collaborative Editing"
+msgstr "Edición colaborativa"
+
+msgid "Signaling Server"
+msgstr "Servidor de señalización"
+
+msgid "Connecting..."
+msgstr "Conectando..."
+
+msgid "Collaborative mode"
+msgstr "Modo colaborativo"
+
+msgid "Disconnected"
+msgstr "Desconectado"
+
+msgid "you"
+msgstr "tú"
+
+msgid "Unknown"
+msgstr "Desconocido"
 
 msgid "Search tasks..."
 msgstr "Buscar tareas..."
@@ -1449,17 +1460,86 @@ msgstr "No se encontraron tareas"
 msgid "Error searching tasks"
 msgstr "Error al buscar tareas"
 
-msgid "Connecting..."
-msgstr "Conectando..."
+msgid "Search (Ctrl+K)"
+msgstr "Buscar (Ctrl+K)"
 
-msgid "Collaborative mode"
-msgstr "Modo colaborativo"
+msgid "Decker Network Settings"
+msgstr "Configuración de red de Decker"
 
-msgid "Disconnected"
-msgstr "Desconectado"
+msgid "You do not have sufficient permissions to access this page."
+msgstr "No tienes permisos suficientes para acceder a esta página."
 
-msgid "you"
-msgstr "tú"
+msgid "Network settings saved."
+msgstr "Configuración de red guardada."
+
+msgid "Allowed Site IDs"
+msgstr "IDs de sitios permitidos"
+
+msgid "Please enter comma-separated site IDs (numbers only)"
+msgstr "Por favor, introduce IDs de sitios separados por comas (solo números)"
+
+msgid ""
+"Enter comma-separated site IDs where Decker is permitted to be activated. "
+"Leave empty to allow activation on all sites."
+msgstr ""
+"Introduce los IDs de sitios separados por comas donde se permite activar "
+"Decker. Déjalo vacío para permitir la activación en todos los sitios."
+
+msgid "Plugin Activation Error"
+msgstr "Error de activación del plugin"
+
+msgid ""
+"Decker cannot be activated on this site. Please ask your network "
+"administrator to add this site to the allowed sites list under Network Admin "
+"&gt; Settings &gt; Decker."
+msgstr ""
+"Decker no puede activarse en este sitio. Por favor, pide al administrador de "
+"la red que añada este sitio a la lista de sitios permitidos en Administración "
+"de red &gt; Configuración &gt; Decker."
+
+msgid ""
+"Decker is active on this site, but the network administrator has not "
+"included it in the allowed sites list. Please contact your network "
+"administrator."
+msgstr ""
+"Decker está activo en este sitio, pero el administrador de la red no lo ha "
+"incluido en la lista de sitios permitidos. Por favor, contacta con tu "
+"administrador de red."
+
+msgid "Task not found."
+msgstr "Tarea no encontrada."
+
+msgid "You do not have permission to clone this task."
+msgstr "No tienes permiso para clonar esta tarea."
+
+msgid "Task cloned successfully."
+msgstr "Tarea clonada correctamente."
+
+msgid "Invalid task ID."
+msgstr "ID de tarea no válido."
+
+msgid "Untitled"
+msgstr "Sin título"
+
+#. translators: %s: original task title
+#, php-format
+msgid "%s (copy)"
+msgstr "%s (copia)"
+
+msgid "Clone"
+msgstr "Clonar"
+
+msgid "Are you sure you want to clone this task?"
+msgstr "¿Estás seguro de que quieres clonar esta tarea?"
+
+msgid "A copy of this task will be created."
+msgstr "Se creará una copia de esta tarea."
+
+msgid "The task has been successfully cloned."
+msgstr "La tarea se ha clonado correctamente."
+
+msgid "An error occurred while cloning the task."
+msgstr "Se produjo un error al clonar la tarea."
 
 msgid "Task Editor Type"
 msgstr "Tipo de editor de tareas"
@@ -1470,5 +1550,9 @@ msgstr "Editor clásico"
 msgid "Quill Editor"
 msgstr "Editor Quill"
 
-msgid "Choose which editor to use for task descriptions. Collaborative editing always uses Quill."
-msgstr "Elige qué editor usar para las descripciones de las tareas. La edición colaborativa siempre usa Quill."
+msgid ""
+"Choose which editor to use for task descriptions. Collaborative editing "
+"always uses Quill."
+msgstr ""
+"Elige qué editor usar para las descripciones de tareas. La edición "
+"colaborativa siempre usa Quill."

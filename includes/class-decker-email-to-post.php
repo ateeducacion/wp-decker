@@ -65,12 +65,12 @@ class Decker_Email_To_Post {
 	 * @return string.
 	 */
 	private function extract_email( $email ) {
-		// Verificar si la cadena contiene un formato "Nombre <email@example.com>".
+			   // Check if the string contains a "Name <email@example.com>" format.
 		if ( preg_match( '/<([^>]+)>/', $email, $matches ) ) {
 			return sanitize_email( $matches[1] );
 		}
 
-		// Si no hay corchetes, asumir que contiene solo el email.
+			   // If there are no brackets, assume it contains only the email.
 		return sanitize_email( $email );
 	}
 
@@ -82,23 +82,30 @@ class Decker_Email_To_Post {
 	 */
 	public function get_body( Erseco\Message $message ): string {
 
-		// Attempt to get the parts of the message.
-		$parts = $message->getParts();
+		// Prefer HTML part.
+		$html_part = $message->getHtmlPart();
+		if ( $html_part ) {
+			return wp_kses_post( $html_part->getContent() );
+		}
 
+		// Fall back to plain text part.
+		$text_part = $message->getTextPart();
+		if ( $text_part ) {
+			return wp_kses_post( nl2br( esc_html( $text_part->getContent() ) ) );
+		}
+
+		// Fallback: first part.
+		$parts = $message->getParts();
 		if ( count( $parts ) > 0 ) {
 			$content = $parts[0]->getContent();
 			$content_type = $parts[0]->getContentType();
 
-			if ( str_starts_with( strtolower( $content_type ), 'text/plain;' ) ) {
-				// Convert plain text to HTML for better readability.
+			if ( str_starts_with( strtolower( $content_type ), 'text/plain' ) ) {
 				return wp_kses_post( nl2br( esc_html( $content ) ) );
-			} else {
-				// Sanitize and return the HTML content.
-				return wp_kses_post( $content );
 			}
+			return wp_kses_post( $content );
 		}
 
-		// If no parts are available, return an empty string.
 		return '';
 	}
 
@@ -119,7 +126,10 @@ class Decker_Email_To_Post {
 		try {
 
 			// Decode the base64-encoded email content.
-			$raw_email = base64_decode( $payload['rawEmail'] );
+			$raw_email = base64_decode( $payload['rawEmail'], true );
+			if ( false === $raw_email ) {
+				return new WP_Error( 'invalid_encoding', 'rawEmail must be base64 encoded', array( 'status' => 400 ) );
+			}
 
 			// Parse email.
 			$message = $this->parse_email( $raw_email );
@@ -216,7 +226,7 @@ class Decker_Email_To_Post {
 	 * @return int Attachment ID.
 	 */
 	private function upload_attachment( $filename, $content, $type, $post_id ) {
-		// Verificar permisos y datos necesarios.
+				// Verify permissions and required data.
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Error( 'permission_error', 'No tienes permisos para subir archivos.' );
 		}
@@ -225,21 +235,21 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'invalid_post', 'ID de post inválido.' );
 		}
 
-		// Extraer solo el tipo MIME sin parámetros adicionales.
+		   // Extract only the MIME type without additional parameters.
 		$type = explode( ';', $type )[0];
 
-		// Crear un nombre de archivo único.
+		   // Create a unique filename.
 		$original_filename = sanitize_file_name( $filename );
 		$extension         = pathinfo( $filename, PATHINFO_EXTENSION );
 		$upload_dir        = wp_upload_dir();
 
-		// Generar nombre único para el archivo usando la función nativa de WordPress.
+		   // Generate a unique file name using the native WordPress function.
 		$obfuscated_name = wp_unique_filename(
 			$upload_dir['path'],
 			wp_generate_uuid4() . '.' . $extension
 		);
 
-		// Construir la ruta completa del archivo.
+			   // Build the full file path.
 		$file_path = $upload_dir['path'] . '/' . $obfuscated_name;
 
 		// Initialize WordPress Filesystem.
@@ -254,17 +264,17 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'file_write_error', 'Error al escribir el archivo.' );
 		}
 
-		// Preparar el array de información del adjunto.
+		   // Prepare the attachment info array.
 		$attachment = array(
 			'guid'           => $upload_dir['url'] . '/' . $obfuscated_name,
 			'post_mime_type' => $type,
 			'post_title'     => preg_replace( '/\.[^.]+$/', '', $original_filename ),
 			'post_content'   => '',
 			'post_status'    => 'inherit',
-			'post_parent'    => $post_id,  // Establecer el post parent.
+			'post_parent'    => $post_id,  // Set the post parent.
 		);
 
-		// Insertar el adjunto en la base de datos.
+			   // Insert the attachment into the database.
 		$attachment_id = wp_insert_attachment( $attachment, $file_path, $post_id );
 
 		if ( is_wp_error( $attachment_id ) ) {
@@ -272,12 +282,12 @@ class Decker_Email_To_Post {
 			return $attachment_id;
 		}
 
-		// Generar metadatos del adjunto.
+			   // Generate attachment metadata.
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		$attachment_data = wp_generate_attachment_metadata( $attachment_id, $file_path );
 		wp_update_attachment_metadata( $attachment_id, $attachment_data );
 
-		// Guardar el nombre original en los metadatos.
+			   // Save the original name in the metadata.
 		update_post_meta( $attachment_id, '_original_filename', $original_filename );
 
 		return $attachment_id;

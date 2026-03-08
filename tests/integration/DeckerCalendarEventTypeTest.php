@@ -52,7 +52,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 				)
 			);
 
-			// Crear evento de un tipo diferente (usar event si no es el tipo actual)
+                       // Create an event of a different type (use 'event' if it's not the current type)
 			$other_type    = ( $type === 'event' ) ? 'warning' : 'event';
 			$other_type_id = self::factory()->post->create(
 				array(
@@ -66,7 +66,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 				)
 			);
 
-			// Crear una tarea
+                       // Create a task
 			$task_id = $this->factory->task->create(
 				array(
 					'post_title'  => 'Test Task',
@@ -82,10 +82,10 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 			$nonce = wp_create_nonce( 'wp_rest' );
 			$request->set_header( 'X-WP-Nonce', $nonce );
 			$response = rest_get_server()->dispatch( $request );
-			// Verificar si la respuesta es un error
+                       // Check if the response is an error
 		if ( is_wp_error( $response ) ) {
 			$this->fail( 'REST request failed: ' . $response->get_error_message() );
-			return; // Evitar continuar con un objeto WP_Error.
+                        return; // Avoid continuing with a WP_Error object.
 		}
 			$data = $response->get_data();
 
@@ -101,7 +101,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 	public function test_ics_feed_returns_only_events_of_type( $type ) {
 			$calendar = new Decker_Calendar();
 
-			// Crear evento del tipo actual
+                       // Create an event of the current type
 			$current_type_id = self::factory()->post->create(
 				array(
 					'post_type'   => 'decker_event',
@@ -114,7 +114,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 				)
 			);
 
-			// Crear evento de un tipo diferente
+                       // Create an event of a different type
 			$other_type    = ( $type === 'event' ) ? 'warning' : 'event';
 			$other_type_id = self::factory()->post->create(
 				array(
@@ -128,7 +128,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 				)
 			);
 
-			// Crear una tarea
+                       // Create a task
 			$task_id = $this->factory->task->create(
 				array(
 					'post_title'  => 'Test Task',
@@ -139,7 +139,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 				)
 			);
 
-			// Generar directamente el contenido ICS sin pasar por headers.
+                       // Generate the ICS content directly without going through headers.
 			$events = $calendar->get_events( $type );
 		if ( is_wp_error( $events ) ) {
 			$this->fail( 'Failed to get events: ' . $events->get_error_message() );
@@ -147,7 +147,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 		}
 			$ical = $calendar->generate_ical( $events, $type );
 
-			// Verificar que solo el evento del tipo actual está presente
+                   // Verify that only the event of the current type is present
 			$this->assertStringContainsString( 'event_' . $current_type_id, $ical );
 			$this->assertStringNotContainsString( 'event_' . $other_type_id, $ical );
 			// $this->assertStringNotContainsString( 'task_' . $task_id, $ical );
