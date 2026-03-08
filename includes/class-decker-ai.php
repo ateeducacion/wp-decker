@@ -167,8 +167,8 @@ class Decker_AI {
 	protected function build_prompt( $mode, $text ) {
 		$locale = $this->get_prompt_locale();
 
-		/* translators: %s: locale code such as es_ES. */
 		$language_instruction = sprintf(
+			/* translators: %s: locale code such as es_ES. */
 			__( 'Write the result in the language configured in WordPress (%s).', 'decker' ),
 			$locale
 		);

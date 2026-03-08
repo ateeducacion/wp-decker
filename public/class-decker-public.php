@@ -567,8 +567,8 @@ class Decker_Public {
 					'Fix all grammar, spelling, and punctuation errors in the following task description.',
 					'decker'
 				),
-				/* translators: %s: locale code such as es_ES. */
 				'language_instruction' => sprintf(
+					/* translators: %s: locale code such as es_ES. */
 					__( 'Write the result in the language configured in WordPress (%s).', 'decker' ),
 					get_user_locale()
 				),

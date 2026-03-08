@@ -78,21 +78,29 @@
     display: block;
 }
 
-.decker-ai-dropdown-item {
+.ql-toolbar .decker-ai-dropdown-menu .decker-ai-dropdown-item {
     display: block;
+    float: none;
+    height: auto;
     width: 100%;
+    min-height: 0;
+    margin: 0;
     padding: 8px 10px;
     background: transparent;
     color: #1d2327;
     border: 0;
     border-radius: 4px;
     font-size: 13px;
+    font-family: inherit;
+    font-weight: 400;
+    line-height: 1.5;
     text-align: left;
     cursor: pointer;
+    white-space: normal;
 }
 
-.decker-ai-dropdown-item:hover,
-.decker-ai-dropdown-item:focus {
+.ql-toolbar .decker-ai-dropdown-menu .decker-ai-dropdown-item:hover,
+.ql-toolbar .decker-ai-dropdown-menu .decker-ai-dropdown-item:focus {
     background-color: #e8f0fe;
     color: #0d6efd;
     outline: none;
