@@ -522,7 +522,7 @@ class Decker_Public {
 		$options = get_option( 'decker_settings', array() );
 
 		return array(
-			'enabled'          => ! isset( $options['ai_enabled'] ) || '1' === $options['ai_enabled'],
+			'enabled'          => isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'],
 			'strings'          => array(
 				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
 				'choose_action'            => __( 'Choose an action', 'decker' ),

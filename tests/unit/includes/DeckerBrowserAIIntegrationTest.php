@@ -26,6 +26,20 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * AI config should default to disabled when the setting is missing.
+	 */
+	public function test_ai_config_defaults_to_disabled() {
+		update_option( 'decker_settings', array() );
+
+		$public = new Decker_Public( 'decker', '1.0.0' );
+		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$method->setAccessible( true );
+		$config = $method->invoke( $public );
+
+		$this->assertFalse( $config['enabled'] );
+	}
+
+	/**
 	 * AI config should be disabled when the setting is turned off.
 	 */
 	public function test_ai_config_respects_disabled_setting() {
