@@ -254,7 +254,7 @@ die();
 													echo '</td>';
 
 													// Author and last editor.
-													echo '<td>' . decker_get_kb_people_html( $article->ID ) . '</td>';
+													echo '<td>' . wp_kses_post( decker_get_kb_people_html( $article->ID ) ) . '</td>';
 
 													// Excerpt.
 													$excerpt = wp_strip_all_tags( $article->post_content );

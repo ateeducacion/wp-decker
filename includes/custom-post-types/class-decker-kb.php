@@ -512,7 +512,8 @@ class Decker_Kb {
 	 */
 	public function get_article( $request ) {
 		$article_id        = $request->get_param( 'id' );
-		$include_comments = rest_sanitize_boolean( $request->get_param( 'include_comments' ) );
+		$include_comments = $request->get_param( 'include_comments' );
+		$include_comments = in_array( strtolower( (string) $include_comments ), array( '1', 'true', 'yes', 'on' ), true );
 
 		$post = get_post( $article_id );
 		if ( ! $post || 'decker_kb' !== $post->post_type ) {
