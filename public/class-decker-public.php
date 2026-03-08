@@ -192,23 +192,23 @@ class Decker_Public {
 				'wp-api',
 
 				// Bootstrap 5.
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css',
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js',
 
 				// Remix Icons.
-				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css',
+				'https://cdn.jsdelivr.net/npm/remixicon@4.9.1/fonts/remixicon.min.css',
 
 				// Tablesort.
-				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
+				'https://cdn.jsdelivr.net/gh/tristen/tablesort@5.7.0/dist/tablesort.min.js',
 
 				// Simplebar.
-				'https://cdn.jsdelivr.net/npm/simplebar@6.3.0/dist/simplebar.min.js',
+				'https://cdn.jsdelivr.net/npm/simplebar@6.3.3/dist/simplebar.min.js',
 
-				// Font Awesome.
+				// Font Awesome 5 Free (kept at 5.x; upgrading to 6.x requires icon class changes).
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
 
 				// SortableJS.
-				'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js',
+				'https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js',
 
 				/*
 				// Highlight.
@@ -217,22 +217,22 @@ class Decker_Public {
 				*/
 
 				// Quill.
-				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
-				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
+				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js',
+				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css',
 				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
-				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.min.js',
-				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.css',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.css',
 
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
 
-				// sweetalert2.js.
-				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
-				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.css',
+				// SweetAlert2.
+				'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.21/dist/sweetalert2.all.min.js',
+				'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.21/dist/sweetalert2.min.css',
 
 				// Chart.js.
-				'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
+				'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
 
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
@@ -254,7 +254,7 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page ) {
 
 				// FullCalendar.
-				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.15/index.global.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js';
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
 
