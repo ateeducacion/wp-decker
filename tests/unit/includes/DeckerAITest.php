@@ -195,6 +195,49 @@ class DeckerAITest extends Decker_Test_Base {
 
 		$this->assertEquals( '<p>Text</p>', $ai->expose_sanitize_response( $raw ) );
 	}
+
+	/**
+	 * The prompt should instruct the provider to use the active WordPress locale.
+	 */
+	public function test_build_prompt_includes_wordpress_locale_instruction() {
+		$ai     = new Decker_AI_Testable();
+		$prompt = $ai->expose_build_prompt( 'improve', 'Sample text' );
+
+		$this->assertStringContainsString( get_user_locale(), $prompt );
+		$this->assertStringContainsString( 'Sample text', $prompt );
+	}
+
+	/**
+	 * Logged-in users should use their WordPress user locale in AI prompts.
+	 */
+	public function test_get_prompt_locale_uses_user_locale_for_logged_in_users() {
+		wp_set_current_user( $this->editor_id );
+
+		$ai = new Decker_AI_Testable();
+
+		$this->assertEquals( get_user_locale(), $ai->expose_get_prompt_locale() );
+	}
+
+	/**
+	 * Guests should fall back to the determined WordPress locale in AI prompts.
+	 */
+	public function test_get_prompt_locale_uses_determined_locale_for_guests() {
+		wp_set_current_user( 0 );
+
+		$ai = new Decker_AI_Testable();
+
+		$this->assertEquals( determine_locale(), $ai->expose_get_prompt_locale() );
+	}
+
+	/**
+	 * The final prompt should include the locale returned by get_prompt_locale().
+	 */
+	public function test_build_prompt_uses_prompt_locale_value() {
+		$ai     = new Decker_AI_Testable_With_Locale( 'ca_ES' );
+		$prompt = $ai->expose_build_prompt( 'improve', 'Sample text' );
+
+		$this->assertStringContainsString( 'ca_ES', $prompt );
+	}
 }
 
 /**
@@ -212,5 +255,58 @@ class Decker_AI_Testable extends Decker_AI {
 	 */
 	public function expose_sanitize_response( $content ) {
 		return $this->sanitize_response( $content );
+	}
+
+	/**
+	 * Expose the protected build_prompt method for testing.
+	 *
+	 * @param string $mode Rewrite mode.
+	 * @param string $text Original content.
+	 * @return string Prompt text.
+	 */
+	public function expose_build_prompt( $mode, $text ) {
+		return $this->build_prompt( $mode, $text );
+	}
+
+	/**
+	 * Expose the protected get_prompt_locale method for testing.
+	 *
+	 * @return string Locale code.
+	 */
+	public function expose_get_prompt_locale() {
+		return $this->get_prompt_locale();
+	}
+}
+
+/**
+ * Testable subclass with an overridable prompt locale.
+ *
+ * @internal Only for use in unit tests.
+ */
+class Decker_AI_Testable_With_Locale extends Decker_AI_Testable {
+
+	/**
+	 * Locale to return from get_prompt_locale().
+	 *
+	 * @var string
+	 */
+	private $prompt_locale;
+
+	/**
+	 * Set the locale used by the test double.
+	 *
+	 * @param string $prompt_locale Locale code for prompts.
+	 */
+	public function __construct( $prompt_locale ) {
+		$this->prompt_locale = $prompt_locale;
+	}
+
+	/**
+	 * Return the injected locale for prompt building tests.
+	 *
+	 * @return string Locale code.
+	 */
+	protected function get_prompt_locale() {
+		return $this->prompt_locale;
 	}
 }

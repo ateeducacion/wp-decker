@@ -165,22 +165,43 @@ class Decker_AI {
 	 * @return string Full prompt string.
 	 */
 	protected function build_prompt( $mode, $text ) {
-		$suffix = 'Return only the improved text as HTML, preserving valid HTML formatting '
-			. 'tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. '
-			. 'Do not include explanations, markdown code fences, or any text '
-			. 'outside the HTML content itself.';
+		$locale = $this->get_prompt_locale();
+
+		/* translators: %s: locale code such as es_ES. */
+		$language_instruction = sprintf(
+			__( 'Write the result in the language configured in WordPress (%s).', 'decker' ),
+			$locale
+		);
+
+		$suffix = __(
+			'Return only the improved text as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML content itself.',
+			'decker'
+		);
 
 		$prefixes = array(
-			'improve'         => 'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.',
-			'shorten'         => 'Shorten the following task description while keeping its key meaning.',
-			'clarify'         => 'Rewrite the following task description to make it clearer and easier to understand.',
-			'professionalize' => 'Rewrite the following task description in a professional tone.',
-			'proofread'       => 'Fix all grammar, spelling, and punctuation errors in the following task description.',
+			'improve'         => __( 'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.', 'decker' ),
+			'shorten'         => __( 'Shorten the following task description while keeping its key meaning.', 'decker' ),
+			'clarify'         => __( 'Rewrite the following task description to make it clearer and easier to understand.', 'decker' ),
+			'professionalize' => __( 'Rewrite the following task description in a professional tone.', 'decker' ),
+			'proofread'       => __( 'Fix all grammar, spelling, and punctuation errors in the following task description.', 'decker' ),
 		);
 
 		$prefix = isset( $prefixes[ $mode ] ) ? $prefixes[ $mode ] : $prefixes['improve'];
 
-		return $prefix . ' ' . $suffix . "\n\n" . $text;
+		return $prefix . ' ' . $language_instruction . ' ' . $suffix . "\n\n" . $text;
+	}
+
+	/**
+	 * Get the locale used in AI prompts.
+	 *
+	 * @return string Locale code.
+	 */
+	protected function get_prompt_locale() {
+		if ( is_user_logged_in() ) {
+			return get_user_locale();
+		}
+
+		return determine_locale();
 	}
 
 	/**

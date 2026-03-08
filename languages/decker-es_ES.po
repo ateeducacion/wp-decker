@@ -1646,3 +1646,25 @@ msgstr "Por favor, añade algo de texto antes de usar la mejora con IA."
 
 msgid "No AI provider available. Configure an OpenAI API key in Decker settings or use a browser with built-in AI support."
 msgstr "No hay proveedor de IA disponible. Configura una clave API de OpenAI en los ajustes de Decker o usa un navegador con soporte de IA integrada."
+
+msgid "Improve the writing of the following task description. Make it clearer, more fluent, and better structured."
+msgstr "Mejora la redacción de la siguiente descripción de tarea. Hazla más clara, fluida y mejor estructurada."
+
+msgid "Shorten the following task description while keeping its key meaning."
+msgstr "Acorta la siguiente descripción de tarea manteniendo su significado principal."
+
+msgid "Rewrite the following task description to make it clearer and easier to understand."
+msgstr "Reescribe la siguiente descripción de tarea para que sea más clara y fácil de entender."
+
+msgid "Rewrite the following task description in a professional tone."
+msgstr "Reescribe la siguiente descripción de tarea con un tono profesional."
+
+msgid "Fix all grammar, spelling, and punctuation errors in the following task description."
+msgstr "Corrige todos los errores gramaticales, ortográficos y de puntuación de la siguiente descripción de tarea."
+
+#, php-format
+msgid "Write the result in the language configured in WordPress (%s)."
+msgstr "Escribe el resultado en el idioma configurado en WordPress (%s)."
+
+msgid "Return only the improved text as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML content itself."
+msgstr "Devuelve solo el texto mejorado como HTML, conservando etiquetas de formato HTML válidas como <strong>, <em>, <ul>, <ol>, <li>, <p> y <a>. No incluyas explicaciones, bloques de código Markdown ni ningún texto fuera del propio contenido HTML."

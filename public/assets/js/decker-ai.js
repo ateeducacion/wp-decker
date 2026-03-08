@@ -30,6 +30,12 @@ window.DeckerAI = (function () {
      */
     var savedRange = null;
 
+    /**
+     * Reference to the AI dropdown container element.
+     * @type {Element|null}
+     */
+    var dropdownElement = null;
+
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -108,32 +114,144 @@ window.DeckerAI = (function () {
             return;
         }
 
+        var modes = getModes();
         var btn = document.createElement( 'button' );
         btn.type      = 'button';
         btn.className = 'ql-ai-improve';
         btn.title     = aiConfig.strings.improve_with_ai;
+        btn.setAttribute( 'aria-haspopup', 'true' );
+        btn.setAttribute( 'aria-expanded', 'false' );
         btn.innerHTML =
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">' +
             '<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"/>' +
             '</svg> ' +
-            '<span>' + escapeHtml( aiConfig.strings.improve_with_ai ) + '</span>';
+            '<span>' + escapeHtml( aiConfig.strings.improve_with_ai ) + '</span>' +
+            '<span class="decker-ai-caret" aria-hidden="true">▾</span>';
 
-        btn.addEventListener( 'click', handleButtonClick );
+        var menu = document.createElement( 'div' );
+        menu.className = 'decker-ai-dropdown-menu';
+
+        modes.forEach( function ( mode ) {
+            var item = document.createElement( 'button' );
+            item.type = 'button';
+            item.className = 'decker-ai-dropdown-item';
+            item.setAttribute( 'data-mode', mode.key );
+            item.textContent = mode.label;
+            item.addEventListener( 'mousedown', saveCurrentRange );
+            item.addEventListener( 'click', function ( event ) {
+                event.preventDefault();
+                event.stopPropagation();
+                closeDropdown();
+                runImproveFlow( mode.key );
+            } );
+            menu.appendChild( item );
+        } );
+
+        btn.addEventListener( 'mousedown', saveCurrentRange );
+        btn.addEventListener( 'click', function ( event ) {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleDropdown();
+        } );
 
         var span = document.createElement( 'span' );
-        span.className = 'ql-formats';
+        span.className = 'ql-formats decker-ai-dropdown';
         span.appendChild( btn );
+        span.appendChild( menu );
         toolbar.appendChild( span );
+
+        dropdownElement = span;
+        document.addEventListener( 'click', handleDocumentClick );
+        document.addEventListener( 'keydown', handleDocumentKeydown );
     }
 
     // -------------------------------------------------------------------------
-    // Main click handler
+    // Toolbar dropdown helpers
     // -------------------------------------------------------------------------
 
     /**
-     * Handle the "Improve with AI" button click.
+     * Get the supported AI actions.
+     *
+     * @returns {Array<{key: string, label: string}>} Available actions.
      */
-    function handleButtonClick() {
+    function getModes() {
+        return [
+            { key: 'improve',         label: aiConfig.strings.mode_improve },
+            { key: 'shorten',         label: aiConfig.strings.mode_shorten },
+            { key: 'clarify',         label: aiConfig.strings.mode_clarify },
+            { key: 'professionalize', label: aiConfig.strings.mode_professionalize },
+            { key: 'proofread',       label: aiConfig.strings.mode_proofread },
+        ];
+    }
+
+    /**
+     * Save the current Quill selection before focus changes.
+     */
+    function saveCurrentRange() {
+        savedRange = quillInstance.getSelection();
+    }
+
+    /**
+     * Toggle the AI dropdown.
+     */
+    function toggleDropdown() {
+        if ( ! dropdownElement ) {
+            return;
+        }
+
+        if ( dropdownElement.classList.contains( 'is-open' ) ) {
+            closeDropdown();
+            return;
+        }
+
+        dropdownElement.classList.add( 'is-open' );
+        dropdownElement.querySelector( '.ql-ai-improve' ).setAttribute( 'aria-expanded', 'true' );
+    }
+
+    /**
+     * Close the AI dropdown.
+     */
+    function closeDropdown() {
+        if ( ! dropdownElement ) {
+            return;
+        }
+
+        dropdownElement.classList.remove( 'is-open' );
+        dropdownElement.querySelector( '.ql-ai-improve' ).setAttribute( 'aria-expanded', 'false' );
+    }
+
+    /**
+     * Close the dropdown when clicking outside it.
+     *
+     * @param {MouseEvent} event Native click event.
+     */
+    function handleDocumentClick( event ) {
+        if ( dropdownElement && ! dropdownElement.contains( event.target ) ) {
+            closeDropdown();
+        }
+    }
+
+    /**
+     * Close the dropdown on Escape.
+     *
+     * @param {KeyboardEvent} event Native keyboard event.
+     */
+    function handleDocumentKeydown( event ) {
+        if ( 'Escape' === event.key ) {
+            closeDropdown();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Main improve flow
+    // -------------------------------------------------------------------------
+
+    /**
+     * Run the AI improvement flow for the selected action.
+     *
+     * @param {string} mode Rewrite mode key.
+     */
+    function runImproveFlow( mode ) {
         var provider = getProvider();
 
         if ( provider === 'none' ) {
@@ -145,13 +263,10 @@ window.DeckerAI = (function () {
             return;
         }
 
-        // Save the current selection before the button steals focus.
-        savedRange = quillInstance.getSelection();
-
-        var textToImprove, isSelection;
+        var textToImprove;
+        var isSelection;
 
         if ( savedRange && savedRange.length > 0 ) {
-            // Use getSemanticHTML for selection if Quill 2.x supports it.
             textToImprove = getSelectionHtml( savedRange );
             isSelection   = true;
         } else {
@@ -159,7 +274,6 @@ window.DeckerAI = (function () {
             isSelection   = false;
         }
 
-        // Guard against empty editor using Quill's plain-text API (no HTML parsing needed).
         var textContent = isSelection
             ? quillInstance.getText( savedRange.index, savedRange.length )
             : quillInstance.getText();
@@ -172,89 +286,34 @@ window.DeckerAI = (function () {
             return;
         }
 
-        showModeSelection().then( function ( mode ) {
-            if ( ! mode ) {
+        Swal.fire( {
+            title:              aiConfig.strings.improving,
+            allowOutsideClick:  false,
+            showConfirmButton:  false,
+            didOpen: function () {
+                Swal.showLoading();
+            },
+        } );
+
+        improveText( textToImprove, mode, provider ).then( function ( result ) {
+            if ( ! result.success ) {
+                Swal.fire( {
+                    icon:  'error',
+                    title: aiConfig.strings.error,
+                    text:  result.error,
+                } );
                 return;
             }
 
-            // Show loading spinner.
-            Swal.fire( {
-                title:              aiConfig.strings.improving,
-                allowOutsideClick:  false,
-                showConfirmButton:  false,
-                didOpen: function () {
-                    Swal.showLoading();
-                },
-            } );
+            var originalPreview = isSelection
+                ? quillInstance.getText( savedRange.index, savedRange.length )
+                : quillInstance.getText();
 
-            improveText( textToImprove, mode, provider ).then( function ( result ) {
-                if ( ! result.success ) {
-                    Swal.fire( {
-                        icon:  'error',
-                        title: aiConfig.strings.error,
-                        text:  result.error,
-                    } );
-                    return;
+            showPreview( originalPreview, result.improved_text ).then( function ( confirmed ) {
+                if ( confirmed ) {
+                    applyImprovement( result.improved_text, isSelection ? savedRange : null );
                 }
-
-                var originalPreview = isSelection
-                    ? quillInstance.getText( savedRange.index, savedRange.length )
-                    : quillInstance.getText();
-
-                showPreview( originalPreview, result.improved_text ).then( function ( confirmed ) {
-                    if ( confirmed ) {
-                        applyImprovement( result.improved_text, isSelection ? savedRange : null );
-                    }
-                } );
             } );
-        } );
-    }
-
-    // -------------------------------------------------------------------------
-    // Step 1 — Mode selection modal
-    // -------------------------------------------------------------------------
-
-    /**
-     * Show SweetAlert2 dialog with rewrite mode buttons.
-     *
-     * @returns {Promise<string|null>} Selected mode key, or null if cancelled.
-     */
-    function showModeSelection() {
-        var selectedMode = null;
-
-        var modes = [
-            { key: 'improve',         label: aiConfig.strings.mode_improve },
-            { key: 'shorten',         label: aiConfig.strings.mode_shorten },
-            { key: 'clarify',         label: aiConfig.strings.mode_clarify },
-            { key: 'professionalize', label: aiConfig.strings.mode_professionalize },
-            { key: 'proofread',       label: aiConfig.strings.mode_proofread },
-        ];
-
-        var buttonsHtml = modes.map( function ( m ) {
-            return '<button type="button" class="decker-ai-mode-btn btn btn-outline-secondary w-100 mb-2" data-mode="' +
-                escapeAttr( m.key ) + '">' + escapeHtml( m.label ) + '</button>';
-        } ).join( '' );
-
-        return Swal.fire( {
-            title:             aiConfig.strings.choose_action,
-            html:              '<div class="decker-ai-modes">' + buttonsHtml + '</div>',
-            showConfirmButton: false,
-            showCancelButton:  true,
-            cancelButtonText:  aiConfig.strings.cancel,
-            focusCancel:       false,
-            preConfirm: function () {
-                return selectedMode;
-            },
-            didOpen: function ( popup ) {
-                popup.querySelectorAll( '.decker-ai-mode-btn' ).forEach( function ( btn ) {
-                    btn.addEventListener( 'click', function () {
-                        selectedMode = btn.getAttribute( 'data-mode' );
-                        Swal.clickConfirm();
-                    } );
-                } );
-            },
-        } ).then( function ( result ) {
-            return result.isConfirmed ? result.value : null;
         } );
     }
 
@@ -289,21 +348,17 @@ window.DeckerAI = (function () {
      * @returns {string} Full prompt.
      */
     function buildPrompt( mode, text ) {
-        var suffix = 'Return only the improved text as HTML, preserving valid HTML formatting ' +
-            'tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. ' +
-            'Do not include explanations, markdown code fences, or any text ' +
-            'outside the HTML content itself.';
-
         var prefixes = {
-            improve:         'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.',
-            shorten:         'Shorten the following task description while keeping its key meaning.',
-            clarify:         'Rewrite the following task description to make it clearer and easier to understand.',
-            professionalize: 'Rewrite the following task description in a professional tone.',
-            proofread:       'Fix all grammar, spelling, and punctuation errors in the following task description.',
+            improve:         aiConfig.prompts.improve,
+            shorten:         aiConfig.prompts.shorten,
+            clarify:         aiConfig.prompts.clarify,
+            professionalize: aiConfig.prompts.professionalize,
+            proofread:       aiConfig.prompts.proofread,
         };
 
         var prefix = prefixes[ mode ] || prefixes.improve;
-        return prefix + ' ' + suffix + '\n\n' + text;
+        return prefix + ' ' + aiConfig.prompts.language_instruction + ' ' +
+            aiConfig.prompts.response_format + '\n\n' + text;
     }
 
     /**

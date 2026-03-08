@@ -546,6 +546,37 @@ class Decker_Public {
 				'no_content_message'   => __( 'Please add some text before using AI improvement.', 'decker' ),
 				'no_ai_available'      => __( 'No AI provider available. Configure an OpenAI API key in Decker settings or use a browser with built-in AI support.', 'decker' ),
 			),
+			'prompts'          => array(
+				'improve'         => __(
+					'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.',
+					'decker'
+				),
+				'shorten'         => __(
+					'Shorten the following task description while keeping its key meaning.',
+					'decker'
+				),
+				'clarify'         => __(
+					'Rewrite the following task description to make it clearer and easier to understand.',
+					'decker'
+				),
+				'professionalize' => __(
+					'Rewrite the following task description in a professional tone.',
+					'decker'
+				),
+				'proofread'       => __(
+					'Fix all grammar, spelling, and punctuation errors in the following task description.',
+					'decker'
+				),
+				/* translators: %s: locale code such as es_ES. */
+				'language_instruction' => sprintf(
+					__( 'Write the result in the language configured in WordPress (%s).', 'decker' ),
+					get_user_locale()
+				),
+				'response_format' => __(
+					'Return only the improved text as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML content itself.',
+					'decker'
+				),
+			),
 		);
 	}
 
