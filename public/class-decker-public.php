@@ -311,6 +311,10 @@ class Decker_Public {
 			// Add global search script.
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js';
 
+			// Add the AI improvement module.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-ai.css';
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-ai.js';
+
 			// Add collaborative editing module if enabled.
 			$this->maybe_enqueue_collaboration();
 
@@ -396,6 +400,7 @@ class Decker_Public {
 				'taskPermalinkStructure' => get_option( 'permalink_structure' )
 					? home_url( '/decker/task/%d/' )
 					: home_url( '/?decker_task=%d' ),
+				'ai'                => $this->get_ai_config(),
 			);
 
 			$last_handle = '';
@@ -504,6 +509,42 @@ class Decker_Public {
 			);
 
 		}
+	}
+
+	/**
+	 * Build the AI configuration object passed to JavaScript.
+	 *
+	 * Exposes whether AI is available and all required UI strings.
+	 * The API key itself is never sent to the client.
+	 *
+	 * @return array AI configuration array.
+	 */
+	private function get_ai_config() {
+		$settings = get_option( 'decker_settings', array() );
+		$enabled  = ! empty( $settings['openai_api_key'] );
+
+		return array(
+			'enabled' => $enabled,
+			'strings' => array(
+				'improve_with_ai'      => __( 'Improve with AI', 'decker' ),
+				'choose_action'        => __( 'Choose an action', 'decker' ),
+				'mode_improve'         => __( 'Improve writing', 'decker' ),
+				'mode_shorten'         => __( 'Make shorter', 'decker' ),
+				'mode_clarify'         => __( 'Make clearer', 'decker' ),
+				'mode_professionalize' => __( 'Make more professional', 'decker' ),
+				'mode_proofread'       => __( 'Fix grammar and spelling', 'decker' ),
+				'improving'            => __( 'Improving text…', 'decker' ),
+				'preview_title'        => __( 'Review improvement', 'decker' ),
+				'original_text'        => __( 'Original', 'decker' ),
+				'improved_text'        => __( 'Improved', 'decker' ),
+				'accept'               => __( 'Accept', 'decker' ),
+				'cancel'               => __( 'Cancel', 'decker' ),
+				'error'                => __( 'Error', 'decker' ),
+				'error_message'        => __( 'An error occurred while improving the text.', 'decker' ),
+				'no_content'           => __( 'No content', 'decker' ),
+				'no_content_message'   => __( 'Please add some text before using AI improvement.', 'decker' ),
+			),
+		);
 	}
 
 	/**

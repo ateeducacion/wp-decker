@@ -102,6 +102,45 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render OpenAI API Key Field.
+	 *
+	 * Outputs the HTML for the openai_api_key settings field.
+	 */
+	public function openai_api_key_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value   = isset( $options['openai_api_key'] ) ? sanitize_text_field( $options['openai_api_key'] ) : '';
+
+		echo '<input type="password" name="decker_settings[openai_api_key]" class="regular-text" '
+			. 'value="' . esc_attr( $value ) . '" autocomplete="off">';
+		echo '<p class="description">' . esc_html__( 'Enter your OpenAI API key to enable the "Improve with AI" feature in the task description editor.', 'decker' ) . '</p>';
+	}
+
+	/**
+	 * Render OpenAI Model Field.
+	 *
+	 * Outputs the HTML for the openai_model settings field.
+	 */
+	public function openai_model_render() {
+		$options        = get_option( 'decker_settings', array() );
+		$selected_model = isset( $options['openai_model'] ) ? sanitize_text_field( $options['openai_model'] ) : 'gpt-4o-mini';
+
+		$models = array(
+			'gpt-4o-mini' => 'GPT-4o mini (fast, affordable)',
+			'gpt-4o'      => 'GPT-4o (most capable)',
+			'gpt-4-turbo' => 'GPT-4 Turbo',
+			'gpt-3.5-turbo' => 'GPT-3.5 Turbo (legacy)',
+		);
+
+		echo '<select name="decker_settings[openai_model]">';
+		foreach ( $models as $value => $label ) {
+			echo '<option value="' . esc_attr( $value ) . '" ' . selected( $selected_model, $value, false ) . '>'
+				. esc_html( $label ) . '</option>';
+		}
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'Select the OpenAI model to use for text improvement. GPT-4o mini is recommended for most use cases.', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render User Profile Field.
 	 *
 	 * Outputs the HTML for the minimum_user_profile field, displaying only roles with edit permissions.
@@ -286,6 +325,8 @@ class Decker_Admin_Settings {
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
+			'openai_api_key'        => __( 'OpenAI API Key', 'decker' ),
+			'openai_model'          => __( 'OpenAI Model', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),
 
@@ -407,6 +448,17 @@ class Decker_Admin_Settings {
 			$input['signaling_server'] = esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
 		} else {
 			$input['signaling_server'] = 'wss://signaling.yjs.dev';
+		}
+
+		// Validate OpenAI API key.
+		$input['openai_api_key'] = isset( $input['openai_api_key'] ) ? sanitize_text_field( $input['openai_api_key'] ) : '';
+
+		// Validate OpenAI model.
+		$valid_models = array( 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo' );
+		if ( isset( $input['openai_model'] ) && in_array( $input['openai_model'], $valid_models, true ) ) {
+			$input['openai_model'] = sanitize_text_field( $input['openai_model'] );
+		} else {
+			$input['openai_model'] = 'gpt-4o-mini';
 		}
 
 		// Validate alert color.

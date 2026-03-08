@@ -1,0 +1,109 @@
+/* ==========================================================================
+   Decker AI — "Improve with AI" toolbar integration
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Toolbar button
+   -------------------------------------------------------------------------- */
+
+.ql-toolbar .ql-ai-improve {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background-color: #0d6efd;
+    color: #fff;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    white-space: nowrap;
+    /* Override Quill's default button width */
+    width: auto;
+}
+
+.ql-toolbar .ql-ai-improve:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.ql-toolbar .ql-ai-improve:focus {
+    outline: 2px solid rgba(13, 110, 253, 0.5);
+    outline-offset: 2px;
+}
+
+.ql-toolbar .ql-ai-improve:disabled,
+.ql-toolbar .ql-ai-improve[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.ql-toolbar .ql-ai-improve svg {
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+}
+
+/* --------------------------------------------------------------------------
+   Mode-selection buttons (inside SweetAlert2 popup)
+   -------------------------------------------------------------------------- */
+
+.decker-ai-modes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 0;
+    text-align: left;
+}
+
+.decker-ai-mode-btn {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 14px;
+    border-radius: 6px;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.decker-ai-mode-btn:hover,
+.decker-ai-mode-btn:focus {
+    background-color: #e8f0fe;
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+/* --------------------------------------------------------------------------
+   Preview text boxes (inside SweetAlert2 popup)
+   -------------------------------------------------------------------------- */
+
+.decker-ai-preview {
+    text-align: left;
+}
+
+.decker-ai-text-box {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px 12px;
+    background-color: #f8f9fa;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.decker-ai-text-box.improved {
+    background-color: #f0fdf4;
+    border-color: #86efac;
+}
+
+/* Strip default white-space pre-wrap from HTML-rendered improved text */
+.decker-ai-text-box.improved p,
+.decker-ai-text-box.improved ul,
+.decker-ai-text-box.improved ol {
+    margin-bottom: 4px;
+    white-space: normal;
+}

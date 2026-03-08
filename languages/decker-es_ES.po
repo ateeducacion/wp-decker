@@ -1537,3 +1537,91 @@ msgstr "La tarea se ha clonado correctamente."
 
 msgid "An error occurred while cloning the task."
 msgstr "Se produjo un error al clonar la tarea."
+
+msgid "You must be logged in to use the AI feature."
+msgstr "Debes iniciar sesión para usar la función de IA."
+
+msgid "You do not have permission to use the AI feature."
+msgstr "No tienes permiso para usar la función de IA."
+
+msgid "No text provided for improvement."
+msgstr "No se proporcionó texto para mejorar."
+
+msgid "No AI API key configured. Please add one in Decker settings."
+msgstr "No hay clave API de IA configurada. Por favor, añade una en los ajustes de Decker."
+
+msgid "The AI provider returned an empty response."
+msgstr "El proveedor de IA devolvió una respuesta vacía."
+
+msgid "Invalid response from AI provider."
+msgstr "Respuesta inválida del proveedor de IA."
+
+#. translators: %s: error message
+#, php-format
+msgid "AI request failed: %s"
+msgstr "La solicitud de IA falló: %s"
+
+#. translators: %s: error message from API
+#, php-format
+msgid "AI API error: %s"
+msgstr "Error de la API de IA: %s"
+
+msgid "Unknown error from AI provider."
+msgstr "Error desconocido del proveedor de IA."
+
+msgid "OpenAI API Key"
+msgstr "Clave API de OpenAI"
+
+msgid "Enter your OpenAI API key to enable the \"Improve with AI\" feature in the task description editor."
+msgstr "Introduce tu clave API de OpenAI para habilitar la función «Mejorar con IA» en el editor de descripción de tareas."
+
+msgid "OpenAI Model"
+msgstr "Modelo de OpenAI"
+
+msgid "Select the OpenAI model to use for text improvement. GPT-4o mini is recommended for most use cases."
+msgstr "Selecciona el modelo de OpenAI para la mejora de texto. Se recomienda GPT-4o mini para la mayoría de los casos de uso."
+
+msgid "Improve with AI"
+msgstr "Mejorar con IA"
+
+msgid "Choose an action"
+msgstr "Elige una acción"
+
+msgid "Improve writing"
+msgstr "Mejorar la redacción"
+
+msgid "Make shorter"
+msgstr "Hacer más corto"
+
+msgid "Make clearer"
+msgstr "Hacer más claro"
+
+msgid "Make more professional"
+msgstr "Hacer más profesional"
+
+msgid "Fix grammar and spelling"
+msgstr "Corregir gramática y ortografía"
+
+msgid "Improving text…"
+msgstr "Mejorando el texto…"
+
+msgid "Review improvement"
+msgstr "Revisar la mejora"
+
+msgid "Original"
+msgstr "Original"
+
+msgid "Improved"
+msgstr "Mejorado"
+
+msgid "Accept"
+msgstr "Aceptar"
+
+msgid "An error occurred while improving the text."
+msgstr "Se produjo un error al mejorar el texto."
+
+msgid "No content"
+msgstr "Sin contenido"
+
+msgid "Please add some text before using AI improvement."
+msgstr "Por favor, añade algo de texto antes de usar la mejora con IA."

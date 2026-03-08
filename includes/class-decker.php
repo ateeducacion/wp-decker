@@ -125,6 +125,12 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-rest-comment-protection.php';
 
 		/**
+		 * The class responsible for AI-powered text improvement via REST API.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai.php';
+		new Decker_AI();
+
+		/**
 		 * The class responsible for defining the MVC.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
