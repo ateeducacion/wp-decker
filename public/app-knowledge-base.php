@@ -269,7 +269,6 @@ die();
 													echo '<td title="' . esc_attr( $exact_date ) . '">' . esc_html( $relative_date ) . '</td>';
 
 													// Actions.
-													$comments_url = Decker_Kb::get_comments_admin_url( $article->ID );
 													$history_url  = Decker_Kb::get_revision_admin_url( $article->ID );
 													echo '<td class="text-end">';
 													// View button.
@@ -280,7 +279,13 @@ die();
 														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
 														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\'>' .
 														'<i class="ri-eye-line"></i></button>';
-													echo '<a href="' . esc_url( $comments_url ) . '" class="btn btn-sm btn-outline-warning me-2" target="_blank" rel="noopener noreferrer" title="' . esc_attr__( 'Comments', 'decker' ) . '"><i class="ri-chat-1-line"></i></a>';
+													echo '<button type="button" class="btn btn-sm btn-outline-warning me-2 view-article-comments-btn" ' .
+														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
+														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
+														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
+														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
+														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\' ' .
+														'title="' . esc_attr__( 'Comments', 'decker' ) . '"><i class="ri-chat-1-line"></i></button>';
 													if ( ! empty( $history_url ) ) {
 														echo '<a href="' . esc_url( $history_url ) . '" class="btn btn-sm btn-outline-dark me-2" target="_blank" rel="noopener noreferrer" title="' . esc_attr__( 'History', 'decker' ) . '"><i class="ri-history-line"></i></a>';
 													}
@@ -425,9 +430,15 @@ die();
 																												 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																												 <i class="ri-eye-line"></i>
 																												 </button>
-																												 <a href="<?php echo esc_url( Decker_Kb::get_comments_admin_url( $article->ID ) ); ?>" class="btn btn-outline-warning" title="<?php echo esc_attr__( 'Comments', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
+																												 <button type="button" class="btn btn-outline-warning view-article-comments-btn"
+																												 data-id="<?php echo esc_attr( $article->ID ); ?>"
+																												 data-title="<?php echo esc_attr( $article->post_title ); ?>"
+																												 data-content="<?php echo esc_attr( $article->post_content ); ?>"
+																												 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+																												 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'
+																												 title="<?php echo esc_attr__( 'Comments', 'decker' ); ?>">
 																												 <i class="ri-chat-1-line"></i>
-																												 </a>
+																												 </button>
 																												 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
 																												 <a href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" class="btn btn-outline-dark" title="<?php echo esc_attr__( 'History', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
 																												 <i class="ri-history-line"></i>
@@ -452,7 +463,13 @@ die();
 																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
 																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																														 <i class="ri-eye-line me-1"></i><?php esc_html_e( 'View', 'decker' ); ?></button></li>
-																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb::get_comments_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-chat-1-line me-1"></i><?php esc_html_e( 'Comments', 'decker' ); ?></a></li>
+																														 <li><button class="dropdown-item view-article-comments-btn"
+																														 data-id="<?php echo esc_attr( $article->ID ); ?>"
+																														 data-title="<?php echo esc_attr( $article->post_title ); ?>"
+																														 data-content="<?php echo esc_attr( $article->post_content ); ?>"
+																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
+																														 <i class="ri-chat-1-line me-1"></i><?php esc_html_e( 'Comments', 'decker' ); ?></button></li>
 																														 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
 																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-history-line me-1"></i><?php esc_html_e( 'History', 'decker' ); ?></a></li>
 																														 <?php endif; ?>

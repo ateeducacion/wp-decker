@@ -278,22 +278,6 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$this->assertEquals( $this->administrator, $last_editor_id );
 	}
 
-	public function test_get_comments_admin_url_points_to_edit_screen_comments() {
-		$post_id = self::factory()->post->create(
-			array(
-				'post_type'   => 'decker_kb',
-				'post_status' => 'publish',
-			)
-		);
-
-		$comments_url = Decker_Kb::get_comments_admin_url( $post_id );
-
-		$this->assertStringContainsString(
-			'post.php?post=' . $post_id . '&action=edit#commentsdiv',
-			$comments_url
-		);
-	}
-
 	public function test_get_revision_admin_url_points_to_revision_screen() {
 		wp_set_current_user( $this->administrator );
 
@@ -336,7 +320,7 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 			)
 		);
 
-		wp_insert_comment(
+		$comment_id = wp_insert_comment(
 			array(
 				'comment_post_ID' => $post_id,
 				'comment_content' => 'First KB comment',
@@ -356,6 +340,7 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 
 		$request = new WP_REST_Request( 'GET', '/decker/v1/kb' );
 		$request->set_param( 'id', $post_id );
+		$request->set_param( 'include_comments', true );
 
 		$response = rest_do_request( $request );
 		$this->assertEquals( 200, $response->get_status() );
@@ -364,14 +349,56 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$this->assertEquals( $this->administrator, $data['article']['author']['id'] );
 		$this->assertEquals( $this->editor, $data['article']['last_editor']['id'] );
 		$this->assertEquals( 1, intval( $data['article']['comment_count'] ) );
+		$this->assertCount( 1, $data['article']['comments'] );
+		$this->assertEquals( $comment_id, $data['article']['comments'][0]['id'] );
+		$this->assertEquals( 'First KB comment', wp_strip_all_tags( $data['article']['comments'][0]['content_rendered'] ) );
+		$this->assertTrue( $data['article']['comments'][0]['can_delete'] );
 		$this->assertGreaterThan( 0, intval( $data['article']['revision_count'] ) );
-		$this->assertStringContainsString(
-			'post.php?post=' . $post_id . '&action=edit#commentsdiv',
-			$data['article']['links']['comments']
-		);
+		$this->assertArrayNotHasKey( 'comments', $data['article']['links'] );
 		$this->assertStringContainsString(
 			'revision.php?revision=',
 			$data['article']['links']['history']
 		);
+	}
+
+	public function test_get_article_comments_data_sets_can_delete_for_author_and_moderator() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'KB Comment Permissions Test',
+				'post_status' => 'publish',
+			)
+		);
+
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_content'  => 'Permission check comment',
+				'user_id'          => $this->editor,
+				'comment_approved' => 1,
+			)
+		);
+
+		wp_set_current_user( $this->editor );
+		$author_comments = Decker_Kb::get_article_comments_data( $post_id );
+		$this->assertTrue( $author_comments[0]['can_delete'] );
+
+		wp_set_current_user( $this->administrator );
+		$moderator_comments = Decker_Kb::get_article_comments_data( $post_id );
+		$this->assertTrue( $moderator_comments[0]['can_delete'] );
+
+		$subscriber_id = self::factory()->user->create(
+			array(
+				'role' => 'subscriber',
+			)
+		);
+		wp_set_current_user( $subscriber_id );
+		$subscriber_comments = Decker_Kb::get_article_comments_data( $post_id );
+		$this->assertFalse( $subscriber_comments[0]['can_delete'] );
+
+		wp_delete_comment( $comment_id, true );
+		wp_delete_user( $subscriber_id );
 	}
 }
