@@ -9,25 +9,31 @@
 .ql-toolbar .ql-ai-improve {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    background-color: #0d6efd;
-    color: #fff;
+    justify-content: center;
+    gap: 2px;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 4px;
+    background-color: transparent;
+    color: #50575e;
     border: 1px solid transparent;
     border-radius: 4px;
     font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
+    font-weight: 400;
+    line-height: 1;
     cursor: pointer;
-    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-    white-space: nowrap;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
     /* Override Quill's default button width */
     width: auto;
 }
 
-.ql-toolbar .ql-ai-improve:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+.ql-toolbar .ql-ai-improve:hover,
+.ql-toolbar .ql-ai-improve:focus,
+.ql-toolbar .decker-ai-dropdown.is-open .ql-ai-improve {
+    background-color: #f0f6fc;
+    color: #2271b1;
+    border-color: #c3d9ed;
 }
 
 .ql-toolbar .ql-ai-improve:focus {
@@ -43,8 +49,21 @@
 }
 
 .ql-toolbar .ql-ai-improve svg {
+    display: block;
     flex-shrink: 0;
-    vertical-align: -0.125em;
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: middle;
+}
+
+.ql-toolbar .ql-ai-improve .decker-ai-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* --------------------------------------------------------------------------
@@ -56,7 +75,7 @@
 }
 
 .ql-toolbar .ql-ai-improve .decker-ai-caret {
-    font-size: 10px;
+    font-size: 8px;
     line-height: 1;
 }
 

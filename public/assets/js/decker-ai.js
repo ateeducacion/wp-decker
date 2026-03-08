@@ -119,13 +119,17 @@ window.DeckerAI = (function () {
         btn.type      = 'button';
         btn.className = 'ql-ai-improve';
         btn.title     = aiConfig.strings.improve_with_ai;
+        btn.setAttribute( 'aria-label', aiConfig.strings.improve_with_ai );
         btn.setAttribute( 'aria-haspopup', 'true' );
         btn.setAttribute( 'aria-expanded', 'false' );
         btn.innerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">' +
-            '<path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"/>' +
-            '</svg> ' +
-            '<span>' + escapeHtml( aiConfig.strings.improve_with_ai ) + '</span>' +
+            '<span class="decker-ai-icon" aria-hidden="true">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">' +
+            '<path d="M8 2.25L9.04 5.4a1 1 0 0 0 .63.63L12.75 7l-3.08.97a1 1 0 0 0-.63.63L8 11.75 6.96 8.6a1 1 0 0 0-.63-.63L3.25 7l3.08-.97a1 1 0 0 0 .63-.63L8 2.25Z" />' +
+            '<path d="M2.65 2.1 3 3.15l1.05.35L3 3.85 2.65 4.9 2.3 3.85 1.25 3.5 2.3 3.15 2.65 2.1Z" />' +
+            '<path d="m12.6 10.35.35 1.05 1.05.35-1.05.35-.35 1.05-.35-1.05-1.05-.35 1.05-.35.35-1.05Z" />' +
+            '</svg>' +
+            '</span>' +
             '<span class="decker-ai-caret" aria-hidden="true">▾</span>';
 
         var menu = document.createElement( 'div' );
