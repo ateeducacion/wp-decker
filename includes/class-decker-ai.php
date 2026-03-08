@@ -145,7 +145,7 @@ class Decker_AI {
 
 		$model  = isset( $settings['openai_model'] ) && ! empty( $settings['openai_model'] )
 			? sanitize_text_field( $settings['openai_model'] )
-			: 'gpt-4o-mini';
+			: 'gpt-4.1-nano';
 
 		$prompt = $this->build_prompt( $mode, $text );
 

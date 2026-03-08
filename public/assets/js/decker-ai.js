@@ -6,6 +6,10 @@
  * Exposed as window.DeckerAI.  Initialised from task-card.js after the
  * Quill instance is created.
  *
+ * Supports two execution modes:
+ *   1. Browser-native AI (Chrome Prompt API / window.ai.languageModel)
+ *   2. Server-side fallback via the WordPress REST API endpoint
+ *
  * Public API:
  *   DeckerAI.init( quill, context, deckerVars )
  */
@@ -54,6 +58,39 @@ window.DeckerAI = (function () {
     }
 
     // -------------------------------------------------------------------------
+    // Browser AI detection
+    // -------------------------------------------------------------------------
+
+    /**
+     * Check whether the browser exposes a built-in language model (Prompt API).
+     *
+     * @returns {boolean} True when window.ai.languageModel is available.
+     */
+    function hasBrowserAI() {
+        return (
+            typeof window.ai !== 'undefined' &&
+            window.ai !== null &&
+            typeof window.ai.languageModel !== 'undefined' &&
+            window.ai.languageModel !== null
+        );
+    }
+
+    /**
+     * Determine which AI provider to use.
+     *
+     * @returns {string} 'browser', 'server', or 'none'.
+     */
+    function getProvider() {
+        if ( hasBrowserAI() ) {
+            return 'browser';
+        }
+        if ( aiConfig && aiConfig.server_available ) {
+            return 'server';
+        }
+        return 'none';
+    }
+
+    // -------------------------------------------------------------------------
     // Toolbar button
     // -------------------------------------------------------------------------
 
@@ -97,6 +134,17 @@ window.DeckerAI = (function () {
      * Handle the "Improve with AI" button click.
      */
     function handleButtonClick() {
+        var provider = getProvider();
+
+        if ( provider === 'none' ) {
+            Swal.fire( {
+                icon:  'warning',
+                title: aiConfig.strings.error,
+                text:  aiConfig.strings.no_ai_available,
+            } );
+            return;
+        }
+
         // Save the current selection before the button steals focus.
         savedRange = quillInstance.getSelection();
 
@@ -139,7 +187,7 @@ window.DeckerAI = (function () {
                 },
             } );
 
-            callAIImproveAPI( textToImprove, mode ).then( function ( result ) {
+            improveText( textToImprove, mode, provider ).then( function ( result ) {
                 if ( ! result.success ) {
                     Swal.fire( {
                         icon:  'error',
@@ -211,7 +259,100 @@ window.DeckerAI = (function () {
     }
 
     // -------------------------------------------------------------------------
-    // Step 2 — REST API call
+    // Step 2 — AI text improvement (dispatcher)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Route the improvement request to the appropriate provider.
+     *
+     * @param {string} text     Text (HTML) to improve.
+     * @param {string} mode     Rewrite mode key.
+     * @param {string} provider 'browser' or 'server'.
+     * @returns {Promise<{success:boolean, improved_text?:string, error?:string}>}
+     */
+    function improveText( text, mode, provider ) {
+        if ( provider === 'browser' ) {
+            return callBrowserAI( text, mode );
+        }
+        return callServerAI( text, mode );
+    }
+
+    // -------------------------------------------------------------------------
+    // Step 2a — Browser-native AI (Prompt API)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Build a prompt string for the given rewrite mode.
+     *
+     * @param {string} mode Rewrite mode key.
+     * @param {string} text HTML content.
+     * @returns {string} Full prompt.
+     */
+    function buildPrompt( mode, text ) {
+        var suffix = 'Return only the improved text as HTML, preserving valid HTML formatting ' +
+            'tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. ' +
+            'Do not include explanations, markdown code fences, or any text ' +
+            'outside the HTML content itself.';
+
+        var prefixes = {
+            improve:         'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.',
+            shorten:         'Shorten the following task description while keeping its key meaning.',
+            clarify:         'Rewrite the following task description to make it clearer and easier to understand.',
+            professionalize: 'Rewrite the following task description in a professional tone.',
+            proofread:       'Fix all grammar, spelling, and punctuation errors in the following task description.',
+        };
+
+        var prefix = prefixes[ mode ] || prefixes.improve;
+        return prefix + ' ' + suffix + '\n\n' + text;
+    }
+
+    /**
+     * Use the browser-native Prompt API (window.ai.languageModel) to improve text.
+     *
+     * @param {string} text Text (HTML) to improve.
+     * @param {string} mode Rewrite mode key.
+     * @returns {Promise<{success:boolean, improved_text?:string, error?:string}>}
+     */
+    function callBrowserAI( text, mode ) {
+        var prompt = buildPrompt( mode, text );
+
+        return window.ai.languageModel.create().then( function ( session ) {
+            return session.prompt( prompt ).then( function ( response ) {
+                session.destroy();
+                var cleaned = sanitizeBrowserResponse( response );
+                if ( ! cleaned ) {
+                    return { success: false, error: aiConfig.strings.error_message };
+                }
+                return { success: true, improved_text: cleaned };
+            } );
+        } ).catch( function ( err ) {
+            return {
+                success: false,
+                error:   aiConfig.strings.error_message + ( err.message ? ' (' + err.message + ')' : '' ),
+            };
+        } );
+    }
+
+    /**
+     * Strip markdown code fences and leading/trailing whitespace from browser AI response.
+     *
+     * @param {string} content Raw response from AI.
+     * @returns {string} Cleaned HTML.
+     */
+    function sanitizeBrowserResponse( content ) {
+        if ( ! content ) {
+            return '';
+        }
+        content = content.trim();
+        // Remove opening fence with optional language label.
+        content = content.replace( /^```[a-z]*\s*/i, '' );
+        // Remove closing fence.
+        content = content.replace( /\s*```\s*$/i, '' );
+        return content.trim();
+    }
+
+    // -------------------------------------------------------------------------
+    // Step 2b — Server-side AI (REST API)
     // -------------------------------------------------------------------------
 
     /**
@@ -221,7 +362,7 @@ window.DeckerAI = (function () {
      * @param {string} mode Rewrite mode key.
      * @returns {Promise<{success:boolean, improved_text?:string, error?:string}>}
      */
-    function callAIImproveAPI( text, mode ) {
+    function callServerAI( text, mode ) {
         return fetch(
             wpApiSettings.root + 'decker/v1/ai/improve',
             {

@@ -520,12 +520,13 @@ class Decker_Public {
 	 * @return array AI configuration array.
 	 */
 	private function get_ai_config() {
-		$settings = get_option( 'decker_settings', array() );
-		$enabled  = ! empty( $settings['openai_api_key'] );
+		$settings        = get_option( 'decker_settings', array() );
+		$has_api_key     = ! empty( $settings['openai_api_key'] );
 
 		return array(
-			'enabled' => $enabled,
-			'strings' => array(
+			'enabled'          => true,
+			'server_available' => $has_api_key,
+			'strings'          => array(
 				'improve_with_ai'      => __( 'Improve with AI', 'decker' ),
 				'choose_action'        => __( 'Choose an action', 'decker' ),
 				'mode_improve'         => __( 'Improve writing', 'decker' ),
@@ -543,6 +544,7 @@ class Decker_Public {
 				'error_message'        => __( 'An error occurred while improving the text.', 'decker' ),
 				'no_content'           => __( 'No content', 'decker' ),
 				'no_content_message'   => __( 'Please add some text before using AI improvement.', 'decker' ),
+				'no_ai_available'      => __( 'No AI provider available. Configure an OpenAI API key in Decker settings or use a browser with built-in AI support.', 'decker' ),
 			),
 		);
 	}

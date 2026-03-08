@@ -112,7 +112,7 @@ class Decker_Admin_Settings {
 
 		echo '<input type="password" name="decker_settings[openai_api_key]" class="regular-text" '
 			. 'value="' . esc_attr( $value ) . '" autocomplete="off">';
-		echo '<p class="description">' . esc_html__( 'Enter your OpenAI API key to enable the "Improve with AI" feature in the task description editor.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Enter your OpenAI API key to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (e.g. Chrome).', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -122,13 +122,15 @@ class Decker_Admin_Settings {
 	 */
 	public function openai_model_render() {
 		$options        = get_option( 'decker_settings', array() );
-		$selected_model = isset( $options['openai_model'] ) ? sanitize_text_field( $options['openai_model'] ) : 'gpt-4o-mini';
+		$selected_model = isset( $options['openai_model'] ) ? sanitize_text_field( $options['openai_model'] ) : 'gpt-4.1-nano';
 
 		$models = array(
-			'gpt-4o-mini' => 'GPT-4o mini (fast, affordable)',
-			'gpt-4o'      => 'GPT-4o (most capable)',
-			'gpt-4-turbo' => 'GPT-4 Turbo',
-			'gpt-3.5-turbo' => 'GPT-3.5 Turbo (legacy)',
+			'gpt-4.1-nano' => 'GPT-4.1 nano (fastest, cheapest)',
+			'gpt-4.1-mini' => 'GPT-4.1 mini (fast, affordable)',
+			'gpt-4.1'      => 'GPT-4.1 (most capable)',
+			'gpt-4o-mini'  => 'GPT-4o mini',
+			'gpt-4o'       => 'GPT-4o',
+			'o4-mini'      => 'o4-mini (reasoning)',
 		);
 
 		echo '<select name="decker_settings[openai_model]">';
@@ -137,7 +139,7 @@ class Decker_Admin_Settings {
 				. esc_html( $label ) . '</option>';
 		}
 		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Select the OpenAI model to use for text improvement. GPT-4o mini is recommended for most use cases.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Select the OpenAI model to use for server-side text improvement. GPT-4.1 nano is recommended for most use cases.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -454,11 +456,11 @@ class Decker_Admin_Settings {
 		$input['openai_api_key'] = isset( $input['openai_api_key'] ) ? sanitize_text_field( $input['openai_api_key'] ) : '';
 
 		// Validate OpenAI model.
-		$valid_models = array( 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo' );
+		$valid_models = array( 'gpt-4.1-nano', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini', 'gpt-4o', 'o4-mini' );
 		if ( isset( $input['openai_model'] ) && in_array( $input['openai_model'], $valid_models, true ) ) {
 			$input['openai_model'] = sanitize_text_field( $input['openai_model'] );
 		} else {
-			$input['openai_model'] = 'gpt-4o-mini';
+			$input['openai_model'] = 'gpt-4.1-nano';
 		}
 
 		// Validate alert color.

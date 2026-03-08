@@ -1575,11 +1575,17 @@ msgstr "Clave API de OpenAI"
 msgid "Enter your OpenAI API key to enable the \"Improve with AI\" feature in the task description editor."
 msgstr "Introduce tu clave API de OpenAI para habilitar la función «Mejorar con IA» en el editor de descripción de tareas."
 
+msgid "Enter your OpenAI API key to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (e.g. Chrome)."
+msgstr "Introduce tu clave API de OpenAI para habilitar la mejora de texto con IA en el servidor. Si se deja vacío, la función seguirá funcionando en navegadores con soporte de la API de Prompt integrada (ej. Chrome)."
+
 msgid "OpenAI Model"
 msgstr "Modelo de OpenAI"
 
 msgid "Select the OpenAI model to use for text improvement. GPT-4o mini is recommended for most use cases."
 msgstr "Selecciona el modelo de OpenAI para la mejora de texto. Se recomienda GPT-4o mini para la mayoría de los casos de uso."
+
+msgid "Select the OpenAI model to use for server-side text improvement. GPT-4.1 nano is recommended for most use cases."
+msgstr "Selecciona el modelo de OpenAI para la mejora de texto en el servidor. Se recomienda GPT-4.1 nano para la mayoría de los casos de uso."
 
 msgid "Improve with AI"
 msgstr "Mejorar con IA"
@@ -1625,3 +1631,6 @@ msgstr "Sin contenido"
 
 msgid "Please add some text before using AI improvement."
 msgstr "Por favor, añade algo de texto antes de usar la mejora con IA."
+
+msgid "No AI provider available. Configure an OpenAI API key in Decker settings or use a browser with built-in AI support."
+msgstr "No hay proveedor de IA disponible. Configura una clave API de OpenAI en los ajustes de Decker o usa un navegador con soporte de IA integrada."
