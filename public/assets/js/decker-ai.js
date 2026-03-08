@@ -13,6 +13,13 @@
 window.DeckerAI = (function () {
 
     /**
+     * Default language used for Prompt API capability declarations.
+     *
+     * @type {string}
+     */
+    var DEFAULT_PROMPT_LANGUAGE = 'en';
+
+    /**
      * Browser AI service wrapper.
      *
      * Prefers the current documented Prompt API surface (`globalThis.LanguageModel`)
@@ -45,7 +52,7 @@ window.DeckerAI = (function () {
      *
      * @returns {Promise<object>} Availability details.
      */
-    NativeBrowserAIService.prototype.getAvailability = async function () {
+    NativeBrowserAIService.prototype.getAvailability = async function ( options ) {
         var apiHandle    = this.getApiHandle();
         var browserInfo  = this.getBrowserInfo();
         var availability = {
@@ -69,7 +76,9 @@ window.DeckerAI = (function () {
 
         if ( typeof apiHandle.api.availability === 'function' ) {
             try {
-                availability.raw = await apiHandle.api.availability();
+                availability.raw = await apiHandle.api.availability(
+                    this.getAvailabilityOptions( options )
+                );
             } catch ( error ) {
                 availability.error = error && error.message ? error.message : '';
             }
@@ -97,7 +106,7 @@ window.DeckerAI = (function () {
         }
 
         if ( ! options || true !== options.skipAvailabilityCheck ) {
-            var availability = await this.getAvailability();
+            var availability = await this.getAvailability( options );
             if ( ! availability.usable ) {
                 throw new Error( availability.reason );
             }
@@ -278,11 +287,78 @@ window.DeckerAI = (function () {
      * @returns {object} Session options.
      */
     NativeBrowserAIService.prototype.getSessionOptions = function ( options ) {
-        if ( options && options.sessionOptions ) {
-            return options.sessionOptions;
+        return Object.assign(
+            {},
+            this.getDefaultPromptApiOptions( options ),
+            options && options.sessionOptions ? options.sessionOptions : {}
+        );
+    };
+
+    /**
+     * Get the Prompt API options for availability checks.
+     *
+     * The Prompt API documentation recommends calling availability() with the
+     * same capabilities that will be used when the session is created and
+     * prompted.
+     *
+     * @param {object} [options] Prompt options.
+     * @returns {object} Availability options.
+     */
+    NativeBrowserAIService.prototype.getAvailabilityOptions = function ( options ) {
+        return Object.assign(
+            {},
+            this.getDefaultPromptApiOptions( options ),
+            options && options.availabilityOptions ? options.availabilityOptions : {}
+        );
+    };
+
+    /**
+     * Get the default Prompt API capabilities for this text-only integration.
+     *
+     * @param {object} [options] Prompt options.
+     * @returns {object} Prompt API capability options.
+     */
+    NativeBrowserAIService.prototype.getDefaultPromptApiOptions = function ( options ) {
+        var language = this.getPromptLanguage( options );
+
+        return {
+            expectedInputs: [
+                {
+                    type: 'text',
+                    languages: [ language ],
+                },
+            ],
+            expectedOutputs: [
+                {
+                    type: 'text',
+                    languages: [ language ],
+                },
+            ],
+        };
+    };
+
+    /**
+     * Get the preferred Prompt API language code.
+     *
+     * Locale values such as `es_ES` or `en-US` are normalized to their base
+     * language tags because the Prompt API language capabilities are declared
+     * with language codes such as `es` or `en`.
+     *
+     * @param {object} [options] Prompt options.
+     * @returns {string} Language code.
+     */
+    NativeBrowserAIService.prototype.getPromptLanguage = function ( options ) {
+        var language = DEFAULT_PROMPT_LANGUAGE;
+
+        if ( this.config && this.config.locale ) {
+            language = this.config.locale;
         }
 
-        return {};
+        if ( options && options.language ) {
+            language = options.language;
+        }
+
+        return String( language ).toLowerCase().split( /[-_]/ )[0];
     };
 
     /**
@@ -355,7 +431,13 @@ window.DeckerAI = (function () {
 
         quillInstance     = quill;
         deckerContext     = context;
-        aiConfig          = vars && vars.ai ? vars.ai : null;
+        aiConfig          = vars && vars.ai
+            ? Object.assign(
+                {},
+                vars.ai,
+                vars.locale ? { locale: vars.locale } : {}
+            )
+            : null;
         browserAIService  = new NativeBrowserAIService( aiConfig );
 
         if ( ! aiConfig || ! aiConfig.enabled ) {
@@ -518,6 +600,7 @@ window.DeckerAI = (function () {
     async function runImproveFlow( mode ) {
         var textToImprove;
         var isSelection;
+        var promptApiOptions = {};
 
         if ( savedRange && savedRange.length > 0 ) {
             textToImprove = getSelectionHtml( savedRange );
@@ -540,12 +623,18 @@ window.DeckerAI = (function () {
             return;
         }
 
-        var availabilityPromise = browserAIService.getAvailability();
+        var availabilityPromise = browserAIService.getAvailability( promptApiOptions );
         // Start session creation from the original user interaction when an API
         // surface exists. Some experimental Prompt API implementations require
         // create() to run directly from a user gesture.
         var sessionPromise      = browserAIService.isSupported()
-            ? browserAIService.createSession( { skipAvailabilityCheck: true } ).then( function ( session ) {
+            ? browserAIService.createSession(
+                Object.assign(
+                    {},
+                    promptApiOptions,
+                    { skipAvailabilityCheck: true }
+                )
+            ).then( function ( session ) {
                 return {
                     session: session,
                     error:   null,
@@ -582,9 +671,13 @@ window.DeckerAI = (function () {
 
             var improvedText = await browserAIService.prompt(
                 buildPrompt( mode, textToImprove ),
-                {
-                    session: sessionResult ? sessionResult.session : null,
-                }
+                Object.assign(
+                    {},
+                    promptApiOptions,
+                    {
+                        session: sessionResult ? sessionResult.session : null,
+                    }
+                )
             );
 
             if ( ! improvedText ) {
