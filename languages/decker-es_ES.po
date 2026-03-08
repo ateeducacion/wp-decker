@@ -1679,6 +1679,33 @@ msgstr "Por favor, añade algo de texto antes de usar la mejora con IA."
 msgid "No AI provider available. Configure an AI provider and API key in Decker settings or use a browser with built-in AI support."
 msgstr "No hay ningún proveedor de IA disponible. Configura un proveedor de IA y una clave API en los ajustes de Decker o usa un navegador con soporte de IA integrada."
 
+msgid "Browser AI unavailable"
+msgstr "La IA del navegador no está disponible"
+
+msgid "This AI action requires a compatible browser with built-in AI support."
+msgstr "Esta acción de IA requiere un navegador compatible con IA integrada."
+
+msgid "Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile."
+msgstr "Chrome puede usar la Prompt API, pero la IA integrada no está disponible o activada actualmente en este perfil del navegador."
+
+msgid "Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile."
+msgstr "Microsoft Edge puede admitir la Prompt API experimental, pero no está disponible en este perfil del navegador."
+
+msgid "The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again."
+msgstr "El modelo de IA del navegador todavía no está listo. Termina de descargarlo o activarlo y vuelve a intentarlo."
+
+msgid "This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled."
+msgstr "Esta función requiere actualmente un navegador compatible con IA integrada, como Chrome o Microsoft Edge con la Prompt API activada."
+
+msgid "Open setup guide"
+msgstr "Abrir guía de configuración"
+
+msgid "The browser AI session could not be started."
+msgstr "No se pudo iniciar la sesión de IA del navegador."
+
+msgid "The browser AI response was empty."
+msgstr "La respuesta de la IA del navegador estaba vacía."
+
 msgid "Improve the following task description so it is concise, clear, and easy for the team to execute."
 msgstr "Mejora la siguiente descripción de tarea para que sea concisa, clara y fácil de ejecutar para el equipo."
 

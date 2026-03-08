@@ -196,103 +196,27 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test AI provider validation with a valid provider value.
+	 * Test legacy AI-related settings are removed when saving settings.
 	 */
-	public function test_settings_validate_ai_provider_with_valid_value() {
+	public function test_settings_validate_removes_legacy_ai_fields() {
 		$input = array(
-			'ai_provider' => 'openrouter',
+			'ai_provider'     => 'openrouter',
+			'ai_api_key'      => 'secret-key',
+			'ai_model'        => 'openai/gpt-5-mini',
+			'openai_api_url'  => 'https://example.com/v1/chat/completions',
+			'openai_api_key'  => 'legacy-key',
+			'openai_model'    => 'legacy-model',
+			'signaling_server' => 'wss://signaling.yjs.dev',
 		);
 
 		$validated = $this->admin_settings->settings_validate( $input );
 
-		$this->assertEquals( 'openrouter', $validated['ai_provider'] );
-	}
-
-	/**
-	 * Test AI provider validation falls back to OpenAI for invalid values.
-	 */
-	public function test_settings_validate_ai_provider_with_invalid_value() {
-		$input = array(
-			'ai_provider' => 'invalid-provider',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'openai', $validated['ai_provider'] );
-	}
-
-	/**
-	 * Test legacy AI settings are migrated to generic option names.
-	 */
-	public function test_settings_validate_migrates_legacy_ai_option_names() {
-		$input = array(
-			'openai_api_key' => 'legacy-key',
-			'openai_model'   => 'gpt-5-mini',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'legacy-key', $validated['ai_api_key'] );
-		$this->assertEquals( 'gpt-5-mini', $validated['ai_model'] );
-	}
-
-	/**
-	 * Test the generic AI API key setting is saved correctly.
-	 */
-	public function test_settings_validate_saves_generic_ai_api_key() {
-		$input = array(
-			'ai_api_key' => 'generic-key',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'generic-key', $validated['ai_api_key'] );
-	}
-
-	/**
-	 * Test the generic AI model setting is saved correctly.
-	 */
-	public function test_settings_validate_saves_generic_ai_model() {
-		$input = array(
-			'ai_provider' => 'openrouter',
-			'ai_model'    => 'openai/gpt-5-mini',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'openai/gpt-5-mini', $validated['ai_model'] );
-	}
-
-	/**
-	 * Test AI API URL validation with a custom HTTPS endpoint.
-	 */
-	public function test_settings_validate_openai_api_url_with_custom_https_endpoint() {
-		$input = array(
-			'openai_api_url' => 'https://openrouter.ai/api/v1/chat/completions',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals(
-			'https://openrouter.ai/api/v1/chat/completions',
-			$validated['openai_api_url']
-		);
-	}
-
-	/**
-	 * Test OpenAI-compatible API URL validation rejects non-HTTPS endpoints.
-	 */
-	public function test_settings_validate_openai_api_url_rejects_non_https_endpoint() {
-		$input = array(
-			'openai_api_url' => 'http://localhost:3000/v1/chat/completions',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals(
-			'https://api.openai.com/v1/chat/completions',
-			$validated['openai_api_url']
-		);
+		$this->assertArrayNotHasKey( 'ai_provider', $validated );
+		$this->assertArrayNotHasKey( 'ai_api_key', $validated );
+		$this->assertArrayNotHasKey( 'ai_model', $validated );
+		$this->assertArrayNotHasKey( 'openai_api_url', $validated );
+		$this->assertArrayNotHasKey( 'openai_api_key', $validated );
+		$this->assertArrayNotHasKey( 'openai_model', $validated );
 	}
 
 	/**
@@ -353,80 +277,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test ai_provider_render outputs the configured provider selector.
+	 * Test AI settings fields are no longer registered.
 	 */
-	public function test_ai_provider_render_outputs_selected_provider() {
-		update_option(
-			'decker_settings',
-			array( 'ai_provider' => 'gemini' )
-		);
-
-		ob_start();
-		$this->admin_settings->ai_provider_render();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[ai_provider]"', $output );
-		$this->assertStringContainsString( '<option value="gemini" selected=\'selected\'>', $output );
-	}
-
-	/**
-	 * Test ai_api_key_render falls back to the legacy stored API key.
-	 */
-	public function test_ai_api_key_render_uses_legacy_stored_value() {
-		update_option(
-			'decker_settings',
-			array( 'openai_api_key' => 'legacy-key' )
-		);
-
-		ob_start();
-		$this->admin_settings->ai_api_key_render();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[ai_api_key]"', $output );
-		$this->assertStringContainsString( 'value="legacy-key"', $output );
-	}
-
-	/**
-	 * Test ai_model_render uses the default model for the selected provider.
-	 */
-	public function test_ai_model_render_uses_provider_default() {
-		update_option(
-			'decker_settings',
-			array( 'ai_provider' => 'gemini' )
-		);
-
-		ob_start();
-		$this->admin_settings->ai_model_render();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[ai_model]"', $output );
-		$this->assertStringContainsString( 'value="gemini-2.0-flash"', $output );
-	}
-
-	/**
-	 * Test openai_api_url_render outputs the configured endpoint.
-	 */
-	public function test_openai_api_url_render_custom_value() {
-		update_option(
-			'decker_settings',
-			array( 'openai_api_url' => 'https://openrouter.ai/api/v1/chat/completions' )
-		);
-
-		ob_start();
-		$this->admin_settings->openai_api_url_render();
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[openai_api_url]"', $output );
-		$this->assertStringContainsString(
-			'value="https://openrouter.ai/api/v1/chat/completions"',
-			$output
-		);
-	}
-
-	/**
-	 * Test advanced AI fields are hidden until an API key is saved.
-	 */
-	public function test_settings_init_hides_advanced_ai_fields_without_saved_key() {
+	public function test_settings_init_does_not_register_legacy_ai_fields() {
 		global $wp_settings_fields;
 
 		update_option( 'decker_settings', array() );
@@ -434,49 +287,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		$this->admin_settings->settings_init();
 
+		$this->assertArrayNotHasKey( 'ai_provider', $wp_settings_fields['decker']['decker_main_section'] );
+		$this->assertArrayNotHasKey( 'ai_api_key', $wp_settings_fields['decker']['decker_main_section'] );
 		$this->assertArrayNotHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayNotHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
-	}
-
-	/**
-	 * Test advanced AI fields are shown once an API key is saved.
-	 */
-	public function test_settings_init_shows_advanced_ai_fields_with_saved_key() {
-		global $wp_settings_fields;
-
-		update_option(
-			'decker_settings',
-			array(
-				'ai_provider' => 'openrouter',
-				'ai_api_key'  => 'saved-key',
-			)
-		);
-		$wp_settings_fields = array();
-
-		$this->admin_settings->settings_init();
-
-		$this->assertArrayHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
-	}
-
-	/**
-	 * Test Gemini hides the URL override field to keep the settings simpler.
-	 */
-	public function test_settings_init_hides_url_override_for_gemini() {
-		global $wp_settings_fields;
-
-		update_option(
-			'decker_settings',
-			array(
-				'ai_provider' => 'gemini',
-				'ai_api_key'  => 'saved-key',
-			)
-		);
-		$wp_settings_fields = array();
-
-		$this->admin_settings->settings_init();
-
-		$this->assertArrayHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
 		$this->assertArrayNotHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
 	}
 

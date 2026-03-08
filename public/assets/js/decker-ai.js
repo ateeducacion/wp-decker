@@ -1,19 +1,321 @@
-/* global Swal, wpApiSettings, deckerVars */
+/* global Swal, deckerVars */
 
 /**
- * Decker AI — "Improve with AI" integration for the Quill task-description editor.
+ * Decker AI — browser-only "Improve with AI" integration for the Quill
+ * task-description editor.
  *
- * Exposed as window.DeckerAI.  Initialised from task-card.js after the
+ * Exposed as window.DeckerAI. Initialised from task-card.js after the
  * Quill instance is created.
  *
- * Supports two execution modes:
- *   1. Browser-native AI (Chrome Prompt API / window.ai.languageModel)
- *   2. Server-side fallback via the WordPress REST API endpoint
- *
- * Public API:
- *   DeckerAI.init( quill, context, deckerVars )
+ * Uses only built-in browser AI capabilities when available. No server-side
+ * fallback or remote providers are used.
  */
 window.DeckerAI = (function () {
+
+    /**
+     * Browser AI service wrapper.
+     *
+     * Prefers the current documented Prompt API surface (`globalThis.LanguageModel`)
+     * and keeps legacy experimental checks isolated as defensive compatibility
+     * fallbacks only.
+     *
+     * @param {object} config Localized AI configuration.
+     */
+    function NativeBrowserAIService( config ) {
+        this.config = config || {};
+    }
+
+    /**
+     * Check whether a browser AI API surface is present.
+     *
+     * @returns {boolean} True when a browser AI API is exposed.
+     */
+    NativeBrowserAIService.prototype.isSupported = function () {
+        return this.getApiHandle() !== null;
+    };
+
+    /**
+     * Detect browser AI availability.
+     *
+     * Distinguishes between:
+     * - API available and usable
+     * - API present but model not ready
+     * - Compatible browser where the feature is disabled or unavailable
+     * - Unsupported browser
+     *
+     * @returns {Promise<object>} Availability details.
+     */
+    NativeBrowserAIService.prototype.getAvailability = async function () {
+        var apiHandle    = this.getApiHandle();
+        var browserInfo  = this.getBrowserInfo();
+        var availability = {
+            usable:        false,
+            state:         'unsupported',
+            browser:       browserInfo.id,
+            browser_name:  browserInfo.name,
+            help_url:      this.getHelpUrl( browserInfo ),
+            api_variant:   apiHandle ? apiHandle.variant : '',
+            raw:           '',
+        };
+
+        if ( ! apiHandle ) {
+            if ( browserInfo.id === 'chrome' || browserInfo.id === 'edge' ) {
+                availability.state = 'feature_disabled';
+            }
+
+            availability.reason = this.getUnavailableReason( availability );
+            return availability;
+        }
+
+        if ( typeof apiHandle.api.availability === 'function' ) {
+            try {
+                availability.raw = await apiHandle.api.availability();
+            } catch ( error ) {
+                availability.error = error && error.message ? error.message : '';
+            }
+        }
+
+        availability.state  = this.resolveAvailabilityState( availability.raw, browserInfo, apiHandle );
+        availability.usable = availability.state === 'available';
+        availability.reason = this.getUnavailableReason( availability );
+
+        return availability;
+    };
+
+    /**
+     * Create a browser AI session.
+     *
+     * This should be called from a real user interaction when possible.
+     *
+     * @param {object} [options] Session options.
+     * @returns {Promise<object>} Prompt API session object.
+     */
+    NativeBrowserAIService.prototype.createSession = async function ( options ) {
+        var apiHandle = this.getApiHandle();
+        if ( ! apiHandle || typeof apiHandle.api.create !== 'function' ) {
+            throw new Error( this.getString( 'ai_session_error' ) );
+        }
+
+        if ( ! options || true !== options.skipAvailabilityCheck ) {
+            var availability = await this.getAvailability();
+            if ( ! availability.usable ) {
+                throw new Error( availability.reason );
+            }
+        }
+
+        return apiHandle.api.create( this.getSessionOptions( options ) );
+    };
+
+    /**
+     * Prompt the browser AI model.
+     *
+     * @param {string} text Prompt text.
+     * @param {object} [options] Prompt options.
+     * @returns {Promise<string>} AI response.
+     */
+    NativeBrowserAIService.prototype.prompt = async function ( text, options ) {
+        var session = options && options.session
+            ? options.session
+            : await this.createSession( options );
+
+        try {
+            return this.sanitizeResponse( await session.prompt( text ) );
+        } finally {
+            if ( session && typeof session.destroy === 'function' ) {
+                session.destroy();
+            }
+        }
+    };
+
+    /**
+     * Get the setup/help URL for the current browser family.
+     *
+     * @param {object} [browserInfo] Browser information.
+     * @returns {string} Help URL or empty string.
+     */
+    NativeBrowserAIService.prototype.getHelpUrl = function ( browserInfo ) {
+        var browser = browserInfo || this.getBrowserInfo();
+
+        if ( browser.id === 'chrome' ) {
+            return 'https://developer.chrome.com/docs/ai/prompt-api';
+        }
+
+        if ( browser.id === 'edge' ) {
+            return 'https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api';
+        }
+
+        return '';
+    };
+
+    /**
+     * Get the localized reason why browser AI is unavailable.
+     *
+     * @param {object} availability Availability information.
+     * @returns {string} User-facing reason.
+     */
+    NativeBrowserAIService.prototype.getUnavailableReason = function ( availability ) {
+        if ( availability.state === 'model_download_required' ) {
+            return this.getString( 'ai_download_required' );
+        }
+
+        if ( availability.browser === 'edge' ) {
+            return this.getString( 'ai_edge_unavailable' );
+        }
+
+        if ( availability.browser === 'chrome' ) {
+            return this.getString( 'ai_chrome_unavailable' );
+        }
+
+        return this.getString( 'ai_browser_unsupported' );
+    };
+
+    /**
+     * Get the best available Prompt API handle.
+     *
+     * Prefers the current `LanguageModel` surface. The legacy
+     * `ai.languageModel` surface remains isolated here only as a defensive
+     * compatibility fallback for experimental builds.
+     *
+     * @returns {{api: object, variant: string}|null} API handle details.
+     */
+    NativeBrowserAIService.prototype.getApiHandle = function () {
+        if ( typeof globalThis.LanguageModel !== 'undefined' && globalThis.LanguageModel ) {
+            return {
+                api:     globalThis.LanguageModel,
+                variant: 'LanguageModel',
+            };
+        }
+
+        if (
+            typeof globalThis.ai !== 'undefined' &&
+            globalThis.ai &&
+            typeof globalThis.ai.languageModel !== 'undefined' &&
+            globalThis.ai.languageModel
+        ) {
+            return {
+                api:     globalThis.ai.languageModel,
+                variant: 'ai.languageModel',
+            };
+        }
+
+        return null;
+    };
+
+    /**
+     * Detect the current browser family.
+     *
+     * @returns {{id: string, name: string}} Browser information.
+     */
+    NativeBrowserAIService.prototype.getBrowserInfo = function () {
+        var userAgent = ( navigator.userAgent || '' ).toLowerCase();
+
+        if ( userAgent.indexOf( 'edg/' ) !== -1 ) {
+            return { id: 'edge', name: 'Microsoft Edge' };
+        }
+
+        if (
+            userAgent.indexOf( 'chrome/' ) !== -1 &&
+            userAgent.indexOf( 'edg/' ) === -1 &&
+            userAgent.indexOf( 'opr/' ) === -1
+        ) {
+            return { id: 'chrome', name: 'Google Chrome' };
+        }
+
+        if ( userAgent.indexOf( 'firefox/' ) !== -1 ) {
+            return { id: 'firefox', name: 'Firefox' };
+        }
+
+        if (
+            userAgent.indexOf( 'safari/' ) !== -1 &&
+            userAgent.indexOf( 'chrome/' ) === -1 &&
+            userAgent.indexOf( 'chromium/' ) === -1 &&
+            userAgent.indexOf( 'edg/' ) === -1
+        ) {
+            return { id: 'safari', name: 'Safari' };
+        }
+
+        return { id: 'other', name: 'this browser' };
+    };
+
+    /**
+     * Resolve the logical availability state from the raw browser AI response.
+     *
+     * @param {*} rawAvailability Raw value returned by availability().
+     * @param {object} browserInfo Browser details.
+     * @param {object|null} apiHandle Prompt API handle.
+     * @returns {string} Availability state.
+     */
+    NativeBrowserAIService.prototype.resolveAvailabilityState = function ( rawAvailability, browserInfo, apiHandle ) {
+        var normalizedAvailability = String( rawAvailability || '' ).toLowerCase();
+
+        if ( normalizedAvailability.indexOf( 'download' ) !== -1 ) {
+            return 'model_download_required';
+        }
+
+        if ( normalizedAvailability === 'unavailable' ) {
+            return browserInfo.id === 'chrome' || browserInfo.id === 'edge'
+                ? 'feature_disabled'
+                : 'unsupported';
+        }
+
+        if ( normalizedAvailability === 'available' ) {
+            return 'available';
+        }
+
+        if ( apiHandle && typeof apiHandle.api.create === 'function' ) {
+            return 'available';
+        }
+
+        return browserInfo.id === 'chrome' || browserInfo.id === 'edge'
+            ? 'feature_disabled'
+            : 'unsupported';
+    };
+
+    /**
+     * Get session options from prompt options.
+     *
+     * @param {object} [options] Prompt options.
+     * @returns {object} Session options.
+     */
+    NativeBrowserAIService.prototype.getSessionOptions = function ( options ) {
+        if ( options && options.sessionOptions ) {
+            return options.sessionOptions;
+        }
+
+        return {};
+    };
+
+    /**
+     * Get a localized string from the AI config.
+     *
+     * @param {string} key String key.
+     * @returns {string} Localized string.
+     */
+    NativeBrowserAIService.prototype.getString = function ( key ) {
+        if ( this.config && this.config.strings && this.config.strings[ key ] ) {
+            return this.config.strings[ key ];
+        }
+
+        return '';
+    };
+
+    /**
+     * Strip markdown fences and whitespace from AI output.
+     *
+     * @param {string} content Raw AI response.
+     * @returns {string} Sanitized response.
+     */
+    NativeBrowserAIService.prototype.sanitizeResponse = function ( content ) {
+        if ( ! content ) {
+            return '';
+        }
+
+        content = content.trim();
+        content = content.replace( /^```[a-z]*\s*/i, '' );
+        content = content.replace( /\s*```\s*$/i, '' );
+
+        return content.trim();
+    };
 
     /** @type {import('quill').default|null} */
     var quillInstance = null;
@@ -23,6 +325,9 @@ window.DeckerAI = (function () {
 
     /** @type {object|null} AI-specific config passed from PHP via deckerVars.ai */
     var aiConfig = null;
+
+    /** @type {NativeBrowserAIService|null} */
+    var browserAIService = null;
 
     /**
      * Selection range saved when the button is clicked (before focus is lost).
@@ -36,10 +341,6 @@ window.DeckerAI = (function () {
      */
     var dropdownElement = null;
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
     /**
      * Initialise the AI module.
      *
@@ -52,9 +353,10 @@ window.DeckerAI = (function () {
             return;
         }
 
-        quillInstance = quill;
-        deckerContext = context;
-        aiConfig      = ( vars && vars.ai ) ? vars.ai : null;
+        quillInstance     = quill;
+        deckerContext     = context;
+        aiConfig          = vars && vars.ai ? vars.ai : null;
+        browserAIService  = new NativeBrowserAIService( aiConfig );
 
         if ( ! aiConfig || ! aiConfig.enabled ) {
             return;
@@ -62,43 +364,6 @@ window.DeckerAI = (function () {
 
         addToolbarButton();
     }
-
-    // -------------------------------------------------------------------------
-    // Browser AI detection
-    // -------------------------------------------------------------------------
-
-    /**
-     * Check whether the browser exposes a built-in language model (Prompt API).
-     *
-     * @returns {boolean} True when window.ai.languageModel is available.
-     */
-    function hasBrowserAI() {
-        return (
-            typeof window.ai !== 'undefined' &&
-            window.ai !== null &&
-            typeof window.ai.languageModel !== 'undefined' &&
-            window.ai.languageModel !== null
-        );
-    }
-
-    /**
-     * Determine which AI provider to use.
-     *
-     * @returns {string} 'browser', 'server', or 'none'.
-     */
-    function getProvider() {
-        if ( hasBrowserAI() ) {
-            return 'browser';
-        }
-        if ( aiConfig && aiConfig.server_available ) {
-            return 'server';
-        }
-        return 'none';
-    }
-
-    // -------------------------------------------------------------------------
-    // Toolbar button
-    // -------------------------------------------------------------------------
 
     /**
      * Append an "Improve with AI" button to the Quill toolbar.
@@ -109,7 +374,6 @@ window.DeckerAI = (function () {
             return;
         }
 
-        // Guard against duplicate buttons when init() is called more than once.
         if ( toolbar.querySelector( '.ql-ai-improve' ) ) {
             return;
         }
@@ -168,10 +432,6 @@ window.DeckerAI = (function () {
         document.addEventListener( 'click', handleDocumentClick );
         document.addEventListener( 'keydown', handleDocumentKeydown );
     }
-
-    // -------------------------------------------------------------------------
-    // Toolbar dropdown helpers
-    // -------------------------------------------------------------------------
 
     /**
      * Get the supported AI actions.
@@ -249,27 +509,13 @@ window.DeckerAI = (function () {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Main improve flow
-    // -------------------------------------------------------------------------
-
     /**
      * Run the AI improvement flow for the selected action.
      *
      * @param {string} mode Rewrite mode key.
+     * @returns {Promise<void>} Async flow result.
      */
-    function runImproveFlow( mode ) {
-        var provider = getProvider();
-
-        if ( provider === 'none' ) {
-            Swal.fire( {
-                icon:  'warning',
-                title: aiConfig.strings.error,
-                text:  aiConfig.strings.no_ai_available,
-            } );
-            return;
-        }
-
+    async function runImproveFlow( mode ) {
         var textToImprove;
         var isSelection;
 
@@ -284,6 +530,7 @@ window.DeckerAI = (function () {
         var textContent = isSelection
             ? quillInstance.getText( savedRange.index, savedRange.length )
             : quillInstance.getText();
+
         if ( ! textContent.trim() ) {
             Swal.fire( {
                 icon:  'warning',
@@ -293,59 +540,74 @@ window.DeckerAI = (function () {
             return;
         }
 
+        var availabilityPromise = browserAIService.getAvailability();
+        // Start session creation from the original user interaction when an API
+        // surface exists. Some experimental Prompt API implementations require
+        // create() to run directly from a user gesture.
+        var sessionPromise      = browserAIService.isSupported()
+            ? browserAIService.createSession( { skipAvailabilityCheck: true } ).then( function ( session ) {
+                return {
+                    session: session,
+                    error:   null,
+                };
+            } ).catch( function ( error ) {
+                return {
+                    session: null,
+                    error:   error,
+                };
+            } )
+            : null;
+        var availability        = await availabilityPromise;
+
+        if ( ! availability.usable ) {
+            showUnavailableMessage( availability );
+            return;
+        }
+
         Swal.fire( {
-            title:              aiConfig.strings.improving,
-            allowOutsideClick:  false,
-            showConfirmButton:  false,
+            title:             aiConfig.strings.improving,
+            allowOutsideClick: false,
+            showConfirmButton: false,
             didOpen: function () {
                 Swal.showLoading();
             },
         } );
 
-        improveText( textToImprove, mode, provider ).then( function ( result ) {
-            if ( ! result.success ) {
-                Swal.fire( {
-                    icon:  'error',
-                    title: aiConfig.strings.error,
-                    text:  result.error,
-                } );
-                return;
+        try {
+            var sessionResult = sessionPromise ? await sessionPromise : null;
+
+            if ( sessionResult && sessionResult.error ) {
+                throw sessionResult.error;
+            }
+
+            var improvedText = await browserAIService.prompt(
+                buildPrompt( mode, textToImprove ),
+                {
+                    session: sessionResult ? sessionResult.session : null,
+                }
+            );
+
+            if ( ! improvedText ) {
+                throw new Error( aiConfig.strings.ai_empty_response );
             }
 
             var originalPreview = isSelection
                 ? quillInstance.getText( savedRange.index, savedRange.length )
                 : quillInstance.getText();
+            var confirmed = await showPreview( originalPreview, improvedText );
 
-            showPreview( originalPreview, result.improved_text ).then( function ( confirmed ) {
-                if ( confirmed ) {
-                    applyImprovement( result.improved_text, isSelection ? savedRange : null );
-                }
+            if ( confirmed ) {
+                applyImprovement( improvedText, isSelection ? savedRange : null );
+            }
+        } catch ( error ) {
+            Swal.fire( {
+                icon:  'error',
+                title: aiConfig.strings.error,
+                text:  error && error.message ? error.message : aiConfig.strings.error_message,
             } );
-        } );
-    }
-
-    // -------------------------------------------------------------------------
-    // Step 2 — AI text improvement (dispatcher)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Route the improvement request to the appropriate provider.
-     *
-     * @param {string} text     Text (HTML) to improve.
-     * @param {string} mode     Rewrite mode key.
-     * @param {string} provider 'browser' or 'server'.
-     * @returns {Promise<{success:boolean, improved_text?:string, error?:string}>}
-     */
-    function improveText( text, mode, provider ) {
-        if ( provider === 'browser' ) {
-            return callBrowserAI( text, mode );
+            return;
         }
-        return callServerAI( text, mode );
     }
-
-    // -------------------------------------------------------------------------
-    // Step 2a — Browser-native AI (Prompt API)
-    // -------------------------------------------------------------------------
 
     /**
      * Build a prompt string for the given rewrite mode.
@@ -367,105 +629,42 @@ window.DeckerAI = (function () {
         };
 
         var prefix = prefixes[ mode ] || prefixes.improve_writing;
+
         return prefix + ' ' + aiConfig.prompts.language_instruction + ' ' +
             aiConfig.prompts.response_format + '\n\n' + text;
     }
 
     /**
-     * Use the browser-native Prompt API (window.ai.languageModel) to improve text.
+     * Show a helpful browser-specific unavailable message.
      *
-     * @param {string} text Text (HTML) to improve.
-     * @param {string} mode Rewrite mode key.
-     * @returns {Promise<{success:boolean, improved_text?:string, error?:string}>}
+     * @param {object} availability Availability details.
      */
-    function callBrowserAI( text, mode ) {
-        var prompt = buildPrompt( mode, text );
+    function showUnavailableMessage( availability ) {
+        var html =
+            '<p>' + escapeHtml( aiConfig.strings.ai_unavailable_intro ) + '</p>' +
+            '<p class="mb-0">' + escapeHtml( availability.reason ) + '</p>';
 
-        return window.ai.languageModel.create().then( function ( session ) {
-            return session.prompt( prompt ).then( function ( response ) {
-                session.destroy();
-                var cleaned = sanitizeBrowserResponse( response );
-                if ( ! cleaned ) {
-                    return { success: false, error: aiConfig.strings.error_message };
-                }
-                return { success: true, improved_text: cleaned };
-            } );
-        } ).catch( function ( err ) {
-            return {
-                success: false,
-                error:   aiConfig.strings.error_message + ( err.message ? ' (' + err.message + ')' : '' ),
-            };
-        } );
-    }
-
-    /**
-     * Strip markdown code fences and leading/trailing whitespace from browser AI response.
-     *
-     * @param {string} content Raw response from AI.
-     * @returns {string} Cleaned HTML.
-     */
-    function sanitizeBrowserResponse( content ) {
-        if ( ! content ) {
-            return '';
+        if ( availability.help_url ) {
+            html +=
+                '<p class="mt-3 mb-0">' +
+                '<a href="' + escapeAttr( availability.help_url ) + '" target="_blank" rel="noopener noreferrer">' +
+                escapeHtml( aiConfig.strings.ai_help_link ) +
+                '</a>' +
+                '</p>';
         }
-        content = content.trim();
-        // Remove opening fence with optional language label.
-        content = content.replace( /^```[a-z]*\s*/i, '' );
-        // Remove closing fence.
-        content = content.replace( /\s*```\s*$/i, '' );
-        return content.trim();
-    }
 
-    // -------------------------------------------------------------------------
-    // Step 2b — Server-side AI (REST API)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Call the Decker REST endpoint to improve the text.
-     *
-     * @param {string} text Text (HTML) to improve.
-     * @param {string} mode Rewrite mode key.
-     * @returns {Promise<{success:boolean, improved_text?:string, error?:string}>}
-     */
-    function callServerAI( text, mode ) {
-        return fetch(
-            wpApiSettings.root + 'decker/v1/ai/improve',
-            {
-                method:  'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce':   wpApiSettings.nonce,
-                },
-                body: JSON.stringify( { text: text, mode: mode } ),
-            }
-        ).then( function ( response ) {
-            return response.json().then( function ( data ) {
-                if ( response.ok ) {
-                    return { success: true, improved_text: data.improved_text };
-                }
-                var errorMsg = ( data && data.message )
-                    ? data.message
-                    : aiConfig.strings.error_message;
-                return { success: false, error: errorMsg };
-            } );
-        } ).catch( function ( err ) {
-            return {
-                success: false,
-                error:   aiConfig.strings.error_message + ( err.message ? ' (' + err.message + ')' : '' ),
-            };
+        Swal.fire( {
+            icon:  'info',
+            title: aiConfig.strings.ai_unavailable_title,
+            html:  html,
         } );
     }
-
-    // -------------------------------------------------------------------------
-    // Step 3 — Preview modal
-    // -------------------------------------------------------------------------
 
     /**
      * Show a before/after preview and ask the user to confirm.
      *
-     * @param {string} original  Plain-text original.
-     * @param {string} improved  Improved HTML from AI.
+     * @param {string} original Plain-text original.
+     * @param {string} improved Improved HTML from AI.
      * @returns {Promise<boolean>} True if user accepted the replacement.
      */
     function showPreview( original, improved ) {
@@ -496,41 +695,27 @@ window.DeckerAI = (function () {
         } );
     }
 
-    // -------------------------------------------------------------------------
-    // Step 4 — Apply improvement
-    // -------------------------------------------------------------------------
-
     /**
      * Replace the selected range (or full content) with the improved HTML.
      *
-     * @param {string}                       improvedHtml HTML returned by AI.
-     * @param {{index:number,length:number}|null} range   Selection range, or null for full replacement.
+     * @param {string} improvedHtml HTML returned by AI.
+     * @param {{index:number,length:number}|null} range Selection range, or null for full replacement.
      */
     function applyImprovement( improvedHtml, range ) {
         if ( range && range.length > 0 ) {
-            // Delete selection and paste improved HTML at that position.
             quillInstance.deleteText( range.index, range.length, 'api' );
             quillInstance.clipboard.dangerouslyPasteHTML( range.index, improvedHtml, 'api' );
         } else {
-            // Full-content replacement.
             quillInstance.clipboard.dangerouslyPasteHTML( 0, improvedHtml, 'api' );
         }
 
-        // Flag unsaved changes so task-card.js shows the save prompt.
         if ( typeof window.deckerHasUnsavedChanges !== 'undefined' ) {
             window.deckerHasUnsavedChanges = true;
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
     /**
      * Get the HTML of a Quill selection range.
-     *
-     * Uses getSemanticHTML() (Quill 2.x) when available, falling back to
-     * plain text for older versions.
      *
      * @param {{index:number,length:number}} range Selection range.
      * @returns {string} HTML string.
@@ -539,7 +724,7 @@ window.DeckerAI = (function () {
         if ( typeof quillInstance.getSemanticHTML === 'function' ) {
             return quillInstance.getSemanticHTML( range.index, range.length );
         }
-        // Fallback: plain text wrapped in a paragraph.
+
         return '<p>' + escapeHtml( quillInstance.getText( range.index, range.length ) ) + '</p>';
     }
 
@@ -553,6 +738,7 @@ window.DeckerAI = (function () {
         if ( ! str ) {
             return '';
         }
+
         return String( str )
             .replace( /&/g, '&amp;' )
             .replace( /</g, '&lt;' )
@@ -571,12 +757,19 @@ window.DeckerAI = (function () {
         if ( ! str ) {
             return '';
         }
-        return String( str ).replace( /"/g, '&quot;' ).replace( /'/g, '&#039;' );
-    }
 
-    // -------------------------------------------------------------------------
-    // Module exports
-    // -------------------------------------------------------------------------
+        return String( str ).replace( /[&<>"']/g, function ( character ) {
+            var replacements = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;',
+            };
+
+            return replacements[ character ];
+        } );
+    }
 
     return {
         init: init,

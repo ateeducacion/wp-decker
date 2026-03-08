@@ -514,40 +514,43 @@ class Decker_Public {
 	/**
 	 * Build the AI configuration object passed to JavaScript.
 	 *
-	 * Exposes whether AI is available and all required UI strings.
-	 * The API key itself is never sent to the client.
+	 * Exposes browser-only AI prompts and all required UI strings.
 	 *
 	 * @return array AI configuration array.
 	 */
 	private function get_ai_config() {
-		$settings    = get_option( 'decker_settings', array() );
-		$has_api_key = ! empty( $settings['ai_api_key'] ) || ! empty( $settings['openai_api_key'] );
-
 		return array(
 			'enabled'          => true,
-			'server_available' => $has_api_key,
 			'strings'          => array(
-				'improve_with_ai'      => __( 'Improve with AI', 'decker' ),
-				'choose_action'        => __( 'Choose an action', 'decker' ),
-				'mode_improve_writing' => __( 'Improve writing', 'decker' ),
-				'mode_make_shorter'    => __( 'Make shorter', 'decker' ),
-				'mode_make_clearer'    => __( 'Make clearer', 'decker' ),
-				'mode_fix_grammar'     => __( 'Fix grammar and spelling', 'decker' ),
-				'mode_make_actionable' => __( 'Make it actionable', 'decker' ),
-				'mode_checklist'       => __( 'Convert to checklist', 'decker' ),
+				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
+				'choose_action'            => __( 'Choose an action', 'decker' ),
+				'mode_improve_writing'     => __( 'Improve writing', 'decker' ),
+				'mode_make_shorter'        => __( 'Make shorter', 'decker' ),
+				'mode_make_clearer'        => __( 'Make clearer', 'decker' ),
+				'mode_fix_grammar'         => __( 'Fix grammar and spelling', 'decker' ),
+				'mode_make_actionable'     => __( 'Make it actionable', 'decker' ),
+				'mode_checklist'           => __( 'Convert to checklist', 'decker' ),
 				'mode_acceptance_criteria' => __( 'Extract acceptance criteria', 'decker' ),
-				'mode_summarize'       => __( 'Summarize', 'decker' ),
-				'improving'            => __( 'Improving text…', 'decker' ),
-				'preview_title'        => __( 'Review improvement', 'decker' ),
-				'original_text'        => __( 'Original', 'decker' ),
-				'improved_text'        => __( 'Improved', 'decker' ),
-				'accept'               => __( 'Accept', 'decker' ),
-				'cancel'               => __( 'Cancel', 'decker' ),
-				'error'                => __( 'Error', 'decker' ),
-				'error_message'        => __( 'An error occurred while improving the text.', 'decker' ),
-				'no_content'           => __( 'No content', 'decker' ),
-				'no_content_message'   => __( 'Please add some text before using AI improvement.', 'decker' ),
-				'no_ai_available'      => __( 'No AI provider available. Configure an AI provider and API key in Decker settings or use a browser with built-in AI support.', 'decker' ),
+				'mode_summarize'           => __( 'Summarize', 'decker' ),
+				'improving'                => __( 'Improving text…', 'decker' ),
+				'preview_title'            => __( 'Review improvement', 'decker' ),
+				'original_text'            => __( 'Original', 'decker' ),
+				'improved_text'            => __( 'Improved', 'decker' ),
+				'accept'                   => __( 'Accept', 'decker' ),
+				'cancel'                   => __( 'Cancel', 'decker' ),
+				'error'                    => __( 'Error', 'decker' ),
+				'error_message'            => __( 'An error occurred while improving the text.', 'decker' ),
+				'no_content'               => __( 'No content', 'decker' ),
+				'no_content_message'       => __( 'Please add some text before using AI improvement.', 'decker' ),
+				'ai_unavailable_title'     => __( 'Browser AI unavailable', 'decker' ),
+				'ai_unavailable_intro'     => __( 'This AI action requires a compatible browser with built-in AI support.', 'decker' ),
+				'ai_chrome_unavailable'    => __( 'Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile.', 'decker' ),
+				'ai_edge_unavailable'      => __( 'Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile.', 'decker' ),
+				'ai_download_required'     => __( 'The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again.', 'decker' ),
+				'ai_browser_unsupported'   => __( 'This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled.', 'decker' ),
+				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
+				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
+				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
 			),
 			'prompts'          => array(
 				'improve_writing' => __(
