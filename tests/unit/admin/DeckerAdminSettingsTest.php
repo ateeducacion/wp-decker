@@ -305,9 +305,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test ai_enabled_render outputs checked HTML by default.
+	 * Test ai_enabled_render outputs unchecked HTML by default.
 	 */
-	public function test_ai_enabled_render_enabled_by_default() {
+	public function test_ai_enabled_render_disabled_by_default() {
 		update_option( 'decker_settings', array() );
 
 		ob_start();
@@ -315,7 +315,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[ai_enabled]"', $output );
-		$this->assertStringContainsString( "checked='checked'", $output );
+		$this->assertStringNotContainsString( "checked='checked'", $output );
 	}
 
 	/**

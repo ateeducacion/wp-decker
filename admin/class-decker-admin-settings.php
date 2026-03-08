@@ -91,7 +91,7 @@ class Decker_Admin_Settings {
 	 */
 	public function ai_enabled_render() {
 		$options = get_option( 'decker_settings', array() );
-		$checked = ! isset( $options['ai_enabled'] ) || '1' === $options['ai_enabled'];
+		$checked = isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'];
 
 		echo '<label>';
 		echo '<input type="checkbox" name="decker_settings[ai_enabled]" value="1" ' . checked( $checked, true, false ) . '>';
