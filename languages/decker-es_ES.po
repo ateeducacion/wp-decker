@@ -1409,3 +1409,66 @@ msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
 
 msgid "There are no tasks from previous days to import."
 msgstr "No hay tareas de días anteriores para importar."
+
+msgid "The task has been saved successfully."
+msgstr "La tarea se ha guardado correctamente."
+
+msgid "Are you sure you want to clone this task?"
+msgstr "¿Seguro que quieres clonar esta tarea?"
+
+msgid "A copy of this task will be created."
+msgstr "Se creará una copia de esta tarea."
+
+msgid "Clone"
+msgstr "Clonar"
+
+msgid "The task has been successfully cloned."
+msgstr "La tarea se ha clonado correctamente."
+
+msgid "An error occurred while cloning the task."
+msgstr "Se ha producido un error al clonar la tarea."
+
+msgid "Search tasks..."
+msgstr "Buscar tareas..."
+
+msgid "Type to search tasks by title"
+msgstr "Escribe para buscar tareas por título"
+
+msgid "to navigate"
+msgstr "para navegar"
+
+msgid "to select"
+msgstr "para seleccionar"
+
+msgid "to close"
+msgstr "para cerrar"
+
+msgid "No tasks found"
+msgstr "No se encontraron tareas"
+
+msgid "Error searching tasks"
+msgstr "Error al buscar tareas"
+
+msgid "Connecting..."
+msgstr "Conectando..."
+
+msgid "Collaborative mode"
+msgstr "Modo colaborativo"
+
+msgid "Disconnected"
+msgstr "Desconectado"
+
+msgid "you"
+msgstr "tú"
+
+msgid "Task Editor Type"
+msgstr "Tipo de editor de tareas"
+
+msgid "Classic Editor"
+msgstr "Editor clásico"
+
+msgid "Quill Editor"
+msgstr "Editor Quill"
+
+msgid "Choose which editor to use for task descriptions. Collaborative editing always uses Quill."
+msgstr "Elige qué editor usar para las descripciones de las tareas. La edición colaborativa siempre usa Quill."
