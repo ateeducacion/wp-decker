@@ -221,7 +221,6 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/default.min.css',
 				*/
 
-
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
@@ -295,13 +294,11 @@ class Decker_Public {
 
 			}
 
-
 			if ( ! $use_quill_editor ) {
 				// Load the WordPress Classic Editor assets and media library for task descriptions when Quill is not selected.
 				wp_enqueue_editor();
 				wp_enqueue_media();
 			}
-
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
 				// Datatables JS CDN.
