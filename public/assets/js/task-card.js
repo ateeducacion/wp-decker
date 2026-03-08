@@ -280,10 +280,8 @@
                             // For checkboxes, always store the boolean checked state
                             formFields.set(key, el.checked);
                         } else {
-                            const localValue = el.value;
-                            if (localValue !== undefined && localValue !== '') {
-                                formFields.set(key, localValue);
-                            }
+                            // Store the value including empty strings (e.g. a cleared date field)
+                            formFields.set(key, el.value);
                         }
                     });
 
