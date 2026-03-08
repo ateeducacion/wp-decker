@@ -333,6 +333,10 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 			'{{mode_instruction}}',
 			$output
 		);
+		$this->assertStringContainsString(
+			'nano-class models',
+			$output
+		);
 	}
 
 	/**

@@ -114,7 +114,7 @@ class Decker_Admin_Settings {
 			: Decker::get_default_ai_prompt_template();
 
 		echo '<textarea name="decker_settings[ai_prompt]" class="large-text code" rows="12">' . esc_textarea( $value ) . '</textarea>';
-		echo '<p class="description">' . esc_html__( 'Customize the base prompt used for browser AI improvements. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Customize the base prompt used for browser AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}.', 'decker' ) . '</p>';
 	}
 
 	/**

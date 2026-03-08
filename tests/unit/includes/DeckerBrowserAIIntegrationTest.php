@@ -97,4 +97,27 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 		$this->assertArrayNotHasKey( 'checklist', $config['prompts'] );
 		$this->assertArrayNotHasKey( 'acceptance_criteria', $config['prompts'] );
 	}
+
+	/**
+	 * Default AI prompt text should focus on returning only the task description.
+	 */
+	public function test_ai_config_prompt_text_focuses_on_task_description_only() {
+		$public = new Decker_Public( 'decker', '1.0.0' );
+		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$method->setAccessible( true );
+		$config = $method->invoke( $public );
+
+		$this->assertStringContainsString(
+			'Return only the description content for the task.',
+			$config['prompts']['prompt_template']
+		);
+		$this->assertStringContainsString(
+			'Return only the final task description as HTML',
+			$config['prompts']['response_format']
+		);
+		$this->assertStringContainsString(
+			'Return only the final task description content.',
+			$config['prompts']['improve_description']
+		);
+	}
 }

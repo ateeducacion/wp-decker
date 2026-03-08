@@ -557,19 +557,19 @@ class Decker_Public {
 					? sanitize_textarea_field( $options['ai_prompt'] )
 					: Decker::get_default_ai_prompt_template(),
 				'improve_description' => __(
-					'Rewrite the task description to be clear, well-structured, and easy to execute. Fix grammar and spelling. Add structure (Objetivo/Contexto/Pasos/Criterio de aceptación) where it improves clarity. Remove redundancy and narrative text that does not add actionable information.',
+					'Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content.',
 					'decker'
 				),
 				'make_actionable' => __(
-					'Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Add ownership language where possible based on the assigned users in the task context. Include a "Criterio de aceptación" section listing how to verify the task is complete.',
+					'Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content.',
 					'decker'
 				),
 				'generate_checklist' => __(
-					'Convert the task description into a structured checklist. Group related items under clear headings. Each item should be a single, verifiable action. If acceptance criteria can be inferred, add them as a separate checklist at the end. Remove narrative text and keep only actionable items.',
+					'Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description.',
 					'decker'
 				),
 				'summarize'       => __(
-					'Summarize the task description into 2-3 sentences maximum. Capture: what needs to be done, who is involved, and the expected outcome. Omit implementation details and history.',
+					'Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description.',
 					'decker'
 				),
 				'language_instruction' => sprintf(
@@ -578,7 +578,7 @@ class Decker_Public {
 					get_user_locale()
 				),
 				'response_format' => __(
-					'Return only the improved text as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML content itself.',
+					'Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself.',
 					'decker'
 				),
 				'context_title'   => __( 'Title', 'decker' ),
