@@ -9,6 +9,49 @@
 
     'use strict';
 
+    function initTooltips(container = document) {
+        const tooltipTriggerList = [];
+
+        if (container && container.nodeType === 1 && container.matches('[data-bs-toggle="tooltip"]')) {
+            tooltipTriggerList.push(container);
+        }
+
+        if (container && typeof container.querySelectorAll === 'function') {
+            tooltipTriggerList.push(...container.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        }
+
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            bootstrap.Tooltip.getOrCreateInstance(tooltipTriggerEl);
+        });
+    }
+
+    let tooltipObserver = null;
+
+    function observeTooltips() {
+        if (!document.body) {
+            return;
+        }
+
+        if (tooltipObserver) {
+            return;
+        }
+
+        tooltipObserver = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === 1) {
+                        initTooltips(node);
+                    }
+                });
+            });
+        });
+
+        tooltipObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+
     // Bootstrap Components
     function initComponents() {
 
@@ -23,8 +66,8 @@
         const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
 
         // Tooltips
-        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+        initTooltips();
+        observeTooltips();
 
         // offcanvas
         const offcanvasElementList = document.querySelectorAll('.offcanvas')
