@@ -766,8 +766,11 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
              * Destroy the collaboration session
              */
             destroy() {
-                // Clear connection checker interval
+                // Clear all timers to prevent post-destroy callbacks
                 clearInterval(connectionChecker);
+                clearTimeout(syncTimeout);
+                clearTimeout(singleUserTimerId);
+                isSynced = true; // Prevent any pending callbacks from firing
 
                 // Clear cursor from awareness before disconnecting
                 awareness.setLocalStateField('cursor', null);
