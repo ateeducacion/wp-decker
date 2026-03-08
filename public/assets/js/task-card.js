@@ -148,7 +148,7 @@
                     }
                 },
                 quicktags: true,
-                mediaButtons: false
+                mediaButtons: true
             };
 
             wp.editor.initialize('task-description', config);

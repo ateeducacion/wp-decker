@@ -46,10 +46,10 @@ class TaskManager {
 		$query_args = array_merge( $default_args, $args );
 		$posts      = get_posts( $query_args );
 
-		// Carga todos los metadatos en caché de una sola vez.
+			// Load all metadata into the cache at once.
 		$post_ids = wp_list_pluck( $posts, 'ID' );
 		if ( ! empty( $post_ids ) ) {
-			update_meta_cache( 'post', $post_ids ); // 1 consulta para todos los metadatos.
+				   update_meta_cache( 'post', $post_ids ); // One query for all metadata.
 		}
 
 		$tasks      = array();
@@ -239,7 +239,7 @@ class TaskManager {
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids = get_posts( $args );
 
-		// Optimización: Cargar metadatos en caché.
+		   // Optimization: Load metadata into cache.
 		if ( ! empty( $post_ids ) ) {
 			update_meta_cache( 'post', $post_ids );
 		}
@@ -376,7 +376,7 @@ class TaskManager {
 		// Important! Here we are using direct post_id retrieval for optimization.
 		$post_ids = get_posts( $args );
 
-		// Optimización: Cargar metadatos en caché.
+		   // Optimization: Load metadata into cache.
 		if ( ! empty( $post_ids ) ) {
 			update_meta_cache( 'post', $post_ids );
 		}

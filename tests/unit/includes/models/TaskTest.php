@@ -155,4 +155,90 @@ class DeckerTaskTest extends Decker_Test_Base {
 		// TO-DO: Better test here
 		// $this->assertEquals( $attachment_id, $task->attachments[0], 'Attachment ID does not match.' );
 	}
+
+	/**
+	 * Test people users are ordered without duplicating the responsible user.
+	 */
+	public function test_get_people_users_places_responsible_first_without_duplicates() {
+		$responsible_id = self::factory()->user->create(
+			array( 'display_name' => 'Responsible User' )
+		);
+		$assigned_user_one = self::factory()->user->create(
+			array( 'display_name' => 'Assigned User One' )
+		);
+		$assigned_user_two = self::factory()->user->create(
+			array( 'display_name' => 'Assigned User Two' )
+		);
+
+		$task_id = self::factory()->task->create(
+			array(
+				'responsable'    => $responsible_id,
+				'assigned_users' => array( $assigned_user_one, $responsible_id, $assigned_user_two ),
+			)
+		);
+
+		$task = new Task( $task_id );
+
+		$this->assertSame(
+			array( $responsible_id, $assigned_user_one, $assigned_user_two ),
+			array_map(
+				static function ( WP_User $user ): int {
+					return $user->ID;
+				},
+				$task->get_people_users()
+			),
+			'The people list should show the responsible user first without duplicates.'
+		);
+	}
+
+	/**
+	 * Test the rendered people avatars include the responsible star badge once.
+	 */
+	public function test_render_people_avatars_marks_the_responsible_user() {
+		$responsible_id = self::factory()->user->create(
+			array( 'display_name' => 'Responsible User' )
+		);
+		$assigned_id = self::factory()->user->create(
+			array( 'display_name' => 'Assigned User' )
+		);
+
+		$task_id = self::factory()->task->create(
+			array(
+				'responsable'    => $responsible_id,
+				'assigned_users' => array( $responsible_id, $assigned_id ),
+			)
+		);
+
+		$task = new Task( $task_id );
+
+		ob_start();
+		$task->render_people_avatars();
+		$html = ob_get_clean();
+		$assigned_user_html_position    = strpos( $html, 'Assigned User' );
+		$responsible_user_html_position = strpos( $html, 'Responsible User' );
+
+		$this->assertSame(
+			1,
+			substr_count( $html, 'ri-star-s-fill' ),
+			'The responsible user should be marked with a single star badge.'
+		);
+		$this->assertSame(
+			2,
+			substr_count( $html, 'class="avatar-group-item ' ),
+			'The responsible user should not be duplicated in the rendered avatar group.'
+		);
+		$this->assertNotFalse(
+			$assigned_user_html_position,
+			'The assigned user name should be present in the rendered avatar group.'
+		);
+		$this->assertNotFalse(
+			$responsible_user_html_position,
+			'The responsible user name should be present in the rendered avatar group.'
+		);
+		$this->assertLessThan(
+			$assigned_user_html_position,
+			$responsible_user_html_position,
+			'The responsible user should be rendered before the other assigned users.'
+		);
+	}
 }

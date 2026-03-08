@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	 */
 	document.addEventListener('hidden.bs.tab', function (event) {
 		if (event.target.getAttribute('href') === '#gantt-tab') {
-			setCanvasHeight(null); // elimina el estilo
+                        setCanvasHeight(null); // remove the style
 		}
 	});
 

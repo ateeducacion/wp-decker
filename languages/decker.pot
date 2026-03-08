@@ -42,6 +42,27 @@ msgstr ""
 msgid "This setting allows users to manage email notifications in their profile. By default, all notifications are enabled."
 msgstr ""
 
+msgid "Enable real-time collaborative editing for tasks."
+msgstr ""
+
+msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
+msgstr ""
+
+msgid "WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev)."
+msgstr ""
+
+msgid "Public servers:"
+msgstr ""
+
+msgid "(Default - Global)"
+msgstr ""
+
+msgid "(Europe)"
+msgstr ""
+
+msgid "(United States)"
+msgstr ""
+
 msgid "Select the minimum user profile that can use Decker."
 msgstr ""
 
@@ -70,6 +91,12 @@ msgid "Shared Key"
 msgstr ""
 
 msgid "Allow Email Notifications"
+msgstr ""
+
+msgid "Collaborative Editing"
+msgstr ""
+
+msgid "Signaling Server"
 msgstr ""
 
 msgid "Clear All Data"
@@ -179,7 +206,6 @@ msgstr ""
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
-#. translators: %s is a username.
 #. Translators: %s is a username.
 msgid "Unknown user"
 msgstr ""
@@ -195,7 +221,7 @@ msgstr ""
 msgid "You have been assigned a task"
 msgstr ""
 
-#. translators: %s is a username.
+#. Translators: %s is a username.
 #, php-format
 msgid "Completed by %s"
 msgstr ""
@@ -208,6 +234,9 @@ msgstr ""
 #. Translators: %s is a username.
 #, php-format
 msgid "Comment by %s"
+msgstr ""
+
+msgid "You are not authorized to access this resource."
 msgstr ""
 
 msgctxt "taxonomy general name"
@@ -240,9 +269,6 @@ msgid "Actions"
 msgstr ""
 
 msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
-msgstr ""
-
-msgid "You are not authorized to access this resource."
 msgstr ""
 
 msgctxt "taxonomy general name"
@@ -403,6 +429,9 @@ msgid "Invalid board ID"
 msgstr ""
 
 msgid "Article saved successfully"
+msgstr ""
+
+msgid "Invalid moved ID."
 msgstr ""
 
 msgid "Article not found"
@@ -877,7 +906,16 @@ msgstr ""
 msgid "No Board"
 msgstr ""
 
-msgid "Search in title, tags, excerpt and content..."
+msgid "Search articles..."
+msgstr ""
+
+msgid "Add Child"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "Delete"
 msgstr ""
 
 msgid "Are you sure?"
@@ -1042,9 +1080,6 @@ msgstr ""
 msgid "Error uploading attachment."
 msgstr ""
 
-msgid "Delete"
-msgstr ""
-
 msgid "Server response error."
 msgstr ""
 
@@ -1055,6 +1090,9 @@ msgid "Request error."
 msgstr ""
 
 msgid "Error saving task."
+msgstr ""
+
+msgid "The task has been saved successfully."
 msgstr ""
 
 msgid "Show HTML source"
@@ -1126,6 +1164,18 @@ msgstr ""
 msgid "Error loading content. Please try again."
 msgstr ""
 
+msgid "Connecting..."
+msgstr ""
+
+msgid "Collaborative mode"
+msgstr ""
+
+msgid "Disconnected"
+msgstr ""
+
+msgid "you"
+msgstr ""
+
 msgid "Select Category"
 msgstr ""
 
@@ -1168,43 +1218,13 @@ msgstr ""
 msgid "Version"
 msgstr ""
 
-msgid "Please provide a title."
-msgstr ""
-
 msgid "Please select a board."
 msgstr ""
 
-msgid "Parent Article"
-msgstr ""
-
-msgid "No parent (top level)"
-msgstr ""
-
-msgid "Order"
+msgid "Please provide a title."
 msgstr ""
 
 msgid "Save Article"
-msgstr ""
-
-msgid "Could not load article"
-msgstr ""
-
-msgid "Select labels..."
-msgstr ""
-
-msgid "No more labels available"
-msgstr ""
-
-msgid "Select parent..."
-msgstr ""
-
-msgid "No more articles available"
-msgstr ""
-
-msgid "Search for parent article..."
-msgstr ""
-
-msgid "Could not save article"
 msgstr ""
 
 msgid "Show Full Sidebar"

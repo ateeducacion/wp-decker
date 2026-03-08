@@ -45,8 +45,22 @@ class Decker_Demo_Data {
 	 */
 	private function create_labels() {
 		$labels = array();
-		for ( $i = 1; $i <= 10; $i++ ) {
-			$term_name = "Label $i";
+
+		// Create labels with varying lengths for better testing.
+		$label_names = array(
+			'Bug',
+			'Feature',
+			'Urgent Priority',
+			'Documentation',
+			'Needs Review',
+			'In Progress',
+			'Testing Required',
+			'UI',
+			'Backend Development',
+			'Critical Security Issue',
+		);
+
+		foreach ( $label_names as $term_name ) {
 			$term_slug = sanitize_title( $term_name );
 			$term_color = $this->generate_random_color();
 
@@ -83,55 +97,55 @@ class Decker_Demo_Data {
 		$visibility_settings = array(
 			// Board 1: Visible in both Boards and KB.
 			array(
-				'name' => 'Board 1',
+				'name' => 'Project Alpha',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
 			// Board 2: Visible only in Boards.
 			array(
-				'name' => 'Board 2',
+				'name' => 'Marketing Campaign Q1 2024',
 				'show_in_boards' => true,
 				'show_in_kb' => false,
 			),
 			// Board 3: Visible only in KB.
 			array(
-				'name' => 'Board 3',
+				'name' => 'Dev',
 				'show_in_boards' => false,
 				'show_in_kb' => true,
 			),
 			// Board 4: Not visible in either (hidden).
 			array(
-				'name' => 'Board 4',
+				'name' => 'Customer Support and Success Team',
 				'show_in_boards' => false,
 				'show_in_kb' => false,
 			),
 			// Board 5: Visible in both.
 			array(
-				'name' => 'Board 5',
+				'name' => 'HR',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
 			// Board 6: Visible in both.
 			array(
-				'name' => 'Board 6',
+				'name' => 'Infrastructure and DevOps',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
 			// Board 7: Visible only in Boards.
 			array(
-				'name' => 'Board 7',
+				'name' => 'Research',
 				'show_in_boards' => true,
 				'show_in_kb' => false,
 			),
 			// Board 8: Visible only in KB.
 			array(
-				'name' => 'Board 8',
+				'name' => 'Quality Assurance and Testing',
 				'show_in_boards' => false,
 				'show_in_kb' => true,
 			),
 			// Board 9: Visible in both.
 			array(
-				'name' => 'Board 9',
+				'name' => 'Sales',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
@@ -203,125 +217,170 @@ class Decker_Demo_Data {
 			return;
 		}
 
-		// Create main categories.
-		$categories = array(
-			'Getting Started' => array(
-				'Introduction' => $lorem_ipsum['medium'],
-				'Quick Start Guide' => $lorem_ipsum['long'],
-				'Basic Concepts' => $lorem_ipsum['medium'],
-			),
-			'User Guide' => array(
-				'Dashboard Overview' => $lorem_ipsum['medium'],
-				'Managing Tasks' => array(
-					'Creating Tasks' => $lorem_ipsum['short'],
-					'Editing Tasks' => $lorem_ipsum['medium'],
-					'Deleting Tasks' => $lorem_ipsum['short'],
+			// Create main categories; include deeper hierarchy for demo (3+ levels).
+			$categories = array(
+				'Getting Started' => array(
+					'Introduction' => $lorem_ipsum['medium'],
+					'Quick Start Guide' => $lorem_ipsum['long'],
+					'Basic Concepts' => $lorem_ipsum['medium'],
 				),
-				'Working with Boards' => array(
-					'Board Setup' => $lorem_ipsum['medium'],
-					'Managing Columns' => $lorem_ipsum['long'],
+				'User Guide' => array(
+					'Dashboard Overview' => $lorem_ipsum['medium'],
+					'Managing Tasks' => array(
+						'Creating Tasks' => $lorem_ipsum['short'],
+						'Editing Tasks' => array(
+							'Basic Edits' => $lorem_ipsum['medium'],
+							'Advanced Edits' => array(
+								'Keyboard Shortcuts' => $lorem_ipsum['short'],
+								'Bulk Changes' => $lorem_ipsum['short'],
+							),
+						),
+						'Deleting Tasks' => $lorem_ipsum['short'],
+					),
+					'Working with Boards' => array(
+						'Board Setup' => $lorem_ipsum['medium'],
+						'Managing Columns' => $lorem_ipsum['long'],
+					),
 				),
-			),
-			'Advanced Features' => array(
-				'API Integration' => $lorem_ipsum['long'],
-				'Custom Workflows' => $lorem_ipsum['medium'],
-				'Automation Rules' => $lorem_ipsum['medium'],
-			),
-		);
+				'Advanced Features' => array(
+					'API Integration' => array(
+						'Authentication' => $lorem_ipsum['medium'],
+						'Endpoints' => array(
+							'GET /tasks' => $lorem_ipsum['short'],
+							'POST /tasks' => $lorem_ipsum['short'],
+						),
+					),
+					'Custom Workflows' => $lorem_ipsum['medium'],
+					'Automation Rules' => $lorem_ipsum['medium'],
+				),
+			);
 
-		// Create articles for each KB-visible board.
-		foreach ( $kb_boards as $board_term ) {
-			// For each board, create a set of articles.
-			foreach ( $categories as $main_title => $subcategories ) {
-				// Create a unique title for this board.
-				$board_main_title = $main_title . ' - ' . $board_term->name;
+			// Create articles for each KB-visible board.
+			foreach ( $kb_boards as $board_term ) {
+				// For each board, create a set of articles.
+				foreach ( $categories as $main_title => $subcategories ) {
+					// Create main category article (no board suffix in title).
+					$main_post_id = wp_insert_post(
+						array(
+							'post_type' => 'decker_kb',
+							'post_title' => $main_title,
+							'post_content' => $lorem_ipsum['short'],
+							'post_status' => 'publish',
+							'menu_order' => 0,
+						)
+					);
 
-				// Create main category article.
-				$main_post_id = wp_insert_post(
-					array(
-						'post_type' => 'decker_kb',
-						'post_title' => $board_main_title,
-						'post_content' => $lorem_ipsum['short'],
-						'post_status' => 'publish',
-						'menu_order' => 0,
-					)
-				);
+					// Assign random labels (1-2) to main category.
+					$main_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+					wp_set_object_terms( $main_post_id, $main_labels, 'decker_label' );
 
-				// Assign random labels (1-2) to main category.
-				$main_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-				wp_set_object_terms( $main_post_id, $main_labels, 'decker_label' );
+					// Assign the board.
+					wp_set_object_terms( $main_post_id, array( $board_term->term_id ), 'decker_board' );
 
-				// Assign the board.
-				wp_set_object_terms( $main_post_id, array( $board_term->term_id ), 'decker_board' );
-
-				$order = 0;
-				foreach ( $subcategories as $sub_title => $content ) {
-					if ( is_array( $content ) ) {
-						// This is a subcategory with its own children.
-						$sub_post_id = wp_insert_post(
-							array(
-								'post_type' => 'decker_kb',
-								'post_title' => $sub_title,
-								'post_content' => $lorem_ipsum['medium'],
-								'post_status' => 'publish',
-								'post_parent' => $main_post_id,
-								'menu_order' => $order,
-							)
-						);
-
-						// Assign random labels to subcategory.
-						$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-						wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-
-						// Assign the same board as parent.
-						wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
-
-						$sub_order = 0;
-						foreach ( $content as $child_title => $child_content ) {
-							$child_post_id = wp_insert_post(
+					$order = 0;
+					foreach ( $subcategories as $sub_title => $content ) {
+						if ( is_array( $content ) ) {
+							// This is a subcategory with its own children.
+							$sub_post_id = wp_insert_post(
 								array(
 									'post_type' => 'decker_kb',
-									'post_title' => $child_title,
-									'post_content' => $child_content,
+									'post_title' => $sub_title,
+									'post_content' => $lorem_ipsum['medium'],
 									'post_status' => 'publish',
-									'post_parent' => $sub_post_id,
-									'menu_order' => $sub_order,
+									'post_parent' => $main_post_id,
+									'menu_order' => $order,
 								)
 							);
 
-							// Assign random labels to child.
-							$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-							wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
+							// Assign random labels to subcategory.
+							$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+							wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
 
 							// Assign the same board as parent.
-							wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
+							wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
 
-							$sub_order++;
+							$sub_order = 0;
+							foreach ( $content as $child_title => $child_content ) {
+								if ( is_array( $child_content ) ) {
+									// Child branch with grandchildren.
+									$child_post_id = wp_insert_post(
+										array(
+											'post_type'    => 'decker_kb',
+											'post_title'   => $child_title,
+											'post_content' => $lorem_ipsum['medium'],
+											'post_status'  => 'publish',
+											'post_parent'  => $sub_post_id,
+											'menu_order'   => $sub_order,
+										)
+									);
+
+									$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+									wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
+									wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
+
+									$gg_order = 0;
+									foreach ( $child_content as $g_title => $g_content ) {
+												$gc_post_id = wp_insert_post(
+													array(
+														'post_type'    => 'decker_kb',
+														'post_title'   => $g_title,
+														'post_content' => is_array( $g_content ) ? $lorem_ipsum['short'] : $g_content,
+														'post_status'  => 'publish',
+														'post_parent'  => $child_post_id,
+														'menu_order'   => $gg_order,
+													)
+												);
+												$gc_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+												wp_set_object_terms( $gc_post_id, $gc_labels, 'decker_label' );
+												wp_set_object_terms( $gc_post_id, array( $board_term->term_id ), 'decker_board' );
+												$gg_order++;
+									}
+									$sub_order++;
+								} else {
+									// Leaf child.
+									$child_post_id = wp_insert_post(
+										array(
+											'post_type'    => 'decker_kb',
+											'post_title'   => $child_title,
+											'post_content' => $child_content,
+											'post_status'  => 'publish',
+											'post_parent'  => $sub_post_id,
+											'menu_order'   => $sub_order,
+										)
+									);
+
+									// Assign random labels to child and same board.
+									$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+									wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
+									wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
+
+									$sub_order++;
+								}
+							}
+						} else {
+							// This is a direct subcategory.
+							$sub_post_id = wp_insert_post(
+								array(
+									'post_type' => 'decker_kb',
+									'post_title' => $sub_title,
+									'post_content' => $content,
+									'post_status' => 'publish',
+									'post_parent' => $main_post_id,
+									'menu_order' => $order,
+								)
+							);
+
+							// Assign random labels to subcategory.
+							$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+							wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
+
+							// Assign the same board as parent.
+							wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
 						}
-					} else {
-						// This is a direct subcategory.
-						$sub_post_id = wp_insert_post(
-							array(
-								'post_type' => 'decker_kb',
-								'post_title' => $sub_title,
-								'post_content' => $content,
-								'post_status' => 'publish',
-								'post_parent' => $main_post_id,
-								'menu_order' => $order,
-							)
-						);
-
-						// Assign random labels to subcategory.
-						$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-						wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-
-						// Assign the same board as parent.
-						wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
+						$order++;
 					}
-					$order++;
 				}
 			}
-		}
 	}
 
 	/**
@@ -496,7 +555,41 @@ class Decker_Demo_Data {
 			}
 
 			for ( $j = 1; $j <= $num_tasks; $j++ ) {
-				$post_title = "Task $j for {$board->name}";
+				// Create task titles with varying lengths for better testing.
+				$short_titles = array(
+					'Fix bug',
+					'Update docs',
+					'Review PR',
+					'Deploy',
+					'Test',
+				);
+
+				$medium_titles = array(
+					'Implement new feature',
+					'Refactor database queries',
+					'Update user interface',
+					'Configure deployment pipeline',
+					'Write unit tests',
+				);
+
+				$long_titles = array(
+					'Investigate performance issues in the production environment',
+					'Develop comprehensive documentation for API endpoints',
+					'Implement user authentication and authorization system',
+					'Optimize database queries for improved application performance',
+					'Create automated testing suite for continuous integration',
+				);
+
+				// Randomly select title length (40% short, 40% medium, 20% long).
+				$rand = $this->custom_rand( 1, 10 );
+				if ( $rand <= 4 ) {
+					$post_title = $short_titles[ array_rand( $short_titles ) ] . " #{$j}";
+				} elseif ( $rand <= 8 ) {
+					$post_title = $medium_titles[ array_rand( $medium_titles ) ] . " for {$board->name}";
+				} else {
+					$post_title = $long_titles[ array_rand( $long_titles ) ] . " - {$board->name}";
+				}
+
 				$post_content = "Content for task $j in board {$board->name}.";
 
 				if ( '1' !== $show_in_boards ) {

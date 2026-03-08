@@ -9,7 +9,7 @@
     const strings = deckerVars.strings;
 
     /**
-     * Devuelve un string ISO UTC acabado en “Z”.
+     * Returns an ISO UTC string ending with "Z".
      * @param {string} localValue - 'YYYY‑MM‑DDTHH:MM'
      */
     function localToUtc(localValue){
@@ -18,23 +18,23 @@
     }
 
     /**
-     * Convierte UTC → valor para el <input>.
-     *  ─ Si llega 'YYYY‑MM‑DD' (all‑day) la devuelve tal cual.
-     *  ─ Si llega 'YYYY‑MM‑DD HH:MM:SS' añade la “T” y la “Z”.
-     *  ─ Si llega ISO con “Z” la pasa a local y corta segundos.
+     * Converts UTC → value for the <input>.
+     *  ─ If 'YYYY‑MM‑DD' (all-day) arrives, return it as is.
+ *  ─ If 'YYYY‑MM‑DD HH:MM:SS' arrives, add the “T” and “Z”.
+     *  ─ If ISO with “Z” arrives, convert to local and trim seconds.
      */
 function utcToLocalValue(utcStr){
     if (!utcStr) return '';
 
-    // all‑day → sin cambios
+    // all‑day → no changes
     if (/^\d{4}-\d{2}-\d{2}$/.test(utcStr)) return utcStr;
 
-    // admitir "YYYY‑MM‑DD HH:MM:SS"
+    // allow "YYYY‑MM‑DD HH:MM:SS"
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(utcStr)){
         utcStr = utcStr.replace(' ', 'T') + 'Z';
     }
 
-    const d = new Date(utcStr);          // sigue estando en UTC
+    const d = new Date(utcStr);          // still in UTC
     const pad = n => String(n).padStart(2,'0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
          + `T${pad(d.getHours())}:${pad(d.getMinutes())}`;   // **local**
@@ -67,8 +67,8 @@ function utcToLocalValue(utcStr){
 
 
     /**
-     * Inicializa las funcionalidades del formulario de eventos.
-     * @param {Element} context - Contexto del DOM donde inicializar (por defecto es document).
+     * Initialize the event form features.
+     * @param {Element} context - DOM context where to initialize (defaults to document).
      */
     function initializeEventCard(context = document) {
 
@@ -80,20 +80,20 @@ function utcToLocalValue(utcStr){
         const startInput = context.querySelector('#event-start');
         const endInput = context.querySelector('#event-end');
 
-   // ---------- valores por defecto ---------- //
+   // ---------- default values ---------- //
         (function setDefaultTimes(){
-            if (startInput.value) return;                // se abre un evento existente
+            if (startInput.value) return;                // an existing event is opened
 
-            // a) si FullCalendar pasó un día (click en celda vacía)…
+           // a) if FullCalendar passed a day (click on an empty cell)…
             const modal     = document.querySelector('#event-modal');
             const clickDate = modal?.dataset.tempEventDate
                 ? (() => {
                     const [y, m, d] = modal.dataset.tempEventDate.split('-').map(Number);
-                    return new Date(y, m - 1, d);  // ← esta versión usa la hora local
+                   return new Date(y, m - 1, d);  // ← this version uses the local time
                 })()
                 : null;
 
-            // b) …o si no, usa ahora mismo
+            // b) otherwise use the current time
             const base = new Date();
 
             if (clickDate) {
@@ -103,7 +103,7 @@ function utcToLocalValue(utcStr){
             }
 
 
-            // redondea base a la siguiente :00 o :30 y +1 h
+            // round base to the next :00 or :30 and add 1 h
             base.setSeconds(0,0);
             const m = base.getMinutes();
             if (m % 30) base.setMinutes(m + (30 - m % 30));
@@ -119,7 +119,7 @@ function utcToLocalValue(utcStr){
 
 const isAllDay = context.querySelector('#event-allday')?.checked;
 
-// Establecer el tipo de los inputs antes de asignar los valores
+// Set the type of the inputs before assigning values
 if (isAllDay) {
     startInput.type = 'date';
     endInput.type = 'date';
@@ -129,7 +129,7 @@ if (isAllDay) {
 }
 
 
-        // Sincroniza fechas: el "to" no puede ser menor que el "from"
+        // Synchronize dates: the "to" cannot be earlier than the "from"
         if (startInput && endInput) {
             startInput.addEventListener('change', () => {
                 endInput.min = startInput.value;
@@ -148,8 +148,8 @@ if (isAllDay) {
             const raw = input.dataset.utc;
             if (!raw) return;
 
-            // Si el input es type="date" pone la fecha tal cual,
-            // en otro caso usa la función de conversión.
+            // If the input is type="date" leave the date as is,
+           // otherwise use the conversion function.
             input.value = (input.type === 'date')
                 ? raw
                 : utcToLocalValue(raw);
@@ -174,7 +174,7 @@ const allDaySwitch = context.querySelector('#event-allday');
 if (allDaySwitch && startInput && endInput) {
     // Set the correct input types on load based on all-day checkbox
     if (allDaySwitch.checked) {
-        startInput.value = startInput.value.split('T')[0] || // venimos de datetime‑local
+        startInput.value = startInput.value.split('T')[0] || // coming from datetime-local
                            new Date().toISOString().slice(0, 10);
         endInput.value   = endInput.value.split('T')[0]   ||
                            startInput.value;
@@ -215,7 +215,7 @@ allDaySwitch.addEventListener('change', () => {
         startInput.type = 'datetime-local';
         endInput.type   = 'datetime-local';
 
-        // Mantener el día y redondear la hora
+       // Keep the day and round the time
         const base = currentStart || new Date();
         const now = new Date();
         now.setSeconds(0, 0);
@@ -225,7 +225,7 @@ allDaySwitch.addEventListener('change', () => {
             now.setMinutes(minutes + (30 - (minutes % 30)));
         }
 
-        // Combinar el día original con la hora redondeada
+       // Combine the original day with the rounded time
         const start = new Date(base);
         start.setHours(now.getHours(), now.getMinutes(), 0, 0);
 
@@ -374,15 +374,15 @@ const eventData = {
         });
     }
     
-    // Exportar funciones globalmente para que puedan ser llamadas desde HTML
+    // Export functions globally so they can be called from HTML
     window.initializeEventCard = initializeEventCard;
 
 
-    // Inicializar automáticamente si el contenido está cargado directamente en la página
+// Automatically initialize if the content is loaded directly on the page
     document.addEventListener('DOMContentLoaded', function() {
-        // Verificar si existe el formulario de tarea directamente en la página
+       // Check if the task form exists directly on the page
         const eventForm = document.querySelector('#event-form');
-        if (eventForm && !eventForm.closest('.event-modal')) { // Asegurarse de que no está dentro de un modal
+       if (eventForm && !eventForm.closest('.event-modal')) { // Ensure that it is not inside a modal
             initializeEventCard(document);
         }
 

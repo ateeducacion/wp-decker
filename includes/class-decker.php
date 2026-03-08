@@ -120,6 +120,11 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
 		/**
+		 * The class responsible for protecting comments on custom post types via the REST API.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-rest-comment-protection.php';
+
+		/**
 		 * The class responsible for defining the MVC.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
@@ -129,6 +134,14 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
+
+		/**
+		 * The class responsible for network-level settings in Multisite.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-network-settings.php';
+		if ( is_multisite() ) {
+			new Decker_Network_Settings();
+		}
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.

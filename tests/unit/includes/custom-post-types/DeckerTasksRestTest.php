@@ -338,4 +338,96 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		// Our code should disallow subscribers: expecting 403
 		$this->assertEquals( 403, $response->get_status() );
 	}
+
+	/**
+	 * Test that subscribers cannot access the task search endpoint
+	 */
+	public function test_search_tasks_authorization() {
+		// Create user with no editing capabilities
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		// Create a task to search for
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Tarea de prueba',
+				'board'      => $this->board_id,
+			)
+		);
+
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'prueba' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		// Subscribers should not be able to search tasks: expecting 403
+		$this->assertEquals( 403, $response->get_status(), 'Expected 403 for subscribers accessing task search endpoint' );
+	}
+
+	/**
+	 * Test search tasks endpoint
+	 */
+	public function test_search_tasks() {
+		// Create tasks with different titles
+		$task1_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Buscar tareas en el sistema',
+				'board'      => $this->board_id,
+			)
+		);
+		update_post_meta( $task1_id, 'stack', 'to-do' );
+
+		$task2_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Implementar funcionalidad de búsqueda',
+				'board'      => $this->board_id,
+			)
+		);
+		update_post_meta( $task2_id, 'stack', 'in-progress' );
+
+		$task3_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Pruebas de integración',
+				'board'      => $this->board_id,
+			)
+		);
+		update_post_meta( $task3_id, 'stack', 'done' );
+
+		// Search for "búsqueda"
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'búsqueda' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status(), 'Expected 200 on search' );
+		$this->assertTrue( $data['success'], 'Expected success to be true' );
+		$this->assertIsArray( $data['tasks'], 'Expected tasks to be an array' );
+		$this->assertCount( 1, $data['tasks'], 'Expected 1 result for "búsqueda"' );
+		$this->assertEquals( 'Implementar funcionalidad de búsqueda', $data['tasks'][0]['title'] );
+		$this->assertEquals( 'in-progress', $data['tasks'][0]['stack'] );
+
+		// Search for "buscar"
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'buscar' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertTrue( $data['success'] );
+		$this->assertIsArray( $data['tasks'] );
+		$this->assertGreaterThanOrEqual( 1, count( $data['tasks'] ), 'Expected at least 1 result for "buscar"' );
+
+		// Search without term (should fail)
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 400, $response->get_status(), 'Expected 400 when search term is missing' );
+	}
 }
