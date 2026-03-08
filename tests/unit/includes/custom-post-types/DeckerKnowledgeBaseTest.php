@@ -277,4 +277,101 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
 		$this->assertEquals( $this->administrator, $last_editor_id );
 	}
+
+	public function test_get_comments_admin_url_points_to_edit_screen_comments() {
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_status' => 'publish',
+			)
+		);
+
+		$comments_url = Decker_Kb::get_comments_admin_url( $post_id );
+
+		$this->assertStringContainsString(
+			'post.php?post=' . $post_id . '&action=edit#commentsdiv',
+			$comments_url
+		);
+	}
+
+	public function test_get_revision_admin_url_points_to_revision_screen() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_title'  => 'Revision Link Test',
+				'post_status' => 'publish',
+			)
+		);
+
+		wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_title'   => 'Revision Link Test Updated',
+				'post_content' => 'Updated content',
+			)
+		);
+
+		$revision_id  = Decker_Kb::get_latest_revision_id( $post_id );
+		$revision_url = Decker_Kb::get_revision_admin_url( $post_id );
+
+		$this->assertGreaterThan( 0, $revision_id );
+		$this->assertStringContainsString(
+			'revision.php?revision=' . $revision_id,
+			$revision_url
+		);
+	}
+
+	public function test_get_article_returns_author_comments_and_history_metadata() {
+		wp_set_current_user( $this->administrator );
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'    => 'decker_kb',
+				'post_title'   => 'KB Metadata Test',
+				'post_content' => 'Initial content',
+				'post_status'  => 'publish',
+				'post_author'  => $this->administrator,
+			)
+		);
+
+		wp_insert_comment(
+			array(
+				'comment_post_ID' => $post_id,
+				'comment_content' => 'First KB comment',
+				'user_id'         => $this->editor,
+				'comment_approved' => 1,
+			)
+		);
+
+		wp_set_current_user( $this->editor );
+		wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_title'   => 'KB Metadata Test Updated',
+				'post_content' => 'Updated content',
+			)
+		);
+
+		$request = new WP_REST_Request( 'GET', '/decker/v1/kb' );
+		$request->set_param( 'id', $post_id );
+
+		$response = rest_do_request( $request );
+		$this->assertEquals( 200, $response->get_status() );
+
+		$data = $response->get_data();
+		$this->assertEquals( $this->administrator, $data['article']['author']['id'] );
+		$this->assertEquals( $this->editor, $data['article']['last_editor']['id'] );
+		$this->assertEquals( 1, intval( $data['article']['comment_count'] ) );
+		$this->assertGreaterThan( 0, intval( $data['article']['revision_count'] ) );
+		$this->assertStringContainsString(
+			'post.php?post=' . $post_id . '&action=edit#commentsdiv',
+			$data['article']['links']['comments']
+		);
+		$this->assertStringContainsString(
+			'revision.php?revision=',
+			$data['article']['links']['history']
+		);
+	}
 }

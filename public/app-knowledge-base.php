@@ -35,6 +35,39 @@ if ( ! empty( $board_slug ) && 'all' !== $view ) {
 
 $kb_data = Decker_Kb::get_articles( $args );
 
+if ( ! function_exists( 'decker_get_kb_people_html' ) ) {
+	/**
+	 * Render Knowledge Base author and last editor avatars.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	function decker_get_kb_people_html( $post_id ) {
+		$author_id      = intval( get_post_field( 'post_author', $post_id ) );
+		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$author_name    = get_the_author_meta( 'display_name', $author_id );
+		$last_editor_name = $last_editor_id ? get_the_author_meta( 'display_name', $last_editor_id ) : '';
+		$author_label   = __( 'Author', 'decker' ) . ': ' . $author_name;
+		$last_editor_label = __( 'Last editor', 'decker' ) . ': ' . $last_editor_name;
+
+		ob_start();
+		?>
+		<div class="d-flex align-items-center gap-1 flex-nowrap">
+			<span class="avatar-group-item" aria-label="<?php echo esc_attr( $author_label ); ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo esc_attr( $author_label ); ?>">
+				<img src="<?php echo esc_url( get_avatar_url( $author_id, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( $author_name ); ?>" class="rounded-circle avatar-xs">
+			</span>
+			<?php if ( $last_editor_id ) : ?>
+				<span class="avatar-group-item" aria-label="<?php echo esc_attr( $last_editor_label ); ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo esc_attr( $last_editor_label ); ?>">
+					<img src="<?php echo esc_url( get_avatar_url( $last_editor_id, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( $last_editor_name ); ?>" class="rounded-circle avatar-xs border border-2 border-info">
+				</span>
+			<?php endif; ?>
+		</div>
+		<?php
+
+		return ob_get_clean();
+	}
+}
+
 /*
 // Test.
 echo '<pre>';
@@ -220,16 +253,8 @@ die();
 													}
 													echo '</td>';
 
-													// Author with avatar (show last editor).
-													$last_editor_id = Decker_Kb::get_last_editor( $article->ID );
-													echo '<td>';
-													echo '<div class="avatar-group">';
-													echo '<a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '" data-bs-original-title="' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '">';
-													echo '<span class="d-none">' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '</span>';
-													echo '<img src="' . esc_url( get_avatar_url( $last_editor_id ) ) . '" alt="' . esc_attr( get_the_author_meta( 'display_name', $last_editor_id ) ) . '" class="rounded-circle avatar-xs">';
-													echo '</a>';
-													echo '</div>';
-													echo '</td>';
+													// Author and last editor.
+													echo '<td>' . decker_get_kb_people_html( $article->ID ) . '</td>';
 
 													// Excerpt.
 													$excerpt = wp_strip_all_tags( $article->post_content );
@@ -244,6 +269,8 @@ die();
 													echo '<td title="' . esc_attr( $exact_date ) . '">' . esc_html( $relative_date ) . '</td>';
 
 													// Actions.
+													$comments_url = Decker_Kb::get_comments_admin_url( $article->ID );
+													$history_url  = Decker_Kb::get_revision_admin_url( $article->ID );
 													echo '<td class="text-end">';
 													// View button.
 													echo '<button type="button" class="btn btn-sm btn-secondary me-2 view-article-btn" ' .
@@ -253,6 +280,10 @@ die();
 														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
 														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\'>' .
 														'<i class="ri-eye-line"></i></button>';
+													echo '<a href="' . esc_url( $comments_url ) . '" class="btn btn-sm btn-outline-warning me-2" target="_blank" rel="noopener noreferrer" title="' . esc_attr__( 'Comments', 'decker' ) . '"><i class="ri-chat-1-line"></i></a>';
+													if ( ! empty( $history_url ) ) {
+														echo '<a href="' . esc_url( $history_url ) . '" class="btn btn-sm btn-outline-dark me-2" target="_blank" rel="noopener noreferrer" title="' . esc_attr__( 'History', 'decker' ) . '"><i class="ri-history-line"></i></a>';
+													}
 																										  // Edit button.
 																										  echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
 																										  // Delete button removed to avoid accidental deletions; handled in inline editor.
@@ -383,7 +414,7 @@ die();
 														</div>
 													<?php endif; ?>
 
-													<img src="<?php echo esc_url( get_avatar_url( $article->post_author, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" class="d-none d-md-inline-block rounded-circle" style="width:24px;height:24px;" title="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" />
+													<span class="d-none d-md-inline-flex"><?php echo wp_kses_post( decker_get_kb_people_html( $article->ID ) ); ?></span>
 
 																										 <div class="btn-group btn-group-sm d-none d-md-inline-flex">
 																												 <button type="button" class="btn btn-outline-secondary view-article-btn"
@@ -394,6 +425,14 @@ die();
 																												 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																												 <i class="ri-eye-line"></i>
 																												 </button>
+																												 <a href="<?php echo esc_url( Decker_Kb::get_comments_admin_url( $article->ID ) ); ?>" class="btn btn-outline-warning" title="<?php echo esc_attr__( 'Comments', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
+																												 <i class="ri-chat-1-line"></i>
+																												 </a>
+																												 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
+																												 <a href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" class="btn btn-outline-dark" title="<?php echo esc_attr__( 'History', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
+																												 <i class="ri-history-line"></i>
+																												 </a>
+																												 <?php endif; ?>
 																												 <button type="button" class="btn btn-outline-info kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>">
 																												 <i class="ri-pencil-line"></i>
 																												 </button>
@@ -413,6 +452,10 @@ die();
 																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
 																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																														 <i class="ri-eye-line me-1"></i><?php esc_html_e( 'View', 'decker' ); ?></button></li>
+																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb::get_comments_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-chat-1-line me-1"></i><?php esc_html_e( 'Comments', 'decker' ); ?></a></li>
+																														 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
+																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-history-line me-1"></i><?php esc_html_e( 'History', 'decker' ); ?></a></li>
+																														 <?php endif; ?>
 																														 <li><button class="dropdown-item kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>"><i class="ri-pencil-line me-1"></i><?php esc_html_e( 'Edit', 'decker' ); ?></button></li>
 																														 <li><button class="dropdown-item add-child-btn" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal"><i class="ri-add-line me-1"></i><?php esc_html_e( 'Add Child', 'decker' ); ?></button></li>
 																														 <li><hr class="dropdown-divider"></li>

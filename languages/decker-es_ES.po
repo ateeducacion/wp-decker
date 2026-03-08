@@ -609,6 +609,9 @@ msgstr "Seleccione una tabla."
 msgid "Author"
 msgstr "Autor"
 
+msgid "Last editor"
+msgstr "Último editor"
+
 msgid "Save"
 msgstr "Guardar"
 

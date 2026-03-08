@@ -124,6 +124,91 @@ class Decker_Kb {
 	}
 
 	/**
+	 * Get the latest revision ID for a KB article.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int Revision ID or 0 when no revisions exist.
+	 */
+	public static function get_latest_revision_id( $post_id ) {
+		$revisions = wp_get_post_revisions(
+			$post_id,
+			array(
+				'posts_per_page' => 1,
+			)
+		);
+
+		if ( empty( $revisions ) ) {
+			return 0;
+		}
+
+		return self::extract_latest_revision_id_from_list( $revisions );
+	}
+
+	/**
+	 * Get the WordPress admin URL for KB article comments.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Admin URL.
+	 */
+	public static function get_comments_admin_url( $post_id ) {
+		return admin_url(
+			sprintf(
+				'post.php?post=%d&action=edit#commentsdiv',
+				intval( $post_id )
+			)
+		);
+	}
+
+	/**
+	 * Get the WordPress revision history URL for a KB article.
+	 *
+	 * The WordPress revision screen includes the diff UI and restore actions.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Admin URL or empty string if no revision exists.
+	 */
+	public static function get_revision_admin_url( $post_id ) {
+		return self::build_revision_admin_url(
+			self::get_latest_revision_id( $post_id )
+		);
+	}
+
+	/**
+	 * Extract the latest revision ID from a revision list.
+	 *
+	 * @param array $revisions Revision list.
+	 * @return int
+	 */
+	private static function extract_latest_revision_id_from_list( $revisions ) {
+		if ( empty( $revisions ) ) {
+			return 0;
+		}
+
+		$revision_list = array_values( $revisions );
+
+		return isset( $revision_list[0]->ID ) ? intval( $revision_list[0]->ID ) : 0;
+	}
+
+	/**
+	 * Build a revision admin URL.
+	 *
+	 * @param int $revision_id Revision ID.
+	 * @return string
+	 */
+	private static function build_revision_admin_url( $revision_id ) {
+		if ( ! $revision_id ) {
+			return '';
+		}
+
+		return admin_url(
+			sprintf(
+				'revision.php?revision=%d',
+				intval( $revision_id )
+			)
+		);
+	}
+
+	/**
 	 * Save or update KB article
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -416,6 +501,11 @@ class Decker_Kb {
 		$labels = wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) );
 		$board_terms = wp_get_object_terms( $article_id, 'decker_board', array( 'fields' => 'ids' ) );
 		$board_id = ! empty( $board_terms ) ? $board_terms[0] : 0;
+		$author_id          = intval( $post->post_author );
+		$last_editor_id     = self::get_last_editor( $article_id );
+		$latest_revision_id = self::get_latest_revision_id( $article_id );
+		$history_url        = self::build_revision_admin_url( $latest_revision_id );
+		$revision_count     = wp_count_post_revisions( $article_id );
 
 		return new WP_REST_Response(
 			array(
@@ -428,6 +518,22 @@ class Decker_Kb {
 					'board'      => $board_id,
 					'parent_id'  => $post->post_parent,
 					'menu_order' => $post->menu_order,
+					'author'     => array(
+						'id'   => $author_id,
+						'name' => get_the_author_meta( 'display_name', $author_id ),
+					),
+					'last_editor' => array(
+						'id'   => $last_editor_id,
+						'name' => get_the_author_meta( 'display_name', $last_editor_id ),
+					),
+					'comment_count' => get_comments_number( $article_id ),
+					'revision_count' => intval( $revision_count ),
+					'links'      => array(
+						'edit'     => get_edit_post_link( $article_id, '' ),
+						'comments' => self::get_comments_admin_url( $article_id ),
+						'history'  => $history_url,
+					),
+					'latest_revision_id' => $latest_revision_id,
 				),
 			),
 			200
