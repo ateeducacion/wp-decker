@@ -311,6 +311,10 @@ class Decker_Public {
 			// Add global search script.
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js';
 
+			// Add the AI improvement module.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-ai.css';
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-ai.js';
+
 			// Add collaborative editing module if enabled.
 			$this->maybe_enqueue_collaboration();
 
@@ -396,6 +400,7 @@ class Decker_Public {
 				'taskPermalinkStructure' => get_option( 'permalink_structure' )
 					? home_url( '/decker/task/%d/' )
 					: home_url( '/?decker_task=%d' ),
+				'ai'                => $this->get_ai_config(),
 			);
 
 			$last_handle = '';
@@ -504,6 +509,89 @@ class Decker_Public {
 			);
 
 		}
+	}
+
+	/**
+	 * Build the AI configuration object passed to JavaScript.
+	 *
+	 * Exposes browser-only AI prompts and all required UI strings.
+	 *
+	 * @return array AI configuration array.
+	 */
+	private function get_ai_config() {
+		$options = get_option( 'decker_settings', array() );
+
+		return array(
+			'enabled'          => ! isset( $options['ai_enabled'] ) || '1' === $options['ai_enabled'],
+			'strings'          => array(
+				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
+				'choose_action'            => __( 'Choose an action', 'decker' ),
+				'mode_improve_description' => __( 'Improve description', 'decker' ),
+				'mode_make_actionable'     => __( 'Make it actionable', 'decker' ),
+				'mode_generate_checklist'  => __( 'Generate checklist', 'decker' ),
+				'mode_summarize'           => __( 'Summarize', 'decker' ),
+				'improving'                => __( 'Improving text…', 'decker' ),
+				'preview_title'            => __( 'Review improvement', 'decker' ),
+				'original_text'            => __( 'Original', 'decker' ),
+				'improved_text'            => __( 'Improved', 'decker' ),
+				'accept'                   => __( 'Accept', 'decker' ),
+				'cancel'                   => __( 'Cancel', 'decker' ),
+				'error'                    => __( 'Error', 'decker' ),
+				'error_message'            => __( 'An error occurred while improving the text.', 'decker' ),
+				'no_content'               => __( 'No content', 'decker' ),
+				'no_content_message'       => __( 'Please add some text before using AI improvement.', 'decker' ),
+				'ai_unavailable_title'     => __( 'Browser AI unavailable', 'decker' ),
+				'ai_unavailable_intro'     => __( 'This AI action requires a compatible browser with built-in AI support.', 'decker' ),
+				'ai_chrome_unavailable'    => __( 'Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile.', 'decker' ),
+				'ai_edge_unavailable'      => __( 'Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile.', 'decker' ),
+				'ai_download_required'     => __( 'The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again.', 'decker' ),
+				'ai_browser_unsupported'   => __( 'This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled.', 'decker' ),
+				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
+				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
+				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
+				'yes'                      => _x( 'Yes', 'AI task context boolean value', 'decker' ),
+				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
+			),
+			'prompts'          => array(
+				'prompt_template' => ! empty( $options['ai_prompt'] )
+					? sanitize_textarea_field( $options['ai_prompt'] )
+					: Decker::get_default_ai_prompt_template(),
+				'improve_description' => __(
+					'Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content.',
+					'decker'
+				),
+				'make_actionable' => __(
+					'Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content.',
+					'decker'
+				),
+				'generate_checklist' => __(
+					'Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description.',
+					'decker'
+				),
+				'summarize'       => __(
+					'Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description.',
+					'decker'
+				),
+				'language_instruction' => sprintf(
+					/* translators: %s: locale code such as es_ES. */
+					__( 'Write the result in the language configured in WordPress (%s).', 'decker' ),
+					get_user_locale()
+				),
+				'response_format' => __(
+					'Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself.',
+					'decker'
+				),
+				'context_title'   => __( 'Title', 'decker' ),
+				'context_board'   => __( 'Board', 'decker' ),
+				'context_responsible' => __( 'Responsable', 'decker' ),
+				'context_assignees' => __( 'Assign to', 'decker' ),
+				'context_stack'   => __( 'Stack', 'decker' ),
+				'context_due_date' => __( 'Due Date', 'decker' ),
+				'context_labels'  => __( 'Labels', 'decker' ),
+				'context_max_priority' => __( 'Maximum Priority', 'decker' ),
+				'context_today'   => __( 'For today', 'decker' ),
+			),
+		);
 	}
 
 	/**

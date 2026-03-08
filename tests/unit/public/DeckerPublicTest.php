@@ -223,4 +223,21 @@ class DeckerPublicTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'roomPrefix', $output );
 	}
 
+	/**
+	 * Test AI config only exposes browser-side integration settings.
+	 */
+	public function test_get_ai_config_is_browser_only() {
+		$reflection = new ReflectionMethod( $this->decker_public, 'get_ai_config' );
+		$reflection->setAccessible( true );
+
+		$config = $reflection->invoke( $this->decker_public );
+
+		$this->assertTrue( $config['enabled'] );
+		$this->assertArrayNotHasKey( 'server_available', $config );
+		$this->assertArrayHasKey( 'ai_unavailable_title', $config['strings'] );
+		$this->assertArrayHasKey( 'ai_chrome_unavailable', $config['strings'] );
+		$this->assertArrayHasKey( 'ai_edge_unavailable', $config['strings'] );
+		$this->assertArrayHasKey( 'ai_browser_unsupported', $config['strings'] );
+	}
+
 }
