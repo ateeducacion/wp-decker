@@ -421,7 +421,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 						}
 					},
 					{
-						targets: [4, 5, 7],
+						targets: [4, 7],
 						orderable: false
 					},
 					{
