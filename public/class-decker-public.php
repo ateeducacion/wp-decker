@@ -184,6 +184,11 @@ class Decker_Public {
 		$decker_page = get_query_var( 'decker_page' );
 
 		if ( $decker_page ) {
+			$options                        = get_option( 'decker_settings', array() );
+			$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'classic';
+			$collaborative_editing_enabled = ! empty( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
+			$use_quill_editor              = $collaborative_editing_enabled || 'quill' === $task_editor_type;
+
 			$resources = array(
 				// Register the main theme config script.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/config.js',
@@ -216,13 +221,6 @@ class Decker_Public {
 				'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/default.min.css',
 				*/
 
-				// Quill.
-				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js',
-				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css',
-				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
-				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.min.js',
-				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.css',
-
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
@@ -245,6 +243,14 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
 
 			);
+
+			if ( $use_quill_editor ) {
+				$resources[] = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.css';
+			}
 
 			if ( 'board' == $decker_page ) {
 				// Dragula.
@@ -286,6 +292,10 @@ class Decker_Public {
 					// Page-specific script for Knowledge Base interactions.
 					$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/knowledge-base.js';
 
+			}
+
+			if ( ! $use_quill_editor ) {
+				wp_enqueue_editor();
 			}
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
@@ -391,6 +401,8 @@ class Decker_Public {
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
 				'current_user_id'   => get_current_user_id(),
+				'task_editor_type'  => $task_editor_type,
+				'use_quill_editor'  => $use_quill_editor,
 				'users'             => $users,
 				'locale' => substr( get_user_locale(), 0, 2 ), // Ej: "es_ES" → "es".
 				'taskPermalinkStructure' => get_option( 'permalink_structure' )

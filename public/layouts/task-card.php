@@ -344,11 +344,22 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 	</ul>
 
 	<div class="tab-content">
-		<!-- Description (Quill Editor) -->
+		<?php
+		$options                        = get_option( 'decker_settings', array() );
+		$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'classic';
+		$collaborative_editing_enabled = ! empty( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
+		$use_quill_editor              = $collaborative_editing_enabled || 'quill' === $task_editor_type;
+		?>
+
+		<!-- Description -->
 		<div class="tab-pane show active" id="description-tab">
-			<div id="editor-container">
-				<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
-			</div>
+			<?php if ( $use_quill_editor ) : ?>
+				<div id="editor-container">
+					<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
+				</div>
+			<?php else : ?>
+				<textarea name="description" id="task-description" rows="12" class="form-control"><?php echo esc_textarea( $task_id ? $task->description : $initial_description ); ?></textarea>
+			<?php endif; ?>
 		</div>
 
 		<!-- Comments -->
@@ -641,4 +652,3 @@ foreach ( $user_dates as $user_id => $dates ) {
 
 
 </form>
-

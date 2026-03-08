@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        if (window.quill) {
-           window.quill = null; // Assuming that Quill doesn't need explicit destruction
+        if (typeof window.destroyTaskEditor === 'function') {
+            window.destroyTaskEditor();
         }
 
         // Destroy collaborative editing session if active

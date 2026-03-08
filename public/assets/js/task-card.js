@@ -15,6 +15,7 @@
     window.deckerHasUnsavedChanges = false;
 
     let quill = null;
+    let taskEditor = null;
     let collabSession = null;
 
     let assigneesSelect = null;
@@ -92,6 +93,103 @@
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
+    }
+
+    /**
+     * Mark the task form as having unsaved changes.
+     */
+    function markTaskAsChanged(context) {
+        const saveButton = context.querySelector('#save-task') || document.querySelector('#save-task');
+        const saveDropdown = context.querySelector('#save-task-dropdown') || document.querySelector('#save-task-dropdown');
+
+        if (saveButton) {
+            saveButton.disabled = false;
+        }
+
+        if (saveDropdown) {
+            saveDropdown.disabled = false;
+        }
+
+        window.deckerHasUnsavedChanges = true;
+    }
+
+    /**
+     * Initialize the WordPress classic editor when Quill is not in use.
+     */
+    function initializeTaskEditor(context) {
+        const textarea = context.querySelector('#task-description');
+
+        if (!textarea || typeof wp === 'undefined' || !wp.editor) {
+            return Promise.resolve();
+        }
+
+        if (taskEditor && taskEditor.initialized) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const config = {
+                tinymce: {
+                    wpautop: true,
+                    container: 'description-tab',
+                    toolbar1: 'formatselect bold italic link bullist numlist blockquote alignleft aligncenter alignright wp_adv fullscreen',
+                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    menubar: false,
+                    setup: function(editor) {
+                        taskEditor = editor;
+                        editor.on('change keyup SetContent', function() {
+                            markTaskAsChanged(context);
+                        });
+                        editor.on('init', function() {
+                            taskEditor.initialized = true;
+                            resolve();
+                        });
+                    }
+                },
+                quicktags: true,
+                mediaButtons: false
+            };
+
+            wp.editor.initialize('task-description', config);
+        });
+    }
+
+    /**
+     * Get the current task description from the active editor.
+     */
+    function getTaskDescription(context) {
+        if (context.querySelector('#editor') && quill) {
+            return quill.root.innerHTML;
+        }
+
+        if (taskEditor && typeof taskEditor.getContent === 'function') {
+            return taskEditor.getContent();
+        }
+
+        if (typeof tinyMCE !== 'undefined') {
+            const activeEditor = tinyMCE.get('task-description');
+            if (activeEditor) {
+                return activeEditor.getContent();
+            }
+        }
+
+        const textarea = context.querySelector('#task-description');
+        return textarea ? textarea.value : '';
+    }
+
+    /**
+     * Destroy the active task editor instance.
+     */
+    function destroyTaskEditor() {
+        if (taskEditor && taskEditor.initialized && typeof wp !== 'undefined' && wp.editor) {
+            wp.editor.remove('task-description');
+        }
+
+        taskEditor = null;
+        formFieldsBinding = null;
+        collabSession = null;
+        quill = null;
+        window.quill = null;
     }
 
     /**
@@ -560,6 +658,10 @@
             console.log('Task ID not found in data-task-id');
         }
 
+        if (context.querySelector('#task-description')) {
+            initializeTaskEditor(context);
+        }
+
         if (context.querySelector('#editor')) {
             // Check if collaborative editing is enabled to include cursors module
             const collabEnabled = window.deckerCollabConfig && window.deckerCollabConfig.enabled;
@@ -645,6 +747,7 @@
                 readOnly: disabled,
                 modules: quillModules
             });
+            window.quill = quill;
 
             // Initialize collaborative editing if enabled and we have a task ID
             if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled) {
@@ -782,15 +885,13 @@
 
         // Function to enable the save button when any field changes
         const enableSaveButton = function() {
-            saveButton.disabled = false;
-            // Mark that there are unsaved changes
-            window.deckerHasUnsavedChanges = true;
+            markTaskAsChanged(context);
         };
 
         const form = context.querySelector('#task-form');
 
         // Add event listeners to all form inputs
-        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-today', 'task-max-priority'];
+        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-today', 'task-max-priority', 'task-description'];
 
         inputIds.forEach(function(id) {
             const element = context.querySelector(`#${id}`);
@@ -809,8 +910,7 @@
         // For the Quill editor
         if (quill) {
             quill.on('text-change', function() {
-                saveButton.disabled = false;
-                window.deckerHasUnsavedChanges = true;
+                markTaskAsChanged(context);
             });
         }
 
@@ -1042,7 +1142,7 @@
             hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
             assignees: selectedAssigneesValues,
             labels: selectedLabelsValues,
-            description: quill.root.innerHTML,
+            description: getTaskDescription(form),
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
         };
@@ -1148,6 +1248,7 @@
     window.sendFormByAjax = sendFormByAjax;
     window.deleteComment = deleteComment;
     window.togglePriorityLabel = togglePriorityLabel;
+    window.destroyTaskEditor = destroyTaskEditor;
 
     // Expose function to set task as archived (for collaborative sync)
     window.setTaskArchivedCollab = function(archived) {
@@ -1167,4 +1268,3 @@
     });
 
 })();
-

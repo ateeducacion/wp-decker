@@ -1460,3 +1460,15 @@ msgstr "Desconectado"
 
 msgid "you"
 msgstr "tú"
+
+msgid "Task Editor Type"
+msgstr "Tipo de editor de tareas"
+
+msgid "Classic Editor"
+msgstr "Editor clásico"
+
+msgid "Quill Editor"
+msgstr "Editor Quill"
+
+msgid "Choose which editor to use for task descriptions. Collaborative editing always uses Quill."
+msgstr "Elige qué editor usar para las descripciones de las tareas. La edición colaborativa siempre usa Quill."
