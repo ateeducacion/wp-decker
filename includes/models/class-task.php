@@ -251,6 +251,92 @@ class Task {
 	}
 
 	/**
+	 * Gets the users displayed in the people avatar group.
+	 *
+	 * The responsible user is returned first, followed by the remaining
+	 * assigned users without duplicates.
+	 *
+	 * @return WP_User[] Ordered list of users to display.
+	 */
+	public function get_people_users(): array {
+		$people = array();
+
+		if ( $this->responsable instanceof WP_User ) {
+			$people[] = $this->responsable;
+		}
+
+		foreach ( $this->assigned_users as $user ) {
+			if ( ! $user instanceof WP_User ) {
+				continue;
+			}
+
+			if ( $this->responsable instanceof WP_User && $this->responsable->ID === $user->ID ) {
+				continue;
+			}
+
+			$people[] = $user;
+		}
+
+		return $people;
+	}
+
+	/**
+	 * Gets the display names for the people avatar group.
+	 *
+	 * @return string[] List of user display names.
+	 */
+	public function get_people_names(): array {
+		$names = array();
+
+		foreach ( $this->get_people_users() as $user ) {
+			$names[] = $user->display_name;
+		}
+
+		return $names;
+	}
+
+	/**
+	 * Renders the people avatar group for the task.
+	 *
+	 * @return void
+	 */
+	public function render_people_avatars(): void {
+		echo '<div class="avatar-group">';
+
+		foreach ( $this->get_people_users() as $user ) {
+			$is_responsable = $this->responsable instanceof WP_User
+				&& $this->responsable->ID === $user->ID;
+			$classes        = 'avatar-group-item position-relative';
+
+			if ( ! empty( $user->today ) ) {
+				$classes .= ' today';
+			}
+
+			if ( $is_responsable ) {
+				$classes .= ' avatar-group-item-responsable';
+			}
+
+			echo '<a href="#" class="' . esc_attr( $classes ) . '"';
+			echo ' data-bs-toggle="tooltip" data-bs-placement="top"';
+			echo ' aria-label="' . esc_attr( $user->display_name ) . '"';
+			echo ' data-bs-original-title="' . esc_attr( $user->display_name ) . '"';
+			echo ' title="' . esc_attr( $user->display_name ) . '">';
+			echo '<span class="d-none">' . esc_html( $user->display_name ) . '</span>';
+
+			if ( $is_responsable ) {
+				echo '<span class="badge badge_avatar"><i class="ri-star-s-fill"></i></span>';
+			}
+
+			echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '"';
+			echo ' alt="' . esc_attr( $user->display_name ) . '"';
+			echo ' class="rounded-circle avatar-xs">';
+			echo '</a>';
+		}
+
+		echo '</div>';
+	}
+
+	/**
 	 * Checks if the current user is assigned to the task.
 	 *
 	 * Iterates through the list of assigned users and compares their IDs
@@ -522,28 +608,8 @@ class Task {
 
 				<?php $this->render_task_menu(); ?>
 
-				<div class="avatar-group mt-2">
-					<?php if ( null != $this->responsable ) { ?>
-						<a href="#" class="avatar-group-item position-relative <?php echo ( $this->responsable )->today ? ' today' : ''; ?>"
-						   data-bs-toggle="tooltip" data-bs-placement="top" 
-						   title="<?php echo esc_attr( ( $this->responsable )->display_name ); ?>">
-						   <span class="badge badge_avatar"><i class="ri-star-s-fill"></i></span>
-							<img src="<?php echo esc_url( get_avatar_url( ( $this->responsable )->ID ) ); ?>" alt=""
-								 class="rounded-circle avatar-xs">
-
-						</a>
-						
-					<?php } ?>
-					<?php foreach ( $this->assigned_users as $user_info ) : ?>
-						<?php if ( ( $this->responsable )->ID != $user_info->ID ) { ?>
-							<a href="#" class="avatar-group-item position-relative <?php echo $user_info->today ? ' today' : ''; ?>"
-							   data-bs-toggle="tooltip" data-bs-placement="top"
-							   title="<?php echo esc_attr( $user_info->display_name ); ?>">
-								<img src="<?php echo esc_url( get_avatar_url( $user_info->ID ) ); ?>" alt=""
-									 class="rounded-circle avatar-xs">
-							</a>
-						<?php } ?>
-					<?php endforeach; ?>
+				<div class="mt-2">
+					<?php $this->render_people_avatars(); ?>
 				</div>
 			</div> <!-- end card-body -->
 		</div>
