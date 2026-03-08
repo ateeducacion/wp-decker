@@ -196,7 +196,48 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test OpenAI-compatible API URL validation with a custom HTTPS endpoint.
+	 * Test AI provider validation with a valid provider value.
+	 */
+	public function test_settings_validate_ai_provider_with_valid_value() {
+		$input = array(
+			'ai_provider' => 'openrouter',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'openrouter', $validated['ai_provider'] );
+	}
+
+	/**
+	 * Test AI provider validation falls back to OpenAI for invalid values.
+	 */
+	public function test_settings_validate_ai_provider_with_invalid_value() {
+		$input = array(
+			'ai_provider' => 'invalid-provider',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'openai', $validated['ai_provider'] );
+	}
+
+	/**
+	 * Test legacy AI settings are migrated to generic option names.
+	 */
+	public function test_settings_validate_migrates_legacy_ai_option_names() {
+		$input = array(
+			'openai_api_key' => 'legacy-key',
+			'openai_model'   => 'gpt-5-mini',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'legacy-key', $validated['ai_api_key'] );
+		$this->assertEquals( 'gpt-5-mini', $validated['ai_model'] );
+	}
+
+	/**
+	 * Test AI API URL validation with a custom HTTPS endpoint.
 	 */
 	public function test_settings_validate_openai_api_url_with_custom_https_endpoint() {
 		$input = array(
@@ -282,6 +323,57 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'value="wss://custom-server.example.com"', $output );
+	}
+
+	/**
+	 * Test ai_provider_render outputs the configured provider selector.
+	 */
+	public function test_ai_provider_render_outputs_selected_provider() {
+		update_option(
+			'decker_settings',
+			array( 'ai_provider' => 'gemini' )
+		);
+
+		ob_start();
+		$this->admin_settings->ai_provider_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[ai_provider]"', $output );
+		$this->assertStringContainsString( '<option value="gemini" selected=\'selected\'>', $output );
+	}
+
+	/**
+	 * Test ai_api_key_render falls back to the legacy stored API key.
+	 */
+	public function test_ai_api_key_render_uses_legacy_stored_value() {
+		update_option(
+			'decker_settings',
+			array( 'openai_api_key' => 'legacy-key' )
+		);
+
+		ob_start();
+		$this->admin_settings->ai_api_key_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[ai_api_key]"', $output );
+		$this->assertStringContainsString( 'value="legacy-key"', $output );
+	}
+
+	/**
+	 * Test ai_model_render uses the default model for the selected provider.
+	 */
+	public function test_ai_model_render_uses_provider_default() {
+		update_option(
+			'decker_settings',
+			array( 'ai_provider' => 'gemini' )
+		);
+
+		ob_start();
+		$this->admin_settings->ai_model_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[ai_model]"', $output );
+		$this->assertStringContainsString( 'value="gemini-2.0-flash"', $output );
 	}
 
 	/**

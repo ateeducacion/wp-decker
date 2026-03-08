@@ -102,21 +102,130 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Render OpenAI API Key Field.
+	 * Get the selected AI provider, with fallback for legacy settings.
 	 *
-	 * Outputs the HTML for the openai_api_key settings field.
+	 * @param array $options Plugin settings.
+	 * @return string Provider slug.
 	 */
-	public function openai_api_key_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = isset( $options['openai_api_key'] ) ? sanitize_text_field( $options['openai_api_key'] ) : '';
+	protected function get_ai_provider_value( $options ) {
+		$valid_providers = array( 'openai', 'openrouter', 'gemini' );
 
-		echo '<input type="password" name="decker_settings[openai_api_key]" class="regular-text" '
-			. 'value="' . esc_attr( $value ) . '" autocomplete="off">';
-		echo '<p class="description">' . esc_html__( 'Enter your OpenAI API key to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (e.g. Chrome).', 'decker' ) . '</p>';
+		if ( ! empty( $options['ai_provider'] ) ) {
+			$provider = sanitize_key( $options['ai_provider'] );
+			if ( in_array( $provider, $valid_providers, true ) ) {
+				return $provider;
+			}
+		}
+
+		if ( ! empty( $options['openai_api_url'] ) ) {
+			$legacy_url = strtolower( (string) $options['openai_api_url'] );
+
+			if ( false !== strpos( $legacy_url, 'openrouter.ai' ) ) {
+				return 'openrouter';
+			}
+
+			if (
+				false !== strpos( $legacy_url, 'generativelanguage.googleapis.com' ) ||
+				false !== strpos( $legacy_url, 'googleapis.com' )
+			) {
+				return 'gemini';
+			}
+		}
+
+		return 'openai';
 	}
 
 	/**
-	 * Render OpenAI-Compatible API URL Field.
+	 * Get the configured AI API key, with fallback for legacy settings.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return string API key.
+	 */
+	protected function get_ai_api_key_value( $options ) {
+		if ( ! empty( $options['ai_api_key'] ) ) {
+			return sanitize_text_field( $options['ai_api_key'] );
+		}
+
+		if ( ! empty( $options['openai_api_key'] ) ) {
+			return sanitize_text_field( $options['openai_api_key'] );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Get the default model for the selected provider.
+	 *
+	 * @param string $provider Provider slug.
+	 * @return string Default model identifier.
+	 */
+	protected function get_default_ai_model( $provider ) {
+		$defaults = array(
+			'openai'     => 'gpt-5-mini',
+			'openrouter' => 'openai/gpt-5-mini',
+			'gemini'     => 'gemini-2.0-flash',
+		);
+
+		return isset( $defaults[ $provider ] ) ? $defaults[ $provider ] : $defaults['openai'];
+	}
+
+	/**
+	 * Get the configured AI model, with fallback for legacy settings.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return string Model identifier.
+	 */
+	protected function get_ai_model_value( $options ) {
+		$provider = $this->get_ai_provider_value( $options );
+
+		if ( ! empty( $options['ai_model'] ) ) {
+			return sanitize_text_field( $options['ai_model'] );
+		}
+
+		if ( ! empty( $options['openai_model'] ) ) {
+			return sanitize_text_field( $options['openai_model'] );
+		}
+
+		return $this->get_default_ai_model( $provider );
+	}
+
+	/**
+	 * Render AI Provider Field.
+	 *
+	 * Outputs the HTML for the ai_provider settings field.
+	 */
+	public function ai_provider_render() {
+		$options  = get_option( 'decker_settings', array() );
+		$provider = $this->get_ai_provider_value( $options );
+
+		echo '<select name="decker_settings[ai_provider]">';
+		echo '<option value="openai" ' . selected( $provider, 'openai', false ) . '>' .
+			esc_html__( 'OpenAI', 'decker' ) . '</option>';
+		echo '<option value="openrouter" ' . selected( $provider, 'openrouter', false ) . '>' .
+			esc_html__( 'OpenRouter', 'decker' ) . '</option>';
+		echo '<option value="gemini" ' . selected( $provider, 'gemini', false ) . '>' .
+			esc_html__( 'Gemini', 'decker' ) . '</option>';
+		echo '</select>';
+		echo '<p class="description">' . esc_html__( 'Choose which provider to use for server-side AI fallback. Browser-native AI remains preferred when available.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'OpenAI uses OpenAI credentials and model names. OpenRouter uses OpenRouter credentials and model names. Gemini uses Gemini credentials and model names.', 'decker' ) . '</p>';
+	}
+
+	/**
+	 * Render AI API Key Field.
+	 *
+	 * Outputs the HTML for the ai_api_key settings field.
+	 */
+	public function ai_api_key_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value   = $this->get_ai_api_key_value( $options );
+
+		echo '<input type="password" name="decker_settings[ai_api_key]" class="regular-text" '
+			. 'value="' . esc_attr( $value ) . '" autocomplete="off">';
+		echo '<p class="description">' . esc_html__( 'Enter the API key for the selected AI provider to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (for example, Chrome).', 'decker' ) . '</p>';
+	}
+
+	/**
+	 * Render AI API URL Override Field.
 	 *
 	 * Outputs the HTML for the openai_api_url settings field.
 	 */
@@ -126,35 +235,36 @@ class Decker_Admin_Settings {
 
 		echo '<input type="url" name="decker_settings[openai_api_url]" class="regular-text code" '
 			. 'value="' . esc_attr( $value ) . '" placeholder="https://api.openai.com/v1/chat/completions">';
-		echo '<p class="description">' . esc_html__( 'Enter the HTTPS chat completions endpoint for an OpenAI-compatible provider. Examples: OpenAI uses https://api.openai.com/v1/chat/completions and OpenRouter uses https://openrouter.ai/api/v1/chat/completions.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Optional advanced override for the HTTPS chat completions endpoint. Leave the default value to use the selected provider endpoint automatically.', 'decker' ) . '</p>';
 		echo '<p class="description">' . esc_html__( 'WordPress Playground may block server-side provider requests because outbound HTTP is proxied through the browser. In that environment, browser-native AI is usually more reliable.', 'decker' ) . '</p>';
 	}
 
 	/**
-	 * Render OpenAI Model Field.
+	 * Render AI Model Field.
 	 *
-	 * Outputs the HTML for the openai_model settings field.
+	 * Outputs the HTML for the ai_model settings field.
 	 */
-	public function openai_model_render() {
+	public function ai_model_render() {
 		$options        = get_option( 'decker_settings', array() );
-		$selected_model = isset( $options['openai_model'] ) ? sanitize_text_field( $options['openai_model'] ) : 'gpt-5-mini';
+		$selected_model = $this->get_ai_model_value( $options );
 
 		$models = array(
-			'gpt-5-mini' => 'GPT-5 mini (recommended)',
-			'gpt-5'      => 'GPT-5',
-			'gpt-5-nano' => 'GPT-5 nano (fastest)',
-			'o4-mini'    => 'o4-mini (reasoning)',
-			'o3'         => 'o3 (advanced reasoning)',
+			'gpt-5-mini'         => 'OpenAI: gpt-5-mini',
+			'gpt-5'              => 'OpenAI: gpt-5',
+			'openai/gpt-5-mini'  => 'OpenRouter: openai/gpt-5-mini',
+			'openai/gpt-5'       => 'OpenRouter: openai/gpt-5',
+			'gemini-2.0-flash'   => 'Gemini: gemini-2.0-flash',
+			'gemini-2.5-flash'   => 'Gemini: gemini-2.5-flash',
 		);
 
-		echo '<input type="text" name="decker_settings[openai_model]" class="regular-text" '
+		echo '<input type="text" name="decker_settings[ai_model]" class="regular-text" '
 			. 'value="' . esc_attr( $selected_model ) . '" list="decker-openai-models" autocomplete="off">';
 		echo '<datalist id="decker-openai-models">';
 		foreach ( $models as $value => $label ) {
 			echo '<option value="' . esc_attr( $value ) . '">' . esc_html( $label ) . '</option>';
 		}
 		echo '</datalist>';
-		echo '<p class="description">' . esc_html__( 'Enter any OpenAI model identifier to use for server-side text improvement. Suggested values are GPT-5 mini, GPT-5, GPT-5 nano, o4-mini, and o3. GPT-5 mini is recommended for most use cases.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Enter the model identifier for the selected provider. Examples: OpenAI can use gpt-5-mini, OpenRouter can use openai/gpt-5-mini, and Gemini can use gemini-2.0-flash.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -342,9 +452,10 @@ class Decker_Admin_Settings {
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
-			'openai_api_key'        => __( 'OpenAI API Key', 'decker' ),
-			'openai_api_url'        => __( 'OpenAI-Compatible API URL', 'decker' ),
-			'openai_model'          => __( 'OpenAI Model', 'decker' ),
+			'ai_provider'           => __( 'AI Provider', 'decker' ),
+			'ai_api_key'            => __( 'AI API Key', 'decker' ),
+			'openai_api_url'        => __( 'AI API URL Override', 'decker' ),
+			'ai_model'              => __( 'AI Model', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),
 
@@ -468,10 +579,23 @@ class Decker_Admin_Settings {
 			$input['signaling_server'] = 'wss://signaling.yjs.dev';
 		}
 
-		// Validate OpenAI API key.
-		$input['openai_api_key'] = isset( $input['openai_api_key'] ) ? sanitize_text_field( $input['openai_api_key'] ) : '';
+		$valid_providers = array( 'openai', 'openrouter', 'gemini' );
 
-		// Validate OpenAI-compatible API URL.
+		// Validate AI provider.
+		$input['ai_provider'] = isset( $input['ai_provider'] ) ? sanitize_key( $input['ai_provider'] ) : 'openai';
+		if ( ! in_array( $input['ai_provider'], $valid_providers, true ) ) {
+			$input['ai_provider'] = 'openai';
+		}
+
+		// Validate AI API key with backward compatibility for legacy field names.
+		$input['ai_api_key'] = '';
+		if ( isset( $input['ai_api_key'] ) ) {
+			$input['ai_api_key'] = sanitize_text_field( $input['ai_api_key'] );
+		} elseif ( isset( $input['openai_api_key'] ) ) {
+			$input['ai_api_key'] = sanitize_text_field( $input['openai_api_key'] );
+		}
+
+		// Validate AI API URL override.
 		$input['openai_api_url'] = isset( $input['openai_api_url'] ) ? esc_url_raw( $input['openai_api_url'], array( 'https' ) ) : '';
 		if ( empty( $input['openai_api_url'] ) ) {
 			$input['openai_api_url'] = 'https://api.openai.com/v1/chat/completions';
@@ -489,10 +613,15 @@ class Decker_Admin_Settings {
 			}
 		}
 
-		// Validate OpenAI model.
-		$input['openai_model'] = isset( $input['openai_model'] ) ? sanitize_text_field( $input['openai_model'] ) : '';
-		if ( empty( $input['openai_model'] ) ) {
-			$input['openai_model'] = 'gpt-5-mini';
+		// Validate AI model with backward compatibility for legacy field names.
+		$input['ai_model'] = '';
+		if ( isset( $input['ai_model'] ) ) {
+			$input['ai_model'] = sanitize_text_field( $input['ai_model'] );
+		} elseif ( isset( $input['openai_model'] ) ) {
+			$input['ai_model'] = sanitize_text_field( $input['openai_model'] );
+		}
+		if ( empty( $input['ai_model'] ) ) {
+			$input['ai_model'] = $this->get_default_ai_model( $input['ai_provider'] );
 		}
 
 		// Validate alert color.

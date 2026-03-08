@@ -520,8 +520,8 @@ class Decker_Public {
 	 * @return array AI configuration array.
 	 */
 	private function get_ai_config() {
-		$settings        = get_option( 'decker_settings', array() );
-		$has_api_key     = ! empty( $settings['openai_api_key'] );
+		$settings    = get_option( 'decker_settings', array() );
+		$has_api_key = ! empty( $settings['ai_api_key'] ) || ! empty( $settings['openai_api_key'] );
 
 		return array(
 			'enabled'          => true,
@@ -529,11 +529,14 @@ class Decker_Public {
 			'strings'          => array(
 				'improve_with_ai'      => __( 'Improve with AI', 'decker' ),
 				'choose_action'        => __( 'Choose an action', 'decker' ),
-				'mode_improve'         => __( 'Improve writing', 'decker' ),
-				'mode_shorten'         => __( 'Make shorter', 'decker' ),
-				'mode_clarify'         => __( 'Make clearer', 'decker' ),
-				'mode_professionalize' => __( 'Make more professional', 'decker' ),
-				'mode_proofread'       => __( 'Fix grammar and spelling', 'decker' ),
+				'mode_improve_writing' => __( 'Improve writing', 'decker' ),
+				'mode_make_shorter'    => __( 'Make shorter', 'decker' ),
+				'mode_make_clearer'    => __( 'Make clearer', 'decker' ),
+				'mode_fix_grammar'     => __( 'Fix grammar and spelling', 'decker' ),
+				'mode_make_actionable' => __( 'Make it actionable', 'decker' ),
+				'mode_checklist'       => __( 'Convert to checklist', 'decker' ),
+				'mode_acceptance_criteria' => __( 'Extract acceptance criteria', 'decker' ),
+				'mode_summarize'       => __( 'Summarize', 'decker' ),
 				'improving'            => __( 'Improving text…', 'decker' ),
 				'preview_title'        => __( 'Review improvement', 'decker' ),
 				'original_text'        => __( 'Original', 'decker' ),
@@ -544,27 +547,39 @@ class Decker_Public {
 				'error_message'        => __( 'An error occurred while improving the text.', 'decker' ),
 				'no_content'           => __( 'No content', 'decker' ),
 				'no_content_message'   => __( 'Please add some text before using AI improvement.', 'decker' ),
-				'no_ai_available'      => __( 'No AI provider available. Configure an OpenAI API key in Decker settings or use a browser with built-in AI support.', 'decker' ),
+				'no_ai_available'      => __( 'No AI provider available. Configure an AI provider and API key in Decker settings or use a browser with built-in AI support.', 'decker' ),
 			),
 			'prompts'          => array(
-				'improve'         => __(
-					'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.',
+				'improve_writing' => __(
+					'Improve the following task description so it is concise, clear, and easy for the team to execute.',
 					'decker'
 				),
-				'shorten'         => __(
-					'Shorten the following task description while keeping its key meaning.',
+				'make_shorter'    => __(
+					'Shorten the following task description while keeping the key actions, constraints, and expected outcome.',
 					'decker'
 				),
-				'clarify'         => __(
-					'Rewrite the following task description to make it clearer and easier to understand.',
+				'make_clearer'    => __(
+					'Rewrite the following task description so it is clearer, more specific, and easier to understand.',
 					'decker'
 				),
-				'professionalize' => __(
-					'Rewrite the following task description in a professional tone.',
+				'fix_grammar'     => __(
+					'Fix grammar, spelling, and punctuation in the following task description without changing its meaning.',
 					'decker'
 				),
-				'proofread'       => __(
-					'Fix all grammar, spelling, and punctuation errors in the following task description.',
+				'make_actionable' => __(
+					'Rewrite the following task description as an actionable task with concrete next steps and clear ownership language.',
+					'decker'
+				),
+				'checklist'       => __(
+					'Convert the following task description into a concise checklist that can be pasted directly into the task.',
+					'decker'
+				),
+				'acceptance_criteria' => __(
+					'Extract concise acceptance criteria from the following task description.',
+					'decker'
+				),
+				'summarize'       => __(
+					'Summarize the following task description into a short, useful summary.',
 					'decker'
 				),
 				'language_instruction' => sprintf(

@@ -54,7 +54,7 @@ class DeckerAITest extends Decker_Test_Base {
 
 		$request  = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
 		$request->set_param( 'text', 'Hello world' );
-		$request->set_param( 'mode', 'improve' );
+		$request->set_param( 'mode', 'improve_writing' );
 		$response = $this->server->dispatch( $request );
 
 		$this->assertEquals( 401, $response->get_status() );
@@ -69,7 +69,7 @@ class DeckerAITest extends Decker_Test_Base {
 
 		$request  = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
 		$request->set_param( 'text', 'Hello world' );
-		$request->set_param( 'mode', 'improve' );
+		$request->set_param( 'mode', 'improve_writing' );
 		$response = $this->server->dispatch( $request );
 
 		// Should not be 401 or 403 — permission check passes.
@@ -102,7 +102,7 @@ class DeckerAITest extends Decker_Test_Base {
 		wp_set_current_user( $this->editor_id );
 
 		$request  = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
-		$request->set_param( 'mode', 'improve' );
+		$request->set_param( 'mode', 'improve_writing' );
 		$response = $this->server->dispatch( $request );
 
 		$this->assertEquals( 400, $response->get_status() );
@@ -136,7 +136,7 @@ class DeckerAITest extends Decker_Test_Base {
 
 		$request  = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
 		$request->set_param( 'text', 'Some task description.' );
-		$request->set_param( 'mode', 'improve' );
+		$request->set_param( 'mode', 'improve_writing' );
 		$response = $this->server->dispatch( $request );
 
 		$this->assertEquals( 503, $response->get_status() );
@@ -153,7 +153,16 @@ class DeckerAITest extends Decker_Test_Base {
 		// Ensure no API key so we get a predictable 503 (not a schema 400).
 		update_option( 'decker_settings', array() );
 
-		$valid_modes = array( 'improve', 'shorten', 'clarify', 'professionalize', 'proofread' );
+		$valid_modes = array(
+			'improve_writing',
+			'make_shorter',
+			'make_clearer',
+			'fix_grammar',
+			'make_actionable',
+			'checklist',
+			'acceptance_criteria',
+			'summarize',
+		);
 
 		foreach ( $valid_modes as $mode ) {
 			$request  = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
@@ -168,6 +177,105 @@ class DeckerAITest extends Decker_Test_Base {
 				"Mode '{$mode}' was unexpectedly rejected by the schema."
 			);
 		}
+	}
+
+	/**
+	 * The provider should come from the new ai_provider setting when present.
+	 */
+	public function test_get_ai_provider_uses_new_provider_setting() {
+		$ai = new Decker_AI_Testable();
+
+		$this->assertEquals(
+			'openrouter',
+			$ai->expose_get_ai_provider(
+				array(
+					'ai_provider' => 'openrouter',
+				)
+			)
+		);
+	}
+
+	/**
+	 * Legacy endpoint settings should still infer the intended provider.
+	 */
+	public function test_get_ai_provider_infers_provider_from_legacy_endpoint() {
+		$ai = new Decker_AI_Testable();
+
+		$this->assertEquals(
+			'gemini',
+			$ai->expose_get_ai_provider(
+				array(
+					'openai_api_url' => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+				)
+			)
+		);
+	}
+
+	/**
+	 * Legacy API key options should still be accepted.
+	 */
+	public function test_get_api_key_falls_back_to_legacy_option_name() {
+		$ai = new Decker_AI_Testable();
+
+		$this->assertEquals(
+			'legacy-key',
+			$ai->expose_get_api_key(
+				array(
+					'openai_api_key' => 'legacy-key',
+				)
+			)
+		);
+	}
+
+	/**
+	 * Legacy model options should still be accepted.
+	 */
+	public function test_get_model_falls_back_to_legacy_option_name() {
+		$ai = new Decker_AI_Testable();
+
+		$this->assertEquals(
+			'gpt-5-mini',
+			$ai->expose_get_model(
+				array(
+					'openai_model' => 'gpt-5-mini',
+				),
+				array(
+					'default_model' => 'gemini-2.0-flash',
+				)
+			)
+		);
+	}
+
+	/**
+	 * Gemini should use the Google OpenAI-compatible endpoint.
+	 */
+	public function test_get_provider_config_returns_gemini_endpoint() {
+		$ai     = new Decker_AI_Testable();
+		$config = $ai->expose_get_provider_config( 'gemini', array() );
+
+		$this->assertEquals(
+			'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+			$config['endpoint']
+		);
+	}
+
+	/**
+	 * Invalid provider settings should fail gracefully.
+	 */
+	public function test_invalid_provider_returns_error() {
+		update_option(
+			'decker_settings',
+			array(
+				'ai_provider' => 'invalid-provider',
+				'ai_api_key'  => 'test-key',
+			)
+		);
+
+		$ai     = new Decker_AI_Testable();
+		$result = $ai->expose_improve_text( 'Sample text', 'improve_writing' );
+
+		$this->assertWPError( $result );
+		$this->assertEquals( 'invalid_ai_provider', $result->get_error_code() );
 	}
 
 	// -------------------------------------------------------------------------
@@ -201,7 +309,7 @@ class DeckerAITest extends Decker_Test_Base {
 	 */
 	public function test_build_prompt_includes_wordpress_locale_instruction() {
 		$ai     = new Decker_AI_Testable();
-		$prompt = $ai->expose_build_prompt( 'improve', 'Sample text' );
+		$prompt = $ai->expose_build_prompt( 'improve_writing', 'Sample text' );
 
 		$this->assertStringContainsString( get_user_locale(), $prompt );
 		$this->assertStringContainsString( 'Sample text', $prompt );
@@ -234,7 +342,7 @@ class DeckerAITest extends Decker_Test_Base {
 	 */
 	public function test_build_prompt_uses_prompt_locale_value() {
 		$ai     = new Decker_AI_Testable_With_Locale( 'ca_ES' );
-		$prompt = $ai->expose_build_prompt( 'improve', 'Sample text' );
+		$prompt = $ai->expose_build_prompt( 'improve_writing', 'Sample text' );
 
 		$this->assertStringContainsString( 'ca_ES', $prompt );
 	}
@@ -269,12 +377,65 @@ class Decker_AI_Testable extends Decker_AI {
 	}
 
 	/**
+	 * Expose the protected improve_text method for testing.
+	 *
+	 * @param string $text Text to improve.
+	 * @param string $mode Rewrite mode.
+	 * @return string|WP_Error Improved text or error.
+	 */
+	public function expose_improve_text( $text, $mode ) {
+		return $this->improve_text( $text, $mode );
+	}
+
+	/**
 	 * Expose the protected get_prompt_locale method for testing.
 	 *
 	 * @return string Locale code.
 	 */
 	public function expose_get_prompt_locale() {
 		return $this->get_prompt_locale();
+	}
+
+	/**
+	 * Expose the protected get_ai_provider method for testing.
+	 *
+	 * @param array $settings Plugin settings.
+	 * @return string Provider slug.
+	 */
+	public function expose_get_ai_provider( $settings ) {
+		return $this->get_ai_provider( $settings );
+	}
+
+	/**
+	 * Expose the protected get_api_key method for testing.
+	 *
+	 * @param array $settings Plugin settings.
+	 * @return string API key.
+	 */
+	public function expose_get_api_key( $settings ) {
+		return $this->get_api_key( $settings );
+	}
+
+	/**
+	 * Expose the protected get_model method for testing.
+	 *
+	 * @param array $settings        Plugin settings.
+	 * @param array $provider_config Provider configuration.
+	 * @return string Model identifier.
+	 */
+	public function expose_get_model( $settings, $provider_config ) {
+		return $this->get_model( $settings, $provider_config );
+	}
+
+	/**
+	 * Expose the protected get_provider_config method for testing.
+	 *
+	 * @param string $provider Provider slug.
+	 * @param array  $settings Plugin settings.
+	 * @return array<string, mixed> Provider configuration.
+	 */
+	public function expose_get_provider_config( $provider, $settings ) {
+		return $this->get_provider_config( $provider, $settings );
 	}
 }
 

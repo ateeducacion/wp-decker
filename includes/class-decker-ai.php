@@ -24,11 +24,25 @@ class Decker_AI {
 	 * @var string[]
 	 */
 	const VALID_MODES = array(
-		'improve',
-		'shorten',
-		'clarify',
-		'professionalize',
-		'proofread',
+		'improve_writing',
+		'make_shorter',
+		'make_clearer',
+		'fix_grammar',
+		'make_actionable',
+		'checklist',
+		'acceptance_criteria',
+		'summarize',
+	);
+
+	/**
+	 * Supported server-side AI providers.
+	 *
+	 * @var string[]
+	 */
+	const VALID_PROVIDERS = array(
+		'openai',
+		'openrouter',
+		'gemini',
 	);
 
 	/**
@@ -132,13 +146,22 @@ class Decker_AI {
 	 * @return string|WP_Error Improved content or error.
 	 */
 	protected function improve_text( $text, $mode ) {
-		$settings     = get_option( 'decker_settings', array() );
-		$api_key      = isset( $settings['openai_api_key'] ) ? trim( $settings['openai_api_key'] ) : '';
-		$provider_url = isset( $settings['openai_api_url'] ) ? esc_url_raw( $settings['openai_api_url'], array( 'https' ) ) : '';
+		$settings = get_option( 'decker_settings', array() );
+		$provider = $this->get_ai_provider( $settings );
 
-		if ( empty( $provider_url ) ) {
-			$provider_url = 'https://api.openai.com/v1/chat/completions';
+		if ( ! in_array( $provider, self::VALID_PROVIDERS, true ) ) {
+			return new WP_Error(
+				'invalid_ai_provider',
+				__(
+					'The configured AI provider is invalid. Please review the Decker AI settings.',
+					'decker'
+				),
+				array( 'status' => 503 )
+			);
 		}
+
+		$api_key         = $this->get_api_key( $settings );
+		$provider_config = $this->get_provider_config( $provider, $settings );
 
 		if ( empty( $api_key ) ) {
 			return new WP_Error(
@@ -148,13 +171,155 @@ class Decker_AI {
 			);
 		}
 
-		$model  = isset( $settings['openai_model'] ) && ! empty( $settings['openai_model'] )
-			? sanitize_text_field( $settings['openai_model'] )
-			: 'gpt-5-mini';
+		$model  = $this->get_model( $settings, $provider_config );
 
 		$prompt = $this->build_prompt( $mode, $text );
 
-		return $this->call_provider( $api_key, $provider_url, $model, $prompt );
+		return $this->call_provider( $provider, $api_key, $model, $prompt, $provider_config );
+	}
+
+	/**
+	 * Get the configured server-side AI provider.
+	 *
+	 * Falls back to legacy settings when the new option is not saved yet.
+	 *
+	 * @param array $settings Decker settings.
+	 * @return string Provider slug.
+	 */
+	protected function get_ai_provider( $settings ) {
+		if ( ! empty( $settings['ai_provider'] ) ) {
+			return sanitize_key( $settings['ai_provider'] );
+		}
+
+		if ( empty( $settings['openai_api_url'] ) ) {
+			return 'openai';
+		}
+
+		$legacy_url = strtolower( (string) $settings['openai_api_url'] );
+
+		if ( false !== strpos( $legacy_url, 'openrouter.ai' ) ) {
+			return 'openrouter';
+		}
+
+		if (
+			false !== strpos( $legacy_url, 'generativelanguage.googleapis.com' ) ||
+			false !== strpos( $legacy_url, 'googleapis.com' )
+		) {
+			return 'gemini';
+		}
+
+		return 'openai';
+	}
+
+	/**
+	 * Get the configured API key with backward compatibility for legacy options.
+	 *
+	 * @param array $settings Decker settings.
+	 * @return string API key.
+	 */
+	protected function get_api_key( $settings ) {
+		if ( ! empty( $settings['ai_api_key'] ) ) {
+			return trim( sanitize_text_field( $settings['ai_api_key'] ) );
+		}
+
+		if ( ! empty( $settings['openai_api_key'] ) ) {
+			return trim( sanitize_text_field( $settings['openai_api_key'] ) );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Get provider-specific connection details.
+	 *
+	 * @param string $provider Provider slug.
+	 * @param array  $settings Decker settings.
+	 * @return array<string, mixed> Provider configuration.
+	 */
+	protected function get_provider_config( $provider, $settings ) {
+		$configs = array(
+			'openai'     => array(
+				'endpoint'      => 'https://api.openai.com/v1/chat/completions',
+				'default_model' => 'gpt-5-mini',
+				'headers'       => array(),
+			),
+			'openrouter' => array(
+				'endpoint'      => 'https://openrouter.ai/api/v1/chat/completions',
+				'default_model' => 'openai/gpt-5-mini',
+				'headers'       => array(
+					'HTTP-Referer' => home_url( '/' ),
+					'X-Title'      => get_bloginfo( 'name' ),
+				),
+			),
+			'gemini'     => array(
+				'endpoint'      => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+				'default_model' => 'gemini-2.0-flash',
+				'headers'       => array(),
+			),
+		);
+
+		if ( ! isset( $configs[ $provider ] ) ) {
+			return array();
+		}
+
+		if ( empty( $settings['ai_provider'] ) && ! empty( $settings['openai_api_url'] ) ) {
+			$legacy_endpoint = $this->validate_provider_url( $settings['openai_api_url'] );
+			if ( ! empty( $legacy_endpoint ) ) {
+				$configs[ $provider ]['endpoint'] = $legacy_endpoint;
+			}
+		}
+
+		return $configs[ $provider ];
+	}
+
+	/**
+	 * Get the configured model with backward compatibility for legacy options.
+	 *
+	 * @param array $settings        Decker settings.
+	 * @param array $provider_config Provider configuration.
+	 * @return string Model identifier.
+	 */
+	protected function get_model( $settings, $provider_config ) {
+		if ( ! empty( $settings['ai_model'] ) ) {
+			return sanitize_text_field( $settings['ai_model'] );
+		}
+
+		if ( ! empty( $settings['openai_model'] ) ) {
+			return sanitize_text_field( $settings['openai_model'] );
+		}
+
+		return isset( $provider_config['default_model'] )
+			? $provider_config['default_model']
+			: 'gpt-5-mini';
+	}
+
+	/**
+	 * Validate a provider URL and ensure it is HTTPS.
+	 *
+	 * @param string $url Provider endpoint URL.
+	 * @return string Validated URL or empty string.
+	 */
+	protected function validate_provider_url( $url ) {
+		$url = esc_url_raw( $url, array( 'https' ) );
+
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		$parsed_url = wp_parse_url( $url );
+
+		if (
+			! wp_http_validate_url( $url ) ||
+			empty( $parsed_url['scheme'] ) ||
+			'https' !== $parsed_url['scheme'] ||
+			empty( $parsed_url['host'] ) ||
+			! empty( $parsed_url['user'] ) ||
+			! empty( $parsed_url['pass'] )
+		) {
+			return '';
+		}
+
+		return $url;
 	}
 
 	/**
@@ -179,14 +344,41 @@ class Decker_AI {
 		);
 
 		$prefixes = array(
-			'improve'         => __( 'Improve the writing of the following task description. Make it clearer, more fluent, and better structured.', 'decker' ),
-			'shorten'         => __( 'Shorten the following task description while keeping its key meaning.', 'decker' ),
-			'clarify'         => __( 'Rewrite the following task description to make it clearer and easier to understand.', 'decker' ),
-			'professionalize' => __( 'Rewrite the following task description in a professional tone.', 'decker' ),
-			'proofread'       => __( 'Fix all grammar, spelling, and punctuation errors in the following task description.', 'decker' ),
+			'improve_writing'     => __(
+				'Improve the following task description so it is concise, clear, and easy for the team to execute.',
+				'decker'
+			),
+			'make_shorter'        => __(
+				'Shorten the following task description while keeping the key actions, constraints, and expected outcome.',
+				'decker'
+			),
+			'make_clearer'        => __(
+				'Rewrite the following task description so it is clearer, more specific, and easier to understand.',
+				'decker'
+			),
+			'fix_grammar'         => __(
+				'Fix grammar, spelling, and punctuation in the following task description without changing its meaning.',
+				'decker'
+			),
+			'make_actionable'     => __(
+				'Rewrite the following task description as an actionable task with concrete next steps and clear ownership language.',
+				'decker'
+			),
+			'checklist'           => __(
+				'Convert the following task description into a concise checklist that can be pasted directly into the task.',
+				'decker'
+			),
+			'acceptance_criteria' => __(
+				'Extract concise acceptance criteria from the following task description.',
+				'decker'
+			),
+			'summarize'           => __(
+				'Summarize the following task description into a short, useful summary.',
+				'decker'
+			),
 		);
 
-		$prefix = isset( $prefixes[ $mode ] ) ? $prefixes[ $mode ] : $prefixes['improve'];
+		$prefix = isset( $prefixes[ $mode ] ) ? $prefixes[ $mode ] : $prefixes['improve_writing'];
 
 		return $prefix . ' ' . $language_instruction . ' ' . $suffix . "\n\n" . $text;
 	}
@@ -205,40 +397,19 @@ class Decker_AI {
 	}
 
 	/**
-	 * Send the prompt to an OpenAI-compatible Chat Completions API.
+	 * Send the prompt to the configured provider.
 	 *
-	 * This method is intentionally separate so the provider can be swapped
-	 * without changing the rest of the class logic.
-	 *
-	 * @param string $api_key      OpenAI-compatible API key.
-	 * @param string $provider_url OpenAI-compatible chat completions endpoint.
-	 * @param string $model        Model identifier (e.g. "gpt-5-mini").
-	 * @param string $prompt       Full prompt to send.
+	 * @param string $provider        Provider slug.
+	 * @param string $api_key         Provider API key.
+	 * @param string $model           Model identifier.
+	 * @param string $prompt          Full prompt to send.
+	 * @param array  $provider_config Provider configuration.
 	 * @return string|WP_Error Improved content, or WP_Error on failure.
 	 */
-	protected function call_provider( $api_key, $provider_url, $model, $prompt ) {
+	protected function call_provider( $provider, $api_key, $model, $prompt, $provider_config ) {
 		$response = wp_remote_post(
-			$provider_url,
-			array(
-				'timeout' => 60,
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-					'Content-Type'  => 'application/json',
-				),
-				'body'    => wp_json_encode(
-					array(
-						'model'       => $model,
-						'messages'    => array(
-							array(
-								'role'    => 'user',
-								'content' => $prompt,
-							),
-						),
-						'max_tokens'  => 2000,
-						'temperature' => 0.7,
-					)
-				),
-			)
+			$provider_config['endpoint'],
+			$this->build_provider_request_args( $provider_config, $api_key, $model, $prompt )
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -250,6 +421,54 @@ class Decker_AI {
 			);
 		}
 
+		return $this->parse_provider_response( $response, $provider );
+	}
+
+	/**
+	 * Build the HTTP request arguments for the selected provider.
+	 *
+	 * @param array  $provider_config Provider configuration.
+	 * @param string $api_key         Provider API key.
+	 * @param string $model           Model identifier.
+	 * @param string $prompt          Prompt content.
+	 * @return array<string, mixed> Request arguments for wp_remote_post().
+	 */
+	protected function build_provider_request_args( $provider_config, $api_key, $model, $prompt ) {
+		$headers = array_merge(
+			array(
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type'  => 'application/json',
+			),
+			isset( $provider_config['headers'] ) ? $provider_config['headers'] : array()
+		);
+
+		return array(
+			'timeout' => 60,
+			'headers' => $headers,
+			'body'    => wp_json_encode(
+				array(
+					'model'       => $model,
+					'messages'    => array(
+						array(
+							'role'    => 'user',
+							'content' => $prompt,
+						),
+					),
+					'max_tokens'  => 2000,
+					'temperature' => 0.7,
+				)
+			),
+		);
+	}
+
+	/**
+	 * Parse the provider HTTP response.
+	 *
+	 * @param array|WP_Error $response HTTP response from wp_remote_post().
+	 * @param string         $provider Provider slug.
+	 * @return string|WP_Error Sanitized improved content or a WP_Error.
+	 */
+	protected function parse_provider_response( $response, $provider ) {
 		$status = wp_remote_retrieve_response_code( $response );
 		$body   = wp_remote_retrieve_body( $response );
 		$data   = json_decode( $body, true );
@@ -261,8 +480,8 @@ class Decker_AI {
 
 			return new WP_Error(
 				'provider_api_error',
-				/* translators: %s: error message from API */
-				sprintf( __( 'AI API error: %s', 'decker' ), $api_message ),
+				/* translators: 1: provider name, 2: error message from API */
+				sprintf( __( 'AI API error (%1$s): %2$s', 'decker' ), $provider, $api_message ),
 				array( 'status' => $status )
 			);
 		}

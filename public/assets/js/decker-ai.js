@@ -180,11 +180,14 @@ window.DeckerAI = (function () {
      */
     function getModes() {
         return [
-            { key: 'improve',         label: aiConfig.strings.mode_improve },
-            { key: 'shorten',         label: aiConfig.strings.mode_shorten },
-            { key: 'clarify',         label: aiConfig.strings.mode_clarify },
-            { key: 'professionalize', label: aiConfig.strings.mode_professionalize },
-            { key: 'proofread',       label: aiConfig.strings.mode_proofread },
+            { key: 'improve_writing',     label: aiConfig.strings.mode_improve_writing },
+            { key: 'make_shorter',        label: aiConfig.strings.mode_make_shorter },
+            { key: 'make_clearer',        label: aiConfig.strings.mode_make_clearer },
+            { key: 'fix_grammar',         label: aiConfig.strings.mode_fix_grammar },
+            { key: 'make_actionable',     label: aiConfig.strings.mode_make_actionable },
+            { key: 'checklist',           label: aiConfig.strings.mode_checklist },
+            { key: 'acceptance_criteria', label: aiConfig.strings.mode_acceptance_criteria },
+            { key: 'summarize',           label: aiConfig.strings.mode_summarize },
         ];
     }
 
@@ -353,14 +356,17 @@ window.DeckerAI = (function () {
      */
     function buildPrompt( mode, text ) {
         var prefixes = {
-            improve:         aiConfig.prompts.improve,
-            shorten:         aiConfig.prompts.shorten,
-            clarify:         aiConfig.prompts.clarify,
-            professionalize: aiConfig.prompts.professionalize,
-            proofread:       aiConfig.prompts.proofread,
+            improve_writing:     aiConfig.prompts.improve_writing,
+            make_shorter:        aiConfig.prompts.make_shorter,
+            make_clearer:        aiConfig.prompts.make_clearer,
+            fix_grammar:         aiConfig.prompts.fix_grammar,
+            make_actionable:     aiConfig.prompts.make_actionable,
+            checklist:           aiConfig.prompts.checklist,
+            acceptance_criteria: aiConfig.prompts.acceptance_criteria,
+            summarize:           aiConfig.prompts.summarize,
         };
 
-        var prefix = prefixes[ mode ] || prefixes.improve;
+        var prefix = prefixes[ mode ] || prefixes.improve_writing;
         return prefix + ' ' + aiConfig.prompts.language_instruction + ' ' +
             aiConfig.prompts.response_format + '\n\n' + text;
     }
