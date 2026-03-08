@@ -315,6 +315,39 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 			</div>
 	  </li>
 
+	  <!-- Journals -->
+	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'journal' ) ); ?>">
+			<a
+				data-bs-toggle="collapse"
+				href="#sidebarJournals"
+				aria-expanded="false"
+				aria-controls="sidebarJournals"
+				class="side-nav-link"
+			>
+				<i class="ri-book-read-line"></i>
+				<span><?php esc_html_e( 'Journals', 'decker' ); ?></span>
+				<span class="menu-arrow"></span>
+			</a>
+			<div class="collapse<?php echo ( 'journal' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarJournals">
+				<ul class="side-nav-second-level">
+					<?php
+					$boards = BoardManager::get_all_boards();
+					foreach ( $boards as $board ) {
+						echo '<li class="' . esc_attr( decker_is_active_subpage( 'board', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
+							add_query_arg(
+								array(
+									'decker_page' => 'journal',
+									'board'       => $board->slug,
+								),
+								home_url( '/' )
+							)
+						) . '">' . esc_html( $board->name ) . '</a></li>';
+					}
+					?>
+				</ul>
+			</div>
+	  </li>
+
 	  <!-- Analytics -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'analytics' ) ); ?>">
 		<a href="<?php echo esc_url( add_query_arg( 'decker_page', 'analytics', home_url( '/' ) ) ); ?>" class="side-nav-link">
