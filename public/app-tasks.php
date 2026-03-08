@@ -225,7 +225,7 @@ table#tablaTareas td:nth-child(6) {
 														<th class="c-stack"><?php esc_html_e( 'C.', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
-														<th class="c-people"><?php esc_html_e( 'Personas', 'decker' ); ?></th>
+														<th class="c-people"><?php esc_html_e( 'People', 'decker' ); ?></th>
 														<th class="c-time"><?php esc_html_e( 'Remaining Time', 'decker' ); ?></th>
 														<th class="c-actions text-end"></th>
 													</tr>
@@ -440,7 +440,7 @@ table#tablaTareas td:nth-child(6) {
 						width: '15%'
 					},
 					{
-						targets: 5, // People column
+						targets: 5, // People column width
 						width: '10%'
 					}
 				],

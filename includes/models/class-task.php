@@ -259,10 +259,13 @@ class Task {
 	 * @return WP_User[] Ordered list of users to display.
 	 */
 	public function get_people_users(): array {
-		$people = array();
+		$people            = array();
+		$responsable_user  = $this->responsable instanceof WP_User
+			? $this->responsable
+			: null;
 
-		if ( $this->responsable instanceof WP_User ) {
-			$people[] = $this->responsable;
+		if ( $responsable_user instanceof WP_User ) {
+			$people[] = $responsable_user;
 		}
 
 		foreach ( $this->assigned_users as $user ) {
@@ -270,7 +273,7 @@ class Task {
 				continue;
 			}
 
-			if ( $this->responsable instanceof WP_User && $this->responsable->ID === $user->ID ) {
+			if ( $responsable_user instanceof WP_User && $responsable_user->ID === $user->ID ) {
 				continue;
 			}
 
@@ -316,7 +319,7 @@ class Task {
 				$classes .= ' avatar-group-item-responsable';
 			}
 
-			echo '<a href="#" class="' . esc_attr( $classes ) . '"';
+			echo '<a href="javascript: void(0);" class="' . esc_attr( $classes ) . '"';
 			echo ' data-bs-toggle="tooltip" data-bs-placement="top"';
 			echo ' aria-label="' . esc_attr( $user->display_name ) . '"';
 			echo ' data-bs-original-title="' . esc_attr( $user->display_name ) . '"';

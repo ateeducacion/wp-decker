@@ -194,7 +194,7 @@ msgstr "Detalles de la Tarea"
 msgid "Assigned Users"
 msgstr "Usuarios asignados"
 
-msgid "Personas"
+msgid "People"
 msgstr "Personas"
 
 msgid "Task User and Date"
