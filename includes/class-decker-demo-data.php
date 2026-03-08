@@ -45,8 +45,22 @@ class Decker_Demo_Data {
 	 */
 	private function create_labels() {
 		$labels = array();
-		for ( $i = 1; $i <= 10; $i++ ) {
-			$term_name = "Label $i";
+
+		// Create labels with varying lengths for better testing.
+		$label_names = array(
+			'Bug',
+			'Feature',
+			'Urgent Priority',
+			'Documentation',
+			'Needs Review',
+			'In Progress',
+			'Testing Required',
+			'UI',
+			'Backend Development',
+			'Critical Security Issue',
+		);
+
+		foreach ( $label_names as $term_name ) {
 			$term_slug = sanitize_title( $term_name );
 			$term_color = $this->generate_random_color();
 
@@ -83,55 +97,55 @@ class Decker_Demo_Data {
 		$visibility_settings = array(
 			// Board 1: Visible in both Boards and KB.
 			array(
-				'name' => 'Board 1',
+				'name' => 'Project Alpha',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
 			// Board 2: Visible only in Boards.
 			array(
-				'name' => 'Board 2',
+				'name' => 'Marketing Campaign Q1 2024',
 				'show_in_boards' => true,
 				'show_in_kb' => false,
 			),
 			// Board 3: Visible only in KB.
 			array(
-				'name' => 'Board 3',
+				'name' => 'Dev',
 				'show_in_boards' => false,
 				'show_in_kb' => true,
 			),
 			// Board 4: Not visible in either (hidden).
 			array(
-				'name' => 'Board 4',
+				'name' => 'Customer Support and Success Team',
 				'show_in_boards' => false,
 				'show_in_kb' => false,
 			),
 			// Board 5: Visible in both.
 			array(
-				'name' => 'Board 5',
+				'name' => 'HR',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
 			// Board 6: Visible in both.
 			array(
-				'name' => 'Board 6',
+				'name' => 'Infrastructure and DevOps',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
 			// Board 7: Visible only in Boards.
 			array(
-				'name' => 'Board 7',
+				'name' => 'Research',
 				'show_in_boards' => true,
 				'show_in_kb' => false,
 			),
 			// Board 8: Visible only in KB.
 			array(
-				'name' => 'Board 8',
+				'name' => 'Quality Assurance and Testing',
 				'show_in_boards' => false,
 				'show_in_kb' => true,
 			),
 			// Board 9: Visible in both.
 			array(
-				'name' => 'Board 9',
+				'name' => 'Sales',
 				'show_in_boards' => true,
 				'show_in_kb' => true,
 			),
@@ -541,7 +555,41 @@ class Decker_Demo_Data {
 			}
 
 			for ( $j = 1; $j <= $num_tasks; $j++ ) {
-				$post_title = "Task $j for {$board->name}";
+				// Create task titles with varying lengths for better testing.
+				$short_titles = array(
+					'Fix bug',
+					'Update docs',
+					'Review PR',
+					'Deploy',
+					'Test',
+				);
+
+				$medium_titles = array(
+					'Implement new feature',
+					'Refactor database queries',
+					'Update user interface',
+					'Configure deployment pipeline',
+					'Write unit tests',
+				);
+
+				$long_titles = array(
+					'Investigate performance issues in the production environment',
+					'Develop comprehensive documentation for API endpoints',
+					'Implement user authentication and authorization system',
+					'Optimize database queries for improved application performance',
+					'Create automated testing suite for continuous integration',
+				);
+
+				// Randomly select title length (40% short, 40% medium, 20% long).
+				$rand = $this->custom_rand( 1, 10 );
+				if ( $rand <= 4 ) {
+					$post_title = $short_titles[ array_rand( $short_titles ) ] . " #{$j}";
+				} elseif ( $rand <= 8 ) {
+					$post_title = $medium_titles[ array_rand( $medium_titles ) ] . " for {$board->name}";
+				} else {
+					$post_title = $long_titles[ array_rand( $long_titles ) ] . " - {$board->name}";
+				}
+
 				$post_content = "Content for task $j in board {$board->name}.";
 
 				if ( '1' !== $show_in_boards ) {

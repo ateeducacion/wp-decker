@@ -116,11 +116,39 @@ table#tablaTareas td {
 	   word-break: break-word; /* Breaks long words to prevent overflow */
 }
 
+/* Description column - allow more space and wrapping */
 table#tablaTareas td:nth-child(4) {
-	   max-width: 200px; /* Maximum width for the description column */
-	overflow: hidden;
-	text-overflow: ellipsis;
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Labels/Tags column - allow wrapping for better display */
+table#tablaTareas td:nth-child(5) {
+	white-space: normal;
+	word-wrap: break-word;
+}
+
+/* Stack column - compact display */
+table#tablaTareas td:nth-child(3) {
 	white-space: nowrap;
+}
+
+/* Priority column - compact display */
+table#tablaTareas td:nth-child(1) {
+	white-space: nowrap;
+	text-align: center;
+}
+
+/* People column - compact display */
+table#tablaTareas td:nth-child(6) {
+	white-space: nowrap;
+}
+
+table#tablaTareas td:nth-child(6) .avatar-group {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	min-width: max-content;
 }
 
 /* If you want to hide a column on mobile, you can use display: none; */
@@ -201,11 +229,10 @@ table#tablaTareas td:nth-child(4) {
 													<tr>
 														<th class="c-priority"><?php esc_html_e( 'P.', 'decker' ); ?></th>
 														<th class="c-board"><?php esc_html_e( 'Board', 'decker' ); ?></th>
-														<th class="c-stack"><?php esc_html_e( 'Stack', 'decker' ); ?></th>
+														<th class="c-stack"><?php esc_html_e( 'C.', 'decker' ); ?></th>
 														<th class="c-description"><?php esc_html_e( 'Description', 'decker' ); ?></th>
 														<th class="c-tags"><?php esc_html_e( 'Tags', 'decker' ); ?></th>
-														<th class="c-responsable"><?php esc_html_e( 'Responsable', 'decker' ); ?></th>
-														<th class="c-users"><?php esc_html_e( 'Assigned Users', 'decker' ); ?></th>
+														<th class="c-people"><?php esc_html_e( 'People', 'decker' ); ?></th>
 														<th class="c-time"><?php esc_html_e( 'Remaining Time', 'decker' ); ?></th>
 														<th class="c-actions text-end"></th>
 													</tr>
@@ -264,32 +291,12 @@ table#tablaTareas td:nth-child(4) {
 													echo '</td>';
 
 
-													// Responsable.
-													echo '<td>';
-													echo '<div class="avatar-group">';
-
-													if ( $task->responsable ) {
-														echo '<a href="javascript: void(0);" class="avatar-group-item avatar-group-item-responsable" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $task->responsable->display_name ) . '" data-bs-original-title="' . esc_attr( $task->responsable->display_name ) . '">';
-														echo '<span class="d-none">' . esc_attr( $task->responsable->display_name ) . '</span>';
-														echo '<img src="' . esc_url( get_avatar_url( $task->responsable->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
-														echo '</a>';
-													}
-
-													echo '</div></td>';
-
-
-													// Assigned users.
-													echo '<td data-users=\'' . esc_attr( wp_json_encode( array_map( 'esc_html', wp_list_pluck( $task->assigned_users, 'display_name' ) ) ) ) . '\'>';
-													echo '<div class="avatar-group">';
-
-													foreach ( $task->assigned_users as $user ) {
-														$today_class = $user->today ? ' today' : '';
-														echo '<a href="javascript: void(0);" class="avatar-group-item' . esc_attr( $today_class ) . '" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( $user->display_name ) . '" data-bs-original-title="' . esc_attr( $user->display_name ) . '">';
-														echo '<span class="d-none">' . esc_attr( $user->display_name ) . '</span>';
-														echo '<img src="' . esc_url( get_avatar_url( $user->ID ) ) . '" alt="' . esc_attr( $user->display_name ) . '" class="rounded-circle avatar-xs">';
-														echo '</a>';
-													}
-													echo '</div></td>';
+													// People.
+													$people_names = $task->get_people_names();
+													$people_text  = implode( ', ', $people_names );
+													echo '<td data-search="' . esc_attr( $people_text ) . '" data-order="' . esc_attr( $people_text ) . '">';
+													$task->render_people_avatars();
+													echo '</td>';
 
 													// Remaining time.
 													echo '<td data-order="' . esc_attr( $task->duedate?->format( 'Y-m-d' ) ) . '" class="due-date">';
@@ -377,9 +384,9 @@ table#tablaTareas td:nth-child(4) {
 						config: {
 							depthLimit: 2,
 							searchBuilder: {
-								columns: [1, 2, 3, 4, 5, 6],
+								columns: [1, 2, 3, 4, 5],
 							},
-							columns: [1, 2, 3, 4, 5, 6],
+							columns: [1, 2, 3, 4, 5],
 						},
 					},
 					{
@@ -405,7 +412,7 @@ table#tablaTareas td:nth-child(4) {
 						searchPanes: {
 							show: false,
 						},
-						targets: [1, 7], // Columns for which SearchPanes is disabled
+						targets: [1, 6], // Columns for which SearchPanes is disabled
 					},
 					{
 						targets: 2, // Columna 3
@@ -414,12 +421,34 @@ table#tablaTareas td:nth-child(4) {
 						}
 					},
 					{
-						targets: [4, 5, 8],
+						targets: [4, 7],
 						orderable: false
 					},
 					{
-						targets: 7, // due-date column
+						targets: 6, // due-date column
 						type: 'date',
+					},
+					// Column width adjustments for better distribution
+					// Explicit widths for key columns; remaining columns auto-size
+					{
+						targets: 0, // Priority column
+						width: '3%'
+					},
+					{
+						targets: 2, // Stack column
+						width: '4%'
+					},
+					{
+						targets: 3, // Description column (0-indexed: P., Board, Stack, Description)
+						width: '30%'
+					},
+					{
+						targets: 4, // Tags/Labels column
+						width: '15%'
+					},
+					{
+						targets: 5, // People column width
+						width: '10%'
 					}
 				],
 

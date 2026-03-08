@@ -630,6 +630,192 @@ class Decker_Tasks {
 				},
 			)
 		);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/search',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'search_tasks' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+				'args'                => array(
+					'search' => array(
+						'required'          => true,
+						'type'              => 'string',
+						'sanitize_callback' => 'sanitize_text_field',
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/(?P<id>\d+)/clone',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_clone_task' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			)
+		);
+	}
+
+	/**
+	 * Handle the REST API request to clone a task.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_clone_task( $request ) {
+		$task_id = (int) $request['id'];
+		$post    = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'You do not have permission to clone this task.', 'decker' ),
+				),
+				403
+			);
+		}
+
+		$new_task_id = self::clone_task( $task_id );
+
+		if ( is_wp_error( $new_task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $new_task_id->get_error_message(),
+				),
+				500
+			);
+		}
+
+		$task_url = get_permalink( $new_task_id );
+		if ( ! $task_url || is_wp_error( $task_url ) ) {
+			$task_url = add_query_arg(
+				array(
+					'decker_page' => 'task',
+					'id'          => $new_task_id,
+				),
+				home_url( '/' )
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success'     => true,
+				'new_task_id' => $new_task_id,
+				'task_url'    => $task_url,
+				'message'     => __( 'Task cloned successfully.', 'decker' ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Clone a task by creating a new task with the same data.
+	 *
+	 * Copies post title (with " (copy)" suffix), content, status, meta
+	 * fields, and taxonomy terms. Does not copy unique fields like
+	 * id_nextcloud_card or _user_date_relations.
+	 *
+	 * @param int $task_id The ID of the task to clone.
+	 * @return int|WP_Error The ID of the new task, or WP_Error on failure.
+	 */
+	public static function clone_task( $task_id ) {
+		$post = get_post( $task_id );
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_Error(
+				'invalid_task',
+				__( 'Invalid task ID.', 'decker' )
+			);
+		}
+
+		// Build the new title with " (copy)" suffix.
+		$original_title = $post->post_title;
+		if ( empty( trim( $original_title ) ) ) {
+			$original_title = __( 'Untitled', 'decker' );
+		}
+
+		/* translators: %s: original task title */
+		$new_title = sprintf( __( '%s (copy)', 'decker' ), $original_title );
+
+		// Gather meta values.
+		$stack        = get_post_meta( $task_id, 'stack', true );
+		$max_priority = (bool) get_post_meta( $task_id, 'max_priority', true );
+		$hidden       = (bool) get_post_meta( $task_id, 'hidden', true );
+		$responsable  = (int) get_post_meta( $task_id, 'responsable', true );
+		$duedate_raw  = get_post_meta( $task_id, 'duedate', true );
+
+		$duedate = null;
+		if ( ! empty( $duedate_raw ) ) {
+			try {
+				$duedate = new DateTime( $duedate_raw );
+			} catch ( Exception $e ) {
+				$duedate = null;
+			}
+		}
+
+		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
+		if ( ! is_array( $assigned_users ) ) {
+			$assigned_users = array();
+		}
+
+		// Get taxonomy terms.
+		$board_terms = wp_get_post_terms(
+			$task_id,
+			'decker_board',
+			array( 'fields' => 'ids' )
+		);
+		$board = ! empty( $board_terms ) && ! is_wp_error( $board_terms )
+			? (int) $board_terms[0]
+			: 0;
+
+		$label_terms = wp_get_post_terms(
+			$task_id,
+			'decker_label',
+			array( 'fields' => 'ids' )
+		);
+		$labels = ! is_wp_error( $label_terms ) ? $label_terms : array();
+
+		// Determine archived status from original post status.
+		$archived = ( 'archived' === $post->post_status );
+
+		// Create the new task using the existing method.
+		$new_task_id = self::create_or_update_task(
+			0,
+			$new_title,
+			$post->post_content,
+			! empty( $stack ) ? $stack : 'to-do',
+			$board,
+			$max_priority,
+			$duedate,
+			get_current_user_id(),
+			$responsable,
+			$hidden,
+			$assigned_users,
+			$labels,
+			null,
+			$archived,
+			0
+		);
+
+		return $new_task_id;
 	}
 
 	/**
@@ -857,6 +1043,87 @@ class Decker_Tasks {
 			array(
 				'message' => 'Event meta updated successfully',
 				'updated_meta' => $updated_meta,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Search tasks by title.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function search_tasks( WP_REST_Request $request ) {
+		$search_term = $request->get_param( 'search' );
+
+		if ( empty( $search_term ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => 'Search term is required.',
+				),
+				400
+			);
+		}
+
+		// Query tasks by title.
+		$args = array(
+			'post_type'      => 'decker_task',
+			'post_status'    => array( 'publish' ),
+			's'              => $search_term,
+			'posts_per_page' => 20,
+			'orderby'        => 'relevance',
+		);
+
+		$query = new WP_Query( $args );
+		$tasks = array();
+
+		if ( $query->have_posts() ) {
+			while ( $query->have_posts() ) {
+				$query->the_post();
+				$task_id = get_the_ID();
+
+				// Get board information.
+				$boards      = wp_get_post_terms( $task_id, 'decker_board' );
+				$board_name  = ! empty( $boards ) ? $boards[0]->name : __( 'No Board', 'decker' );
+				$board_slug  = ! empty( $boards ) ? $boards[0]->slug : '';
+
+				// Get stack information.
+				$stack = get_post_meta( $task_id, 'stack', true );
+				$stack_label = '';
+				switch ( $stack ) {
+					case 'to-do':
+						$stack_label = __( 'To-Do', 'decker' );
+						break;
+					case 'in-progress':
+						$stack_label = __( 'In Progress', 'decker' );
+						break;
+					case 'done':
+						$stack_label = __( 'Done', 'decker' );
+						break;
+					default:
+						$stack_label = __( 'Unknown', 'decker' );
+						break;
+				}
+
+				$tasks[] = array(
+					'id'          => $task_id,
+					'title'       => get_the_title(),
+					'board'       => $board_name,
+					'board_slug'  => $board_slug,
+					'stack'       => $stack,
+					'stack_label' => $stack_label,
+					'url'         => get_permalink( $task_id ),
+				);
+			}
+			wp_reset_postdata();
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'tasks'   => $tasks,
 			),
 			200
 		);
@@ -2221,22 +2488,37 @@ class Decker_Tasks {
 	 * @return string HTML markup for the stack icon with tooltip.
 	 */
 	public static function get_stack_icon_html( string $stack ): string {
-			$label = self::get_stack_label( $stack );
+		$label         = self::get_stack_label( $stack );
+		$escaped_label = esc_attr( $label );
+		$icon_template = '<i class="%1$s" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+
 		switch ( $stack ) {
 			case 'to-do':
-					$icon = '<i class="ri-checkbox-blank-circle-line text-secondary me-2" title="' . esc_attr( $label ) . '"></i>';
+				$icon = sprintf(
+					$icon_template,
+					'ri-checkbox-blank-circle-line text-secondary me-2',
+					$escaped_label
+				);
 				break;
 			case 'in-progress':
-					$icon = '<i class="ri-progress-3-line text-warning me-2" title="' . esc_attr( $label ) . '"></i>';
+				$icon = sprintf(
+					$icon_template,
+					'ri-progress-3-line text-warning me-2',
+					$escaped_label
+				);
 				break;
 			case 'done':
-					$icon = '<i class="ri-checkbox-circle-line text-success me-2" title="' . esc_attr( $label ) . '"></i>';
+				$icon = sprintf(
+					$icon_template,
+					'ri-checkbox-circle-line text-success me-2',
+					$escaped_label
+				);
 				break;
 			default:
 				return esc_html( $stack );
 		}
 
-			return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
+		return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
 	}
 
 	/**
