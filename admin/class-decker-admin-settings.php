@@ -154,6 +154,16 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Check whether server-side AI settings should be shown.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return bool True when an AI API key is saved.
+	 */
+	protected function has_saved_ai_api_key( $options ) {
+		return '' !== $this->get_ai_api_key_value( $options );
+	}
+
+	/**
 	 * Get the default model for the selected provider.
 	 *
 	 * @param string $provider Provider slug.
@@ -190,6 +200,47 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Determine if the AI model field should be shown.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return bool True when the model field should be shown.
+	 */
+	protected function should_show_ai_model_field( $options ) {
+		return $this->has_saved_ai_api_key( $options );
+	}
+
+	/**
+	 * Determine if the AI URL override field should be shown.
+	 *
+	 * @param array $options Plugin settings.
+	 * @return bool True when the URL override field should be shown.
+	 */
+	protected function should_show_ai_url_override_field( $options ) {
+		return $this->has_saved_ai_api_key( $options )
+			&& 'gemini' !== $this->get_ai_provider_value( $options );
+	}
+
+	/**
+	 * Get a setting value from the submitted input with legacy fallback.
+	 *
+	 * @param array  $input        Submitted input.
+	 * @param string $key          Preferred setting key.
+	 * @param string $legacy_key   Legacy fallback key.
+	 * @return string Submitted value.
+	 */
+	protected function get_input_setting_value( $input, $key, $legacy_key ) {
+		if ( isset( $input[ $key ] ) ) {
+			return sanitize_text_field( $input[ $key ] );
+		}
+
+		if ( isset( $input[ $legacy_key ] ) ) {
+			return sanitize_text_field( $input[ $legacy_key ] );
+		}
+
+		return '';
+	}
+
+	/**
 	 * Render AI Provider Field.
 	 *
 	 * Outputs the HTML for the ai_provider settings field.
@@ -222,6 +273,7 @@ class Decker_Admin_Settings {
 		echo '<input type="password" name="decker_settings[ai_api_key]" class="regular-text" '
 			. 'value="' . esc_attr( $value ) . '" autocomplete="off">';
 		echo '<p class="description">' . esc_html__( 'Enter the API key for the selected AI provider to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (for example, Chrome).', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Model and URL override settings are shown after an API key has been saved.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -435,6 +487,8 @@ class Decker_Admin_Settings {
 	 * Registers settings and adds settings sections and fields.
 	 */
 	public function settings_init() {
+		$options = get_option( 'decker_settings', array() );
+
 		register_setting( 'decker', 'decker_settings', array( $this, 'settings_validate' ) );
 
 		add_settings_section(
@@ -454,12 +508,18 @@ class Decker_Admin_Settings {
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
 			'ai_provider'           => __( 'AI Provider', 'decker' ),
 			'ai_api_key'            => __( 'AI API Key', 'decker' ),
-			'openai_api_url'        => __( 'AI API URL Override', 'decker' ),
-			'ai_model'              => __( 'AI Model', 'decker' ),
-			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
-			'ignored_users'         => __( 'Ignored Users', 'decker' ),
-
 		);
+
+		if ( $this->should_show_ai_model_field( $options ) ) {
+			$fields['ai_model'] = __( 'AI Model', 'decker' );
+		}
+
+		if ( $this->should_show_ai_url_override_field( $options ) ) {
+			$fields['openai_api_url'] = __( 'AI API URL Override', 'decker' );
+		}
+
+		$fields['clear_all_data_button'] = __( 'Clear All Data', 'decker' );
+		$fields['ignored_users']         = __( 'Ignored Users', 'decker' );
 
 		foreach ( $fields as $field_id => $field_title ) {
 			add_settings_field(
@@ -588,12 +648,7 @@ class Decker_Admin_Settings {
 		}
 
 		// Validate AI API key with backward compatibility for legacy field names.
-		$input['ai_api_key'] = '';
-		if ( isset( $input['ai_api_key'] ) ) {
-			$input['ai_api_key'] = sanitize_text_field( $input['ai_api_key'] );
-		} elseif ( isset( $input['openai_api_key'] ) ) {
-			$input['ai_api_key'] = sanitize_text_field( $input['openai_api_key'] );
-		}
+		$input['ai_api_key'] = $this->get_input_setting_value( $input, 'ai_api_key', 'openai_api_key' );
 
 		// Validate AI API URL override.
 		$input['openai_api_url'] = isset( $input['openai_api_url'] ) ? esc_url_raw( $input['openai_api_url'], array( 'https' ) ) : '';
@@ -614,12 +669,7 @@ class Decker_Admin_Settings {
 		}
 
 		// Validate AI model with backward compatibility for legacy field names.
-		$input['ai_model'] = '';
-		if ( isset( $input['ai_model'] ) ) {
-			$input['ai_model'] = sanitize_text_field( $input['ai_model'] );
-		} elseif ( isset( $input['openai_model'] ) ) {
-			$input['ai_model'] = sanitize_text_field( $input['openai_model'] );
-		}
+		$input['ai_model'] = $this->get_input_setting_value( $input, 'ai_model', 'openai_model' );
 		if ( empty( $input['ai_model'] ) ) {
 			$input['ai_model'] = $this->get_default_ai_model( $input['ai_provider'] );
 		}

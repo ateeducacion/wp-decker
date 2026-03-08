@@ -7,6 +7,207 @@
  */
 
 /**
+ * Resolve provider-specific AI settings.
+ *
+ * @since 1.0.0
+ */
+class Decker_AI_Provider_Settings {
+
+	/**
+	 * Valid providers.
+	 *
+	 * @var string[]
+	 */
+	private $valid_providers = array(
+		'openai',
+		'openrouter',
+		'gemini',
+	);
+
+	/**
+	 * Get the configured server-side AI provider.
+	 *
+	 * Falls back to legacy settings when the new option is not saved yet.
+	 *
+	 * @param array $settings Decker settings.
+	 * @return string Provider slug.
+	 */
+	public function get_ai_provider( $settings ) {
+		if ( ! empty( $settings['ai_provider'] ) ) {
+			return sanitize_key( $settings['ai_provider'] );
+		}
+
+		return $this->infer_provider_from_legacy_url(
+			isset( $settings['openai_api_url'] ) ? $settings['openai_api_url'] : ''
+		);
+	}
+
+	/**
+	 * Get the configured API key with backward compatibility for legacy options.
+	 *
+	 * @param array $settings Decker settings.
+	 * @return string API key.
+	 */
+	public function get_api_key( $settings ) {
+		$api_key = '';
+
+		if ( ! empty( $settings['ai_api_key'] ) ) {
+			$api_key = $settings['ai_api_key'];
+		} elseif ( ! empty( $settings['openai_api_key'] ) ) {
+			$api_key = $settings['openai_api_key'];
+		}
+
+		return trim( sanitize_text_field( $api_key ) );
+	}
+
+	/**
+	 * Get provider-specific connection details.
+	 *
+	 * @param string $provider Provider slug.
+	 * @param array  $settings Decker settings.
+	 * @return array<string, mixed> Provider configuration.
+	 */
+	public function get_provider_config( $provider, $settings ) {
+		$configs = array(
+			'openai'     => array(
+				'endpoint'      => 'https://api.openai.com/v1/chat/completions',
+				'default_model' => 'gpt-5-mini',
+				'headers'       => array(),
+			),
+			'openrouter' => array(
+				'endpoint'      => 'https://openrouter.ai/api/v1/chat/completions',
+				'default_model' => 'openai/gpt-5-mini',
+				'headers'       => array(
+					'HTTP-Referer' => home_url( '/' ),
+					'X-Title'      => get_bloginfo( 'name' ),
+				),
+			),
+			'gemini'     => array(
+				'endpoint'      => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+				'default_model' => 'gemini-2.0-flash',
+				'headers'       => array(),
+			),
+		);
+
+		if ( ! isset( $configs[ $provider ] ) ) {
+			return array();
+		}
+
+		if ( empty( $settings['ai_provider'] ) ) {
+			$configs[ $provider ]['endpoint'] = $this->get_legacy_provider_endpoint(
+				isset( $settings['openai_api_url'] ) ? $settings['openai_api_url'] : '',
+				$configs[ $provider ]['endpoint']
+			);
+		}
+
+		return $configs[ $provider ];
+	}
+
+	/**
+	 * Get the configured model with backward compatibility for legacy options.
+	 *
+	 * @param array $settings        Decker settings.
+	 * @param array $provider_config Provider configuration.
+	 * @return string Model identifier.
+	 */
+	public function get_model( $settings, $provider_config ) {
+		$model = '';
+
+		if ( ! empty( $settings['ai_model'] ) ) {
+			$model = $settings['ai_model'];
+		} elseif ( ! empty( $settings['openai_model'] ) ) {
+			$model = $settings['openai_model'];
+		}
+
+		if ( empty( $model ) ) {
+			$model = isset( $provider_config['default_model'] )
+				? $provider_config['default_model']
+				: 'gpt-5-mini';
+		}
+
+		return sanitize_text_field( $model );
+	}
+
+	/**
+	 * Validate a provider URL and ensure it is HTTPS.
+	 *
+	 * @param string $url Provider endpoint URL.
+	 * @return string Validated URL or empty string.
+	 */
+	public function validate_provider_url( $url ) {
+		$url = esc_url_raw( $url, array( 'https' ) );
+
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		$parsed_url = wp_parse_url( $url );
+
+		if (
+			! wp_http_validate_url( $url ) ||
+			empty( $parsed_url['scheme'] ) ||
+			'https' !== $parsed_url['scheme'] ||
+			empty( $parsed_url['host'] ) ||
+			! empty( $parsed_url['user'] ) ||
+			! empty( $parsed_url['pass'] )
+		) {
+			return '';
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Get the valid providers.
+	 *
+	 * @return string[]
+	 */
+	public function get_valid_providers() {
+		return $this->valid_providers;
+	}
+
+	/**
+	 * Infer the provider from a legacy API URL.
+	 *
+	 * @param string $legacy_url Legacy provider URL.
+	 * @return string Provider slug.
+	 */
+	private function infer_provider_from_legacy_url( $legacy_url ) {
+		if ( empty( $legacy_url ) ) {
+			return 'openai';
+		}
+
+		$legacy_url = strtolower( (string) $legacy_url );
+
+		if ( false !== strpos( $legacy_url, 'openrouter.ai' ) ) {
+			return 'openrouter';
+		}
+
+		if (
+			false !== strpos( $legacy_url, 'generativelanguage.googleapis.com' ) ||
+			false !== strpos( $legacy_url, 'googleapis.com' )
+		) {
+			return 'gemini';
+		}
+
+		return 'openai';
+	}
+
+	/**
+	 * Get the legacy provider endpoint when available.
+	 *
+	 * @param string $legacy_url        Legacy configured URL.
+	 * @param string $default_endpoint  Default endpoint for the provider.
+	 * @return string Endpoint URL.
+	 */
+	private function get_legacy_provider_endpoint( $legacy_url, $default_endpoint ) {
+		$legacy_endpoint = $this->validate_provider_url( $legacy_url );
+
+		return ! empty( $legacy_endpoint ) ? $legacy_endpoint : $default_endpoint;
+	}
+}
+
+/**
  * Decker AI integration.
  *
  * Registers a REST API endpoint that proxies text-improvement requests
@@ -44,6 +245,13 @@ class Decker_AI {
 		'openrouter',
 		'gemini',
 	);
+
+	/**
+	 * Provider settings resolver.
+	 *
+	 * @var Decker_AI_Provider_Settings|null
+	 */
+	private $provider_settings;
 
 	/**
 	 * Constructor — registers REST hooks.
@@ -149,7 +357,7 @@ class Decker_AI {
 		$settings = get_option( 'decker_settings', array() );
 		$provider = $this->get_ai_provider( $settings );
 
-		if ( ! in_array( $provider, self::VALID_PROVIDERS, true ) ) {
+		if ( ! in_array( $provider, $this->get_provider_settings()->get_valid_providers(), true ) ) {
 			return new WP_Error(
 				'invalid_ai_provider',
 				__(
@@ -187,28 +395,7 @@ class Decker_AI {
 	 * @return string Provider slug.
 	 */
 	protected function get_ai_provider( $settings ) {
-		if ( ! empty( $settings['ai_provider'] ) ) {
-			return sanitize_key( $settings['ai_provider'] );
-		}
-
-		if ( empty( $settings['openai_api_url'] ) ) {
-			return 'openai';
-		}
-
-		$legacy_url = strtolower( (string) $settings['openai_api_url'] );
-
-		if ( false !== strpos( $legacy_url, 'openrouter.ai' ) ) {
-			return 'openrouter';
-		}
-
-		if (
-			false !== strpos( $legacy_url, 'generativelanguage.googleapis.com' ) ||
-			false !== strpos( $legacy_url, 'googleapis.com' )
-		) {
-			return 'gemini';
-		}
-
-		return 'openai';
+		return $this->get_provider_settings()->get_ai_provider( $settings );
 	}
 
 	/**
@@ -218,15 +405,7 @@ class Decker_AI {
 	 * @return string API key.
 	 */
 	protected function get_api_key( $settings ) {
-		if ( ! empty( $settings['ai_api_key'] ) ) {
-			return trim( sanitize_text_field( $settings['ai_api_key'] ) );
-		}
-
-		if ( ! empty( $settings['openai_api_key'] ) ) {
-			return trim( sanitize_text_field( $settings['openai_api_key'] ) );
-		}
-
-		return '';
+		return $this->get_provider_settings()->get_api_key( $settings );
 	}
 
 	/**
@@ -237,39 +416,7 @@ class Decker_AI {
 	 * @return array<string, mixed> Provider configuration.
 	 */
 	protected function get_provider_config( $provider, $settings ) {
-		$configs = array(
-			'openai'     => array(
-				'endpoint'      => 'https://api.openai.com/v1/chat/completions',
-				'default_model' => 'gpt-5-mini',
-				'headers'       => array(),
-			),
-			'openrouter' => array(
-				'endpoint'      => 'https://openrouter.ai/api/v1/chat/completions',
-				'default_model' => 'openai/gpt-5-mini',
-				'headers'       => array(
-					'HTTP-Referer' => home_url( '/' ),
-					'X-Title'      => get_bloginfo( 'name' ),
-				),
-			),
-			'gemini'     => array(
-				'endpoint'      => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-				'default_model' => 'gemini-2.0-flash',
-				'headers'       => array(),
-			),
-		);
-
-		if ( ! isset( $configs[ $provider ] ) ) {
-			return array();
-		}
-
-		if ( empty( $settings['ai_provider'] ) && ! empty( $settings['openai_api_url'] ) ) {
-			$legacy_endpoint = $this->validate_provider_url( $settings['openai_api_url'] );
-			if ( ! empty( $legacy_endpoint ) ) {
-				$configs[ $provider ]['endpoint'] = $legacy_endpoint;
-			}
-		}
-
-		return $configs[ $provider ];
+		return $this->get_provider_settings()->get_provider_config( $provider, $settings );
 	}
 
 	/**
@@ -280,17 +427,7 @@ class Decker_AI {
 	 * @return string Model identifier.
 	 */
 	protected function get_model( $settings, $provider_config ) {
-		if ( ! empty( $settings['ai_model'] ) ) {
-			return sanitize_text_field( $settings['ai_model'] );
-		}
-
-		if ( ! empty( $settings['openai_model'] ) ) {
-			return sanitize_text_field( $settings['openai_model'] );
-		}
-
-		return isset( $provider_config['default_model'] )
-			? $provider_config['default_model']
-			: 'gpt-5-mini';
+		return $this->get_provider_settings()->get_model( $settings, $provider_config );
 	}
 
 	/**
@@ -300,26 +437,20 @@ class Decker_AI {
 	 * @return string Validated URL or empty string.
 	 */
 	protected function validate_provider_url( $url ) {
-		$url = esc_url_raw( $url, array( 'https' ) );
+		return $this->get_provider_settings()->validate_provider_url( $url );
+	}
 
-		if ( empty( $url ) ) {
-			return '';
+	/**
+	 * Get the provider settings resolver.
+	 *
+	 * @return Decker_AI_Provider_Settings Provider settings resolver.
+	 */
+	protected function get_provider_settings() {
+		if ( ! $this->provider_settings instanceof Decker_AI_Provider_Settings ) {
+			$this->provider_settings = new Decker_AI_Provider_Settings();
 		}
 
-		$parsed_url = wp_parse_url( $url );
-
-		if (
-			! wp_http_validate_url( $url ) ||
-			empty( $parsed_url['scheme'] ) ||
-			'https' !== $parsed_url['scheme'] ||
-			empty( $parsed_url['host'] ) ||
-			! empty( $parsed_url['user'] ) ||
-			! empty( $parsed_url['pass'] )
-		) {
-			return '';
-		}
-
-		return $url;
+		return $this->provider_settings;
 	}
 
 	/**

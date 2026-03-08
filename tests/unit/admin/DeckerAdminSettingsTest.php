@@ -237,6 +237,33 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test the generic AI API key setting is saved correctly.
+	 */
+	public function test_settings_validate_saves_generic_ai_api_key() {
+		$input = array(
+			'ai_api_key' => 'generic-key',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'generic-key', $validated['ai_api_key'] );
+	}
+
+	/**
+	 * Test the generic AI model setting is saved correctly.
+	 */
+	public function test_settings_validate_saves_generic_ai_model() {
+		$input = array(
+			'ai_provider' => 'openrouter',
+			'ai_model'    => 'openai/gpt-5-mini',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'openai/gpt-5-mini', $validated['ai_model'] );
+	}
+
+	/**
 	 * Test AI API URL validation with a custom HTTPS endpoint.
 	 */
 	public function test_settings_validate_openai_api_url_with_custom_https_endpoint() {
@@ -394,6 +421,63 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 			'value="https://openrouter.ai/api/v1/chat/completions"',
 			$output
 		);
+	}
+
+	/**
+	 * Test advanced AI fields are hidden until an API key is saved.
+	 */
+	public function test_settings_init_hides_advanced_ai_fields_without_saved_key() {
+		global $wp_settings_fields;
+
+		update_option( 'decker_settings', array() );
+		$wp_settings_fields = array();
+
+		$this->admin_settings->settings_init();
+
+		$this->assertArrayNotHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
+		$this->assertArrayNotHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
+	}
+
+	/**
+	 * Test advanced AI fields are shown once an API key is saved.
+	 */
+	public function test_settings_init_shows_advanced_ai_fields_with_saved_key() {
+		global $wp_settings_fields;
+
+		update_option(
+			'decker_settings',
+			array(
+				'ai_provider' => 'openrouter',
+				'ai_api_key'  => 'saved-key',
+			)
+		);
+		$wp_settings_fields = array();
+
+		$this->admin_settings->settings_init();
+
+		$this->assertArrayHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
+		$this->assertArrayHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
+	}
+
+	/**
+	 * Test Gemini hides the URL override field to keep the settings simpler.
+	 */
+	public function test_settings_init_hides_url_override_for_gemini() {
+		global $wp_settings_fields;
+
+		update_option(
+			'decker_settings',
+			array(
+				'ai_provider' => 'gemini',
+				'ai_api_key'  => 'saved-key',
+			)
+		);
+		$wp_settings_fields = array();
+
+		$this->admin_settings->settings_init();
+
+		$this->assertArrayHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
+		$this->assertArrayNotHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
 	}
 
 	/**

@@ -1604,6 +1604,9 @@ msgstr "Clave API de IA"
 msgid "Enter the API key for the selected AI provider to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (for example, Chrome)."
 msgstr "Introduce la clave API del proveedor de IA seleccionado para habilitar la mejora de texto con IA en el servidor. Si se deja vacío, la función seguirá funcionando en navegadores con soporte de la API de Prompt integrada (por ejemplo, Chrome)."
 
+msgid "Model and URL override settings are shown after an API key has been saved."
+msgstr "Los ajustes de modelo y de URL personalizada se muestran después de guardar una clave API."
+
 msgid "AI API URL Override"
 msgstr "URL de API de IA personalizada"
 
