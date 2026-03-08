@@ -2488,30 +2488,30 @@ class Decker_Tasks {
 	 * @return string HTML markup for the stack icon with tooltip.
 	 */
 	public static function get_stack_icon_html( string $stack ): string {
-		$label      = self::get_stack_label( $stack );
-		$attributes = sprintf(
-			'class="%1$s" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"',
-			'%s',
-			esc_attr( $label )
-		);
+		$label         = self::get_stack_label( $stack );
+		$escaped_label = esc_attr( $label );
+		$icon_template = '<i class="%1$s" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
 
 		switch ( $stack ) {
 			case 'to-do':
 				$icon = sprintf(
-					'<i ' . $attributes . '></i>',
-					'ri-checkbox-blank-circle-line text-secondary me-2'
+					$icon_template,
+					'ri-checkbox-blank-circle-line text-secondary me-2',
+					$escaped_label
 				);
 				break;
 			case 'in-progress':
 				$icon = sprintf(
-					'<i ' . $attributes . '></i>',
-					'ri-progress-3-line text-warning me-2'
+					$icon_template,
+					'ri-progress-3-line text-warning me-2',
+					$escaped_label
 				);
 				break;
 			case 'done':
 				$icon = sprintf(
-					'<i ' . $attributes . '></i>',
-					'ri-checkbox-circle-line text-success me-2'
+					$icon_template,
+					'ri-checkbox-circle-line text-success me-2',
+					$escaped_label
 				);
 				break;
 			default:

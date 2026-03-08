@@ -12,7 +12,7 @@
     function initTooltips(container = document) {
         const tooltipTriggerList = [];
 
-        if (container && container.nodeType === 1 && container.matches('[data-bs-toggle="tooltip"]')) {
+        if (container && container.nodeType === Node.ELEMENT_NODE && typeof container.matches === 'function' && container.matches('[data-bs-toggle="tooltip"]')) {
             tooltipTriggerList.push(container);
         }
 
@@ -39,7 +39,7 @@
         tooltipObserver = new MutationObserver(function (mutations) {
             mutations.forEach(function (mutation) {
                 mutation.addedNodes.forEach(function (node) {
-                    if (node.nodeType === 1) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
                         initTooltips(node);
                     }
                 });
