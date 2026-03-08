@@ -922,6 +922,13 @@
 
         });
 
+        document.querySelectorAll('.clone-task').forEach((element) => {
+
+          element.removeEventListener('click', cloneTaskHandler);
+          element.addEventListener('click', cloneTaskHandler);
+
+        });
+
     }
 
     // Function to handle changes in the "task-today" checkbox

@@ -366,6 +366,12 @@ class Decker_Public {
 					'task_archived_success'       => __( 'The task has been successfully archived.', 'decker' ),
 					'task_unarchived_success'     => __( 'The task has been successfully unarchived.', 'decker' ),
 					'error_archiving_task'        => __( 'An error occurred while archiving the task.', 'decker' ),
+					// Clone task strings.
+					'confirm_clone_task_title'    => __( 'Are you sure you want to clone this task?', 'decker' ),
+					'confirm_clone_task_text'     => __( 'A copy of this task will be created.', 'decker' ),
+					'clone_task'                  => __( 'Clone', 'decker' ),
+					'task_cloned_success'         => __( 'The task has been successfully cloned.', 'decker' ),
+					'error_cloning_task'          => __( 'An error occurred while cloning the task.', 'decker' ),
 					// Extra keys from first version.
 					'success'                     => __( 'Success', 'decker' ),
 					'error'                       => __( 'Error', 'decker' ),
