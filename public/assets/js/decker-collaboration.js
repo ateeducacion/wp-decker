@@ -442,8 +442,9 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         const cursorsModule = quillInstance.getModule('cursors');
         console.log('Decker Collaboration: cursorsModule =', cursorsModule);
 
-        // Track selection change handler for cleanup
+        // Track event handlers for cleanup
         let selectionChangeHandler = null;
+        let remoteCursorChangeHandler = null;
 
         // Setup remote cursor management if cursors module is available
         if (cursorsModule) {
@@ -465,7 +466,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             quillInstance.on('selection-change', selectionChangeHandler);
 
             // Listen for awareness changes to update remote cursors
-            awareness.on('change', () => {
+            remoteCursorChangeHandler = () => {
                 const states = awareness.getStates();
 
                 // Get current cursor IDs in the module
@@ -499,7 +500,8 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
                         cursorsModule.removeCursor(cursor.id);
                     }
                 });
-            });
+            };
+            awareness.on('change', remoteCursorChangeHandler);
         } else {
             console.warn('Decker Collaboration: Cursors module NOT found in Quill instance. Remote cursors will not be displayed.');
         }
@@ -510,19 +512,22 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         const maxRetries = 5;
         const retryInterval = 2000; // Check every 2 seconds
 
-        // Update status on awareness changes
-        awareness.on('change', () => {
+        const awarenessStatusChangeHandler = () => {
             if (!isDisabled) {
                 updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
             }
-        });
+        };
+
+        // Update status on awareness changes
+        awareness.on('change', awarenessStatusChangeHandler);
 
         // Update status on provider status changes
-        provider.on('status', () => {
+        const providerStatusChangeHandler = () => {
             if (!isDisabled) {
                 updateStatusBar(statusBar, awareness, provider, statusBarTrackingState, false);
             }
-        });
+        };
+        provider.on('status', providerStatusChangeHandler);
 
         // Periodic connection check
         const connectionChecker = setInterval(() => {
@@ -630,11 +635,21 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
              * Destroy the collaboration session
              */
             destroy() {
+                isDisabled = true;
+
                 // Clear connection checker interval
                 clearInterval(connectionChecker);
 
                 // Clear cursor from awareness before disconnecting
                 awareness.setLocalStateField('cursor', null);
+
+                awareness.off('change', awarenessStatusChangeHandler);
+
+                if (remoteCursorChangeHandler) {
+                    awareness.off('change', remoteCursorChangeHandler);
+                }
+
+                provider.off('status', providerStatusChangeHandler);
 
                 // Remove selection change handler if it exists
                 if (selectionChangeHandler) {
