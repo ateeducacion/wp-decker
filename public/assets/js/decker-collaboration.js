@@ -446,7 +446,7 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             const peerCount = awareness.getStates().size;
 
             // If signaling is connected and we're alone after a few checks, proceed
-            if (signalingOk && peerCount <= 1 && singleUserCheckCount >= 3) {
+            if (!isSynced && signalingOk && peerCount <= 1 && singleUserCheckCount >= 3) {
                 console.log('Decker Collaboration: Single user mode detected (check #' + singleUserCheckCount + ')');
                 isSynced = true;
                 syncPromiseResolve();
