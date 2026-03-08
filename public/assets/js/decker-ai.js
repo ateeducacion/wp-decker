@@ -669,8 +669,10 @@ window.DeckerAI = (function () {
                 throw sessionResult.error;
             }
 
+            var taskContext = getTaskContext( textToImprove, textContent );
+
             var improvedText = await browserAIService.prompt(
-                buildPrompt( mode, textToImprove ),
+                buildPrompt( mode, taskContext ),
                 Object.assign(
                     {},
                     promptApiOptions,
@@ -706,10 +708,10 @@ window.DeckerAI = (function () {
      * Build a prompt string for the given rewrite mode.
      *
      * @param {string} mode Rewrite mode key.
-     * @param {string} text HTML content.
+     * @param {object} taskContext Task context data.
      * @returns {string} Full prompt.
      */
-    function buildPrompt( mode, text ) {
+    function buildPrompt( mode, taskContext ) {
         var prefixes = {
             improve_writing:     aiConfig.prompts.improve_writing,
             make_shorter:        aiConfig.prompts.make_shorter,
@@ -722,9 +724,140 @@ window.DeckerAI = (function () {
         };
 
         var prefix = prefixes[ mode ] || prefixes.improve_writing;
+        var template = aiConfig.prompts.prompt_template || '';
 
-        return prefix + ' ' + aiConfig.prompts.language_instruction + ' ' +
-            aiConfig.prompts.response_format + '\n\n' + text;
+        return applyPromptTemplate(
+            template,
+            {
+                mode_instruction:     prefix,
+                task_context:         formatTaskContext( taskContext ),
+                content_html:         taskContext.content_html,
+                language_instruction: aiConfig.prompts.language_instruction,
+                response_format:      aiConfig.prompts.response_format,
+            }
+        );
+    }
+
+    /**
+     * Collect the current task context from the task form.
+     *
+     * @param {string} contentHtml HTML content that will be transformed.
+     * @param {string} contentText Plain text content that will be transformed.
+     * @returns {object} Task context object.
+     */
+    function getTaskContext( contentHtml, contentText ) {
+        return {
+            title:         getInputValue( '#task-title' ),
+            board:         getSelectText( '#task-board' ),
+            responsible:   getSelectText( '#task-responsable' ),
+            assignees:     getSelectText( '#task-assignees' ),
+            stack:         getSelectText( '#task-stack' ),
+            due_date:      getInputValue( '#task-due-date' ),
+            labels:        getSelectText( '#task-labels' ),
+            max_priority:  getCheckboxText( '#task-max-priority' ),
+            today:         getCheckboxText( '#task-today' ),
+            content_html:  contentHtml,
+            content_text:  contentText,
+        };
+    }
+
+    /**
+     * Format task context as a localized plain-text block for the model.
+     *
+     * @param {object} taskContext Task context object.
+     * @returns {string} Task context block.
+     */
+    function formatTaskContext( taskContext ) {
+        var emptyValue = '—';
+
+        return [
+            aiConfig.prompts.context_title + ': ' + ( taskContext.title || emptyValue ),
+            aiConfig.prompts.context_board + ': ' + ( taskContext.board || emptyValue ),
+            aiConfig.prompts.context_responsible + ': ' + ( taskContext.responsible || emptyValue ),
+            aiConfig.prompts.context_assignees + ': ' + ( taskContext.assignees || emptyValue ),
+            aiConfig.prompts.context_stack + ': ' + ( taskContext.stack || emptyValue ),
+            aiConfig.prompts.context_due_date + ': ' + ( taskContext.due_date || emptyValue ),
+            aiConfig.prompts.context_labels + ': ' + ( taskContext.labels || emptyValue ),
+            aiConfig.prompts.context_max_priority + ': ' + ( taskContext.max_priority || emptyValue ),
+            aiConfig.prompts.context_today + ': ' + ( taskContext.today || emptyValue ),
+        ].join( '\n' );
+    }
+
+    /**
+     * Replace prompt placeholders with current values.
+     *
+     * @param {string} template Prompt template.
+     * @param {object} replacements Placeholder replacements.
+     * @returns {string} Final prompt text.
+     */
+    function applyPromptTemplate( template, replacements ) {
+        Object.keys( replacements ).forEach( function ( key ) {
+            var pattern = new RegExp( '\\{\\{\\s*' + escapeRegExp( key ) + '\\s*\\}\\}', 'g' );
+            template = template.replace( pattern, replacements[ key ] || '' );
+        } );
+
+        return template;
+    }
+
+    /**
+     * Get the trimmed value of an input field.
+     *
+     * @param {string} selector Field selector.
+     * @returns {string} Field value.
+     */
+    function getInputValue( selector ) {
+        var field = deckerContext.querySelector( selector );
+
+        return field && field.value ? String( field.value ).trim() : '';
+    }
+
+    /**
+     * Get the selected text from a select field.
+     *
+     * @param {string} selector Field selector.
+     * @returns {string} Selected text.
+     */
+    function getSelectText( selector ) {
+        var field = deckerContext.querySelector( selector );
+
+        if ( ! field || ! field.selectedOptions ) {
+            return '';
+        }
+
+        return Array.from( field.selectedOptions )
+            .map( function ( option ) {
+                return option && option.textContent
+                    ? option.textContent.trim()
+                    : '';
+            } )
+            .filter( function ( value ) {
+                return !! value;
+            } )
+            .join( ', ' );
+    }
+
+    /**
+     * Get the localized yes/no value of a checkbox field.
+     *
+     * @param {string} selector Field selector.
+     * @returns {string} Localized boolean text.
+     */
+    function getCheckboxText( selector ) {
+        var field = deckerContext.querySelector( selector );
+
+        return field && field.checked
+            ? aiConfig.strings.yes
+            : aiConfig.strings.no;
+    }
+
+    /**
+     * Escape a string for use in a regular expression.
+     *
+     * @param {string} value Raw string.
+     * @returns {string} Escaped string.
+     */
+    function escapeRegExp( value ) {
+        return String( value ).replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
     }
 
     /**

@@ -211,6 +211,18 @@ class Decker {
 		return $this->version;
 	}
 
+	/**
+	 * Get the default browser AI prompt template.
+	 *
+	 * @return string Default prompt template.
+	 */
+	public static function get_default_ai_prompt_template() {
+		return __(
+			"You are helping update a task in Decker. Use all available task information to complete the requested action.\n\nRequested action:\n{{mode_instruction}}\n\nTask context:\n{{task_context}}\n\nContent to transform:\n{{content_html}}\n\n{{language_instruction}}\n{{response_format}}",
+			'decker'
+		);
+	}
+
 
 	/**
 	 * Check if the current user has at least the required role.

@@ -519,8 +519,10 @@ class Decker_Public {
 	 * @return array AI configuration array.
 	 */
 	private function get_ai_config() {
+		$options = get_option( 'decker_settings', array() );
+
 		return array(
-			'enabled'          => true,
+			'enabled'          => ! isset( $options['ai_enabled'] ) || '1' === $options['ai_enabled'],
 			'strings'          => array(
 				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
 				'choose_action'            => __( 'Choose an action', 'decker' ),
@@ -551,8 +553,13 @@ class Decker_Public {
 				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
 				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
 				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
+				'yes'                      => _x( 'Yes', 'AI task context boolean value', 'decker' ),
+				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
 			),
 			'prompts'          => array(
+				'prompt_template' => ! empty( $options['ai_prompt'] )
+					? sanitize_textarea_field( $options['ai_prompt'] )
+					: Decker::get_default_ai_prompt_template(),
 				'improve_writing' => __(
 					'Improve the following task description so it is concise, clear, and easy for the team to execute.',
 					'decker'
@@ -594,6 +601,15 @@ class Decker_Public {
 					'Return only the improved text as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML content itself.',
 					'decker'
 				),
+				'context_title'   => __( 'Title', 'decker' ),
+				'context_board'   => __( 'Board', 'decker' ),
+				'context_responsible' => __( 'Responsable', 'decker' ),
+				'context_assignees' => __( 'Assign to', 'decker' ),
+				'context_stack'   => __( 'Stack', 'decker' ),
+				'context_due_date' => __( 'Due Date', 'decker' ),
+				'context_labels'  => __( 'Labels', 'decker' ),
+				'context_max_priority' => __( 'Maximum Priority', 'decker' ),
+				'context_today'   => __( 'For today', 'decker' ),
 			),
 		);
 	}

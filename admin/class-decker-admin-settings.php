@@ -83,6 +83,41 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render AI Enabled Field.
+	 *
+	 * Outputs the HTML for the ai_enabled field.
+	 *
+	 * @return void
+	 */
+	public function ai_enabled_render() {
+		$options = get_option( 'decker_settings', array() );
+		$checked = ! isset( $options['ai_enabled'] ) || '1' === $options['ai_enabled'];
+
+		echo '<label>';
+		echo '<input type="checkbox" name="decker_settings[ai_enabled]" value="1" ' . checked( $checked, true, false ) . '>';
+		echo esc_html__( 'Enable browser AI improvements for task descriptions.', 'decker' );
+		echo '</label>';
+		echo '<p class="description">' . esc_html__( 'When enabled, compatible browsers can use the built-in Prompt API to improve task descriptions directly in the editor.', 'decker' ) . '</p>';
+	}
+
+	/**
+	 * Render AI Prompt Field.
+	 *
+	 * Outputs the HTML for the ai_prompt field.
+	 *
+	 * @return void
+	 */
+	public function ai_prompt_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value   = isset( $options['ai_prompt'] ) && '' !== $options['ai_prompt']
+			? sanitize_textarea_field( $options['ai_prompt'] )
+			: Decker::get_default_ai_prompt_template();
+
+		echo '<textarea name="decker_settings[ai_prompt]" class="large-text code" rows="12">' . esc_textarea( $value ) . '</textarea>';
+		echo '<p class="description">' . esc_html__( 'Customize the base prompt used for browser AI improvements. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}.', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render Signaling Server Field.
 	 *
 	 * Outputs the HTML for the signaling_server field.
@@ -285,6 +320,8 @@ class Decker_Admin_Settings {
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
+			'ai_enabled'            => __( 'Browser AI', 'decker' ),
+			'ai_prompt'             => __( 'AI Prompt', 'decker' ),
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),
@@ -414,6 +451,12 @@ class Decker_Admin_Settings {
 
 		// Validate collaborative editing.
 		$input['collaborative_editing'] = isset( $input['collaborative_editing'] ) && '1' === $input['collaborative_editing'] ? '1' : '0';
+
+		// Validate browser AI settings.
+		$input['ai_enabled'] = isset( $input['ai_enabled'] ) && '1' === $input['ai_enabled'] ? '1' : '0';
+		$input['ai_prompt']  = isset( $input['ai_prompt'] ) && '' !== trim( $input['ai_prompt'] )
+			? sanitize_textarea_field( $input['ai_prompt'] )
+			: Decker::get_default_ai_prompt_template();
 
 		// Validate signaling server.
 		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {

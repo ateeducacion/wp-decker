@@ -159,6 +159,62 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test ai_enabled setting validation with enabled value.
+	 */
+	public function test_settings_validate_ai_enabled_enabled() {
+		$input = array(
+			'ai_enabled' => '1',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( '1', $validated['ai_enabled'] );
+	}
+
+	/**
+	 * Test ai_enabled setting validation with missing value defaults to disabled.
+	 */
+	public function test_settings_validate_ai_enabled_missing() {
+		$input = array();
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( '0', $validated['ai_enabled'] );
+	}
+
+	/**
+	 * Test ai_prompt setting validation falls back to the default template.
+	 */
+	public function test_settings_validate_ai_prompt_defaults_when_empty() {
+		$input = array(
+			'ai_prompt' => '',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals(
+			Decker::get_default_ai_prompt_template(),
+			$validated['ai_prompt']
+		);
+	}
+
+	/**
+	 * Test ai_prompt setting validation preserves a custom template.
+	 */
+	public function test_settings_validate_ai_prompt_custom_value() {
+		$input = array(
+			'ai_prompt' => "Custom prompt\n{{task_context}}",
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals(
+			"Custom prompt\n{{task_context}}",
+			$validated['ai_prompt']
+		);
+	}
+
+	/**
 	 * Test signaling_server setting validation with valid URL.
 	 */
 	public function test_settings_validate_signaling_server_valid_url() {
@@ -249,6 +305,37 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test ai_enabled_render outputs checked HTML by default.
+	 */
+	public function test_ai_enabled_render_enabled_by_default() {
+		update_option( 'decker_settings', array() );
+
+		ob_start();
+		$this->admin_settings->ai_enabled_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[ai_enabled]"', $output );
+		$this->assertStringContainsString( "checked='checked'", $output );
+	}
+
+	/**
+	 * Test ai_prompt_render outputs the default template.
+	 */
+	public function test_ai_prompt_render_uses_default_template() {
+		update_option( 'decker_settings', array() );
+
+		ob_start();
+		$this->admin_settings->ai_prompt_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[ai_prompt]"', $output );
+		$this->assertStringContainsString(
+			'{{mode_instruction}}',
+			$output
+		);
+	}
+
+	/**
 	 * Test signaling_server_render outputs correct HTML with default value.
 	 */
 	public function test_signaling_server_render_default() {
@@ -277,9 +364,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test AI settings fields are no longer registered.
+	 * Test browser AI settings fields are registered and legacy ones are not.
 	 */
-	public function test_settings_init_does_not_register_legacy_ai_fields() {
+	public function test_settings_init_registers_browser_ai_fields_only() {
 		global $wp_settings_fields;
 
 		update_option( 'decker_settings', array() );
@@ -287,6 +374,8 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		$this->admin_settings->settings_init();
 
+		$this->assertArrayHasKey( 'ai_enabled', $wp_settings_fields['decker']['decker_main_section'] );
+		$this->assertArrayHasKey( 'ai_prompt', $wp_settings_fields['decker']['decker_main_section'] );
 		$this->assertArrayNotHasKey( 'ai_provider', $wp_settings_fields['decker']['decker_main_section'] );
 		$this->assertArrayNotHasKey( 'ai_api_key', $wp_settings_fields['decker']['decker_main_section'] );
 		$this->assertArrayNotHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
