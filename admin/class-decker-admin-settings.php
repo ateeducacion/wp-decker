@@ -116,6 +116,21 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render OpenAI-Compatible API URL Field.
+	 *
+	 * Outputs the HTML for the openai_api_url settings field.
+	 */
+	public function openai_api_url_render() {
+		$options = get_option( 'decker_settings', array() );
+		$value   = isset( $options['openai_api_url'] ) ? esc_url( $options['openai_api_url'] ) : 'https://api.openai.com/v1/chat/completions';
+
+		echo '<input type="url" name="decker_settings[openai_api_url]" class="regular-text code" '
+			. 'value="' . esc_attr( $value ) . '" placeholder="https://api.openai.com/v1/chat/completions">';
+		echo '<p class="description">' . esc_html__( 'Enter the HTTPS chat completions endpoint for an OpenAI-compatible provider. Examples: OpenAI uses https://api.openai.com/v1/chat/completions and OpenRouter uses https://openrouter.ai/api/v1/chat/completions.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'WordPress Playground may block server-side provider requests because outbound HTTP is proxied through the browser. In that environment, browser-native AI is usually more reliable.', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render OpenAI Model Field.
 	 *
 	 * Outputs the HTML for the openai_model settings field.
@@ -328,6 +343,7 @@ class Decker_Admin_Settings {
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
 			'openai_api_key'        => __( 'OpenAI API Key', 'decker' ),
+			'openai_api_url'        => __( 'OpenAI-Compatible API URL', 'decker' ),
 			'openai_model'          => __( 'OpenAI Model', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),
@@ -454,6 +470,24 @@ class Decker_Admin_Settings {
 
 		// Validate OpenAI API key.
 		$input['openai_api_key'] = isset( $input['openai_api_key'] ) ? sanitize_text_field( $input['openai_api_key'] ) : '';
+
+		// Validate OpenAI-compatible API URL.
+		$input['openai_api_url'] = isset( $input['openai_api_url'] ) ? esc_url_raw( $input['openai_api_url'], array( 'https' ) ) : '';
+		if ( empty( $input['openai_api_url'] ) ) {
+			$input['openai_api_url'] = 'https://api.openai.com/v1/chat/completions';
+		} else {
+			$parsed_url = wp_parse_url( $input['openai_api_url'] );
+			if (
+				! wp_http_validate_url( $input['openai_api_url'] ) ||
+				empty( $parsed_url['scheme'] ) ||
+				'https' !== $parsed_url['scheme'] ||
+				empty( $parsed_url['host'] ) ||
+				! empty( $parsed_url['user'] ) ||
+				! empty( $parsed_url['pass'] )
+			) {
+				$input['openai_api_url'] = 'https://api.openai.com/v1/chat/completions';
+			}
+		}
 
 		// Validate OpenAI model.
 		$input['openai_model'] = isset( $input['openai_model'] ) ? sanitize_text_field( $input['openai_model'] ) : '';

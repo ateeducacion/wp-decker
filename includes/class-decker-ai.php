@@ -132,8 +132,13 @@ class Decker_AI {
 	 * @return string|WP_Error Improved content or error.
 	 */
 	protected function improve_text( $text, $mode ) {
-		$settings = get_option( 'decker_settings', array() );
-		$api_key  = isset( $settings['openai_api_key'] ) ? trim( $settings['openai_api_key'] ) : '';
+		$settings     = get_option( 'decker_settings', array() );
+		$api_key      = isset( $settings['openai_api_key'] ) ? trim( $settings['openai_api_key'] ) : '';
+		$provider_url = isset( $settings['openai_api_url'] ) ? esc_url_raw( $settings['openai_api_url'], array( 'https' ) ) : '';
+
+		if ( empty( $provider_url ) ) {
+			$provider_url = 'https://api.openai.com/v1/chat/completions';
+		}
 
 		if ( empty( $api_key ) ) {
 			return new WP_Error(
@@ -149,7 +154,7 @@ class Decker_AI {
 
 		$prompt = $this->build_prompt( $mode, $text );
 
-		return $this->call_provider( $api_key, $model, $prompt );
+		return $this->call_provider( $api_key, $provider_url, $model, $prompt );
 	}
 
 	/**
@@ -179,19 +184,20 @@ class Decker_AI {
 	}
 
 	/**
-	 * Send the prompt to the OpenAI Chat Completions API.
+	 * Send the prompt to an OpenAI-compatible Chat Completions API.
 	 *
 	 * This method is intentionally separate so the provider can be swapped
 	 * without changing the rest of the class logic.
 	 *
-	 * @param string $api_key OpenAI API key.
-	 * @param string $model   Model identifier (e.g. "gpt-5-mini").
-	 * @param string $prompt  Full prompt to send.
+	 * @param string $api_key      OpenAI-compatible API key.
+	 * @param string $provider_url OpenAI-compatible chat completions endpoint.
+	 * @param string $model        Model identifier (e.g. "gpt-5-mini").
+	 * @param string $prompt       Full prompt to send.
 	 * @return string|WP_Error Improved content, or WP_Error on failure.
 	 */
-	protected function call_provider( $api_key, $model, $prompt ) {
+	protected function call_provider( $api_key, $provider_url, $model, $prompt ) {
 		$response = wp_remote_post(
-			'https://api.openai.com/v1/chat/completions',
+			$provider_url,
 			array(
 				'timeout' => 60,
 				'headers' => array(

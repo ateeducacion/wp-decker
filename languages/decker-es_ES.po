@@ -1578,6 +1578,15 @@ msgstr "Introduce tu clave API de OpenAI para habilitar la función «Mejorar co
 msgid "Enter your OpenAI API key to enable server-side AI text improvement. If left empty, the feature will still work in browsers that support the built-in Prompt API (e.g. Chrome)."
 msgstr "Introduce tu clave API de OpenAI para habilitar la mejora de texto con IA en el servidor. Si se deja vacío, la función seguirá funcionando en navegadores con soporte de la API de Prompt integrada (ej. Chrome)."
 
+msgid "OpenAI-Compatible API URL"
+msgstr "URL de API compatible con OpenAI"
+
+msgid "Enter the HTTPS chat completions endpoint for an OpenAI-compatible provider. Examples: OpenAI uses https://api.openai.com/v1/chat/completions and OpenRouter uses https://openrouter.ai/api/v1/chat/completions."
+msgstr "Introduce el endpoint HTTPS de chat completions de un proveedor compatible con OpenAI. Ejemplos: OpenAI usa https://api.openai.com/v1/chat/completions y OpenRouter usa https://openrouter.ai/api/v1/chat/completions."
+
+msgid "WordPress Playground may block server-side provider requests because outbound HTTP is proxied through the browser. In that environment, browser-native AI is usually more reliable."
+msgstr "WordPress Playground puede bloquear las solicitudes al proveedor en el servidor porque el HTTP saliente se canaliza a través del navegador. En ese entorno, la IA nativa del navegador suele ser más fiable."
+
 msgid "OpenAI Model"
 msgstr "Modelo de OpenAI"
 

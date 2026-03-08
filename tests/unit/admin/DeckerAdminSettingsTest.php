@@ -196,6 +196,38 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test OpenAI-compatible API URL validation with a custom HTTPS endpoint.
+	 */
+	public function test_settings_validate_openai_api_url_with_custom_https_endpoint() {
+		$input = array(
+			'openai_api_url' => 'https://openrouter.ai/api/v1/chat/completions',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals(
+			'https://openrouter.ai/api/v1/chat/completions',
+			$validated['openai_api_url']
+		);
+	}
+
+	/**
+	 * Test OpenAI-compatible API URL validation rejects non-HTTPS endpoints.
+	 */
+	public function test_settings_validate_openai_api_url_rejects_non_https_endpoint() {
+		$input = array(
+			'openai_api_url' => 'http://localhost:3000/v1/chat/completions',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals(
+			'https://api.openai.com/v1/chat/completions',
+			$validated['openai_api_url']
+		);
+	}
+
+	/**
 	 * Test collaborative_editing_render outputs correct HTML when disabled.
 	 */
 	public function test_collaborative_editing_render_disabled() {
@@ -250,6 +282,26 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'value="wss://custom-server.example.com"', $output );
+	}
+
+	/**
+	 * Test openai_api_url_render outputs the configured endpoint.
+	 */
+	public function test_openai_api_url_render_custom_value() {
+		update_option(
+			'decker_settings',
+			array( 'openai_api_url' => 'https://openrouter.ai/api/v1/chat/completions' )
+		);
+
+		ob_start();
+		$this->admin_settings->openai_api_url_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[openai_api_url]"', $output );
+		$this->assertStringContainsString(
+			'value="https://openrouter.ai/api/v1/chat/completions"',
+			$output
+		);
 	}
 
 	/**

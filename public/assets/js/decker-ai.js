@@ -367,6 +367,7 @@ window.DeckerAI = (function () {
             wpApiSettings.root + 'decker/v1/ai/improve',
             {
                 method:  'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-WP-Nonce':   wpApiSettings.nonce,
