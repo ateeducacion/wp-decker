@@ -526,13 +526,9 @@ class Decker_Public {
 			'strings'          => array(
 				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
 				'choose_action'            => __( 'Choose an action', 'decker' ),
-				'mode_improve_writing'     => __( 'Improve writing', 'decker' ),
-				'mode_make_shorter'        => __( 'Make shorter', 'decker' ),
-				'mode_make_clearer'        => __( 'Make clearer', 'decker' ),
-				'mode_fix_grammar'         => __( 'Fix grammar and spelling', 'decker' ),
+				'mode_improve_description' => __( 'Improve description', 'decker' ),
 				'mode_make_actionable'     => __( 'Make it actionable', 'decker' ),
-				'mode_checklist'           => __( 'Convert to checklist', 'decker' ),
-				'mode_acceptance_criteria' => __( 'Extract acceptance criteria', 'decker' ),
+				'mode_generate_checklist'  => __( 'Generate checklist', 'decker' ),
 				'mode_summarize'           => __( 'Summarize', 'decker' ),
 				'improving'                => __( 'Improving text…', 'decker' ),
 				'preview_title'            => __( 'Review improvement', 'decker' ),
@@ -560,36 +556,20 @@ class Decker_Public {
 				'prompt_template' => ! empty( $options['ai_prompt'] )
 					? sanitize_textarea_field( $options['ai_prompt'] )
 					: Decker::get_default_ai_prompt_template(),
-				'improve_writing' => __(
-					'Improve the following task description so it is concise, clear, and easy for the team to execute.',
-					'decker'
-				),
-				'make_shorter'    => __(
-					'Shorten the following task description while keeping the key actions, constraints, and expected outcome.',
-					'decker'
-				),
-				'make_clearer'    => __(
-					'Rewrite the following task description so it is clearer, more specific, and easier to understand.',
-					'decker'
-				),
-				'fix_grammar'     => __(
-					'Fix grammar, spelling, and punctuation in the following task description without changing its meaning.',
+				'improve_description' => __(
+					'Rewrite the task description to be clear, well-structured, and easy to execute. Fix grammar and spelling. Add structure (Objetivo/Contexto/Pasos/Criterio de aceptación) where it improves clarity. Remove redundancy and narrative text that does not add actionable information.',
 					'decker'
 				),
 				'make_actionable' => __(
-					'Rewrite the following task description as an actionable task with concrete next steps and clear ownership language.',
+					'Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Add ownership language where possible based on the assigned users in the task context. Include a "Criterio de aceptación" section listing how to verify the task is complete.',
 					'decker'
 				),
-				'checklist'       => __(
-					'Convert the following task description into a concise checklist that can be pasted directly into the task.',
-					'decker'
-				),
-				'acceptance_criteria' => __(
-					'Extract concise acceptance criteria from the following task description.',
+				'generate_checklist' => __(
+					'Convert the task description into a structured checklist. Group related items under clear headings. Each item should be a single, verifiable action. If acceptance criteria can be inferred, add them as a separate checklist at the end. Remove narrative text and keep only actionable items.',
 					'decker'
 				),
 				'summarize'       => __(
-					'Summarize the following task description into a short, useful summary.',
+					'Summarize the task description into 2-3 sentences maximum. Capture: what needs to be done, who is involved, and the expected outcome. Omit implementation details and history.',
 					'decker'
 				),
 				'language_instruction' => sprintf(

@@ -65,4 +65,36 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 			$config['prompts']['prompt_template']
 		);
 	}
+
+	/**
+	 * AI config should expose only the simplified four browser AI actions.
+	 */
+	public function test_ai_config_exposes_only_simplified_ai_actions() {
+		$public = new Decker_Public( 'decker', '1.0.0' );
+		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$method->setAccessible( true );
+		$config = $method->invoke( $public );
+
+		$this->assertArrayHasKey( 'mode_improve_description', $config['strings'] );
+		$this->assertArrayHasKey( 'mode_make_actionable', $config['strings'] );
+		$this->assertArrayHasKey( 'mode_generate_checklist', $config['strings'] );
+		$this->assertArrayHasKey( 'mode_summarize', $config['strings'] );
+		$this->assertArrayNotHasKey( 'mode_improve_writing', $config['strings'] );
+		$this->assertArrayNotHasKey( 'mode_make_shorter', $config['strings'] );
+		$this->assertArrayNotHasKey( 'mode_make_clearer', $config['strings'] );
+		$this->assertArrayNotHasKey( 'mode_fix_grammar', $config['strings'] );
+		$this->assertArrayNotHasKey( 'mode_checklist', $config['strings'] );
+		$this->assertArrayNotHasKey( 'mode_acceptance_criteria', $config['strings'] );
+
+		$this->assertArrayHasKey( 'improve_description', $config['prompts'] );
+		$this->assertArrayHasKey( 'make_actionable', $config['prompts'] );
+		$this->assertArrayHasKey( 'generate_checklist', $config['prompts'] );
+		$this->assertArrayHasKey( 'summarize', $config['prompts'] );
+		$this->assertArrayNotHasKey( 'improve_writing', $config['prompts'] );
+		$this->assertArrayNotHasKey( 'make_shorter', $config['prompts'] );
+		$this->assertArrayNotHasKey( 'make_clearer', $config['prompts'] );
+		$this->assertArrayNotHasKey( 'fix_grammar', $config['prompts'] );
+		$this->assertArrayNotHasKey( 'checklist', $config['prompts'] );
+		$this->assertArrayNotHasKey( 'acceptance_criteria', $config['prompts'] );
+	}
 }

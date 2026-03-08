@@ -522,13 +522,9 @@ window.DeckerAI = (function () {
      */
     function getModes() {
         return [
-            { key: 'improve_writing',     label: aiConfig.strings.mode_improve_writing },
-            { key: 'make_shorter',        label: aiConfig.strings.mode_make_shorter },
-            { key: 'make_clearer',        label: aiConfig.strings.mode_make_clearer },
-            { key: 'fix_grammar',         label: aiConfig.strings.mode_fix_grammar },
+            { key: 'improve_description', label: aiConfig.strings.mode_improve_description },
             { key: 'make_actionable',     label: aiConfig.strings.mode_make_actionable },
-            { key: 'checklist',           label: aiConfig.strings.mode_checklist },
-            { key: 'acceptance_criteria', label: aiConfig.strings.mode_acceptance_criteria },
+            { key: 'generate_checklist',  label: aiConfig.strings.mode_generate_checklist },
             { key: 'summarize',           label: aiConfig.strings.mode_summarize },
         ];
     }
@@ -713,17 +709,13 @@ window.DeckerAI = (function () {
      */
     function buildPrompt( mode, taskContext ) {
         var prefixes = {
-            improve_writing:     aiConfig.prompts.improve_writing,
-            make_shorter:        aiConfig.prompts.make_shorter,
-            make_clearer:        aiConfig.prompts.make_clearer,
-            fix_grammar:         aiConfig.prompts.fix_grammar,
+            improve_description: aiConfig.prompts.improve_description,
             make_actionable:     aiConfig.prompts.make_actionable,
-            checklist:           aiConfig.prompts.checklist,
-            acceptance_criteria: aiConfig.prompts.acceptance_criteria,
+            generate_checklist:  aiConfig.prompts.generate_checklist,
             summarize:           aiConfig.prompts.summarize,
         };
 
-        var prefix = prefixes[ mode ] || prefixes.improve_writing;
+        var prefix = prefixes[ mode ] || prefixes.improve_description;
         var template = aiConfig.prompts.prompt_template || '';
 
         return applyPromptTemplate(
