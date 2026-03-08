@@ -1,4 +1,4 @@
-# Copyright (C) 2025 Área de Tecnología Educativa
+# Copyright (C) 2026 Área de Tecnología Educativa
 # This file is distributed under the GPL-3.0+.
 msgid ""
 msgstr ""
@@ -46,6 +46,15 @@ msgid "Enable real-time collaborative editing for tasks."
 msgstr ""
 
 msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
+msgstr ""
+
+msgid "Enable browser AI improvements for task descriptions."
+msgstr ""
+
+msgid "When enabled, compatible browsers can use the built-in Prompt API to improve task descriptions directly in the editor."
+msgstr ""
+
+msgid "Customize the base prompt used for browser AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
 msgstr ""
 
 msgid "WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev)."
@@ -96,6 +105,12 @@ msgstr ""
 msgid "Collaborative Editing"
 msgstr ""
 
+msgid "Browser AI"
+msgstr ""
+
+msgid "AI Prompt"
+msgstr ""
+
 msgid "Signaling Server"
 msgstr ""
 
@@ -132,6 +147,24 @@ msgid "Settings"
 msgstr ""
 
 msgid "Go to Decker"
+msgstr ""
+
+msgid "Decker Network Settings"
+msgstr ""
+
+msgid "You do not have sufficient permissions to access this page."
+msgstr ""
+
+msgid "Network settings saved."
+msgstr ""
+
+msgid "Allowed Site IDs"
+msgstr ""
+
+msgid "Please enter comma-separated site IDs (numbers only)"
+msgstr ""
+
+msgid "Enter comma-separated site IDs where Decker is permitted to be activated. Leave empty to allow activation on all sites."
 msgstr ""
 
 msgid "No tasks found for this date."
@@ -237,6 +270,37 @@ msgid "Comment by %s"
 msgstr ""
 
 msgid "You are not authorized to access this resource."
+msgstr ""
+
+msgid ""
+"You are a task-writing assistant for Decker, a Kanban board used by a team that manages educational technology projects (virtual classrooms, digital content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, and school IT support).\n"
+"\n"
+"## Your role\n"
+"Transform raw task details into a brief, high-quality task description that is clear, useful, and ready to paste into the task card.\n"
+"\n"
+"## Task context\n"
+"{{task_context}}\n"
+"\n"
+"## Requested action\n"
+"{{mode_instruction}}\n"
+"\n"
+"## Content to transform\n"
+"{{content_html}}\n"
+"\n"
+"## Rules\n"
+"- Use the task context only to understand and improve the description. Do not repeat metadata unless it is essential inside the final description.\n"
+"- Return only the description content for the task. Do not add explanations, notes, meta commentary, or text outside the description itself.\n"
+"- Keep the result professional, concise, and specific — no filler, no corporate jargon.\n"
+"- Write a brief result that a team member can read quickly and understand immediately.\n"
+"- Preserve all URLs, reference numbers (e.g. incident IDs like 100004538192), dates, and proper nouns exactly as given.\n"
+"- NEVER invent information. If something is unclear, keep it as-is rather than guessing.\n"
+"- If the input contains credentials or passwords, replace them with \"[credenciales en la tarea original]\" and add a warning inside the description.\n"
+"- Use HTML formatting when helpful: <strong> for emphasis, <ul>/<ol>/<li> for lists, <p> for paragraphs, <a> for links.\n"
+"- Prefer a short paragraph or a compact list, depending on the requested action. Only use headings or sections if they clearly improve the task description.\n"
+"- For short, simple tasks, keep the description short and proportional.\n"
+"\n"
+"{{language_instruction}}\n"
+"{{response_format}}"
 msgstr ""
 
 msgctxt "taxonomy general name"
@@ -524,6 +588,41 @@ msgstr ""
 msgid "Stack"
 msgstr ""
 
+msgid "Task not found."
+msgstr ""
+
+msgid "You do not have permission to clone this task."
+msgstr ""
+
+msgid "Task cloned successfully."
+msgstr ""
+
+msgid "Invalid task ID."
+msgstr ""
+
+msgid "Untitled"
+msgstr ""
+
+#. translators: %s: original task title
+#, php-format
+msgid "%s (copy)"
+msgstr ""
+
+msgid "No Board"
+msgstr ""
+
+msgid "To-Do"
+msgstr ""
+
+msgid "In Progress"
+msgstr ""
+
+msgid "Done"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
 msgctxt "post type general name"
 msgid "Tasks"
 msgstr ""
@@ -590,15 +689,6 @@ msgid "Due Date"
 msgstr ""
 
 msgid "Max Priority"
-msgstr ""
-
-msgid "To-Do"
-msgstr ""
-
-msgid "In Progress"
-msgstr ""
-
-msgid "Done"
 msgstr ""
 
 msgid "Nextcloud Card ID"
@@ -778,6 +868,9 @@ msgstr ""
 msgid "Edit in WordPress"
 msgstr ""
 
+msgid "Clone"
+msgstr ""
+
 msgid "Archive"
 msgstr ""
 
@@ -903,9 +996,6 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-msgid "No Board"
-msgstr ""
-
 msgid "Search articles..."
 msgstr ""
 
@@ -1005,7 +1095,13 @@ msgstr ""
 msgid "P."
 msgstr ""
 
+msgid "C."
+msgstr ""
+
 msgid "Description"
+msgstr ""
+
+msgid "People"
 msgstr ""
 
 msgid "Remaining Time"
@@ -1128,6 +1224,18 @@ msgstr ""
 msgid "An error occurred while archiving the task."
 msgstr ""
 
+msgid "Are you sure you want to clone this task?"
+msgstr ""
+
+msgid "A copy of this task will be created."
+msgstr ""
+
+msgid "The task has been successfully cloned."
+msgstr ""
+
+msgid "An error occurred while cloning the task."
+msgstr ""
+
 msgid "Month"
 msgstr ""
 
@@ -1162,6 +1270,133 @@ msgid "Loading content. Please wait."
 msgstr ""
 
 msgid "Error loading content. Please try again."
+msgstr ""
+
+msgid "Search tasks..."
+msgstr ""
+
+msgid "Type to search tasks by title"
+msgstr ""
+
+msgid "to navigate"
+msgstr ""
+
+msgid "to select"
+msgstr ""
+
+msgid "to close"
+msgstr ""
+
+msgid "No tasks found"
+msgstr ""
+
+msgid "Error searching tasks"
+msgstr ""
+
+msgid "Improve with AI"
+msgstr ""
+
+msgid "Choose an action"
+msgstr ""
+
+msgid "Improve description"
+msgstr ""
+
+msgid "Make it actionable"
+msgstr ""
+
+msgid "Generate checklist"
+msgstr ""
+
+msgid "Summarize"
+msgstr ""
+
+msgid "Improving text…"
+msgstr ""
+
+msgid "Review improvement"
+msgstr ""
+
+msgid "Original"
+msgstr ""
+
+msgid "Improved"
+msgstr ""
+
+msgid "Accept"
+msgstr ""
+
+msgid "An error occurred while improving the text."
+msgstr ""
+
+msgid "No content"
+msgstr ""
+
+msgid "Please add some text before using AI improvement."
+msgstr ""
+
+msgid "Browser AI unavailable"
+msgstr ""
+
+msgid "This AI action requires a compatible browser with built-in AI support."
+msgstr ""
+
+msgid "Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile."
+msgstr ""
+
+msgid "Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile."
+msgstr ""
+
+msgid "The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again."
+msgstr ""
+
+msgid "This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled."
+msgstr ""
+
+msgid "Open setup guide"
+msgstr ""
+
+msgid "The browser AI session could not be started."
+msgstr ""
+
+msgid "The browser AI response was empty."
+msgstr ""
+
+msgctxt "AI task context boolean value"
+msgid "Yes"
+msgstr ""
+
+msgctxt "AI task context boolean value"
+msgid "No"
+msgstr ""
+
+msgid "Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content."
+msgstr ""
+
+msgid "Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content."
+msgstr ""
+
+msgid "Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description."
+msgstr ""
+
+msgid "Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description."
+msgstr ""
+
+#. translators: %s: locale code such as es_ES.
+#, php-format
+msgid "Write the result in the language configured in WordPress (%s)."
+msgstr ""
+
+msgid "Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself."
+msgstr ""
+
+msgid "Assign to"
+msgstr ""
+
+msgid "Maximum Priority"
+msgstr ""
+
+msgid "For today"
 msgstr ""
 
 msgid "Connecting..."
@@ -1329,12 +1564,6 @@ msgstr ""
 msgid "MAXIMUM PRIORITY"
 msgstr ""
 
-msgid "Maximum Priority"
-msgstr ""
-
-msgid "For today"
-msgstr ""
-
 msgid "Select Responsable"
 msgstr ""
 
@@ -1348,9 +1577,6 @@ msgid "Select date"
 msgstr ""
 
 msgid "Please select a due date."
-msgstr ""
-
-msgid "Assign to"
 msgstr ""
 
 msgid "Comments"
@@ -1399,6 +1625,9 @@ msgid "Toggle Dropdown"
 msgstr ""
 
 msgid "Task"
+msgstr ""
+
+msgid "Search (Ctrl+K)"
 msgstr ""
 
 msgid "Notifications"

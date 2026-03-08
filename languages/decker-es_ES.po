@@ -1481,33 +1481,8 @@ msgstr "IDs de sitios permitidos"
 msgid "Please enter comma-separated site IDs (numbers only)"
 msgstr "Por favor, introduce IDs de sitios separados por comas (solo números)"
 
-msgid ""
-"Enter comma-separated site IDs where Decker is permitted to be activated. "
-"Leave empty to allow activation on all sites."
-msgstr ""
-"Introduce los IDs de sitios separados por comas donde se permite activar "
-"Decker. Déjalo vacío para permitir la activación en todos los sitios."
-
-msgid "Plugin Activation Error"
-msgstr "Error de activación del plugin"
-
-msgid ""
-"Decker cannot be activated on this site. Please ask your network "
-"administrator to add this site to the allowed sites list under Network Admin "
-"&gt; Settings &gt; Decker."
-msgstr ""
-"Decker no puede activarse en este sitio. Por favor, pide al administrador de "
-"la red que añada este sitio a la lista de sitios permitidos en Administración "
-"de red &gt; Configuración &gt; Decker."
-
-msgid ""
-"Decker is active on this site, but the network administrator has not "
-"included it in the allowed sites list. Please contact your network "
-"administrator."
-msgstr ""
-"Decker está activo en este sitio, pero el administrador de la red no lo ha "
-"incluido en la lista de sitios permitidos. Por favor, contacta con tu "
-"administrador de red."
+msgid "Enter comma-separated site IDs where Decker is permitted to be activated. Leave empty to allow activation on all sites."
+msgstr "Introduce los IDs de sitios separados por comas donde se permite activar Decker. Déjalo vacío para permitir la activación en todos los sitios."
 
 msgid "Task not found."
 msgstr "Tarea no encontrada."
@@ -1543,3 +1518,174 @@ msgstr "La tarea se ha clonado correctamente."
 
 msgid "An error occurred while cloning the task."
 msgstr "Se produjo un error al clonar la tarea."
+
+msgid "Improve with AI"
+msgstr "Mejorar con IA"
+
+msgid "Choose an action"
+msgstr "Elige una acción"
+
+msgid "Improve description"
+msgstr "Mejorar descripción"
+
+msgid "Make it actionable"
+msgstr "Hacer accionable"
+
+msgid "Generate checklist"
+msgstr "Generar checklist"
+
+msgid "Summarize"
+msgstr "Resumir"
+
+msgid "Improving text…"
+msgstr "Mejorando el texto…"
+
+msgid "Review improvement"
+msgstr "Revisar la mejora"
+
+msgid "Original"
+msgstr "Original"
+
+msgid "Improved"
+msgstr "Mejorado"
+
+msgid "Accept"
+msgstr "Aceptar"
+
+msgid "An error occurred while improving the text."
+msgstr "Se produjo un error al mejorar el texto."
+
+msgid "No content"
+msgstr "Sin contenido"
+
+msgid "Please add some text before using AI improvement."
+msgstr "Por favor, añade algo de texto antes de usar la mejora con IA."
+
+msgid "Browser AI unavailable"
+msgstr "La IA del navegador no está disponible"
+
+msgid "This AI action requires a compatible browser with built-in AI support."
+msgstr "Esta acción de IA requiere un navegador compatible con IA integrada."
+
+msgid "Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile."
+msgstr "Chrome puede usar la Prompt API, pero la IA integrada no está disponible o activada actualmente en este perfil del navegador."
+
+msgid "Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile."
+msgstr "Microsoft Edge puede admitir la Prompt API experimental, pero no está disponible en este perfil del navegador."
+
+msgid "The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again."
+msgstr "El modelo de IA del navegador todavía no está listo. Termina de descargarlo o activarlo y vuelve a intentarlo."
+
+msgid "This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled."
+msgstr "Esta función requiere actualmente un navegador compatible con IA integrada, como Chrome o Microsoft Edge con la Prompt API activada."
+
+msgid "Open setup guide"
+msgstr "Abrir guía de configuración"
+
+msgid "The browser AI session could not be started."
+msgstr "No se pudo iniciar la sesión de IA del navegador."
+
+msgid "The browser AI response was empty."
+msgstr "La respuesta de la IA del navegador estaba vacía."
+
+msgctxt "AI task context boolean value"
+msgid "Yes"
+msgstr "Sí"
+
+msgctxt "AI task context boolean value"
+msgid "No"
+msgstr "No"
+
+msgid "Enable browser AI improvements for task descriptions."
+msgstr "Activar mejoras con IA del navegador para las descripciones de tareas."
+
+msgid "When enabled, compatible browsers can use the built-in Prompt API to improve task descriptions directly in the editor."
+msgstr "Cuando está activado, los navegadores compatibles pueden usar la Prompt API integrada para mejorar las descripciones de tareas directamente en el editor."
+
+msgid "Browser AI"
+msgstr "IA del navegador"
+
+msgid "AI Prompt"
+msgstr "Prompt de IA"
+
+msgid "Customize the base prompt used for browser AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
+msgstr "Personaliza el prompt base usado para las mejoras con IA del navegador. Para modelos nano más pequeños, normalmente funciona mejor escribir este prompt base en inglés y dejar que el modelo traduzca el resultado final al idioma de WordPress. Marcadores disponibles: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
+
+msgid "Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content."
+msgstr "Reescribe la descripción de la tarea para que sea clara, bien estructurada y fácil de ejecutar. Corrige la gramática y la ortografía. Usa el contexto de la tarea solo cuando ayude a redactar una descripción mejor. Devuelve solo el contenido final de la descripción de la tarea."
+
+msgid "Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content."
+msgstr "Reescribe la descripción de la tarea como pasos concretos y accionables. Cada paso debe empezar con un verbo y dejar claro QUIÉN hace QUÉ. Usa los usuarios asignados en el contexto de la tarea solo cuando resulte útil. Devuelve solo el contenido final de la descripción de la tarea."
+
+msgid "Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description."
+msgstr "Convierte la descripción de la tarea en un checklist estructurado. Agrupa los elementos relacionados solo cuando mejore la claridad. Cada elemento debe ser una única acción verificable. Devuelve solo el contenido final del checklist para la descripción de la tarea."
+
+msgid "Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description."
+msgstr "Resume la descripción de la tarea en un máximo de 2-3 frases. Recoge qué hay que hacer y cuál es el resultado esperado. Devuelve solo la descripción final breve de la tarea."
+
+#. translators: %s: locale code such as es_ES.
+#, php-format
+msgid "Write the result in the language configured in WordPress (%s)."
+msgstr "Escribe el resultado en el idioma configurado en WordPress (%s)."
+
+msgid "Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself."
+msgstr "Devuelve solo la descripción final de la tarea como HTML, conservando etiquetas de formato HTML válidas como <strong>, <em>, <ul>, <ol>, <li>, <p> y <a>. No incluyas explicaciones, bloques de código Markdown ni ningún texto fuera de la propia descripción HTML."
+
+msgid ""
+"You are a task-writing assistant for Decker, a Kanban board used by a team that manages educational technology projects (virtual classrooms, digital content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, and school IT support).\n"
+"\n"
+"## Your role\n"
+"Transform raw task details into a brief, high-quality task description that is clear, useful, and ready to paste into the task card.\n"
+"\n"
+"## Task context\n"
+"{{task_context}}\n"
+"\n"
+"## Requested action\n"
+"{{mode_instruction}}\n"
+"\n"
+"## Content to transform\n"
+"{{content_html}}\n"
+"\n"
+"## Rules\n"
+"- Use the task context only to understand and improve the description. Do not repeat metadata unless it is essential inside the final description.\n"
+"- Return only the description content for the task. Do not add explanations, notes, meta commentary, or text outside the description itself.\n"
+"- Keep the result professional, concise, and specific — no filler, no corporate jargon.\n"
+"- Write a brief result that a team member can read quickly and understand immediately.\n"
+"- Preserve all URLs, reference numbers (e.g. incident IDs like 100004538192), dates, and proper nouns exactly as given.\n"
+"- NEVER invent information. If something is unclear, keep it as-is rather than guessing.\n"
+"- If the input contains credentials or passwords, replace them with \"[credenciales en la tarea original]\" and add a warning inside the description.\n"
+"- Use HTML formatting when helpful: <strong> for emphasis, <ul>/<ol>/<li> for lists, <p> for paragraphs, <a> for links.\n"
+"- Prefer a short paragraph or a compact list, depending on the requested action. Only use headings or sections if they clearly improve the task description.\n"
+"- For short, simple tasks, keep the description short and proportional.\n"
+"\n"
+"{{language_instruction}}\n"
+"{{response_format}}"
+msgstr ""
+"Eres un asistente de redacción de tareas para Decker, un tablero Kanban usado por un equipo que gestiona proyectos de tecnología educativa (aulas virtuales, plataformas de contenidos digitales, GSuite/Google Workspace, Moodle/EVAGD, formación docente y soporte TIC a centros).\n"
+"\n"
+"## Tu función\n"
+"Transforma los datos en bruto de una tarea en una descripción breve y de alta calidad que sea clara, útil y esté lista para pegarse en la tarjeta de la tarea.\n"
+"\n"
+"## Contexto de la tarea\n"
+"{{task_context}}\n"
+"\n"
+"## Acción solicitada\n"
+"{{mode_instruction}}\n"
+"\n"
+"## Contenido a transformar\n"
+"{{content_html}}\n"
+"\n"
+"## Reglas\n"
+"- Usa el contexto de la tarea solo para entender y mejorar la descripción. No repitas metadatos salvo que sean esenciales dentro de la descripción final.\n"
+"- Devuelve solo el contenido de la descripción de la tarea. No añadas explicaciones, notas, comentarios meta ni texto fuera de la propia descripción.\n"
+"- Mantén el resultado profesional, conciso y específico, sin relleno ni jerga corporativa.\n"
+"- Redacta un resultado breve que un miembro del equipo pueda leer rápido y entender de inmediato.\n"
+"- Conserva exactamente todas las URL, números de referencia (por ejemplo, IDs de incidencia como 100004538192), fechas y nombres propios.\n"
+"- NUNCA inventes información. Si algo no está claro, déjalo tal cual en vez de adivinar.\n"
+"- Si la entrada contiene credenciales o contraseñas, sustitúyelas por \"[credenciales en la tarea original]\" y añade una advertencia dentro de la descripción.\n"
+"- Usa formato HTML cuando ayude: <strong> para énfasis, <ul>/<ol>/<li> para listas, <p> para párrafos y <a> para enlaces.\n"
+"- Prefiere un párrafo corto o una lista compacta, según la acción solicitada. Usa encabezados o secciones solo si mejoran claramente la descripción de la tarea.\n"
+"- Para tareas cortas y sencillas, mantén la descripción breve y proporcionada.\n"
+"\n"
+"{{language_instruction}}\n"
+"{{response_format}}"
