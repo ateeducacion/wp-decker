@@ -2488,22 +2488,37 @@ class Decker_Tasks {
 	 * @return string HTML markup for the stack icon with tooltip.
 	 */
 	public static function get_stack_icon_html( string $stack ): string {
-			$label = self::get_stack_label( $stack );
+		$label         = self::get_stack_label( $stack );
+		$escaped_label = esc_attr( $label );
+		$icon_template = '<i class="%1$s" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+
 		switch ( $stack ) {
 			case 'to-do':
-					$icon = '<i class="ri-checkbox-blank-circle-line text-secondary me-2" title="' . esc_attr( $label ) . '"></i>';
+				$icon = sprintf(
+					$icon_template,
+					'ri-checkbox-blank-circle-line text-secondary me-2',
+					$escaped_label
+				);
 				break;
 			case 'in-progress':
-					$icon = '<i class="ri-progress-3-line text-warning me-2" title="' . esc_attr( $label ) . '"></i>';
+				$icon = sprintf(
+					$icon_template,
+					'ri-progress-3-line text-warning me-2',
+					$escaped_label
+				);
 				break;
 			case 'done':
-					$icon = '<i class="ri-checkbox-circle-line text-success me-2" title="' . esc_attr( $label ) . '"></i>';
+				$icon = sprintf(
+					$icon_template,
+					'ri-checkbox-circle-line text-success me-2',
+					$escaped_label
+				);
 				break;
 			default:
 				return esc_html( $stack );
 		}
 
-			return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
+		return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
 	}
 
 	/**
