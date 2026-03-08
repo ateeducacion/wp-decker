@@ -144,6 +144,13 @@ table#tablaTareas td:nth-child(6) {
 	white-space: nowrap;
 }
 
+table#tablaTareas td:nth-child(6) .avatar-group {
+	display: inline-flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	min-width: max-content;
+}
+
 /* If you want to hide a column on mobile, you can use display: none; */
 @media (max-width: 768px) {
 	.d-none.d-md-table-cell {
