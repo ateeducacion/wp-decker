@@ -295,6 +295,7 @@ class Decker_Public {
 			}
 
 			if ( ! $use_quill_editor ) {
+				// Load the WordPress Classic Editor assets for task descriptions when Quill is not selected.
 				wp_enqueue_editor();
 			}
 

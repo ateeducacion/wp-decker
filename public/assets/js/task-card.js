@@ -128,6 +128,7 @@
         }
 
         return new Promise((resolve) => {
+            const debouncedMarkTaskAsChanged = debounce(() => markTaskAsChanged(context), 150);
             const config = {
                 tinymce: {
                     wpautop: true,
@@ -138,7 +139,7 @@
                     setup: function(editor) {
                         taskEditor = editor;
                         editor.on('change keyup SetContent', function() {
-                            markTaskAsChanged(context);
+                            debouncedMarkTaskAsChanged();
                         });
                         editor.on('init', function() {
                             taskEditor.initialized = true;
@@ -186,8 +187,6 @@
         }
 
         taskEditor = null;
-        formFieldsBinding = null;
-        collabSession = null;
         quill = null;
         window.quill = null;
     }
