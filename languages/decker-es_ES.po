@@ -1587,6 +1587,9 @@ msgstr "Selecciona el modelo de OpenAI para la mejora de texto. Se recomienda GP
 msgid "Select the OpenAI model to use for server-side text improvement. GPT-4.1 nano is recommended for most use cases."
 msgstr "Selecciona el modelo de OpenAI para la mejora de texto en el servidor. Se recomienda GPT-4.1 nano para la mayoría de los casos de uso."
 
+msgid "Enter any OpenAI model identifier to use for server-side text improvement. Suggested values are GPT-5 mini, GPT-5, GPT-5 nano, o4-mini, and o3. GPT-5 mini is recommended for most use cases."
+msgstr "Introduce cualquier identificador de modelo de OpenAI para usarlo en la mejora de texto en el servidor. Los valores sugeridos son GPT-5 mini, GPT-5, GPT-5 nano, o4-mini y o3. Se recomienda GPT-5 mini para la mayoría de los casos de uso."
+
 msgid "Improve with AI"
 msgstr "Mejorar con IA"
 

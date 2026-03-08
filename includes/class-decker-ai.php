@@ -145,7 +145,7 @@ class Decker_AI {
 
 		$model  = isset( $settings['openai_model'] ) && ! empty( $settings['openai_model'] )
 			? sanitize_text_field( $settings['openai_model'] )
-			: 'gpt-4.1-nano';
+			: 'gpt-5-mini';
 
 		$prompt = $this->build_prompt( $mode, $text );
 
@@ -185,7 +185,7 @@ class Decker_AI {
 	 * without changing the rest of the class logic.
 	 *
 	 * @param string $api_key OpenAI API key.
-	 * @param string $model   Model identifier (e.g. "gpt-4o-mini").
+	 * @param string $model   Model identifier (e.g. "gpt-5-mini").
 	 * @param string $prompt  Full prompt to send.
 	 * @return string|WP_Error Improved content, or WP_Error on failure.
 	 */

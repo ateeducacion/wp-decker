@@ -122,24 +122,24 @@ class Decker_Admin_Settings {
 	 */
 	public function openai_model_render() {
 		$options        = get_option( 'decker_settings', array() );
-		$selected_model = isset( $options['openai_model'] ) ? sanitize_text_field( $options['openai_model'] ) : 'gpt-4.1-nano';
+		$selected_model = isset( $options['openai_model'] ) ? sanitize_text_field( $options['openai_model'] ) : 'gpt-5-mini';
 
 		$models = array(
-			'gpt-4.1-nano' => 'GPT-4.1 nano (fastest, cheapest)',
-			'gpt-4.1-mini' => 'GPT-4.1 mini (fast, affordable)',
-			'gpt-4.1'      => 'GPT-4.1 (most capable)',
-			'gpt-4o-mini'  => 'GPT-4o mini',
-			'gpt-4o'       => 'GPT-4o',
-			'o4-mini'      => 'o4-mini (reasoning)',
+			'gpt-5-mini' => 'GPT-5 mini (recommended)',
+			'gpt-5'      => 'GPT-5',
+			'gpt-5-nano' => 'GPT-5 nano (fastest)',
+			'o4-mini'    => 'o4-mini (reasoning)',
+			'o3'         => 'o3 (advanced reasoning)',
 		);
 
-		echo '<select name="decker_settings[openai_model]">';
+		echo '<input type="text" name="decker_settings[openai_model]" class="regular-text" '
+			. 'value="' . esc_attr( $selected_model ) . '" list="decker-openai-models" autocomplete="off">';
+		echo '<datalist id="decker-openai-models">';
 		foreach ( $models as $value => $label ) {
-			echo '<option value="' . esc_attr( $value ) . '" ' . selected( $selected_model, $value, false ) . '>'
-				. esc_html( $label ) . '</option>';
+			echo '<option value="' . esc_attr( $value ) . '">' . esc_html( $label ) . '</option>';
 		}
-		echo '</select>';
-		echo '<p class="description">' . esc_html__( 'Select the OpenAI model to use for server-side text improvement. GPT-4.1 nano is recommended for most use cases.', 'decker' ) . '</p>';
+		echo '</datalist>';
+		echo '<p class="description">' . esc_html__( 'Enter any OpenAI model identifier to use for server-side text improvement. Suggested values are GPT-5 mini, GPT-5, GPT-5 nano, o4-mini, and o3. GPT-5 mini is recommended for most use cases.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -456,11 +456,9 @@ class Decker_Admin_Settings {
 		$input['openai_api_key'] = isset( $input['openai_api_key'] ) ? sanitize_text_field( $input['openai_api_key'] ) : '';
 
 		// Validate OpenAI model.
-		$valid_models = array( 'gpt-4.1-nano', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini', 'gpt-4o', 'o4-mini' );
-		if ( isset( $input['openai_model'] ) && in_array( $input['openai_model'], $valid_models, true ) ) {
-			$input['openai_model'] = sanitize_text_field( $input['openai_model'] );
-		} else {
-			$input['openai_model'] = 'gpt-4.1-nano';
+		$input['openai_model'] = isset( $input['openai_model'] ) ? sanitize_text_field( $input['openai_model'] ) : '';
+		if ( empty( $input['openai_model'] ) ) {
+			$input['openai_model'] = 'gpt-5-mini';
 		}
 
 		// Validate alert color.
