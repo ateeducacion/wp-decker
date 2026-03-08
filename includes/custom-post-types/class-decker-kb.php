@@ -533,7 +533,7 @@ class Decker_Kb {
 		$last_editor_id = self::get_last_editor( $article_id );
 		$latest_revision_id = self::get_latest_revision_id( $article_id );
 		$history_url        = self::build_revision_admin_url( $latest_revision_id );
-		$revision_count     = wp_count_post_revisions( $article_id );
+		$revision_count     = count( wp_get_post_revisions( $article_id ) );
 
 		return new WP_REST_Response(
 			array(

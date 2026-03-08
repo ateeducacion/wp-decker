@@ -1,0 +1,23 @@
+MIME-Version: 1.0
+From: Test User <test@example.com>
+Date: Wed, 4 Dec 2024 15:34:38 +0000
+Message-ID: <test123@mail.example.com>
+Subject: test with signature
+To: receiver@example.com
+Content-Type: multipart/alternative; boundary="000000000000abc123"
+
+--000000000000abc123
+Content-Type: text/plain; charset="UTF-8"
+
+This is the main body of the email.
+
+-- 
+Test User
+test@example.com
+
+--000000000000abc123
+Content-Type: text/html; charset="UTF-8"
+
+<div>This is the main body of the email.</div>
+
+--000000000000abc123--

@@ -1,0 +1,117 @@
+Received: from smtp-lp.gobiernodecanarias.org (93.188.136.122)
+        by cloudflare-email.net (unknown) id al7GMhfKmcTq
+        for <receiver@example.com>; Wed, 04 Dec 2024 15:36:06 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; cv=none;
+	b=SBo3RB3S8JZdhWcJ5fMyqX3evMsIWIPsuF+v6bsjXJUVIB3kSkSx6VM8bOkRyX5g3KKz+748u
+	NEKz7SHK+1z8YW6O3D2RJZmQPEVpNHWQvb5wVAIb7PaKWw/XLm05JbNSS90FJvY/2b9lun5F0l1
+	ZRd2HhbWfxKGjCtdKkQuHX0LnXRdLaaFcvDIJ8H2Vu1jfQwsH/9aZ2/tBqSE7fP9oHX85pWwQ4j
+	PhEoTWjKbL7DtjWV10V4D66i72Uxpw7Uw8YyzChWarcQrVkyIz7KpHsVHCtucwHmam73rTEiFD/
+	5bjFAevexCSERyofS9R5vnm3D/V3qZUScXXsV5uxHSRQ==;
+ARC-Message-Signature: i=1; a=rsa-sha256; s=2023; d=cloudflare-email.net; c=relaxed/relaxed;
+	h=To:Subject:Date:From:reply-to:cc:resent-date:resent-from:resent-to
+	:resent-cc:in-reply-to:references:list-id:list-help:list-unsubscribe
+	:list-subscribe:list-post:list-owner:list-archive; t=1733326568;
+	x=1733931368; bh=qb1u80Qwb5KhZf2+hcBBy/4O5Kby/n0J9R3pjcEtS3k=; b=KyUW8K/mH0
+	hxG/+dGxqyvtF5XUj2w0KP9cYcb3fuzSKShxdvkjGmsc890jNl3p9KJT07jtC73GZuNPt311awk
+	6Yyop2f48M7fWzW3WkHRIKjaiUsT7HcIWfdnRp0mMf8ldE92iMd1dhT9jB+gndprkcS+dEXAxgw
+	NEDHEY6HmfbITJq8OEZO6mtBwWzOqi8vPC8tTRlmqkWNY1L1sGeaX6gPtEnBmlC7A3o5/6u5f7g
+	juKsiY1vZ00GSELx21x1emWKG1QXUIJLpGfCWWqEo+YVqsk3m+i/pyFNkII4VrDk7x+7gC3/CsP
+	A/m2zuQzWkhB03CaMW2jV8ohv4S+DRuQ==;
+ARC-Authentication-Results: i=1; mx.cloudflare.net;
+	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
+	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
+	arc=none smtp.remote-ip=93.188.136.122
+Received-SPF: pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender)
+	receiver=mx.cloudflare.net; client-ip=93.188.136.122; envelope-from="test2@example.com"; helo=smtp-lp.gobiernodecanarias.org;
+Authentication-Results: mx.cloudflare.net;
+	dmarc=pass header.from=gobiernodecanarias.org policy.dmarc=reject;
+	spf=none (mx.cloudflare.net: no SPF records found for postmaster@smtp-lp.gobiernodecanarias.org) smtp.helo=smtp-lp.gobiernodecanarias.org;
+	spf=pass (mx.cloudflare.net: domain of test2@example.com designates 93.188.136.122 as permitted sender) smtp.mailfrom=test2@example.com;
+	arc=none smtp.remote-ip=93.188.136.122
+Received: from atletico-sc07e.gobiernodecanarias.net (atletico-sc07e.gobiernodecanarias.net [10.141.38.173])
+	by smtp-lp.gobiernodecanarias.org (Postfix) with ESMTP id 4903ABDA0A3
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:36:06 +0000 (WET)
+DMARC-Filter: OpenDMARC Filter v1.4.1 smtp-lp.gobiernodecanarias.org 4903ABDA0A3
+Authentication-Results: smtp-lp.gobiernodecanarias.org; dmarc=none (p=none dis=none) header.from=gobiernodecanarias.org
+Authentication-Results: smtp-lp.gobiernodecanarias.org; spf=fail smtp.mailfrom=gobiernodecanarias.org
+DKIM-Filter: OpenDKIM Filter v2.11.0 smtp-lp.gobiernodecanarias.org 4903ABDA0A3
+Received: from atletico-sc07e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id C43C41570A0F
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:36:05 +0000 (GMT)
+Received: from atletico-sc07e.gobiernodecanarias.net (unknown [127.0.0.1])
+	by DDEI (Postfix) with ESMTP id AAC4F1570A06
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:36:05 +0000 (GMT)
+X-TM-AS-ERS: 209.85.208.44-127.9.11.1
+X-TM-AS-SMTP: 1.0 YWxtZW5kcm9zMi5nb2JpZXJub2RlY2FuYXJpYXMub3Jn ZXNlcmNvbEBnb
+	2JpZXJub2RlY2FuYXJpYXMub3Jn
+X-TM-DDEI-Authentication-Results:spf=fail (Sender IP is 209.85.208.44) smtp.
+	mailfrom=test2@example.com
+X-DDEI-TLS-USAGE: Unused
+Received: from almendros2.gobiernodecanarias.org (unknown [10.141.157.138])
+	by atletico-sc07e.gobiernodecanarias.net (Postfix) with ESMTP
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:36:05 +0000 (GMT)
+Received: from me.openexo.com (unknown [10.141.106.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+	(No client certificate requested)
+	by almendros2.gobiernodecanarias.org (Postfix) with ESMTPSA id 9C104132572A
+	for <receiver@example.com>; Wed,  4 Dec 2024 15:36:05 +0000 (WET)
+Received: from me.openexo.com ([127.0.0.1]) by me.openexo.com with ESMTP;
+	Wed, 04 Dec 2024 15:35:48 +0000 (WET)
+Received: from mail-ed1-f44.google.com ([209.85.208.44]) by me.openexo.com with
+	ESMTP;
+	(version=TLS1.3 cipher=TLS_AES_128_GCM_SHA256);
+	Wed, 04 Dec 2024 15:36:04 +0000 (UTC)
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-5cece886771so406700a12.0
+        for <receiver@example.com>; Wed, 04 Dec 2024 07:36:04 -0800 (PST)
+X-Gm-Message-State: AOJu0Yz6UWdYZSlo6gwE5+WE58FpxiqchbywrvAQLt8ervJVtmgxg7mG
+	gssb9BPRUXwC1vekDyShcN/kGMX7wAwWnnFFtXdPFD0fHi+NZLuAv52rxTNId5Cy/76QYIssPza
+	YMNUhwf+koUj/5ea5g1BRvyF8Hf4=
+X-Google-Smtp-Source: AGHT+IEL2lIx+mCPB5H6aUsJ/pkiqP5Sfky6HtyjXHOjrZ6KWn69DZYNlKYvt4KwMFPYZ4ws8eku/WYj+h5fVPi7nr0=
+X-Received: by 2002:a05:6402:5191:b0:5d0:c649:b2d2 with SMTP id
+ 4fb4d7f45d1cf-5d0c649bbc1mr25819379a12.1.1733326563894; Wed, 04 Dec 2024
+ 07:36:03 -0800 (PST)
+MIME-Version: 1.0
+From: Test User 2 <test2@example.com>
+Date: Wed, 4 Dec 2024 15:35:53 +0000
+X-Gmail-Original-Message-ID: <CANqSyMC1q=8uBuZ7H5S7CcBDBWBg6yscObzqFE16Xj+En7iNfw@mail.gmail.com>
+Message-ID: <CANqSyMC1q=8uBuZ7H5S7CcBDBWBg6yscObzqFE16Xj+En7iNfw@mail.gmail.com>
+Subject: test from gmail gb
+To: receiver@example.com
+Content-Type: multipart/alternative; boundary="0000000000001ef6b00628738a8f"
+X-TMASE-Version: DDEI-5.1-9.1.1004-28838.000
+X-TMASE-Result: 10--18.156900-10.000000
+X-TMASE-MatchedRID: SiN1X8Ph1oqMWPnQjYTmSrHFVEA/5VBNVlfRWmx2KnPAIZTerVmo0+KB
+	Fzn2PnofX9MlUXqFTO3SEmMwVLdkWsU3FKhdT3F/UYB7V58oVjhAAqZk1OdrlCFcmxL76KeOxoZ
+	THZ+XCFEN8sJSKp/yGPUJN7+IjuvuY/h9emeS2oTUS7zR7ir9hCzrPg+MjoVuGrsB8LWwUQol3a
+	fZehJEWaIGyLAIcTQWA5YSHWdShDG+5D/rhFC2hK77GYn+3QJXA/q7PI0TWwiDGx/OQ1GV8mdBt
+	X6uC5l8x/OaSH9EKluJh8KfzwoOZJBlLa6MK1y4
+X-TMASE-SNAP-Result: 1.821001.0001-0-1-22:0,33:0,34:0-0
+X-TMASE-INERTIA: 0-0;;;;
+X-TMASE-XGENCLOUD: ecc35c53-096b-4aa8-9675-97dd8d8503e6-0-0-200-0
+X-TM-AS-Result: 
+	No--18.157-7.0-31-10;No--18.157-5.0-31-10;No--18.157-4.5-31-10
+
+--0000000000001ef6b00628738a8f
+Content-Type: text/plain; charset="UTF-8"
+
+this is a mail from gmail gb
+
+--0000000000001ef6b00628738a8f
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><div class=3D"gmail-gs" style=3D"margin:0px;min-width:0px;=
+padding:0px 0px 20px;width:initial;font-family:&quot;Google Sans&quot;,Robo=
+to,RobotoDraft,Helvetica,Arial,sans-serif;font-size:medium"><div class=3D"g=
+mail-"><div id=3D"gmail-:9v" class=3D"gmail-ii gmail-gt" style=3D"direction=
+:ltr;margin:8px 0px 0px;padding:0px;font-size:0.875rem;overflow-x:hidden"><=
+div id=3D"gmail-:h0" class=3D"gmail-a3s gmail-aiL" style=3D"direction:ltr;f=
+ont-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alte=
+rnates:normal;font-size-adjust:none;font-kerning:auto;font-feature-settings=
+:normal;font-stretch:normal;font-size:small;line-height:1.5;font-family:Ari=
+al,Helvetica,sans-serif;overflow:auto hidden"><div dir=3D"ltr">this is a ma=
+il from gmail gb</div></div></div></div></div></div>
+
+--0000000000001ef6b00628738a8f--
+
