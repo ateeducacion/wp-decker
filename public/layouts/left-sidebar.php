@@ -238,21 +238,74 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 						   // Get the board slug from the URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
-			$boards = BoardManager::get_all_boards();
+			$boards            = BoardManager::get_all_boards();
+			$board_task_counts = $task_manager->get_board_task_counts_by_stack(
+				array(
+					'to-do',
+					'in-progress',
+				)
+			);
+
 			foreach ( $boards as $board ) {
 				// Only show boards that have show_in_boards set to true.
 				if ( $board->show_in_boards ) {
-					echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
-						esc_url(
-							add_query_arg(
-								array(
-									'decker_page' => 'board',
-									'slug'        => $board->slug,
-								),
-								home_url( '/' )
-							)
-						)
-					) . '">' . esc_html( $board->name ) . '</a></li>';
+					$to_do_count       = (int) ( $board_task_counts[ $board->slug ]['to-do'] ?? 0 );
+					$in_progress_count = (int) ( $board_task_counts[ $board->slug ]['in-progress'] ?? 0 );
+					$board_url         = add_query_arg(
+						array(
+							'decker_page' => 'board',
+							'slug'        => $board->slug,
+						),
+						home_url( '/' )
+					);
+					?>
+					<li class="<?php echo esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ); ?>">
+						<a
+							class="decker-sidebar-board-link"
+							title="<?php echo esc_attr( $board->name ); ?>"
+							href="<?php echo esc_url( $board_url ); ?>"
+						>
+							<span class="decker-sidebar-board-title"><?php echo esc_html( $board->name ); ?></span>
+							<?php if ( $to_do_count > 0 || $in_progress_count > 0 ) : ?>
+								<span class="decker-sidebar-board-badges">
+									<?php if ( $to_do_count > 0 ) : ?>
+										<?php
+										$to_do_label = Decker_Tasks::get_stack_label( 'to-do' );
+										?>
+										<span
+											class="decker-sidebar-board-status decker-sidebar-board-status-todo"
+											data-bs-toggle="tooltip"
+											data-bs-placement="top"
+											aria-label="<?php echo esc_attr( $to_do_label ); ?>"
+											data-bs-original-title="<?php echo esc_attr( $to_do_label ); ?>"
+										>
+											<i class="<?php echo esc_attr( Decker_Tasks::get_stack_icon_classes( 'to-do' ) ); ?>" aria-hidden="true"></i>
+											<sup class="decker-sidebar-board-status-count"><?php echo esc_html( $to_do_count ); ?></sup>
+											<span class="visually-hidden"><?php echo esc_html( $to_do_label . ': ' . $to_do_count ); ?></span>
+										</span>
+									<?php endif; ?>
+
+									<?php if ( $in_progress_count > 0 ) : ?>
+										<?php
+										$in_progress_label = Decker_Tasks::get_stack_label( 'in-progress' );
+										?>
+										<span
+											class="decker-sidebar-board-status decker-sidebar-board-status-in-progress"
+											data-bs-toggle="tooltip"
+											data-bs-placement="top"
+											aria-label="<?php echo esc_attr( $in_progress_label ); ?>"
+											data-bs-original-title="<?php echo esc_attr( $in_progress_label ); ?>"
+										>
+											<i class="<?php echo esc_attr( Decker_Tasks::get_stack_icon_classes( 'in-progress' ) ); ?>" aria-hidden="true"></i>
+											<sup class="decker-sidebar-board-status-count"><?php echo esc_html( $in_progress_count ); ?></sup>
+											<span class="visually-hidden"><?php echo esc_html( $in_progress_label . ': ' . $in_progress_count ); ?></span>
+										</span>
+									<?php endif; ?>
+								</span>
+							<?php endif; ?>
+						</a>
+					</li>
+					<?php
 				}
 			}
 			?>

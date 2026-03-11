@@ -54,6 +54,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	});
 
+	document.querySelectorAll('.merge-task').forEach((element) => {
+
+	  element.removeEventListener('click', mergeTaskHandler);
+	  element.addEventListener('click', mergeTaskHandler);
+
+	});
+
 
 	// Add event listener for "Fix Order" button
 	const fixOrderButton = document.getElementById('fix-order-btn');
@@ -186,11 +193,6 @@ function cloneTaskHandler(event) {
 			})
 			.then(data => {
 				if (data.success) {
-					// Close any currently open task modal.
-					window.deckerHasUnsavedChanges = false;
-					const taskModal = document.getElementById('task-modal');
-					const modalInstance = taskModal ? bootstrap.Modal.getInstance(taskModal) : null;
-
 					const openClonedTask = () => {
 						const trigger = document.createElement('button');
 						trigger.setAttribute('data-task-id', data.new_task_id);
@@ -202,13 +204,7 @@ function cloneTaskHandler(event) {
 						trigger.remove();
 					};
 
-					if (modalInstance && taskModal.classList.contains('show')) {
-						// Wait for modal to fully close before opening the cloned task.
-						taskModal.addEventListener('hidden.bs.modal', openClonedTask, { once: true });
-						modalInstance.hide();
-					} else {
-						openClonedTask();
-					}
+					runAfterTaskModalCloses(openClonedTask);
 				}
 			})
 			.catch(error => {
@@ -221,6 +217,374 @@ function cloneTaskHandler(event) {
 			});
 		}
 	});
+}
+
+function runAfterTaskModalCloses(callback) {
+	const taskModal = document.getElementById('task-modal');
+	const modalInstance = (
+		taskModal &&
+		typeof bootstrap !== 'undefined' &&
+		bootstrap.Modal
+	) ? bootstrap.Modal.getOrCreateInstance(taskModal) : null;
+
+	if (modalInstance && taskModal.classList.contains('show')) {
+		window.deckerHasUnsavedChanges = false;
+		taskModal.addEventListener('hidden.bs.modal', callback, { once: true });
+		modalInstance.hide();
+		return;
+	}
+
+	callback();
+}
+
+function mergeTaskHandler(event) {
+	event.preventDefault();
+	const element = event.currentTarget;
+	const taskId = element.getAttribute('data-task-id');
+	const taskTitle = element.getAttribute('data-task-title') || '';
+
+	runAfterTaskModalCloses(() => openMergeTaskSelector(taskId, taskTitle));
+}
+
+function openMergeTaskSelector(taskId, taskTitle) {
+	const mergeSearchDebounceMs = 250;
+	let searchTimeout = null;
+	let currentQuery = '';
+	let selectedTaskId = '';
+	let selectedTaskLabel = '';
+	let selectedIndex = -1;
+	let currentResults = [];
+	let abortController = null;
+	const sourceTaskTitle = taskTitle
+		? `<strong>${escapeHtml(taskTitle)}</strong><br>`
+		: '';
+
+	Swal.fire({
+		title: deckerVars.strings.merge_task_title,
+		html: `
+			<p class="text-start mb-3">${sourceTaskTitle}${deckerVars.strings.merge_task_text}</p>
+			<input
+				type="search"
+				id="decker-merge-search"
+				class="form-control form-control-lg"
+				style="margin:0; width:100%;"
+				placeholder="${deckerVars.strings.merge_task_search_placeholder}"
+				autocomplete="off"
+			>
+			<label
+				for="decker-merge-destination"
+				class="form-label d-block text-start mt-2"
+			>${deckerVars.strings.merge_task_select_label}</label>
+			<div
+				id="decker-merge-destination"
+				class="border rounded overflow-auto"
+				style="display:block; width:100%; max-height:18rem;"
+			>
+				<div class="text-muted text-center py-4 px-3">
+					<i class="ri-search-line fs-3"></i>
+					<p class="mt-2 mb-0">${deckerVars.strings.merge_task_search_hint}</p>
+				</div>
+			</div>
+		`,
+		showCancelButton: true,
+		confirmButtonText: deckerVars.strings.confirm_merge_task_button,
+		cancelButtonText: deckerVars.strings.cancel,
+		focusConfirm: false,
+		willClose: () => {
+			window.clearTimeout(searchTimeout);
+
+			if (abortController) {
+				abortController.abort();
+				abortController = null;
+			}
+		},
+		didOpen: () => {
+			const searchInput = document.getElementById('decker-merge-search');
+			const resultsContainer = document.getElementById('decker-merge-destination');
+
+			if (!searchInput || !resultsContainer) {
+				return;
+			}
+
+			const renderMessage = (message, iconClass = 'ri-search-line') => {
+				selectedTaskId = '';
+				selectedTaskLabel = '';
+				selectedIndex = -1;
+				currentResults = [];
+				resultsContainer.innerHTML = `
+					<div class="text-muted text-center py-4 px-3">
+						<i class="${iconClass} fs-3"></i>
+						<p class="mt-2 mb-0">${message}</p>
+					</div>
+				`;
+			};
+
+			const updateSelection = (index) => {
+				const resultItems = resultsContainer.querySelectorAll(
+					'.merge-search-result'
+				);
+
+				if (index < 0 || index >= currentResults.length || !resultItems.length) {
+					return;
+				}
+
+				selectedIndex = index;
+				selectedTaskId = String(currentResults[index].id);
+				selectedTaskLabel =
+					`#${currentResults[index].id} · ` +
+					`${currentResults[index].title} · ` +
+					`${currentResults[index].board}`;
+
+				resultItems.forEach((item, itemIndex) => {
+					const isSelected = itemIndex === selectedIndex;
+
+					item.classList.toggle('active', isSelected);
+					item.setAttribute(
+						'aria-selected',
+						isSelected ? 'true' : 'false'
+					);
+
+					item.querySelectorAll('.merge-search-result-meta').forEach((meta) => {
+						meta.classList.toggle('text-muted', !isSelected);
+						meta.classList.toggle('text-white-50', isSelected);
+					});
+				});
+
+				resultItems[selectedIndex].scrollIntoView({
+					block: 'nearest'
+				});
+			};
+
+			const renderResults = (tasks) => {
+				currentResults = tasks;
+				selectedTaskId = '';
+				selectedTaskLabel = '';
+				selectedIndex = -1;
+
+				resultsContainer.innerHTML = `
+					<div class="list-group list-group-flush">
+						${tasks.map((task, index) => `
+							<button
+								type="button"
+								class="list-group-item list-group-item-action merge-search-result text-start"
+								data-index="${index}"
+								aria-selected="false"
+							>
+								<div class="d-flex w-100 justify-content-between align-items-center">
+									<h6 class="mb-1">
+										#${escapeHtml(task.id)} · ${escapeHtml(task.title)}
+									</h6>
+									<small class="merge-search-result-meta text-muted">
+										${escapeHtml(task.stack_label || '')}
+									</small>
+								</div>
+								<small class="merge-search-result-meta text-muted">
+									<i class="ri-folder-line"></i> ${escapeHtml(task.board)}
+								</small>
+							</button>
+						`).join('')}
+					</div>
+				`;
+
+				resultsContainer.querySelectorAll('.merge-search-result').forEach((item) => {
+					item.addEventListener('click', function() {
+						updateSelection(
+							parseInt(this.getAttribute('data-index'), 10)
+						);
+						Swal.resetValidationMessage();
+					});
+				});
+			};
+
+			const performSearch = (query) => {
+				abortController = new AbortController();
+
+				fetch(
+					`${wpApiSettings.root}decker/v1/tasks/search?search=` +
+					encodeURIComponent(query),
+					{
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-WP-Nonce': wpApiSettings.nonce
+						},
+						signal: abortController.signal
+					}
+				)
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
+					}
+					return response.json();
+				})
+				.then(data => {
+					if (query !== currentQuery) {
+						return;
+					}
+
+					const tasks = Array.isArray(data.tasks)
+						? data.tasks.filter(
+							task => String(task.id) !== String(taskId)
+						)
+						: [];
+
+					if (!tasks.length) {
+						renderMessage(deckerVars.strings.merge_task_no_results);
+						return;
+					}
+
+					renderResults(tasks);
+				})
+				.catch(error => {
+					if (error.name === 'AbortError') {
+						return;
+					}
+
+					renderMessage(deckerVars.strings.error, 'ri-error-warning-line');
+				});
+			};
+
+			searchInput.focus();
+
+			searchInput.addEventListener('input', function() {
+				const query = this.value.trim();
+
+				window.clearTimeout(searchTimeout);
+				currentQuery = query;
+
+				if (abortController) {
+					abortController.abort();
+					abortController = null;
+				}
+
+				if (query.length < 2) {
+					renderMessage(deckerVars.strings.merge_task_search_hint);
+					return;
+				}
+
+				renderMessage(deckerVars.strings.merge_task_searching);
+
+				searchTimeout = window.setTimeout(function() {
+					performSearch(query);
+				}, mergeSearchDebounceMs);
+			});
+
+			searchInput.addEventListener('keydown', function(event) {
+				if (!currentResults.length) {
+					return;
+				}
+
+				if (event.key === 'ArrowDown') {
+					event.preventDefault();
+					updateSelection((selectedIndex + 1) % currentResults.length);
+					return;
+				}
+
+				if (event.key === 'ArrowUp') {
+					event.preventDefault();
+					updateSelection(
+						selectedIndex <= 0
+							? currentResults.length - 1
+							: selectedIndex - 1
+					);
+				}
+			});
+		},
+		preConfirm: () => {
+			if (!selectedTaskId) {
+				Swal.showValidationMessage(deckerVars.strings.select_task_to_merge);
+				return false;
+			}
+
+			return {
+				destinationTaskId: selectedTaskId,
+				destinationTaskLabel: selectedTaskLabel
+			};
+		}
+	}).then((selectionResult) => {
+		if (!selectionResult.isConfirmed || !selectionResult.value) {
+			return;
+		}
+
+		Swal.fire({
+			title: deckerVars.strings.confirm_merge_task_title,
+			text: `${deckerVars.strings.confirm_merge_task_text} ${selectionResult.value.destinationTaskLabel}`,
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: deckerVars.strings.confirm_merge_task_button,
+			cancelButtonText: deckerVars.strings.cancel
+		}).then((confirmResult) => {
+			if (!confirmResult.isConfirmed) {
+				return;
+			}
+
+			fetch(`<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>${encodeURIComponent(taskId)}/merge`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+				},
+				body: JSON.stringify({
+					destination_task_id: parseInt(selectionResult.value.destinationTaskId, 10)
+				})
+			})
+			.then(async response => {
+				const data = await response.json();
+				if (!response.ok || !data.success) {
+					throw new Error(data.message || deckerVars.strings.error_merging_task);
+				}
+				return data;
+			})
+			.then(data => {
+				Swal.fire({
+					title: deckerVars.strings.success,
+					text: data.message || deckerVars.strings.task_merged_success,
+					icon: 'success'
+				}).then(() => {
+					openTaskAfterTaskAction(data.destination_task_id);
+				});
+			})
+			.catch(error => {
+				Swal.fire({
+					title: deckerVars.strings.error,
+					text: error.message || deckerVars.strings.error_merging_task,
+					icon: 'error'
+				});
+			});
+		});
+	});
+}
+
+function openTaskAfterTaskAction(taskId) {
+	const taskModal = document.getElementById('task-modal');
+
+	const openTaskModal = () => {
+		const trigger = document.createElement('button');
+		trigger.setAttribute('data-task-id', taskId);
+		trigger.setAttribute('data-bs-toggle', 'modal');
+		trigger.setAttribute('data-bs-target', '#task-modal');
+		trigger.style.display = 'none';
+		document.body.appendChild(trigger);
+		trigger.click();
+		trigger.remove();
+	};
+
+	if (taskModal) {
+		runAfterTaskModalCloses(openTaskModal);
+	} else {
+		window.location.href = deckerVars.taskPermalinkStructure.replace('%d', taskId);
+	}
+}
+
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
 }
 
 

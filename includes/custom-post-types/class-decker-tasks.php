@@ -661,6 +661,25 @@ class Decker_Tasks {
 				},
 			)
 		);
+
+		register_rest_route(
+			'decker/v1',
+			'/tasks/(?P<id>\d+)/merge',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'handle_merge_task' ),
+				'permission_callback' => function () {
+					return current_user_can( 'edit_posts' );
+				},
+				'args'                => array(
+					'destination_task_id' => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -722,6 +741,68 @@ class Decker_Tasks {
 				'new_task_id' => $new_task_id,
 				'task_url'    => $task_url,
 				'message'     => __( 'Task cloned successfully.', 'decker' ),
+			),
+			200
+		);
+	}
+
+	/**
+	 * Handle the REST API request to merge a task into another task.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_merge_task( WP_REST_Request $request ) {
+		$source_task_id      = (int) $request['id'];
+		$destination_task_id = (int) $request->get_param( 'destination_task_id' );
+
+		if ( ! $destination_task_id ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Please choose a destination task.', 'decker' ),
+				),
+				400
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $source_task_id ) ||
+			! current_user_can( 'edit_post', $destination_task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __(
+						'You do not have permission to merge one of the selected tasks.',
+						'decker'
+					),
+				),
+				403
+			);
+		}
+
+		$result = self::merge_tasks( $source_task_id, $destination_task_id );
+
+		if ( is_wp_error( $result ) ) {
+			$error_data = $result->get_error_data();
+			$status     = is_array( $error_data ) && isset( $error_data['status'] )
+				? (int) $error_data['status']
+				: 400;
+
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $result->get_error_message(),
+				),
+				$status
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success'             => true,
+				'source_task_id'      => $source_task_id,
+				'destination_task_id' => $destination_task_id,
+				'message'             => __( 'Task merged successfully.', 'decker' ),
 			),
 			200
 		);
@@ -816,6 +897,299 @@ class Decker_Tasks {
 		);
 
 		return $new_task_id;
+	}
+
+	/**
+	 * Merge a source task into a destination task.
+	 *
+	 * The destination task keeps its primary fields, while the source task
+	 * contributes assigned users, user-date relations, comments, attachments,
+	 * and description content. The source task is archived and renamed.
+	 *
+	 * @param int $source_task_id The source task ID.
+	 * @param int $destination_task_id The destination task ID.
+	 * @return true|WP_Error True on success or a WP_Error on failure.
+	 */
+	public static function merge_tasks( int $source_task_id, int $destination_task_id ) {
+		$source_post      = get_post( $source_task_id );
+		$destination_post = get_post( $destination_task_id );
+
+		if ( ! $source_post || 'decker_task' !== $source_post->post_type ) {
+			return new WP_Error(
+				'invalid_source_task',
+				__( 'The source task was not found.', 'decker' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! $destination_post || 'decker_task' !== $destination_post->post_type ) {
+			return new WP_Error(
+				'invalid_destination_task',
+				__( 'The destination task was not found.', 'decker' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( $source_task_id === $destination_task_id ) {
+			return new WP_Error(
+				'invalid_merge',
+				__( 'A task cannot be merged into itself.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( 'publish' !== $source_post->post_status ||
+			'publish' !== $destination_post->post_status ) {
+			return new WP_Error(
+				'invalid_task_status',
+				__( 'Only published tasks can be merged.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( get_post_meta( $source_task_id, 'merged_into', true ) ) {
+			return new WP_Error(
+				'already_merged',
+				__( 'This task has already been merged.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		$destination_assigned_users = self::normalize_task_user_ids(
+			get_post_meta( $destination_task_id, 'assigned_users', true )
+		);
+		$source_assigned_users      = self::normalize_task_user_ids(
+			get_post_meta( $source_task_id, 'assigned_users', true )
+		);
+		$merged_assigned_users      = array_values(
+			array_unique(
+				array_merge(
+					$destination_assigned_users,
+					$source_assigned_users
+				)
+			)
+		);
+
+		update_post_meta(
+			$destination_task_id,
+			'assigned_users',
+			$merged_assigned_users
+		);
+
+		$merged_relations = self::merge_user_date_relations(
+			get_post_meta( $destination_task_id, '_user_date_relations', true ),
+			get_post_meta( $source_task_id, '_user_date_relations', true )
+		);
+
+		if ( ! empty( $merged_relations ) ) {
+			update_post_meta(
+				$destination_task_id,
+				'_user_date_relations',
+				$merged_relations
+			);
+		}
+
+		$merged_description = self::build_merged_task_description(
+			(string) $destination_post->post_content,
+			(string) $source_post->post_content,
+			(string) $source_post->post_title,
+			$source_task_id
+		);
+
+		wp_update_post(
+			array(
+				'ID'           => $destination_task_id,
+				'post_content' => wp_kses(
+					$merged_description,
+					Decker::get_allowed_tags()
+				),
+			)
+		);
+
+		$source_comments = get_comments(
+			array(
+				'post_id' => $source_task_id,
+				'status'  => 'all',
+				'orderby' => 'comment_ID',
+				'order'   => 'ASC',
+			)
+		);
+
+		foreach ( $source_comments as $comment ) {
+			wp_update_comment(
+				array(
+					'comment_ID'      => $comment->comment_ID,
+					'comment_post_ID' => $destination_task_id,
+				)
+			);
+		}
+
+		$source_attachments      = get_attached_media( '', $source_task_id );
+		$destination_attachments = get_post_meta(
+			$destination_task_id,
+			'attachments',
+			true
+		);
+		$source_attachment_meta  = get_post_meta( $source_task_id, 'attachments', true );
+
+		$destination_attachments = is_array( $destination_attachments )
+			? array_map( 'intval', $destination_attachments )
+			: array();
+		$source_attachment_meta  = is_array( $source_attachment_meta )
+			? array_map( 'intval', $source_attachment_meta )
+			: array();
+
+		foreach ( $source_attachments as $attachment ) {
+			wp_update_post(
+				array(
+					'ID'          => $attachment->ID,
+					'post_parent' => $destination_task_id,
+				)
+			);
+			$destination_attachments[] = (int) $attachment->ID;
+		}
+
+		if ( ! empty( $source_attachment_meta ) ) {
+			$destination_attachments = array_merge(
+				$destination_attachments,
+				$source_attachment_meta
+			);
+		}
+
+		if ( ! empty( $destination_attachments ) ) {
+			update_post_meta(
+				$destination_task_id,
+				'attachments',
+				array_values( array_unique( $destination_attachments ) )
+			);
+		}
+
+		delete_post_meta( $source_task_id, 'attachments' );
+
+		update_post_meta( $source_task_id, 'merged_into', $destination_task_id );
+
+		$renamed_source_title = sprintf(
+			'[MERGED #%1$d] %2$s',
+			$destination_task_id,
+			$source_post->post_title
+		);
+
+		wp_update_post(
+			array(
+				'ID'          => $source_task_id,
+				'post_status' => 'archived',
+				'post_title'  => sanitize_text_field( $renamed_source_title ),
+			)
+		);
+
+		return true;
+	}
+
+	/**
+	 * Normalize the assigned users meta into a list of unique user IDs.
+	 *
+	 * @param mixed $assigned_users The raw assigned users meta value.
+	 * @return array<int> Normalized user IDs.
+	 */
+	private static function normalize_task_user_ids( $assigned_users ): array {
+		if ( ! is_array( $assigned_users ) ) {
+			if ( is_scalar( $assigned_users ) && '' !== (string) $assigned_users ) {
+				$assigned_users = array( $assigned_users );
+			} else {
+				$assigned_users = array();
+			}
+		}
+
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', $assigned_users )
+				)
+			)
+		);
+	}
+
+	/**
+	 * Merge the user-date relations from two tasks without duplicates.
+	 *
+	 * @param mixed $destination_relations The destination relations meta.
+	 * @param mixed $source_relations The source relations meta.
+	 * @return array<int, array<string, int|string>> Merged relations.
+	 */
+	private static function merge_user_date_relations(
+		$destination_relations,
+		$source_relations
+	): array {
+		$destination_relations = is_array( $destination_relations )
+			? $destination_relations
+			: array();
+		$source_relations      = is_array( $source_relations )
+			? $source_relations
+			: array();
+
+		$merged_relations = array();
+		$seen_relations   = array();
+
+		foreach ( array_merge( $destination_relations, $source_relations ) as $relation ) {
+			if ( ! is_array( $relation ) ||
+				! isset( $relation['user_id'], $relation['date'] ) ) {
+				continue;
+			}
+
+			$user_id = (int) $relation['user_id'];
+			$date    = sanitize_text_field( (string) $relation['date'] );
+			$key     = $user_id . '|' . $date;
+
+			if ( isset( $seen_relations[ $key ] ) || ! $user_id || '' === $date ) {
+				continue;
+			}
+
+			$seen_relations[ $key ] = true;
+			$merged_relations[]     = array(
+				'user_id' => $user_id,
+				'date'    => $date,
+			);
+		}
+
+		return $merged_relations;
+	}
+
+	/**
+	 * Build the destination description for a merged task.
+	 *
+	 * @param string $destination_description The destination task description.
+	 * @param string $source_description The source task description.
+	 * @param string $source_title The source task title.
+	 * @param int    $source_task_id The source task ID.
+	 * @return string The merged description content.
+	 */
+	private static function build_merged_task_description(
+		string $destination_description,
+		string $source_description,
+		string $source_title,
+		int $source_task_id
+	): string {
+		$destination_description = trim( $destination_description );
+		$source_description      = trim( $source_description );
+
+		$merge_header = sprintf(
+			/* translators: 1: source task title, 2: source task ID */
+			__( 'Merged from task: %1$s (ID: %2$d)', 'decker' ),
+			$source_title,
+			$source_task_id
+		);
+
+		$merged_block = '<hr /><p><strong>' . esc_html( $merge_header ) . '</strong></p>';
+
+		if ( '' !== $source_description ) {
+			$merged_block .= "\n" . $source_description;
+		}
+
+		if ( '' === $destination_description ) {
+			return $merged_block;
+		}
+
+		return $destination_description . "\n\n" . $merged_block;
 	}
 
 	/**
@@ -2482,6 +2856,25 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Get icon classes for a given stack.
+	 *
+	 * @param string $stack Stack slug.
+	 * @return string Icon class list.
+	 */
+	public static function get_stack_icon_classes( string $stack ): string {
+		switch ( $stack ) {
+			case 'to-do':
+				return 'ri-checkbox-blank-circle-line text-secondary';
+			case 'in-progress':
+				return 'ri-progress-3-line text-warning';
+			case 'done':
+				return 'ri-checkbox-circle-line text-success';
+			default:
+				return '';
+		}
+	}
+
+	/**
 	 * Get HTML icon for a given stack.
 	 *
 	 * @param string $stack Stack slug.
@@ -2490,33 +2883,18 @@ class Decker_Tasks {
 	public static function get_stack_icon_html( string $stack ): string {
 		$label         = self::get_stack_label( $stack );
 		$escaped_label = esc_attr( $label );
-		$icon_template = '<i class="%1$s" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+		$icon_template = '<i class="%1$s me-2" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+		$icon_classes  = self::get_stack_icon_classes( $stack );
 
-		switch ( $stack ) {
-			case 'to-do':
-				$icon = sprintf(
-					$icon_template,
-					'ri-checkbox-blank-circle-line text-secondary me-2',
-					$escaped_label
-				);
-				break;
-			case 'in-progress':
-				$icon = sprintf(
-					$icon_template,
-					'ri-progress-3-line text-warning me-2',
-					$escaped_label
-				);
-				break;
-			case 'done':
-				$icon = sprintf(
-					$icon_template,
-					'ri-checkbox-circle-line text-success me-2',
-					$escaped_label
-				);
-				break;
-			default:
-				return esc_html( $stack );
+		if ( '' === $icon_classes ) {
+			return esc_html( $stack );
 		}
+
+		$icon = sprintf(
+			$icon_template,
+			$icon_classes,
+			$escaped_label
+		);
 
 		return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
 	}
