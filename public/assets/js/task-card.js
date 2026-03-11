@@ -932,6 +932,13 @@
 
         });
 
+        document.querySelectorAll('.merge-task').forEach((element) => {
+
+          element.removeEventListener('click', mergeTaskHandler);
+          element.addEventListener('click', mergeTaskHandler);
+
+        });
+
     }
 
     // Function to handle changes in the "task-today" checkbox
@@ -1263,4 +1270,3 @@
     });
 
 })();
-
