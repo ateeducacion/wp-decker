@@ -997,6 +997,74 @@ msgstr "Exportar archivo .ics"
 msgid "Meeting"
 msgstr "Reunión"
 
+msgid "Merge into..."
+msgstr "Fusionar en..."
+
+msgid "Merge task"
+msgstr "Fusionar tarea"
+
+msgid "Choose the destination task that should remain active."
+msgstr "Elige la tarea de destino que debe permanecer activa."
+
+msgid "Search tasks by title"
+msgstr "Buscar tareas por título"
+
+msgid "Type at least 2 characters to search for a destination task."
+msgstr "Escribe al menos 2 caracteres para buscar una tarea de destino."
+
+msgid "Searching tasks..."
+msgstr "Buscando tareas..."
+
+msgid "No matching tasks found."
+msgstr "No se encontraron tareas coincidentes."
+
+msgid "Destination task"
+msgstr "Tarea de destino"
+
+msgid "Please select a destination task."
+msgstr "Selecciona una tarea de destino."
+
+msgid "Are you sure you want to merge this task?"
+msgstr "¿Seguro que quieres fusionar esta tarea?"
+
+msgid "The current task will be archived and merged into the selected destination task."
+msgstr "La tarea actual se archivará y se fusionará en la tarea de destino seleccionada."
+
+msgid "An error occurred while merging the task."
+msgstr "Se produjo un error al fusionar la tarea."
+
+msgid "The task has been successfully merged."
+msgstr "La tarea se ha fusionado correctamente."
+
+msgid "Please choose a destination task."
+msgstr "Elige una tarea de destino."
+
+msgid "You do not have permission to merge one of the selected tasks."
+msgstr "No tienes permiso para fusionar una de las tareas seleccionadas."
+
+msgid "Task merged successfully."
+msgstr "Tarea fusionada correctamente."
+
+msgid "The source task was not found."
+msgstr "No se encontró la tarea de origen."
+
+msgid "The destination task was not found."
+msgstr "No se encontró la tarea de destino."
+
+msgid "A task cannot be merged into itself."
+msgstr "Una tarea no puede fusionarse consigo misma."
+
+msgid "Only published tasks can be merged."
+msgstr "Solo se pueden fusionar tareas publicadas."
+
+msgid "This task has already been merged."
+msgstr "Esta tarea ya se ha fusionado."
+
+#. translators: 1: source task title, 2: source task ID
+#, php-format
+msgid "Merged from task: %1$s (ID: %2$d)"
+msgstr "Fusionada desde la tarea: %1$s (ID: %2$d)"
+
 msgid "Absence"
 msgstr "Ausencia"
 
