@@ -197,24 +197,33 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     white-space: nowrap;
 }
 
-.side-nav .decker-sidebar-board-badges .badge {
+.decker-sidebar-board-status {
+    display: inline-flex;
+    align-items: flex-start;
     flex: 0 0 auto;
+    gap: 0.05rem;
+    line-height: 1;
     position: static;
-    right: auto;
-    margin-top: 0;
-    margin-right: 0;
+    cursor: help;
 }
 
-.decker-sidebar-badge-todo {
+.decker-sidebar-board-status i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.decker-sidebar-board-status-count {
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.decker-sidebar-board-status-todo .decker-sidebar-board-status-count {
     color: var(--ct-secondary-text-emphasis);
-    background-color: var(--ct-secondary-bg-subtle);
-    border: 1px solid var(--ct-secondary-border-subtle);
 }
 
-.decker-sidebar-badge-in-progress {
+.decker-sidebar-board-status-in-progress .decker-sidebar-board-status-count {
     color: var(--ct-warning-text-emphasis);
-    background-color: var(--ct-warning-bg-subtle);
-    border: 1px solid var(--ct-warning-border-subtle);
 }
 
 

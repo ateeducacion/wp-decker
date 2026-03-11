@@ -269,11 +269,37 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 							<?php if ( $to_do_count > 0 || $in_progress_count > 0 ) : ?>
 								<span class="decker-sidebar-board-badges">
 									<?php if ( $to_do_count > 0 ) : ?>
-										<span class="badge decker-sidebar-badge-todo"><?php echo esc_html( $to_do_count ); ?></span>
+										<?php
+										$to_do_label = Decker_Tasks::get_stack_label( 'to-do' );
+										?>
+										<span
+											class="decker-sidebar-board-status decker-sidebar-board-status-todo"
+											data-bs-toggle="tooltip"
+											data-bs-placement="top"
+											aria-label="<?php echo esc_attr( $to_do_label ); ?>"
+											data-bs-original-title="<?php echo esc_attr( $to_do_label ); ?>"
+										>
+											<i class="<?php echo esc_attr( Decker_Tasks::get_stack_icon_classes( 'to-do' ) ); ?>" aria-hidden="true"></i>
+											<sup class="decker-sidebar-board-status-count"><?php echo esc_html( $to_do_count ); ?></sup>
+											<span class="visually-hidden"><?php echo esc_html( $to_do_label . ': ' . $to_do_count ); ?></span>
+										</span>
 									<?php endif; ?>
 
 									<?php if ( $in_progress_count > 0 ) : ?>
-										<span class="badge decker-sidebar-badge-in-progress"><?php echo esc_html( $in_progress_count ); ?></span>
+										<?php
+										$in_progress_label = Decker_Tasks::get_stack_label( 'in-progress' );
+										?>
+										<span
+											class="decker-sidebar-board-status decker-sidebar-board-status-in-progress"
+											data-bs-toggle="tooltip"
+											data-bs-placement="top"
+											aria-label="<?php echo esc_attr( $in_progress_label ); ?>"
+											data-bs-original-title="<?php echo esc_attr( $in_progress_label ); ?>"
+										>
+											<i class="<?php echo esc_attr( Decker_Tasks::get_stack_icon_classes( 'in-progress' ) ); ?>" aria-hidden="true"></i>
+											<sup class="decker-sidebar-board-status-count"><?php echo esc_html( $in_progress_count ); ?></sup>
+											<span class="visually-hidden"><?php echo esc_html( $in_progress_label . ': ' . $in_progress_count ); ?></span>
+										</span>
 									<?php endif; ?>
 								</span>
 							<?php endif; ?>

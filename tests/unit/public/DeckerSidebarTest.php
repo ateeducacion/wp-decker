@@ -80,11 +80,31 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			$output
 		);
 		$this->assertMatchesRegularExpression(
-			'/badge decker-sidebar-badge-todo">1</',
+			'/decker-sidebar-board-status decker-sidebar-board-status-todo/',
 			$output
 		);
 		$this->assertMatchesRegularExpression(
-			'/badge decker-sidebar-badge-in-progress">1</',
+			'/decker-sidebar-board-status decker-sidebar-board-status-in-progress/',
+			$output
+		);
+		$this->assertMatchesRegularExpression(
+			'/ri-checkbox-blank-circle-line text-secondary/',
+			$output
+		);
+		$this->assertMatchesRegularExpression(
+			'/ri-progress-3-line text-warning/',
+			$output
+		);
+		$this->assertMatchesRegularExpression(
+			'/data-bs-original-title="To-Do"/',
+			$output
+		);
+		$this->assertMatchesRegularExpression(
+			'/data-bs-original-title="In Progress"/',
+			$output
+		);
+		$this->assertMatchesRegularExpression(
+			'/<sup class="decker-sidebar-board-status-count">1<\/sup>/',
 			$output
 		);
 		$this->assertStringContainsString(
