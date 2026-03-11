@@ -197,8 +197,12 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     white-space: nowrap;
 }
 
-.decker-sidebar-board-badges .badge {
+.side-nav .decker-sidebar-board-badges .badge {
     flex: 0 0 auto;
+    position: static;
+    right: auto;
+    margin-top: 0;
+    margin-right: 0;
 }
 
 .decker-badge-orange {
