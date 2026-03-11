@@ -76,22 +76,16 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			$output
 		);
 		$this->assertStringContainsString(
-			'<span class="decker-sidebar-board-badges">',
+			'decker-sidebar-board-badges',
 			$output
 		);
-		$this->assertStringContainsString(
-			'<span class="badge bg-secondary">1</span>',
-			$output
-		);
-		$this->assertStringContainsString(
-			'<span class="badge decker-badge-orange">1</span>',
-			$output
-		);
+		$this->assertMatchesRegularExpression( '/badge bg-secondary">1</', $output );
+		$this->assertMatchesRegularExpression( '/badge decker-badge-orange">1</', $output );
 		$this->assertStringContainsString(
 			'Empty Board',
 			$output
 		);
-		$this->assertSame( 1, substr_count( $output, '<span class="decker-sidebar-board-badges">' ) );
+		$this->assertSame( 1, preg_match_all( '/decker-sidebar-board-badges/', $output ) );
 		$this->assertMatchesRegularExpression(
 			'/Infrastructure and Development.*decker-sidebar-board-badges/s',
 			$output

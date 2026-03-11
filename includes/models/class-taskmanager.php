@@ -235,6 +235,11 @@ class TaskManager {
 		// Build the placeholder list for prepare(); the count only determines
 		// how many prepared statement `%s` placeholders are used below.
 		$placeholders = implode( ', ', array_fill( 0, count( $sanitized_stacks ), '%s' ) );
+
+		// Join the stack meta so counts can be grouped by column, then join the
+		// board taxonomy tables to group results by board slug. A left join on
+		// the hidden flag lets us exclude hidden tasks while still counting
+		// tasks that do not have any hidden meta stored.
 		$query        = $wpdb->prepare(
 			"
 			SELECT terms.slug AS board_slug, stack_meta.meta_value AS stack, COUNT(posts.ID) AS task_count

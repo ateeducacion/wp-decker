@@ -249,8 +249,8 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 			foreach ( $boards as $board ) {
 				// Only show boards that have show_in_boards set to true.
 				if ( $board->show_in_boards ) {
-					$to_do_count       = isset( $board_task_counts[ $board->slug ]['to-do'] ) ? (int) $board_task_counts[ $board->slug ]['to-do'] : 0;
-					$in_progress_count = isset( $board_task_counts[ $board->slug ]['in-progress'] ) ? (int) $board_task_counts[ $board->slug ]['in-progress'] : 0;
+					$to_do_count       = (int) ( $board_task_counts[ $board->slug ]['to-do'] ?? 0 );
+					$in_progress_count = (int) ( $board_task_counts[ $board->slug ]['in-progress'] ?? 0 );
 					$board_url         = add_query_arg(
 						array(
 							'decker_page' => 'board',
