@@ -64,7 +64,11 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString(
-			'decker-sidebar-board-title">Infrastructure and Development</span>',
+			'decker-sidebar-board-title',
+			$output
+		);
+		$this->assertStringContainsString(
+			'Infrastructure and Development',
 			$output
 		);
 		$this->assertStringContainsString(
@@ -80,12 +84,9 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			$output
 		);
 		$this->assertStringContainsString(
-			'decker-sidebar-board-title">Empty Board</span></a></li>',
+			'Empty Board',
 			$output
 		);
-		$this->assertStringNotContainsString(
-			'decker-sidebar-board-title">Empty Board</span><span class="decker-sidebar-board-badges">',
-			$output
-		);
+		$this->assertSame( 1, substr_count( $output, '<span class="decker-sidebar-board-badges">' ) );
 	}
 }

@@ -233,7 +233,7 @@ class TaskManager {
 		}
 
 		// Build the placeholder list for prepare(); the count only determines
-		// how many literal `%s` tokens are used in the prepared query below.
+		// how many prepared statement `%s` placeholders are used below.
 		$placeholders = implode( ', ', array_fill( 0, count( $sanitized_stacks ), '%s' ) );
 		$query        = $wpdb->prepare(
 			"
@@ -261,7 +261,7 @@ class TaskManager {
 			$sanitized_stacks
 		);
 
-		$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared -- Aggregated count query is prepared above.
+		$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared -- Dynamic IN placeholders are safely constructed and passed through $wpdb->prepare() above.
 		$counts  = array();
 
 		foreach ( $results as $result ) {
