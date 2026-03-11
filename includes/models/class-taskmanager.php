@@ -240,6 +240,7 @@ class TaskManager {
 		// board taxonomy tables to group results by board slug. A left join on
 		// the hidden flag lets us exclude hidden tasks while still counting
 		// tasks that do not have any hidden meta stored.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholder string only contains generated %s tokens; stack values are bound by $wpdb->prepare() below.
 		$query        = $wpdb->prepare(
 			"
 			SELECT terms.slug AS board_slug, stack_meta.meta_value AS stack, COUNT(posts.ID) AS task_count
@@ -265,6 +266,7 @@ class TaskManager {
 			",
 			$sanitized_stacks
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared -- Dynamic IN placeholders are safely constructed and passed through $wpdb->prepare() above.
 		$counts  = array();
