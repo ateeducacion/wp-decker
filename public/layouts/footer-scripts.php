@@ -247,9 +247,9 @@ function openMergeTaskSelector(taskId, taskTitle) {
 		title: deckerVars.strings.merge_task_title,
 		html: `
 			<p class="text-start mb-3">${sourceTaskTitle}${deckerVars.strings.merge_task_text}</p>
-			<input type="search" id="decker-merge-search" class="swal2-input" placeholder="${deckerVars.strings.merge_task_search_placeholder}" autocomplete="off">
+			<input type="search" id="decker-merge-search" class="form-control form-control-lg" style="margin:0; width:100%;" placeholder="${deckerVars.strings.merge_task_search_placeholder}" autocomplete="off">
 			<label for="decker-merge-destination" class="form-label d-block text-start mt-2">${deckerVars.strings.merge_task_select_label}</label>
-			<select id="decker-merge-destination" class="swal2-select" size="8" style="display:block; width:100%;">
+			<select id="decker-merge-destination" class="form-select" size="8" style="display:block; width:100%; min-height: 12rem;">
 				<option value="">${deckerVars.strings.merge_task_search_hint}</option>
 			</select>
 		`,
