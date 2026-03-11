@@ -955,15 +955,17 @@ class Decker_Tasks {
 			);
 		}
 
-		$merged_assigned_users = array_values(
+		$destination_assigned_users = self::normalize_task_user_ids(
+			get_post_meta( $destination_task_id, 'assigned_users', true )
+		);
+		$source_assigned_users      = self::normalize_task_user_ids(
+			get_post_meta( $source_task_id, 'assigned_users', true )
+		);
+		$merged_assigned_users      = array_values(
 			array_unique(
 				array_merge(
-					self::normalize_task_user_ids(
-						get_post_meta( $destination_task_id, 'assigned_users', true )
-					),
-					self::normalize_task_user_ids(
-						get_post_meta( $source_task_id, 'assigned_users', true )
-					)
+					$destination_assigned_users,
+					$source_assigned_users
 				)
 			)
 		);
