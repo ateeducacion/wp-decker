@@ -238,21 +238,45 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 						   // Get the board slug from the URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
-			$boards = BoardManager::get_all_boards();
+			$boards            = BoardManager::get_all_boards();
+			$board_task_counts = $task_manager->get_board_task_counts_by_stack(
+				array(
+					'to-do',
+					'in-progress',
+				)
+			);
+
 			foreach ( $boards as $board ) {
 				// Only show boards that have show_in_boards set to true.
 				if ( $board->show_in_boards ) {
-					echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="text-truncate" title="' . esc_html( $board->name ) . '" href="' . esc_url(
-						esc_url(
-							add_query_arg(
-								array(
-									'decker_page' => 'board',
-									'slug'        => $board->slug,
-								),
-								home_url( '/' )
-							)
+					$to_do_count       = isset( $board_task_counts[ $board->slug ]['to-do'] ) ? (int) $board_task_counts[ $board->slug ]['to-do'] : 0;
+					$in_progress_count = isset( $board_task_counts[ $board->slug ]['in-progress'] ) ? (int) $board_task_counts[ $board->slug ]['in-progress'] : 0;
+
+					echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="decker-sidebar-board-link" title="' . esc_attr( $board->name ) . '" href="' . esc_url(
+						add_query_arg(
+							array(
+								'decker_page' => 'board',
+								'slug'        => $board->slug,
+							),
+							home_url( '/' )
 						)
-					) . '">' . esc_html( $board->name ) . '</a></li>';
+					) . '"><span class="text-truncate">' . esc_html( $board->name ) . '</span>';
+
+					if ( $to_do_count > 0 || $in_progress_count > 0 ) {
+						echo '<span class="decker-sidebar-board-badges">';
+
+						if ( $to_do_count > 0 ) {
+							echo '<span class="badge bg-secondary">' . esc_html( $to_do_count ) . '</span>';
+						}
+
+						if ( $in_progress_count > 0 ) {
+							echo '<span class="badge decker-badge-orange">' . esc_html( $in_progress_count ) . '</span>';
+						}
+
+						echo '</span>';
+					}
+
+					echo '</a></li>';
 				}
 			}
 			?>

@@ -172,6 +172,30 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     word-break: break-word;
 }
 
+.decker-sidebar-board-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.decker-sidebar-board-link > .text-truncate {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.decker-sidebar-board-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.decker-badge-orange {
+    color: #fff;
+    background-color: var(--ct-orange) !important;
+}
+
 
 
 /* =================================================================
