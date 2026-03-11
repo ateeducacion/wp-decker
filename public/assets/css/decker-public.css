@@ -172,6 +172,60 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     word-break: break-word;
 }
 
+.decker-sidebar-board-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.decker-sidebar-board-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.decker-sidebar-board-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.decker-sidebar-board-status {
+    display: inline-flex;
+    align-items: flex-start;
+    flex: 0 0 auto;
+    gap: 0.05rem;
+    line-height: 1;
+    position: static;
+    cursor: help;
+}
+
+.decker-sidebar-board-status i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.decker-sidebar-board-status-count {
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.decker-sidebar-board-status-todo .decker-sidebar-board-status-count {
+    color: var(--ct-secondary-text-emphasis);
+}
+
+.decker-sidebar-board-status-in-progress .decker-sidebar-board-status-count {
+    color: var(--ct-warning-text-emphasis);
+}
+
 
 
 /* =================================================================

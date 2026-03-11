@@ -2856,6 +2856,25 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Get icon classes for a given stack.
+	 *
+	 * @param string $stack Stack slug.
+	 * @return string Icon class list.
+	 */
+	public static function get_stack_icon_classes( string $stack ): string {
+		switch ( $stack ) {
+			case 'to-do':
+				return 'ri-checkbox-blank-circle-line text-secondary';
+			case 'in-progress':
+				return 'ri-progress-3-line text-warning';
+			case 'done':
+				return 'ri-checkbox-circle-line text-success';
+			default:
+				return '';
+		}
+	}
+
+	/**
 	 * Get HTML icon for a given stack.
 	 *
 	 * @param string $stack Stack slug.
@@ -2864,33 +2883,18 @@ class Decker_Tasks {
 	public static function get_stack_icon_html( string $stack ): string {
 		$label         = self::get_stack_label( $stack );
 		$escaped_label = esc_attr( $label );
-		$icon_template = '<i class="%1$s" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+		$icon_template = '<i class="%1$s me-2" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+		$icon_classes  = self::get_stack_icon_classes( $stack );
 
-		switch ( $stack ) {
-			case 'to-do':
-				$icon = sprintf(
-					$icon_template,
-					'ri-checkbox-blank-circle-line text-secondary me-2',
-					$escaped_label
-				);
-				break;
-			case 'in-progress':
-				$icon = sprintf(
-					$icon_template,
-					'ri-progress-3-line text-warning me-2',
-					$escaped_label
-				);
-				break;
-			case 'done':
-				$icon = sprintf(
-					$icon_template,
-					'ri-checkbox-circle-line text-success me-2',
-					$escaped_label
-				);
-				break;
-			default:
-				return esc_html( $stack );
+		if ( '' === $icon_classes ) {
+			return esc_html( $stack );
 		}
+
+		$icon = sprintf(
+			$icon_template,
+			$icon_classes,
+			$escaped_label
+		);
 
 		return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
 	}
