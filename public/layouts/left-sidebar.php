@@ -269,11 +269,11 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 							<?php if ( $to_do_count > 0 || $in_progress_count > 0 ) : ?>
 								<span class="decker-sidebar-board-badges">
 									<?php if ( $to_do_count > 0 ) : ?>
-										<span class="badge bg-secondary"><?php echo esc_html( $to_do_count ); ?></span>
+										<span class="badge decker-sidebar-badge-todo"><?php echo esc_html( $to_do_count ); ?></span>
 									<?php endif; ?>
 
 									<?php if ( $in_progress_count > 0 ) : ?>
-										<span class="badge decker-badge-orange"><?php echo esc_html( $in_progress_count ); ?></span>
+										<span class="badge decker-sidebar-badge-in-progress"><?php echo esc_html( $in_progress_count ); ?></span>
 									<?php endif; ?>
 								</span>
 							<?php endif; ?>

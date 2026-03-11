@@ -205,6 +205,18 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     margin-right: 0;
 }
 
+.decker-sidebar-badge-todo {
+    color: var(--ct-secondary-text-emphasis);
+    background-color: var(--ct-secondary-bg-subtle);
+    border: 1px solid var(--ct-secondary-border-subtle);
+}
+
+.decker-sidebar-badge-in-progress {
+    color: var(--ct-warning-text-emphasis);
+    background-color: var(--ct-warning-bg-subtle);
+    border: 1px solid var(--ct-warning-border-subtle);
+}
+
 .decker-badge-orange {
     color: #fff;
     background-color: var(--ct-orange) !important;

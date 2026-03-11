@@ -79,8 +79,14 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			'decker-sidebar-board-badges',
 			$output
 		);
-		$this->assertMatchesRegularExpression( '/badge bg-secondary">1</', $output );
-		$this->assertMatchesRegularExpression( '/badge decker-badge-orange">1</', $output );
+		$this->assertMatchesRegularExpression(
+			'/badge decker-sidebar-badge-todo">1</',
+			$output
+		);
+		$this->assertMatchesRegularExpression(
+			'/badge decker-sidebar-badge-in-progress">1</',
+			$output
+		);
 		$this->assertStringContainsString(
 			'Empty Board',
 			$output
