@@ -64,6 +64,10 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString(
+			'decker-sidebar-board-link',
+			$output
+		);
+		$this->assertStringContainsString(
 			'decker-sidebar-board-title',
 			$output
 		);
@@ -88,5 +92,13 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			$output
 		);
 		$this->assertSame( 1, substr_count( $output, '<span class="decker-sidebar-board-badges">' ) );
+		$this->assertMatchesRegularExpression(
+			'/Infrastructure and Development.*decker-sidebar-board-badges/s',
+			$output
+		);
+		$this->assertDoesNotMatchRegularExpression(
+			'/Empty Board.*decker-sidebar-board-badges/s',
+			$output
+		);
 	}
 }
