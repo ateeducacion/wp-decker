@@ -27,8 +27,11 @@
     {
       "step": "installPlugin",
       "pluginData": {
-        "resource": "url",
-        "url": "https://github.com/ateeducacion/wp-decker/archive/refs/heads/main.zip"
+        "resource": "git:directory",
+        "url": "https://github.com/ateeducacion/wp-decker",
+        "ref": "HEAD",
+        "refType": "refname",
+        "path": "/"
       },
       "options": {
         "activate": true
