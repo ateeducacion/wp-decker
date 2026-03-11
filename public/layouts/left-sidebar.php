@@ -256,8 +256,8 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 							'decker_page' => 'board',
 							'slug'        => $board->slug,
 						),
-							home_url( '/' )
-						);
+						home_url( '/' )
+					);
 					?>
 					<li class="<?php echo esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ); ?>">
 						<a

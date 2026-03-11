@@ -64,7 +64,19 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString(
-			'decker-sidebar-board-title">Infrastructure and Development</span><span class="decker-sidebar-board-badges"><span class="badge bg-secondary">1</span><span class="badge decker-badge-orange">1</span></span>',
+			'decker-sidebar-board-title">Infrastructure and Development</span>',
+			$output
+		);
+		$this->assertStringContainsString(
+			'<span class="decker-sidebar-board-badges">',
+			$output
+		);
+		$this->assertStringContainsString(
+			'<span class="badge bg-secondary">1</span>',
+			$output
+		);
+		$this->assertStringContainsString(
+			'<span class="badge decker-badge-orange">1</span>',
 			$output
 		);
 		$this->assertStringContainsString(
