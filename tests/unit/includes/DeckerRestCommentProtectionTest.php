@@ -10,8 +10,10 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
     private $server;
     private $task_id;
     private $public_post_id;
+    private $kb_post_id;
     private $task_comment_id;
     private $public_comment_id;
+    private $kb_comment_id;
     private $page_id;
     private $page_comment_id;
     private $admin_id;
@@ -54,6 +56,13 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
             'comment_status' => 'open',
         ) );
 
+        $this->kb_post_id = self::factory()->post->create( array(
+            'post_type'      => 'decker_kb',
+            'post_status'    => 'publish',
+            'post_title'     => 'Protected KB Article',
+            'comment_status' => 'open',
+        ) );
+
         $this->page_id = self::factory()->post->create( array(
             'post_type'   => 'page',
             'post_status' => 'publish',
@@ -70,6 +79,11 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         $this->public_comment_id = self::factory()->comment->create( array(
             'comment_post_ID' => $this->public_post_id,
             'comment_content' => 'Comment on public post',
+        ) );
+
+        $this->kb_comment_id = self::factory()->comment->create( array(
+            'comment_post_ID' => $this->kb_post_id,
+            'comment_content' => 'Comment on protected KB article',
         ) );
 
         $this->page_comment_id = self::factory()->comment->create( array(
@@ -93,6 +107,9 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         if ( $this->public_comment_id ) {
             wp_delete_comment( $this->public_comment_id, true );
         }
+        if ( $this->kb_comment_id ) {
+            wp_delete_comment( $this->kb_comment_id, true );
+        }
         if ( $this->page_comment_id ) {
             wp_delete_comment( $this->page_comment_id, true );
         }
@@ -101,6 +118,9 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         }
         if ( $this->public_post_id ) {
             wp_delete_post( $this->public_post_id, true );
+        }
+        if ( $this->kb_post_id ) {
+            wp_delete_post( $this->kb_post_id, true );
         }
         if ( $this->page_id ) {
             wp_delete_post( $this->page_id, true );
@@ -184,9 +204,10 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         $data = $response->get_data();
         $ids  = wp_list_pluck( $data, 'id' );
 
-        // Should include the public post comment, but not the protected task comment.
+        // Should include the public post comment, but not comments on protected CPTs.
         $this->assertContains( $this->public_comment_id, $ids );
         $this->assertNotContains( $this->task_comment_id, $ids );
+        $this->assertNotContains( $this->kb_comment_id, $ids );
     }
 
     /**
@@ -217,6 +238,17 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
 
         $this->assertEquals( 401, $response->get_status() );
         $this->assertSame( 'You are not authorized to access this resource.', $response->get_data()['message'] );
+
+        $kb_request = new WP_REST_Request( 'POST', '/wp/v2/comments' );
+        $kb_request->set_param( 'post', $this->kb_post_id );
+        $kb_request->set_param( 'content', 'Trying to comment on KB' );
+        $kb_request->set_param( 'author_name', 'Anónimo' );
+        $kb_request->set_param( 'author_email', 'anon@example.com' );
+
+        $kb_response = $this->server->dispatch( $kb_request );
+
+        $this->assertEquals( 401, $kb_response->get_status() );
+        $this->assertSame( 'You are not authorized to access this resource.', $kb_response->get_data()['message'] );
     }
 
     /**

@@ -33,6 +33,9 @@ class Decker_Kb {
 
 		// REST API endpoints.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+
+		// Track last editor.
+		add_action( 'save_post_decker_kb', array( $this, 'track_last_editor' ), 10, 2 );
 	}
 
 	/**
@@ -77,6 +80,158 @@ class Decker_Kb {
 	 */
 	public function check_permissions() {
 		return current_user_can( 'edit_posts' );
+	}
+
+	/**
+	 * Track the last user who edited a KB article.
+	 *
+	 * Stores the current user ID as post meta so the UI can display
+	 * the last editor instead of the original post author.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Post object.
+	 */
+	public function track_last_editor( $post_id, $post ) {
+		// Skip autosaves and revisions.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		$current_user_id = get_current_user_id();
+		if ( $current_user_id && current_user_can( 'edit_post', $post_id ) ) {
+			update_post_meta( $post_id, '_last_editor', $current_user_id );
+		}
+	}
+
+	/**
+	 * Get the last editor user ID for a KB article.
+	 *
+	 * Falls back to the post author if no last editor is recorded.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int User ID of the last editor.
+	 */
+	public static function get_last_editor( $post_id ) {
+		$last_editor = get_post_meta( $post_id, '_last_editor', true );
+		if ( $last_editor ) {
+			return intval( $last_editor );
+		}
+		$post = get_post( $post_id );
+		return $post ? intval( $post->post_author ) : 0;
+	}
+
+	/**
+	 * Get the latest revision ID for a KB article.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int Revision ID or 0 when no revisions exist.
+	 */
+	public static function get_latest_revision_id( $post_id ) {
+		$revisions = wp_get_post_revisions(
+			$post_id,
+			array(
+				'posts_per_page' => 1,
+			)
+		);
+
+		if ( empty( $revisions ) ) {
+			return 0;
+		}
+
+		return self::extract_latest_revision_id_from_list( $revisions );
+	}
+
+	/**
+	 * Get the WordPress revision history URL for a KB article.
+	 *
+	 * The WordPress revision screen includes the diff UI and restore actions.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Admin URL or empty string if no revision exists.
+	 */
+	public static function get_revision_admin_url( $post_id ) {
+		return self::build_revision_admin_url(
+			self::get_latest_revision_id( $post_id )
+		);
+	}
+
+	/**
+	 * Extract the latest revision ID from a revision list.
+	 *
+	 * @param array $revisions Revision list.
+	 * @return int
+	 */
+	private static function extract_latest_revision_id_from_list( $revisions ) {
+		if ( empty( $revisions ) ) {
+			return 0;
+		}
+
+		$revision_list = array_values( $revisions );
+
+		return isset( $revision_list[0]->ID ) ? intval( $revision_list[0]->ID ) : 0;
+	}
+
+	/**
+	 * Build a revision admin URL.
+	 *
+	 * @param int $revision_id Revision ID.
+	 * @return string
+	 */
+	private static function build_revision_admin_url( $revision_id ) {
+		if ( ! $revision_id ) {
+			return '';
+		}
+
+		return admin_url(
+			sprintf(
+				'revision.php?revision=%d',
+				intval( $revision_id )
+			)
+		);
+	}
+
+	/**
+	 * Get formatted comments for a KB article.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array
+	 */
+	public static function get_article_comments_data( $post_id ) {
+		$comments = get_comments(
+			array(
+				'post_id' => intval( $post_id ),
+				'status'  => 'approve',
+				'orderby' => 'comment_date_gmt',
+				'order'   => 'ASC',
+			)
+		);
+
+		$comment_data = array();
+
+		foreach ( $comments as $comment ) {
+			$avatar_source = $comment->user_id ? intval( $comment->user_id ) : $comment->comment_author_email;
+
+			$comment_data[] = array(
+				'id'                => intval( $comment->comment_ID ),
+				'parent'            => intval( $comment->comment_parent ),
+				'author_name'       => $comment->comment_author,
+				'author_avatar_url' => get_avatar_url( $avatar_source, array( 'size' => 48 ) ),
+				'date'              => get_comment_date( '', $comment ),
+				'content_rendered'  => wp_kses_post(
+					apply_filters( 'comment_text', $comment->comment_content, $comment )
+				),
+				'user_id'           => intval( $comment->user_id ),
+				'can_delete'        => (
+					current_user_can( 'moderate_comments' ) ||
+					get_current_user_id() === intval( $comment->user_id )
+				),
+			);
+		}
+
+		return $comment_data;
 	}
 
 	/**
@@ -356,7 +511,9 @@ class Decker_Kb {
 	 * @return WP_REST_Response
 	 */
 	public function get_article( $request ) {
-		$article_id = $request->get_param( 'id' );
+		$article_id        = $request->get_param( 'id' );
+		$include_comments = $request->get_param( 'include_comments' );
+		$include_comments = in_array( strtolower( (string) $include_comments ), array( '1', 'true', 'yes', 'on' ), true );
 
 		$post = get_post( $article_id );
 		if ( ! $post || 'decker_kb' !== $post->post_type ) {
@@ -372,6 +529,11 @@ class Decker_Kb {
 		$labels = wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) );
 		$board_terms = wp_get_object_terms( $article_id, 'decker_board', array( 'fields' => 'ids' ) );
 		$board_id = ! empty( $board_terms ) ? $board_terms[0] : 0;
+		$author_id = intval( $post->post_author );
+		$last_editor_id = self::get_last_editor( $article_id );
+		$latest_revision_id = self::get_latest_revision_id( $article_id );
+		$history_url        = self::build_revision_admin_url( $latest_revision_id );
+		$revision_count     = count( wp_get_post_revisions( $article_id ) );
 
 		return new WP_REST_Response(
 			array(
@@ -384,6 +546,22 @@ class Decker_Kb {
 					'board'      => $board_id,
 					'parent_id'  => $post->post_parent,
 					'menu_order' => $post->menu_order,
+					'author'     => array(
+						'id'   => $author_id,
+						'name' => get_the_author_meta( 'display_name', $author_id ),
+					),
+					'last_editor' => array(
+						'id'   => $last_editor_id,
+						'name' => get_the_author_meta( 'display_name', $last_editor_id ),
+					),
+					'comment_count'  => get_comments_number( $article_id ),
+					'comments'       => $include_comments ? self::get_article_comments_data( $article_id ) : array(),
+					'revision_count' => intval( $revision_count ),
+					'links'      => array(
+						'edit'     => get_edit_post_link( $article_id, '' ),
+						'history'  => $history_url,
+					),
+					'latest_revision_id' => $latest_revision_id,
 				),
 			),
 			200
@@ -421,7 +599,7 @@ class Decker_Kb {
 			'has_archive'        => true,
 			'hierarchical'       => true, // Enable hierarchy.
 			'menu_position'       => 25,
-			'supports'           => array( 'title', 'editor', 'page-attributes', 'revisions' ),
+			'supports'           => array( 'title', 'editor', 'author', 'comments', 'page-attributes', 'revisions' ),
 			'show_in_rest'       => true, // Enable Gutenberg.
 			'menu_icon'          => 'dashicons-book',
 		);

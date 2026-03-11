@@ -66,7 +66,7 @@ class Decker_REST_Comment_Protection {
 		 *
 		 * @param array $post_types An array of post type slugs. Default: ['decker_task'].
 		 */
-		return apply_filters( 'decker/protected_comment_post_types', array( 'decker_task' ) );
+		return apply_filters( 'decker/protected_comment_post_types', array( 'decker_task', 'decker_kb' ) );
 	}
 
 	/**
