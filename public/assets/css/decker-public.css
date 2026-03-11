@@ -217,11 +217,6 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     border: 1px solid var(--ct-warning-border-subtle);
 }
 
-.decker-badge-orange {
-    color: #fff;
-    background-color: var(--ct-orange) !important;
-}
-
 
 
 /* =================================================================
