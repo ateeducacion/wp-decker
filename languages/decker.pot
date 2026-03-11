@@ -597,6 +597,15 @@ msgstr ""
 msgid "Task cloned successfully."
 msgstr ""
 
+msgid "Please choose a destination task."
+msgstr ""
+
+msgid "You do not have permission to merge one of the selected tasks."
+msgstr ""
+
+msgid "Task merged successfully."
+msgstr ""
+
 msgid "Invalid task ID."
 msgstr ""
 
@@ -606,6 +615,26 @@ msgstr ""
 #. translators: %s: original task title
 #, php-format
 msgid "%s (copy)"
+msgstr ""
+
+msgid "The source task was not found."
+msgstr ""
+
+msgid "The destination task was not found."
+msgstr ""
+
+msgid "A task cannot be merged into itself."
+msgstr ""
+
+msgid "Only published tasks can be merged."
+msgstr ""
+
+msgid "This task has already been merged."
+msgstr ""
+
+#. translators: 1: source task title, 2: source task ID
+#, php-format
+msgid "Merged from task: %1$s (ID: %2$d)"
 msgstr ""
 
 msgid "No Board"
@@ -869,6 +898,9 @@ msgid "Edit in WordPress"
 msgstr ""
 
 msgid "Clone"
+msgstr ""
+
+msgid "Merge into..."
 msgstr ""
 
 msgid "Archive"
@@ -1234,6 +1266,42 @@ msgid "The task has been successfully cloned."
 msgstr ""
 
 msgid "An error occurred while cloning the task."
+msgstr ""
+
+msgid "Merge task"
+msgstr ""
+
+msgid "Choose the destination task that should remain active."
+msgstr ""
+
+msgid "Search tasks by title"
+msgstr ""
+
+msgid "Type at least 2 characters to search for a destination task."
+msgstr ""
+
+msgid "Searching tasks..."
+msgstr ""
+
+msgid "No matching tasks found."
+msgstr ""
+
+msgid "Destination task"
+msgstr ""
+
+msgid "Please select a destination task."
+msgstr ""
+
+msgid "Are you sure you want to merge this task?"
+msgstr ""
+
+msgid "The current task will be archived and merged into the selected destination task."
+msgstr ""
+
+msgid "The task has been successfully merged."
+msgstr ""
+
+msgid "An error occurred while merging the task."
 msgstr ""
 
 msgid "Month"
