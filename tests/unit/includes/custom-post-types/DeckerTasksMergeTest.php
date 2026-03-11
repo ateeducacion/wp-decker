@@ -250,11 +250,9 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 			'/decker/v1/tasks/' . $source_task_id . '/merge'
 		);
 		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'destination_task_id' => $destination_task_id,
-				)
+		$request->set_body_params(
+			array(
+				'destination_task_id' => $destination_task_id,
 			)
 		);
 
