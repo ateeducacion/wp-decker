@@ -242,4 +242,29 @@ class DeckerPublicTest extends Decker_Test_Base {
 		$this->assertArrayHasKey( 'ai_browser_unsupported', $config['strings'] );
 	}
 
+	/**
+	 * Test merge task UI strings are localized for the task card script.
+	 */
+	public function test_enqueue_scripts_localizes_merge_task_strings() {
+		set_query_var( 'decker_page', 'task' );
+
+		$this->decker_public->enqueue_scripts();
+
+		$data = wp_scripts()->get_data( 'task-card', 'data' );
+
+		$this->assertIsString( $data );
+		$this->assertStringContainsString(
+			'"merge_task_title":"Merge task"',
+			$data
+		);
+		$this->assertStringContainsString(
+			'"merge_task_search_hint":"Type at least 2 characters to search for a destination task."',
+			$data
+		);
+		$this->assertStringContainsString(
+			'"select_task_to_merge":"Please select a destination task."',
+			$data
+		);
+	}
+
 }
