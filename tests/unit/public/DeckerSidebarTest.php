@@ -60,7 +60,7 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		set_query_var( 'decker_page', 'board' );
 
 		ob_start();
-		include_once dirname( __DIR__, 3 ) . '/public/layouts/left-sidebar.php';
+		include_once plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/left-sidebar.php';
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString(

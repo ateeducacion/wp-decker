@@ -232,6 +232,8 @@ class TaskManager {
 			return array();
 		}
 
+		// Build the placeholder list for prepare(); the count only determines
+		// how many literal `%s` tokens are used in the prepared query below.
 		$placeholders = implode( ', ', array_fill( 0, count( $sanitized_stacks ), '%s' ) );
 		$query        = $wpdb->prepare(
 			"

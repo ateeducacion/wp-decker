@@ -251,32 +251,35 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 				if ( $board->show_in_boards ) {
 					$to_do_count       = isset( $board_task_counts[ $board->slug ]['to-do'] ) ? (int) $board_task_counts[ $board->slug ]['to-do'] : 0;
 					$in_progress_count = isset( $board_task_counts[ $board->slug ]['in-progress'] ) ? (int) $board_task_counts[ $board->slug ]['in-progress'] : 0;
-
-					echo '<li class="' . esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ) . '"><a class="decker-sidebar-board-link" title="' . esc_attr( $board->name ) . '" href="' . esc_url(
-						add_query_arg(
-							array(
-								'decker_page' => 'board',
-								'slug'        => $board->slug,
-							),
+					$board_url         = add_query_arg(
+						array(
+							'decker_page' => 'board',
+							'slug'        => $board->slug,
+						),
 							home_url( '/' )
-						)
-					) . '"><span class="text-truncate">' . esc_html( $board->name ) . '</span>';
+						);
+					?>
+					<li class="<?php echo esc_attr( decker_is_active_subpage( 'slug', $board->slug ) ); ?>">
+						<a
+							class="decker-sidebar-board-link"
+							title="<?php echo esc_attr( $board->name ); ?>"
+							href="<?php echo esc_url( $board_url ); ?>"
+						>
+							<span class="text-truncate"><?php echo esc_html( $board->name ); ?></span>
+							<?php if ( $to_do_count > 0 || $in_progress_count > 0 ) : ?>
+								<span class="decker-sidebar-board-badges">
+									<?php if ( $to_do_count > 0 ) : ?>
+										<span class="badge bg-secondary"><?php echo esc_html( $to_do_count ); ?></span>
+									<?php endif; ?>
 
-					if ( $to_do_count > 0 || $in_progress_count > 0 ) {
-						echo '<span class="decker-sidebar-board-badges">';
-
-						if ( $to_do_count > 0 ) {
-							echo '<span class="badge bg-secondary">' . esc_html( $to_do_count ) . '</span>';
-						}
-
-						if ( $in_progress_count > 0 ) {
-							echo '<span class="badge decker-badge-orange">' . esc_html( $in_progress_count ) . '</span>';
-						}
-
-						echo '</span>';
-					}
-
-					echo '</a></li>';
+									<?php if ( $in_progress_count > 0 ) : ?>
+										<span class="badge decker-badge-orange"><?php echo esc_html( $in_progress_count ); ?></span>
+									<?php endif; ?>
+								</span>
+							<?php endif; ?>
+						</a>
+					</li>
+					<?php
 				}
 			}
 			?>
