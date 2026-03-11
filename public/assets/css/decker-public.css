@@ -176,11 +176,16 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
 }
 
-.decker-sidebar-board-link > .text-truncate {
+.decker-sidebar-board-title {
     flex: 1 1 auto;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .decker-sidebar-board-badges {
@@ -189,6 +194,11 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     gap: 0.25rem;
     margin-left: auto;
     flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.decker-sidebar-board-badges .badge {
+    flex: 0 0 auto;
 }
 
 .decker-badge-orange {

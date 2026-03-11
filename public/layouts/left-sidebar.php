@@ -265,7 +265,7 @@ function decker_is_active_subpage( $get_parameter, $page ) {
 							title="<?php echo esc_attr( $board->name ); ?>"
 							href="<?php echo esc_url( $board_url ); ?>"
 						>
-							<span class="text-truncate"><?php echo esc_html( $board->name ); ?></span>
+							<span class="decker-sidebar-board-title"><?php echo esc_html( $board->name ); ?></span>
 							<?php if ( $to_do_count > 0 || $in_progress_count > 0 ) : ?>
 								<span class="decker-sidebar-board-badges">
 									<?php if ( $to_do_count > 0 ) : ?>

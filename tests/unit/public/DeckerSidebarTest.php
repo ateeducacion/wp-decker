@@ -19,7 +19,7 @@ class DeckerSidebarTest extends Decker_Test_Base {
 
 		$board_with_counts = self::factory()->board->create_and_get(
 			array(
-				'name' => 'Board With Counts',
+				'name' => 'Infrastructure and Development',
 				'slug' => 'board-with-counts',
 			)
 		);
@@ -64,15 +64,15 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString(
-			'Board With Counts</span><span class="decker-sidebar-board-badges"><span class="badge bg-secondary">1</span><span class="badge decker-badge-orange">1</span></span>',
+			'decker-sidebar-board-title">Infrastructure and Development</span><span class="decker-sidebar-board-badges"><span class="badge bg-secondary">1</span><span class="badge decker-badge-orange">1</span></span>',
 			$output
 		);
 		$this->assertStringContainsString(
-			'>Empty Board</span></a></li>',
+			'decker-sidebar-board-title">Empty Board</span></a></li>',
 			$output
 		);
 		$this->assertStringNotContainsString(
-			'Empty Board</span><span class="decker-sidebar-board-badges">',
+			'decker-sidebar-board-title">Empty Board</span><span class="decker-sidebar-board-badges">',
 			$output
 		);
 	}
