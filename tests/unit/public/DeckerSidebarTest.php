@@ -117,7 +117,7 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			$output
 		);
 		$this->assertDoesNotMatchRegularExpression(
-			'/Empty Board.*decker-sidebar-board-badges/s',
+			'/<span class="decker-sidebar-board-title">Empty Board<\/span>(?:(?!<\/a>).)*decker-sidebar-board-badges/s',
 			$output
 		);
 	}
