@@ -464,12 +464,14 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 					// Move SearchBuilder to the desired location
 					var searchBuilderButton = jQuery('.dt-buttons .buttons-searchBuilder');
 
-					searchBuilderButton
-						.prop('disabled', false)
-						.removeClass('disabled')
-						.attr('aria-disabled', 'false');
+					if (searchBuilderButton.length > 0) {
+						searchBuilderButton
+							.prop('disabled', false)
+							.removeClass('disabled')
+							.attr('aria-disabled', 'false');
 
-					jQuery('#searchBuilderContainer').append(searchBuilderButton);
+						jQuery('#searchBuilderContainer').append(searchBuilderButton);
+					}
 					
 					// Apply initial filter if it exists
 					if (initialBoard) {
