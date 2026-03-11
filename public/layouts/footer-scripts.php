@@ -54,6 +54,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	});
 
+	document.querySelectorAll('.merge-task').forEach((element) => {
+
+	  element.removeEventListener('click', mergeTaskHandler);
+	  element.addEventListener('click', mergeTaskHandler);
+
+	});
+
 
 	// Add event listener for "Fix Order" button
 	const fixOrderButton = document.getElementById('fix-order-btn');
@@ -221,6 +228,191 @@ function cloneTaskHandler(event) {
 			});
 		}
 	});
+}
+
+function mergeTaskHandler(event) {
+	event.preventDefault();
+	const element = event.currentTarget;
+	const taskId = element.getAttribute('data-task-id');
+	const taskTitle = element.getAttribute('data-task-title') || '';
+
+	openMergeTaskSelector(taskId, taskTitle);
+}
+
+function openMergeTaskSelector(taskId, taskTitle) {
+	let searchTimeout = null;
+	const sourceTaskTitle = taskTitle ? `<strong>${escapeHtml(taskTitle)}</strong><br>` : '';
+
+	Swal.fire({
+		title: deckerVars.strings.merge_task_title,
+		html: `
+			<p class="text-start mb-3">${sourceTaskTitle}${deckerVars.strings.merge_task_text}</p>
+			<input type="search" id="decker-merge-search" class="swal2-input" placeholder="${deckerVars.strings.merge_task_search_placeholder}" autocomplete="off">
+			<label for="decker-merge-destination" class="form-label d-block text-start mt-2">${deckerVars.strings.merge_task_select_label}</label>
+			<select id="decker-merge-destination" class="swal2-select" size="8" style="display:block; width:100%;">
+				<option value="">${deckerVars.strings.merge_task_search_hint}</option>
+			</select>
+		`,
+		showCancelButton: true,
+		confirmButtonText: deckerVars.strings.confirm_merge_task_button,
+		cancelButtonText: deckerVars.strings.cancel,
+		focusConfirm: false,
+		didOpen: () => {
+			const searchInput = document.getElementById('decker-merge-search');
+			const destinationSelect = document.getElementById('decker-merge-destination');
+
+			if (!searchInput || !destinationSelect) {
+				return;
+			}
+
+			searchInput.focus();
+
+			searchInput.addEventListener('input', function() {
+				const query = this.value.trim();
+
+				window.clearTimeout(searchTimeout);
+
+				if (query.length < 2) {
+					destinationSelect.innerHTML = `<option value="">${deckerVars.strings.merge_task_search_hint}</option>`;
+					return;
+				}
+
+				destinationSelect.innerHTML = `<option value="">${deckerVars.strings.merge_task_searching}</option>`;
+
+				searchTimeout = window.setTimeout(function() {
+					fetch(`${wpApiSettings.root}decker/v1/tasks/search?search=${encodeURIComponent(query)}`, {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-WP-Nonce': wpApiSettings.nonce
+						}
+					})
+					.then(response => {
+						if (!response.ok) {
+							throw new Error('Network response was not ok');
+						}
+						return response.json();
+					})
+					.then(data => {
+						const tasks = Array.isArray(data.tasks) ? data.tasks.filter(task => String(task.id) !== String(taskId)) : [];
+
+						if (!tasks.length) {
+							destinationSelect.innerHTML = `<option value="">${deckerVars.strings.merge_task_no_results}</option>`;
+							return;
+						}
+
+						destinationSelect.innerHTML = tasks.map(task => (
+							`<option value="${task.id}">#${task.id} · ${escapeHtml(task.title)} · ${escapeHtml(task.board)}</option>`
+						)).join('');
+					})
+					.catch(() => {
+						destinationSelect.innerHTML = `<option value="">${deckerVars.strings.error}</option>`;
+					});
+				}, 250);
+			});
+		},
+		preConfirm: () => {
+			const destinationSelect = document.getElementById('decker-merge-destination');
+
+			if (!destinationSelect || !destinationSelect.value) {
+				Swal.showValidationMessage(deckerVars.strings.select_task_to_merge);
+				return false;
+			}
+
+			return {
+				destinationTaskId: destinationSelect.value,
+				destinationTaskLabel: destinationSelect.options[destinationSelect.selectedIndex].text
+			};
+		}
+	}).then((selectionResult) => {
+		if (!selectionResult.isConfirmed || !selectionResult.value) {
+			return;
+		}
+
+		Swal.fire({
+			title: deckerVars.strings.confirm_merge_task_title,
+			text: `${deckerVars.strings.confirm_merge_task_text} ${selectionResult.value.destinationTaskLabel}`,
+			icon: 'warning',
+			showCancelButton: true,
+			confirmButtonColor: '#d33',
+			cancelButtonColor: '#3085d6',
+			confirmButtonText: deckerVars.strings.confirm_merge_task_button,
+			cancelButtonText: deckerVars.strings.cancel
+		}).then((confirmResult) => {
+			if (!confirmResult.isConfirmed) {
+				return;
+			}
+
+			fetch(`<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>${encodeURIComponent(taskId)}/merge`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
+				},
+				body: JSON.stringify({
+					destination_task_id: parseInt(selectionResult.value.destinationTaskId, 10)
+				})
+			})
+			.then(async response => {
+				const data = await response.json();
+				if (!response.ok || !data.success) {
+					throw new Error(data.message || deckerVars.strings.error_merging_task);
+				}
+				return data;
+			})
+			.then(data => {
+				Swal.fire({
+					title: deckerVars.strings.success,
+					text: data.message || deckerVars.strings.task_merged_success,
+					icon: 'success'
+				}).then(() => {
+					openTaskAfterTaskAction(data.destination_task_id);
+				});
+			})
+			.catch(error => {
+				Swal.fire({
+					title: deckerVars.strings.error,
+					text: error.message || deckerVars.strings.error_merging_task,
+					icon: 'error'
+				});
+			});
+		});
+	});
+}
+
+function openTaskAfterTaskAction(taskId) {
+	window.deckerHasUnsavedChanges = false;
+	const taskModal = document.getElementById('task-modal');
+	const modalInstance = taskModal ? bootstrap.Modal.getInstance(taskModal) : null;
+
+	const openTaskModal = () => {
+		const trigger = document.createElement('button');
+		trigger.setAttribute('data-task-id', taskId);
+		trigger.setAttribute('data-bs-toggle', 'modal');
+		trigger.setAttribute('data-bs-target', '#task-modal');
+		trigger.style.display = 'none';
+		document.body.appendChild(trigger);
+		trigger.click();
+		trigger.remove();
+	};
+
+	if (modalInstance && taskModal.classList.contains('show')) {
+		taskModal.addEventListener('hidden.bs.modal', openTaskModal, { once: true });
+		modalInstance.hide();
+	} else if (taskModal) {
+		openTaskModal();
+	} else {
+		window.location.href = deckerVars.taskPermalinkStructure.replace('%d', taskId);
+	}
+}
+
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
 }
 
 

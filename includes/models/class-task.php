@@ -676,6 +676,16 @@ class Task {
 				'<a href="#" class="dropdown-item clone-task" data-task-id="%d"><i class="ri-file-copy-line me-1"></i>' . __( 'Clone', 'decker' ) . '</a>',
 				esc_attr( $this->ID )
 			);
+
+			if ( 'publish' === $this->status &&
+				! get_post_meta( $this->ID, 'merged_into', true ) ) {
+				$menu_items[] = sprintf(
+					'<a href="#" class="dropdown-item merge-task" data-task-id="%1$d" data-task-title="%2$s"><i class="ri-git-merge-line me-1"></i>%3$s</a>',
+					esc_attr( $this->ID ),
+					esc_attr( $this->title ),
+					__( 'Merge into...', 'decker' )
+				);
+			}
 		}
 
 		if ( 'publish' == $this->status ) {
