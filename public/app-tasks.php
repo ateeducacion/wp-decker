@@ -462,16 +462,8 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 
 				initComplete: function () {
 					// Move SearchBuilder to the desired location
-					var searchBuilderButton = jQuery('.dt-buttons .buttons-searchBuilder');
-
-					if (searchBuilderButton.length > 0) {
-						searchBuilderButton
-							.prop('disabled', false)
-							.removeClass('disabled')
-							.attr('aria-disabled', 'false');
-
-						jQuery('#searchBuilderContainer').append(searchBuilderButton);
-					}
+					var searchBuilderButton = jQuery('.dt-buttons .dt-button');
+					jQuery('#searchBuilderContainer').append(searchBuilderButton);
 					
 					// Apply initial filter if it exists
 					if (initialBoard) {
