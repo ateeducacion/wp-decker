@@ -116,6 +116,9 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-provider-interface.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-gemini-api-provider.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-manager.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
@@ -188,6 +191,7 @@ class Decker {
 	public function run() {
 		// Initialize notification handler.
 		new Decker_Notification_Handler();
+		new Decker_AI_Manager();
 
 		$this->loader->run();
 	}

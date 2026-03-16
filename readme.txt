@@ -18,6 +18,7 @@ Decker is a WordPress plugin developed for internal use at the Área de Tecnolog
 
 – **Import from Nextcloud Deck through API**: Imports boards and cards from Nextcloud.  
 – **Customization**: Adjustable settings available in the WordPress admin panel.  
+- **AI Description Improvements**: Improve task descriptions with Gemini Nano in supported browsers or with the Gemini API through WordPress.  
 – **Multisite Support**: Fully compatible with WordPress multisite installations.  
 – **WordPress Coding Standards Compliance**: Adheres to [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards).  
 – **Continuous Integration Pipeline**: Set up for automated code verification and release generation on GitHub.  
@@ -37,6 +38,9 @@ Go to the Import from NextCloud page, and enter your Nextcloud API credentials (
 = Can I use this plugin without Nextcloud Deck? =  
 Yes, the plugin independant, Nextcloud is only to oneway import.
 
+= How do AI description improvements work? =
+Enable AI Improvements in **Settings > Decker** and then choose either Gemini Nano (browser-based) or Gemini API (server-side). The Gemini API key is stored only on the server, is not shown again after saving, and is never exposed to client-side JavaScript.
+
 == Screenshots ==
 
 1. **Kanban Board View**  
@@ -44,4 +48,3 @@ Yes, the plugin independant, Nextcloud is only to oneway import.
 
 2. **Settings Panel**  
    Configure plugin preferences.
-

@@ -538,6 +538,9 @@ class Decker_Public {
 
 		return array(
 			'enabled'          => isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'],
+			'provider'         => Decker_AI_Manager::get_selected_provider( $options ),
+			'api_endpoint'     => Decker_AI_Manager::get_rest_endpoint_url(),
+			'server_available' => '' !== Decker_AI_Manager::get_api_key( $options ),
 			'strings'          => array(
 				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
 				'choose_action'            => __( 'Choose an action', 'decker' ),
@@ -564,48 +567,12 @@ class Decker_Public {
 				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
 				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
 				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
+				'ai_api_missing_key'       => __( 'The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it.', 'decker' ),
+				'ai_api_request_error'     => __( 'The Gemini API request failed. Please try again in a moment.', 'decker' ),
 				'yes'                      => _x( 'Yes', 'AI task context boolean value', 'decker' ),
 				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
 			),
-			'prompts'          => array(
-				'prompt_template' => ! empty( $options['ai_prompt'] )
-					? sanitize_textarea_field( $options['ai_prompt'] )
-					: Decker::get_default_ai_prompt_template(),
-				'improve_description' => __(
-					'Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content.',
-					'decker'
-				),
-				'make_actionable' => __(
-					'Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content.',
-					'decker'
-				),
-				'generate_checklist' => __(
-					'Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description.',
-					'decker'
-				),
-				'summarize'       => __(
-					'Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description.',
-					'decker'
-				),
-				'language_instruction' => sprintf(
-					/* translators: %s: locale code such as es_ES. */
-					__( 'Write the result in the language configured in WordPress (%s).', 'decker' ),
-					get_user_locale()
-				),
-				'response_format' => __(
-					'Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself.',
-					'decker'
-				),
-				'context_title'   => __( 'Title', 'decker' ),
-				'context_board'   => __( 'Board', 'decker' ),
-				'context_responsible' => __( 'Responsable', 'decker' ),
-				'context_assignees' => __( 'Assign to', 'decker' ),
-				'context_stack'   => __( 'Stack', 'decker' ),
-				'context_due_date' => __( 'Due Date', 'decker' ),
-				'context_labels'  => __( 'Labels', 'decker' ),
-				'context_max_priority' => __( 'Maximum Priority', 'decker' ),
-				'context_today'   => __( 'For today', 'decker' ),
-			),
+			'prompts'          => Decker_AI_Manager::get_prompt_config( $options ),
 		);
 	}
 

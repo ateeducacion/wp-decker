@@ -1656,6 +1656,12 @@ msgstr "No se pudo iniciar la sesión de IA del navegador."
 msgid "The browser AI response was empty."
 msgstr "La respuesta de la IA del navegador estaba vacía."
 
+msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it."
+msgstr "Está seleccionado el proveedor API de Gemini, pero no se ha guardado ninguna clave de API en los ajustes de Decker. Pide a un administrador que la configure."
+
+msgid "The Gemini API request failed. Please try again in a moment."
+msgstr "La solicitud a la API de Gemini ha fallado. Vuelve a intentarlo en un momento."
+
 msgctxt "AI task context boolean value"
 msgid "Yes"
 msgstr "Sí"
@@ -1664,23 +1670,92 @@ msgctxt "AI task context boolean value"
 msgid "No"
 msgstr "No"
 
-msgid "Enable browser AI improvements for task descriptions."
-msgstr "Activar mejoras con IA del navegador para las descripciones de tareas."
+msgid "Enable AI improvements for task descriptions."
+msgstr "Activar mejoras con IA para las descripciones de tareas."
 
-msgid "When enabled, compatible browsers can use the built-in Prompt API to improve task descriptions directly in the editor."
-msgstr "Cuando está activado, los navegadores compatibles pueden usar la Prompt API integrada para mejorar las descripciones de tareas directamente en el editor."
+msgid "When enabled, users can improve task descriptions with either Gemini Nano in supported browsers or the Gemini API through the server."
+msgstr "Cuando está activado, los usuarios pueden mejorar las descripciones de tareas con Gemini Nano en navegadores compatibles o con la API de Gemini a través del servidor."
 
-msgid "Browser AI"
-msgstr "IA del navegador"
+msgid "Gemini Nano (browser-based)"
+msgstr "Gemini Nano (basado en el navegador)"
+
+msgid "Gemini API (server-side)"
+msgstr "API de Gemini (del lado del servidor)"
+
+msgid "Choose whether AI improvements run in the browser with Gemini Nano or through the Gemini API on the server."
+msgstr "Elige si las mejoras con IA se ejecutan en el navegador con Gemini Nano o mediante la API de Gemini en el servidor."
+
+msgid "A Gemini API key is already stored. Leave this field empty to keep the current key."
+msgstr "Ya hay una clave de la API de Gemini guardada. Deja este campo vacío para mantener la clave actual."
+
+msgid "Paste a Gemini API key to enable server-side Gemini requests. The saved key is never shown again after saving."
+msgstr "Pega una clave de la API de Gemini para activar las solicitudes de Gemini del lado del servidor. La clave guardada no se vuelve a mostrar después de guardar."
+
+msgid "Optional Gemini model name for server-side requests. Leave the default unless you need a different compatible text-generation model."
+msgstr "Nombre opcional del modelo Gemini para las solicitudes del lado del servidor. Deja el valor predeterminado salvo que necesites otro modelo de generación de texto compatible."
+
+msgid "AI Configuration"
+msgstr "Configuración de IA"
+
+msgid "AI Improvements"
+msgstr "Mejoras con IA"
+
+msgid "AI Provider"
+msgstr "Proveedor de IA"
+
+msgid "Gemini API Key"
+msgstr "Clave de la API de Gemini"
+
+msgid "Gemini Model"
+msgstr "Modelo Gemini"
+
+msgid "Configure how Decker improves task descriptions with AI. Browser-based Gemini Nano keeps the text in the browser, while the Gemini API sends the prompt to Google through your WordPress server using the saved API key."
+msgstr "Configura cómo Decker mejora las descripciones de tareas con IA. Gemini Nano basado en el navegador mantiene el texto en el navegador, mientras que la API de Gemini envía el prompt a Google a través de tu servidor de WordPress usando la clave de API guardada."
 
 msgid "AI Prompt"
 msgstr "Prompt de IA"
 
-msgid "Customize the base prompt used for browser AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
-msgstr "Personaliza el prompt base usado para las mejoras con IA del navegador. Para modelos nano más pequeños, normalmente funciona mejor escribir este prompt base en inglés y dejar que el modelo traduzca el resultado final al idioma de WordPress. Marcadores disponibles: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
+msgid "Customize the base prompt used for AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
+msgstr "Personaliza el prompt base usado para las mejoras con IA. Para modelos nano más pequeños, normalmente funciona mejor escribir este prompt base en inglés y dejar que el modelo traduzca el resultado final al idioma de WordPress. Marcadores disponibles: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
 
-msgid "Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content."
-msgstr "Reescribe la descripción de la tarea para que sea clara, bien estructurada y fácil de ejecutar. Corrige la gramática y la ortografía. Usa el contexto de la tarea solo cuando ayude a redactar una descripción mejor. Devuelve solo el contenido final de la descripción de la tarea."
+msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings."
+msgstr "Está seleccionado el proveedor API de Gemini, pero no se ha guardado ninguna clave de API en los ajustes de Decker."
+
+msgid "The Gemini API key was rejected. Please ask an administrator to review the saved key."
+msgstr "La clave de la API de Gemini fue rechazada. Pide a un administrador que revise la clave guardada."
+
+msgid "The Gemini API rate limit was reached. Please wait a moment and try again."
+msgstr "Se ha alcanzado el límite de peticiones de la API de Gemini. Espera un momento y vuelve a intentarlo."
+
+msgid "The Gemini API took too long to respond. Please try again."
+msgstr "La API de Gemini tardó demasiado en responder. Vuelve a intentarlo."
+
+msgid "The Gemini API returned an unexpected response. Please try again later."
+msgstr "La API de Gemini devolvió una respuesta inesperada. Vuelve a intentarlo más tarde."
+
+msgid "The Gemini API response could not be parsed."
+msgstr "No se pudo procesar la respuesta de la API de Gemini."
+
+msgid "The Gemini API returned an empty response."
+msgstr "La API de Gemini devolvió una respuesta vacía."
+
+msgid "You must be logged in to use AI improvements."
+msgstr "Debes haber iniciado sesión para usar las mejoras con IA."
+
+msgid "Your session has expired. Please reload the page and try again."
+msgstr "Tu sesión ha caducado. Recarga la página y vuelve a intentarlo."
+
+msgid "You do not have permission to use AI improvements."
+msgstr "No tienes permiso para usar las mejoras con IA."
+
+msgid "AI improvements are disabled in Decker settings."
+msgstr "Las mejoras con IA están desactivadas en los ajustes de Decker."
+
+msgid "The configured AI provider uses the browser directly and does not need the server endpoint."
+msgstr "El proveedor de IA configurado usa el navegador directamente y no necesita el endpoint del servidor."
+
+msgid "Rewrite the following task description to make it clearer, better structured, and more actionable. Preserve the original meaning, language, and important details. Do not add invented information. Return only the improved description."
+msgstr "Reescribe la siguiente descripción de tarea para hacerla más clara, mejor estructurada y más accionable. Conserva el significado original, el idioma y los detalles importantes. No añadas información inventada. Devuelve solo la descripción mejorada."
 
 msgid "Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content."
 msgstr "Reescribe la descripción de la tarea como pasos concretos y accionables. Cada paso debe empezar con un verbo y dejar claro QUIÉN hace QUÉ. Usa los usuarios asignados en el contexto de la tarea solo cuando resulte útil. Devuelve solo el contenido final de la descripción de la tarea."

@@ -224,9 +224,9 @@ class DeckerPublicTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test AI config only exposes browser-side integration settings.
+	 * Test AI config exposes provider metadata without leaking secrets.
 	 */
-	public function test_get_ai_config_is_browser_only() {
+	public function test_get_ai_config_exposes_provider_metadata() {
 		update_option( 'decker_settings', array() );
 
 		$reflection = new ReflectionMethod( $this->decker_public, 'get_ai_config' );
@@ -235,11 +235,17 @@ class DeckerPublicTest extends Decker_Test_Base {
 		$config = $reflection->invoke( $this->decker_public );
 
 		$this->assertFalse( $config['enabled'] );
-		$this->assertArrayNotHasKey( 'server_available', $config );
+		$this->assertSame(
+			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
+			$config['provider']
+		);
+		$this->assertFalse( $config['server_available'] );
+		$this->assertArrayHasKey( 'api_endpoint', $config );
 		$this->assertArrayHasKey( 'ai_unavailable_title', $config['strings'] );
 		$this->assertArrayHasKey( 'ai_chrome_unavailable', $config['strings'] );
 		$this->assertArrayHasKey( 'ai_edge_unavailable', $config['strings'] );
 		$this->assertArrayHasKey( 'ai_browser_unsupported', $config['strings'] );
+		$this->assertArrayHasKey( 'ai_api_missing_key', $config['strings'] );
 	}
 
 	/**
