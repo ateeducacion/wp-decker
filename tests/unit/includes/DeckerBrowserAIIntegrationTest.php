@@ -146,8 +146,8 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 			'Return only the final task description as HTML',
 			$config['prompts']['response_format']
 		);
-		$this->assertStringContainsString(
-			'Return only the improved description.',
+		$this->assertSame(
+			Decker_AI_Manager::get_prompt_config()['improve_description'],
 			$config['prompts']['improve_description']
 		);
 	}

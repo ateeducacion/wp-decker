@@ -48,6 +48,9 @@ class Decker_AI_Gemini_API_Provider implements Decker_AI_Provider_Interface {
 	/**
 	 * Improve a task description with Gemini.
 	 *
+	 * Uses the official Gemini API key header so the credential is sent outside
+	 * the request URL.
+	 *
 	 * @param string $prompt Prompt text to send.
 	 * @return string|WP_Error
 	 */
@@ -68,8 +71,8 @@ class Decker_AI_Gemini_API_Provider implements Decker_AI_Provider_Interface {
 			array(
 				'timeout' => 20,
 				'headers' => array(
-					'Content-Type'  => 'application/json',
-					'X-goog-api-key' => $this->api_key,
+					'Content-Type'   => 'application/json',
+					'X-Goog-Api-Key' => $this->api_key,
 				),
 				'body'    => wp_json_encode( $this->get_request_body( $prompt ) ),
 			)

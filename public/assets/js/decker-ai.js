@@ -20,6 +20,13 @@ window.DeckerAI = (function () {
     var DEFAULT_PROMPT_LANGUAGE = 'en';
 
     /**
+     * Server-side Gemini API provider key.
+     *
+     * @type {string}
+     */
+    var GEMINI_API_PROVIDER = 'gemini_api';
+
+    /**
      * Browser AI service wrapper.
      *
      * Prefers the current documented Prompt API surface (`globalThis.LanguageModel`)
@@ -887,7 +894,7 @@ window.DeckerAI = (function () {
      * @returns {boolean} True when Gemini API is selected.
      */
     function isGeminiAPIProvider() {
-        return aiConfig && aiConfig.provider === 'gemini_api';
+        return aiConfig && aiConfig.provider === GEMINI_API_PROVIDER;
     }
 
     /**

@@ -146,7 +146,7 @@ class Decker_Admin_Settings {
 			? __( 'A Gemini API key is already stored. Leave this field empty to keep the current key.', 'decker' )
 			: __( 'Paste a Gemini API key to enable server-side Gemini requests. The saved key is never shown again after saving.', 'decker' );
 
-		echo '<input type="password" name="decker_settings[ai_api_key]" class="regular-text" value="" autocomplete="new-password" placeholder="' . esc_attr( $placeholder ) . '">';
+		echo '<input type="password" name="decker_settings[ai_api_key]" class="regular-text" value="" autocomplete="off" placeholder="' . esc_attr( $placeholder ) . '">';
 		echo '<p class="description">' . esc_html( $description ) . '</p>';
 	}
 
@@ -548,7 +548,7 @@ class Decker_Admin_Settings {
 		$input['ai_enabled'] = isset( $input['ai_enabled'] ) && '1' === $input['ai_enabled'] ? '1' : '0';
 		$input['ai_provider'] = Decker_AI_Manager::get_selected_provider( $input );
 		$input['ai_api_key']  = isset( $input['ai_api_key'] ) && '' !== trim( $input['ai_api_key'] )
-			? preg_replace( '/\s+/', '', sanitize_text_field( $input['ai_api_key'] ) )
+			? Decker_AI_Manager::sanitize_api_key( $input['ai_api_key'] )
 			: Decker_AI_Manager::get_api_key( $current_values );
 		$input['ai_model']    = isset( $input['ai_model'] ) && '' !== trim( $input['ai_model'] )
 			? sanitize_text_field( $input['ai_model'] )

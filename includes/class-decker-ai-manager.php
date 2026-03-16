@@ -226,7 +226,17 @@ class Decker_AI_Manager {
 			return '';
 		}
 
-		return preg_replace( '/\s+/', '', sanitize_text_field( $options['ai_api_key'] ) );
+		return self::sanitize_api_key( $options['ai_api_key'] );
+	}
+
+	/**
+	 * Sanitize a Gemini API key for storage and use.
+	 *
+	 * @param string $api_key Raw API key.
+	 * @return string
+	 */
+	public static function sanitize_api_key( $api_key ) {
+		return (string) preg_replace( '/\s+/', '', sanitize_text_field( $api_key ) );
 	}
 
 	/**
