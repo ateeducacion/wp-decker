@@ -1,25 +1,26 @@
 <?php
 /**
- * Tests for browser-only AI integration.
+ * Tests for AI integration configuration.
  *
  * @package Decker
  */
 
 /**
- * Unit tests for browser-only AI integration.
+ * Unit tests for AI integration configuration.
  */
 class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 
 	/**
-	 * The legacy AI REST route should no longer be registered.
+	 * The AI REST route should be registered for server-side Gemini requests.
 	 */
-	public function test_legacy_ai_rest_route_is_not_registered() {
+	public function test_ai_rest_route_is_registered() {
 		global $wp_rest_server;
 
 		$wp_rest_server = new WP_REST_Server();
+		new Decker_AI_Manager();
 		do_action( 'rest_api_init' );
 
-		$this->assertArrayNotHasKey(
+		$this->assertArrayHasKey(
 			'/decker/v1/ai/improve',
 			$wp_rest_server->get_routes()
 		);
@@ -81,6 +82,22 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * AI config should default to the browser Gemini Nano provider.
+	 */
+	public function test_ai_config_defaults_to_browser_gemini_nano_provider() {
+		$public = new Decker_Public( 'decker', '1.0.0' );
+		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$method->setAccessible( true );
+		$config = $method->invoke( $public );
+
+		$this->assertSame(
+			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
+			$config['provider']
+		);
+		$this->assertFalse( $config['server_available'] );
+	}
+
+	/**
 	 * AI config should expose only the simplified four browser AI actions.
 	 */
 	public function test_ai_config_exposes_only_simplified_ai_actions() {
@@ -130,7 +147,7 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 			$config['prompts']['response_format']
 		);
 		$this->assertStringContainsString(
-			'Return only the final task description content.',
+			'Return only the improved description.',
 			$config['prompts']['improve_description']
 		);
 	}

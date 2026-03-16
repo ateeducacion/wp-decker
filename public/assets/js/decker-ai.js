@@ -1,14 +1,14 @@
 /* global Swal, deckerVars */
 
 /**
- * Decker AI — browser-only "Improve with AI" integration for the Quill
- * task-description editor.
+ * Decker AI "Improve with AI" integration for the Quill task-description
+ * editor.
  *
  * Exposed as window.DeckerAI. Initialised from task-card.js after the
  * Quill instance is created.
  *
- * Uses only built-in browser AI capabilities when available. No server-side
- * fallback or remote providers are used.
+ * Uses either the built-in browser Prompt API or a server-side Gemini API
+ * provider, depending on the plugin settings.
  */
 window.DeckerAI = (function () {
 
@@ -393,6 +393,85 @@ window.DeckerAI = (function () {
         return content.trim();
     };
 
+    /**
+     * Server-side Gemini API service wrapper.
+     *
+     * @param {object} config Localized AI configuration.
+     * @param {string} restNonce REST nonce for authenticated requests.
+     */
+    function GeminiAPIService( config, restNonce ) {
+        this.config = config || {};
+        this.restNonce = restNonce || '';
+    }
+
+    /**
+     * Improve text through the server-side Gemini API endpoint.
+     *
+     * @param {string} mode Rewrite mode key.
+     * @param {object} taskContext Current task context.
+     * @returns {Promise<string>} Improved HTML text.
+     */
+    GeminiAPIService.prototype.improve = async function ( mode, taskContext ) {
+        if ( ! this.config || ! this.config.api_endpoint ) {
+            throw new Error( this.getString( 'ai_api_request_error' ) );
+        }
+
+        if ( ! this.config.server_available ) {
+            throw new Error( this.getString( 'ai_api_missing_key' ) );
+        }
+
+        var response = await fetch(
+            this.config.api_endpoint,
+            {
+                method:      'POST',
+                credentials: 'same-origin',
+                headers:     {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce':   this.restNonce,
+                },
+                body: JSON.stringify( {
+                    mode:         mode,
+                    task_context: taskContext,
+                } ),
+            }
+        );
+        var data = null;
+
+        try {
+            data = await response.json();
+        } catch ( error ) {
+            throw new Error( this.getString( 'ai_api_request_error' ) );
+        }
+
+        if ( ! response.ok ) {
+            throw new Error(
+                data && data.message
+                    ? data.message
+                    : this.getString( 'ai_api_request_error' )
+            );
+        }
+
+        if ( ! data || ! data.improved_text ) {
+            throw new Error( this.getString( 'ai_api_request_error' ) );
+        }
+
+        return data.improved_text;
+    };
+
+    /**
+     * Get a localized string from the AI config.
+     *
+     * @param {string} key String key.
+     * @returns {string} Localized string.
+     */
+    GeminiAPIService.prototype.getString = function ( key ) {
+        if ( this.config && this.config.strings && this.config.strings[ key ] ) {
+            return this.config.strings[ key ];
+        }
+
+        return '';
+    };
+
     /** @type {import('quill').default|null} */
     var quillInstance = null;
 
@@ -404,6 +483,9 @@ window.DeckerAI = (function () {
 
     /** @type {NativeBrowserAIService|null} */
     var browserAIService = null;
+
+    /** @type {GeminiAPIService|null} */
+    var geminiAPIService = null;
 
     /**
      * Selection range saved when the button is clicked (before focus is lost).
@@ -439,6 +521,10 @@ window.DeckerAI = (function () {
             )
             : null;
         browserAIService  = new NativeBrowserAIService( aiConfig );
+        geminiAPIService  = new GeminiAPIService(
+            aiConfig,
+            vars && vars.nonces ? vars.nonces.wp_rest_nonce : ''
+        );
 
         if ( ! aiConfig || ! aiConfig.enabled ) {
             return;
@@ -597,6 +683,7 @@ window.DeckerAI = (function () {
         var textToImprove;
         var isSelection;
         var promptApiOptions = {};
+        var taskContext;
 
         if ( savedRange && savedRange.length > 0 ) {
             textToImprove = getSelectionHtml( savedRange );
@@ -617,6 +704,12 @@ window.DeckerAI = (function () {
                 text:  aiConfig.strings.no_content_message,
             } );
             return;
+        }
+
+        taskContext = getTaskContext( textToImprove, textContent );
+
+        if ( isGeminiAPIProvider() ) {
+            return runGeminiAPIImproveFlow( mode, taskContext, isSelection );
         }
 
         var availabilityPromise = browserAIService.getAvailability( promptApiOptions );
@@ -665,8 +758,6 @@ window.DeckerAI = (function () {
                 throw sessionResult.error;
             }
 
-            var taskContext = getTaskContext( textToImprove, textContent );
-
             var improvedText = await browserAIService.prompt(
                 buildPrompt( mode, taskContext ),
                 Object.assign(
@@ -697,6 +788,43 @@ window.DeckerAI = (function () {
                 text:  error && error.message ? error.message : aiConfig.strings.error_message,
             } );
             return;
+        }
+    }
+
+    /**
+     * Run the server-side Gemini API improvement flow.
+     *
+     * @param {string} mode Rewrite mode key.
+     * @param {object} taskContext Task context data.
+     * @param {boolean} isSelection Whether a partial selection is being replaced.
+     * @returns {Promise<void>} Async flow result.
+     */
+    async function runGeminiAPIImproveFlow( mode, taskContext, isSelection ) {
+        Swal.fire( {
+            title:             aiConfig.strings.improving,
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: function () {
+                Swal.showLoading();
+            },
+        } );
+
+        try {
+            var improvedText = await geminiAPIService.improve( mode, taskContext );
+            var originalPreview = isSelection && savedRange
+                ? quillInstance.getText( savedRange.index, savedRange.length )
+                : quillInstance.getText();
+            var confirmed = await showPreview( originalPreview, improvedText );
+
+            if ( confirmed ) {
+                applyImprovement( improvedText, isSelection ? savedRange : null );
+            }
+        } catch ( error ) {
+            Swal.fire( {
+                icon:  'error',
+                title: aiConfig.strings.error,
+                text:  error && error.message ? error.message : aiConfig.strings.ai_api_request_error,
+            } );
         }
     }
 
@@ -751,6 +879,15 @@ window.DeckerAI = (function () {
             content_html:  contentHtml,
             content_text:  contentText,
         };
+    }
+
+    /**
+     * Check whether the server-side Gemini API provider is selected.
+     *
+     * @returns {boolean} True when Gemini API is selected.
+     */
+    function isGeminiAPIProvider() {
+        return aiConfig && aiConfig.provider === 'gemini_api';
     }
 
     /**
