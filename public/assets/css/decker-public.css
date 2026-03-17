@@ -46,7 +46,8 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .notify-item .notification-content {
     display: flex;
     flex-direction: column; /* Align vertically */
-    width: 80%; /* Ensures it occupies all available width */
+    min-width: 0;
+    width: 100%; /* Ensures it occupies all available width */
 }
 
 .notify-item .fw-semibold {
@@ -61,6 +62,8 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     display: flex;
     justify-content: space-between; /*Aligns the time to the right*/
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .notify-item .notification-time {
@@ -73,8 +76,80 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     display: flex; /* To vertically center the icon */
     align-items: center; /* Center vertically */
     justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    color: #fff;
+    flex-shrink: 0;
+}
 
+.notify-icon i {
+    line-height: 1;
+}
+
+.notify-item {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    position: relative;
+    padding-right: 2.25rem;
+    border-left: 3px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.notify-item .notify-item-link {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: inherit;
+}
+
+.notify-item .notify-item-link:hover,
+.notify-item .notify-item-link:focus {
+    color: inherit;
+}
+
+.notify-item .notify-item-delete {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    padding: 0.125rem;
+    border-radius: 50%;
+    opacity: 0.55;
+    transition: opacity 0.2s ease, background-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.notify-item .notify-item-delete:hover,
+.notify-item .notify-item-delete:focus {
+    opacity: 1;
+    background-color: rgba(220, 53, 69, 0.12);
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.12);
+}
+
+.notify-item .notify-item-delete:focus {
+    outline: none;
+}
+
+.notify-item.notify-item-unread {
+    border-left-color: var(--ct-primary, #0d6efd);
+    background-color: rgba(13, 110, 253, 0.08);
+}
+
+.notify-item.notify-item-unread .fw-semibold {
+    font-weight: 700;
+}
+
+.notify-item.notify-item-read {
+    opacity: 0.72;
+}
+
+.notify-item.notify-item-read .notification-content {
+    font-style: italic;
 }
 
 .notify-item .d-flex{

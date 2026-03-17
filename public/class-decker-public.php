@@ -485,6 +485,11 @@ class Decker_Public {
 				array(
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'heartbeat-nonce' ),
+					'userId'  => get_current_user_id(),
+					'labels'  => array(
+						'delete'              => __( 'Delete', 'decker' ),
+						'delete_notification' => __( 'Delete notification', 'decker' ),
+					),
 				)
 			);
 
