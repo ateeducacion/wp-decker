@@ -262,10 +262,7 @@ console.log('loading decker-heartbeat.js');
 
         deleteButton.type = 'button';
         deleteButton.classList.add(
-            'btn',
-            'btn-link',
-            'btn-sm',
-            'text-muted',
+            'btn-close',
             'notify-item-delete'
         );
         deleteButton.setAttribute(
@@ -276,8 +273,6 @@ console.log('loading decker-heartbeat.js');
             'title',
             DeckerData.labels.delete_notification
         );
-        deleteButton.innerHTML =
-            '<i class="ri-delete-bin-line" aria-hidden="true"></i>';
 
         deleteButton.addEventListener('click', function(event) {
             event.preventDefault();

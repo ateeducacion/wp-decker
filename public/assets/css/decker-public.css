@@ -106,6 +106,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     flex: 0 0 auto;
     align-self: center;
     margin-left: auto;
+    padding: 0.25rem;
 }
 
 .notify-item.notify-item-unread {
