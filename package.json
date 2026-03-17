@@ -3,8 +3,8 @@
     "@wordpress/e2e-test-utils-playwright": "^1.27.0",
     "@wordpress/env": "^11.0.0",
     "@wordpress/scripts": "^31.0.0",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0"
+    "jest": "^30.0.0",
+    "jest-environment-jsdom": "^30.0.0"
   },
   "scripts": {
     "wp-env": "wp-env",
