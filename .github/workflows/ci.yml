@@ -13,7 +13,6 @@ permissions:
   contents: read
   pull-requests: write
   deployments: write
-  checks: write
 
 jobs:
   lint_and_test:
@@ -49,27 +48,6 @@ jobs:
       - name: Add Playground URL to summary
         run: |
           echo "[Test in WP Playground](https://playground.wordpress.net/#${BASE64_BLUEPRINT})" >> $GITHUB_STEP_SUMMARY
-
-      # Create a GitHub Check Run with the Playground URL
-      - name: Create a check with a test link
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const encodedBlueprint = process.env.BASE64_BLUEPRINT;
-            const playgroundUrl = `https://playground.wordpress.net/#${encodedBlueprint}`;
-            github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: "Test on WP playground",
-              head_sha: context.payload.pull_request ? context.payload.pull_request.head.sha : context.sha,
-              status: "completed",
-              conclusion: "neutral",
-              output: {
-                title: "Test in WP playground",
-                summary: `[Test in WP Playground](${playgroundUrl})`
-              }
-            });
 
       # Create a deployment with the Playground URL
       - name: Create a deployment
@@ -141,5 +119,4 @@ jobs:
 
       - name: Run unit tests
         run: make test
-
 
