@@ -21,6 +21,7 @@ function createMockYMap( initial = {} ) {
 			return store.size;
 		},
 		observe: jest.fn(),
+		unobserve: jest.fn(),
 		_store: store,
 	};
 }
@@ -35,6 +36,7 @@ function createMockAwareness( peerCount = 1 ) {
 		getStates: jest.fn( () => states ),
 		setLocalStateField: jest.fn(),
 		on: jest.fn(),
+		off: jest.fn(),
 	};
 }
 
@@ -251,6 +253,23 @@ describe( 'Task card form field sync', () => {
 		expect( context.querySelector( '#task-stack' ).value ).toBe( 'in-progress' );
 	} );
 
+	test( 'joining user keeps remote state instead of repopulating Yjs from local snapshot', () => {
+		const context = setupDOM( {
+			title: 'Local Title',
+			board: 'board1',
+		} );
+		const formFields = createMockYMap( {
+			title: 'Remote Title',
+			board: 'board2',
+		} );
+
+		simulateJoiningUserApply( context, formFields );
+
+		expect( context.querySelector( '#task-title' ).value ).toBe( 'Remote Title' );
+		expect( context.querySelector( '#task-board' ).value ).toBe( 'board2' );
+		expect( formFields.set ).not.toHaveBeenCalled();
+	} );
+
 	test( 'checkbox el.checked is not set when value is undefined', () => {
 		const context = setupDOM( { maxPriority: true } );
 		const formFields = createMockYMap();
@@ -318,5 +337,22 @@ describe( 'Task card form field sync', () => {
 
 		// Quill innerHTML captured
 		expect( snapshot.quillHtml ).toBe( '<p>Test content</p>' );
+	} );
+
+	test( 'second user fallback can still seed empty server values when remote data is not ready yet', () => {
+		const context = setupDOM( {
+			title: '',
+			dueDate: '',
+			board: 'board1',
+			stack: 'to-do',
+		} );
+		const formFields = createMockYMap();
+
+		simulateDOMFallback( context, formFields );
+
+		expect( formFields.set ).toHaveBeenCalledWith( 'title', '' );
+		expect( formFields.set ).toHaveBeenCalledWith( 'dueDate', '' );
+		expect( formFields.set ).toHaveBeenCalledWith( 'board', 'board1' );
+		expect( formFields.set ).toHaveBeenCalledWith( 'stack', 'to-do' );
 	} );
 } );

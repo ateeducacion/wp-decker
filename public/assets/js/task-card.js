@@ -135,15 +135,23 @@
      * Simple debounce function
      */
     function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
+        let timeout = null;
+        const executedFunction = function(...args) {
             const later = () => {
                 clearTimeout(timeout);
+                timeout = null;
                 func(...args);
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
+
+        executedFunction.cancel = function() {
+            clearTimeout(timeout);
+            timeout = null;
+        };
+
+        return executedFunction;
     }
 
     /**
@@ -171,12 +179,47 @@
         const formFields = session.formFields;
         const awareness = session.awareness;
         let isRemoteUpdate = false;
+        let isDestroyed = false;
+        let remoteChangesHandler = null;
+        let fieldAwarenessChangeHandler = null;
+        let remoteUpdateResetTimerId = null;
+        const fieldCleanupCallbacks = [];
 
         // Get local Choices.js instances
         const choicesMappings = [
             { instance: assigneesSelect, key: 'assignees', id: 'task-assignees' },
             { instance: labelsSelect, key: 'labels', id: 'task-labels' },
         ];
+
+        /**
+         * Register a DOM event listener and store its destroy-time cleanup callback.
+         *
+         * @param {Element} element DOM element.
+         * @param {string} eventName Event name.
+         * @param {Function} handler Event handler.
+         * @return {void}
+         */
+        function registerFieldListener(element, eventName, handler) {
+            element.addEventListener(eventName, handler);
+            // Store the teardown so destroy() can remove every listener registered here.
+            fieldCleanupCallbacks.push(() => element.removeEventListener(eventName, handler));
+        }
+
+        /**
+         * Remove all visual markers for remote field editors.
+         *
+         * @return {void}
+         */
+        function clearFieldAwarenessIndicators() {
+            context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
+            context.querySelectorAll('.decker-field-editing').forEach(el => {
+                el.classList.remove('decker-field-editing');
+                el.style.removeProperty('--editor-color');
+            });
+            context.querySelectorAll('.decker-field-editing-container').forEach(el => {
+                el.classList.remove('decker-field-editing-container');
+            });
+        }
 
         /**
          * Initialize form fields from Yjs or populate Yjs from original values.
@@ -314,33 +357,55 @@
                     formFields.set(key, value);
                 };
 
-                el.addEventListener('change', sendChange);
+                registerFieldListener(el, 'change', sendChange);
 
                 // For text inputs, use debounced input event
                 if (type === 'text') {
-                    el.addEventListener('input', debounce(sendChange, 150));
+                    const debouncedSendChange = debounce(sendChange, 150);
+                    registerFieldListener(el, 'input', debouncedSendChange);
+                    fieldCleanupCallbacks.push(() => debouncedSendChange.cancel());
                 }
 
                 // Focus tracking for awareness
-                el.addEventListener('focus', () => session.setActiveField(id));
-                el.addEventListener('blur', () => session.clearActiveField());
+                const handleFocus = () => session.setActiveField(id);
+                const handleBlur = () => session.clearActiveField();
+
+                registerFieldListener(el, 'focus', handleFocus);
+                registerFieldListener(el, 'blur', handleBlur);
             });
 
             // Choices.js fields
             choicesMappings.forEach(({ instance, key, id }) => {
                 if (!instance) return;
 
-                instance.passedElement.element.addEventListener('change', () => {
+                const handleChoicesChange = () => {
                     if (isRemoteUpdate) return;
                     const values = instance.getValue(true);
                     formFields.set(key, values);
-                });
+                };
+
+                registerFieldListener(
+                    instance.passedElement.element,
+                    'change',
+                    handleChoicesChange
+                );
 
                 // Focus tracking for Choices.js dropdowns
                 const choicesContainer = context.querySelector(`#${id}`)?.closest('.choices');
                 if (choicesContainer) {
-                    choicesContainer.addEventListener('focusin', () => session.setActiveField(id));
-                    choicesContainer.addEventListener('focusout', () => session.clearActiveField());
+                    const handleChoicesFocusIn = () => session.setActiveField(id);
+                    const handleChoicesFocusOut = () => session.clearActiveField();
+
+                    registerFieldListener(
+                        choicesContainer,
+                        'focusin',
+                        handleChoicesFocusIn
+                    );
+                    registerFieldListener(
+                        choicesContainer,
+                        'focusout',
+                        handleChoicesFocusOut
+                    );
                 }
             });
         }
@@ -349,7 +414,11 @@
          * Observe Yjs changes and update local fields
          */
         function observeRemoteChanges() {
-            formFields.observe((event) => {
+            remoteChangesHandler = (event) => {
+                if (isDestroyed) {
+                    return;
+                }
+
                 isRemoteUpdate = true;
 
                 event.keysChanged.forEach(key => {
@@ -395,25 +464,29 @@
                     }
                 });
 
-                // Use setTimeout to ensure flag resets after any triggered events
-                setTimeout(() => { isRemoteUpdate = false; }, 0);
-            });
+                // Clear any previous reset and keep only one pending timer so we
+                // can coalesce bursts of remote changes into a single flag reset.
+                clearTimeout(remoteUpdateResetTimerId);
+                remoteUpdateResetTimerId = setTimeout(() => {
+                    if (!isDestroyed) {
+                        isRemoteUpdate = false;
+                    }
+                }, 0);
+            };
+
+            formFields.observe(remoteChangesHandler);
         }
 
         /**
          * Show indicators of who is editing which field
          */
         function observeFieldAwareness() {
-            awareness.on('change', () => {
-                // Clear existing indicators
-                context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
-                context.querySelectorAll('.decker-field-editing').forEach(el => {
-                    el.classList.remove('decker-field-editing');
-                    el.style.removeProperty('--editor-color');
-                });
-                context.querySelectorAll('.decker-field-editing-container').forEach(el => {
-                    el.classList.remove('decker-field-editing-container');
-                });
+            fieldAwarenessChangeHandler = () => {
+                if (isDestroyed) {
+                    return;
+                }
+
+                clearFieldAwarenessIndicators();
 
                 // Create new indicators for remote users
                 awareness.getStates().forEach((state, clientId) => {
@@ -442,7 +515,9 @@
                     indicator.textContent = state.user.name;
                     wrapper.appendChild(indicator);
                 });
-            });
+            };
+
+            awareness.on('change', fieldAwarenessChangeHandler);
         }
 
         // Initialize everything
@@ -466,16 +541,23 @@
             },
 
             destroy() {
+                isDestroyed = true;
+                clearTimeout(remoteUpdateResetTimerId);
+                isRemoteUpdate = false;
+
+                if (remoteChangesHandler && typeof formFields.unobserve === 'function') {
+                    formFields.unobserve(remoteChangesHandler);
+                }
+
+                if (fieldAwarenessChangeHandler && typeof awareness.off === 'function') {
+                    awareness.off('change', fieldAwarenessChangeHandler);
+                }
+
+                fieldCleanupCallbacks.forEach(cleanup => cleanup());
+
                 // Clear awareness
                 session.clearActiveField();
-                // Clear indicators
-                context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
-                context.querySelectorAll('.decker-field-editing').forEach(el => {
-                    el.classList.remove('decker-field-editing');
-                });
-                context.querySelectorAll('.decker-field-editing-container').forEach(el => {
-                    el.classList.remove('decker-field-editing-container');
-                });
+                clearFieldAwarenessIndicators();
                 console.log('Decker: Form fields collaboration destroyed');
             }
         };

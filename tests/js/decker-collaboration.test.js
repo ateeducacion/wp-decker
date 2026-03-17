@@ -81,6 +81,7 @@ function createMockProvider() {
 		getStates: jest.fn( () => awarenessStates ),
 		setLocalStateField: jest.fn(),
 		on: jest.fn(),
+		off: jest.fn(),
 	};
 
 	const provider = {
@@ -93,6 +94,7 @@ function createMockProvider() {
 			}
 			handlers[ event ].push( cb );
 		} ),
+		off: jest.fn(),
 		connect: jest.fn(),
 		disconnect: jest.fn(),
 		destroy: jest.fn(),
