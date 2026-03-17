@@ -135,15 +135,23 @@
      * Simple debounce function
      */
     function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
+        let timeout = null;
+        const executedFunction = function(...args) {
             const later = () => {
                 clearTimeout(timeout);
+                timeout = null;
                 func(...args);
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
+
+        executedFunction.cancel = function() {
+            clearTimeout(timeout);
+            timeout = null;
+        };
+
+        return executedFunction;
     }
 
     /**
@@ -184,19 +192,23 @@
         ];
 
         /**
-         * Register a DOM event listener and its cleanup callback.
+         * Register a DOM event listener and store its destroy-time cleanup callback.
          *
          * @param {Element} element DOM element.
          * @param {string} eventName Event name.
          * @param {Function} handler Event handler.
+         * @return {void}
          */
         function registerFieldListener(element, eventName, handler) {
             element.addEventListener(eventName, handler);
+            // Store the teardown so destroy() can remove every listener registered here.
             fieldCleanupCallbacks.push(() => element.removeEventListener(eventName, handler));
         }
 
         /**
-         * Remove all collaborative field awareness indicators.
+         * Remove all visual markers for remote field editors.
+         *
+         * @return {void}
          */
         function clearFieldAwarenessIndicators() {
             context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
@@ -351,6 +363,7 @@
                 if (type === 'text') {
                     const debouncedSendChange = debounce(sendChange, 150);
                     registerFieldListener(el, 'input', debouncedSendChange);
+                    fieldCleanupCallbacks.push(() => debouncedSendChange.cancel());
                 }
 
                 // Focus tracking for awareness
@@ -451,7 +464,8 @@
                     }
                 });
 
-                // Use setTimeout to ensure flag resets after any triggered events
+                // Clear any previous reset and keep only one pending timer so we
+                // can coalesce bursts of remote changes into a single flag reset.
                 clearTimeout(remoteUpdateResetTimerId);
                 remoteUpdateResetTimerId = setTimeout(() => {
                     if (!isDestroyed) {
