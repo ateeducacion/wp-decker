@@ -183,6 +183,70 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test ai_provider defaults to the browser Gemini Nano provider.
+	 */
+	public function test_settings_validate_ai_provider_defaults_to_browser_gemini_nano() {
+		$validated = $this->admin_settings->settings_validate( array() );
+
+		$this->assertEquals(
+			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
+			$validated['ai_provider']
+		);
+	}
+
+	/**
+	 * Test ai_provider validation falls back for unsupported providers.
+	 */
+	public function test_settings_validate_ai_provider_rejects_invalid_values() {
+		$validated = $this->admin_settings->settings_validate(
+			array(
+				'ai_provider' => 'openrouter',
+			)
+		);
+
+		$this->assertEquals(
+			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
+			$validated['ai_provider']
+		);
+	}
+
+	/**
+	 * Test ai_api_key preserves the stored value when the field is left empty.
+	 */
+	public function test_settings_validate_ai_api_key_preserves_existing_value() {
+		update_option(
+			'decker_settings',
+			array(
+				'ai_api_key' => 'existing-key',
+			)
+		);
+
+		$validated = $this->admin_settings->settings_validate(
+			array(
+				'ai_api_key' => '',
+			)
+		);
+
+		$this->assertEquals( 'existing-key', $validated['ai_api_key'] );
+	}
+
+	/**
+	 * Test ai_model defaults to the Gemini model constant.
+	 */
+	public function test_settings_validate_ai_model_defaults_when_empty() {
+		$validated = $this->admin_settings->settings_validate(
+			array(
+				'ai_model' => '',
+			)
+		);
+
+		$this->assertEquals(
+			Decker_AI_Manager::DEFAULT_GEMINI_MODEL,
+			$validated['ai_model']
+		);
+	}
+
+	/**
 	 * Test ai_prompt setting validation falls back to the default template.
 	 */
 	public function test_settings_validate_ai_prompt_defaults_when_empty() {
@@ -252,13 +316,13 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test legacy AI-related settings are removed when saving settings.
+	 * Test legacy OpenAI fields are removed while Gemini settings are preserved.
 	 */
-	public function test_settings_validate_removes_legacy_ai_fields() {
+	public function test_settings_validate_removes_legacy_openai_fields() {
 		$input = array(
-			'ai_provider'     => 'openrouter',
+			'ai_provider'      => 'gemini_api',
 			'ai_api_key'      => 'secret-key',
-			'ai_model'        => 'openai/gpt-5-mini',
+			'ai_model'        => 'gemini-2.5-flash',
 			'openai_api_url'  => 'https://example.com/v1/chat/completions',
 			'openai_api_key'  => 'legacy-key',
 			'openai_model'    => 'legacy-model',
@@ -267,9 +331,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		$validated = $this->admin_settings->settings_validate( $input );
 
-		$this->assertArrayNotHasKey( 'ai_provider', $validated );
-		$this->assertArrayNotHasKey( 'ai_api_key', $validated );
-		$this->assertArrayNotHasKey( 'ai_model', $validated );
+		$this->assertEquals( 'gemini_api', $validated['ai_provider'] );
+		$this->assertEquals( 'secret-key', $validated['ai_api_key'] );
+		$this->assertEquals( 'gemini-2.5-flash', $validated['ai_model'] );
 		$this->assertArrayNotHasKey( 'openai_api_url', $validated );
 		$this->assertArrayNotHasKey( 'openai_api_key', $validated );
 		$this->assertArrayNotHasKey( 'openai_model', $validated );
@@ -340,6 +404,50 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test ai_api_key_render does not expose the saved API key.
+	 */
+	public function test_ai_api_key_render_masks_saved_value() {
+		update_option(
+			'decker_settings',
+			array(
+				'ai_api_key' => 'super-secret-key',
+			)
+		);
+
+		ob_start();
+		$this->admin_settings->ai_api_key_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="decker_settings[ai_api_key]"', $output );
+		$this->assertStringContainsString( 'type="password"', $output );
+		$this->assertStringNotContainsString( 'super-secret-key', $output );
+		$this->assertStringContainsString(
+			'Leave this field empty to keep the current key.',
+			$output
+		);
+	}
+
+	/**
+	 * Test ai_provider_render outputs the provider radio buttons.
+	 */
+	public function test_ai_provider_render_outputs_supported_providers() {
+		update_option(
+			'decker_settings',
+			array(
+				'ai_provider' => Decker_AI_Manager::PROVIDER_GEMINI_API,
+			)
+		);
+
+		ob_start();
+		$this->admin_settings->ai_provider_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'browser_gemini_nano', $output );
+		$this->assertStringContainsString( 'gemini_api', $output );
+		$this->assertStringContainsString( "checked='checked'", $output );
+	}
+
+	/**
 	 * Test signaling_server_render outputs correct HTML with default value.
 	 */
 	public function test_signaling_server_render_default() {
@@ -368,9 +476,9 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test browser AI settings fields are registered and legacy ones are not.
+	 * Test AI settings fields are registered in the dedicated AI section.
 	 */
-	public function test_settings_init_registers_browser_ai_fields_only() {
+	public function test_settings_init_registers_ai_fields_in_ai_section() {
 		global $wp_settings_fields;
 
 		update_option( 'decker_settings', array() );
@@ -378,12 +486,11 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		$this->admin_settings->settings_init();
 
-		$this->assertArrayHasKey( 'ai_enabled', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayHasKey( 'ai_prompt', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayNotHasKey( 'ai_provider', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayNotHasKey( 'ai_api_key', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayNotHasKey( 'ai_model', $wp_settings_fields['decker']['decker_main_section'] );
-		$this->assertArrayNotHasKey( 'openai_api_url', $wp_settings_fields['decker']['decker_main_section'] );
+		$this->assertArrayHasKey( 'ai_enabled', $wp_settings_fields['decker']['decker_ai_section'] );
+		$this->assertArrayHasKey( 'ai_provider', $wp_settings_fields['decker']['decker_ai_section'] );
+		$this->assertArrayHasKey( 'ai_api_key', $wp_settings_fields['decker']['decker_ai_section'] );
+		$this->assertArrayHasKey( 'ai_model', $wp_settings_fields['decker']['decker_ai_section'] );
+		$this->assertArrayHasKey( 'ai_prompt', $wp_settings_fields['decker']['decker_ai_section'] );
 	}
 
 	/**
