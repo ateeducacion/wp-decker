@@ -165,6 +165,10 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$result = $this->notifications->heartbeat_received( $response, $data, null );
 
 		$this->assertArrayHasKey( 'decker_notifications', $result, 'Response should include notifications.' );
+		$this->assertCount( 1, $result['decker_notifications'], 'Response should include exactly one notification.' );
+		$this->assertArrayHasKey( 'notificationId', $result['decker_notifications'][0], 'Notification should include a generated identifier.' );
+		$this->assertNotEmpty( $result['decker_notifications'][0]['notificationId'], 'Notification identifier should not be empty.' );
+		unset( $result['decker_notifications'][0]['notificationId'] );
 		$this->assertEquals( array( $notification ), $result['decker_notifications'], 'Notifications should match.' );
 
 		// Verify that the notifications were cleared.
