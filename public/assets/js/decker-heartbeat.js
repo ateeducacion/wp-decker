@@ -70,7 +70,7 @@ console.log('loading decker-heartbeat.js');
     }
     // End test notification.
 
-    var notificationStorageKey = 'decker_notification_read_'
+    var notificationReadStateKey = 'decker_notification_read_'
         + (DeckerData.userId || 0);
 
     function getStoredReadNotifications() {
@@ -79,7 +79,7 @@ console.log('loading decker-heartbeat.js');
 
         try {
             storedNotifications = window.localStorage.getItem(
-                notificationStorageKey
+                notificationReadStateKey
             );
             parsedNotifications = storedNotifications
                 ? JSON.parse(storedNotifications)
@@ -94,11 +94,15 @@ console.log('loading decker-heartbeat.js');
     function storeReadNotifications(notificationIds) {
         try {
             window.localStorage.setItem(
-                notificationStorageKey,
+                notificationReadStateKey,
                 JSON.stringify(notificationIds)
             );
         } catch (error) {
-            console.error('Could not store notification state.', error);
+            console.error(
+                'Could not store notification state for key:',
+                notificationReadStateKey,
+                error
+            );
         }
     }
 
@@ -140,9 +144,13 @@ console.log('loading decker-heartbeat.js');
 
     function clearStoredNotificationState() {
         try {
-            window.localStorage.removeItem(notificationStorageKey);
+            window.localStorage.removeItem(notificationReadStateKey);
         } catch (error) {
-            console.error('Could not clear notification state.', error);
+            console.error(
+                'Could not clear notification state for key:',
+                notificationReadStateKey,
+                error
+            );
         }
     }
 
@@ -160,18 +168,8 @@ console.log('loading decker-heartbeat.js');
     }
 
     function setNotificationState(notificationItem, isRead) {
-        var notificationState = notificationItem.querySelector(
-            '.notification-state-badge'
-        );
-
         notificationItem.classList.toggle('notify-item-read', isRead);
         notificationItem.classList.toggle('notify-item-unread', !isRead);
-
-        if (notificationState) {
-            notificationState.textContent = isRead
-                ? DeckerData.labels.read
-                : DeckerData.labels.new;
-        }
     }
 
     /**
@@ -194,7 +192,6 @@ console.log('loading decker-heartbeat.js');
         var notificationItem = document.createElement('div');
         var notificationLink = document.createElement('a');
         var notificationList = document.getElementById('notification-list');
-        var stateBadge = document.createElement('span');
         var timeSpan = document.createElement('small');
         var titleDiv = document.createElement('h5');
 
@@ -245,11 +242,8 @@ console.log('loading decker-heartbeat.js');
         timeSpan.classList.add('text-muted');
         timeSpan.textContent = formatNotificationTime(notificationData.time);
 
-        stateBadge.classList.add('notification-state-badge');
-
         actionDiv.appendChild(actionText);
         actionDiv.appendChild(timeSpan);
-        actionDiv.appendChild(stateBadge);
 
         contentDiv.appendChild(titleDiv);
         contentDiv.appendChild(actionDiv);

@@ -108,19 +108,6 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     margin-left: auto;
 }
 
-.notify-item .notification-state-badge {
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid currentColor;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    line-height: 1;
-    padding: 0.15rem 0.45rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
 .notify-item.notify-item-unread {
     border-left-color: var(--ct-primary, #0d6efd);
     background-color: rgba(13, 110, 253, 0.08);
@@ -136,18 +123,6 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .notify-item.notify-item-read .notification-content {
     font-style: italic;
-}
-
-.notify-item.notify-item-read .notification-state-badge {
-    font-style: normal;
-}
-
-.notify-item.notify-item-unread .notification-state-badge {
-    color: var(--ct-primary, #0d6efd);
-}
-
-.notify-item.notify-item-read .notification-state-badge {
-    color: #6c757d;
 }
 
 .notify-item .d-flex{

@@ -1324,11 +1324,6 @@ msgstr "Notificaciones"
 msgid "Clear All"
 msgstr "Limpiar todo"
 
-msgid "New"
-msgstr "Nueva"
-
-msgid "Read"
-msgstr "Leída"
 
 msgid "Test Notification"
 msgstr "Notificación de la prueba"

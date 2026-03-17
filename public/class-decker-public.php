@@ -489,8 +489,6 @@ class Decker_Public {
 					'labels'  => array(
 						'delete'              => __( 'Delete', 'decker' ),
 						'delete_notification' => __( 'Delete notification', 'decker' ),
-						'new'                 => __( 'New', 'decker' ),
-						'read'                => __( 'Read', 'decker' ),
 					),
 				)
 			);
