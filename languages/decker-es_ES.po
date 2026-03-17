@@ -693,6 +693,9 @@ msgstr "Fecha"
 msgid "Delete"
 msgstr "Eliminar"
 
+msgid "Delete notification"
+msgstr "Eliminar notificación"
+
 msgid "Server response error."
 msgstr "Error en la respuesta del servidor."
 
@@ -1320,6 +1323,12 @@ msgstr "Notificaciones"
 
 msgid "Clear All"
 msgstr "Limpiar todo"
+
+msgid "New"
+msgstr "Nueva"
+
+msgid "Read"
+msgstr "Leída"
 
 msgid "Test Notification"
 msgstr "Notificación de la prueba"

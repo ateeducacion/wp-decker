@@ -471,6 +471,7 @@ class Decker_Notification_Handler {
 			foreach ( $pending as $notification ) {
 				// Prepare data for JS.
 				$response['decker_notifications'][] = array(
+					'notificationId' => $this->get_notification_id( $notification ),
 					'url'       => isset( $notification['url'] ) ? $notification['url'] : '#',
 					'taskId'    => isset( $notification['task_id'] ) ? $notification['task_id'] : 0,
 					'iconColor' => $this->get_icon_color_by_type( $notification['type'] ),
@@ -518,6 +519,7 @@ class Decker_Notification_Handler {
 		$formatted = array();
 		foreach ( $last_notifications as $notification ) {
 			$formatted[] = array(
+				'notificationId' => $this->get_notification_id( $notification ),
 				'url'       => isset( $notification['url'] ) ? $notification['url'] : '#',
 				'taskId'    => isset( $notification['task_id'] ) ? $notification['task_id'] : 0,
 				'iconColor' => $this->get_icon_color_by_type( $notification['type'] ),
@@ -562,11 +564,23 @@ class Decker_Notification_Handler {
 			return;
 		}
 
+		$notification_id = isset( $notification['notification_id'] )
+			? sanitize_text_field( $notification['notification_id'] )
+			: '';
+
 		// Remove the notification matching type and task_id (if applicable).
 		$filtered = array_filter(
 			$all_notifications,
-			function ( $n ) use ( $notification ) {
-				return ( $n['type'] !== $notification['type'] || ( isset( $n['task_id'] ) && $n['task_id'] !== $notification['task_id'] ) );
+			function ( $stored_notification ) use ( $notification, $notification_id ) {
+				if ( $notification_id ) {
+					return $this->get_notification_id( $stored_notification ) !== $notification_id;
+				}
+
+				return (
+					$stored_notification['type'] !== $notification['type']
+					|| ( isset( $stored_notification['task_id'] )
+					&& $stored_notification['task_id'] !== $notification['task_id'] )
+				);
 			}
 		);
 
@@ -583,16 +597,20 @@ class Decker_Notification_Handler {
 			wp_send_json_error( 'Not logged in' );
 		}
 
-		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$task_id         = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$type            = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$notification_id = isset( $_POST['notification_id'] )
+			? sanitize_text_field( wp_unslash( $_POST['notification_id'] ) )
+			: '';
 
-		if ( ! $task_id && ! $type ) {
+		if ( ! $task_id && ! $type && ! $notification_id ) {
 			wp_send_json_error( 'No valid identifier provided' );
 		}
 
 		$notification_to_remove = array(
-			'type' => $type,
-			'task_id' => $task_id,
+			'type'            => $type,
+			'task_id'         => $task_id,
+			'notification_id' => $notification_id,
 		);
 		$this->remove_notification_from_user( $user_id, $notification_to_remove );
 
@@ -649,6 +667,8 @@ class Decker_Notification_Handler {
 			return;
 		}
 
+		$notification['notification_id'] = $this->get_notification_id( $notification );
+
 		// Save to "all notifications".
 		$all_notifications = get_user_meta( $user_id, 'decker_all_notifications', true );
 		if ( ! is_array( $all_notifications ) ) {
@@ -673,6 +693,29 @@ class Decker_Notification_Handler {
 
 		$pending[] = $notification;
 		update_user_meta( $user_id, 'decker_pending_notifications', $pending );
+	}
+
+	/**
+	 * Gets a stable identifier for a notification.
+	 *
+	 * @param array $notification Notification data.
+	 * @return string
+	 */
+	private function get_notification_id( $notification ) {
+		if ( ! empty( $notification['notification_id'] ) ) {
+			return sanitize_text_field( $notification['notification_id'] );
+		}
+
+		$identifier_data = array(
+			'type'    => isset( $notification['type'] ) ? (string) $notification['type'] : '',
+			'task_id' => isset( $notification['task_id'] ) ? (string) $notification['task_id'] : '',
+			'title'   => isset( $notification['title'] ) ? (string) $notification['title'] : '',
+			'action'  => isset( $notification['action'] ) ? (string) $notification['action'] : '',
+			'time'    => isset( $notification['time'] ) ? (string) $notification['time'] : '',
+			'url'     => isset( $notification['url'] ) ? (string) $notification['url'] : '',
+		);
+
+		return md5( wp_json_encode( $identifier_data ) );
 	}
 
 	/**

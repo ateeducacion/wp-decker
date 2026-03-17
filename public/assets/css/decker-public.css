@@ -46,7 +46,8 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .notify-item .notification-content {
     display: flex;
     flex-direction: column; /* Align vertically */
-    width: 80%; /* Ensures it occupies all available width */
+    min-width: 0;
+    width: 100%; /* Ensures it occupies all available width */
 }
 
 .notify-item .fw-semibold {
@@ -61,6 +62,8 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     display: flex;
     justify-content: space-between; /*Aligns the time to the right*/
     align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .notify-item .notification-time {
@@ -75,6 +78,76 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     justify-content: center; /* Center horizontally */
     align-items: center; /* Center vertically */
 
+}
+
+.notify-item {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding-right: 0.5rem;
+    border-left: 3px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+        opacity 0.2s ease;
+}
+
+.notify-item .notify-item-link {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: inherit;
+}
+
+.notify-item .notify-item-link:hover,
+.notify-item .notify-item-link:focus {
+    color: inherit;
+}
+
+.notify-item .notify-item-delete {
+    flex: 0 0 auto;
+    align-self: center;
+    margin-left: auto;
+}
+
+.notify-item .notification-state-badge {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.15rem 0.45rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.notify-item.notify-item-unread {
+    border-left-color: var(--ct-primary, #0d6efd);
+    background-color: rgba(13, 110, 253, 0.08);
+}
+
+.notify-item.notify-item-unread .fw-semibold {
+    font-weight: 700;
+}
+
+.notify-item.notify-item-read {
+    opacity: 0.72;
+}
+
+.notify-item.notify-item-read .notification-content {
+    font-style: italic;
+}
+
+.notify-item.notify-item-read .notification-state-badge {
+    font-style: normal;
+}
+
+.notify-item.notify-item-unread .notification-state-badge {
+    color: var(--ct-primary, #0d6efd);
+}
+
+.notify-item.notify-item-read .notification-state-badge {
+    color: #6c757d;
 }
 
 .notify-item .d-flex{

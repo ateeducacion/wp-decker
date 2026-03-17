@@ -406,6 +406,68 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Tests notifications are stored with a notification identifier.
+	 */
+	public function test_add_notification_assigns_notification_id() {
+		$notification = array(
+			'type'    => 'task_created',
+			'task_id' => $this->task_id,
+			'title'   => 'Created',
+			'action'  => 'A new task was created',
+			'time'    => '2026-03-17 12:00:00',
+			'url'     => '#',
+		);
+
+		$this->notifications->add_notification_to_user( $this->test_user, $notification );
+
+		$all_notifications = get_user_meta( $this->test_user, 'decker_all_notifications', true );
+
+		$this->assertNotEmpty( $all_notifications[0]['notification_id'] );
+	}
+
+	/**
+	 * Tests removing a notification by identifier only removes the matching item.
+	 */
+	public function test_remove_notification_from_user_by_notification_id() {
+		$first_notification = array(
+			'notification_id' => 'notification-1',
+			'type'            => 'task_comment',
+			'task_id'         => $this->task_id,
+			'title'           => 'Comment 1',
+			'action'          => 'First comment',
+			'time'            => '2026-03-17 12:00:00',
+			'url'             => '#',
+		);
+		$second_notification = array(
+			'notification_id' => 'notification-2',
+			'type'            => 'task_comment',
+			'task_id'         => $this->task_id,
+			'title'           => 'Comment 2',
+			'action'          => 'Second comment',
+			'time'            => '2026-03-17 12:05:00',
+			'url'             => '#',
+		);
+
+		update_user_meta(
+			$this->test_user,
+			'decker_all_notifications',
+			array( $first_notification, $second_notification )
+		);
+
+		$this->notifications->remove_notification_from_user(
+			$this->test_user,
+			array(
+				'notification_id' => 'notification-1',
+			)
+		);
+
+		$remaining_notifications = get_user_meta( $this->test_user, 'decker_all_notifications', true );
+
+		$this->assertCount( 1, $remaining_notifications );
+		$this->assertSame( 'notification-2', $remaining_notifications[0]['notification_id'] );
+	}
+
+	/**
 	 * Captures emails sent by wp_mail().
 	 *
 	 * @param array $args Email arguments.
