@@ -169,6 +169,7 @@ class Decker_Public {
 			'upcoming'       => 'public/app-upcoming.php',
 			'event-manager'  => 'public/app-event-manager.php',
 			'knowledge-base' => 'public/app-knowledge-base.php',
+			'journal'        => 'public/app-journal.php',
 		);
 
 		if ( array_key_exists( $decker_page, $include_files ) ) {
@@ -272,7 +273,7 @@ class Decker_Public {
 
 			}
 
-			if ( 'knowledge-base' == $decker_page ) {
+			if ( 'knowledge-base' == $decker_page || 'journal' == $decker_page ) {
 
 							   wp_enqueue_media(); // Required for media uploads.
 				// wp_enqueue_script('editor');
@@ -288,7 +289,7 @@ class Decker_Public {
 
 			}
 
-			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
+			if ( 'tasks' == $decker_page || 'journal' == $decker_page ) { // Only load datatables.net on tasks and journal pages.
 				// Datatables JS CDN.
 				$resources[] = 'https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js';
 				$resources[] = 'https://cdn.datatables.net/searchbuilder/1.6.0/js/dataTables.searchBuilder.min.js';
