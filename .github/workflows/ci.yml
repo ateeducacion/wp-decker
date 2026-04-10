@@ -51,7 +51,7 @@ jobs:
 
       # Create a deployment with the Playground URL
       - name: Create a deployment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
