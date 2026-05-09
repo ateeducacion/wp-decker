@@ -661,8 +661,80 @@ class Decker_Demo_Data {
 
 					update_post_meta( $task_id, '_user_date_relations', $relations );
 					update_post_meta( $task_id, 'startdate', $start_date->format( 'Y-m-d' ) );
+
+					// Seed comments so the board comments popover has something to preview.
+					$this->seed_task_comments( $task_id, $assigned_users, $start_date, $end_date );
 				}
 			}
+		}
+	}
+
+	/**
+	 * Seeds a varied set of demo comments on a task so the board popover
+	 * preview can be exercised with short, long, multi-author and link
+	 * containing content.
+	 *
+	 * @param int      $task_id        Target task post ID.
+	 * @param int[]    $assigned_users Users available as comment authors.
+	 * @param DateTime $start_date     Earliest plausible comment date.
+	 * @param DateTime $end_date       Latest plausible comment date.
+	 */
+	private function seed_task_comments( $task_id, $assigned_users, $start_date, $end_date ) {
+		// 30 % no comments, 30 % a single one, 25 % a handful, 15 % a long thread.
+		$bucket = $this->custom_rand( 1, 100 );
+		if ( $bucket <= 30 ) {
+			return;
+		} elseif ( $bucket <= 60 ) {
+			$count = 1;
+		} elseif ( $bucket <= 85 ) {
+			$count = $this->custom_rand( 2, 4 );
+		} else {
+			$count = $this->custom_rand( 6, 10 );
+		}
+
+		$short_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+		$medium_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.';
+		$long_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
+
+		$samples = array(
+			'<p>' . $short_lorem . '</p>',
+			'<p>' . $medium_lorem . '</p>',
+			'<p>' . $long_lorem . '</p>',
+			'<p>Check the spec at <a href="https://example.com/spec">example.com/spec</a> before continuing.</p>',
+			'<p>' . $short_lorem . '</p><p>Reference: <a href="https://example.org/docs">example.org/docs</a>.</p>',
+			'<p>Quick update: ' . $short_lorem . '</p>',
+			'<p>' . $medium_lorem . '</p><p>' . $short_lorem . '</p>',
+		);
+
+		$first_ts = $start_date->getTimestamp();
+		$last_ts = $end_date->getTimestamp();
+		if ( $last_ts <= $first_ts ) {
+			$last_ts = $first_ts + DAY_IN_SECONDS;
+		}
+
+		for ( $i = 0; $i < $count; $i++ ) {
+			$author_id = ! empty( $assigned_users )
+				? $assigned_users[ array_rand( $assigned_users ) ]
+				: 0;
+			$author = $author_id ? get_userdata( $author_id ) : false;
+
+			$comment_ts = $this->custom_rand( $first_ts, $last_ts );
+			$content = $samples[ array_rand( $samples ) ];
+
+			wp_insert_comment(
+				array(
+					'comment_post_ID'      => $task_id,
+					'comment_author'       => $author ? $author->display_name : 'Demo',
+					'comment_author_email' => $author ? $author->user_email : 'demo@example.com',
+					'comment_author_url'   => '',
+					'comment_content'      => $content,
+					'comment_type'         => 'comment',
+					'user_id'              => $author_id,
+					'comment_approved'     => 1,
+					'comment_date'         => gmdate( 'Y-m-d H:i:s', $comment_ts ),
+					'comment_date_gmt'     => gmdate( 'Y-m-d H:i:s', $comment_ts ),
+				)
+			);
 		}
 	}
 

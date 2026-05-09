@@ -242,6 +242,8 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
 
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-comments-popover.js',
+
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
 
 			);
@@ -406,6 +408,11 @@ class Decker_Public {
 					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
 					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 					'copy_task_url'               => __( 'Copy Task URL', 'decker' ),
+					'loading_comments'            => __( 'Loading comments…', 'decker' ),
+					'no_comments'                 => __( 'No comments yet.', 'decker' ),
+					'comments_error'              => __( 'Could not load comments.', 'decker' ),
+					/* translators: %d is the number of additional comments not shown in the popover preview. */
+					'more_comments'               => __( 'and %d more', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
