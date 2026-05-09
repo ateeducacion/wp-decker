@@ -599,10 +599,34 @@ class Task {
 						}
 						?>
 					</span>
-					<span class="text-nowrap mb-2 d-inline-block">
-						<i class="ri-discuss-line text-muted"></i>
-						<b><?php echo esc_html( get_comments_number( $this->ID ) ); ?></b>
-					</span>
+					<?php
+					$comments_count = (int) get_comments_number( $this->ID );
+					if ( $comments_count > 0 ) :
+						/* translators: %d is the number of comments on the task. */
+						$comments_title = sprintf( _n( '%d comment', '%d comments', $comments_count, 'decker' ), $comments_count );
+						?>
+						<span class="text-nowrap mb-2 d-inline-flex align-items-center decker-comments-popover"
+							role="button"
+							tabindex="0"
+							data-bs-toggle="popover"
+							data-bs-trigger="hover focus"
+							data-bs-html="true"
+							data-bs-placement="right"
+							data-bs-fallback-placements='["left","top","bottom"]'
+							data-bs-custom-class="decker-comments-popover-pop"
+							data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
+							data-decker-comments-count="<?php echo esc_attr( $comments_count ); ?>"
+							title="<?php echo esc_attr( $comments_title ); ?>"
+							data-bs-content="<?php echo esc_attr__( 'Loading comments…', 'decker' ); ?>">
+							<i class="ri-discuss-line text-muted me-1"></i>
+							<b><?php echo esc_html( $comments_count ); ?></b>
+						</span>
+					<?php else : ?>
+						<span class="text-nowrap mb-2 d-inline-block">
+							<i class="ri-discuss-line text-muted"></i>
+							<b>0</b>
+						</span>
+					<?php endif; ?>
 					<span class="text-nowrap mb-2 d-inline-block">
 						<i class="ri-attachment-2 text-muted"></i>
 						<b><?php echo esc_html( count( get_attached_media( '', $this->ID ) ) ); ?></b>

@@ -640,3 +640,27 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
        left: 1rem;
     }
 }
+
+.decker-comments-popover {
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+}
+
+.decker-comments-popover.decker-comments-popover-pinned {
+    color: var(--bs-primary);
+}
+
+.popover.decker-comments-popover-pop {
+    max-width: 360px;
+}
+
+.popover.decker-comments-popover-pop .popover-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.popover.decker-comments-popover-pop .decker-comments-popover-list .small {
+    word-break: break-word;
+}

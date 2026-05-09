@@ -1836,3 +1836,19 @@ msgstr ""
 "\n"
 "{{language_instruction}}\n"
 "{{response_format}}"
+
+#, php-format
+msgid "%d comment"
+msgid_plural "%d comments"
+msgstr[0] "%d comentario"
+msgstr[1] "%d comentarios"
+
+msgid "Loading comments…"
+msgstr "Cargando comentarios…"
+
+msgid "Could not load comments."
+msgstr "No se han podido cargar los comentarios."
+
+#, php-format
+msgid "and %d more"
+msgstr "y %d más"

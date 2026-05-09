@@ -1721,3 +1721,19 @@ msgstr ""
 
 msgid "Logout"
 msgstr ""
+
+#, php-format
+msgid "%d comment"
+msgid_plural "%d comments"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Loading comments…"
+msgstr ""
+
+msgid "Could not load comments."
+msgstr ""
+
+#, php-format
+msgid "and %d more"
+msgstr ""
