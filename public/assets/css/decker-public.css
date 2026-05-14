@@ -664,3 +664,26 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 .popover.decker-comments-popover-pop .decker-comments-popover-list .small {
     word-break: break-word;
 }
+
+.decker-labels-popover {
+    cursor: pointer;
+    user-select: none;
+    line-height: 1;
+}
+
+.popover.decker-labels-popover-pop {
+    max-width: 280px;
+}
+
+.popover.decker-labels-popover-pop .decker-labels-popover-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.popover.decker-labels-popover-pop .decker-labels-popover-list .badge {
+    color: #fff;
+    word-break: break-word;
+    white-space: normal;
+    text-align: left;
+}
