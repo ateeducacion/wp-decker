@@ -287,6 +287,11 @@ class DeckerTaskTest extends Decker_Test_Base {
 			'The labels counter should be a Bootstrap popover trigger.'
 		);
 		$this->assertStringContainsString(
+			'data-bs-sanitize="false"',
+			$html,
+			'Sanitization must be disabled so the inline chip background colors survive (content is server-escaped).'
+		);
+		$this->assertStringContainsString(
 			'data-decker-labels-count="2"',
 			$html,
 			'The labels counter should expose the number of labels for client-side hooks.'

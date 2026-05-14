@@ -683,6 +683,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .popover.decker-labels-popover-pop .decker-labels-popover-list .badge {
     color: #fff;
+    background-color: #6c757d; /* readable fallback if inline style is ever stripped */
     word-break: break-word;
     white-space: normal;
     text-align: left;

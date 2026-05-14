@@ -648,6 +648,7 @@ class Task {
 							data-bs-toggle="popover"
 							data-bs-trigger="hover focus"
 							data-bs-html="true"
+							data-bs-sanitize="false"
 							data-bs-placement="top"
 							data-bs-fallback-placements='["bottom","right","left"]'
 							data-bs-custom-class="decker-labels-popover-pop"
