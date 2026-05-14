@@ -635,8 +635,11 @@ class Task {
 					$labels_count = count( $this->labels );
 					if ( $labels_count > 0 ) :
 						/* translators: %d is the number of labels on the task. */
-						$labels_title = sprintf( _n( '%d label', '%d labels', $labels_count, 'decker' ), $labels_count );
-						$labels_list  = '<div class="decker-labels-popover-list">';
+						$labels_screen_reader = sprintf( _n( '%d label', '%d labels', $labels_count, 'decker' ), $labels_count );
+						$close_aria_label     = __( 'Close', 'decker' );
+
+						$labels_list  = '<button type="button" class="btn-close decker-labels-popover-close" aria-label="' . esc_attr( $close_aria_label ) . '"></button>';
+						$labels_list .= '<div class="decker-labels-popover-list">';
 						foreach ( $this->labels as $label ) {
 							$labels_list .= '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span>';
 						}
@@ -645,17 +648,10 @@ class Task {
 						<span class="ps-2 text-nowrap mb-2 d-inline-flex align-items-center decker-labels-popover"
 							role="button"
 							tabindex="0"
-							data-bs-toggle="popover"
-							data-bs-trigger="hover focus"
-							data-bs-html="true"
-							data-bs-sanitize="false"
-							data-bs-placement="top"
-							data-bs-fallback-placements='["bottom","right","left"]'
-							data-bs-custom-class="decker-labels-popover-pop"
 							data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
 							data-decker-labels-count="<?php echo esc_attr( $labels_count ); ?>"
-							title="<?php echo esc_attr( $labels_title ); ?>"
-							data-bs-content="<?php echo esc_attr( $labels_list ); ?>">
+							data-decker-labels-content="<?php echo esc_attr( $labels_list ); ?>"
+							aria-label="<?php echo esc_attr( $labels_screen_reader ); ?>">
 							<i class="ri-price-tag-3-line text-muted me-1"></i>
 							<b><?php echo esc_html( $labels_count ); ?></b>
 						</span>

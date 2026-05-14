@@ -282,14 +282,19 @@ class DeckerTaskTest extends Decker_Test_Base {
 			'The card should mark the labels counter as a popover trigger when labels exist.'
 		);
 		$this->assertStringContainsString(
-			'data-bs-toggle="popover"',
+			'data-decker-labels-content',
 			$html,
-			'The labels counter should be a Bootstrap popover trigger.'
+			'The labels counter must carry the popover HTML content for the JS initializer to read.'
 		);
 		$this->assertStringContainsString(
-			'data-bs-sanitize="false"',
+			'decker-labels-popover-close',
 			$html,
-			'Sanitization must be disabled so the inline chip background colors survive (content is server-escaped).'
+			'The popover body must include a close button so the user can dismiss it.'
+		);
+		$this->assertStringNotContainsString(
+			'data-bs-toggle="popover"',
+			$html,
+			'The labels counter must not be auto-initialized by the generic popover bootstrap; the dedicated initializer applies sanitize:false.'
 		);
 		$this->assertStringContainsString(
 			'data-decker-labels-count="2"',
@@ -344,6 +349,11 @@ class DeckerTaskTest extends Decker_Test_Base {
 			'data-decker-labels-count',
 			$html,
 			'A labelless task must not expose the labels-count data attribute.'
+		);
+		$this->assertStringNotContainsString(
+			'decker-labels-popover-close',
+			$html,
+			'A labelless task must not render a close button (there is no popover to close).'
 		);
 	}
 }
