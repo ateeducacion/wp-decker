@@ -24,6 +24,6 @@ class Label extends Decker_Term_Entity {
 	 * @throws Exception If the term is invalid.
 	 */
 	public function __construct( WP_Term $term ) {
-		$this->hydrate_term( $term, 'decker_label', 'Invalid label term.' );
+		$this->hydrate_term( $term, 'decker_label' );
 	}
 }

@@ -50,16 +50,14 @@ abstract class Decker_Term_Entity {
 	 *
 	 * @param WP_Term $term              The term object to hydrate from.
 	 * @param string  $expected_taxonomy The expected taxonomy slug.
-	 * @param string  $error_message     The exception message for invalid terms.
 	 * @throws Exception If the term does not match the expected taxonomy.
 	 */
 	protected function hydrate_term(
 		WP_Term $term,
-		string $expected_taxonomy,
-		string $error_message
+		string $expected_taxonomy
 	): void {
 		if ( $expected_taxonomy !== $term->taxonomy ) {
-			throw new Exception( esc_html( $error_message ) );
+			throw new Exception( 'Invalid taxonomy term.' );
 		}
 
 		$this->id   = $term->term_id;

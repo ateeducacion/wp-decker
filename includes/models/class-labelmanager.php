@@ -122,8 +122,8 @@ class LabelManager extends Decker_Taxonomy_Manager {
 		return array(
 			'success' => true,
 			'message' => $is_update
-				? __( 'Label updated successfully', 'decker' )
-				: __( 'Label created successfully', 'decker' ),
+			? __( 'Label updated successfully', 'decker' )
+			: __( 'Label created successfully', 'decker' ),
 		);
 	}
 

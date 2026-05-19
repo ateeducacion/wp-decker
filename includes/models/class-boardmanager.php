@@ -105,8 +105,8 @@ class BoardManager extends Decker_Taxonomy_Manager {
 		return array(
 			'success' => true,
 			'message' => $is_update
-				? __( 'Board updated successfully', 'decker' )
-				: __( 'Board created successfully', 'decker' ),
+			? __( 'Board updated successfully', 'decker' )
+			: __( 'Board created successfully', 'decker' ),
 		);
 	}
 
