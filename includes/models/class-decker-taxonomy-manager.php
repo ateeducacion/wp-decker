@@ -1,6 +1,6 @@
 <?php
 /**
- * File class-taxonomy-manager
+ * File class-decker-taxonomy-manager
  *
  * @package    Decker
  * @subpackage Decker/includes/models

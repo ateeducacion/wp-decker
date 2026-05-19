@@ -1,6 +1,6 @@
 <?php
 /**
- * File class-term-entity
+ * File class-decker-term-entity
  *
  * @package    Decker
  * @subpackage Decker/includes/models
