@@ -130,10 +130,12 @@ class Decker {
 		/**
 		 * The class responsible for defining the MVC.
 		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-term-entity.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-taxonomy-manager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
