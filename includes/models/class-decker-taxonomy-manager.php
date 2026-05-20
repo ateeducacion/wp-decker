@@ -73,7 +73,7 @@ abstract class Decker_Taxonomy_Manager {
 	 *
 	 * @param string $key               The cache key.
 	 * @param bool   $reload_if_missing Whether to reload items if the key is missing.
-	 * @return mixed
+	 * @return object|null Cached item object or null when not found.
 	 */
 	final protected static function get_cached_item(
 		string $key,

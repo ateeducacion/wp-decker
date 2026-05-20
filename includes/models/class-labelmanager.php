@@ -17,18 +17,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class LabelManager extends Decker_Taxonomy_Manager {
 
-	/**
-	 * Cached manager instance for the label manager.
-	 *
-	 * @var static|null
-	 */
 	protected static $instance = null;
 
-	/**
-	 * Cached label items loaded by the label manager.
-	 *
-	 * @var array
-	 */
 	protected static array $items = array();
 
 	/**

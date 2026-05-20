@@ -17,18 +17,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class BoardManager extends Decker_Taxonomy_Manager {
 
-	/**
-	 * Cached manager instance for the board manager.
-	 *
-	 * @var static|null
-	 */
 	protected static $instance = null;
 
-	/**
-	 * Cached board items loaded by the board manager.
-	 *
-	 * @var array
-	 */
 	protected static array $items = array();
 
 	/**
