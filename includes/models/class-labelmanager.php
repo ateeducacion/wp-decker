@@ -17,8 +17,18 @@ defined( 'ABSPATH' ) || exit;
  */
 class LabelManager extends Decker_Taxonomy_Manager {
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @var static|null
+	 */
 	protected static $instance = null;
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @var array
+	 */
 	protected static array $items = array();
 
 	/**
