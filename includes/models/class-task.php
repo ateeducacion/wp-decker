@@ -631,6 +631,36 @@ class Task {
 						<i class="ri-attachment-2 text-muted"></i>
 						<b><?php echo esc_html( count( get_attached_media( '', $this->ID ) ) ); ?></b>
 					</span>
+					<?php
+					$labels_count = count( $this->labels );
+					if ( $labels_count > 0 ) :
+						/* translators: %d is the number of labels on the task. */
+						$labels_screen_reader = sprintf( _n( '%d label', '%d labels', $labels_count, 'decker' ), $labels_count );
+						$close_aria_label     = __( 'Close', 'decker' );
+
+						$labels_list  = '<button type="button" class="btn-close decker-labels-popover-close" aria-label="' . esc_attr( $close_aria_label ) . '"></button>';
+						$labels_list .= '<div class="decker-labels-popover-list">';
+						foreach ( $this->labels as $label ) {
+							$labels_list .= '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span>';
+						}
+						$labels_list .= '</div>';
+						?>
+						<span class="ps-2 text-nowrap mb-2 d-inline-flex align-items-center decker-labels-popover"
+							role="button"
+							tabindex="0"
+							data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
+							data-decker-labels-count="<?php echo esc_attr( $labels_count ); ?>"
+							data-decker-labels-content="<?php echo esc_attr( $labels_list ); ?>"
+							aria-label="<?php echo esc_attr( $labels_screen_reader ); ?>">
+							<i class="ri-price-tag-3-line text-muted me-1"></i>
+							<b><?php echo esc_html( $labels_count ); ?></b>
+						</span>
+					<?php else : ?>
+						<span class="ps-2 text-nowrap mb-2 d-inline-block">
+							<i class="ri-price-tag-3-line text-muted me-1"></i>
+							<b>0</b>
+						</span>
+					<?php endif; ?>
 				</p>
 
 				<?php $this->render_task_menu(); ?>

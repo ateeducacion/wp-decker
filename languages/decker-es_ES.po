@@ -1843,6 +1843,12 @@ msgid_plural "%d comments"
 msgstr[0] "%d comentario"
 msgstr[1] "%d comentarios"
 
+#, php-format
+msgid "%d label"
+msgid_plural "%d labels"
+msgstr[0] "%d etiqueta"
+msgstr[1] "%d etiquetas"
+
 msgid "Loading comments…"
 msgstr "Cargando comentarios…"
 

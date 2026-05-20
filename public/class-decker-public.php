@@ -244,6 +244,8 @@ class Decker_Public {
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-comments-popover.js',
 
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-labels-popover.js',
+
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
 
 			);

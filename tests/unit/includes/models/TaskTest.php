@@ -241,4 +241,119 @@ class DeckerTaskTest extends Decker_Test_Base {
 			'The responsible user should be rendered before the other assigned users.'
 		);
 	}
+
+	/**
+	 * Test the rendered card exposes labels through an icon + popover.
+	 */
+	public function test_render_task_card_displays_labels_with_popover() {
+		$label_one = self::factory()->label->create(
+			array(
+				'name'  => 'Urgent',
+				'color' => '#ff0000',
+			)
+		);
+		$label_two = self::factory()->label->create(
+			array(
+				'name'  => 'Backend',
+				'color' => '#00aabb',
+			)
+		);
+
+		$task_id = self::factory()->task->create(
+			array(
+				'labels' => array( $label_one, $label_two ),
+			)
+		);
+
+		$task = new Task( $task_id );
+
+		ob_start();
+		$task->render_task_card();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString(
+			'ri-price-tag-3-line',
+			$html,
+			'The card should render the label icon next to the other counters.'
+		);
+		$this->assertStringContainsString(
+			'decker-labels-popover',
+			$html,
+			'The card should mark the labels counter as a popover trigger when labels exist.'
+		);
+		$this->assertStringContainsString(
+			'data-decker-labels-content',
+			$html,
+			'The labels counter must carry the popover HTML content for the JS initializer to read.'
+		);
+		$this->assertStringContainsString(
+			'decker-labels-popover-close',
+			$html,
+			'The popover body must include a close button so the user can dismiss it.'
+		);
+		$this->assertStringNotContainsString(
+			'data-bs-toggle="popover"',
+			$html,
+			'The labels counter must not be auto-initialized by the generic popover bootstrap; the dedicated initializer applies sanitize:false.'
+		);
+		$this->assertStringContainsString(
+			'data-decker-labels-count="2"',
+			$html,
+			'The labels counter should expose the number of labels for client-side hooks.'
+		);
+		$this->assertStringContainsString(
+			'Urgent',
+			$html,
+			'The popover content should include each label name.'
+		);
+		$this->assertStringContainsString(
+			'Backend',
+			$html,
+			'The popover content should include each label name.'
+		);
+		$this->assertStringContainsString(
+			'#ff0000',
+			$html,
+			'The popover content should preserve each label color.'
+		);
+		$this->assertStringContainsString(
+			'#00aabb',
+			$html,
+			'The popover content should preserve each label color.'
+		);
+	}
+
+	/**
+	 * Test a task with no labels renders the inert icon without popover wiring.
+	 */
+	public function test_render_task_card_without_labels_renders_inert_counter() {
+		$task_id = self::factory()->task->create();
+
+		$task = new Task( $task_id );
+
+		ob_start();
+		$task->render_task_card();
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString(
+			'ri-price-tag-3-line',
+			$html,
+			'The label icon should still appear when the task has no labels.'
+		);
+		$this->assertStringNotContainsString(
+			'decker-labels-popover"',
+			$html,
+			'A labelless task must not be wired as a popover trigger.'
+		);
+		$this->assertStringNotContainsString(
+			'data-decker-labels-count',
+			$html,
+			'A labelless task must not expose the labels-count data attribute.'
+		);
+		$this->assertStringNotContainsString(
+			'decker-labels-popover-close',
+			$html,
+			'A labelless task must not render a close button (there is no popover to close).'
+		);
+	}
 }

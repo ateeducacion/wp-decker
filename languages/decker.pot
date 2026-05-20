@@ -1728,6 +1728,12 @@ msgid_plural "%d comments"
 msgstr[0] ""
 msgstr[1] ""
 
+#, php-format
+msgid "%d label"
+msgid_plural "%d labels"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "Loading comments…"
 msgstr ""
 
