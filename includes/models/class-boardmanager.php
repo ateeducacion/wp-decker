@@ -20,7 +20,7 @@ class BoardManager extends Decker_Taxonomy_Manager {
 	/**
 	 * Cached manager instance for the board manager.
 	 *
-	 * @var object|null
+	 * @var static|null
 	 */
 	protected static $instance = null;
 

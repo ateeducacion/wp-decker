@@ -20,7 +20,7 @@ abstract class Decker_Taxonomy_Manager {
 	/**
 	 * The cached manager instance.
 	 *
-	 * @var object|null
+	 * @var static|null
 	 */
 	protected static $instance = null;
 
