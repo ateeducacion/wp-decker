@@ -20,18 +20,14 @@ class LabelManager extends Decker_Taxonomy_Manager {
 	/**
 	 * Cached singleton instance for the label manager.
 	 *
-	 * {@inheritDoc}
-	 *
-	 * @var static|null
+	 * @var static|null $instance Cached label manager instance.
 	 */
 	protected static $instance = null;
 
 	/**
 	 * Cached Label objects keyed by name.
 	 *
-	 * {@inheritDoc}
-	 *
-	 * @var array
+	 * @var array       $items Cached label objects keyed by name.
 	 */
 	protected static array $items = array();
 
