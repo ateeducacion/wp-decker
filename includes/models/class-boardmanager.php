@@ -20,14 +20,14 @@ class BoardManager extends Decker_Taxonomy_Manager {
 	/**
 	 * Cached singleton instance for the board manager.
 	 *
-	 * @var static|null $instance
+	 * @var BoardManager|null $instance
 	 */
 	protected static $instance = null;
 
 	/**
 	 * Cached Board objects keyed by slug.
 	 *
-	 * @var array       $items
+	 * @var Board[] $items
 	 */
 	protected static array $items = array();
 
