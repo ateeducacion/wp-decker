@@ -18,14 +18,14 @@ defined( 'ABSPATH' ) || exit;
 class BoardManager extends Decker_Taxonomy_Manager {
 
 	/**
-	 * Holds the singleton instance of the BoardManager.
+	 * Cached manager instance for the board manager.
 	 *
-	 * @var BoardManager|null
+	 * @var object|null
 	 */
 	protected static $instance = null;
 
 	/**
-	 * Stores the loaded boards as an associative array.
+	 * Cached board items loaded by the board manager.
 	 *
 	 * @var array
 	 */

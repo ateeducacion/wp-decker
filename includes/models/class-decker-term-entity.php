@@ -50,7 +50,7 @@ abstract class Decker_Term_Entity {
 	 *
 	 * @param WP_Term $term              The term object to hydrate from.
 	 * @param string  $expected_taxonomy The expected taxonomy slug.
-	 * @throws Exception If the term does not match the expected taxonomy.
+	 * @throws Exception                 If the term does not match the expected taxonomy.
 	 */
 	protected function hydrate_term(
 		WP_Term $term,
