@@ -22,7 +22,7 @@ class LabelManager extends Decker_Taxonomy_Manager {
 	 *
 	 * @var LabelManager|null
 	 */
-	protected static ?LabelManager $instance = null;
+	protected static $instance = null;
 
 	/**
 	 * Stores the loaded labels as an associative array.

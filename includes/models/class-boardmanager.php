@@ -22,7 +22,7 @@ class BoardManager extends Decker_Taxonomy_Manager {
 	 *
 	 * @var BoardManager|null
 	 */
-	protected static ?BoardManager $instance = null;
+	protected static $instance = null;
 
 	/**
 	 * Stores the loaded boards as an associative array.
