@@ -83,8 +83,8 @@ class BoardManager extends Decker_Taxonomy_Manager {
 			);
 		}
 
-		$is_update = (bool) $id;
-		$result    = static::save_term( $data, $id, 'decker_board', true );
+		$is_existing_term = (bool) $id;
+		$result           = static::save_term( $data, $id, 'decker_board', true );
 
 		if ( is_wp_error( $result ) ) {
 			return static::error_response( $result );
@@ -104,7 +104,7 @@ class BoardManager extends Decker_Taxonomy_Manager {
 
 		return array(
 			'success' => true,
-			'message' => $is_update
+			'message' => $is_existing_term
 			? __( 'Board updated successfully', 'decker' )
 			: __( 'Board created successfully', 'decker' ),
 		);

@@ -106,8 +106,8 @@ class LabelManager extends Decker_Taxonomy_Manager {
 			);
 		}
 
-		$is_update = (bool) $id;
-		$result    = static::save_term( $data, $id, 'decker_label' );
+		$is_existing_term = (bool) $id;
+		$result           = static::save_term( $data, $id, 'decker_label' );
 
 		if ( is_wp_error( $result ) ) {
 			return static::error_response( $result );
@@ -121,7 +121,7 @@ class LabelManager extends Decker_Taxonomy_Manager {
 
 		return array(
 			'success' => true,
-			'message' => $is_update
+			'message' => $is_existing_term
 			? __( 'Label updated successfully', 'decker' )
 			: __( 'Label created successfully', 'decker' ),
 		);
