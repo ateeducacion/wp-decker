@@ -292,6 +292,22 @@ class Decker_Calendar {
 			return;
 		}
 
+		// Require access before producing any output.
+		// Mirror get_calendar_permissions_check(): allow logged-in users with the
+		// 'read' capability, otherwise require a valid per-user calendar token.
+		if ( ! $this->can_access_ical_feed() ) {
+			if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
+				status_header( 403 );
+			}
+
+			// During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
+			if ( php_sapi_name() !== 'cli' && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
+				exit;
+			}
+
+			return;
+		}
+
 		$type = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
 
 		/*
@@ -323,6 +339,46 @@ class Decker_Calendar {
 		}
 
 		return;
+	}
+
+	/**
+	 * Check if the current request may access the iCal feed.
+	 *
+	 * Mirrors get_calendar_permissions_check() so the iCal endpoint and the REST
+	 * route agree: logged-in users with the 'read' capability are allowed,
+	 * otherwise a valid per-user 'decker_calendar_token' is required.
+	 *
+	 * @return bool True if access is granted, false otherwise.
+	 */
+	private function can_access_ical_feed() {
+
+		// Allow logged-in users with the read capability.
+		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
+			return true;
+		}
+
+		// Otherwise require a valid per-user calendar token.
+		$token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+		if ( empty( $token ) ) {
+			return false;
+		}
+
+		$users = get_users(
+			array(
+				'meta_key'   => 'decker_calendar_token',
+				'meta_value' => $token,
+				'number'     => 1,
+			)
+		);
+
+		if ( ! empty( $users ) ) {
+			$stored = get_user_meta( $users[0]->ID, 'decker_calendar_token', true );
+			if ( hash_equals( (string) $stored, $token ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -472,8 +528,11 @@ class Decker_Calendar {
 				   // Format dates for all-day events or with time.
 			if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
 						   // For all-day events, use format VALUE=DATE and DTEND on the next day.
+				// Per RFC 5545 DTEND;VALUE=DATE is exclusive, so emit the day after
+				// the stored (inclusive) end date. This also makes single-day all-day
+				// events span exactly one day (DTEND = DTSTART + 1 day).
 				$start_date = gmdate( 'Ymd', strtotime( $event['start'] ) );
-				$end_date = gmdate( 'Ymd', strtotime( $event['end'] ) );
+				$end_date = gmdate( 'Ymd', strtotime( $event['end'] ) + DAY_IN_SECONDS );
 
 				$ical .= 'DTSTART;VALUE=DATE:' . $start_date . "\r\n";
 				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";

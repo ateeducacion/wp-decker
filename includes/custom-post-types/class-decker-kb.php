@@ -274,9 +274,30 @@ class Decker_Kb {
 		if ( ! empty( $params['id'] ) ) {
 			$post_data['ID'] = intval( $params['id'] );
 			$existing_post   = get_post( $post_data['ID'] );
-			if ( $existing_post ) {
-				$old_parent_id = intval( $existing_post->post_parent );
+
+			// Ensure the target post exists and is actually a KB article.
+			if ( ! $existing_post || 'decker_kb' !== $existing_post->post_type ) {
+				return new WP_REST_Response(
+					array(
+						'success' => false,
+						'message' => __( 'Article not found', 'decker' ),
+					),
+					404
+				);
 			}
+
+			// Require per-post edit capability for updates.
+			if ( ! current_user_can( 'edit_post', $post_data['ID'] ) ) {
+				return new WP_REST_Response(
+					array(
+						'success' => false,
+						'message' => __( 'You do not have permission to edit this article', 'decker' ),
+					),
+					403
+				);
+			}
+
+			$old_parent_id = intval( $existing_post->post_parent );
 		}
 
 		// Parent and order: only set if provided. If not, preserve existing values on update.

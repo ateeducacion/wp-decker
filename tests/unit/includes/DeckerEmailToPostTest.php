@@ -337,6 +337,181 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Builds a raw multipart e-mail with a single attachment.
+	 *
+	 * @param string $filename     The attachment filename.
+	 * @param string $mime_type    The attachment Content-Type.
+	 * @param string $raw_content  The raw (unencoded) attachment bytes.
+	 * @return string The raw e-mail content.
+	 */
+	private function build_email_with_attachment( string $filename, string $mime_type, string $raw_content ): string {
+		$boundary = 'BOUNDARY1234567890';
+
+		$email  = "From: test@example.com\r\n";
+		$email .= "To: decker@example.com\r\n";
+		$email .= "Subject: Task with Attachment\r\n";
+		$email .= "MIME-Version: 1.0\r\n";
+		$email .= "Content-Type: multipart/mixed; boundary=\"{$boundary}\"\r\n\r\n";
+		$email .= "--{$boundary}\r\n";
+		$email .= "Content-Type: text/plain; charset=\"UTF-8\"\r\n\r\n";
+		$email .= "This is a test task body\r\n";
+		$email .= "--{$boundary}\r\n";
+		$email .= "Content-Type: {$mime_type}; name=\"{$filename}\"\r\n";
+		$email .= "Content-Disposition: attachment; filename=\"{$filename}\"\r\n";
+		$email .= "Content-Transfer-Encoding: base64\r\n\r\n";
+		$email .= chunk_split( base64_encode( $raw_content ) );
+		$email .= "--{$boundary}--\r\n";
+
+		return $email;
+	}
+
+	/**
+	 * Dispatches the email-to-post endpoint with the given raw e-mail.
+	 *
+	 * @param string $raw_email The raw e-mail content.
+	 * @return WP_REST_Response The REST response.
+	 */
+	private function dispatch_email( string $raw_email ) {
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			json_encode(
+				array(
+					'rawEmail' => base64_encode( $raw_email ),
+					'metadata' => array(
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
+						'subject' => 'Task with Attachment',
+						'cc'      => array(),
+						'bcc'     => array(),
+					),
+				)
+			)
+		);
+
+		return rest_get_server()->dispatch( $request );
+	}
+
+	/**
+	 * A malicious .php attachment must never be written to the uploads directory.
+	 */
+	public function test_rejects_executable_php_attachment() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+
+		$raw_email = $this->build_email_with_attachment(
+			'shell.php',
+			'application/x-php',
+			"<?php echo 'pwned'; ?>"
+		);
+
+		$response = $this->dispatch_email( $raw_email );
+
+		// The task is still created, but the dangerous attachment is rejected.
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$attachments = get_attached_media( '', $data['task_id'] );
+		$this->assertCount( 0, $attachments, 'Executable .php attachment must not be uploaded' );
+	}
+
+	/**
+	 * A .phtml attachment disguised with an allowed Content-Type must be rejected.
+	 */
+	public function test_rejects_executable_phtml_attachment() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+
+		$raw_email = $this->build_email_with_attachment(
+			'evil.phtml',
+			'image/jpeg',
+			"<?php echo 'pwned'; ?>"
+		);
+
+		$response = $this->dispatch_email( $raw_email );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$attachments = get_attached_media( '', $data['task_id'] );
+		$this->assertCount( 0, $attachments, 'Executable .phtml attachment must not be uploaded' );
+	}
+
+	/**
+	 * A legitimate PDF attachment must still be uploaded.
+	 */
+	public function test_accepts_legitimate_pdf_attachment() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+
+		$pdf_content = $this->get_fixture_content( 'sample-1.pdf' );
+		$raw_email   = $this->build_email_with_attachment(
+			'sample-1.pdf',
+			'application/pdf',
+			$pdf_content
+		);
+
+		$response = $this->dispatch_email( $raw_email );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$attachments = get_attached_media( '', $data['task_id'] );
+		$this->assertCount( 1, $attachments, 'Legitimate PDF attachment must be uploaded' );
+
+		$attachment = array_shift( $attachments );
+		$this->assertEquals( 'application/pdf', $attachment->post_mime_type );
+	}
+
+	/**
+	 * Authorization must fail closed when no shared key is configured.
+	 */
+	public function test_authorization_denied_when_shared_key_unset() {
+		// Remove the configured shared key entirely.
+		update_option( 'decker_settings', array() );
+
+		// Even guessing the old buggy default 'error' must be denied.
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer error' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertEquals( 'rest_forbidden', $data['code'] );
+	}
+
+	/**
+	 * Authorization must fail closed when the shared key is empty.
+	 */
+	public function test_authorization_denied_when_shared_key_empty() {
+		update_option( 'decker_settings', array( 'shared_key' => '' ) );
+
+		// 'Bearer ' with an empty/whitespace token must never authenticate.
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 403, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertEquals( 'rest_forbidden', $data['code'] );
+	}
+
+	/**
+	 * Authorization must succeed with the correct configured shared key.
+	 */
+	public function test_authorization_allowed_with_correct_key() {
+		// The valid key reaches payload validation instead of being rejected as forbidden.
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertNotEquals( 403, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertNotEquals( 'rest_forbidden', $data['code'] );
+	}
+
+	/**
 	 * Helper method to retrieve fixture content.
 	 *
 	 * @param string $filename Name of the fixture file.

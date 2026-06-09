@@ -599,4 +599,102 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		wp_delete_comment( $comment_id, true );
 		wp_delete_user( $subscriber_id );
 	}
+
+	public function test_save_article_rejects_update_of_non_kb_post() {
+		wp_set_current_user( $this->administrator );
+
+		// A regular post that must never be convertible to a KB article.
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'post',
+				'post_title'  => 'Untouchable Post',
+				'post_status' => 'draft',
+				'post_author' => $this->administrator,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $post_id );
+		$request->set_param( 'title', 'Hijacked Title' );
+		$request->set_param( 'content', '<p>Hijacked content</p>' );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 404, $response->get_status() );
+		$this->assertFalse( $data['success'] );
+
+		// The original post must remain completely unchanged.
+		$post = get_post( $post_id );
+		$this->assertEquals( 'post', $post->post_type );
+		$this->assertEquals( 'Untouchable Post', $post->post_title );
+		$this->assertEquals( 'draft', $post->post_status );
+	}
+
+	public function test_save_article_rejects_update_without_edit_permission() {
+		// Create a KB article owned by the administrator.
+		wp_set_current_user( $this->administrator );
+
+		$article_id = self::factory()->post->create(
+			array(
+				'post_type'    => 'decker_kb',
+				'post_title'   => 'Protected Article',
+				'post_content' => 'Protected content',
+				'post_status'  => 'publish',
+				'post_author'  => $this->administrator,
+			)
+		);
+
+		// A contributor cannot edit another user's published article.
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		wp_set_current_user( $contributor );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_id );
+		$request->set_param( 'title', 'Tampered Title' );
+		$request->set_param( 'content', '<p>Tampered content</p>' );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 403, $response->get_status() );
+		$this->assertFalse( $data['success'] );
+
+		// The article must remain unchanged.
+		$article = get_post( $article_id );
+		$this->assertEquals( 'Protected Article', $article->post_title );
+		$this->assertEquals( 'Protected content', $article->post_content );
+
+		wp_delete_user( $contributor );
+	}
+
+	public function test_save_article_updates_existing_kb_article() {
+		wp_set_current_user( $this->administrator );
+
+		$article_id = self::factory()->post->create(
+			array(
+				'post_type'    => 'decker_kb',
+				'post_title'   => 'Legit Article',
+				'post_content' => 'Legit content',
+				'post_status'  => 'publish',
+				'post_author'  => $this->administrator,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_id );
+		$request->set_param( 'title', 'Legit Article Updated' );
+		$request->set_param( 'content', '<p>Legit content updated</p>' );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertTrue( $data['success'] );
+
+		$article = get_post( $article_id );
+		$this->assertEquals( 'decker_kb', $article->post_type );
+		$this->assertEquals( 'Legit Article Updated', $article->post_title );
+		$this->assertEquals( '<p>Legit content updated</p>', $article->post_content );
+	}
 }

@@ -310,7 +310,10 @@ class Decker_Tasks {
 		global $wpdb;
 
 		$final_order = $target_order;
-		if ( $target_order > $source_order ) {
+		// The +1 adjustment is only valid for moves within the same stack, where
+		// source_order and target_order index the same column. For cross-stack moves
+		// the two indexes reference different columns, so use target_order directly.
+		if ( $source_stack === $target_stack && $target_order > $source_order ) {
 			$final_order = $target_order + 1;
 		}
 
@@ -325,6 +328,34 @@ class Decker_Tasks {
 			array( 'ID' => $task_id ), // The condition to match the correct row.
 			array( '%d', '%s', '%s' ), // The data types of the values: integer and strings.
 			array( '%d' )  // The data type of the condition (integer).
+		);
+
+		// Make room at the destination so the moved card deterministically occupies
+		// $final_order. Without this shift the moved card and the incumbent at that
+		// slot share a menu_order and the renumber tie-break would depend on
+		// post_modified second-granularity (flaky), dropping the card one slot off.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr
+					ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt
+					ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->postmeta} pm_stack
+					ON p.ID = pm_stack.post_id
+					AND pm_stack.meta_key = 'stack'
+				SET p.menu_order = p.menu_order + 1
+				WHERE p.post_type = 'decker_task'
+					AND p.post_status = 'publish'
+					AND pm_stack.meta_value = %s
+					AND tt.term_id = %d
+					AND p.ID != %d
+					AND p.menu_order >= %d",
+				$target_stack,
+				$board_id,
+				$task_id,
+				$final_order
+			)
 		);
 
 		// Reorder tasks in the source stack.
@@ -395,11 +426,11 @@ class Decker_Tasks {
 			                AND p.ID != %d
 			            GROUP BY 
 			                p.ID
-			            ORDER BY 
+			            ORDER BY
 			                meta_value DESC,
 			                p.menu_order ASC,
-			                p.id ASC,
-			                p.post_modified DESC
+			                p.post_modified DESC,
+			                p.id ASC
 			        ) AS t
 			    ) AS ordered_tasks ON p.ID = ordered_tasks.ID
 			    SET p.menu_order = ordered_tasks.new_menu_order;",
@@ -528,7 +559,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'mark_user_date_relation' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return Decker::current_user_has_at_least_minimum_role();
 				},
 			)
 		);
@@ -540,7 +571,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'unmark_user_date_relation' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return Decker::current_user_has_at_least_minimum_role();
 				},
 			)
 		);
@@ -552,7 +583,7 @@ class Decker_Tasks {
 				'methods'             => 'PUT',
 				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return Decker::current_user_has_at_least_minimum_role();
 				},
 				'args' => array(
 					'board_id'      => array( 'required' => true ),
@@ -571,7 +602,7 @@ class Decker_Tasks {
 				'methods'             => 'PUT',
 				'callback'            => array( $this, 'update_task_stack_and_order' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return Decker::current_user_has_at_least_minimum_role();
 				},
 				'args' => array(
 					'board_id'      => array( 'required' => true ),
@@ -590,7 +621,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'remove_user_from_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return Decker::current_user_has_at_least_minimum_role();
 				},
 			)
 		);
@@ -602,7 +633,7 @@ class Decker_Tasks {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'assign_user_to_task' ),
 				'permission_callback' => function () {
-					return current_user_can( 'read' );
+					return Decker::current_user_has_at_least_minimum_role();
 				},
 			)
 		);
@@ -1309,6 +1340,13 @@ class Decker_Tasks {
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$relations = $relations ? $relations : array();
 
+		// Avoid appending a duplicate relation for the same user and date.
+		foreach ( $relations as $relation ) {
+			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
+				return;
+			}
+		}
+
 		$relations[] = array(
 			'user_id' => $user_id,
 			'date'    => $date->format( 'Y-m-d' ),
@@ -1333,7 +1371,6 @@ class Decker_Tasks {
 		foreach ( $relations as $key => $relation ) {
 			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
 				unset( $relations[ $key ] );
-				break;
 			}
 		}
 
