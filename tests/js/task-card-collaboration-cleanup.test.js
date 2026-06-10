@@ -289,4 +289,52 @@ describe( 'Task card collaboration cleanup', () => {
 
 		jest.useRealTimers();
 	} );
+
+	test( 'does NOT seed form fields from the snapshot when a peer is present', () => {
+		const context = setupDOM();
+		const formFields = createMockFormFields(); // empty: peer data not synced yet
+		const awareness = createMockAwareness(); // self + teammate
+		const session = {
+			formFields,
+			awareness,
+			hasPeers: () => true,
+			onSynced: jest.fn( ( callback ) => callback() ),
+			setActiveField: jest.fn(),
+			clearActiveField: jest.fn(),
+		};
+
+		initFormFieldsCollaboration( session, context );
+
+		// The joining user must wait for the peer's live values instead of
+		// overwriting the shared map with the stale DB snapshot.
+		expect( formFields.set ).not.toHaveBeenCalled();
+	} );
+
+	test( 'seeds form fields from the snapshot when genuinely alone (first user)', () => {
+		const context = setupDOM();
+		const formFields = createMockFormFields(); // empty
+		const awareness = {
+			clientID: 1,
+			getStates: jest.fn(
+				() => new Map( [ [ 1, { user: { name: 'Me' } } ] ] )
+			),
+			on: jest.fn(),
+			off: jest.fn(),
+			setLocalStateField: jest.fn(),
+		};
+		const session = {
+			formFields,
+			awareness,
+			hasPeers: () => false,
+			onSynced: jest.fn( ( callback ) => callback() ),
+			setActiveField: jest.fn(),
+			clearActiveField: jest.fn(),
+		};
+
+		initFormFieldsCollaboration( session, context );
+
+		// First user populates the shared map from the original snapshot values.
+		expect( formFields.set ).toHaveBeenCalledWith( 'title', 'Original title' );
+		expect( formFields.set ).toHaveBeenCalledWith( 'board', 'board1' );
+	} );
 } );

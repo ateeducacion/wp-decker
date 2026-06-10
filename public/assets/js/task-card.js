@@ -235,9 +235,25 @@
                 // Check if there are other peers connected (not just myself)
                 const connectedPeers = awareness.getStates().size;
                 const hasRemoteData = formFields.size > 0;
-                const isFirstUser = connectedPeers === 1 && !hasRemoteData;
+                // Trust the collaboration layer's peer-aware signal (real WebRTC
+                // connections + awareness), not just the awareness size sampled at this
+                // instant, which can transiently read 1 while a peer is mid-handshake.
+                const peerPresent = typeof session.hasPeers === 'function'
+                    ? session.hasPeers()
+                    : connectedPeers > 1;
 
-                console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Is first user:', isFirstUser);
+                // A peer is present but its form data has not synced yet: do NOT seed
+                // from the DB snapshot/DOM. Wait for observeRemoteChanges to apply the
+                // peer's live values when they arrive, otherwise we would overwrite them.
+                if (peerPresent && !hasRemoteData) {
+                    console.log('Decker: Peer present, awaiting remote form values (no DB seed)');
+                    isRemoteUpdate = false;
+                    return;
+                }
+
+                const isFirstUser = !peerPresent && connectedPeers === 1 && !hasRemoteData;
+
+                console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Peer present:', peerPresent, 'Is first user:', isFirstUser);
 
                 if (isFirstUser) {
                     if (!originalValuesSnapshot) {
