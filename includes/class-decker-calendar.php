@@ -285,10 +285,9 @@ class Decker_Calendar {
 	 * Handle iCal calendar request.
 	 */
 	public function handle_ical_request() {
-		global $wp_query;
 
-		   // Accept both an internal query var and a GET parameter (?decker-calendar).
-		if ( ! isset( $wp_query->query_vars['decker-calendar'] ) && ! isset( $_GET['decker-calendar'] ) ) {
+		// Accept both an internal query var and a GET parameter (?decker-calendar).
+		if ( ! $this->is_ical_request() ) {
 			return;
 		}
 
@@ -296,19 +295,15 @@ class Decker_Calendar {
 		// Mirror get_calendar_permissions_check(): allow logged-in users with the
 		// 'read' capability, otherwise require a valid per-user calendar token.
 		if ( ! $this->can_access_ical_feed() ) {
-			if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
-				status_header( 403 );
-			}
+			$this->send_ical_forbidden_header();
 
 			// During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
-			if ( php_sapi_name() !== 'cli' && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
+			if ( $this->should_terminate_request() ) {
 				exit;
 			}
 
 			return;
 		}
-
-		$type = isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
 
 		/*
 		Direct generation.
@@ -317,10 +312,58 @@ class Decker_Calendar {
 		*/
 
 		// Cached generation.
-		$ical   = $this->get_cached_ical( $type );
+		$ical = $this->get_cached_ical( $this->get_requested_type() );
 
-		   // Avoid “Cannot modify header information” warnings when output has already started
-		// (e.g., in PHPUnit) by checking headers_sent() before sending headers.
+		$this->send_ical_headers();
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
+		echo $ical;
+
+		// During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
+		// Only exit on normal web requests to avoid extra content.
+		if ( $this->should_terminate_request() ) {
+			exit;
+		}
+
+		return;
+	}
+
+	/**
+	 * Whether the current request targets the iCal feed.
+	 *
+	 * @return bool True when the internal query var or the ?decker-calendar GET flag is set.
+	 */
+	private function is_ical_request() {
+		global $wp_query;
+
+		return isset( $wp_query->query_vars['decker-calendar'] ) || isset( $_GET['decker-calendar'] );
+	}
+
+	/**
+	 * Read and sanitize the requested feed type from the query string.
+	 *
+	 * @return string Sanitized type slug, or '' when not provided.
+	 */
+	private function get_requested_type() {
+		return isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : '';
+	}
+
+	/**
+	 * Emit a 403 status for forbidden iCal requests, suppressed during tests.
+	 */
+	private function send_ical_forbidden_header() {
+		if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
+			status_header( 403 );
+		}
+	}
+
+	/**
+	 * Send the iCal download headers, suppressed during tests and when output started.
+	 *
+	 * Avoid “Cannot modify header information” warnings when output has already
+	 * started (e.g., in PHPUnit) by checking headers_sent() before sending headers.
+	 */
+	private function send_ical_headers() {
 		if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
@@ -329,16 +372,17 @@ class Decker_Calendar {
 			header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' ); // Date in past.
 			header( 'Pragma: no-cache' );
 		}
-		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output is safe iCal content
-		echo $ical;
+	}
 
-		   // During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
-		// Only exit on normal web requests to avoid extra content.
-		if ( php_sapi_name() !== 'cli' && ( ! defined( 'WP_CLI' ) || ! WP_CLI ) ) {
-			exit;
-		}
-
-		return;
+	/**
+	 * Whether the request should terminate via exit after emitting output.
+	 *
+	 * During tests (CLI/PHPUnit or WP-CLI) we do not stop execution.
+	 *
+	 * @return bool True on normal web requests, false under CLI/WP-CLI.
+	 */
+	private function should_terminate_request() {
+		return php_sapi_name() !== 'cli' && ( ! defined( 'WP_CLI' ) || ! WP_CLI );
 	}
 
 	/**
@@ -388,89 +432,138 @@ class Decker_Calendar {
 	 * @return array
 	 */
 	public function get_events( $type = '' ) {
-		$events     = array();
-		$event_args = array();
+		$events = array();
 
+		// Get regular events.
+		$event_posts = Decker_Events::get_events( $this->build_event_query_args( $type ) );
+		foreach ( $event_posts as $event_data ) {
+			$row = $this->map_event_post_to_array( $event_data );
+			if ( null !== $row ) {
+				$events[] = $row;
+			}
+		}
+
+		// Add tasks only when not filtering by a specific type.
+		if ( empty( $type ) ) {
+			$events = array_merge( $events, $this->get_task_calendar_events() );
+		}
+
+		return $events;
+	}
+
+	/**
+	 * Build the WP_Query args used to fetch the events for a feed type.
+	 *
+	 * @param string $type Event type slug.
+	 * @return array Query args with a meta_query when the type is known, empty otherwise.
+	 */
+	private function build_event_query_args( $type ) {
 		if ( $type && isset( $this->type_map[ $type ] ) ) {
-			$event_args['meta_query'] = array(
-				array(
-					'key'   => 'event_category',
-					'value' => $this->type_map[ $type ],
+			return array(
+				'meta_query' => array(
+					array(
+						'key'   => 'event_category',
+						'value' => $this->type_map[ $type ],
+					),
 				),
 			);
 		}
 
-		// Get regular events.
-		$event_posts = Decker_Events::get_events( $event_args );
-		foreach ( $event_posts as $event_data ) {
-			$post = $event_data['post'];
-			$meta = $event_data['meta'];
+		return array();
+	}
 
-				   // Ensure that the dates are valid before adding them.
-			if ( ! empty( $meta['event_start'] ) && ! empty( $meta['event_end'] ) ) {
+	/**
+	 * Map a single Decker_Events::get_events() row to the calendar event array.
+	 *
+	 * @param array $event_data Row with 'post' and 'meta' keys.
+	 * @return array|null Calendar event array, or null when start/end dates are missing.
+	 */
+	private function map_event_post_to_array( $event_data ) {
+		$post = $event_data['post'];
+		$meta = $event_data['meta'];
 
-				$all_day = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
+		// Ensure that the dates are valid before adding them.
+		if ( empty( $meta['event_start'] ) || empty( $meta['event_end'] ) ) {
+			return null;
+		}
 
-				if ( ! $all_day ) {
-					$start_iso = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $meta['event_start'][0] ) );
-					$end_iso   = gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $meta['event_end'][0] ) );
-				} else {
-					$start_iso = $meta['event_start'][0]; // YYYY-MM-DD.
-					$end_iso   = $meta['event_end'][0];
-				}
+		$all_day             = isset( $meta['event_allday'] ) ? $meta['event_allday'][0] : false;
+		list( $start_iso, $end_iso ) = $this->format_event_dates( $meta, $all_day );
 
+		return array(
+			'post_id'        => $post->ID,
+			'id'             => 'event_' . $post->ID, // Prefix to distinguish from tasks.
+			'title'          => $post->post_title,
+			'description'    => $post->post_content,
+			'allDay'         => $all_day,
+			'start'          => $start_iso,
+			'end'            => $end_iso,
+			'location'       => isset( $meta['event_location'] ) ? $meta['event_location'][0] : '',
+			'url'            => isset( $meta['event_url'] ) ? $meta['event_url'][0] : '',
+			'className'      => isset( $meta['event_category'] ) ? $meta['event_category'][0] : '',
+			'assigned_users' => isset( $meta['event_assigned_users'][0] ) ? maybe_unserialize( $meta['event_assigned_users'][0] ) : array(),
+			// 'assigned_users' => $this->normalize_assigned_users( $meta ),
+			'type'           => 'event',
+		);
+	}
+
+	/**
+	 * Resolve the start/end ISO strings for an event from its meta.
+	 *
+	 * @param array $meta    Event meta as returned by get_post_meta().
+	 * @param mixed $all_day All-day flag (loose truthiness preserved).
+	 * @return array{0:string,1:string} The start and end values.
+	 */
+	private function format_event_dates( $meta, $all_day ) {
+		if ( ! $all_day ) {
+			return array(
+				gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $meta['event_start'][0] ) ),
+				gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $meta['event_end'][0] ) ),
+			);
+		}
+
+		// YYYY-MM-DD raw passthrough for all-day events.
+		return array( $meta['event_start'][0], $meta['event_end'][0] );
+	}
+
+	/**
+	 * Build the calendar event arrays for published tasks with a due date.
+	 *
+	 * @return array List of task event arrays.
+	 */
+	private function get_task_calendar_events() {
+		$events = array();
+
+		$task_manager = new TaskManager();
+		$tasks        = $task_manager->get_tasks_by_status( 'publish' );
+
+		foreach ( $tasks as $task ) {
+			$board       = $task->get_board();
+			$board_color = $board ? $board->color : '';
+
+			// Only add tasks that have a due date.
+			if ( $task->duedate ) {
 				$events[] = array(
-					'post_id'        => $post->ID,
-					'id'             => 'event_' . $post->ID, // Prefix to distinguish from tasks.
-					'title'          => $post->post_title,
-					'description'    => $post->post_content,
-					'allDay'         => $all_day,
-					'start'          => $start_iso,
-					'end'            => $end_iso,
-					'location'       => isset( $meta['event_location'] ) ? $meta['event_location'][0] : '',
-					'url'            => isset( $meta['event_url'] ) ? $meta['event_url'][0] : '',
-					'className'      => isset( $meta['event_category'] ) ? $meta['event_category'][0] : '',
-					'assigned_users' => isset( $meta['event_assigned_users'][0] ) ? maybe_unserialize( $meta['event_assigned_users'][0] ) : array(),
-					// 'assigned_users' => $this->normalize_assigned_users( $meta ),
-					'type'           => 'event',
+					'post_id' => $task->ID,
+					'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
+					'title'          => $task->title,
+					'description'    => $task->description,
+					'allDay'         => true,
+					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+					'color'          => $board_color,
+					'className'      => $board_color,
+					'max_priority'   => $task->max_priority,
+					'assigned_users' => array_map(
+						function ( $user ) {
+							return intval( $user->ID );
+						},
+						$task->assigned_users
+					),
+					'type'           => 'task',
 				);
 			}
 		}
-
-		   // Add tasks only when not filtering by a specific type.
-		if ( empty( $type ) ) {
-			// Get published tasks.
-			$task_manager = new TaskManager();
-			$tasks        = $task_manager->get_tasks_by_status( 'publish' );
-
-			foreach ( $tasks as $task ) {
-				$board       = $task->get_board();
-				$board_color = $board ? $board->color : '';
-
-				// Only add tasks that have a due date.
-				if ( $task->duedate ) {
-					$events[] = array(
-						'post_id' => $task->ID,
-						'id'             => 'task_' . $task->ID, // Prefix to distinguish from events.
-						'title'          => $task->title,
-						'description'    => $task->description,
-						'allDay'         => true,
-						'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
-						'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
-						'color'          => $board_color,
-						'className'      => $board_color,
-						'max_priority'   => $task->max_priority,
-						'assigned_users' => array_map(
-							function ( $user ) {
-								return intval( $user->ID );
-							},
-							$task->assigned_users
-						),
-						'type'           => 'task',
-					);
-				}
-			}
-		} // End tasks conditional
 
 		return $events;
 	}
@@ -483,146 +576,7 @@ class Decker_Calendar {
 	 * @return string
 	 */
 	public function generate_ical( $events, $type = '' ) {
-
-		$ical  = "BEGIN:VCALENDAR\r\n";
-		$ical .= "VERSION:2.0\r\n";
-
-		// Add calendar name property.
-		$calendar_name = 'Decker';
-		$type_names = $this->get_type_names();
-		if ( $type && isset( $type_names[ $type ] ) ) {
-			$calendar_name = 'Decker - ' . $type_names[ $type ];
-		}
-
-				$ical .= 'PRODID:-//' . $this->ical_escape( $calendar_name ) . "//NONSGML Decker//EN\r\n"; // Key property.
-
-		$ical .= "CALSCALE:GREGORIAN\r\n";
-		$ical .= "METHOD:PUBLISH\r\n";
-		$ical .= "X-WR-TIMEZONE:UTC\r\n";
-
-				// Set the refresh interval.
-		$ttl = 'PT1H'; // 1h.
-		$ical .= "REFRESH-INTERVAL;VALUE=DURATION:$ttl\r\n";
-		$ical .= "X-PUBLISHED-TTL:$ttl\r\n";
-
-		   // Add a period at the end of the comment.
-		$ical .= 'X-WR-CALNAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
-		$ical .= 'X-NAME:' . $this->ical_escape( $calendar_name ) . "\r\n";
-
-		// Sort events by ascending start date to ensure deterministic results
-		// and align with test expectations.
-		usort(
-			$events,
-			function ( $a, $b ) {
-				return strtotime( $a['start'] ) <=> strtotime( $b['start'] );
-			}
-		);
-
-		foreach ( $events as $event ) {
-			$ical .= "BEGIN:VEVENT\r\n";
-			$ical .= 'UID:' . $event['id'] . "@decker\r\n";
-			// Important to let the clients to update an event if modified.
-			$ical .= 'SEQUENCE:' . get_post_modified_time( 'U', true, $event['post_id'] ) . "\r\n";
-			$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
-
-				   // Format dates for all-day events or with time.
-			if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
-						   // For all-day events, use format VALUE=DATE and DTEND on the next day.
-				// Per RFC 5545 DTEND;VALUE=DATE is exclusive, so emit the day after
-				// the stored (inclusive) end date. This also makes single-day all-day
-				// events span exactly one day (DTEND = DTSTART + 1 day).
-				$start_date = gmdate( 'Ymd', strtotime( $event['start'] ) );
-				$end_date = gmdate( 'Ymd', strtotime( $event['end'] ) + DAY_IN_SECONDS );
-
-				$ical .= 'DTSTART;VALUE=DATE:' . $start_date . "\r\n";
-				$ical .= 'DTEND;VALUE=DATE:' . $end_date . "\r\n";
-			} else {
-
-				$start = gmdate( 'Ymd\THis\Z', strtotime( $event['start'] ) );
-				$end   = gmdate( 'Ymd\THis\Z', strtotime( $event['end'] ) );
-				$ical .= 'DTSTART:' . $start . "\r\n";
-				$ical .= 'DTEND:' . $end . "\r\n";
-			}
-
-			// Add assigned users as prefix to the event title (but not on tasks).
-			$users_prefix = '';
-			if ( ! empty( $type ) && ! empty( $event['assigned_users'] ) ) {
-				$display_names = array();
-				foreach ( $event['assigned_users'] as $user_id ) {
-					$user = get_userdata( $user_id );
-					if ( $user && $user->user_email ) {
-
-						// Collect display names.
-						$display_names[] = $user->display_name;
-
-					}
-				}
-								// We use » because : had encoding problems in iCal.
-				$users_prefix = implode( ', ', $display_names ) . ' » ';
-			}
-
-			$ical .= 'SUMMARY:' . $this->ical_escape( $users_prefix . $event['title'] ) . "\r\n";
-			// Split description into 75 character chunks.
-			$description = $this->ical_escape( $event['description'] );
-			$desc_chunks = str_split( $description, 74 ); // 74 to account for the space after continuation.
-			if ( ! empty( $desc_chunks ) ) {
-				$ical .= 'DESCRIPTION:' . array_shift( $desc_chunks ) . "\r\n";
-				foreach ( $desc_chunks as $chunk ) {
-					$ical .= ' ' . $chunk . "\r\n";
-				}
-			}
-
-			if ( ! empty( $event['location'] ) ) {
-				$location   = $this->ical_escape( $event['location'] );
-				$loc_chunks = str_split( $location, 74 );
-				$ical      .= 'LOCATION:' . array_shift( $loc_chunks ) . "\r\n";
-				foreach ( $loc_chunks as $chunk ) {
-					$ical .= ' ' . $chunk . "\r\n";
-				}
-			}
-
-			if ( ! empty( $event['url'] ) ) {
-				$url        = esc_url_raw( $event['url'] );
-				$url_chunks = str_split( $url, 74 );
-				$ical      .= 'URL:' . array_shift( $url_chunks ) . "\r\n";
-				foreach ( $url_chunks as $chunk ) {
-					$ical .= ' ' . $chunk . "\r\n";
-				}
-			}
-
-			// Add assigned users as attendees with proper line folding.
-			if ( ! empty( $event['assigned_users'] ) ) {
-				foreach ( $event['assigned_users'] as $user_id ) {
-					$user = get_userdata( $user_id );
-					if ( $user && $user->user_email ) {
-						$attendee   = 'ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;'
-							. 'RSVP=TRUE:mailto:' . $user->user_email;
-						$att_chunks = str_split( $attendee, 74 );
-						$ical      .= array_shift( $att_chunks ) . "\r\n";
-						foreach ( $att_chunks as $chunk ) {
-							$ical .= ' ' . $chunk . "\r\n";
-						}
-					}
-				}
-			}
-
-			$ical .= "END:VEVENT\r\n";
-		}
-
-		$ical .= "END:VCALENDAR\r\n";
-		return $ical;
-	}
-
-	/**
-	 * Escape special characters for iCal format.
-	 *
-	 * @param string $string The string to escape.
-	 * @return string
-	 */
-	private function ical_escape( $string ) {
-		$string = str_replace( array( "\r\n", "\n", "\r" ), "\\n", $string );
-		$string = str_replace( array( ',', ';', ':' ), array( '\,', '\;', '\:' ), $string );
-		return $string;
+		return ( new Decker_Ical_Builder( $this->get_type_names() ) )->build( $events, $type );
 	}
 
 	/**

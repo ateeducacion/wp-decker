@@ -16,31 +16,35 @@ defined( 'ABSPATH' ) || exit;
 
 <?php
 
-/**
- * Determines if the current Decker page matches the provided one.
- *
- * @param string $page El valor de `decker_page` a verificar.
- * @return string 'menuitem-active' if it matches, otherwise an empty string.
- */
-function decker_is_active_page( $page ) {
-	if ( isset( $_GET['decker_page'] ) && sanitize_text_field( wp_unslash( $_GET['decker_page'] ) ) === $page ) {
-		return 'menuitem-active';
+if ( ! function_exists( 'decker_is_active_page' ) ) {
+	/**
+	 * Determines if the current Decker page matches the provided one.
+	 *
+	 * @param string $page El valor de `decker_page` a verificar.
+	 * @return string 'menuitem-active' if it matches, otherwise an empty string.
+	 */
+	function decker_is_active_page( $page ) {
+		if ( isset( $_GET['decker_page'] ) && sanitize_text_field( wp_unslash( $_GET['decker_page'] ) ) === $page ) {
+			return 'menuitem-active';
+		}
+		return '';
 	}
-	return '';
 }
 
-/**
- * Determines if the current Decker subpage matches the provided one.
- *
- * @param string $get_parameter The GET parameter to check.
- * @param string $page El valor de `decker_page` a verificar.
- * @return string 'menuitem-active' if it matches, otherwise an empty string.
- */
-function decker_is_active_subpage( $get_parameter, $page ) {
-	if ( isset( $_GET[ $get_parameter ] ) && sanitize_text_field( wp_unslash( $_GET[ $get_parameter ] ) ) === $page ) {
-		return 'active';
+if ( ! function_exists( 'decker_is_active_subpage' ) ) {
+	/**
+	 * Determines if the current Decker subpage matches the provided one.
+	 *
+	 * @param string $get_parameter The GET parameter to check.
+	 * @param string $page El valor de `decker_page` a verificar.
+	 * @return string 'menuitem-active' if it matches, otherwise an empty string.
+	 */
+	function decker_is_active_subpage( $get_parameter, $page ) {
+		if ( isset( $_GET[ $get_parameter ] ) && sanitize_text_field( wp_unslash( $_GET[ $get_parameter ] ) ) === $page ) {
+			return 'active';
+		}
+		return '';
 	}
-	return '';
 }
 
 ?>

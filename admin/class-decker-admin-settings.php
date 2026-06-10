@@ -529,90 +529,216 @@ class Decker_Admin_Settings {
 		$input          = is_array( $input ) ? $input : array();
 		$current_values = get_option( 'decker_settings', array() );
 
+		$input = $this->strip_legacy_openai_fields( $input );
+
+		// Validate shared key.
+		$input['shared_key'] = $this->validate_shared_key( $input );
+
+		// Validate allow email notifications.
+		$input['allow_email_notifications'] = $this->sanitize_checkbox( $input, 'allow_email_notifications' );
+
+		// Validate collaborative editing.
+		$input['collaborative_editing'] = $this->sanitize_checkbox( $input, 'collaborative_editing' );
+
+		// Validate AI settings.
+		$input['ai_enabled']  = $this->sanitize_checkbox( $input, 'ai_enabled' );
+		$input['ai_provider'] = Decker_AI_Manager::get_selected_provider( $input );
+		$input['ai_api_key']  = $this->validate_ai_api_key( $input, $current_values );
+		$input['ai_model']    = $this->validate_ai_model( $input );
+		$input['ai_prompt']   = $this->validate_ai_prompt( $input );
+
+		// Validate signaling server.
+		$input['signaling_server'] = $this->validate_signaling_server( $input );
+
+		// Validate alert color.
+		$input['alert_color'] = $this->validate_alert_color( $input );
+
+		// Validate user profile.
+		$input['minimum_user_profile'] = $this->validate_minimum_user_profile( $input );
+
+		// Validate alert message.
+		$input['alert_message'] = $this->validate_alert_message( $input );
+
+		// Validate ignored users.
+		$input['ignored_users'] = $this->validate_ignored_users( $input );
+
+		return $input;
+	}
+
+	/**
+	 * Strip Legacy OpenAI Fields.
+	 *
+	 * Removes the deprecated openai_* keys that are no longer stored.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return array The input array without the legacy OpenAI keys.
+	 */
+	private function strip_legacy_openai_fields( array $input ) {
 		unset(
 			$input['openai_api_url'],
 			$input['openai_api_key'],
 			$input['openai_model']
 		);
 
-		// Validate shared key.
-		$input['shared_key'] = isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
+		return $input;
+	}
 
-		// Validate allow email notifications.
-		$input['allow_email_notifications'] = isset( $input['allow_email_notifications'] ) && '1' === $input['allow_email_notifications'] ? '1' : '0';
+	/**
+	 * Sanitize Checkbox.
+	 *
+	 * Returns '1' when the given key is present and strictly equals '1', else '0'.
+	 *
+	 * @param array  $input The input fields being validated.
+	 * @param string $key   The checkbox key to read.
+	 * @return string Either '1' or '0'.
+	 */
+	private function sanitize_checkbox( array $input, $key ) {
+		return isset( $input[ $key ] ) && '1' === $input[ $key ] ? '1' : '0';
+	}
 
-		// Validate collaborative editing.
-		$input['collaborative_editing'] = isset( $input['collaborative_editing'] ) && '1' === $input['collaborative_editing'] ? '1' : '0';
+	/**
+	 * Validate Shared Key.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string The sanitized shared key, or '' when absent.
+	 */
+	private function validate_shared_key( array $input ) {
+		return isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
+	}
 
-		// Validate AI settings.
-		$input['ai_enabled'] = isset( $input['ai_enabled'] ) && '1' === $input['ai_enabled'] ? '1' : '0';
-		$input['ai_provider'] = Decker_AI_Manager::get_selected_provider( $input );
-		$input['ai_api_key']  = isset( $input['ai_api_key'] ) && '' !== trim( $input['ai_api_key'] )
+	/**
+	 * Validate AI API Key.
+	 *
+	 * Sanitizes a newly provided key, otherwise keeps the previously stored one.
+	 *
+	 * @param array $input          The input fields being validated.
+	 * @param array $current_values The currently stored settings option.
+	 * @return string The validated API key.
+	 */
+	private function validate_ai_api_key( array $input, array $current_values ) {
+		return isset( $input['ai_api_key'] ) && '' !== trim( $input['ai_api_key'] )
 			? Decker_AI_Manager::sanitize_api_key( $input['ai_api_key'] )
 			: Decker_AI_Manager::get_api_key( $current_values );
-		$input['ai_model']    = isset( $input['ai_model'] ) && '' !== trim( $input['ai_model'] )
+	}
+
+	/**
+	 * Validate AI Model.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string The sanitized model name, or the default Gemini model.
+	 */
+	private function validate_ai_model( array $input ) {
+		return isset( $input['ai_model'] ) && '' !== trim( $input['ai_model'] )
 			? sanitize_text_field( $input['ai_model'] )
 			: Decker_AI_Manager::DEFAULT_GEMINI_MODEL;
-		$input['ai_prompt']  = isset( $input['ai_prompt'] ) && '' !== trim( $input['ai_prompt'] )
+	}
+
+	/**
+	 * Validate AI Prompt.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string The sanitized prompt, or the default prompt template.
+	 */
+	private function validate_ai_prompt( array $input ) {
+		return isset( $input['ai_prompt'] ) && '' !== trim( $input['ai_prompt'] )
 			? sanitize_textarea_field( $input['ai_prompt'] )
 			: Decker::get_default_ai_prompt_template();
+	}
 
-		// Validate signaling server.
+	/**
+	 * Validate Signaling Server.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string The sanitized server URL, or the default public server.
+	 */
+	private function validate_signaling_server( array $input ) {
 		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {
 			// Include wss protocol for WebSocket signaling servers.
-			$input['signaling_server'] = esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
-		} else {
-			$input['signaling_server'] = 'wss://signaling.yjs.dev';
+			return esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
 		}
 
-		// Validate alert color.
+		return 'wss://signaling.yjs.dev';
+	}
+
+	/**
+	 * Validate Alert Color.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string A valid alert color, defaulting to 'info'.
+	 */
+	private function validate_alert_color( array $input ) {
 		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
 		if ( isset( $input['alert_color'] ) && ! in_array( $input['alert_color'], $valid_colors ) ) {
-			$input['alert_color'] = 'info'; // Default to info if invalid.
-		} else {
-			$input['alert_color'] = isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
+			return 'info'; // Default to info if invalid.
 		}
 
-		// Validate user profile.
+		return isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
+	}
+
+	/**
+	 * Validate Minimum User Profile.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string A valid role slug, defaulting to 'editor'.
+	 */
+	private function validate_minimum_user_profile( array $input ) {
 		$roles = wp_roles()->get_names();
 		if ( isset( $input['minimum_user_profile'] ) && ! array_key_exists( $input['minimum_user_profile'], $roles ) ) {
-			$input['minimum_user_profile'] = 'editor'; // Default to editor if invalid.
-		} else {
-			$input['minimum_user_profile'] = isset( $input['minimum_user_profile'] ) ? $input['minimum_user_profile'] : 'editor';
+			return 'editor'; // Default to editor if invalid.
 		}
 
-		// Validate alert message.
-		$input['alert_message'] = isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
+		return isset( $input['minimum_user_profile'] ) ? $input['minimum_user_profile'] : 'editor';
+	}
 
+	/**
+	 * Validate Alert Message.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string The filtered alert message, or '' when absent.
+	 */
+	private function validate_alert_message( array $input ) {
+		return isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
+	}
+
+	/**
+	 * Validate Ignored Users.
+	 *
+	 * Keeps numeric user IDs that resolve to an existing user, dropping the rest,
+	 * and stores a transient when numeric-but-nonexistent IDs are present.
+	 *
+	 * @param array $input The input fields being validated.
+	 * @return string A comma-separated list of valid user IDs, or '' when absent/none.
+	 */
+	private function validate_ignored_users( array $input ) {
 		// Initialize ignored_users if not set.
 		if ( ! isset( $input['ignored_users'] ) ) {
-			$input['ignored_users'] = '';
+			return '';
 		}
 
 		// Validate ignored users if not empty.
-		if ( ! empty( $input['ignored_users'] ) ) {
-			$user_ids = array_map( 'trim', explode( ',', $input['ignored_users'] ) );
-			$valid_user_ids = array();
-			$invalid_user_ids = array();
+		if ( empty( $input['ignored_users'] ) ) {
+			return $input['ignored_users'];
+		}
 
-			foreach ( $user_ids as $user_id ) {
-				if ( is_numeric( $user_id ) ) {
-					if ( get_user_by( 'id', $user_id ) ) {
-						$valid_user_ids[] = $user_id;
-					} else {
-						$invalid_user_ids[] = $user_id;
-					}
+		$user_ids = array_map( 'trim', explode( ',', $input['ignored_users'] ) );
+		$valid_user_ids = array();
+		$invalid_user_ids = array();
+
+		foreach ( $user_ids as $user_id ) {
+			if ( is_numeric( $user_id ) ) {
+				if ( get_user_by( 'id', $user_id ) ) {
+					$valid_user_ids[] = $user_id;
+				} else {
+					$invalid_user_ids[] = $user_id;
 				}
-			}
-
-			$input['ignored_users'] = ! empty( $valid_user_ids ) ? implode( ',', $valid_user_ids ) : '';
-
-			// Set transient if there were invalid IDs.
-			if ( ! empty( $invalid_user_ids ) ) {
-				set_transient( 'decker_invalid_user_ids', $invalid_user_ids, 45 );
 			}
 		}
 
-		return $input;
+		// Set transient if there were invalid IDs.
+		if ( ! empty( $invalid_user_ids ) ) {
+			set_transient( 'decker_invalid_user_ids', $invalid_user_ids, 45 );
+		}
+
+		return ! empty( $valid_user_ids ) ? implode( ',', $valid_user_ids ) : '';
 	}
 }

@@ -48,6 +48,9 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	public function set_up(): void {
 		parent::set_up();
 
+		// ajax_get_decker_notifications() ends in wp_send_json_*(); make it catchable.
+		$this->enable_wp_send_json_capture();
+
 		$this->captured_mail = array();
 
 		// Enable email notifications.
@@ -92,6 +95,8 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	 * Tear down the test environment.
 	 */
 	public function tear_down(): void {
+		$this->disable_wp_send_json_capture();
+
 		// Delete the test task and user.
 		wp_delete_post( $this->task_id, true );
 		wp_delete_user( $this->test_user );
@@ -469,6 +474,480 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		$this->assertCount( 1, $remaining_notifications );
 		$this->assertSame( 'notification-2', $remaining_notifications[0]['notification_id'] );
+	}
+
+	/**
+	 * Heartbeat must not touch pending meta for logged-out users.
+	 */
+	public function test_heartbeat_returns_response_unchanged_for_logged_out_user() {
+		update_user_meta(
+			$this->test_user,
+			'decker_pending_notifications',
+			array( array( 'type' => 'task_created' ) )
+		);
+
+		wp_set_current_user( 0 );
+
+		$result = $this->notifications->heartbeat_received( array( 'foo' => 'bar' ), array(), null );
+
+		$this->assertSame( array( 'foo' => 'bar' ), $result, 'Anonymous heartbeat should return the response untouched.' );
+		$this->assertNotEmpty(
+			get_user_meta( $this->test_user, 'decker_pending_notifications', true ),
+			'Pending notifications must not be deleted for anonymous heartbeats.'
+		);
+	}
+
+	/**
+	 * Locks the heartbeat payload defaults and icon mappings.
+	 */
+	public function test_heartbeat_payload_defaults_and_icon_mapping() {
+		update_user_meta(
+			$this->test_user,
+			'decker_pending_notifications',
+			array(
+				array( 'type' => 'task_comment' ),
+				array( 'type' => 'unknown_type' ),
+			)
+		);
+
+		$result = $this->notifications->heartbeat_received( array(), array(), null );
+
+		$items = $result['decker_notifications'];
+
+		$this->assertSame( 'info', $items[0]['iconColor'], 'task_comment icon color mismatch.' );
+		$this->assertSame( 'ri-message-3-line', $items[0]['iconClass'], 'task_comment icon class mismatch.' );
+		$this->assertSame( '#', $items[0]['url'], 'url default mismatch.' );
+		$this->assertSame( 0, $items[0]['taskId'], 'taskId default mismatch.' );
+		$this->assertSame( 'New Notification', $items[0]['title'], 'Heartbeat title default mismatch.' );
+		$this->assertSame( '', $items[0]['action'], 'action default mismatch.' );
+		$this->assertSame( '', $items[0]['time'], 'time default mismatch.' );
+		$this->assertSame( 'task_comment', $items[0]['type'], 'Heartbeat-only type key mismatch.' );
+
+		$this->assertSame( 'primary', $items[1]['iconColor'], 'unknown type icon color default mismatch.' );
+		$this->assertSame( 'ri-information-line', $items[1]['iconClass'], 'unknown type icon class default mismatch.' );
+	}
+
+	/**
+	 * Heartbeat must preserve existing response keys and clear pending only after formatting.
+	 */
+	public function test_heartbeat_preserves_existing_response_keys() {
+		update_user_meta(
+			$this->test_user,
+			'decker_pending_notifications',
+			array( array( 'type' => 'task_created' ) )
+		);
+
+		$result = $this->notifications->heartbeat_received( array( 'existing' => 1 ), array(), null );
+
+		$this->assertSame( 1, $result['existing'], 'Existing response key should be preserved.' );
+		$this->assertCount( 1, $result['decker_notifications'], 'Should format exactly one notification.' );
+		$this->assertEmpty(
+			get_user_meta( $this->test_user, 'decker_pending_notifications', true ),
+			'Pending notifications should be cleared after formatting.'
+		);
+	}
+
+	/**
+	 * Locks the CURRENT ascending sort + front slice for the AJAX endpoint.
+	 */
+	public function test_ajax_get_notifications_returns_oldest_first_and_caps_at_15() {
+		$notifications = array();
+		for ( $i = 1; $i <= 20; $i++ ) {
+			$notifications[] = array(
+				'type'  => 'task_created',
+				'title' => 'n' . $i,
+				'time'  => sprintf( '2026-01-01 00:00:%02d', $i ),
+			);
+		}
+		update_user_meta( $this->test_user, 'decker_all_notifications', $notifications );
+
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'heartbeat-nonce' );
+
+		ob_start();
+		try {
+			$this->notifications->ajax_get_decker_notifications();
+		} catch ( WPDieException $e ) {
+			$e->getMessage();
+		}
+		$json = json_decode( ob_get_clean(), true );
+
+		$this->assertTrue( $json['success'], 'Response should be successful.' );
+		$this->assertCount( 15, $json['data'], 'Should cap at MAX_NOTIFICATIONS.' );
+		$this->assertSame( 'n1', $json['data'][0]['title'], 'Oldest notification should be first.' );
+		$this->assertSame( 'n15', $json['data'][14]['title'], 'Newest five should be dropped from the front slice.' );
+	}
+
+	/**
+	 * Locks the AJAX payload shape so a shared formatter cannot silently merge it with the heartbeat one.
+	 */
+	public function test_ajax_get_notifications_payload_shape_differs_from_heartbeat() {
+		update_user_meta(
+			$this->test_user,
+			'decker_all_notifications',
+			array(
+				array(
+					'type' => 'task_created',
+					'time' => '2026-01-01 00:00:01',
+				),
+			)
+		);
+
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'heartbeat-nonce' );
+
+		ob_start();
+		try {
+			$this->notifications->ajax_get_decker_notifications();
+		} catch ( WPDieException $e ) {
+			$e->getMessage();
+		}
+		$json = json_decode( ob_get_clean(), true );
+
+		$this->assertSame( 'Notification', $json['data'][0]['title'], 'AJAX title default must be "Notification".' );
+		$this->assertArrayNotHasKey( 'type', $json['data'][0], 'AJAX payload must not contain a type key.' );
+		$this->assertNotEmpty( $json['data'][0]['notificationId'], 'notificationId should be populated.' );
+		$this->assertSame( 'primary', $json['data'][0]['iconColor'], 'task_created icon color mismatch.' );
+	}
+
+	/**
+	 * The AJAX endpoint must require a logged-in user.
+	 */
+	public function test_ajax_get_notifications_requires_login() {
+		wp_set_current_user( 0 );
+
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'heartbeat-nonce' );
+
+		ob_start();
+		try {
+			$this->notifications->ajax_get_decker_notifications();
+		} catch ( WPDieException $e ) {
+			$e->getMessage();
+		}
+		$json = json_decode( ob_get_clean(), true );
+
+		$this->assertFalse( $json['success'], 'Response should fail for logged-out users.' );
+		$this->assertSame( 'Not logged in', $json['data'], 'Error message mismatch.' );
+	}
+
+	/**
+	 * In-app notifications must be stored even when emails are disabled globally.
+	 */
+	public function test_task_completed_stores_in_app_notification_even_when_email_disabled_globally() {
+		update_option( 'decker_settings', array( 'allow_email_notifications' => false ) );
+
+		$other_user = $this->factory->user->create(
+			array(
+				'role'       => 'editor',
+				'user_email' => 'test2@example.com',
+			)
+		);
+
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user, $other_user ),
+				'stack'          => 'done',
+			)
+		);
+
+		do_action( 'decker_task_completed', $this->task_id, 'done', $this->test_user );
+
+		$this->assertEmpty( $this->captured_mail, 'No email should be sent when globally disabled.' );
+
+		$pending = get_user_meta( $other_user, 'decker_pending_notifications', true );
+		$this->assertNotEmpty( $pending, 'In-app notification should be stored even with email disabled.' );
+		$this->assertSame( 'task_completed', $pending[0]['type'], 'Notification type mismatch.' );
+	}
+
+	/**
+	 * Per-user preference disables email but in-app notification still stored.
+	 */
+	public function test_task_completed_skips_email_when_user_pref_disabled_but_stores_notification() {
+		$other_user = $this->factory->user->create(
+			array(
+				'role'       => 'editor',
+				'user_email' => 'test2@example.com',
+			)
+		);
+		update_user_meta(
+			$other_user,
+			'decker_notification_preferences',
+			array( 'notify_completed' => false )
+		);
+
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user, $other_user ),
+				'stack'          => 'done',
+			)
+		);
+
+		do_action( 'decker_task_completed', $this->task_id, 'done', $this->test_user );
+
+		// The per-user "notify_completed" preference disables only the completion email.
+		$completed_mail = array();
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'Task Completed' ) ) {
+				$completed_mail[] = $mail;
+			}
+		}
+		$this->assertEmpty( $completed_mail, 'No completion email should be sent when user preference disabled.' );
+
+		// The in-app completion notification must still be stored.
+		$pending = get_user_meta( $other_user, 'decker_pending_notifications', true );
+		$this->assertNotEmpty( $pending, 'In-app notification should still be stored.' );
+		$completed_types = array_filter(
+			$pending,
+			function ( $notification ) {
+				return 'task_completed' === $notification['type'];
+			}
+		);
+		$this->assertNotEmpty( $completed_types, 'A completion in-app notification should be stored.' );
+	}
+
+	/**
+	 * Unknown finisher must be labelled "Unknown user" in both the action and email body.
+	 */
+	public function test_task_completed_unknown_finisher_labels_unknown_user() {
+		$other_user = $this->factory->user->create(
+			array(
+				'role'       => 'editor',
+				'user_email' => 'test2@example.com',
+			)
+		);
+		update_user_meta(
+			$other_user,
+			'decker_notification_preferences',
+			array( 'notify_completed' => true )
+		);
+
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $other_user ),
+				'stack'          => 'done',
+			)
+		);
+
+		do_action( 'decker_task_completed', $this->task_id, 'done', 999999 );
+
+		// The unknown finisher firing stores a completion notification labelled "Unknown user".
+		$pending          = get_user_meta( $other_user, 'decker_pending_notifications', true );
+		$has_unknown_note = false;
+		foreach ( $pending as $notification ) {
+			if ( 'task_completed' === $notification['type'] && str_contains( $notification['action'], 'Unknown user' ) ) {
+				$has_unknown_note = true;
+			}
+		}
+		$this->assertTrue( $has_unknown_note, 'Action should label unknown finisher.' );
+
+		// The unknown finisher firing sends a completion email whose body labels "Unknown user".
+		$has_unknown_mail = false;
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'Task Completed' ) && str_contains( $mail['message'], 'Unknown user' ) ) {
+				$has_unknown_mail = true;
+			}
+		}
+		$this->assertTrue( $has_unknown_mail, 'Email body should label unknown finisher.' );
+	}
+
+	/**
+	 * No assigned users returns early without email or notification.
+	 */
+	public function test_task_completed_returns_early_with_no_assigned_users() {
+		$new_task_id = $this->factory->task->create();
+
+		do_action( 'decker_task_completed', $new_task_id, 'done', $this->test_user );
+
+		$this->assertEmpty( $this->captured_mail, 'No email should be sent with no assigned users.' );
+		$this->assertEmpty(
+			get_user_meta( $this->test_user, 'decker_pending_notifications', true ),
+			'No notification should be stored with no assigned users.'
+		);
+
+		wp_delete_post( $new_task_id, true );
+	}
+
+	/**
+	 * The comment handler must ignore non-task posts.
+	 */
+	public function test_new_comment_ignores_non_task_posts() {
+		$post_id = $this->factory->post->create();
+		self::factory()->comment->create(
+			array(
+				'comment_post_ID'  => $post_id,
+				'user_id'          => self::factory()->user->create(),
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEmpty(
+			get_user_meta( $this->test_user, 'decker_pending_notifications', true ),
+			'Non-task comments should not create notifications.'
+		);
+
+		$has_comment_mail = false;
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'New Comment' ) ) {
+				$has_comment_mail = true;
+			}
+		}
+		$this->assertFalse( $has_comment_mail, 'Non-task comments should not send email.' );
+
+		wp_delete_post( $post_id, true );
+	}
+
+	/**
+	 * The commenter is skipped while other assignees are notified.
+	 */
+	public function test_new_comment_skips_commenter_and_notifies_other_assignees() {
+		$other_user = $this->factory->user->create(
+			array(
+				'role'       => 'editor',
+				'user_email' => 'test2@example.com',
+			)
+		);
+
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user, $other_user ),
+			)
+		);
+
+		self::factory()->comment->create(
+			array(
+				'comment_post_ID'  => $this->task_id,
+				'user_id'          => $this->test_user,
+				'comment_approved' => 1,
+			)
+		);
+
+		$this->assertEmpty(
+			get_user_meta( $this->test_user, 'decker_pending_notifications', true ),
+			'Commenter should be skipped via strict comparison.'
+		);
+
+		$pending      = get_user_meta( $other_user, 'decker_pending_notifications', true );
+		$comment_note = null;
+		foreach ( $pending as $notification ) {
+			if ( 'task_comment' === $notification['type'] ) {
+				$comment_note = $notification;
+			}
+		}
+		$this->assertNotNull( $comment_note, 'A comment notification should be stored for the other assignee.' );
+		$this->assertStringContainsString( 'Test Task', $comment_note['title'], 'Task title not found in notification.' );
+
+		$comment_recipients = array();
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'New Comment' ) ) {
+				$comment_recipients[] = $mail['to'];
+			}
+		}
+		$this->assertContains( 'test2@example.com', $comment_recipients, 'Other assignee must receive a comment email.' );
+		$this->assertNotContains( 'test@example.com', $comment_recipients, 'Commenter must not receive a comment email.' );
+	}
+
+	/**
+	 * Guest comments are labelled "Unknown user" and the guest id does not match assignees.
+	 */
+	public function test_new_comment_guest_comment_labels_unknown_user() {
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user ),
+			)
+		);
+
+		self::factory()->comment->create(
+			array(
+				'comment_post_ID'  => $this->task_id,
+				'user_id'          => 0,
+				'comment_approved' => 1,
+			)
+		);
+
+		$pending = get_user_meta( $this->test_user, 'decker_pending_notifications', true );
+		$this->assertNotEmpty( $pending, 'Assignee should be notified for a guest comment.' );
+		$this->assertStringContainsString( 'Unknown user', $pending[0]['action'], 'Action should label guest author.' );
+
+		$comment_mail = null;
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'New Comment' ) ) {
+				$comment_mail = $mail;
+			}
+		}
+		$this->assertNotNull( $comment_mail, 'Comment email expected.' );
+		$this->assertSame( 'test@example.com', $comment_mail['to'], 'Recipient mismatch.' );
+		$this->assertStringContainsString( 'Unknown user', $comment_mail['message'], 'Email body should label guest author.' );
+	}
+
+	/**
+	 * Global email disabled skips comment email but still stores in-app notification.
+	 */
+	public function test_new_comment_email_skipped_when_global_disabled_but_in_app_stored() {
+		update_option( 'decker_settings', array( 'allow_email_notifications' => false ) );
+
+		$this->task_id = self::factory()->task->update_object(
+			$this->task_id,
+			array(
+				'assigned_users' => array( $this->test_user ),
+			)
+		);
+
+		$commenter_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		self::factory()->comment->create(
+			array(
+				'comment_post_ID'  => $this->task_id,
+				'user_id'          => $commenter_id,
+				'comment_approved' => 1,
+			)
+		);
+
+		$comment_mail = false;
+		foreach ( $this->captured_mail as $mail ) {
+			if ( str_contains( $mail['subject'], 'New Comment' ) ) {
+				$comment_mail = true;
+			}
+		}
+		$this->assertFalse( $comment_mail, 'No comment email should be sent when globally disabled.' );
+
+		$this->assertNotEmpty(
+			get_user_meta( $this->test_user, 'decker_pending_notifications', true ),
+			'In-app comment notification should still be stored.'
+		);
+	}
+
+	/**
+	 * The notification identifier is a deterministic md5 of the normalized fields.
+	 */
+	public function test_notification_id_is_deterministic_md5() {
+		$notification = array(
+			'type'    => 'task_created',
+			'task_id' => 7,
+			'title'   => 'T',
+			'action'  => 'A',
+			'time'    => '2026-01-01 00:00:00',
+			'url'     => '#',
+		);
+
+		$this->notifications->add_notification_to_user( $this->test_user, $notification );
+
+		$all      = get_user_meta( $this->test_user, 'decker_all_notifications', true );
+		$expected = md5(
+			wp_json_encode(
+				array(
+					'type'    => 'task_created',
+					'task_id' => '7',
+					'title'   => 'T',
+					'action'  => 'A',
+					'time'    => '2026-01-01 00:00:00',
+					'url'     => '#',
+				)
+			)
+		);
+
+		$this->assertSame( $expected, $all[0]['notification_id'], 'notificationId must be a stable md5.' );
 	}
 
 	/**

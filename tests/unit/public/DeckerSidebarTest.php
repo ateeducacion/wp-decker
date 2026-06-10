@@ -60,7 +60,11 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		set_query_var( 'decker_page', 'board' );
 
 		ob_start();
-		include_once plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/left-sidebar.php';
+		// Use include (not include_once): another test may have already loaded the
+		// template in this process, which would make include_once a no-op and yield
+		// empty output. The function declarations are function_exists-guarded, so
+		// re-including only re-renders the markup.
+		include plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/left-sidebar.php';
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString(

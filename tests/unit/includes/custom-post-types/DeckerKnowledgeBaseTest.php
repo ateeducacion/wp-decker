@@ -697,4 +697,419 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		$this->assertEquals( 'Legit Article Updated', $article->post_title );
 		$this->assertEquals( '<p>Legit content updated</p>', $article->post_content );
 	}
+
+	/**
+	 * Helper to create a KB article quickly.
+	 *
+	 * @param array $args Overrides for the post array.
+	 * @return int Post ID.
+	 */
+	private function create_kb_article( $args = array() ) {
+		return self::factory()->post->create(
+			wp_parse_args(
+				$args,
+				array(
+					'post_type'   => 'decker_kb',
+					'post_title'  => 'KB Article',
+					'post_status' => 'publish',
+				)
+			)
+		);
+	}
+
+	public function test_save_article_update_without_parent_or_order_preserves_hierarchy() {
+		wp_set_current_user( $this->administrator );
+
+		$parent_id = $this->create_kb_article( array( 'post_title' => 'Parent P' ) );
+		$article_a = $this->create_kb_article(
+			array(
+				'post_title'  => 'Article A',
+				'post_parent' => $parent_id,
+				'menu_order'  => 2,
+			)
+		);
+		$sibling_s = $this->create_kb_article(
+			array(
+				'post_title'  => 'Sibling S',
+				'post_parent' => $parent_id,
+				'menu_order'  => 5,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_a );
+		$request->set_param( 'title', 'Article A Updated' );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( $parent_id, get_post( $article_a )->post_parent );
+		$this->assertEquals( 2, get_post( $article_a )->menu_order );
+		$this->assertEquals( 5, get_post( $sibling_s )->menu_order );
+	}
+
+	public function test_save_article_with_menu_order_repositions_and_reindexes_siblings() {
+		wp_set_current_user( $this->administrator );
+
+		$parent_id = $this->create_kb_article( array( 'post_title' => 'Parent P' ) );
+		$child_a   = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child A',
+				'post_parent' => $parent_id,
+				'menu_order'  => 0,
+			)
+		);
+		$child_b = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child B',
+				'post_parent' => $parent_id,
+				'menu_order'  => 1,
+			)
+		);
+		$child_c = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child C',
+				'post_parent' => $parent_id,
+				'menu_order'  => 2,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $child_c );
+		$request->set_param( 'menu_order', 0 );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( 0, get_post( $child_c )->menu_order );
+		$this->assertEquals( 1, get_post( $child_a )->menu_order );
+		$this->assertEquals( 2, get_post( $child_b )->menu_order );
+	}
+
+	public function test_save_article_menu_order_clamped_to_sibling_count() {
+		wp_set_current_user( $this->administrator );
+
+		$parent_id = $this->create_kb_article( array( 'post_title' => 'Parent P' ) );
+		$child_a   = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child A',
+				'post_parent' => $parent_id,
+				'menu_order'  => 0,
+			)
+		);
+		$child_b = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child B',
+				'post_parent' => $parent_id,
+				'menu_order'  => 1,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $child_a );
+		$request->set_param( 'menu_order', 99 );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( 1, get_post( $child_a )->menu_order );
+		$this->assertEquals( 0, get_post( $child_b )->menu_order );
+	}
+
+	public function test_save_article_parent_change_recalculates_old_and_new_siblings() {
+		wp_set_current_user( $this->administrator );
+
+		$parent1 = $this->create_kb_article( array( 'post_title' => 'Parent 1' ) );
+		$parent2 = $this->create_kb_article( array( 'post_title' => 'Parent 2' ) );
+
+		$child_a = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child A',
+				'post_parent' => $parent1,
+				'menu_order'  => 0,
+			)
+		);
+		$moved = $this->create_kb_article(
+			array(
+				'post_title'  => 'Moved M',
+				'post_parent' => $parent1,
+				'menu_order'  => 1,
+			)
+		);
+		$child_b = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child B',
+				'post_parent' => $parent1,
+				'menu_order'  => 2,
+			)
+		);
+		$child_x = $this->create_kb_article(
+			array(
+				'post_title'  => 'Child X',
+				'post_parent' => $parent2,
+				'menu_order'  => 0,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $moved );
+		$request->set_param( 'parent_id', $parent2 );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( $parent2, get_post( $moved )->post_parent );
+		$this->assertEquals( 0, get_post( $child_x )->menu_order );
+		$this->assertEquals( 1, get_post( $moved )->menu_order );
+		$this->assertEquals( 0, get_post( $child_a )->menu_order );
+		$this->assertEquals( 1, get_post( $child_b )->menu_order );
+	}
+
+	public function test_save_article_create_with_unresolvable_board_deletes_post_and_returns_400() {
+		wp_set_current_user( $this->administrator );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'title', 'Ghost Article' );
+		$request->set_param( 'board', -1 );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertFalse( $data['success'] );
+		$this->assertStringContainsString( 'Invalid board ID', $data['message'] );
+
+		$found = get_posts(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_status' => 'any',
+				'title'       => 'Ghost Article',
+				'numberposts' => -1,
+			)
+		);
+		$this->assertCount( 0, $found );
+	}
+
+	public function test_save_article_create_with_zero_board_returns_board_required() {
+		wp_set_current_user( $this->administrator );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'title', 'Zero Board' );
+		$request->set_param( 'board', 0 );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertFalse( $data['success'] );
+		$this->assertStringContainsString( 'Board is required', $data['message'] );
+	}
+
+	public function test_save_article_update_with_invalid_board_keeps_board_and_succeeds() {
+		wp_set_current_user( $this->administrator );
+
+		$board = wp_insert_term(
+			'Kept Board',
+			'decker_board',
+			array(
+				'slug' => 'kept-board',
+			)
+		);
+
+		$article_id = $this->create_kb_article( array( 'post_title' => 'Article With Board' ) );
+		wp_set_object_terms( $article_id, array( $board['term_id'] ), 'decker_board' );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_id );
+		$request->set_param( 'board', -1 );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertTrue( $data['success'] );
+		$this->assertNotNull( get_post( $article_id ) );
+
+		$terms = wp_get_object_terms( $article_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$this->assertEquals( array( $board['term_id'] ), $terms );
+	}
+
+	public function test_save_article_labels_replaced_kept_or_cleared() {
+		wp_set_current_user( $this->administrator );
+
+		$label1 = wp_insert_term( 'Label One', 'decker_label', array( 'slug' => 'label-one' ) );
+		$label2 = wp_insert_term( 'Label Two', 'decker_label', array( 'slug' => 'label-two' ) );
+
+		$article_id = $this->create_kb_article( array( 'post_title' => 'Labelled Article' ) );
+		wp_set_object_terms( $article_id, array( $label1['term_id'] ), 'decker_label' );
+
+		// (1) Replace labels with L2.
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_id );
+		$request->set_param( 'labels', array( $label2['term_id'] ) );
+		rest_do_request( $request );
+		$this->assertEquals(
+			array( $label2['term_id'] ),
+			wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) )
+		);
+
+		// (2) Update without labels param keeps L2.
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_id );
+		$request->set_param( 'title', 'Labelled Article Touched' );
+		rest_do_request( $request );
+		$this->assertEquals(
+			array( $label2['term_id'] ),
+			wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) )
+		);
+
+		// (3) Empty labels array clears all labels.
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
+		$request->set_param( 'id', $article_id );
+		$request->set_param( 'labels', array() );
+		rest_do_request( $request );
+		$this->assertEmpty(
+			wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) )
+		);
+	}
+
+	public function test_reorder_articles_without_moved_id_returns_400() {
+		wp_set_current_user( $this->administrator );
+
+		$parent_id  = $this->create_kb_article( array( 'post_title' => 'Parent' ) );
+		$article_id = $this->create_kb_article(
+			array(
+				'post_title'  => 'Untouched Article',
+				'post_parent' => $parent_id,
+				'menu_order'  => 4,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb/reorder' );
+		$request->set_param( 'new_parent_id', $parent_id );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertFalse( $data['success'] );
+		$this->assertEquals( 'Invalid moved ID.', $data['message'] );
+
+		$this->assertEquals( $parent_id, get_post( $article_id )->post_parent );
+		$this->assertEquals( 4, get_post( $article_id )->menu_order );
+	}
+
+	public function test_reorder_articles_without_old_parent_skips_old_sibling_reindex() {
+		wp_set_current_user( $this->administrator );
+
+		$parent1 = $this->create_kb_article( array( 'post_title' => 'Parent 1' ) );
+		$parent2 = $this->create_kb_article( array( 'post_title' => 'Parent 2' ) );
+
+		$moved = $this->create_kb_article(
+			array(
+				'post_title'  => 'Moved M',
+				'post_parent' => $parent1,
+				'menu_order'  => 0,
+			)
+		);
+		$sibling = $this->create_kb_article(
+			array(
+				'post_title'  => 'Sibling S',
+				'post_parent' => $parent1,
+				'menu_order'  => 7,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb/reorder' );
+		$request->set_param( 'moved_id', $moved );
+		$request->set_param( 'new_parent_id', $parent2 );
+		$request->set_param( 'new_order', array( $moved ) );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( $parent2, get_post( $moved )->post_parent );
+		$this->assertEquals( 7, get_post( $sibling )->menu_order );
+	}
+
+	public function test_reorder_articles_with_old_parent_and_empty_old_order_reindexes_sequentially() {
+		wp_set_current_user( $this->administrator );
+
+		$parent1 = $this->create_kb_article( array( 'post_title' => 'Parent 1' ) );
+		$parent2 = $this->create_kb_article( array( 'post_title' => 'Parent 2' ) );
+
+		$moved = $this->create_kb_article(
+			array(
+				'post_title'  => 'Moved M',
+				'post_parent' => $parent1,
+				'menu_order'  => 0,
+			)
+		);
+		$sibling = $this->create_kb_article(
+			array(
+				'post_title'  => 'Sibling S',
+				'post_parent' => $parent1,
+				'menu_order'  => 7,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb/reorder' );
+		$request->set_param( 'moved_id', $moved );
+		$request->set_param( 'new_parent_id', $parent2 );
+		$request->set_param( 'new_order', array( $moved ) );
+		$request->set_param( 'old_parent_id', $parent1 );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( 0, get_post( $sibling )->menu_order );
+		$this->assertEquals(
+			$this->administrator,
+			intval( get_post_meta( $sibling, '_last_editor', true ) )
+		);
+	}
+
+	public function test_reorder_articles_to_root_reparents_all_ids_in_new_order() {
+		wp_set_current_user( $this->administrator );
+
+		$parent1 = $this->create_kb_article( array( 'post_title' => 'Parent 1' ) );
+
+		$root1 = $this->create_kb_article(
+			array(
+				'post_title'  => 'Root 1',
+				'post_parent' => 0,
+				'menu_order'  => 5,
+			)
+		);
+		$root2 = $this->create_kb_article(
+			array(
+				'post_title'  => 'Root 2',
+				'post_parent' => 0,
+				'menu_order'  => 9,
+			)
+		);
+		$moved = $this->create_kb_article(
+			array(
+				'post_title'  => 'Moved M',
+				'post_parent' => $parent1,
+				'menu_order'  => 0,
+			)
+		);
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/kb/reorder' );
+		$request->set_param( 'moved_id', $moved );
+		$request->set_param( 'new_parent_id', 0 );
+		$request->set_param( 'new_order', array( $root1, $moved, $root2 ) );
+		$request->set_param( 'old_parent_id', $parent1 );
+
+		$response = rest_do_request( $request );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( 0, get_post( $root1 )->post_parent );
+		$this->assertEquals( 0, get_post( $moved )->post_parent );
+		$this->assertEquals( 0, get_post( $root2 )->post_parent );
+		$this->assertEquals( 0, get_post( $root1 )->menu_order );
+		$this->assertEquals( 1, get_post( $moved )->menu_order );
+		$this->assertEquals( 2, get_post( $root2 )->menu_order );
+	}
 }

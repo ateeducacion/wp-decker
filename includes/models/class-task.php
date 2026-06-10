@@ -142,59 +142,96 @@ class Task {
 	 */
 	public function __construct( $input = null ) {
 
+		$post = $this->resolve_input( $input );
+
+		if ( ! $post ) {
+			return;
+		}
+
+		$this->load_from_post( $post );
+	}
+
+	/**
+	 * Resolves the constructor input into a WP_Post, or false when creating a new task.
+	 *
+	 * @param int|WP_Post|null $input The ID of the task or a WP_Post object.
+	 * @return WP_Post|null|false WP_Post when resolvable, otherwise false.
+	 */
+	private function resolve_input( $input ) {
 		if ( $input instanceof WP_Post ) {
-			$post = $input;
-		} elseif ( is_int( $input ) && $input > 0 ) {
-			$post = get_post( $input );
-		} else {
-			$this->author = get_current_user_id(); // Default author.
-			$post         = false;
+			return $input;
 		}
 
-		if ( $post ) {
-
-			if ( 'decker_task' !== $post->post_type ) {
-				throw new Exception( esc_attr_e( 'Invalid post type.', 'decker' ) );
-			}
-
-			$this->ID          = $post->ID;
-			$this->title       = (string) $post->post_title;
-			$this->description = (string) $post->post_content;
-			$this->status      = (string) $post->post_status;
-			$this->author      = $post->post_author;
-			$this->order       = (int) $post->menu_order;
-
-			// Load all metadata once.
-			$meta = get_post_meta( $this->ID );
-
-			$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
-			$user_object    = get_userdata( $responsable_id );
-
-			// Only assign if $user_object is a WP_User.
-			if ( $user_object instanceof WP_User ) {
-				$this->responsable = $user_object;
-				 $this->responsable->today = $this->is_today_assigned( $responsable_id, $meta );
-			}
-
-			$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];
-
-			// Use the meta array directly.
-			$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;
-			$this->max_priority = isset( $meta['max_priority'][0] ) && '1' === $meta['max_priority'][0];
-
-			// Convert duedate to a DateTime object if set.
-			$this->duedate = isset( $meta['duedate'][0] ) ? new DateTime( $meta['duedate'][0] ) : null;
-
-			$this->attachments = isset( $meta['attachments'] ) ? (array) $meta['attachments'] : array();
-			$this->meta        = $meta; // Store all meta in case you need it later.
-
-			$this->assigned_users = $this->get_users( $meta );
-
-			// Load taxonomies.
-			$this->board  = $this->get_board();
-			$this->labels = $this->get_labels();
-
+		if ( is_int( $input ) && $input > 0 ) {
+			return get_post( $input );
 		}
+
+		$this->author = get_current_user_id(); // Default author.
+
+		return false;
+	}
+
+	/**
+	 * Hydrates the task from a WP_Post object.
+	 *
+	 * @param WP_Post $post The source post.
+	 * @return void
+	 * @throws Exception If the post is not a `decker_task`.
+	 */
+	private function load_from_post( WP_Post $post ): void {
+
+		if ( 'decker_task' !== $post->post_type ) {
+			throw new Exception( esc_attr_e( 'Invalid post type.', 'decker' ) );
+		}
+
+		$this->ID          = $post->ID;
+		$this->title       = (string) $post->post_title;
+		$this->description = (string) $post->post_content;
+		$this->status      = (string) $post->post_status;
+		$this->author      = $post->post_author;
+		$this->order       = (int) $post->menu_order;
+
+		// Load all metadata once.
+		$meta = get_post_meta( $this->ID );
+
+		$this->load_meta_fields( $post, $meta );
+
+		$this->assigned_users = $this->get_users( $meta );
+
+		// Load taxonomies.
+		$this->board  = $this->get_board();
+		$this->labels = $this->get_labels();
+	}
+
+	/**
+	 * Hydrates the scalar meta-backed fields from the loaded meta array.
+	 *
+	 * @param WP_Post $post The source post.
+	 * @param array   $meta The loaded post meta.
+	 * @return void
+	 */
+	private function load_meta_fields( WP_Post $post, array $meta ): void {
+
+		$responsable_id = isset( $meta['responsable'][0] ) ? (int) $meta['responsable'][0] : $post->post_author;
+		$user_object    = get_userdata( $responsable_id );
+
+		// Only assign if $user_object is a WP_User.
+		if ( $user_object instanceof WP_User ) {
+			$this->responsable = $user_object;
+			 $this->responsable->today = $this->is_today_assigned( $responsable_id, $meta );
+		}
+
+		$this->hidden = isset( $meta['hidden'][0] ) && '1' === $meta['hidden'][0];
+
+		// Use the meta array directly.
+		$this->stack        = isset( $meta['stack'][0] ) ? (string) $meta['stack'][0] : null;
+		$this->max_priority = isset( $meta['max_priority'][0] ) && '1' === $meta['max_priority'][0];
+
+		// Convert duedate to a DateTime object if set.
+		$this->duedate = isset( $meta['duedate'][0] ) ? new DateTime( $meta['duedate'][0] ) : null;
+
+		$this->attachments = isset( $meta['attachments'] ) ? (array) $meta['attachments'] : array();
+		$this->meta        = $meta; // Store all meta in case you need it later.
 	}
 
 	/**
@@ -540,19 +577,7 @@ class Task {
 			$relative_time = esc_html( $this->get_relative_time() );
 		}
 
-		$card_background_color = '';
-		if ( $draw_background_color && $this->board && $this->board->color ) {
-			$board_color           = $this->pastelize_color( $this->board->color );
-
-			if ( $this->hidden ) {
-				$card_background_color = 'style="background-color: gainsboro; opacity: 1; background-image: repeating-linear-gradient(45deg,' . $board_color . ' 25%, transparent 25%, transparent 75%,' . $board_color . ' 75%,' . $board_color . '), repeating-linear-gradient(45deg,' . $board_color . ' 25%, gainsboro 25%, gainsboro 75%,' . $board_color . ' 75%,' . $board_color . '); background-position: 0 0, 10px 10px; background-size: 20px 20px;"';
-			} else {
-				$card_background_color = 'style="background-color: ' . esc_attr( $board_color ) . ';"';
-			}
-		} elseif ( $this->hidden ) {
-			// For hidden tasks, we set a light gray color.
-			$card_background_color = 'style="background-color: gainsboro;"';
-		}
+		$card_background_color = $this->get_card_background_style( $draw_background_color );
 
 		?>
 		<div class="task card mb-0" data-task-id="<?php echo esc_attr( $this->ID ); ?>" <?php echo wp_kses_post( $card_background_color ); ?>>
@@ -565,17 +590,7 @@ class Task {
 				<small class="text-muted relative-time-badge" title="<?php echo esc_attr( $formatted_duedate ); ?>">
 					<span class="task-id label-to-hide 
 						<?php
-						if ( $this->duedate instanceof DateTime ) {
-							$today_midnight = new DateTime( 'today' );
-							$due_midnight = clone $this->duedate;
-							$due_midnight->setTime( 0, 0, 0 );
-
-							if ( $due_midnight == $today_midnight ) {
-								echo 'due-today';
-							} elseif ( $due_midnight < $today_midnight ) {
-								echo 'due-past';
-							}
-						}
+						echo esc_attr( $this->get_due_css_class() );
 						?>
 						">
 						<?php echo esc_html( $this->get_relative_time() ); ?>
@@ -594,73 +609,19 @@ class Task {
 						<i class="ri-briefcase-2-line text-muted"></i>                       
 						<?php
 
-						if ( $draw_background_color && $this->board && $this->board->color ) {
-							echo esc_html( $this->board->name );
-						}
+						$this->render_card_board_name( $draw_background_color );
 						?>
 					</span>
 					<?php
-					$comments_count = (int) get_comments_number( $this->ID );
-					if ( $comments_count > 0 ) :
-						/* translators: %d is the number of comments on the task. */
-						$comments_title = sprintf( _n( '%d comment', '%d comments', $comments_count, 'decker' ), $comments_count );
-						?>
-						<span class="text-nowrap mb-2 d-inline-flex align-items-center decker-comments-popover"
-							role="button"
-							tabindex="0"
-							data-bs-toggle="popover"
-							data-bs-trigger="hover focus"
-							data-bs-html="true"
-							data-bs-placement="right"
-							data-bs-fallback-placements='["left","top","bottom"]'
-							data-bs-custom-class="decker-comments-popover-pop"
-							data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
-							data-decker-comments-count="<?php echo esc_attr( $comments_count ); ?>"
-							title="<?php echo esc_attr( $comments_title ); ?>"
-							data-bs-content="<?php echo esc_attr__( 'Loading comments…', 'decker' ); ?>">
-							<i class="ri-discuss-line text-muted me-1"></i>
-							<b><?php echo esc_html( $comments_count ); ?></b>
-						</span>
-					<?php else : ?>
-						<span class="text-nowrap mb-2 d-inline-block">
-							<i class="ri-discuss-line text-muted"></i>
-							<b>0</b>
-						</span>
-					<?php endif; ?>
+					$this->render_card_comments_counter();
+					?>
 					<span class="text-nowrap mb-2 d-inline-block">
 						<i class="ri-attachment-2 text-muted"></i>
 						<b><?php echo esc_html( count( get_attached_media( '', $this->ID ) ) ); ?></b>
 					</span>
 					<?php
-					$labels_count = count( $this->labels );
-					if ( $labels_count > 0 ) :
-						/* translators: %d is the number of labels on the task. */
-						$labels_screen_reader = sprintf( _n( '%d label', '%d labels', $labels_count, 'decker' ), $labels_count );
-						$close_aria_label     = __( 'Close', 'decker' );
-
-						$labels_list  = '<button type="button" class="btn-close decker-labels-popover-close" aria-label="' . esc_attr( $close_aria_label ) . '"></button>';
-						$labels_list .= '<div class="decker-labels-popover-list">';
-						foreach ( $this->labels as $label ) {
-							$labels_list .= '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span>';
-						}
-						$labels_list .= '</div>';
-						?>
-						<span class="ps-2 text-nowrap mb-2 d-inline-flex align-items-center decker-labels-popover"
-							role="button"
-							tabindex="0"
-							data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
-							data-decker-labels-count="<?php echo esc_attr( $labels_count ); ?>"
-							data-decker-labels-content="<?php echo esc_attr( $labels_list ); ?>"
-							aria-label="<?php echo esc_attr( $labels_screen_reader ); ?>">
-							<i class="ri-price-tag-3-line text-muted me-1"></i>
-							<b><?php echo esc_html( $labels_count ); ?></b>
-						</span>
-					<?php else : ?>
-						<span class="ps-2 text-nowrap mb-2 d-inline-block">
-							<i class="ri-price-tag-3-line text-muted me-1"></i>
-							<b>0</b>
-						</span>
-					<?php endif; ?>
+					$this->render_card_labels_counter();
+					?>
 				</p>
 
 				<?php $this->render_task_menu(); ?>
@@ -673,6 +634,141 @@ class Task {
 		<?php
 	}
 
+	/**
+	 * Builds the card background style attribute.
+	 *
+	 * @param bool $draw_background_color Whether to include background color styling.
+	 * @return string The style="..." attribute, or '' when no background is needed.
+	 */
+	private function get_card_background_style( bool $draw_background_color ): string {
+		if ( $draw_background_color && $this->board && $this->board->color ) {
+			$board_color = $this->pastelize_color( $this->board->color );
+
+			if ( $this->hidden ) {
+				return 'style="background-color: gainsboro; opacity: 1; background-image: repeating-linear-gradient(45deg,' . $board_color . ' 25%, transparent 25%, transparent 75%,' . $board_color . ' 75%,' . $board_color . '), repeating-linear-gradient(45deg,' . $board_color . ' 25%, gainsboro 25%, gainsboro 75%,' . $board_color . ' 75%,' . $board_color . '); background-position: 0 0, 10px 10px; background-size: 20px 20px;"';
+			}
+
+			return 'style="background-color: ' . esc_attr( $board_color ) . ';"';
+		}
+
+		if ( $this->hidden ) {
+			// For hidden tasks, we set a light gray color.
+			return 'style="background-color: gainsboro;"';
+		}
+
+		return '';
+	}
+
+	/**
+	 * Returns the due-date css class for the relative-time badge.
+	 *
+	 * @return string 'due-today', 'due-past', or '' when no due date applies.
+	 */
+	private function get_due_css_class(): string {
+		if ( $this->duedate instanceof DateTime ) {
+			$today_midnight = new DateTime( 'today' );
+			$due_midnight = clone $this->duedate;
+			$due_midnight->setTime( 0, 0, 0 );
+
+			if ( $due_midnight == $today_midnight ) {
+				return 'due-today';
+			} elseif ( $due_midnight < $today_midnight ) {
+				return 'due-past';
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Echoes the board name inside the card when the background color is drawn.
+	 *
+	 * @param bool $draw_background_color Whether to include background color styling.
+	 * @return void
+	 */
+	private function render_card_board_name( bool $draw_background_color ): void {
+		if ( $draw_background_color && $this->board && $this->board->color ) {
+			echo esc_html( $this->board->name );
+		}
+	}
+
+	/**
+	 * Echoes the comments counter, with a popover trigger when comments exist.
+	 *
+	 * @return void
+	 */
+	private function render_card_comments_counter(): void {
+		$comments_count = (int) get_comments_number( $this->ID );
+		if ( $comments_count > 0 ) :
+			/* translators: %d is the number of comments on the task. */
+			$comments_title = sprintf( _n( '%d comment', '%d comments', $comments_count, 'decker' ), $comments_count );
+			?>
+			<span class="text-nowrap mb-2 d-inline-flex align-items-center decker-comments-popover"
+				role="button"
+				tabindex="0"
+				data-bs-toggle="popover"
+				data-bs-trigger="hover focus"
+				data-bs-html="true"
+				data-bs-placement="right"
+				data-bs-fallback-placements='["left","top","bottom"]'
+				data-bs-custom-class="decker-comments-popover-pop"
+				data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
+				data-decker-comments-count="<?php echo esc_attr( $comments_count ); ?>"
+				title="<?php echo esc_attr( $comments_title ); ?>"
+				data-bs-content="<?php echo esc_attr__( 'Loading comments…', 'decker' ); ?>">
+				<i class="ri-discuss-line text-muted me-1"></i>
+				<b><?php echo esc_html( $comments_count ); ?></b>
+			</span>
+			<?php
+		else :
+			?>
+			<span class="text-nowrap mb-2 d-inline-block">
+				<i class="ri-discuss-line text-muted"></i>
+				<b>0</b>
+			</span>
+			<?php
+		endif;
+	}
+
+	/**
+	 * Echoes the labels counter, with a popover trigger when labels exist.
+	 *
+	 * @return void
+	 */
+	private function render_card_labels_counter(): void {
+		$labels_count = count( $this->labels );
+		if ( $labels_count > 0 ) :
+			/* translators: %d is the number of labels on the task. */
+			$labels_screen_reader = sprintf( _n( '%d label', '%d labels', $labels_count, 'decker' ), $labels_count );
+			$close_aria_label     = __( 'Close', 'decker' );
+
+			$labels_list  = '<button type="button" class="btn-close decker-labels-popover-close" aria-label="' . esc_attr( $close_aria_label ) . '"></button>';
+			$labels_list .= '<div class="decker-labels-popover-list">';
+			foreach ( $this->labels as $label ) {
+				$labels_list .= '<span class="badge" style="background-color: ' . esc_attr( $label->color ) . ';">' . esc_html( $label->name ) . '</span>';
+			}
+			$labels_list .= '</div>';
+			?>
+			<span class="ps-2 text-nowrap mb-2 d-inline-flex align-items-center decker-labels-popover"
+				role="button"
+				tabindex="0"
+				data-decker-task-id="<?php echo esc_attr( $this->ID ); ?>"
+				data-decker-labels-count="<?php echo esc_attr( $labels_count ); ?>"
+				data-decker-labels-content="<?php echo esc_attr( $labels_list ); ?>"
+				aria-label="<?php echo esc_attr( $labels_screen_reader ); ?>">
+				<i class="ri-price-tag-3-line text-muted me-1"></i>
+				<b><?php echo esc_html( $labels_count ); ?></b>
+			</span>
+			<?php
+		else :
+			?>
+			<span class="ps-2 text-nowrap mb-2 d-inline-block">
+				<i class="ri-price-tag-3-line text-muted me-1"></i>
+				<b>0</b>
+			</span>
+			<?php
+		endif;
+	}
 
 	/**
 	 * Render the task card contextual menu.
@@ -682,20 +778,9 @@ class Task {
 	public function render_task_menu( bool $card = false ): void {
 		$menu_items = array();
 
-		$task_url = get_permalink( $this->ID );
-		if ( ! $task_url || is_wp_error( $task_url ) ) {
-			$task_url = add_query_arg(
-				array(
-					'decker_page' => 'task',
-					'id'          => esc_attr( $this->ID ),
-				),
-				home_url( '/' )
-			);
-		}
-
 		$menu_items[] = sprintf(
 			'<a href="#" class="dropdown-item copy-task-url" data-task-url="%s"><i class="ri-clipboard-line me-1"></i>%s</a>',
-			esc_url( $task_url ),
+			esc_url( $this->get_menu_task_url() ),
 			__( 'Copy Task URL', 'decker' )
 		);
 
@@ -716,89 +801,179 @@ class Task {
 			);
 		}
 
-		if ( current_user_can( 'manage_options' ) ) {
-			// Add 'Edit in WordPress' menu item.
-			$menu_items[] = sprintf(
+		$menu_items = array_merge( $menu_items, $this->get_admin_menu_items() );
+		$menu_items = array_merge( $menu_items, $this->get_owner_menu_items() );
+
+		$menu_items[] = $this->get_archive_menu_item();
+
+		if ( ! $card ) {
+			$is_assigned         = in_array( get_current_user_id(), array_column( $this->assigned_users, 'ID' ) );
+			$is_marked_for_today = $this->is_marked_for_today_for_current_user();
+
+			$menu_items = array_merge(
+				$menu_items,
+				$this->get_assignment_menu_items( $is_assigned, $is_marked_for_today )
+			);
+		}
+
+		$this->print_menu_dropdown( $menu_items, $card );
+	}
+
+	/**
+	 * Resolves the task URL used for the copy-link menu item.
+	 *
+	 * @return string The permalink, or a query-arg fallback when unavailable.
+	 */
+	private function get_menu_task_url(): string {
+		$task_url = get_permalink( $this->ID );
+		if ( ! $task_url || is_wp_error( $task_url ) ) {
+			$task_url = add_query_arg(
+				array(
+					'decker_page' => 'task',
+					'id'          => esc_attr( $this->ID ),
+				),
+				home_url( '/' )
+			);
+		}
+
+		return $task_url;
+	}
+
+	/**
+	 * Returns the admin-only menu items.
+	 *
+	 * @return string[] The 'Edit in WordPress' item, or an empty array.
+	 */
+	private function get_admin_menu_items(): array {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return array();
+		}
+
+		// Add 'Edit in WordPress' menu item.
+		return array(
+			sprintf(
 				'<a href="%s" class="dropdown-item" target="_blank"><i class="ri-wordpress-line me-1"></i>' . __( 'Edit in WordPress', 'decker' ) . '</a>',
 				esc_url( get_edit_post_link( $this->ID ) )
-			);
+			),
+		);
+	}
+
+	/**
+	 * Returns the owner (edit_post) menu items.
+	 *
+	 * @return string[] The Clone item, plus the Merge item when applicable.
+	 */
+	private function get_owner_menu_items(): array {
+		if ( ! current_user_can( 'edit_post', $this->ID ) ) {
+			return array();
 		}
 
-		if ( current_user_can( 'edit_post', $this->ID ) ) {
-			// Add 'Clone' menu item.
-			$menu_items[] = sprintf(
+		// Add 'Clone' menu item.
+		$items = array(
+			sprintf(
 				'<a href="#" class="dropdown-item clone-task" data-task-id="%d"><i class="ri-file-copy-line me-1"></i>' . __( 'Clone', 'decker' ) . '</a>',
 				esc_attr( $this->ID )
-			);
+			),
+		);
 
-			if ( 'publish' === $this->status &&
-				! get_post_meta( $this->ID, 'merged_into', true ) ) {
-				$menu_items[] = sprintf(
-					'<a href="#" class="dropdown-item merge-task" data-task-id="%1$d" data-task-title="%2$s"><i class="ri-git-merge-line me-1"></i>%3$s</a>',
-					esc_attr( $this->ID ),
-					esc_attr( $this->title ),
-					__( 'Merge into...', 'decker' )
-				);
-			}
+		if ( 'publish' === $this->status &&
+			! get_post_meta( $this->ID, 'merged_into', true ) ) {
+			$items[] = sprintf(
+				'<a href="#" class="dropdown-item merge-task" data-task-id="%1$d" data-task-title="%2$s"><i class="ri-git-merge-line me-1"></i>%3$s</a>',
+				esc_attr( $this->ID ),
+				esc_attr( $this->title ),
+				__( 'Merge into...', 'decker' )
+			);
 		}
 
+		return $items;
+	}
+
+	/**
+	 * Returns the Archive item for published tasks, or the Unarchive item otherwise.
+	 *
+	 * @return string The archive/unarchive menu item HTML.
+	 */
+	private function get_archive_menu_item(): string {
 		if ( 'publish' == $this->status ) {
 			// Add 'Archive' menu item.
-			$menu_items[] = sprintf(
+			return sprintf(
 				'<a href="#" class="dropdown-item archive-task" data-task-id="%d"><i class="ri-archive-line me-1"></i>' . __( 'Archive', 'decker' ) . '</a>',
 				esc_attr( $this->ID )
 			);
-
-		} else {
-
-			// Add 'Unarchive' menu item.
-			$menu_items[] = sprintf(
-				'<a href="#" class="dropdown-item unarchive-task" data-task-id="%d"><i class="ri-inbox-unarchive-line me-1"></i>' . __( 'Unarchive', 'decker' ) . '</a>',
-				esc_attr( $this->ID )
-			);
-
 		}
 
-		if ( ! $card ) {
+		// Add 'Unarchive' menu item.
+		return sprintf(
+			'<a href="#" class="dropdown-item unarchive-task" data-task-id="%d"><i class="ri-inbox-unarchive-line me-1"></i>' . __( 'Unarchive', 'decker' ) . '</a>',
+			esc_attr( $this->ID )
+		);
+	}
 
-			// Add 'Assign to me' and 'Leave' menu items based on assigned users.
-			$is_assigned  = in_array( get_current_user_id(), array_column( $this->assigned_users, 'ID' ) );
-			$menu_items[] = sprintf(
-				'<a href="#" class="dropdown-item assign-to-me %s" data-task-id="%d"><i class="ri-user-add-line me-1"></i>' . __( 'Assign to me', 'decker' ) . '</a>',
-				$is_assigned ? 'hidden' : '',
-				esc_attr( $this->ID ),
-			);
-
-			// Add 'Leave' menu item.
-			$menu_items[] = sprintf(
-				'<a href="#" class="dropdown-item leave-task %s" data-task-id="%d"><i class="ri-logout-circle-line me-1"></i>' . __( 'Leave', 'decker' ) . '</a>',
-				! $is_assigned ? 'hidden' : '',
-				esc_attr( $this->ID ),
-			);
-
-			// Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag.
-			$is_marked_for_today = false;
-			foreach ( $this->assigned_users as $user ) {
-				if ( get_current_user_id() == $user->ID && ! empty( $user->today ) ) {
-					$is_marked_for_today = true;
-					break;
-				}
+	/**
+	 * Determines whether the current user is marked for today on this task.
+	 *
+	 * @return bool True when the current user is assigned with the today flag set.
+	 */
+	private function is_marked_for_today_for_current_user(): bool {
+		// Check assigned users with 'today' flag for the current user.
+		foreach ( $this->assigned_users as $user ) {
+			if ( get_current_user_id() == $user->ID && ! empty( $user->today ) ) {
+				return true;
 			}
-
-			$menu_items[] = sprintf(
-				'<a href="#" class="dropdown-item mark-for-today %s" data-task-id="%d"><i class="ri-calendar-check-line me-1"></i>' . __( 'Mark for today', 'decker' ) . '</a>',
-				! $is_assigned || $is_marked_for_today ? 'hidden' : '',
-				esc_attr( $this->ID ),
-			);
-
-			$menu_items[] = sprintf(
-				'<a href="#" class="dropdown-item unmark-for-today %s" data-task-id="%d"><i class="ri-calendar-close-line me-1"></i>' . __( 'Unmark for today', 'decker' ) . '</a>',
-				! $is_marked_for_today ? 'hidden' : '',
-				esc_attr( $this->ID ),
-			);
-
 		}
 
+		return false;
+	}
+
+	/**
+	 * Returns the assignment-related menu items (assign / leave / mark / unmark).
+	 *
+	 * @param bool $is_assigned Whether the current user is assigned to the task.
+	 * @param bool $is_marked_for_today Whether the current user is marked for today.
+	 * @return string[] The four assignment menu items.
+	 */
+	private function get_assignment_menu_items( bool $is_assigned, bool $is_marked_for_today ): array {
+		$items = array();
+
+		// Add 'Assign to me' and 'Leave' menu items based on assigned users.
+		$items[] = sprintf(
+			'<a href="#" class="dropdown-item assign-to-me %s" data-task-id="%d"><i class="ri-user-add-line me-1"></i>' . __( 'Assign to me', 'decker' ) . '</a>',
+			$is_assigned ? 'hidden' : '',
+			esc_attr( $this->ID ),
+		);
+
+		// Add 'Leave' menu item.
+		$items[] = sprintf(
+			'<a href="#" class="dropdown-item leave-task %s" data-task-id="%d"><i class="ri-logout-circle-line me-1"></i>' . __( 'Leave', 'decker' ) . '</a>',
+			! $is_assigned ? 'hidden' : '',
+			esc_attr( $this->ID ),
+		);
+
+		// Add 'Mark for today' / 'Unmark for today' menu items for assigned users with 'today' flag.
+		$items[] = sprintf(
+			'<a href="#" class="dropdown-item mark-for-today %s" data-task-id="%d"><i class="ri-calendar-check-line me-1"></i>' . __( 'Mark for today', 'decker' ) . '</a>',
+			! $is_assigned || $is_marked_for_today ? 'hidden' : '',
+			esc_attr( $this->ID ),
+		);
+
+		$items[] = sprintf(
+			'<a href="#" class="dropdown-item unmark-for-today %s" data-task-id="%d"><i class="ri-calendar-close-line me-1"></i>' . __( 'Unmark for today', 'decker' ) . '</a>',
+			! $is_marked_for_today ? 'hidden' : '',
+			esc_attr( $this->ID ),
+		);
+
+		return $items;
+	}
+
+	/**
+	 * Prints the dropdown wrapper around the assembled menu items.
+	 *
+	 * @param string[] $menu_items The menu item HTML fragments.
+	 * @param bool     $card Whether the menu is rendered inside a card.
+	 * @return void
+	 */
+	private function print_menu_dropdown( array $menu_items, bool $card ): void {
 		if ( ! $card ) {
 			// Generate dropdown HTML for card.
 			printf(
