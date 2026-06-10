@@ -415,6 +415,58 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         // Use the provider's built-in awareness
         const awareness = provider.awareness;
 
+        // Track whether a real peer is (or was ever) present. Seeding the DB snapshot
+        // into the shared CRDT while a peer is live is what duplicates/overwrites the
+        // live content (Yjs merges, it never replaces), so this gates all seeding.
+        let peerEverSeen = false;
+
+        const countOtherAwareness = () => {
+            let count = 0;
+            awareness.getStates().forEach((state, clientId) => {
+                if (clientId !== awareness.clientID) {
+                    count++;
+                }
+            });
+            return count;
+        };
+
+        // y-webrtc 10.x keeps the live peer connections on provider.room; guard for
+        // version differences and for the unit-test mocks, which do not model a room.
+        const countWebrtcConns = () => {
+            const room = provider.room;
+            if (room && room.webrtcConns && typeof room.webrtcConns.size === 'number') {
+                return room.webrtcConns.size;
+            }
+            if (provider.webrtcConns && typeof provider.webrtcConns.size === 'number') {
+                return provider.webrtcConns.size;
+            }
+            return 0;
+        };
+
+        // True when we are NOT the authoritative seeder (another client exists).
+        const peersPresent = () => peerEverSeen || countOtherAwareness() > 0 || countWebrtcConns() > 0;
+
+        // y-webrtc emits 'peers' when a webrtc/broadcast peer connects. This fires
+        // before the Yjs document finishes syncing, so it is the earliest reliable
+        // signal that we are not alone.
+        const peersChangeHandler = (event) => {
+            const webrtc = (event && event.webrtcPeers && event.webrtcPeers.length) || 0;
+            const broadcast = (event && event.bcPeers && event.bcPeers.length) || 0;
+            const added = (event && event.added && event.added.length) || 0;
+            if (webrtc > 0 || broadcast > 0 || added > 0) {
+                peerEverSeen = true;
+            }
+        };
+        provider.on('peers', peersChangeHandler);
+
+        // Mark a peer as seen as soon as another awareness state appears.
+        const peerAwarenessHandler = () => {
+            if (countOtherAwareness() > 0) {
+                peerEverSeen = true;
+            }
+        };
+        awareness.on('change', peerAwarenessHandler);
+
         // Sync state tracking for event-based initialization
         let isSynced = false;
         let syncPromiseResolve = null;
@@ -433,35 +485,47 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             }
         });
 
-        // Fast single-user detection: check periodically until we confirm status
+        // Single-user detection. The signaling socket opens almost immediately, but
+        // discovering and finishing the WebRTC handshake with an EXISTING peer (and
+        // syncing the Yjs doc) takes much longer. So we must NOT declare ourselves the
+        // sole/authoritative user just because the signaling socket is up and no peer
+        // has announced yet — we wait a quiet window long enough for a real peer to
+        // appear, and we bail out the moment any peer is detected (letting the real
+        // 'synced' event resolve instead).
         let singleUserCheckCount = 0;
-        const maxSingleUserChecks = 10; // Check up to 10 times (100ms * 10 = 1 second max)
+        const checkIntervalMs = 100;
+        // ~1.5s: comfortably exceeds typical WebRTC handshake + awareness propagation.
+        const singleUserMinChecks = 15;
+        // ~2s hard ceiling for the probe before proceeding regardless.
+        const maxSingleUserChecks = 20;
         let singleUserTimerId = null;
 
         const checkSingleUser = () => {
             if (isSynced) return; // Already synced, stop checking
 
             singleUserCheckCount++;
-            const signalingOk = isSignalingConnected(provider);
-            const peerCount = awareness.getStates().size;
 
-            // If signaling is connected and we're alone after a few checks, proceed
-            if (!isSynced && signalingOk && peerCount <= 1 && singleUserCheckCount >= 3) {
-                console.log('Decker Collaboration: Single user mode detected (check #' + singleUserCheckCount + ')');
+            // A peer connected (or its awareness arrived): stop probing for single-user
+            // and let the real Yjs 'synced' event resolve. Never seed over a peer.
+            if (peersPresent()) {
+                console.log('Decker Collaboration: Peer detected, waiting for real sync');
+                return;
+            }
+
+            const signalingOk = isSignalingConnected(provider);
+
+            // Only declare ourselves the authoritative user after a quiet window with
+            // the signaling socket up and no peer having appeared.
+            if (!isSynced && signalingOk && singleUserCheckCount >= singleUserMinChecks) {
+                console.log('Decker Collaboration: Single user mode confirmed (check #' + singleUserCheckCount + ')');
                 isSynced = true;
                 syncPromiseResolve();
                 return;
             }
 
-            // If we have peers, wait for proper sync
-            if (peerCount > 1) {
-                console.log('Decker Collaboration: Multiple peers detected, waiting for sync');
-                return; // Stop checking, let 'synced' event handle it
-            }
-
             // Keep checking until max attempts
             if (singleUserCheckCount < maxSingleUserChecks) {
-                singleUserTimerId = setTimeout(checkSingleUser, 100);
+                singleUserTimerId = setTimeout(checkSingleUser, checkIntervalMs);
             } else if (!isSynced) {
                 // All checks exhausted without resolution — resolve sync immediately
                 isSynced = true;
@@ -470,16 +534,16 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
         };
 
         // Start checking immediately
-        singleUserTimerId = setTimeout(checkSingleUser, 100);
+        singleUserTimerId = setTimeout(checkSingleUser, checkIntervalMs);
 
-        // Safety timeout: reduced to 2 seconds (only as last resort)
+        // Safety timeout (absolute last resort, beyond the single-user probe ceiling).
         const syncTimeout = setTimeout(() => {
             if (!isSynced) {
-                console.warn('Decker Collaboration: Sync timeout (2s), proceeding');
+                console.warn('Decker Collaboration: Sync timeout (3s), proceeding');
                 isSynced = true;
                 syncPromiseResolve();
             }
-        }, 2000);
+        }, 3000);
 
         // Clear timeout when sync completes normally
         syncPromise.then(() => clearTimeout(syncTimeout));
@@ -676,6 +740,15 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
              * @param {string} originalHtml - Original HTML content from server
              */
             initializeContentWithFallback(originalHtml) {
+                // Never seed the DB snapshot when a peer is (or was) present. Writing it
+                // into the shared CRDT would merge stale content with the peer's live
+                // edits (duplication/overwrite); when a peer exists we have already
+                // received their content through sync, so we keep it.
+                if (peersPresent()) {
+                    console.log('Decker Collaboration: Peer present, keeping synced content (no DB seed)');
+                    return;
+                }
+
                 // Only set content if Y.js document is empty
                 if (ytext.length === 0 && originalHtml && originalHtml.trim() !== '' && originalHtml !== '<p><br></p>') {
                     console.log('Decker Collaboration: Y.js empty after sync, initializing with original content:', originalHtml);
@@ -731,6 +804,15 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
             },
 
             /**
+             * Whether another collaborator is (or was ever) present in this session.
+             * Used by the form-fields layer to avoid seeding DB values over live ones.
+             * @returns {boolean}
+             */
+            hasPeers() {
+                return peersPresent();
+            },
+
+            /**
              * Get list of connected users
              */
             getConnectedUsers() {
@@ -777,12 +859,14 @@ import { QuillBinding } from 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20';
                 isDisabled = true;
 
                 awareness.off('change', awarenessStatusChangeHandler);
+                awareness.off('change', peerAwarenessHandler);
 
                 if (remoteCursorChangeHandler) {
                     awareness.off('change', remoteCursorChangeHandler);
                 }
 
                 provider.off('status', providerStatusChangeHandler);
+                provider.off('peers', peersChangeHandler);
 
                 // Remove selection change handler if it exists
                 if (selectionChangeHandler) {
