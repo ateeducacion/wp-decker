@@ -15,8 +15,12 @@ defined( 'ABSPATH' ) || exit;
 // Process form submission.
 
 if ( isset( $_POST['decker_term_nonce'] ) ) {
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		wp_die( esc_html__( 'You do not have permission to perform this action.', 'decker' ) );
+	}
+
 	$decker_term_nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
-	if ( wp_verify_nonce( $decker_term_nonce, 'import_tasks' ) ) {
+	if ( ! wp_verify_nonce( $decker_term_nonce, 'decker_term_action' ) ) {
 		wp_die( 'Security check failed' );
 	}
 

@@ -34,6 +34,10 @@ class Decker_REST_Comment_Protection {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_rest_comment_protection_hooks' ) );
+
+		// The classic global comments feed (/comments/feed/) is served by WP_Query, not REST.
+		// Protect it independently of the REST request lifecycle.
+		add_filter( 'comment_feed_where', array( $this, 'filter_comment_feed_where' ), 10, 2 );
 	}
 
 	/**
@@ -113,6 +117,39 @@ class Decker_REST_Comment_Protection {
 		$clauses['where'] .= " AND ({$wpdb->comments}.comment_post_ID = 0 OR " . substr( trim( $where_clause ), 4 ) . ')';
 
 		return $clauses;
+	}
+
+	/**
+	 * Exclude comments on protected post types from the classic comments feed.
+	 *
+	 * The global comments feed (/comments/feed/, /?feed=comments-rss2) is served by
+	 * WP_Query without any post_type restriction, so approved comments on published
+	 * protected posts (e.g. decker_task) would otherwise leak to anyone. This appends
+	 * a WHERE clause excluding any comment whose parent post is of a protected type.
+	 *
+	 * @param string   $cwhere The WHERE clause of the comment feed query.
+	 * @param WP_Query $query  The current WP_Query instance (unused).
+	 * @return string The modified WHERE clause.
+	 */
+	public function filter_comment_feed_where( $cwhere, $query = null ) {
+		$protected_post_types = $this->get_protected_post_types();
+
+		if ( empty( $protected_post_types ) ) {
+			return $cwhere;
+		}
+
+		global $wpdb;
+
+		$placeholders = implode( ', ', array_fill( 0, count( $protected_post_types ), '%s' ) );
+
+		// Exclude comments whose parent post is of a protected post type via a subquery,
+		// independent of any table alias used by the feed query's own JOIN.
+		$cwhere .= $wpdb->prepare(
+			" AND {$wpdb->comments}.comment_post_ID NOT IN ( SELECT ID FROM {$wpdb->posts} WHERE post_type IN ( $placeholders ) )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$protected_post_types
+		);
+
+		return $cwhere;
 	}
 
 	/**

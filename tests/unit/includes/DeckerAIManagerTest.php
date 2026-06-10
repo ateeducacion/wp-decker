@@ -25,6 +25,13 @@ class DeckerAIManagerTest extends Decker_Test_Base {
 	private $editor_id;
 
 	/**
+	 * Last request body captured from the Gemini HTTP call.
+	 *
+	 * @var string
+	 */
+	private $captured_body = '';
+
+	/**
 	 * Set up before each test.
 	 */
 	public function set_up(): void {
@@ -230,5 +237,184 @@ class DeckerAIManagerTest extends Decker_Test_Base {
 				)
 			),
 		);
+	}
+
+	/**
+	 * Capture the outgoing request body, then return a successful response.
+	 *
+	 * @param false|array|WP_Error $preempt Whether to preempt the request.
+	 * @param array                $args Request arguments.
+	 * @param string               $url Request URL.
+	 * @return array
+	 */
+	public function capture_request_body( $preempt, $args, $_url ) {
+		$this->captured_body = isset( $args['body'] ) ? (string) $args['body'] : '';
+
+		return $this->mock_successful_gemini_response( $preempt, $args, $_url );
+	}
+
+	/**
+	 * Build an improve request with an arbitrary task context.
+	 *
+	 * @param array  $task_context Task context payload.
+	 * @param string $mode Rewrite mode key.
+	 * @return WP_REST_Request
+	 */
+	private function get_improve_request_with_context( array $task_context, $mode = 'improve_description' ) {
+		$request = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'mode'         => $mode,
+					'task_context' => $task_context,
+				)
+			)
+		);
+
+		return $request;
+	}
+
+	/**
+	 * Decode the captured request body and extract the generated prompt text.
+	 *
+	 * @return string
+	 */
+	private function get_captured_prompt() {
+		$decoded = json_decode( $this->captured_body, true );
+
+		return $decoded['contents'][0]['parts'][0]['text'];
+	}
+
+	/**
+	 * Lock the full set of "Label: value" context lines sent to Gemini.
+	 */
+	public function test_improve_description_sends_formatted_context_lines_to_gemini() {
+		add_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10, 3 );
+
+		$request  = $this->get_improve_request_with_context(
+			array(
+				'title'        => 'Original title',
+				'board'        => 'QA Board',
+				'stack'        => 'to-do',
+				'content_text' => 'Original task description.',
+				'content_html' => '<p>Original task description.</p>',
+			)
+		);
+		$response = rest_get_server()->dispatch( $request );
+
+		remove_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10 );
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$prompt = $this->get_captured_prompt();
+
+		$this->assertStringContainsString( 'Title: Original title', $prompt );
+		$this->assertStringContainsString( 'Board: QA Board', $prompt );
+		$this->assertStringContainsString( 'Stack: to-do', $prompt );
+		$this->assertStringContainsString( 'Labels: —', $prompt );
+		$this->assertStringContainsString( 'Assign to: —', $prompt );
+		$this->assertStringContainsString( 'Due Date: —', $prompt );
+		$this->assertStringContainsString( 'Maximum Priority: —', $prompt );
+		$this->assertStringContainsString( 'For today: —', $prompt );
+		$this->assertStringContainsString( 'Responsable: —', $prompt );
+	}
+
+	/**
+	 * Lock the wp_strip_all_tags fallback that derives content_text from content_html.
+	 */
+	public function test_improve_description_derives_content_text_from_html() {
+		add_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10, 3 );
+
+		$request  = $this->get_improve_request_with_context(
+			array(
+				'content_html' => '<p>Hello fallback</p>',
+			)
+		);
+		$response = rest_get_server()->dispatch( $request );
+
+		remove_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10 );
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$prompt = $this->get_captured_prompt();
+		$this->assertStringContainsString( '<p>Hello fallback</p>', $prompt );
+	}
+
+	/**
+	 * Lock the empty-content rejection.
+	 */
+	public function test_improve_description_rejects_empty_content_with_400() {
+		$request  = $this->get_improve_request_with_context(
+			array(
+				'content_text' => '',
+				'content_html' => '',
+			)
+		);
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertSame(
+			'Please add some text before using AI improvement.',
+			$response->get_data()['message']
+		);
+	}
+
+	/**
+	 * Lock the PHP-truthiness quirk where a '0' string renders as an em dash.
+	 */
+	public function test_improve_description_renders_zero_string_fields_as_em_dash() {
+		add_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10, 3 );
+
+		$request  = $this->get_improve_request_with_context(
+			array(
+				'title'        => '0',
+				'labels'       => '0',
+				'content_text' => 'Original task description.',
+				'content_html' => '<p>Original task description.</p>',
+			)
+		);
+		$response = rest_get_server()->dispatch( $request );
+
+		remove_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10 );
+
+		$this->assertEquals( 200, $response->get_status() );
+
+		$prompt = $this->get_captured_prompt();
+		$this->assertStringContainsString( 'Title: —', $prompt );
+		$this->assertStringNotContainsString( 'Title: 0', $prompt );
+	}
+
+	/**
+	 * Lock the mode prefix selection and its improve_description fallback.
+	 */
+	public function test_improve_description_uses_mode_prefix_with_fallback() {
+		add_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10, 3 );
+
+		$summarize  = $this->get_improve_request_with_context(
+			array(
+				'content_text' => 'Original task description.',
+				'content_html' => '<p>Original task description.</p>',
+			),
+			'summarize'
+		);
+		rest_get_server()->dispatch( $summarize );
+		$summarize_prompt = $this->get_captured_prompt();
+
+		$unknown = $this->get_improve_request_with_context(
+			array(
+				'content_text' => 'Original task description.',
+				'content_html' => '<p>Original task description.</p>',
+			),
+			'totally_unknown'
+		);
+		rest_get_server()->dispatch( $unknown );
+		$unknown_prompt = $this->get_captured_prompt();
+
+		remove_filter( 'pre_http_request', array( $this, 'capture_request_body' ), 10 );
+
+		$this->assertStringContainsString( 'Summarize the task description into 2-3 sentences', $summarize_prompt );
+		$this->assertStringContainsString( 'Rewrite the following task description', $unknown_prompt );
 	}
 }

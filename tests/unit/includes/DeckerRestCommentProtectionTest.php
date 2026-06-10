@@ -268,4 +268,34 @@ class DeckerRestCommentProtectionTest extends Decker_Test_Base {
         $this->assertEquals( 401, $response->get_status() );
         $this->assertSame( 'You are not authorized to access this resource.', $response->get_data()['message'] );
     }
+
+    /**
+     * The classic global comments feed must not leak comments from protected CPTs.
+     *
+     * This exercises the WP_Query comment-feed SQL path (served independently of REST)
+     * to ensure decker_task / decker_kb comments are excluded while normal post and
+     * page comments remain visible.
+     */
+    public function test_comments_feed_excludes_protected_cpt_comments() {
+        $feed_query = new WP_Query( array(
+            'feed'        => 'comments-rss2',
+            'withcomments' => 1,
+            'post_status' => 'publish',
+        ) );
+
+        $this->assertTrue( $feed_query->is_comment_feed() );
+
+        $feed_comment_ids = wp_list_pluck( (array) $feed_query->comments, 'comment_ID' );
+        $feed_comment_ids = array_map( 'intval', $feed_comment_ids );
+
+        // Public post and page comments remain visible in the feed.
+        $this->assertContains( (int) $this->public_comment_id, $feed_comment_ids );
+        $this->assertContains( (int) $this->page_comment_id, $feed_comment_ids );
+
+        // Protected CPT comments must be excluded.
+        $this->assertNotContains( (int) $this->task_comment_id, $feed_comment_ids );
+        $this->assertNotContains( (int) $this->kb_comment_id, $feed_comment_ids );
+
+        wp_reset_postdata();
+    }
 }

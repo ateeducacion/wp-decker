@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Decker 0.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-decker\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/decker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -48,13 +48,31 @@ msgstr ""
 msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
 msgstr ""
 
-msgid "Enable browser AI improvements for task descriptions."
+msgid "Enable AI improvements for task descriptions."
 msgstr ""
 
-msgid "When enabled, compatible browsers can use the built-in Prompt API to improve task descriptions directly in the editor."
+msgid "When enabled, users can improve task descriptions with either Gemini Nano in supported browsers or the Gemini API through the server."
 msgstr ""
 
-msgid "Customize the base prompt used for browser AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
+msgid "Gemini Nano (browser-based)"
+msgstr ""
+
+msgid "Gemini API (server-side)"
+msgstr ""
+
+msgid "Choose whether AI improvements run in the browser with Gemini Nano or through the Gemini API on the server."
+msgstr ""
+
+msgid "A Gemini API key is already stored. Leave this field empty to keep the current key."
+msgstr ""
+
+msgid "Paste a Gemini API key to enable server-side Gemini requests. The saved key is never shown again after saving."
+msgstr ""
+
+msgid "Optional Gemini model name for server-side requests. Leave the default unless you need a different compatible text-generation model."
+msgstr ""
+
+msgid "Customize the base prompt used for AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
 msgstr ""
 
 msgid "WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev)."
@@ -87,6 +105,9 @@ msgstr ""
 msgid "Decker Configuration"
 msgstr ""
 
+msgid "AI Configuration"
+msgstr ""
+
 msgid "Alert Color"
 msgstr ""
 
@@ -105,12 +126,6 @@ msgstr ""
 msgid "Collaborative Editing"
 msgstr ""
 
-msgid "Browser AI"
-msgstr ""
-
-msgid "AI Prompt"
-msgstr ""
-
 msgid "Signaling Server"
 msgstr ""
 
@@ -120,7 +135,25 @@ msgstr ""
 msgid "Ignored Users"
 msgstr ""
 
+msgid "AI Improvements"
+msgstr ""
+
+msgid "AI Provider"
+msgstr ""
+
+msgid "Gemini API Key"
+msgstr ""
+
+msgid "Gemini Model"
+msgstr ""
+
+msgid "AI Prompt"
+msgstr ""
+
 msgid "Configure the Decker plugin settings."
+msgstr ""
+
+msgid "Configure how Decker improves task descriptions with AI. Browser-based Gemini Nano keeps the text in the browser, while the Gemini API sends the prompt to Google through your WordPress server using the saved API key."
 msgstr ""
 
 msgid "Please enter comma-separated user IDs (numbers only)"
@@ -168,6 +201,95 @@ msgid "Enter comma-separated site IDs where Decker is permitted to be activated.
 msgstr ""
 
 msgid "No tasks found for this date."
+msgstr ""
+
+msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings."
+msgstr ""
+
+msgid "The Gemini API request failed. Please try again in a moment."
+msgstr ""
+
+msgid "The Gemini API key was rejected. Please ask an administrator to review the saved key."
+msgstr ""
+
+msgid "The Gemini API rate limit was reached. Please wait a moment and try again."
+msgstr ""
+
+msgid "The Gemini API took too long to respond. Please try again."
+msgstr ""
+
+msgid "The Gemini API returned an unexpected response. Please try again later."
+msgstr ""
+
+msgid "The Gemini API response could not be parsed."
+msgstr ""
+
+msgid "The Gemini API returned an empty response."
+msgstr ""
+
+msgid "You must be logged in to use AI improvements."
+msgstr ""
+
+msgid "Your session has expired. Please reload the page and try again."
+msgstr ""
+
+msgid "You do not have permission to use AI improvements."
+msgstr ""
+
+msgid "AI improvements are disabled in Decker settings."
+msgstr ""
+
+msgid "The configured AI provider uses the browser directly and does not need the server endpoint."
+msgstr ""
+
+msgid "Please add some text before using AI improvement."
+msgstr ""
+
+msgid "Rewrite the following task description to make it clearer, better structured, and more actionable. Preserve the original meaning, language, and important details. Do not add invented information. Return only the improved description."
+msgstr ""
+
+msgid "Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content."
+msgstr ""
+
+msgid "Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description."
+msgstr ""
+
+msgid "Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description."
+msgstr ""
+
+#. translators: %s: locale code such as es_ES.
+#, php-format
+msgid "Write the result in the language configured in WordPress (%s)."
+msgstr ""
+
+msgid "Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself."
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Board"
+msgstr ""
+
+msgid "Responsable"
+msgstr ""
+
+msgid "Assign to"
+msgstr ""
+
+msgid "Stack"
+msgstr ""
+
+msgid "Due Date"
+msgstr ""
+
+msgid "Labels"
+msgstr ""
+
+msgid "Maximum Priority"
+msgstr ""
+
+msgid "For today"
 msgstr ""
 
 msgid "Events"
@@ -239,7 +361,6 @@ msgstr ""
 msgid "This email was automatically sent by Decker"
 msgstr ""
 
-#. Translators: %s is a username.
 msgid "Unknown user"
 msgstr ""
 
@@ -432,19 +553,19 @@ msgstr ""
 msgid "Assigned Users"
 msgstr ""
 
+msgid "Start:"
+msgstr ""
+
+msgid "End:"
+msgstr ""
+
 msgid "All Day Event Event"
 msgstr ""
 
 msgid "End Date must be after Start Date."
 msgstr ""
 
-msgid "Start:"
-msgstr ""
-
 msgid "Time is stored in UTC. Adjust accordingly."
-msgstr ""
-
-msgid "End:"
 msgstr ""
 
 msgid "Location:"
@@ -489,16 +610,19 @@ msgstr ""
 msgid "Board is required"
 msgstr ""
 
-msgid "Invalid board ID"
-msgstr ""
-
 msgid "Article saved successfully"
 msgstr ""
 
-msgid "Invalid moved ID."
+msgid "Article not found"
 msgstr ""
 
-msgid "Article not found"
+msgid "You do not have permission to edit this article"
+msgstr ""
+
+msgid "Invalid board ID"
+msgstr ""
+
+msgid "Invalid moved ID."
 msgstr ""
 
 msgctxt "post type general name"
@@ -580,12 +704,6 @@ msgid "Add New Label"
 msgstr ""
 
 msgid "New Label Name"
-msgstr ""
-
-msgid "Labels"
-msgstr ""
-
-msgid "Stack"
 msgstr ""
 
 msgid "Task not found."
@@ -711,19 +829,10 @@ msgstr ""
 msgid "Attachments"
 msgstr ""
 
-msgid "Board"
-msgstr ""
-
-msgid "Due Date"
-msgstr ""
-
 msgid "Max Priority"
 msgstr ""
 
 msgid "Nextcloud Card ID"
-msgstr ""
-
-msgid "Responsable"
 msgstr ""
 
 msgid "Hidden"
@@ -888,6 +997,26 @@ msgstr ""
 msgid "Order:"
 msgstr ""
 
+#. translators: %d is the number of comments on the task.
+#, php-format
+msgid "%d comment"
+msgid_plural "%d comments"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Loading comments…"
+msgstr ""
+
+#. translators: %d is the number of labels on the task.
+#, php-format
+msgid "%d label"
+msgid_plural "%d labels"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Close"
+msgstr ""
+
 msgid "Copy Task URL"
 msgstr ""
 
@@ -978,9 +1107,6 @@ msgstr ""
 msgid "Alert"
 msgstr ""
 
-msgid "Title"
-msgstr ""
-
 msgid "All Day"
 msgstr ""
 
@@ -1010,13 +1136,16 @@ msgstr ""
 msgid "Fix Order"
 msgstr ""
 
+msgid "Author"
+msgstr ""
+
+msgid "Last editor"
+msgstr ""
+
 msgid "All Articles"
 msgstr ""
 
 msgid "Tags"
-msgstr ""
-
-msgid "Author"
 msgstr ""
 
 msgid "Excerpt"
@@ -1026,6 +1155,12 @@ msgid "Updated"
 msgstr ""
 
 msgid "Content"
+msgstr ""
+
+msgid "Comments"
+msgstr ""
+
+msgid "History"
 msgstr ""
 
 msgid "Search articles..."
@@ -1074,9 +1209,6 @@ msgid "You have no tasks defined for today. Do you want to import tasks from a p
 msgstr ""
 
 msgid "Yes"
-msgstr ""
-
-msgid "Close"
 msgstr ""
 
 msgid "MAX PRIORITY"
@@ -1137,6 +1269,9 @@ msgid "People"
 msgstr ""
 
 msgid "Remaining Time"
+msgstr ""
+
+msgid "You do not have permission to perform this action."
 msgstr ""
 
 msgid "Name"
@@ -1334,10 +1469,24 @@ msgstr ""
 msgid "Could not copy URL. Please copy it manually:"
 msgstr ""
 
+msgid "No comments yet."
+msgstr ""
+
+msgid "Could not load comments."
+msgstr ""
+
+#. translators: %d is the number of additional comments not shown in the popover preview.
+#, php-format
+msgid "and %d more"
+msgstr ""
+
 msgid "Loading content. Please wait."
 msgstr ""
 
 msgid "Error loading content. Please try again."
+msgstr ""
+
+msgid "Delete notification"
 msgstr ""
 
 msgid "Search tasks..."
@@ -1400,9 +1549,6 @@ msgstr ""
 msgid "No content"
 msgstr ""
 
-msgid "Please add some text before using AI improvement."
-msgstr ""
-
 msgid "Browser AI unavailable"
 msgstr ""
 
@@ -1430,41 +1576,15 @@ msgstr ""
 msgid "The browser AI response was empty."
 msgstr ""
 
+msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it."
+msgstr ""
+
 msgctxt "AI task context boolean value"
 msgid "Yes"
 msgstr ""
 
 msgctxt "AI task context boolean value"
 msgid "No"
-msgstr ""
-
-msgid "Rewrite the task description so it is clear, well-structured, and easy to execute. Fix grammar and spelling. Use the task context only when it helps write a better description. Return only the final task description content."
-msgstr ""
-
-msgid "Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content."
-msgstr ""
-
-msgid "Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description."
-msgstr ""
-
-msgid "Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description."
-msgstr ""
-
-#. translators: %s: locale code such as es_ES.
-#, php-format
-msgid "Write the result in the language configured in WordPress (%s)."
-msgstr ""
-
-msgid "Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself."
-msgstr ""
-
-msgid "Assign to"
-msgstr ""
-
-msgid "Maximum Priority"
-msgstr ""
-
-msgid "For today"
 msgstr ""
 
 msgid "Connecting..."
@@ -1528,6 +1648,15 @@ msgid "Please provide a title."
 msgstr ""
 
 msgid "Save Article"
+msgstr ""
+
+msgid "Write your comment..."
+msgstr ""
+
+msgid "Please enter a comment."
+msgstr ""
+
+msgid "Comment"
 msgstr ""
 
 msgid "Show Full Sidebar"
@@ -1647,31 +1776,13 @@ msgstr ""
 msgid "Please select a due date."
 msgstr ""
 
-msgid "Comments"
-msgstr ""
-
-msgid "History"
-msgstr ""
-
 msgid "Gantt"
 msgstr ""
 
 msgid "Information"
 msgstr ""
 
-msgid "No comments yet."
-msgstr ""
-
 msgid "Replying to"
-msgstr ""
-
-msgid "Write your comment..."
-msgstr ""
-
-msgid "Please enter a comment."
-msgstr ""
-
-msgid "Comment"
 msgstr ""
 
 msgid "Upload"
@@ -1720,26 +1831,4 @@ msgid "Help"
 msgstr ""
 
 msgid "Logout"
-msgstr ""
-
-#, php-format
-msgid "%d comment"
-msgid_plural "%d comments"
-msgstr[0] ""
-msgstr[1] ""
-
-#, php-format
-msgid "%d label"
-msgid_plural "%d labels"
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "Loading comments…"
-msgstr ""
-
-msgid "Could not load comments."
-msgstr ""
-
-#, php-format
-msgid "and %d more"
 msgstr ""

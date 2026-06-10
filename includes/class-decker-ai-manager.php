@@ -354,29 +354,62 @@ class Decker_AI_Manager {
 	private function sanitize_task_context( $task_context ) {
 		$task_context = is_array( $task_context ) ? $task_context : array();
 
-		$sanitized = array(
-			'title'        => isset( $task_context['title'] ) ? sanitize_text_field( $task_context['title'] ) : '',
-			'board'        => isset( $task_context['board'] ) ? sanitize_text_field( $task_context['board'] ) : '',
-			'responsible'  => isset( $task_context['responsible'] ) ? sanitize_text_field( $task_context['responsible'] ) : '',
-			'assignees'    => isset( $task_context['assignees'] ) ? sanitize_text_field( $task_context['assignees'] ) : '',
-			'stack'        => isset( $task_context['stack'] ) ? sanitize_text_field( $task_context['stack'] ) : '',
-			'due_date'     => isset( $task_context['due_date'] ) ? sanitize_text_field( $task_context['due_date'] ) : '',
-			'labels'       => isset( $task_context['labels'] ) ? sanitize_text_field( $task_context['labels'] ) : '',
-			'max_priority' => isset( $task_context['max_priority'] ) ? sanitize_text_field( $task_context['max_priority'] ) : '',
-			'today'        => isset( $task_context['today'] ) ? sanitize_text_field( $task_context['today'] ) : '',
+		return array_merge(
+			$this->sanitize_context_fields( $task_context ),
+			$this->sanitize_context_content( $task_context )
+		);
+	}
+
+	/**
+	 * Sanitize the scalar task-context fields with sanitize_text_field().
+	 *
+	 * @param array $task_context Raw task context.
+	 * @return array Sanitized scalar fields, in their canonical order.
+	 */
+	private function sanitize_context_fields( array $task_context ) {
+		$fields = array(
+			'title',
+			'board',
+			'responsible',
+			'assignees',
+			'stack',
+			'due_date',
+			'labels',
+			'max_priority',
+			'today',
+		);
+
+		$sanitized = array();
+		foreach ( $fields as $field ) {
+			$sanitized[ $field ] = isset( $task_context[ $field ] )
+				? sanitize_text_field( $task_context[ $field ] )
+				: '';
+		}
+
+		return $sanitized;
+	}
+
+	/**
+	 * Sanitize the content fields and apply the html/text fallbacks.
+	 *
+	 * @param array $task_context Raw task context.
+	 * @return array The content_html and content_text fields.
+	 */
+	private function sanitize_context_content( array $task_context ) {
+		$content = array(
 			'content_html' => isset( $task_context['content_html'] ) ? wp_kses_post( $task_context['content_html'] ) : '',
 			'content_text' => isset( $task_context['content_text'] ) ? sanitize_textarea_field( $task_context['content_text'] ) : '',
 		);
 
-		if ( '' === $sanitized['content_text'] ) {
-			$sanitized['content_text'] = wp_strip_all_tags( $sanitized['content_html'] );
+		if ( '' === $content['content_text'] ) {
+			$content['content_text'] = wp_strip_all_tags( $content['content_html'] );
 		}
 
-		if ( '' === $sanitized['content_html'] && '' !== $sanitized['content_text'] ) {
-			$sanitized['content_html'] = '<p>' . esc_html( $sanitized['content_text'] ) . '</p>';
+		if ( '' === $content['content_html'] && '' !== $content['content_text'] ) {
+			$content['content_html'] = '<p>' . esc_html( $content['content_text'] ) . '</p>';
 		}
 
-		return $sanitized;
+		return $content;
 	}
 
 	/**
@@ -388,20 +421,34 @@ class Decker_AI_Manager {
 	 */
 	private function format_task_context( $task_context, $prompts ) {
 		$empty_value = '—';
+		$line_labels = $this->get_context_line_labels( $prompts );
 
-		return implode(
-			"\n",
-			array(
-				$prompts['context_title'] . ': ' . ( $task_context['title'] ? $task_context['title'] : $empty_value ),
-				$prompts['context_board'] . ': ' . ( $task_context['board'] ? $task_context['board'] : $empty_value ),
-				$prompts['context_responsible'] . ': ' . ( $task_context['responsible'] ? $task_context['responsible'] : $empty_value ),
-				$prompts['context_assignees'] . ': ' . ( $task_context['assignees'] ? $task_context['assignees'] : $empty_value ),
-				$prompts['context_stack'] . ': ' . ( $task_context['stack'] ? $task_context['stack'] : $empty_value ),
-				$prompts['context_due_date'] . ': ' . ( $task_context['due_date'] ? $task_context['due_date'] : $empty_value ),
-				$prompts['context_labels'] . ': ' . ( $task_context['labels'] ? $task_context['labels'] : $empty_value ),
-				$prompts['context_max_priority'] . ': ' . ( $task_context['max_priority'] ? $task_context['max_priority'] : $empty_value ),
-				$prompts['context_today'] . ': ' . ( $task_context['today'] ? $task_context['today'] : $empty_value ),
-			)
+		$lines = array();
+		foreach ( $line_labels as $field => $label ) {
+			$value   = $task_context[ $field ];
+			$lines[] = $label . ': ' . ( $value ? $value : $empty_value );
+		}
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * Maps each task-context field to its prompt label, in output order.
+	 *
+	 * @param array $prompts Prompt labels.
+	 * @return array Map of context field => prompt label.
+	 */
+	private function get_context_line_labels( array $prompts ) {
+		return array(
+			'title'        => $prompts['context_title'],
+			'board'        => $prompts['context_board'],
+			'responsible'  => $prompts['context_responsible'],
+			'assignees'    => $prompts['context_assignees'],
+			'stack'        => $prompts['context_stack'],
+			'due_date'     => $prompts['context_due_date'],
+			'labels'       => $prompts['context_labels'],
+			'max_priority' => $prompts['context_max_priority'],
+			'today'        => $prompts['context_today'],
 		);
 	}
 

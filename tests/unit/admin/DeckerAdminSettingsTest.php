@@ -574,6 +574,236 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$this->assertEmpty( $terms, 'Terms should be deleted.' );
 	}
 
+	/**
+	 * Lock-in: non-array input is coerced to an empty array and every field
+	 * falls back to its documented default.
+	 */
+	public function test_settings_validate_non_array_input_returns_full_defaults() {
+		foreach ( array( 'not-an-array', null ) as $bad_input ) {
+			$validated = $this->admin_settings->settings_validate( $bad_input );
+
+			$this->assertEquals( '', $validated['shared_key'] );
+			$this->assertEquals( '0', $validated['allow_email_notifications'] );
+			$this->assertEquals( '0', $validated['collaborative_editing'] );
+			$this->assertEquals( '0', $validated['ai_enabled'] );
+			$this->assertEquals( Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO, $validated['ai_provider'] );
+			$this->assertEquals( '', $validated['ai_api_key'] );
+			$this->assertEquals( Decker_AI_Manager::DEFAULT_GEMINI_MODEL, $validated['ai_model'] );
+			$this->assertEquals( Decker::get_default_ai_prompt_template(), $validated['ai_prompt'] );
+			$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
+			$this->assertEquals( 'info', $validated['alert_color'] );
+			$this->assertEquals( 'editor', $validated['minimum_user_profile'] );
+			$this->assertEquals( '', $validated['alert_message'] );
+			$this->assertEquals( '', $validated['ignored_users'] );
+		}
+	}
+
+	/**
+	 * Lock-in: the persisted insertion order of the validated keys must not change.
+	 */
+	public function test_settings_validate_output_key_order_locked() {
+		$validated = $this->admin_settings->settings_validate( array() );
+
+		$this->assertEquals(
+			array(
+				'shared_key',
+				'allow_email_notifications',
+				'collaborative_editing',
+				'ai_enabled',
+				'ai_provider',
+				'ai_api_key',
+				'ai_model',
+				'ai_prompt',
+				'signaling_server',
+				'alert_color',
+				'minimum_user_profile',
+				'alert_message',
+				'ignored_users',
+			),
+			array_keys( $validated )
+		);
+	}
+
+	/**
+	 * Lock-in: unknown keys pass through untouched (only legacy openai_* are removed).
+	 */
+	public function test_settings_validate_preserves_unknown_passthrough_keys() {
+		$input = array(
+			'future_setting' => 'keep-me',
+			'shared_key'     => 'k',
+		);
+
+		$validated = $this->admin_settings->settings_validate( $input );
+
+		$this->assertEquals( 'keep-me', $validated['future_setting'] );
+	}
+
+	/**
+	 * Lock-in: allow_email_notifications uses a strict '1' === comparison.
+	 */
+	public function test_settings_validate_allow_email_notifications_strict_one() {
+		$this->assertEquals(
+			'1',
+			$this->admin_settings->settings_validate( array( 'allow_email_notifications' => '1' ) )['allow_email_notifications']
+		);
+		$this->assertEquals(
+			'0',
+			$this->admin_settings->settings_validate( array( 'allow_email_notifications' => 'yes' ) )['allow_email_notifications']
+		);
+		$this->assertEquals(
+			'0',
+			$this->admin_settings->settings_validate( array() )['allow_email_notifications']
+		);
+	}
+
+	/**
+	 * Lock-in: a whitespace-only ai_api_key keeps the previously stored key.
+	 */
+	public function test_settings_validate_ai_api_key_whitespace_only_keeps_stored_key() {
+		update_option( 'decker_settings', array( 'ai_api_key' => 'existing-key' ) );
+
+		$validated = $this->admin_settings->settings_validate( array( 'ai_api_key' => '   ' ) );
+
+		$this->assertEquals( 'existing-key', $validated['ai_api_key'] );
+	}
+
+	/**
+	 * Lock-in: a new ai_api_key is run through Decker_AI_Manager::sanitize_api_key.
+	 */
+	public function test_settings_validate_ai_api_key_strips_whitespace_from_new_key() {
+		$validated = $this->admin_settings->settings_validate( array( 'ai_api_key' => "abc def\t123" ) );
+
+		$this->assertEquals( 'abcdef123', $validated['ai_api_key'] );
+	}
+
+	/**
+	 * Lock-in: with no stored key an empty ai_api_key falls back to '' (string).
+	 */
+	public function test_settings_validate_ai_api_key_empty_when_no_stored_key() {
+		$validated = $this->admin_settings->settings_validate( array( 'ai_api_key' => '' ) );
+
+		$this->assertSame( '', $validated['ai_api_key'] );
+	}
+
+	/**
+	 * Lock-in: a whitespace-only ai_model falls back to the default Gemini model.
+	 */
+	public function test_settings_validate_ai_model_whitespace_only_defaults() {
+		$validated = $this->admin_settings->settings_validate( array( 'ai_model' => '   ' ) );
+
+		$this->assertEquals( Decker_AI_Manager::DEFAULT_GEMINI_MODEL, $validated['ai_model'] );
+	}
+
+	/**
+	 * Lock-in: a whitespace-only ai_prompt falls back to the default template.
+	 */
+	public function test_settings_validate_ai_prompt_whitespace_only_defaults() {
+		$validated = $this->admin_settings->settings_validate( array( 'ai_prompt' => "  \n  " ) );
+
+		$this->assertEquals( Decker::get_default_ai_prompt_template(), $validated['ai_prompt'] );
+	}
+
+	/**
+	 * Lock-in: a disallowed protocol yields '' (not the default server).
+	 */
+	public function test_settings_validate_signaling_server_disallowed_protocol_becomes_empty() {
+		$validated = $this->admin_settings->settings_validate( array( 'signaling_server' => 'ftp://example.com' ) );
+
+		$this->assertSame( '', $validated['signaling_server'] );
+	}
+
+	/**
+	 * Lock-in: missing alert_color / minimum_user_profile keys take their defaults.
+	 */
+	public function test_settings_validate_alert_color_and_profile_missing_keys_default() {
+		$validated = $this->admin_settings->settings_validate( array() );
+
+		$this->assertEquals( 'info', $validated['alert_color'] );
+		$this->assertEquals( 'editor', $validated['minimum_user_profile'] );
+	}
+
+	/**
+	 * Lock-in: alert_message is filtered through wp_kses_post.
+	 */
+	public function test_settings_validate_alert_message_runs_wp_kses_post() {
+		$validated = $this->admin_settings->settings_validate(
+			array( 'alert_message' => '<script>alert(1)</script><strong>ok</strong>' )
+		);
+
+		$this->assertEquals( 'alert(1)<strong>ok</strong>', $validated['alert_message'] );
+		$this->assertEquals( '', $this->admin_settings->settings_validate( array() )['alert_message'] );
+	}
+
+	/**
+	 * Lock-in: a set-but-empty '0' ignored_users passes through and sets no transient.
+	 */
+	public function test_settings_validate_ignored_users_zero_string_passes_through() {
+		$validated = $this->admin_settings->settings_validate( array( 'ignored_users' => '0' ) );
+
+		$this->assertSame( '0', $validated['ignored_users'] );
+		$this->assertFalse( get_transient( 'decker_invalid_user_ids' ) );
+	}
+
+	/**
+	 * Lock-in: all-invalid ignored_users empties the value and stores the transient.
+	 */
+	public function test_settings_validate_ignored_users_all_invalid_sets_transient_and_empties() {
+		$validated = $this->admin_settings->settings_validate( array( 'ignored_users' => '999999,888888' ) );
+
+		$this->assertSame( '', $validated['ignored_users'] );
+		$this->assertEquals( array( '999999', '888888' ), get_transient( 'decker_invalid_user_ids' ) );
+	}
+
+	/**
+	 * Lock-in: valid ignored_users IDs do not set the invalid-IDs transient.
+	 */
+	public function test_settings_validate_ignored_users_valid_ids_do_not_set_transient() {
+		$user1_id = $this->factory->user->create();
+		$user2_id = $this->factory->user->create();
+
+		$this->admin_settings->settings_validate( array( 'ignored_users' => "{$user1_id},{$user2_id}" ) );
+
+		$this->assertFalse( get_transient( 'decker_invalid_user_ids' ) );
+	}
+
+	/**
+	 * Lock-in: ignored_users entries are trimmed before validation.
+	 */
+	public function test_settings_validate_ignored_users_trims_entries() {
+		$user1_id = $this->factory->user->create();
+		$user2_id = $this->factory->user->create();
+
+		$validated = $this->admin_settings->settings_validate(
+			array( 'ignored_users' => " {$user1_id} , {$user2_id} " )
+		);
+
+		$this->assertEquals( "{$user1_id},{$user2_id}", $validated['ignored_users'] );
+	}
+
+	/**
+	 * Lock-in: the sanitize callback never writes the decker_settings option itself.
+	 */
+	public function test_settings_validate_has_no_option_write_side_effect() {
+		$input = array(
+			'shared_key'           => 'validkey123!',
+			'allow_email_notifications' => '1',
+			'collaborative_editing' => '1',
+			'ai_enabled'           => '1',
+			'ai_provider'          => 'gemini_api',
+			'ai_api_key'           => 'a-key',
+			'ai_model'             => 'gemini-2.5-flash',
+			'ai_prompt'            => 'Prompt',
+			'signaling_server'     => 'wss://example.com',
+			'alert_color'          => 'success',
+			'minimum_user_profile' => 'editor',
+			'alert_message'        => 'Hi',
+			'ignored_users'        => '',
+		);
+
+		$this->admin_settings->settings_validate( $input );
+
+		$this->assertFalse( get_option( 'decker_settings' ) );
+	}
 
 	/**
 	 * Clean up after each test.
@@ -582,6 +812,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		parent::tear_down();
 		// Reset any global variables or options if necessary.
 		delete_option( 'decker_settings' );
+		delete_transient( 'decker_invalid_user_ids' );
 	}
 }
 

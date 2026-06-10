@@ -98,56 +98,56 @@ class Decker_Demo_Data {
 			// Board 1: Visible in both Boards and KB.
 			array(
 				'name' => 'Project Alpha',
-				'show_in_boards' => true,
-				'show_in_kb' => true,
+				'show_in_boards' => '1',
+				'show_in_kb' => '1',
 			),
 			// Board 2: Visible only in Boards.
 			array(
 				'name' => 'Marketing Campaign Q1 2024',
-				'show_in_boards' => true,
-				'show_in_kb' => false,
+				'show_in_boards' => '1',
+				'show_in_kb' => '0',
 			),
 			// Board 3: Visible only in KB.
 			array(
 				'name' => 'Dev',
-				'show_in_boards' => false,
-				'show_in_kb' => true,
+				'show_in_boards' => '0',
+				'show_in_kb' => '1',
 			),
 			// Board 4: Not visible in either (hidden).
 			array(
 				'name' => 'Customer Support and Success Team',
-				'show_in_boards' => false,
-				'show_in_kb' => false,
+				'show_in_boards' => '0',
+				'show_in_kb' => '0',
 			),
 			// Board 5: Visible in both.
 			array(
 				'name' => 'HR',
-				'show_in_boards' => true,
-				'show_in_kb' => true,
+				'show_in_boards' => '1',
+				'show_in_kb' => '1',
 			),
 			// Board 6: Visible in both.
 			array(
 				'name' => 'Infrastructure and DevOps',
-				'show_in_boards' => true,
-				'show_in_kb' => true,
+				'show_in_boards' => '1',
+				'show_in_kb' => '1',
 			),
 			// Board 7: Visible only in Boards.
 			array(
 				'name' => 'Research',
-				'show_in_boards' => true,
-				'show_in_kb' => false,
+				'show_in_boards' => '1',
+				'show_in_kb' => '0',
 			),
 			// Board 8: Visible only in KB.
 			array(
 				'name' => 'Quality Assurance and Testing',
-				'show_in_boards' => false,
-				'show_in_kb' => true,
+				'show_in_boards' => '0',
+				'show_in_kb' => '1',
 			),
 			// Board 9: Visible in both.
 			array(
 				'name' => 'Sales',
-				'show_in_boards' => true,
-				'show_in_kb' => true,
+				'show_in_boards' => '1',
+				'show_in_kb' => '1',
 			),
 		);
 
@@ -162,8 +162,8 @@ class Decker_Demo_Data {
 			$existing_term = term_exists( $term_slug, 'decker_board' );
 			if ( $existing_term ) {
 				// Update visibility settings for existing board.
-				update_term_meta( $existing_term['term_id'], 'term-show-in-boards', $show_in_boards ? '1' : '0' );
-				update_term_meta( $existing_term['term_id'], 'term-show-in-kb', $show_in_kb ? '1' : '0' );
+				update_term_meta( $existing_term['term_id'], 'term-show-in-boards', $show_in_boards );
+				update_term_meta( $existing_term['term_id'], 'term-show-in-kb', $show_in_kb );
 				$boards[] = $existing_term['term_id'];
 				continue;
 			}
@@ -178,8 +178,8 @@ class Decker_Demo_Data {
 
 			if ( ! is_wp_error( $term ) ) {
 				add_term_meta( $term['term_id'], 'term-color', $term_color, true );
-				add_term_meta( $term['term_id'], 'term-show-in-boards', $show_in_boards ? '1' : '0', true );
-				add_term_meta( $term['term_id'], 'term-show-in-kb', $show_in_kb ? '1' : '0', true );
+				add_term_meta( $term['term_id'], 'term-show-in-boards', $show_in_boards, true );
+				add_term_meta( $term['term_id'], 'term-show-in-kb', $show_in_kb, true );
 				$boards[] = $term['term_id'];
 			}
 		}
@@ -192,11 +192,7 @@ class Decker_Demo_Data {
 	 * @param array $labels Array of label term IDs.
 	 */
 	private function create_kb_articles( $labels ) {
-		$lorem_ipsum = array(
-			'short' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-			'medium' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-			'long' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-		);
+		$lorem_ipsum = $this->get_kb_demo_lorem();
 
 		// Get boards that are visible in KB.
 		$kb_boards = get_terms(
@@ -217,170 +213,147 @@ class Decker_Demo_Data {
 			return;
 		}
 
-			// Create main categories; include deeper hierarchy for demo (3+ levels).
-			$categories = array(
-				'Getting Started' => array(
-					'Introduction' => $lorem_ipsum['medium'],
-					'Quick Start Guide' => $lorem_ipsum['long'],
-					'Basic Concepts' => $lorem_ipsum['medium'],
-				),
-				'User Guide' => array(
-					'Dashboard Overview' => $lorem_ipsum['medium'],
-					'Managing Tasks' => array(
-						'Creating Tasks' => $lorem_ipsum['short'],
-						'Editing Tasks' => array(
-							'Basic Edits' => $lorem_ipsum['medium'],
-							'Advanced Edits' => array(
-								'Keyboard Shortcuts' => $lorem_ipsum['short'],
-								'Bulk Changes' => $lorem_ipsum['short'],
-							),
-						),
-						'Deleting Tasks' => $lorem_ipsum['short'],
-					),
-					'Working with Boards' => array(
-						'Board Setup' => $lorem_ipsum['medium'],
-						'Managing Columns' => $lorem_ipsum['long'],
-					),
-				),
-				'Advanced Features' => array(
-					'API Integration' => array(
-						'Authentication' => $lorem_ipsum['medium'],
-						'Endpoints' => array(
-							'GET /tasks' => $lorem_ipsum['short'],
-							'POST /tasks' => $lorem_ipsum['short'],
-						),
-					),
-					'Custom Workflows' => $lorem_ipsum['medium'],
-					'Automation Rules' => $lorem_ipsum['medium'],
-				),
-			);
+		// Create main categories; include deeper hierarchy for demo (3+ levels).
+		$categories = $this->get_kb_demo_categories( $lorem_ipsum );
 
-			// Create articles for each KB-visible board.
-			foreach ( $kb_boards as $board_term ) {
-				// For each board, create a set of articles.
-				foreach ( $categories as $main_title => $subcategories ) {
-					// Create main category article (no board suffix in title).
-					$main_post_id = wp_insert_post(
-						array(
-							'post_type' => 'decker_kb',
-							'post_title' => $main_title,
-							'post_content' => $lorem_ipsum['short'],
-							'post_status' => 'publish',
-							'menu_order' => 0,
-						)
-					);
+		// Create articles for each KB-visible board.
+		foreach ( $kb_boards as $board_term ) {
+			// For each board, create a set of articles.
+			foreach ( $categories as $main_title => $subcategories ) {
+				// Create main category article (no board suffix in title).
+				$main_post_id = $this->insert_kb_article( $main_title, $lorem_ipsum['short'], 0, 0, $board_term->term_id, $labels );
 
-					// Assign random labels (1-2) to main category.
-					$main_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-					wp_set_object_terms( $main_post_id, $main_labels, 'decker_label' );
-
-					// Assign the board.
-					wp_set_object_terms( $main_post_id, array( $board_term->term_id ), 'decker_board' );
-
-					$order = 0;
-					foreach ( $subcategories as $sub_title => $content ) {
-						if ( is_array( $content ) ) {
-							// This is a subcategory with its own children.
-							$sub_post_id = wp_insert_post(
-								array(
-									'post_type' => 'decker_kb',
-									'post_title' => $sub_title,
-									'post_content' => $lorem_ipsum['medium'],
-									'post_status' => 'publish',
-									'post_parent' => $main_post_id,
-									'menu_order' => $order,
-								)
-							);
-
-							// Assign random labels to subcategory.
-							$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-							wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-
-							// Assign the same board as parent.
-							wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
-
-							$sub_order = 0;
-							foreach ( $content as $child_title => $child_content ) {
-								if ( is_array( $child_content ) ) {
-									// Child branch with grandchildren.
-									$child_post_id = wp_insert_post(
-										array(
-											'post_type'    => 'decker_kb',
-											'post_title'   => $child_title,
-											'post_content' => $lorem_ipsum['medium'],
-											'post_status'  => 'publish',
-											'post_parent'  => $sub_post_id,
-											'menu_order'   => $sub_order,
-										)
-									);
-
-									$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-									wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
-									wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
-
-									$gg_order = 0;
-									foreach ( $child_content as $g_title => $g_content ) {
-												$gc_post_id = wp_insert_post(
-													array(
-														'post_type'    => 'decker_kb',
-														'post_title'   => $g_title,
-														'post_content' => is_array( $g_content ) ? $lorem_ipsum['short'] : $g_content,
-														'post_status'  => 'publish',
-														'post_parent'  => $child_post_id,
-														'menu_order'   => $gg_order,
-													)
-												);
-												$gc_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-												wp_set_object_terms( $gc_post_id, $gc_labels, 'decker_label' );
-												wp_set_object_terms( $gc_post_id, array( $board_term->term_id ), 'decker_board' );
-												$gg_order++;
-									}
-									$sub_order++;
-								} else {
-									// Leaf child.
-									$child_post_id = wp_insert_post(
-										array(
-											'post_type'    => 'decker_kb',
-											'post_title'   => $child_title,
-											'post_content' => $child_content,
-											'post_status'  => 'publish',
-											'post_parent'  => $sub_post_id,
-											'menu_order'   => $sub_order,
-										)
-									);
-
-									// Assign random labels to child and same board.
-									$child_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-									wp_set_object_terms( $child_post_id, $child_labels, 'decker_label' );
-									wp_set_object_terms( $child_post_id, array( $board_term->term_id ), 'decker_board' );
-
-									$sub_order++;
-								}
-							}
-						} else {
-							// This is a direct subcategory.
-							$sub_post_id = wp_insert_post(
-								array(
-									'post_type' => 'decker_kb',
-									'post_title' => $sub_title,
-									'post_content' => $content,
-									'post_status' => 'publish',
-									'post_parent' => $main_post_id,
-									'menu_order' => $order,
-								)
-							);
-
-							// Assign random labels to subcategory.
-							$sub_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
-							wp_set_object_terms( $sub_post_id, $sub_labels, 'decker_label' );
-
-							// Assign the same board as parent.
-							wp_set_object_terms( $sub_post_id, array( $board_term->term_id ), 'decker_board' );
-						}
-						$order++;
-					}
-				}
+				// Create the subcategory subtree under this root.
+				$this->create_kb_subtree( $subcategories, $main_post_id, 1, $board_term->term_id, $lorem_ipsum, $labels );
 			}
+		}
+	}
+
+	/**
+	 * Returns the lorem ipsum strings used for KB demo content.
+	 *
+	 * @return array Associative array with short/medium/long keys.
+	 */
+	private function get_kb_demo_lorem() {
+		return array(
+			'short' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+			'medium' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
+			'long' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+		);
+	}
+
+	/**
+	 * Returns the nested KB demo category tree.
+	 *
+	 * @param array $lorem Lorem ipsum strings keyed short/medium/long.
+	 * @return array Nested category tree (title => content|subtree).
+	 */
+	private function get_kb_demo_categories( $lorem ) {
+		return array(
+			'Getting Started' => array(
+				'Introduction' => $lorem['medium'],
+				'Quick Start Guide' => $lorem['long'],
+				'Basic Concepts' => $lorem['medium'],
+			),
+			'User Guide' => array(
+				'Dashboard Overview' => $lorem['medium'],
+				'Managing Tasks' => array(
+					'Creating Tasks' => $lorem['short'],
+					'Editing Tasks' => array(
+						'Basic Edits' => $lorem['medium'],
+						'Advanced Edits' => array(
+							'Keyboard Shortcuts' => $lorem['short'],
+							'Bulk Changes' => $lorem['short'],
+						),
+					),
+					'Deleting Tasks' => $lorem['short'],
+				),
+				'Working with Boards' => array(
+					'Board Setup' => $lorem['medium'],
+					'Managing Columns' => $lorem['long'],
+				),
+			),
+			'Advanced Features' => array(
+				'API Integration' => array(
+					'Authentication' => $lorem['medium'],
+					'Endpoints' => array(
+						'GET /tasks' => $lorem['short'],
+						'POST /tasks' => $lorem['short'],
+					),
+				),
+				'Custom Workflows' => $lorem['medium'],
+				'Automation Rules' => $lorem['medium'],
+			),
+		);
+	}
+
+	/**
+	 * Inserts a single KB article and assigns its labels and board.
+	 *
+	 * Side-effect order is preserved: post insert, then label terms, then board term.
+	 *
+	 * @param string $title         Article title.
+	 * @param string $content       Article content.
+	 * @param int    $parent_id     Parent post ID (0 for roots).
+	 * @param int    $menu_order    Menu order for the article.
+	 * @param int    $board_term_id Board term ID to assign.
+	 * @param array  $labels        Array of label term IDs to draw from.
+	 * @return int The created post ID.
+	 */
+	private function insert_kb_article( $title, $content, $parent_id, $menu_order, $board_term_id, $labels ) {
+		$post_id = wp_insert_post(
+			array(
+				'post_type' => 'decker_kb',
+				'post_title' => $title,
+				'post_content' => $content,
+				'post_status' => 'publish',
+				'post_parent' => $parent_id,
+				'menu_order' => $menu_order,
+			)
+		);
+
+		// Assign random labels (1-2) to the article.
+		$article_labels = $this->wp_rand_elements( $labels, $this->custom_rand( 1, 2 ) );
+		wp_set_object_terms( $post_id, $article_labels, 'decker_label' );
+
+		// Assign the board.
+		wp_set_object_terms( $post_id, array( $board_term_id ), 'decker_board' );
+
+		return $post_id;
+	}
+
+	/**
+	 * Recursively creates the KB subtree below a parent article.
+	 *
+	 * Reproduces the demo hierarchy rules: branch nodes use medium lorem and
+	 * recurse, leaf nodes keep their own content, and depth-3 nodes are always
+	 * inserted as leaves (an array grandchild collapses to short lorem and its
+	 * children are dropped). Siblings are ordered sequentially at every level.
+	 *
+	 * @param array $nodes         Title => content|subtree map for this level.
+	 * @param int   $parent_id     Parent post ID.
+	 * @param int   $depth         Current depth (root children start at 1).
+	 * @param int   $board_term_id Board term ID to assign.
+	 * @param array $lorem         Lorem ipsum strings keyed short/medium/long.
+	 * @param array $labels        Array of label term IDs to draw from.
+	 */
+	private function create_kb_subtree( $nodes, $parent_id, $depth, $board_term_id, $lorem, $labels ) {
+		$order = 0;
+		foreach ( $nodes as $title => $content ) {
+			if ( 3 === $depth ) {
+				// Grandchild depth: always a leaf, array children are dropped.
+				$leaf_content = is_array( $content ) ? $lorem['short'] : $content;
+				$this->insert_kb_article( $title, $leaf_content, $parent_id, $order, $board_term_id, $labels );
+			} elseif ( is_array( $content ) ) {
+				// Branch node with its own children.
+				$post_id = $this->insert_kb_article( $title, $lorem['medium'], $parent_id, $order, $board_term_id, $labels );
+				$this->create_kb_subtree( $content, $post_id, $depth + 1, $board_term_id, $lorem, $labels );
+			} else {
+				// Leaf node keeps its own content.
+				$this->insert_kb_article( $title, $content, $parent_id, $order, $board_term_id, $labels );
+			}
+			$order++;
+		}
 	}
 
 	/**
@@ -555,118 +528,163 @@ class Decker_Demo_Data {
 			}
 
 			for ( $j = 1; $j <= $num_tasks; $j++ ) {
-				// Create task titles with varying lengths for better testing.
-				$short_titles = array(
-					'Fix bug',
-					'Update docs',
-					'Review PR',
-					'Deploy',
-					'Test',
-				);
+				$this->create_demo_task( $board, $show_in_boards, $j, $labels, $user_ids );
+			}
+		}
+	}
 
-				$medium_titles = array(
-					'Implement new feature',
-					'Refactor database queries',
-					'Update user interface',
-					'Configure deployment pipeline',
-					'Write unit tests',
-				);
+	/**
+	 * Creates a single demo task and its related meta and comments.
+	 *
+	 * @param WP_Term $board          Board term object.
+	 * @param string  $show_in_boards Board visibility flag ('1' for visible).
+	 * @param int     $index          Sequential task index within the board.
+	 * @param array   $labels         Array of label term IDs to draw from.
+	 * @param array   $user_ids       Array of user IDs to draw from.
+	 */
+	private function create_demo_task( $board, $show_in_boards, $index, $labels, $user_ids ) {
+		$post_title = $this->generate_demo_task_title( $index, $board->name, $show_in_boards );
 
-				$long_titles = array(
-					'Investigate performance issues in the production environment',
-					'Develop comprehensive documentation for API endpoints',
-					'Implement user authentication and authorization system',
-					'Optimize database queries for improved application performance',
-					'Create automated testing suite for continuous integration',
-				);
+		$post_content = "Content for task $index in board {$board->name}.";
 
-				// Randomly select title length (40% short, 40% medium, 20% long).
-				$rand = $this->custom_rand( 1, 10 );
-				if ( $rand <= 4 ) {
-					$post_title = $short_titles[ array_rand( $short_titles ) ] . " #{$j}";
-				} elseif ( $rand <= 8 ) {
-					$post_title = $medium_titles[ array_rand( $medium_titles ) ] . " for {$board->name}";
-				} else {
-					$post_title = $long_titles[ array_rand( $long_titles ) ] . " - {$board->name}";
-				}
+		// Assign random labels (0 to 3 labels).
+		$num_labels = $this->custom_rand( 0, 3 );
+		$assigned_labels = ( $num_labels > 0 && ! empty( $labels ) )
+			? $this->wp_rand_elements( $labels, $num_labels )
+			: array();
 
-				$post_content = "Content for task $j in board {$board->name}.";
+		// Assign random users (1 to 3 users).
+		$num_users = $this->custom_rand( 1, 3 );
+		$assigned_users = $this->wp_rand_elements( $user_ids, $num_users );
 
-				if ( '1' !== $show_in_boards ) {
-					$post_title .= ' (Hidden Board)';
-				}
+		// Generate additional fields.
+		$max_priority = $this->random_boolean( 0.2 );
+		$archived = $this->random_boolean( 0.2 );
+		$creation_date = $this->random_date( '-2 months', 'now' );
+		$start_date = $this->random_date( '-2 months', 'now' );
+		$duration = $this->custom_rand( 1, 14 );
+		$end_date = clone $start_date;
+		$end_date->modify( "+{$duration} days" );
+		$stack = $this->random_stack();
 
-				// Assign random labels (0 to 3 labels).
-				$num_labels = $this->custom_rand( 0, 3 );
-				$assigned_labels = ( $num_labels > 0 && ! empty( $labels ) )
-					? $this->wp_rand_elements( $labels, $num_labels )
-					: array();
+		$task_id = Decker_Tasks::create_or_update_task(
+			0,
+			$post_title,
+			$post_content,
+			$stack,
+			$board->term_id,
+			$max_priority,
+			$end_date, // due date is end of task.
+			1,
+			1,
+			false,
+			$assigned_users,
+			$assigned_labels,
+			$creation_date,
+			$archived,
+			0
+		);
 
-				// Assign random users (1 to 3 users).
-				$num_users = $this->custom_rand( 1, 3 );
-				$assigned_users = $this->wp_rand_elements( $user_ids, $num_users );
+		if ( $task_id && ! is_wp_error( $task_id ) ) {
+			// Generate user-date relations for each day in the task duration.
+			$relations = $this->build_user_date_relations( $assigned_users, $start_date, $end_date );
 
-				// Generate additional fields.
-				$max_priority = $this->random_boolean( 0.2 );
-				$archived = $this->random_boolean( 0.2 );
-				$creation_date = $this->random_date( '-2 months', 'now' );
-				$start_date = $this->random_date( '-2 months', 'now' );
-				$duration = $this->custom_rand( 1, 14 );
-				$end_date = clone $start_date;
-				$end_date->modify( "+{$duration} days" );
-				$stack = $this->random_stack();
+			update_post_meta( $task_id, '_user_date_relations', $relations );
+			update_post_meta( $task_id, 'startdate', $start_date->format( 'Y-m-d' ) );
 
-				$task_id = Decker_Tasks::create_or_update_task(
-					0,
-					$post_title,
-					$post_content,
-					$stack,
-					$board_id,
-					$max_priority,
-					$end_date, // due date is end of task.
-					1,
-					1,
-					false,
-					$assigned_users,
-					$assigned_labels,
-					$creation_date,
-					$archived,
-					0
-				);
+			// Seed comments so the board comments popover has something to preview.
+			$this->seed_task_comments( $task_id, $assigned_users, $start_date, $end_date );
+		}
+	}
 
-				if ( $task_id && ! is_wp_error( $task_id ) ) {
-					// Generate user-date relations for each day in the task duration.
-					$relations = array();
-					$period_start = clone $start_date;
-					$period_end = clone $end_date;
-					$period_end->modify( '+1 day' ); // to include end date.
+	/**
+	 * Generates a demo task title with a random length pool and optional suffix.
+	 *
+	 * @param int    $index          Sequential task index within the board.
+	 * @param string $board_name     Board name used in medium/long titles.
+	 * @param string $show_in_boards Board visibility flag ('1' for visible).
+	 * @return string The generated task title.
+	 */
+	private function generate_demo_task_title( $index, $board_name, $show_in_boards ) {
+		// Create task titles with varying lengths for better testing.
+		$short_titles = array(
+			'Fix bug',
+			'Update docs',
+			'Review PR',
+			'Deploy',
+			'Test',
+		);
 
-					$interval = new DateInterval( 'P1D' );
-					$period = new DatePeriod( $period_start, $interval, $period_end );
+		$medium_titles = array(
+			'Implement new feature',
+			'Refactor database queries',
+			'Update user interface',
+			'Configure deployment pipeline',
+			'Write unit tests',
+		);
 
-					foreach ( $period as $day ) {
-						foreach ( $assigned_users as $user_id ) {
-							$dates = iterator_to_array( $period );
-							$days_to_assign = $this->custom_rand( 1, count( $dates ) );
-							$random_dates = $this->wp_rand_elements( $dates, $days_to_assign );
+		$long_titles = array(
+			'Investigate performance issues in the production environment',
+			'Develop comprehensive documentation for API endpoints',
+			'Implement user authentication and authorization system',
+			'Optimize database queries for improved application performance',
+			'Create automated testing suite for continuous integration',
+		);
 
-							foreach ( $random_dates as $day ) {
-								$relations[] = array(
-									'user_id' => $user_id,
-									'date'    => $day->format( 'Y-m-d' ),
-								);
-							}
-						}
-					}
+		// Randomly select title length (40% short, 40% medium, 20% long).
+		$rand = $this->custom_rand( 1, 10 );
+		if ( $rand <= 4 ) {
+			$post_title = $short_titles[ array_rand( $short_titles ) ] . " #{$index}";
+		} elseif ( $rand <= 8 ) {
+			$post_title = $medium_titles[ array_rand( $medium_titles ) ] . " for {$board_name}";
+		} else {
+			$post_title = $long_titles[ array_rand( $long_titles ) ] . " - {$board_name}";
+		}
 
-					update_post_meta( $task_id, '_user_date_relations', $relations );
-					update_post_meta( $task_id, 'startdate', $start_date->format( 'Y-m-d' ) );
+		if ( '1' !== $show_in_boards ) {
+			$post_title .= ' (Hidden Board)';
+		}
 
-					// Seed comments so the board comments popover has something to preview.
-					$this->seed_task_comments( $task_id, $assigned_users, $start_date, $end_date );
+		return $post_title;
+	}
+
+	/**
+	 * Builds the _user_date_relations rows for a task.
+	 *
+	 * The original quadratic loop structure is preserved verbatim: the outer
+	 * loop iterates each day of the period and re-randomizes per day, and the
+	 * inner loop reuses $day, so row counts must not be "optimized".
+	 *
+	 * @param array    $assigned_users Assigned user IDs.
+	 * @param DateTime $start_date     Task start date.
+	 * @param DateTime $end_date       Task end date.
+	 * @return array Array of user_id/date relation rows.
+	 */
+	private function build_user_date_relations( $assigned_users, $start_date, $end_date ) {
+		$relations = array();
+		$period_start = clone $start_date;
+		$period_end = clone $end_date;
+		$period_end->modify( '+1 day' ); // to include end date.
+
+		$interval = new DateInterval( 'P1D' );
+		$period = new DatePeriod( $period_start, $interval, $period_end );
+
+		foreach ( $period as $day ) {
+			foreach ( $assigned_users as $user_id ) {
+				$dates = iterator_to_array( $period );
+				$days_to_assign = $this->custom_rand( 1, count( $dates ) );
+				$random_dates = $this->wp_rand_elements( $dates, $days_to_assign );
+
+				foreach ( $random_dates as $day ) {
+					$relations[] = array(
+						'user_id' => $user_id,
+						'date'    => $day->format( 'Y-m-d' ),
+					);
 				}
 			}
 		}
+
+		return $relations;
 	}
 
 	/**
@@ -681,30 +699,12 @@ class Decker_Demo_Data {
 	 */
 	private function seed_task_comments( $task_id, $assigned_users, $start_date, $end_date ) {
 		// 30 % no comments, 30 % a single one, 25 % a handful, 15 % a long thread.
-		$bucket = $this->custom_rand( 1, 100 );
-		if ( $bucket <= 30 ) {
+		$count = $this->get_demo_comment_count();
+		if ( 0 === $count ) {
 			return;
-		} elseif ( $bucket <= 60 ) {
-			$count = 1;
-		} elseif ( $bucket <= 85 ) {
-			$count = $this->custom_rand( 2, 4 );
-		} else {
-			$count = $this->custom_rand( 6, 10 );
 		}
 
-		$short_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
-		$medium_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.';
-		$long_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-
-		$samples = array(
-			'<p>' . $short_lorem . '</p>',
-			'<p>' . $medium_lorem . '</p>',
-			'<p>' . $long_lorem . '</p>',
-			'<p>Check the spec at <a href="https://example.com/spec">example.com/spec</a> before continuing.</p>',
-			'<p>' . $short_lorem . '</p><p>Reference: <a href="https://example.org/docs">example.org/docs</a>.</p>',
-			'<p>Quick update: ' . $short_lorem . '</p>',
-			'<p>' . $medium_lorem . '</p><p>' . $short_lorem . '</p>',
-		);
+		$samples = $this->get_demo_comment_samples();
 
 		$first_ts = $start_date->getTimestamp();
 		$last_ts = $end_date->getTimestamp();
@@ -713,10 +713,7 @@ class Decker_Demo_Data {
 		}
 
 		for ( $i = 0; $i < $count; $i++ ) {
-			$author_id = ! empty( $assigned_users )
-				? $assigned_users[ array_rand( $assigned_users ) ]
-				: 0;
-			$author = $author_id ? get_userdata( $author_id ) : false;
+			$author = $this->resolve_demo_comment_author( $assigned_users );
 
 			$comment_ts = $this->custom_rand( $first_ts, $last_ts );
 			$content = $samples[ array_rand( $samples ) ];
@@ -724,18 +721,82 @@ class Decker_Demo_Data {
 			wp_insert_comment(
 				array(
 					'comment_post_ID'      => $task_id,
-					'comment_author'       => $author ? $author->display_name : 'Demo',
-					'comment_author_email' => $author ? $author->user_email : 'demo@example.com',
+					'comment_author'       => $author['name'],
+					'comment_author_email' => $author['email'],
 					'comment_author_url'   => '',
 					'comment_content'      => $content,
 					'comment_type'         => 'comment',
-					'user_id'              => $author_id,
+					'user_id'              => $author['id'],
 					'comment_approved'     => 1,
 					'comment_date'         => gmdate( 'Y-m-d H:i:s', $comment_ts ),
 					'comment_date_gmt'     => gmdate( 'Y-m-d H:i:s', $comment_ts ),
 				)
 			);
 		}
+	}
+
+	/**
+	 * Draws the demo comment count for a task using weighted buckets.
+	 *
+	 * 30 % no comments, 30 % a single one, 25 % a handful, 15 % a long thread.
+	 * Exactly one random draw is consumed per branch, matching the original.
+	 *
+	 * @return int Number of comments to create (0, 1, 2-4 or 6-10).
+	 */
+	private function get_demo_comment_count() {
+		$bucket = $this->custom_rand( 1, 100 );
+		if ( $bucket <= 30 ) {
+			return 0;
+		} elseif ( $bucket <= 60 ) {
+			return 1;
+		} elseif ( $bucket <= 85 ) {
+			return $this->custom_rand( 2, 4 );
+		}
+		return $this->custom_rand( 6, 10 );
+	}
+
+	/**
+	 * Returns the demo comment content samples.
+	 *
+	 * @return array Array of HTML comment bodies.
+	 */
+	private function get_demo_comment_samples() {
+		$short_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+		$medium_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.';
+		$long_lorem = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
+
+		return array(
+			'<p>' . $short_lorem . '</p>',
+			'<p>' . $medium_lorem . '</p>',
+			'<p>' . $long_lorem . '</p>',
+			'<p>Check the spec at <a href="https://example.com/spec">example.com/spec</a> before continuing.</p>',
+			'<p>' . $short_lorem . '</p><p>Reference: <a href="https://example.org/docs">example.org/docs</a>.</p>',
+			'<p>Quick update: ' . $short_lorem . '</p>',
+			'<p>' . $medium_lorem . '</p><p>' . $short_lorem . '</p>',
+		);
+	}
+
+	/**
+	 * Resolves the author identity for a demo comment.
+	 *
+	 * Draws a random assigned user (consuming one array_rand draw, as in the
+	 * original) and falls back to the 'Demo' identity when there is no user or
+	 * the user no longer exists, while keeping the drawn user_id.
+	 *
+	 * @param int[] $assigned_users Users available as comment authors.
+	 * @return array Array with id (int), name (string) and email (string).
+	 */
+	private function resolve_demo_comment_author( $assigned_users ) {
+		$author_id = ! empty( $assigned_users )
+			? $assigned_users[ array_rand( $assigned_users ) ]
+			: 0;
+		$author = $author_id ? get_userdata( $author_id ) : false;
+
+		return array(
+			'id'    => $author_id,
+			'name'  => $author ? $author->display_name : 'Demo',
+			'email' => $author ? $author->user_email : 'demo@example.com',
+		);
 	}
 
 	/**
