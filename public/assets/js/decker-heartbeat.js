@@ -70,6 +70,107 @@ console.log('loading decker-heartbeat.js');
     }
     // End test notification.
 
+    var notificationReadStateKey = 'decker_notification_read_'
+        + (DeckerData.userId || 0);
+
+    function getStoredReadNotifications() {
+        var parsedNotifications;
+        var storedNotifications;
+
+        try {
+            storedNotifications = window.localStorage.getItem(
+                notificationReadStateKey
+            );
+            parsedNotifications = storedNotifications
+                ? JSON.parse(storedNotifications)
+                : [];
+        } catch (error) {
+            return [];
+        }
+
+        return Array.isArray(parsedNotifications) ? parsedNotifications : [];
+    }
+
+    function storeReadNotifications(notificationIds) {
+        try {
+            window.localStorage.setItem(
+                notificationReadStateKey,
+                JSON.stringify(notificationIds)
+            );
+        } catch (error) {
+            console.error(
+                'Could not store notification state for key:',
+                notificationReadStateKey,
+                error
+            );
+        }
+    }
+
+    function isNotificationRead(notificationId) {
+        if (!notificationId) {
+            return false;
+        }
+
+        return getStoredReadNotifications().indexOf(notificationId) !== -1;
+    }
+
+    function markNotificationAsRead(notificationId) {
+        var storedNotifications;
+
+        if (!notificationId || isNotificationRead(notificationId)) {
+            return;
+        }
+
+        storedNotifications = getStoredReadNotifications();
+        storedNotifications.push(notificationId);
+        storeReadNotifications(storedNotifications);
+    }
+
+    function removeStoredNotificationState(notificationId) {
+        var filteredNotifications;
+
+        if (!notificationId) {
+            return;
+        }
+
+        filteredNotifications = getStoredReadNotifications().filter(
+            function(storedId) {
+                return storedId !== notificationId;
+            }
+        );
+
+        storeReadNotifications(filteredNotifications);
+    }
+
+    function clearStoredNotificationState() {
+        try {
+            window.localStorage.removeItem(notificationReadStateKey);
+        } catch (error) {
+            console.error(
+                'Could not clear notification state for key:',
+                notificationReadStateKey,
+                error
+            );
+        }
+    }
+
+    function updateNotificationBadge() {
+        var notificationBadge = document.querySelector('.noti-icon-badge');
+        var hasNotifications = document.querySelectorAll(
+            '#notification-list .notify-item'
+        ).length > 0;
+
+        if (notificationBadge) {
+            notificationBadge.style.display = hasNotifications
+                ? 'inline-block'
+                : 'none';
+        }
+    }
+
+    function setNotificationState(notificationItem, isRead) {
+        notificationItem.classList.toggle('notify-item-read', isRead);
+        notificationItem.classList.toggle('notify-item-unread', !isRead);
+    }
 
     /**
      * Appends a new notification to the UI.
@@ -79,59 +180,67 @@ console.log('loading decker-heartbeat.js');
      * @param {Boolean} showAlert Whether we should trigger a SweetAlert or browser notification.
      */
     function addNotification(notificationData, showAlert) {
+        var actionDiv = document.createElement('small');
+        var actionText = document.createElement('span');
+        var contentDiv = document.createElement('div');
+        var deleteButton = document.createElement('button');
+        var icon = document.createElement('i');
+        var iconDiv = document.createElement('div');
+        var notificationDiv = document.createElement('div');
+        var notificationId = notificationData.notificationId || '';
+        var notificationIsRead = isNotificationRead(notificationId);
+        var notificationItem = document.createElement('div');
+        var notificationLink = document.createElement('a');
         var notificationList = document.getElementById('notification-list');
-        var notificationBadge = document.querySelector('.noti-icon-badge');
+        var timeSpan = document.createElement('small');
+        var titleDiv = document.createElement('h5');
 
         if (!notificationList) {
             console.error('Notification list element not found.');
             return;
         }
 
-        // Show the badge if it was hidden
-        if (notificationBadge && notificationBadge.style.display === 'none') {
-            notificationBadge.style.display = '';
-        }
+        notificationItem.classList.add('dropdown-item', 'notify-item');
+        notificationItem.dataset.notificationId = notificationId;
+        notificationItem.dataset.taskId = notificationData.taskId || '';
+        notificationItem.dataset.notificationType = notificationData.type || '';
 
-        var notificationLink = document.createElement('a');
         notificationLink.href = notificationData.url || '#';
         notificationLink.title = notificationData.title || 'Notification';
+        notificationLink.classList.add(
+            'notify-item-link',
+            'text-decoration-none'
+        );
 
-        // If it has a task ID, we assume it opens the modal.
         if (notificationData.taskId) {
             notificationLink.dataset.bsToggle = 'modal';
             notificationLink.dataset.bsTarget = '#task-modal';
             notificationLink.dataset.taskId = notificationData.taskId;
         }
-        notificationLink.classList.add('dropdown-item', 'notify-item');
 
-        var notificationDiv = document.createElement('div');
         notificationDiv.classList.add('d-flex');
 
-        var iconDiv = document.createElement('div');
-        iconDiv.classList.add('notify-icon', 'bg-' + (notificationData.iconColor || 'primary'));
-        var icon = document.createElement('i');
-        icon.classList.add(notificationData.iconClass || 'ri-information-line', 'fs-18');
+        iconDiv.classList.add(
+            'notify-icon',
+            'bg-' + (notificationData.iconColor || 'primary')
+        );
+        icon.classList.add(
+            notificationData.iconClass || 'ri-information-line',
+            'fs-18'
+        );
         iconDiv.appendChild(icon);
 
-        var contentDiv = document.createElement('div');
         contentDiv.classList.add('notification-content');
 
-        var titleDiv = document.createElement('h5');
         titleDiv.classList.add('fw-semibold');
         titleDiv.textContent = notificationData.title || 'New Notification';
 
-        var actionDiv = document.createElement('small');
         actionDiv.classList.add('notification-action');
 
-        var actionText = document.createElement('span');
         actionText.textContent = notificationData.action || '';
 
-        var timeSpan = document.createElement('small');
         timeSpan.classList.add('text-muted');
-        // timeSpan.textContent = notificationData.time || '';
-
         timeSpan.textContent = formatNotificationTime(notificationData.time);
-
 
         actionDiv.appendChild(actionText);
         actionDiv.appendChild(timeSpan);
@@ -139,46 +248,58 @@ console.log('loading decker-heartbeat.js');
         contentDiv.appendChild(titleDiv);
         contentDiv.appendChild(actionDiv);
 
-
-    var closeButton = document.createElement('button');
-    closeButton.classList.add('btn-close', 'position-absolute', 'top-50', 'end-0', 'translate-middle-y', 'me-2');
-    closeButton.setAttribute('aria-label', 'Close');
-    closeButton.dataset.taskId = notificationData.taskId;
-
-    closeButton.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation(); // Prevent opening the task modal
-        removeSingleNotification(notificationData.taskId);
-        notificationItem.remove();
-    });
-
-
         notificationDiv.appendChild(iconDiv);
         notificationDiv.appendChild(contentDiv);
 
         notificationLink.appendChild(notificationDiv);
-        notificationList.prepend(notificationLink);
+        notificationLink.addEventListener('click', function() {
+            if (!notificationIsRead) {
+                markNotificationAsRead(notificationId);
+                notificationIsRead = true;
+                setNotificationState(notificationItem, true);
+            }
+        });
 
-        // Show the badge
-        if (notificationBadge) {
-            notificationBadge.style.display = 'inline-block';
-        }
+        deleteButton.type = 'button';
+        deleteButton.classList.add(
+            'btn-close',
+            'notify-item-delete'
+        );
+        deleteButton.setAttribute(
+            'aria-label',
+            DeckerData.labels.delete_notification
+        );
+        deleteButton.setAttribute(
+            'title',
+            DeckerData.labels.delete_notification
+        );
 
-        // Trigger a SweetAlert if requested
+        deleteButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            removeSingleNotification(
+                notificationId,
+                notificationData.taskId,
+                notificationData.type
+            ).done(function() {
+                removeStoredNotificationState(notificationId);
+                notificationItem.remove();
+                updateNotificationBadge();
+            });
+        });
+
+        notificationItem.appendChild(notificationLink);
+        notificationItem.appendChild(deleteButton);
+        notificationList.prepend(notificationItem);
+
+        setNotificationState(notificationItem, notificationIsRead);
+        updateNotificationBadge();
+
         if (showAlert && typeof Swal !== 'undefined') {
-            // Swal.fire({
-            //     title: notificationData.title || 'New Notification',
-            //     text: notificationData.action || '',
-            //     icon: 'info',
-            //     timer: 4000,
-            //     toast: true,
-            //     position: 'top-end',
-            //     showConfirmButton: false
-            // });
-
             Swal.fire({
                 html: `<div style="display: flex; align-items: center;">
-                         <div class="notify-icon bg-${notificationData.iconColor}" 
+                         <div class="notify-icon bg-${notificationData.iconColor}"
                               style="height: 36px; width: 36px; line-height: 36px; text-align: center; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; margin-right: 10px;">
                            <i class="${notificationData.iconClass || 'ri-information-line'} fs-18"></i>
                          </div>
@@ -193,42 +314,35 @@ console.log('loading decker-heartbeat.js');
                 showConfirmButton: false,
                 timer: 4000
             });
-
-            
         }
 
-        // Trigger a browser notification if requested
         if (
             showAlert &&
             ('Notification' in window) &&
             Notification.permission === 'granted'
         ) {
             new Notification(
-                'Decker', 
+                'Decker',
                 { body: notificationData.title || 'New Notification' }
             );
         }
     }
 
-function formatNotificationTime(timeString) {
-    const date = new Date(timeString);
-    const now = new Date();
+    function formatNotificationTime(timeString) {
+        const date = new Date(timeString);
+        const now = new Date();
 
-    // Get date components
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months go from 0 to 11
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
 
-    // If it's the same day, show only HH:mm
-    if (date.toDateString() === now.toDateString()) {
-        return `${hours}:${minutes}`;
+        if (date.toDateString() === now.toDateString()) {
+            return `${hours}:${minutes}`;
+        }
+
+        return `${day}/${month} ${hours}:${minutes}`;
     }
-
-    // If it's a previous day, show DD/MM HH:mm
-    return `${day}/${month} ${hours}:${minutes}`;
-}
-
 
     /**
      * Loads the last 15 notifications from the server on page load.
@@ -236,22 +350,22 @@ function formatNotificationTime(timeString) {
      */
     function loadInitialNotifications() {
         $.ajax({
-            url: DeckerData.ajaxUrl, // WordPress localizes this variable in admin
+            url: DeckerData.ajaxUrl,
             method: 'POST',
             data: {
                 action: 'get_decker_notifications'
             }
         })
-        .done(function(response) {
-            if (response.success && Array.isArray(response.data)) {
-                response.data.forEach(function(notification) {
-                    addNotification(notification, false);
-                });
-            }
-        })
-        .fail(function() {
-            console.error('Could not load initial notifications.');
-        });
+            .done(function(response) {
+                if (response.success && Array.isArray(response.data)) {
+                    response.data.forEach(function(notification) {
+                        addNotification(notification, false);
+                    });
+                }
+            })
+            .fail(function() {
+                console.error('Could not load initial notifications.');
+            });
     }
 
     /**
@@ -259,30 +373,13 @@ function formatNotificationTime(timeString) {
      */
     function clearNotificationsUI() {
         var notificationList = document.getElementById('notification-list');
-        var notificationBadge = document.querySelector('.noti-icon-badge');
 
         if (notificationList) {
             notificationList.innerHTML = '';
         }
-        if (notificationBadge) {
-            notificationBadge.style.display = 'none';
-        }
-    }
 
-    function removeSingleNotification(taskId) {
-        if (!taskId) {
-            return;
-        }
-        $.ajax({
-            url: DeckerData.ajaxUrl,
-            method: 'POST',
-            data: {
-                action: 'remove_decker_notification',
-                task_id: taskId
-            }
-        }).fail(function () {
-            console.error('Failed to remove the notification from meta.');
-        });
+        clearStoredNotificationState();
+        updateNotificationBadge();
     }
 
     /**
@@ -296,58 +393,46 @@ function formatNotificationTime(timeString) {
                 action: 'clear_decker_notifications'
             }
         })
-        .done(function(response) {
-            if (response.success) {
-                clearNotificationsUI();
-            }
-        })
-        .fail(function() {
-            console.error('Failed to clear notifications.');
-        });
+            .done(function(response) {
+                if (response.success) {
+                    clearNotificationsUI();
+                }
+            })
+            .fail(function() {
+                console.error('Failed to clear notifications.');
+            });
     }
 
     /**
-     * Removes a single notification from user meta if it has an ID.
-     * 
-     * @param {Number} taskId The task ID, or null if no ID
+     * Removes a single notification from user meta.
+     *
+     * @param {string} notificationId Notification identifier.
+     * @param {number} taskId Task identifier.
+     * @param {string} type Notification type.
+     * @return {jqXHR} AJAX promise.
      */
-    function removeSingleNotification(taskId) {
-        // If there's no task ID, do nothing in meta
-        if (!taskId) {
-            return;
-        }
-        $.ajax({
+    function removeSingleNotification(notificationId, taskId, type) {
+        return $.ajax({
             url: DeckerData.ajaxUrl,
             method: 'POST',
             data: {
                 action: 'remove_decker_notification',
-                task_id: taskId
+                notification_id: notificationId || '',
+                task_id: taskId || 0,
+                type: type || ''
             }
         }).fail(function() {
             console.error('Failed to remove the notification from meta.');
         });
     }
 
-    // On "Clear All" link:
-    var clearAllLink = document.querySelector('.text-dark.text-decoration-underline');
+    var clearAllLink = document.querySelector('.js-clear-notifications');
     if (clearAllLink) {
-        clearAllLink.addEventListener('click', function() {
+        clearAllLink.addEventListener('click', function(event) {
+            event.preventDefault();
             clearAllNotifications();
         });
     }
-
-    // Delegate click on each notification:
-    $('#notification-list').on('click', 'a.notify-item', function() {
-        var taskId = $(this).data('task-id');
-        removeSingleNotification(taskId);
-        // We do not remove it from UI here because it's normal for a user to see the item remain.
-        // If you prefer to remove it, do:
-        // $(this).remove();
-        // Hide the badge if none remain:
-        // if ($('#notification-list a').length === 0) {
-        //     $('.noti-icon-badge').hide();
-        // }
-    });
 
     // Send data to the server on each heartbeat:
     $(document).on('heartbeat-send', function(e, data) {
@@ -391,4 +476,3 @@ function formatNotificationTime(timeString) {
     });
 
 })(jQuery);
-

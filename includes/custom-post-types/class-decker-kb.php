@@ -33,6 +33,9 @@ class Decker_Kb {
 
 		// REST API endpoints.
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+
+		// Track last editor.
+		add_action( 'save_post_decker_kb', array( $this, 'track_last_editor' ), 10, 2 );
 	}
 
 	/**
@@ -80,6 +83,158 @@ class Decker_Kb {
 	}
 
 	/**
+	 * Track the last user who edited a KB article.
+	 *
+	 * Stores the current user ID as post meta so the UI can display
+	 * the last editor instead of the original post author.
+	 *
+	 * @param int     $post_id Post ID.
+	 * @param WP_Post $post    Post object.
+	 */
+	public function track_last_editor( $post_id, $post ) {
+		// Skip autosaves and revisions.
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+		if ( wp_is_post_revision( $post_id ) ) {
+			return;
+		}
+
+		$current_user_id = get_current_user_id();
+		if ( $current_user_id && current_user_can( 'edit_post', $post_id ) ) {
+			update_post_meta( $post_id, '_last_editor', $current_user_id );
+		}
+	}
+
+	/**
+	 * Get the last editor user ID for a KB article.
+	 *
+	 * Falls back to the post author if no last editor is recorded.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int User ID of the last editor.
+	 */
+	public static function get_last_editor( $post_id ) {
+		$last_editor = get_post_meta( $post_id, '_last_editor', true );
+		if ( $last_editor ) {
+			return intval( $last_editor );
+		}
+		$post = get_post( $post_id );
+		return $post ? intval( $post->post_author ) : 0;
+	}
+
+	/**
+	 * Get the latest revision ID for a KB article.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return int Revision ID or 0 when no revisions exist.
+	 */
+	public static function get_latest_revision_id( $post_id ) {
+		$revisions = wp_get_post_revisions(
+			$post_id,
+			array(
+				'posts_per_page' => 1,
+			)
+		);
+
+		if ( empty( $revisions ) ) {
+			return 0;
+		}
+
+		return self::extract_latest_revision_id_from_list( $revisions );
+	}
+
+	/**
+	 * Get the WordPress revision history URL for a KB article.
+	 *
+	 * The WordPress revision screen includes the diff UI and restore actions.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Admin URL or empty string if no revision exists.
+	 */
+	public static function get_revision_admin_url( $post_id ) {
+		return self::build_revision_admin_url(
+			self::get_latest_revision_id( $post_id )
+		);
+	}
+
+	/**
+	 * Extract the latest revision ID from a revision list.
+	 *
+	 * @param array $revisions Revision list.
+	 * @return int
+	 */
+	private static function extract_latest_revision_id_from_list( $revisions ) {
+		if ( empty( $revisions ) ) {
+			return 0;
+		}
+
+		$revision_list = array_values( $revisions );
+
+		return isset( $revision_list[0]->ID ) ? intval( $revision_list[0]->ID ) : 0;
+	}
+
+	/**
+	 * Build a revision admin URL.
+	 *
+	 * @param int $revision_id Revision ID.
+	 * @return string
+	 */
+	private static function build_revision_admin_url( $revision_id ) {
+		if ( ! $revision_id ) {
+			return '';
+		}
+
+		return admin_url(
+			sprintf(
+				'revision.php?revision=%d',
+				intval( $revision_id )
+			)
+		);
+	}
+
+	/**
+	 * Get formatted comments for a KB article.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return array
+	 */
+	public static function get_article_comments_data( $post_id ) {
+		$comments = get_comments(
+			array(
+				'post_id' => intval( $post_id ),
+				'status'  => 'approve',
+				'orderby' => 'comment_date_gmt',
+				'order'   => 'ASC',
+			)
+		);
+
+		$comment_data = array();
+
+		foreach ( $comments as $comment ) {
+			$avatar_source = $comment->user_id ? intval( $comment->user_id ) : $comment->comment_author_email;
+
+			$comment_data[] = array(
+				'id'                => intval( $comment->comment_ID ),
+				'parent'            => intval( $comment->comment_parent ),
+				'author_name'       => $comment->comment_author,
+				'author_avatar_url' => get_avatar_url( $avatar_source, array( 'size' => 48 ) ),
+				'date'              => get_comment_date( '', $comment ),
+				'content_rendered'  => wp_kses_post(
+					apply_filters( 'comment_text', $comment->comment_content, $comment )
+				),
+				'user_id'           => intval( $comment->user_id ),
+				'can_delete'        => (
+					current_user_can( 'moderate_comments' ) ||
+					get_current_user_id() === intval( $comment->user_id )
+				),
+			);
+		}
+
+		return $comment_data;
+	}
+
+	/**
 	 * Save or update KB article
 	 *
 	 * @param WP_REST_Request $request Request object.
@@ -88,21 +243,90 @@ class Decker_Kb {
 	public function save_article( $request ) {
 		$params = $request->get_params();
 
-		$existing_post   = null;
-		$old_parent_id   = null;
 		$desired_position = isset( $params['menu_order'] ) ? max( 0, intval( $params['menu_order'] ) ) : null;
 
 		// Validate that board is provided only on create (no ID).
 		if ( empty( $params['id'] ) && empty( $params['board'] ) ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => __( 'Board is required', 'decker' ),
-				),
-				400
-			);
+			return $this->error_response( __( 'Board is required', 'decker' ) );
 		}
 
+		// Look up the existing post (with IDOR guards) when updating.
+		$existing_post = $this->get_existing_article( $params );
+		if ( $existing_post instanceof WP_REST_Response ) {
+			return $existing_post;
+		}
+
+		$old_parent_id = $existing_post ? intval( $existing_post->post_parent ) : null;
+
+		$post_data = $this->build_article_post_data( $params, $existing_post );
+
+		$post_id = wp_insert_post( $post_data );
+
+		if ( is_wp_error( $post_id ) ) {
+			return $this->error_response( $post_id->get_error_message() );
+		}
+
+		// Assign labels and board; a non-null return is a terminal error response.
+		$terms_error = $this->assign_article_terms( $post_id, $params );
+		if ( $terms_error ) {
+			return $terms_error;
+		}
+
+		$new_parent_id = intval( $post_data['post_parent'] );
+		$this->maybe_reorder_after_save( $params, $post_id, $old_parent_id, $new_parent_id, $desired_position );
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => __( 'Article saved successfully', 'decker' ),
+				'id'     => $post_id,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Look up the existing KB article for an update request.
+	 *
+	 * Returns null when creating (no ID), the WP_Post when the update target is a
+	 * valid editable KB article, or a WP_REST_Response error when the IDOR guards
+	 * (missing/non-KB post or insufficient capability) reject the request.
+	 *
+	 * @param array $params Request params.
+	 * @return WP_Post|WP_REST_Response|null
+	 */
+	private function get_existing_article( array $params ) {
+		if ( empty( $params['id'] ) ) {
+			return null;
+		}
+
+		$post_id       = intval( $params['id'] );
+		$existing_post = get_post( $post_id );
+
+		// Ensure the target post exists and is actually a KB article.
+		if ( ! $existing_post || 'decker_kb' !== $existing_post->post_type ) {
+			return $this->error_response( __( 'Article not found', 'decker' ), 404 );
+		}
+
+		// Require per-post edit capability for updates.
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return $this->error_response( __( 'You do not have permission to edit this article', 'decker' ), 403 );
+		}
+
+		return $existing_post;
+	}
+
+	/**
+	 * Build the wp_insert_post() array for a save_article() request.
+	 *
+	 * Always sets post_parent and menu_order (provided param -> existing value -> 0)
+	 * so the caller can read post_parent unconditionally.
+	 *
+	 * @param array        $params        Request params.
+	 * @param WP_Post|null $existing_post Existing post on update, null on create.
+	 * @return array
+	 */
+	private function build_article_post_data( array $params, $existing_post ) {
 		$post_data = array(
 			'post_type'    => 'decker_kb',
 			'post_status'  => 'publish',
@@ -118,10 +342,6 @@ class Decker_Kb {
 
 		if ( ! empty( $params['id'] ) ) {
 			$post_data['ID'] = intval( $params['id'] );
-			$existing_post   = get_post( $post_data['ID'] );
-			if ( $existing_post ) {
-				$old_parent_id = intval( $existing_post->post_parent );
-			}
 		}
 
 		// Parent and order: only set if provided. If not, preserve existing values on update.
@@ -141,18 +361,20 @@ class Decker_Kb {
 			$post_data['menu_order'] = 0;
 		}
 
-		$post_id = wp_insert_post( $post_data );
+		return $post_data;
+	}
 
-		if ( is_wp_error( $post_id ) ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => $post_id->get_error_message(),
-				),
-				400
-			);
-		}
-
+	/**
+	 * Assign labels and board taxonomy terms for a saved article.
+	 *
+	 * Returns null on success, or a WP_REST_Response error when an invalid board
+	 * is supplied on create (the freshly created post is hard-deleted first).
+	 *
+	 * @param int   $post_id Saved post ID.
+	 * @param array $params  Request params.
+	 * @return WP_REST_Response|null
+	 */
+	private function assign_article_terms( $post_id, array $params ) {
 		// Handle labels: only update if provided; otherwise keep.
 		if ( isset( $params['labels'] ) && is_array( $params['labels'] ) ) {
 			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
@@ -166,32 +388,49 @@ class Decker_Kb {
 			} elseif ( empty( $params['id'] ) ) {
 				// If creating and invalid board, reject.
 				wp_delete_post( $post_id, true );
-				return new WP_REST_Response(
-					array(
-						'success' => false,
-						'message' => __( 'Invalid board ID', 'decker' ),
-					),
-					400
-				);
+				return $this->error_response( __( 'Invalid board ID', 'decker' ) );
 			}
 		}
 
-		// Recalculate siblings only if order or parent actually changed in request.
-		$new_parent_id = isset( $post_data['post_parent'] ) ? intval( $post_data['post_parent'] ) : ( $existing_post ? intval( $existing_post->post_parent ) : 0 );
-		if ( isset( $params['menu_order'] ) || ( null !== $old_parent_id && $old_parent_id !== $new_parent_id ) ) {
-			$this->recalculate_siblings_with_position( $new_parent_id, $post_id, $desired_position );
-			if ( null !== $old_parent_id && $old_parent_id !== $new_parent_id ) {
-				$this->recalculate_siblings( $old_parent_id );
-			}
+		return null;
+	}
+
+	/**
+	 * Recalculate siblings after a save when order or parent changed in the request.
+	 *
+	 * @param array    $params           Request params.
+	 * @param int      $post_id          Saved post ID.
+	 * @param int|null $old_parent_id    Parent before the save (null on create).
+	 * @param int      $new_parent_id    Parent after the save.
+	 * @param int|null $desired_position Desired index (null appends).
+	 */
+	private function maybe_reorder_after_save( array $params, $post_id, $old_parent_id, $new_parent_id, $desired_position ) {
+		$parent_changed = ( null !== $old_parent_id && $old_parent_id !== $new_parent_id );
+
+		if ( ! isset( $params['menu_order'] ) && ! $parent_changed ) {
+			return;
 		}
 
+		$this->recalculate_siblings_with_position( $new_parent_id, $post_id, $desired_position );
+		if ( $parent_changed ) {
+			$this->recalculate_siblings( $old_parent_id );
+		}
+	}
+
+	/**
+	 * Build a standard error WP_REST_Response.
+	 *
+	 * @param string $message Human-readable error message.
+	 * @param int    $status  HTTP status code.
+	 * @return WP_REST_Response
+	 */
+	private function error_response( $message, $status = 400 ) {
 		return new WP_REST_Response(
 			array(
-				'success' => true,
-				'message' => __( 'Article saved successfully', 'decker' ),
-				'id'     => $post_id,
+				'success' => false,
+				'message' => $message,
 			),
-			200
+			$status
 		);
 	}
 
@@ -204,44 +443,75 @@ class Decker_Kb {
 	 * @return WP_REST_Response
 	 */
 	public function reorder_articles( $request ) {
-		$params        = $request->get_params();
-		$moved_id      = isset( $params['moved_id'] ) ? intval( $params['moved_id'] ) : 0;
-		$new_parent_id = isset( $params['new_parent_id'] ) ? intval( $params['new_parent_id'] ) : 0;
-		$old_parent_id = isset( $params['old_parent_id'] ) ? intval( $params['old_parent_id'] ) : null;
-		$new_order     = isset( $params['new_order'] ) && is_array( $params['new_order'] ) ? array_map( 'intval', $params['new_order'] ) : array();
-		$old_order     = isset( $params['old_order'] ) && is_array( $params['old_order'] ) ? array_map( 'intval', $params['old_order'] ) : array();
+		$args = $this->parse_reorder_request( $request );
 
-		if ( ! $moved_id ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => __( 'Invalid moved ID.', 'decker' ),
-				),
-				400
-			);
+		if ( ! $args['moved_id'] ) {
+			return $this->error_response( __( 'Invalid moved ID.', 'decker' ) );
 		}
 
 		// Update parent for moved item.
 		wp_update_post(
 			array(
-				'ID'          => $moved_id,
-				'post_parent' => $new_parent_id,
+				'ID'          => $args['moved_id'],
+				'post_parent' => $args['new_parent_id'],
 			)
 		);
 
 		// Apply new order for target siblings.
-		$this->apply_explicit_order( $new_parent_id, $new_order );
+		$this->apply_explicit_order( $args['new_parent_id'], $args['new_order'] );
 
 		// Recalculate old siblings if provided.
-		if ( null !== $old_parent_id ) {
-			if ( $old_order ) {
-				$this->apply_explicit_order( $old_parent_id, $old_order );
-			} else {
-				$this->recalculate_siblings( $old_parent_id );
-			}
-		}
+		$this->reorder_previous_parent( $args['old_parent_id'], $args['old_order'] );
 
 		return new WP_REST_Response( array( 'success' => true ), 200 );
+	}
+
+	/**
+	 * Normalize the reorder request params into typed values.
+	 *
+	 * The old_parent_id value stays nullable: null means "not provided" (skip
+	 * old-side recalculation), while 0 means the root parent.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return array {
+	 *     @type int      $moved_id      Moved post ID (0 default).
+	 *     @type int      $new_parent_id Target parent ID (0 default).
+	 *     @type int|null $old_parent_id Previous parent ID (null when absent).
+	 *     @type int[]    $new_order     Ordered IDs for the target parent.
+	 *     @type int[]    $old_order     Ordered IDs for the previous parent.
+	 * }
+	 */
+	private function parse_reorder_request( $request ) {
+		$params = $request->get_params();
+
+		return array(
+			'moved_id'      => isset( $params['moved_id'] ) ? intval( $params['moved_id'] ) : 0,
+			'new_parent_id' => isset( $params['new_parent_id'] ) ? intval( $params['new_parent_id'] ) : 0,
+			'old_parent_id' => isset( $params['old_parent_id'] ) ? intval( $params['old_parent_id'] ) : null,
+			'new_order'     => isset( $params['new_order'] ) && is_array( $params['new_order'] ) ? array_map( 'intval', $params['new_order'] ) : array(),
+			'old_order'     => isset( $params['old_order'] ) && is_array( $params['old_order'] ) ? array_map( 'intval', $params['old_order'] ) : array(),
+		);
+	}
+
+	/**
+	 * Recalculate the previous parent's siblings after a move.
+	 *
+	 * No-op when the old parent was not provided (null sentinel). Applies the
+	 * explicit order when supplied, otherwise resequences the remaining children.
+	 *
+	 * @param int|null $old_parent_id Previous parent ID (null skips).
+	 * @param array    $old_order     Ordered IDs for the previous parent.
+	 */
+	private function reorder_previous_parent( $old_parent_id, array $old_order ) {
+		if ( null === $old_parent_id ) {
+			return;
+		}
+
+		if ( $old_order ) {
+			$this->apply_explicit_order( $old_parent_id, $old_order );
+		} else {
+			$this->recalculate_siblings( $old_parent_id );
+		}
 	}
 
 	/**
@@ -356,7 +626,9 @@ class Decker_Kb {
 	 * @return WP_REST_Response
 	 */
 	public function get_article( $request ) {
-		$article_id = $request->get_param( 'id' );
+		$article_id        = $request->get_param( 'id' );
+		$include_comments = $request->get_param( 'include_comments' );
+		$include_comments = in_array( strtolower( (string) $include_comments ), array( '1', 'true', 'yes', 'on' ), true );
 
 		$post = get_post( $article_id );
 		if ( ! $post || 'decker_kb' !== $post->post_type ) {
@@ -372,6 +644,11 @@ class Decker_Kb {
 		$labels = wp_get_object_terms( $article_id, 'decker_label', array( 'fields' => 'ids' ) );
 		$board_terms = wp_get_object_terms( $article_id, 'decker_board', array( 'fields' => 'ids' ) );
 		$board_id = ! empty( $board_terms ) ? $board_terms[0] : 0;
+		$author_id = intval( $post->post_author );
+		$last_editor_id = self::get_last_editor( $article_id );
+		$latest_revision_id = self::get_latest_revision_id( $article_id );
+		$history_url        = self::build_revision_admin_url( $latest_revision_id );
+		$revision_count     = count( wp_get_post_revisions( $article_id ) );
 
 		return new WP_REST_Response(
 			array(
@@ -384,6 +661,22 @@ class Decker_Kb {
 					'board'      => $board_id,
 					'parent_id'  => $post->post_parent,
 					'menu_order' => $post->menu_order,
+					'author'     => array(
+						'id'   => $author_id,
+						'name' => get_the_author_meta( 'display_name', $author_id ),
+					),
+					'last_editor' => array(
+						'id'   => $last_editor_id,
+						'name' => get_the_author_meta( 'display_name', $last_editor_id ),
+					),
+					'comment_count'  => get_comments_number( $article_id ),
+					'comments'       => $include_comments ? self::get_article_comments_data( $article_id ) : array(),
+					'revision_count' => intval( $revision_count ),
+					'links'      => array(
+						'edit'     => get_edit_post_link( $article_id, '' ),
+						'history'  => $history_url,
+					),
+					'latest_revision_id' => $latest_revision_id,
 				),
 			),
 			200
@@ -421,7 +714,7 @@ class Decker_Kb {
 			'has_archive'        => true,
 			'hierarchical'       => true, // Enable hierarchy.
 			'menu_position'       => 25,
-			'supports'           => array( 'title', 'editor', 'page-attributes', 'revisions' ),
+			'supports'           => array( 'title', 'editor', 'author', 'comments', 'page-attributes', 'revisions' ),
 			'show_in_rest'       => true, // Enable Gutenberg.
 			'menu_icon'          => 'dashicons-book',
 		);

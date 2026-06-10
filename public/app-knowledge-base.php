@@ -35,6 +35,39 @@ if ( ! empty( $board_slug ) && 'all' !== $view ) {
 
 $kb_data = Decker_Kb::get_articles( $args );
 
+if ( ! function_exists( 'decker_get_kb_people_html' ) ) {
+	/**
+	 * Render Knowledge Base author and last editor avatars.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	function decker_get_kb_people_html( $post_id ) {
+		$author_id      = intval( get_post_field( 'post_author', $post_id ) );
+		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$author_name    = get_the_author_meta( 'display_name', $author_id );
+		$last_editor_name = $last_editor_id ? get_the_author_meta( 'display_name', $last_editor_id ) : '';
+		$author_label   = __( 'Author', 'decker' ) . ': ' . $author_name;
+		$last_editor_label = __( 'Last editor', 'decker' ) . ': ' . $last_editor_name;
+
+		ob_start();
+		?>
+		<div class="d-flex align-items-center gap-1 flex-nowrap">
+			<span class="avatar-group-item" aria-label="<?php echo esc_attr( $author_label ); ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo esc_attr( $author_label ); ?>">
+				<img src="<?php echo esc_url( get_avatar_url( $author_id, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( $author_name ); ?>" class="rounded-circle avatar-xs">
+			</span>
+			<?php if ( $last_editor_id ) : ?>
+				<span class="avatar-group-item" aria-label="<?php echo esc_attr( $last_editor_label ); ?>" data-bs-toggle="tooltip" data-bs-placement="top" title="<?php echo esc_attr( $last_editor_label ); ?>">
+					<img src="<?php echo esc_url( get_avatar_url( $last_editor_id, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( $last_editor_name ); ?>" class="rounded-circle avatar-xs border border-2 border-info">
+				</span>
+			<?php endif; ?>
+		</div>
+		<?php
+
+		return ob_get_clean();
+	}
+}
+
 /*
 // Test.
 echo '<pre>';
@@ -220,15 +253,8 @@ die();
 													}
 													echo '</td>';
 
-													// Author with avatar.
-													echo '<td>';
-													echo '<div class="avatar-group">';
-													echo '<a href="javascript: void(0);" class="avatar-group-item" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" data-bs-original-title="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '">';
-													echo '<span class="d-none">' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '</span>';
-													echo '<img src="' . esc_url( get_avatar_url( $article->post_author ) ) . '" alt="' . esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ) . '" class="rounded-circle avatar-xs">';
-													echo '</a>';
-													echo '</div>';
-													echo '</td>';
+													// Author and last editor.
+													echo '<td>' . wp_kses_post( decker_get_kb_people_html( $article->ID ) ) . '</td>';
 
 													// Excerpt.
 													$excerpt = wp_strip_all_tags( $article->post_content );
@@ -243,6 +269,7 @@ die();
 													echo '<td title="' . esc_attr( $exact_date ) . '">' . esc_html( $relative_date ) . '</td>';
 
 													// Actions.
+													$history_url  = Decker_Kb::get_revision_admin_url( $article->ID );
 													echo '<td class="text-end">';
 													// View button.
 													echo '<button type="button" class="btn btn-sm btn-secondary me-2 view-article-btn" ' .
@@ -252,6 +279,16 @@ die();
 														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
 														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\'>' .
 														'<i class="ri-eye-line"></i></button>';
+													echo '<button type="button" class="btn btn-sm btn-outline-warning me-2 view-article-comments-btn" ' .
+														'data-id="' . esc_attr( $article_data['id'] ) . '" ' .
+														'data-title="' . esc_attr( $article_data['title'] ) . '" ' .
+														'data-content="' . esc_attr( $article_data['content'] ) . '" ' .
+														'data-labels=\'' . esc_attr( $article_data_json['labels'] ) . '\' ' .
+														'data-board=\'' . esc_attr( $article_data_json['board'] ) . '\' ' .
+														'title="' . esc_attr__( 'Comments', 'decker' ) . '"><i class="ri-chat-1-line"></i></button>';
+													if ( ! empty( $history_url ) ) {
+														echo '<a href="' . esc_url( $history_url ) . '" class="btn btn-sm btn-outline-dark me-2" target="_blank" rel="noopener noreferrer" title="' . esc_attr__( 'History', 'decker' ) . '"><i class="ri-history-line"></i></a>';
+													}
 																										  // Edit button.
 																										  echo '<a href="#" class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#kb-modal" data-article-id="' . esc_attr( $article->ID ) . '"><i class="ri-pencil-line"></i></a>';
 																										  // Delete button removed to avoid accidental deletions; handled in inline editor.
@@ -276,19 +313,15 @@ die();
 													return isset( $p->depth ) && 0 === intval( $p->depth );
 												}
 											);
-											if ( ! function_exists( 'decker_render_kb_node' ) ) {
+											if ( ! function_exists( 'decker_get_kb_node_render_data' ) ) {
 												/**
-												 * Render a KB article node with recursive children.
+												 * Gather the rendering data for a single KB article node.
 												 *
-												 * Outputs a list item with actions, optional board badge (in view=all),
-												 * and a collapsible list for children.
-												 *
-												 * @param WP_Post $article            The article post object.
-												 * @param bool    $is_all_view_flag   Whether the current rendering is for the "view=all" mode.
-												 *
-												 * @return void
+												 * @param WP_Post $article The article post object.
+												 * @return array Associative array with has_children, labels_data, board_id,
+												 *               board_name, board_color, swatch_title and article_data_json.
 												 */
-												function decker_render_kb_node( $article, $is_all_view_flag = false ) {
+												function decker_get_kb_node_render_data( $article ) {
 													$has_children = isset( $article->children ) && ! empty( $article->children );
 													$labels       = wp_get_post_terms( $article->ID, 'decker_label' );
 													$labels_data  = array();
@@ -321,17 +354,37 @@ die();
 															)
 														),
 													);
-													?>
-											<li class="kb-item list-group-item" data-article-id="<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->post_parent ); ?>" data-menu-order="<?php echo esc_attr( $article->menu_order ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
-														<div class="d-flex align-items-center justify-content-between">
-											<div class="d-flex align-items-center gap-2">
-													<?php
-														// Compute swatch vars once.
+
+													// Compute swatch vars once.
 													$swatch_color = $board_color ? $board_color : '#6c757d';
 													$swatch_title = $board_name ? $board_name : __( 'No Board', 'decker' );
+
+													return array(
+														'has_children'      => $has_children,
+														'labels_data'       => $labels_data,
+														'board_id'          => $board_id,
+														'board_name'        => $board_name,
+														'board_color'       => $board_color,
+														'swatch_title'      => $swatch_title,
+														'article_data_json' => $article_data_json,
+													);
+												}
+											}
+
+											if ( ! function_exists( 'decker_render_kb_node_toggle' ) ) {
+												/**
+												 * Render the collapse toggle (or disabled placeholder) for a KB node.
+												 *
+												 * @param int    $article_id       The article post ID.
+												 * @param bool   $has_children     Whether the node has children.
+												 * @param bool   $is_all_view_flag Whether rendering for the "view=all" mode.
+												 * @param string $swatch_title     Board name used as the title attribute in all view.
+												 * @return void
+												 */
+												function decker_render_kb_node_toggle( $article_id, $has_children, $is_all_view_flag, $swatch_title ) {
 													?>
 																										<?php if ( $has_children ) : ?>
-													<button class="btn btn-sm btn-outline-secondary kb-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#children-of-<?php echo esc_attr( $article->ID ); ?>" aria-expanded="false" aria-controls="children-of-<?php echo esc_attr( $article->ID ); ?>" title="<?php echo $is_all_view_flag ? esc_attr( $swatch_title ) : ''; ?>">
+													<button class="btn btn-sm btn-outline-secondary kb-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#children-of-<?php echo esc_attr( $article_id ); ?>" aria-expanded="false" aria-controls="children-of-<?php echo esc_attr( $article_id ); ?>" title="<?php echo $is_all_view_flag ? esc_attr( $swatch_title ) : ''; ?>">
 														<i class="ri-arrow-right-s-line"></i>
 													</button>
 												<?php else : ?>
@@ -339,23 +392,26 @@ die();
 														<i class="ri-arrow-right-s-line"></i>
 													</span>
 												<?php endif; ?>
-												<span class="kb-title-text">
-													<a href="#" class="view-article-link"
-														data-id="<?php echo esc_attr( $article->ID ); ?>"
-														data-title="<?php echo esc_attr( $article->post_title ); ?>"
-														data-content="<?php echo esc_attr( $article->post_content ); ?>"
-														data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
-														data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'><?php echo esc_html( $article->post_title ); ?></a>
-												</span>
-												<span class="kb-hidden-content d-none"><?php echo esc_html( wp_strip_all_tags( $article->post_content ) ); ?></span>
-															</div>
-												<div class="d-flex align-items-center gap-2">
-													<?php if ( ! empty( $labels_data ) ) : ?>
-														<?php
-														$labels_count   = count( $labels_data );
-														$display_labels = array_slice( $labels_data, 0, 3 );
-														$extra_labels   = max( 0, $labels_count - 3 );
-														?>
+													<?php
+												}
+											}
+
+											if ( ! function_exists( 'decker_render_kb_node_labels' ) ) {
+												/**
+												 * Render the label badges (with overflow popover) for a KB node.
+												 *
+												 * @param array $labels_data Array of label name/color arrays.
+												 * @param int   $article_id  The article post ID.
+												 * @return void
+												 */
+												function decker_render_kb_node_labels( $labels_data, $article_id ) {
+													if ( empty( $labels_data ) ) {
+														return;
+													}
+													$labels_count   = count( $labels_data );
+													$display_labels = array_slice( $labels_data, 0, 3 );
+													$extra_labels   = max( 0, $labels_count - 3 );
+													?>
 														<div class="kb-labels d-none d-md-flex align-items-center flex-wrap" style="gap:4px;">
 															<?php foreach ( $display_labels as $ld ) : ?>
 																<span class="badge" style="background-color: <?php echo esc_attr( $ld['color'] ); ?>;">
@@ -363,7 +419,7 @@ die();
 																</span>
 															<?php endforeach; ?>
 															<?php if ( $extra_labels > 0 ) : ?>
-																<?php $popover_id = 'kb-popover-' . $article->ID; ?>
+																<?php $popover_id = 'kb-popover-' . $article_id; ?>
 																<span class="badge bg-secondary"
 																	  role="button"
 																	  tabindex="0"
@@ -380,10 +436,20 @@ die();
 																</div>
 															<?php endif; ?>
 														</div>
-													<?php endif; ?>
+													<?php
+												}
+											}
 
-													<img src="<?php echo esc_url( get_avatar_url( $article->post_author, array( 'size' => 24 ) ) ); ?>" alt="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" class="d-none d-md-inline-block rounded-circle" style="width:24px;height:24px;" title="<?php echo esc_attr( get_the_author_meta( 'display_name', $article->post_author ) ); ?>" />
-
+											if ( ! function_exists( 'decker_render_kb_node_actions' ) ) {
+												/**
+												 * Render the desktop action button group for a KB node.
+												 *
+												 * @param WP_Post $article           The article post object.
+												 * @param array   $article_data_json Encoded data attribute payloads.
+												 * @return void
+												 */
+												function decker_render_kb_node_actions( $article, $article_data_json ) {
+													?>
 																										 <div class="btn-group btn-group-sm d-none d-md-inline-flex">
 																												 <button type="button" class="btn btn-outline-secondary view-article-btn"
 																												 data-id="<?php echo esc_attr( $article->ID ); ?>"
@@ -393,6 +459,20 @@ die();
 																												 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																												 <i class="ri-eye-line"></i>
 																												 </button>
+																												 <button type="button" class="btn btn-outline-warning view-article-comments-btn"
+																												 data-id="<?php echo esc_attr( $article->ID ); ?>"
+																												 data-title="<?php echo esc_attr( $article->post_title ); ?>"
+																												 data-content="<?php echo esc_attr( $article->post_content ); ?>"
+																												 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+																												 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'
+																												 title="<?php echo esc_attr__( 'Comments', 'decker' ); ?>">
+																												 <i class="ri-chat-1-line"></i>
+																												 </button>
+																												 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
+																												 <a href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" class="btn btn-outline-dark" title="<?php echo esc_attr__( 'History', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
+																												 <i class="ri-history-line"></i>
+																												 </a>
+																												 <?php endif; ?>
 																												 <button type="button" class="btn btn-outline-info kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>">
 																												 <i class="ri-pencil-line"></i>
 																												 </button>
@@ -400,6 +480,20 @@ die();
 																												 <i class="ri-add-line"></i>
 																												 </button>
 																										 </div>
+													<?php
+												}
+											}
+
+											if ( ! function_exists( 'decker_render_kb_node_dropdown' ) ) {
+												/**
+												 * Render the mobile dropdown action menu for a KB node.
+												 *
+												 * @param WP_Post $article           The article post object.
+												 * @param array   $article_data_json Encoded data attribute payloads.
+												 * @return void
+												 */
+												function decker_render_kb_node_dropdown( $article, $article_data_json ) {
+													?>
 																										 <div class="dropdown d-md-none">
 																												 <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
 																														 <i class="ri-more-2-fill"></i>
@@ -412,15 +506,38 @@ die();
 																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
 																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																														 <i class="ri-eye-line me-1"></i><?php esc_html_e( 'View', 'decker' ); ?></button></li>
+																														 <li><button class="dropdown-item view-article-comments-btn"
+																														 data-id="<?php echo esc_attr( $article->ID ); ?>"
+																														 data-title="<?php echo esc_attr( $article->post_title ); ?>"
+																														 data-content="<?php echo esc_attr( $article->post_content ); ?>"
+																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
+																														 <i class="ri-chat-1-line me-1"></i><?php esc_html_e( 'Comments', 'decker' ); ?></button></li>
+																														 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
+																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-history-line me-1"></i><?php esc_html_e( 'History', 'decker' ); ?></a></li>
+																														 <?php endif; ?>
 																														 <li><button class="dropdown-item kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>"><i class="ri-pencil-line me-1"></i><?php esc_html_e( 'Edit', 'decker' ); ?></button></li>
 																														 <li><button class="dropdown-item add-child-btn" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal"><i class="ri-add-line me-1"></i><?php esc_html_e( 'Add Child', 'decker' ); ?></button></li>
 																														 <li><hr class="dropdown-divider"></li>
 																														 <li><button class="dropdown-item text-danger" onclick="deleteArticle(<?php echo esc_attr( $article->ID ); ?>, '<?php echo esc_js( $article->post_title ); ?>')"><i class="ri-delete-bin-line me-1"></i><?php esc_html_e( 'Delete', 'decker' ); ?></button></li>
 																												 </ul>
 																										 </div>
-																							   </div>
-																							   </div>
-												<div class="edit-container mt-2" id="edit-container-<?php echo esc_attr( $article->ID ); ?>" style="display: none;"></div>
+													<?php
+												}
+											}
+
+											if ( ! function_exists( 'decker_render_kb_node_children' ) ) {
+												/**
+												 * Render the children list (collapsible) for a KB node.
+												 *
+												 * @param WP_Post $article          The article post object.
+												 * @param bool    $has_children     Whether the node has children.
+												 * @param bool    $is_all_view_flag Whether rendering for the "view=all" mode.
+												 * @param int     $board_id         The board term ID for the node.
+												 * @return void
+												 */
+												function decker_render_kb_node_children( $article, $has_children, $is_all_view_flag, $board_id ) {
+													?>
 												<ul class="list-group list-group-flush collapse kb-children" id="children-of-<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
 															<?php if ( $has_children ) : ?>
 																<?php
@@ -429,6 +546,55 @@ die();
 																?>
 													<?php endif; ?>
 												</ul>
+													<?php
+												}
+											}
+
+											if ( ! function_exists( 'decker_render_kb_node' ) ) {
+												/**
+												 * Render a KB article node with recursive children.
+												 *
+												 * Outputs a list item with actions, optional board badge (in view=all),
+												 * and a collapsible list for children.
+												 *
+												 * @param WP_Post $article            The article post object.
+												 * @param bool    $is_all_view_flag   Whether the current rendering is for the "view=all" mode.
+												 *
+												 * @return void
+												 */
+												function decker_render_kb_node( $article, $is_all_view_flag = false ) {
+													$render_data       = decker_get_kb_node_render_data( $article );
+													$has_children      = $render_data['has_children'];
+													$labels_data       = $render_data['labels_data'];
+													$board_id          = $render_data['board_id'];
+													$swatch_title      = $render_data['swatch_title'];
+													$article_data_json = $render_data['article_data_json'];
+													?>
+											<li class="kb-item list-group-item" data-article-id="<?php echo esc_attr( $article->ID ); ?>" data-parent-id="<?php echo esc_attr( $article->post_parent ); ?>" data-menu-order="<?php echo esc_attr( $article->menu_order ); ?>" data-board-id="<?php echo esc_attr( $board_id ); ?>">
+														<div class="d-flex align-items-center justify-content-between">
+											<div class="d-flex align-items-center gap-2">
+													<?php decker_render_kb_node_toggle( $article->ID, $has_children, $is_all_view_flag, $swatch_title ); ?>
+												<span class="kb-title-text">
+													<a href="#" class="view-article-link"
+														data-id="<?php echo esc_attr( $article->ID ); ?>"
+														data-title="<?php echo esc_attr( $article->post_title ); ?>"
+														data-content="<?php echo esc_attr( $article->post_content ); ?>"
+														data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
+														data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'><?php echo esc_html( $article->post_title ); ?></a>
+												</span>
+												<span class="kb-hidden-content d-none"><?php echo esc_html( wp_strip_all_tags( $article->post_content ) ); ?></span>
+															</div>
+												<div class="d-flex align-items-center gap-2">
+													<?php decker_render_kb_node_labels( $labels_data, $article->ID ); ?>
+
+													<span class="d-none d-md-inline-flex"><?php echo wp_kses_post( decker_get_kb_people_html( $article->ID ) ); ?></span>
+
+													<?php decker_render_kb_node_actions( $article, $article_data_json ); ?>
+													<?php decker_render_kb_node_dropdown( $article, $article_data_json ); ?>
+																							   </div>
+																							   </div>
+												<div class="edit-container mt-2" id="edit-container-<?php echo esc_attr( $article->ID ); ?>" style="display: none;"></div>
+													<?php decker_render_kb_node_children( $article, $has_children, $is_all_view_flag, $board_id ); ?>
 												</li>
 															<?php
 												}

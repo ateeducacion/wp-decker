@@ -192,23 +192,23 @@ class Decker_Public {
 				'wp-api',
 
 				// Bootstrap 5.
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css',
-				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css',
+				'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js',
 
 				// Remix Icons.
-				'https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css',
+				'https://cdn.jsdelivr.net/npm/remixicon@4.9.1/fonts/remixicon.min.css',
 
 				// Tablesort.
-				'https://cdnjs.cloudflare.com/ajax/libs/tablesort/5.2.1/tablesort.min.js',
+				'https://cdn.jsdelivr.net/gh/tristen/tablesort@5.7.0/dist/tablesort.min.js',
 
 				// Simplebar.
-				'https://cdn.jsdelivr.net/npm/simplebar@6.3.0/dist/simplebar.min.js',
+				'https://cdn.jsdelivr.net/npm/simplebar@6.3.3/dist/simplebar.min.js',
 
-				// Font Awesome.
+				// Font Awesome 5 Free (kept at 5.x; upgrading to 6.x requires icon class changes).
 				'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
 
 				// SortableJS.
-				'https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.6/Sortable.min.js',
+				'https://cdn.jsdelivr.net/npm/sortablejs@1.15.7/Sortable.min.js',
 
 				/*
 				// Highlight.
@@ -217,22 +217,22 @@ class Decker_Public {
 				*/
 
 				// Quill.
-				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.min.js',
-				'https://cdnjs.cloudflare.com/ajax/libs/quill/2.0.2/quill.snow.min.css',
+				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js',
+				'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css',
 				'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js',
-				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.min.js',
-				'https://cdn.jsdelivr.net/npm/quill-cursors@4.0.3/dist/quill-cursors.css',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.min.js',
+				'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.css',
 
 				// Choices.js.
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.js',
 				'https://cdnjs.cloudflare.com/ajax/libs/choices.js/11.1.0/choices.min.css',
 
-				// sweetalert2.js.
-				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.all.min.js',
-				'https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.16.1/sweetalert2.min.css',
+				// SweetAlert2.
+				'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.21/dist/sweetalert2.all.min.js',
+				'https://cdn.jsdelivr.net/npm/sweetalert2@11.26.21/dist/sweetalert2.min.css',
 
 				// Chart.js.
-				'https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js',
+				'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
 
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
@@ -241,6 +241,10 @@ class Decker_Public {
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
+
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-comments-popover.js',
+
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-labels-popover.js',
 
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
 
@@ -254,7 +258,7 @@ class Decker_Public {
 			if ( 'calendar' == $decker_page ) {
 
 				// FullCalendar.
-				$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.15/index.global.min.js';
+				$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js';
 
 				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
 
@@ -307,6 +311,13 @@ class Decker_Public {
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js';
 
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js';
+
+			// Add global search script.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js';
+
+			// Add the AI improvement module.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-ai.css';
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-ai.js';
 
 			// Add collaborative editing module if enabled.
 			$this->maybe_enqueue_collaboration();
@@ -363,6 +374,27 @@ class Decker_Public {
 					'task_archived_success'       => __( 'The task has been successfully archived.', 'decker' ),
 					'task_unarchived_success'     => __( 'The task has been successfully unarchived.', 'decker' ),
 					'error_archiving_task'        => __( 'An error occurred while archiving the task.', 'decker' ),
+					// Clone task strings.
+					'confirm_clone_task_title'    => __( 'Are you sure you want to clone this task?', 'decker' ),
+					'confirm_clone_task_text'     => __( 'A copy of this task will be created.', 'decker' ),
+					'clone_task'                  => __( 'Clone', 'decker' ),
+					'task_cloned_success'         => __( 'The task has been successfully cloned.', 'decker' ),
+					'error_cloning_task'          => __( 'An error occurred while cloning the task.', 'decker' ),
+					// Merge task strings.
+					'merge_task'                  => __( 'Merge into...', 'decker' ),
+					'merge_task_title'            => __( 'Merge task', 'decker' ),
+					'merge_task_text'             => __( 'Choose the destination task that should remain active.', 'decker' ),
+					'merge_task_search_placeholder' => __( 'Search tasks by title', 'decker' ),
+					'merge_task_search_hint'      => __( 'Type at least 2 characters to search for a destination task.', 'decker' ),
+					'merge_task_searching'        => __( 'Searching tasks...', 'decker' ),
+					'merge_task_no_results'       => __( 'No matching tasks found.', 'decker' ),
+					'merge_task_select_label'     => __( 'Destination task', 'decker' ),
+					'select_task_to_merge'        => __( 'Please select a destination task.', 'decker' ),
+					'confirm_merge_task_title'    => __( 'Are you sure you want to merge this task?', 'decker' ),
+					'confirm_merge_task_text'     => __( 'The current task will be archived and merged into the selected destination task.', 'decker' ),
+					'confirm_merge_task_button'   => __( 'Merge task', 'decker' ),
+					'task_merged_success'         => __( 'The task has been successfully merged.', 'decker' ),
+					'error_merging_task'          => __( 'An error occurred while merging the task.', 'decker' ),
 					// Extra keys from first version.
 					'success'                     => __( 'Success', 'decker' ),
 					'error'                       => __( 'Error', 'decker' ),
@@ -378,6 +410,11 @@ class Decker_Public {
 					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
 					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 					'copy_task_url'               => __( 'Copy Task URL', 'decker' ),
+					'loading_comments'            => __( 'Loading comments…', 'decker' ),
+					'no_comments'                 => __( 'No comments yet.', 'decker' ),
+					'comments_error'              => __( 'Could not load comments.', 'decker' ),
+					/* translators: %d is the number of additional comments not shown in the popover preview. */
+					'more_comments'               => __( 'and %d more', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
@@ -387,6 +424,7 @@ class Decker_Public {
 				'taskPermalinkStructure' => get_option( 'permalink_structure' )
 					? home_url( '/decker/task/%d/' )
 					: home_url( '/?decker_task=%d' ),
+				'ai'                => $this->get_ai_config(),
 			);
 
 			$last_handle = '';
@@ -456,6 +494,11 @@ class Decker_Public {
 				array(
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'heartbeat-nonce' ),
+					'userId'  => get_current_user_id(),
+					'labels'  => array(
+						'delete'              => __( 'Delete', 'decker' ),
+						'delete_notification' => __( 'Delete notification', 'decker' ),
+					),
 				)
 			);
 
@@ -475,7 +518,76 @@ class Decker_Public {
 			// TODO: This can be removed, review.
 			wp_localize_script( 'event-card', 'deckerVars', $localized_data );
 
+			// Localize the global search script.
+			wp_localize_script(
+				'global-search',
+				'deckerSearchVars',
+				array(
+					'restUrl' => rest_url(),
+					'nonce'   => wp_create_nonce( 'wp_rest' ),
+					'strings' => array(
+						'search_placeholder' => __( 'Search tasks...', 'decker' ),
+						'search_hint'        => __( 'Type to search tasks by title', 'decker' ),
+						'navigate'           => __( 'to navigate', 'decker' ),
+						'select'             => __( 'to select', 'decker' ),
+						'close'              => __( 'to close', 'decker' ),
+						'no_results'         => __( 'No tasks found', 'decker' ),
+						'error'              => __( 'Error searching tasks', 'decker' ),
+					),
+				)
+			);
+
 		}
+	}
+
+	/**
+	 * Build the AI configuration object passed to JavaScript.
+	 *
+	 * Exposes browser-only AI prompts and all required UI strings.
+	 *
+	 * @return array AI configuration array.
+	 */
+	private function get_ai_config() {
+		$options = get_option( 'decker_settings', array() );
+
+		return array(
+			'enabled'          => isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'],
+			'provider'         => Decker_AI_Manager::get_selected_provider( $options ),
+			'api_endpoint'     => Decker_AI_Manager::get_rest_endpoint_url(),
+			'server_available' => '' !== Decker_AI_Manager::get_api_key( $options ),
+			'strings'          => array(
+				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
+				'choose_action'            => __( 'Choose an action', 'decker' ),
+				'mode_improve_description' => __( 'Improve description', 'decker' ),
+				'mode_make_actionable'     => __( 'Make it actionable', 'decker' ),
+				'mode_generate_checklist'  => __( 'Generate checklist', 'decker' ),
+				'mode_summarize'           => __( 'Summarize', 'decker' ),
+				'improving'                => __( 'Improving text…', 'decker' ),
+				'preview_title'            => __( 'Review improvement', 'decker' ),
+				'original_text'            => __( 'Original', 'decker' ),
+				'improved_text'            => __( 'Improved', 'decker' ),
+				'accept'                   => __( 'Accept', 'decker' ),
+				'cancel'                   => __( 'Cancel', 'decker' ),
+				'error'                    => __( 'Error', 'decker' ),
+				'error_message'            => __( 'An error occurred while improving the text.', 'decker' ),
+				'no_content'               => __( 'No content', 'decker' ),
+				'no_content_message'       => __( 'Please add some text before using AI improvement.', 'decker' ),
+				'ai_unavailable_title'     => __( 'Browser AI unavailable', 'decker' ),
+				'ai_unavailable_intro'     => __( 'This AI action requires a compatible browser with built-in AI support.', 'decker' ),
+				'ai_chrome_unavailable'    => __( 'Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile.', 'decker' ),
+				'ai_edge_unavailable'      => __( 'Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile.', 'decker' ),
+				'ai_download_required'     => __( 'The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again.', 'decker' ),
+				'ai_browser_unsupported'   => __( 'This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled.', 'decker' ),
+				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
+				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
+				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
+				'ai_api_missing_key'       => __( 'The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it.', 'decker' ),
+				'ai_api_request_error'     => __( 'The Gemini API request failed. Please try again in a moment.', 'decker' ),
+				'yes'                      => _x( 'Yes', 'AI task context boolean value', 'decker' ),
+				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
+			),
+			'prompts'          => Decker_AI_Manager::get_prompt_config( $options ),
+		);
 	}
 
 	/**

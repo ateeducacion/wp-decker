@@ -1,0 +1,160 @@
+/* ==========================================================================
+   Decker AI — "Improve with AI" toolbar integration
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Toolbar button
+   -------------------------------------------------------------------------- */
+
+.ql-toolbar .ql-ai-improve {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 4px;
+    background-color: transparent;
+    color: #50575e;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+        border-color 0.15s ease-in-out;
+    /* Override Quill's default button width */
+    width: auto;
+}
+
+.ql-toolbar .ql-ai-improve:hover,
+.ql-toolbar .ql-ai-improve:focus,
+.ql-toolbar .decker-ai-dropdown.is-open .ql-ai-improve {
+    background-color: #f0f6fc;
+    color: #2271b1;
+    border-color: #c3d9ed;
+}
+
+.ql-toolbar .ql-ai-improve:focus {
+    outline: 2px solid rgba(13, 110, 253, 0.5);
+    outline-offset: 2px;
+}
+
+.ql-toolbar .ql-ai-improve:disabled,
+.ql-toolbar .ql-ai-improve[disabled] {
+    opacity: 0.65;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.ql-toolbar .ql-ai-improve svg {
+    display: block;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 1.35;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: middle;
+}
+
+.ql-toolbar .ql-ai-improve .decker-ai-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   Toolbar dropdown
+   -------------------------------------------------------------------------- */
+
+.ql-toolbar .decker-ai-dropdown {
+    position: relative;
+}
+
+.ql-toolbar .ql-ai-improve .decker-ai-caret {
+    font-size: 8px;
+    line-height: 1;
+}
+
+.decker-ai-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: none;
+    min-width: 220px;
+    padding: 6px;
+    background-color: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.decker-ai-dropdown.is-open .decker-ai-dropdown-menu {
+    display: block;
+}
+
+.ql-toolbar .decker-ai-dropdown-menu .decker-ai-dropdown-item {
+    display: block;
+    float: none;
+    height: auto;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 8px 10px;
+    background: transparent;
+    color: #1d2327;
+    border: 0;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    cursor: pointer;
+    white-space: normal;
+}
+
+.ql-toolbar .decker-ai-dropdown-menu .decker-ai-dropdown-item:hover,
+.ql-toolbar .decker-ai-dropdown-menu .decker-ai-dropdown-item:focus {
+    background-color: #e8f0fe;
+    color: #0d6efd;
+    outline: none;
+}
+
+/* --------------------------------------------------------------------------
+   Preview text boxes (inside SweetAlert2 popup)
+   -------------------------------------------------------------------------- */
+
+.decker-ai-preview {
+    text-align: left;
+}
+
+.decker-ai-text-box {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 10px 12px;
+    background-color: #f8f9fa;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+.decker-ai-text-box.improved {
+    background-color: #f0fdf4;
+    border-color: #86efac;
+}
+
+/* Strip default white-space pre-wrap from HTML-rendered improved text */
+.decker-ai-text-box.improved p,
+.decker-ai-text-box.improved ul,
+.decker-ai-text-box.improved ol {
+    margin-bottom: 4px;
+    white-space: normal;
+}

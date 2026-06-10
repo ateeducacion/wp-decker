@@ -276,20 +276,69 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( 200, $response->get_status() );
 
-		// Set the order manually to ensure the test passes
-		wp_update_post(
+		// Clean cache again
+		clean_post_cache( $task1 );
+		clean_post_cache( $task2 );
+
+		// Check the real computed order: task1 was dragged below task2, so it
+		// must land at slot 2 and task2 must shift up to slot 1.
+		$this->assertEquals( 2, get_post( $task1 )->menu_order, 'Dragged task should land at slot 2' );
+		$this->assertEquals( 1, get_post( $task2 )->menu_order, 'Incumbent task should shift up to slot 1' );
+	}
+
+	/**
+	 * Test that an editor can reorder tasks via REST while lower roles cannot.
+	 */
+	public function test_order_endpoint_authorization() {
+		$task = self::factory()->task->create(
 			array(
-				'ID'         => $task1,
-				'menu_order' => 2,
+				'board' => $this->board_id,
+				'stack' => 'to-do',
 			)
 		);
 
-		// Clean cache again
-		clean_post_cache( $task1 );
+		$order_data = array(
+			'board_id'     => $this->board_id,
+			'source_stack' => 'to-do',
+			'target_stack' => 'in-progress',
+			'source_order' => 1,
+			'target_order' => 1,
+		);
 
-		// Check new order
-		$task = get_post( $task1 );
-		$this->assertEquals( 2, $task->menu_order, 'Menu order did not match expected value 2' );
+		// Subscriber should be denied.
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task . '/stack' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $order_data ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertContains( $response->get_status(), array( 401, 403 ), 'Subscribers must not mutate task stack' );
+
+		// Contributor should be denied as well.
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		wp_set_current_user( $contributor );
+
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task . '/order' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $order_data ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertContains( $response->get_status(), array( 401, 403 ), 'Contributors must not mutate task order' );
+
+		// Editor should succeed.
+		wp_set_current_user( $this->editor );
+
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task . '/stack' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $order_data ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertEquals( 200, $response->get_status(), 'Editor should be allowed to mutate task stack' );
 	}
 
 	/**
@@ -337,5 +386,97 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 
 		// Our code should disallow subscribers: expecting 403
 		$this->assertEquals( 403, $response->get_status() );
+	}
+
+	/**
+	 * Test that subscribers cannot access the task search endpoint
+	 */
+	public function test_search_tasks_authorization() {
+		// Create user with no editing capabilities
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		// Create a task to search for
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Tarea de prueba',
+				'board'      => $this->board_id,
+			)
+		);
+
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'prueba' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		// Subscribers should not be able to search tasks: expecting 403
+		$this->assertEquals( 403, $response->get_status(), 'Expected 403 for subscribers accessing task search endpoint' );
+	}
+
+	/**
+	 * Test search tasks endpoint
+	 */
+	public function test_search_tasks() {
+		// Create tasks with different titles
+		$task1_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Buscar tareas en el sistema',
+				'board'      => $this->board_id,
+			)
+		);
+		update_post_meta( $task1_id, 'stack', 'to-do' );
+
+		$task2_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Implementar funcionalidad de búsqueda',
+				'board'      => $this->board_id,
+			)
+		);
+		update_post_meta( $task2_id, 'stack', 'in-progress' );
+
+		$task3_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Pruebas de integración',
+				'board'      => $this->board_id,
+			)
+		);
+		update_post_meta( $task3_id, 'stack', 'done' );
+
+		// Search for "búsqueda"
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'búsqueda' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status(), 'Expected 200 on search' );
+		$this->assertTrue( $data['success'], 'Expected success to be true' );
+		$this->assertIsArray( $data['tasks'], 'Expected tasks to be an array' );
+		$this->assertCount( 1, $data['tasks'], 'Expected 1 result for "búsqueda"' );
+		$this->assertEquals( 'Implementar funcionalidad de búsqueda', $data['tasks'][0]['title'] );
+		$this->assertEquals( 'in-progress', $data['tasks'][0]['stack'] );
+
+		// Search for "buscar"
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_param( 'search', 'buscar' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$data     = $response->get_data();
+
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertTrue( $data['success'] );
+		$this->assertIsArray( $data['tasks'] );
+		$this->assertGreaterThanOrEqual( 1, count( $data['tasks'] ), 'Expected at least 1 result for "buscar"' );
+
+		// Search without term (should fail)
+		$request = new WP_REST_Request( 'GET', '/decker/v1/tasks/search' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertEquals( 400, $response->get_status(), 'Expected 400 when search term is missing' );
 	}
 }

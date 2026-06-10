@@ -11,6 +11,13 @@ use om\IcalParser;
 class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
 	/**
+	 * Per-user calendar token used to authenticate the feed requests.
+	 *
+	 * @var string
+	 */
+	private $calendar_token = '';
+
+	/**
 	 * Make sure the rewrite endpoint exists for every test.
 	 */
 	public function set_up() {
@@ -24,6 +31,23 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		$wp_rewrite->init();                      // reset internal state
 		$wp_rewrite->add_endpoint( 'decker-calendar', EP_ROOT );
 		$wp_rewrite->flush_rules( false );        // soft flush
+
+		// The iCal feed now requires authentication. Provision a user with a
+		// per-user calendar token so the requests below can authenticate via
+		// the ?token= parameter without relying on a logged-in session.
+		$user_id              = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$this->calendar_token = 'test-calendar-token-' . $user_id;
+		update_user_meta( $user_id, 'decker_calendar_token', $this->calendar_token );
+	}
+
+	/**
+	 * Build a feed URL appending the calendar token for authentication.
+	 *
+	 * @param string $query Query string (without leading ?).
+	 * @return string
+	 */
+	private function feed_url( string $query ): string {
+		return home_url( '/?' . $query . '&token=' . rawurlencode( $this->calendar_token ) );
 	}
 
 	/**
@@ -79,7 +103,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 			)
 		);
 
-		$this->go_to( home_url( '/?decker-calendar&type=meeting' ) );
+		$this->go_to( $this->feed_url( 'decker-calendar&type=meeting' ) );
 
 		ob_start();
 		do_action( 'template_redirect' );
@@ -125,7 +149,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 			)
 		);
 
-		$this->go_to( home_url( '/?decker-calendar' ) );
+		$this->go_to( $this->feed_url( 'decker-calendar' ) );
 
 		ob_start();
 		do_action( 'template_redirect' );
@@ -144,6 +168,8 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 	/** @test */
 	public function test_all_day_event_ics_download() {
 
+		// A two-day inclusive all-day event (Jan 1 → Jan 2) is saved through the
+		// real meta pipeline, so event_end is stored as the inclusive last day.
 		self::factory()->event->create(
 			array(
 				'post_title' => 'All Day Event',
@@ -155,7 +181,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 			)
 		);
 
-		$this->go_to( home_url( '/?decker-calendar' ) );
+		$this->go_to( $this->feed_url( 'decker-calendar' ) );
 
 		ob_start();
 		do_action( 'template_redirect' );
@@ -168,6 +194,66 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 
 		$this->assertCount( 1, $events );
 		$this->assertSame( '20250101T000000Z', $events[0]['DTSTART'] );
-		$this->assertSame( '20250102T000000Z', $events[0]['DTEND'] );
+		// Per RFC 5545, DTEND;VALUE=DATE is exclusive: the inclusive last day
+		// (Jan 2) must be emitted as the next day (Jan 3).
+		$this->assertSame( '20250103T000000Z', $events[0]['DTEND'] );
+	}
+
+	/** @test */
+	public function test_single_day_all_day_event_dtend_is_exclusive() {
+
+		// A single-day all-day event: start and end are the same stored day.
+		self::factory()->event->create(
+			array(
+				'post_title' => 'Single Day All Day Event',
+				'meta_input' => array(
+					'event_allday' => true,
+					'event_start'  => '2025-03-10',
+					'event_end'    => '2025-03-10',
+				),
+			)
+		);
+
+		$this->go_to( $this->feed_url( 'decker-calendar' ) );
+
+		ob_start();
+		do_action( 'template_redirect' );
+		$ics = ob_get_clean();
+
+		$this->assertNotEmpty( $ics, 'ICS content should not be empty.' );
+
+		$events = $this->parse_ics_with_debug( $ics );
+
+		$this->assertCount( 1, $events );
+		$this->assertSame( '20250310T000000Z', $events[0]['DTSTART'] );
+		// DTEND must be DTSTART + 1 day so the event spans exactly one day.
+		$this->assertSame( '20250311T000000Z', $events[0]['DTEND'] );
+	}
+
+	/** @test */
+	public function test_anonymous_request_without_token_is_forbidden() {
+
+		self::factory()->event->create(
+			array(
+				'post_title'   => 'Secret Event',
+				'post_content' => 'Confidential Description',
+				'meta_input'   => array(
+					'event_start' => '2025-01-01 10:00:00',
+					'event_end'   => '2025-01-01 12:00:00',
+				),
+			)
+		);
+
+		// Ensure no logged-in user and no token: the feed must not leak data.
+		wp_set_current_user( 0 );
+		$this->go_to( home_url( '/?decker-calendar' ) );
+
+		ob_start();
+		do_action( 'template_redirect' );
+		$ics = ob_get_clean();
+
+		$this->assertEmpty( $ics, 'Anonymous request without a token must not receive feed content.' );
+		$this->assertStringNotContainsString( 'Secret Event', (string) $ics );
+		$this->assertStringNotContainsString( 'Confidential Description', (string) $ics );
 	}
 }

@@ -262,4 +262,25 @@ class DeckerTasksTest extends Decker_Test_Base {
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$this->assertEmpty( $relations, 'The relation should be removed.' );
 	}
+
+	/**
+	 * Test that stack icons use Bootstrap tooltip attributes.
+	 */
+	public function test_get_stack_icon_html_uses_bootstrap_tooltip_attributes() {
+		$html = Decker_Tasks::get_stack_icon_html( 'in-progress' );
+
+		$this->assertStringContainsString( 'ri-progress-3-line', $html );
+		$this->assertStringContainsString( 'data-bs-toggle="tooltip"', $html );
+		$this->assertStringContainsString( 'data-bs-placement="top"', $html );
+		$this->assertStringContainsString(
+			'data-bs-original-title="In Progress"',
+			$html
+		);
+		$this->assertStringContainsString( 'aria-label="In Progress"', $html );
+		$this->assertStringNotContainsString( ' title="', $html );
+		$this->assertStringContainsString(
+			'<span class="visually-hidden">In Progress</span>',
+			$html
+		);
+	}
 }

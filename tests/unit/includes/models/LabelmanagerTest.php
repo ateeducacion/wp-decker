@@ -110,6 +110,7 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 		$result = LabelManager::save_label( $new_label_data, 0 );
 
 		$this->assertTrue( $result['success'] );
+		$this->assertEquals( 'Label created successfully', $result['message'] );
 
 		// Verify the label was created
 		$term = get_term_by( 'name', 'New Test Label', 'decker_label' );
@@ -132,6 +133,7 @@ class DeckerLabelManagerTest extends Decker_Test_Base {
 		$result = LabelManager::save_label( $updated_data, $this->test_label_id );
 
 		$this->assertTrue( $result['success'] );
+		$this->assertEquals( 'Label updated successfully', $result['message'] );
 
 		// Verify the label was updated
 		$term = get_term( $this->test_label_id, 'decker_label' );

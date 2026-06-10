@@ -115,7 +115,11 @@ class Decker {
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ical-builder.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-provider-interface.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-gemini-api-provider.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-manager.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-disable-comment-notifications.php';
 
@@ -127,13 +131,23 @@ class Decker {
 		/**
 		 * The class responsible for defining the MVC.
 		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-term-entity.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-taxonomy-manager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
+
+		/**
+		 * The class responsible for network-level settings in Multisite.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-network-settings.php';
+		if ( is_multisite() ) {
+			new Decker_Network_Settings();
+		}
 
 		/**
 		 * The class responsible for defining all actions that occur in the admin area.
@@ -180,6 +194,7 @@ class Decker {
 	public function run() {
 		// Initialize notification handler.
 		new Decker_Notification_Handler();
+		new Decker_AI_Manager();
 
 		$this->loader->run();
 	}
@@ -201,6 +216,18 @@ class Decker {
 	 */
 	public function get_version() {
 		return $this->version;
+	}
+
+	/**
+	 * Get the default browser AI prompt template.
+	 *
+	 * @return string Default prompt template.
+	 */
+	public static function get_default_ai_prompt_template() {
+		return __(
+			"You are a task-writing assistant for Decker, a Kanban board used by a team that manages educational technology projects (virtual classrooms, digital content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, and school IT support).\n\n## Your role\nTransform raw task details into a brief, high-quality task description that is clear, useful, and ready to paste into the task card.\n\n## Task context\n{{task_context}}\n\n## Requested action\n{{mode_instruction}}\n\n## Content to transform\n{{content_html}}\n\n## Rules\n- Use the task context only to understand and improve the description. Do not repeat metadata unless it is essential inside the final description.\n- Return only the description content for the task. Do not add explanations, notes, meta commentary, or text outside the description itself.\n- Keep the result professional, concise, and specific — no filler, no corporate jargon.\n- Write a brief result that a team member can read quickly and understand immediately.\n- Preserve all URLs, reference numbers (e.g. incident IDs like 100004538192), dates, and proper nouns exactly as given.\n- NEVER invent information. If something is unclear, keep it as-is rather than guessing.\n- If the input contains credentials or passwords, replace them with \"[credenciales en la tarea original]\" and add a warning inside the description.\n- Use HTML formatting when helpful: <strong> for emphasis, <ul>/<ol>/<li> for lists, <p> for paragraphs, <a> for links.\n- Prefer a short paragraph or a compact list, depending on the requested action. Only use headings or sections if they clearly improve the task description.\n- For short, simple tasks, keep the description short and proportional.\n\n{{language_instruction}}\n{{response_format}}",
+			'decker'
+		);
 	}
 
 

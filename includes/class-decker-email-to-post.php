@@ -82,23 +82,30 @@ class Decker_Email_To_Post {
 	 */
 	public function get_body( Erseco\Message $message ): string {
 
-		// Attempt to get the parts of the message.
-		$parts = $message->getParts();
+		// Prefer HTML part.
+		$html_part = $message->getHtmlPart();
+		if ( $html_part ) {
+			return wp_kses_post( $html_part->getContent() );
+		}
 
+		// Fall back to plain text part.
+		$text_part = $message->getTextPart();
+		if ( $text_part ) {
+			return wp_kses_post( nl2br( esc_html( $text_part->getContent() ) ) );
+		}
+
+		// Fallback: first part.
+		$parts = $message->getParts();
 		if ( count( $parts ) > 0 ) {
 			$content = $parts[0]->getContent();
 			$content_type = $parts[0]->getContentType();
 
-			if ( str_starts_with( strtolower( $content_type ), 'text/plain;' ) ) {
-				// Convert plain text to HTML for better readability.
+			if ( str_starts_with( strtolower( $content_type ), 'text/plain' ) ) {
 				return wp_kses_post( nl2br( esc_html( $content ) ) );
-			} else {
-				// Sanitize and return the HTML content.
-				return wp_kses_post( $content );
 			}
+			return wp_kses_post( $content );
 		}
 
-		// If no parts are available, return an empty string.
 		return '';
 	}
 
@@ -119,7 +126,10 @@ class Decker_Email_To_Post {
 		try {
 
 			// Decode the base64-encoded email content.
-			$raw_email = base64_decode( $payload['rawEmail'] );
+			$raw_email = base64_decode( $payload['rawEmail'], true );
+			if ( false === $raw_email ) {
+				return new WP_Error( 'invalid_encoding', 'rawEmail must be base64 encoded', array( 'status' => 400 ) );
+			}
 
 			// Parse email.
 			$message = $this->parse_email( $raw_email );
@@ -230,13 +240,81 @@ class Decker_Email_To_Post {
 
 		   // Create a unique filename.
 		$original_filename = sanitize_file_name( $filename );
-		$extension         = pathinfo( $filename, PATHINFO_EXTENSION );
-		$upload_dir        = wp_upload_dir();
+
+		   // Reject attachments with no usable filename.
+		if ( '' === $original_filename ) {
+			return new WP_Error( 'invalid_filename', 'Nombre de archivo inválido.' );
+		}
+
+		   // Validate the attachment against WordPress's allowed types. Never trust the
+		   // attacker-controlled extension or the e-mail Content-Type on their own.
+		$filetype = wp_check_filetype_and_ext( $original_filename, $original_filename, get_allowed_mime_types() );
+
+		$verified_ext  = $filetype['ext'];
+		$verified_type = $filetype['type'];
+
+		   // Explicit denylist of executable / script extensions, checked against the
+		   // sanitized filename so double extensions cannot smuggle code through.
+		$disallowed_extensions = array(
+			'php',
+			'php3',
+			'php4',
+			'php5',
+			'php6',
+			'php7',
+			'php8',
+			'phtml',
+			'phps',
+			'phar',
+			'pht',
+			'phtm',
+			'cgi',
+			'pl',
+			'asp',
+			'aspx',
+			'jsp',
+			'jspx',
+			'sh',
+			'bash',
+			'exe',
+			'com',
+			'bat',
+			'cmd',
+			'msi',
+			'scr',
+			'dll',
+			'jar',
+			'py',
+			'rb',
+			'htaccess',
+			'htm',
+			'html',
+			'shtml',
+			'svg',
+		);
+
+		$lower_filename = strtolower( $original_filename );
+		foreach ( $disallowed_extensions as $disallowed_extension ) {
+			if ( str_ends_with( $lower_filename, '.' . $disallowed_extension ) ) {
+				return new WP_Error( 'disallowed_file_type', 'Tipo de archivo no permitido.' );
+			}
+		}
+
+		   // Reject when WordPress cannot resolve a verified extension/type from the allowlist.
+		if ( empty( $verified_ext ) || empty( $verified_type ) ) {
+			return new WP_Error( 'disallowed_file_type', 'Tipo de archivo no permitido.' );
+		}
+
+		   // Use the verified MIME type from the allowlist, not the e-mail Content-Type.
+		$type = $verified_type;
+
+		$extension  = $verified_ext;
+		$upload_dir = wp_upload_dir();
 
 		   // Generate a unique file name using the native WordPress function.
 		$obfuscated_name = wp_unique_filename(
 			$upload_dir['path'],
-			wp_generate_uuid4() . '.' . $extension
+			sanitize_file_name( wp_generate_uuid4() . '.' . $extension )
 		);
 
 			   // Build the full file path.
@@ -292,10 +370,25 @@ class Decker_Email_To_Post {
 	private function validate_authorization( $auth_header ) {
 
 		// Retrieve options and set the shared key.
-		$options = get_option( 'decker_settings', array() );
-		$shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : 'error';
+		$options    = get_option( 'decker_settings', array() );
+		$shared_key = isset( $options['shared_key'] ) ? sanitize_text_field( $options['shared_key'] ) : '';
 
-		return $auth_header && 0 === strpos( $auth_header, 'Bearer ' ) && hash_equals( $shared_key, substr( $auth_header, 7 ) );
+		// Fail closed: if no shared key is configured, deny all requests.
+		if ( '' === $shared_key ) {
+			return false;
+		}
+
+		// Require a well-formed Bearer header with a non-empty token.
+		if ( ! $auth_header || 0 !== strpos( $auth_header, 'Bearer ' ) ) {
+			return false;
+		}
+
+		$token = substr( $auth_header, 7 );
+		if ( '' === trim( $token ) ) {
+			return false;
+		}
+
+		return hash_equals( $shared_key, $token );
 	}
 
 	/**

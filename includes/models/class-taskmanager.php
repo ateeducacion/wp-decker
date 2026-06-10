@@ -209,6 +209,87 @@ class TaskManager {
 		return $this->get_tasks( $args );
 	}
 
+	/**
+	 * Retrieves task counts grouped by board slug and stack.
+	 *
+	 * Hidden tasks are excluded to match the existing active task counter.
+	 *
+	 * @param string[] $stacks The stacks to count.
+	 * @return array<string, array<string, int>> Task counts keyed by board slug and stack.
+	 */
+	public function get_board_task_counts_by_stack( array $stacks ): array {
+		global $wpdb;
+
+		$sanitized_stacks = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'sanitize_key', $stacks )
+				)
+			)
+		);
+
+		if ( empty( $sanitized_stacks ) ) {
+			return array();
+		}
+
+		// Build the placeholder list for prepare(); the count only determines
+		// how many prepared statement `%s` placeholders are used below.
+		$placeholders = implode( ', ', array_fill( 0, count( $sanitized_stacks ), '%s' ) );
+
+		// Join the stack meta so counts can be grouped by column, then join the
+		// board taxonomy tables to group results by board slug. A left join on
+		// the hidden flag lets us exclude hidden tasks while still counting
+		// tasks that do not have any hidden meta stored.
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Placeholder string only contains generated %s tokens; stack values are bound by $wpdb->prepare() below.
+		$query        = $wpdb->prepare(
+			"
+			SELECT terms.slug AS board_slug, stack_meta.meta_value AS stack, COUNT(posts.ID) AS task_count
+			FROM {$wpdb->posts} AS posts
+			INNER JOIN {$wpdb->postmeta} AS stack_meta
+				ON posts.ID = stack_meta.post_id
+				AND stack_meta.meta_key = 'stack'
+			INNER JOIN {$wpdb->term_relationships} AS relationships
+				ON posts.ID = relationships.object_id
+			INNER JOIN {$wpdb->term_taxonomy} AS taxonomy
+				ON relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+				AND taxonomy.taxonomy = 'decker_board'
+			INNER JOIN {$wpdb->terms} AS terms
+				ON taxonomy.term_id = terms.term_id
+			LEFT JOIN {$wpdb->postmeta} AS hidden_meta
+				ON posts.ID = hidden_meta.post_id
+				AND hidden_meta.meta_key = 'hidden'
+			WHERE posts.post_type = 'decker_task'
+				AND posts.post_status = 'publish'
+				AND stack_meta.meta_value IN ($placeholders)
+				AND ( hidden_meta.meta_id IS NULL OR hidden_meta.meta_value != '1' )
+			GROUP BY terms.slug, stack_meta.meta_value
+			",
+			$sanitized_stacks
+		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$results = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared -- Dynamic IN placeholders are safely constructed and passed through $wpdb->prepare() above.
+		$counts  = array();
+
+		foreach ( $results as $result ) {
+			$board_slug = isset( $result->board_slug ) ? (string) $result->board_slug : '';
+			$stack      = isset( $result->stack ) ? (string) $result->stack : '';
+			$task_count = isset( $result->task_count ) ? (int) $result->task_count : 0;
+
+			if ( '' === $board_slug || '' === $stack ) {
+				continue;
+			}
+
+			if ( ! isset( $counts[ $board_slug ] ) ) {
+				$counts[ $board_slug ] = array();
+			}
+
+			$counts[ $board_slug ][ $stack ] = $task_count;
+		}
+
+		return $counts;
+	}
+
 
 	/**
 	 * Checks if the current user has tasks assigned for today.

@@ -49,6 +49,12 @@ defined( 'ABSPATH' ) || exit;
 
 		<ul class="topbar-menu d-flex align-items-center gap-3">
 
+			<li class="d-none d-lg-inline-block">
+				<a class="nav-link" href="#" id="deckerGlobalSearchTrigger" data-bs-toggle="tooltip" data-bs-placement="left" title="<?php esc_attr_e( 'Search (Ctrl+K)', 'decker' ); ?>">
+					<i class="ri-search-line fs-22"></i>
+				</a>
+			</li>
+
 			<li class="dropdown notification-list">
                 <a class="nav-link dropdown-toggle arrow-none" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
                     <i class="ri-notification-3-line fs-22"></i>
@@ -63,7 +69,7 @@ defined( 'ABSPATH' ) || exit;
 					            <h6 class="m-0 fs-16 fw-semibold"> <?php esc_html_e( 'Notifications', 'decker' ); ?></h6>
 					        </div>
 					        <div class="col-auto">
-					            <a href="javascript: void(0);" class="text-dark text-decoration-underline">
+					            <a href="javascript: void(0);" class="text-dark text-decoration-underline js-clear-notifications">
 					                <small><?php esc_html_e( 'Clear All', 'decker' ); ?></small>
 					            </a>
 					        </div>
@@ -156,4 +162,3 @@ defined( 'ABSPATH' ) || exit;
 		</ul>
 	</div>
 </div>
-

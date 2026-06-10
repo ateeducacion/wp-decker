@@ -122,6 +122,53 @@ class Decker_Notification_Handler {
 	}
 
 	/**
+	 * Retrieves the assigned users for a task, normalized to an array.
+	 *
+	 * @param int $task_id The task ID.
+	 * @return array Assigned user IDs, or an empty array when none are stored.
+	 */
+	private function get_assigned_users( $task_id ) {
+		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
+		if ( ! is_array( $assigned_users ) ) {
+			return array();
+		}
+
+		return $assigned_users;
+	}
+
+	/**
+	 * Resolves the email recipient for a user, honoring global and per-user settings.
+	 *
+	 * @param int    $user_id        The user ID.
+	 * @param string $preference_key The notification preference key to check.
+	 * @return WP_User|false The user object when email may be sent, false otherwise.
+	 */
+	private function get_email_recipient( $user_id, $preference_key ) {
+		if ( ! $this->are_notifications_enabled() ) {
+			return false;
+		}
+
+		$preferences = $this->get_user_preferences( $user_id );
+		if ( ! $preferences[ $preference_key ] ) {
+			return false;
+		}
+
+		return get_userdata( $user_id );
+	}
+
+	/**
+	 * Sends an HTML email through the mailer with the standard content-type header.
+	 *
+	 * @param string $email   The recipient email address.
+	 * @param string $subject The email subject.
+	 * @param string $content The email body.
+	 */
+	private function send_html_email( $email, $subject, $content ) {
+		$headers = array( 'Content-Type: text/html; charset=UTF-8' );
+		$this->mailer->send_email( $email, $subject, $content, $headers );
+	}
+
+	/**
 	 * Handles sending of newly created task notifications (for assigned users).
 	 *
 	 * This is triggered by the 'decker_task_created' hook.
@@ -276,12 +323,9 @@ class Decker_Notification_Handler {
 			return;
 		}
 
-		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
-		if ( empty( $assigned_users ) || ! is_array( $assigned_users ) ) {
+		$assigned_users = $this->get_assigned_users( $task_id );
+		if ( empty( $assigned_users ) ) {
 			return;
-		}
-		if ( ! is_array( $assigned_users ) ) {
-			$assigned_users = array();
 		}
 
 		// Skip the user who completed the task.
@@ -291,48 +335,56 @@ class Decker_Notification_Handler {
 		$finisher = get_userdata( $completing_user_id );
 
 		foreach ( $assigned_users as $user_id ) {
-
-			/* error_log( 'Adding notification in handle_task_completed() for user: ' . $user_id ); */
-
-			// Store notification in user meta for Heartbeat and UI.
-			$this->add_notification_to_user(
-				$user_id,
-				array(
-					'type'       => 'task_completed',
-					'task_id'    => $task_id,
-					'title'      => $task->post_title,
-					/* Translators: %s is a username. */
-					'action'     => sprintf( __( 'Completed by %s', 'decker' ), $finisher ? $finisher->display_name : __( 'Unknown user', 'decker' ) ),
-					'time'       => gmdate( 'Y-m-d H:i:s' ),
-					'url'        => esc_url( $this->build_task_url( $task_id ) ),
-				)
-			);
-
-			// Check if email notifications are enabled and if the user allows them.
-			if ( ! $this->are_notifications_enabled() ) {
-				continue;
-			}
-			$preferences = $this->get_user_preferences( $user_id );
-			if ( ! $preferences['notify_completed'] ) {
-				continue;
-			}
-
-			$user = get_userdata( $user_id );
-			if ( ! $user ) {
-				continue;
-			}
-
-			$subject = sprintf( 'Task Completed: %s', $task->post_title );
-			$content = sprintf(
-				'The task "%1$s" has been marked as completed by %2$s. Click here to view it: %3$s',
-				$task->post_title,
-				$finisher ? $finisher->display_name : __( 'Unknown user', 'decker' ),
-				$this->build_task_url( $task_id )
-			);
-
-			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-			$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
+			$this->notify_user_task_completed( $user_id, $task, $task_id, $finisher );
 		}
+	}
+
+	/**
+	 * Notifies a single assigned user that a task was completed.
+	 *
+	 * Stores the in-app notification (always) and, when email notifications are
+	 * enabled for the user, sends the completion email.
+	 *
+	 * @param int           $user_id  The recipient user ID.
+	 * @param WP_Post       $task     The completed task post object.
+	 * @param int           $task_id  The completed task ID.
+	 * @param WP_User|false $finisher The user who completed the task, or false if unknown.
+	 */
+	private function notify_user_task_completed( $user_id, $task, $task_id, $finisher ) {
+
+		/* error_log( 'Adding notification in handle_task_completed() for user: ' . $user_id ); */
+
+		$finisher_name = $finisher ? $finisher->display_name : __( 'Unknown user', 'decker' );
+
+		// Store notification in user meta for Heartbeat and UI.
+		$this->add_notification_to_user(
+			$user_id,
+			array(
+				'type'       => 'task_completed',
+				'task_id'    => $task_id,
+				'title'      => $task->post_title,
+				/* Translators: %s is a username. */
+				'action'     => sprintf( __( 'Completed by %s', 'decker' ), $finisher_name ),
+				'time'       => gmdate( 'Y-m-d H:i:s' ),
+				'url'        => esc_url( $this->build_task_url( $task_id ) ),
+			)
+		);
+
+		// Check if email notifications are enabled and if the user allows them.
+		$user = $this->get_email_recipient( $user_id, 'notify_completed' );
+		if ( ! $user ) {
+			return;
+		}
+
+		$subject = sprintf( 'Task Completed: %s', $task->post_title );
+		$content = sprintf(
+			'The task "%1$s" has been marked as completed by %2$s. Click here to view it: %3$s',
+			$task->post_title,
+			$finisher_name,
+			$this->build_task_url( $task_id )
+		);
+
+		$this->send_html_email( $user->user_email, $subject, $content );
 	}
 
 	/**
@@ -354,8 +406,8 @@ class Decker_Notification_Handler {
 			return;
 		}
 
-		$assigned_users = get_post_meta( $post_id, 'assigned_users', true );
-		if ( empty( $assigned_users ) || ! is_array( $assigned_users ) ) {
+		$assigned_users = $this->get_assigned_users( $post_id );
+		if ( empty( $assigned_users ) ) {
 			return;
 		}
 
@@ -369,48 +421,56 @@ class Decker_Notification_Handler {
 				continue;
 			}
 
-			// Store notification in user meta for Heartbeat and UI.
-			$this->add_notification_to_user(
-				$user_id,
-				array(
-					'type'    => 'task_comment',
-					'task_id' => $post_id,
-					// Translators: %s is the task title.
-					'title'   => sprintf( __( 'New Comment on Task: %s', 'decker' ), $task->post_title ),
-					// Translators: %s is a username.
-					'action'  => sprintf( __( 'Comment by %s', 'decker' ), $author ? $author->display_name : __( 'Unknown user', 'decker' ) ),
-					'time'    => gmdate( 'Y-m-d H:i:s' ),
-					'url'     => esc_url( $this->build_task_url( $post_id ) ),
-				)
-			);
-
-			// Check if email notifications are enabled and if the user allows them.
-			if ( ! $this->are_notifications_enabled() ) {
-				continue;
-			}
-
-			$preferences = $this->get_user_preferences( $user_id );
-			if ( ! $preferences['notify_comments'] ) {
-				continue;
-			}
-
-			$user = get_userdata( $user_id );
-			if ( ! $user ) {
-				continue;
-			}
-			// Translators: %s is the task title.
-			$subject = sprintf( 'New Comment on Task: %s', $task->post_title );
-			$content = sprintf(
-				// translators: 1: Task title, 2: Author name, 3: Task URL.
-				'A new comment has been added to the task "%1$s" by %2$s. Click here to view it: %3$s',
-				$task->post_title,
-				$author ? $author->display_name : __( 'Unknown user', 'decker' ),
-				$this->build_task_url( $post_id )
-			);
-
-			$headers = array( 'Content-Type: text/html; charset=UTF-8' );
-			$this->mailer->send_email( $user->user_email, $subject, $content, $headers );
+			$this->notify_user_task_comment( $user_id, $task, $post_id, $author );
 		}
+	}
+
+	/**
+	 * Notifies a single assigned user about a new comment on a task.
+	 *
+	 * Stores the in-app notification (always) and, when email notifications are
+	 * enabled for the user, sends the comment email.
+	 *
+	 * @param int           $user_id The recipient user ID.
+	 * @param WP_Post       $task    The commented task post object.
+	 * @param int           $post_id The commented task ID.
+	 * @param WP_User|false $author  The comment author, or false if unknown.
+	 */
+	private function notify_user_task_comment( $user_id, $task, $post_id, $author ) {
+		$author_name = $author ? $author->display_name : __( 'Unknown user', 'decker' );
+
+		// Store notification in user meta for Heartbeat and UI.
+		$this->add_notification_to_user(
+			$user_id,
+			array(
+				'type'    => 'task_comment',
+				'task_id' => $post_id,
+				// Translators: %s is the task title.
+				'title'   => sprintf( __( 'New Comment on Task: %s', 'decker' ), $task->post_title ),
+				// Translators: %s is a username.
+				'action'  => sprintf( __( 'Comment by %s', 'decker' ), $author_name ),
+				'time'    => gmdate( 'Y-m-d H:i:s' ),
+				'url'     => esc_url( $this->build_task_url( $post_id ) ),
+			)
+		);
+
+		// Check if email notifications are enabled and if the user allows them.
+		$user = $this->get_email_recipient( $user_id, 'notify_comments' );
+		if ( ! $user ) {
+			return;
+		}
+
+		// Translators: %s is the task title.
+		$subject = sprintf( 'New Comment on Task: %s', $task->post_title );
+		$content = sprintf(
+			// translators: 1: Task title, 2: Author name, 3: Task URL.
+			'A new comment has been added to the task "%1$s" by %2$s. Click here to view it: %3$s',
+			$task->post_title,
+			$author_name,
+			$this->build_task_url( $post_id )
+		);
+
+		$this->send_html_email( $user->user_email, $subject, $content );
 	}
 
 
@@ -460,31 +520,20 @@ class Decker_Notification_Handler {
 			return $response;
 		}
 
-		$pending = get_user_meta( $user_id, 'decker_pending_notifications', true );
-		if ( empty( $pending ) || ! is_array( $pending ) ) {
-			$pending = array();
+		$pending = $this->get_notifications_meta( $user_id, 'decker_pending_notifications' );
+		if ( empty( $pending ) ) {
+			return $response;
 		}
 
-		if ( ! empty( $pending ) ) {
-			$response['decker_notifications'] = array();
+		$response['decker_notifications'] = array();
 
-			foreach ( $pending as $notification ) {
-				// Prepare data for JS.
-				$response['decker_notifications'][] = array(
-					'url'       => isset( $notification['url'] ) ? $notification['url'] : '#',
-					'taskId'    => isset( $notification['task_id'] ) ? $notification['task_id'] : 0,
-					'iconColor' => $this->get_icon_color_by_type( $notification['type'] ),
-					'iconClass' => $this->get_icon_class_by_type( $notification['type'] ),
-					'title'     => isset( $notification['title'] ) ? $notification['title'] : 'New Notification',
-					'action'    => isset( $notification['action'] ) ? $notification['action'] : '',
-					'time'      => isset( $notification['time'] ) ? $notification['time'] : '',
-					'type'      => isset( $notification['type'] ) ? $notification['type'] : '',
-				);
-			}
-
-			// Clear pending after sending them once.
-			delete_user_meta( $user_id, 'decker_pending_notifications' );
+		foreach ( $pending as $notification ) {
+			// Prepare data for JS.
+			$response['decker_notifications'][] = $this->format_notification_for_heartbeat( $notification );
 		}
+
+		// Clear pending after sending them once.
+		delete_user_meta( $user_id, 'decker_pending_notifications' );
 
 		return $response;
 	}
@@ -499,10 +548,7 @@ class Decker_Notification_Handler {
 			wp_send_json_error( 'Not logged in' );
 		}
 
-		$all_notifications = get_user_meta( $user_id, 'decker_all_notifications', true );
-		if ( empty( $all_notifications ) || ! is_array( $all_notifications ) ) {
-			$all_notifications = array();
-		}
+		$all_notifications = $this->get_notifications_meta( $user_id, 'decker_all_notifications' );
 
 		// Reverse so newest is at the front.
 		usort(
@@ -517,15 +563,7 @@ class Decker_Notification_Handler {
 		// Map them to the same structure used in JS.
 		$formatted = array();
 		foreach ( $last_notifications as $notification ) {
-			$formatted[] = array(
-				'url'       => isset( $notification['url'] ) ? $notification['url'] : '#',
-				'taskId'    => isset( $notification['task_id'] ) ? $notification['task_id'] : 0,
-				'iconColor' => $this->get_icon_color_by_type( $notification['type'] ),
-				'iconClass' => $this->get_icon_class_by_type( $notification['type'] ),
-				'title'     => isset( $notification['title'] ) ? $notification['title'] : 'Notification',
-				'action'    => isset( $notification['action'] ) ? $notification['action'] : '',
-				'time'      => isset( $notification['time'] ) ? $notification['time'] : '',
-			);
+			$formatted[] = $this->format_notification_for_client( $notification, 'Notification' );
 		}
 
 		wp_send_json_success( $formatted );
@@ -562,11 +600,23 @@ class Decker_Notification_Handler {
 			return;
 		}
 
+		$notification_id = isset( $notification['notification_id'] )
+			? sanitize_text_field( $notification['notification_id'] )
+			: '';
+
 		// Remove the notification matching type and task_id (if applicable).
 		$filtered = array_filter(
 			$all_notifications,
-			function ( $n ) use ( $notification ) {
-				return ( $n['type'] !== $notification['type'] || ( isset( $n['task_id'] ) && $n['task_id'] !== $notification['task_id'] ) );
+			function ( $stored_notification ) use ( $notification, $notification_id ) {
+				if ( $notification_id ) {
+					return $this->get_notification_id( $stored_notification ) !== $notification_id;
+				}
+
+				return (
+					$stored_notification['type'] !== $notification['type']
+					|| ( isset( $stored_notification['task_id'] )
+					&& $stored_notification['task_id'] !== $notification['task_id'] )
+				);
 			}
 		);
 
@@ -583,16 +633,20 @@ class Decker_Notification_Handler {
 			wp_send_json_error( 'Not logged in' );
 		}
 
-		$task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$task_id         = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
+		$type            = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+		$notification_id = isset( $_POST['notification_id'] )
+			? sanitize_text_field( wp_unslash( $_POST['notification_id'] ) )
+			: '';
 
-		if ( ! $task_id && ! $type ) {
+		if ( ! $task_id && ! $type && ! $notification_id ) {
 			wp_send_json_error( 'No valid identifier provided' );
 		}
 
 		$notification_to_remove = array(
-			'type' => $type,
-			'task_id' => $task_id,
+			'type'            => $type,
+			'task_id'         => $task_id,
+			'notification_id' => $notification_id,
 		);
 		$this->remove_notification_from_user( $user_id, $notification_to_remove );
 
@@ -649,6 +703,8 @@ class Decker_Notification_Handler {
 			return;
 		}
 
+		$notification['notification_id'] = $this->get_notification_id( $notification );
+
 		// Save to "all notifications".
 		$all_notifications = get_user_meta( $user_id, 'decker_all_notifications', true );
 		if ( ! is_array( $all_notifications ) ) {
@@ -673,6 +729,80 @@ class Decker_Notification_Handler {
 
 		$pending[] = $notification;
 		update_user_meta( $user_id, 'decker_pending_notifications', $pending );
+	}
+
+	/**
+	 * Gets a stable identifier for a notification.
+	 *
+	 * @param array $notification Notification data.
+	 * @return string
+	 */
+	private function get_notification_id( $notification ) {
+		if ( ! empty( $notification['notification_id'] ) ) {
+			return sanitize_text_field( $notification['notification_id'] );
+		}
+
+		$identifier_data = array(
+			'type'    => isset( $notification['type'] ) ? (string) $notification['type'] : '',
+			'task_id' => isset( $notification['task_id'] ) ? (string) $notification['task_id'] : '',
+			'title'   => isset( $notification['title'] ) ? (string) $notification['title'] : '',
+			'action'  => isset( $notification['action'] ) ? (string) $notification['action'] : '',
+			'time'    => isset( $notification['time'] ) ? (string) $notification['time'] : '',
+			'url'     => isset( $notification['url'] ) ? (string) $notification['url'] : '',
+		);
+
+		return md5( wp_json_encode( $identifier_data ) );
+	}
+
+	/**
+	 * Retrieves a notifications meta value, normalized to an array.
+	 *
+	 * @param int    $user_id  The user ID.
+	 * @param string $meta_key The user meta key to read.
+	 * @return array The stored notifications, or an empty array when none are stored.
+	 */
+	private function get_notifications_meta( $user_id, $meta_key ) {
+		$notifications = get_user_meta( $user_id, $meta_key, true );
+		if ( ! is_array( $notifications ) ) {
+			return array();
+		}
+
+		return $notifications;
+	}
+
+	/**
+	 * Maps a stored notification to the structure consumed by the JS client.
+	 *
+	 * @param array  $notification  Notification data.
+	 * @param string $default_title Title fallback when the notification has none.
+	 * @return array The formatted notification payload.
+	 */
+	private function format_notification_for_client( $notification, $default_title ) {
+		return array(
+			'notificationId' => $this->get_notification_id( $notification ),
+			'url'       => isset( $notification['url'] ) ? $notification['url'] : '#',
+			'taskId'    => isset( $notification['task_id'] ) ? $notification['task_id'] : 0,
+			'iconColor' => $this->get_icon_color_by_type( $notification['type'] ),
+			'iconClass' => $this->get_icon_class_by_type( $notification['type'] ),
+			'title'     => isset( $notification['title'] ) ? $notification['title'] : $default_title,
+			'action'    => isset( $notification['action'] ) ? $notification['action'] : '',
+			'time'      => isset( $notification['time'] ) ? $notification['time'] : '',
+		);
+	}
+
+	/**
+	 * Maps a stored notification to the Heartbeat payload structure.
+	 *
+	 * Adds the heartbeat-only 'type' key and uses the heartbeat default title.
+	 *
+	 * @param array $notification Notification data.
+	 * @return array The formatted Heartbeat notification payload.
+	 */
+	private function format_notification_for_heartbeat( $notification ) {
+		$formatted         = $this->format_notification_for_client( $notification, 'New Notification' );
+		$formatted['type'] = isset( $notification['type'] ) ? $notification['type'] : '';
+
+		return $formatted;
 	}
 
 	/**

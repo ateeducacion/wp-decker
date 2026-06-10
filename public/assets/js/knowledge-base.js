@@ -678,7 +678,13 @@
     $(document).on('click', '.view-article-link, .view-article-btn', function (e) {
       e.preventDefault();
       const $t = $(this);
-      window.viewArticle && window.viewArticle($t.data('id'), $t.data('title'), $t.data('content'), $t.data('labels'), $t.data('board'));
+      window.viewArticle && window.viewArticle($t.data('id'), $t.data('title'), $t.data('content'), $t.data('labels'), $t.data('board'), 'article');
+    });
+
+    $(document).on('click', '.view-article-comments-btn', function (e) {
+      e.preventDefault();
+      const $t = $(this);
+      window.viewArticle && window.viewArticle($t.data('id'), $t.data('title'), $t.data('content'), $t.data('labels'), $t.data('board'), 'comments');
     });
   }
 
