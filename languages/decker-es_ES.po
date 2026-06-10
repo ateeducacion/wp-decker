@@ -1239,7 +1239,6 @@ msgstr "Permitir notificaciones por correo electrónico"
 msgid "This email was automatically sent by Decker"
 msgstr "Este correo electrónico ha sido enviado automáticamente por Decker"
 
-#. Translators: %s is a username.
 msgid "Unknown user"
 msgstr "Usuario desconocido"
 
@@ -1323,7 +1322,6 @@ msgstr "Notificaciones"
 
 msgid "Clear All"
 msgstr "Limpiar todo"
-
 
 msgid "Test Notification"
 msgstr "Notificación de la prueba"
@@ -1837,12 +1835,14 @@ msgstr ""
 "{{language_instruction}}\n"
 "{{response_format}}"
 
+#. translators: %d is the number of comments on the task.
 #, php-format
 msgid "%d comment"
 msgid_plural "%d comments"
 msgstr[0] "%d comentario"
 msgstr[1] "%d comentarios"
 
+#. translators: %d is the number of labels on the task.
 #, php-format
 msgid "%d label"
 msgid_plural "%d labels"
@@ -1855,6 +1855,13 @@ msgstr "Cargando comentarios…"
 msgid "Could not load comments."
 msgstr "No se han podido cargar los comentarios."
 
+#. translators: %d is the number of additional comments not shown in the popover preview.
 #, php-format
 msgid "and %d more"
 msgstr "y %d más"
+
+msgid "You do not have permission to edit this article"
+msgstr "No tienes permiso para editar este artículo"
+
+msgid "You do not have permission to perform this action."
+msgstr "No tienes permiso para realizar esta acción."
