@@ -94,6 +94,14 @@ test: start-if-not-running
 	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
 
+# Run PHPUnit on WordPress Playground (WebAssembly, SQLite) — no Docker required.
+# Reuses Playground's in-process WP on SQLite (WP_TESTS_SKIP_INSTALL); same FILE / FILTER as `make test`.
+test-playground:
+	@CMD="/wordpress/wp-content/plugins/decker/vendor/bin/phpunit -c /wordpress/wp-content/plugins/decker/phpunit-playground.xml.dist"; \
+	if [ -n "$(FILE)" ]; then CMD="$$CMD /wordpress/wp-content/plugins/decker/$(FILE)"; fi; \
+	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
+	cd "$${TMPDIR:-/tmp}" && npx --yes @wp-playground/cli@latest php --mount="$(CURDIR):/wordpress/wp-content/plugins/decker" -- $$CMD --testdox --colors=always
+
 # Run unit tests in verbose mode. Honor TEST filter if provided.
 test-verbose: start-if-not-running
 	@CMD="./vendor/bin/phpunit"; \
@@ -250,6 +258,7 @@ help:
 	@echo "                         make test FILE=tests/MyTest.php"
 	@echo "                         make test FILE=tests/MyTest.php FILTER=test_my_feature"
 	@echo ""
+	@echo "  test-playground    - Run PHPUnit on Playground (WASM/SQLite, no Docker). Same FILE/FILTER."
 	@echo "  test-js            - Run JavaScript unit tests with Jest"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
