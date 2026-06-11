@@ -37,6 +37,11 @@ up: check-docker
 # Alias for `up` (some folks type `make start`).
 start: up
 
+# Bring up a Playground dev server (WebAssembly, SQLite) — no Docker required.
+# Serves on http://127.0.0.1:9400 with the plugin mounted and auto-login.
+up-playground:
+	cd "$${TMPDIR:-/tmp}" && npx --yes @wp-playground/cli@latest start --path="$(CURDIR)"
+
 # Update WordPress core/themes and (re)start the environment.
 update-env: check-docker
 	npx wp-env start --update
@@ -227,7 +232,8 @@ help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "General:"
-	@echo "  up / start         - Start the WordPress environment (idempotent)"
+	@echo "  up / start         - Start the WordPress environment with Docker (idempotent)"
+	@echo "  up-playground       - Start a Playground dev server (WASM/SQLite, no Docker, port 9400)"
 	@echo "  down / stop        - Stop the environment (data preserved)"
 	@echo "  update-env         - Update WordPress core/themes and restart"
 	@echo "  logs               - Show the docker container logs"
