@@ -17,8 +17,12 @@ jobs:
 
       - name: Set environment variables
         run: |
-          RAW_TAG="${GITHUB_REF##*/}"
+          RAW_TAG="${{ github.event.release.tag_name }}"
           VERSION_TAG="${RAW_TAG#v}"  # Delete the initial 'v' if exists
+          if [ -z "$VERSION_TAG" ]; then
+            echo "::error::Could not determine release tag" >&2
+            exit 1
+          fi
           echo "RELEASE_TAG=${VERSION_TAG}" >> $GITHUB_ENV
 
       - name: Create package using the Makefile
