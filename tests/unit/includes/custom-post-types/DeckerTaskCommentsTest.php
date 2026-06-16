@@ -97,6 +97,42 @@ class DeckerTaskCommentsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A comment containing a URL must be rendered with a clickable link.
+	 *
+	 * render_comments() (used when the task is reloaded) must render URLs as
+	 * clickable links, matching the REST API output used by the AJAX path.
+	 * This guards against regressing back to the 'the_content' filter, which
+	 * does not apply make_clickable() and leaves URLs as plain text. See #260.
+	 */
+	public function test_comment_url_is_rendered_as_clickable_link() {
+		require_once dirname( __DIR__, 4 ) . '/public/layouts/partials/task-comments.php';
+
+		wp_set_current_user( $this->administrator );
+
+		$url        = 'https://example.com/path';
+		$comment_id = self::factory()->comment->create(
+			array(
+				'comment_post_ID' => $this->task_id,
+				'comment_content' => "Check this out $url please",
+				'user_id'         => $this->administrator,
+			)
+		);
+
+		$comment = get_comment( $comment_id );
+
+		ob_start();
+		render_comments( array( $comment ), 0, $this->administrator );
+		$rendered = ob_get_clean();
+
+		$this->assertStringContainsString(
+			'href="' . $url . '"',
+			$rendered,
+			'Comment URL should be rendered as a clickable link on task reload.'
+		);
+		$this->assertStringContainsString( '<a ', $rendered, 'Rendered comment should contain an anchor tag.' );
+	}
+
+	/**
 	 * Clean up after each test.
 	 */
 	public function tear_down() {
