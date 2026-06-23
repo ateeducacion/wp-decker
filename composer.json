@@ -10,7 +10,8 @@
         "wp-cli/i18n-command": "*",
         "wp-coding-standards/wpcs": "*",
         "yoast/phpunit-polyfills": "*",
-        "yoast/wp-test-utils": "*"
+        "yoast/wp-test-utils": "*",
+        "wp-phpunit/wp-phpunit": "*"
     },
     "scripts": {
         "post-install-cmd": [

@@ -37,6 +37,11 @@ up: check-docker
 # Alias for `up` (some folks type `make start`).
 start: up
 
+# Bring up a Playground dev server (WebAssembly, SQLite) — no Docker required.
+# Serves on http://127.0.0.1:9400 with the plugin mounted and auto-login.
+up-playground:
+	cd "$${TMPDIR:-/tmp}" && npx --yes @wp-playground/cli@latest start --path="$(CURDIR)"
+
 # Update WordPress core/themes and (re)start the environment.
 update-env: check-docker
 	npx wp-env start --update
@@ -93,6 +98,14 @@ test: start-if-not-running
 	if [ -n "$(FILE)" ]; then CMD="$$CMD $(FILE)"; fi; \
 	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
+
+# Run PHPUnit on WordPress Playground (WebAssembly, SQLite) — no Docker required.
+# Reuses Playground's in-process WP on SQLite (WP_TESTS_SKIP_INSTALL); same FILE / FILTER as `make test`.
+test-playground:
+	@CMD="/wordpress/wp-content/plugins/decker/vendor/bin/phpunit -c /wordpress/wp-content/plugins/decker/phpunit-playground.xml.dist"; \
+	if [ -n "$(FILE)" ]; then CMD="$$CMD /wordpress/wp-content/plugins/decker/$(FILE)"; fi; \
+	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
+	cd "$${TMPDIR:-/tmp}" && npx --yes @wp-playground/cli@latest php --mount="$(CURDIR):/wordpress/wp-content/plugins/decker" -- $$CMD --testdox --colors=always
 
 # Run unit tests in verbose mode. Honor TEST filter if provided.
 test-verbose: start-if-not-running
@@ -219,7 +232,8 @@ help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "General:"
-	@echo "  up / start         - Start the WordPress environment (idempotent)"
+	@echo "  up / start         - Start the WordPress environment with Docker (idempotent)"
+	@echo "  up-playground       - Start a Playground dev server (WASM/SQLite, no Docker, port 9400)"
 	@echo "  down / stop        - Stop the environment (data preserved)"
 	@echo "  update-env         - Update WordPress core/themes and restart"
 	@echo "  logs               - Show the docker container logs"
@@ -250,6 +264,7 @@ help:
 	@echo "                         make test FILE=tests/MyTest.php"
 	@echo "                         make test FILE=tests/MyTest.php FILTER=test_my_feature"
 	@echo ""
+	@echo "  test-playground    - Run PHPUnit on Playground (WASM/SQLite, no Docker). Same FILE/FILTER."
 	@echo "  test-js            - Run JavaScript unit tests with Jest"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
