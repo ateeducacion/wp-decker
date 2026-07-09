@@ -5,6 +5,7 @@
     // Global variables received from PHP
     const ajaxUrl = deckerVars.ajax_url;
     const restUrl = wpApiSettings.root + wpApiSettings.versionString;
+    const deckerRestUrl = wpApiSettings.root + 'decker/v1/';
     const homeUrl = deckerVars.home_url;
     const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
@@ -13,6 +14,10 @@
 
     // Global variable to indicate if there are unsaved changes
     window.deckerHasUnsavedChanges = false;
+
+    // Edit-lock state for the task currently open in edit mode.
+    // { postId: number, owned: boolean } or null when no card is being edited.
+    let activeLock = null;
 
     let quill = null;
     let collabSession = null;
@@ -129,6 +134,212 @@
                 modalBody.appendChild(overlay);
             }
         }
+    }
+
+    /* ---------------------------------------------------------------------
+     * Task edit locking (WordPress post lock compatible).
+     * ------------------------------------------------------------------- */
+
+    /**
+     * Read the lock state serialized by the server into the task form.
+     * @param {HTMLElement} context - The container element.
+     * @returns {Object|null} The lock info, or null when unavailable.
+     */
+    function readTaskLockState(context) {
+        const form = context.querySelector('#task-form');
+        if (!form || !form.dataset.lock) {
+            return null;
+        }
+        try {
+            return JSON.parse(form.dataset.lock);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Perform a REST request against the Decker task lock endpoints.
+     * @param {string} method - HTTP method.
+     * @param {number|string} taskId - The task ID.
+     * @param {string} path - Optional sub-path (e.g. '/takeover').
+     * @param {Object} options - Extra fetch options.
+     * @returns {Promise} The fetch promise.
+     */
+    function lockRequest(method, taskId, path, options) {
+        const url = `${deckerRestUrl}tasks/${taskId}/lock${path || ''}`;
+        return fetch(url, Object.assign({
+            method: method,
+            headers: { 'X-WP-Nonce': wpApiSettings.nonce },
+            credentials: 'same-origin'
+        }, options || {}));
+    }
+
+    /**
+     * Disable every editing control in the card (fields, editor, save button).
+     * @param {HTMLElement} context - The container element.
+     */
+    function disableEditingControls(context) {
+        const form = context.querySelector('#task-form');
+        if (form) {
+            form.querySelectorAll('input, select, textarea').forEach(el => {
+                el.disabled = true;
+            });
+        }
+        if (assigneesSelect) {
+            assigneesSelect.disable();
+        }
+        if (labelsSelect) {
+            labelsSelect.disable();
+        }
+        if (quill) {
+            quill.disable();
+        }
+        const saveButton = context.querySelector('#save-task');
+        if (saveButton) {
+            saveButton.disabled = true;
+        }
+        const saveDropdown = context.querySelector('#save-task-dropdown');
+        if (saveDropdown) {
+            saveDropdown.disabled = true;
+        }
+    }
+
+    /**
+     * Wire the server-rendered "Take over editing" button.
+     * @param {HTMLElement} context - The container element.
+     */
+    function wireTakeOverButton(context) {
+        const button = context.querySelector('.decker-take-over-lock');
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', function () {
+            const taskId = button.dataset.taskId || getTaskId();
+            button.disabled = true;
+            button.textContent = strings.taking_over;
+            lockRequest('POST', taskId, '/takeover')
+                .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                .then(({ ok, data }) => {
+                    if (ok && data && data.owned_by_current_user) {
+                        // Reopen the card so it renders in editable state.
+                        reloadTaskCard(taskId);
+                    } else {
+                        button.disabled = false;
+                        button.textContent = strings.take_over_editing;
+                        alert(strings.lock_takeover_failed);
+                    }
+                })
+                .catch(() => {
+                    button.disabled = false;
+                    button.textContent = strings.take_over_editing;
+                    alert(strings.lock_takeover_failed);
+                });
+        });
+    }
+
+    /**
+     * Reload the current view so the card re-renders in its new lock state.
+     *
+     * Mirrors the behavior of a successful save, which also reloads the page.
+     */
+    function reloadTaskCard() {
+        window.deckerHasUnsavedChanges = false;
+        window.location.reload();
+    }
+
+    /**
+     * Apply the read-only locked state to a card locked by another user.
+     * @param {HTMLElement} context - The container element.
+     */
+    function applyLockedState(context) {
+        disableEditingControls(context);
+        wireTakeOverButton(context);
+    }
+
+    /**
+     * Render a "lock lost" warning when another user takes over while editing.
+     * @param {HTMLElement} context - The container element.
+     * @param {Object} info - The lock info from the server.
+     */
+    function handleLockLost(context, info) {
+        if (activeLock) {
+            activeLock.owned = false;
+        }
+        disableEditingControls(context);
+
+        const form = context.querySelector('#task-form');
+        if (!form || form.querySelector('[data-decker-lock-lost]')) {
+            return;
+        }
+
+        let message = strings.lock_lost_message;
+        if (info && info.owner && info.owner.display_name) {
+            message = strings.card_locked_by.replace('%s', info.owner.display_name)
+                + ' ' + strings.lock_lost_message;
+        }
+
+        const banner = document.createElement('div');
+        banner.className = 'alert alert-danger d-flex align-items-center justify-content-between';
+        banner.setAttribute('role', 'alert');
+        banner.setAttribute('data-decker-lock-lost', '');
+        banner.setAttribute('aria-live', 'assertive');
+
+        const text = document.createElement('span');
+        text.className = 'd-flex align-items-center';
+        text.innerHTML = '<i class="ri-lock-line me-2"></i>';
+        const textSpan = document.createElement('span');
+        textSpan.textContent = message;
+        text.appendChild(textSpan);
+
+        const reloadButton = document.createElement('button');
+        reloadButton.type = 'button';
+        reloadButton.className = 'btn btn-sm btn-danger ms-2';
+        reloadButton.textContent = strings.reload_card;
+        reloadButton.addEventListener('click', function () {
+            reloadTaskCard(getTaskId());
+        });
+
+        banner.appendChild(text);
+        banner.appendChild(reloadButton);
+        form.insertBefore(banner, form.firstChild);
+    }
+
+    /**
+     * Release the active lock when the current user owns it.
+     */
+    function releaseActiveLock() {
+        if (!activeLock || !activeLock.postId || !activeLock.owned) {
+            activeLock = null;
+            return;
+        }
+        const taskId = activeLock.postId;
+        activeLock = null;
+        // keepalive lets the request complete even while the modal/page unloads.
+        lockRequest('DELETE', taskId, '', { keepalive: true }).catch(() => {});
+    }
+
+    // Expose the release helper so the modal close handler can call it.
+    window.deckerReleaseActiveTaskLock = releaseActiveLock;
+
+    // Keep the current user's lock alive through the WordPress heartbeat and
+    // detect takeovers. Bound once at module load.
+    if (window.jQuery) {
+        jQuery(document).on('heartbeat-send.deckerLock', function (e, data) {
+            if (activeLock && activeLock.postId && activeLock.owned) {
+                data.decker_task_lock = { post_id: activeLock.postId };
+            }
+        });
+
+        jQuery(document).on('heartbeat-tick.deckerLock', function (e, data) {
+            if (!activeLock || !data || !data.decker_task_lock) {
+                return;
+            }
+            const info = data.decker_task_lock;
+            if (info.locked && !info.owned_by_current_user) {
+                const modal = document.querySelector('.task-modal.show') || document;
+                handleLockLost(modal, info);
+            }
+        });
     }
 
     /**
@@ -741,6 +952,10 @@
         // CRITICAL: Capture original values BEFORE any collaboration or Quill setup
         originalValuesSnapshot = captureOriginalFormValues(context);
 
+        // Read the server-provided edit-lock state for this card.
+        const lockState = readTaskLockState(context);
+        const lockedByOther = !!(lockState && lockState.locked);
+
         new Tablesort(context.querySelector('#user-history-table'));
 
         // Check if the task_id is present in data-task-id
@@ -834,12 +1049,12 @@
 
             quill = new Quill(context.querySelector('#editor'), {
                 theme: 'snow',
-                readOnly: disabled,
+                readOnly: disabled || lockedByOther,
                 modules: quillModules
             });
 
             // Initialize collaborative editing if enabled and we have a task ID
-            if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled) {
+            if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled && !lockedByOther) {
                 const taskId = getTaskId();
                 if (taskId && taskId !== '' && taskId !== '0') {
                     // Destroy any previous collaboration session
@@ -937,7 +1152,7 @@
         }
 
         // Initialize form fields collaboration after Choices.js is ready
-        if (collabSession && !disabled) {
+        if (collabSession && !disabled && !lockedByOther) {
             // Destroy previous form fields binding if exists
             if (formFieldsBinding) {
                 formFieldsBinding.destroy();
@@ -1036,6 +1251,17 @@
           element.addEventListener('click', mergeTaskHandler);
 
         });
+
+        // Activate edit-lock behavior for existing, non-archived cards.
+        const lockTaskId = getTaskId();
+        if (lockTaskId && lockTaskId !== '' && lockTaskId !== '0' && !disabled) {
+            if (lockedByOther) {
+                activeLock = { postId: parseInt(lockTaskId, 10), owned: false };
+                applyLockedState(context);
+            } else if (lockState && lockState.owned_by_current_user) {
+                activeLock = { postId: parseInt(lockTaskId, 10), owned: true };
+            }
+        }
 
     }
 
@@ -1294,6 +1520,13 @@
                     }
 
                 } else {
+                    // A stale editing session lost the lock (another user took over).
+                    if (response.data && response.data.code === 'decker_task_locked') {
+                        const lockContext = document.querySelector('.task-modal.show') || document;
+                        handleLockLost(lockContext, response.data);
+                        alert(response.data.message || strings.lock_lost_message);
+                        return;
+                    }
                     alert(response.data.message || strings.error_saving_task);
                     if (saveButton) {
                         saveButton.disabled = false;

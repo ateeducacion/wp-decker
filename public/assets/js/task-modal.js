@@ -72,6 +72,12 @@ document.addEventListener('DOMContentLoaded', function () {
 // Clear data-* attributes when closing the modal to allow reinitialization
     jQuery('#task-modal').on('hidden.bs.modal', function () {
         var modal = jQuery(this);
+
+        // Release the edit lock when the current user owns it.
+        if (typeof window.deckerReleaseActiveTaskLock === 'function') {
+            window.deckerReleaseActiveTaskLock();
+        }
+
        // Remove the data-* attributes used to track initialization
         modal[0].removeAttribute('data-send-comments-initialized');
         modal[0].removeAttribute('data-task-page-initialized');

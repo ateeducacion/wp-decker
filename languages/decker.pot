@@ -393,6 +393,17 @@ msgstr ""
 msgid "You are not authorized to access this resource."
 msgstr ""
 
+#. translators: %s is the display name of the user currently editing the card.
+#, php-format
+msgid "This card is currently locked by %s."
+msgstr ""
+
+msgid "Invalid task."
+msgstr ""
+
+msgid "You are not allowed to edit this card."
+msgstr ""
+
 msgid ""
 "You are a task-writing assistant for Decker, a Kanban board used by a team that manages educational technology projects (virtual classrooms, digital content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, and school IT support).\n"
 "\n"
@@ -1478,6 +1489,24 @@ msgstr ""
 #. translators: %d is the number of additional comments not shown in the popover preview.
 #, php-format
 msgid "and %d more"
+msgstr ""
+
+msgid "Take over editing"
+msgstr ""
+
+msgid "Taking over…"
+msgstr ""
+
+msgid "Editing taken over"
+msgstr ""
+
+msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
+msgstr ""
+
+msgid "The card could not be taken over. Please reload and try again."
+msgstr ""
+
+msgid "Reload card"
 msgstr ""
 
 msgid "Loading content. Please wait."

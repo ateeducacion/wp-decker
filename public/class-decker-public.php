@@ -415,6 +415,15 @@ class Decker_Public {
 					'comments_error'              => __( 'Could not load comments.', 'decker' ),
 					/* translators: %d is the number of additional comments not shown in the popover preview. */
 					'more_comments'               => __( 'and %d more', 'decker' ),
+					// Task edit lock strings.
+					'take_over_editing'           => __( 'Take over editing', 'decker' ),
+					'taking_over'                 => __( 'Taking over…', 'decker' ),
+					/* translators: %s is the display name of the user currently editing the card. */
+					'card_locked_by'              => __( 'This card is currently locked by %s.', 'decker' ),
+					'lock_lost_title'             => __( 'Editing taken over', 'decker' ),
+					'lock_lost_message'           => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
+					'lock_takeover_failed'        => __( 'The card could not be taken over. Please reload and try again.', 'decker' ),
+					'reload_card'                 => __( 'Reload card', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
