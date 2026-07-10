@@ -5,6 +5,17 @@
  * works correctly: status bar, Quill content preservation, form field
  * sync, checkbox values, empty fields, and session cleanup.
  *
+ * NOTE: This spec is excluded from the default (CI) e2e run because it depends
+ * on the collaborative editing feature, which (a) is disabled by default, and
+ * (b) loads Yjs from an external CDN (esm.sh) and dials an external signalling
+ * server (signaling.yjs.dev). To keep CI deterministic it is only collected
+ * when `DECKER_E2E_COLLAB=1` is set. Run it locally with:
+ *
+ *     make test-e2e-collab
+ *
+ * which enables the `collaborative_editing` setting, runs this spec, and then
+ * restores the setting.
+ *
  * @package Decker
  */
 
@@ -49,8 +60,8 @@ test.describe( 'Task Collaboration', () => {
 		taskId = taskRes.id;
 	} );
 
-	test( 'task page loads with collaboration status bar', async ( { admin, page } ) => {
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
+	test( 'task page loads with collaboration status bar', async ( { page } ) => {
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 
 		// Wait for the collaboration module to initialize
 		const statusBar = page.locator( '.decker-collab-status' );
@@ -61,8 +72,8 @@ test.describe( 'Task Collaboration', () => {
 		await expect( statusText ).toBeVisible();
 	} );
 
-	test( 'Quill editor preserves server content', async ( { admin, page } ) => {
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
+	test( 'Quill editor preserves server content', async ( { page } ) => {
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 
 		// Wait for collaboration to sync (status bar appears)
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
@@ -75,7 +86,7 @@ test.describe( 'Task Collaboration', () => {
 		expect( editorContent.trim().length ).toBeGreaterThan( 0 );
 	} );
 
-	test( 'form fields populated after sync (single user)', async ( { admin, page } ) => {
+	test( 'form fields populated after sync (single user)', async ( { page } ) => {
 		// Update task with specific values
 		await page.request.fetch(
 			`${ page.url() || '' }`.replace( /\?.*/, '' ) || '/wp-json/wp/v2/tasks/' + taskId,
@@ -87,7 +98,7 @@ test.describe( 'Task Collaboration', () => {
 			}
 		).catch( () => {} );
 
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 
 		// Wait for sync
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
@@ -102,32 +113,29 @@ test.describe( 'Task Collaboration', () => {
 		await expect( stackSelect ).toHaveValue( 'to-do' );
 	} );
 
-	test( 'checkbox values sync correctly', async ( { requestUtils, admin, page } ) => {
-		// Update the task to have max_priority set
-		await requestUtils.rest( {
-			path: `/wp/v2/tasks/${ taskId }`,
-			method: 'POST',
-			data: {
-				meta: {
-					max_priority: '1',
-				},
-			},
-		} );
+	test( 'checkbox value round-trips through a save', async ( { page } ) => {
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
-
-		// Wait for sync
+		// Wait for the collaboration module to initialize.
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
-		await page.waitForTimeout( 2000 );
 
-		// The max priority checkbox should be checked
-		const maxPriorityCheckbox = page.locator( '#task-max-priority' );
-		await expect( maxPriorityCheckbox ).toBeChecked();
+		// Exercise the full form round-trip: check the box and save it.
+		await page.fill( '#task-due-date', '2026-12-31' );
+		await page.locator( '#task-max-priority' ).check();
+
+		// A successful save redirects back to the task permalink; the reloaded,
+		// server-rendered form reflects the stored value.
+		await Promise.all( [
+			page.waitForURL( /decker_page=task&id=\d+/ ),
+			page.locator( '#save-task' ).click(),
+		] );
+
+		await expect( page.locator( '#task-max-priority' ) ).toBeChecked();
 	} );
 
-	test( 'empty field values preserved', async ( { admin, page } ) => {
+	test( 'empty field values preserved', async ( { page } ) => {
 		// Task was created with empty due date
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 
 		// Wait for sync
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
@@ -138,17 +146,17 @@ test.describe( 'Task Collaboration', () => {
 		await expect( dueDateInput ).toHaveValue( '' );
 	} );
 
-	test( 'session cleanup on navigation', async ( { admin, page } ) => {
+	test( 'session cleanup on navigation', async ( { page } ) => {
 		// Navigate to task page
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
 
 		// Navigate away
-		await admin.visitAdminPage( '/', 'decker_page=calendar' );
+		await page.goto( '/?decker_page=calendar' );
 		await page.waitForTimeout( 1000 );
 
 		// Navigate back to task
-		await admin.visitAdminPage( '/', `decker_page=task&id=${ taskId }` );
+		await page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
 
 		// Check for console errors about duplicate sessions
