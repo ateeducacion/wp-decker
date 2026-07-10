@@ -104,12 +104,16 @@ test.describe( 'Task edit locking', () => {
 		await expect( b.page.locator( '#task-title' ) ).toBeEnabled();
 		await expect( b.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
 		await b.page.fill( '#task-title', 'Updated by user B' );
+		// The due date is a required field; a full save is blocked client-side
+		// (form validation) until it is set.
+		await b.page.fill( '#task-due-date', '2026-12-31' );
 		await b.page.locator( '#save-task' ).click();
 		await b.page.waitForLoadState( 'networkidle' );
 
 		// User A tries to save a stale change and is rejected.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
 		await a.page.fill( '#task-title', 'Updated by user A' );
+		await a.page.fill( '#task-due-date', '2026-12-30' );
 		await a.page.locator( '#save-task' ).click();
 		await expect(
 			a.page.locator( '[data-decker-lock-lost]' )
@@ -134,6 +138,8 @@ test.describe( 'Task edit locking', () => {
 		await expect( b.page.locator( '#task-title' ) ).toBeEnabled();
 		await expect( b.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
 		await b.page.fill( '#task-title', 'Edited without a prior lock' );
+		// The due date is a required field; fill it so the full save is allowed.
+		await b.page.fill( '#task-due-date', '2026-12-31' );
 		await b.page.locator( '#save-task' ).click();
 		await b.page.waitForLoadState( 'networkidle' );
 

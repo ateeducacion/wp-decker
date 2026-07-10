@@ -23,6 +23,13 @@ module.exports = defineConfig( {
 	timeout: parseInt( process.env.TIMEOUT || '', 10 ) || 100_000,
 	reportSlowTests: null,
 	testDir: path.join( __dirname, 'specs' ),
+	// The collaboration spec depends on the (default-off) collaborative editing
+	// feature plus external services (esm.sh CDN + signalling server), so it is
+	// not part of the deterministic CI gate. Opt in with DECKER_E2E_COLLAB=1
+	// (see the `test-e2e-collab` Makefile target).
+	testIgnore: process.env.DECKER_E2E_COLLAB
+		? undefined
+		: '**/task-collaboration.spec.js',
 	outputDir: path.join( process.env.WP_ARTIFACTS_PATH, 'test-results' ),
 	snapshotPathTemplate:
 		'{testDir}/{testFileDir}/__snapshots__/{arg}-{projectName}{ext}',
