@@ -404,6 +404,9 @@ msgstr ""
 msgid "You are not allowed to edit this card."
 msgstr ""
 
+msgid "The task could not be updated due to a concurrent change. Please try again."
+msgstr ""
+
 msgid ""
 "You are a task-writing assistant for Decker, a Kanban board used by a team that manages educational technology projects (virtual classrooms, digital content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, and school IT support).\n"
 "\n"
@@ -718,6 +721,24 @@ msgid "New Label Name"
 msgstr ""
 
 msgid "Task not found."
+msgstr ""
+
+msgid "The user is derived from the session and cannot be provided."
+msgstr ""
+
+msgid "This task is archived and cannot be marked for today."
+msgstr ""
+
+msgid "Task added to today."
+msgstr ""
+
+msgid "Task is already marked for today."
+msgstr ""
+
+msgid "Task removed from today."
+msgstr ""
+
+msgid "Task is not marked for today."
 msgstr ""
 
 msgid "You do not have permission to clone this task."
@@ -1507,6 +1528,21 @@ msgid "The card could not be taken over. Please reload and try again."
 msgstr ""
 
 msgid "Reload card"
+msgstr ""
+
+msgid "Add to today"
+msgstr ""
+
+msgid "Remove from today"
+msgstr ""
+
+msgid "Adding to today…"
+msgstr ""
+
+msgid "Removing from today…"
+msgstr ""
+
+msgid "The task could not be updated."
 msgstr ""
 
 msgid "Loading content. Please wait."

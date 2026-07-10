@@ -169,10 +169,27 @@ require_once __DIR__ . '/partials/task-comments.php';
 				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task_id ? $task->max_priority : $initial_max_priority ); ?> <?php disabled( $disabled ); ?>>
 				<label class="form-check-label" for="task-max-priority"><?php esc_html_e( 'Maximum Priority', 'decker' ); ?></label>
 			</div>
-			<div class="form-check form-switch">
-				<input class="form-check-input" type="checkbox" id="task-today" 
-				   <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled( $disabled ); ?>>
-				<label class="form-check-label" for="task-today"><?php esc_html_e( 'For today', 'decker' ); ?></label>
+			<?php
+			// "For today" is a personal relation. For an existing, non-archived
+			// task the pristine form offers a lightweight quick-action button and
+			// keeps the checkbox hidden until a shared field is edited.
+			$today_marked     = $task_id ? $task->is_current_user_today_assigned() : false;
+			$show_today_quick = $task_id && 'archived' !== $task->status;
+			?>
+			<div id="task-today-control" class="decker-today-control">
+				<?php if ( $show_today_quick ) : ?>
+					<button type="button" id="task-today-quick" class="btn btn-sm <?php echo $today_marked ? 'btn-outline-secondary' : 'btn-success'; ?> decker-today-quick" data-task-id="<?php echo esc_attr( $task_id ); ?>" data-marked="<?php echo $today_marked ? '1' : '0'; ?>">
+						<i class="ri-calendar-check-line me-1" aria-hidden="true"></i>
+						<span class="decker-today-quick-label"><?php echo $today_marked ? esc_html__( 'Remove from today', 'decker' ) : esc_html__( 'Add to today', 'decker' ); ?></span>
+					</button>
+				<?php endif; ?>
+				<span class="form-check form-switch decker-today-checkbox <?php echo $show_today_quick ? 'd-none' : ''; ?>">
+					<input class="form-check-input" type="checkbox" id="task-today"
+						<?php checked( $today_marked ); ?>
+						<?php echo $show_today_quick ? 'tabindex="-1" aria-hidden="true"' : ''; ?>
+						<?php disabled( $disabled || $show_today_quick ); ?>>
+					<label class="form-check-label" for="task-today"><?php esc_html_e( 'For today', 'decker' ); ?></label>
+				</span>
 			</div>
 		</div>
 

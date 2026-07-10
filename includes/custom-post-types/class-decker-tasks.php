@@ -46,6 +46,26 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Lazily-instantiated "For today" relation service.
+	 *
+	 * @var Decker_Task_Today_Manager|null
+	 */
+	private $today_manager = null;
+
+	/**
+	 * Get the shared "For today" relation service.
+	 *
+	 * @return Decker_Task_Today_Manager The relation service instance.
+	 */
+	public function get_today_manager(): Decker_Task_Today_Manager {
+		if ( ! $this->today_manager instanceof Decker_Task_Today_Manager ) {
+			$this->today_manager = new Decker_Task_Today_Manager();
+		}
+
+		return $this->today_manager;
+	}
+
+	/**
 	 * Define Hooks.
 	 *
 	 * Registers all the hooks related to the decker_task custom post type.
@@ -565,10 +585,9 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function mark_user_date_relation( $request ) {
-		$task_id = $request['id'];
-		$user_id = $request->get_param( 'user_id' );
+		$task_id = (int) $request['id'];
 
-		if ( ! $task_id || ! $user_id ) {
+		if ( ! $task_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -578,7 +597,9 @@ class Decker_Tasks {
 			);
 		}
 
-		$this->add_user_date_relation( $task_id, $user_id );
+		// The relation is personal: always use the authenticated current user
+		// and ignore any client-supplied user_id.
+		$this->add_user_date_relation( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -596,10 +617,9 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function unmark_user_date_relation( $request ) {
-		$task_id = $request['id'];
-		$user_id = $request->get_param( 'user_id' );
+		$task_id = (int) $request['id'];
 
-		if ( ! $task_id || ! $user_id ) {
+		if ( ! $task_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -609,7 +629,9 @@ class Decker_Tasks {
 			);
 		}
 
-		$this->remove_user_date_relation( $task_id, $user_id );
+		// The relation is personal: always use the authenticated current user
+		// and ignore any client-supplied user_id.
+		$this->remove_user_date_relation( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -650,6 +672,21 @@ class Decker_Tasks {
 		if ( 'minimum_role' === $permission ) {
 			return function () {
 				return Decker::current_user_has_at_least_minimum_role();
+			};
+		}
+
+		// Object-level capability for a single task. A missing task passes the
+		// authenticated check so the callback can return a 404 instead of a 403.
+		if ( 'edit_task' === $permission ) {
+			return function ( $request ) {
+				$task_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
+				$post    = $task_id ? get_post( $task_id ) : null;
+
+				if ( ! $post || 'decker_task' !== $post->post_type ) {
+					return is_user_logged_in();
+				}
+
+				return current_user_can( 'edit_post', $task_id );
 			};
 		}
 
@@ -757,7 +794,114 @@ class Decker_Tasks {
 			),
 		);
 
-		return array_merge( $routes, $this->get_task_lock_route_definitions() );
+		return array_merge( $routes, $this->get_task_lock_route_definitions(), $this->get_task_today_route_definitions() );
+	}
+
+	/**
+	 * Get the REST route definition for the "For today" quick action.
+	 *
+	 * @return array<int, array<string, mixed>> The today route definition.
+	 */
+	private function get_task_today_route_definitions(): array {
+		return array(
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/today',
+				'methods'    => 'PUT',
+				'callback'   => 'handle_task_today',
+				'permission' => 'edit_task',
+				'args'       => array(
+					'marked' => array(
+						'required' => true,
+						'type'     => 'boolean',
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Handle the "For today" quick action for the current user.
+	 *
+	 * Changes only the authenticated user's current-day relation. It never
+	 * touches shared task fields, the task edit lock, or another user's data.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_task_today( $request ) {
+		$task_id = (int) $request['id'];
+		$post    = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_invalid_task',
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		// Identity is derived from the session; a client-supplied user is refused.
+		if ( null !== $request->get_param( 'user_id' ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_unexpected_identity',
+					'message' => __( 'The user is derived from the session and cannot be provided.', 'decker' ),
+				),
+				400
+			);
+		}
+
+		if ( 'archived' === $post->post_status ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_task_archived',
+					'message' => __( 'This task is archived and cannot be marked for today.', 'decker' ),
+				),
+				409
+			);
+		}
+
+		$marked = (bool) $request->get_param( 'marked' );
+		$result = $this->get_today_manager()->set_today_state( $task_id, get_current_user_id(), $marked );
+
+		if ( is_wp_error( $result ) ) {
+			return $this->lock_error_response( $result );
+		}
+
+		return new WP_REST_Response(
+			array_merge(
+				array(
+					'success' => true,
+					'message' => $this->today_result_message( $result['marked'], $result['changed'] ),
+				),
+				$result
+			),
+			200
+		);
+	}
+
+	/**
+	 * Build the human-readable message for a today quick-action result.
+	 *
+	 * @param bool $marked  The resulting marked state.
+	 * @param bool $changed Whether the state actually changed.
+	 * @return string The translated message.
+	 */
+	private function today_result_message( bool $marked, bool $changed ): string {
+		if ( $marked ) {
+			return $changed
+				? __( 'Task added to today.', 'decker' )
+				: __( 'Task is already marked for today.', 'decker' );
+		}
+
+		return $changed
+			? __( 'Task removed from today.', 'decker' )
+			: __( 'Task is not marked for today.', 'decker' );
 	}
 
 	/**
@@ -1717,47 +1861,17 @@ class Decker_Tasks {
 	 * @param int $user_id The user ID.
 	 */
 	public function add_user_date_relation( int $task_id, int $user_id ) {
-
-		$date = new DateTime(); // Current date and time.
-
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		// Avoid appending a duplicate relation for the same user and date.
-		foreach ( $relations as $relation ) {
-			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
-				return;
-			}
-		}
-
-		$relations[] = array(
-			'user_id' => $user_id,
-			'date'    => $date->format( 'Y-m-d' ),
-		);
-
-		$result = update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->get_today_manager()->mark_for_today( $task_id, $user_id );
 	}
 
 	/**
-	 * Remove a user-date relation for a task.
+	 * Remove today's user-date relation for a task.
 	 *
 	 * @param int $task_id The task ID.
 	 * @param int $user_id The user ID.
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
-
-				$date = new DateTime(); // Current date and time.
-
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		foreach ( $relations as $key => $relation ) {
-			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
-				unset( $relations[ $key ] );
-			}
-		}
-
-		update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->get_today_manager()->unmark_for_today( $task_id, $user_id );
 	}
 
 

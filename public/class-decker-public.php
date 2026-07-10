@@ -424,6 +424,12 @@ class Decker_Public {
 					'lock_lost_message'           => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
 					'lock_takeover_failed'        => __( 'The card could not be taken over. Please reload and try again.', 'decker' ),
 					'reload_card'                 => __( 'Reload card', 'decker' ),
+					// "For today" quick-action strings.
+					'add_to_today'                => __( 'Add to today', 'decker' ),
+					'remove_from_today'           => __( 'Remove from today', 'decker' ),
+					'adding_to_today'             => __( 'Adding to today…', 'decker' ),
+					'removing_from_today'         => __( 'Removing from today…', 'decker' ),
+					'today_update_failed'         => __( 'The task could not be updated.', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
