@@ -99,28 +99,27 @@ test.describe( 'Task "For today" quick action', () => {
 		expect( todayResponse.status() ).toBe( 200 );
 		expect( saveRequests ).toHaveLength( 0 );
 
-		// After reload the task is marked and the title is unchanged.
-		await a.page.waitForLoadState( 'networkidle' );
+		// The button toggles in place, without navigating away or a full save.
+		await expect( quick ).toContainText( 'Remove from today' );
+		await expect( a.page.locator( '#task-title' ) ).toHaveValue( 'Today Quick Action Task' );
+
+		// The change persisted on the server.
 		await a.page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( a.page.locator( '#task-today-quick' ) ).toContainText( 'Remove from today' );
-		await expect( a.page.locator( '#task-title' ) ).toHaveValue( 'Today Quick Action Task' );
 
 		await a.context.close();
 	} );
 
-	test( 'unmarks the task for today without a full save', async ( { browser, baseURL, requestUtils } ) => {
-		// Pre-mark the task for user A via the same endpoint is not available here,
-		// so mark through the UI first.
+	test( 'unmarks the task for today without a full save', async ( { browser, baseURL } ) => {
 		const a = await loginAs( browser, baseURL, USER_A );
 		await a.page.goto( `/?decker_page=task&id=${ taskId }` );
+		const quick = a.page.locator( '#task-today-quick' );
+
+		// Mark first (in place).
 		await Promise.all( [
 			a.page.waitForResponse( ( r ) => r.url().includes( `/tasks/${ taskId }/today` ) ),
-			a.page.locator( '#task-today-quick' ).click(),
+			quick.click(),
 		] );
-		await a.page.waitForLoadState( 'networkidle' );
-
-		await a.page.goto( `/?decker_page=task&id=${ taskId }` );
-		const quick = a.page.locator( '#task-today-quick' );
 		await expect( quick ).toContainText( 'Remove from today' );
 
 		const saveRequests = [];
@@ -130,12 +129,15 @@ test.describe( 'Task "For today" quick action', () => {
 			}
 		} );
 
+		// Unmark (in place).
 		await Promise.all( [
 			a.page.waitForResponse( ( r ) => r.url().includes( `/tasks/${ taskId }/today` ) && r.request().method() === 'PUT' ),
 			quick.click(),
 		] );
 		expect( saveRequests ).toHaveLength( 0 );
+		await expect( quick ).toContainText( 'Add to today' );
 
+		// The removal persisted on the server.
 		await a.page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( a.page.locator( '#task-today-quick' ) ).toContainText( 'Add to today' );
 

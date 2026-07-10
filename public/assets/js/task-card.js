@@ -509,8 +509,31 @@
     }
 
     /**
-     * Handle a successful quick action: update local state, release the lock,
-     * refresh the parent view and close the modal.
+     * Toggle the quick-action button between its "add" and "remove" states.
+     * @param {HTMLElement} context - The container element.
+     * @param {boolean} marked - The new marked state.
+     */
+    function updateTodayQuickButton(context, marked) {
+        const button = context.querySelector('#task-today-quick');
+        if (!button) {
+            return;
+        }
+        button.disabled = false;
+        button.setAttribute('aria-busy', 'false');
+        button.dataset.marked = marked ? '1' : '0';
+        delete button.dataset.idleLabel;
+        button.classList.remove('btn-success', 'btn-outline-secondary');
+        button.classList.add(marked ? 'btn-outline-secondary' : 'btn-success');
+        const label = button.querySelector('.decker-today-quick-label');
+        if (label) {
+            label.textContent = marked ? strings.remove_from_today : strings.add_to_today;
+        }
+    }
+
+    /**
+     * Handle a successful quick action: toggle the control in place and keep the
+     * card open so the user can mark/unmark freely. The parent view is refreshed
+     * on modal close (or on the next navigation) rather than reloading here.
      * @param {HTMLElement} context - The container element.
      * @param {Object} data - The server response.
      */
@@ -519,8 +542,13 @@
         if (checkbox) {
             checkbox.checked = !!data.marked;
         }
+        updateTodayQuickButton(context, !!data.marked);
+
         // The quick action never dirties the form.
         window.deckerHasUnsavedChanges = false;
+
+        // Remember a change was made so the parent view can refresh on close.
+        window.deckerTodayChangedInSession = true;
 
         notifyTodayResult(data.message, true);
 
@@ -533,30 +561,6 @@
                 date: data.date
             }
         }));
-
-        // Release the lock owned by this session, then close the modal.
-        if (typeof window.deckerReleaseActiveTaskLock === 'function') {
-            window.deckerReleaseActiveTaskLock();
-        }
-
-        const modalElement = document.querySelector('.task-modal.show');
-        if (modalElement) {
-            const modalInstance = bootstrap.Modal.getInstance(modalElement);
-            if (modalInstance) {
-                modalInstance.hide();
-            }
-        }
-        // Refresh the parent view (today indicators) — mirrors the full-save flow.
-        reloadParentView();
-    }
-
-    /**
-     * Refresh the parent view after a today change. A full reload mirrors the
-     * existing modal save flow; the dispatched event above is the extension
-     * point for future targeted updates.
-     */
-    function reloadParentView() {
-        window.location.reload();
     }
 
     /**
@@ -1191,6 +1195,7 @@
         // A freshly rendered card always starts pristine, so the quick-action
         // mode and the one-way pristine-to-dirty transition reset per session.
         window.deckerHasUnsavedChanges = false;
+        window.deckerTodayChangedInSession = false;
 
         // CRITICAL: Capture original values BEFORE any collaboration or Quill setup
         originalValuesSnapshot = captureOriginalFormValues(context);

@@ -61,6 +61,8 @@ function compile( name, deps ) {
 }
 
 const STRINGS = {
+	add_to_today: 'Add to today',
+	remove_from_today: 'Remove from today',
 	adding_to_today: 'Adding to today…',
 	removing_from_today: 'Removing from today…',
 	today_update_failed: 'The task could not be updated.',
@@ -275,29 +277,36 @@ describe( 'task-card today quick action', () => {
 		expect( submitTodayQuickAction ).not.toHaveBeenCalled();
 	} );
 
-	test( 'success updates local state, releases the lock, notifies and reloads', () => {
+	test( 'success toggles the button in place and keeps the card open', () => {
 		const context = buildDom( { marked: false } );
-		const reloadParentView = jest.fn();
 		window.deckerReleaseActiveTaskLock = jest.fn();
 		window.deckerHasUnsavedChanges = true; // ensure it gets reset
+		window.deckerTodayChangedInSession = false;
 		const notifyTodayResult = jest.fn();
 		const dispatched = [];
 		document.dispatchEvent = jest.fn( ( e ) => dispatched.push( e ) );
 
+		const updateTodayQuickButton = compile( 'updateTodayQuickButton', { strings: STRINGS } );
 		const onTodayQuickActionSuccess = compile( 'onTodayQuickActionSuccess', {
+			updateTodayQuickButton,
 			notifyTodayResult,
-			reloadParentView,
-			bootstrap: { Modal: { getInstance: () => null } },
 		} );
 
 		onTodayQuickActionSuccess( context, { success: true, marked: true, task_id: 5, user_id: 9, date: '2026-07-10', message: 'Task added to today.' } );
 
+		// Local state updated in place: checkbox + toggled button, card not closed.
+		const button = context.querySelector( '#task-today-quick' );
 		expect( context.querySelector( '#task-today' ).checked ).toBe( true );
+		expect( button.dataset.marked ).toBe( '1' );
+		expect( button.textContent ).toContain( 'Remove from today' );
+		expect( button.classList.contains( 'btn-outline-secondary' ) ).toBe( true );
+		// Not dirtied; change remembered for the close-time parent refresh.
 		expect( window.deckerHasUnsavedChanges ).toBe( false );
-		expect( window.deckerReleaseActiveTaskLock ).toHaveBeenCalled();
-		expect( notifyTodayResult ).toHaveBeenCalledWith( expect.anything(), true );
+		expect( window.deckerTodayChangedInSession ).toBe( true );
+		// Toast + event, but no lock release or modal close/reload here.
+		expect( notifyTodayResult ).toHaveBeenCalledWith( 'Task added to today.', true );
 		expect( dispatched[ 0 ].type ).toBe( 'decker:task-today-changed' );
-		expect( reloadParentView ).toHaveBeenCalled();
+		expect( window.deckerReleaseActiveTaskLock ).not.toHaveBeenCalled();
 	} );
 
 	test( 'failure keeps the modal open, restores the button and does not release the lock', async () => {

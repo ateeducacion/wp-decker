@@ -122,6 +122,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         cleanupTaskModal(modal);
+
+        // If a "For today" change was made while the card was open, refresh the
+        // parent view so the board/priority today indicators are up to date.
+        if (window.deckerTodayChangedInSession) {
+            window.deckerTodayChangedInSession = false;
+            window.location.reload();
+        }
     });
 
     /**
