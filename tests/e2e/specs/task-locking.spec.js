@@ -1,0 +1,156 @@
+/**
+ * E2E tests for Decker task edit locking (WordPress post lock compatible).
+ *
+ * Two separate browser contexts play the role of two users editing the same
+ * card. It verifies that the second user is blocked, can explicitly take over,
+ * and that the first user can no longer save stale changes afterwards.
+ *
+ * @package Decker
+ */
+
+import { test, expect } from '@wordpress/e2e-test-utils-playwright';
+
+const USER_A = { username: 'lockusera', password: 'lock-pass-A-123', name: 'Lock User A' };
+const USER_B = { username: 'lockuserb', password: 'lock-pass-B-123', name: 'Lock User B' };
+
+/**
+ * Log a specific user in through the WordPress login form in a fresh context.
+ *
+ * @param {import('@playwright/test').Browser} browser  The Playwright browser.
+ * @param {string}                             baseURL  The site base URL.
+ * @param {Object}                             user     The user credentials.
+ * @return {Promise<{context: any, page: any}>} The authenticated context/page.
+ */
+async function loginAs( browser, baseURL, user ) {
+	const context = await browser.newContext( { baseURL } );
+	const page = await context.newPage();
+	await page.goto( '/wp-login.php' );
+	await page.fill( '#user_login', user.username );
+	await page.fill( '#user_pass', user.password );
+	await page.click( '#wp-submit' );
+	await page.waitForLoadState( 'networkidle' );
+	return { context, page };
+}
+
+test.describe( 'Task edit locking', () => {
+	let boardId;
+	let taskId;
+
+	test.beforeAll( async ( { requestUtils } ) => {
+		await requestUtils.activatePlugin( 'decker' );
+
+		// Two editor users play the two concurrent editors.
+		await requestUtils.rest( {
+			path: '/wp/v2/users',
+			method: 'POST',
+			data: { ...USER_A, email: 'lockusera@example.com', roles: [ 'editor' ] },
+		} ).catch( () => {} );
+		await requestUtils.rest( {
+			path: '/wp/v2/users',
+			method: 'POST',
+			data: { ...USER_B, email: 'lockuserb@example.com', roles: [ 'editor' ] },
+		} ).catch( () => {} );
+
+		const boardRes = await requestUtils.rest( {
+			path: '/wp/v2/decker_board',
+			method: 'POST',
+			data: { name: 'E2E Lock Board', slug: 'e2e-lock-board' },
+		} );
+		boardId = boardRes.id;
+	} );
+
+	test.beforeEach( async ( { requestUtils } ) => {
+		const taskRes = await requestUtils.rest( {
+			path: '/wp/v2/tasks',
+			method: 'POST',
+			data: {
+				title: 'Lock Test Task',
+				content: '<p>Lock test content</p>',
+				status: 'publish',
+				decker_board: [ boardId ],
+				meta: { stack: 'to-do', max_priority: '0', duedate: '' },
+			},
+		} );
+		taskId = taskRes.id;
+	} );
+
+	test( 'user B is blocked, takes over, and user A can no longer save', async ( {
+		browser,
+		baseURL,
+	} ) => {
+		// User A opens the card and acquires the lock.
+		const a = await loginAs( browser, baseURL, USER_A );
+		await a.page.goto( `/?decker_page=task&id=${ taskId }` );
+		await expect( a.page.locator( '#task-title' ) ).toBeEnabled();
+		await expect( a.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
+
+		// User B opens the same card and sees it locked by user A.
+		const b = await loginAs( browser, baseURL, USER_B );
+		await b.page.goto( `/?decker_page=task&id=${ taskId }` );
+
+		const banner = b.page.locator( '[data-decker-lock-banner]' );
+		await expect( banner ).toBeVisible();
+		await expect( banner ).toContainText( USER_A.name );
+
+		// User B cannot edit or save.
+		await expect( b.page.locator( '#task-title' ) ).toBeDisabled();
+		await expect( b.page.locator( '#save-task' ) ).toBeDisabled();
+
+		// User B explicitly takes over.
+		await b.page.locator( '.decker-take-over-lock' ).click();
+		await b.page.waitForLoadState( 'networkidle' );
+
+		// After takeover, user B can edit and save.
+		await expect( b.page.locator( '#task-title' ) ).toBeEnabled();
+		await expect( b.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
+		await b.page.fill( '#task-title', 'Updated by user B' );
+		await b.page.locator( '#save-task' ).click();
+		await b.page.waitForLoadState( 'networkidle' );
+
+		// User A tries to save a stale change and is rejected.
+		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
+		await a.page.fill( '#task-title', 'Updated by user A' );
+		await a.page.locator( '#save-task' ).click();
+		await expect(
+			a.page.locator( '[data-decker-lock-lost]' )
+		).toBeVisible( { timeout: 10000 } );
+
+		// The final stored title is user B's value.
+		const final = await ( await loginAs( browser, baseURL, USER_B ) ).page;
+		await final.goto( `/?decker_page=task&id=${ taskId }` );
+		await expect( final.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
+
+		await a.context.close();
+		await b.context.close();
+	} );
+
+	test( 'a fresh user can edit a card with no active lock', async ( {
+		browser,
+		baseURL,
+	} ) => {
+		const b = await loginAs( browser, baseURL, USER_B );
+		await b.page.goto( `/?decker_page=task&id=${ taskId }` );
+
+		await expect( b.page.locator( '#task-title' ) ).toBeEnabled();
+		await expect( b.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
+		await b.page.fill( '#task-title', 'Edited without a prior lock' );
+		await b.page.locator( '#save-task' ).click();
+		await b.page.waitForLoadState( 'networkidle' );
+
+		await b.page.goto( `/?decker_page=task&id=${ taskId }` );
+		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Edited without a prior lock' );
+
+		await b.context.close();
+	} );
+
+	test.afterAll( async ( { requestUtils } ) => {
+		if ( boardId ) {
+			await requestUtils.rest( {
+				path: `/wp/v2/decker_board/${ boardId }`,
+				method: 'DELETE',
+				data: { force: true },
+			} ).catch( () => {} );
+		}
+		await requestUtils.deactivatePlugin( 'decker' );
+	} );
+} );

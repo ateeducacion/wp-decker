@@ -512,6 +512,342 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A bracket directive routes the task to the matching board and strips the directive.
+	 */
+	public function test_creates_task_on_board_from_bracket_subject_slug() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[soe] pepito pérez' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'pepito pérez', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $soe_board_id, $boards );
+		$this->assertNotContains( $this->board_id, $boards );
+	}
+
+	/**
+	 * The explicit "board:" directive routes the task to the matching board.
+	 */
+	public function test_creates_task_on_board_from_explicit_board_subject_directive() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[board:soe] pepito pérez' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'pepito pérez', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $soe_board_id, $boards );
+		$this->assertNotContains( $this->board_id, $boards );
+	}
+
+	/**
+	 * The Spanish "tablero:" directive routes the task to the matching board.
+	 */
+	public function test_creates_task_on_board_from_spanish_subject_directive() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[tablero:soe] pepito pérez' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'pepito pérez', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $soe_board_id, $boards );
+		$this->assertNotContains( $this->board_id, $boards );
+	}
+
+	/**
+	 * The board directive is matched case-insensitively from the user's perspective.
+	 */
+	public function test_board_subject_directive_is_case_insensitive() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[SOE] pepito pérez' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'pepito pérez', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $soe_board_id, $boards );
+	}
+
+	/**
+	 * Without a directive, the task keeps using the sender's default board.
+	 */
+	public function test_email_without_board_directive_uses_default_board() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( 'Plain task without directive' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'Plain task without directive', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $this->board_id, $boards );
+	}
+
+	/**
+	 * An explicit "board:"/"tablero:" directive for an unknown board fails instead of falling back.
+	 */
+	public function test_invalid_bracket_board_directive_returns_error() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+
+		$response = $this->dispatch_email_with_subject( '[board:unknown-board] pepito pérez' );
+
+		$this->assertEquals( 400, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertEquals( 'invalid_board_slug', $data['code'] );
+
+		$this->assertEquals( 0, $this->count_decker_tasks(), 'No task should be created for an unknown explicit board slug' );
+	}
+
+	/**
+	 * A bare "[xxx]" that matches no board falls back to the default board with the title intact.
+	 *
+	 * This protects common bracketed subject prefixes (e.g. "[URGENT] ...") from being dropped.
+	 */
+	public function test_unmatched_bare_bracket_falls_back_to_default_board() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[URGENT] Fix the login bug' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( '[URGENT] Fix the login bug', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $this->board_id, $boards );
+		$this->assertNotContains( $soe_board_id, $boards );
+	}
+
+	/**
+	 * The directive is matched by board slug, never by the board's display name.
+	 */
+	public function test_board_directive_matches_by_slug_not_name() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		// Name sanitizes to "sales-operations" but the slug is "soe".
+		$board_id = $this->create_board_with_slug( 'soe', 'Sales Operations' );
+
+		// The slug matches and routes to the board.
+		$response = $this->dispatch_email_with_subject( '[soe] pepito pérez' );
+		$this->assertEquals( 200, $response->get_status() );
+		$boards = $this->get_task_board_ids( $response->get_data()['task_id'] );
+		$this->assertContains( $board_id, $boards );
+
+		// The sanitized name is NOT a slug, so an explicit directive for it must fail.
+		$response = $this->dispatch_email_with_subject( '[board:sales-operations] pepito pérez' );
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertEquals( 'invalid_board_slug', $response->get_data()['code'] );
+	}
+
+	/**
+	 * A leading bracket whose content sanitizes to an empty slug is treated as a literal title.
+	 */
+	public function test_bracket_with_empty_slug_falls_back_to_default_board() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[!!!] real title' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( '[!!!] real title', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $this->board_id, $boards );
+		$this->assertNotContains( $soe_board_id, $boards );
+	}
+
+	/**
+	 * Whitespace around and inside the directive is tolerated when routing and cleaning the title.
+	 */
+	public function test_board_directive_tolerates_surrounding_whitespace() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '  [ soe ]   pepito pérez  ' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'pepito pérez', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $soe_board_id, $boards );
+		$this->assertNotContains( $this->board_id, $boards );
+	}
+
+	/**
+	 * A directive that leaves no title behind is rejected without creating a task.
+	 */
+	public function test_empty_title_after_board_directive_is_rejected() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$this->create_board_with_slug( 'soe', 'SOE' );
+
+		$response = $this->dispatch_email_with_subject( '[soe]' );
+
+		$this->assertEquals( 400, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertEquals( 'missing_field', $data['code'] );
+
+		$this->assertEquals( 0, $this->count_decker_tasks(), 'No empty-title task should be created' );
+	}
+
+	/**
+	 * Board routing must not change attachment handling.
+	 */
+	public function test_board_directive_does_not_break_attachments() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$soe_board_id = $this->create_board_with_slug( 'soe', 'SOE' );
+
+		$pdf_content = $this->get_fixture_content( 'sample-1.pdf' );
+		$raw_email   = $this->build_email_with_attachment(
+			'sample-1.pdf',
+			'application/pdf',
+			$pdf_content
+		);
+
+		$response = $this->dispatch_raw_email_with_subject( $raw_email, '[soe] Task with Attachment' );
+
+		$this->assertEquals( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertArrayHasKey( 'task_id', $data );
+
+		$task = get_post( $data['task_id'] );
+		$this->assertEquals( 'Task with Attachment', $task->post_title );
+
+		$boards = $this->get_task_board_ids( $data['task_id'] );
+		$this->assertContains( $soe_board_id, $boards );
+
+		$attachments = get_attached_media( '', $data['task_id'] );
+		$this->assertCount( 1, $attachments, 'Legitimate PDF attachment must still be uploaded' );
+	}
+
+	/**
+	 * Creates a decker_board term with the given slug.
+	 *
+	 * @param string $slug The board slug.
+	 * @param string $name The board name.
+	 * @return int The board term ID.
+	 */
+	private function create_board_with_slug( string $slug, string $name ): int {
+		return self::factory()->board->create(
+			array(
+				'name' => $name,
+				'slug' => $slug,
+			)
+		);
+	}
+
+	/**
+	 * Returns the decker_board term IDs assigned to a task.
+	 *
+	 * @param int $task_id The task ID.
+	 * @return int[] The board term IDs.
+	 */
+	private function get_task_board_ids( int $task_id ): array {
+		return wp_get_post_terms( $task_id, 'decker_board', array( 'fields' => 'ids' ) );
+	}
+
+	/**
+	 * Counts the existing decker_task posts in any status.
+	 *
+	 * @return int The number of tasks.
+	 */
+	private function count_decker_tasks(): int {
+		$tasks = get_posts(
+			array(
+				'post_type'   => 'decker_task',
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'fields'      => 'ids',
+			)
+		);
+
+		return count( $tasks );
+	}
+
+	/**
+	 * Dispatches the email-to-post endpoint with the given raw e-mail and metadata subject.
+	 *
+	 * The endpoint derives the task title from metadata.subject, so callers control the
+	 * effective subject (and any board directive) through the $subject argument.
+	 *
+	 * @param string $raw_email The raw e-mail content.
+	 * @param string $subject   The metadata subject used as the task title source.
+	 * @return WP_REST_Response The REST response.
+	 */
+	private function dispatch_raw_email_with_subject( string $raw_email, string $subject ) {
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			json_encode(
+				array(
+					'rawEmail' => base64_encode( $raw_email ),
+					'metadata' => array(
+						'from'    => 'test@example.com',
+						'to'      => 'decker@example.com',
+						'subject' => $subject,
+						'cc'      => array(),
+						'bcc'     => array(),
+					),
+				)
+			)
+		);
+
+		return rest_get_server()->dispatch( $request );
+	}
+
+	/**
+	 * Dispatches a simple plain-text e-mail using the given subject.
+	 *
+	 * @param string $subject The metadata subject used as the task title source.
+	 * @param string $body    The plain-text body.
+	 * @return WP_REST_Response The REST response.
+	 */
+	private function dispatch_email_with_subject( string $subject, string $body = 'This is a test task body' ) {
+		$raw_email  = "From: test@example.com\r\n";
+		$raw_email .= "To: decker@example.com\r\n";
+		$raw_email .= 'Subject: ' . $subject . "\r\n";
+		$raw_email .= "Content-Type: text/plain\r\n\r\n";
+		$raw_email .= $body;
+
+		return $this->dispatch_raw_email_with_subject( $raw_email, $subject );
+	}
+
+	/**
 	 * Helper method to retrieve fixture content.
 	 *
 	 * @param string $filename Name of the fixture file.

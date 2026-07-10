@@ -336,8 +336,9 @@ describe( 'DeckerCollaboration', () => {
 		const callback = jest.fn();
 		session.onSynced( callback );
 
-		// Run through all 10 checks (100ms each) + initial 100ms delay
-		for ( let i = 0; i <= 10; i++ ) {
+		// Run through all single-user checks (100ms each) + initial delay. The probe
+		// now waits a longer quiet window (~2s ceiling) before proceeding when alone.
+		for ( let i = 0; i <= 22; i++ ) {
 			jest.advanceTimersByTime( 100 );
 			await Promise.resolve(); // flush microtasks
 		}
@@ -379,5 +380,105 @@ describe( 'DeckerCollaboration', () => {
 		expect( mockYText.applyDelta ).toHaveBeenCalledWith( [
 			{ insert: 'hello' },
 		] );
+	} );
+} );
+
+// ── Race-condition regression guards (enter/leave content replacement) ──
+describe( 'DeckerCollaboration seeding race guards', () => {
+	/** Make the signaling socket appear OPEN. */
+	function connectSignaling() {
+		mockProvider.signalingConns = [ { ws: { readyState: 1 } } ];
+	}
+
+	/** Add a remote awareness peer (clientId !== self). */
+	function addAwarenessPeer( clientId = 2 ) {
+		mockProvider._awarenessStates.set( clientId, { user: { name: 'Peer' } } );
+	}
+
+	test( 'does NOT seed DB content when a peer is present in awareness', () => {
+		loadModule();
+		const session = initSession();
+
+		// A peer is already in the room (its awareness is visible).
+		addAwarenessPeer( 2 );
+
+		// Sync resolves and the editor tries to seed the stale DB snapshot.
+		mockProvider._fire( 'synced', { synced: true } );
+		session.initializeContentWithFallback( '<p>STALE DB CONTENT</p>' );
+
+		// The DB content must NOT be written into the shared CRDT: the peer's
+		// live content (delivered via sync) is kept instead.
+		expect( mockQuill.clipboard.convert ).not.toHaveBeenCalled();
+		expect( mockYText.applyDelta ).not.toHaveBeenCalled();
+		expect( mockYText.insert ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does NOT seed DB content once a peers event has fired (peerEverSeen latch)', () => {
+		loadModule();
+		const session = initSession();
+
+		// y-webrtc reports a connected peer before the Yjs doc finishes syncing.
+		mockProvider._fire( 'peers', { added: [ 2 ], webrtcPeers: [ 2 ], bcPeers: [] } );
+
+		mockProvider._fire( 'synced', { synced: true } );
+		session.initializeContentWithFallback( '<p>STALE DB CONTENT</p>' );
+
+		expect( mockQuill.clipboard.convert ).not.toHaveBeenCalled();
+		expect( mockYText.applyDelta ).not.toHaveBeenCalled();
+	} );
+
+	test( 'still seeds DB content when genuinely alone (no peers)', () => {
+		loadModule();
+		const session = initSession();
+
+		mockProvider._fire( 'synced', { synced: true } );
+		session.initializeContentWithFallback( '<p>Hello world</p>' );
+
+		// No peer present -> we are the authoritative seeder, content is applied.
+		expect( mockQuill.clipboard.convert ).toHaveBeenCalledWith( {
+			html: '<p>Hello world</p>',
+		} );
+		expect( mockYText.applyDelta ).toHaveBeenCalled();
+	} );
+
+	test( 'does NOT declare single-user prematurely (~300ms); waits the settle window', async () => {
+		loadModule();
+		connectSignaling();
+
+		const session = initSession();
+
+		// Advance ~300ms (the old premature threshold) — must NOT be synced yet.
+		for ( let i = 0; i < 4; i++ ) {
+			jest.advanceTimersByTime( 100 );
+			await Promise.resolve();
+		}
+		expect( session.isSynced() ).toBe( false );
+
+		// Advance through the full quiet window — now a genuinely-alone user resolves.
+		for ( let i = 0; i < 14; i++ ) {
+			jest.advanceTimersByTime( 100 );
+			await Promise.resolve();
+		}
+		expect( session.isSynced() ).toBe( true );
+	} );
+
+	test( 'does NOT declare single-user while a peer is present; waits for real sync', async () => {
+		loadModule();
+		connectSignaling();
+		addAwarenessPeer( 2 ); // peer present from the start
+
+		const session = initSession();
+
+		// Even well past the single-user window, presence of a peer prevents the
+		// premature single-user resolution (sync must come from the peer).
+		for ( let i = 0; i < 20; i++ ) {
+			jest.advanceTimersByTime( 100 );
+			await Promise.resolve();
+		}
+		expect( session.isSynced() ).toBe( false );
+
+		// The real Yjs sync event resolves it.
+		mockProvider._fire( 'synced', { synced: true } );
+		expect( session.isSynced() ).toBe( true );
 	} );
 } );
