@@ -91,6 +91,29 @@ if ( $task_id && 'archived' == $task->status ) {
 	$disabled = true;
 }
 
+// Task edit locking. Acquire the lock for the current user when opening an
+// existing, non-archived card. When another user is actively editing it, keep
+// the card read-only and expose a takeover action instead.
+$lock_info    = array();
+$locked_state = false;
+if ( $task_id && ! $disabled && class_exists( 'Decker_Task_Locks' ) ) {
+	$task_locks      = new Decker_Task_Locks();
+	$current_user_id = get_current_user_id();
+	$lock_info       = $task_locks->get_lock_info( $task_id, $current_user_id );
+
+	if ( ! empty( $lock_info['locked'] ) ) {
+		// Another user owns the active lock: render a read-only view.
+		$disabled     = true;
+		$locked_state = true;
+	} else {
+		// Unlocked, stale or already ours: (re)acquire the lock.
+		$acquired = $task_locks->acquire_lock( $task_id, $current_user_id );
+		if ( ! is_wp_error( $acquired ) ) {
+			$lock_info = $acquired;
+		}
+	}
+}
+
 $task_comments = array();
 
 if ( $task_id ) {
@@ -112,9 +135,23 @@ require_once __DIR__ . '/partials/task-comments.php';
 ?>
 
 <!-- Task card -->
-<form id="task-form" class="needs-validation" target="_self" novalidate>
+<form id="task-form" class="needs-validation" target="_self" novalidate data-task-id="<?php echo esc_attr( $task_id ); ?>" data-lock="<?php echo esc_attr( wp_json_encode( $lock_info ) ); ?>">
 	<input type="hidden" name="action" value="save_decker_task">
 	<input type="hidden" name="task_id" value="<?php echo esc_attr( $task_id ); ?>">
+
+	<?php if ( $locked_state ) : ?>
+		<div class="alert alert-warning d-flex align-items-center justify-content-between decker-lock-banner" role="alert" data-decker-lock-banner>
+			<span class="d-flex align-items-center">
+				<i class="ri-lock-line me-2"></i>
+				<span class="decker-lock-message"><?php echo esc_html( $lock_info['message'] ); ?></span>
+			</span>
+			<?php if ( ! empty( $lock_info['can_take_over'] ) ) : ?>
+				<button type="button" class="btn btn-sm btn-warning ms-2 decker-take-over-lock" data-task-id="<?php echo esc_attr( $task_id ); ?>">
+					<i class="ri-lock-unlock-line me-1"></i><?php esc_html_e( 'Take over editing', 'decker' ); ?>
+				</button>
+			<?php endif; ?>
+		</div>
+	<?php endif; ?>
 	<div class="row">
 
 		<!-- Title -->

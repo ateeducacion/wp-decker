@@ -1865,3 +1865,32 @@ msgstr "No tienes permiso para editar este artículo"
 
 msgid "You do not have permission to perform this action."
 msgstr "No tienes permiso para realizar esta acción."
+
+#. translators: %s is the display name of the user currently editing the card.
+#, php-format
+msgid "This card is currently locked by %s."
+msgstr "Actualmente esta tarjeta está bloqueada por %s."
+
+msgid "Invalid task."
+msgstr "Tarea no válida."
+
+msgid "You are not allowed to edit this card."
+msgstr "No tienes permiso para editar esta tarjeta."
+
+msgid "Take over editing"
+msgstr "Tomar el control de la edición"
+
+msgid "Taking over…"
+msgstr "Tomando el control…"
+
+msgid "Editing taken over"
+msgstr "Edición transferida"
+
+msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
+msgstr "Ya no puedes guardar esta tarjeta porque otro usuario ha tomado el control de la edición. Vuelve a cargar la tarjeta para ver los últimos cambios."
+
+msgid "The card could not be taken over. Please reload and try again."
+msgstr "No se pudo tomar el control de la tarjeta. Vuelve a cargarla e inténtalo de nuevo."
+
+msgid "Reload card"
+msgstr "Volver a cargar la tarjeta"
