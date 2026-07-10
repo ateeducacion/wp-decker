@@ -22,13 +22,21 @@ const USER_B = { username: 'lockuserb', password: 'lock-pass-B-123', name: 'Lock
  * @return {Promise<{context: any, page: any}>} The authenticated context/page.
  */
 async function loginAs( browser, baseURL, user ) {
-	const context = await browser.newContext( { baseURL } );
+	// Force a clean context (no inherited admin storage state) so the session
+	// belongs solely to this user.
+	const context = await browser.newContext( { baseURL, storageState: { cookies: [], origins: [] } } );
 	const page = await context.newPage();
 	await page.goto( '/wp-login.php' );
 	await page.fill( '#user_login', user.username );
 	await page.fill( '#user_pass', user.password );
-	await page.click( '#wp-submit' );
-	await page.waitForLoadState( 'networkidle' );
+	// Wait for the post-login redirect so the auth cookie is fully committed
+	// before navigating anywhere else; otherwise, under CI timing, a follow-up
+	// goto can render as a different (or anonymous) user and the server-side
+	// lock is then acquired for the wrong account.
+	await Promise.all( [
+		page.waitForURL( '**/wp-admin/**' ),
+		page.click( '#wp-submit' ),
+	] );
 	return { context, page };
 }
 
@@ -104,12 +112,16 @@ test.describe( 'Task edit locking', () => {
 		await expect( b.page.locator( '#task-title' ) ).toBeEnabled();
 		await expect( b.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
 		await b.page.fill( '#task-title', 'Updated by user B' );
+		// The due date is a required field; a full save is blocked client-side
+		// (form validation) until it is set.
+		await b.page.fill( '#task-due-date', '2026-12-31' );
 		await b.page.locator( '#save-task' ).click();
 		await b.page.waitForLoadState( 'networkidle' );
 
 		// User A tries to save a stale change and is rejected.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
 		await a.page.fill( '#task-title', 'Updated by user A' );
+		await a.page.fill( '#task-due-date', '2026-12-30' );
 		await a.page.locator( '#save-task' ).click();
 		await expect(
 			a.page.locator( '[data-decker-lock-lost]' )
@@ -134,6 +146,8 @@ test.describe( 'Task edit locking', () => {
 		await expect( b.page.locator( '#task-title' ) ).toBeEnabled();
 		await expect( b.page.locator( '[data-decker-lock-banner]' ) ).toHaveCount( 0 );
 		await b.page.fill( '#task-title', 'Edited without a prior lock' );
+		// The due date is a required field; fill it so the full save is allowed.
+		await b.page.fill( '#task-due-date', '2026-12-31' );
 		await b.page.locator( '#save-task' ).click();
 		await b.page.waitForLoadState( 'networkidle' );
 

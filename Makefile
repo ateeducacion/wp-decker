@@ -114,15 +114,40 @@ test-verbose: start-if-not-running
 	CMD="$$CMD --debug --verbose"; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
 
+# Ensure tests environment has admin user and plugin active
+setup-tests-env:
+	@echo "Setting up tests environment..."
+	@npx wp-env run tests-cli wp core install \
+		--url=http://localhost:8889 \
+		--title="Decker Tests" \
+		--admin_user=admin \
+		--admin_password=password \
+		--admin_email=admin@example.com \
+		--skip-email 2>/dev/null || true
+	@npx wp-env run tests-cli wp plugin activate decker 2>/dev/null || true
+	@npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard 2>/dev/null || true
+	@# Keep the deterministic suite free of the external-service collaboration feature.
+	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
+
+# Run E2E tests with Playwright against wp-env tests environment (port 8889).
+# The collaboration spec is excluded here (see test-e2e-collab).
+test-e2e: start-if-not-running setup-tests-env
+	WP_BASE_URL=http://localhost:8889 npm run test:e2e
+
+test-e2e-visual: start-if-not-running setup-tests-env
+	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
+
+# Run ONLY the collaboration spec. It needs the collaborative editing feature
+# enabled and reaches external services (esm.sh CDN + signalling server), so it
+# is kept out of the default CI gate. This enables the feature, runs the spec,
+# and restores the setting afterwards regardless of the outcome.
+test-e2e-collab: start-if-not-running setup-tests-env
+	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
+	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
+	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
+
 test-js:
 	npm run test:js
-
-test-e2e:
-	npm run test:e2e
-
-test-e2e-visual:
-	npm run test:e2e -- --ui
-
 
 logs:
 	npx wp-env logs

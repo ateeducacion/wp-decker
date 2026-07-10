@@ -23,13 +23,21 @@ const USER_B = { username: 'todayuserb', password: 'today-pass-B-123', name: 'To
  * @return {Promise<{context: any, page: any}>} The authenticated context/page.
  */
 async function loginAs( browser, baseURL, user ) {
-	const context = await browser.newContext( { baseURL } );
+	// Force a clean context (no inherited admin storage state) so the session
+	// belongs solely to this user.
+	const context = await browser.newContext( { baseURL, storageState: { cookies: [], origins: [] } } );
 	const page = await context.newPage();
 	await page.goto( '/wp-login.php' );
 	await page.fill( '#user_login', user.username );
 	await page.fill( '#user_pass', user.password );
-	await page.click( '#wp-submit' );
-	await page.waitForLoadState( 'networkidle' );
+	// Wait for the post-login redirect so the auth cookie is fully committed
+	// before navigating anywhere else; otherwise, under CI timing, a follow-up
+	// goto can render as a different (or anonymous) user and the server-side
+	// lock is then acquired for the wrong account.
+	await Promise.all( [
+		page.waitForURL( '**/wp-admin/**' ),
+		page.click( '#wp-submit' ),
+	] );
 	return { context, page };
 }
 
