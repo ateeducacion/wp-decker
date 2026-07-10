@@ -672,7 +672,7 @@ class Decker_Tasks {
 			'target_order'  => array( 'required' => true ),
 		);
 
-		return array(
+		$routes = array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/mark_relation',
 				'methods'    => 'POST',
@@ -755,6 +755,18 @@ class Decker_Tasks {
 					),
 				),
 			),
+		);
+
+		return array_merge( $routes, $this->get_task_lock_route_definitions() );
+	}
+
+	/**
+	 * Get the REST route definitions for the task edit-lock endpoints.
+	 *
+	 * @return array<int, array<string, mixed>> The lock route definitions.
+	 */
+	private function get_task_lock_route_definitions(): array {
+		return array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/lock',
 				'methods'    => 'GET',
@@ -2608,6 +2620,12 @@ class Decker_Tasks {
 			return $post_id;
 		}
 
+		// Enforce the edit lock so a stale admin session cannot overwrite newer
+		// changes after another user has taken over editing.
+		if ( is_wp_error( $this->get_task_locks()->assert_user_can_save( $post_id, get_current_user_id() ) ) ) {
+			return $post_id;
+		}
+
 		// The order of these calls is load-bearing: writing the 'stack' meta and the
 		// 'decker_board' term trigger reorder hooks mid-save, so details must run
 		// before taxonomies, and both before users and relations.
@@ -2644,12 +2662,6 @@ class Decker_Tasks {
 
 		// Check the user's permissions.
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return false;
-		}
-
-		// Enforce the edit lock: a user whose lock has been taken over by
-		// somebody else must not be able to overwrite the newer changes.
-		if ( is_wp_error( $this->get_task_locks()->assert_user_can_save( $post_id, get_current_user_id() ) ) ) {
 			return false;
 		}
 

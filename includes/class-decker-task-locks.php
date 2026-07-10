@@ -88,46 +88,70 @@ class Decker_Task_Locks {
 			'message'               => '',
 		);
 
+		// Unsupported post, or locking disabled: always report as unlocked.
 		if ( ! $this->is_supported_task( $post_id ) ) {
 			return $base;
 		}
 
 		$base['valid'] = true;
 
-		// When locking is disabled the card always reports as unlocked.
 		if ( ! $this->is_enabled() ) {
 			return $base;
 		}
 
-		$lock     = $this->read_lock( $post_id );
-		$owner_id = $lock ? $lock['user'] : 0;
-		$active   = $lock && $lock['time'] > ( time() - $this->get_lock_window() );
-
-		$owned_by_viewer = $active && $owner_id === $current_user_id;
-		$locked_by_other = $active && $owner_id !== $current_user_id;
-
-		$base['owned_by_current_user'] = $owned_by_viewer;
-		$base['locked']                = $locked_by_other;
-		$base['is_stale']              = (bool) $lock && ! $active;
-
-		if ( $owner_id ) {
-			$owner = get_userdata( $owner_id );
-			if ( $owner ) {
-				$base['owner'] = array(
-					'id'           => $owner_id,
-					'display_name' => $owner->display_name,
-				);
-			}
+		$lock = $this->read_lock( $post_id );
+		if ( ! $lock ) {
+			return $base;
 		}
 
-		if ( $locked_by_other ) {
-			$owner_name = $base['owner'] ? $base['owner']['display_name'] : '';
-			/* translators: %s is the display name of the user currently editing the card. */
-			$base['message']       = sprintf( __( 'This card is currently locked by %s.', 'decker' ), $owner_name );
-			$base['can_take_over'] = user_can( $current_user_id, 'edit_post', $post_id );
+		$base['owner'] = $this->build_owner_info( $lock['user'] );
+
+		// A lock older than the window is stale and does not block a new editor.
+		if ( $lock['time'] <= ( time() - $this->get_lock_window() ) ) {
+			$base['is_stale'] = true;
+			return $base;
 		}
+
+		// Active lock owned by the viewer themselves.
+		if ( $lock['user'] === $current_user_id ) {
+			$base['owned_by_current_user'] = true;
+			return $base;
+		}
+
+		// Active lock owned by another user.
+		$base['locked']        = true;
+		$base['can_take_over'] = user_can( $current_user_id, 'edit_post', $post_id );
+
+		$owner_name = $base['owner'] ? $base['owner']['display_name'] : '';
+		/* translators: %s is the display name of the user currently editing the card. */
+		$base['message'] = sprintf( __( 'This card is currently locked by %s.', 'decker' ), $owner_name );
 
 		return $base;
+	}
+
+	/**
+	 * Build the public owner descriptor for a lock, or null when unavailable.
+	 *
+	 * Only the id and display name are exposed; private data such as the email
+	 * address is never included.
+	 *
+	 * @param int $owner_id The lock owner user ID.
+	 * @return array{id:int,display_name:string}|null The owner descriptor.
+	 */
+	private function build_owner_info( int $owner_id ) {
+		if ( ! $owner_id ) {
+			return null;
+		}
+
+		$owner = get_userdata( $owner_id );
+		if ( ! $owner ) {
+			return null;
+		}
+
+		return array(
+			'id'           => $owner_id,
+			'display_name' => $owner->display_name,
+		);
 	}
 
 	/**
