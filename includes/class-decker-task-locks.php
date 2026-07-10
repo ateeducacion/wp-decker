@@ -50,6 +50,25 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Determine whether edit locking is active.
+	 *
+	 * Locking is the fallback for concurrent editing. When Decker's real-time
+	 * collaborative editing is enabled it already resolves concurrency through
+	 * the shared CRDT, so locking stands down to avoid blocking a second editor
+	 * from joining the collaborative session.
+	 *
+	 * @return bool True when locking should be enforced.
+	 */
+	public function is_enabled(): bool {
+		$options = get_option( 'decker_settings', array() );
+
+		$collaboration_enabled = ! empty( $options['collaborative_editing'] )
+			&& '1' === $options['collaborative_editing'];
+
+		return ! $collaboration_enabled;
+	}
+
+	/**
 	 * Build the normalized lock information for a task from a viewer's point of view.
 	 *
 	 * @param int $post_id         The task post ID.
@@ -74,6 +93,11 @@ class Decker_Task_Locks {
 		}
 
 		$base['valid'] = true;
+
+		// When locking is disabled the card always reports as unlocked.
+		if ( ! $this->is_enabled() ) {
+			return $base;
+		}
 
 		$lock     = $this->read_lock( $post_id );
 		$owner_id = $lock ? $lock['user'] : 0;
@@ -119,6 +143,11 @@ class Decker_Task_Locks {
 	 * @return array|WP_Error The lock info on success, or WP_Error on failure.
 	 */
 	public function acquire_lock( int $post_id, int $user_id ) {
+		// Locking is disabled (collaborative editing takes over): report unlocked.
+		if ( ! $this->is_enabled() ) {
+			return $this->get_lock_info( $post_id, $user_id );
+		}
+
 		$guard = $this->guard_lock_operation( $post_id, $user_id );
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
@@ -144,6 +173,11 @@ class Decker_Task_Locks {
 	 * @return array|WP_Error The lock info on success, or WP_Error on failure.
 	 */
 	public function take_over_lock( int $post_id, int $user_id ) {
+		// Locking is disabled (collaborative editing takes over): report unlocked.
+		if ( ! $this->is_enabled() ) {
+			return $this->get_lock_info( $post_id, $user_id );
+		}
+
 		$guard = $this->guard_lock_operation( $post_id, $user_id );
 		if ( is_wp_error( $guard ) ) {
 			return $guard;
@@ -164,7 +198,7 @@ class Decker_Task_Locks {
 	 * @return bool True when the lock was released, false otherwise.
 	 */
 	public function release_lock( int $post_id, int $user_id ): bool {
-		if ( ! $this->is_supported_task( $post_id ) ) {
+		if ( ! $this->is_enabled() || ! $this->is_supported_task( $post_id ) ) {
 			return false;
 		}
 
@@ -189,6 +223,11 @@ class Decker_Task_Locks {
 	 * @return true|WP_Error True when the save may proceed, WP_Error otherwise.
 	 */
 	public function assert_user_can_save( int $post_id, int $user_id ) {
+		// When collaborative editing is enabled, locking does not gate saves.
+		if ( ! $this->is_enabled() ) {
+			return true;
+		}
+
 		if ( ! $this->is_supported_task( $post_id ) ) {
 			return new WP_Error(
 				'decker_invalid_task',

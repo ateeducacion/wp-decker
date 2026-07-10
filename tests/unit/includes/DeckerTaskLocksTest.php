@@ -297,4 +297,25 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	public function test_no_lock_allows_save() {
 		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_b ) );
 	}
+
+	/**
+	 * When collaborative editing is enabled, locking stands down: a second
+	 * user is never blocked and can save, because the CRDT resolves concurrency.
+	 */
+	public function test_locking_stands_down_when_collaboration_enabled() {
+		update_option( 'decker_settings', array( 'collaborative_editing' => '1' ) );
+
+		$this->assertFalse( $this->locks->is_enabled() );
+
+		// User A "acquires" the lock, but nothing is actually stored.
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
+
+		// A second user still sees the card as unlocked and may save.
+		$info = $this->locks->get_lock_info( $this->task_id, $this->user_b );
+		$this->assertFalse( $info['locked'] );
+		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_b ) );
+
+		delete_option( 'decker_settings' );
+	}
 }
