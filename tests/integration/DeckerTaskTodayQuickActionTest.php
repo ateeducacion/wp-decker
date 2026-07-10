@@ -145,6 +145,22 @@ class DeckerTaskTodayQuickActionTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The endpoint accepts `marked` from the query string, so it works even on
+	 * hosts that drop or do not parse the PUT request body.
+	 */
+	public function test_mark_accepts_query_string_parameter() {
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $this->task_id . '/today' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_query_params( array( 'marked' => 'true' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['marked'] );
+		$this->assertTrue( $this->manager->is_marked_for_today( $this->task_id, $this->user_a ) );
+	}
+
+	/**
 	 * A client-supplied user_id is rejected and never marks another user.
 	 */
 	public function test_client_supplied_user_id_is_rejected() {

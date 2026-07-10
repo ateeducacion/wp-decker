@@ -479,7 +479,11 @@
         }
         setTodayQuickActionLoading(context, true);
 
-        fetch(`${deckerRestUrl}tasks/${taskId}/today`, {
+        // Send `marked` both in the query string and the JSON body. Some hosts
+        // do not parse the body of a PUT request, so the query string keeps the
+        // parameter reachable while the body stays spec-compliant.
+        const url = `${deckerRestUrl}tasks/${taskId}/today?marked=${marked ? 'true' : 'false'}`;
+        fetch(url, {
             method: 'PUT',
             headers: {
                 'X-WP-Nonce': wpApiSettings.nonce,

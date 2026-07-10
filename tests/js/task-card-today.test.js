@@ -202,7 +202,7 @@ describe( 'task-card today quick action', () => {
 
 		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
 		const [ url, options ] = global.fetch.mock.calls[ 0 ];
-		expect( url ).toBe( 'http://x/wp-json/decker/v1/tasks/5/today' );
+		expect( url ).toBe( 'http://x/wp-json/decker/v1/tasks/5/today?marked=true' );
 		expect( options.method ).toBe( 'PUT' );
 		expect( options.headers[ 'X-WP-Nonce' ] ).toBe( 'nonce-123' );
 
@@ -233,6 +233,7 @@ describe( 'task-card today quick action', () => {
 		context.querySelector( '#task-today-quick' ).click();
 		await new Promise( ( r ) => setTimeout( r, 0 ) );
 
+		expect( global.fetch.mock.calls[ 0 ][ 0 ] ).toContain( '?marked=false' );
 		expect( JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body ) ).toEqual( { marked: false } );
 	} );
 
