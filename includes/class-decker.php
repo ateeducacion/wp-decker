@@ -112,6 +112,7 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-revision-manager.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
@@ -192,6 +193,8 @@ class Decker {
 	 * Run the loader to execute all of the hooks with WordPress.
 	 */
 	public function run() {
+		new Decker_Task_Revision_Manager();
+
 		// Initialize notification handler.
 		new Decker_Notification_Handler();
 		new Decker_AI_Manager();
