@@ -1894,3 +1894,39 @@ msgstr "No se pudo tomar el control de la tarjeta. Vuelve a cargarla e inténtal
 
 msgid "Reload card"
 msgstr "Volver a cargar la tarjeta"
+
+msgid "The task could not be updated due to a concurrent change. Please try again."
+msgstr "No se pudo actualizar la tarea debido a un cambio simultáneo. Inténtalo de nuevo."
+
+msgid "The user is derived from the session and cannot be provided."
+msgstr "El usuario se obtiene de la sesión y no se puede proporcionar."
+
+msgid "This task is archived and cannot be marked for today."
+msgstr "Esta tarea está archivada y no se puede marcar para hoy."
+
+msgid "Task added to today."
+msgstr "Tarea añadida a hoy."
+
+msgid "Task is already marked for today."
+msgstr "La tarea ya está marcada para hoy."
+
+msgid "Task removed from today."
+msgstr "Tarea eliminada de hoy."
+
+msgid "Task is not marked for today."
+msgstr "La tarea no está marcada para hoy."
+
+msgid "Add to today"
+msgstr "Añadir a hoy"
+
+msgid "Remove from today"
+msgstr "Quitar de hoy"
+
+msgid "Adding to today…"
+msgstr "Añadiendo a hoy…"
+
+msgid "Removing from today…"
+msgstr "Quitando de hoy…"
+
+msgid "The task could not be updated."
+msgstr "No se pudo actualizar la tarea."

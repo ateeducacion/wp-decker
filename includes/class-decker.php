@@ -105,6 +105,11 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-locks.php';
 
 		/**
+		 * User-specific "For today" relation service.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-today-manager.php';
+
+		/**
 		 * The classes responsible for defining the custom-post-types.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';

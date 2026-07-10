@@ -32,10 +32,11 @@
     let originalValuesSnapshot = null;
 
     // Field mappings for collaboration
+    // NOTE: 'task-today' is intentionally excluded. The "For today" state is
+    // user-specific and must never be synchronized through shared collaboration.
     const FIELD_MAPPINGS = [
         { id: 'task-title', key: 'title', type: 'text' },
         { id: 'task-max-priority', key: 'maxPriority', type: 'checkbox' },
-        { id: 'task-today', key: 'today', type: 'checkbox' },
         { id: 'task-board', key: 'board', type: 'select' },
         { id: 'task-responsable', key: 'responsable', type: 'select' },
         { id: 'task-stack', key: 'stack', type: 'select' },
@@ -372,6 +373,208 @@
                 handleLockLost(modal, info);
             }
         });
+    }
+
+    /* ---------------------------------------------------------------------
+     * "For today" quick action (user-specific, avoids a full task save).
+     * ------------------------------------------------------------------- */
+
+    /**
+     * Wire the quick "Add/Remove to today" button for a pristine existing task.
+     * @param {HTMLElement} context - The container element.
+     */
+    function initializeTodayQuickAction(context) {
+        const button = context.querySelector('#task-today-quick');
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', function () {
+            // Only act while the form is pristine; once dirty the checkbox rules.
+            if (window.deckerHasUnsavedChanges) {
+                return;
+            }
+            const marked = button.dataset.marked !== '1';
+            submitTodayQuickAction(context, marked);
+        });
+    }
+
+    /**
+     * Reveal the standard "For today" checkbox and hide the quick action.
+     * @param {HTMLElement} context - The container element.
+     */
+    function showTodayCheckbox(context) {
+        const button = context.querySelector('#task-today-quick');
+        if (button) {
+            button.classList.add('d-none');
+        }
+        const wrapper = context.querySelector('.decker-today-checkbox');
+        if (wrapper) {
+            wrapper.classList.remove('d-none');
+        }
+        const checkbox = context.querySelector('#task-today');
+        if (checkbox) {
+            checkbox.disabled = false;
+            checkbox.removeAttribute('aria-hidden');
+            checkbox.removeAttribute('tabindex');
+        }
+    }
+
+    /**
+     * Canonical transition from pristine to dirty edit mode. One-way and
+     * idempotent for the current modal session.
+     * @param {HTMLElement} context - The container element.
+     */
+    function enterDirtyEditMode(context) {
+        if (window.deckerHasUnsavedChanges) {
+            return;
+        }
+        window.deckerHasUnsavedChanges = true;
+        const saveButton = context.querySelector('#save-task');
+        if (saveButton) {
+            saveButton.disabled = false;
+        }
+        showTodayCheckbox(context);
+    }
+
+    /**
+     * Toggle the quick-action button loading state accessibly.
+     * @param {HTMLElement} context - The container element.
+     * @param {boolean} loading - Whether the request is in flight.
+     */
+    function setTodayQuickActionLoading(context, loading) {
+        const button = context.querySelector('#task-today-quick');
+        if (!button) {
+            return;
+        }
+        button.disabled = loading;
+        button.setAttribute('aria-busy', loading ? 'true' : 'false');
+        const label = button.querySelector('.decker-today-quick-label');
+        if (!label) {
+            return;
+        }
+        if (loading) {
+            button.dataset.idleLabel = label.textContent;
+            label.textContent = button.dataset.marked === '1'
+                ? strings.removing_from_today
+                : strings.adding_to_today;
+        } else if (button.dataset.idleLabel) {
+            label.textContent = button.dataset.idleLabel;
+        }
+    }
+
+    /**
+     * Send the lightweight today request for the current user only.
+     * @param {HTMLElement} context - The container element.
+     * @param {boolean} marked - The desired today state.
+     */
+    function submitTodayQuickAction(context, marked) {
+        const button = context.querySelector('#task-today-quick');
+        const taskId = (button && button.dataset.taskId) || getTaskId();
+        if (!taskId || taskId === '0') {
+            return;
+        }
+        // Prevent duplicate submissions.
+        if (button && button.getAttribute('aria-busy') === 'true') {
+            return;
+        }
+        setTodayQuickActionLoading(context, true);
+
+        fetch(`${deckerRestUrl}tasks/${taskId}/today`, {
+            method: 'PUT',
+            headers: {
+                'X-WP-Nonce': wpApiSettings.nonce,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ marked: marked })
+        })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data && data.success) {
+                    onTodayQuickActionSuccess(context, data);
+                } else {
+                    setTodayQuickActionLoading(context, false);
+                    const message = (data && data.message) || strings.today_update_failed;
+                    notifyTodayResult(message, false);
+                }
+            })
+            .catch(() => {
+                setTodayQuickActionLoading(context, false);
+                notifyTodayResult(strings.today_update_failed, false);
+            });
+    }
+
+    /**
+     * Handle a successful quick action: update local state, release the lock,
+     * refresh the parent view and close the modal.
+     * @param {HTMLElement} context - The container element.
+     * @param {Object} data - The server response.
+     */
+    function onTodayQuickActionSuccess(context, data) {
+        const checkbox = context.querySelector('#task-today');
+        if (checkbox) {
+            checkbox.checked = !!data.marked;
+        }
+        // The quick action never dirties the form.
+        window.deckerHasUnsavedChanges = false;
+
+        notifyTodayResult(data.message, true);
+
+        // Extension point for targeted parent-view updates.
+        document.dispatchEvent(new CustomEvent('decker:task-today-changed', {
+            detail: {
+                taskId: data.task_id,
+                marked: data.marked,
+                userId: data.user_id,
+                date: data.date
+            }
+        }));
+
+        // Release the lock owned by this session, then close the modal.
+        if (typeof window.deckerReleaseActiveTaskLock === 'function') {
+            window.deckerReleaseActiveTaskLock();
+        }
+
+        const modalElement = document.querySelector('.task-modal.show');
+        if (modalElement) {
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+        }
+        // Refresh the parent view (today indicators) — mirrors the full-save flow.
+        reloadParentView();
+    }
+
+    /**
+     * Refresh the parent view after a today change. A full reload mirrors the
+     * existing modal save flow; the dispatched event above is the extension
+     * point for future targeted updates.
+     */
+    function reloadParentView() {
+        window.location.reload();
+    }
+
+    /**
+     * Show an accessible toast for the quick-action result.
+     * @param {string} message - The message to show.
+     * @param {boolean} success - Whether the action succeeded.
+     */
+    function notifyTodayResult(message, success) {
+        const swal = (window.parent && window.parent.Swal) || window.Swal;
+        if (swal) {
+            swal.fire({
+                icon: success ? 'success' : 'error',
+                title: message,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: success ? 1500 : 3000,
+                timerProgressBar: true
+            });
+        } else if (!success) {
+            alert(message);
+        }
     }
 
     /**
@@ -981,6 +1184,10 @@
 
     // Function to initialize the tasks page within the given context
     function initializeTaskPage(context) {
+        // A freshly rendered card always starts pristine, so the quick-action
+        // mode and the one-way pristine-to-dirty transition reset per session.
+        window.deckerHasUnsavedChanges = false;
+
         // CRITICAL: Capture original values BEFORE any collaboration or Quill setup
         originalValuesSnapshot = captureOriginalFormValues(context);
 
@@ -1221,17 +1428,17 @@
 
         const saveButton = context.querySelector('#save-task');
 
-        // Function to enable the save button when any field changes
+        // Canonical dirty transition: shared-field edits switch the card from the
+        // quick-action mode to the normal checkbox + full-save mode. 'task-today'
+        // is intentionally NOT a dirty trigger — it is handled by the quick action.
         const enableSaveButton = function() {
-            saveButton.disabled = false;
-            // Mark that there are unsaved changes
-            window.deckerHasUnsavedChanges = true;
+            enterDirtyEditMode(context);
         };
 
         const form = context.querySelector('#task-form');
 
-        // Add event listeners to all form inputs
-        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-today', 'task-max-priority'];
+        // Add event listeners to all shared editable form inputs.
+        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-max-priority'];
 
         inputIds.forEach(function(id) {
             const element = context.querySelector(`#${id}`);
@@ -1241,17 +1448,23 @@
             }
         });
 
+        // Wire the "For today" quick action for pristine existing tasks.
+        initializeTodayQuickAction(context);
+
         // Check the initial state of the highest priority checkbox and toggle the label
         var taskMaxPriorityCheck = context.querySelector('#task-max-priority');
         if (taskMaxPriorityCheck) {
             togglePriorityLabel(taskMaxPriorityCheck);
         }
-        
+
         // For the Quill editor
         if (quill) {
-            quill.on('text-change', function() {
-                saveButton.disabled = false;
-                window.deckerHasUnsavedChanges = true;
+            quill.on('text-change', function(delta, oldDelta, source) {
+                // Only a local user edit marks the form dirty; remote collaboration
+                // updates must not switch this user into edit mode.
+                if (source === 'user') {
+                    enterDirtyEditMode(context);
+                }
             });
         }
 
@@ -1261,7 +1474,7 @@
         }
         if (labelsSelect) {
             labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
-        }        
+        }
 
         document.querySelectorAll('.archive-task,.unarchive-task').forEach((element) => {
 
