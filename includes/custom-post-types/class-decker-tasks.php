@@ -2084,6 +2084,70 @@ class Decker_Tasks {
 		);
 
 		register_post_type( 'decker_task', $args );
+
+		$this->register_task_meta();
+	}
+
+	/**
+	 * Register the task detail meta fields for the REST API.
+	 *
+	 * The `decker_task` post type is exposed over REST, but its detail meta was
+	 * not registered, so the generic `/wp/v2/tasks` endpoint silently dropped
+	 * `stack`, `max_priority` and `duedate` on write and never returned them on
+	 * read. Registering them here makes those fields round-trip through REST.
+	 *
+	 * Writing the `stack` meta stays ordering-consistent because the existing
+	 * `added_post_meta` / `updated_post_meta` hooks recompute the task order.
+	 */
+	private function register_task_meta() {
+		$auth_callback = function ( $allowed, $meta_key, $post_id ) {
+			return current_user_can( 'edit_post', $post_id );
+		};
+
+		// `stack` is validated with a REST enum schema rather than a
+		// sanitize_callback so that only REST writes are constrained; internal
+		// meta writes (form save, drag-and-drop reorder) keep their raw values.
+		register_post_meta(
+			'decker_task',
+			'stack',
+			array(
+				'type'          => 'string',
+				'single'        => true,
+				'auth_callback' => $auth_callback,
+				'show_in_rest'  => array(
+					'schema' => array(
+						'type' => 'string',
+						'enum' => array( 'to-do', 'in-progress', 'done' ),
+					),
+				),
+			)
+		);
+
+		// Stored internally as '0'/'1' (and '' for legacy rows); the model reads
+		// it as `'1' === value`. Exposed as a boolean over REST without a
+		// value-altering sanitize_callback so internal writes are untouched.
+		register_post_meta(
+			'decker_task',
+			'max_priority',
+			array(
+				'type'          => 'boolean',
+				'single'        => true,
+				'show_in_rest'  => true,
+				'auth_callback' => $auth_callback,
+			)
+		);
+
+		register_post_meta(
+			'decker_task',
+			'duedate',
+			array(
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'auth_callback'     => $auth_callback,
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
 	}
 
 	/**
