@@ -37,28 +37,7 @@ class Decker_Task_Revision_Manager {
 		unset( $data );
 
 		$post_id = (int) $post_id;
-		if ( $this->creating_baseline || $post_id <= 0 ) {
-			return;
-		}
-
-		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
-		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
-			return;
-		}
-
-		$post = get_post( $post_id );
-		if ( ! $post || 'decker_task' !== $post->post_type || 'auto-draft' === $post->post_status ) {
-			return;
-		}
-
-		if ( ! post_type_supports( 'decker_task', 'revisions' ) || ! wp_revisions_enabled( $post ) ) {
-			return;
-		}
-
-		if ( $this->has_regular_revision( $post_id ) ) {
+		if ( ! $this->needs_baseline( $post_id ) ) {
 			return;
 		}
 
@@ -76,6 +55,42 @@ class Decker_Task_Revision_Manager {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Determine whether a baseline revision must be created before this update.
+	 *
+	 * @param int $post_id Post ID about to be updated.
+	 * @return bool True when the task needs a baseline revision.
+	 */
+	private function needs_baseline( int $post_id ): bool {
+		if ( $this->creating_baseline || $post_id <= 0 ) {
+			return false;
+		}
+
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return false;
+		}
+
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return false;
+		}
+
+		return $this->is_revisionable_task( get_post( $post_id ) ) && ! $this->has_regular_revision( $post_id );
+	}
+
+	/**
+	 * Determine whether a post is a Decker task eligible for revisions.
+	 *
+	 * @param WP_Post|null $post Post about to be updated, if it exists.
+	 * @return bool True when the post is a revisionable task.
+	 */
+	private function is_revisionable_task( $post ): bool {
+		if ( ! $post || 'decker_task' !== $post->post_type || 'auto-draft' === $post->post_status ) {
+			return false;
+		}
+
+		return post_type_supports( 'decker_task', 'revisions' ) && wp_revisions_enabled( $post );
 	}
 
 	/**
