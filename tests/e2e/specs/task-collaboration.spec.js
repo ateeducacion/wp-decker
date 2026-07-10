@@ -119,8 +119,7 @@ test.describe( 'Task Collaboration', () => {
 		// Wait for the collaboration module to initialize.
 		await expect( page.locator( '.decker-collab-status' ) ).toBeVisible( { timeout: 10000 } );
 
-		// Custom task meta (max_priority) is written by the plugin's own save
-		// handler, not the generic REST meta API, so drive it through the form.
+		// Exercise the full form round-trip: check the box and save it.
 		await page.fill( '#task-due-date', '2026-12-31' );
 		await page.locator( '#task-max-priority' ).check();
 

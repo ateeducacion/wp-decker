@@ -22,12 +22,6 @@ jobs:
       # Note: the WordPress Playground PR preview link is posted by the dedicated
       # playground-preview.yml workflow (WordPress/action-wp-playground-pr-preview).
 
-      # - name: Pre-pull Docker images
-      #   run: |
-      #     docker pull mariadb:lts
-      #     docker pull wordpress
-      #     docker pull wordpress:cli
-
       - name: PHP setup
         uses: shivammathur/setup-php@v2
         with:

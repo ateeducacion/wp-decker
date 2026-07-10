@@ -1,15 +1,12 @@
 /**
  * E2E tests for the Decker Kanban board.
  *
- * Covers the two most important board flows:
+ * Covers the most important board flows:
  *   1. The board view renders its three stack columns.
  *   2. A task created through the real task form lands in the board's TO-DO
  *      column (exercising the full front-end create + save + render round-trip).
- *
- * Note: task meta such as `stack` is written by the plugin's own form-save
- * handler, not by the generic REST meta API, so a task must be created through
- * the UI to be placed in a stack column. Creating it via REST would leave it
- * with an empty stack and it would not appear in any column.
+ *   3. A task created over REST with an explicit stack renders in that column
+ *      (regression coverage for the task meta being exposed over REST).
  *
  * @package Decker
  */
@@ -83,6 +80,32 @@ test.describe( 'Decker Kanban board', () => {
 		const card = todoColumn.locator( `.task.card[data-task-id="${ newId }"]` );
 		await expect( card ).toBeVisible();
 		await expect( card.getByText( title, { exact: false } ) ).toBeVisible();
+	} );
+
+	test( 'a task created over REST with a stack renders in that column', async ( { requestUtils, page } ) => {
+		const title = `REST Board Task ${ Date.now() }`;
+
+		const task = await requestUtils.rest( {
+			path: '/wp/v2/tasks',
+			method: 'POST',
+			data: {
+				title,
+				status: 'publish',
+				decker_board: [ boardId ],
+				meta: { stack: 'in-progress', max_priority: false, duedate: '2026-12-31' },
+			},
+		} );
+		createdTaskIds.push( task.id );
+
+		await page.goto( `/?decker_page=board&slug=${ boardSlug }` );
+
+		// The stack was honoured, so the card is in the In Progress column and
+		// not in TO-DO.
+		const card = page.locator( `#task-list-in-progress .task.card[data-task-id="${ task.id }"]` );
+		await expect( card ).toBeVisible();
+		await expect(
+			page.locator( `#task-list-to-do .task.card[data-task-id="${ task.id }"]` )
+		).toHaveCount( 0 );
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
