@@ -238,12 +238,21 @@
     }
 
     /**
-     * Reload the current view so the card re-renders in its new lock state.
+     * Re-render the card in its new lock state.
      *
-     * Mirrors the behavior of a successful save, which also reloads the page.
+     * Inside the modal the card is reloaded in place so it is not closed: after
+     * a takeover it becomes editable, and a previous editor who lost the lock
+     * sees the read-only state without the modal disappearing. On the full-page
+     * view there is no modal to preserve, so the page is reloaded.
+     *
+     * @param {number|string} taskId - The task ID to reload.
      */
-    function reloadTaskCard() {
+    function reloadTaskCard(taskId) {
         window.deckerHasUnsavedChanges = false;
+        const id = taskId || getTaskId();
+        if (typeof window.deckerReloadTaskCard === 'function' && window.deckerReloadTaskCard(id)) {
+            return;
+        }
         window.location.reload();
     }
 
