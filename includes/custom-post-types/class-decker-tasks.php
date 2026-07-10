@@ -17,12 +17,52 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Tasks {
 
 	/**
+	 * Lazily-instantiated edit-lock manager.
+	 *
+	 * @var Decker_Task_Locks|null
+	 */
+	private $task_locks = null;
+
+	/**
 	 * Constructor
 	 *
 	 * Initializes the class by setting up the hooks.
 	 */
 	public function __construct() {
 		$this->define_hooks();
+	}
+
+	/**
+	 * Get the shared task edit-lock manager.
+	 *
+	 * @return Decker_Task_Locks The lock manager instance.
+	 */
+	public function get_task_locks(): Decker_Task_Locks {
+		if ( ! $this->task_locks instanceof Decker_Task_Locks ) {
+			$this->task_locks = new Decker_Task_Locks();
+		}
+
+		return $this->task_locks;
+	}
+
+	/**
+	 * Lazily-instantiated "For today" relation service.
+	 *
+	 * @var Decker_Task_Today_Manager|null
+	 */
+	private $today_manager = null;
+
+	/**
+	 * Get the shared "For today" relation service.
+	 *
+	 * @return Decker_Task_Today_Manager The relation service instance.
+	 */
+	public function get_today_manager(): Decker_Task_Today_Manager {
+		if ( ! $this->today_manager instanceof Decker_Task_Today_Manager ) {
+			$this->today_manager = new Decker_Task_Today_Manager();
+		}
+
+		return $this->today_manager;
 	}
 
 	/**
@@ -63,6 +103,9 @@ class Decker_Tasks {
 
 		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
+
+		// Keep the editor's task lock alive through the WordPress heartbeat.
+		add_filter( 'heartbeat_received', array( $this, 'refresh_task_lock_heartbeat' ), 10, 2 );
 
 		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
@@ -542,10 +585,9 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function mark_user_date_relation( $request ) {
-		$task_id = $request['id'];
-		$user_id = $request->get_param( 'user_id' );
+		$task_id = (int) $request['id'];
 
-		if ( ! $task_id || ! $user_id ) {
+		if ( ! $task_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -555,7 +597,9 @@ class Decker_Tasks {
 			);
 		}
 
-		$this->add_user_date_relation( $task_id, $user_id );
+		// The relation is personal: always use the authenticated current user
+		// and ignore any client-supplied user_id.
+		$this->add_user_date_relation( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -573,10 +617,9 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function unmark_user_date_relation( $request ) {
-		$task_id = $request['id'];
-		$user_id = $request->get_param( 'user_id' );
+		$task_id = (int) $request['id'];
 
-		if ( ! $task_id || ! $user_id ) {
+		if ( ! $task_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -586,7 +629,9 @@ class Decker_Tasks {
 			);
 		}
 
-		$this->remove_user_date_relation( $task_id, $user_id );
+		// The relation is personal: always use the authenticated current user
+		// and ignore any client-supplied user_id.
+		$this->remove_user_date_relation( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -630,6 +675,21 @@ class Decker_Tasks {
 			};
 		}
 
+		// Object-level capability for a single task. A missing task passes the
+		// authenticated check so the callback can return a 404 instead of a 403.
+		if ( 'edit_task' === $permission ) {
+			return function ( $request ) {
+				$task_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
+				$post    = $task_id ? get_post( $task_id ) : null;
+
+				if ( ! $post || 'decker_task' !== $post->post_type ) {
+					return is_user_logged_in();
+				}
+
+				return current_user_can( 'edit_post', $task_id );
+			};
+		}
+
 		return function () use ( $permission ) {
 			return current_user_can( $permission );
 		};
@@ -649,7 +709,7 @@ class Decker_Tasks {
 			'target_order'  => array( 'required' => true ),
 		);
 
-		return array(
+		$routes = array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/mark_relation',
 				'methods'    => 'POST',
@@ -733,6 +793,325 @@ class Decker_Tasks {
 				),
 			),
 		);
+
+		return array_merge( $routes, $this->get_task_lock_route_definitions(), $this->get_task_today_route_definitions() );
+	}
+
+	/**
+	 * Get the REST route definition for the "For today" quick action.
+	 *
+	 * @return array<int, array<string, mixed>> The today route definition.
+	 */
+	private function get_task_today_route_definitions(): array {
+		return array(
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/today',
+				'methods'    => 'PUT',
+				'callback'   => 'handle_task_today',
+				'permission' => 'edit_task',
+				'args'       => array(
+					'marked' => array(
+						'required' => true,
+						'type'     => 'boolean',
+					),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Handle the "For today" quick action for the current user.
+	 *
+	 * Changes only the authenticated user's current-day relation. It never
+	 * touches shared task fields, the task edit lock, or another user's data.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_task_today( $request ) {
+		$task_id = (int) $request['id'];
+		$post    = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_invalid_task',
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		// Identity is derived from the session; a client-supplied user is refused.
+		if ( null !== $request->get_param( 'user_id' ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_unexpected_identity',
+					'message' => __( 'The user is derived from the session and cannot be provided.', 'decker' ),
+				),
+				400
+			);
+		}
+
+		if ( 'archived' === $post->post_status ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_task_archived',
+					'message' => __( 'This task is archived and cannot be marked for today.', 'decker' ),
+				),
+				409
+			);
+		}
+
+		$marked = (bool) $request->get_param( 'marked' );
+		$result = $this->get_today_manager()->set_today_state( $task_id, get_current_user_id(), $marked );
+
+		if ( is_wp_error( $result ) ) {
+			return $this->lock_error_response( $result );
+		}
+
+		return new WP_REST_Response(
+			array_merge(
+				array(
+					'success' => true,
+					'message' => $this->today_result_message( $result['marked'], $result['changed'] ),
+				),
+				$result
+			),
+			200
+		);
+	}
+
+	/**
+	 * Build the human-readable message for a today quick-action result.
+	 *
+	 * @param bool $marked  The resulting marked state.
+	 * @param bool $changed Whether the state actually changed.
+	 * @return string The translated message.
+	 */
+	private function today_result_message( bool $marked, bool $changed ): string {
+		if ( $marked ) {
+			return $changed
+				? __( 'Task added to today.', 'decker' )
+				: __( 'Task is already marked for today.', 'decker' );
+		}
+
+		return $changed
+			? __( 'Task removed from today.', 'decker' )
+			: __( 'Task is not marked for today.', 'decker' );
+	}
+
+	/**
+	 * Get the REST route definitions for the task edit-lock endpoints.
+	 *
+	 * @return array<int, array<string, mixed>> The lock route definitions.
+	 */
+	private function get_task_lock_route_definitions(): array {
+		return array(
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock',
+				'methods'    => 'GET',
+				'callback'   => 'handle_get_task_lock',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock',
+				'methods'    => 'POST',
+				'callback'   => 'handle_acquire_task_lock',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock',
+				'methods'    => 'DELETE',
+				'callback'   => 'handle_release_task_lock',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock/takeover',
+				'methods'    => 'POST',
+				'callback'   => 'handle_takeover_task_lock',
+				'permission' => 'edit_posts',
+			),
+		);
+	}
+
+	/**
+	 * Validate a task lock REST request (task exists and user may edit it).
+	 *
+	 * @param int $task_id The task post ID.
+	 * @return WP_REST_Response|null An error response, or null when the request is valid.
+	 */
+	private function validate_task_lock_request( int $task_id ) {
+		$post = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_invalid_task',
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_task_cannot_edit',
+					'message' => __( 'You are not allowed to edit this card.', 'decker' ),
+				),
+				403
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Convert a lock WP_Error into a REST response with the proper status code.
+	 *
+	 * @param WP_Error $error The lock error.
+	 * @return WP_REST_Response The error response.
+	 */
+	private function lock_error_response( WP_Error $error ): WP_REST_Response {
+		$data   = $error->get_error_data();
+		$status = ( is_array( $data ) && isset( $data['status'] ) ) ? (int) $data['status'] : 400;
+
+		return new WP_REST_Response(
+			array(
+				'success' => false,
+				'code'    => $error->get_error_code(),
+				'message' => $error->get_error_message(),
+			),
+			$status
+		);
+	}
+
+	/**
+	 * Handle the REST request that returns the current lock state of a task.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_get_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$info = $this->get_task_locks()->get_lock_info( $task_id, get_current_user_id() );
+
+		return new WP_REST_Response( $info, 200 );
+	}
+
+	/**
+	 * Handle the REST request that acquires or refreshes a task lock.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_acquire_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$info = $this->get_task_locks()->acquire_lock( $task_id, get_current_user_id() );
+		if ( is_wp_error( $info ) ) {
+			return $this->lock_error_response( $info );
+		}
+
+		// The task is held by another active user; report the conflict.
+		$status = $info['locked'] ? 409 : 200;
+
+		return new WP_REST_Response( $info, $status );
+	}
+
+	/**
+	 * Handle the REST request that explicitly takes over a task lock.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_takeover_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$info = $this->get_task_locks()->take_over_lock( $task_id, get_current_user_id() );
+		if ( is_wp_error( $info ) ) {
+			return $this->lock_error_response( $info );
+		}
+
+		return new WP_REST_Response( $info, 200 );
+	}
+
+	/**
+	 * Handle the REST request that releases a task lock owned by the current user.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_release_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$released = $this->get_task_locks()->release_lock( $task_id, get_current_user_id() );
+
+		return new WP_REST_Response( array( 'released' => $released ), 200 );
+	}
+
+	/**
+	 * Refresh the current user's task lock during a WordPress heartbeat.
+	 *
+	 * The front-end sends the id of the task open in edit mode. The lock is
+	 * refreshed when the user still owns it (or it is free/stale); if another
+	 * user has taken over, the returned payload reports the loss so the editor
+	 * can block further saves.
+	 *
+	 * @param array $response The heartbeat response.
+	 * @param array $data     The data received from the client.
+	 * @return array The augmented heartbeat response.
+	 */
+	public function refresh_task_lock_heartbeat( $response, $data ) {
+		if ( empty( $data['decker_task_lock']['post_id'] ) ) {
+			return $response;
+		}
+
+		$task_id = absint( $data['decker_task_lock']['post_id'] );
+		if ( ! $task_id ) {
+			return $response;
+		}
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! current_user_can( 'edit_post', $task_id ) ) {
+			return $response;
+		}
+
+		$info = $this->get_task_locks()->acquire_lock( $task_id, $user_id );
+		if ( is_wp_error( $info ) ) {
+			return $response;
+		}
+
+		$response['decker_task_lock'] = $info;
+
+		return $response;
 	}
 
 	/**
@@ -1482,47 +1861,17 @@ class Decker_Tasks {
 	 * @param int $user_id The user ID.
 	 */
 	public function add_user_date_relation( int $task_id, int $user_id ) {
-
-		$date = new DateTime(); // Current date and time.
-
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		// Avoid appending a duplicate relation for the same user and date.
-		foreach ( $relations as $relation ) {
-			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
-				return;
-			}
-		}
-
-		$relations[] = array(
-			'user_id' => $user_id,
-			'date'    => $date->format( 'Y-m-d' ),
-		);
-
-		$result = update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->get_today_manager()->mark_for_today( $task_id, $user_id );
 	}
 
 	/**
-	 * Remove a user-date relation for a task.
+	 * Remove today's user-date relation for a task.
 	 *
 	 * @param int $task_id The task ID.
 	 * @param int $user_id The user ID.
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
-
-				$date = new DateTime(); // Current date and time.
-
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		foreach ( $relations as $key => $relation ) {
-			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
-				unset( $relations[ $key ] );
-			}
-		}
-
-		update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->get_today_manager()->unmark_for_today( $task_id, $user_id );
 	}
 
 
@@ -1721,6 +2070,7 @@ class Decker_Tasks {
 			'supports'           => array(
 				'title',
 				'editor',
+				'revisions',
 				'author',
 				'custom-fields',
 				'comments',
@@ -2384,6 +2734,12 @@ class Decker_Tasks {
 			return $post_id;
 		}
 
+		// Enforce the edit lock so a stale admin session cannot overwrite newer
+		// changes after another user has taken over editing.
+		if ( is_wp_error( $this->get_task_locks()->assert_user_can_save( $post_id, get_current_user_id() ) ) ) {
+			return $post_id;
+		}
+
 		// The order of these calls is load-bearing: writing the 'stack' meta and the
 		// 'decker_board' term trigger reorder hooks mid-save, so details must run
 		// before taxonomies, and both before users and relations.
@@ -2712,6 +3068,27 @@ class Decker_Tasks {
 		// Retrieve and sanitize form data.
 		$core    = $this->read_task_core_fields();
 		$options = $this->read_task_option_fields();
+
+		// Enforce the edit lock server-side before applying changes to an
+		// existing task. A stale editing session (for example after another user
+		// took over the lock) must never overwrite newer changes.
+		if ( $core['id'] > 0 ) {
+			$lock_check = $this->get_task_locks()->assert_user_can_save( $core['id'], get_current_user_id() );
+			if ( is_wp_error( $lock_check ) ) {
+				$error_data = array(
+					'message' => $lock_check->get_error_message(),
+					'code'    => $lock_check->get_error_code(),
+					'locked'  => true,
+				);
+
+				if ( $send_response ) {
+					wp_send_json_error( $error_data, 409 );
+					return;
+				}
+
+				return array_merge( array( 'success' => false ), $error_data );
+			}
+		}
 
 		$duedate = $this->parse_task_due_date( $options['duedate_raw'] );
 
