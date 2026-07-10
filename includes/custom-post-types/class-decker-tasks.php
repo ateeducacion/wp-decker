@@ -1944,6 +1944,7 @@ class Decker_Tasks {
 			'supports'           => array(
 				'title',
 				'editor',
+				'revisions',
 				'author',
 				'custom-fields',
 				'comments',
