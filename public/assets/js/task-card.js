@@ -314,9 +314,24 @@
     }
 
     /**
+     * Speed up or restore the WordPress heartbeat while a card is being edited,
+     * so a takeover blocks the previous editor within a few seconds.
+     * @param {boolean} fast - True to use the fast (~5s) interval.
+     */
+    function setLockHeartbeatSpeed(fast) {
+        if (window.wp && window.wp.heartbeat && typeof window.wp.heartbeat.interval === 'function') {
+            window.wp.heartbeat.interval(fast ? 'fast' : 'standard');
+        }
+    }
+
+    // Expose so the lock activation in initializeTaskPage can call it.
+    window.deckerSetLockHeartbeatSpeed = setLockHeartbeatSpeed;
+
+    /**
      * Release the active lock when the current user owns it.
      */
     function releaseActiveLock() {
+        setLockHeartbeatSpeed(false);
         if (!activeLock || !activeLock.postId || !activeLock.owned) {
             activeLock = null;
             return;
@@ -329,6 +344,12 @@
 
     // Expose the release helper so the modal close handler can call it.
     window.deckerReleaseActiveTaskLock = releaseActiveLock;
+
+    // Release the lock when the tab is closed or the user navigates away
+    // (covers the full-page view and closing without saving).
+    window.addEventListener('pagehide', function () {
+        releaseActiveLock();
+    });
 
     // Keep the current user's lock alive through the WordPress heartbeat and
     // detect takeovers. Bound once at module load.
@@ -345,6 +366,8 @@
             }
             const info = data.decker_task_lock;
             if (info.locked && !info.owned_by_current_user) {
+                // We were the editor and just lost the lock to another user.
+                setLockHeartbeatSpeed(false);
                 const modal = document.querySelector('.task-modal.show') || document;
                 handleLockLost(modal, info);
             }
@@ -1269,6 +1292,11 @@
                 applyLockedState(context);
             } else if (lockState && lockState.owned_by_current_user) {
                 activeLock = { postId: parseInt(lockTaskId, 10), owned: true };
+                // Poll faster while editing so a takeover blocks the previous
+                // editor within a few seconds instead of a full heartbeat cycle.
+                if (typeof window.deckerSetLockHeartbeatSpeed === 'function') {
+                    window.deckerSetLockHeartbeatSpeed(true);
+                }
             }
         }
 

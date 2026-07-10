@@ -164,6 +164,32 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The heartbeat refreshes the owner's lock and, after a takeover, reports
+	 * the loss to the previous editor so the UI can block them automatically.
+	 */
+	public function test_heartbeat_reports_takeover_to_previous_owner() {
+		$tasks = new Decker_Tasks();
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		$payload = array( 'decker_task_lock' => array( 'post_id' => $this->task_id ) );
+
+		// While user A still owns the lock, the heartbeat confirms ownership.
+		wp_set_current_user( $this->user_a );
+		$resp = $tasks->refresh_task_lock_heartbeat( array(), $payload );
+		$this->assertTrue( $resp['decker_task_lock']['owned_by_current_user'] );
+
+		// User B takes over.
+		$this->locks->take_over_lock( $this->task_id, $this->user_b );
+
+		// User A's next heartbeat reports the lock is now held by user B.
+		wp_set_current_user( $this->user_a );
+		$resp = $tasks->refresh_task_lock_heartbeat( array(), $payload );
+		$this->assertTrue( $resp['decker_task_lock']['locked'] );
+		$this->assertFalse( $resp['decker_task_lock']['owned_by_current_user'] );
+		$this->assertSame( $this->user_b, $resp['decker_task_lock']['owner']['id'] );
+	}
+
+	/**
 	 * Saving a brand-new task (id 0) is never blocked by locking.
 	 */
 	public function test_new_task_creation_is_not_blocked() {
