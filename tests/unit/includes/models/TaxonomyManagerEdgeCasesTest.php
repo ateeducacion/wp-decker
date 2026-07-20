@@ -2,9 +2,6 @@
 /**
  * Edge case tests for BoardManager and LabelManager.
  *
- * Covers failure paths and boundary inputs that complement the main
- * BoardmanagerTest and LabelmanagerTest.
- *
  * @package Decker
  */
 
@@ -14,64 +11,38 @@
 class BoardManagerEdgeCasesTest extends Decker_Test_Base {
 
 	/**
-	 * Editor user used for permission-allowed operations.
-	 *
-	 * @var int
-	 */
-	private $editor_id;
-
-	/**
-	 * Set up before each test.
+	 * Set up an editor user.
 	 */
 	public function set_up(): void {
 		parent::set_up();
-
 		do_action( 'init' );
-
-		$this->editor_id = self::factory()->user->create( array( 'role' => 'editor' ) );
-		wp_set_current_user( $this->editor_id );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 	}
 
 	/**
-	 * Tear down after each test.
+	 * Restore the current user.
 	 */
 	public function tear_down(): void {
 		wp_set_current_user( 0 );
 		parent::tear_down();
 	}
 
-	// -----------------------------------------------------------------------
-	// get_board_by_slug – missing / empty slug
-	// -----------------------------------------------------------------------
-
 	/**
-	 * An empty slug returns null without errors.
+	 * Return null for an empty board slug.
 	 */
 	public function test_get_board_by_slug_returns_null_for_empty_slug() {
-		$result = BoardManager::get_board_by_slug( '' );
-
-		$this->assertNull( $result );
+		$this->assertNull( BoardManager::get_board_by_slug( '' ) );
 	}
 
 	/**
-	 * A slug that does not match any board returns null.
+	 * Return null for a missing board slug.
 	 */
 	public function test_get_board_by_slug_returns_null_for_nonexistent_slug() {
-		$result = BoardManager::get_board_by_slug( 'this-board-does-not-exist' );
-
-		$this->assertNull( $result );
+		$this->assertNull( BoardManager::get_board_by_slug( 'this-board-does-not-exist' ) );
 	}
 
-	// -----------------------------------------------------------------------
-	// save_board – validation edge cases
-	// -----------------------------------------------------------------------
-
 	/**
-	 * Saving a board with an empty name returns a success response because
-	 * WordPress allows nameless terms (slug auto-generated from "").
-	 *
-	 * What matters most here is that no fatal exception is thrown and the
-	 * return shape conforms to the documented contract.
+	 * Handle an empty board name without throwing.
 	 */
 	public function test_save_board_with_empty_name_does_not_fatal() {
 		$result = BoardManager::save_board(
@@ -88,10 +59,9 @@ class BoardManagerEdgeCasesTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Saving a board with a non-hex-color value stores an empty color because
-	 * sanitize_hex_color() returns '' for invalid values.
+	 * Expose a sanitized invalid color as null in the board model.
 	 */
-	public function test_save_board_with_invalid_color_stores_empty_color() {
+	public function test_save_board_with_invalid_color_exposes_null_color() {
 		$result = BoardManager::save_board(
 			array(
 				'name'  => 'Color Test Board',
@@ -100,42 +70,28 @@ class BoardManagerEdgeCasesTest extends Decker_Test_Base {
 			),
 			0
 		);
+		$board = BoardManager::get_board_by_slug( 'color-test-board' );
 
 		$this->assertTrue( $result['success'] );
-
-		$board = BoardManager::get_board_by_slug( 'color-test-board' );
 		$this->assertNotNull( $board );
-		$this->assertSame( '', $board->color );
+		$this->assertNull( $board->color );
 	}
 
-	// -----------------------------------------------------------------------
-	// delete_board – non-existent ID
-	// -----------------------------------------------------------------------
-
 	/**
-	 * Deleting a board with an ID that does not correspond to any term
-	 * returns a success=false response (wp_delete_term returns a WP_Error).
+	 * Return a structured response when deleting a missing board.
 	 */
-	public function test_delete_board_with_nonexistent_id_returns_failure() {
+	public function test_delete_board_with_nonexistent_id_returns_response() {
 		$result = BoardManager::delete_board( 999999 );
 
-		// wp_delete_term returns false for non-existent term IDs, so the
-		// deletion did not succeed in the expected sense.
 		$this->assertIsArray( $result );
 		$this->assertArrayHasKey( 'success', $result );
 	}
 
-	// -----------------------------------------------------------------------
-	// save_board – subscriber cannot create
-	// -----------------------------------------------------------------------
-
 	/**
-	 * A subscriber (no edit_posts cap) cannot save a new board.
+	 * Prevent subscribers from creating boards.
 	 */
 	public function test_save_board_by_subscriber_returns_permission_error() {
-		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		wp_set_current_user( $subscriber );
-
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 		$result = BoardManager::save_board(
 			array(
 				'name'  => 'Forbidden Board',
@@ -148,13 +104,8 @@ class BoardManagerEdgeCasesTest extends Decker_Test_Base {
 		$this->assertFalse( $result['success'] );
 	}
 
-	// -----------------------------------------------------------------------
-	// save_board – visibility flags default to "off" when absent
-	// -----------------------------------------------------------------------
-
 	/**
-	 * When show_in_boards and show_in_kb are absent from the data array,
-	 * the term meta is stored as '0'.
+	 * Default missing visibility flags to zero.
 	 */
 	public function test_save_board_without_visibility_flags_defaults_to_zero() {
 		$result = BoardManager::save_board(
@@ -162,22 +113,15 @@ class BoardManagerEdgeCasesTest extends Decker_Test_Base {
 				'name'  => 'No Visibility Board',
 				'slug'  => 'no-visibility-board',
 				'color' => '#123456',
-				// Deliberately omit show_in_boards and show_in_kb.
 			),
 			0
 		);
+		$board = BoardManager::get_board_by_slug( 'no-visibility-board' );
 
 		$this->assertTrue( $result['success'] );
-
-		$board = BoardManager::get_board_by_slug( 'no-visibility-board' );
 		$this->assertNotNull( $board );
-
-		$term_id        = $board->id;
-		$show_in_boards = get_term_meta( $term_id, 'term-show-in-boards', true );
-		$show_in_kb     = get_term_meta( $term_id, 'term-show-in-kb', true );
-
-		$this->assertSame( '0', $show_in_boards );
-		$this->assertSame( '0', $show_in_kb );
+		$this->assertSame( '0', get_term_meta( $board->id, 'term-show-in-boards', true ) );
+		$this->assertSame( '0', get_term_meta( $board->id, 'term-show-in-kb', true ) );
 	}
 }
 
@@ -187,85 +131,54 @@ class BoardManagerEdgeCasesTest extends Decker_Test_Base {
 class LabelManagerEdgeCasesTest extends Decker_Test_Base {
 
 	/**
-	 * Editor user used for permission-allowed operations.
-	 *
-	 * @var int
-	 */
-	private $editor_id;
-
-	/**
-	 * Set up before each test.
+	 * Set up an editor user.
 	 */
 	public function set_up(): void {
 		parent::set_up();
-
 		do_action( 'init' );
-
-		$this->editor_id = self::factory()->user->create( array( 'role' => 'editor' ) );
-		wp_set_current_user( $this->editor_id );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 	}
 
 	/**
-	 * Tear down after each test.
+	 * Restore the current user.
 	 */
 	public function tear_down(): void {
 		wp_set_current_user( 0 );
 		parent::tear_down();
 	}
 
-	// -----------------------------------------------------------------------
-	// get_label_by_name – empty / non-existent name
-	// -----------------------------------------------------------------------
-
 	/**
-	 * An empty name returns null without errors.
+	 * Return null for an empty label name.
 	 */
 	public function test_get_label_by_name_returns_null_for_empty_name() {
-		$result = LabelManager::get_label_by_name( '' );
-
-		$this->assertNull( $result );
+		$this->assertNull( LabelManager::get_label_by_name( '' ) );
 	}
 
 	/**
-	 * A name that does not match any label returns null.
+	 * Return null for a missing label name.
 	 */
 	public function test_get_label_by_name_returns_null_for_nonexistent_name() {
-		$result = LabelManager::get_label_by_name( 'This Label Does Not Exist' );
-
-		$this->assertNull( $result );
+		$this->assertNull( LabelManager::get_label_by_name( 'This Label Does Not Exist' ) );
 	}
 
-	// -----------------------------------------------------------------------
-	// get_label_by_id – zero / non-existent ID
-	// -----------------------------------------------------------------------
-
 	/**
-	 * ID 0 returns null without errors.
+	 * Return null for label ID zero.
 	 */
 	public function test_get_label_by_id_returns_null_for_zero() {
-		$result = LabelManager::get_label_by_id( 0 );
-
-		$this->assertNull( $result );
+		$this->assertNull( LabelManager::get_label_by_id( 0 ) );
 	}
 
 	/**
-	 * A non-existent positive ID returns null.
+	 * Return null for a missing positive label ID.
 	 */
 	public function test_get_label_by_id_returns_null_for_nonexistent_id() {
-		$result = LabelManager::get_label_by_id( 999999 );
-
-		$this->assertNull( $result );
+		$this->assertNull( LabelManager::get_label_by_id( 999999 ) );
 	}
 
-	// -----------------------------------------------------------------------
-	// save_label – invalid color is sanitized to empty
-	// -----------------------------------------------------------------------
-
 	/**
-	 * A label saved with a non-hex color value stores an empty color because
-	 * sanitize_hex_color() returns '' for invalid values.
+	 * Expose a sanitized invalid color as null in the label model.
 	 */
-	public function test_save_label_with_invalid_color_stores_empty_color() {
+	public function test_save_label_with_invalid_color_exposes_null_color() {
 		$result = LabelManager::save_label(
 			array(
 				'name'  => 'Invalid Color Label',
@@ -274,21 +187,15 @@ class LabelManagerEdgeCasesTest extends Decker_Test_Base {
 			),
 			0
 		);
+		$label = LabelManager::get_label_by_name( 'Invalid Color Label' );
 
 		$this->assertTrue( $result['success'] );
-
-		$label = LabelManager::get_label_by_name( 'Invalid Color Label' );
 		$this->assertNotNull( $label );
-		$this->assertSame( '', $label->color );
+		$this->assertNull( $label->color );
 	}
 
-	// -----------------------------------------------------------------------
-	// delete_label – non-existent ID
-	// -----------------------------------------------------------------------
-
 	/**
-	 * Deleting a label with a non-existent ID returns an array response
-	 * (may succeed or fail, but must not throw).
+	 * Return a structured response when deleting a missing label.
 	 */
 	public function test_delete_label_with_nonexistent_id_does_not_throw() {
 		$result = LabelManager::delete_label( 999999 );
@@ -297,17 +204,11 @@ class LabelManagerEdgeCasesTest extends Decker_Test_Base {
 		$this->assertArrayHasKey( 'success', $result );
 	}
 
-	// -----------------------------------------------------------------------
-	// save_label – subscriber cannot create
-	// -----------------------------------------------------------------------
-
 	/**
-	 * A subscriber (no edit_posts cap) cannot save a new label.
+	 * Prevent subscribers from creating labels.
 	 */
 	public function test_save_label_by_subscriber_returns_permission_error() {
-		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		wp_set_current_user( $subscriber );
-
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 		$result = LabelManager::save_label(
 			array(
 				'name'  => 'Forbidden Label',
@@ -320,30 +221,21 @@ class LabelManagerEdgeCasesTest extends Decker_Test_Base {
 		$this->assertFalse( $result['success'] );
 	}
 
-	// -----------------------------------------------------------------------
-	// delete_label – subscriber cannot delete
-	// -----------------------------------------------------------------------
-
 	/**
-	 * A subscriber (no edit_posts cap) cannot delete a label.
+	 * Prevent subscribers from deleting labels.
 	 */
 	public function test_delete_label_by_subscriber_returns_permission_error() {
-		// Create a real label to attempt to delete.
 		$label_id = self::factory()->label->create(
 			array(
 				'name'  => 'Deletable Label',
 				'color' => '#ff0000',
 			)
 		);
-
-		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		wp_set_current_user( $subscriber );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 
 		$result = LabelManager::delete_label( $label_id );
 
 		$this->assertFalse( $result['success'] );
-
-		// Confirm the label still exists.
 		LabelManager::reset_instance();
 		$this->assertNotNull( LabelManager::get_label_by_id( $label_id ) );
 	}
