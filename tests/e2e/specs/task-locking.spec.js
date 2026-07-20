@@ -41,19 +41,6 @@ function getSavePostParam( response, key ) {
 }
 
 /**
- * Whether a response is a REST lock release for the given task.
- *
- * @param {import('@playwright/test').Response} response The Playwright response.
- * @param {number|string}                       taskId   The task ID.
- * @return {boolean} True when the request releases that task lock.
- */
-function isLockReleaseResponse( response, taskId ) {
-	const request = response.request();
-	return request.method() === 'DELETE' &&
-		response.url().includes( `/tasks/${ taskId }/lock` );
-}
-
-/**
  * Log a specific user in through the WordPress login form in a fresh context.
  *
  * @param {import('@playwright/test').Browser} browser  The Playwright browser.
@@ -169,20 +156,27 @@ test.describe( 'Task edit locking', () => {
 		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
 		await expect( b.page.locator( '#save-task' ) ).toBeDisabled( { timeout: 10000 } );
 
-		// Explicitly release the active lock (modal close / pagehide path) and
-		// wait for DELETE to finish so the 409 below cannot be explained by an
-		// still-held _edit_lock — only by the persisted generation mismatch.
-		const [ releaseResponse ] = await Promise.all( [
-			b.page.waitForResponse( ( response ) => isLockReleaseResponse( response, taskId ) ),
-			b.page.evaluate( () => {
-				if ( typeof window.deckerReleaseActiveTaskLock === 'function' ) {
-					window.deckerReleaseActiveTaskLock();
-				}
-			} ),
-		] );
-		expect( releaseResponse.ok() ).toBeTruthy();
-		const releaseBody = await releaseResponse.json();
-		expect( releaseBody.released ).toBe( true );
+		// Explicitly release the active lock via REST (same outcome as modal
+		// close / pagehide) and wait for the response so the 409 below cannot
+		// be explained by an still-held _edit_lock — only by the generation
+		// mismatch from A's stale form.
+		const releaseResult = await b.page.evaluate( async ( id ) => {
+			const root = window.wpApiSettings && window.wpApiSettings.root
+				? window.wpApiSettings.root
+				: '/wp-json/';
+			const nonce = window.wpApiSettings && window.wpApiSettings.nonce
+				? window.wpApiSettings.nonce
+				: '';
+			const response = await fetch( `${ root }decker/v1/tasks/${ id }/lock`, {
+				method: 'DELETE',
+				headers: { 'X-WP-Nonce': nonce },
+				credentials: 'same-origin',
+			} );
+			const data = await response.json();
+			return { ok: response.ok, status: response.status, data };
+		}, taskId );
+		expect( releaseResult.ok ).toBe( true );
+		expect( releaseResult.data.released ).toBe( true );
 
 		// User A tries to save a stale change and is rejected with HTTP 409.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
