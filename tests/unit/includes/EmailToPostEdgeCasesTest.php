@@ -2,8 +2,6 @@
 /**
  * Edge case tests for the email-to-post REST endpoint.
  *
- * Covers boundary/failure inputs that complement DeckerEmailToPostTest.
- *
  * @package Decker
  */
 
@@ -13,13 +11,6 @@
 class EmailToPostEdgeCasesTest extends Decker_Test_Base {
 
 	/**
-	 * REST server instance.
-	 *
-	 * @var WP_REST_Server
-	 */
-	private $server;
-
-	/**
 	 * Endpoint path.
 	 *
 	 * @var string
@@ -27,34 +18,27 @@ class EmailToPostEdgeCasesTest extends Decker_Test_Base {
 	private $endpoint = '/decker/v1/email-to-post';
 
 	/**
-	 * Shared key for ******
+	 * Shared authentication key.
 	 *
 	 * @var string
 	 */
 	private $shared_key;
 
 	/**
-	 * Editor user whose email is registered in WordPress.
+	 * Registered sender user ID.
 	 *
 	 * @var int
 	 */
 	private $user_id;
 
 	/**
-	 * A board the test user owns.
-	 *
-	 * @var int
-	 */
-	private $board_id;
-
-	/**
-	 * Set up before each test.
+	 * Set up the REST endpoint and fixtures.
 	 */
 	public function set_up(): void {
 		parent::set_up();
 
 		global $wp_rest_server;
-		$this->server = $wp_rest_server = new WP_REST_Server();
+		$wp_rest_server = new WP_REST_Server();
 
 		$this->shared_key = wp_generate_uuid4();
 		update_option( 'decker_settings', array( 'shared_key' => $this->shared_key ) );
@@ -70,18 +54,17 @@ class EmailToPostEdgeCasesTest extends Decker_Test_Base {
 		);
 
 		wp_set_current_user( $this->user_id );
-		$this->board_id = self::factory()->board->create(
+		$board_id = self::factory()->board->create(
 			array(
 				'name' => 'Edge Board',
 				'slug' => 'edge-board',
 			)
 		);
-
-		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		update_user_meta( $this->user_id, 'decker_default_board', $board_id );
 	}
 
 	/**
-	 * Tear down after each test.
+	 * Restore global state.
 	 */
 	public function tear_down(): void {
 		delete_option( 'decker_settings' );
@@ -89,220 +72,159 @@ class EmailToPostEdgeCasesTest extends Decker_Test_Base {
 		parent::tear_down();
 	}
 
-	// -----------------------------------------------------------------------
-	// Authorization edge cases
-	// -----------------------------------------------------------------------
-
 	/**
-	 * A ****** that is all whitespace is rejected as invalid.
+	 * Reject a whitespace-only bearer token.
 	 */
 	public function test_authorization_rejected_for_whitespace_only_token() {
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', 'Bearer    ' );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'rawEmail' => base64_encode( $this->build_minimal_raw_email() ),
-					'metadata' => $this->build_minimal_metadata(),
-				)
-			)
-		);
-
-		$response = rest_get_server()->dispatch( $request );
+		$response = $this->dispatch( 'Bearer    ', $this->valid_payload() );
 
 		$this->assertSame( 403, $response->get_status() );
 	}
 
 	/**
-	 * A malformed Authorization header (not starting with "Bearer ") is
-	 * rejected with 403.
+	 * Reject an authorization scheme other than Bearer.
 	 */
 	public function test_authorization_rejected_for_malformed_bearer_prefix() {
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', 'Token ' . $this->shared_key );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'rawEmail' => base64_encode( $this->build_minimal_raw_email() ),
-					'metadata' => $this->build_minimal_metadata(),
-				)
-			)
-		);
-
-		$response = rest_get_server()->dispatch( $request );
+		$response = $this->dispatch( 'Token ' . $this->shared_key, $this->valid_payload() );
 
 		$this->assertSame( 403, $response->get_status() );
 	}
 
 	/**
-	 * An incorrect token value is rejected with 403.
+	 * Reject an incorrect bearer token.
 	 */
 	public function test_authorization_rejected_for_wrong_token() {
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', '******' );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'rawEmail' => base64_encode( $this->build_minimal_raw_email() ),
-					'metadata' => $this->build_minimal_metadata(),
-				)
-			)
-		);
-
-		$response = rest_get_server()->dispatch( $request );
+		$response = $this->dispatch( 'Bearer wrong-token', $this->valid_payload() );
 
 		$this->assertSame( 403, $response->get_status() );
 	}
 
-	// -----------------------------------------------------------------------
-	// Payload edge cases
-	// -----------------------------------------------------------------------
-
 	/**
-	 * A non-base64 rawEmail body is rejected with 400.
+	 * Reject a non-base64 raw email.
 	 */
 	public function test_non_base64_raw_email_rejected() {
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', 'Bearer ' . $this->shared_key );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'rawEmail' => '@@@@not-valid-base64@@@@',
-					'metadata' => $this->build_minimal_metadata(),
-				)
-			)
-		);
+		$payload             = $this->valid_payload();
+		$payload['rawEmail'] = '@@@@not-valid-base64@@@@';
 
-		$response = rest_get_server()->dispatch( $request );
+		$response = $this->dispatch( 'Bearer ' . $this->shared_key, $payload );
 
 		$this->assertSame( 400, $response->get_status() );
 	}
 
 	/**
-	 * When no rawEmail and no metadata are present, the request is rejected
-	 * with 400.
+	 * Reject a payload without email data.
 	 */
 	public function test_empty_payload_rejected_with_400() {
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', 'Bearer ' . $this->shared_key );
-		$request->set_body( wp_json_encode( array() ) );
-
-		$response = rest_get_server()->dispatch( $request );
+		$response = $this->dispatch( 'Bearer ' . $this->shared_key, array() );
 
 		$this->assertSame( 400, $response->get_status() );
 	}
 
 	/**
-	 * An email from a sender that is not registered as a WordPress user
-	 * returns a 500 error (the handler cannot resolve the author).
+	 * Reject a sender that is not associated with a WordPress user.
 	 */
 	public function test_unregistered_sender_returns_error() {
-		$raw = $this->build_raw_email(
-			'From: nobody@nowhere.invalid',
-			'To: edge-user@example.com',
-			'Subject: Ghost Sender Task',
-			'This is the body.'
-		);
-
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', 'Bearer ' . $this->shared_key );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'rawEmail' => base64_encode( $raw ),
-					'metadata' => array(
-						'from'    => 'nobody@nowhere.invalid',
-						'to'      => 'edge-user@example.com',
-						'subject' => 'Ghost Sender Task',
-						'cc'      => array(),
-						'bcc'     => array(),
-					),
-				)
-			)
-		);
-
-		$response = rest_get_server()->dispatch( $request );
-
-		// 500 is the expected response when the sender is not a known user.
-		$this->assertSame( 500, $response->get_status() );
-	}
-
-	/**
-	 * When the subject becomes empty after stripping the board directive, the
-	 * request is rejected.
-	 */
-	public function test_empty_subject_after_directive_is_rejected() {
-		$raw = $this->build_raw_email(
-			'From: edge-user@example.com',
-			'To: inbox@decker.example.com',
-			'Subject: [edge-board]',
-			'Body text here.'
-		);
-
-		$request = new WP_REST_Request( 'POST', $this->endpoint );
-		$request->set_header( 'Authorization', 'Bearer ' . $this->shared_key );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'rawEmail' => base64_encode( $raw ),
-					'metadata' => array(
-						'from'    => 'edge-user@example.com',
-						'to'      => 'inbox@decker.example.com',
-						'subject' => '[edge-board]',
-						'cc'      => array(),
-						'bcc'     => array(),
-					),
-				)
-			)
-		);
-
-		$response = rest_get_server()->dispatch( $request );
-
-		$this->assertContains( $response->get_status(), array( 400, 500 ) );
-	}
-
-	// -----------------------------------------------------------------------
-	// Helpers
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Build a minimal raw email string.
-	 *
-	 * @return string
-	 */
-	private function build_minimal_raw_email(): string {
-		return $this->build_raw_email(
-			'From: edge-user@example.com',
-			'To: inbox@decker.example.com',
-			'Subject: Minimal Task',
-			'Minimal body.'
-		);
-	}
-
-	/**
-	 * Build a minimal metadata array.
-	 *
-	 * @return array
-	 */
-	private function build_minimal_metadata(): array {
-		return array(
-			'from'    => 'edge-user@example.com',
-			'to'      => 'inbox@decker.example.com',
-			'subject' => 'Minimal Task',
+		$payload             = $this->valid_payload();
+		$payload['metadata'] = array(
+			'from'    => 'nobody@nowhere.invalid',
+			'to'      => 'edge-user@example.com',
+			'subject' => 'Ghost Sender Task',
 			'cc'      => array(),
 			'bcc'     => array(),
 		);
+		$payload['rawEmail'] = base64_encode(
+			$this->build_raw_email(
+				'From: nobody@nowhere.invalid',
+				'To: edge-user@example.com',
+				'Subject: Ghost Sender Task',
+				'This is the body.'
+			)
+		);
+
+		$response = $this->dispatch( 'Bearer ' . $this->shared_key, $payload );
+		$data     = $response->get_data();
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_author', $data['code'] );
 	}
 
 	/**
-	 * Assemble a raw RFC-2822 email message from header lines and a body.
+	 * Reject a subject that is empty after removing a valid board directive.
+	 */
+	public function test_empty_subject_after_directive_is_rejected() {
+		$payload = array(
+			'rawEmail' => base64_encode(
+				$this->build_raw_email(
+					'From: edge-user@example.com',
+					'To: inbox@decker.example.com',
+					'Subject: [edge-board]',
+					'Body text here.'
+				)
+			),
+			'metadata' => array(
+				'from'    => 'edge-user@example.com',
+				'to'      => 'inbox@decker.example.com',
+				'subject' => '[edge-board]',
+				'cc'      => array(),
+				'bcc'     => array(),
+			),
+		);
+
+		$response = $this->dispatch( 'Bearer ' . $this->shared_key, $payload );
+
+		$this->assertSame( 400, $response->get_status() );
+	}
+
+	/**
+	 * Dispatch an email-to-post request.
 	 *
-	 * @param string ...$parts Header lines followed by the body as the last argument.
+	 * @param string $authorization Authorization header value.
+	 * @param array  $payload       Request payload.
+	 * @return WP_REST_Response
+	 */
+	private function dispatch( string $authorization, array $payload ): WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->set_header( 'Authorization', $authorization );
+		$request->set_body( wp_json_encode( $payload ) );
+
+		return rest_get_server()->dispatch( $request );
+	}
+
+	/**
+	 * Build a valid request payload.
+	 *
+	 * @return array
+	 */
+	private function valid_payload(): array {
+		return array(
+			'rawEmail' => base64_encode(
+				$this->build_raw_email(
+					'From: edge-user@example.com',
+					'To: inbox@decker.example.com',
+					'Subject: Minimal Task',
+					'Minimal body.'
+				)
+			),
+			'metadata' => array(
+				'from'    => 'edge-user@example.com',
+				'to'      => 'inbox@decker.example.com',
+				'subject' => 'Minimal Task',
+				'cc'      => array(),
+				'bcc'     => array(),
+			),
+		);
+	}
+
+	/**
+	 * Build a minimal RFC 2822 message.
+	 *
+	 * @param string ...$parts Header lines followed by the message body.
 	 * @return string
 	 */
 	private function build_raw_email( string ...$parts ): string {
 		$body    = array_pop( $parts );
 		$headers = implode( "\r\n", $parts );
+
 		return $headers . "\r\nContent-Type: text/plain\r\n\r\n" . $body;
 	}
 }
