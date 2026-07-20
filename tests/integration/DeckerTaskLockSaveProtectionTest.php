@@ -425,6 +425,77 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * After a takeover and release, a token-less generic REST update must be
+	 * rejected with 409 (the task now carries a newer authoritative generation),
+	 * not silently accepted.
+	 */
+	public function test_rest_update_without_generation_is_rejected_after_release() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
+
+		$original = get_post( $this->task_id )->post_title;
+		wp_set_current_user( $this->user_a );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params( array( 'title' => 'Token-less REST overwrite' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'decker_task_locked', $response->get_data()['code'] );
+		$this->assertSame( $original, get_post( $this->task_id )->post_title );
+	}
+
+	/**
+	 * A generic REST update is serialized against takeovers by the write lease: a
+	 * takeover injected during the REST post write is refused, so A's update
+	 * commits atomically.
+	 */
+	public function test_rest_update_serializes_a_concurrent_takeover() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		$task_id  = $this->task_id;
+		$user_b   = $this->user_b;
+		$injected = false;
+		$takeover = null;
+
+		$callback = function ( $post_id ) use ( &$injected, &$takeover, $task_id, $user_b ) {
+			if ( $injected || (int) $post_id !== (int) $task_id ) {
+				return;
+			}
+			$injected = true;
+			$takeover = ( new Decker_Task_Locks() )->take_over_lock( $post_id, $user_b );
+		};
+		add_action( 'pre_post_update', $callback, 10, 1 );
+
+		wp_set_current_user( $this->user_a );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params(
+			array(
+				'title'           => 'REST commit by user A',
+				'lock_generation' => $info_a['generation'],
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+
+		remove_action( 'pre_post_update', $callback, 10 );
+
+		$this->assertTrue( $injected, 'The takeover must have been injected during the REST write.' );
+		$this->assertLessThan( 300, $response->get_status() );
+		$this->assertSame( 'REST commit by user A', get_post( $this->task_id )->post_title );
+		// B's takeover was refused by the write lease.
+		$this->assertFalse( $takeover['owned_by_current_user'] );
+		$this->assertTrue( $takeover['locked'] );
+	}
+
+	/**
 	 * A task created through the REST API is seeded before the first acquire.
 	 */
 	public function test_rest_created_task_is_seeded_before_first_acquire() {

@@ -142,11 +142,13 @@ class Decker_Task_Lock_Store {
 			// Re-read after the action so injected concurrent writes are observed.
 			$current = $this->state->read( $post_id );
 
-			// A forced takeover must not interrupt an in-progress commit, and a
-			// non-forced acquire must not steal an active foreign lock.
-			if ( $bump_generation && $this->state->is_saving( $current ) ) {
+			// An in-progress commit (write lease) may only be extended by the same
+			// owner without a generation bump; any takeover, different owner or
+			// generation change must wait so the lease can never be dropped.
+			if ( $this->blocked_by_save_lease( $current, $user_id, $bump_generation ) ) {
 				return false;
 			}
+			// A non-forced acquire must not steal an active foreign lock.
 			if ( ! $bump_generation && $this->is_active_foreign_lock( $current, $user_id, $window ) ) {
 				return false;
 			}
@@ -155,6 +157,9 @@ class Decker_Task_Lock_Store {
 				'user'  => (int) $user_id,
 				'token' => $this->compute_token( $current, $user_id, $bump_generation ),
 				'time'  => time(),
+				// Preserve the lease across a same-owner refresh (the only write
+				// allowed here while saving); every other case clears it.
+				'save'  => $this->state->is_saving( $current ) ? (int) $current['save'] : 0,
 			);
 
 			if ( $this->state->write( $post_id, $current, $new ) ) {
@@ -183,7 +188,11 @@ class Decker_Task_Lock_Store {
 		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
 			$current = $this->state->read( $post_id );
 
-			if ( ! $this->owns_session( $current, $user_id, $session_generation ) ) {
+			// Never release while a save is in progress: dropping the lease would
+			// let a takeover interleave with the still-running save (a pagehide
+			// release during the same session's save must not undo it).
+			if ( ! $this->owns_session( $current, $user_id, $session_generation )
+				|| $this->state->is_saving( $current ) ) {
 				return false;
 			}
 
@@ -202,6 +211,27 @@ class Decker_Task_Lock_Store {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether a write must wait for an in-progress save (write lease).
+	 *
+	 * A fresh lease blocks everything except the lease owner extending it without
+	 * a generation bump, so no operation can silently drop it.
+	 *
+	 * @param array|null $current The current state, or null.
+	 * @param int        $user_id The user attempting to write.
+	 * @param bool       $bump    Whether a new generation token is forced.
+	 * @return bool True when the write must be refused.
+	 */
+	private function blocked_by_save_lease( $current, int $user_id, bool $bump ): bool {
+		if ( ! $this->state->is_saving( $current ) ) {
+			return false;
+		}
+
+		return $bump
+			|| ! is_array( $current )
+			|| (int) $current['user'] !== (int) $user_id;
 	}
 
 	/**

@@ -33,6 +33,13 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Write lease claimed for the current REST update, released after the write.
+	 *
+	 * @var array{post_id:int,user_id:int,generation:string}|null
+	 */
+	private $rest_write_lease = null;
+
+	/**
 	 * Get the shared task edit-lock manager.
 	 *
 	 * @return Decker_Task_Locks The lock manager instance.
@@ -96,8 +103,9 @@ class Decker_Tasks {
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 		// Enforce the edit lock on generic /wp/v2/tasks updates, which bypass the
-		// save_decker_task guard.
+		// save_decker_task guard, and serialize the REST write with a lease.
 		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
+		add_action( 'rest_after_insert_decker_task', array( $this, 'release_rest_write_lease' ), 10, 1 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -2825,31 +2833,68 @@ class Decker_Tasks {
 	 *
 	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
 	 * registered meta), which bypasses the lock guard in save_decker_task. This
-	 * rejects an update while another user owns the active lock, and validates a
-	 * `lock_generation` when one is supplied. Creates (no existing id) are not
-	 * affected, so a never-locked task remains updatable over REST.
+	 * rejects an update while another user owns the active lock, requires a valid
+	 * `lock_generation` once the task carries one, and claims the write lease so a
+	 * takeover cannot interleave with the REST write (released in
+	 * {@see release_rest_write_lease()}). Creates (no existing id) and never-locked
+	 * tasks remain updatable over REST.
 	 *
 	 * @param stdClass        $prepared_post The prepared post for insertion.
 	 * @param WP_REST_Request $request       The REST request.
 	 * @return stdClass|WP_Error The prepared post, or a 409 error when locked.
 	 */
 	public function guard_rest_task_update( $prepared_post, $request ) {
+		$this->rest_write_lease = null;
+
 		if ( empty( $prepared_post->ID ) ) {
 			return $prepared_post;
 		}
 
+		$post_id    = (int) $prepared_post->ID;
+		$user_id    = get_current_user_id();
 		$generation = $request->get_param( 'lock_generation' );
-		$check      = $this->get_task_locks()->assert_user_can_save(
-			(int) $prepared_post->ID,
-			get_current_user_id(),
-			is_string( $generation ) ? $generation : null
-		);
+		$generation = is_string( $generation ) ? $generation : null;
+		$locks      = $this->get_task_locks();
 
+		$check = $locks->assert_user_can_save( $post_id, $user_id, $generation, true );
 		if ( is_wp_error( $check ) ) {
 			return $check;
 		}
 
+		// Serialize the actual REST write with the same write lease as the AJAX
+		// path so a takeover cannot land between this guard and the post write.
+		if ( '' !== (string) $generation && $locks->is_enabled() ) {
+			if ( ! $locks->begin_save( $post_id, $user_id, (string) $generation ) ) {
+				return new WP_Error(
+					'decker_task_locked',
+					__( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
+					array( 'status' => 409 )
+				);
+			}
+			$this->rest_write_lease = array(
+				'post_id'    => $post_id,
+				'user_id'    => $user_id,
+				'generation' => (string) $generation,
+			);
+		}
+
 		return $prepared_post;
+	}
+
+	/**
+	 * Release the write lease claimed for a REST update, after the post write.
+	 *
+	 * @param WP_Post $post The updated task (unused; the lease is tracked per request).
+	 * @return void
+	 */
+	public function release_rest_write_lease( $post ) {
+		if ( ! is_array( $this->rest_write_lease ) ) {
+			return;
+		}
+
+		$lease                  = $this->rest_write_lease;
+		$this->rest_write_lease = null;
+		$this->get_task_locks()->end_save( $lease['post_id'], $lease['user_id'], $lease['generation'] );
 	}
 
 	/**

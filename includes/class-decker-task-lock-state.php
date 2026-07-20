@@ -54,12 +54,20 @@ class Decker_Task_Lock_State {
 	const CAS_MAX_ATTEMPTS = 5;
 
 	/**
-	 * Seconds a save may hold the write lease before it is treated as stale (so a
-	 * crash mid-save cannot block takeovers forever).
+	 * Fallback / floor for the write-lease window in seconds, used when PHP's
+	 * `max_execution_time` is unavailable or unlimited (e.g. CLI).
 	 *
 	 * @var int
 	 */
-	const SAVE_LEASE = 15;
+	const SAVE_LEASE_FLOOR = 30;
+
+	/**
+	 * Hard ceiling for the write-lease window so a wedged lease cannot block
+	 * takeovers for longer than this.
+	 *
+	 * @var int
+	 */
+	const SAVE_LEASE_CEILING = 300;
 
 	/**
 	 * Decode the authoritative lock state.
@@ -117,12 +125,32 @@ class Decker_Task_Lock_State {
 	/**
 	 * Whether a fresh write lease is held (a commit is in progress).
 	 *
+	 * The window tracks how long the request could still be running, so the lease
+	 * cannot expire while a long `wp_update_post()` is mid-write; once PHP would
+	 * have killed the request the lease is treated as stale so takeovers resume.
+	 *
 	 * @param array|null $state The decoded state, or null.
 	 * @return bool True when a non-stale save lease is set.
 	 */
 	public function is_saving( $state ): bool {
 		return is_array( $state )
-			&& (int) $state['save'] > ( time() - self::SAVE_LEASE );
+			&& (int) $state['save'] > ( time() - $this->save_lease_window() );
+	}
+
+	/**
+	 * The write-lease window in seconds, tied to PHP's max execution time so it
+	 * outlives any save the request is allowed to run, clamped to sane bounds.
+	 *
+	 * @return int The window in seconds.
+	 */
+	private function save_lease_window(): int {
+		$max = (int) ini_get( 'max_execution_time' );
+		if ( $max <= 0 ) {
+			$max = self::SAVE_LEASE_FLOOR;
+		}
+
+		// A small buffer past the request limit before the lease is deemed stale.
+		return min( self::SAVE_LEASE_CEILING, max( self::SAVE_LEASE_FLOOR, $max + 5 ) );
 	}
 
 	/**

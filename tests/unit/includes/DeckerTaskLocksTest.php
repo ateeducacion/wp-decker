@@ -559,6 +559,63 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A release during the same session's own save must not drop the lease (a
+	 * `pagehide` release while a save is in flight would otherwise let a takeover
+	 * interleave with the still-running save).
+	 */
+	public function test_release_is_refused_while_a_save_is_in_progress() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		// The pagehide release is refused while the save holds the lease.
+		$this->assertFalse( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		// The lease still holds: a takeover is still blocked.
+		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertFalse( $blocked['owned_by_current_user'] );
+
+		// Once the save ends, release works again.
+		$this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
+	}
+
+	/**
+	 * A same-owner re-acquire (for example a second tab's render) must preserve
+	 * an active write lease instead of clearing it.
+	 */
+	public function test_same_owner_acquire_preserves_the_save_lease() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		// A same-owner acquire keeps the same generation and the lease.
+		$reacquired = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertSame( $info['generation'], $reacquired['generation'] );
+
+		// The lease survived the re-acquire: a takeover is still blocked.
+		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertFalse( $blocked['owned_by_current_user'] );
+	}
+
+	/**
+	 * The write lease must not expire while a slow save is still allowed to run:
+	 * a lease older than the previous fixed 15s window still blocks a takeover
+	 * because the window tracks the request execution time.
+	 */
+	public function test_write_lease_survives_a_slow_save() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		// Backdate the lease to 20s ago (past the old fixed 15s window).
+		$state          = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
+		$state['save']  = time() - 20;
+		update_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, wp_json_encode( $state ) );
+
+		// The lease is still fresh, so the takeover is still refused.
+		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertFalse( $blocked['owned_by_current_user'] );
+	}
+
+	/**
 	 * With no lock present at all, any editor is allowed to save.
 	 */
 	public function test_no_lock_allows_save() {
