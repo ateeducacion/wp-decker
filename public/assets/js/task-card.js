@@ -362,9 +362,14 @@
             return;
         }
         const taskId = activeLock.postId;
+        // Send our session generation so the server releases only this session and
+        // never a newer session of the same user that took over.
+        const lock = readTaskLockState(document.getElementById('task-form'));
+        const generation = lock && lock.generation ? lock.generation : '';
+        const path = generation ? `?lock_generation=${encodeURIComponent(generation)}` : '';
         activeLock = null;
         // keepalive lets the request complete even while the modal/page unloads.
-        lockRequest('DELETE', taskId, '', { keepalive: true }).catch(() => {});
+        lockRequest('DELETE', taskId, path, { keepalive: true }).catch(() => {});
     }
 
     /**

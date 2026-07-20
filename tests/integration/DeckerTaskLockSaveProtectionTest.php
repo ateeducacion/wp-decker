@@ -173,7 +173,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertTrue( ( new Decker_Tasks() )->handle_save_decker_task()['success'] );
 
 		// New owner leaves (modal close / pagehide): active lock released.
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
 
 		// A malformed/old client omits the token; it must not fail open.
 		wp_set_current_user( $this->user_a );
@@ -201,7 +201,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_b );
 		$_POST = $this->save_payload( 'Updated by user B', $info_b['generation'] );
 		$this->assertTrue( $tasks->handle_save_decker_task()['success'] );
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
 
 		// A's heartbeat, carrying A's now-stale generation, must not re-acquire.
 		wp_set_current_user( $this->user_a );
@@ -270,7 +270,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertTrue( $resp_b['success'] );
 
 		// Modal hide / pagehide releases the active lock but keeps generation.
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
 		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
 
 		wp_set_current_user( $this->user_a );
@@ -356,6 +356,29 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertGreaterThan( 0, (int) $resp['task_id'] );
 
 		$this->assertSeeded( (int) $resp['task_id'] );
+	}
+
+	/**
+	 * A generic REST update must respect the edit lock: while another user owns
+	 * the active lock, /wp/v2/tasks/{id} is rejected with 409 and the task is
+	 * unchanged (the generic REST path bypassed save_decker_task's guard).
+	 */
+	public function test_rest_update_is_blocked_while_another_user_holds_the_lock() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$original = get_post( $this->task_id )->post_title;
+
+		wp_set_current_user( $this->user_b );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params( array( 'title' => 'REST overwrite by user B' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'decker_task_locked', $response->get_data()['code'] );
+		$this->assertSame( $original, get_post( $this->task_id )->post_title );
 	}
 
 	/**

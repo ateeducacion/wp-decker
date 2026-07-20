@@ -239,19 +239,22 @@ class Decker_Task_Locks {
 	/**
 	 * Release the lock only when it is owned by the given user.
 	 *
-	 * Another user's lock is never removed by this method. The generation token
-	 * is intentionally kept (time set to 0) so stale editor sessions remain invalid.
+	 * Another user's lock is never removed by this method, and neither is a newer
+	 * session owned by the same user: the caller must present the session
+	 * generation it holds, and both owner and token must match. The token is kept
+	 * (time set to 0) so stale editor sessions remain invalid.
 	 *
-	 * @param int $post_id The task post ID.
-	 * @param int $user_id The user releasing the lock.
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user releasing the lock.
+	 * @param string $session_generation The generation token embedded in the editor form.
 	 * @return bool True when the lock was released, false otherwise.
 	 */
-	public function release_lock( int $post_id, int $user_id ): bool {
+	public function release_lock( int $post_id, int $user_id, string $session_generation = '' ): bool {
 		if ( ! $this->is_enabled() || ! $this->is_supported_task( $post_id ) ) {
 			return false;
 		}
 
-		return $this->store->release( $post_id, $user_id );
+		return $this->store->release( $post_id, $user_id, $session_generation );
 	}
 
 	/**

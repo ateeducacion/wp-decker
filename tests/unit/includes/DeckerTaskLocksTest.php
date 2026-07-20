@@ -216,7 +216,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertNotSame( $info_a['generation'], $info_b['generation'] );
 
 		// Simulate the new owner closing the modal (lock released, token kept).
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
 		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
 		$this->assertSame( $info_b['generation'], $this->locks->get_generation( $this->task_id ) );
 
@@ -358,7 +358,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		} else {
 			// C owns. B's session token must not match the live generation after C releases.
 			if ( ! empty( $info_b['generation'] ) && $info_b['generation'] !== $generation ) {
-				$this->assertTrue( $this->locks->release_lock( $this->task_id, $owner_id ) );
+				$this->assertTrue( $this->locks->release_lock( $this->task_id, $owner_id, $generation ) );
 				$result = $this->locks->assert_user_can_save(
 					$this->task_id,
 					$this->user_b,
@@ -388,7 +388,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertSame( $info_c['generation'], $this->locks->get_generation( $this->task_id ) );
 
 		// C releases; only C's token remains authoritative.
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $user_c ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $user_c, $info_c['generation'] ) );
 		$this->assertSame( $info_c['generation'], $this->locks->get_generation( $this->task_id ) );
 
 		// B lost the takeover chain: their token must not save after release.
@@ -496,13 +496,39 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 * another user's active lock.
 	 */
 	public function test_release_lock_only_for_owner() {
-		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 
-		$this->assertFalse( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		// Wrong user cannot release, and neither can the owner with a wrong token.
+		$this->assertFalse( $this->locks->release_lock( $this->task_id, $this->user_b, $info['generation'] ) );
+		$this->assertFalse( $this->locks->release_lock( $this->task_id, $this->user_a, 'not-the-token' ) );
 		$this->assertNotEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
 
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
 		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
+	}
+
+	/**
+	 * Release must match the token, not just the owner: a stale session must not
+	 * release a newer session owned by the same user (which would leave that
+	 * newer editor without an active lock).
+	 */
+	public function test_release_requires_matching_generation_not_just_owner() {
+		$info_a1 = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$info_a2 = $this->locks->take_over_lock( $this->task_id, $this->user_a );
+
+		// A1 (the stale session) releases with its old token: it owns nothing now.
+		$this->assertFalse(
+			$this->locks->release_lock( $this->task_id, $this->user_a, $info_a1['generation'] )
+		);
+
+		// A2's session is still active and can still save.
+		$info = $this->locks->get_lock_info( $this->task_id, $this->user_a );
+		$this->assertTrue( $info['owned_by_current_user'] );
+		$this->assertSame( $info_a2['generation'], $info['generation'] );
+		$this->assertTrue(
+			$this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a2['generation'] )
+		);
 	}
 
 	/**
@@ -558,7 +584,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	public function test_refresh_lock_does_not_reauthorize_after_takeover_and_release() {
 		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
 
 		// A's heartbeat with the pre-takeover token must not grant a new one.
 		$refresh = $this->locks->refresh_lock( $this->task_id, $this->user_a, $info_a['generation'] );
@@ -611,13 +637,13 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 * another user (for example a wp-admin editor) after our state CAS.
 	 */
 	public function test_release_preserves_a_foreign_native_lock() {
-		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 
 		// A concurrent wp-admin editor writes a newer native lock for user B.
 		update_post_meta( $this->task_id, '_edit_lock', time() . ':' . $this->user_b );
 
 		// User A releases its Decker lock; B's native lock must survive.
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a ) );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
 
 		$native = get_post_meta( $this->task_id, '_edit_lock', true );
 		$this->assertStringEndsWith( ':' . $this->user_b, (string) $native );
@@ -628,8 +654,8 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 * afterwards (for example from the wp-admin editor) is still respected.
 	 */
 	public function test_native_lock_detected_after_released_decker_state() {
-		$this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a ) );
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
 
 		// The Decker state row still exists but is released; a native lock appears.
 		update_post_meta( $this->task_id, '_edit_lock', time() . ':' . $this->user_b );

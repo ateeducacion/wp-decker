@@ -95,6 +95,9 @@ class Decker_Tasks {
 		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		// Enforce the edit lock on generic /wp/v2/tasks updates, which bypass the
+		// save_decker_task guard.
+		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -1075,7 +1078,12 @@ class Decker_Tasks {
 			return $error;
 		}
 
-		$released = $this->get_task_locks()->release_lock( $task_id, get_current_user_id() );
+		$generation = $request->get_param( 'lock_generation' );
+		$released   = $this->get_task_locks()->release_lock(
+			$task_id,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : ''
+		);
 
 		return new WP_REST_Response( array( 'released' => $released ), 200 );
 	}
@@ -2810,6 +2818,38 @@ class Decker_Tasks {
 		}
 
 		$this->get_task_locks()->initialize_lock_state( $post_id );
+	}
+
+	/**
+	 * Enforce the edit lock on generic REST updates of an existing task.
+	 *
+	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
+	 * registered meta), which bypasses the lock guard in save_decker_task. This
+	 * rejects an update while another user owns the active lock, and validates a
+	 * `lock_generation` when one is supplied. Creates (no existing id) are not
+	 * affected, so a never-locked task remains updatable over REST.
+	 *
+	 * @param stdClass        $prepared_post The prepared post for insertion.
+	 * @param WP_REST_Request $request       The REST request.
+	 * @return stdClass|WP_Error The prepared post, or a 409 error when locked.
+	 */
+	public function guard_rest_task_update( $prepared_post, $request ) {
+		if ( empty( $prepared_post->ID ) ) {
+			return $prepared_post;
+		}
+
+		$generation = $request->get_param( 'lock_generation' );
+		$check      = $this->get_task_locks()->assert_user_can_save(
+			(int) $prepared_post->ID,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : null
+		);
+
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+
+		return $prepared_post;
 	}
 
 	/**

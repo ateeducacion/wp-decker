@@ -203,22 +203,26 @@ class Decker_Task_Lock_Store {
 	}
 
 	/**
-	 * Release the lock owned by the given user, keeping the token (time set to 0).
+	 * Release the lock held by the given session, keeping the token (time set to 0).
 	 *
-	 * Retries the CAS on contention. When no Decker state exists it only removes
-	 * a native `_edit_lock` mirror still owned by the user.
+	 * Both the owner **and** the session generation must match the authoritative
+	 * state, so a stale session cannot release a newer session owned by the same
+	 * user (which would leave that newer editor without an active lock).
 	 *
-	 * @param int $post_id The task post ID.
-	 * @param int $user_id The user releasing the lock.
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user releasing the lock.
+	 * @param string $session_generation The generation token embedded in the editor form.
 	 * @return bool True when the lock was released.
 	 */
-	public function release( int $post_id, int $user_id ): bool {
+	public function release( int $post_id, int $user_id, string $session_generation ): bool {
 		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
 			$current = $this->read( $post_id );
 
-			if ( ! $this->is_active( $current ) || (int) $current['user'] !== (int) $user_id ) {
-				// Legacy mirror only: release native lock when we still own it.
-				return $this->native->release_if_owned( $post_id, $user_id );
+			// Only our own active session may release: owner and token must match.
+			if ( ! $this->is_active( $current )
+				|| (int) $current['user'] !== (int) $user_id
+				|| (string) $current['token'] !== $session_generation ) {
+				return false;
 			}
 
 			$released = array(
