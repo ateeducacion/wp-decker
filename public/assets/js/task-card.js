@@ -1815,6 +1815,18 @@
 
             if (xhr.status >= 200 && xhr.status < 400 && response && response.success) {
                 window.deckerHasUnsavedChanges = false;
+                // Adopt the server's rotated generation (only ever from our own
+                // save response) so the next save uses it and a second tab of the
+                // same user holding the old token can no longer overwrite us.
+                if (response.data && response.data.generation && form.dataset.lock) {
+                    try {
+                        const lock = JSON.parse(form.dataset.lock);
+                        lock.generation = response.data.generation;
+                        form.dataset.lock = JSON.stringify(lock);
+                    } catch (e) {
+                        // Leave the existing data-lock untouched when unparseable.
+                    }
+                }
                 if (window.parent && window.parent.Swal) {
                     window.parent.Swal.fire({
                         icon: 'success',

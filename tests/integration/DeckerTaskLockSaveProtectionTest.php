@@ -169,11 +169,13 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 
 		wp_set_current_user( $this->user_b );
-		$_POST = $this->save_payload( 'Updated by user B', $info_b['generation'] );
-		$this->assertTrue( ( new Decker_Tasks() )->handle_save_decker_task()['success'] );
+		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
+		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
+		$this->assertTrue( $resp_b['success'] );
 
-		// New owner leaves (modal close / pagehide): active lock released.
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
+		// New owner leaves (modal close / pagehide): active lock released. The save
+		// rotated the token, so release uses the generation from the save response.
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $resp_b['generation'] ) );
 
 		// A malformed/old client omits the token; it must not fail open.
 		wp_set_current_user( $this->user_a );
@@ -199,9 +201,11 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		// B takes over, saves, and releases (modal close / pagehide).
 		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		wp_set_current_user( $this->user_b );
-		$_POST = $this->save_payload( 'Updated by user B', $info_b['generation'] );
-		$this->assertTrue( $tasks->handle_save_decker_task()['success'] );
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
+		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
+		$resp_b = $tasks->handle_save_decker_task();
+		$this->assertTrue( $resp_b['success'] );
+		$b_generation = $resp_b['generation'];
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $b_generation ) );
 
 		// A's heartbeat, carrying A's now-stale generation, must not re-acquire.
 		wp_set_current_user( $this->user_a );
@@ -215,8 +219,8 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertFalse( $resp['decker_task_lock']['owned_by_current_user'] );
 		$this->assertNotEmpty( $resp['decker_task_lock']['stale_session'] );
 
-		// The server generation is still B's; A never received a fresh one.
-		$this->assertSame( $info_b['generation'], $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
+		// The server generation is B's post-save one; A never received a fresh one.
+		$this->assertSame( $b_generation, $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		// A's original save is still rejected after the heartbeat.
 		wp_set_current_user( $this->user_a );
@@ -269,8 +273,9 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
 		$this->assertTrue( $resp_b['success'] );
 
-		// Modal hide / pagehide releases the active lock but keeps generation.
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
+		// Modal hide / pagehide releases the active lock but keeps generation. The
+		// save rotated the token, so release uses the response generation.
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $resp_b['generation'] ) );
 		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
 
 		wp_set_current_user( $this->user_a );
@@ -493,6 +498,70 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		// B's takeover was refused by the write lease.
 		$this->assertFalse( $takeover['owned_by_current_user'] );
 		$this->assertTrue( $takeover['locked'] );
+	}
+
+	/**
+	 * Two forms of the same user (two tabs) share the generation at open. After
+	 * the first tab saves, the generation rotates, so the second tab's later stale
+	 * save is rejected instead of silently overwriting the first.
+	 */
+	public function test_second_same_user_tab_stale_save_is_rejected() {
+		// Both tabs render and receive the same generation.
+		$tab1 = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
+		$tab2 = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
+		$this->assertSame( $tab1, $tab2 );
+
+		// Tab 1 saves: the generation rotates and only tab 1 learns the new one.
+		wp_set_current_user( $this->user_a );
+		$_POST = $this->save_payload( 'Saved by tab 1', $tab1 );
+		$resp1 = ( new Decker_Tasks() )->handle_save_decker_task();
+		$this->assertTrue( $resp1['success'] );
+		$this->assertNotSame( $tab1, $resp1['generation'] );
+
+		// Tab 2 saves stale content with the old shared token: rejected.
+		$_POST = $this->save_payload( 'Stale save by tab 2', $tab2 );
+		$resp2 = ( new Decker_Tasks() )->handle_save_decker_task();
+		$this->assertFalse( $resp2['success'] );
+		$this->assertSame( 'decker_task_locked', $resp2['code'] );
+		$this->assertSame( 'Saved by tab 1', get_post( $this->task_id )->post_title );
+	}
+
+	/**
+	 * A token-less REST update of a never-locked task is serialized by an anonymous
+	 * write lease: a first lock acquisition injected during the write is blocked,
+	 * so it cannot interleave and later overwrite the REST change.
+	 */
+	public function test_rest_update_of_never_locked_task_blocks_concurrent_acquire() {
+		$task_id   = $this->task_id;
+		$user_b    = $this->user_b;
+		$injected  = false;
+		$b_acquire = null;
+
+		$callback = function ( $post_id ) use ( &$injected, &$b_acquire, $task_id, $user_b ) {
+			if ( $injected || (int) $post_id !== (int) $task_id ) {
+				return;
+			}
+			$injected  = true;
+			$b_acquire = ( new Decker_Task_Locks() )->acquire_lock( $post_id, $user_b );
+		};
+		add_action( 'pre_post_update', $callback, 10, 1 );
+
+		wp_set_current_user( $this->user_a );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params( array( 'title' => 'Token-less REST update by A' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		remove_action( 'pre_post_update', $callback, 10 );
+
+		$this->assertTrue( $injected, 'The acquire must have been injected during the REST write.' );
+		$this->assertLessThan( 300, $response->get_status() );
+		$this->assertSame( 'Token-less REST update by A', get_post( $this->task_id )->post_title );
+		// B's first-lock acquisition was blocked by the anonymous write lease.
+		$this->assertFalse( $b_acquire['owned_by_current_user'] );
 	}
 
 	/**

@@ -275,15 +275,30 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Extend the write lease from the actual post write so a slow save cannot
+	 * outlive its lease.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return void
+	 */
+	public function renew_save( int $post_id ) {
+		$this->store->renew_save( $post_id );
+	}
+
+	/**
 	 * Release the write lease after a save completes.
+	 *
+	 * A session save rotates the generation so any second same-user tab holding
+	 * the old token can no longer save; the new generation is returned so the
+	 * saving form can adopt it.
 	 *
 	 * @param int    $post_id            The task post ID.
 	 * @param int    $user_id            The user finishing the save.
 	 * @param string $session_generation The generation token embedded in the editor form.
-	 * @return void
+	 * @return string The generation after the save.
 	 */
-	public function end_save( int $post_id, int $user_id, string $session_generation ) {
-		$this->store->end_save( $post_id, $user_id, $session_generation );
+	public function end_save( int $post_id, int $user_id, string $session_generation ): string {
+		return $this->store->end_save( $post_id, $user_id, $session_generation );
 	}
 
 	/**

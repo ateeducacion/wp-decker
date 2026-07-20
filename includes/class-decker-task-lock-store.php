@@ -191,7 +191,7 @@ class Decker_Task_Lock_Store {
 			// Never release while a save is in progress: dropping the lease would
 			// let a takeover interleave with the still-running save (a pagehide
 			// release during the same session's save must not undo it).
-			if ( ! $this->owns_session( $current, $user_id, $session_generation )
+			if ( ! $this->state->owned_by( $current, $user_id, $session_generation )
 				|| $this->state->is_saving( $current ) ) {
 				return false;
 			}
@@ -249,7 +249,7 @@ class Decker_Task_Lock_Store {
 	public function refresh( int $post_id, int $user_id, string $session_generation ): bool {
 		$current = $this->state->read( $post_id );
 
-		if ( ! $this->owns_session( $current, $user_id, $session_generation ) ) {
+		if ( ! $this->state->owned_by( $current, $user_id, $session_generation ) ) {
 			return false;
 		}
 
@@ -271,9 +271,12 @@ class Decker_Task_Lock_Store {
 	/**
 	 * Claim the write lease for a save, atomically with a generation check.
 	 *
-	 * Succeeds only when the caller still owns the exact active session and no
-	 * other save is in progress. Once held, a forced takeover refuses (see
-	 * {@see write()}), so a takeover cannot interleave with the caller's commit.
+	 * Stores an absolute deadline chosen by this request so a contender never
+	 * recomputes the lifetime. Succeeds for a session save (the caller owns the
+	 * active lock) or an anonymous save (a REST update of a never-locked task,
+	 * which has no session yet); either way acquisitions and takeovers are then
+	 * blocked during the write. Fails when another save is already in progress or
+	 * an active lock is held by someone else.
 	 *
 	 * @param int    $post_id            The task post ID.
 	 * @param int    $user_id            The user starting the save.
@@ -283,58 +286,101 @@ class Decker_Task_Lock_Store {
 	public function begin_save( int $post_id, int $user_id, string $session_generation ): bool {
 		$current = $this->state->read( $post_id );
 
-		if ( ! $this->owns_session( $current, $user_id, $session_generation )
-			|| $this->state->is_saving( $current ) ) {
+		if ( $this->state->is_saving( $current ) ) {
 			return false;
 		}
 
+		$owns      = $this->state->owned_by( $current, $user_id, $session_generation );
+		$anonymous = '' === $session_generation && ! $this->state->is_active( $current );
+		if ( ! $owns && ! $anonymous ) {
+			return false;
+		}
+
+		$base = is_array( $current ) ? $current : array(
+			'user'  => 0,
+			'token' => '',
+			'time'  => 0,
+		);
+
 		$new = array(
-			'user'  => (int) $user_id,
-			'token' => (string) $current['token'],
-			'time'  => (int) $current['time'],
-			'save'  => time(),
+			'user'  => (int) $base['user'],
+			'token' => (string) $base['token'],
+			'time'  => (int) $base['time'],
+			'save'  => $this->state->save_deadline(),
 		);
 
 		return $this->state->write( $post_id, $current, $new );
 	}
 
 	/**
-	 * Release the write lease after a save completes (best-effort).
+	 * Extend the write lease (called from the actual post write) so a slow save
+	 * cannot outlive its lease. Only extends an existing in-progress lease.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return bool True when the lease deadline was extended.
+	 */
+	public function renew_save( int $post_id ): bool {
+		$current = $this->state->read( $post_id );
+		if ( ! $this->state->is_saving( $current ) ) {
+			return false;
+		}
+
+		$renewed         = $current;
+		$renewed['save'] = $this->state->save_deadline();
+
+		return $this->state->write( $post_id, $current, $renewed );
+	}
+
+	/**
+	 * Release the write lease after a save completes, retrying the CAS so a
+	 * concurrent heartbeat cannot strand the lease.
+	 *
+	 * A session save rotates the token so a second same-user tab that shared it
+	 * can no longer save with the stale token; an anonymous (never-locked) save
+	 * keeps the empty token so the task stays free. Returns the resulting
+	 * generation for the caller to echo back to its form.
 	 *
 	 * @param int    $post_id            The task post ID.
 	 * @param int    $user_id            The user finishing the save.
 	 * @param string $session_generation The generation token embedded in the editor form.
-	 * @return void
+	 * @return string The generation after the save (rotated for a session save).
 	 */
-	public function end_save( int $post_id, int $user_id, string $session_generation ) {
-		$current = $this->state->read( $post_id );
+	public function end_save( int $post_id, int $user_id, string $session_generation ): string {
+		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
+			$current = $this->state->read( $post_id );
 
-		if ( ! $this->owns_session( $current, $user_id, $session_generation ) ) {
-			return;
+			if ( ! is_array( $current ) || ! $this->state->is_saving( $current ) ) {
+				return $this->state->generation( $post_id );
+			}
+
+			/**
+			 * Fires after the expected state is read and before the end-save CAS.
+			 *
+			 * Tests use this to land a concurrent write between read and CAS and
+			 * verify the retry loop still clears the lease.
+			 *
+			 * @param int   $post_id The task post ID.
+			 * @param array $current The expected previous state.
+			 */
+			do_action( 'decker_task_end_save_before_cas', $post_id, $current );
+
+			$is_session = '' !== (string) $current['token']
+				&& (int) $current['user'] === (int) $user_id
+				&& (string) $current['token'] === $session_generation;
+
+			$new = array(
+				'user'  => (int) $current['user'],
+				'token' => $is_session ? wp_generate_uuid4() : (string) $current['token'],
+				'time'  => (int) $current['time'],
+				'save'  => 0,
+			);
+
+			if ( $this->state->write( $post_id, $current, $new ) ) {
+				return (string) $new['token'];
+			}
 		}
 
-		$new = array(
-			'user'  => (int) $user_id,
-			'token' => (string) $current['token'],
-			'time'  => (int) $current['time'],
-			'save'  => 0,
-		);
-
-		$this->state->write( $post_id, $current, $new );
-	}
-
-	/**
-	 * Whether the state is an active lock held by exactly this session.
-	 *
-	 * @param array|null $state              The decoded state, or null.
-	 * @param int        $user_id            The expected owner.
-	 * @param string     $session_generation The expected token.
-	 * @return bool True when owner and token both match an active lock.
-	 */
-	private function owns_session( $state, int $user_id, string $session_generation ): bool {
-		return $this->state->is_active( $state )
-			&& (int) $state['user'] === (int) $user_id
-			&& (string) $state['token'] === $session_generation;
+		return $this->state->generation( $post_id );
 	}
 
 	/**

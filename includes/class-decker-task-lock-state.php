@@ -54,20 +54,19 @@ class Decker_Task_Lock_State {
 	const CAS_MAX_ATTEMPTS = 5;
 
 	/**
-	 * Fallback / floor for the write-lease window in seconds, used when PHP's
-	 * `max_execution_time` is unavailable or unlimited (e.g. CLI).
+	 * Minimum write-lease duration in seconds (covers request setup / parsing).
 	 *
 	 * @var int
 	 */
-	const SAVE_LEASE_FLOOR = 30;
+	const SAVE_LEASE_MIN = 60;
 
 	/**
-	 * Hard ceiling for the write-lease window so a wedged lease cannot block
-	 * takeovers for longer than this.
+	 * Write-lease duration used when PHP's `max_execution_time` is unlimited
+	 * (e.g. CLI): a generous absolute window, since there is no request bound.
 	 *
 	 * @var int
 	 */
-	const SAVE_LEASE_CEILING = 300;
+	const SAVE_LEASE_UNBOUNDED = 300;
 
 	/**
 	 * Decode the authoritative lock state.
@@ -125,32 +124,46 @@ class Decker_Task_Lock_State {
 	/**
 	 * Whether a fresh write lease is held (a commit is in progress).
 	 *
-	 * The window tracks how long the request could still be running, so the lease
-	 * cannot expire while a long `wp_update_post()` is mid-write; once PHP would
-	 * have killed the request the lease is treated as stale so takeovers resume.
+	 * `save` is an absolute deadline chosen by the saving request, so a contender
+	 * checking the state never recomputes the lifetime from its own PHP config;
+	 * it simply compares the stored deadline against now.
 	 *
 	 * @param array|null $state The decoded state, or null.
-	 * @return bool True when a non-stale save lease is set.
+	 * @return bool True when the stored lease deadline is still in the future.
 	 */
 	public function is_saving( $state ): bool {
 		return is_array( $state )
-			&& (int) $state['save'] > ( time() - $this->save_lease_window() );
+			&& (int) $state['save'] > time();
 	}
 
 	/**
-	 * The write-lease window in seconds, tied to PHP's max execution time so it
-	 * outlives any save the request is allowed to run, clamped to sane bounds.
+	 * Whether the state is an active lock held by exactly this session.
 	 *
-	 * @return int The window in seconds.
+	 * @param array|null $state   The decoded state, or null.
+	 * @param int        $user_id The expected owner.
+	 * @param string     $token   The expected generation token.
+	 * @return bool True when owner and token both match an active lock.
 	 */
-	private function save_lease_window(): int {
-		$max = (int) ini_get( 'max_execution_time' );
-		if ( $max <= 0 ) {
-			$max = self::SAVE_LEASE_FLOOR;
-		}
+	public function owned_by( $state, int $user_id, string $token ): bool {
+		return $this->is_active( $state )
+			&& (int) $state['user'] === (int) $user_id
+			&& (string) $state['token'] === $token;
+	}
 
-		// A small buffer past the request limit before the lease is deemed stale.
-		return min( self::SAVE_LEASE_CEILING, max( self::SAVE_LEASE_FLOOR, $max + 5 ) );
+	/**
+	 * An absolute write-lease deadline for the current (saving) request.
+	 *
+	 * Tied to this request's `max_execution_time` so the lease outlives any save
+	 * the request is allowed to run; unlimited execution falls back to a generous
+	 * fixed window. The saver stores this so a slow save does not expire early.
+	 *
+	 * @return int Unix timestamp at which the lease expires.
+	 */
+	public function save_deadline(): int {
+		$max      = (int) ini_get( 'max_execution_time' );
+		$duration = $max > 0 ? max( self::SAVE_LEASE_MIN, $max ) : self::SAVE_LEASE_UNBOUNDED;
+
+		return time() + $duration;
 	}
 
 	/**

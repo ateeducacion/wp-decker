@@ -574,9 +574,11 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		$this->assertFalse( $blocked['owned_by_current_user'] );
 
-		// Once the save ends, release works again.
-		$this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
-		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
+		// Once the save ends, the lease clears and the token rotates; release works
+		// again with the rotated generation.
+		$rotated = $this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertNotSame( $info['generation'], $rotated );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $rotated ) );
 	}
 
 	/**
@@ -597,22 +599,60 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The write lease must not expire while a slow save is still allowed to run:
-	 * a lease older than the previous fixed 15s window still blocks a takeover
-	 * because the window tracks the request execution time.
+	 * The write lease stores an absolute deadline chosen by the saving request, so
+	 * it does not expire while a slow save runs and a contender never recomputes
+	 * the lifetime from its own config. The deadline is generously in the future.
 	 */
-	public function test_write_lease_survives_a_slow_save() {
+	public function test_write_lease_uses_a_generous_absolute_deadline() {
 		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
 
-		// Backdate the lease to 20s ago (past the old fixed 15s window).
-		$state          = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
-		$state['save']  = time() - 20;
-		update_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, wp_json_encode( $state ) );
+		// The stored lease is an absolute deadline comfortably in the future (>= 60s),
+		// so a save lasting far longer than the old fixed 15s window stays protected.
+		$state = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
+		$this->assertGreaterThanOrEqual( time() + 60, (int) $state['save'] );
 
-		// The lease is still fresh, so the takeover is still refused.
+		// A takeover is refused while the deadline has not passed.
 		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		$this->assertFalse( $blocked['owned_by_current_user'] );
+	}
+
+	/**
+	 * end_save must retry its CAS: a concurrent write (heartbeat) landing between
+	 * its read and write must not strand the lease as permanently in-progress.
+	 */
+	public function test_end_save_retries_and_clears_lease_after_a_concurrent_write() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		$locks    = $this->locks;
+		$task_id  = $this->task_id;
+		$user_a   = $this->user_a;
+		$gen      = $info['generation'];
+		$injected = false;
+
+		// On the first end-save attempt, land a concurrent refresh so the CAS misses.
+		add_action(
+			'decker_task_end_save_before_cas',
+			static function () use ( &$injected, $locks, $task_id, $user_a, $gen ) {
+				if ( $injected ) {
+					return;
+				}
+				$injected = true;
+				$locks->refresh_lock( $task_id, $user_a, $gen );
+			},
+			10,
+			2
+		);
+
+		$this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		remove_all_actions( 'decker_task_end_save_before_cas' );
+
+		$this->assertTrue( $injected, 'A concurrent write must have been injected.' );
+
+		// The lease was cleared despite the concurrent write, so a takeover proceeds.
+		$after = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertTrue( $after['owned_by_current_user'] );
 	}
 
 	/**

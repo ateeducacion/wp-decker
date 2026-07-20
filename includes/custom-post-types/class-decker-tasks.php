@@ -94,6 +94,9 @@ class Decker_Tasks {
 		// Seed the lock state on every task creation, independent of the
 		// editable-meta nonce guard, so admin, AJAX and REST creates are covered.
 		add_action( 'save_post_decker_task', array( $this, 'seed_task_lock_state' ), 10, 3 );
+		// Extend the write lease at the actual post write so a slow save cannot
+		// outlive it (covers both the AJAX and REST save paths).
+		add_action( 'pre_post_update', array( $this, 'renew_task_write_lease' ), 10, 1 );
 		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
 		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
 		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
@@ -2861,10 +2864,13 @@ class Decker_Tasks {
 			return $check;
 		}
 
-		// Serialize the actual REST write with the same write lease as the AJAX
-		// path so a takeover cannot land between this guard and the post write.
-		if ( '' !== (string) $generation && $locks->is_enabled() ) {
-			if ( ! $locks->begin_save( $post_id, $user_id, (string) $generation ) ) {
+		// Serialize the actual REST write with the write lease so a takeover — or a
+		// first lock acquisition on a never-locked task — cannot land between this
+		// guard and the post write. Uses a session lease when a token was supplied,
+		// otherwise an anonymous lease (never-locked task).
+		if ( $locks->is_enabled() ) {
+			$token = (string) $generation;
+			if ( ! $locks->begin_save( $post_id, $user_id, $token ) ) {
 				return new WP_Error(
 					'decker_task_locked',
 					__( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
@@ -2874,20 +2880,35 @@ class Decker_Tasks {
 			$this->rest_write_lease = array(
 				'post_id'    => $post_id,
 				'user_id'    => $user_id,
-				'generation' => (string) $generation,
+				'generation' => $token,
 			);
+			// Backstop: release the lease at shutdown even if the write errors out
+			// before rest_after_insert_decker_task fires (end_save is idempotent).
+			add_action( 'shutdown', array( $this, 'release_rest_write_lease' ), 1 );
 		}
 
 		return $prepared_post;
 	}
 
 	/**
-	 * Release the write lease claimed for a REST update, after the post write.
+	 * Extend the write lease when the actual task post is written.
 	 *
-	 * @param WP_Post $post The updated task (unused; the lease is tracked per request).
+	 * @param int $post_id The post being updated.
 	 * @return void
 	 */
-	public function release_rest_write_lease( $post ) {
+	public function renew_task_write_lease( $post_id ) {
+		if ( 'decker_task' === get_post_type( (int) $post_id ) ) {
+			$this->get_task_locks()->renew_save( (int) $post_id );
+		}
+	}
+
+	/**
+	 * Release the write lease claimed for a REST update (after-insert or shutdown).
+	 *
+	 * @param WP_Post|null $post The updated task (unused; the lease is tracked per request).
+	 * @return void
+	 */
+	public function release_rest_write_lease( $post = null ) {
 		if ( ! is_array( $this->rest_write_lease ) ) {
 			return;
 		}
@@ -3350,14 +3371,18 @@ class Decker_Tasks {
 		}
 
 		// All writes are done: release the write lease so takeovers can proceed.
+		// A session save rotates the generation; hand the new one back so the form
+		// adopts it and a second same-user tab holding the old token is rejected.
+		$new_generation = '';
 		if ( $has_write_lease ) {
-			$this->get_task_locks()->end_save( $core['id'], get_current_user_id(), $lock_generation );
+			$new_generation = $this->get_task_locks()->end_save( $core['id'], get_current_user_id(), $lock_generation );
 		}
 
 		$result_data = array(
-			'success' => ! is_wp_error( $result ),
-			'message' => is_wp_error( $result ) ? $result->get_error_message() : __( 'Task saved successfully.', 'decker' ),
-			'task_id' => $result,
+			'success'    => ! is_wp_error( $result ),
+			'message'    => is_wp_error( $result ) ? $result->get_error_message() : __( 'Task saved successfully.', 'decker' ),
+			'task_id'    => $result,
+			'generation' => $new_generation,
 		);
 
 		if ( $send_response ) {
