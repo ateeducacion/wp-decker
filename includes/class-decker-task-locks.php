@@ -18,20 +18,16 @@ defined( 'ABSPATH' ) || exit;
  * Thin, WordPress-compatible wrapper around the native `_edit_lock` post meta
  * convention used by WordPress core to prevent concurrent post editing.
  *
- * The lock value is stored exactly like WordPress core stores it, as a
- * "{timestamp}:{user_id}" string in the `_edit_lock` meta key, and the stale
- * window is derived from the same `wp_check_post_lock_window` filter core uses.
- * This keeps Decker locks interoperable with the native WordPress edit screen
- * while remaining usable from the front-end app, where the admin-only
- * wp_check_post_lock()/wp_set_post_lock() helpers are not loaded.
+ * Authority for Decker decisions lives in a single JSON meta value
+ * `_decker_edit_lock_state` of the form:
+ * `{"user":123,"token":"uuid","time":1710000000}`.
+ * Owner and generation token are always written together via compare-and-swap
+ * so concurrent takeovers cannot leave a foreign token paired with a different
+ * owner. `_edit_lock` / `_edit_last` are mirrored afterwards for WordPress
+ * admin interoperability, but validation prefers the authoritative state.
  *
- * In addition to the active lock, Decker stores a unique lock-generation token in
- * `_decker_edit_lock_generation`. A new token (UUID) is written whenever ownership
- * changes (including explicit takeovers). Using a fresh random token avoids the
- * race of a non-atomic read/increment/write counter under concurrent takeovers.
- * Editor sessions embed the token they opened with; a stale session is rejected
- * on save even if the active lock was later released (for example after the new
- * owner closed the modal).
+ * `time` is 0 when the lock has been released while the last token is retained
+ * so a stale editor session is still rejected after the winner leaves.
  *
  * The class only handles lock bookkeeping. Rendering, REST routing and AJAX
  * handling live in their own classes.
@@ -46,11 +42,25 @@ class Decker_Task_Locks {
 	const POST_TYPE = 'decker_task';
 
 	/**
-	 * Post meta key for the unique lock-generation token.
+	 * Authoritative lock state meta (JSON: user, token, time).
+	 *
+	 * @var string
+	 */
+	const STATE_META = '_decker_edit_lock_state';
+
+	/**
+	 * Legacy generation-only meta key (read as fallback, no longer written).
 	 *
 	 * @var string
 	 */
 	const GENERATION_META = '_decker_edit_lock_generation';
+
+	/**
+	 * Maximum CAS attempts for a single lock mutation.
+	 *
+	 * @var int
+	 */
+	const CAS_MAX_ATTEMPTS = 5;
 
 	/**
 	 * Get the stale-lock window in seconds.
@@ -194,14 +204,18 @@ class Decker_Task_Locks {
 			return $guard;
 		}
 
-		$info = $this->get_lock_info( $post_id, $user_id );
+		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
+			$info = $this->get_lock_info( $post_id, $user_id );
 
-		// Do not steal an active lock owned by another user.
-		if ( $info['locked'] ) {
-			return $info;
+			// Do not steal an active lock owned by another user.
+			if ( $info['locked'] ) {
+				return $info;
+			}
+
+			if ( $this->write_lock( $post_id, $user_id, false ) ) {
+				return $this->get_lock_info( $post_id, $user_id );
+			}
 		}
-
-		$this->write_lock( $post_id, $user_id );
 
 		return $this->get_lock_info( $post_id, $user_id );
 	}
@@ -224,9 +238,14 @@ class Decker_Task_Locks {
 			return $guard;
 		}
 
-		// Always bump the generation on takeover so the previous editor's form
-		// session is invalidated even after this owner later releases the lock.
-		$this->write_lock( $post_id, $user_id, true );
+		// Always issue a new generation token on takeover so the previous
+		// editor's form session is invalidated even after this owner later
+		// releases the lock.
+		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
+			if ( $this->write_lock( $post_id, $user_id, true ) ) {
+				return $this->get_lock_info( $post_id, $user_id );
+			}
+		}
 
 		return $this->get_lock_info( $post_id, $user_id );
 	}
@@ -234,8 +253,8 @@ class Decker_Task_Locks {
 	/**
 	 * Release the lock only when it is owned by the given user.
 	 *
-	 * Another user's lock is never removed by this method. The generation meta
-	 * is intentionally kept so stale editor sessions remain invalid.
+	 * Another user's lock is never removed by this method. The generation token
+	 * is intentionally kept (time set to 0) so stale editor sessions remain invalid.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @param int $user_id The user releasing the lock.
@@ -246,10 +265,25 @@ class Decker_Task_Locks {
 			return false;
 		}
 
-		$lock = $this->read_lock( $post_id );
-		if ( $lock && $lock['user'] === $user_id ) {
-			delete_post_meta( $post_id, '_edit_lock' );
-			return true;
+		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
+			$current = $this->read_authoritative_state( $post_id );
+			$active  = $this->state_is_active( $current );
+
+			if ( ! $active || (int) $current['user'] !== (int) $user_id ) {
+				// Legacy mirror only: release native lock when we still own it.
+				return $this->release_legacy_lock_if_owned( $post_id, $user_id );
+			}
+
+			$released = array(
+				'user'  => (int) $user_id,
+				'token' => (string) $current['token'],
+				'time'  => 0,
+			);
+
+			if ( $this->cas_write_state( $post_id, $current, $released ) ) {
+				delete_post_meta( $post_id, '_edit_lock' );
+				return true;
+			}
 		}
 
 		return false;
@@ -372,16 +406,192 @@ class Decker_Task_Locks {
 	 * @return string The current generation token, or empty string when never locked.
 	 */
 	public function get_generation( int $post_id ): string {
+		$state = $this->read_authoritative_state( $post_id );
+		if ( $state && '' !== $state['token'] ) {
+			return $state['token'];
+		}
+
+		// Legacy single-key generation used before the atomic state meta.
 		return (string) get_post_meta( $post_id, self::GENERATION_META, true );
 	}
 
 	/**
-	 * Read and parse the native `_edit_lock` meta for a task.
+	 * Read the active lock (owner + time) from the authoritative state.
+	 *
+	 * Falls back to the native `_edit_lock` mirror when no Decker state exists
+	 * (for example a lock set from the WordPress admin editor).
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return array{time:int,user:int}|null The active lock, or null when free/released.
+	 */
+	private function read_lock( int $post_id ) {
+		$state = $this->read_authoritative_state( $post_id );
+		if ( $state ) {
+			if ( ! $this->state_is_active( $state ) ) {
+				return null;
+			}
+
+			return array(
+				'time' => (int) $state['time'],
+				'user' => (int) $state['user'],
+			);
+		}
+
+		return $this->read_legacy_edit_lock( $post_id );
+	}
+
+	/**
+	 * Write owner + generation as one CAS-protected state blob.
+	 *
+	 * @param int  $post_id         The task post ID.
+	 * @param int  $user_id         The lock owner.
+	 * @param bool $bump_generation Force a new generation token.
+	 * @return bool True when the CAS write succeeded.
+	 */
+	private function write_lock( int $post_id, int $user_id, bool $bump_generation = false ): bool {
+		$current = $this->read_authoritative_state( $post_id );
+
+		/**
+		 * Fires after the expected state is read and before the CAS write.
+		 *
+		 * Tests may use this to inject a concurrent CAS winner between read and write.
+		 *
+		 * @param int        $post_id The task post ID.
+		 * @param array|null $current The expected previous state, or null.
+		 * @param int        $user_id The user about to write the lock.
+		 * @param bool       $bump    Whether a new generation token is forced.
+		 */
+		do_action( 'decker_task_lock_before_cas', $post_id, $current, $user_id, $bump_generation );
+
+		// Re-read after the action so injected concurrent writes are observed and
+		// used as the CAS expected value.
+		$current = $this->read_authoritative_state( $post_id );
+
+		// Non-forced acquire must not steal an active foreign lock after the barrier.
+		if ( ! $bump_generation
+			&& $this->state_is_active( $current )
+			&& (int) $current['user'] !== (int) $user_id
+			&& (int) $current['time'] > ( time() - $this->get_lock_window() ) ) {
+			return false;
+		}
+
+		$active_same_owner = $this->state_is_active( $current )
+			&& (int) $current['user'] === (int) $user_id
+			&& (int) $current['time'] > ( time() - $this->get_lock_window() );
+
+		$token = ( $active_same_owner && ! $bump_generation && '' !== $current['token'] )
+			? $current['token']
+			: wp_generate_uuid4();
+
+		$new = array(
+			'user'  => (int) $user_id,
+			'token' => (string) $token,
+			'time'  => time(),
+		);
+
+		if ( ! $this->cas_write_state( $post_id, $current, $new ) ) {
+			return false;
+		}
+
+		$this->mirror_wp_lock( $post_id, $user_id );
+		return true;
+	}
+
+	/**
+	 * Read the authoritative Decker lock state, if present.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return array{user:int,token:string,time:int}|null The state, or null when absent.
+	 */
+	private function read_authoritative_state( int $post_id ) {
+		$raw = get_post_meta( $post_id, self::STATE_META, true );
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return null;
+		}
+
+		$decoded = json_decode( $raw, true );
+		if ( ! is_array( $decoded ) ) {
+			return null;
+		}
+
+		return array(
+			'user'  => isset( $decoded['user'] ) ? (int) $decoded['user'] : 0,
+			'token' => isset( $decoded['token'] ) ? (string) $decoded['token'] : '',
+			'time'  => isset( $decoded['time'] ) ? (int) $decoded['time'] : 0,
+		);
+	}
+
+	/**
+	 * Whether a state blob represents an actively held lock.
+	 *
+	 * @param array{user:int,token:string,time:int}|null $state The state.
+	 * @return bool True when the lock is actively held.
+	 */
+	private function state_is_active( $state ): bool {
+		return is_array( $state )
+			&& (int) $state['time'] > 0
+			&& (int) $state['user'] > 0;
+	}
+
+	/**
+	 * Encode lock state for storage. Key order is fixed for stable CAS comparisons.
+	 *
+	 * @param array{user:int,token:string,time:int} $state The state.
+	 * @return string JSON payload.
+	 */
+	private function encode_state( array $state ): string {
+		return wp_json_encode(
+			array(
+				'user'  => (int) $state['user'],
+				'token' => (string) $state['token'],
+				'time'  => (int) $state['time'],
+			)
+		);
+	}
+
+	/**
+	 * Compare-and-swap write of the authoritative lock state.
+	 *
+	 * @param int                                    $post_id  The task post ID.
+	 * @param array{user:int,token:string,time:int}|null $expected Previous state, or null when absent.
+	 * @param array{user:int,token:string,time:int}  $new      Desired state.
+	 * @return bool True when this writer won the CAS.
+	 */
+	private function cas_write_state( int $post_id, $expected, array $new ): bool {
+		$new_raw = $this->encode_state( $new );
+
+		if ( null === $expected ) {
+			// Unique add fails when another process created the key first.
+			$added = add_post_meta( $post_id, self::STATE_META, $new_raw, true );
+			return (bool) $added;
+		}
+
+		$expected_raw = $this->encode_state( $expected );
+		// update_post_meta returns false when the previous value no longer matches.
+		$updated = update_post_meta( $post_id, self::STATE_META, $new_raw, $expected_raw );
+
+		return (bool) $updated;
+	}
+
+	/**
+	 * Mirror the native WordPress edit-lock fields for admin interoperability.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @param int $user_id The lock owner.
+	 * @return void
+	 */
+	private function mirror_wp_lock( int $post_id, int $user_id ) {
+		update_post_meta( $post_id, '_edit_lock', time() . ':' . $user_id );
+		update_post_meta( $post_id, '_edit_last', $user_id );
+	}
+
+	/**
+	 * Parse the native `_edit_lock` meta (legacy / admin path).
 	 *
 	 * @param int $post_id The task post ID.
 	 * @return array{time:int,user:int}|null The parsed lock, or null when absent.
 	 */
-	private function read_lock( int $post_id ) {
+	private function read_legacy_edit_lock( int $post_id ) {
 		$raw = get_post_meta( $post_id, '_edit_lock', true );
 		if ( ! $raw ) {
 			return null;
@@ -396,28 +606,19 @@ class Decker_Task_Locks {
 	}
 
 	/**
-	 * Write the native `_edit_lock` meta for a task and record the last editor.
+	 * Release a legacy `_edit_lock` mirror when Decker state is absent.
 	 *
-	 * A new unique generation token is written when ownership changes, or when
-	 * the caller forces a bump (explicit takeover). Same-owner refreshes keep
-	 * the existing token so the open form session remains valid.
-	 *
-	 * @param int  $post_id         The task post ID.
-	 * @param int  $user_id         The lock owner.
-	 * @param bool $bump_generation Force a new generation token even for the same owner.
-	 * @return void
+	 * @param int $post_id The task post ID.
+	 * @param int $user_id The user releasing the lock.
+	 * @return bool True when the legacy lock was removed.
 	 */
-	private function write_lock( int $post_id, int $user_id, bool $bump_generation = false ) {
-		$previous      = $this->read_lock( $post_id );
-		$owner_changed = ! $previous || (int) $previous['user'] !== (int) $user_id;
-
-		if ( $bump_generation || $owner_changed ) {
-			// Fresh UUID per ownership change: concurrent takeovers cannot both
-			// land on the same next integer after a shared read.
-			update_post_meta( $post_id, self::GENERATION_META, wp_generate_uuid4() );
+	private function release_legacy_lock_if_owned( int $post_id, int $user_id ): bool {
+		$lock = $this->read_legacy_edit_lock( $post_id );
+		if ( $lock && (int) $lock['user'] === (int) $user_id ) {
+			delete_post_meta( $post_id, '_edit_lock' );
+			return true;
 		}
 
-		update_post_meta( $post_id, '_edit_lock', time() . ':' . $user_id );
-		update_post_meta( $post_id, '_edit_last', $user_id );
+		return false;
 	}
 }

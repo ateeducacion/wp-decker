@@ -253,6 +253,126 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Owner and generation always come from the same atomic state, even when a
+	 * concurrent takeover wins between read and CAS (injected via action).
+	 *
+	 * Simulates the race that used to leave generation=TC with _edit_lock=B:
+	 * while B is taking over, C fully commits first. B's CAS must either fail
+	 * and retry against C, or succeed only as a consistent B/token pair — never
+	 * leave C's token with B's owner.
+	 */
+	public function test_concurrent_takeover_cannot_decouple_owner_from_token() {
+		$user_c = self::factory()->user->create( array( 'role' => 'editor' ) );
+
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		$injected = false;
+		$locks    = $this->locks;
+
+		add_action(
+			'decker_task_lock_before_cas',
+			static function ( $post_id, $current, $user_id ) use ( &$injected, $locks, $user_c ) {
+				if ( $injected || (int) $user_id !== (int) $GLOBALS['decker_test_user_b'] ) {
+					return;
+				}
+				$injected = true;
+				// C fully wins a takeover before B's CAS runs.
+				$locks->take_over_lock( (int) $post_id, (int) $user_c );
+			},
+			10,
+			3
+		);
+
+		$GLOBALS['decker_test_user_b'] = $this->user_b;
+		$info_b                        = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		unset( $GLOBALS['decker_test_user_b'] );
+		remove_all_actions( 'decker_task_lock_before_cas' );
+
+		$this->assertTrue( $injected, 'The CAS barrier must have injected C\'s takeover.' );
+
+		// Authoritative generation always matches the owner reported for that generation.
+		$generation = $this->locks->get_generation( $this->task_id );
+		$raw_state  = get_post_meta( $this->task_id, Decker_Task_Locks::STATE_META, true );
+		$state      = json_decode( (string) $raw_state, true );
+
+		$this->assertIsArray( $state );
+		$this->assertSame( $generation, $state['token'] );
+		$this->assertGreaterThan( 0, (int) $state['user'] );
+		$this->assertNotEmpty( $state['token'] );
+
+		// Whoever finally owns the lock, their info generation matches the meta token.
+		$owner_id = (int) $state['user'];
+		$info     = $this->locks->get_lock_info( $this->task_id, $owner_id );
+		$this->assertTrue( $info['owned_by_current_user'] );
+		$this->assertSame( $generation, $info['generation'] );
+
+		// Mirror must not disagree with the authoritative owner.
+		$edit_lock = get_post_meta( $this->task_id, '_edit_lock', true );
+		$this->assertMatchesRegularExpression( '/^\d+:' . $owner_id . '$/', (string) $edit_lock );
+
+		// If B lost the race, their returned token must not be the live generation
+		// after a later release by the real owner — unless B actually won.
+		if ( (int) $owner_id === (int) $this->user_b ) {
+			$this->assertSame( $info_b['generation'], $generation );
+		} else {
+			// C owns. B's session token must not match the live generation after C releases.
+			if ( ! empty( $info_b['generation'] ) && $info_b['generation'] !== $generation ) {
+				$this->assertTrue( $this->locks->release_lock( $this->task_id, $owner_id ) );
+				$result = $this->locks->assert_user_can_save(
+					$this->task_id,
+					$this->user_b,
+					$info_b['generation']
+				);
+				$this->assertWPError( $result );
+				$this->assertSame( 'decker_task_locked', $result->get_error_code() );
+			}
+		}
+
+		wp_delete_user( $user_c );
+	}
+
+	/**
+	 * A token that is not paired with its owner in the atomic state cannot save
+	 * after release (guards against the historical desync bug).
+	 */
+	public function test_foreign_token_rejected_after_owner_releases() {
+		$user_c = self::factory()->user->create( array( 'role' => 'editor' ) );
+
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$info_c = $this->locks->take_over_lock( $this->task_id, $user_c );
+
+		$this->assertNotSame( $info_a['generation'], $info_b['generation'] );
+		$this->assertNotSame( $info_b['generation'], $info_c['generation'] );
+		$this->assertSame( $info_c['generation'], $this->locks->get_generation( $this->task_id ) );
+
+		// C releases; only C's token remains authoritative.
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $user_c ) );
+		$this->assertSame( $info_c['generation'], $this->locks->get_generation( $this->task_id ) );
+
+		// B lost the takeover chain: their token must not save after release.
+		$result_b = $this->locks->assert_user_can_save(
+			$this->task_id,
+			$this->user_b,
+			$info_b['generation']
+		);
+		$this->assertWPError( $result_b );
+		$this->assertSame( 'decker_task_locked', $result_b->get_error_code() );
+
+		// Divergent mirror (_edit_lock points at B while state token is C's) must
+		// not resurrect B's session: generation still comes from atomic state.
+		update_post_meta( $this->task_id, '_edit_lock', time() . ':' . $this->user_b );
+		$result_b2 = $this->locks->assert_user_can_save(
+			$this->task_id,
+			$this->user_b,
+			$info_b['generation']
+		);
+		$this->assertWPError( $result_b2 );
+
+		wp_delete_user( $user_c );
+	}
+
+	/**
 	 * Expired/stale locks do not block a new user from acquiring the lock.
 	 */
 	public function test_stale_lock_does_not_block_new_user() {
