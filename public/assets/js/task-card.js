@@ -1749,60 +1749,84 @@
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
         xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    window.deckerHasUnsavedChanges = false;
-                    if (window.parent && window.parent.Swal) {
-                        window.parent.Swal.fire({
-                            icon: 'success',
-                            title: strings.task_saved_success,
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 1500,
-                            timerProgressBar: true
-                        });
-                    }
-                    const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
-                    if (modalElement) {
-                        var modalInstance = bootstrap.Modal.getInstance(modalElement);
-                        if (modalInstance) {
-                            modalInstance.hide();
-                        }
-                        
-                        // Reload the page if the request was successful
-                        location.reload();
-                    } else {
-                        // Redirect or update depending on the response
-                        window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
+            let response = null;
+            try {
+                response = JSON.parse(xhr.responseText);
+            } catch (e) {
+                response = null;
+            }
+
+            if (xhr.status >= 200 && xhr.status < 400 && response && response.success) {
+                window.deckerHasUnsavedChanges = false;
+                if (window.parent && window.parent.Swal) {
+                    window.parent.Swal.fire({
+                        icon: 'success',
+                        title: strings.task_saved_success,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                }
+                const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
+                if (modalElement) {
+                    var modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
                     }
 
-                } else {
-                    // A stale editing session lost the lock (another user took over).
-                    if (response.data && response.data.code === 'decker_task_locked') {
-                        const lockContext = document.querySelector('.task-modal.show') || document;
-                        handleLockLost(lockContext, response.data);
-                        alert(response.data.message || strings.lock_lost_message);
-                        return;
-                    }
-                    alert(response.data.message || strings.error_saving_task);
-                    if (saveButton) {
-                        saveButton.disabled = false;
-                    }
-                    if (saveDropdown) {
-                        saveDropdown.disabled = false;
-                    }
+                    // Reload the page if the request was successful
+                    location.reload();
+                    return;
                 }
-            } else {
-                console.error(strings.server_response_error);
-                alert(strings.an_error_occurred_saving_task);
+
+                // Full-page view: only navigate when this save created a new
+                // task. Reloading an existing card would fire pagehide, release
+                // the edit lock, and open a race where a stale editor can still
+                // overwrite the just-saved values before the lock is re-acquired.
+                const savedId = response.data && response.data.task_id
+                    ? String(response.data.task_id)
+                    : '';
+                const currentId = formData.task_id ? String(formData.task_id) : '';
+                if (savedId && (!currentId || currentId === '0' || currentId !== savedId)) {
+                    window.location.href = `${homeUrl}?decker_page=task&id=${savedId}`;
+                    return;
+                }
+
+                // Stay on the page and keep the lock for further edits.
                 if (saveButton) {
                     saveButton.disabled = false;
                 }
                 if (saveDropdown) {
                     saveDropdown.disabled = false;
                 }
+                return;
+            }
+
+            // Lock conflicts are returned as HTTP 409 with success:false.
+            // Handle them for any status so the previous editor is blocked
+            // immediately instead of only on 2xx bodies.
+            if (response && response.data && response.data.code === 'decker_task_locked') {
+                const lockContext = document.querySelector('.task-modal.show') || document;
+                handleLockLost(lockContext, response.data);
+                alert(response.data.message || strings.lock_lost_message);
+                return;
+            }
+
+            if (response && response.data && response.data.message) {
+                alert(response.data.message);
+            } else if (xhr.status >= 200 && xhr.status < 400) {
+                alert(strings.error_saving_task);
+            } else {
+                console.error(strings.server_response_error);
+                alert(strings.an_error_occurred_saving_task);
+            }
+            if (saveButton) {
+                saveButton.disabled = false;
+            }
+            if (saveDropdown) {
+                saveDropdown.disabled = false;
             }
         };
 

@@ -115,14 +115,30 @@ test.describe( 'Task edit locking', () => {
 		// The due date is a required field; a full save is blocked client-side
 		// (form validation) until it is set.
 		await b.page.fill( '#task-due-date', '2026-12-31' );
-		await b.page.locator( '#save-task' ).click();
-		await b.page.waitForLoadState( 'networkidle' );
+		await Promise.all( [
+			b.page.waitForResponse( ( response ) =>
+				response.url().includes( 'admin-ajax.php' ) &&
+				response.request().method() === 'POST' &&
+				response.ok()
+			),
+			b.page.locator( '#save-task' ).click(),
+		] );
+		// Saving an existing full-page card must keep the session (and lock)
+		// instead of redirecting, so the title remains user B's on this page.
+		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
+		await expect( b.page.locator( '#save-task' ) ).toBeEnabled( { timeout: 10000 } );
 
 		// User A tries to save a stale change and is rejected.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
 		await a.page.fill( '#task-title', 'Updated by user A' );
 		await a.page.fill( '#task-due-date', '2026-12-30' );
-		await a.page.locator( '#save-task' ).click();
+		await Promise.all( [
+			a.page.waitForResponse( ( response ) =>
+				response.url().includes( 'admin-ajax.php' ) &&
+				response.request().method() === 'POST'
+			),
+			a.page.locator( '#save-task' ).click(),
+		] );
 		await expect(
 			a.page.locator( '[data-decker-lock-lost]' )
 		).toBeVisible( { timeout: 10000 } );
