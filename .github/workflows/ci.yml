@@ -7,7 +7,7 @@ on:
     tags:
       - '*'
     branches:
-      - '*'
+      - '*' 
 
 permissions:
   contents: read
@@ -16,12 +16,16 @@ jobs:
   lint_and_test:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the code
       - uses: actions/checkout@v7
+
+      # Note: the WordPress Playground PR preview link is posted by the dedicated
+      # playground-preview.yml workflow (WordPress/action-wp-playground-pr-preview).
 
       - name: PHP setup
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: '8.3'  # Adjust the version according to your needs
           extensions: mbstring, intl, curl, dom, json, pdo, mysql, xml, zip
 
       - name: Install dependencies
@@ -33,9 +37,11 @@ jobs:
       - name: Check untranslated strings
         run: make check-untranslated
 
+      # Install wp-env globally
       - name: Setup wp-env
         run: npm -g --no-fund i @wordpress/env
 
+      # Start wp-env environment
       - name: Start wp-env
         run: make up
 
@@ -46,19 +52,9 @@ jobs:
         run: make check-plugin
 
       - name: Run unit tests
-        shell: bash
-        run: |
-          set -o pipefail
-          make test 2>&1 | tee /tmp/phpunit.log
+        run: make test
 
-      - name: Upload PHPUnit log
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: phpunit-log
-          path: /tmp/phpunit.log
-          retention-days: 1
-
+      # E2E Tests with Playwright
       - name: Install npm dependencies and Playwright
         run: npm install && npx playwright install --with-deps chromium
 
