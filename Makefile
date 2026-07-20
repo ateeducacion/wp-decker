@@ -7,6 +7,24 @@ else
   SED_INPLACE = sed -i
 endif
 
+# ─── Port arbitration (local dev) ────────────────────────────────────────────
+# wp-decker and the documentate plugin both default to ports 8888/8889, so only
+# one wp-env stack can own them at a time. Before starting ours, stop whatever
+# publishes the ports we need. `docker stop` (not `rm`) keeps the other stack's
+# data — its own `make up` brings it back. Skipped under CI ($$CI set) and a
+# no-op when Docker is down, so it only ever acts on a developer's machine —
+# never stopping an environment CI just started.
+# Usage: $(call free_ports,8888 8889)
+define free_ports
+	@if [ -z "$$CI" ] && docker version >/dev/null 2>&1; then \
+		ids="$$(docker ps -q $(patsubst %,--filter publish=%,$(1)))"; \
+		if [ -n "$$ids" ]; then \
+			echo "Freeing port(s) '$(1)': stopping conflicting containers..."; \
+			docker stop $$ids >/dev/null; \
+		fi; \
+	fi
+endef
+
 # Check if Docker is running
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
@@ -30,6 +48,7 @@ start-if-not-running: check-docker
 # Bring up the environment. Always calls `wp-env start` (idempotent), so it
 # (re)syncs the containers instead of skipping when something only appears up.
 up: check-docker
+	$(call free_ports,8888 8889)
 	npx wp-env start
 	-npx wp-env run cli wp plugin activate decker
 	@echo "Visit http://localhost:8888/wp-admin/ to access the Decker dashboard."
