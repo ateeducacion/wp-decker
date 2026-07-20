@@ -136,6 +136,9 @@ add_action( 'admin_notices', 'decker_multisite_restriction_notice' );
  * admin-specific hooks, and public-facing site hooks.
  */
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-ability-service.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-abilities.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-agent-ui.php';
 
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
