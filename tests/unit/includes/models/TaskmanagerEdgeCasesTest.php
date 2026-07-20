@@ -57,24 +57,17 @@ class DeckerTaskManagerEdgeCasesTest extends Decker_Test_Base {
 	 * Ensure serialized LIKE matching does not return another user's task.
 	 */
 	public function test_get_tasks_by_user_filters_serialized_id_false_positives() {
-		$target_user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		$other_user_id  = (int) ( (string) $target_user_id . '0' );
+		$target_user_id = 1;
+		$other_user_id  = 0;
 
-		while ( get_user_by( 'id', $other_user_id ) ) {
-			++$other_user_id;
+		while ( false === strpos( (string) $other_user_id, (string) $target_user_id ) ) {
+			$other_user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
 		}
-
-		$other_user_id = self::factory()->user->create(
-			array(
-				'role' => 'subscriber',
-				'ID'   => $other_user_id,
-			)
-		);
 
 		$task_id = self::factory()->task->create(
 			array(
-				'board'        => $this->board->term_id,
-				'responsable'  => $this->editor_id,
+				'board'          => $this->board->term_id,
+				'responsable'    => $this->editor_id,
 				'assigned_users' => array( $other_user_id ),
 			)
 		);
@@ -141,7 +134,7 @@ class DeckerTaskManagerEdgeCasesTest extends Decker_Test_Base {
 	public function test_get_user_task_dates_removes_duplicates_across_tasks() {
 		$yesterday = ( new DateTime( 'yesterday' ) )->format( 'Y-m-d' );
 
-		foreach ( range( 1, 2 ) as $unused ) {
+		for ( $index = 0; $index < 2; ++$index ) {
 			$task_id = self::factory()->task->create(
 				array(
 					'board'          => $this->board->term_id,
@@ -168,12 +161,12 @@ class DeckerTaskManagerEdgeCasesTest extends Decker_Test_Base {
 	 * Ensure invalid, current, future, and expired dates are excluded.
 	 */
 	public function test_get_user_task_dates_excludes_out_of_range_and_invalid_dates() {
-		$valid_date    = ( new DateTime( '-2 days' ) )->format( 'Y-m-d' );
-		$expired_date  = ( new DateTime( '-8 days' ) )->format( 'Y-m-d' );
-		$today         = ( new DateTime() )->format( 'Y-m-d' );
-		$tomorrow      = ( new DateTime( '+1 day' ) )->format( 'Y-m-d' );
-		$another_user  = self::factory()->user->create( array( 'role' => 'subscriber' ) );
-		$task_id       = self::factory()->task->create(
+		$valid_date   = ( new DateTime( '-2 days' ) )->format( 'Y-m-d' );
+		$expired_date = ( new DateTime( '-8 days' ) )->format( 'Y-m-d' );
+		$today        = ( new DateTime() )->format( 'Y-m-d' );
+		$tomorrow     = ( new DateTime( '+1 day' ) )->format( 'Y-m-d' );
+		$another_user = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$task_id      = self::factory()->task->create(
 			array(
 				'board'          => $this->board->term_id,
 				'assigned_users' => array( $this->editor_id ),
@@ -221,7 +214,7 @@ class DeckerTaskManagerEdgeCasesTest extends Decker_Test_Base {
 		$this->assertSame( array(), $this->task_manager->get_board_task_counts_by_stack( array() ) );
 		$this->assertSame(
 			array(),
-			$this->task_manager->get_board_task_counts_by_stack( array( '', '---', '   ' ) )
+			$this->task_manager->get_board_task_counts_by_stack( array( '', '@@@', '   ' ) )
 		);
 	}
 
