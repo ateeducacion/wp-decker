@@ -258,6 +258,35 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Claim the write lease for a save so a takeover cannot interleave with it.
+	 *
+	 * Succeeds only while the caller still owns the exact active session; a false
+	 * result means the session was superseded between validation and the write, so
+	 * the save must be rejected. Callers gate this on {@see is_enabled()} — it is
+	 * only meaningful while locking is enforced.
+	 *
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user starting the save.
+	 * @param string $session_generation The generation token embedded in the editor form.
+	 * @return bool True when the lease was claimed.
+	 */
+	public function begin_save( int $post_id, int $user_id, string $session_generation ): bool {
+		return $this->store->begin_save( $post_id, $user_id, $session_generation );
+	}
+
+	/**
+	 * Release the write lease after a save completes.
+	 *
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user finishing the save.
+	 * @param string $session_generation The generation token embedded in the editor form.
+	 * @return void
+	 */
+	public function end_save( int $post_id, int $user_id, string $session_generation ) {
+		$this->store->end_save( $post_id, $user_id, $session_generation );
+	}
+
+	/**
 	 * Refresh a still-held lock from the heartbeat without ever acquiring.
 	 *
 	 * The heartbeat must never grant a new generation to an already-open form: a
@@ -427,16 +456,6 @@ class Decker_Task_Locks {
 		$post = get_post( $post_id );
 
 		return $post instanceof WP_Post && self::POST_TYPE === $post->post_type;
-	}
-
-	/**
-	 * Read the unique lock-generation token for a task.
-	 *
-	 * @param int $post_id The task post ID.
-	 * @return string The current generation token, or empty string when never locked.
-	 */
-	public function get_generation( int $post_id ): string {
-		return $this->store->generation( $post_id );
 	}
 
 	/**

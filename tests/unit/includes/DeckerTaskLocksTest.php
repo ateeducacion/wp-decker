@@ -218,7 +218,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		// Simulate the new owner closing the modal (lock released, token kept).
 		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $info_b['generation'] ) );
 		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
-		$this->assertSame( $info_b['generation'], $this->locks->get_generation( $this->task_id ) );
+		$this->assertSame( $info_b['generation'], $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		// Without a generation token, an unlocked card is free (legacy behaviour).
 		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_a ) );
@@ -332,7 +332,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertTrue( $injected, 'The CAS barrier must have injected C\'s takeover.' );
 
 		// Authoritative generation always matches the owner reported for that generation.
-		$generation = $this->locks->get_generation( $this->task_id );
+		$generation = $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'];
 		$raw_state  = get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true );
 		$state      = json_decode( (string) $raw_state, true );
 
@@ -385,11 +385,11 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 
 		$this->assertNotSame( $info_a['generation'], $info_b['generation'] );
 		$this->assertNotSame( $info_b['generation'], $info_c['generation'] );
-		$this->assertSame( $info_c['generation'], $this->locks->get_generation( $this->task_id ) );
+		$this->assertSame( $info_c['generation'], $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		// C releases; only C's token remains authoritative.
 		$this->assertTrue( $this->locks->release_lock( $this->task_id, $user_c, $info_c['generation'] ) );
-		$this->assertSame( $info_c['generation'], $this->locks->get_generation( $this->task_id ) );
+		$this->assertSame( $info_c['generation'], $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		// B lost the takeover chain: their token must not save after release.
 		$result_b = $this->locks->assert_user_can_save(
@@ -532,6 +532,33 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The write lease serializes saves against takeovers: while a save holds the
+	 * lease, a takeover refuses, and once the save ends the takeover proceeds.
+	 */
+	public function test_write_lease_blocks_takeover_until_save_completes() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		// A begins a save: it claims the write lease.
+		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		// While the lease is held, B's takeover is refused and A still owns.
+		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertFalse( $blocked['owned_by_current_user'] );
+		$this->assertTrue( $blocked['locked'] );
+		$this->assertTrue(
+			$this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info['generation'] )
+		);
+
+		// A second save cannot start while one is already in progress.
+		$this->assertFalse( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+
+		// A ends the save: the lease clears and B can now take over.
+		$this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		$after = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertTrue( $after['owned_by_current_user'] );
+	}
+
+	/**
 	 * With no lock present at all, any editor is allowed to save.
 	 */
 	public function test_no_lock_allows_save() {
@@ -591,7 +618,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 
 		$this->assertFalse( $refresh['owned_by_current_user'] );
 		$this->assertNotEmpty( $refresh['stale_session'] );
-		$this->assertSame( $info_b['generation'], $this->locks->get_generation( $this->task_id ) );
+		$this->assertSame( $info_b['generation'], $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		// The stale session is still rejected on save.
 		$result = $this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a['generation'] );

@@ -216,7 +216,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertNotEmpty( $resp['decker_task_lock']['stale_session'] );
 
 		// The server generation is still B's; A never received a fresh one.
-		$this->assertSame( $info_b['generation'], $this->locks->get_generation( $this->task_id ) );
+		$this->assertSame( $info_b['generation'], $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		// A's original save is still rejected after the heartbeat.
 		wp_set_current_user( $this->user_a );
@@ -335,7 +335,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertIsArray( $state, 'Lock state must be seeded on creation.' );
 		$this->assertSame( 0, (int) $state['user'] );
 		$this->assertSame( 0, (int) $state['time'] );
-		$this->assertSame( '', $this->locks->get_generation( $task_id ) );
+		$this->assertSame( '', $this->locks->get_lock_info( $task_id, $this->user_a )['generation'] );
 	}
 
 	/**
@@ -356,6 +356,49 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertGreaterThan( 0, (int) $resp['task_id'] );
 
 		$this->assertSeeded( (int) $resp['task_id'] );
+	}
+
+	/**
+	 * The TOCTOU race: a takeover injected after A passes the lock check but
+	 * before A's wp_update_post() runs must not cause a lost update. A's write
+	 * lease serializes the takeover (it refuses) so A commits atomically; the
+	 * takeover only proceeds once A's save has finished.
+	 */
+	public function test_save_lease_serializes_a_takeover_injected_during_the_write() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		$task_id  = $this->task_id;
+		$user_b   = $this->user_b;
+		$injected = false;
+		$takeover = null;
+
+		$callback = function ( $post_id ) use ( &$injected, &$takeover, $task_id, $user_b ) {
+			if ( $injected || (int) $post_id !== (int) $task_id ) {
+				return;
+			}
+			$injected = true;
+			// Runs inside A's wp_update_post(), after A claimed the write lease.
+			$takeover = ( new Decker_Task_Locks() )->take_over_lock( $post_id, $user_b );
+		};
+		add_action( 'pre_post_update', $callback, 10, 1 );
+
+		wp_set_current_user( $this->user_a );
+		$_POST = $this->save_payload( 'Committed by user A', $info_a['generation'] );
+		$resp  = ( new Decker_Tasks() )->handle_save_decker_task();
+
+		remove_action( 'pre_post_update', $callback, 10 );
+
+		$this->assertTrue( $injected, 'The takeover must have been injected during A\'s write.' );
+
+		// A's save committed atomically; B's takeover was refused by the lease.
+		$this->assertTrue( $resp['success'] );
+		$this->assertSame( 'Committed by user A', get_post( $this->task_id )->post_title );
+		$this->assertFalse( $takeover['owned_by_current_user'] );
+		$this->assertTrue( $takeover['locked'] );
+
+		// Once A's save has finished the lease is released and B can take over.
+		$after = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertTrue( $after['owned_by_current_user'] );
 	}
 
 	/**

@@ -3241,6 +3241,28 @@ class Decker_Tasks {
 			}
 		}
 
+		// Claim a write lease so a takeover cannot interleave between the lock
+		// validation above and the database write below (a takeover refuses while
+		// the lease is held). Only meaningful for an owned, generation-checked
+		// session; a failure here means the session was just superseded.
+		$lock_generation = is_string( $options['lock_generation'] ) ? $options['lock_generation'] : '';
+		$has_write_lease = false;
+		if ( $core['id'] > 0 && '' !== $lock_generation && $this->get_task_locks()->is_enabled() ) {
+			$has_write_lease = $this->get_task_locks()->begin_save( $core['id'], get_current_user_id(), $lock_generation );
+			if ( ! $has_write_lease ) {
+				$error_data = array(
+					'message' => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
+					'code'    => 'decker_task_locked',
+					'locked'  => true,
+				);
+				if ( $send_response ) {
+					wp_send_json_error( $error_data, 409 );
+					return;
+				}
+				return array_merge( array( 'success' => false ), $error_data );
+			}
+		}
+
 		$duedate = $this->parse_task_due_date( $options['duedate_raw'] );
 
 		$mark_for_today = $options['mark_for_today'];
@@ -3268,6 +3290,9 @@ class Decker_Tasks {
 		);
 
 		if ( is_wp_error( $result ) ) {
+			if ( $has_write_lease ) {
+				$this->get_task_locks()->end_save( $core['id'], get_current_user_id(), $lock_generation );
+			}
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
 			return;
 		}
@@ -3277,6 +3302,11 @@ class Decker_Tasks {
 			$this->add_user_date_relation( $result, get_current_user_id() );
 		} else {
 			$this->remove_user_date_relation( $result, get_current_user_id() );
+		}
+
+		// All writes are done: release the write lease so takeovers can proceed.
+		if ( $has_write_lease ) {
+			$this->get_task_locks()->end_save( $core['id'], get_current_user_id(), $lock_generation );
 		}
 
 		$result_data = array(
