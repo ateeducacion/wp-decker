@@ -185,6 +185,7 @@ class EmailToPostEdgeCasesTest extends Decker_Test_Base {
 	private function dispatch( string $authorization, array $payload ): WP_REST_Response {
 		$request = new WP_REST_Request( 'POST', $this->endpoint );
 		$request->set_header( 'Authorization', $authorization );
+		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $payload ) );
 
 		return rest_get_server()->dispatch( $request );
