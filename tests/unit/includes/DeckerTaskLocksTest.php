@@ -257,7 +257,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$window = $this->locks->get_lock_window();
 		update_post_meta(
 			$this->task_id,
-			Decker_Task_Locks::STATE_META,
+			Decker_Task_Lock_Store::STATE_META,
 			wp_json_encode(
 				array(
 					'user'  => $this->user_a,
@@ -333,7 +333,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 
 		// Authoritative generation always matches the owner reported for that generation.
 		$generation = $this->locks->get_generation( $this->task_id );
-		$raw_state  = get_post_meta( $this->task_id, Decker_Task_Locks::STATE_META, true );
+		$raw_state  = get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true );
 		$state      = json_decode( (string) $raw_state, true );
 
 		$this->assertIsArray( $state );

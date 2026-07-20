@@ -190,6 +190,10 @@
         }
         try {
             const lock = JSON.parse(form.dataset.lock);
+            // The heartbeat ticks often; only rewrite data-lock when it changes.
+            if (lock.generation === generation) {
+                return;
+            }
             lock.generation = generation;
             form.dataset.lock = JSON.stringify(lock);
         } catch (e) {
@@ -1785,10 +1789,7 @@
 
         // Embed the lock generation from the form session so the server can
         // reject this save after a takeover even if the active lock was released.
-        const lockState = readTaskLockState(form) || {};
-        const lockGeneration = Object.prototype.hasOwnProperty.call(lockState, 'generation')
-            ? lockState.generation
-            : '';
+        const lockGeneration = (readTaskLockState(form) || {}).generation ?? '';
 
         // Gather the form data
         const formData = {
