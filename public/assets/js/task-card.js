@@ -367,8 +367,21 @@
         lockRequest('DELETE', taskId, '', { keepalive: true }).catch(() => {});
     }
 
+    /**
+     * Clear in-memory lock tracking without contacting the server.
+     *
+     * Used when the lock was already released through another path (for example
+     * an explicit REST DELETE in tests) so a later pagehide does not issue a
+     * duplicate release request.
+     */
+    function clearActiveLockState() {
+        setLockHeartbeatSpeed(false);
+        activeLock = null;
+    }
+
     // Expose the release helper so the modal close handler can call it.
     window.deckerReleaseActiveTaskLock = releaseActiveLock;
+    window.deckerClearActiveTaskLockState = clearActiveLockState;
 
     // Release the lock when the tab is closed or the user navigates away
     // (covers the full-page view and closing without saving).

@@ -173,10 +173,17 @@ test.describe( 'Task edit locking', () => {
 				credentials: 'same-origin',
 			} );
 			const data = await response.json();
+			// Drop in-memory ownership so pagehide does not fire a second DELETE.
+			if ( typeof window.deckerClearActiveTaskLockState === 'function' ) {
+				window.deckerClearActiveTaskLockState();
+			}
 			return { ok: response.ok, status: response.status, data };
 		}, taskId );
 		expect( releaseResult.ok ).toBe( true );
 		expect( releaseResult.data.released ).toBe( true );
+
+		// Close B's session before opening another B context for the final check.
+		await b.context.close();
 
 		// User A tries to save a stale change and is rejected with HTTP 409.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
@@ -188,8 +195,7 @@ test.describe( 'Task edit locking', () => {
 		] );
 		const aGeneration = getSavePostParam( aSaveResponse, 'lock_generation' );
 		expect( aGeneration ).toBeTruthy();
-		expect( aGeneration ).not.toBe( '0' );
-		// After takeover, A's form still carries the pre-takeover generation.
+		// After takeover, A's form still carries the pre-takeover generation token.
 		expect( aGeneration ).not.toBe( bGeneration );
 		expect( aSaveResponse.status() ).toBe( 409 );
 		const aSaveBody = await aSaveResponse.json();
@@ -205,7 +211,6 @@ test.describe( 'Task edit locking', () => {
 		await expect( final.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
 
 		await a.context.close();
-		await b.context.close();
 		await final.context.close();
 	} );
 

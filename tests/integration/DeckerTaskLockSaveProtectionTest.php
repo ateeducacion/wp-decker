@@ -92,7 +92,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	 * Build a valid save payload for the task under test.
 	 *
 	 * @param string   $title      The title to save.
-	 * @param int|null $generation Optional lock generation from the editor session.
+	 * @param string|null $generation Optional lock generation token from the editor session.
 	 * @return array The $_POST payload.
 	 */
 	private function save_payload( string $title, $generation = null ): array {

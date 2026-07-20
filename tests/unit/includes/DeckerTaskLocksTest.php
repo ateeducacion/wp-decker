@@ -91,7 +91,8 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertIsArray( $info );
 		$this->assertTrue( $info['owned_by_current_user'] );
 		$this->assertFalse( $info['locked'] );
-		$this->assertSame( 1, $info['generation'] );
+		$this->assertNotEmpty( $info['generation'] );
+		$this->assertIsString( $info['generation'] );
 
 		$meta = get_post_meta( $this->task_id, '_edit_lock', true );
 		$this->assertMatchesRegularExpression( '/^\d+:' . $this->user_a . '$/', $meta );
@@ -203,20 +204,21 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Takeover bumps the lock generation so a released lock still rejects the
-	 * previous editor's session token.
+	 * Takeover issues a new generation token so a released lock still rejects
+	 * the previous editor's session token.
 	 */
 	public function test_takeover_bumps_generation_and_invalidates_stale_session() {
 		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertSame( 1, $info_a['generation'] );
+		$this->assertNotEmpty( $info_a['generation'] );
 
 		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
-		$this->assertSame( 2, $info_b['generation'] );
+		$this->assertNotEmpty( $info_b['generation'] );
+		$this->assertNotSame( $info_a['generation'], $info_b['generation'] );
 
-		// Simulate the new owner closing the modal (lock released, generation kept).
+		// Simulate the new owner closing the modal (lock released, token kept).
 		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
 		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
-		$this->assertSame( 2, $this->locks->get_generation( $this->task_id ) );
+		$this->assertSame( $info_b['generation'], $this->locks->get_generation( $this->task_id ) );
 
 		// Without a generation token, an unlocked card is free (legacy behaviour).
 		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_a ) );
@@ -228,6 +230,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 
 		// The new owner's generation remains valid after they re-acquire.
 		$reacquired = $this->locks->acquire_lock( $this->task_id, $this->user_b );
+		$this->assertNotSame( $info_b['generation'], $reacquired['generation'] );
 		$this->assertTrue(
 			$this->locks->assert_user_can_save(
 				$this->task_id,
@@ -235,6 +238,18 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 				$reacquired['generation']
 			)
 		);
+	}
+
+	/**
+	 * Successive ownership changes must not reuse the same generation token.
+	 */
+	public function test_ownership_changes_issue_unique_generation_tokens() {
+		$first  = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$second = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$third  = $this->locks->take_over_lock( $this->task_id, $this->user_a );
+
+		$tokens = array( $first['generation'], $second['generation'], $third['generation'] );
+		$this->assertCount( 3, array_unique( $tokens ) );
 	}
 
 	/**

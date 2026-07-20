@@ -3244,7 +3244,7 @@ class Decker_Tasks {
 	 *
 	 * The nonce is verified by the caller when the response filter is enabled.
 	 *
-	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string,lock_generation:int|null}
+	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string,lock_generation:string|null}
 	 */
 	private function read_task_option_fields(): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
@@ -3259,12 +3259,12 @@ class Decker_Tasks {
 
 		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
 
-		// Session generation from the editor form; null when the client did not send it.
+		// Session generation token from the editor form; null when the client did not send it.
 		$lock_generation = null;
 		if ( isset( $_POST['lock_generation'] ) ) {
 			$lock_generation_raw = sanitize_text_field( wp_unslash( $_POST['lock_generation'] ) );
 			if ( '' !== $lock_generation_raw ) {
-				$lock_generation = absint( $lock_generation_raw );
+				$lock_generation = $lock_generation_raw;
 			}
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
