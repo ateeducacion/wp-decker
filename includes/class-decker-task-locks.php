@@ -524,7 +524,7 @@ class Decker_Task_Locks {
 	/**
 	 * Whether a state blob represents an actively held lock.
 	 *
-	 * @param array{user:int,token:string,time:int}|null $state The state.
+	 * @param array|null $state The state (user/token/time), or null.
 	 * @return bool True when the lock is actively held.
 	 */
 	private function state_is_active( $state ): bool {
@@ -536,7 +536,7 @@ class Decker_Task_Locks {
 	/**
 	 * Encode lock state for storage. Key order is fixed for stable CAS comparisons.
 	 *
-	 * @param array{user:int,token:string,time:int} $state The state.
+	 * @param array $state The state (user/token/time).
 	 * @return string JSON payload.
 	 */
 	private function encode_state( array $state ): string {
@@ -552,9 +552,9 @@ class Decker_Task_Locks {
 	/**
 	 * Compare-and-swap write of the authoritative lock state.
 	 *
-	 * @param int                                    $post_id  The task post ID.
-	 * @param array{user:int,token:string,time:int}|null $expected Previous state, or null when absent.
-	 * @param array{user:int,token:string,time:int}  $new      Desired state.
+	 * @param int        $post_id  The task post ID.
+	 * @param array|null $expected Previous state (user/token/time), or null when absent.
+	 * @param array      $new      Desired state (user/token/time).
 	 * @return bool True when this writer won the CAS.
 	 */
 	private function cas_write_state( int $post_id, $expected, array $new ): bool {
