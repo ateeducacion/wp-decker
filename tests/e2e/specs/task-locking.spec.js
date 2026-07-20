@@ -167,7 +167,21 @@ test.describe( 'Task edit locking', () => {
 			const nonce = window.wpApiSettings && window.wpApiSettings.nonce
 				? window.wpApiSettings.nonce
 				: '';
-			const response = await fetch( `${ root }decker/v1/tasks/${ id }/lock`, {
+			// Release requires the session generation (owner + token must match),
+			// read from the form's data-lock exactly as the client sends it.
+			let generation = '';
+			const form = document.getElementById( 'task-form' );
+			if ( form && form.dataset.lock ) {
+				try {
+					generation = JSON.parse( form.dataset.lock ).generation || '';
+				} catch ( e ) {
+					generation = '';
+				}
+			}
+			const query = generation
+				? `?lock_generation=${ encodeURIComponent( generation ) }`
+				: '';
+			const response = await fetch( `${ root }decker/v1/tasks/${ id }/lock${ query }`, {
 				method: 'DELETE',
 				headers: { 'X-WP-Nonce': nonce },
 				credentials: 'same-origin',
