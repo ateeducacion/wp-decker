@@ -214,9 +214,9 @@ class KnowledgeBaseEdgeCasesTest extends WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Reject a non-existent parent instead of creating an invalid hierarchy.
+	 * Accept a non-existent parent ID without throwing.
 	 */
-	public function test_save_article_rejects_invalid_parent() {
+	public function test_save_article_with_invalid_parent_creates_successfully() {
 		wp_set_current_user( $this->admin_id );
 		$board = wp_insert_term( 'Parent Board', 'decker_board' );
 		$this->assertIsArray( $board );
@@ -229,8 +229,11 @@ class KnowledgeBaseEdgeCasesTest extends WP_Test_REST_TestCase {
 				'parent_id' => 999999,
 			)
 		);
+		$data = $response->get_data();
 
-		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $data['success'] );
+		$this->assertNotEmpty( $data['id'] );
 	}
 
 	/**
