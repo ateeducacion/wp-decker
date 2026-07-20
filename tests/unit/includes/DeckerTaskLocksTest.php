@@ -532,4 +532,94 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 
 		delete_option( 'decker_settings' );
 	}
+
+	/**
+	 * A heartbeat refresh extends the sole owner's lock without ever bumping the
+	 * generation, so their open form keeps saving.
+	 */
+	public function test_refresh_lock_keeps_sole_owner_session() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		$refresh = $this->locks->refresh_lock( $this->task_id, $this->user_a, $info_a['generation'] );
+
+		$this->assertTrue( $refresh['owned_by_current_user'] );
+		$this->assertSame( $info_a['generation'], $refresh['generation'] );
+		$this->assertArrayNotHasKey( 'stale_session', $refresh );
+		$this->assertTrue(
+			$this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a['generation'] )
+		);
+	}
+
+	/**
+	 * The heartbeat must never re-acquire a released lock for a previous editor:
+	 * after a takeover and release, the stale editor stays stale (regression for
+	 * the heartbeat re-authorization hole).
+	 */
+	public function test_refresh_lock_does_not_reauthorize_after_takeover_and_release() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+
+		// A's heartbeat with the pre-takeover token must not grant a new one.
+		$refresh = $this->locks->refresh_lock( $this->task_id, $this->user_a, $info_a['generation'] );
+
+		$this->assertFalse( $refresh['owned_by_current_user'] );
+		$this->assertNotEmpty( $refresh['stale_session'] );
+		$this->assertSame( $info_b['generation'], $this->locks->get_generation( $this->task_id ) );
+
+		// The stale session is still rejected on save.
+		$result = $this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a['generation'] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_task_locked', $result->get_error_code() );
+	}
+
+	/**
+	 * When the Decker state is released (inactive), a native `_edit_lock` set
+	 * afterwards (for example from the wp-admin editor) is still respected.
+	 */
+	public function test_native_lock_detected_after_released_decker_state() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a ) );
+
+		// The Decker state row still exists but is released; a native lock appears.
+		update_post_meta( $this->task_id, '_edit_lock', time() . ':' . $this->user_b );
+
+		$info = $this->locks->get_lock_info( $this->task_id, $this->user_a );
+		$this->assertTrue( $info['locked'] );
+		$this->assertFalse( $info['owned_by_current_user'] );
+		$this->assertSame( $this->user_b, $info['owner']['id'] );
+	}
+
+	/**
+	 * Seeding an inactive state on creation lets the first acquire use the atomic
+	 * update path; the seed never reads as a lock and is idempotent.
+	 */
+	public function test_initialize_seeds_inactive_state() {
+		// Simulate a legacy task that has no state row yet.
+		delete_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META );
+		$this->assertSame( '', get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ) );
+
+		$this->locks->initialize_lock_state( $this->task_id );
+
+		$state = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
+		$this->assertIsArray( $state );
+		$this->assertSame( 0, (int) $state['user'] );
+		$this->assertSame( 0, (int) $state['time'] );
+
+		// The seed is inactive: not a lock and no generation.
+		$info = $this->locks->get_lock_info( $this->task_id, $this->user_a );
+		$this->assertFalse( $info['locked'] );
+		$this->assertSame( '', $info['generation'] );
+
+		// First acquire still works and mints a generation.
+		$acquired = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $acquired['owned_by_current_user'] );
+		$this->assertNotEmpty( $acquired['generation'] );
+
+		// Re-seeding is a no-op: it must not clobber the active lock.
+		$this->locks->initialize_lock_state( $this->task_id );
+		$this->assertTrue(
+			$this->locks->get_lock_info( $this->task_id, $this->user_a )['owned_by_current_user']
+		);
+	}
 }

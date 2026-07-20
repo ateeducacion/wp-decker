@@ -12,12 +12,15 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/class-decker-task-native-lock.php';
+
 /**
  * Class Decker_Task_Lock_Store
  *
  * Owns the authoritative `_decker_edit_lock_state` meta and the compare-and-swap
- * writes that keep the owner and generation token consistent, plus the native
- * `_edit_lock` mirror used for WordPress admin interoperability.
+ * writes that keep the owner and generation token consistent. The native
+ * `_edit_lock` mirror used for WordPress admin interoperability is delegated to
+ * {@see Decker_Task_Native_Lock}.
  *
  * Keeping every persistence detail here lets Decker_Task_Locks stay a thin policy
  * layer (capability checks, stale-lock window, save gating) instead of also
@@ -45,6 +48,20 @@ class Decker_Task_Lock_Store {
 	 * @var int
 	 */
 	const CAS_MAX_ATTEMPTS = 5;
+
+	/**
+	 * The native WordPress `_edit_lock` mirror.
+	 *
+	 * @var Decker_Task_Native_Lock
+	 */
+	private $native;
+
+	/**
+	 * Constructor.
+	 */
+	public function __construct() {
+		$this->native = new Decker_Task_Native_Lock();
+	}
 
 	/**
 	 * Read the authoritative Decker lock state, if present.
@@ -89,26 +106,24 @@ class Decker_Task_Lock_Store {
 	/**
 	 * Read the active lock (owner + time) from the authoritative state.
 	 *
-	 * Falls back to the native `_edit_lock` mirror when no Decker state exists
-	 * (for example a lock set from the WordPress admin editor).
+	 * Falls back to the native `_edit_lock` mirror whenever there is no active
+	 * Decker lock — either no Decker state at all, or a released state (time = 0).
+	 * That way a native lock set afterwards from the WordPress admin editor is
+	 * still detected and respected.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @return array{time:int,user:int}|null The active lock, or null when free/released.
 	 */
 	public function read_active_lock( int $post_id ) {
 		$state = $this->read( $post_id );
-		if ( $state ) {
-			if ( ! $this->is_active( $state ) ) {
-				return null;
-			}
-
+		if ( $this->is_active( $state ) ) {
 			return array(
 				'time' => (int) $state['time'],
 				'user' => (int) $state['user'],
 			);
 		}
 
-		return $this->read_native_lock( $post_id );
+		return $this->native->read( $post_id );
 	}
 
 	/**
@@ -177,7 +192,7 @@ class Decker_Task_Lock_Store {
 			);
 
 			if ( $this->cas_write( $post_id, $current, $new ) ) {
-				$this->mirror_native_lock( $post_id, $user_id );
+				$this->native->set( $post_id, $user_id );
 				return true;
 			}
 
@@ -203,7 +218,7 @@ class Decker_Task_Lock_Store {
 
 			if ( ! $this->is_active( $current ) || (int) $current['user'] !== (int) $user_id ) {
 				// Legacy mirror only: release native lock when we still own it.
-				return $this->release_native_if_owned( $post_id, $user_id );
+				return $this->native->release_if_owned( $post_id, $user_id );
 			}
 
 			$released = array(
@@ -213,12 +228,52 @@ class Decker_Task_Lock_Store {
 			);
 
 			if ( $this->cas_write( $post_id, $current, $released ) ) {
-				$this->delete_native_lock( $post_id );
+				$this->native->clear( $post_id );
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Refresh a still-held session's timestamp without acquiring.
+	 *
+	 * Unlike {@see write()}, this never acquires a free or released lock and never
+	 * mints a new generation. It only extends the lock when the caller still owns
+	 * an active lock whose token matches their session generation, so a takeover
+	 * can never be undone by the previous editor's heartbeat.
+	 *
+	 * A single attempt is enough: on CAS contention the next heartbeat retries.
+	 *
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user whose session is refreshing.
+	 * @param string $session_generation The generation token embedded in the editor form.
+	 * @return bool True when the lock timestamp was refreshed.
+	 */
+	public function refresh( int $post_id, int $user_id, string $session_generation ): bool {
+		$current = $this->read( $post_id );
+
+		// Only the current owner holding the exact session token may refresh.
+		if ( '' === $session_generation
+			|| ! $this->is_active( $current )
+			|| (int) $current['user'] !== (int) $user_id
+			|| (string) $current['token'] !== $session_generation ) {
+			return false;
+		}
+
+		$refreshed = array(
+			'user'  => (int) $user_id,
+			'token' => (string) $current['token'],
+			'time'  => time(),
+		);
+
+		if ( ! $this->cas_write( $post_id, $current, $refreshed ) ) {
+			return false;
+		}
+
+		$this->native->set( $post_id, $user_id );
+		return true;
 	}
 
 	/**
@@ -287,61 +342,35 @@ class Decker_Task_Lock_Store {
 	}
 
 	/**
-	 * Mirror the native WordPress edit-lock fields for admin interoperability.
+	 * Seed an empty, released state row when a task is created.
 	 *
-	 * @param int $post_id The task post ID.
-	 * @param int $user_id The lock owner.
-	 * @return void
-	 */
-	private function mirror_native_lock( int $post_id, int $user_id ) {
-		update_post_meta( $post_id, '_edit_lock', time() . ':' . $user_id );
-		update_post_meta( $post_id, '_edit_last', $user_id );
-	}
-
-	/**
-	 * Delete the native `_edit_lock` mirror.
+	 * The first real acquire then goes through the atomic conditional
+	 * `update_post_meta` path instead of the best-effort unique add, closing the
+	 * duplicate-row window in {@see cas_write()} for tasks created after this
+	 * runs. The seeded state is inactive (no owner, time 0), so it never reads as
+	 * a lock and carries no generation. No-op when a state already exists, and
+	 * race-free because a just-created task is not yet visible to other editors.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @return void
 	 */
-	private function delete_native_lock( int $post_id ) {
-		delete_post_meta( $post_id, '_edit_lock' );
-	}
-
-	/**
-	 * Parse the native `_edit_lock` meta (legacy / admin path).
-	 *
-	 * @param int $post_id The task post ID.
-	 * @return array{time:int,user:int}|null The parsed lock, or null when absent.
-	 */
-	private function read_native_lock( int $post_id ) {
-		$raw = get_post_meta( $post_id, '_edit_lock', true );
-		if ( ! $raw ) {
-			return null;
+	public function initialize( int $post_id ) {
+		$existing = get_post_meta( $post_id, self::STATE_META, true );
+		if ( is_string( $existing ) && '' !== $existing ) {
+			return;
 		}
 
-		$parts = explode( ':', (string) $raw );
-
-		return array(
-			'time' => isset( $parts[0] ) ? (int) $parts[0] : 0,
-			'user' => isset( $parts[1] ) ? (int) $parts[1] : 0,
+		add_post_meta(
+			$post_id,
+			self::STATE_META,
+			$this->encode(
+				array(
+					'user'  => 0,
+					'token' => '',
+					'time'  => 0,
+				)
+			),
+			true
 		);
-	}
-
-	/**
-	 * Release a native `_edit_lock` mirror when Decker state is absent.
-	 *
-	 * @param int $post_id The task post ID.
-	 * @param int $user_id The user releasing the lock.
-	 * @return bool True when the native lock was removed.
-	 */
-	private function release_native_if_owned( int $post_id, int $user_id ): bool {
-		$lock = $this->read_native_lock( $post_id );
-		if ( $lock && (int) $lock['user'] === (int) $user_id ) {
-			$this->delete_native_lock( $post_id );
-			return true;
-		}
-
-		return false;
 	}
 }

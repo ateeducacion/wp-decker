@@ -426,7 +426,13 @@
     if (window.jQuery) {
         jQuery(document).on('heartbeat-send.deckerLock', function (e, data) {
             if (activeLock && activeLock.postId && activeLock.owned) {
-                data.decker_task_lock = { post_id: activeLock.postId };
+                // Send the session generation so the server refreshes only this
+                // exact session and never re-acquires on our behalf.
+                const lock = readTaskLockState(document.getElementById('task-form'));
+                data.decker_task_lock = {
+                    post_id: activeLock.postId,
+                    generation: lock && lock.generation ? lock.generation : '',
+                };
             }
         });
 
@@ -435,14 +441,15 @@
                 return;
             }
             const info = data.decker_task_lock;
-            if (info.locked && !info.owned_by_current_user) {
-                // We were the editor and just lost the lock to another user.
+            // Lost to another active editor, or our session was superseded by a
+            // takeover (even one already released): block this stale editor.
+            if ((info.locked && !info.owned_by_current_user) || info.stale_session) {
                 setLockHeartbeatSpeed(false);
                 const modal = document.querySelector('.task-modal.show') || document;
                 handleLockLost(modal, info);
             } else if (info.owned_by_current_user) {
-                // Still ours: keep the form's generation in sync so a save after
-                // a stale-then-refreshed lock is not rejected as a takeover.
+                // Still ours: keep the form's generation in sync (a no-op unless
+                // the server legitimately refreshed our own session).
                 updateFormLockGeneration(info.generation);
             }
         });

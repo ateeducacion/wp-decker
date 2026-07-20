@@ -1080,9 +1080,11 @@ class Decker_Tasks {
 	/**
 	 * Refresh the current user's task lock during a WordPress heartbeat.
 	 *
-	 * The front-end sends the id of the task open in edit mode. The lock is
-	 * refreshed when the user still owns it (or it is free/stale); if another
-	 * user has taken over, the returned payload reports the loss so the editor
+	 * The front-end sends the id of the task open in edit mode plus the session
+	 * generation embedded in its form. The lock is only refreshed when the user
+	 * still owns that exact session; a heartbeat never re-acquires a released
+	 * lock, so a previous editor cannot be re-authorized after a takeover. When
+	 * the session no longer matches, the payload reports the loss so the editor
 	 * can block further saves.
 	 *
 	 * @param array $response The heartbeat response.
@@ -1104,7 +1106,11 @@ class Decker_Tasks {
 			return $response;
 		}
 
-		$info = $this->get_task_locks()->acquire_lock( $task_id, $user_id );
+		$session_generation = isset( $data['decker_task_lock']['generation'] )
+			? sanitize_text_field( wp_unslash( $data['decker_task_lock']['generation'] ) )
+			: '';
+
+		$info = $this->get_task_locks()->refresh_lock( $task_id, $user_id, $session_generation );
 		if ( is_wp_error( $info ) ) {
 			return $response;
 		}
@@ -2798,6 +2804,12 @@ class Decker_Tasks {
 			return $post_id;
 		}
 
+		// Seed the atomic lock state on creation so the first edit acquire uses
+		// the conditional update path (no duplicate-row race on first lock).
+		if ( ! $update ) {
+			$this->get_task_locks()->initialize_lock_state( $post_id );
+		}
+
 		// Enforce the edit lock so a stale admin session cannot overwrite newer
 		// changes after another user has taken over editing.
 		if ( is_wp_error( $this->get_task_locks()->assert_user_can_save( $post_id, get_current_user_id() ) ) ) {
@@ -3138,10 +3150,14 @@ class Decker_Tasks {
 		// took over the lock) must never overwrite newer changes, even when the
 		// active lock was released after the takeover (modal close / pagehide).
 		if ( $core['id'] > 0 ) {
+			// Public AJAX saves of an existing task must carry a session
+			// generation while locking is enabled; a missing token cannot be
+			// validated against a takeover and must not overwrite newer changes.
 			$lock_check = $this->get_task_locks()->assert_user_can_save(
 				$core['id'],
 				get_current_user_id(),
-				$options['lock_generation']
+				$options['lock_generation'],
+				true
 			);
 			if ( is_wp_error( $lock_check ) ) {
 				$error_data = array(

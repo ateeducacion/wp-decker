@@ -84,10 +84,8 @@ class Decker_Task_Locks {
 	public function is_enabled(): bool {
 		$options = get_option( 'decker_settings', array() );
 
-		$collaboration_enabled = ! empty( $options['collaborative_editing'] )
-			&& '1' === $options['collaborative_editing'];
-
-		return ! $collaboration_enabled;
+		// Locking stands down only when collaborative editing is explicitly on.
+		return '1' !== ( $options['collaborative_editing'] ?? '' );
 	}
 
 	/**
@@ -257,23 +255,63 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Refresh a still-held lock from the heartbeat without ever acquiring.
+	 *
+	 * The heartbeat must never grant a new generation to an already-open form: a
+	 * previous editor whose card was taken over (and possibly released) must stay
+	 * stale. This only extends the timestamp when the caller still owns the exact
+	 * session (owner + generation); otherwise it reports the current lock info and
+	 * flags `stale_session` so the client can block the superseded editor.
+	 *
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user whose session is refreshing.
+	 * @param string $session_generation Generation token embedded in the editor form.
+	 * @return array The current lock info, possibly flagged with `stale_session`.
+	 */
+	public function refresh_lock( int $post_id, int $user_id, string $session_generation = '' ) {
+		if ( ! $this->is_enabled() || ! $this->is_supported_task( $post_id ) ) {
+			return $this->get_lock_info( $post_id, $user_id );
+		}
+
+		// Extend our own session only; never acquire a free/released lock here.
+		$this->store->refresh( $post_id, $user_id, $session_generation );
+
+		$info = $this->get_lock_info( $post_id, $user_id );
+
+		// A takeover (even one already released) leaves the form carrying a
+		// generation that no longer matches; tell the client its session is gone.
+		if ( '' !== $session_generation
+			&& ! $info['owned_by_current_user']
+			&& $session_generation !== (string) $info['generation'] ) {
+			$info['stale_session'] = true;
+		}
+
+		return $info;
+	}
+
+	/**
 	 * Ensure the given user is allowed to save the task.
 	 *
 	 * A save is rejected when:
-	 * - another user currently owns an active lock, or
+	 * - another user currently owns an active lock,
 	 * - the editor session submitted a lock generation that no longer matches
 	 *   the server generation (the card was taken over, even if the lock has
-	 *   since been released).
+	 *   since been released), or
+	 * - `$require_generation` is set (the public save endpoint while locking is
+	 *   enabled), no session generation was submitted, and the task already
+	 *   carries a server generation (so a missing token cannot fail open after a
+	 *   takeover and release).
 	 *
-	 * When no session generation is provided the check falls back to the active
-	 * lock only, which keeps admin/meta paths and older clients working.
+	 * Admin/meta and internal save paths leave `$require_generation` false; a
+	 * never-locked task (no server generation) is always saveable without a token.
 	 *
 	 * @param int         $post_id            The task post ID.
 	 * @param int         $user_id            The user attempting to save.
 	 * @param string|null $session_generation Generation token embedded in the editor form, or null.
+	 * @param bool        $require_generation Reject when no session generation is provided.
 	 * @return true|WP_Error True when the save may proceed, WP_Error otherwise.
 	 */
-	public function assert_user_can_save( int $post_id, int $user_id, $session_generation = null ) {
+	public function assert_user_can_save( int $post_id, int $user_id, $session_generation = null, bool $require_generation = false ) {
 		// When collaborative editing is enabled, locking does not gate saves.
 		if ( ! $this->is_enabled() ) {
 			return true;
@@ -290,37 +328,57 @@ class Decker_Task_Locks {
 		$info = $this->get_lock_info( $post_id, $user_id );
 
 		if ( $info['locked'] ) {
-			return new WP_Error(
-				'decker_task_locked',
-				$info['message'],
-				array(
-					'status'     => 409,
-					'owner'      => $info['owner'],
-					'generation' => $info['generation'],
-				)
-			);
+			return $this->locked_error( $info['message'], $info['owner'], $info['generation'] );
 		}
 
-		if ( null !== $session_generation && '' !== (string) $session_generation ) {
+		$has_generation = null !== $session_generation && '' !== (string) $session_generation;
+
+		if ( $has_generation ) {
 			$current_generation = $this->store->generation( $post_id );
 			if ( (string) $session_generation !== $current_generation ) {
-				$message = ! empty( $info['message'] )
-					? $info['message']
-					: __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' );
+				return $this->locked_error( $info['message'], $info['owner'], $current_generation );
+			}
 
-				return new WP_Error(
-					'decker_task_locked',
-					$message,
-					array(
-						'status'     => 409,
-						'owner'      => $info['owner'],
-						'generation' => $current_generation,
-					)
-				);
+			return true;
+		}
+
+		// No session generation was submitted. A public save is rejected only when
+		// the task actually carries a server generation (it was locked or taken
+		// over at some point) — the fail-open case after a takeover and release. A
+		// never-locked task has no newer change to protect and stays saveable, so
+		// admin/meta and internal save paths keep working.
+		if ( $require_generation ) {
+			$current_generation = $this->store->generation( $post_id );
+			if ( '' !== $current_generation ) {
+				return $this->locked_error( '', $info['owner'], $current_generation );
 			}
 		}
 
 		return true;
+	}
+
+	/**
+	 * Build the standard `decker_task_locked` (409) error for a rejected save.
+	 *
+	 * @param string $message    Owner-specific message, or empty for the default takeover text.
+	 * @param mixed  $owner      The lock owner descriptor, or null.
+	 * @param string $generation The server generation to echo back.
+	 * @return WP_Error The lock-conflict error.
+	 */
+	private function locked_error( string $message, $owner, string $generation ): WP_Error {
+		if ( '' === $message ) {
+			$message = __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' );
+		}
+
+		return new WP_Error(
+			'decker_task_locked',
+			$message,
+			array(
+				'status'     => 409,
+				'owner'      => $owner,
+				'generation' => $generation,
+			)
+		);
 	}
 
 	/**
@@ -374,5 +432,19 @@ class Decker_Task_Locks {
 	 */
 	public function get_generation( int $post_id ): string {
 		return $this->store->generation( $post_id );
+	}
+
+	/**
+	 * Seed the lock state for a freshly created task.
+	 *
+	 * Ensures the first edit acquire uses the atomic conditional write path
+	 * instead of the best-effort unique add. Safe to call more than once; the
+	 * seeded state is inactive, so it never reads as a lock.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return void
+	 */
+	public function initialize_lock_state( int $post_id ) {
+		$this->store->initialize( $post_id );
 	}
 }
