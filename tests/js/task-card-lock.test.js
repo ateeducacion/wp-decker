@@ -120,14 +120,28 @@ describe( 'task-card lock UI', () => {
 		global.alert = jest.fn();
 	} );
 
-	test( 'reads the serialized lock state from the form', () => {
-		const lock = { post_id: 7, locked: true, owner: { id: 3, display_name: 'Ana' } };
+	test( 'reads the serialized lock state from a container that holds the form', () => {
+		const lock = { post_id: 7, locked: true, owner: { id: 3, display_name: 'Ana' }, generation: 1 };
 		const context = buildDom( lock, true );
 
 		const parsed = readTaskLockState( context );
 
 		expect( parsed.locked ).toBe( true );
 		expect( parsed.owner.display_name ).toBe( 'Ana' );
+		expect( parsed.generation ).toBe( 1 );
+	} );
+
+	test( 'reads the serialized lock state when the form itself is the context', () => {
+		// sendFormByAjax() passes document.getElementById('task-form'), not a wrapper.
+		const lock = { post_id: 7, locked: false, owned_by_current_user: true, generation: 3 };
+		const context = buildDom( lock, false );
+		const form = context.querySelector( '#task-form' );
+
+		const parsed = readTaskLockState( form );
+
+		expect( parsed ).not.toBeNull();
+		expect( parsed.generation ).toBe( 3 );
+		expect( parsed.owned_by_current_user ).toBe( true );
 	} );
 
 	test( 'returns null when there is no lock data', () => {
@@ -135,6 +149,7 @@ describe( 'task-card lock UI', () => {
 		const context = document.getElementById( 'context' );
 
 		expect( readTaskLockState( context ) ).toBeNull();
+		expect( readTaskLockState( context.querySelector( '#task-form' ) ) ).toBeNull();
 	} );
 
 	test( 'renders the locked message with the owner display name', () => {

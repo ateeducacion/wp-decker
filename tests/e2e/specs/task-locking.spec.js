@@ -29,6 +29,31 @@ function isSaveTaskResponse( response ) {
 }
 
 /**
+ * Read a single application/x-www-form-urlencoded field from a save response.
+ *
+ * @param {import('@playwright/test').Response} response The save response.
+ * @param {string}                              key      The field name.
+ * @return {string|null} The field value, or null when absent.
+ */
+function getSavePostParam( response, key ) {
+	const postData = response.request().postData() || '';
+	return new URLSearchParams( postData ).get( key );
+}
+
+/**
+ * Whether a response is a REST lock release for the given task.
+ *
+ * @param {import('@playwright/test').Response} response The Playwright response.
+ * @param {number|string}                       taskId   The task ID.
+ * @return {boolean} True when the request releases that task lock.
+ */
+function isLockReleaseResponse( response, taskId ) {
+	const request = response.request();
+	return request.method() === 'DELETE' &&
+		response.url().includes( `/tasks/${ taskId }/lock` );
+}
+
+/**
  * Log a specific user in through the WordPress login form in a fresh context.
  *
  * @param {import('@playwright/test').Browser} browser  The Playwright browser.
@@ -135,14 +160,29 @@ test.describe( 'Task edit locking', () => {
 			b.page.locator( '#save-task' ).click(),
 		] );
 		expect( bSaveResponse.status() ).toBe( 200 );
+		// The browser must send a non-empty lock generation from data-lock.
+		const bGeneration = getSavePostParam( bSaveResponse, 'lock_generation' );
+		expect( bGeneration ).toBeTruthy();
+		expect( bGeneration ).not.toBe( '0' );
 		// Saving an existing full-page card must keep the session instead of
 		// redirecting, and return to pristine mode (Save disabled until dirty).
 		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
 		await expect( b.page.locator( '#save-task' ) ).toBeDisabled( { timeout: 10000 } );
 
-		// Simulate the modal/pagehide path: B leaves and releases the active lock.
-		// Generation must still reject A's stale form.
-		await b.context.close();
+		// Explicitly release the active lock (modal close / pagehide path) and
+		// wait for DELETE to finish so the 409 below cannot be explained by an
+		// still-held _edit_lock — only by the persisted generation mismatch.
+		const [ releaseResponse ] = await Promise.all( [
+			b.page.waitForResponse( ( response ) => isLockReleaseResponse( response, taskId ) ),
+			b.page.evaluate( () => {
+				if ( typeof window.deckerReleaseActiveTaskLock === 'function' ) {
+					window.deckerReleaseActiveTaskLock();
+				}
+			} ),
+		] );
+		expect( releaseResponse.ok() ).toBeTruthy();
+		const releaseBody = await releaseResponse.json();
+		expect( releaseBody.released ).toBe( true );
 
 		// User A tries to save a stale change and is rejected with HTTP 409.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
@@ -152,6 +192,11 @@ test.describe( 'Task edit locking', () => {
 			a.page.waitForResponse( isSaveTaskResponse ),
 			a.page.locator( '#save-task' ).click(),
 		] );
+		const aGeneration = getSavePostParam( aSaveResponse, 'lock_generation' );
+		expect( aGeneration ).toBeTruthy();
+		expect( aGeneration ).not.toBe( '0' );
+		// After takeover, A's form still carries the pre-takeover generation.
+		expect( aGeneration ).not.toBe( bGeneration );
 		expect( aSaveResponse.status() ).toBe( 409 );
 		const aSaveBody = await aSaveResponse.json();
 		expect( aSaveBody.success ).toBe( false );
@@ -166,6 +211,7 @@ test.describe( 'Task edit locking', () => {
 		await expect( final.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
 
 		await a.context.close();
+		await b.context.close();
 		await final.context.close();
 	} );
 
@@ -186,6 +232,7 @@ test.describe( 'Task edit locking', () => {
 			b.page.locator( '#save-task' ).click(),
 		] );
 		expect( saveResponse.status() ).toBe( 200 );
+		expect( getSavePostParam( saveResponse, 'lock_generation' ) ).toBeTruthy();
 		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Edited without a prior lock' );
 		await expect( b.page.locator( '#save-task' ) ).toBeDisabled( { timeout: 10000 } );
 

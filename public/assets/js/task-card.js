@@ -143,11 +143,22 @@
 
     /**
      * Read the lock state serialized by the server into the task form.
-     * @param {HTMLElement} context - The container element.
+     *
+     * Accepts either a page/modal container that contains `#task-form`, or the
+     * form element itself. `Element.querySelector()` only matches descendants,
+     * so passing the form must not look for a nested `#task-form` (which would
+     * miss `data-lock` and send an empty `lock_generation` on save).
+     *
+     * @param {HTMLElement} context - The container or the task form element.
      * @returns {Object|null} The lock info, or null when unavailable.
      */
     function readTaskLockState(context) {
-        const form = context.querySelector('#task-form');
+        if (!context) {
+            return null;
+        }
+        const form = (typeof context.matches === 'function' && context.matches('#task-form'))
+            ? context
+            : context.querySelector('#task-form');
         if (!form || !form.dataset.lock) {
             return null;
         }
