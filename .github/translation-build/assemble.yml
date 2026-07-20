@@ -20,8 +20,8 @@ jobs:
 
       - name: Assemble translation catalogues
         run: |
-          cat .github/translation-build/po.* > languages/decker-fr_FR.po
-          cat .github/translation-build/mo.* | base64 --decode > languages/decker-fr_FR.mo
+          cat .github/translation-build/po.* | base64 --decode | gzip --decompress > languages/decker-fr_FR.po
+          cat .github/translation-build/mo.* | base64 --decode | gzip --decompress > languages/decker-fr_FR.mo
           rm -rf .github/translation-build
 
       - name: Commit generated catalogues
