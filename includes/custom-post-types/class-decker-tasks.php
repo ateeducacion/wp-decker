@@ -3135,15 +3135,30 @@ class Decker_Tasks {
 
 		// Enforce the edit lock server-side before applying changes to an
 		// existing task. A stale editing session (for example after another user
-		// took over the lock) must never overwrite newer changes.
+		// took over the lock) must never overwrite newer changes, even when the
+		// active lock was released after the takeover (modal close / pagehide).
 		if ( $core['id'] > 0 ) {
-			$lock_check = $this->get_task_locks()->assert_user_can_save( $core['id'], get_current_user_id() );
+			$lock_check = $this->get_task_locks()->assert_user_can_save(
+				$core['id'],
+				get_current_user_id(),
+				$options['lock_generation']
+			);
 			if ( is_wp_error( $lock_check ) ) {
 				$error_data = array(
 					'message' => $lock_check->get_error_message(),
 					'code'    => $lock_check->get_error_code(),
 					'locked'  => true,
 				);
+
+				$error_data_extra = $lock_check->get_error_data();
+				if ( is_array( $error_data_extra ) ) {
+					if ( isset( $error_data_extra['owner'] ) ) {
+						$error_data['owner'] = $error_data_extra['owner'];
+					}
+					if ( isset( $error_data_extra['generation'] ) ) {
+						$error_data['generation'] = $error_data_extra['generation'];
+					}
+				}
 
 				if ( $send_response ) {
 					wp_send_json_error( $error_data, 409 );
@@ -3229,7 +3244,7 @@ class Decker_Tasks {
 	 *
 	 * The nonce is verified by the caller when the response filter is enabled.
 	 *
-	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string}
+	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string,lock_generation:int|null}
 	 */
 	private function read_task_option_fields(): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
@@ -3243,15 +3258,22 @@ class Decker_Tasks {
 		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
 		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
+
+		// Session generation from the editor form; null when the client did not send it.
+		$lock_generation = null;
+		if ( isset( $_POST['lock_generation'] ) && '' !== wp_unslash( $_POST['lock_generation'] ) ) {
+			$lock_generation = absint( wp_unslash( $_POST['lock_generation'] ) );
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		return array(
-			'max_priority'   => $max_priority,
-			'mark_for_today' => $mark_for_today,
-			'author'         => $author,
-			'responsable'    => $responsable,
-			'hidden'         => $hidden,
-			'duedate_raw'    => $duedate_raw,
+			'max_priority'    => $max_priority,
+			'mark_for_today'  => $mark_for_today,
+			'author'          => $author,
+			'responsable'     => $responsable,
+			'hidden'          => $hidden,
+			'duedate_raw'     => $duedate_raw,
+			'lock_generation' => $lock_generation,
 		);
 	}
 

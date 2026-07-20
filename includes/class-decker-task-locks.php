@@ -25,6 +25,12 @@ defined( 'ABSPATH' ) || exit;
  * while remaining usable from the front-end app, where the admin-only
  * wp_check_post_lock()/wp_set_post_lock() helpers are not loaded.
  *
+ * In addition to the active lock, Decker stores a monotonic lock generation in
+ * `_decker_edit_lock_generation`. The generation is bumped whenever ownership
+ * changes (including explicit takeovers). Editor sessions embed the generation
+ * they opened with; a stale session is rejected on save even if the active lock
+ * was later released (for example after the new owner closed the modal).
+ *
  * The class only handles lock bookkeeping. Rendering, REST routing and AJAX
  * handling live in their own classes.
  */
@@ -36,6 +42,13 @@ class Decker_Task_Locks {
 	 * @var string
 	 */
 	const POST_TYPE = 'decker_task';
+
+	/**
+	 * Post meta key for the monotonic lock generation counter.
+	 *
+	 * @var string
+	 */
+	const GENERATION_META = '_decker_edit_lock_generation';
 
 	/**
 	 * Get the stale-lock window in seconds.
@@ -85,6 +98,7 @@ class Decker_Task_Locks {
 			'is_stale'              => false,
 			'can_take_over'         => false,
 			'lock_window'           => $this->get_lock_window(),
+			'generation'            => 0,
 			'message'               => '',
 		);
 
@@ -93,7 +107,8 @@ class Decker_Task_Locks {
 			return $base;
 		}
 
-		$base['valid'] = true;
+		$base['valid']      = true;
+		$base['generation'] = $this->get_generation( $post_id );
 
 		if ( ! $this->is_enabled() ) {
 			return $base;
@@ -207,7 +222,9 @@ class Decker_Task_Locks {
 			return $guard;
 		}
 
-		$this->write_lock( $post_id, $user_id );
+		// Always bump the generation on takeover so the previous editor's form
+		// session is invalidated even after this owner later releases the lock.
+		$this->write_lock( $post_id, $user_id, true );
 
 		return $this->get_lock_info( $post_id, $user_id );
 	}
@@ -215,7 +232,8 @@ class Decker_Task_Locks {
 	/**
 	 * Release the lock only when it is owned by the given user.
 	 *
-	 * Another user's lock is never removed by this method.
+	 * Another user's lock is never removed by this method. The generation meta
+	 * is intentionally kept so stale editor sessions remain invalid.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @param int $user_id The user releasing the lock.
@@ -238,15 +256,21 @@ class Decker_Task_Locks {
 	/**
 	 * Ensure the given user is allowed to save the task.
 	 *
-	 * A save is allowed when there is no active lock, when the active lock is
-	 * owned by the user, or when the existing lock is stale. It is rejected only
-	 * when another user currently owns an active lock.
+	 * A save is rejected when:
+	 * - another user currently owns an active lock, or
+	 * - the editor session submitted a lock generation that no longer matches
+	 *   the server generation (the card was taken over, even if the lock has
+	 *   since been released).
 	 *
-	 * @param int $post_id The task post ID.
-	 * @param int $user_id The user attempting to save.
+	 * When no session generation is provided the check falls back to the active
+	 * lock only, which keeps admin/meta paths and older clients working.
+	 *
+	 * @param int      $post_id            The task post ID.
+	 * @param int      $user_id            The user attempting to save.
+	 * @param int|null $session_generation Generation embedded in the editor form, or null.
 	 * @return true|WP_Error True when the save may proceed, WP_Error otherwise.
 	 */
-	public function assert_user_can_save( int $post_id, int $user_id ) {
+	public function assert_user_can_save( int $post_id, int $user_id, $session_generation = null ) {
 		// When collaborative editing is enabled, locking does not gate saves.
 		if ( ! $this->is_enabled() ) {
 			return true;
@@ -267,10 +291,30 @@ class Decker_Task_Locks {
 				'decker_task_locked',
 				$info['message'],
 				array(
-					'status' => 409,
-					'owner'  => $info['owner'],
+					'status'     => 409,
+					'owner'      => $info['owner'],
+					'generation' => $info['generation'],
 				)
 			);
+		}
+
+		if ( null !== $session_generation ) {
+			$current_generation = $this->get_generation( $post_id );
+			if ( (int) $session_generation !== $current_generation ) {
+				$message = ! empty( $info['message'] )
+					? $info['message']
+					: __( 'You can no longer save this card because another user has taken over editing.', 'decker' );
+
+				return new WP_Error(
+					'decker_task_locked',
+					$message,
+					array(
+						'status'     => 409,
+						'owner'      => $info['owner'],
+						'generation' => $current_generation,
+					)
+				);
+			}
 		}
 
 		return true;
@@ -320,6 +364,16 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Read the monotonic lock generation for a task.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return int The current generation (0 when never locked).
+	 */
+	public function get_generation( int $post_id ): int {
+		return max( 0, (int) get_post_meta( $post_id, self::GENERATION_META, true ) );
+	}
+
+	/**
 	 * Read and parse the native `_edit_lock` meta for a task.
 	 *
 	 * @param int $post_id The task post ID.
@@ -342,11 +396,24 @@ class Decker_Task_Locks {
 	/**
 	 * Write the native `_edit_lock` meta for a task and record the last editor.
 	 *
-	 * @param int $post_id The task post ID.
-	 * @param int $user_id The lock owner.
+	 * The lock generation is bumped when ownership changes, or when the caller
+	 * forces a bump (explicit takeover). Same-owner refreshes keep the generation
+	 * so the open form session remains valid.
+	 *
+	 * @param int  $post_id         The task post ID.
+	 * @param int  $user_id         The lock owner.
+	 * @param bool $bump_generation Force a generation bump even for the same owner.
 	 * @return void
 	 */
-	private function write_lock( int $post_id, int $user_id ) {
+	private function write_lock( int $post_id, int $user_id, bool $bump_generation = false ) {
+		$previous      = $this->read_lock( $post_id );
+		$owner_changed = ! $previous || (int) $previous['user'] !== (int) $user_id;
+
+		if ( $bump_generation || $owner_changed ) {
+			$generation = $this->get_generation( $post_id ) + 1;
+			update_post_meta( $post_id, self::GENERATION_META, $generation );
+		}
+
 		update_post_meta( $post_id, '_edit_lock', time() . ':' . $user_id );
 		update_post_meta( $post_id, '_edit_last', $user_id );
 	}

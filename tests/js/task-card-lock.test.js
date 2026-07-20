@@ -257,4 +257,54 @@ describe( 'task-card lock UI', () => {
 		expect( context.querySelector( '#save-task' ).disabled ).toBe( true );
 		expect( activeLock.owned ).toBe( false );
 	} );
+
+	test( 'detects lock conflict responses regardless of HTTP success envelope', () => {
+		const isTaskLockConflictResponse = compile( 'isTaskLockConflictResponse', {} );
+
+		expect( isTaskLockConflictResponse( {
+			success: false,
+			data: { code: 'decker_task_locked', message: 'locked', locked: true },
+		} ) ).toBe( true );
+
+		expect( isTaskLockConflictResponse( {
+			success: false,
+			data: { code: 'other_error', message: 'nope' },
+		} ) ).toBe( false );
+
+		expect( isTaskLockConflictResponse( null ) ).toBe( false );
+		expect( isTaskLockConflictResponse( { success: true } ) ).toBe( false );
+	} );
+
+	test( 'HTTP 409 lock conflict shows the lock-lost banner via handleLockLost', () => {
+		const lock = { post_id: 4, locked: false, owned_by_current_user: true, generation: 1 };
+		const context = buildDom( lock, false );
+		const activeLock = { postId: 4, owned: true };
+		const handleLockLost = compile( 'handleLockLost', {
+			activeLock,
+			disableEditingControls,
+			strings: STRINGS,
+			getTaskId: () => '4',
+			reloadTaskCard: jest.fn(),
+		} );
+		const isTaskLockConflictResponse = compile( 'isTaskLockConflictResponse', {} );
+
+		// Simulate the xhr.onload branch for a 409 body.
+		const response = {
+			success: false,
+			data: {
+				code: 'decker_task_locked',
+				message: 'You can no longer save this card because another user has taken over editing.',
+				locked: true,
+				owner: { id: 2, display_name: 'Bruno' },
+			},
+		};
+		expect( isTaskLockConflictResponse( response ) ).toBe( true );
+
+		if ( isTaskLockConflictResponse( response ) ) {
+			handleLockLost( context, response.data );
+		}
+
+		expect( context.querySelector( '[data-decker-lock-lost]' ) ).not.toBeNull();
+		expect( context.querySelector( '#save-task' ).disabled ).toBe( true );
+	} );
 } );

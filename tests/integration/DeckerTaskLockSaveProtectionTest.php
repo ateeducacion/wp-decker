@@ -91,16 +91,23 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	/**
 	 * Build a valid save payload for the task under test.
 	 *
-	 * @param string $title The title to save.
+	 * @param string   $title      The title to save.
+	 * @param int|null $generation Optional lock generation from the editor session.
 	 * @return array The $_POST payload.
 	 */
-	private function save_payload( string $title ): array {
-		return array(
+	private function save_payload( string $title, $generation = null ): array {
+		$payload = array(
 			'task_id' => $this->task_id,
 			'title'   => $title,
 			'stack'   => 'to-do',
 			'board'   => $this->board_id,
 		);
+
+		if ( null !== $generation ) {
+			$payload['lock_generation'] = $generation;
+		}
+
+		return $payload;
 	}
 
 	/**
@@ -140,26 +147,52 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	 */
 	public function test_stale_save_after_takeover_is_rejected() {
 		// User A opens the card and acquires the lock.
-		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 
 		// User B explicitly takes over.
-		$this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 
 		// User B saves their change.
 		wp_set_current_user( $this->user_b );
-		$_POST    = $this->save_payload( 'Updated by user B' );
-		$resp_b   = ( new Decker_Tasks() )->handle_save_decker_task();
+		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
+		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
 		$this->assertTrue( $resp_b['success'] );
 
-		// User A attempts to save a stale change.
+		// User A attempts to save a stale change with the original session token.
 		wp_set_current_user( $this->user_a );
-		$_POST  = $this->save_payload( 'Updated by user A' );
+		$_POST  = $this->save_payload( 'Updated by user A', $info_a['generation'] );
 		$resp_a = ( new Decker_Tasks() )->handle_save_decker_task();
 
 		$this->assertFalse( $resp_a['success'] );
 		$this->assertSame( 'decker_task_locked', $resp_a['code'] );
 
 		// The final saved title must be user B's value.
+		$this->assertSame( 'Updated by user B', get_post( $this->task_id )->post_title );
+	}
+
+	/**
+	 * After takeover + save + lock release (modal close / pagehide), the previous
+	 * owner's form generation is still rejected so they cannot overwrite B.
+	 */
+	public function test_stale_save_rejected_after_takeover_even_when_lock_released() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+
+		wp_set_current_user( $this->user_b );
+		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
+		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
+		$this->assertTrue( $resp_b['success'] );
+
+		// Modal hide / pagehide releases the active lock but keeps generation.
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
+
+		wp_set_current_user( $this->user_a );
+		$_POST  = $this->save_payload( 'Updated by user A', $info_a['generation'] );
+		$resp_a = ( new Decker_Tasks() )->handle_save_decker_task();
+
+		$this->assertFalse( $resp_a['success'] );
+		$this->assertSame( 'decker_task_locked', $resp_a['code'] );
 		$this->assertSame( 'Updated by user B', get_post( $this->task_id )->post_title );
 	}
 

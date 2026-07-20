@@ -159,6 +159,19 @@
     }
 
     /**
+     * Whether a save AJAX body represents a lock conflict.
+     *
+     * The server returns HTTP 409 with success:false and code
+     * decker_task_locked; callers must not gate this on 2xx statuses alone.
+     *
+     * @param {Object|null} response - Parsed JSON response body.
+     * @returns {boolean} True when the response is a lock conflict.
+     */
+    function isTaskLockConflictResponse(response) {
+        return !!(response && response.data && response.data.code === 'decker_task_locked');
+    }
+
+    /**
      * Perform a REST request against the Decker task lock endpoints.
      * @param {string} method - HTTP method.
      * @param {number|string} taskId - The task ID.
@@ -1714,6 +1727,13 @@
         const selectedAssigneesValues = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
         const selectedLabelsValues = labelsSelect.getValue().map(item => parseInt(item.value, 10));
 
+        // Embed the lock generation from the form session so the server can
+        // reject this save after a takeover even if the active lock was released.
+        const lockState = readTaskLockState(form) || {};
+        const lockGeneration = Object.prototype.hasOwnProperty.call(lockState, 'generation')
+            ? lockState.generation
+            : '';
+
         // Gather the form data
         const formData = {
             action: 'save_decker_task',
@@ -1731,6 +1751,7 @@
             description: quill.root.innerHTML,
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
+            lock_generation: lockGeneration,
         };
 
         // Disable save controls to prevent duplicate submissions
@@ -1782,9 +1803,9 @@
                 }
 
                 // Full-page view: only navigate when this save created a new
-                // task. Reloading an existing card would fire pagehide, release
-                // the edit lock, and open a race where a stale editor can still
-                // overwrite the just-saved values before the lock is re-acquired.
+                // task. Reloading an existing card would fire pagehide and
+                // release the edit lock; the server also invalidates stale
+                // sessions via lock generation, but staying put avoids the race.
                 const savedId = response.data && response.data.task_id
                     ? String(response.data.task_id)
                     : '';
@@ -1794,11 +1815,12 @@
                     return;
                 }
 
-                // Stay on the page and keep the lock for further edits.
+                // Return to pristine mode: keep Save disabled until the next edit.
                 if (saveButton) {
-                    saveButton.disabled = false;
+                    saveButton.disabled = true;
                 }
                 if (saveDropdown) {
+                    // Existing-task split actions stay available (archive, etc.).
                     saveDropdown.disabled = false;
                 }
                 return;
@@ -1807,7 +1829,7 @@
             // Lock conflicts are returned as HTTP 409 with success:false.
             // Handle them for any status so the previous editor is blocked
             // immediately instead of only on 2xx bodies.
-            if (response && response.data && response.data.code === 'decker_task_locked') {
+            if (isTaskLockConflictResponse(response)) {
                 const lockContext = document.querySelector('.task-modal.show') || document;
                 handleLockLost(lockContext, response.data);
                 alert(response.data.message || strings.lock_lost_message);

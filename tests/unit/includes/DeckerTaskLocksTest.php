@@ -91,6 +91,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertIsArray( $info );
 		$this->assertTrue( $info['owned_by_current_user'] );
 		$this->assertFalse( $info['locked'] );
+		$this->assertSame( 1, $info['generation'] );
 
 		$meta = get_post_meta( $this->task_id, '_edit_lock', true );
 		$this->assertMatchesRegularExpression( '/^\d+:' . $this->user_a . '$/', $meta );
@@ -100,11 +101,13 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 * The same user can refresh or reacquire their own lock.
 	 */
 	public function test_same_user_can_refresh_own_lock() {
-		$this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$first = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info  = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 
 		$this->assertTrue( $info['owned_by_current_user'] );
 		$this->assertFalse( $info['locked'] );
+		// Same-owner refresh must not invalidate the open editor session.
+		$this->assertSame( $first['generation'], $info['generation'] );
 	}
 
 	/**
@@ -197,6 +200,41 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertSame( 'decker_task_locked', $result->get_error_code() );
 
 		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_b ) );
+	}
+
+	/**
+	 * Takeover bumps the lock generation so a released lock still rejects the
+	 * previous editor's session token.
+	 */
+	public function test_takeover_bumps_generation_and_invalidates_stale_session() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertSame( 1, $info_a['generation'] );
+
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertSame( 2, $info_b['generation'] );
+
+		// Simulate the new owner closing the modal (lock released, generation kept).
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b ) );
+		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
+		$this->assertSame( 2, $this->locks->get_generation( $this->task_id ) );
+
+		// Without a generation token, an unlocked card is free (legacy behaviour).
+		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_a ) );
+
+		// With the original form generation, the stale session is rejected.
+		$result = $this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a['generation'] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_task_locked', $result->get_error_code() );
+
+		// The new owner's generation remains valid after they re-acquire.
+		$reacquired = $this->locks->acquire_lock( $this->task_id, $this->user_b );
+		$this->assertTrue(
+			$this->locks->assert_user_can_save(
+				$this->task_id,
+				$this->user_b,
+				$reacquired['generation']
+			)
+		);
 	}
 
 	/**
