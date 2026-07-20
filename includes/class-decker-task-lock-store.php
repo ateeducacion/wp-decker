@@ -115,6 +115,16 @@ class Decker_Task_Lock_Store {
 	}
 
 	/**
+	 * Whether a task currently has a fresh write lease.
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return bool True while a save is in progress.
+	 */
+	public function is_saving( int $post_id ): bool {
+		return $this->state->is_saving( $this->state->read( $post_id ) );
+	}
+
+	/**
 	 * Acquire, refresh or take over the lock as one CAS-protected state write.
 	 *
 	 * @param int  $post_id         The task post ID.
@@ -160,6 +170,7 @@ class Decker_Task_Lock_Store {
 				// Preserve the lease across a same-owner refresh (the only write
 				// allowed here while saving); every other case clears it.
 				'save'  => $this->state->is_saving( $current ) ? (int) $current['save'] : 0,
+				'lease_id' => $this->state->is_saving( $current ) ? (string) $current['lease_id'] : '',
 			);
 
 			if ( $this->state->write( $post_id, $current, $new ) ) {
@@ -258,6 +269,7 @@ class Decker_Task_Lock_Store {
 			'token' => (string) $current['token'],
 			'time'  => time(),
 			'save'  => (int) $current['save'],
+			'lease_id' => (string) $current['lease_id'],
 		);
 
 		if ( ! $this->state->write( $post_id, $current, $refreshed ) ) {
@@ -281,18 +293,26 @@ class Decker_Task_Lock_Store {
 	 * @param int    $post_id            The task post ID.
 	 * @param int    $user_id            The user starting the save.
 	 * @param string $session_generation The generation token embedded in the editor form.
-	 * @return bool True when the lease was claimed.
+	 * @return string|false The unique lease identifier, or false when refused.
 	 */
-	public function begin_save( int $post_id, int $user_id, string $session_generation ): bool {
+	public function begin_save( int $post_id, int $user_id, string $session_generation ) {
 		$current = $this->state->read( $post_id );
 
 		if ( $this->state->is_saving( $current ) ) {
 			return false;
 		}
 
-		$owns      = $this->state->owned_by( $current, $user_id, $session_generation );
-		$anonymous = '' === $session_generation && ! $this->state->is_active( $current );
-		if ( ! $owns && ! $anonymous ) {
+		$current_generation = is_array( $current ) ? (string) $current['token'] : '';
+		$owns              = $this->state->owned_by( $current, $user_id, $session_generation );
+		$anonymous         = '' === $session_generation
+			&& '' === $current_generation
+			&& ! $this->state->is_active( $current );
+		$anonymous_version = '' !== $session_generation
+			&& is_array( $current )
+			&& 0 === (int) $current['user']
+			&& ! $this->state->is_active( $current )
+			&& (string) $current['token'] === $session_generation;
+		if ( ! $owns && ! $anonymous && ! $anonymous_version ) {
 			return false;
 		}
 
@@ -302,55 +322,60 @@ class Decker_Task_Lock_Store {
 			'time'  => 0,
 		);
 
-		$new = array(
+		$lease_id = wp_generate_uuid4();
+		$new      = array(
 			'user'  => (int) $base['user'],
 			'token' => (string) $base['token'],
 			'time'  => (int) $base['time'],
 			'save'  => $this->state->save_deadline(),
+			'lease_id' => $lease_id,
 		);
 
-		return $this->state->write( $post_id, $current, $new );
+		return $this->state->write( $post_id, $current, $new ) ? $lease_id : false;
 	}
 
 	/**
 	 * Extend the write lease (called from the actual post write) so a slow save
 	 * cannot outlive its lease. Only extends an existing in-progress lease.
 	 *
-	 * @param int $post_id The task post ID.
+	 * @param int    $post_id  The task post ID.
+	 * @param string $lease_id The exact lease identifier returned by begin_save().
 	 * @return bool True when the lease deadline was extended.
 	 */
-	public function renew_save( int $post_id ): bool {
+	public function renew_save( int $post_id, string $lease_id ): bool {
 		$current = $this->state->read( $post_id );
-		if ( ! $this->state->is_saving( $current ) ) {
+		if ( ! is_array( $current ) || '' === $lease_id || (string) $current['lease_id'] !== $lease_id ) {
 			return false;
 		}
 
+		$deadline = $this->state->save_deadline();
+		if ( (int) $current['save'] >= $deadline ) {
+			return true;
+		}
+
 		$renewed         = $current;
-		$renewed['save'] = $this->state->save_deadline();
+		$renewed['save'] = $deadline;
 
 		return $this->state->write( $post_id, $current, $renewed );
 	}
 
 	/**
-	 * Release the write lease after a save completes, retrying the CAS so a
+	 * Finish a successful save, retrying the CAS so a
 	 * concurrent heartbeat cannot strand the lease.
 	 *
-	 * A session save rotates the token so a second same-user tab that shared it
-	 * can no longer save with the stale token; an anonymous (never-locked) save
-	 * keeps the empty token so the task stays free. Returns the resulting
-	 * generation for the caller to echo back to its form.
+	 * Every successful mutation rotates the token so stale forms are invalidated,
+	 * including token-less forms rendered before an anonymous REST update.
 	 *
 	 * @param int    $post_id            The task post ID.
-	 * @param int    $user_id            The user finishing the save.
-	 * @param string $session_generation The generation token embedded in the editor form.
-	 * @return string The generation after the save (rotated for a session save).
+	 * @param string $lease_id           The exact lease identifier returned by begin_save().
+	 * @return string|false The rotated generation, or false when the lease is no longer owned.
 	 */
-	public function end_save( int $post_id, int $user_id, string $session_generation ): string {
+	public function finish_save_successfully( int $post_id, string $lease_id ) {
 		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
 			$current = $this->state->read( $post_id );
 
-			if ( ! is_array( $current ) || ! $this->state->is_saving( $current ) ) {
-				return $this->state->generation( $post_id );
+			if ( ! is_array( $current ) || '' === $lease_id || (string) $current['lease_id'] !== $lease_id ) {
+				return false;
 			}
 
 			/**
@@ -364,15 +389,12 @@ class Decker_Task_Lock_Store {
 			 */
 			do_action( 'decker_task_end_save_before_cas', $post_id, $current );
 
-			$is_session = '' !== (string) $current['token']
-				&& (int) $current['user'] === (int) $user_id
-				&& (string) $current['token'] === $session_generation;
-
 			$new = array(
 				'user'  => (int) $current['user'],
-				'token' => $is_session ? wp_generate_uuid4() : (string) $current['token'],
+				'token' => wp_generate_uuid4(),
 				'time'  => (int) $current['time'],
 				'save'  => 0,
+				'lease_id' => '',
 			);
 
 			if ( $this->state->write( $post_id, $current, $new ) ) {
@@ -380,7 +402,35 @@ class Decker_Task_Lock_Store {
 			}
 		}
 
-		return $this->state->generation( $post_id );
+		return false;
+	}
+
+	/**
+	 * Cancel a failed save without rotating the current session generation.
+	 *
+	 * Only the request holding the exact lease identifier may clear it; an expired
+	 * writer can therefore never cancel a newer writer's lease.
+	 *
+	 * @param int    $post_id  The task post ID.
+	 * @param string $lease_id The exact lease identifier returned by begin_save().
+	 * @return bool True when this request cleared its lease.
+	 */
+	public function cancel_save( int $post_id, string $lease_id ): bool {
+		for ( $attempt = 0; $attempt < self::CAS_MAX_ATTEMPTS; $attempt++ ) {
+			$current = $this->state->read( $post_id );
+			if ( ! is_array( $current ) || '' === $lease_id || (string) $current['lease_id'] !== $lease_id ) {
+				return false;
+			}
+
+			$new             = $current;
+			$new['save']     = 0;
+			$new['lease_id'] = '';
+			if ( $this->state->write( $post_id, $current, $new ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

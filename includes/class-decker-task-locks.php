@@ -121,6 +121,12 @@ class Decker_Task_Locks {
 			return $base;
 		}
 
+		if ( $this->store->is_saving( $post_id ) ) {
+			$base['locked'] = true;
+			$base['message'] = __( 'This card is currently being saved. Please try again.', 'decker' );
+			return $base;
+		}
+
 		$lock = $this->store->read_active_lock( $post_id );
 		if ( ! $lock ) {
 			return $base;
@@ -205,9 +211,13 @@ class Decker_Task_Locks {
 			return $info;
 		}
 
-		$this->store->write( $post_id, $user_id, false, $this->get_lock_window() );
+		$written = $this->store->write( $post_id, $user_id, false, $this->get_lock_window() );
+		$info    = $this->get_lock_info( $post_id, $user_id );
+		if ( ! $written && ! $info['locked'] && ! $info['owned_by_current_user'] ) {
+			return $this->locked_error( '', $info['owner'], $info['generation'] );
+		}
 
-		return $this->get_lock_info( $post_id, $user_id );
+		return $info;
 	}
 
 	/**
@@ -231,9 +241,13 @@ class Decker_Task_Locks {
 		// Always issue a new generation token on takeover so the previous
 		// editor's form session is invalidated even after this owner later
 		// releases the lock.
-		$this->store->write( $post_id, $user_id, true, $this->get_lock_window() );
+		$written = $this->store->write( $post_id, $user_id, true, $this->get_lock_window() );
+		$info    = $this->get_lock_info( $post_id, $user_id );
+		if ( ! $written && ! $info['locked'] ) {
+			return $this->locked_error( '', $info['owner'], $info['generation'] );
+		}
 
-		return $this->get_lock_info( $post_id, $user_id );
+		return $info;
 	}
 
 	/**
@@ -268,9 +282,9 @@ class Decker_Task_Locks {
 	 * @param int    $post_id            The task post ID.
 	 * @param int    $user_id            The user starting the save.
 	 * @param string $session_generation The generation token embedded in the editor form.
-	 * @return bool True when the lease was claimed.
+	 * @return string|false The unique lease identifier, or false when refused.
 	 */
-	public function begin_save( int $post_id, int $user_id, string $session_generation ): bool {
+	public function begin_save( int $post_id, int $user_id, string $session_generation ) {
 		return $this->store->begin_save( $post_id, $user_id, $session_generation );
 	}
 
@@ -278,27 +292,38 @@ class Decker_Task_Locks {
 	 * Extend the write lease from the actual post write so a slow save cannot
 	 * outlive its lease.
 	 *
-	 * @param int $post_id The task post ID.
-	 * @return void
+	 * @param int    $post_id  The task post ID.
+	 * @param string $lease_id The exact lease identifier returned by begin_save().
+	 * @return bool True when this request renewed its own lease.
 	 */
-	public function renew_save( int $post_id ) {
-		$this->store->renew_save( $post_id );
+	public function renew_save( int $post_id, string $lease_id ): bool {
+		return $this->store->renew_save( $post_id, $lease_id );
 	}
 
 	/**
-	 * Release the write lease after a save completes.
+	 * Finish a successful save and rotate its generation.
 	 *
 	 * A session save rotates the generation so any second same-user tab holding
 	 * the old token can no longer save; the new generation is returned so the
 	 * saving form can adopt it.
 	 *
-	 * @param int    $post_id            The task post ID.
-	 * @param int    $user_id            The user finishing the save.
-	 * @param string $session_generation The generation token embedded in the editor form.
-	 * @return string The generation after the save.
+	 * @param int    $post_id  The task post ID.
+	 * @param string $lease_id The exact lease identifier returned by begin_save().
+	 * @return string|false The rotated generation, or false when the lease is no longer owned.
 	 */
-	public function end_save( int $post_id, int $user_id, string $session_generation ): string {
-		return $this->store->end_save( $post_id, $user_id, $session_generation );
+	public function finish_save_successfully( int $post_id, string $lease_id ) {
+		return $this->store->finish_save_successfully( $post_id, $lease_id );
+	}
+
+	/**
+	 * Cancel a failed save without rotating the session generation.
+	 *
+	 * @param int    $post_id  The task post ID.
+	 * @param string $lease_id The exact lease identifier returned by begin_save().
+	 * @return bool True when this request cleared its own lease.
+	 */
+	public function cancel_save( int $post_id, string $lease_id ): bool {
+		return $this->store->cancel_save( $post_id, $lease_id );
 	}
 
 	/**

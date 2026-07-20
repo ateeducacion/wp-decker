@@ -393,6 +393,9 @@ msgstr ""
 msgid "You are not authorized to access this resource."
 msgstr ""
 
+msgid "This card is currently being saved. Please try again."
+msgstr ""
+
 #. translators: %s is the display name of the user currently editing the card.
 #, php-format
 msgid "This card is currently locked by %s."

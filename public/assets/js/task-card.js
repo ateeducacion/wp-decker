@@ -19,6 +19,10 @@
     // { postId: number, owned: boolean } or null when no card is being edited.
     let activeLock = null;
 
+    // Prevent a heartbeat response from invalidating the session while its save
+    // is rotating the generation on the server.
+    let taskSaveInFlight = false;
+
     let quill = null;
     let collabSession = null;
 
@@ -388,6 +392,23 @@
     window.deckerReleaseActiveTaskLock = releaseActiveLock;
     window.deckerClearActiveTaskLockState = clearActiveLockState;
 
+    /**
+     * Whether a task-lock heartbeat response belongs to an obsolete form state.
+     *
+     * @param {Object} info - The lock information returned by the heartbeat.
+     * @param {string} currentGeneration - Generation currently stored by the form.
+     * @param {boolean} saveInFlight - Whether the form is awaiting a save response.
+     * @returns {boolean} True when the heartbeat response must be ignored.
+     */
+    function shouldIgnoreTaskLockHeartbeat(info, currentGeneration, saveInFlight) {
+        if (saveInFlight) {
+            return true;
+        }
+
+        return !!(info && info.request_generation
+            && info.request_generation !== currentGeneration);
+    }
+
     // Release the lock when the tab is closed or the user navigates away
     // (covers the full-page view and closing without saving).
     window.addEventListener('pagehide', function () {
@@ -398,7 +419,7 @@
     // detect takeovers. Bound once at module load.
     if (window.jQuery) {
         jQuery(document).on('heartbeat-send.deckerLock', function (e, data) {
-            if (activeLock && activeLock.postId && activeLock.owned) {
+            if (!taskSaveInFlight && activeLock && activeLock.postId && activeLock.owned) {
                 // Send the session generation so the server refreshes only this
                 // exact session and never re-acquires on our behalf.
                 const lock = readTaskLockState(document.getElementById('task-form'));
@@ -414,6 +435,13 @@
                 return;
             }
             const info = data.decker_task_lock;
+            const currentLock = readTaskLockState(document.getElementById('task-form'));
+            const currentGeneration = currentLock && currentLock.generation
+                ? currentLock.generation
+                : '';
+            if (shouldIgnoreTaskLockHeartbeat(info, currentGeneration, taskSaveInFlight)) {
+                return;
+            }
             // Lost to another active editor, or our session was superseded (a
             // takeover, even one already released, or another session of the same
             // user): block this stale editor. We never adopt a server-sent token
@@ -1813,6 +1841,8 @@
                 response = null;
             }
 
+            taskSaveInFlight = false;
+
             if (xhr.status >= 200 && xhr.status < 400 && response && response.success) {
                 window.deckerHasUnsavedChanges = false;
                 // Adopt the server's rotated generation (only ever from our own
@@ -1901,6 +1931,7 @@
         };
 
         xhr.onerror = function() {
+            taskSaveInFlight = false;
             console.error(strings.request_error);
             alert(strings.error_saving_task);
             if (saveButton) {
@@ -1915,6 +1946,7 @@
             .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
             .join('&');
 
+        taskSaveInFlight = true;
         xhr.send(encodedData);
     }
 

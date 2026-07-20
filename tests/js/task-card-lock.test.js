@@ -322,4 +322,24 @@ describe( 'task-card lock UI', () => {
 		expect( context.querySelector( '[data-decker-lock-lost]' ) ).not.toBeNull();
 		expect( context.querySelector( '#save-task' ).disabled ).toBe( true );
 	} );
+
+	test( 'ignores a delayed heartbeat submitted with the pre-save generation', () => {
+		const shouldIgnoreTaskLockHeartbeat = compile( 'shouldIgnoreTaskLockHeartbeat', {} );
+
+		expect( shouldIgnoreTaskLockHeartbeat(
+			{ request_generation: 'generation-a', stale_session: true },
+			'generation-b',
+			false
+		) ).toBe( true );
+		expect( shouldIgnoreTaskLockHeartbeat(
+			{ request_generation: 'generation-a', stale_session: true },
+			'generation-a',
+			true
+		) ).toBe( true );
+		expect( shouldIgnoreTaskLockHeartbeat(
+			{ request_generation: 'generation-a', stale_session: true },
+			'generation-a',
+			false
+		) ).toBe( false );
+	} );
 } );

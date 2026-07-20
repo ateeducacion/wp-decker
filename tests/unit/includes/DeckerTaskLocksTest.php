@@ -539,21 +539,21 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 
 		// A begins a save: it claims the write lease.
-		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+		$lease_id = $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertNotEmpty( $lease_id );
 
-		// While the lease is held, B's takeover is refused and A still owns.
+		// While the lease is held, B's takeover is refused and no second write
+		// may pass validation, including one submitted by A's session.
 		$blocked = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		$this->assertFalse( $blocked['owned_by_current_user'] );
 		$this->assertTrue( $blocked['locked'] );
-		$this->assertTrue(
-			$this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info['generation'] )
-		);
+		$this->assertWPError( $this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info['generation'] ) );
 
 		// A second save cannot start while one is already in progress.
 		$this->assertFalse( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
 
 		// A ends the save: the lease clears and B can now take over.
-		$this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->locks->finish_save_successfully( $this->task_id, $lease_id );
 		$after = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		$this->assertTrue( $after['owned_by_current_user'] );
 	}
@@ -565,7 +565,8 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 */
 	public function test_release_is_refused_while_a_save_is_in_progress() {
 		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+		$lease_id = $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertNotEmpty( $lease_id );
 
 		// The pagehide release is refused while the save holds the lease.
 		$this->assertFalse( $this->locks->release_lock( $this->task_id, $this->user_a, $info['generation'] ) );
@@ -576,7 +577,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 
 		// Once the save ends, the lease clears and the token rotates; release works
 		// again with the rotated generation.
-		$rotated = $this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		$rotated = $this->locks->finish_save_successfully( $this->task_id, $lease_id );
 		$this->assertNotSame( $info['generation'], $rotated );
 		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $rotated ) );
 	}
@@ -587,7 +588,8 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 */
 	public function test_same_owner_acquire_preserves_the_save_lease() {
 		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+		$lease_id = $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertNotEmpty( $lease_id );
 
 		// A same-owner acquire keeps the same generation and the lease.
 		$reacquired = $this->locks->acquire_lock( $this->task_id, $this->user_a );
@@ -605,7 +607,8 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 */
 	public function test_write_lease_uses_a_generous_absolute_deadline() {
 		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+		$lease_id = $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertNotEmpty( $lease_id );
 
 		// The stored lease is an absolute deadline comfortably in the future (>= 60s),
 		// so a save lasting far longer than the old fixed 15s window stays protected.
@@ -623,7 +626,8 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	 */
 	public function test_end_save_retries_and_clears_lease_after_a_concurrent_write() {
 		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertTrue( $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] ) );
+		$lease_id = $this->locks->begin_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->assertNotEmpty( $lease_id );
 
 		$locks    = $this->locks;
 		$task_id  = $this->task_id;
@@ -645,7 +649,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 			2
 		);
 
-		$this->locks->end_save( $this->task_id, $this->user_a, $info['generation'] );
+		$this->locks->finish_save_successfully( $this->task_id, $lease_id );
 		remove_all_actions( 'decker_task_end_save_before_cas' );
 
 		$this->assertTrue( $injected, 'A concurrent write must have been injected.' );
@@ -653,6 +657,35 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		// The lease was cleared despite the concurrent write, so a takeover proceeds.
 		$after = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		$this->assertTrue( $after['owned_by_current_user'] );
+	}
+
+	/**
+	 * An expired request must not renew or clear a newer request's write lease.
+	 */
+	public function test_expired_writer_cannot_mutate_a_newer_write_lease() {
+		$info_a  = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$lease_a = $this->locks->begin_save( $this->task_id, $this->user_a, $info_a['generation'] );
+		$this->assertNotEmpty( $lease_a );
+
+		$state         = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
+		$state['save'] = time() - 1;
+		update_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, wp_json_encode( $state ) );
+
+		$info_b  = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$lease_b = $this->locks->begin_save( $this->task_id, $this->user_b, $info_b['generation'] );
+		$this->assertNotEmpty( $lease_b );
+		$this->assertNotSame( $lease_a, $lease_b );
+
+		$this->assertFalse( $this->locks->renew_save( $this->task_id, $lease_a ) );
+		$this->assertFalse( $this->locks->cancel_save( $this->task_id, $lease_a ) );
+		$this->assertTrue( $this->locks->renew_save( $this->task_id, $lease_b ) );
+
+		$user_c  = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$blocked = $this->locks->take_over_lock( $this->task_id, $user_c );
+		$this->assertFalse( $blocked['owned_by_current_user'] );
+		$this->assertTrue( $this->locks->cancel_save( $this->task_id, $lease_b ) );
+		$this->assertTrue( $this->locks->take_over_lock( $this->task_id, $user_c )['owned_by_current_user'] );
+		wp_delete_user( $user_c );
 	}
 
 	/**

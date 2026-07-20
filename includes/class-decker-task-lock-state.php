@@ -17,12 +17,14 @@ defined( 'ABSPATH' ) || exit;
  *
  * Reads, encodes and compare-and-swap-writes the `_decker_edit_lock_state` meta,
  * and answers predicates about a decoded state blob. The state is a JSON object
- * `{"user","token","time"[,"save"]}`:
+ * `{"user","token","time"[,"save","lease_id"]}`:
  *
  * - `user`/`token` — the current owner and its unique generation token.
  * - `time`         — last activity; 0 once the lock is released.
- * - `save`         — timestamp of an in-progress commit (the write lease); the
- *                    key is omitted when 0 so states without a save stay
+ * - `save`         — deadline of an in-progress commit (the write lease).
+ * - `lease_id`     — unique request identifier required to renew or clear the
+ *                    lease. Lease keys are omitted when inactive so states
+ *                    without a save stay
  *                    byte-identical to the pre-lease format (CAS-compatible).
  *
  * The compare-and-swap is best-effort under true concurrency: WordPress has no
@@ -72,7 +74,7 @@ class Decker_Task_Lock_State {
 	 * Decode the authoritative lock state.
 	 *
 	 * @param int $post_id The task post ID.
-	 * @return array{user:int,token:string,time:int,save:int}|null The state, or null when absent.
+	 * @return array{user:int,token:string,time:int,save:int,lease_id:string}|null The state, or null when absent.
 	 */
 	public function read( int $post_id ) {
 		$raw = get_post_meta( $post_id, self::STATE_META, true );
@@ -90,6 +92,7 @@ class Decker_Task_Lock_State {
 			'token' => isset( $decoded['token'] ) ? (string) $decoded['token'] : '',
 			'time'  => isset( $decoded['time'] ) ? (int) $decoded['time'] : 0,
 			'save'  => isset( $decoded['save'] ) ? (int) $decoded['save'] : 0,
+			'lease_id' => isset( $decoded['lease_id'] ) ? (string) $decoded['lease_id'] : '',
 		);
 	}
 
@@ -171,7 +174,7 @@ class Decker_Task_Lock_State {
 	 *
 	 * @param int        $post_id  The task post ID.
 	 * @param array|null $expected Previous state, or null when absent.
-	 * @param array      $new      Desired state (user/token/time[/save]).
+	 * @param array      $new      Desired state (user/token/time[/save/lease_id]).
 	 * @return bool True when this writer won the CAS.
 	 */
 	public function write( int $post_id, $expected, array $new ): bool {
@@ -206,7 +209,7 @@ class Decker_Task_Lock_State {
 	}
 
 	/**
-	 * Encode a state for storage. Key order is fixed and `save` is omitted when 0
+	 * Encode a state for storage. Key order is fixed and lease keys are omitted
 	 * so lease-free states match the pre-lease byte format for stable CAS.
 	 *
 	 * @param array $state The state (user/token/time[/save]).
@@ -221,6 +224,7 @@ class Decker_Task_Lock_State {
 
 		if ( ! empty( $state['save'] ) ) {
 			$payload['save'] = (int) $state['save'];
+			$payload['lease_id'] = isset( $state['lease_id'] ) ? (string) $state['lease_id'] : '';
 		}
 
 		return wp_json_encode( $payload );

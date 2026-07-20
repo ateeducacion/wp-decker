@@ -157,7 +157,8 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
 
 		$update_data_2 = array(
-			'meta' => array(
+			'lock_generation' => $data['lock_generation'],
+			'meta'            => array(
 				'duedate' => '2025-01-15',
 			),
 		);

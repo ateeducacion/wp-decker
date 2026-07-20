@@ -1930,3 +1930,6 @@ msgstr "Quitando de hoy…"
 
 msgid "The task could not be updated."
 msgstr "No se pudo actualizar la tarea."
+
+msgid "This card is currently being saved. Please try again."
+msgstr "Esta tarjeta se está guardando. Inténtalo de nuevo."
