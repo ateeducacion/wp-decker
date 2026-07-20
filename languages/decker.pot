@@ -401,6 +401,9 @@ msgstr ""
 msgid "Invalid task."
 msgstr ""
 
+msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
+msgstr ""
+
 msgid "You are not allowed to edit this card."
 msgstr ""
 
@@ -1519,9 +1522,6 @@ msgid "Taking over…"
 msgstr ""
 
 msgid "Editing taken over"
-msgstr ""
-
-msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
 msgstr ""
 
 msgid "The card could not be taken over. Please reload and try again."

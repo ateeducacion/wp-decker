@@ -303,7 +303,7 @@ class Decker_Task_Locks {
 			if ( (int) $session_generation !== $current_generation ) {
 				$message = ! empty( $info['message'] )
 					? $info['message']
-					: __( 'You can no longer save this card because another user has taken over editing.', 'decker' );
+					: __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' );
 
 				return new WP_Error(
 					'decker_task_locked',

@@ -293,7 +293,7 @@ describe( 'task-card lock UI', () => {
 			success: false,
 			data: {
 				code: 'decker_task_locked',
-				message: 'You can no longer save this card because another user has taken over editing.',
+				message: 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.',
 				locked: true,
 				owner: { id: 2, display_name: 'Bruno' },
 			},
