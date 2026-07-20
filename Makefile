@@ -7,6 +7,19 @@ else
   SED_INPLACE = sed -i
 endif
 
+# Use npx so CI (no global install) and local dev both work.
+# Override with: make up WP_ENV="wp-env"
+WP_ENV = npx wp-env
+
+# WP-CLI helpers for the development (`cli`) and tests (`tests-cli`) containers.
+WP_CLI = $(WP_ENV) run cli wp
+WP_TESTS_CLI = $(WP_ENV) run tests-cli
+
+# Ports — single source of truth for the Makefile. wp-env defaults: development
+# = DEV_PORT, tests = TESTS_PORT. Override from the environment if they clash.
+DEV_PORT   ?= 8888
+TESTS_PORT ?= 8889
+
 # ─── Port arbitration (local dev) ────────────────────────────────────────────
 # wp-decker and the documentate plugin both default to ports 8888/8889, so only
 # one wp-env stack can own them at a time. Before starting ours, stop whatever
@@ -36,11 +49,11 @@ install-requirements:
 # targets: the probe keeps repeated `make test` runs fast, and `wp-env start`
 # is idempotent so re-running it is safe. Probes the development site (8888).
 start-if-not-running: check-docker
-	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8888)" = "000" ]; then \
+	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:$(DEV_PORT))" = "000" ]; then \
 		echo "wp-env is not running. Starting..."; \
-		npx wp-env start; \
-		npx wp-env run cli wp plugin activate decker; \
-		echo "Visit http://localhost:8888/wp-admin/ to access the Decker dashboard."; \
+		$(WP_ENV) start; \
+		$(WP_CLI)plugin activate decker; \
+		echo "Visit http://localhost:$(DEV_PORT)/wp-admin/ to access the Decker dashboard."; \
 	else \
 		echo "wp-env is already running."; \
 	fi
@@ -48,22 +61,22 @@ start-if-not-running: check-docker
 # Bring up the environment. Always calls `wp-env start` (idempotent), so it
 # (re)syncs the containers instead of skipping when something only appears up.
 up: check-docker
-	$(call free_ports,8888 8889)
-	npx wp-env start
-	-npx wp-env run cli wp plugin activate decker
-	@echo "Visit http://localhost:8888/wp-admin/ to access the Decker dashboard."
+	$(call free_ports,$(DEV_PORT) $(TESTS_PORT))
+	$(WP_ENV) start
+	-$(WP_CLI)plugin activate decker
+	@echo "Visit http://localhost:$(DEV_PORT)/wp-admin/ to access the Decker dashboard."
 
 # Alias for `up` (some folks type `make start`).
 start: up
 
 # Update WordPress core/themes and (re)start the environment.
 update-env: check-docker
-	npx wp-env start --update
-	-npx wp-env run cli wp plugin activate decker
+	$(WP_ENV) start --update
+	-$(WP_CLI)plugin activate decker
 
 flush-permalinks:
-	#npx wp-env run cli wp rewrite flush --hard
-	npx wp-env run cli wp rewrite structure '/%postname%/'
+	#$(WP_CLI)rewrite flush --hard
+	$(WP_CLI)rewrite structure '/%postname%/'
 
 # Function to create a user only if it does not exist
 create-user:
@@ -71,33 +84,33 @@ create-user:
 		echo "Error: Please, specify USER, EMAIL, ROLE and PASSWORD. Usage: make create-user USER=test1 EMAIL=test1@example.org ROLE=editor PASSWORD=password"; \
 		exit 1; \
 	fi
-	npx wp-env run cli sh -c 'wp user list --field=user_login | grep -q "^$(USER)$$" || wp user create $(USER) $(EMAIL) --role=$(ROLE) --user_pass=$(PASSWORD)'
+	$(WP_ENV) run cli sh -c 'wp user list --field=user_login | grep -q "^$(USER)$$" || wp user create $(USER) $(EMAIL) --role=$(ROLE) --user_pass=$(PASSWORD)'
 
 # Stop the environment (containers are stopped; data is preserved — use
 # `destroy` to remove containers and volumes entirely).
 down: check-docker
-	npx wp-env stop
+	$(WP_ENV) stop
 
 # Alias for `down` (some folks type `make stop`).
 stop: down
 
-# Clean the environments, the same that running "npx wp-env clean all"
+# Clean the environments, the same that running "$(WP_ENV) clean all"
 clean:
-	npx wp-env clean development
-	npx wp-env clean tests
+	$(WP_ENV) clean development
+	$(WP_ENV) clean tests
 
 destroy:
-	npx wp-env destroy
+	$(WP_ENV) destroy
 
 # Reset the WordPress databases to a fresh install, then reactivate the plugin.
 reset: check-docker
-	npx wp-env reset
-	-npx wp-env run cli wp plugin activate decker
+	$(WP_ENV) reset
+	-$(WP_CLI)plugin activate decker
 
 # Pass the wp plugin-check
 check-plugin: check-docker start-if-not-running
-	npx wp-env run cli wp plugin install plugin-check --activate --color
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
+	$(WP_CLI)plugin install plugin-check --activate --color
+	$(WP_CLI)plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
 
 # Combined check for lint, tests, untranslated, and more
 check: fix lint check-plugin test check-untranslated mo
@@ -111,64 +124,64 @@ test: start-if-not-running
 	@CMD="./vendor/bin/phpunit"; \
 	if [ -n "$(FILE)" ]; then CMD="$$CMD $(FILE)"; fi; \
 	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
+	$(WP_TESTS_CLI)--env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
 
 # Run unit tests in verbose mode. Honor TEST filter if provided.
 test-verbose: start-if-not-running
 	@CMD="./vendor/bin/phpunit"; \
 	if [ -n "$(TEST)" ]; then CMD="$$CMD --filter $(TEST)"; fi; \
 	CMD="$$CMD --debug --verbose"; \
-	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
+	$(WP_TESTS_CLI)--env-cwd=wp-content/plugins/decker $$CMD --colors=always
 
 # Ensure tests environment has admin user and plugin active
 setup-tests-env:
 	@echo "Setting up tests environment..."
-	@npx wp-env run tests-cli wp core install \
-		--url=http://localhost:8889 \
+	@$(WP_TESTS_CLI)wp core install \
+		--url=http://localhost:$(TESTS_PORT) \
 		--title="Decker Tests" \
 		--admin_user=admin \
 		--admin_password=password \
 		--admin_email=admin@example.com \
 		--skip-email 2>/dev/null || true
-	@npx wp-env run tests-cli wp plugin activate decker 2>/dev/null || true
-	@npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard 2>/dev/null || true
+	@$(WP_TESTS_CLI)wp plugin activate decker 2>/dev/null || true
+	@$(WP_TESTS_CLI)wp rewrite structure '/%postname%/' --hard 2>/dev/null || true
 	@# Keep the deterministic suite free of the external-service collaboration feature.
-	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
+	@$(WP_TESTS_CLI)wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
 
 # Run E2E tests with Playwright against wp-env tests environment (port 8889).
 # The collaboration spec is excluded here (see test-e2e-collab).
 test-e2e: start-if-not-running setup-tests-env
-	WP_BASE_URL=http://localhost:8889 npm run test:e2e
+	WP_BASE_URL=http://localhost:$(TESTS_PORT) npm run test:e2e
 
 test-e2e-visual: start-if-not-running setup-tests-env
-	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
+	WP_BASE_URL=http://localhost:$(TESTS_PORT) npm run test:e2e -- --ui
 
 # Run ONLY the collaboration spec. It needs the collaborative editing feature
 # enabled and reaches external services (esm.sh CDN + signalling server), so it
 # is kept out of the default CI gate. This enables the feature, runs the spec,
 # and restores the setting afterwards regardless of the outcome.
 test-e2e-collab: start-if-not-running setup-tests-env
-	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
-	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
-	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
+	@$(WP_TESTS_CLI)wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
+	-WP_BASE_URL=http://localhost:$(TESTS_PORT) DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
+	@$(WP_TESTS_CLI)wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
 
 test-js:
 	npm run test:js
 
 logs:
-	npx wp-env logs
+	$(WP_ENV) logs
 
 logs-test:
-	npx wp-env logs --environment=tests
+	$(WP_ENV) logs --environment=tests
 
 
 # Install PHP_CodeSniffer and WordPress Coding Standards in the container
 install-phpcs: check-docker start-if-not-running
 	@echo "Checking if PHP_CodeSniffer is installed..."
-	@if ! npx wp-env run cli bash -c '[ -x "$$HOME/.composer/vendor/bin/phpcs" ]' > /dev/null 2>&1; then \
+	@if ! $(WP_ENV) run cli bash -c '[ -x "$$HOME/.composer/vendor/bin/phpcs" ]' > /dev/null 2>&1; then \
 		echo "Installing PHP_CodeSniffer and WordPress Coding Standards..."; \
-		npx wp-env run cli composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true; \
-		npx wp-env run cli composer global require squizlabs/php_codesniffer wp-coding-standards/wpcs --no-interaction; \
+		$(WP_ENV) run cli composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true; \
+		$(WP_ENV) run cli composer global require squizlabs/php_codesniffer wp-coding-standards/wpcs --no-interaction; \
 	else \
 		echo "PHP_CodeSniffer is already installed."; \
 	fi
@@ -176,11 +189,11 @@ install-phpcs: check-docker start-if-not-running
 
 # Check code style with PHP Code Sniffer inside the container
 lint: install-phpcs
-	npx wp-env run cli phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
+	$(WP_ENV) run cli phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Automatically fix code style with PHP Code Beautifier inside the container
 fix: install-phpcs
-	npx wp-env run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
+	$(WP_ENV) run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
 
 # Run PHP Mess Detector ignoring vendor and node_modules
 phpmd:
