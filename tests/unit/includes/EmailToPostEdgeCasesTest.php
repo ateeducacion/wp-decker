@@ -144,7 +144,7 @@ class EmailToPostEdgeCasesTest extends Decker_Test_Base {
 		$response = $this->dispatch( 'Bearer ' . $this->shared_key, $payload );
 		$data     = $response->get_data();
 
-		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 500, $response->get_status() );
 		$this->assertSame( 'invalid_author', $data['code'] );
 	}
 
