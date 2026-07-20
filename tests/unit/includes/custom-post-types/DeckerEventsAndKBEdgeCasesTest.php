@@ -259,6 +259,7 @@ class KnowledgeBaseEdgeCasesTest extends WP_Test_REST_TestCase {
 	private function dispatch_save( array $payload ): WP_REST_Response {
 		$request = new WP_REST_Request( 'POST', '/decker/v1/kb' );
 		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( $payload ) );
 
 		return rest_get_server()->dispatch( $request );
