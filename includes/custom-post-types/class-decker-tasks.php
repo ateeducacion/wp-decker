@@ -3261,8 +3261,11 @@ class Decker_Tasks {
 
 		// Session generation from the editor form; null when the client did not send it.
 		$lock_generation = null;
-		if ( isset( $_POST['lock_generation'] ) && '' !== wp_unslash( $_POST['lock_generation'] ) ) {
-			$lock_generation = absint( wp_unslash( $_POST['lock_generation'] ) );
+		if ( isset( $_POST['lock_generation'] ) ) {
+			$lock_generation_raw = sanitize_text_field( wp_unslash( $_POST['lock_generation'] ) );
+			if ( '' !== $lock_generation_raw ) {
+				$lock_generation = absint( $lock_generation_raw );
+			}
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
