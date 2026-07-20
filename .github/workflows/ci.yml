@@ -7,7 +7,7 @@ on:
     tags:
       - '*'
     branches:
-      - '*' 
+      - '*'
 
 permissions:
   contents: read
@@ -52,7 +52,18 @@ jobs:
         run: make check-plugin
 
       - name: Run unit tests
-        run: make test
+        shell: bash
+        run: |
+          set -o pipefail
+          make test 2>&1 | tee /tmp/phpunit.log
+
+      - name: Upload PHPUnit log
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: phpunit-log
+          path: /tmp/phpunit.log
+          retention-days: 1
 
       # E2E Tests with Playwright
       - name: Install npm dependencies and Playwright
