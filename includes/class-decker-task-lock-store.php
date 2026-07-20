@@ -228,7 +228,10 @@ class Decker_Task_Lock_Store {
 			);
 
 			if ( $this->cas_write( $post_id, $current, $released ) ) {
-				$this->native->clear( $post_id );
+				// Clear the native mirror only if it is still ours: a wp-admin
+				// editor may have written a newer `_edit_lock` between the CAS and
+				// here, and that lock must not be deleted.
+				$this->native->release_if_owned( $post_id, $user_id );
 				return true;
 			}
 		}

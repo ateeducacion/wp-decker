@@ -84,6 +84,9 @@ class Decker_Tasks {
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
+		// Seed the lock state on every task creation, independent of the
+		// editable-meta nonce guard, so admin, AJAX and REST creates are covered.
+		add_action( 'save_post_decker_task', array( $this, 'seed_task_lock_state' ), 10, 3 );
 		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
 		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
 		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
@@ -2788,7 +2791,26 @@ class Decker_Tasks {
 		return $data;
 	}
 
+	/**
+	 * Seed the atomic lock state when a task is created.
+	 *
+	 * Runs on every `decker_task` insertion (admin, AJAX save_decker_task and
+	 * REST), independent of the editable-meta nonce guard, so the first edit
+	 * acquire uses the atomic conditional update path instead of the best-effort
+	 * unique add. Skips updates, revisions and autosaves.
+	 *
+	 * @param int     $post_id The task post ID.
+	 * @param WP_Post $post    The task post object.
+	 * @param bool    $update  Whether this is an update of an existing task.
+	 * @return void
+	 */
+	public function seed_task_lock_state( $post_id, $post, $update ) {
+		if ( $update || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
 
+		$this->get_task_locks()->initialize_lock_state( $post_id );
+	}
 
 	/**
 	 * Save the custom meta fields.
@@ -2802,12 +2824,6 @@ class Decker_Tasks {
 		// Bail out early when the request must not modify task meta.
 		if ( ! $this->can_save_task_meta( $post_id ) ) {
 			return $post_id;
-		}
-
-		// Seed the atomic lock state on creation so the first edit acquire uses
-		// the conditional update path (no duplicate-row race on first lock).
-		if ( ! $update ) {
-			$this->get_task_locks()->initialize_lock_state( $post_id );
 		}
 
 		// Enforce the edit lock so a stale admin session cannot overwrite newer

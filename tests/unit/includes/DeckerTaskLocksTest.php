@@ -574,6 +574,56 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Session validity is decided by the token, not the owner id: when ownership
+	 * cycles back to the same user (a second session of that user takes over), the
+	 * original session's stale token is still flagged and must not adopt the new
+	 * one (regression for the same-user re-authorization hole).
+	 */
+	public function test_refresh_lock_flags_stale_session_when_ownership_returns_to_same_user() {
+		// Session A1.
+		$info_a1 = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		// User B takes over, then a different session of user A takes over again.
+		$this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$info_a2 = $this->locks->take_over_lock( $this->task_id, $this->user_a );
+		$this->assertNotSame( $info_a1['generation'], $info_a2['generation'] );
+
+		// A1 heartbeats with its now-stale token. The owner is user A again, but
+		// the token differs, so the session must be reported stale.
+		$refresh = $this->locks->refresh_lock( $this->task_id, $this->user_a, $info_a1['generation'] );
+		$this->assertNotEmpty( $refresh['stale_session'] );
+		// The reported (authoritative) generation is A2's; the client must block
+		// instead of adopting it, and A1's save stays rejected.
+		$this->assertSame( $info_a2['generation'], $refresh['generation'] );
+
+		$result = $this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a1['generation'] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_task_locked', $result->get_error_code() );
+
+		// A2 (the live session) is not stale and can still save.
+		$this->assertTrue(
+			$this->locks->assert_user_can_save( $this->task_id, $this->user_a, $info_a2['generation'] )
+		);
+	}
+
+	/**
+	 * Releasing a lock must not delete a newer native `_edit_lock` written by
+	 * another user (for example a wp-admin editor) after our state CAS.
+	 */
+	public function test_release_preserves_a_foreign_native_lock() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		// A concurrent wp-admin editor writes a newer native lock for user B.
+		update_post_meta( $this->task_id, '_edit_lock', time() . ':' . $this->user_b );
+
+		// User A releases its Decker lock; B's native lock must survive.
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a ) );
+
+		$native = get_post_meta( $this->task_id, '_edit_lock', true );
+		$this->assertStringEndsWith( ':' . $this->user_b, (string) $native );
+	}
+
+	/**
 	 * When the Decker state is released (inactive), a native `_edit_lock` set
 	 * afterwards (for example from the wp-admin editor) is still respected.
 	 */

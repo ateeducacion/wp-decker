@@ -278,10 +278,12 @@ class Decker_Task_Locks {
 
 		$info = $this->get_lock_info( $post_id, $user_id );
 
-		// A takeover (even one already released) leaves the form carrying a
-		// generation that no longer matches; tell the client its session is gone.
+		// Session validity is decided by the generation token, not the owner id:
+		// a submitted token that no longer matches the authoritative generation is
+		// stale even when ownership has cycled back to the same user (a second
+		// session of that user took over). Otherwise this session could be told it
+		// still owns the card and adopt the newer token.
 		if ( '' !== $session_generation
-			&& ! $info['owned_by_current_user']
 			&& $session_generation !== (string) $info['generation'] ) {
 			$info['stale_session'] = true;
 		}

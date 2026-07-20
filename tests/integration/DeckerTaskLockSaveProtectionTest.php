@@ -324,4 +324,64 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 
 		$this->assertTrue( $resp['success'] );
 	}
+
+	/**
+	 * Assert a task carries the inactive lock-state seed (owner 0, time 0).
+	 *
+	 * @param int $task_id The task to inspect.
+	 */
+	private function assertSeeded( int $task_id ) {
+		$state = json_decode( (string) get_post_meta( $task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
+		$this->assertIsArray( $state, 'Lock state must be seeded on creation.' );
+		$this->assertSame( 0, (int) $state['user'] );
+		$this->assertSame( 0, (int) $state['time'] );
+		$this->assertSame( '', $this->locks->get_generation( $task_id ) );
+	}
+
+	/**
+	 * A task created through the AJAX save endpoint is seeded before the first
+	 * acquire, so the initial acquire uses the atomic update path.
+	 */
+	public function test_ajax_created_task_is_seeded_before_first_acquire() {
+		wp_set_current_user( $this->user_a );
+		$_POST = array(
+			'task_id' => 0,
+			'title'   => 'AJAX created task',
+			'stack'   => 'to-do',
+			'board'   => $this->board_id,
+		);
+
+		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$this->assertTrue( $resp['success'] );
+		$this->assertGreaterThan( 0, (int) $resp['task_id'] );
+
+		$this->assertSeeded( (int) $resp['task_id'] );
+	}
+
+	/**
+	 * A task created through the REST API is seeded before the first acquire.
+	 */
+	public function test_rest_created_task_is_seeded_before_first_acquire() {
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params(
+			array(
+				'title'        => 'REST created task',
+				'status'       => 'publish',
+				'decker_board' => array( $this->board_id ),
+				'meta'         => array( 'stack' => 'to-do' ),
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 201, $response->get_status() );
+
+		$this->assertSeeded( (int) $response->get_data()['id'] );
+
+		wp_delete_user( $admin );
+	}
 }

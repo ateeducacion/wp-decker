@@ -170,38 +170,6 @@
     }
 
     /**
-     * Refresh the generation embedded in the form's data-lock.
-     *
-     * The server keeps the same generation token while the current user still
-     * owns the lock, but it mints a new one on takeover or when re-acquiring a
-     * lock that had gone stale. Mirroring the latest generation back into the
-     * form keeps a later save from sending a stale token and being wrongly
-     * rejected as a takeover.
-     *
-     * @param {string|number} generation - The authoritative generation token.
-     */
-    function updateFormLockGeneration(generation) {
-        if (typeof generation === 'undefined' || generation === null) {
-            return;
-        }
-        const form = document.getElementById('task-form');
-        if (!form || !form.dataset.lock) {
-            return;
-        }
-        try {
-            const lock = JSON.parse(form.dataset.lock);
-            // The heartbeat ticks often; only rewrite data-lock when it changes.
-            if (lock.generation === generation) {
-                return;
-            }
-            lock.generation = generation;
-            form.dataset.lock = JSON.stringify(lock);
-        } catch (e) {
-            // Leave the existing data-lock untouched when it cannot be parsed.
-        }
-    }
-
-    /**
      * Whether a save AJAX body represents a lock conflict.
      *
      * The server returns HTTP 409 with success:false and code
@@ -441,16 +409,15 @@
                 return;
             }
             const info = data.decker_task_lock;
-            // Lost to another active editor, or our session was superseded by a
-            // takeover (even one already released): block this stale editor.
+            // Lost to another active editor, or our session was superseded (a
+            // takeover, even one already released, or another session of the same
+            // user): block this stale editor. We never adopt a server-sent token
+            // into an open form — validity is proven only by the token we already
+            // hold, so a stale session can never be silently re-authorized.
             if ((info.locked && !info.owned_by_current_user) || info.stale_session) {
                 setLockHeartbeatSpeed(false);
                 const modal = document.querySelector('.task-modal.show') || document;
                 handleLockLost(modal, info);
-            } else if (info.owned_by_current_user) {
-                // Still ours: keep the form's generation in sync (a no-op unless
-                // the server legitimately refreshed our own session).
-                updateFormLockGeneration(info.generation);
             }
         });
     }
