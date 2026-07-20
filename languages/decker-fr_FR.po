@@ -1,0 +1,2138 @@
+# French (France) translations for ATE Decker.
+# Copyright (C) 2026 Área de Tecnología Educativa
+# This file is distributed under the same license as the ATE Decker project.
+# Ernesto Serrano <ate.educacion@gobiernodecanarias.org>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ATE Decker 0.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/decker\n"
+"POT-Creation-Date: 2026-07-20 11:03+0000\n"
+"PO-Revision-Date: 2026-07-20 11:03+0000\n"
+"Last-Translator: Ernesto Serrano <ate.educacion@gobiernodecanarias.org>\n"
+"Language: fr_FR\n"
+"Language-Team: French <fr@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "Área de Tecnología Educativa"
+msgstr "Área de Tecnología Educativa"
+
+msgid "Decker"
+msgstr "Decker"
+
+msgid "Decker Settings"
+msgstr "Réglages de Decker"
+
+msgid "Decker Configuration"
+msgstr "Configuration de Decker"
+
+msgid "Clear All Data"
+msgstr "Effacer toutes les données"
+
+msgid ""
+"Are you sure you want to delete all Decker records? This action cannot be "
+"undone."
+msgstr ""
+"Voulez-vous vraiment supprimer tous les enregistrements de Decker ? Cette "
+"action est irréversible."
+
+msgid "Click the button to delete all Decker labels, tasks, and boards."
+msgstr ""
+"Cliquez sur le bouton pour supprimer toutes les étiquettes, tâches et tous "
+"les tableaux de Decker."
+
+msgid "All Decker records have been deleted."
+msgstr "Tous les enregistrements de Decker ont été supprimés."
+
+msgctxt "taxonomy general name"
+msgid "Actions"
+msgstr "Actions"
+
+msgctxt "taxonomy singular name"
+msgid "Action"
+msgstr "Action"
+
+msgid "Search Actions"
+msgstr "Rechercher des actions"
+
+msgid "All Actions"
+msgstr "Toutes les actions"
+
+msgid "Edit Action"
+msgstr "Modifier l’action"
+
+msgid "Update Action"
+msgstr "Mettre à jour l’action"
+
+msgid "Add New Action"
+msgstr "Ajouter une action"
+
+msgid "New Action Name"
+msgstr "Nom de la nouvelle action"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
+msgstr ""
+"Les termes de la taxonomie Actions ne peuvent pas dépasser deux niveaux de "
+"profondeur."
+
+msgid "You are not authorized to access this resource."
+msgstr "Vous n’êtes pas autorisé à accéder à cette ressource."
+
+msgctxt "taxonomy general name"
+msgid "Boards"
+msgstr "Tableaux"
+
+msgctxt "taxonomy singular name"
+msgid "Board"
+msgstr "Tableau"
+
+msgid "Search Boards"
+msgstr "Rechercher des tableaux"
+
+msgid "All Boards"
+msgstr "Tous les tableaux"
+
+msgid "Edit Board"
+msgstr "Modifier le tableau"
+
+msgid "Update Board"
+msgstr "Mettre à jour le tableau"
+
+msgid "Add New Board"
+msgstr "Ajouter un tableau"
+
+msgid "New Board Name"
+msgstr "Nom du nouveau tableau"
+
+msgid "Boards"
+msgstr "Tableaux"
+
+msgid "Color"
+msgstr "Couleur"
+
+msgctxt "taxonomy general name"
+msgid "Labels"
+msgstr "Étiquettes"
+
+msgctxt "taxonomy singular name"
+msgid "Label"
+msgstr "Étiquette"
+
+msgid "Search Labels"
+msgstr "Rechercher des étiquettes"
+
+msgid "All Labels"
+msgstr "Toutes les étiquettes"
+
+msgid "Edit Label"
+msgstr "Modifier l’étiquette"
+
+msgid "Update Label"
+msgstr "Mettre à jour l’étiquette"
+
+msgid "Add New Label"
+msgstr "Ajouter une étiquette"
+
+msgid "New Label Name"
+msgstr "Nom de la nouvelle étiquette"
+
+msgid "Labels"
+msgstr "Étiquettes"
+
+msgctxt "post type general name"
+msgid "Tasks"
+msgstr "Tâches"
+
+msgctxt "post type singular name"
+msgid "Task"
+msgstr "Tâche"
+
+msgctxt "admin menu"
+msgid "Decker"
+msgstr "Decker"
+
+msgid "Edit Task"
+msgstr "Modifier la tâche"
+
+msgid "View Task"
+msgstr "Voir la tâche"
+
+msgid "All Tasks"
+msgstr "Toutes les tâches"
+
+msgid "Search Tasks"
+msgstr "Rechercher des tâches"
+
+msgid "Parent Tasks:"
+msgstr "Tâches parentes :"
+
+msgid "No tasks found."
+msgstr "Aucune tâche trouvée."
+
+msgid "No tasks found in Trash."
+msgstr "Aucune tâche trouvée dans la corbeille."
+
+msgctxt "post status"
+msgid "Archived"
+msgstr "Archivé"
+
+#, python-format
+msgid "Archived <span class=\"count\">(%s)</span>"
+msgid_plural "Archived <span class=\"count\">(%s)</span>"
+msgstr[0] "Archivé <span class=\"count\">(%s)</span>"
+msgstr[1] "Archivés <span class=\"count\">(%s)</span>"
+
+msgid "Archived"
+msgstr "Archivé"
+
+msgid "Archivado"
+msgstr "Archivé"
+
+msgid "Task Details"
+msgstr "Détails de la tâche"
+
+msgid "Assigned Users"
+msgstr "Utilisateurs assignés"
+
+msgid "People"
+msgstr "Personnes"
+
+msgid "Task User and Date"
+msgstr "Utilisateur et date de la tâche"
+
+msgid "Attachments"
+msgstr "Pièces jointes"
+
+msgid "Board"
+msgstr "Tableau"
+
+msgid "Due Date"
+msgstr "Date d’échéance"
+
+msgid "Max Priority"
+msgstr "Priorité maximale"
+
+msgid "Stack"
+msgstr "Colonne"
+
+msgid "C."
+msgstr "C."
+
+msgid "To-Do"
+msgstr "À faire"
+
+msgid "In Progress"
+msgstr "En cours"
+
+msgid "Done"
+msgstr "Terminé"
+
+msgid "Nextcloud Card ID"
+msgstr "ID de la carte Nextcloud"
+
+msgid "Select Board"
+msgstr "Sélectionner un tableau"
+
+msgid "Assign User:"
+msgstr "Assigner un utilisateur :"
+
+msgid "Assign Date:"
+msgstr "Assigner une date :"
+
+msgid "Add Relation"
+msgstr "Ajouter une relation"
+
+msgid "Remove"
+msgstr "Supprimer"
+
+msgid "Please select a user and date."
+msgstr "Veuillez sélectionner un utilisateur et une date."
+
+msgid "Show All Boards"
+msgstr "Afficher tous les tableaux"
+
+msgid "Show All Labels"
+msgstr "Afficher toutes les étiquettes"
+
+msgid "Status"
+msgstr "État"
+
+msgid "Select your favorite color."
+msgstr "Sélectionnez votre couleur préférée."
+
+msgid "https://github.com/ateeducacion/wp-decker"
+msgstr "https://github.com/ateeducacion/wp-decker"
+
+msgid ""
+"Decker is a WordPress plugin focused on efficiently and structurally "
+"presenting a list of tasks. It is a simple task management plugin that "
+"utilizes a Kanban board and a unique priority system."
+msgstr ""
+"Decker est une extension WordPress conçue pour présenter une liste de tâches"
+" de manière efficace et structurée. Il s’agit d’un gestionnaire de tâches "
+"simple utilisant un tableau Kanban et un système de priorité spécifique."
+
+msgid "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
+msgstr "https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/"
+
+msgid ""
+"Provide the Bearer token in the Authorization header for the email-to-post "
+"endpoint. Example request:"
+msgstr ""
+"Fournissez le jeton Bearer dans l’en-tête Authorization pour le point de "
+"terminaison de création par e-mail. Exemple de requête :"
+
+msgid ""
+"Enter the alert message to display as a banner. Supports HTML. Leave empty "
+"to hide."
+msgstr ""
+"Saisissez le message d’alerte à afficher dans une bannière. Le HTML est pris"
+" en charge. Laissez vide pour la masquer."
+
+msgid "Select the color for the alert message."
+msgstr "Sélectionnez la couleur du message d’alerte."
+
+msgid "Shared Key"
+msgstr "Clé partagée"
+
+msgid "Alert Message"
+msgstr "Message d’alerte"
+
+msgid "Alert Color"
+msgstr "Couleur de l’alerte"
+
+msgid "Settings"
+msgstr "Réglages"
+
+msgid "Go to Decker"
+msgstr "Accéder à Decker"
+
+msgid "-- Select User --"
+msgstr "-- Sélectionner un utilisateur --"
+
+msgid "Unknown User"
+msgstr "Utilisateur inconnu"
+
+msgid "This user and date combination already exists."
+msgstr "Cette combinaison d’utilisateur et de date existe déjà."
+
+msgid "Add Attachments"
+msgstr "Ajouter des pièces jointes"
+
+msgid "Select Attachments"
+msgstr "Sélectionner des pièces jointes"
+
+msgid "The title is required."
+msgstr "Le titre est obligatoire."
+
+msgid "The stack is required."
+msgstr "La colonne est obligatoire."
+
+msgid "The board is required and must be a positive integer."
+msgstr "Le tableau est obligatoire et doit être un entier positif."
+
+msgid "The board does not exist in the decker_board taxonomy."
+msgstr "Le tableau n’existe pas dans la taxonomie decker_board."
+
+msgid "Default Board"
+msgstr "Tableau par défaut"
+
+msgid "Select a board"
+msgstr "Sélectionner un tableau"
+
+msgid "Select your default board."
+msgstr "Sélectionnez votre tableau par défaut."
+
+msgid "Analytics Dashboard"
+msgstr "Tableau de bord analytique"
+
+msgid "Analytics"
+msgstr "Analyses"
+
+msgid "Active Tasks"
+msgstr "Tâches actives"
+
+msgid "Total Users"
+msgstr "Nombre total d’utilisateurs"
+
+msgid "Archived Tasks"
+msgstr "Tâches archivées"
+
+msgid "Total Boards"
+msgstr "Nombre total de tableaux"
+
+msgid "Tasks by Board"
+msgstr "Tâches par tableau"
+
+msgid "Tasks by User"
+msgstr "Tâches par utilisateur"
+
+msgid "Tasks by Stack"
+msgstr "Tâches par colonne"
+
+msgid "Kanban Board"
+msgstr "Tableau Kanban"
+
+msgid "Search..."
+msgstr "Rechercher…"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "All Users"
+msgstr "Tous les utilisateurs"
+
+msgid "Fix Order"
+msgstr "Corriger l’ordre"
+
+msgid "TO-DO"
+msgstr "À FAIRE"
+
+msgid "Priority"
+msgstr "Priorité"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "MAX PRIORITY"
+msgstr "PRIORITÉ MAXIMALE"
+
+msgid "Title"
+msgstr "Titre"
+
+msgid "No board assigned"
+msgstr "Aucun tableau assigné"
+
+msgid "No tasks for today."
+msgstr "Aucune tâche pour aujourd’hui."
+
+msgid "Select tasks to import"
+msgstr "Sélectionner les tâches à importer"
+
+msgid "Tasks Detail"
+msgstr "Détail des tâches"
+
+msgid "Tasks"
+msgstr "Tâches"
+
+msgid "Task Detail"
+msgstr "Détail de la tâche"
+
+msgid "New task"
+msgstr "Nouvelle tâche"
+
+msgid "Task not found"
+msgstr "Tâche introuvable"
+
+msgid "My Tasks"
+msgstr "Mes tâches"
+
+msgid "P."
+msgstr "P."
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Tags"
+msgstr "Étiquettes"
+
+msgid "Remaining Time"
+msgstr "Temps restant"
+
+msgid "Upcoming Tasks"
+msgstr "Tâches à venir"
+
+msgid "DELAYED"
+msgstr "EN RETARD"
+
+msgid "Today"
+msgstr "Aujourd’hui"
+
+msgid "Tomorrow"
+msgstr "Demain"
+
+msgid "Next 7 Days"
+msgstr "7 prochains jours"
+
+msgid "You do not have permission to view this page."
+msgstr "Vous n’avez pas l’autorisation de consulter cette page."
+
+msgid "Version"
+msgstr "Version"
+
+msgid "Show Full Sidebar"
+msgstr "Afficher la barre latérale complète"
+
+msgid "Navigation"
+msgstr "Navigation"
+
+msgid "Apps"
+msgstr "Applications"
+
+msgid "Theme Settings"
+msgstr "Réglages du thème"
+
+msgid "Customize"
+msgstr "Personnaliser"
+
+msgid "the overall color scheme, sidebar menu, etc."
+msgstr "le jeu de couleurs général, le menu latéral, etc."
+
+msgid "Choose Layout"
+msgstr "Choisir la mise en page"
+
+msgid "Vertical"
+msgstr "Verticale"
+
+msgid "Horizontal"
+msgstr "Horizontale"
+
+msgid "Color Scheme"
+msgstr "Jeu de couleurs"
+
+msgid "Light"
+msgstr "Clair"
+
+msgid "Dark"
+msgstr "Sombre"
+
+msgid "Layout Mode"
+msgstr "Mode de mise en page"
+
+msgid "Fluid"
+msgstr "Fluide"
+
+msgid "Boxed"
+msgstr "Encadrée"
+
+msgid "Detached"
+msgstr "Détachée"
+
+msgid "Topbar Color"
+msgstr "Couleur de la barre supérieure"
+
+msgid "Brand"
+msgstr "Marque"
+
+msgid "Menu Color"
+msgstr "Couleur du menu"
+
+msgid "Sidebar Size"
+msgstr "Taille de la barre latérale"
+
+msgid "Default"
+msgstr "Par défaut"
+
+msgid "Compact"
+msgstr "Compacte"
+
+msgid "Condensed"
+msgstr "Condensée"
+
+msgid "Hover View"
+msgstr "Vue au survol"
+
+msgid "Full Layout"
+msgstr "Mise en page complète"
+
+msgid "Fullscreen Layout"
+msgstr "Mise en page plein écran"
+
+msgid "Layout Position"
+msgstr "Position de la mise en page"
+
+msgid "Fixed"
+msgstr "Fixe"
+
+msgid "Scrollable"
+msgstr "Défilable"
+
+msgid "Sidebar User Info"
+msgstr "Informations utilisateur dans la barre latérale"
+
+msgid "Reset"
+msgstr "Réinitialiser"
+
+msgid "Task"
+msgstr "Tâche"
+
+msgid "Error loading content. Please try again."
+msgstr "Erreur lors du chargement du contenu. Veuillez réessayer."
+
+msgid "Theme Mode"
+msgstr "Mode du thème"
+
+msgid "Welcome !"
+msgstr "Bienvenue !"
+
+msgid "My Profile"
+msgstr "Mon profil"
+
+msgid "Logout"
+msgstr "Se déconnecter"
+
+#, python-format
+msgid "Error: The board %s does not exist."
+msgstr "Erreur : le tableau %s n’existe pas."
+
+msgid "MAXIMUM PRIORITY"
+msgstr "PRIORITÉ MAXIMALE"
+
+msgid "Please provide a title."
+msgstr "Veuillez fournir un titre."
+
+msgid "Maximum Priority"
+msgstr "Priorité maximale"
+
+msgid "For today"
+msgstr "Pour aujourd’hui"
+
+msgid "To Do"
+msgstr "À faire"
+
+msgid "Please select a due date."
+msgstr "Veuillez sélectionner une date d’échéance."
+
+msgid "Assign to"
+msgstr "Assigner à"
+
+msgid "Comments"
+msgstr "Commentaires"
+
+msgid "History"
+msgstr "Historique"
+
+msgid "Gantt"
+msgstr "Gantt"
+
+msgid "Task title"
+msgstr "Titre de la tâche"
+
+msgid "Select date"
+msgstr "Sélectionner une date"
+
+msgid "Please select a board."
+msgstr "Veuillez sélectionner un tableau."
+
+msgid "Author"
+msgstr "Auteur"
+
+msgid "Last editor"
+msgstr "Dernier éditeur"
+
+msgid "Save"
+msgstr "Enregistrer"
+
+msgid "Toggle Dropdown"
+msgstr "Afficher ou masquer la liste déroulante"
+
+msgid "Please select a file to upload."
+msgstr "Veuillez sélectionner un fichier à téléverser."
+
+msgid "Are you sure you want to archive this task?"
+msgstr "Voulez-vous vraiment archiver cette tâche ?"
+
+msgid "Failed to archive task."
+msgstr "Échec de l’archivage de la tâche."
+
+msgid "Error uploading attachment."
+msgstr "Erreur lors du téléversement de la pièce jointe."
+
+msgid "Are you sure you want to delete this attachment?"
+msgstr "Voulez-vous vraiment supprimer cette pièce jointe ?"
+
+msgid "Invalid post type."
+msgstr "Type de publication non valide."
+
+msgid "🔥"
+msgstr "🔥"
+
+msgid "Normal"
+msgstr "Normale"
+
+msgid "Undefined date"
+msgstr "Date non définie"
+
+msgid "Order:"
+msgstr "Ordre :"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "Edit in WordPress"
+msgstr "Modifier dans WordPress"
+
+msgid "Archive"
+msgstr "Archiver"
+
+msgid "Assign to me"
+msgstr "Me l’assigner"
+
+msgid "Leave"
+msgstr "Quitter"
+
+msgid "Mark for today"
+msgstr "Marquer pour aujourd’hui"
+
+msgid "Unmark for today"
+msgstr "Retirer d’aujourd’hui"
+
+msgid "No comments yet."
+msgstr "Aucun commentaire pour le moment."
+
+msgid "Replying to"
+msgstr "Réponse à"
+
+msgid "Write your comment..."
+msgstr "Écrivez votre commentaire…"
+
+msgid "Upload"
+msgstr "Téléverser"
+
+msgid "Nickname"
+msgstr "Pseudonyme"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Delete notification"
+msgstr "Supprimer la notification"
+
+msgid "Server response error."
+msgstr "Erreur de réponse du serveur."
+
+msgid "An error occurred while saving the task."
+msgstr "Une erreur est survenue lors de l’enregistrement de la tâche."
+
+msgid "Request error."
+msgstr "Erreur de requête."
+
+msgid "Error saving task."
+msgstr "Erreur lors de l’enregistrement de la tâche."
+
+msgid "My Board"
+msgstr "Mon tableau"
+
+msgid "Board updated successfully"
+msgstr "Tableau mis à jour"
+
+msgid "Board created successfully"
+msgstr "Tableau créé"
+
+msgid "Board deleted successfully"
+msgstr "Tableau supprimé"
+
+msgid "Label updated successfully"
+msgstr "Étiquette mise à jour"
+
+msgid "Label created successfully"
+msgstr "Étiquette créée"
+
+msgid "Label deleted successfully"
+msgstr "Étiquette supprimée"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Slug"
+msgstr "Slug"
+
+msgid "Add New Term"
+msgstr "Ajouter un terme"
+
+msgid "Leave empty for automatic generation from name"
+msgstr "Laissez vide pour générer automatiquement à partir du nom"
+
+msgid "Edit Term"
+msgstr "Modifier le terme"
+
+msgid "To confirm deletion, please enter the term slug:"
+msgstr "Pour confirmer la suppression, saisissez le slug du terme :"
+
+msgid ""
+"WARNING: Deleting a board is dangerous! All tasks assigned to this board "
+"will be left without a board."
+msgstr ""
+"ATTENTION : supprimer un tableau est dangereux ! Toutes les tâches qui lui "
+"sont assignées se retrouveront sans tableau."
+
+msgid "Incorrect slug. Deletion cancelled."
+msgstr "Slug incorrect. Suppression annulée."
+
+msgid "Utilities"
+msgstr "Outils"
+
+msgid "Configure the Decker plugin settings."
+msgstr "Configurez les réglages de l’extension Decker."
+
+msgid "Select the minimum user profile that can use Decker."
+msgstr "Sélectionnez le profil utilisateur minimal autorisé à utiliser Decker."
+
+msgid "Minimum User Profile"
+msgstr "Profil utilisateur minimal"
+
+msgid "Send"
+msgstr "Envoyer"
+
+msgid "Show HTML source"
+msgstr "Afficher le code source HTML"
+
+msgid "Edit the content in HTML format"
+msgstr "Modifier le contenu au format HTML"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Ignored Users"
+msgstr "Utilisateurs ignorés"
+
+msgid "Please enter comma-separated user IDs (numbers only)"
+msgstr ""
+"Saisissez des identifiants utilisateur séparés par des virgules (nombres "
+"uniquement)"
+
+msgid "Enter comma-separated user IDs to ignore from Decker functionality."
+msgstr ""
+"Saisissez les identifiants utilisateur à exclure des fonctionnalités de "
+"Decker, séparés par des virgules."
+
+#, python-format
+msgid "The following user IDs were invalid and have been removed: %s"
+msgstr ""
+"Les identifiants utilisateur suivants n’étaient pas valides et ont été "
+"supprimés : %s"
+
+msgid "Access denied"
+msgstr "Accès refusé"
+
+msgid "You do not have permission to delete boards"
+msgstr "Vous n’avez pas l’autorisation de supprimer des tableaux"
+
+msgid "You do not have permission to manage labels"
+msgstr "Vous n’avez pas l’autorisation de gérer les étiquettes"
+
+msgid "You do not have permission to delete labels"
+msgstr "Vous n’avez pas l’autorisation de supprimer les étiquettes"
+
+msgid "Loading content. Please wait."
+msgstr "Chargement du contenu. Veuillez patienter."
+
+msgid "Are you sure you want to delete this comment?"
+msgstr "Voulez-vous vraiment supprimer ce commentaire ?"
+
+msgid "Failed to delete comment."
+msgstr "Échec de la suppression du commentaire."
+
+msgid "Error deleting comment."
+msgstr "Erreur lors de la suppression du commentaire."
+
+msgid "Please enter a comment."
+msgstr "Veuillez saisir un commentaire."
+
+msgid "Comment"
+msgstr "Commenter"
+
+msgid "Warning"
+msgstr "Avertissement"
+
+msgid "You are running this site with demo data."
+msgstr "Ce site utilise des données de démonstration."
+
+msgid "Tasks by Stack from current User"
+msgstr "Mes tâches par colonne"
+
+msgid "Failed to delete attachment."
+msgstr "Échec de la suppression de la pièce jointe."
+
+msgid "Email Notifications"
+msgstr "Notifications par e-mail"
+
+msgid "Notify me when a task is assigned to me."
+msgstr "Me notifier lorsqu’une tâche m’est assignée."
+
+msgid "Notify me when a task assigned to me is completed."
+msgstr "Me notifier lorsqu’une tâche qui m’est assignée est terminée."
+
+msgid "Notify me when someone comments on a task I am assigned to."
+msgstr "Me notifier lorsqu’une personne commente une tâche qui m’est assignée."
+
+msgid "Responsable"
+msgstr "Responsable"
+
+msgid "Select Responsable"
+msgstr "Sélectionner un responsable"
+
+msgid "Please select a responsable."
+msgstr "Veuillez sélectionner un responsable."
+
+msgid "Information"
+msgstr "Informations"
+
+msgid "Created"
+msgstr "Créé"
+
+msgid "Only basic HTML formatting is allowed (i, b, em, strong, br)"
+msgstr "Seule la mise en forme HTML de base est autorisée (i, b, em, strong, br)"
+
+msgid "Hidden"
+msgstr "Masquée"
+
+msgid "Hidden task"
+msgstr "Tâche masquée"
+
+msgid "(Hidden tasks are not shown in task listings)"
+msgstr "(Les tâches masquées ne sont pas affichées dans les listes)"
+
+msgctxt "post type general name"
+msgid "Events"
+msgstr "Événements"
+
+msgctxt "post type singular name"
+msgid "Event"
+msgstr "Événement"
+
+msgctxt "admin menu"
+msgid "Events"
+msgstr "Événements"
+
+msgctxt "add new on admin bar"
+msgid "Event"
+msgstr "Événement"
+
+msgctxt "event"
+msgid "Add New"
+msgstr "Ajouter"
+
+msgid "Add New Event"
+msgstr "Ajouter un événement"
+
+msgid "New Event"
+msgstr "Nouvel événement"
+
+msgid "Edit Event"
+msgstr "Modifier l’événement"
+
+msgid "View Event"
+msgstr "Voir l’événement"
+
+msgid "Events"
+msgstr "Événements"
+
+msgid "Search Events"
+msgstr "Rechercher des événements"
+
+msgid "No events found."
+msgstr "Aucun événement trouvé."
+
+msgid "No events found in Trash."
+msgstr "Aucun événement trouvé dans la corbeille."
+
+msgid "Event Details"
+msgstr "Détails de l’événement"
+
+msgid "Location:"
+msgstr "Lieu :"
+
+msgid "URL:"
+msgstr "URL :"
+
+msgid "Category:"
+msgstr "Catégorie :"
+
+msgid "Danger"
+msgstr "Danger"
+
+msgid "Success"
+msgstr "Succès"
+
+msgid "Primary"
+msgstr "Principal"
+
+msgid "Info"
+msgstr "Informations"
+
+msgid "Calendar"
+msgstr "Calendrier"
+
+msgid "Drag and drop your event or click in the calendar"
+msgstr "Glissez-déposez votre événement ou cliquez dans le calendrier"
+
+msgid "Event"
+msgstr "Événement"
+
+msgid "Location"
+msgstr "Lieu"
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Start"
+msgstr "Début"
+
+msgid "End"
+msgstr "Fin"
+
+msgid "Add New Task"
+msgstr "Ajouter une tâche"
+
+msgid "You do not have permissions to access this data."
+msgstr "Vous n’avez pas l’autorisation d’accéder à ces données."
+
+msgid "All Day Event"
+msgstr "Événement sur toute la journée"
+
+msgid "End Date must be after Start Date."
+msgstr "La date de fin doit être postérieure à la date de début."
+
+msgid "Calendar Token"
+msgstr "Jeton du calendrier"
+
+msgid "Generate New Token"
+msgstr "Générer un nouveau jeton"
+
+msgid "Subscribe to Decker calendar:"
+msgstr "S’abonner au calendrier Decker :"
+
+msgid "Google Calendar"
+msgstr "Google Agenda"
+
+msgid "iCalendar"
+msgstr "iCalendar"
+
+msgid "Outlook 365"
+msgstr "Outlook 365"
+
+msgid "Export .ics file"
+msgstr "Exporter le fichier .ics"
+
+msgid "Meeting"
+msgstr "Réunion"
+
+msgid "Merge into..."
+msgstr "Fusionner dans…"
+
+msgid "Merge task"
+msgstr "Fusionner la tâche"
+
+msgid "Choose the destination task that should remain active."
+msgstr "Choisissez la tâche de destination qui doit rester active."
+
+msgid "Search tasks by title"
+msgstr "Rechercher des tâches par titre"
+
+msgid "Type at least 2 characters to search for a destination task."
+msgstr "Saisissez au moins 2 caractères pour rechercher une tâche de destination."
+
+msgid "Searching tasks..."
+msgstr "Recherche de tâches…"
+
+msgid "No matching tasks found."
+msgstr "Aucune tâche correspondante trouvée."
+
+msgid "Destination task"
+msgstr "Tâche de destination"
+
+msgid "Please select a destination task."
+msgstr "Veuillez sélectionner une tâche de destination."
+
+msgid "Are you sure you want to merge this task?"
+msgstr "Voulez-vous vraiment fusionner cette tâche ?"
+
+msgid ""
+"The current task will be archived and merged into the selected destination "
+"task."
+msgstr ""
+"La tâche actuelle sera archivée et fusionnée dans la tâche de destination "
+"sélectionnée."
+
+msgid "An error occurred while merging the task."
+msgstr "Une erreur est survenue lors de la fusion de la tâche."
+
+msgid "The task has been successfully merged."
+msgstr "La tâche a été fusionnée."
+
+msgid "Please choose a destination task."
+msgstr "Choisissez une tâche de destination."
+
+msgid "You do not have permission to merge one of the selected tasks."
+msgstr "Vous n’avez pas l’autorisation de fusionner l’une des tâches sélectionnées."
+
+msgid "Task merged successfully."
+msgstr "Tâche fusionnée."
+
+msgid "The source task was not found."
+msgstr "La tâche source est introuvable."
+
+msgid "The destination task was not found."
+msgstr "La tâche de destination est introuvable."
+
+msgid "A task cannot be merged into itself."
+msgstr "Une tâche ne peut pas être fusionnée avec elle-même."
+
+msgid "Only published tasks can be merged."
+msgstr "Seules les tâches publiées peuvent être fusionnées."
+
+msgid "This task has already been merged."
+msgstr "Cette tâche a déjà été fusionnée."
+
+msgid "Merged from task: %1$s (ID: %2$d)"
+msgstr "Fusionnée depuis la tâche : %1$s (ID : %2$d)"
+
+msgid "Absence"
+msgstr "Absence"
+
+msgid "Absences"
+msgstr "Absences"
+
+msgid "Alert"
+msgstr "Alerte"
+
+msgid "All Day"
+msgstr "Toute la journée"
+
+msgid "Uncategorized"
+msgstr "Non classé"
+
+msgid "Please enter a title for the event."
+msgstr "Veuillez saisir un titre pour l’événement."
+
+msgid "Start Date and Time"
+msgstr "Date et heure de début"
+
+msgid "Please select a start date and time."
+msgstr "Veuillez sélectionner une date et une heure de début."
+
+msgid "End Date and Time"
+msgstr "Date et heure de fin"
+
+msgid "Please select an end date and time."
+msgstr "Veuillez sélectionner une date et une heure de fin."
+
+msgid "Please select at least one user."
+msgstr "Veuillez sélectionner au moins un utilisateur."
+
+msgid "Please enter the event location."
+msgstr "Veuillez saisir le lieu de l’événement."
+
+msgid "Event URL"
+msgstr "URL de l’événement"
+
+msgid "Please enter a valid URL."
+msgstr "Veuillez saisir une URL valide."
+
+msgid "Please enter a description for the event."
+msgstr "Veuillez saisir une description de l’événement."
+
+msgid "Select Category"
+msgstr "Sélectionner une catégorie"
+
+msgid "Please select a category for the event."
+msgstr "Veuillez sélectionner une catégorie pour l’événement."
+
+msgid "Month"
+msgstr "Mois"
+
+msgid "Week"
+msgstr "Semaine"
+
+msgid "Day"
+msgstr "Jour"
+
+msgid "List"
+msgstr "Liste"
+
+msgctxt "post type general name"
+msgid "Knowledge Base"
+msgstr "Base de connaissances"
+
+msgctxt "post type singular name"
+msgid "Article"
+msgstr "Article"
+
+msgctxt "admin menu"
+msgid "Knowledge Base"
+msgstr "Base de connaissances"
+
+msgid "Add New Article"
+msgstr "Ajouter un article"
+
+msgid "New Article"
+msgstr "Nouvel article"
+
+msgid "Edit Article"
+msgstr "Modifier l’article"
+
+msgid "View Article"
+msgstr "Voir l’article"
+
+msgid "Knowledge Base"
+msgstr "Base de connaissances"
+
+msgid "Save Article"
+msgstr "Enregistrer l’article"
+
+msgid "Parent Article:"
+msgstr "Article parent :"
+
+msgid "No articles found."
+msgstr "Aucun article trouvé."
+
+msgid "Team Meeting"
+msgstr "Réunion d’équipe"
+
+msgid "Project Review"
+msgstr "Revue de projet"
+
+msgid "Training Session"
+msgstr "Session de formation"
+
+msgid "Client Presentation"
+msgstr "Présentation au client"
+
+msgid "Sprint Planning"
+msgstr "Planification du sprint"
+
+msgid "Code Review"
+msgstr "Revue de code"
+
+msgid "Release Day"
+msgstr "Jour de mise en production"
+
+msgid "Maintenance Window"
+msgstr "Fenêtre de maintenance"
+
+msgid "Meeting Room A"
+msgstr "Salle de réunion A"
+
+msgid "Conference Room"
+msgstr "Salle de conférence"
+
+msgid "Training Center"
+msgstr "Centre de formation"
+
+msgid "Virtual Meeting"
+msgstr "Réunion virtuelle"
+
+msgid "Main Office"
+msgstr "Bureau principal"
+
+msgid "Demo event created automatically."
+msgstr "Événement de démonstration créé automatiquement."
+
+msgid "Article saved successfully"
+msgstr "Article enregistré"
+
+msgid "Article not found"
+msgstr "Article introuvable"
+
+msgid "Excerpt"
+msgstr "Extrait"
+
+msgid "Content"
+msgstr "Contenu"
+
+msgid "Error"
+msgstr "Erreur"
+
+msgid "You do not have permission to access this resource."
+msgstr "Vous n’avez pas l’autorisation d’accéder à cette ressource."
+
+msgid "Enable email notifications for all plugin events."
+msgstr "Activer les notifications par e-mail pour tous les événements de l’extension."
+
+msgid ""
+"This setting allows users to manage email notifications in their profile. By"
+" default, all notifications are enabled."
+msgstr ""
+"Ce réglage permet aux utilisateurs de gérer les notifications par e-mail "
+"dans leur profil. Toutes les notifications sont activées par défaut."
+
+msgid "Allow Email Notifications"
+msgstr "Autoriser les notifications par e-mail"
+
+msgid "This email was automatically sent by Decker"
+msgstr "Cet e-mail a été envoyé automatiquement par Decker"
+
+msgid "Unknown user"
+msgstr "Utilisateur inconnu"
+
+msgid "Task Created"
+msgstr "Tâche créée"
+
+msgid ""
+"A new task \"%1$s\" has been created by %3$s. <a href=\"%2$s\">Click here to"
+" view the task</a>."
+msgstr ""
+"Une nouvelle tâche « %1$s » a été créée par %3$s. <a href=\"%2$s\">Cliquez "
+"ici pour voir la tâche</a>."
+
+msgid "You have been assigned a task"
+msgstr "Une tâche vous a été assignée"
+
+#, python-format
+msgid "Completed by %s"
+msgstr "Terminée par %s"
+
+#, python-format
+msgid "New Comment on Task: %s"
+msgstr "Nouveau commentaire sur la tâche : %s"
+
+#, python-format
+msgid "Comment by %s"
+msgstr "Commentaire de %s"
+
+msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
+msgstr "La colonne n’est pas valide. Valeurs autorisées : to-do, in-progress, done."
+
+msgid "No due date"
+msgstr "Aucune date d’échéance"
+
+msgid "Yesterday"
+msgstr "Hier"
+
+#, python-format
+msgid "%s ago"
+msgstr "il y a %s"
+
+#, python-format
+msgid "in %s"
+msgstr "dans %s"
+
+msgid "Unarchive"
+msgstr "Désarchiver"
+
+msgid "This action will move the task to the archive."
+msgstr "Cette action déplacera la tâche vers les archives."
+
+msgid "Are you sure you want to unarchive this task?"
+msgstr "Voulez-vous vraiment désarchiver cette tâche ?"
+
+msgid "This action will restore the task."
+msgstr "Cette action restaurera la tâche."
+
+msgid "The task has been successfully archived."
+msgstr "La tâche a été archivée."
+
+msgid "The task has been successfully unarchived."
+msgstr "La tâche a été désarchivée."
+
+msgid "An error occurred while archiving the task."
+msgstr "Une erreur est survenue lors de l’archivage de la tâche."
+
+msgid "Unsaved changes"
+msgstr "Modifications non enregistrées"
+
+msgid "You have unsaved changes. Close without saving?"
+msgstr "Certaines modifications ne sont pas enregistrées. Fermer sans enregistrer ?"
+
+msgid "Close anyway"
+msgstr "Fermer quand même"
+
+msgid "Notifications"
+msgstr "Notifications"
+
+msgid "Clear All"
+msgstr "Tout effacer"
+
+msgid "Test Notification"
+msgstr "Notification de test"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "Show in Boards"
+msgstr "Afficher dans les tableaux"
+
+msgid "Display this board in the Boards section of the sidebar"
+msgstr "Afficher ce tableau dans la section Tableaux de la barre latérale"
+
+msgid "Show in Knowledge Base"
+msgstr "Afficher dans la base de connaissances"
+
+msgid "Display this board in the Knowledge Base section of the sidebar"
+msgstr ""
+"Afficher ce tableau dans la section Base de connaissances de la barre "
+"latérale"
+
+msgid "Visibility"
+msgstr "Visibilité"
+
+msgid "Board is required"
+msgstr "Un tableau est obligatoire"
+
+msgid "Invalid board ID"
+msgstr "Identifiant de tableau non valide"
+
+msgid "No date"
+msgstr "Aucune date"
+
+msgid "You do not have permission to create terms."
+msgstr "Vous n’avez pas l’autorisation de créer des termes."
+
+msgid "All Articles"
+msgstr "Tous les articles"
+
+msgid "No Board"
+msgstr "Aucun tableau"
+
+msgid "Are you sure?"
+msgstr "Êtes-vous sûr ?"
+
+msgid "The article"
+msgstr "L’article"
+
+msgid "will be deleted"
+msgstr "sera supprimé"
+
+msgid "Yes, delete"
+msgstr "Oui, supprimer"
+
+msgid "Deleted"
+msgstr "Supprimé"
+
+msgid "The article has been successfully deleted."
+msgstr "L’article a été supprimé."
+
+msgid "Could not delete the article."
+msgstr "Impossible de supprimer l’article."
+
+msgid "In Boards"
+msgstr "Dans les tableaux"
+
+msgid "In KB"
+msgstr "Dans la base"
+
+msgid "Task saved successfully."
+msgstr "Tâche enregistrée."
+
+msgid "Are you sure you want to delete this event?"
+msgstr "Voulez-vous vraiment supprimer cet événement ?"
+
+msgid "Updated"
+msgstr "Mis à jour"
+
+msgid "No tasks found for this date."
+msgstr "Aucune tâche trouvée pour cette date."
+
+msgid "Select date to import from:"
+msgstr "Sélectionnez la date depuis laquelle importer :"
+
+msgid "Loading tasks..."
+msgstr "Chargement des tâches…"
+
+msgid "Error loading tasks."
+msgstr "Erreur lors du chargement des tâches."
+
+msgid "Event type feeds:"
+msgstr "Flux par type d’événement :"
+
+msgid "Warnings"
+msgstr "Avertissements"
+
+msgid "Alerts"
+msgstr "Alertes"
+
+msgid "All Types"
+msgstr "Tous les types"
+
+msgid "Start:"
+msgstr "Début :"
+
+msgid "End:"
+msgstr "Fin :"
+
+msgid "All Day Event Event"
+msgstr "Événement sur toute la journée"
+
+msgid "Time is stored in UTC. Adjust accordingly."
+msgstr "L’heure est enregistrée en UTC. Ajustez-la en conséquence."
+
+msgid ""
+"You have no tasks defined for today. Do you want to import tasks from a "
+"previous day?"
+msgstr ""
+"Aucune tâche n’est définie pour aujourd’hui. Voulez-vous importer des tâches"
+" d’un jour précédent ?"
+
+msgid "No high priority tasks found."
+msgstr "Aucune tâche de haute priorité trouvée."
+
+msgid "Import"
+msgstr "Importer"
+
+msgid "Copy Task URL"
+msgstr "Copier l’URL de la tâche"
+
+msgid "Task URL copied!"
+msgstr "URL de la tâche copiée !"
+
+msgid "Could not copy URL. Please copy it manually:"
+msgstr "Impossible de copier l’URL. Copiez-la manuellement :"
+
+msgid "There are no tasks from previous days to import."
+msgstr "Aucune tâche des jours précédents ne peut être importée."
+
+msgid "Invalid moved ID."
+msgstr "Identifiant déplacé non valide."
+
+msgid "Search articles..."
+msgstr "Rechercher des articles…"
+
+msgid "Add Child"
+msgstr "Ajouter un enfant"
+
+msgid "View"
+msgstr "Voir"
+
+msgid "The task has been saved successfully."
+msgstr "La tâche a été enregistrée."
+
+msgid "Enable real-time collaborative editing for tasks."
+msgstr "Activer l’édition collaborative en temps réel des tâches."
+
+msgid ""
+"When enabled, multiple users can edit the same task simultaneously with "
+"real-time synchronization using WebRTC."
+msgstr ""
+"Lorsque cette option est activée, plusieurs utilisateurs peuvent modifier "
+"simultanément la même tâche avec une synchronisation en temps réel via "
+"WebRTC."
+
+msgid ""
+"WebRTC signaling server URL for collaborative editing. Leave empty to use "
+"the default public server (wss://signaling.yjs.dev)."
+msgstr ""
+"URL du serveur de signalisation WebRTC pour l’édition collaborative. Laissez"
+" vide pour utiliser le serveur public par défaut (wss://signaling.yjs.dev)."
+
+msgid "Public servers:"
+msgstr "Serveurs publics :"
+
+msgid "(Default - Global)"
+msgstr "(Par défaut — mondial)"
+
+msgid "(Europe)"
+msgstr "(Europe)"
+
+msgid "(United States)"
+msgstr "(États-Unis)"
+
+msgid "Collaborative Editing"
+msgstr "Édition collaborative"
+
+msgid "Signaling Server"
+msgstr "Serveur de signalisation"
+
+msgid "Connecting..."
+msgstr "Connexion…"
+
+msgid "Collaborative mode"
+msgstr "Mode collaboratif"
+
+msgid "Disconnected"
+msgstr "Déconnecté"
+
+msgid "you"
+msgstr "vous"
+
+msgid "Unknown"
+msgstr "Inconnu"
+
+msgid "Search tasks..."
+msgstr "Rechercher des tâches…"
+
+msgid "Type to search tasks by title"
+msgstr "Saisissez du texte pour rechercher des tâches par titre"
+
+msgid "to navigate"
+msgstr "pour naviguer"
+
+msgid "to select"
+msgstr "pour sélectionner"
+
+msgid "to close"
+msgstr "pour fermer"
+
+msgid "No tasks found"
+msgstr "Aucune tâche trouvée"
+
+msgid "Error searching tasks"
+msgstr "Erreur lors de la recherche de tâches"
+
+msgid "Search (Ctrl+K)"
+msgstr "Rechercher (Ctrl+K)"
+
+msgid "Decker Network Settings"
+msgstr "Réglages réseau de Decker"
+
+msgid "You do not have sufficient permissions to access this page."
+msgstr "Vous ne disposez pas des autorisations nécessaires pour accéder à cette page."
+
+msgid "Network settings saved."
+msgstr "Réglages réseau enregistrés."
+
+msgid "Allowed Site IDs"
+msgstr "Identifiants de sites autorisés"
+
+msgid "Please enter comma-separated site IDs (numbers only)"
+msgstr ""
+"Saisissez des identifiants de site séparés par des virgules (nombres "
+"uniquement)"
+
+msgid ""
+"Enter comma-separated site IDs where Decker is permitted to be activated. "
+"Leave empty to allow activation on all sites."
+msgstr ""
+"Saisissez les identifiants des sites sur lesquels Decker peut être activé, "
+"séparés par des virgules. Laissez vide pour autoriser l’activation sur tous "
+"les sites."
+
+msgid "Task not found."
+msgstr "Tâche introuvable."
+
+msgid "You do not have permission to clone this task."
+msgstr "Vous n’avez pas l’autorisation de dupliquer cette tâche."
+
+msgid "Task cloned successfully."
+msgstr "Tâche dupliquée."
+
+msgid "Invalid task ID."
+msgstr "Identifiant de tâche non valide."
+
+msgid "Untitled"
+msgstr "Sans titre"
+
+#, python-format
+msgid "%s (copy)"
+msgstr "%s (copie)"
+
+msgid "Clone"
+msgstr "Dupliquer"
+
+msgid "Are you sure you want to clone this task?"
+msgstr "Voulez-vous vraiment dupliquer cette tâche ?"
+
+msgid "A copy of this task will be created."
+msgstr "Une copie de cette tâche sera créée."
+
+msgid "The task has been successfully cloned."
+msgstr "La tâche a été dupliquée."
+
+msgid "An error occurred while cloning the task."
+msgstr "Une erreur est survenue lors de la duplication de la tâche."
+
+msgid "Improve with AI"
+msgstr "Améliorer avec l’IA"
+
+msgid "Choose an action"
+msgstr "Choisir une action"
+
+msgid "Improve description"
+msgstr "Améliorer la description"
+
+msgid "Make it actionable"
+msgstr "Rendre la description exploitable"
+
+msgid "Generate checklist"
+msgstr "Générer une liste de contrôle"
+
+msgid "Summarize"
+msgstr "Résumer"
+
+msgid "Improving text…"
+msgstr "Amélioration du texte…"
+
+msgid "Review improvement"
+msgstr "Vérifier l’amélioration"
+
+msgid "Original"
+msgstr "Original"
+
+msgid "Improved"
+msgstr "Amélioré"
+
+msgid "Accept"
+msgstr "Accepter"
+
+msgid "An error occurred while improving the text."
+msgstr "Une erreur est survenue lors de l’amélioration du texte."
+
+msgid "No content"
+msgstr "Aucun contenu"
+
+msgid "Please add some text before using AI improvement."
+msgstr "Ajoutez du texte avant d’utiliser l’amélioration par IA."
+
+msgid "Browser AI unavailable"
+msgstr "IA du navigateur indisponible"
+
+msgid "This AI action requires a compatible browser with built-in AI support."
+msgstr ""
+"Cette action d’IA nécessite un navigateur compatible intégrant la prise en "
+"charge de l’IA."
+
+msgid ""
+"Chrome can use the Prompt API, but built-in AI is not currently available or"
+" enabled in this browser profile."
+msgstr ""
+"Chrome peut utiliser l’API Prompt, mais l’IA intégrée n’est actuellement ni "
+"disponible ni activée dans ce profil de navigateur."
+
+msgid ""
+"Microsoft Edge can support the experimental Prompt API, but it is not "
+"available in this browser profile."
+msgstr ""
+"Microsoft Edge peut prendre en charge l’API Prompt expérimentale, mais "
+"celle-ci n’est pas disponible dans ce profil de navigateur."
+
+msgid ""
+"The browser AI model is not ready yet. Finish downloading or enabling the "
+"built-in model and try again."
+msgstr ""
+"Le modèle d’IA du navigateur n’est pas encore prêt. Terminez son "
+"téléchargement ou activez le modèle intégré, puis réessayez."
+
+msgid ""
+"This feature currently requires a compatible browser with built-in AI "
+"support, such as Chrome or Microsoft Edge with the Prompt API enabled."
+msgstr ""
+"Cette fonctionnalité nécessite actuellement un navigateur compatible "
+"intégrant l’IA, comme Chrome ou Microsoft Edge avec l’API Prompt activée."
+
+msgid "Open setup guide"
+msgstr "Ouvrir le guide de configuration"
+
+msgid "The browser AI session could not be started."
+msgstr "Impossible de démarrer la session d’IA du navigateur."
+
+msgid "The browser AI response was empty."
+msgstr "La réponse de l’IA du navigateur était vide."
+
+msgid ""
+"The Gemini API provider is selected, but no API key has been saved in Decker"
+" settings. Please ask an administrator to configure it."
+msgstr ""
+"Le fournisseur API Gemini est sélectionné, mais aucune clé API n’a été "
+"enregistrée dans les réglages de Decker. Demandez à un administrateur de la "
+"configurer."
+
+msgid "The Gemini API request failed. Please try again in a moment."
+msgstr "La requête vers l’API Gemini a échoué. Réessayez dans un instant."
+
+msgctxt "AI task context boolean value"
+msgid "Yes"
+msgstr "Oui"
+
+msgctxt "AI task context boolean value"
+msgid "No"
+msgstr "Non"
+
+msgid "Enable AI improvements for task descriptions."
+msgstr "Activer les améliorations par IA pour les descriptions de tâches."
+
+msgid ""
+"When enabled, users can improve task descriptions with either Gemini Nano in"
+" supported browsers or the Gemini API through the server."
+msgstr ""
+"Lorsque cette option est activée, les utilisateurs peuvent améliorer les "
+"descriptions de tâches avec Gemini Nano dans les navigateurs compatibles ou "
+"avec l’API Gemini via le serveur."
+
+msgid "Gemini Nano (browser-based)"
+msgstr "Gemini Nano (dans le navigateur)"
+
+msgid "Gemini API (server-side)"
+msgstr "API Gemini (côté serveur)"
+
+msgid ""
+"Choose whether AI improvements run in the browser with Gemini Nano or "
+"through the Gemini API on the server."
+msgstr ""
+"Choisissez si les améliorations par IA s’exécutent dans le navigateur avec "
+"Gemini Nano ou via l’API Gemini sur le serveur."
+
+msgid ""
+"A Gemini API key is already stored. Leave this field empty to keep the "
+"current key."
+msgstr ""
+"Une clé API Gemini est déjà enregistrée. Laissez ce champ vide pour "
+"conserver la clé actuelle."
+
+msgid ""
+"Paste a Gemini API key to enable server-side Gemini requests. The saved key "
+"is never shown again after saving."
+msgstr ""
+"Collez une clé API Gemini pour activer les requêtes Gemini côté serveur. La "
+"clé enregistrée ne sera plus affichée après l’enregistrement."
+
+msgid ""
+"Optional Gemini model name for server-side requests. Leave the default "
+"unless you need a different compatible text-generation model."
+msgstr ""
+"Nom facultatif du modèle Gemini utilisé pour les requêtes côté serveur. "
+"Conservez la valeur par défaut, sauf si vous avez besoin d’un autre modèle "
+"compatible de génération de texte."
+
+msgid "AI Configuration"
+msgstr "Configuration de l’IA"
+
+msgid "AI Improvements"
+msgstr "Améliorations par IA"
+
+msgid "AI Provider"
+msgstr "Fournisseur d’IA"
+
+msgid "Gemini API Key"
+msgstr "Clé API Gemini"
+
+msgid "Gemini Model"
+msgstr "Modèle Gemini"
+
+msgid ""
+"Configure how Decker improves task descriptions with AI. Browser-based "
+"Gemini Nano keeps the text in the browser, while the Gemini API sends the "
+"prompt to Google through your WordPress server using the saved API key."
+msgstr ""
+"Configurez la manière dont Decker améliore les descriptions de tâches avec "
+"l’IA. Gemini Nano conserve le texte dans le navigateur, tandis que l’API "
+"Gemini envoie l’invite à Google via votre serveur WordPress à l’aide de la "
+"clé API enregistrée."
+
+msgid "AI Prompt"
+msgstr "Invite de l’IA"
+
+msgid ""
+"Customize the base prompt used for AI improvements. For smaller nano-class "
+"models, it usually works better to write this base prompt in English and let"
+" the model translate the final result into the WordPress language. Available"
+" placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, "
+"{{language_instruction}}, {{response_format}}."
+msgstr ""
+"Personnalisez l’invite de base utilisée pour les améliorations par IA. Pour "
+"les petits modèles de classe nano, il est généralement préférable de rédiger"
+" cette invite en anglais et de laisser le modèle traduire le résultat final "
+"dans la langue de WordPress. Espaces réservés disponibles : "
+"{{mode_instruction}}, {{task_context}}, {{content_html}}, "
+"{{language_instruction}}, {{response_format}}."
+
+msgid ""
+"The Gemini API provider is selected, but no API key has been saved in Decker"
+" settings."
+msgstr ""
+"Le fournisseur API Gemini est sélectionné, mais aucune clé API n’a été "
+"enregistrée dans les réglages de Decker."
+
+msgid ""
+"The Gemini API key was rejected. Please ask an administrator to review the "
+"saved key."
+msgstr ""
+"La clé API Gemini a été refusée. Demandez à un administrateur de vérifier la"
+" clé enregistrée."
+
+msgid "The Gemini API rate limit was reached. Please wait a moment and try again."
+msgstr ""
+"La limite de requêtes de l’API Gemini a été atteinte. Patientez un instant, "
+"puis réessayez."
+
+msgid "The Gemini API took too long to respond. Please try again."
+msgstr "L’API Gemini a mis trop de temps à répondre. Veuillez réessayer."
+
+msgid "The Gemini API returned an unexpected response. Please try again later."
+msgstr "L’API Gemini a renvoyé une réponse inattendue. Réessayez plus tard."
+
+msgid "The Gemini API response could not be parsed."
+msgstr "Impossible d’analyser la réponse de l’API Gemini."
+
+msgid "The Gemini API returned an empty response."
+msgstr "L’API Gemini a renvoyé une réponse vide."
+
+msgid "You must be logged in to use AI improvements."
+msgstr "Vous devez être connecté pour utiliser les améliorations par IA."
+
+msgid "Your session has expired. Please reload the page and try again."
+msgstr "Votre session a expiré. Rechargez la page, puis réessayez."
+
+msgid "You do not have permission to use AI improvements."
+msgstr "Vous n’avez pas l’autorisation d’utiliser les améliorations par IA."
+
+msgid "AI improvements are disabled in Decker settings."
+msgstr "Les améliorations par IA sont désactivées dans les réglages de Decker."
+
+msgid ""
+"The configured AI provider uses the browser directly and does not need the "
+"server endpoint."
+msgstr ""
+"Le fournisseur d’IA configuré utilise directement le navigateur et n’a pas "
+"besoin du point de terminaison du serveur."
+
+msgid ""
+"Rewrite the following task description to make it clearer, better "
+"structured, and more actionable. Preserve the original meaning, language, "
+"and important details. Do not add invented information. Return only the "
+"improved description."
+msgstr ""
+"Réécrivez la description de tâche suivante afin de la rendre plus claire, "
+"mieux structurée et plus exploitable. Conservez le sens, la langue et les "
+"détails importants d’origine. N’ajoutez aucune information inventée. "
+"Renvoyez uniquement la description améliorée."
+
+msgid ""
+"Rewrite the task description as concrete, actionable steps. Each step should"
+" start with a verb and make clear WHO does WHAT. Use the assigned users in "
+"the task context only when helpful. Return only the final task description "
+"content."
+msgstr ""
+"Réécrivez la description de la tâche sous forme d’étapes concrètes et "
+"réalisables. Chaque étape doit commencer par un verbe et indiquer clairement"
+" QUI fait QUOI. N’utilisez les utilisateurs assignés du contexte de la tâche"
+" que lorsque cela est utile. Renvoyez uniquement le contenu final de la "
+"description de la tâche."
+
+msgid ""
+"Convert the task description into a structured checklist. Group related "
+"items only when it improves clarity. Each item should be a single, "
+"verifiable action. Return only the final checklist content for the task "
+"description."
+msgstr ""
+"Convertissez la description de la tâche en une liste de contrôle structurée."
+" Regroupez les éléments liés uniquement lorsque cela améliore la clarté. "
+"Chaque élément doit correspondre à une action unique et vérifiable. Renvoyez"
+" uniquement le contenu final de la liste de contrôle pour la description de "
+"la tâche."
+
+msgid ""
+"Summarize the task description into 2-3 sentences maximum. Capture what "
+"needs to be done and the expected outcome. Return only the final short task "
+"description."
+msgstr ""
+"Résumez la description de la tâche en 2 ou 3 phrases au maximum. Indiquez ce"
+" qui doit être fait et le résultat attendu. Renvoyez uniquement la brève "
+"description finale de la tâche."
+
+#, python-format
+msgid "Write the result in the language configured in WordPress (%s)."
+msgstr "Rédigez le résultat dans la langue configurée dans WordPress (%s)."
+
+msgid ""
+"Return only the final task description as HTML, preserving valid HTML "
+"formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not "
+"include explanations, markdown code fences, or any text outside the HTML "
+"description itself."
+msgstr ""
+"Renvoyez uniquement la description finale de la tâche en HTML, en conservant"
+" les balises de mise en forme HTML valides telles que <strong>, <em>, <ul>, "
+"<ol>, <li>, <p> et <a>. N’incluez aucune explication, aucun bloc de code "
+"Markdown ni aucun texte en dehors de la description HTML elle-même."
+
+msgid ""
+"You are a task-writing assistant for Decker, a Kanban board used by a team "
+"that manages educational technology projects (virtual classrooms, digital "
+"content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, "
+"and school IT support).\n"
+"\n"
+"## Your role\n"
+"Transform raw task details into a brief, high-quality task description that "
+"is clear, useful, and ready to paste into the task card.\n"
+"\n"
+"## Task context\n"
+"{{task_context}}\n"
+"\n"
+"## Requested action\n"
+"{{mode_instruction}}\n"
+"\n"
+"## Content to transform\n"
+"{{content_html}}\n"
+"\n"
+"## Rules\n"
+"- Use the task context only to understand and improve the description. Do "
+"not repeat metadata unless it is essential inside the final description.\n"
+"- Return only the description content for the task. Do not add explanations,"
+" notes, meta commentary, or text outside the description itself.\n"
+"- Keep the result professional, concise, and specific — no filler, no "
+"corporate jargon.\n"
+"- Write a brief result that a team member can read quickly and understand "
+"immediately.\n"
+"- Preserve all URLs, reference numbers (e.g. incident IDs like "
+"100004538192), dates, and proper nouns exactly as given.\n"
+"- NEVER invent information. If something is unclear, keep it as-is rather "
+"than guessing.\n"
+"- If the input contains credentials or passwords, replace them with "
+"\"[credenciales en la tarea original]\" and add a warning inside the "
+"description.\n"
+"- Use HTML formatting when helpful: <strong> for emphasis, <ul>/<ol>/<li> "
+"for lists, <p> for paragraphs, <a> for links.\n"
+"- Prefer a short paragraph or a compact list, depending on the requested "
+"action. Only use headings or sections if they clearly improve the task "
+"description.\n"
+"- For short, simple tasks, keep the description short and proportional.\n"
+"\n"
+"{{language_instruction}}\n"
+"{{response_format}}"
+msgstr ""
+"Vous êtes un assistant de rédaction de tâches pour Decker, un tableau Kanban"
+" utilisé par une équipe qui gère des projets de technologie éducative "
+"(classes virtuelles, plateformes de contenus numériques, GSuite/Google "
+"Workspace, Moodle/EVAGD, formation des enseignants et assistance "
+"informatique aux établissements scolaires).\n"
+"\n"
+"## Votre rôle\n"
+"Transformez les données brutes d’une tâche en une description courte et de "
+"qualité, claire, utile et prête à être collée dans la carte de la tâche.\n"
+"\n"
+"## Contexte de la tâche\n"
+"{{task_context}}\n"
+"\n"
+"## Action demandée\n"
+"{{mode_instruction}}\n"
+"\n"
+"## Contenu à transformer\n"
+"{{content_html}}\n"
+"\n"
+"## Règles\n"
+"- Utilisez le contexte de la tâche uniquement pour comprendre et améliorer "
+"la description. Ne répétez pas les métadonnées, sauf si elles sont "
+"indispensables dans la description finale.\n"
+"- Renvoyez uniquement le contenu de la description de la tâche. N’ajoutez "
+"aucune explication, note, remarque métatextuelle ni aucun texte en dehors de"
+" la description elle-même.\n"
+"- Produisez un résultat professionnel, concis et précis, sans remplissage ni"
+" jargon d’entreprise.\n"
+"- Rédigez un résultat bref qu’un membre de l’équipe peut lire rapidement et "
+"comprendre immédiatement.\n"
+"- Conservez exactement toutes les URL, tous les numéros de référence (par "
+"exemple les identifiants d’incident comme 100004538192), les dates et les "
+"noms propres.\n"
+"- N’INVENTEZ JAMAIS d’informations. Si un élément n’est pas clair, "
+"conservez-le tel quel au lieu de faire une supposition.\n"
+"- Si le contenu contient des identifiants ou des mots de passe, remplacez-"
+"les par « [identifiants dans la tâche d’origine] » et ajoutez un "
+"avertissement dans la description.\n"
+"- Utilisez la mise en forme HTML lorsqu’elle est utile : <strong> pour "
+"l’emphase, <ul>/<ol>/<li> pour les listes, <p> pour les paragraphes et <a> "
+"pour les liens.\n"
+"- Préférez un paragraphe court ou une liste compacte selon l’action "
+"demandée. N’utilisez des titres ou des sections que s’ils améliorent "
+"clairement la description de la tâche.\n"
+"- Pour les tâches courtes et simples, conservez une description brève et "
+"proportionnée.\n"
+"\n"
+"{{language_instruction}}\n"
+"{{response_format}}"
+
+#, python-format
+msgid "%d comment"
+msgid_plural "%d comments"
+msgstr[0] "%d commentaire"
+msgstr[1] "%d commentaires"
+
+#, python-format
+msgid "%d label"
+msgid_plural "%d labels"
+msgstr[0] "%d étiquette"
+msgstr[1] "%d étiquettes"
+
+msgid "Loading comments…"
+msgstr "Chargement des commentaires…"
+
+msgid "Could not load comments."
+msgstr "Impossible de charger les commentaires."
+
+#, python-format
+msgid "and %d more"
+msgstr "et %d de plus"
+
+msgid "You do not have permission to edit this article"
+msgstr "Vous n’avez pas l’autorisation de modifier cet article"
+
+msgid "You do not have permission to perform this action."
+msgstr "Vous n’avez pas l’autorisation d’effectuer cette action."
+
+#, python-format
+msgid "This card is currently locked by %s."
+msgstr "Cette carte est actuellement verrouillée par %s."
+
+msgid "Invalid task."
+msgstr "Tâche non valide."
+
+msgid "You are not allowed to edit this card."
+msgstr "Vous n’êtes pas autorisé à modifier cette carte."
+
+msgid "Take over editing"
+msgstr "Prendre le contrôle de l’édition"
+
+msgid "Taking over…"
+msgstr "Prise de contrôle…"
+
+msgid "Editing taken over"
+msgstr "Contrôle de l’édition transféré"
+
+msgid ""
+"You can no longer save this card because another user has taken over "
+"editing. Please reload the card to see the latest changes."
+msgstr ""
+"Vous ne pouvez plus enregistrer cette carte, car un autre utilisateur a pris"
+" le contrôle de l’édition. Rechargez la carte pour afficher les dernières "
+"modifications."
+
+msgid "The card could not be taken over. Please reload and try again."
+msgstr "Impossible de prendre le contrôle de la carte. Rechargez-la, puis réessayez."
+
+msgid "Reload card"
+msgstr "Recharger la carte"
+
+msgid "The task could not be updated due to a concurrent change. Please try again."
+msgstr ""
+"La tâche n’a pas pu être mise à jour en raison d’une modification "
+"simultanée. Veuillez réessayer."
+
+msgid "The user is derived from the session and cannot be provided."
+msgstr ""
+"L’utilisateur est déterminé à partir de la session et ne peut pas être "
+"fourni."
+
+msgid "This task is archived and cannot be marked for today."
+msgstr "Cette tâche est archivée et ne peut pas être marquée pour aujourd’hui."
+
+msgid "Task added to today."
+msgstr "Tâche ajoutée à aujourd’hui."
+
+msgid "Task is already marked for today."
+msgstr "La tâche est déjà marquée pour aujourd’hui."
+
+msgid "Task removed from today."
+msgstr "Tâche retirée d’aujourd’hui."
+
+msgid "Task is not marked for today."
+msgstr "La tâche n’est pas marquée pour aujourd’hui."
+
+msgid "Add to today"
+msgstr "Ajouter à aujourd’hui"
+
+msgid "Remove from today"
+msgstr "Retirer d’aujourd’hui"
+
+msgid "Adding to today…"
+msgstr "Ajout à aujourd’hui…"
+
+msgid "Removing from today…"
+msgstr "Retrait d’aujourd’hui…"
+
+msgid "The task could not be updated."
+msgstr "La tâche n’a pas pu être mise à jour."
+
