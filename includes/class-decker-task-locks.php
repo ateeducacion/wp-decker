@@ -468,18 +468,20 @@ class Decker_Task_Locks {
 		$current = $this->read_authoritative_state( $post_id );
 
 		// Non-forced acquire must not steal an active foreign lock after the barrier.
-		if ( ! $bump_generation
-			&& $this->state_is_active( $current )
-			&& (int) $current['user'] !== (int) $user_id
-			&& (int) $current['time'] > ( time() - $this->get_lock_window() ) ) {
+		if ( ! $bump_generation && $this->is_active_foreign_lock( $current, $user_id ) ) {
 			return false;
 		}
 
-		$active_same_owner = $this->state_is_active( $current )
+		// Keep the caller's generation token across refreshes, and even after the
+		// lock went stale, as long as the same user still owns the state. A new
+		// token is only minted on an ownership change or a forced takeover, so a
+		// sole editor whose heartbeat lapsed is never invalidated by staleness
+		// alone (which would surface as a false "another user took over").
+		$same_owner_has_token = is_array( $current )
 			&& (int) $current['user'] === (int) $user_id
-			&& (int) $current['time'] > ( time() - $this->get_lock_window() );
+			&& '' !== $current['token'];
 
-		$token = ( $active_same_owner && ! $bump_generation && '' !== $current['token'] )
+		$token = ( ! $bump_generation && $same_owner_has_token )
 			? $current['token']
 			: wp_generate_uuid4();
 
@@ -534,6 +536,19 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Whether the state is an active lock held by a different, non-stale owner.
+	 *
+	 * @param array|null $state   The state (user/token/time), or null.
+	 * @param int        $user_id The user attempting to acquire.
+	 * @return bool True when another user currently holds a live lock.
+	 */
+	private function is_active_foreign_lock( $state, int $user_id ): bool {
+		return $this->state_is_active( $state )
+			&& (int) $state['user'] !== (int) $user_id
+			&& (int) $state['time'] > ( time() - $this->get_lock_window() );
+	}
+
+	/**
 	 * Encode lock state for storage. Key order is fixed for stable CAS comparisons.
 	 *
 	 * @param array $state The state (user/token/time).
@@ -552,6 +567,13 @@ class Decker_Task_Locks {
 	/**
 	 * Compare-and-swap write of the authoritative lock state.
 	 *
+	 * This emulates CAS on top of post meta and is best-effort under true
+	 * concurrency: WordPress has no unique constraint on (post_id, meta_key), so
+	 * `add_post_meta( ..., $unique = true )` still races between its internal
+	 * existence check and the INSERT. That window is limited to the very first
+	 * lock on a never-locked task; every later transition goes through the
+	 * conditional `update_post_meta` path, which is atomic at the SQL layer.
+	 *
 	 * @param int        $post_id  The task post ID.
 	 * @param array|null $expected Previous state (user/token/time), or null when absent.
 	 * @param array      $new      Desired state (user/token/time).
@@ -561,13 +583,17 @@ class Decker_Task_Locks {
 		$new_raw = $this->encode_state( $new );
 
 		if ( null === $expected ) {
-			// Unique add fails when another process created the key first.
+			// Best-effort unique add: fails when the key already exists, but two
+			// simultaneous first writers can both succeed (see method docblock).
 			$added = add_post_meta( $post_id, self::STATE_META, $new_raw, true );
 			return (bool) $added;
 		}
 
 		$expected_raw = $this->encode_state( $expected );
-		// update_post_meta returns false when the previous value no longer matches.
+		// update_post_meta only writes the row whose value still equals the
+		// expected blob, so a concurrent winner makes this return false. It also
+		// returns false when $new equals the stored value (no row changed); the
+		// caller's retry loop tolerates that harmless no-op.
 		$updated = update_post_meta( $post_id, self::STATE_META, $new_raw, $expected_raw );
 
 		return (bool) $updated;

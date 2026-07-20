@@ -170,6 +170,34 @@
     }
 
     /**
+     * Refresh the generation embedded in the form's data-lock.
+     *
+     * The server keeps the same generation token while the current user still
+     * owns the lock, but it mints a new one on takeover or when re-acquiring a
+     * lock that had gone stale. Mirroring the latest generation back into the
+     * form keeps a later save from sending a stale token and being wrongly
+     * rejected as a takeover.
+     *
+     * @param {string|number} generation - The authoritative generation token.
+     */
+    function updateFormLockGeneration(generation) {
+        if (typeof generation === 'undefined' || generation === null) {
+            return;
+        }
+        const form = document.getElementById('task-form');
+        if (!form || !form.dataset.lock) {
+            return;
+        }
+        try {
+            const lock = JSON.parse(form.dataset.lock);
+            lock.generation = generation;
+            form.dataset.lock = JSON.stringify(lock);
+        } catch (e) {
+            // Leave the existing data-lock untouched when it cannot be parsed.
+        }
+    }
+
+    /**
      * Whether a save AJAX body represents a lock conflict.
      *
      * The server returns HTTP 409 with success:false and code
@@ -408,6 +436,10 @@
                 setLockHeartbeatSpeed(false);
                 const modal = document.querySelector('.task-modal.show') || document;
                 handleLockLost(modal, info);
+            } else if (info.owned_by_current_user) {
+                // Still ours: keep the form's generation in sync so a save after
+                // a stale-then-refreshed lock is not rejected as a takeover.
+                updateFormLockGeneration(info.generation);
             }
         });
     }

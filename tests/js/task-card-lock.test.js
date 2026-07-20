@@ -152,6 +152,31 @@ describe( 'task-card lock UI', () => {
 		expect( readTaskLockState( context.querySelector( '#task-form' ) ) ).toBeNull();
 	} );
 
+	test( 'refreshes the embedded generation while the lock stays owned', () => {
+		const lock = { post_id: 7, locked: false, owned_by_current_user: true, generation: 'gen-1' };
+		buildDom( lock, false );
+		const updateFormLockGeneration = compile( 'updateFormLockGeneration', {} );
+
+		updateFormLockGeneration( 'gen-2' );
+
+		const parsed = readTaskLockState( document.getElementById( 'task-form' ) );
+		expect( parsed.generation ).toBe( 'gen-2' );
+		// Other lock fields are preserved.
+		expect( parsed.owned_by_current_user ).toBe( true );
+	} );
+
+	test( 'ignores a null generation and leaves data-lock untouched', () => {
+		const lock = { post_id: 7, locked: false, owned_by_current_user: true, generation: 'gen-1' };
+		buildDom( lock, false );
+		const updateFormLockGeneration = compile( 'updateFormLockGeneration', {} );
+
+		updateFormLockGeneration( null );
+		updateFormLockGeneration( undefined );
+
+		const parsed = readTaskLockState( document.getElementById( 'task-form' ) );
+		expect( parsed.generation ).toBe( 'gen-1' );
+	} );
+
 	test( 'renders the locked message with the owner display name', () => {
 		const lock = {
 			post_id: 5,

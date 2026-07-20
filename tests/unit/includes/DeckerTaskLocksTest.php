@@ -228,14 +228,55 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertWPError( $result );
 		$this->assertSame( 'decker_task_locked', $result->get_error_code() );
 
-		// The new owner's generation remains valid after they re-acquire.
+		// The new owner re-acquiring the lock they just released is still the same
+		// editing session: their generation token is preserved (only an ownership
+		// change or an explicit takeover mints a new one) so their open form keeps
+		// saving.
 		$reacquired = $this->locks->acquire_lock( $this->task_id, $this->user_b );
-		$this->assertNotSame( $info_b['generation'], $reacquired['generation'] );
+		$this->assertSame( $info_b['generation'], $reacquired['generation'] );
 		$this->assertTrue(
 			$this->locks->assert_user_can_save(
 				$this->task_id,
 				$this->user_b,
 				$reacquired['generation']
+			)
+		);
+	}
+
+	/**
+	 * A sole editor whose lock lapsed into staleness must keep their generation
+	 * token when the lock is re-acquired (for example the heartbeat resumes after
+	 * the tab regained focus). Bumping it here would reject the editor's own open
+	 * form as a phantom takeover.
+	 */
+	public function test_same_owner_reacquire_after_stale_keeps_generation() {
+		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertNotEmpty( $info_a['generation'] );
+
+		// Force the authoritative state stale while A still owns it.
+		$window = $this->locks->get_lock_window();
+		update_post_meta(
+			$this->task_id,
+			Decker_Task_Locks::STATE_META,
+			wp_json_encode(
+				array(
+					'user'  => $this->user_a,
+					'token' => $info_a['generation'],
+					'time'  => time() - $window - 60,
+				)
+			)
+		);
+
+		$reacquired = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertTrue( $reacquired['owned_by_current_user'] );
+		$this->assertSame( $info_a['generation'], $reacquired['generation'] );
+
+		// The original form token still saves: no takeover happened.
+		$this->assertTrue(
+			$this->locks->assert_user_can_save(
+				$this->task_id,
+				$this->user_a,
+				$info_a['generation']
 			)
 		);
 	}
