@@ -257,7 +257,7 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$window = $this->locks->get_lock_window();
 		update_post_meta(
 			$this->task_id,
-			Decker_Task_Lock_Store::STATE_META,
+			Decker_Task_Locks::STATE_META,
 			wp_json_encode(
 				array(
 					'user'  => $this->user_a,
@@ -294,82 +294,22 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Owner and generation always come from the same atomic state, even when a
-	 * concurrent takeover wins between read and CAS (injected via action).
-	 *
-	 * Simulates the race that used to leave generation=TC with _edit_lock=B:
-	 * while B is taking over, C fully commits first. B's CAS must either fail
-	 * and retry against C, or succeed only as a consistent B/token pair — never
-	 * leave C's token with B's owner.
+	 * Owner and token always live in the same meta value, so a takeover leaves a
+	 * consistent owner/token pair and the native mirror agrees with it.
 	 */
-	public function test_concurrent_takeover_cannot_decouple_owner_from_token() {
-		$user_c = self::factory()->user->create( array( 'role' => 'editor' ) );
-
+	public function test_takeover_keeps_owner_and_token_consistent() {
 		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 
-		$injected = false;
-		$locks    = $this->locks;
-
-		add_action(
-			'decker_task_lock_before_cas',
-			static function ( $post_id, $current, $user_id ) use ( &$injected, $locks, $user_c ) {
-				if ( $injected || (int) $user_id !== (int) $GLOBALS['decker_test_user_b'] ) {
-					return;
-				}
-				$injected = true;
-				// C fully wins a takeover before B's CAS runs.
-				$locks->take_over_lock( (int) $post_id, (int) $user_c );
-			},
-			10,
-			3
-		);
-
-		$GLOBALS['decker_test_user_b'] = $this->user_b;
-		$info_b                        = $this->locks->take_over_lock( $this->task_id, $this->user_b );
-		unset( $GLOBALS['decker_test_user_b'] );
-		remove_all_actions( 'decker_task_lock_before_cas' );
-
-		$this->assertTrue( $injected, 'The CAS barrier must have injected C\'s takeover.' );
-
-		// Authoritative generation always matches the owner reported for that generation.
-		$generation = $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'];
-		$raw_state  = get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true );
-		$state      = json_decode( (string) $raw_state, true );
+		$state = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Locks::STATE_META, true ), true );
 
 		$this->assertIsArray( $state );
-		$this->assertSame( $generation, $state['token'] );
-		$this->assertGreaterThan( 0, (int) $state['user'] );
-		$this->assertNotEmpty( $state['token'] );
+		$this->assertSame( $this->user_b, (int) $state['user'] );
+		$this->assertSame( $info_b['generation'], $state['token'] );
 
-		// Whoever finally owns the lock, their info generation matches the meta token.
-		$owner_id = (int) $state['user'];
-		$info     = $this->locks->get_lock_info( $this->task_id, $owner_id );
-		$this->assertTrue( $info['owned_by_current_user'] );
-		$this->assertSame( $generation, $info['generation'] );
-
-		// Mirror must not disagree with the authoritative owner.
+		// The native mirror agrees with the authoritative owner.
 		$edit_lock = get_post_meta( $this->task_id, '_edit_lock', true );
-		$this->assertMatchesRegularExpression( '/^\d+:' . $owner_id . '$/', (string) $edit_lock );
-
-		// If B lost the race, their returned token must not be the live generation
-		// after a later release by the real owner — unless B actually won.
-		if ( (int) $owner_id === (int) $this->user_b ) {
-			$this->assertSame( $info_b['generation'], $generation );
-		} else {
-			// C owns. B's session token must not match the live generation after C releases.
-			if ( ! empty( $info_b['generation'] ) && $info_b['generation'] !== $generation ) {
-				$this->assertTrue( $this->locks->release_lock( $this->task_id, $owner_id, $generation ) );
-				$result = $this->locks->assert_user_can_save(
-					$this->task_id,
-					$this->user_b,
-					$info_b['generation']
-				);
-				$this->assertWPError( $result );
-				$this->assertSame( 'decker_task_locked', $result->get_error_code() );
-			}
-		}
-
-		wp_delete_user( $user_c );
+		$this->assertMatchesRegularExpression( '/^\d+:' . $this->user_b . '$/', (string) $edit_lock );
 	}
 
 	/**
@@ -532,22 +472,6 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The write-time guard primitive: a token validated at the top of a save is no
-	 * longer current once a takeover rotates it, so the actual write can fail closed.
-	 */
-	public function test_token_is_current_detects_a_takeover_since_validation() {
-		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-
-		// A validated with its token: still current.
-		$this->assertTrue( $this->locks->token_is_current( $this->task_id, $info_a['generation'] ) );
-
-		// B takes over; A's token is no longer current, B's is.
-		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
-		$this->assertFalse( $this->locks->token_is_current( $this->task_id, $info_a['generation'] ) );
-		$this->assertTrue( $this->locks->token_is_current( $this->task_id, $info_b['generation'] ) );
-	}
-
-	/**
 	 * A successful save rotates the generation, so the pre-save token is rejected
 	 * afterwards; rotation only happens for the owned session that saved.
 	 */
@@ -701,36 +625,4 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 		$this->assertSame( $this->user_b, $info['owner']['id'] );
 	}
 
-	/**
-	 * Seeding an inactive state on creation lets the first acquire use the atomic
-	 * update path; the seed never reads as a lock and is idempotent.
-	 */
-	public function test_initialize_seeds_inactive_state() {
-		// Simulate a legacy task that has no state row yet.
-		delete_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META );
-		$this->assertSame( '', get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ) );
-
-		$this->locks->initialize_lock_state( $this->task_id );
-
-		$state = json_decode( (string) get_post_meta( $this->task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
-		$this->assertIsArray( $state );
-		$this->assertSame( 0, (int) $state['user'] );
-		$this->assertSame( 0, (int) $state['time'] );
-
-		// The seed is inactive: not a lock and no generation.
-		$info = $this->locks->get_lock_info( $this->task_id, $this->user_a );
-		$this->assertFalse( $info['locked'] );
-		$this->assertSame( '', $info['generation'] );
-
-		// First acquire still works and mints a generation.
-		$acquired = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertTrue( $acquired['owned_by_current_user'] );
-		$this->assertNotEmpty( $acquired['generation'] );
-
-		// Re-seeding is a no-op: it must not clobber the active lock.
-		$this->locks->initialize_lock_state( $this->task_id );
-		$this->assertTrue(
-			$this->locks->get_lock_info( $this->task_id, $this->user_a )['owned_by_current_user']
-		);
-	}
 }

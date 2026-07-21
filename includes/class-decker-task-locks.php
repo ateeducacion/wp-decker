@@ -12,29 +12,28 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-require_once __DIR__ . '/class-decker-task-lock-store.php';
+require_once __DIR__ . '/class-decker-task-lock-state.php';
 
 /**
  * Class Decker_Task_Locks
  *
- * Thin, WordPress-compatible wrapper around the native `_edit_lock` post meta
- * convention used by WordPress core to prevent concurrent post editing.
+ * Front-end counterpart of WordPress core's advisory post locking
+ * (`wp_set_post_lock()` / `wp_check_post_lock()` are admin-only), plus the one
+ * thing core does not provide: detect-and-reject on save.
  *
- * Authority for Decker decisions lives in a single JSON meta value
- * `_decker_edit_lock_state` of the form:
- * `{"user":123,"token":"uuid","time":1710000000}`.
- * Owner and generation token are always written together via compare-and-swap
- * so concurrent takeovers cannot leave a foreign token paired with a different
- * owner. `_edit_lock` / `_edit_last` are mirrored afterwards for WordPress
- * admin interoperability, but validation prefers the authoritative state.
+ * Concurrency model (optimistic, advisory — see docs/adr/001):
+ * - every save of an existing task presents the generation token its form
+ *   rendered with; a mismatch (a takeover happened, even if since released) is
+ *   rejected with 409;
+ * - the token is minted on ownership change / explicit takeover and rotated on
+ *   each successful save, so any other stale form (including a second tab of
+ *   the same user) is rejected on its next save;
+ * - lock-state writes are plain meta writes, exactly like core's
+ *   `wp_set_post_lock()`. Sub-second races between lock operations are accepted
+ *   and self-heal on the next heartbeat; task revisions remain the recovery net.
  *
- * `time` is 0 when the lock has been released while the last token is retained
- * so a stale editor session is still rejected after the winner leaves.
- *
- * This class owns lock policy (capability guards, the stale-lock window and save
- * gating); the persistence and compare-and-swap mechanics live in
- * {@see Decker_Task_Lock_Store}. Rendering, REST routing and AJAX handling live
- * in their own classes.
+ * Persistence (and the core `_edit_lock` mirror for wp-admin interop) lives in
+ * {@see Decker_Task_Lock_State}.
  */
 class Decker_Task_Locks {
 
@@ -46,17 +45,24 @@ class Decker_Task_Locks {
 	const POST_TYPE = 'decker_task';
 
 	/**
-	 * The persistence / compare-and-swap backend.
+	 * Authoritative lock state meta key.
 	 *
-	 * @var Decker_Task_Lock_Store
+	 * @var string
 	 */
-	private $store;
+	const STATE_META = Decker_Task_Lock_State::STATE_META;
+
+	/**
+	 * The lock-state persistence backend.
+	 *
+	 * @var Decker_Task_Lock_State
+	 */
+	private $state;
 
 	/**
 	 * Constructor.
 	 */
 	public function __construct() {
-		$this->store = new Decker_Task_Lock_Store();
+		$this->state = new Decker_Task_Lock_State();
 	}
 
 	/**
@@ -82,10 +88,13 @@ class Decker_Task_Locks {
 	 * @return bool True when locking should be enforced.
 	 */
 	public function is_enabled(): bool {
-		$options = get_option( 'decker_settings', array() );
+		$options = wp_parse_args(
+			(array) get_option( 'decker_settings', array() ),
+			array( 'collaborative_editing' => '' )
+		);
 
 		// Locking stands down only when collaborative editing is explicitly on.
-		return '1' !== ( $options['collaborative_editing'] ?? '' );
+		return '1' !== $options['collaborative_editing'];
 	}
 
 	/**
@@ -115,13 +124,13 @@ class Decker_Task_Locks {
 		}
 
 		$base['valid']      = true;
-		$base['generation'] = $this->store->generation( $post_id );
+		$base['generation'] = $this->state->generation( $post_id );
 
 		if ( ! $this->is_enabled() ) {
 			return $base;
 		}
 
-		$lock = $this->store->read_active_lock( $post_id );
+		$lock = $this->state->active_lock( $post_id );
 		if ( ! $lock ) {
 			return $base;
 		}
@@ -152,37 +161,13 @@ class Decker_Task_Locks {
 	}
 
 	/**
-	 * Build the public owner descriptor for a lock, or null when unavailable.
-	 *
-	 * Only the id and display name are exposed; private data such as the email
-	 * address is never included.
-	 *
-	 * @param int $owner_id The lock owner user ID.
-	 * @return array{id:int,display_name:string}|null The owner descriptor.
-	 */
-	private function build_owner_info( int $owner_id ) {
-		if ( ! $owner_id ) {
-			return null;
-		}
-
-		$owner = get_userdata( $owner_id );
-		if ( ! $owner ) {
-			return null;
-		}
-
-		return array(
-			'id'           => $owner_id,
-			'display_name' => $owner->display_name,
-		);
-	}
-
-	/**
 	 * Acquire or refresh the lock for the given user.
 	 *
 	 * The lock is only written when the task is unlocked, already owned by the
 	 * user, or held by a stale lock. An active lock owned by another user is
 	 * never stolen; the caller receives the current lock info instead so it can
-	 * offer an explicit takeover.
+	 * offer an explicit takeover. A same-owner (re)acquire keeps the session
+	 * token so the open editor form stays valid.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @param int $user_id The user acquiring the lock.
@@ -205,13 +190,16 @@ class Decker_Task_Locks {
 			return $info;
 		}
 
-		$this->store->write( $post_id, $user_id, false, $this->get_lock_window() );
+		$this->write_lock( $post_id, $user_id, false );
 
 		return $this->get_lock_info( $post_id, $user_id );
 	}
 
 	/**
 	 * Take over an active lock owned by another user.
+	 *
+	 * Always mints a new generation token so the previous editor's form session
+	 * is invalidated even after this owner later releases the lock.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @param int $user_id The user taking over the lock.
@@ -228,16 +216,13 @@ class Decker_Task_Locks {
 			return $guard;
 		}
 
-		// Always issue a new generation token on takeover so the previous
-		// editor's form session is invalidated even after this owner later
-		// releases the lock.
-		$this->store->write( $post_id, $user_id, true, $this->get_lock_window() );
+		$this->write_lock( $post_id, $user_id, true );
 
 		return $this->get_lock_info( $post_id, $user_id );
 	}
 
 	/**
-	 * Release the lock only when it is owned by the given user.
+	 * Release the lock only when it is held by the given session.
 	 *
 	 * Another user's lock is never removed by this method, and neither is a newer
 	 * session owned by the same user: the caller must present the session
@@ -254,38 +239,14 @@ class Decker_Task_Locks {
 			return false;
 		}
 
-		return $this->store->release( $post_id, $user_id, $session_generation );
-	}
+		$state = $this->state->read( $post_id );
+		if ( ! $this->state->owned_by( $state, $user_id, $session_generation ) ) {
+			return false;
+		}
 
-	/**
-	 * Whether the current generation still equals the token a request validated
-	 * with. Used as a fail-closed check right before the actual post write: a
-	 * takeover (or another session's completed save) since validation rotates the
-	 * token, so the write must be aborted rather than overwrite newer content.
-	 *
-	 * @param int    $post_id The task post ID.
-	 * @param string $token   The token the request validated with.
-	 * @return bool True when the token is unchanged since validation.
-	 */
-	public function token_is_current( int $post_id, string $token ): bool {
-		return $this->store->token_is_current( $post_id, $token );
-	}
+		$this->state->save( $post_id, $user_id, (string) $state['token'], 0 );
 
-	/**
-	 * Rotate the session generation after a successful save.
-	 *
-	 * A successful save rotates the token so any second same-user tab holding the
-	 * old token can no longer save; the new generation is returned so the saving
-	 * form can adopt it. Returns false when there is no owned session to rotate
-	 * (for example a never-locked task updated over REST).
-	 *
-	 * @param int    $post_id            The task post ID.
-	 * @param int    $user_id            The user finishing the save.
-	 * @param string $session_generation The generation the save validated with.
-	 * @return string|false The rotated generation, or false when nothing rotated.
-	 */
-	public function rotate_generation( int $post_id, int $user_id, string $session_generation ) {
-		return $this->store->rotate_generation( $post_id, $user_id, $session_generation );
+		return true;
 	}
 
 	/**
@@ -308,15 +269,17 @@ class Decker_Task_Locks {
 		}
 
 		// Extend our own session only; never acquire a free/released lock here.
-		$this->store->refresh( $post_id, $user_id, $session_generation );
+		$state = $this->state->read( $post_id );
+		if ( $this->state->owned_by( $state, $user_id, $session_generation ) ) {
+			$this->state->save( $post_id, $user_id, (string) $state['token'], time() );
+		}
 
 		$info = $this->get_lock_info( $post_id, $user_id );
 
 		// Session validity is decided by the generation token, not the owner id:
 		// a submitted token that no longer matches the authoritative generation is
 		// stale even when ownership has cycled back to the same user (a second
-		// session of that user took over). Otherwise this session could be told it
-		// still owns the card and adopt the newer token.
+		// session of that user took over).
 		if ( '' !== $session_generation
 			&& $session_generation !== (string) $info['generation'] ) {
 			$info['stale_session'] = true;
@@ -326,14 +289,39 @@ class Decker_Task_Locks {
 	}
 
 	/**
-	 * Ensure the given user is allowed to save the task.
+	 * Rotate the session generation after a successful save.
+	 *
+	 * A successful save rotates the token so any other form still holding the old
+	 * token (for example a second tab of the same user) can no longer save; the
+	 * new generation is returned so the saving form can adopt it. Returns false
+	 * when there is no owned session to rotate.
+	 *
+	 * @param int    $post_id            The task post ID.
+	 * @param int    $user_id            The user finishing the save.
+	 * @param string $session_generation The generation the save validated with.
+	 * @return string|false The rotated generation, or false when nothing rotated.
+	 */
+	public function rotate_generation( int $post_id, int $user_id, string $session_generation ) {
+		$state = $this->state->read( $post_id );
+		if ( ! $this->state->owned_by( $state, $user_id, $session_generation ) ) {
+			return false;
+		}
+
+		$token = wp_generate_uuid4();
+		$this->state->save( $post_id, $user_id, $token, (int) $state['time'] );
+
+		return $token;
+	}
+
+	/**
+	 * Ensure the given user is allowed to save the task (detect-and-reject).
 	 *
 	 * A save is rejected when:
 	 * - another user currently owns an active lock,
 	 * - the editor session submitted a lock generation that no longer matches
 	 *   the server generation (the card was taken over, even if the lock has
 	 *   since been released), or
-	 * - `$require_generation` is set (the public save endpoint while locking is
+	 * - `$require_generation` is set (the public save endpoints while locking is
 	 *   enabled), no session generation was submitted, and the task already
 	 *   carries a server generation (so a missing token cannot fail open after a
 	 *   takeover and release).
@@ -367,12 +355,12 @@ class Decker_Task_Locks {
 			return $this->locked_error( $info['message'], $info['owner'], $info['generation'] );
 		}
 
-		$has_generation = null !== $session_generation && '' !== (string) $session_generation;
+		// A null or empty submitted generation both mean "no token" ('' cast).
+		$has_generation = '' !== (string) $session_generation;
 
 		if ( $has_generation ) {
-			$current_generation = $this->store->generation( $post_id );
-			if ( (string) $session_generation !== $current_generation ) {
-				return $this->locked_error( $info['message'], $info['owner'], $current_generation );
+			if ( (string) $session_generation !== $info['generation'] ) {
+				return $this->locked_error( $info['message'], $info['owner'], $info['generation'] );
 			}
 
 			return true;
@@ -383,14 +371,26 @@ class Decker_Task_Locks {
 		// over at some point) — the fail-open case after a takeover and release. A
 		// never-locked task has no newer change to protect and stays saveable, so
 		// admin/meta and internal save paths keep working.
-		if ( $require_generation ) {
-			$current_generation = $this->store->generation( $post_id );
-			if ( '' !== $current_generation ) {
-				return $this->locked_error( '', $info['owner'], $current_generation );
-			}
+		if ( $require_generation && '' !== $info['generation'] ) {
+			return $this->locked_error( '', $info['owner'], $info['generation'] );
 		}
 
 		return true;
+	}
+
+	/**
+	 * Write the lock state for an owner (plain write, like wp_set_post_lock()).
+	 *
+	 * @param int  $post_id The task post ID.
+	 * @param int  $user_id The lock owner.
+	 * @param bool $bump    Force a new generation token (explicit takeover).
+	 * @return void
+	 */
+	private function write_lock( int $post_id, int $user_id, bool $bump ) {
+		$state = $this->state->read( $post_id );
+		$token = $this->state->next_token( $state, $user_id, $bump );
+
+		$this->state->save( $post_id, $user_id, $token, time() );
 	}
 
 	/**
@@ -451,26 +451,36 @@ class Decker_Task_Locks {
 	 * @return bool True when the post exists and is a decker_task.
 	 */
 	private function is_supported_task( int $post_id ): bool {
+		// The explicit guard matters: get_post_type( 0 ) falls back to the global post.
 		if ( $post_id <= 0 ) {
 			return false;
 		}
 
-		$post = get_post( $post_id );
-
-		return $post instanceof WP_Post && self::POST_TYPE === $post->post_type;
+		return self::POST_TYPE === get_post_type( $post_id );
 	}
 
 	/**
-	 * Seed the lock state for a freshly created task.
+	 * Build the public owner descriptor for a lock, or null when unavailable.
 	 *
-	 * Ensures the first edit acquire uses the atomic conditional write path
-	 * instead of the best-effort unique add. Safe to call more than once; the
-	 * seeded state is inactive, so it never reads as a lock.
+	 * Only the id and display name are exposed; private data such as the email
+	 * address is never included.
 	 *
-	 * @param int $post_id The task post ID.
-	 * @return void
+	 * @param int $owner_id The lock owner user ID.
+	 * @return array{id:int,display_name:string}|null The owner descriptor.
 	 */
-	public function initialize_lock_state( int $post_id ) {
-		$this->store->initialize( $post_id );
+	private function build_owner_info( int $owner_id ) {
+		if ( ! $owner_id ) {
+			return null;
+		}
+
+		$owner = get_userdata( $owner_id );
+		if ( ! $owner ) {
+			return null;
+		}
+
+		return array(
+			'id'           => $owner_id,
+			'display_name' => $owner->display_name,
+		);
 	}
 }

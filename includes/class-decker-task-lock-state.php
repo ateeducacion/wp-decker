@@ -2,7 +2,7 @@
 /**
  * File class-decker-task-lock-state
  *
- * Codec and predicates for the authoritative Decker edit-lock state meta.
+ * Persistence for the Decker edit-lock state and the core `_edit_lock` mirror.
  *
  * @package    Decker
  * @subpackage Decker/includes
@@ -15,18 +15,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class Decker_Task_Lock_State
  *
- * Reads, encodes and compare-and-swap-writes the `_decker_edit_lock_state` meta,
- * and answers predicates about a decoded state blob. The state is a JSON object
- * `{"user","token","time"}`:
- *
- * - `user`/`token` — the current owner and its unique generation token.
- * - `time`         — last activity; 0 once the lock is released (the token is
- *                    kept so a stale form is still rejected after release).
- *
- * The compare-and-swap is best-effort under true concurrency: WordPress has no
- * unique constraint on (post_id, meta_key), so the very first `add_post_meta`
- * can race; every later transition uses the conditional `update_post_meta`,
- * which is atomic at the SQL layer.
+ * Reads and writes the `_decker_edit_lock_state` meta (`{user, token, time}`)
+ * with plain meta writes — exactly like core's `wp_set_post_lock()` — and keeps
+ * WordPress core's `_edit_lock` / `_edit_last` mirrored so wp-admin shows the
+ * same lock. All policy lives in {@see Decker_Task_Locks}; this class only
+ * persists and decodes state.
  */
 class Decker_Task_Lock_State {
 
@@ -36,20 +29,6 @@ class Decker_Task_Lock_State {
 	 * @var string
 	 */
 	const STATE_META = '_decker_edit_lock_state';
-
-	/**
-	 * Legacy generation-only meta key (read as fallback, no longer written).
-	 *
-	 * @var string
-	 */
-	const GENERATION_META = '_decker_edit_lock_generation';
-
-	/**
-	 * Maximum CAS attempts for a single lock mutation.
-	 *
-	 * @var int
-	 */
-	const CAS_MAX_ATTEMPTS = 5;
 
 	/**
 	 * Decode the authoritative lock state.
@@ -68,39 +47,71 @@ class Decker_Task_Lock_State {
 			return null;
 		}
 
+		$state = wp_parse_args(
+			$decoded,
+			array(
+				'user'  => 0,
+				'token' => '',
+				'time'  => 0,
+			)
+		);
+
 		return array(
-			'user'  => isset( $decoded['user'] ) ? (int) $decoded['user'] : 0,
-			'token' => isset( $decoded['token'] ) ? (string) $decoded['token'] : '',
-			'time'  => isset( $decoded['time'] ) ? (int) $decoded['time'] : 0,
+			'user'  => (int) $state['user'],
+			'token' => (string) $state['token'],
+			'time'  => (int) $state['time'],
 		);
 	}
 
 	/**
-	 * The current generation token, or empty string when never locked.
+	 * Persist the lock state and refresh the native `_edit_lock` mirror.
+	 *
+	 * Plain writes, key order fixed. A released state (time 0) keeps the token so
+	 * stale forms stay invalid, and drops the native mirror only when still ours.
+	 *
+	 * @param int    $post_id The task post ID.
+	 * @param int    $user_id The lock owner.
+	 * @param string $token   The session generation token.
+	 * @param int    $time    Last-activity timestamp, or 0 when released.
+	 * @return void
+	 */
+	public function save( int $post_id, int $user_id, string $token, int $time ) {
+		update_post_meta(
+			$post_id,
+			self::STATE_META,
+			wp_json_encode(
+				array(
+					'user'  => $user_id,
+					'token' => $token,
+					'time'  => $time,
+				)
+			)
+		);
+
+		if ( $time > 0 ) {
+			update_post_meta( $post_id, '_edit_lock', $time . ':' . $user_id );
+			update_post_meta( $post_id, '_edit_last', $user_id );
+			return;
+		}
+
+		// Clear the native mirror only if it is still ours: a wp-admin editor may
+		// have written a newer `_edit_lock` we must not delete.
+		$native = $this->read_native( $post_id );
+		if ( $native && (int) $native['user'] === $user_id ) {
+			delete_post_meta( $post_id, '_edit_lock' );
+		}
+	}
+
+	/**
+	 * The current generation token, or empty string when the task was never locked.
 	 *
 	 * @param int $post_id The task post ID.
 	 * @return string The token.
 	 */
 	public function generation( int $post_id ): string {
 		$state = $this->read( $post_id );
-		if ( $state && '' !== $state['token'] ) {
-			return $state['token'];
-		}
 
-		// Legacy single-key generation used before the atomic state meta.
-		return (string) get_post_meta( $post_id, self::GENERATION_META, true );
-	}
-
-	/**
-	 * Whether a state blob represents an actively held lock.
-	 *
-	 * @param array|null $state The decoded state, or null.
-	 * @return bool True when the lock is actively held.
-	 */
-	public function is_active( $state ): bool {
-		return is_array( $state )
-			&& (int) $state['time'] > 0
-			&& (int) $state['user'] > 0;
+		return is_array( $state ) ? (string) $state['token'] : '';
 	}
 
 	/**
@@ -112,63 +123,69 @@ class Decker_Task_Lock_State {
 	 * @return bool True when owner and token both match an active lock.
 	 */
 	public function owned_by( $state, int $user_id, string $token ): bool {
-		return $this->is_active( $state )
-			&& (int) $state['user'] === (int) $user_id
+		return is_array( $state )
+			&& (int) $state['time'] > 0
+			&& (int) $state['user'] === $user_id
+			&& '' !== $token
 			&& (string) $state['token'] === $token;
 	}
 
 	/**
-	 * Compare-and-swap write of the authoritative state.
+	 * Read the active lock (owner + time), falling back to the native mirror.
 	 *
-	 * @param int        $post_id  The task post ID.
-	 * @param array|null $expected Previous state, or null when absent.
-	 * @param array      $new      Desired state (user/token/time).
-	 * @return bool True when this writer won the CAS.
-	 */
-	public function write( int $post_id, $expected, array $new ): bool {
-		$new_raw = $this->encode( $new );
-
-		if ( null === $expected ) {
-			// Best-effort unique add (see class docblock).
-			return (bool) add_post_meta( $post_id, self::STATE_META, $new_raw, true );
-		}
-
-		// update_post_meta only writes the row whose value still equals the
-		// expected blob, so a concurrent winner makes this return false.
-		return (bool) update_post_meta( $post_id, self::STATE_META, $new_raw, $this->encode( $expected ) );
-	}
-
-	/**
-	 * Seed an empty, released state row when a task is created.
-	 *
-	 * The first real acquire then uses the atomic conditional update path instead
-	 * of the best-effort unique add. No-op when a state already exists.
+	 * The fallback covers locks set from the wp-admin editor, which only writes
+	 * core's `_edit_lock`.
 	 *
 	 * @param int $post_id The task post ID.
-	 * @return void
+	 * @return array{time:int,user:int}|null The active lock, or null when free/released.
 	 */
-	public function initialize( int $post_id ) {
-		$existing = get_post_meta( $post_id, self::STATE_META, true );
-		if ( is_string( $existing ) && '' !== $existing ) {
-			return;
+	public function active_lock( int $post_id ) {
+		$state = $this->read( $post_id );
+		if ( is_array( $state ) && $state['time'] > 0 && $state['user'] > 0 ) {
+			return array(
+				'time' => $state['time'],
+				'user' => $state['user'],
+			);
 		}
 
-		add_post_meta( $post_id, self::STATE_META, $this->encode( array() ), true );
+		return $this->read_native( $post_id );
 	}
 
 	/**
-	 * Encode a state for storage. Key order is fixed for stable CAS comparisons.
+	 * The token to persist for a lock write: kept on a same-owner (re)acquire,
+	 * minted on an ownership change or an explicit takeover.
 	 *
-	 * @param array $state The state (user/token/time).
-	 * @return string JSON payload.
+	 * @param array|null $state   The current state, or null.
+	 * @param int        $user_id The lock owner.
+	 * @param bool       $bump    Force a new generation token (explicit takeover).
+	 * @return string The token to persist.
 	 */
-	private function encode( array $state ): string {
-		return wp_json_encode(
-			array(
-				'user'  => isset( $state['user'] ) ? (int) $state['user'] : 0,
-				'token' => isset( $state['token'] ) ? (string) $state['token'] : '',
-				'time'  => isset( $state['time'] ) ? (int) $state['time'] : 0,
-			)
+	public function next_token( $state, int $user_id, bool $bump ): string {
+		$keep = ! $bump
+			&& is_array( $state )
+			&& (int) $state['user'] === $user_id
+			&& '' !== (string) $state['token'];
+
+		return $keep ? (string) $state['token'] : wp_generate_uuid4();
+	}
+
+	/**
+	 * Parse core's native `_edit_lock` meta ("time:user").
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return array{time:int,user:int}|null The parsed lock, or null when absent.
+	 */
+	private function read_native( int $post_id ) {
+		$raw = get_post_meta( $post_id, '_edit_lock', true );
+		if ( ! $raw ) {
+			return null;
+		}
+
+		$parts = explode( ':', (string) $raw );
+
+		return array(
+			'time' => (int) ( $parts[0] ?? 0 ),
+			'user' => (int) ( $parts[1] ?? 0 ),
 		);
 	}
 }

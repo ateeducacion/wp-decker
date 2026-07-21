@@ -33,27 +33,6 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Token the current REST update validated with, re-checked at the post write.
-	 *
-	 * @var array{post_id:int,token:string}|null
-	 */
-	private $rest_write_token = null;
-
-	/**
-	 * Generation produced by the completed REST update, pending response output.
-	 *
-	 * @var array{post_id:int,generation:string}|null
-	 */
-	private $rest_response_generation = null;
-
-	/**
-	 * Token the current AJAX save validated with, re-checked at the post write.
-	 *
-	 * @var array{post_id:int,token:string}|null
-	 */
-	private $ajax_write_token = null;
-
-	/**
 	 * Get the shared task edit-lock manager.
 	 *
 	 * @return Decker_Task_Locks The lock manager instance.
@@ -105,13 +84,6 @@ class Decker_Tasks {
 
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
 		add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
-		// Seed the lock state on every task creation, independent of the
-		// editable-meta nonce guard, so admin, AJAX and REST creates are covered.
-		add_action( 'save_post_decker_task', array( $this, 'seed_task_lock_state' ), 10, 3 );
-		// Re-check the request's validated token immediately before WordPress
-		// writes. Returning true aborts the write, so a takeover between validation
-		// and the write fails closed instead of overwriting newer content.
-		add_filter( 'wp_insert_post_empty_content', array( $this, 'guard_task_write_token' ), 10, 2 );
 		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
 		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
 		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
@@ -120,11 +92,9 @@ class Decker_Tasks {
 		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
-		// Enforce the edit lock on generic /wp/v2/tasks updates, which bypass the
-		// save_decker_task guard, and rotate the generation after the write.
+		// Enforce the edit lock (detect-and-reject) on generic /wp/v2/tasks
+		// updates, which bypass the save_decker_task guard.
 		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
-		add_action( 'rest_after_insert_decker_task', array( $this, 'rotate_rest_task_generation' ), 10, 3 );
-		add_filter( 'rest_prepare_decker_task', array( $this, 'add_rest_lock_generation' ), 10, 3 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -2828,159 +2798,36 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Seed the atomic lock state when a task is created.
-	 *
-	 * Runs on every `decker_task` insertion (admin, AJAX save_decker_task and
-	 * REST), independent of the editable-meta nonce guard, so the first edit
-	 * acquire uses the atomic conditional update path instead of the best-effort
-	 * unique add. Skips updates, revisions and autosaves.
-	 *
-	 * @param int     $post_id The task post ID.
-	 * @param WP_Post $post    The task post object.
-	 * @param bool    $update  Whether this is an update of an existing task.
-	 * @return void
-	 */
-	public function seed_task_lock_state( $post_id, $post, $update ) {
-		if ( $update || wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
-			return;
-		}
-
-		$this->get_task_locks()->initialize_lock_state( $post_id );
-	}
-
-	/**
 	 * Enforce the edit lock on generic REST updates of an existing task.
 	 *
 	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
 	 * registered meta), which bypasses the lock guard in save_decker_task. This
-	 * rejects an update while another user owns the active lock, requires a valid
-	 * `lock_generation` once the task carries one, and remembers the validated token
-	 * so the write-time guard ({@see guard_task_write_token()}) can abort the REST
-	 * write if the generation rotates first. Creates (no existing id) and
-	 * never-locked tasks remain updatable over REST.
+	 * rejects an update while another user owns the active lock and requires a
+	 * valid `lock_generation` once the task carries one (detect-and-reject).
+	 * Creates (no existing id) and never-locked tasks remain updatable over REST.
 	 *
 	 * @param stdClass        $prepared_post The prepared post for insertion.
 	 * @param WP_REST_Request $request       The REST request.
 	 * @return stdClass|WP_Error The prepared post, or a 409 error when locked.
 	 */
 	public function guard_rest_task_update( $prepared_post, $request ) {
-		$this->rest_write_token = null;
-
 		if ( empty( $prepared_post->ID ) ) {
 			return $prepared_post;
 		}
 
-		$post_id    = (int) $prepared_post->ID;
-		$user_id    = get_current_user_id();
 		$generation = $request->get_param( 'lock_generation' );
-		$generation = is_string( $generation ) ? $generation : null;
-		$locks      = $this->get_task_locks();
+		$check      = $this->get_task_locks()->assert_user_can_save(
+			(int) $prepared_post->ID,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : null,
+			true
+		);
 
-		$check = $locks->assert_user_can_save( $post_id, $user_id, $generation, true );
 		if ( is_wp_error( $check ) ) {
 			return $check;
 		}
 
-		// Remember the token this update validated with so the write-time guard can
-		// abort the REST write if a takeover (or a concurrent acquire on a
-		// never-locked task) rotates the generation before WordPress writes.
-		if ( $locks->is_enabled() ) {
-			$this->rest_write_token = array(
-				'post_id' => $post_id,
-				'token'   => (string) $generation,
-			);
-		}
-
 		return $prepared_post;
-	}
-
-	/**
-	 * Abort the actual task write when the request's validated token is stale.
-	 *
-	 * Returning true from wp_insert_post_empty_content aborts the write, so a
-	 * takeover (or a concurrent acquire) between token validation and the write
-	 * fails closed instead of overwriting newer content.
-	 *
-	 * @param bool  $maybe_empty Whether WordPress already considers the post empty.
-	 * @param array $postarr     The post data about to be written.
-	 * @return bool True when the write must be aborted.
-	 */
-	public function guard_task_write_token( $maybe_empty, $postarr ): bool {
-		if ( $maybe_empty || empty( $postarr['ID'] ) || 'decker_task' !== get_post_type( (int) $postarr['ID'] ) ) {
-			return (bool) $maybe_empty;
-		}
-
-		$post_id = (int) $postarr['ID'];
-		$token   = $this->request_write_token( $post_id );
-		if ( null === $token ) {
-			return false;
-		}
-
-		return ! $this->get_task_locks()->token_is_current( $post_id, $token );
-	}
-
-	/**
-	 * Return the token the current request validated with for a task, or null.
-	 *
-	 * @param int $post_id The task post ID.
-	 * @return string|null The validated token, or null when this request has none.
-	 */
-	private function request_write_token( int $post_id ) {
-		foreach ( array( $this->ajax_write_token, $this->rest_write_token ) as $stash ) {
-			if ( is_array( $stash ) && (int) $stash['post_id'] === $post_id ) {
-				return (string) $stash['token'];
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Rotate the generation after a successful generic REST update, and stash it
-	 * for the response.
-	 *
-	 * @param WP_Post              $post     The updated task.
-	 * @param WP_REST_Request|null $request  The REST request (unused).
-	 * @param bool|null            $creating Whether the task was created (unused).
-	 * @return void
-	 */
-	public function rotate_rest_task_generation( $post, $request = null, $creating = null ) {
-		if ( ! is_array( $this->rest_write_token )
-			|| (int) $this->rest_write_token['post_id'] !== (int) $post->ID ) {
-			return;
-		}
-
-		$token                  = $this->rest_write_token['token'];
-		$this->rest_write_token = null;
-		$generation = $this->get_task_locks()->rotate_generation( (int) $post->ID, get_current_user_id(), $token );
-		if ( false !== $generation ) {
-			$this->rest_response_generation = array(
-				'post_id'    => (int) $post->ID,
-				'generation' => $generation,
-			);
-		}
-	}
-
-	/**
-	 * Add the rotated generation to the successful generic REST response.
-	 *
-	 * @param WP_REST_Response $response The prepared REST response.
-	 * @param WP_Post          $post     The updated task.
-	 * @param WP_REST_Request  $request  The REST request (unused).
-	 * @return WP_REST_Response The response with lock_generation when applicable.
-	 */
-	public function add_rest_lock_generation( $response, $post, $request ) {
-		if ( ! is_array( $this->rest_response_generation )
-			|| (int) $this->rest_response_generation['post_id'] !== (int) $post->ID ) {
-			return $response;
-		}
-
-		$data                    = $response->get_data();
-		$data['lock_generation'] = $this->rest_response_generation['generation'];
-		$response->set_data( $data );
-		$this->rest_response_generation = null;
-
-		return $response;
 	}
 
 	/**
@@ -3372,18 +3219,7 @@ class Decker_Tasks {
 			}
 		}
 
-		// Remember the token we validated with. The write-time guard
-		// (guard_task_write_token) re-checks it right before the DB write, so a
-		// takeover between here and the write aborts the write instead of
-		// overwriting newer content. Only meaningful for a generation-checked save.
 		$lock_generation = is_string( $options['lock_generation'] ) ? $options['lock_generation'] : '';
-		$guarded_save    = $core['id'] > 0 && '' !== $lock_generation && $this->get_task_locks()->is_enabled();
-		if ( $guarded_save ) {
-			$this->ajax_write_token = array(
-				'post_id' => $core['id'],
-				'token'   => $lock_generation,
-			);
-		}
 
 		$duedate = $this->parse_task_due_date( $options['duedate_raw'] );
 
@@ -3412,27 +3248,9 @@ class Decker_Tasks {
 		);
 
 		if ( is_wp_error( $result ) ) {
-			$this->ajax_write_token = null;
 			$error_data = array( 'message' => $result->get_error_message() );
 			if ( $send_response ) {
 				wp_send_json_error( $error_data );
-				return;
-			}
-			return array_merge( array( 'success' => false ), $error_data );
-		}
-
-		// Fail-closed: a takeover between validation and the write rotated the
-		// token, so guard_task_write_token aborted the write (wp_update_post
-		// returned 0). Report the conflict instead of a phantom success.
-		if ( $guarded_save && ! $result ) {
-			$this->ajax_write_token = null;
-			$error_data = array(
-				'message' => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
-				'code'    => 'decker_task_locked',
-				'locked'  => true,
-			);
-			if ( $send_response ) {
-				wp_send_json_error( $error_data, 409 );
 				return;
 			}
 			return array_merge( array( 'success' => false ), $error_data );
@@ -3445,12 +3263,12 @@ class Decker_Tasks {
 			$this->remove_user_date_relation( $result, get_current_user_id() );
 		}
 
-		// The save committed: rotate the generation so a second same-user tab
-		// holding the old token is rejected, and hand the new one back to the form.
+		// The save committed: rotate the generation so any other stale form (for
+		// example a second tab of the same user) is rejected on its next save, and
+		// hand the new token back so this form adopts it.
 		$new_generation = '';
-		if ( $guarded_save ) {
+		if ( $core['id'] > 0 && '' !== $lock_generation ) {
 			$rotated = $this->get_task_locks()->rotate_generation( $core['id'], get_current_user_id(), $lock_generation );
-			$this->ajax_write_token = null;
 			if ( false !== $rotated ) {
 				$new_generation = $rotated;
 			}
