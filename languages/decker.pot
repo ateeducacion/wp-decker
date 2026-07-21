@@ -2019,3 +2019,6 @@ msgid ""
 "Choose which editor to use for task descriptions. Collaborative editing "
 "always uses Quill."
 msgstr ""
+
+msgid "Checklist"
+msgstr ""

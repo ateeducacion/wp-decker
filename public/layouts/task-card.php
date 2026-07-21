@@ -361,7 +361,7 @@ require_once __DIR__ . '/partials/task-comments.php';
 	<div class="tab-content">
 		<?php
 		$options                        = get_option( 'decker_settings', array() );
-		$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'classic';
+		$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
 		$collaborative_editing_enabled = ! empty( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
 		$use_quill_editor              = $collaborative_editing_enabled || 'quill' === $task_editor_type;
 		?>

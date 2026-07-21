@@ -185,7 +185,7 @@ class Decker_Public {
 
 		if ( $decker_page ) {
 			$options                        = get_option( 'decker_settings', array() );
-			$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'classic';
+			$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
 			$collaborative_editing_enabled = ! empty( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
 			$use_quill_editor              = $collaborative_editing_enabled || 'quill' === $task_editor_type;
 
@@ -302,6 +302,9 @@ class Decker_Public {
 				// Load the WordPress Classic Editor assets and media library for task descriptions when Quill is not selected.
 				wp_enqueue_editor();
 				wp_enqueue_media();
+
+				// Checklist support for the classic editor (Quill-compatible markup).
+				$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/tinymce-checklist.js';
 			}
 
 			if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
@@ -422,6 +425,7 @@ class Decker_Public {
 					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
 					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 					'copy_task_url'               => __( 'Copy Task URL', 'decker' ),
+					'checklist'                   => __( 'Checklist', 'decker' ),
 					'loading_comments'            => __( 'Loading comments…', 'decker' ),
 					'no_comments'                 => __( 'No comments yet.', 'decker' ),
 					'comments_error'              => __( 'Could not load comments.', 'decker' ),

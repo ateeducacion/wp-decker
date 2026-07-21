@@ -2054,3 +2054,6 @@ msgid ""
 msgstr ""
 "Elige qué editor usar para las descripciones de tareas. La edición "
 "colaborativa siempre usa Quill."
+
+msgid "Checklist"
+msgstr "Lista de verificación"

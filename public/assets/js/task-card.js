@@ -1295,11 +1295,22 @@
                 tinymce: {
                     wpautop: true,
                     container: 'description-tab',
-                    toolbar1: 'formatselect bold italic link bullist numlist blockquote alignleft aligncenter alignright wp_adv fullscreen',
+                    toolbar1: 'formatselect bold italic link bullist numlist decker_checklist blockquote alignleft aligncenter alignright wp_adv fullscreen',
                     toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
                     menubar: false,
+                    // Keep Quill's checklist markup (li[data-list]) intact through
+                    // TinyMCE's schema so both editors share the same stored format.
+                    extended_valid_elements: 'li[data-list|value|class|style]',
+                    // Draw the checkboxes for checklist items; state handling lives
+                    // in tinymce-checklist.js (DeckerChecklist).
+                    content_style: 'li[data-list]{list-style:none;position:relative;padding-left:1.7em;}' +
+                        'li[data-list]::before{content:"\\2610";position:absolute;left:0;top:0;width:1.4em;cursor:pointer;}' +
+                        'li[data-list="checked"]::before{content:"\\2611";}',
                     setup: function(editor) {
                         taskEditor = editor;
+                        if (window.DeckerChecklist) {
+                            window.DeckerChecklist.attach(editor);
+                        }
                         editor.on('init', function() {
                             taskEditor.initialized = true;
                             resolve();

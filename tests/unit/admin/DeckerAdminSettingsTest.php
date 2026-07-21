@@ -593,9 +593,37 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 			$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
 			$this->assertEquals( 'info', $validated['alert_color'] );
 			$this->assertEquals( 'editor', $validated['minimum_user_profile'] );
+			$this->assertEquals( 'quill', $validated['task_editor_type'] );
 			$this->assertEquals( '', $validated['alert_message'] );
 			$this->assertEquals( '', $validated['ignored_users'] );
 		}
+	}
+
+	/**
+	 * Test task_editor_type defaults to quill during the transition period.
+	 */
+	public function test_settings_validate_task_editor_type_defaults_to_quill() {
+		$validated = $this->admin_settings->settings_validate( array() );
+
+		$this->assertEquals( 'quill', $validated['task_editor_type'] );
+	}
+
+	/**
+	 * Test task_editor_type keeps a valid classic selection.
+	 */
+	public function test_settings_validate_task_editor_type_accepts_classic() {
+		$validated = $this->admin_settings->settings_validate( array( 'task_editor_type' => 'classic' ) );
+
+		$this->assertEquals( 'classic', $validated['task_editor_type'] );
+	}
+
+	/**
+	 * Test task_editor_type falls back to quill for unsupported values.
+	 */
+	public function test_settings_validate_task_editor_type_rejects_invalid_values() {
+		$validated = $this->admin_settings->settings_validate( array( 'task_editor_type' => 'markdown' ) );
+
+		$this->assertEquals( 'quill', $validated['task_editor_type'] );
 	}
 
 	/**
