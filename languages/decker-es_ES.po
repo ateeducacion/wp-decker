@@ -1930,3 +1930,96 @@ msgstr "Quitando de hoy…"
 
 msgid "The task could not be updated."
 msgstr "No se pudo actualizar la tarea."
+
+msgid "Permission-aware abilities for Decker task, board, and knowledge-base operations."
+msgstr "Habilidades con control de permisos para operaciones de tareas, tableros y base de conocimiento de Decker."
+
+msgid "List Decker tasks"
+msgstr "Listar tareas de Decker"
+
+msgid "Lists visible Decker tasks with optional search, board, stack, status, and pagination filters."
+msgstr "Lista las tareas de Decker visibles con filtros opcionales de búsqueda, tablero, pila, estado y paginación."
+
+msgid "Get a Decker task"
+msgstr "Obtener una tarea de Decker"
+
+msgid "Retrieves one visible Decker task by ID."
+msgstr "Recupera una tarea de Decker visible por su ID."
+
+msgid "Create a Decker task"
+msgstr "Crear una tarea de Decker"
+
+msgid "Creates a task through the existing Decker task domain method."
+msgstr "Crea una tarea mediante el método de dominio de tareas existente de Decker."
+
+msgid "Update a Decker task"
+msgstr "Actualizar una tarea de Decker"
+
+msgid "Updates selected fields while preserving unspecified values and edit locks."
+msgstr "Actualiza los campos indicados conservando los valores no especificados y los bloqueos de edición."
+
+msgid "Move a Decker task"
+msgstr "Mover una tarea de Decker"
+
+msgid "Moves a task to another stack or board through existing domain behavior."
+msgstr "Mueve una tarea a otra pila o tablero mediante el comportamiento de dominio existente."
+
+msgid "Archive or restore a Decker task"
+msgstr "Archivar o restaurar una tarea de Decker"
+
+msgid "Archives or restores a task using an explicit, reversible archived state."
+msgstr "Archiva o restaura una tarea usando un estado de archivado explícito y reversible."
+
+msgid "List Decker boards"
+msgstr "Listar tableros de Decker"
+
+msgid "Lists boards that can be used to filter or create tasks."
+msgstr "Lista los tableros que se pueden usar para filtrar o crear tareas."
+
+msgid "Search the Decker knowledge base"
+msgstr "Buscar en la base de conocimiento de Decker"
+
+msgid "Searches accessible knowledge-base articles by text and optional board."
+msgstr "Busca artículos accesibles de la base de conocimiento por texto y tablero opcional."
+
+msgid "You are not allowed to access Decker data."
+msgstr "No tienes permiso para acceder a los datos de Decker."
+
+msgid "You are not allowed to access this task."
+msgstr "No tienes permiso para acceder a esta tarea."
+
+msgid "You are not allowed to access this hidden task."
+msgstr "No tienes permiso para acceder a esta tarea oculta."
+
+msgid "Authentication is required."
+msgstr "Se requiere autenticación."
+
+msgid "The requested board does not exist."
+msgstr "El tablero solicitado no existe."
+
+msgid "You are not allowed to create tasks for another author."
+msgstr "No tienes permiso para crear tareas para otro autor."
+
+msgid "You are not allowed to change the task author."
+msgstr "No tienes permiso para cambiar el autor de la tarea."
+
+msgid "The task title is required."
+msgstr "El título de la tarea es obligatorio."
+
+msgid "The supplied task stack is invalid."
+msgstr "La pila de tarea proporcionada no es válida."
+
+msgid "One or more supplied user IDs are invalid."
+msgstr "Uno o más ID de usuario proporcionados no son válidos."
+
+msgid "One or more supplied taxonomy term IDs are invalid."
+msgstr "Uno o más ID de término de taxonomía proporcionados no son válidos."
+
+msgid "The due date must be a valid date in Y-m-d format."
+msgstr "La fecha de vencimiento debe ser una fecha válida en formato Y-m-d."
+
+msgid "The requested task was not found."
+msgstr "No se encontró la tarea solicitada."
+
+msgid "The task is not assigned to a valid board."
+msgstr "La tarea no está asignada a un tablero válido."

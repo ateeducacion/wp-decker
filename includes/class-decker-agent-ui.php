@@ -46,5 +46,3 @@ class Decker_Agent_UI {
 		);
 	}
 }
-
-new Decker_Agent_UI();

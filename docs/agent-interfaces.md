@@ -10,16 +10,18 @@ The `decker` category contains:
 
 | Ability | Type | Required access |
 | --- | --- | --- |
-| `decker/list-tasks` | Read-only | Authenticated user with `edit_posts` |
-| `decker/get-task` | Read-only | `read_post` for the requested task and Decker visibility rules |
+| `decker/list-tasks` | Read-only | Authenticated user with `edit_posts`; each task additionally passes the hidden-visibility rule |
+| `decker/get-task` | Read-only | `read_post` for the requested task and the hidden-visibility rule |
 | `decker/create-task` | Mutating | Authenticated user with `edit_posts` |
-| `decker/update-task` | Mutating, idempotent | `edit_post` and the existing task edit lock |
-| `decker/move-task` | Mutating, idempotent | `edit_post` and the existing task edit lock |
+| `decker/update-task` | Mutating, idempotent | `edit_post` and, when enabled, the existing task edit lock |
+| `decker/move-task` | Mutating, idempotent | `edit_post` and, when enabled, the existing task edit lock |
 | `decker/archive-task` | Mutating, reversible, idempotent | `edit_post`; the archived state must be explicit |
 | `decker/list-boards` | Read-only | Authenticated user with `edit_posts` |
 | `decker/search-knowledge-base` | Read-only | Authenticated user with `edit_posts` and per-post access |
 
 There is no delete ability. Archiving is reversible and is not marked destructive.
+
+Decker has no board-level access control: every user with `edit_posts` can see every board and every non-hidden task, exactly as the board UI presents them. The only per-task restriction is the hidden-visibility rule (see below), which `list-tasks` and `get-task` apply identically so listings never disagree with single reads.
 
 ## Schemas and responses
 
@@ -31,7 +33,13 @@ Dates use `Y-m-d`. Stack values are limited to `to-do`, `in-progress`, and `done
 
 Abilities use the current WordPress authentication context. Existing cookie-authenticated REST requests continue to use WordPress nonces where appropriate. Other supported WordPress authentication mechanisms are not forced to provide a cookie nonce.
 
-Authorization is enforced server-side. Object operations validate the requested task, post type, per-post capability, hidden-task visibility, and edit lock. Hidden tasks are available only to administrators or users directly related as author, responsible user, or assignee.
+Authorization is enforced server-side. Object operations validate the requested task, post type, per-post capability, hidden-task visibility, and — when the edit-lock feature is enabled — the existing task edit lock. Hidden tasks are available only to administrators or users directly related as author, responsible user, or assignee; they are excluded from `list-tasks` unless `include_hidden` is set, and even then only the tasks that user is entitled to see are returned.
+
+Listings resolve visibility before pagination, so `total` and `total_pages` describe exactly the tasks the current user can see; a page is never padded with, or emptied by, tasks that were filtered out.
+
+Missing authentication returns HTTP `401`; an authenticated but forbidden request returns `403`.
+
+The edit lock is advisory and only enforced when Decker's post-locking feature is active. There is no optimistic-concurrency token (ETag / `If-Unmodified-Since`) yet, so a concurrent UI edit and agent write can still race; add one if stronger guarantees are required.
 
 No public or unauthenticated agent endpoint is registered. Multisite execution stays scoped to the current site.
 
@@ -39,9 +47,11 @@ No public or unauthenticated agent endpoint is registered. Multisite execution s
 
 Task writes call `Decker_Tasks::create_or_update_task()`. The adapter does not reimplement creation, update, taxonomy assignment, stack-transition hooks, notifications, or archive behavior. Existing REST routes remain available and backward compatible.
 
+Writes carry the complete task state: unspecified fields keep their stored values, and an empty `label_ids` clears the task's labels rather than leaving them untouched. The adapter also re-reads and preserves the task's Nextcloud card link, which the shared domain method rewrites on every save.
+
 ## Browser semantics
 
-The main interface is progressively enhanced with associated labels and stable names for filters, native action buttons, accessible names for icon-only controls, labelled task regions, list semantics, and polite status regions. Existing IDs, classes, data attributes, and backend operations are preserved.
+The main interface is progressively enhanced with associated labels and stable names for filters, accessible names for icon-only controls, labelled task regions, list semantics, and appropriate status/alert roles. Enhancements are additive and idempotent — they only set attributes and add hidden labels on the existing markup, never replacing nodes, so event listeners, saved references, and Bootstrap component instances survive. `window.DeckerAgentSemantics.enhance()` may be re-run after a dynamic render. The native "Fix Order" control is a real `<button>` in the server-rendered markup rather than a scripted anchor swap. Existing IDs, classes, data attributes, and backend operations are preserved.
 
 ## WebMCP status
 

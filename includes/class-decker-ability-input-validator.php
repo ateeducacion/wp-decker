@@ -100,7 +100,7 @@ class Decker_Ability_Input_Validator {
 	 */
 	public function validate_board( int $board_id ) {
 		if ( $board_id < 1 || ! term_exists( $board_id, 'decker_board' ) ) {
-			return new WP_Error( 'decker_invalid_board', 'The requested board does not exist.', array( 'status' => 400 ) );
+			return new WP_Error( 'decker_invalid_board', __( 'The requested board does not exist.', 'decker' ), array( 'status' => 400 ) );
 		}
 
 		return true;
@@ -117,7 +117,7 @@ class Decker_Ability_Input_Validator {
 		$author_id       = isset( $input['author_id'] ) ? absint( $input['author_id'] ) : $current_user_id;
 
 		if ( $author_id !== $current_user_id && ! current_user_can( 'edit_others_posts' ) ) {
-			return $this->permission_error( 'decker_author_forbidden', 'You are not allowed to create tasks for another author.' );
+			return $this->permission_error( 'decker_author_forbidden', __( 'You are not allowed to create tasks for another author.', 'decker' ) );
 		}
 
 		return $author_id;
@@ -135,7 +135,7 @@ class Decker_Ability_Input_Validator {
 		$new_author    = absint( $state['author_id'] );
 
 		if ( $stored_author !== $new_author && ! current_user_can( 'edit_others_posts' ) ) {
-			return $this->permission_error( 'decker_author_forbidden', 'You are not allowed to change the task author.' );
+			return $this->permission_error( 'decker_author_forbidden', __( 'You are not allowed to change the task author.', 'decker' ) );
 		}
 
 		return true;
@@ -194,11 +194,11 @@ class Decker_Ability_Input_Validator {
 	 */
 	private function validate_state( array $state ) {
 		if ( '' === $state['title'] ) {
-			return new WP_Error( 'decker_invalid_title', 'The task title is required.', array( 'status' => 400 ) );
+			return new WP_Error( 'decker_invalid_title', __( 'The task title is required.', 'decker' ), array( 'status' => 400 ) );
 		}
 
 		if ( ! in_array( $state['stack'], self::STACKS, true ) ) {
-			return new WP_Error( 'decker_invalid_stack', 'The supplied task stack is invalid.', array( 'status' => 400 ) );
+			return new WP_Error( 'decker_invalid_stack', __( 'The supplied task stack is invalid.', 'decker' ), array( 'status' => 400 ) );
 		}
 
 		$board_validation = $this->validate_board( $state['board_id'] );
@@ -253,7 +253,7 @@ class Decker_Ability_Input_Validator {
 	private function validate_user_ids( array $user_ids ) {
 		foreach ( $this->normalize_ids( $user_ids ) as $user_id ) {
 			if ( $user_id < 1 || ! get_userdata( $user_id ) ) {
-				return new WP_Error( 'decker_invalid_user', 'One or more supplied user IDs are invalid.', array( 'status' => 400 ) );
+				return new WP_Error( 'decker_invalid_user', __( 'One or more supplied user IDs are invalid.', 'decker' ), array( 'status' => 400 ) );
 			}
 		}
 		return true;
@@ -269,7 +269,7 @@ class Decker_Ability_Input_Validator {
 	private function validate_term_ids( array $term_ids, string $taxonomy ) {
 		foreach ( $this->normalize_ids( $term_ids ) as $term_id ) {
 			if ( $term_id < 1 || ! term_exists( $term_id, $taxonomy ) ) {
-				return new WP_Error( 'decker_invalid_term', 'One or more supplied taxonomy term IDs are invalid.', array( 'status' => 400 ) );
+				return new WP_Error( 'decker_invalid_term', __( 'One or more supplied taxonomy term IDs are invalid.', 'decker' ), array( 'status' => 400 ) );
 			}
 		}
 		return true;
@@ -291,7 +291,7 @@ class Decker_Ability_Input_Validator {
 	 * @return WP_Error Invalid date error.
 	 */
 	private function invalid_due_date_error(): WP_Error {
-		return new WP_Error( 'decker_invalid_due_date', 'The due date must be a valid date in Y-m-d format.', array( 'status' => 400 ) );
+		return new WP_Error( 'decker_invalid_due_date', __( 'The due date must be a valid date in Y-m-d format.', 'decker' ), array( 'status' => 400 ) );
 	}
 
 	/**

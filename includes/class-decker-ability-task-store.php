@@ -33,7 +33,7 @@ class Decker_Ability_Task_Store {
 		if ( ! $post || 'decker_task' !== $post->post_type ) {
 			return new WP_Error(
 				'decker_task_not_found',
-				'The requested task was not found.',
+				__( 'The requested task was not found.', 'decker' ),
 				array( 'status' => 404 )
 			);
 		}
@@ -85,7 +85,7 @@ class Decker_Ability_Task_Store {
 		if ( is_wp_error( $board_ids ) || empty( $board_ids ) ) {
 			return new WP_Error(
 				'decker_task_board_missing',
-				'The task is not assigned to a valid board.',
+				__( 'The task is not assigned to a valid board.', 'decker' ),
 				array( 'status' => 409 )
 			);
 		}
@@ -107,6 +107,8 @@ class Decker_Ability_Task_Store {
 			'assignee_ids'        => $this->integer_ids( $assignees ),
 			'label_ids'           => $this->term_ids( $label_ids ),
 			'archived'            => 'archived' === $post->post_status,
+			// Preserve the Nextcloud link; the domain method rewrites this meta on every save.
+			'id_nextcloud_card'   => absint( get_post_meta( $post->ID, 'id_nextcloud_card', true ) ),
 		);
 	}
 
@@ -131,6 +133,8 @@ class Decker_Ability_Task_Store {
 	 * @return array<string, mixed>|WP_Error Formatted task or error.
 	 */
 	public function persist( int $task_id, array $state ) {
+		$label_ids = $this->term_ids( $state['label_ids'] );
+
 		$result = Decker_Tasks::create_or_update_task(
 			$task_id,
 			(string) $state['title'],
@@ -143,9 +147,10 @@ class Decker_Ability_Task_Store {
 			absint( $state['responsible_user_id'] ),
 			(bool) $state['hidden'],
 			(array) $state['assignee_ids'],
-			(array) $state['label_ids'],
+			$label_ids,
 			null,
-			(bool) $state['archived']
+			(bool) $state['archived'],
+			isset( $state['id_nextcloud_card'] ) ? absint( $state['id_nextcloud_card'] ) : 0
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -156,6 +161,11 @@ class Decker_Ability_Task_Store {
 		if ( is_wp_error( $post ) ) {
 			return $post;
 		}
+
+		// Labels are also passed to the domain call so its save hooks see them, but
+		// that path only merges (never clears) labels; reconcile here so the
+		// complete-state contract holds, including an empty set that clears all.
+		wp_set_post_terms( $post->ID, $label_ids, 'decker_label' );
 
 		return $this->format_task( $post );
 	}

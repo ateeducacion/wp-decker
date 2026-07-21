@@ -180,4 +180,188 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 		$this->assertTrue( wp_has_ability( 'decker/list-tasks' ) );
 		$this->assertTrue( wp_has_ability( 'decker/create-task' ) );
 	}
+
+	/**
+	 * Missing authentication is 401, not 403.
+	 */
+	public function test_authentication_error_uses_401_status() {
+		wp_set_current_user( 0 );
+		$error = $this->service->can_list_tasks();
+		$this->assertWPError( $error );
+		$this->assertSame( 'decker_authentication_required', $error->get_error_code() );
+		$this->assertSame( 401, $error->get_error_data()['status'] );
+	}
+
+	/**
+	 * Totals and pages must describe only the tasks the user can see, and pages
+	 * must never be padded with or emptied by filtered-out tasks.
+	 */
+	public function test_pagination_counts_only_visible_tasks() {
+		$token = 'PAGINATIONTOKEN';
+		wp_set_current_user( $this->editor_id );
+		for ( $i = 0; $i < 3; $i++ ) {
+			self::factory()->task->create(
+				array(
+					'post_title' => "$token visible $i",
+					'board'      => $this->board_id,
+				)
+			);
+		}
+		for ( $i = 0; $i < 2; $i++ ) {
+			$hidden_id = self::factory()->task->create(
+				array(
+					'post_title' => "$token hidden $i",
+					'board'      => $this->board_id,
+				)
+			);
+			update_post_meta( $hidden_id, 'hidden', '1' );
+		}
+
+		// A second editor, unrelated to the hidden tasks, may only see the three visible ones.
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+
+		$page_one = $this->service->list_tasks(
+			array(
+				'search'   => $token,
+				'page'     => 1,
+				'per_page' => 2,
+			)
+		);
+		$this->assertSame( 3, $page_one['total'] );
+		$this->assertSame( 2, $page_one['total_pages'] );
+		$this->assertCount( 2, $page_one['tasks'] );
+
+		$page_two = $this->service->list_tasks(
+			array(
+				'search'   => $token,
+				'page'     => 2,
+				'per_page' => 2,
+			)
+		);
+		$this->assertSame( 3, $page_two['total'] );
+		$this->assertCount( 1, $page_two['tasks'] );
+	}
+
+	/**
+	 * A user related to a hidden task can list it with include_hidden, matching get-task.
+	 */
+	public function test_related_user_can_list_own_hidden_task() {
+		$assignee_id = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title'     => 'HIDDENLISTTOKEN task',
+				'board'          => $this->board_id,
+				'assigned_users' => array( $assignee_id ),
+			)
+		);
+		update_post_meta( $task_id, 'hidden', '1' );
+
+		wp_set_current_user( $assignee_id );
+		$this->assertNotWPError( $this->service->can_read_task( array( 'task_id' => $task_id ) ) );
+
+		$default = $this->service->list_tasks( array( 'search' => 'HIDDENLISTTOKEN' ) );
+		$this->assertSame( array(), $default['tasks'] );
+
+		$with_hidden = $this->service->list_tasks( array( 'search' => 'HIDDENLISTTOKEN', 'include_hidden' => true ) );
+		$this->assertSame( array( $task_id ), wp_list_pluck( $with_hidden['tasks'], 'id' ) );
+	}
+
+	/**
+	 * Updates must not wipe the Nextcloud card link the domain method rewrites.
+	 */
+	public function test_update_preserves_nextcloud_card_id() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create( array( 'post_title' => 'Synced task', 'board' => $this->board_id ) );
+		update_post_meta( $task_id, 'id_nextcloud_card', 4242 );
+
+		$updated = $this->service->update_task( array( 'task_id' => $task_id, 'title' => 'Synced task edited' ) );
+		$this->assertNotWPError( $updated );
+		$this->assertSame( '4242', (string) get_post_meta( $task_id, 'id_nextcloud_card', true ) );
+	}
+
+	/**
+	 * An explicit empty label set must clear the task's labels.
+	 */
+	public function test_update_clears_labels_with_empty_array() {
+		wp_set_current_user( $this->editor_id );
+		$label_id = self::factory()->label->create();
+		$task_id  = self::factory()->task->create(
+			array(
+				'post_title' => 'Labelled task',
+				'board'      => $this->board_id,
+				'labels'     => array( $label_id ),
+			)
+		);
+		$this->assertContains( $label_id, wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) ) );
+
+		$updated = $this->service->update_task( array( 'task_id' => $task_id, 'label_ids' => array() ) );
+		$this->assertNotWPError( $updated );
+		$this->assertSame( array(), $updated['label_ids'] );
+		$this->assertSame( array(), wp_get_post_terms( $task_id, 'decker_label', array( 'fields' => 'ids' ) ) );
+	}
+
+	/**
+	 * Unspecified fields keep their stored values across an update.
+	 */
+	public function test_update_preserves_unspecified_fields() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title'  => 'Preserve task',
+				'board'       => $this->board_id,
+				'responsable' => $this->editor_id,
+				'duedate'     => '2026-09-15',
+			)
+		);
+
+		$updated = $this->service->update_task( array( 'task_id' => $task_id, 'title' => 'Preserve task edited' ) );
+		$this->assertNotWPError( $updated );
+		$this->assertSame( 'Preserve task edited', $updated['title'] );
+		$this->assertSame( '2026-09-15', $updated['due_date'] );
+		$this->assertSame( $this->editor_id, $updated['responsible_user_id'] );
+	}
+
+	/**
+	 * Moving a task to another board must change its board.
+	 */
+	public function test_move_task_changes_board() {
+		wp_set_current_user( $this->editor_id );
+		$other_board = self::factory()->board->create();
+		$task_id     = self::factory()->task->create( array( 'post_title' => 'Movable', 'board' => $this->board_id ) );
+
+		$moved = $this->service->move_task( array( 'task_id' => $task_id, 'board_id' => $other_board ) );
+		$this->assertNotWPError( $moved );
+		$this->assertSame( $other_board, $moved['board_id'] );
+	}
+
+	/**
+	 * Archiving is reversible: an explicit false restores the task.
+	 */
+	public function test_archive_task_can_restore() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create( array( 'post_title' => 'Archivable', 'board' => $this->board_id ) );
+
+		$archived = $this->service->archive_task( array( 'task_id' => $task_id, 'archived' => true ) );
+		$this->assertSame( 'archived', $archived['status'] );
+
+		$restored = $this->service->archive_task( array( 'task_id' => $task_id, 'archived' => false ) );
+		$this->assertSame( 'publish', $restored['status'] );
+	}
+
+	/**
+	 * Invalid dates are rejected before any write.
+	 */
+	public function test_invalid_due_date_is_rejected() {
+		wp_set_current_user( $this->editor_id );
+		$error = $this->service->create_task(
+			array(
+				'title'    => 'Bad date',
+				'board_id' => $this->board_id,
+				'due_date' => '2026-13-40',
+			)
+		);
+		$this->assertWPError( $error );
+		$this->assertSame( 'decker_invalid_due_date', $error->get_error_code() );
+	}
 }

@@ -1897,3 +1897,96 @@ msgstr ""
 
 msgid "Logout"
 msgstr ""
+
+msgid "Permission-aware abilities for Decker task, board, and knowledge-base operations."
+msgstr ""
+
+msgid "List Decker tasks"
+msgstr ""
+
+msgid "Lists visible Decker tasks with optional search, board, stack, status, and pagination filters."
+msgstr ""
+
+msgid "Get a Decker task"
+msgstr ""
+
+msgid "Retrieves one visible Decker task by ID."
+msgstr ""
+
+msgid "Create a Decker task"
+msgstr ""
+
+msgid "Creates a task through the existing Decker task domain method."
+msgstr ""
+
+msgid "Update a Decker task"
+msgstr ""
+
+msgid "Updates selected fields while preserving unspecified values and edit locks."
+msgstr ""
+
+msgid "Move a Decker task"
+msgstr ""
+
+msgid "Moves a task to another stack or board through existing domain behavior."
+msgstr ""
+
+msgid "Archive or restore a Decker task"
+msgstr ""
+
+msgid "Archives or restores a task using an explicit, reversible archived state."
+msgstr ""
+
+msgid "List Decker boards"
+msgstr ""
+
+msgid "Lists boards that can be used to filter or create tasks."
+msgstr ""
+
+msgid "Search the Decker knowledge base"
+msgstr ""
+
+msgid "Searches accessible knowledge-base articles by text and optional board."
+msgstr ""
+
+msgid "You are not allowed to access Decker data."
+msgstr ""
+
+msgid "You are not allowed to access this task."
+msgstr ""
+
+msgid "You are not allowed to access this hidden task."
+msgstr ""
+
+msgid "Authentication is required."
+msgstr ""
+
+msgid "The requested board does not exist."
+msgstr ""
+
+msgid "You are not allowed to create tasks for another author."
+msgstr ""
+
+msgid "You are not allowed to change the task author."
+msgstr ""
+
+msgid "The task title is required."
+msgstr ""
+
+msgid "The supplied task stack is invalid."
+msgstr ""
+
+msgid "One or more supplied user IDs are invalid."
+msgstr ""
+
+msgid "One or more supplied taxonomy term IDs are invalid."
+msgstr ""
+
+msgid "The due date must be a valid date in Y-m-d format."
+msgstr ""
+
+msgid "The requested task was not found."
+msgstr ""
+
+msgid "The task is not assigned to a valid board."
+msgstr ""

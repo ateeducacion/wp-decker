@@ -21,11 +21,25 @@ require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-command-service
 class Decker_Ability_Service {
 
 	/**
-	 * Registered callbacks keyed by legacy method name.
+	 * Task access rules.
 	 *
-	 * @var array<string, callable>
+	 * @var Decker_Ability_Task_Access
 	 */
-	private $callbacks;
+	private $access;
+
+	/**
+	 * Read operations.
+	 *
+	 * @var Decker_Ability_Query_Service
+	 */
+	private $queries;
+
+	/**
+	 * Write operations.
+	 *
+	 * @var Decker_Ability_Command_Service
+	 */
+	private $commands;
 
 	/**
 	 * Constructor.
@@ -33,39 +47,128 @@ class Decker_Ability_Service {
 	public function __construct() {
 		$store     = new Decker_Ability_Task_Store();
 		$validator = new Decker_Ability_Input_Validator();
-		$access    = new Decker_Ability_Task_Access( $store );
-		$queries   = new Decker_Ability_Query_Service( $store, $validator );
-		$commands  = new Decker_Ability_Command_Service( $store, $validator );
 
-		$this->callbacks = array(
-			'can_list_tasks'        => array( $access, 'can_list_tasks' ),
-			'can_create_task'       => array( $access, 'can_create_task' ),
-			'can_read_task'         => array( $access, 'can_read_task' ),
-			'can_edit_task'         => array( $access, 'can_edit_task' ),
-			'list_tasks'            => array( $queries, 'list_tasks' ),
-			'get_task'              => array( $queries, 'get_task' ),
-			'list_boards'           => array( $queries, 'list_boards' ),
-			'search_knowledge_base' => array( $queries, 'search_knowledge_base' ),
-			'create_task'           => array( $commands, 'create_task' ),
-			'update_task'           => array( $commands, 'update_task' ),
-			'move_task'             => array( $commands, 'move_task' ),
-			'archive_task'          => array( $commands, 'archive_task' ),
-		);
+		$this->access   = new Decker_Ability_Task_Access( $store );
+		$this->queries  = new Decker_Ability_Query_Service( $store, $validator, $this->access );
+		$this->commands = new Decker_Ability_Command_Service( $store, $validator );
 	}
 
 	/**
-	 * Preserve the original callback surface while delegating implementation.
+	 * Check permission to read task collections.
 	 *
-	 * @param string $name      Requested callback name.
-	 * @param array  $arguments Callback arguments.
-	 * @return mixed Callback result.
-	 * @throws BadMethodCallException When the callback name is unknown.
+	 * @param array|null $input Optional ability input.
+	 * @return bool|WP_Error True when permitted, otherwise an error.
 	 */
-	public function __call( string $name, array $arguments ) {
-		if ( ! isset( $this->callbacks[ $name ] ) ) {
-			throw new BadMethodCallException( 'Unknown Decker ability callback: ' . esc_html( $name ) );
-		}
+	public function can_list_tasks( $input = null ) {
+		return $this->access->can_list_tasks( $input );
+	}
 
-		return call_user_func_array( $this->callbacks[ $name ], $arguments );
+	/**
+	 * Check permission to create tasks.
+	 *
+	 * @param array|null $input Optional ability input.
+	 * @return bool|WP_Error True when permitted, otherwise an error.
+	 */
+	public function can_create_task( $input = null ) {
+		return $this->access->can_create_task( $input );
+	}
+
+	/**
+	 * Check permission to read one task.
+	 *
+	 * @param array $input Ability input.
+	 * @return bool|WP_Error True when permitted, otherwise an error.
+	 */
+	public function can_read_task( $input ) {
+		return $this->access->can_read_task( $input );
+	}
+
+	/**
+	 * Check permission to edit one task.
+	 *
+	 * @param array $input Ability input.
+	 * @return bool|WP_Error True when permitted, otherwise an error.
+	 */
+	public function can_edit_task( $input ) {
+		return $this->access->can_edit_task( $input );
+	}
+
+	/**
+	 * List visible tasks.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Task collection or error.
+	 */
+	public function list_tasks( $input ) {
+		return $this->queries->list_tasks( $input );
+	}
+
+	/**
+	 * Retrieve one task.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Task data or error.
+	 */
+	public function get_task( $input ) {
+		return $this->queries->get_task( $input );
+	}
+
+	/**
+	 * List available boards.
+	 *
+	 * @return array<string, mixed>|WP_Error Boards or error.
+	 */
+	public function list_boards() {
+		return $this->queries->list_boards();
+	}
+
+	/**
+	 * Search knowledge-base articles.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Articles or error.
+	 */
+	public function search_knowledge_base( $input ) {
+		return $this->queries->search_knowledge_base( $input );
+	}
+
+	/**
+	 * Create a task.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Created task or error.
+	 */
+	public function create_task( $input ) {
+		return $this->commands->create_task( $input );
+	}
+
+	/**
+	 * Update a task.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Updated task or error.
+	 */
+	public function update_task( $input ) {
+		return $this->commands->update_task( $input );
+	}
+
+	/**
+	 * Move a task.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Updated task or error.
+	 */
+	public function move_task( $input ) {
+		return $this->commands->move_task( $input );
+	}
+
+	/**
+	 * Archive or restore a task.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Updated task or error.
+	 */
+	public function archive_task( $input ) {
+		return $this->commands->archive_task( $input );
 	}
 }

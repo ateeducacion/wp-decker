@@ -38,15 +38,11 @@ class Decker_Ability_Task_Access {
 	 */
 	public function can_list_tasks( $input = null ) {
 		if ( ! is_user_logged_in() ) {
-			return $this->permission_error( 'decker_authentication_required', 'Authentication is required.' );
+			return $this->authentication_error();
 		}
 
 		if ( ! current_user_can( 'edit_posts' ) ) {
-			return $this->permission_error( 'decker_forbidden', 'You are not allowed to access Decker data.' );
-		}
-
-		if ( $this->requests_hidden_tasks( $input ) && ! current_user_can( 'manage_options' ) ) {
-			return $this->permission_error( 'decker_hidden_tasks_forbidden', 'Only administrators may include hidden tasks.' );
+			return $this->permission_error( 'decker_forbidden', __( 'You are not allowed to access Decker data.', 'decker' ) );
 		}
 
 		return true;
@@ -103,24 +99,36 @@ class Decker_Ability_Task_Access {
 
 		$capability = $require_edit ? 'edit_post' : 'read_post';
 		if ( ! current_user_can( $capability, $task_id ) ) {
-			return $this->permission_error( 'decker_task_forbidden', 'You are not allowed to access this task.' );
+			return $this->permission_error( 'decker_task_forbidden', __( 'You are not allowed to access this task.', 'decker' ) );
 		}
 
 		if ( $this->is_hidden_from_current_user( $post ) ) {
-			return $this->permission_error( 'decker_task_hidden', 'You are not allowed to access this hidden task.' );
+			return $this->permission_error( 'decker_task_hidden', __( 'You are not allowed to access this hidden task.', 'decker' ) );
 		}
 
 		return true;
 	}
 
 	/**
-	 * Determine whether hidden tasks were explicitly requested.
+	 * Determine whether a task may appear in a listing for the current user.
 	 *
-	 * @param array|null $input Optional ability input.
-	 * @return bool True when hidden tasks were requested.
+	 * Applies the same hidden-task rule enforced by get-task so listings and
+	 * single reads stay consistent. Hidden tasks are excluded from the default
+	 * listing and only surface when explicitly requested by a user allowed to
+	 * see them (their author, responsible user, assignee, or an administrator).
+	 *
+	 * @param WP_Post $post           Task post.
+	 * @param bool    $include_hidden Whether hidden tasks were requested.
+	 * @return bool True when the task is visible to the current user.
 	 */
-	private function requests_hidden_tasks( $input ): bool {
-		return is_array( $input ) && ! empty( $input['include_hidden'] );
+	public function is_visible_in_list( WP_Post $post, bool $include_hidden ): bool {
+		$is_hidden = (bool) get_post_meta( $post->ID, 'hidden', true );
+
+		if ( $is_hidden && ! $include_hidden ) {
+			return false;
+		}
+
+		return ! $this->is_hidden_from_current_user( $post );
 	}
 
 	/**
@@ -148,6 +156,22 @@ class Decker_Ability_Task_Access {
 		}
 
 		return ! in_array( $user_id, $assignee_ids, true );
+	}
+
+	/**
+	 * Build an authentication error.
+	 *
+	 * Missing authentication is 401, distinct from an authenticated-but-forbidden
+	 * 403, so agents can tell "log in" apart from "give up".
+	 *
+	 * @return WP_Error Authentication error.
+	 */
+	private function authentication_error(): WP_Error {
+		return new WP_Error(
+			'decker_authentication_required',
+			__( 'Authentication is required.', 'decker' ),
+			array( 'status' => 401 )
+		);
 	}
 
 	/**

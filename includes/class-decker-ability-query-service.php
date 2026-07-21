@@ -29,14 +29,23 @@ class Decker_Ability_Query_Service {
 	private $validator;
 
 	/**
+	 * Task access rules.
+	 *
+	 * @var Decker_Ability_Task_Access
+	 */
+	private $access;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Decker_Ability_Task_Store      $store     Task store.
 	 * @param Decker_Ability_Input_Validator $validator Input validator.
+	 * @param Decker_Ability_Task_Access     $access    Task access rules.
 	 */
-	public function __construct( Decker_Ability_Task_Store $store, Decker_Ability_Input_Validator $validator ) {
+	public function __construct( Decker_Ability_Task_Store $store, Decker_Ability_Input_Validator $validator, Decker_Ability_Task_Access $access ) {
 		$this->store     = $store;
 		$this->validator = $validator;
+		$this->access    = $access;
 	}
 
 	/**
@@ -52,14 +61,20 @@ class Decker_Ability_Query_Service {
 			return $validation;
 		}
 
-		$query = new WP_Query( $this->build_task_query_arguments( $input ) );
+		// Authorization is applied before pagination so totals and pages describe
+		// exactly the tasks this user can see; paginating first would leak counts
+		// and yield empty pages when hidden tasks fall inside the requested slice.
+		$visible = $this->collect_visible_posts( $input );
+		$total   = count( $visible );
+		$offset  = ( $input['page'] - 1 ) * $input['per_page'];
+		$page    = array_slice( $visible, $offset, $input['per_page'] );
 
 		return array(
-			'tasks'       => $this->collect_visible_tasks( $query->posts ),
+			'tasks'       => array_map( array( $this->store, 'format_task' ), $page ),
 			'page'        => $input['page'],
 			'per_page'    => $input['per_page'],
-			'total'       => (int) $query->found_posts,
-			'total_pages' => (int) $query->max_num_pages,
+			'total'       => $total,
+			'total_pages' => (int) ceil( $total / $input['per_page'] ),
 		);
 	}
 
@@ -165,16 +180,25 @@ class Decker_Ability_Query_Service {
 	/**
 	 * Build task query arguments.
 	 *
+	 * Returns all matching tasks as full posts (meta cache primed) so visibility
+	 * is resolved in PHP and counts reflect only accessible tasks. Hidden tasks
+	 * are excluded in SQL for the default listing — where they are never visible
+	 * anyway — so the database does not return rows only to be discarded.
+	 *
 	 * @param array $input Normalized input.
 	 * @return array<string, mixed> Query arguments.
 	 */
 	private function build_task_query_arguments( array $input ): array {
 		$arguments = array(
-			'post_type'      => 'decker_task',
-			'post_status'    => $input['status'],
-			'posts_per_page' => $input['per_page'],
-			'paged'          => $input['page'],
-			'orderby'        => array(
+			'post_type'              => 'decker_task',
+			'post_status'            => $input['status'],
+			'posts_per_page'         => -1,
+			'no_found_rows'          => true,
+			// Return full posts with the meta cache primed so the visibility pass
+			// and page formatting read from cache; terms are only needed per page.
+			'update_post_meta_cache' => true,
+			'update_post_term_cache' => false,
+			'orderby'                => array(
 				'menu_order' => 'ASC',
 				'modified'   => 'DESC',
 			),
@@ -184,25 +208,6 @@ class Decker_Ability_Query_Service {
 			$arguments['s'] = $input['search'];
 		}
 
-		$meta_query = $this->build_meta_query( $input );
-		if ( ! empty( $meta_query ) ) {
-			$arguments['meta_query'] = $meta_query;
-		}
-
-		if ( $input['board_id'] > 0 ) {
-			$arguments['tax_query'] = $this->build_board_tax_query( $input['board_id'] );
-		}
-
-		return $arguments;
-	}
-
-	/**
-	 * Build metadata query clauses.
-	 *
-	 * @param array $input Normalized input.
-	 * @return array<int, array<string, mixed>> Metadata query.
-	 */
-	private function build_meta_query( array $input ): array {
 		$meta_query = array();
 
 		if ( '' !== $input['stack'] ) {
@@ -214,6 +219,8 @@ class Decker_Ability_Query_Service {
 		}
 
 		if ( ! $input['include_hidden'] ) {
+			// Hidden tasks are never returned by the default listing, so exclude
+			// them in SQL; is_visible_in_list() then only re-checks candidates.
 			$meta_query[] = array(
 				'relation' => 'OR',
 				array(
@@ -228,7 +235,15 @@ class Decker_Ability_Query_Service {
 			);
 		}
 
-		return $meta_query;
+		if ( ! empty( $meta_query ) ) {
+			$arguments['meta_query'] = $meta_query;
+		}
+
+		if ( $input['board_id'] > 0 ) {
+			$arguments['tax_query'] = $this->build_board_tax_query( $input['board_id'] );
+		}
+
+		return $arguments;
 	}
 
 	/**
@@ -248,20 +263,25 @@ class Decker_Ability_Query_Service {
 	}
 
 	/**
-	 * Collect visible tasks.
+	 * Collect every task the current user may see, in query order.
 	 *
-	 * @param WP_Post[] $posts Task posts.
-	 * @return array<int, array<string, mixed>> Formatted tasks.
+	 * The query returns full posts with the meta cache primed, so the visibility
+	 * checks here and the page formatting in list_tasks() read from cache rather
+	 * than issuing a lookup per task.
+	 *
+	 * @param array $input Normalized input.
+	 * @return WP_Post[] Visible task posts (keys not preserved; slice re-indexes).
 	 */
-	private function collect_visible_tasks( array $posts ): array {
-		$tasks = array();
-		foreach ( $posts as $post ) {
-			if ( $post instanceof WP_Post && current_user_can( 'edit_post', $post->ID ) ) {
-				$tasks[] = $this->store->format_task( $post );
-			}
-		}
+	private function collect_visible_posts( array $input ): array {
+		$query          = new WP_Query( $this->build_task_query_arguments( $input ) );
+		$include_hidden = $input['include_hidden'];
 
-		return $tasks;
+		return array_filter(
+			$query->posts,
+			function ( $post ) use ( $include_hidden ) {
+				return $post instanceof WP_Post && $this->access->is_visible_in_list( $post, $include_hidden );
+			}
+		);
 	}
 
 	/**

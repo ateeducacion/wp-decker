@@ -28,24 +28,38 @@ class Decker_Abilities {
 	private const STACKS = array( 'to-do', 'in-progress', 'done' );
 
 	/**
-	 * Ability execution service.
+	 * Ability execution service, created on first use.
 	 *
-	 * @var Decker_Ability_Service
+	 * @var Decker_Ability_Service|null
 	 */
-	private $service;
+	private $service = null;
 
 	/**
 	 * Constructor.
+	 *
+	 * The execution service is not built here: when the Abilities API is absent
+	 * nothing is registered, so the sub-services must not be paid for per request.
 	 */
 	public function __construct() {
-		$this->service = new Decker_Ability_Service();
-
 		if ( ! self::is_available() ) {
 			return;
 		}
 
 		add_action( 'wp_abilities_api_categories_init', array( $this, 'register_category' ) );
 		add_action( 'wp_abilities_api_init', array( $this, 'register_abilities' ) );
+	}
+
+	/**
+	 * Get the execution service, instantiating it on first use.
+	 *
+	 * @return Decker_Ability_Service Execution service.
+	 */
+	private function service(): Decker_Ability_Service {
+		if ( null === $this->service ) {
+			$this->service = new Decker_Ability_Service();
+		}
+
+		return $this->service;
 	}
 
 	/**
@@ -73,8 +87,8 @@ class Decker_Abilities {
 		wp_register_ability_category(
 			self::CATEGORY,
 			array(
-				'label'       => 'Decker',
-				'description' => 'Permission-aware abilities for Decker task, board, and knowledge-base operations.',
+				'label'       => __( 'Decker', 'decker' ),
+				'description' => __( 'Permission-aware abilities for Decker task, board, and knowledge-base operations.', 'decker' ),
 			)
 		);
 	}
@@ -105,14 +119,14 @@ class Decker_Abilities {
 	 */
 	public function get_ability_definitions(): array {
 		return array(
-			'decker/list-tasks'            => $this->definition( 'List Decker tasks', 'Lists visible Decker tasks with optional search, board, stack, status, and pagination filters.', $this->list_tasks_input_schema(), $this->task_collection_schema(), 'list_tasks', 'can_list_tasks', true, true ),
-			'decker/get-task'              => $this->definition( 'Get a Decker task', 'Retrieves one visible Decker task by ID.', $this->task_id_schema(), $this->task_schema(), 'get_task', 'can_read_task', true, true ),
-			'decker/create-task'           => $this->definition( 'Create a Decker task', 'Creates a task through the existing Decker task domain method.', $this->task_write_schema( false ), $this->task_schema(), 'create_task', 'can_create_task', false, false ),
-			'decker/update-task'           => $this->definition( 'Update a Decker task', 'Updates selected fields while preserving unspecified values and edit locks.', $this->task_write_schema( true ), $this->task_schema(), 'update_task', 'can_edit_task', false, true ),
-			'decker/move-task'             => $this->definition( 'Move a Decker task', 'Moves a task to another stack or board through existing domain behavior.', $this->move_task_schema(), $this->task_schema(), 'move_task', 'can_edit_task', false, true ),
-			'decker/archive-task'          => $this->definition( 'Archive or restore a Decker task', 'Archives or restores a task using an explicit, reversible archived state.', $this->archive_task_schema(), $this->task_schema(), 'archive_task', 'can_edit_task', false, true ),
-			'decker/list-boards'           => $this->definition( 'List Decker boards', 'Lists boards that can be used to filter or create tasks.', null, $this->boards_schema(), 'list_boards', 'can_list_tasks', true, true ),
-			'decker/search-knowledge-base' => $this->definition( 'Search the Decker knowledge base', 'Searches accessible knowledge-base articles by text and optional board.', $this->knowledge_base_input_schema(), $this->knowledge_base_output_schema(), 'search_knowledge_base', 'can_list_tasks', true, true ),
+			'decker/list-tasks'            => $this->definition( __( 'List Decker tasks', 'decker' ), __( 'Lists visible Decker tasks with optional search, board, stack, status, and pagination filters.', 'decker' ), $this->list_tasks_input_schema(), $this->task_collection_schema(), 'list_tasks', 'can_list_tasks', true, true ),
+			'decker/get-task'              => $this->definition( __( 'Get a Decker task', 'decker' ), __( 'Retrieves one visible Decker task by ID.', 'decker' ), $this->task_id_schema(), $this->task_schema(), 'get_task', 'can_read_task', true, true ),
+			'decker/create-task'           => $this->definition( __( 'Create a Decker task', 'decker' ), __( 'Creates a task through the existing Decker task domain method.', 'decker' ), $this->task_write_schema( false ), $this->task_schema(), 'create_task', 'can_create_task', false, false ),
+			'decker/update-task'           => $this->definition( __( 'Update a Decker task', 'decker' ), __( 'Updates selected fields while preserving unspecified values and edit locks.', 'decker' ), $this->task_write_schema( true ), $this->task_schema(), 'update_task', 'can_edit_task', false, true ),
+			'decker/move-task'             => $this->definition( __( 'Move a Decker task', 'decker' ), __( 'Moves a task to another stack or board through existing domain behavior.', 'decker' ), $this->move_task_schema(), $this->task_schema(), 'move_task', 'can_edit_task', false, true ),
+			'decker/archive-task'          => $this->definition( __( 'Archive or restore a Decker task', 'decker' ), __( 'Archives or restores a task using an explicit, reversible archived state.', 'decker' ), $this->archive_task_schema(), $this->task_schema(), 'archive_task', 'can_edit_task', false, true ),
+			'decker/list-boards'           => $this->definition( __( 'List Decker boards', 'decker' ), __( 'Lists boards that can be used to filter or create tasks.', 'decker' ), null, $this->boards_schema(), 'list_boards', 'can_list_tasks', true, true ),
+			'decker/search-knowledge-base' => $this->definition( __( 'Search the Decker knowledge base', 'decker' ), __( 'Searches accessible knowledge-base articles by text and optional board.', 'decker' ), $this->knowledge_base_input_schema(), $this->knowledge_base_output_schema(), 'search_knowledge_base', 'can_list_tasks', true, true ),
 		);
 	}
 
@@ -135,8 +149,8 @@ class Decker_Abilities {
 			'description'         => $description,
 			'category'            => self::CATEGORY,
 			'output_schema'       => $output_schema,
-			'execute_callback'    => array( $this->service, $execute_method ),
-			'permission_callback' => array( $this->service, $permission_method ),
+			'execute_callback'    => array( $this->service(), $execute_method ),
+			'permission_callback' => array( $this->service(), $permission_method ),
 			'meta'                => array(
 				'annotations' => array(
 					'readonly'    => $readonly,
@@ -473,5 +487,3 @@ class Decker_Abilities {
 		);
 	}
 }
-
-new Decker_Abilities();

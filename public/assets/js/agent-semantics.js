@@ -1,3 +1,11 @@
+/**
+ * Progressive semantic enhancements for Decker interfaces.
+ *
+ * Enhancements are additive and idempotent: they set ARIA attributes and add
+ * hidden labels on the existing markup. Nodes are never replaced, so event
+ * listeners, saved references, and Bootstrap component instances are preserved.
+ * `enhance()` may be called again after any dynamic render.
+ */
 (function (window, document) {
 	'use strict';
 
@@ -20,69 +28,31 @@
 		control.name = control.name || name;
 	}
 
-	function replaceActionAnchor(anchor) {
-		if (!anchor || anchor.tagName !== 'A') {
-			return null;
+	/**
+	 * Make an icon-only popover trigger keyboard-focusable and announced without
+	 * replacing the element, which would detach its Bootstrap popover instance.
+	 */
+	function enhancePopoverIcon(icon) {
+		if (!icon || icon.hasAttribute('aria-label')) {
+			return;
 		}
 
-		const button = document.createElement('button');
-		button.type = 'button';
-		Array.from(anchor.attributes).forEach(function (attribute) {
-			if (attribute.name !== 'href') {
-				button.setAttribute(attribute.name, attribute.value);
-			}
-		});
-		while (anchor.firstChild) {
-			button.appendChild(anchor.firstChild);
-		}
-		anchor.replaceWith(button);
-		return button;
-	}
-
-	function getPopoverAccessibleName(icon) {
-		const content = icon.getAttribute('data-bs-content') || '';
-		return String(content).replace(/\s+/g, ' ').trim();
-	}
-
-	function replacePopoverIcon(icon) {
-		if (!icon || icon.tagName === 'BUTTON') {
-			return null;
-		}
-
-		const accessibleName = getPopoverAccessibleName(icon);
+		const accessibleName = String(icon.getAttribute('data-bs-content') || '').replace(/\s+/g, ' ').trim();
 		if (!accessibleName) {
-			return null;
+			return;
 		}
 
-		const button = document.createElement('button');
-		button.type = 'button';
-		button.className = 'btn btn-link p-0 border-0 align-baseline ms-1';
-		button.setAttribute('aria-label', accessibleName);
-		Array.from(icon.attributes).forEach(function (attribute) {
-			if (attribute.name.indexOf('data-bs-') === 0) {
-				button.setAttribute(attribute.name, attribute.value);
-			}
-		});
-
-		const replacementIcon = document.createElement('i');
-		replacementIcon.className = icon.className.replace(/\bms-1\b/g, '').trim();
-		replacementIcon.setAttribute('aria-hidden', 'true');
-		button.appendChild(replacementIcon);
-		icon.replaceWith(button);
-		return button;
+		icon.setAttribute('role', 'button');
+		icon.setAttribute('tabindex', '0');
+		icon.setAttribute('aria-label', accessibleName);
 	}
 
-	function enhanceTaskSection(container, index) {
-		let section = container;
-		if (container.tagName !== 'SECTION') {
-			section = document.createElement('section');
-			Array.from(container.attributes).forEach(function (attribute) {
-				section.setAttribute(attribute.name, attribute.value);
-			});
-			while (container.firstChild) {
-				section.appendChild(container.firstChild);
-			}
-			container.replaceWith(section);
+	/**
+	 * Label a task column region and expose list semantics on its cards, in place.
+	 */
+	function enhanceTaskSection(section, index) {
+		if (!section.hasAttribute('role')) {
+			section.setAttribute('role', 'group');
 		}
 
 		const heading = section.querySelector('.task-header');
@@ -94,30 +64,46 @@
 		const list = section.querySelector('.task-list-items');
 		if (list) {
 			list.setAttribute('role', 'list');
-			list.querySelectorAll('.card').forEach(function (card) {
+			// Only direct children are valid list items for the list role.
+			list.querySelectorAll(':scope > .card').forEach(function (card) {
 				card.setAttribute('role', 'listitem');
 			});
 		}
-		return section;
+	}
+
+	/**
+	 * Errors and warnings are assertive alerts; everything else is a polite status.
+	 */
+	function enhanceAlert(alert) {
+		if (alert.hasAttribute('role')) {
+			return;
+		}
+
+		if (alert.classList.contains('alert-danger') || alert.classList.contains('alert-warning')) {
+			alert.setAttribute('role', 'alert');
+		} else {
+			alert.setAttribute('role', 'status');
+			alert.setAttribute('aria-live', 'polite');
+		}
 	}
 
 	function enhance(root) {
-		const searchInput = root.getElementById('searchInput');
+		const scope = root || document;
+		// querySelector works on both Document and Element, so it accepts any root.
+		const byId = function (id) {
+			return scope.querySelector('#' + id);
+		};
+
+		const searchInput = byId('searchInput');
 		if (searchInput) {
 			searchInput.setAttribute('autocomplete', 'off');
 			ensureLabel(searchInput, 'decker_search');
 		}
-		ensureLabel(root.getElementById('boardUserFilter'), 'decker_user_filter');
-		replaceActionAnchor(root.getElementById('fix-order-btn'));
+		ensureLabel(byId('boardUserFilter'), 'decker_user_filter');
 
-		root.querySelectorAll('i[data-bs-toggle="popover"][data-bs-content]').forEach(replacePopoverIcon);
-		root.querySelectorAll('.board > .tasks').forEach(enhanceTaskSection);
-		root.querySelectorAll('.alert').forEach(function (alert) {
-			if (!alert.hasAttribute('role')) {
-				alert.setAttribute('role', 'status');
-			}
-			alert.setAttribute('aria-live', 'polite');
-		});
+		scope.querySelectorAll('i[data-bs-toggle="popover"][data-bs-content]').forEach(enhancePopoverIcon);
+		scope.querySelectorAll('.board > .tasks').forEach(enhanceTaskSection);
+		scope.querySelectorAll('.alert').forEach(enhanceAlert);
 	}
 
 	window.DeckerAgentSemantics = { enhance: enhance };
