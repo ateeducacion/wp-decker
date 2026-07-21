@@ -17,6 +17,13 @@ require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-command-service
 
 /**
  * Dispatches ability callbacks to focused query, command, and access services.
+ *
+ * This is a thin delegation facade: it deliberately exposes one public method per
+ * ability callback so the Abilities API can bind them and so static analysis sees
+ * an explicit, typed surface (rather than a __call() dispatch table). The public
+ * method count is intentional.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods)
  */
 class Decker_Ability_Service {
 
@@ -130,6 +137,16 @@ class Decker_Ability_Service {
 	 */
 	public function search_knowledge_base( $input ) {
 		return $this->queries->search_knowledge_base( $input );
+	}
+
+	/**
+	 * Retrieve one knowledge-base article, including its full content.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Article data or error.
+	 */
+	public function get_knowledge_article( $input ) {
+		return $this->queries->get_knowledge_article( $input );
 	}
 
 	/**

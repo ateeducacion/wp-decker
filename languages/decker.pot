@@ -1990,3 +1990,18 @@ msgstr ""
 
 msgid "The task is not assigned to a valid board."
 msgstr ""
+
+msgid "Searches accessible knowledge-base articles by text and optional board, returning summaries with an excerpt."
+msgstr ""
+
+msgid "Get a Decker knowledge-base article"
+msgstr ""
+
+msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
+msgstr ""
+
+msgid "The requested knowledge-base article was not found."
+msgstr ""
+
+msgid "You are not allowed to access this article."
+msgstr ""

@@ -94,4 +94,19 @@ describe( 'agent-semantics enhance', () => {
 		expect( () => enhance( document.body ) ).not.toThrow();
 		expect( document.querySelector( '.board > .tasks' ).getAttribute( 'role' ) ).toBe( 'group' );
 	} );
+
+	test( 'does not add a redundant hidden label to an aria-labelled control', () => {
+		enhance( document );
+		// #boardUserFilter already has aria-label, so no <label for> should be added.
+		expect( document.querySelector( 'label[for="boardUserFilter"]' ) ).toBeNull();
+	} );
+
+	test( 'popover icon activates on Enter/Space without throwing when Bootstrap is absent', () => {
+		enhance( document );
+		const icon = document.querySelector( 'i[data-bs-toggle="popover"]' );
+		const press = () => icon.dispatchEvent(
+			new window.KeyboardEvent( 'keydown', { key: 'Enter', bubbles: true, cancelable: true } )
+		);
+		expect( press ).not.toThrow();
+	} );
 } );

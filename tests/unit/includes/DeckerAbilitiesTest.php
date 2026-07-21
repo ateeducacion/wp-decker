@@ -60,6 +60,7 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 				'decker/archive-task',
 				'decker/list-boards',
 				'decker/search-knowledge-base',
+				'decker/get-knowledge-article',
 			),
 			array_keys( $definitions )
 		);
@@ -363,5 +364,54 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 		);
 		$this->assertWPError( $error );
 		$this->assertSame( 'decker_invalid_due_date', $error->get_error_code() );
+	}
+
+	/**
+	 * A write must be rejected while another user holds an active edit lock.
+	 */
+	public function test_update_rejects_task_locked_by_another_user() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create( array( 'post_title' => 'Locked task', 'board' => $this->board_id ) );
+
+		// Another editor takes an active lock; locking is enabled by default in tests.
+		$other = self::factory()->user->create( array( 'role' => 'editor' ) );
+		( new Decker_Task_Locks() )->acquire_lock( $task_id, $other );
+
+		$error = $this->service->update_task( array( 'task_id' => $task_id, 'title' => 'Should not save' ) );
+		$this->assertWPError( $error );
+		$this->assertSame( 'decker_task_locked', $error->get_error_code() );
+		$this->assertSame( 'Locked task', get_post_field( 'post_title', $task_id ) );
+	}
+
+	/**
+	 * Knowledge-base search returns bounded summaries; retrieval returns full content.
+	 */
+	public function test_knowledge_base_search_summarizes_and_article_returns_full_content() {
+		wp_set_current_user( $this->editor_id );
+		$article_id = wp_insert_post(
+			array(
+				'post_type'    => 'decker_kb',
+				'post_status'  => 'publish',
+				'post_author'  => $this->editor_id,
+				'post_title'   => 'KBTOKEN handbook',
+				'post_content' => str_repeat( 'Detailed body content. ', 40 ),
+			)
+		);
+		wp_set_object_terms( $article_id, $this->board_id, 'decker_board' );
+
+		$search = $this->service->search_knowledge_base( array( 'search' => 'KBTOKEN' ) );
+		$this->assertNotWPError( $search );
+		$this->assertSame( array( $article_id ), wp_list_pluck( $search['articles'], 'id' ) );
+		$this->assertArrayHasKey( 'excerpt', $search['articles'][0] );
+		$this->assertArrayNotHasKey( 'content', $search['articles'][0] );
+
+		$article = $this->service->get_knowledge_article( array( 'article_id' => $article_id ) );
+		$this->assertNotWPError( $article );
+		$this->assertSame( $article_id, $article['id'] );
+		$this->assertStringContainsString( 'Detailed body content', $article['content'] );
+
+		$missing = $this->service->get_knowledge_article( array( 'article_id' => 99999 ) );
+		$this->assertWPError( $missing );
+		$this->assertSame( 'decker_article_not_found', $missing->get_error_code() );
 	}
 }

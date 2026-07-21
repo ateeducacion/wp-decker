@@ -18,10 +18,11 @@ The `decker` category contains:
 | `decker/archive-task` | Mutating, reversible, idempotent | `edit_post`; the archived state must be explicit |
 | `decker/list-boards` | Read-only | Authenticated user with `edit_posts` |
 | `decker/search-knowledge-base` | Read-only | Authenticated user with `edit_posts` and per-post access |
+| `decker/get-knowledge-article` | Read-only | Authenticated user with `edit_posts` and per-post access |
 
 There is no delete ability. Archiving is reversible and is not marked destructive.
 
-Decker has no board-level access control: every user with `edit_posts` can see every board and every non-hidden task, exactly as the board UI presents them. The only per-task restriction is the hidden-visibility rule (see below), which `list-tasks` and `get-task` apply identically so listings never disagree with single reads.
+Decker has no board-level access control: every user with `edit_posts` can see every board and every non-hidden task, exactly as the board UI presents them. The only per-task restriction is the hidden-visibility rule (see below).
 
 ## Schemas and responses
 
@@ -29,13 +30,24 @@ Every ability uses explicit JSON Schema types, required fields, limits, enum val
 
 Dates use `Y-m-d`. Stack values are limited to `to-do`, `in-progress`, and `done`. Referenced users and taxonomy terms must exist.
 
+Knowledge-base access is split so responses stay bounded: `search-knowledge-base` returns summaries (id, title, a plain-text excerpt, board, modified), and `get-knowledge-article` returns the full body of a single article by ID.
+
 ## Authentication and authorization
 
 Abilities use the current WordPress authentication context. Existing cookie-authenticated REST requests continue to use WordPress nonces where appropriate. Other supported WordPress authentication mechanisms are not forced to provide a cookie nonce.
 
-Authorization is enforced server-side. Object operations validate the requested task, post type, per-post capability, hidden-task visibility, and — when the edit-lock feature is enabled — the existing task edit lock. Hidden tasks are available only to administrators or users directly related as author, responsible user, or assignee; they are excluded from `list-tasks` unless `include_hidden` is set, and even then only the tasks that user is entitled to see are returned.
+Authorization is enforced server-side. Object operations validate the requested task, post type, per-post capability, hidden-task visibility, and — when the edit-lock feature is enabled — the existing task edit lock. A hidden task is visible only to administrators or users directly related to it as author, responsible user, or assignee.
 
-Listings resolve visibility before pagination, so `total` and `total_pages` describe exactly the tasks the current user can see; a page is never padded with, or emptied by, tasks that were filtered out.
+`include_hidden` defines the listing contract explicitly:
+
+- **`include_hidden: false` (default)** — no hidden task appears at all, *even one you are related to*. This keeps default listings uncluttered. A hidden task you are entitled to see is still directly retrievable by ID through `get-task`; it simply does not surface in the default list.
+- **`include_hidden: true`** — hidden tasks are included, but still only the ones that user is entitled to see (the per-task rule above). Others' hidden tasks never appear.
+
+So `list-tasks` and `get-task` apply the same per-task rule; they differ only in that the default list additionally hides *all* hidden tasks until you opt in — a deliberate default, not an inconsistency.
+
+### Pagination
+
+`total` and `total_pages` always describe exactly the tasks the current user can see, so a page is never padded with, or emptied by, tasks that were filtered out. The default listing excludes hidden tasks in SQL and paginates in the database, so it scales without loading the whole board. The `include_hidden` listing resolves per-user visibility in PHP over a bounded candidate set (2000); if that cap is reached the response includes `truncated: true`.
 
 Missing authentication returns HTTP `401`; an authenticated but forbidden request returns `403`.
 

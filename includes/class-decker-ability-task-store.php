@@ -107,8 +107,6 @@ class Decker_Ability_Task_Store {
 			'assignee_ids'        => $this->integer_ids( $assignees ),
 			'label_ids'           => $this->term_ids( $label_ids ),
 			'archived'            => 'archived' === $post->post_status,
-			// Preserve the Nextcloud link; the domain method rewrites this meta on every save.
-			'id_nextcloud_card'   => absint( get_post_meta( $post->ID, 'id_nextcloud_card', true ) ),
 		);
 	}
 
@@ -133,8 +131,9 @@ class Decker_Ability_Task_Store {
 	 * @return array<string, mixed>|WP_Error Formatted task or error.
 	 */
 	public function persist( int $task_id, array $state ) {
-		$label_ids = $this->term_ids( $state['label_ids'] );
-
+		// Labels and the Nextcloud link are handled by the domain method:
+		// create_or_update_task() now replaces the full label set (clearing when
+		// empty) and preserves an existing id_nextcloud_card on update.
 		$result = Decker_Tasks::create_or_update_task(
 			$task_id,
 			(string) $state['title'],
@@ -147,10 +146,9 @@ class Decker_Ability_Task_Store {
 			absint( $state['responsible_user_id'] ),
 			(bool) $state['hidden'],
 			(array) $state['assignee_ids'],
-			$label_ids,
+			$this->term_ids( $state['label_ids'] ),
 			null,
-			(bool) $state['archived'],
-			isset( $state['id_nextcloud_card'] ) ? absint( $state['id_nextcloud_card'] ) : 0
+			(bool) $state['archived']
 		);
 
 		if ( is_wp_error( $result ) ) {
@@ -158,16 +156,8 @@ class Decker_Ability_Task_Store {
 		}
 
 		$post = $this->get_task_post( absint( $result ) );
-		if ( is_wp_error( $post ) ) {
-			return $post;
-		}
 
-		// Labels are also passed to the domain call so its save hooks see them, but
-		// that path only merges (never clears) labels; reconcile here so the
-		// complete-state contract holds, including an empty set that clears all.
-		wp_set_post_terms( $post->ID, $label_ids, 'decker_label' );
-
-		return $this->format_task( $post );
+		return is_wp_error( $post ) ? $post : $this->format_task( $post );
 	}
 
 	/**

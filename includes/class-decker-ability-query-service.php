@@ -15,6 +15,17 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Ability_Query_Service {
 
 	/**
+	 * Maximum candidate tasks scanned when hidden tasks are included.
+	 *
+	 * The include_hidden path resolves per-user visibility in PHP (the rule
+	 * cannot be expressed in SQL), so it is bounded to keep this opt-in listing
+	 * from loading an unbounded board; the result is flagged truncated at the cap.
+	 *
+	 * @var int
+	 */
+	private const MAX_HIDDEN_SCAN = 2000;
+
+	/**
 	 * Task store.
 	 *
 	 * @var Decker_Ability_Task_Store
@@ -61,21 +72,85 @@ class Decker_Ability_Query_Service {
 			return $validation;
 		}
 
-		// Authorization is applied before pagination so totals and pages describe
-		// exactly the tasks this user can see; paginating first would leak counts
-		// and yield empty pages when hidden tasks fall inside the requested slice.
-		$visible = $this->collect_visible_posts( $input );
-		$total   = count( $visible );
-		$offset  = ( $input['page'] - 1 ) * $input['per_page'];
-		$page    = array_slice( $visible, $offset, $input['per_page'] );
+		return $input['include_hidden'] ? $this->list_including_hidden( $input ) : $this->list_default( $input );
+	}
 
-		return array(
-			'tasks'       => array_map( array( $this->store, 'format_task' ), $page ),
+	/**
+	 * List tasks for the default (no hidden) case.
+	 *
+	 * Hidden tasks are excluded in SQL and Decker has no board ACL, so the query
+	 * returns exactly the visible set and the database paginates and counts it —
+	 * the whole board is never loaded into PHP.
+	 *
+	 * @param array $input Normalized input.
+	 * @return array<string, mixed> Task collection.
+	 */
+	private function list_default( array $input ): array {
+		$arguments                   = $this->build_task_query_arguments( $input );
+		$arguments['posts_per_page'] = $input['per_page'];
+		$arguments['paged']          = $input['page'];
+
+		$query = new WP_Query( $arguments );
+
+		return $this->format_collection( $input, $query->posts, (int) $query->found_posts, (int) $query->max_num_pages, false );
+	}
+
+	/**
+	 * List tasks when hidden tasks are requested.
+	 *
+	 * The "author/responsible/assignee may see their own hidden task" rule cannot
+	 * be expressed in SQL, so visibility is resolved in PHP over a bounded set of
+	 * candidates; totals and pages describe only the tasks this user may see.
+	 *
+	 * @param array $input Normalized input.
+	 * @return array<string, mixed> Task collection.
+	 */
+	private function list_including_hidden( array $input ): array {
+		$arguments                   = $this->build_task_query_arguments( $input );
+		$arguments['posts_per_page'] = self::MAX_HIDDEN_SCAN;
+		$arguments['no_found_rows']  = true;
+
+		$query     = new WP_Query( $arguments );
+		$truncated = count( $query->posts ) >= self::MAX_HIDDEN_SCAN;
+
+		$visible = array_filter(
+			$query->posts,
+			function ( $post ) {
+				return $post instanceof WP_Post && $this->access->is_visible_in_list( $post, true );
+			}
+		);
+
+		$total  = count( $visible );
+		$offset = ( $input['page'] - 1 ) * $input['per_page'];
+		$page   = array_slice( $visible, $offset, $input['per_page'] );
+
+		return $this->format_collection( $input, $page, $total, (int) ceil( $total / $input['per_page'] ), $truncated );
+	}
+
+	/**
+	 * Shape a task-collection response.
+	 *
+	 * @param array     $input       Normalized input.
+	 * @param WP_Post[] $posts       Posts to format for the current page.
+	 * @param int       $total       Total accessible tasks.
+	 * @param int       $total_pages Total pages.
+	 * @param bool      $truncated   Whether the candidate scan hit its cap.
+	 * @return array<string, mixed> Task collection.
+	 */
+	private function format_collection( array $input, array $posts, int $total, int $total_pages, bool $truncated ): array {
+		$collection = array(
+			'tasks'       => array_map( array( $this->store, 'format_task' ), $posts ),
 			'page'        => $input['page'],
 			'per_page'    => $input['per_page'],
 			'total'       => $total,
-			'total_pages' => (int) ceil( $total / $input['per_page'] ),
+			'total_pages' => $total_pages,
 		);
+
+		if ( $truncated ) {
+			$collection['truncated'] = true;
+		}
+
+		return $collection;
 	}
 
 	/**
@@ -116,6 +191,10 @@ class Decker_Ability_Query_Service {
 	/**
 	 * Search knowledge-base articles.
 	 *
+	 * Returns summaries (title, excerpt, board, modified) so a text search stays
+	 * bounded in size; the full body is fetched one article at a time through
+	 * get_knowledge_article().
+	 *
 	 * @param array $input Ability input.
 	 * @return array<string, array<int, array<string, mixed>>>|WP_Error Articles or error.
 	 */
@@ -129,11 +208,40 @@ class Decker_Ability_Query_Service {
 		$articles = array();
 		foreach ( Decker_Kb::get_articles( $this->build_knowledge_base_arguments( $input ) ) as $post ) {
 			if ( current_user_can( 'edit_post', $post->ID ) ) {
-				$articles[] = $this->format_article( $post );
+				$articles[] = $this->format_article_summary( $post );
 			}
 		}
 
 		return array( 'articles' => $articles );
+	}
+
+	/**
+	 * Retrieve one knowledge-base article, including its full content.
+	 *
+	 * @param array $input Ability input.
+	 * @return array<string, mixed>|WP_Error Article data or error.
+	 */
+	public function get_knowledge_article( $input ) {
+		$article_id = isset( $input['article_id'] ) ? absint( $input['article_id'] ) : 0;
+		$post       = $article_id > 0 ? get_post( $article_id ) : null;
+
+		if ( ! $post instanceof WP_Post || 'decker_kb' !== $post->post_type || 'publish' !== $post->post_status ) {
+			return new WP_Error(
+				'decker_article_not_found',
+				__( 'The requested knowledge-base article was not found.', 'decker' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+			return new WP_Error(
+				'decker_article_forbidden',
+				__( 'You are not allowed to access this article.', 'decker' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return $this->format_article( $post );
 	}
 
 	/**
@@ -178,12 +286,12 @@ class Decker_Ability_Query_Service {
 	}
 
 	/**
-	 * Build task query arguments.
+	 * Build the shared task-query filters (no pagination).
 	 *
-	 * Returns all matching tasks as full posts (meta cache primed) so visibility
-	 * is resolved in PHP and counts reflect only accessible tasks. Hidden tasks
-	 * are excluded in SQL for the default listing — where they are never visible
-	 * anyway — so the database does not return rows only to be discarded.
+	 * Callers add their own paging: the default listing paginates in SQL, while
+	 * the include_hidden listing caps the scan and filters in PHP. Hidden tasks
+	 * are excluded in SQL for the default case — where they are never visible —
+	 * so the database does not return rows only to be discarded.
 	 *
 	 * @param array $input Normalized input.
 	 * @return array<string, mixed> Query arguments.
@@ -192,10 +300,8 @@ class Decker_Ability_Query_Service {
 		$arguments = array(
 			'post_type'              => 'decker_task',
 			'post_status'            => $input['status'],
-			'posts_per_page'         => -1,
-			'no_found_rows'          => true,
-			// Return full posts with the meta cache primed so the visibility pass
-			// and page formatting read from cache; terms are only needed per page.
+			// Full posts with the meta cache primed so the visibility pass and page
+			// formatting read from cache; terms are only needed per page.
 			'update_post_meta_cache' => true,
 			'update_post_term_cache' => false,
 			'orderby'                => array(
@@ -263,28 +369,6 @@ class Decker_Ability_Query_Service {
 	}
 
 	/**
-	 * Collect every task the current user may see, in query order.
-	 *
-	 * The query returns full posts with the meta cache primed, so the visibility
-	 * checks here and the page formatting in list_tasks() read from cache rather
-	 * than issuing a lookup per task.
-	 *
-	 * @param array $input Normalized input.
-	 * @return WP_Post[] Visible task posts (keys not preserved; slice re-indexes).
-	 */
-	private function collect_visible_posts( array $input ): array {
-		$query          = new WP_Query( $this->build_task_query_arguments( $input ) );
-		$include_hidden = $input['include_hidden'];
-
-		return array_filter(
-			$query->posts,
-			function ( $post ) use ( $include_hidden ) {
-				return $post instanceof WP_Post && $this->access->is_visible_in_list( $post, $include_hidden );
-			}
-		);
-	}
-
-	/**
 	 * Format a board term.
 	 *
 	 * @param WP_Term $term Board term.
@@ -320,21 +404,58 @@ class Decker_Ability_Query_Service {
 	}
 
 	/**
-	 * Format a knowledge-base article.
+	 * Format a knowledge-base article summary (no full body).
+	 *
+	 * @param WP_Post $post Article post.
+	 * @return array<string, mixed> Article summary.
+	 */
+	private function format_article_summary( WP_Post $post ): array {
+		return array(
+			'id'       => (int) $post->ID,
+			'title'    => (string) $post->post_title,
+			'excerpt'  => $this->article_excerpt( $post ),
+			'board_id' => $this->article_board_id( $post ),
+			'modified' => mysql_to_rfc3339( $post->post_modified_gmt ),
+		);
+	}
+
+	/**
+	 * Format a knowledge-base article, including its full content.
 	 *
 	 * @param WP_Post $post Article post.
 	 * @return array<string, mixed> Article data.
 	 */
 	private function format_article( WP_Post $post ): array {
-		$board_ids = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
-		$board_id  = ! is_wp_error( $board_ids ) && ! empty( $board_ids ) ? (int) $board_ids[0] : 0;
-
 		return array(
 			'id'       => (int) $post->ID,
 			'title'    => (string) $post->post_title,
 			'content'  => (string) $post->post_content,
-			'board_id' => $board_id,
+			'board_id' => $this->article_board_id( $post ),
 			'modified' => mysql_to_rfc3339( $post->post_modified_gmt ),
 		);
+	}
+
+	/**
+	 * Get an article's first board ID.
+	 *
+	 * @param WP_Post $post Article post.
+	 * @return int Board term ID or zero.
+	 */
+	private function article_board_id( WP_Post $post ): int {
+		$board_ids = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
+
+		return ! is_wp_error( $board_ids ) && ! empty( $board_ids ) ? (int) $board_ids[0] : 0;
+	}
+
+	/**
+	 * Build a bounded plain-text excerpt for an article.
+	 *
+	 * @param WP_Post $post Article post.
+	 * @return string Excerpt.
+	 */
+	private function article_excerpt( WP_Post $post ): string {
+		$source = '' !== (string) $post->post_excerpt ? $post->post_excerpt : $post->post_content;
+
+		return wp_trim_words( wp_strip_all_tags( (string) $source ), 55 );
 	}
 }

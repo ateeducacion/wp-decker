@@ -126,7 +126,8 @@ class Decker_Abilities {
 			'decker/move-task'             => $this->definition( __( 'Move a Decker task', 'decker' ), __( 'Moves a task to another stack or board through existing domain behavior.', 'decker' ), $this->move_task_schema(), $this->task_schema(), 'move_task', 'can_edit_task', false, true ),
 			'decker/archive-task'          => $this->definition( __( 'Archive or restore a Decker task', 'decker' ), __( 'Archives or restores a task using an explicit, reversible archived state.', 'decker' ), $this->archive_task_schema(), $this->task_schema(), 'archive_task', 'can_edit_task', false, true ),
 			'decker/list-boards'           => $this->definition( __( 'List Decker boards', 'decker' ), __( 'Lists boards that can be used to filter or create tasks.', 'decker' ), null, $this->boards_schema(), 'list_boards', 'can_list_tasks', true, true ),
-			'decker/search-knowledge-base' => $this->definition( __( 'Search the Decker knowledge base', 'decker' ), __( 'Searches accessible knowledge-base articles by text and optional board.', 'decker' ), $this->knowledge_base_input_schema(), $this->knowledge_base_output_schema(), 'search_knowledge_base', 'can_list_tasks', true, true ),
+			'decker/search-knowledge-base' => $this->definition( __( 'Search the Decker knowledge base', 'decker' ), __( 'Searches accessible knowledge-base articles by text and optional board, returning summaries with an excerpt.', 'decker' ), $this->knowledge_base_input_schema(), $this->knowledge_base_output_schema(), 'search_knowledge_base', 'can_list_tasks', true, true ),
+			'decker/get-knowledge-article' => $this->definition( __( 'Get a Decker knowledge-base article', 'decker' ), __( 'Retrieves one accessible knowledge-base article, including its full content, by ID.', 'decker' ), $this->knowledge_article_input_schema(), $this->knowledge_article_output_schema(), 'get_knowledge_article', 'can_list_tasks', true, true ),
 		);
 	}
 
@@ -347,6 +348,9 @@ class Decker_Abilities {
 					'type' => 'integer',
 					'minimum' => 0,
 				),
+				'truncated'   => array(
+					'type' => 'boolean',
+				),
 			),
 			array( 'tasks', 'page', 'per_page', 'total', 'total_pages' )
 		);
@@ -413,7 +417,7 @@ class Decker_Abilities {
 	}
 
 	/**
-	 * Get knowledge-base output schema.
+	 * Get knowledge-base search output schema.
 	 *
 	 * @return array<string, mixed> Schema.
 	 */
@@ -422,11 +426,11 @@ class Decker_Abilities {
 			array(
 				'id'       => $this->positive_integer_schema(),
 				'title'    => array( 'type' => 'string' ),
-				'content'  => array( 'type' => 'string' ),
+				'excerpt'  => array( 'type' => 'string' ),
 				'board_id' => array( 'type' => 'integer' ),
 				'modified' => array( 'type' => 'string' ),
 			),
-			array( 'id', 'title', 'content', 'board_id', 'modified' )
+			array( 'id', 'title', 'excerpt', 'board_id', 'modified' )
 		);
 
 		return $this->object_schema(
@@ -437,6 +441,33 @@ class Decker_Abilities {
 				),
 			),
 			array( 'articles' )
+		);
+	}
+
+	/**
+	 * Get the get-knowledge-article input schema.
+	 *
+	 * @return array<string, mixed> Schema.
+	 */
+	private function knowledge_article_input_schema(): array {
+		return $this->object_schema( array( 'article_id' => $this->positive_integer_schema() ), array( 'article_id' ) );
+	}
+
+	/**
+	 * Get the get-knowledge-article output schema.
+	 *
+	 * @return array<string, mixed> Schema.
+	 */
+	private function knowledge_article_output_schema(): array {
+		return $this->object_schema(
+			array(
+				'id'       => $this->positive_integer_schema(),
+				'title'    => array( 'type' => 'string' ),
+				'content'  => array( 'type' => 'string' ),
+				'board_id' => array( 'type' => 'integer' ),
+				'modified' => array( 'type' => 'string' ),
+			),
+			array( 'id', 'title', 'content', 'board_id', 'modified' )
 		);
 	}
 

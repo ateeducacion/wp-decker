@@ -2023,3 +2023,18 @@ msgstr "No se encontró la tarea solicitada."
 
 msgid "The task is not assigned to a valid board."
 msgstr "La tarea no está asignada a un tablero válido."
+
+msgid "Searches accessible knowledge-base articles by text and optional board, returning summaries with an excerpt."
+msgstr "Busca artículos accesibles de la base de conocimiento por texto y tablero opcional, devolviendo resúmenes con un extracto."
+
+msgid "Get a Decker knowledge-base article"
+msgstr "Obtener un artículo de la base de conocimiento de Decker"
+
+msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
+msgstr "Recupera un artículo accesible de la base de conocimiento, incluido su contenido completo, por ID."
+
+msgid "The requested knowledge-base article was not found."
+msgstr "No se encontró el artículo de la base de conocimiento solicitado."
+
+msgid "You are not allowed to access this article."
+msgstr "No tienes permiso para acceder a este artículo."

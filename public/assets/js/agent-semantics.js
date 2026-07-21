@@ -9,12 +9,15 @@
 (function (window, document) {
 	'use strict';
 
-	function ensureLabel(control, name) {
-		if (!control || !control.id || document.querySelector('label[for="' + control.id + '"]')) {
+	function ensureLabel(control) {
+		// Skip controls that are already named: an existing aria-label or a
+		// matching <label> wins, so a hidden label would be redundant.
+		if (!control || !control.id || control.hasAttribute('aria-label') ||
+			document.querySelector('label[for="' + control.id + '"]')) {
 			return;
 		}
 
-		const text = control.getAttribute('aria-label') || control.getAttribute('placeholder') ||
+		const text = control.getAttribute('placeholder') ||
 			(control.options && control.options.length ? control.options[0].textContent : '');
 		if (!text.trim()) {
 			return;
@@ -25,7 +28,6 @@
 		label.htmlFor = control.id;
 		label.textContent = text.trim();
 		control.parentNode.insertBefore(label, control);
-		control.name = control.name || name;
 	}
 
 	/**
@@ -45,6 +47,19 @@
 		icon.setAttribute('role', 'button');
 		icon.setAttribute('tabindex', '0');
 		icon.setAttribute('aria-label', accessibleName);
+
+		// A non-native element does not activate on Enter/Space, so the role="button"
+		// promise would be empty. Toggle the Bootstrap popover on those keys; the
+		// aria-label guard above keeps this listener from being bound twice.
+		icon.addEventListener('keydown', function (event) {
+			if (event.key !== 'Enter' && event.key !== ' ') {
+				return;
+			}
+			event.preventDefault();
+			if (window.bootstrap && window.bootstrap.Popover) {
+				window.bootstrap.Popover.getOrCreateInstance(icon).toggle();
+			}
+		});
 	}
 
 	/**
@@ -97,9 +112,9 @@
 		const searchInput = byId('searchInput');
 		if (searchInput) {
 			searchInput.setAttribute('autocomplete', 'off');
-			ensureLabel(searchInput, 'decker_search');
+			ensureLabel(searchInput);
 		}
-		ensureLabel(byId('boardUserFilter'), 'decker_user_filter');
+		ensureLabel(byId('boardUserFilter'));
 
 		scope.querySelectorAll('i[data-bs-toggle="popover"][data-bs-content]').forEach(enhancePopoverIcon);
 		scope.querySelectorAll('.board > .tasks').forEach(enhanceTaskSection);
