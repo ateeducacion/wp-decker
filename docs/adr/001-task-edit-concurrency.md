@@ -11,7 +11,11 @@ organisation, no hostile actors, no external API consumers). The observed
 incident class: a user leaves a task form open, another user takes over
 editing and saves, and the first user's stale form later silently overwrites
 the newer content. Infrequent, but real. `decker_task` supports WordPress
-revisions, so any overwrite is recoverable from the revision history.
+revisions. Recovery is partial by design: revisions capture the standard
+WordPress fields (title, description) but **not** post meta or taxonomy terms
+(assignees, labels, board, stack, due date). A clobbered meta field is
+restored by hand by whoever is editing the card — in every residual scenario
+below, that person is actively looking at it.
 
 WordPress core provides **advisory** locking only: `wp_set_post_lock()` /
 `wp_check_post_lock()` write and read `_edit_lock` with plain meta writes,
@@ -62,11 +66,11 @@ frequency is well below one per decade, and revisions recover them.
 
 | # | Residual race | Window | Est. frequency @ 17 users | Consequence | Recovery |
 |---|---|---|---|---|---|
-| 1 | Takeover lands between a save's token validation and its `wp_update_post()` | ~tens of ms, requires a takeover in that exact window | ≪ 1/decade | The pre-takeover save commits; the taker starts from it or overwrites it | Revisions; the taker is looking at the task anyway |
-| 2 | Two saves presenting the **same** valid token commit concurrently (double-submit, two same-user tabs racing) | ~request duration | ≪ 1/year (client disables Save while submitting) | Last write wins between the same user's own sessions | Revisions |
+| 1 | Takeover lands between a save's token validation and its `wp_update_post()` | ~tens of ms, requires a takeover in that exact window | ≪ 1/decade | The pre-takeover save commits; the taker starts from it or overwrites it | Revisions (title/desc); meta fixed by the taker, who is looking at the card |
+| 2 | Two saves presenting the **same** valid token commit concurrently (double-submit, two same-user tabs racing) | ~request duration | ≪ 1/year (client disables Save while submitting) | Last write wins between the same user's own sessions | Revisions (title/desc); meta re-entered by the same user |
 | 3 | Two lock operations (acquire/takeover) write lock state in the same instant | ~ms | ≪ 1/year | One lock write lost; state self-heals on next heartbeat (≤ 15 s) | None needed; content is never affected |
 | 4 | Concurrent **first** lock writes on a never-locked task duplicate the meta row | ~ms, first lock only | ≪ 1/decade | Redundant meta row; behaviour unchanged (single `get_post_meta` reads one row) | Delete the extra row if ever noticed |
-| 5 | wp-admin classic-editor save ignores the generation (core has no enforcement hook there) | n/a | rare (team uses the Decker UI) | Same protection level as every other WordPress post type | Revisions |
+| 5 | wp-admin classic-editor save ignores the generation (core has no enforcement hook there) | n/a | rare (team uses the Decker UI) | Same protection level as every other WordPress post type | Revisions (title/desc); meta by hand |
 
 If any of these is ever observed more than ~once a year in practice, the
 first escalation is **not** a lease: it is `GET_LOCK`/`SELECT ... FOR UPDATE`
