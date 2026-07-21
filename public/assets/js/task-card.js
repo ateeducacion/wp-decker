@@ -123,6 +123,11 @@
             quill.disable();
         }
 
+        // Disable the classic (TinyMCE) editor
+        if (taskEditor && typeof taskEditor.setMode === 'function') {
+            taskEditor.setMode('readonly');
+        }
+
         // Show archived overlay message
         let overlay = context.querySelector('.decker-archived-overlay');
         if (!overlay) {
@@ -223,6 +228,9 @@
         }
         if (quill) {
             quill.disable();
+        }
+        if (taskEditor && typeof taskEditor.setMode === 'function') {
+            taskEditor.setMode('readonly');
         }
         const saveButton = context.querySelector('#save-task');
         if (saveButton) {
@@ -1278,7 +1286,7 @@
      * @param {HTMLElement} context The container element holding the task form.
      * @return {Promise} Resolves once the editor is ready.
      */
-    function initializeTaskEditor(context) {
+    function initializeTaskEditor(context, readOnly) {
         const textarea = context.querySelector('#task-description');
 
         if (!textarea || typeof wp === 'undefined' || !wp.editor) {
@@ -1291,10 +1299,22 @@
 
         return new Promise((resolve) => {
             const debouncedMarkDirty = debounce(() => enterDirtyEditMode(context), 150);
+
+            // Quicktags (Text tab) edits bypass TinyMCE events entirely; track
+            // the textarea directly so they still mark the card dirty.
+            textarea.addEventListener('input', debouncedMarkDirty);
+            textarea.addEventListener('change', debouncedMarkDirty);
+            if (readOnly) {
+                textarea.readOnly = true;
+            }
+
             const config = {
                 tinymce: {
                     wpautop: true,
                     container: 'description-tab',
+                    // Locked or archived cards must not be editable, matching
+                    // the Quill readOnly behavior.
+                    readonly: readOnly ? true : false,
                     toolbar1: 'formatselect bold italic link bullist numlist decker_checklist blockquote alignleft aligncenter alignright wp_adv fullscreen',
                     toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
                     menubar: false,
@@ -1312,7 +1332,9 @@
                             window.DeckerChecklist.attach(editor);
                         }
                         editor.on('init', function() {
-                            taskEditor.initialized = true;
+                            // Use the local reference: taskEditor may already be
+                            // null if the modal was closed before init fired.
+                            editor.initialized = true;
                             resolve();
                         });
                         // Only genuine user edits switch the card into dirty mode;
@@ -1342,6 +1364,18 @@
             return quill.root.innerHTML;
         }
 
+        // wp.editor.getContent() syncs TinyMCE into the textarea when the
+        // Visual tab is active and always returns the textarea value, so
+        // edits made in the Text (quicktags) tab are never lost.
+        if (
+            context.querySelector('#task-description') &&
+            typeof wp !== 'undefined' &&
+            wp.editor &&
+            typeof wp.editor.getContent === 'function'
+        ) {
+            return wp.editor.getContent('task-description');
+        }
+
         if (taskEditor && typeof taskEditor.getContent === 'function') {
             return taskEditor.getContent();
         }
@@ -1362,7 +1396,10 @@
      * reinitialized cleanly. Quill teardown is handled separately.
      */
     function destroyTaskEditor() {
-        if (taskEditor && taskEditor.initialized && typeof wp !== 'undefined' && wp.editor) {
+        // Remove any instance bound to the textarea even if 'init' has not
+        // fired yet (fast modal open/close), so no orphan editor survives.
+        // wp.editor.remove() is a safe no-op when nothing was initialized.
+        if (typeof wp !== 'undefined' && wp.editor && typeof wp.editor.remove === 'function') {
             wp.editor.remove('task-description');
         }
 
@@ -1395,9 +1432,10 @@
         }
 
         // When Quill is not selected, the card renders a classic-editor textarea
-        // instead of the #editor container. Initialize it here.
+        // instead of the #editor container. Initialize it here, honoring the
+        // same read-only conditions as the Quill editor.
         if (context.querySelector('#task-description')) {
-            initializeTaskEditor(context);
+            initializeTaskEditor(context, disabled || lockedByOther);
         }
 
         if (context.querySelector('#editor')) {
