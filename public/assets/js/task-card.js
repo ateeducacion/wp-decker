@@ -5,6 +5,7 @@
     // Global variables received from PHP
     const ajaxUrl = deckerVars.ajax_url;
     const restUrl = wpApiSettings.root + wpApiSettings.versionString;
+    const deckerRestUrl = wpApiSettings.root + 'decker/v1/';
     const homeUrl = deckerVars.home_url;
     const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
@@ -13,6 +14,14 @@
 
     // Global variable to indicate if there are unsaved changes
     window.deckerHasUnsavedChanges = false;
+
+    // Edit-lock state for the task currently open in edit mode.
+    // { postId: number, owned: boolean } or null when no card is being edited.
+    let activeLock = null;
+
+    // Prevent a heartbeat response from invalidating the session while its save
+    // is rotating the generation on the server.
+    let taskSaveInFlight = false;
 
     let quill = null;
     let taskEditor = null;
@@ -24,16 +33,69 @@
     // Form fields collaboration binding state
     let formFieldsBinding = null;
 
+    // Snapshot of original form values from server (captured before collaboration)
+    let originalValuesSnapshot = null;
+
     // Field mappings for collaboration
+    // NOTE: 'task-today' is intentionally excluded. The "For today" state is
+    // user-specific and must never be synchronized through shared collaboration.
     const FIELD_MAPPINGS = [
         { id: 'task-title', key: 'title', type: 'text' },
         { id: 'task-max-priority', key: 'maxPriority', type: 'checkbox' },
-        { id: 'task-today', key: 'today', type: 'checkbox' },
         { id: 'task-board', key: 'board', type: 'select' },
         { id: 'task-responsable', key: 'responsable', type: 'select' },
         { id: 'task-stack', key: 'stack', type: 'select' },
         { id: 'task-due-date', key: 'dueDate', type: 'date' },
     ];
+
+    /**
+     * Capture all original form values from server-rendered HTML.
+     * Must be called BEFORE Quill and collaboration are initialized.
+     * @param {HTMLElement} context - The container element
+     * @returns {Object} Original values snapshot
+     */
+    function captureOriginalFormValues(context) {
+        const snapshot = {
+            fields: {},
+            choices: {},
+            quillHtml: null,
+            capturedAt: Date.now()
+        };
+
+        // Capture regular fields
+        FIELD_MAPPINGS.forEach(({ id, key, type }) => {
+            const el = context.querySelector(`#${id}`);
+            if (!el) return;
+
+            if (type === 'checkbox') {
+                snapshot.fields[key] = el.checked;
+            } else {
+                snapshot.fields[key] = el.value;
+            }
+        });
+
+        // Capture Quill content BEFORE binding (from raw HTML in #editor)
+        const editorEl = context.querySelector('#editor');
+        if (editorEl) {
+            snapshot.quillHtml = editorEl.innerHTML;
+        }
+
+        // Capture select multiple values (assignees, labels) from raw HTML
+        const assigneesEl = context.querySelector('#task-assignees');
+        if (assigneesEl) {
+            snapshot.choices.assignees = Array.from(assigneesEl.selectedOptions)
+                .map(opt => opt.value);
+        }
+
+        const labelsEl = context.querySelector('#task-labels');
+        if (labelsEl) {
+            snapshot.choices.labels = Array.from(labelsEl.selectedOptions)
+                .map(opt => opt.value);
+        }
+
+        console.log('Decker: Original form values captured:', snapshot);
+        return snapshot;
+    }
 
     /**
      * Disable all form fields (used when task is archived)
@@ -80,115 +142,551 @@
         }
     }
 
+    /* ---------------------------------------------------------------------
+     * Task edit locking (WordPress post lock compatible).
+     * ------------------------------------------------------------------- */
+
+    /**
+     * Read the lock state serialized by the server into the task form.
+     *
+     * Accepts either a page/modal container that contains `#task-form`, or the
+     * form element itself. `Element.querySelector()` only matches descendants,
+     * so passing the form must not look for a nested `#task-form` (which would
+     * miss `data-lock` and send an empty `lock_generation` on save).
+     *
+     * @param {HTMLElement} context - The container or the task form element.
+     * @returns {Object|null} The lock info, or null when unavailable.
+     */
+    function readTaskLockState(context) {
+        if (!context) {
+            return null;
+        }
+        const form = (typeof context.matches === 'function' && context.matches('#task-form'))
+            ? context
+            : context.querySelector('#task-form');
+        if (!form || !form.dataset.lock) {
+            return null;
+        }
+        try {
+            return JSON.parse(form.dataset.lock);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether a save AJAX body represents a lock conflict.
+     *
+     * The server returns HTTP 409 with success:false and code
+     * decker_task_locked; callers must not gate this on 2xx statuses alone.
+     *
+     * @param {Object|null} response - Parsed JSON response body.
+     * @returns {boolean} True when the response is a lock conflict.
+     */
+    function isTaskLockConflictResponse(response) {
+        return !!(response && response.data && response.data.code === 'decker_task_locked');
+    }
+
+    /**
+     * Perform a REST request against the Decker task lock endpoints.
+     * @param {string} method - HTTP method.
+     * @param {number|string} taskId - The task ID.
+     * @param {string} path - Optional sub-path (e.g. '/takeover').
+     * @param {Object} options - Extra fetch options.
+     * @returns {Promise} The fetch promise.
+     */
+    function lockRequest(method, taskId, path, options) {
+        const url = `${deckerRestUrl}tasks/${taskId}/lock${path || ''}`;
+        return fetch(url, Object.assign({
+            method: method,
+            headers: { 'X-WP-Nonce': wpApiSettings.nonce },
+            credentials: 'same-origin'
+        }, options || {}));
+    }
+
+    /**
+     * Disable every editing control in the card (fields, editor, save button).
+     * @param {HTMLElement} context - The container element.
+     */
+    function disableEditingControls(context) {
+        const form = context.querySelector('#task-form');
+        if (form) {
+            form.querySelectorAll('input, select, textarea').forEach(el => {
+                el.disabled = true;
+            });
+        }
+        if (assigneesSelect) {
+            assigneesSelect.disable();
+        }
+        if (labelsSelect) {
+            labelsSelect.disable();
+        }
+        if (quill) {
+            quill.disable();
+        }
+        const saveButton = context.querySelector('#save-task');
+        if (saveButton) {
+            saveButton.disabled = true;
+        }
+        const saveDropdown = context.querySelector('#save-task-dropdown');
+        if (saveDropdown) {
+            saveDropdown.disabled = true;
+        }
+    }
+
+    /**
+     * Wire the server-rendered "Take over editing" button.
+     * @param {HTMLElement} context - The container element.
+     */
+    function wireTakeOverButton(context) {
+        const button = context.querySelector('.decker-take-over-lock');
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', function () {
+            const taskId = button.dataset.taskId || getTaskId();
+            button.disabled = true;
+            button.textContent = strings.taking_over;
+            lockRequest('POST', taskId, '/takeover')
+                .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                .then(({ ok, data }) => {
+                    if (ok && data && data.owned_by_current_user) {
+                        // Reopen the card so it renders in editable state.
+                        reloadTaskCard(taskId);
+                    } else {
+                        button.disabled = false;
+                        button.textContent = strings.take_over_editing;
+                        alert(strings.lock_takeover_failed);
+                    }
+                })
+                .catch(() => {
+                    button.disabled = false;
+                    button.textContent = strings.take_over_editing;
+                    alert(strings.lock_takeover_failed);
+                });
+        });
+    }
+
+    /**
+     * Re-render the card in its new lock state.
+     *
+     * Inside the modal the card is reloaded in place so it is not closed: after
+     * a takeover it becomes editable, and a previous editor who lost the lock
+     * sees the read-only state without the modal disappearing. On the full-page
+     * view there is no modal to preserve, so the page is reloaded.
+     *
+     * @param {number|string} taskId - The task ID to reload.
+     */
+    function reloadTaskCard(taskId) {
+        window.deckerHasUnsavedChanges = false;
+        const id = taskId || getTaskId();
+        if (typeof window.deckerReloadTaskCard === 'function' && window.deckerReloadTaskCard(id)) {
+            return;
+        }
+        window.location.reload();
+    }
+
+    /**
+     * Apply the read-only locked state to a card locked by another user.
+     * @param {HTMLElement} context - The container element.
+     */
+    function applyLockedState(context) {
+        disableEditingControls(context);
+        wireTakeOverButton(context);
+    }
+
+    /**
+     * Render a "lock lost" warning when another user takes over while editing.
+     * @param {HTMLElement} context - The container element.
+     * @param {Object} info - The lock info from the server.
+     */
+    function handleLockLost(context, info) {
+        if (activeLock) {
+            activeLock.owned = false;
+        }
+        disableEditingControls(context);
+
+        const form = context.querySelector('#task-form');
+        if (!form || form.querySelector('[data-decker-lock-lost]')) {
+            return;
+        }
+
+        let message = strings.lock_lost_message;
+        if (info && info.owner && info.owner.display_name) {
+            message = strings.card_locked_by.replace('%s', info.owner.display_name)
+                + ' ' + strings.lock_lost_message;
+        }
+
+        const banner = document.createElement('div');
+        banner.className = 'alert alert-danger d-flex align-items-center justify-content-between';
+        banner.setAttribute('role', 'alert');
+        banner.setAttribute('data-decker-lock-lost', '');
+        banner.setAttribute('aria-live', 'assertive');
+
+        const text = document.createElement('span');
+        text.className = 'd-flex align-items-center';
+        text.innerHTML = '<i class="ri-lock-line me-2"></i>';
+        const textSpan = document.createElement('span');
+        textSpan.textContent = message;
+        text.appendChild(textSpan);
+
+        const reloadButton = document.createElement('button');
+        reloadButton.type = 'button';
+        reloadButton.className = 'btn btn-sm btn-danger ms-2';
+        reloadButton.textContent = strings.reload_card;
+        reloadButton.addEventListener('click', function () {
+            reloadTaskCard(getTaskId());
+        });
+
+        banner.appendChild(text);
+        banner.appendChild(reloadButton);
+        form.insertBefore(banner, form.firstChild);
+    }
+
+    /**
+     * Speed up or restore the WordPress heartbeat while a card is being edited,
+     * so a takeover blocks the previous editor within a few seconds.
+     * @param {boolean} fast - True to use the fast (~5s) interval.
+     */
+    function setLockHeartbeatSpeed(fast) {
+        if (window.wp && window.wp.heartbeat && typeof window.wp.heartbeat.interval === 'function') {
+            window.wp.heartbeat.interval(fast ? 'fast' : 'standard');
+        }
+    }
+
+    // Expose so the lock activation in initializeTaskPage can call it.
+    window.deckerSetLockHeartbeatSpeed = setLockHeartbeatSpeed;
+
+    /**
+     * Release the active lock when the current user owns it.
+     */
+    function releaseActiveLock() {
+        setLockHeartbeatSpeed(false);
+        if (!activeLock || !activeLock.postId || !activeLock.owned) {
+            activeLock = null;
+            return;
+        }
+        const taskId = activeLock.postId;
+        // Send our session generation so the server releases only this session and
+        // never a newer session of the same user that took over.
+        const lock = readTaskLockState(document.getElementById('task-form'));
+        const generation = lock && lock.generation ? lock.generation : '';
+        const path = generation ? `?lock_generation=${encodeURIComponent(generation)}` : '';
+        activeLock = null;
+        // keepalive lets the request complete even while the modal/page unloads.
+        lockRequest('DELETE', taskId, path, { keepalive: true }).catch(() => {});
+    }
+
+    /**
+     * Clear in-memory lock tracking without contacting the server.
+     *
+     * Used when the lock was already released through another path (for example
+     * an explicit REST DELETE in tests) so a later pagehide does not issue a
+     * duplicate release request.
+     */
+    function clearActiveLockState() {
+        setLockHeartbeatSpeed(false);
+        activeLock = null;
+    }
+
+    // Expose the release helper so the modal close handler can call it.
+    window.deckerReleaseActiveTaskLock = releaseActiveLock;
+    window.deckerClearActiveTaskLockState = clearActiveLockState;
+
+    /**
+     * Whether a task-lock heartbeat response belongs to an obsolete form state.
+     *
+     * @param {Object} info - The lock information returned by the heartbeat.
+     * @param {string} currentGeneration - Generation currently stored by the form.
+     * @param {boolean} saveInFlight - Whether the form is awaiting a save response.
+     * @returns {boolean} True when the heartbeat response must be ignored.
+     */
+    function shouldIgnoreTaskLockHeartbeat(info, currentGeneration, saveInFlight) {
+        if (saveInFlight) {
+            return true;
+        }
+
+        return !!(info && info.request_generation
+            && info.request_generation !== currentGeneration);
+    }
+
+    // Release the lock when the tab is closed or the user navigates away
+    // (covers the full-page view and closing without saving).
+    window.addEventListener('pagehide', function () {
+        releaseActiveLock();
+    });
+
+    // Keep the current user's lock alive through the WordPress heartbeat and
+    // detect takeovers. Bound once at module load.
+    if (window.jQuery) {
+        jQuery(document).on('heartbeat-send.deckerLock', function (e, data) {
+            if (!taskSaveInFlight && activeLock && activeLock.postId && activeLock.owned) {
+                // Send the session generation so the server refreshes only this
+                // exact session and never re-acquires on our behalf.
+                const lock = readTaskLockState(document.getElementById('task-form'));
+                data.decker_task_lock = {
+                    post_id: activeLock.postId,
+                    generation: lock && lock.generation ? lock.generation : '',
+                };
+            }
+        });
+
+        jQuery(document).on('heartbeat-tick.deckerLock', function (e, data) {
+            if (!activeLock || !data || !data.decker_task_lock) {
+                return;
+            }
+            const info = data.decker_task_lock;
+            const currentLock = readTaskLockState(document.getElementById('task-form'));
+            const currentGeneration = currentLock && currentLock.generation
+                ? currentLock.generation
+                : '';
+            if (shouldIgnoreTaskLockHeartbeat(info, currentGeneration, taskSaveInFlight)) {
+                return;
+            }
+            // Lost to another active editor, or our session was superseded (a
+            // takeover, even one already released, or another session of the same
+            // user): block this stale editor. We never adopt a server-sent token
+            // into an open form — validity is proven only by the token we already
+            // hold, so a stale session can never be silently re-authorized.
+            if ((info.locked && !info.owned_by_current_user) || info.stale_session) {
+                setLockHeartbeatSpeed(false);
+                const modal = document.querySelector('.task-modal.show') || document;
+                handleLockLost(modal, info);
+            }
+        });
+    }
+
+    /* ---------------------------------------------------------------------
+     * "For today" quick action (user-specific, avoids a full task save).
+     * ------------------------------------------------------------------- */
+
+    /**
+     * Wire the quick "Add/Remove to today" button for a pristine existing task.
+     * @param {HTMLElement} context - The container element.
+     */
+    function initializeTodayQuickAction(context) {
+        const button = context.querySelector('#task-today-quick');
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', function () {
+            // Only act while the form is pristine; once dirty the checkbox rules.
+            if (window.deckerHasUnsavedChanges) {
+                return;
+            }
+            const marked = button.dataset.marked !== '1';
+            submitTodayQuickAction(context, marked);
+        });
+    }
+
+    /**
+     * Reveal the standard "For today" checkbox and hide the quick action.
+     * @param {HTMLElement} context - The container element.
+     */
+    function showTodayCheckbox(context) {
+        const button = context.querySelector('#task-today-quick');
+        if (button) {
+            button.classList.add('d-none');
+        }
+        const wrapper = context.querySelector('.decker-today-checkbox');
+        if (wrapper) {
+            wrapper.classList.remove('d-none');
+        }
+        const checkbox = context.querySelector('#task-today');
+        if (checkbox) {
+            checkbox.disabled = false;
+            checkbox.removeAttribute('aria-hidden');
+            checkbox.removeAttribute('tabindex');
+        }
+    }
+
+    /**
+     * Canonical transition from pristine to dirty edit mode. One-way and
+     * idempotent for the current modal session.
+     * @param {HTMLElement} context - The container element.
+     */
+    function enterDirtyEditMode(context) {
+        if (window.deckerHasUnsavedChanges) {
+            return;
+        }
+        window.deckerHasUnsavedChanges = true;
+        const saveButton = context.querySelector('#save-task');
+        if (saveButton) {
+            saveButton.disabled = false;
+        }
+        showTodayCheckbox(context);
+    }
+
+    /**
+     * Toggle the quick-action button loading state accessibly.
+     * @param {HTMLElement} context - The container element.
+     * @param {boolean} loading - Whether the request is in flight.
+     */
+    function setTodayQuickActionLoading(context, loading) {
+        const button = context.querySelector('#task-today-quick');
+        if (!button) {
+            return;
+        }
+        button.disabled = loading;
+        button.setAttribute('aria-busy', loading ? 'true' : 'false');
+        const label = button.querySelector('.decker-today-quick-label');
+        if (!label) {
+            return;
+        }
+        if (loading) {
+            button.dataset.idleLabel = label.textContent;
+            label.textContent = button.dataset.marked === '1'
+                ? strings.removing_from_today
+                : strings.adding_to_today;
+        } else if (button.dataset.idleLabel) {
+            label.textContent = button.dataset.idleLabel;
+        }
+    }
+
+    /**
+     * Send the lightweight today request for the current user only.
+     * @param {HTMLElement} context - The container element.
+     * @param {boolean} marked - The desired today state.
+     */
+    function submitTodayQuickAction(context, marked) {
+        const button = context.querySelector('#task-today-quick');
+        const taskId = (button && button.dataset.taskId) || getTaskId();
+        if (!taskId || taskId === '0') {
+            return;
+        }
+        // Prevent duplicate submissions.
+        if (button && button.getAttribute('aria-busy') === 'true') {
+            return;
+        }
+        setTodayQuickActionLoading(context, true);
+
+        // Send `marked` both in the query string and the JSON body. Some hosts
+        // do not parse the body of a PUT request, so the query string keeps the
+        // parameter reachable while the body stays spec-compliant.
+        const url = `${deckerRestUrl}tasks/${taskId}/today?marked=${marked ? 'true' : 'false'}`;
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'X-WP-Nonce': wpApiSettings.nonce,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ marked: marked })
+        })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data && data.success) {
+                    onTodayQuickActionSuccess(context, data);
+                } else {
+                    setTodayQuickActionLoading(context, false);
+                    const message = (data && data.message) || strings.today_update_failed;
+                    notifyTodayResult(message, false);
+                }
+            })
+            .catch(() => {
+                setTodayQuickActionLoading(context, false);
+                notifyTodayResult(strings.today_update_failed, false);
+            });
+    }
+
+    /**
+     * Toggle the quick-action button between its "add" and "remove" states.
+     * @param {HTMLElement} context - The container element.
+     * @param {boolean} marked - The new marked state.
+     */
+    function updateTodayQuickButton(context, marked) {
+        const button = context.querySelector('#task-today-quick');
+        if (!button) {
+            return;
+        }
+        button.disabled = false;
+        button.setAttribute('aria-busy', 'false');
+        button.dataset.marked = marked ? '1' : '0';
+        delete button.dataset.idleLabel;
+        button.classList.remove('btn-success', 'btn-outline-secondary');
+        button.classList.add(marked ? 'btn-outline-secondary' : 'btn-success');
+        const label = button.querySelector('.decker-today-quick-label');
+        if (label) {
+            label.textContent = marked ? strings.remove_from_today : strings.add_to_today;
+        }
+    }
+
+    /**
+     * Handle a successful quick action: toggle the control in place and keep the
+     * card open so the user can mark/unmark freely. The parent view is refreshed
+     * on modal close (or on the next navigation) rather than reloading here.
+     * @param {HTMLElement} context - The container element.
+     * @param {Object} data - The server response.
+     */
+    function onTodayQuickActionSuccess(context, data) {
+        const checkbox = context.querySelector('#task-today');
+        if (checkbox) {
+            checkbox.checked = !!data.marked;
+        }
+        updateTodayQuickButton(context, !!data.marked);
+
+        // The quick action never dirties the form.
+        window.deckerHasUnsavedChanges = false;
+
+        // Remember a change was made so the parent view can refresh on close.
+        window.deckerTodayChangedInSession = true;
+
+        notifyTodayResult(data.message, true);
+
+        // Extension point for targeted parent-view updates.
+        document.dispatchEvent(new CustomEvent('decker:task-today-changed', {
+            detail: {
+                taskId: data.task_id,
+                marked: data.marked,
+                userId: data.user_id,
+                date: data.date
+            }
+        }));
+    }
+
+    /**
+     * Show an accessible toast for the quick-action result.
+     * @param {string} message - The message to show.
+     * @param {boolean} success - Whether the action succeeded.
+     */
+    function notifyTodayResult(message, success) {
+        const swal = (window.parent && window.parent.Swal) || window.Swal;
+        if (swal) {
+            swal.fire({
+                icon: success ? 'success' : 'error',
+                title: message,
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: success ? 1500 : 3000,
+                timerProgressBar: true
+            });
+        } else if (!success) {
+            alert(message);
+        }
+    }
+
     /**
      * Simple debounce function
      */
     function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
+        let timeout = null;
+        const executedFunction = function(...args) {
             const later = () => {
                 clearTimeout(timeout);
+                timeout = null;
                 func(...args);
             };
             clearTimeout(timeout);
             timeout = setTimeout(later, wait);
         };
-    }
 
-    /**
-     * Mark the task form as having unsaved changes.
-     */
-    function markTaskAsChanged(context) {
-        const saveButton = context.querySelector('#save-task') || document.querySelector('#save-task');
-        const saveDropdown = context.querySelector('#save-task-dropdown') || document.querySelector('#save-task-dropdown');
+        executedFunction.cancel = function() {
+            clearTimeout(timeout);
+            timeout = null;
+        };
 
-        if (saveButton) {
-            saveButton.disabled = false;
-        }
-
-        if (saveDropdown) {
-            saveDropdown.disabled = false;
-        }
-
-        window.deckerHasUnsavedChanges = true;
-    }
-
-    /**
-     * Initialize the WordPress classic editor when Quill is not in use.
-     */
-    function initializeTaskEditor(context) {
-        const textarea = context.querySelector('#task-description');
-
-        if (!textarea || typeof wp === 'undefined' || !wp.editor) {
-            return Promise.resolve();
-        }
-
-        if (taskEditor && taskEditor.initialized) {
-            return Promise.resolve();
-        }
-
-        return new Promise((resolve) => {
-            const debouncedMarkTaskAsChanged = debounce(() => markTaskAsChanged(context), 150);
-            const config = {
-                tinymce: {
-                    wpautop: true,
-                    container: 'description-tab',
-                    toolbar1: 'formatselect bold italic link bullist numlist blockquote alignleft aligncenter alignright wp_adv fullscreen',
-                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
-                    menubar: false,
-                    setup: function(editor) {
-                        taskEditor = editor;
-                        editor.on('change keyup SetContent', function() {
-                            debouncedMarkTaskAsChanged();
-                        });
-                        editor.on('init', function() {
-                            taskEditor.initialized = true;
-                            resolve();
-                        });
-                    }
-                },
-                quicktags: true,
-                mediaButtons: true
-            };
-
-            wp.editor.initialize('task-description', config);
-        });
-    }
-
-    /**
-     * Get the current task description from the active editor.
-     */
-    function getTaskDescription(context) {
-        if (context.querySelector('#editor') && quill) {
-            return quill.root.innerHTML;
-        }
-
-        if (taskEditor && typeof taskEditor.getContent === 'function') {
-            return taskEditor.getContent();
-        }
-
-        if (typeof tinyMCE !== 'undefined') {
-            const activeEditor = tinyMCE.get('task-description');
-            if (activeEditor) {
-                return activeEditor.getContent();
-            }
-        }
-
-        const textarea = context.querySelector('#task-description');
-        return textarea ? textarea.value : '';
-    }
-
-    /**
-     * Destroy the active task editor instance.
-     */
-    function destroyTaskEditor() {
-        if (taskEditor && taskEditor.initialized && typeof wp !== 'undefined' && wp.editor) {
-            wp.editor.remove('task-description');
-        }
-
-        taskEditor = null;
-        quill = null;
-        window.quill = null;
+        return executedFunction;
     }
 
     /**
@@ -216,6 +714,11 @@
         const formFields = session.formFields;
         const awareness = session.awareness;
         let isRemoteUpdate = false;
+        let isDestroyed = false;
+        let remoteChangesHandler = null;
+        let fieldAwarenessChangeHandler = null;
+        let remoteUpdateResetTimerId = null;
+        const fieldCleanupCallbacks = [];
 
         // Get local Choices.js instances
         const choicesMappings = [
@@ -224,47 +727,107 @@
         ];
 
         /**
-         * Initialize form fields from Yjs or populate Yjs from local values.
+         * Register a DOM event listener and store its destroy-time cleanup callback.
+         *
+         * @param {Element} element DOM element.
+         * @param {string} eventName Event name.
+         * @param {Function} handler Event handler.
+         * @return {void}
+         */
+        function registerFieldListener(element, eventName, handler) {
+            element.addEventListener(eventName, handler);
+            // Store the teardown so destroy() can remove every listener registered here.
+            fieldCleanupCallbacks.push(() => element.removeEventListener(eventName, handler));
+        }
+
+        /**
+         * Remove all visual markers for remote field editors.
+         *
+         * @return {void}
+         */
+        function clearFieldAwarenessIndicators() {
+            context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
+            context.querySelectorAll('.decker-field-editing').forEach(el => {
+                el.classList.remove('decker-field-editing');
+                el.style.removeProperty('--editor-color');
+            });
+            context.querySelectorAll('.decker-field-editing-container').forEach(el => {
+                el.classList.remove('decker-field-editing-container');
+            });
+        }
+
+        /**
+         * Initialize form fields from Yjs or populate Yjs from original values.
+         * Uses event-based sync instead of fixed timeout.
          * Only the first user (no other peers) populates Yjs.
          * Subsequent users only receive and apply remote values.
          */
         function initializeFormFieldValues() {
-            // Wait for WebRTC connection and sync
-            setTimeout(() => {
+            // Wait for WebRTC sync to complete before initializing
+            session.onSynced(() => {
                 isRemoteUpdate = true;
 
                 // Check if there are other peers connected (not just myself)
                 const connectedPeers = awareness.getStates().size;
                 const hasRemoteData = formFields.size > 0;
-                const isFirstUser = connectedPeers <= 1 && !hasRemoteData;
+                // Trust the collaboration layer's peer-aware signal (real WebRTC
+                // connections + awareness), not just the awareness size sampled at this
+                // instant, which can transiently read 1 while a peer is mid-handshake.
+                const peerPresent = typeof session.hasPeers === 'function'
+                    ? session.hasPeers()
+                    : connectedPeers > 1;
 
-                console.log('Decker: Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Is first user:', isFirstUser);
+                // A peer is present but its form data has not synced yet: do NOT seed
+                // from the DB snapshot/DOM. Wait for observeRemoteChanges to apply the
+                // peer's live values when they arrive, otherwise we would overwrite them.
+                if (peerPresent && !hasRemoteData) {
+                    console.log('Decker: Peer present, awaiting remote form values (no DB seed)');
+                    isRemoteUpdate = false;
+                    return;
+                }
+
+                const isFirstUser = !peerPresent && connectedPeers === 1 && !hasRemoteData;
+
+                console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Peer present:', peerPresent, 'Is first user:', isFirstUser);
 
                 if (isFirstUser) {
-                    // First user - populate Yjs with local values
-                    console.log('Decker: First user, populating Yjs with local values');
+                    if (!originalValuesSnapshot) {
+                        console.warn('Decker: First user detected but originalValuesSnapshot is missing. Skipping initial form value population.');
+                        // Avoid falling through to non-first-user / edge-case branches.
+                        return;
+                    }
+                    // First user - populate Yjs with ORIGINAL values from snapshot
+                    console.log('Decker: First user, populating Yjs with original server values');
 
+                    // Use original values from snapshot (guaranteed to be correct)
                     FIELD_MAPPINGS.forEach(({ id, key, type }) => {
+                        const originalValue = originalValuesSnapshot.fields[key];
+                        if (originalValue !== undefined) {
+                            formFields.set(key, originalValue);
+                        }
+                        // Also ensure local UI has the value
                         const el = context.querySelector(`#${id}`);
-                        if (!el) return;
-
-                        const localValue = type === 'checkbox' ? el.checked : el.value;
-                        if (localValue !== undefined && localValue !== '') {
-                            formFields.set(key, localValue);
+                        if (el) {
+                            if (type === 'checkbox') {
+                                if (originalValue !== undefined) {
+                                    el.checked = !!originalValue;
+                                }
+                            } else if (originalValue !== undefined) {
+                                el.value = originalValue;
+                            }
                         }
                     });
 
-                    choicesMappings.forEach(({ instance, key }) => {
-                        if (!instance) return;
-
-                        const localValues = instance.getValue(true);
-                        if (localValues && localValues.length > 0) {
-                            formFields.set(key, localValues);
-                        }
-                    });
-                } else {
-                    // Another user has data - only apply remote values, don't overwrite
-                    console.log('Decker: Joining existing session, applying remote values only');
+                    // Choices.js fields from snapshot
+                    if (originalValuesSnapshot.choices.assignees && originalValuesSnapshot.choices.assignees.length > 0) {
+                        formFields.set('assignees', originalValuesSnapshot.choices.assignees);
+                    }
+                    if (originalValuesSnapshot.choices.labels && originalValuesSnapshot.choices.labels.length > 0) {
+                        formFields.set('labels', originalValuesSnapshot.choices.labels);
+                    }
+                } else if (hasRemoteData) {
+                    // Another user has data - apply remote values to local UI
+                    console.log('Decker: Joining existing session, applying remote values');
 
                     // Apply all remote values to local UI
                     FIELD_MAPPINGS.forEach(({ id, key, type }) => {
@@ -299,10 +862,35 @@
                     if (formFields.get('archived') === true) {
                         disableAllFormFields(context, strings.task_is_archived || 'This task is archived');
                     }
+                } else {
+                    // Edge case: No remote data and no snapshot - use current DOM values
+                    console.log('Decker: No remote data, no snapshot - using current DOM values as fallback');
+
+                    FIELD_MAPPINGS.forEach(({ id, key, type }) => {
+                        const el = context.querySelector(`#${id}`);
+                        if (!el) return;
+
+                        if (type === 'checkbox') {
+                            // For checkboxes, always store the boolean checked state
+                            formFields.set(key, el.checked);
+                        } else {
+                            // Store the value including empty strings (e.g. a cleared date field)
+                            formFields.set(key, el.value);
+                        }
+                    });
+
+                    choicesMappings.forEach(({ instance, key }) => {
+                        if (!instance) return;
+
+                        const localValues = instance.getValue(true);
+                        if (localValues && localValues.length > 0) {
+                            formFields.set(key, localValues);
+                        }
+                    });
                 }
 
                 isRemoteUpdate = false;
-            }, 1000); // Increased timeout to allow WebRTC sync
+            });
         }
 
         /**
@@ -320,33 +908,55 @@
                     formFields.set(key, value);
                 };
 
-                el.addEventListener('change', sendChange);
+                registerFieldListener(el, 'change', sendChange);
 
                 // For text inputs, use debounced input event
                 if (type === 'text') {
-                    el.addEventListener('input', debounce(sendChange, 150));
+                    const debouncedSendChange = debounce(sendChange, 150);
+                    registerFieldListener(el, 'input', debouncedSendChange);
+                    fieldCleanupCallbacks.push(() => debouncedSendChange.cancel());
                 }
 
                 // Focus tracking for awareness
-                el.addEventListener('focus', () => session.setActiveField(id));
-                el.addEventListener('blur', () => session.clearActiveField());
+                const handleFocus = () => session.setActiveField(id);
+                const handleBlur = () => session.clearActiveField();
+
+                registerFieldListener(el, 'focus', handleFocus);
+                registerFieldListener(el, 'blur', handleBlur);
             });
 
             // Choices.js fields
             choicesMappings.forEach(({ instance, key, id }) => {
                 if (!instance) return;
 
-                instance.passedElement.element.addEventListener('change', () => {
+                const handleChoicesChange = () => {
                     if (isRemoteUpdate) return;
                     const values = instance.getValue(true);
                     formFields.set(key, values);
-                });
+                };
+
+                registerFieldListener(
+                    instance.passedElement.element,
+                    'change',
+                    handleChoicesChange
+                );
 
                 // Focus tracking for Choices.js dropdowns
                 const choicesContainer = context.querySelector(`#${id}`)?.closest('.choices');
                 if (choicesContainer) {
-                    choicesContainer.addEventListener('focusin', () => session.setActiveField(id));
-                    choicesContainer.addEventListener('focusout', () => session.clearActiveField());
+                    const handleChoicesFocusIn = () => session.setActiveField(id);
+                    const handleChoicesFocusOut = () => session.clearActiveField();
+
+                    registerFieldListener(
+                        choicesContainer,
+                        'focusin',
+                        handleChoicesFocusIn
+                    );
+                    registerFieldListener(
+                        choicesContainer,
+                        'focusout',
+                        handleChoicesFocusOut
+                    );
                 }
             });
         }
@@ -355,7 +965,11 @@
          * Observe Yjs changes and update local fields
          */
         function observeRemoteChanges() {
-            formFields.observe((event) => {
+            remoteChangesHandler = (event) => {
+                if (isDestroyed) {
+                    return;
+                }
+
                 isRemoteUpdate = true;
 
                 event.keysChanged.forEach(key => {
@@ -401,25 +1015,29 @@
                     }
                 });
 
-                // Use setTimeout to ensure flag resets after any triggered events
-                setTimeout(() => { isRemoteUpdate = false; }, 0);
-            });
+                // Clear any previous reset and keep only one pending timer so we
+                // can coalesce bursts of remote changes into a single flag reset.
+                clearTimeout(remoteUpdateResetTimerId);
+                remoteUpdateResetTimerId = setTimeout(() => {
+                    if (!isDestroyed) {
+                        isRemoteUpdate = false;
+                    }
+                }, 0);
+            };
+
+            formFields.observe(remoteChangesHandler);
         }
 
         /**
          * Show indicators of who is editing which field
          */
         function observeFieldAwareness() {
-            awareness.on('change', () => {
-                // Clear existing indicators
-                context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
-                context.querySelectorAll('.decker-field-editing').forEach(el => {
-                    el.classList.remove('decker-field-editing');
-                    el.style.removeProperty('--editor-color');
-                });
-                context.querySelectorAll('.decker-field-editing-container').forEach(el => {
-                    el.classList.remove('decker-field-editing-container');
-                });
+            fieldAwarenessChangeHandler = () => {
+                if (isDestroyed) {
+                    return;
+                }
+
+                clearFieldAwarenessIndicators();
 
                 // Create new indicators for remote users
                 awareness.getStates().forEach((state, clientId) => {
@@ -448,7 +1066,9 @@
                     indicator.textContent = state.user.name;
                     wrapper.appendChild(indicator);
                 });
-            });
+            };
+
+            awareness.on('change', fieldAwarenessChangeHandler);
         }
 
         // Initialize everything
@@ -472,16 +1092,23 @@
             },
 
             destroy() {
+                isDestroyed = true;
+                clearTimeout(remoteUpdateResetTimerId);
+                isRemoteUpdate = false;
+
+                if (remoteChangesHandler && typeof formFields.unobserve === 'function') {
+                    formFields.unobserve(remoteChangesHandler);
+                }
+
+                if (fieldAwarenessChangeHandler && typeof awareness.off === 'function') {
+                    awareness.off('change', fieldAwarenessChangeHandler);
+                }
+
+                fieldCleanupCallbacks.forEach(cleanup => cleanup());
+
                 // Clear awareness
                 session.clearActiveField();
-                // Clear indicators
-                context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
-                context.querySelectorAll('.decker-field-editing').forEach(el => {
-                    el.classList.remove('decker-field-editing');
-                });
-                context.querySelectorAll('.decker-field-editing-container').forEach(el => {
-                    el.classList.remove('decker-field-editing-container');
-                });
+                clearFieldAwarenessIndicators();
                 console.log('Decker: Form fields collaboration destroyed');
             }
         };
@@ -644,8 +1271,107 @@
         });
     }
 
+    /**
+     * Initialize the WordPress classic (TinyMCE) editor for the task
+     * description when Quill is not in use.
+     *
+     * @param {HTMLElement} context The container element holding the task form.
+     * @return {Promise} Resolves once the editor is ready.
+     */
+    function initializeTaskEditor(context) {
+        const textarea = context.querySelector('#task-description');
+
+        if (!textarea || typeof wp === 'undefined' || !wp.editor) {
+            return Promise.resolve();
+        }
+
+        if (taskEditor && taskEditor.initialized) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            const debouncedMarkDirty = debounce(() => enterDirtyEditMode(context), 150);
+            const config = {
+                tinymce: {
+                    wpautop: true,
+                    container: 'description-tab',
+                    toolbar1: 'formatselect bold italic link bullist numlist blockquote alignleft aligncenter alignright wp_adv fullscreen',
+                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    menubar: false,
+                    setup: function(editor) {
+                        taskEditor = editor;
+                        editor.on('init', function() {
+                            taskEditor.initialized = true;
+                            resolve();
+                        });
+                        // Only genuine user edits switch the card into dirty mode;
+                        // the initial content load (SetContent during init) is
+                        // intentionally excluded so opening a card stays pristine.
+                        editor.on('input keyup change ExecCommand', function() {
+                            debouncedMarkDirty();
+                        });
+                    }
+                },
+                quicktags: true,
+                mediaButtons: true
+            };
+
+            wp.editor.initialize('task-description', config);
+        });
+    }
+
+    /**
+     * Get the current task description from whichever editor is active.
+     *
+     * @param {HTMLElement} context The container element holding the task form.
+     * @return {string} The description HTML.
+     */
+    function getTaskDescription(context) {
+        if (context.querySelector('#editor') && quill) {
+            return quill.root.innerHTML;
+        }
+
+        if (taskEditor && typeof taskEditor.getContent === 'function') {
+            return taskEditor.getContent();
+        }
+
+        if (typeof tinyMCE !== 'undefined') {
+            const activeEditor = tinyMCE.get('task-description');
+            if (activeEditor) {
+                return activeEditor.getContent();
+            }
+        }
+
+        const textarea = context.querySelector('#task-description');
+        return textarea ? textarea.value : '';
+    }
+
+    /**
+     * Destroy the active classic editor instance so the card can be
+     * reinitialized cleanly. Quill teardown is handled separately.
+     */
+    function destroyTaskEditor() {
+        if (taskEditor && taskEditor.initialized && typeof wp !== 'undefined' && wp.editor) {
+            wp.editor.remove('task-description');
+        }
+
+        taskEditor = null;
+    }
+
     // Function to initialize the tasks page within the given context
     function initializeTaskPage(context) {
+        // A freshly rendered card always starts pristine, so the quick-action
+        // mode and the one-way pristine-to-dirty transition reset per session.
+        window.deckerHasUnsavedChanges = false;
+        window.deckerTodayChangedInSession = false;
+
+        // CRITICAL: Capture original values BEFORE any collaboration or Quill setup
+        originalValuesSnapshot = captureOriginalFormValues(context);
+
+        // Read the server-provided edit-lock state for this card.
+        const lockState = readTaskLockState(context);
+        const lockedByOther = !!(lockState && lockState.locked);
+
         new Tablesort(context.querySelector('#user-history-table'));
 
         // Check if the task_id is present in data-task-id
@@ -657,6 +1383,8 @@
             console.log('Task ID not found in data-task-id');
         }
 
+        // When Quill is not selected, the card renders a classic-editor textarea
+        // instead of the #editor container. Initialize it here.
         if (context.querySelector('#task-description')) {
             initializeTaskEditor(context);
         }
@@ -743,13 +1471,12 @@
 
             quill = new Quill(context.querySelector('#editor'), {
                 theme: 'snow',
-                readOnly: disabled,
+                readOnly: disabled || lockedByOther,
                 modules: quillModules
             });
-            window.quill = quill;
 
             // Initialize collaborative editing if enabled and we have a task ID
-            if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled) {
+            if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled && !lockedByOther) {
                 const taskId = getTaskId();
                 if (taskId && taskId !== '' && taskId !== '0') {
                     // Destroy any previous collaboration session
@@ -758,21 +1485,23 @@
                         collabSession = null;
                     }
 
-                    // Get initial content before binding
-                    const initialContent = quill.root.innerHTML;
-
                     // Initialize collaboration
                     collabSession = window.DeckerCollaboration.init(quill, taskId, context);
 
-                    // If this is the first peer, set the initial content
-                    if (collabSession && initialContent && initialContent !== '<p><br></p>') {
-                        setTimeout(() => {
-                            collabSession.setInitialContent(initialContent);
-                        }, 500);
+                    // Use event-based initialization with original content from snapshot
+                    if (collabSession && originalValuesSnapshot && originalValuesSnapshot.quillHtml) {
+                        collabSession.onSynced(() => {
+                            collabSession.initializeContentWithFallback(originalValuesSnapshot.quillHtml);
+                        });
                     }
 
                     console.log('Decker: Collaborative editing initialized for task', taskId);
                 }
+            }
+
+            // Initialize AI improvement feature if available and editor is not read-only.
+            if (window.DeckerAI && !disabled) {
+                window.DeckerAI.init(quill, context, deckerVars);
             }
 
         }
@@ -845,7 +1574,7 @@
         }
 
         // Initialize form fields collaboration after Choices.js is ready
-        if (collabSession && !disabled) {
+        if (collabSession && !disabled && !lockedByOther) {
             // Destroy previous form fields binding if exists
             if (formFieldsBinding) {
                 formFieldsBinding.destroy();
@@ -882,15 +1611,17 @@
 
         const saveButton = context.querySelector('#save-task');
 
-        // Function to enable the save button when any field changes
+        // Canonical dirty transition: shared-field edits switch the card from the
+        // quick-action mode to the normal checkbox + full-save mode. 'task-today'
+        // is intentionally NOT a dirty trigger — it is handled by the quick action.
         const enableSaveButton = function() {
-            markTaskAsChanged(context);
+            enterDirtyEditMode(context);
         };
 
         const form = context.querySelector('#task-form');
 
-        // Add event listeners to all form inputs
-        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-today', 'task-max-priority', 'task-description'];
+        // Add event listeners to all shared editable form inputs.
+        const inputIds = ['task-title', 'task-due-date', 'task-board', 'task-stack', 'task-author-info', 'task-responsable', 'task-hidden', 'task-max-priority'];
 
         inputIds.forEach(function(id) {
             const element = context.querySelector(`#${id}`);
@@ -900,16 +1631,23 @@
             }
         });
 
+        // Wire the "For today" quick action for pristine existing tasks.
+        initializeTodayQuickAction(context);
+
         // Check the initial state of the highest priority checkbox and toggle the label
         var taskMaxPriorityCheck = context.querySelector('#task-max-priority');
         if (taskMaxPriorityCheck) {
             togglePriorityLabel(taskMaxPriorityCheck);
         }
-        
+
         // For the Quill editor
         if (quill) {
-            quill.on('text-change', function() {
-                markTaskAsChanged(context);
+            quill.on('text-change', function(delta, oldDelta, source) {
+                // Only a local user edit marks the form dirty; remote collaboration
+                // updates must not switch this user into edit mode.
+                if (source === 'user') {
+                    enterDirtyEditMode(context);
+                }
             });
         }
 
@@ -919,7 +1657,7 @@
         }
         if (labelsSelect) {
             labelsSelect.passedElement.element.addEventListener('change', enableSaveButton);
-        }        
+        }
 
         document.querySelectorAll('.archive-task,.unarchive-task').forEach((element) => {
 
@@ -934,6 +1672,29 @@
           element.addEventListener('click', cloneTaskHandler);
 
         });
+
+        document.querySelectorAll('.merge-task').forEach((element) => {
+
+          element.removeEventListener('click', mergeTaskHandler);
+          element.addEventListener('click', mergeTaskHandler);
+
+        });
+
+        // Activate edit-lock behavior for existing, non-archived cards.
+        const lockTaskId = getTaskId();
+        if (lockTaskId && lockTaskId !== '' && lockTaskId !== '0' && !disabled) {
+            if (lockedByOther) {
+                activeLock = { postId: parseInt(lockTaskId, 10), owned: false };
+                applyLockedState(context);
+            } else if (lockState && lockState.owned_by_current_user) {
+                activeLock = { postId: parseInt(lockTaskId, 10), owned: true };
+                // Poll faster while editing so a takeover blocks the previous
+                // editor within a few seconds instead of a full heartbeat cycle.
+                if (typeof window.deckerSetLockHeartbeatSpeed === 'function') {
+                    window.deckerSetLockHeartbeatSpeed(true);
+                }
+            }
+        }
 
     }
 
@@ -1127,6 +1888,10 @@
         const selectedAssigneesValues = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
         const selectedLabelsValues = labelsSelect.getValue().map(item => parseInt(item.value, 10));
 
+        // Embed the lock generation from the form session so the server can
+        // reject this save after a takeover even if the active lock was released.
+        const lockGeneration = (readTaskLockState(form) || {}).generation ?? '';
+
         // Gather the form data
         const formData = {
             action: 'save_decker_task',
@@ -1144,6 +1909,7 @@
             description: getTaskDescription(form),
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
+            lock_generation: lockGeneration,
         };
 
         // Disable save controls to prevent duplicate submissions
@@ -1162,57 +1928,104 @@
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
         xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    window.deckerHasUnsavedChanges = false;
-                    if (window.parent && window.parent.Swal) {
-                        window.parent.Swal.fire({
-                            icon: 'success',
-                            title: strings.task_saved_success,
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 1500,
-                            timerProgressBar: true
-                        });
-                    }
-                    const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
-                    if (modalElement) {
-                        var modalInstance = bootstrap.Modal.getInstance(modalElement);
-                        if (modalInstance) {
-                            modalInstance.hide();
-                        }
-                        
-                        // Reload the page if the request was successful
-                        location.reload();
-                    } else {
-                        // Redirect or update depending on the response
-                        window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
-                    }
+            let response = null;
+            try {
+                response = JSON.parse(xhr.responseText);
+            } catch (e) {
+                response = null;
+            }
 
-                } else {
-                    alert(response.data.message || strings.error_saving_task);
-                    if (saveButton) {
-                        saveButton.disabled = false;
-                    }
-                    if (saveDropdown) {
-                        saveDropdown.disabled = false;
+            taskSaveInFlight = false;
+
+            if (xhr.status >= 200 && xhr.status < 400 && response && response.success) {
+                window.deckerHasUnsavedChanges = false;
+                // Adopt the server's rotated generation (only ever from our own
+                // save response) so the next save uses it and a second tab of the
+                // same user holding the old token can no longer overwrite us.
+                if (response.data && response.data.generation && form.dataset.lock) {
+                    try {
+                        const lock = JSON.parse(form.dataset.lock);
+                        lock.generation = response.data.generation;
+                        form.dataset.lock = JSON.stringify(lock);
+                    } catch (e) {
+                        // Leave the existing data-lock untouched when unparseable.
                     }
                 }
+                if (window.parent && window.parent.Swal) {
+                    window.parent.Swal.fire({
+                        icon: 'success',
+                        title: strings.task_saved_success,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                }
+                const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
+                if (modalElement) {
+                    var modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+
+                    // Reload the page if the request was successful
+                    location.reload();
+                    return;
+                }
+
+                // Full-page view: only navigate when this save created a new
+                // task. Reloading an existing card would fire pagehide and
+                // release the edit lock; the server also invalidates stale
+                // sessions via lock generation, but staying put avoids the race.
+                const savedId = response.data && response.data.task_id
+                    ? String(response.data.task_id)
+                    : '';
+                const currentId = formData.task_id ? String(formData.task_id) : '';
+                if (savedId && (!currentId || currentId === '0' || currentId !== savedId)) {
+                    window.location.href = `${homeUrl}?decker_page=task&id=${savedId}`;
+                    return;
+                }
+
+                // Return to pristine mode: keep Save disabled until the next edit.
+                if (saveButton) {
+                    saveButton.disabled = true;
+                }
+                if (saveDropdown) {
+                    // Existing-task split actions stay available (archive, etc.).
+                    saveDropdown.disabled = false;
+                }
+                return;
+            }
+
+            // Lock conflicts are returned as HTTP 409 with success:false.
+            // Handle them for any status so the previous editor is blocked
+            // immediately instead of only on 2xx bodies.
+            if (isTaskLockConflictResponse(response)) {
+                const lockContext = document.querySelector('.task-modal.show') || document;
+                handleLockLost(lockContext, response.data);
+                alert(response.data.message || strings.lock_lost_message);
+                return;
+            }
+
+            if (response && response.data && response.data.message) {
+                alert(response.data.message);
+            } else if (xhr.status >= 200 && xhr.status < 400) {
+                alert(strings.error_saving_task);
             } else {
                 console.error(strings.server_response_error);
                 alert(strings.an_error_occurred_saving_task);
-                if (saveButton) {
-                    saveButton.disabled = false;
-                }
-                if (saveDropdown) {
-                    saveDropdown.disabled = false;
-                }
+            }
+            if (saveButton) {
+                saveButton.disabled = false;
+            }
+            if (saveDropdown) {
+                saveDropdown.disabled = false;
             }
         };
 
         xhr.onerror = function() {
+            taskSaveInFlight = false;
             console.error(strings.request_error);
             alert(strings.error_saving_task);
             if (saveButton) {
@@ -1227,6 +2040,7 @@
             .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
             .join('&');
 
+        taskSaveInFlight = true;
         xhr.send(encodedData);
     }
 
@@ -1246,8 +2060,8 @@
     window.initializeTaskPage = initializeTaskPage;
     window.sendFormByAjax = sendFormByAjax;
     window.deleteComment = deleteComment;
-    window.togglePriorityLabel = togglePriorityLabel;
     window.destroyTaskEditor = destroyTaskEditor;
+    window.togglePriorityLabel = togglePriorityLabel;
 
     // Expose function to set task as archived (for collaborative sync)
     window.setTaskArchivedCollab = function(archived) {

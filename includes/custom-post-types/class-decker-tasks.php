@@ -17,12 +17,52 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Tasks {
 
 	/**
+	 * Lazily-instantiated edit-lock manager.
+	 *
+	 * @var Decker_Task_Locks|null
+	 */
+	private $task_locks = null;
+
+	/**
 	 * Constructor
 	 *
 	 * Initializes the class by setting up the hooks.
 	 */
 	public function __construct() {
 		$this->define_hooks();
+	}
+
+	/**
+	 * Get the shared task edit-lock manager.
+	 *
+	 * @return Decker_Task_Locks The lock manager instance.
+	 */
+	public function get_task_locks(): Decker_Task_Locks {
+		if ( ! $this->task_locks instanceof Decker_Task_Locks ) {
+			$this->task_locks = new Decker_Task_Locks();
+		}
+
+		return $this->task_locks;
+	}
+
+	/**
+	 * Lazily-instantiated "For today" relation service.
+	 *
+	 * @var Decker_Task_Today_Manager|null
+	 */
+	private $today_manager = null;
+
+	/**
+	 * Get the shared "For today" relation service.
+	 *
+	 * @return Decker_Task_Today_Manager The relation service instance.
+	 */
+	public function get_today_manager(): Decker_Task_Today_Manager {
+		if ( ! $this->today_manager instanceof Decker_Task_Today_Manager ) {
+			$this->today_manager = new Decker_Task_Today_Manager();
+		}
+
+		return $this->today_manager;
 	}
 
 	/**
@@ -52,6 +92,9 @@ class Decker_Tasks {
 		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		// Enforce the edit lock (detect-and-reject) on generic /wp/v2/tasks
+		// updates, which bypass the save_decker_task guard.
+		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -63,6 +106,9 @@ class Decker_Tasks {
 
 		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
+
+		// Keep the editor's task lock alive through the WordPress heartbeat.
+		add_filter( 'heartbeat_received', array( $this, 'refresh_task_lock_heartbeat' ), 10, 2 );
 
 		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
@@ -261,6 +307,54 @@ class Decker_Tasks {
 		$source_order = intval( $request->get_param( 'source_order' ) );
 		$target_order = intval( $request->get_param( 'target_order' ) );
 
+		$invalid = $this->validate_stack_order_request(
+			$task_id,
+			$source_stack,
+			$target_stack,
+			$source_order,
+			$target_order
+		);
+		if ( $invalid instanceof WP_REST_Response ) {
+			return $invalid;
+		}
+
+		// Update the stack and the order.
+		$this->apply_stack_transition( $task_id, $source_stack, $target_stack );
+
+		$this->persist_task_menu_order( $task_id, $board_id, $source_stack, $target_stack, $source_order, $target_order );
+
+		// Reorder tasks in the source stack.
+		if ( $source_stack !== $target_stack ) {
+			$result = $this->reorder_tasks_in_stack( $board_id, $source_stack );
+		}
+		// Reorder tasks in the target stack.
+		$result = $this->reorder_tasks_in_stack( $board_id, $target_stack );
+
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success' => true,
+				'status'  => 'success',
+				'message' => 'Task stack and order updated successfully.',
+			),
+			200
+		);
+	}
+
+	/**
+	 * Validate the parameters for a stack/order update request.
+	 *
+	 * @param int    $task_id      The task ID.
+	 * @param string $source_stack The source stack value.
+	 * @param string $target_stack The target stack value.
+	 * @param int    $source_order The source order index.
+	 * @param int    $target_order The target order index.
+	 * @return WP_REST_Response|null The error response when invalid, or null when valid.
+	 */
+	private function validate_stack_order_request( int $task_id, string $source_stack, string $target_stack, int $source_order, int $target_order ): ?WP_REST_Response {
 		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
 		if ( ! in_array( $source_stack, $valid_stacks ) || ! in_array( $target_stack, $valid_stacks ) ) {
@@ -294,7 +388,17 @@ class Decker_Tasks {
 			);
 		}
 
-		// Update the stack and the order.
+		return null;
+	}
+
+	/**
+	 * Apply a stack transition for a task and fire the related hooks.
+	 *
+	 * @param int    $task_id      The task ID.
+	 * @param string $source_stack The source stack value.
+	 * @param string $target_stack The target stack value.
+	 */
+	private function apply_stack_transition( int $task_id, string $source_stack, string $target_stack ) {
 		if ( $source_stack != $target_stack ) {
 			update_post_meta( $task_id, 'stack', $target_stack );
 
@@ -306,11 +410,26 @@ class Decker_Tasks {
 				do_action( 'decker_task_completed', $task_id, $target_stack, get_current_user_id() );
 			}
 		}
+	}
 
+	/**
+	 * Persist the task menu_order using raw SQL and shift incumbents at the destination.
+	 *
+	 * @param int    $task_id      The task ID.
+	 * @param int    $board_id     The board term ID.
+	 * @param string $source_stack The source stack value.
+	 * @param string $target_stack The target stack value.
+	 * @param int    $source_order The source order index.
+	 * @param int    $target_order The target order index.
+	 */
+	private function persist_task_menu_order( int $task_id, int $board_id, string $source_stack, string $target_stack, int $source_order, int $target_order ) {
 		global $wpdb;
 
 		$final_order = $target_order;
-		if ( $target_order > $source_order ) {
+		// The +1 adjustment is only valid for moves within the same stack, where
+		// source_order and target_order index the same column. For cross-stack moves
+		// the two indexes reference different columns, so use target_order directly.
+		if ( $source_stack === $target_stack && $target_order > $source_order ) {
 			$final_order = $target_order + 1;
 		}
 
@@ -327,24 +446,32 @@ class Decker_Tasks {
 			array( '%d' )  // The data type of the condition (integer).
 		);
 
-		// Reorder tasks in the source stack.
-		if ( $source_stack !== $target_stack ) {
-			$result = $this->reorder_tasks_in_stack( $board_id, $source_stack );
-		}
-		// Reorder tasks in the target stack.
-		$result = $this->reorder_tasks_in_stack( $board_id, $target_stack );
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'status'  => 'success',
-				'message' => 'Task stack and order updated successfully.',
-			),
-			200
+		// Make room at the destination so the moved card deterministically occupies
+		// $final_order. Without this shift the moved card and the incumbent at that
+		// slot share a menu_order and the renumber tie-break would depend on
+		// post_modified second-granularity (flaky), dropping the card one slot off.
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr
+					ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt
+					ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->postmeta} pm_stack
+					ON p.ID = pm_stack.post_id
+					AND pm_stack.meta_key = 'stack'
+				SET p.menu_order = p.menu_order + 1
+				WHERE p.post_type = 'decker_task'
+					AND p.post_status = 'publish'
+					AND pm_stack.meta_value = %s
+					AND tt.term_id = %d
+					AND p.ID != %d
+					AND p.menu_order >= %d",
+				$target_stack,
+				$board_id,
+				$task_id,
+				$final_order
+			)
 		);
 	}
 
@@ -395,11 +522,11 @@ class Decker_Tasks {
 			                AND p.ID != %d
 			            GROUP BY 
 			                p.ID
-			            ORDER BY 
+			            ORDER BY
 			                meta_value DESC,
 			                p.menu_order ASC,
-			                p.id ASC,
-			                p.post_modified DESC
+			                p.post_modified DESC,
+			                p.id ASC
 			        ) AS t
 			    ) AS ordered_tasks ON p.ID = ordered_tasks.ID
 			    SET p.menu_order = ordered_tasks.new_menu_order;",
@@ -461,10 +588,9 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function mark_user_date_relation( $request ) {
-		$task_id = $request['id'];
-		$user_id = $request->get_param( 'user_id' );
+		$task_id = (int) $request['id'];
 
-		if ( ! $task_id || ! $user_id ) {
+		if ( ! $task_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -474,7 +600,9 @@ class Decker_Tasks {
 			);
 		}
 
-		$this->add_user_date_relation( $task_id, $user_id );
+		// The relation is personal: always use the authenticated current user
+		// and ignore any client-supplied user_id.
+		$this->add_user_date_relation( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -492,10 +620,9 @@ class Decker_Tasks {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function unmark_user_date_relation( $request ) {
-		$task_id = $request['id'];
-		$user_id = $request->get_param( 'user_id' );
+		$task_id = (int) $request['id'];
 
-		if ( ! $task_id || ! $user_id ) {
+		if ( ! $task_id ) {
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -505,7 +632,9 @@ class Decker_Tasks {
 			);
 		}
 
-		$this->remove_user_date_relation( $task_id, $user_id );
+		// The relation is personal: always use the authenticated current user
+		// and ignore any client-supplied user_id.
+		$this->remove_user_date_relation( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -521,146 +650,483 @@ class Decker_Tasks {
 	 */
 	public function register_rest_routes() {
 
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/mark_relation',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'mark_user_date_relation' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-			)
+		foreach ( $this->get_rest_route_definitions() as $definition ) {
+			$route_args = array(
+				'methods'             => $definition['methods'],
+				'callback'            => array( $this, $definition['callback'] ),
+				'permission_callback' => $this->make_permission_callback( $definition['permission'] ),
+			);
+
+			if ( isset( $definition['args'] ) ) {
+				$route_args['args'] = $definition['args'];
+			}
+
+			register_rest_route( 'decker/v1', $definition['route'], $route_args );
+		}
+	}
+
+	/**
+	 * Build the permission callback closure for a given permission type.
+	 *
+	 * @param string $permission The permission key ('minimum_role' or a capability slug).
+	 * @return callable The permission callback.
+	 */
+	private function make_permission_callback( string $permission ): callable {
+		if ( 'minimum_role' === $permission ) {
+			return function () {
+				return Decker::current_user_has_at_least_minimum_role();
+			};
+		}
+
+		// Object-level capability for a single task. A missing task passes the
+		// authenticated check so the callback can return a 404 instead of a 403.
+		if ( 'edit_task' === $permission ) {
+			return function ( $request ) {
+				$task_id = isset( $request['id'] ) ? (int) $request['id'] : 0;
+				$post    = $task_id ? get_post( $task_id ) : null;
+
+				if ( ! $post || 'decker_task' !== $post->post_type ) {
+					return is_user_logged_in();
+				}
+
+				return current_user_can( 'edit_post', $task_id );
+			};
+		}
+
+		return function () use ( $permission ) {
+			return current_user_can( $permission );
+		};
+	}
+
+	/**
+	 * Get the REST route definitions for the decker_task endpoints.
+	 *
+	 * @return array<int, array<string, mixed>> The list of route definitions.
+	 */
+	private function get_rest_route_definitions(): array {
+		$order_args = array(
+			'board_id'      => array( 'required' => true ),
+			'source_stack'  => array( 'required' => true ),
+			'target_stack'  => array( 'required' => true ),
+			'source_order'  => array( 'required' => true ),
+			'target_order'  => array( 'required' => true ),
 		);
 
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/unmark_relation',
+		$routes = array(
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'unmark_user_date_relation' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/order',
+				'route'      => '/tasks/(?P<id>\d+)/mark_relation',
+				'methods'    => 'POST',
+				'callback'   => 'mark_user_date_relation',
+				'permission' => 'minimum_role',
+			),
 			array(
-				'methods'             => 'PUT',
-				'callback'            => array( $this, 'update_task_stack_and_order' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-				'args' => array(
-					'board_id'      => array( 'required' => true ),
-					'source_stack'  => array( 'required' => true ),
-					'target_stack'  => array( 'required' => true ),
-					'source_order'  => array( 'required' => true ),
-					'target_order'  => array( 'required' => true ),
-				),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/stack',
+				'route'      => '/tasks/(?P<id>\d+)/unmark_relation',
+				'methods'    => 'POST',
+				'callback'   => 'unmark_user_date_relation',
+				'permission' => 'minimum_role',
+			),
 			array(
-				'methods'             => 'PUT',
-				'callback'            => array( $this, 'update_task_stack_and_order' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-				'args' => array(
-					'board_id'      => array( 'required' => true ),
-					'source_stack'  => array( 'required' => true ),
-					'target_stack'  => array( 'required' => true ),
-					'source_order'  => array( 'required' => true ),
-					'target_order'  => array( 'required' => true ),
-				),
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/leave',
+				'route'      => '/tasks/(?P<id>\d+)/order',
+				'methods'    => 'PUT',
+				'callback'   => 'update_task_stack_and_order',
+				'permission' => 'minimum_role',
+				'args'       => $order_args,
+			),
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'remove_user_from_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/assign',
+				'route'      => '/tasks/(?P<id>\d+)/stack',
+				'methods'    => 'PUT',
+				'callback'   => 'update_task_stack_and_order',
+				'permission' => 'minimum_role',
+				'args'       => $order_args,
+			),
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'assign_user_to_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'read' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/fix-order/(?P<board_id>\d+)',
+				'route'      => '/tasks/(?P<id>\d+)/leave',
+				'methods'    => 'POST',
+				'callback'   => 'remove_user_from_task',
+				'permission' => 'minimum_role',
+			),
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'handle_fix_order' ),
-				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/update_due_date',
+				'route'      => '/tasks/(?P<id>\d+)/assign',
+				'methods'    => 'POST',
+				'callback'   => 'assign_user_to_task',
+				'permission' => 'minimum_role',
+			),
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'update_task_due_date' ),
-				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
-				},
-			)
-		);
-
-		register_rest_route(
-			'decker/v1',
-			'/tasks/search',
+				'route'      => '/fix-order/(?P<board_id>\d+)',
+				'methods'    => 'POST',
+				'callback'   => 'handle_fix_order',
+				'permission' => 'manage_options',
+			),
 			array(
-				'methods'             => 'GET',
-				'callback'            => array( $this, 'search_tasks' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-				'args'                => array(
+				'route'      => '/tasks/(?P<id>\d+)/update_due_date',
+				'methods'    => 'POST',
+				'callback'   => 'update_task_due_date',
+				'permission' => 'manage_options',
+			),
+			array(
+				'route'      => '/tasks/search',
+				'methods'    => 'GET',
+				'callback'   => 'search_tasks',
+				'permission' => 'edit_posts',
+				'args'       => array(
 					'search' => array(
 						'required'          => true,
 						'type'              => 'string',
 						'sanitize_callback' => 'sanitize_text_field',
 					),
 				),
-			)
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/clone',
+				'methods'    => 'POST',
+				'callback'   => 'handle_clone_task',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/merge',
+				'methods'    => 'POST',
+				'callback'   => 'handle_merge_task',
+				'permission' => 'edit_posts',
+				'args'       => array(
+					'destination_task_id' => array(
+						'required'          => true,
+						'type'              => 'integer',
+						'sanitize_callback' => 'absint',
+					),
+				),
+			),
 		);
 
-		register_rest_route(
-			'decker/v1',
-			'/tasks/(?P<id>\d+)/clone',
+		return array_merge( $routes, $this->get_task_lock_route_definitions(), $this->get_task_today_route_definitions() );
+	}
+
+	/**
+	 * Get the REST route definition for the "For today" quick action.
+	 *
+	 * @return array<int, array<string, mixed>> The today route definition.
+	 */
+	private function get_task_today_route_definitions(): array {
+		return array(
 			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'handle_clone_task' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_posts' );
-				},
-			)
+				'route'      => '/tasks/(?P<id>\d+)/today',
+				'methods'    => 'PUT',
+				'callback'   => 'handle_task_today',
+				'permission' => 'edit_task',
+				'args'       => array(
+					'marked' => array(
+						'required' => true,
+						'type'     => 'boolean',
+					),
+				),
+			),
 		);
+	}
+
+	/**
+	 * Handle the "For today" quick action for the current user.
+	 *
+	 * Changes only the authenticated user's current-day relation. It never
+	 * touches shared task fields, the task edit lock, or another user's data.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_task_today( $request ) {
+		$task_id = (int) $request['id'];
+		$post    = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_invalid_task',
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		// Identity is derived from the session; a client-supplied user is refused.
+		if ( null !== $request->get_param( 'user_id' ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_unexpected_identity',
+					'message' => __( 'The user is derived from the session and cannot be provided.', 'decker' ),
+				),
+				400
+			);
+		}
+
+		if ( 'archived' === $post->post_status ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_task_archived',
+					'message' => __( 'This task is archived and cannot be marked for today.', 'decker' ),
+				),
+				409
+			);
+		}
+
+		$marked = (bool) $request->get_param( 'marked' );
+		$result = $this->get_today_manager()->set_today_state( $task_id, get_current_user_id(), $marked );
+
+		if ( is_wp_error( $result ) ) {
+			return $this->lock_error_response( $result );
+		}
+
+		return new WP_REST_Response(
+			array_merge(
+				array(
+					'success' => true,
+					'message' => $this->today_result_message( $result['marked'], $result['changed'] ),
+				),
+				$result
+			),
+			200
+		);
+	}
+
+	/**
+	 * Build the human-readable message for a today quick-action result.
+	 *
+	 * @param bool $marked  The resulting marked state.
+	 * @param bool $changed Whether the state actually changed.
+	 * @return string The translated message.
+	 */
+	private function today_result_message( bool $marked, bool $changed ): string {
+		if ( $marked ) {
+			return $changed
+				? __( 'Task added to today.', 'decker' )
+				: __( 'Task is already marked for today.', 'decker' );
+		}
+
+		return $changed
+			? __( 'Task removed from today.', 'decker' )
+			: __( 'Task is not marked for today.', 'decker' );
+	}
+
+	/**
+	 * Get the REST route definitions for the task edit-lock endpoints.
+	 *
+	 * @return array<int, array<string, mixed>> The lock route definitions.
+	 */
+	private function get_task_lock_route_definitions(): array {
+		return array(
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock',
+				'methods'    => 'GET',
+				'callback'   => 'handle_get_task_lock',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock',
+				'methods'    => 'POST',
+				'callback'   => 'handle_acquire_task_lock',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock',
+				'methods'    => 'DELETE',
+				'callback'   => 'handle_release_task_lock',
+				'permission' => 'edit_posts',
+			),
+			array(
+				'route'      => '/tasks/(?P<id>\d+)/lock/takeover',
+				'methods'    => 'POST',
+				'callback'   => 'handle_takeover_task_lock',
+				'permission' => 'edit_posts',
+			),
+		);
+	}
+
+	/**
+	 * Validate a task lock REST request (task exists and user may edit it).
+	 *
+	 * @param int $task_id The task post ID.
+	 * @return WP_REST_Response|null An error response, or null when the request is valid.
+	 */
+	private function validate_task_lock_request( int $task_id ) {
+		$post = get_post( $task_id );
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_invalid_task',
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_task_cannot_edit',
+					'message' => __( 'You are not allowed to edit this card.', 'decker' ),
+				),
+				403
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Convert a lock WP_Error into a REST response with the proper status code.
+	 *
+	 * @param WP_Error $error The lock error.
+	 * @return WP_REST_Response The error response.
+	 */
+	private function lock_error_response( WP_Error $error ): WP_REST_Response {
+		$data   = $error->get_error_data();
+		$status = ( is_array( $data ) && isset( $data['status'] ) ) ? (int) $data['status'] : 400;
+
+		return new WP_REST_Response(
+			array(
+				'success' => false,
+				'code'    => $error->get_error_code(),
+				'message' => $error->get_error_message(),
+			),
+			$status
+		);
+	}
+
+	/**
+	 * Handle the REST request that returns the current lock state of a task.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_get_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$info = $this->get_task_locks()->get_lock_info( $task_id, get_current_user_id() );
+
+		return new WP_REST_Response( $info, 200 );
+	}
+
+	/**
+	 * Handle the REST request that acquires or refreshes a task lock.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_acquire_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$info = $this->get_task_locks()->acquire_lock( $task_id, get_current_user_id() );
+		if ( is_wp_error( $info ) ) {
+			return $this->lock_error_response( $info );
+		}
+
+		// The task is held by another active user; report the conflict.
+		$status = $info['locked'] ? 409 : 200;
+
+		return new WP_REST_Response( $info, $status );
+	}
+
+	/**
+	 * Handle the REST request that explicitly takes over a task lock.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_takeover_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$info = $this->get_task_locks()->take_over_lock( $task_id, get_current_user_id() );
+		if ( is_wp_error( $info ) ) {
+			return $this->lock_error_response( $info );
+		}
+
+		return new WP_REST_Response( $info, 200 );
+	}
+
+	/**
+	 * Handle the REST request that releases a task lock owned by the current user.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_release_task_lock( $request ) {
+		$task_id = (int) $request['id'];
+
+		$error = $this->validate_task_lock_request( $task_id );
+		if ( $error instanceof WP_REST_Response ) {
+			return $error;
+		}
+
+		$generation = $request->get_param( 'lock_generation' );
+		$released   = $this->get_task_locks()->release_lock(
+			$task_id,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : ''
+		);
+
+		return new WP_REST_Response( array( 'released' => $released ), 200 );
+	}
+
+	/**
+	 * Refresh the current user's task lock during a WordPress heartbeat.
+	 *
+	 * The front-end sends the id of the task open in edit mode plus the session
+	 * generation embedded in its form. The lock is only refreshed when the user
+	 * still owns that exact session; a heartbeat never re-acquires a released
+	 * lock, so a previous editor cannot be re-authorized after a takeover. When
+	 * the session no longer matches, the payload reports the loss so the editor
+	 * can block further saves.
+	 *
+	 * @param array $response The heartbeat response.
+	 * @param array $data     The data received from the client.
+	 * @return array The augmented heartbeat response.
+	 */
+	public function refresh_task_lock_heartbeat( $response, $data ) {
+		if ( empty( $data['decker_task_lock']['post_id'] ) ) {
+			return $response;
+		}
+
+		$task_id = absint( $data['decker_task_lock']['post_id'] );
+		if ( ! $task_id ) {
+			return $response;
+		}
+
+		$user_id = get_current_user_id();
+		if ( ! $user_id || ! current_user_can( 'edit_post', $task_id ) ) {
+			return $response;
+		}
+
+		$session_generation = isset( $data['decker_task_lock']['generation'] )
+			? sanitize_text_field( wp_unslash( $data['decker_task_lock']['generation'] ) )
+			: '';
+
+		$info = $this->get_task_locks()->refresh_lock( $task_id, $user_id, $session_generation );
+		if ( is_wp_error( $info ) ) {
+			return $response;
+		}
+		$info['request_generation'] = $session_generation;
+
+		$response['decker_task_lock'] = $info;
+
+		return $response;
 	}
 
 	/**
@@ -728,6 +1194,68 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Handle the REST API request to merge a task into another task.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response The REST response.
+	 */
+	public function handle_merge_task( WP_REST_Request $request ) {
+		$source_task_id      = (int) $request['id'];
+		$destination_task_id = (int) $request->get_param( 'destination_task_id' );
+
+		if ( ! $destination_task_id ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Please choose a destination task.', 'decker' ),
+				),
+				400
+			);
+		}
+
+		if ( ! current_user_can( 'edit_post', $source_task_id ) ||
+			! current_user_can( 'edit_post', $destination_task_id ) ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __(
+						'You do not have permission to merge one of the selected tasks.',
+						'decker'
+					),
+				),
+				403
+			);
+		}
+
+		$result = self::merge_tasks( $source_task_id, $destination_task_id );
+
+		if ( is_wp_error( $result ) ) {
+			$error_data = $result->get_error_data();
+			$status     = is_array( $error_data ) && isset( $error_data['status'] )
+				? (int) $error_data['status']
+				: 400;
+
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $result->get_error_message(),
+				),
+				$status
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'success'             => true,
+				'source_task_id'      => $source_task_id,
+				'destination_task_id' => $destination_task_id,
+				'message'             => __( 'Task merged successfully.', 'decker' ),
+			),
+			200
+		);
+	}
+
+	/**
 	 * Clone a task by creating a new task with the same data.
 	 *
 	 * Copies post title (with " (copy)" suffix), content, status, meta
@@ -747,51 +1275,21 @@ class Decker_Tasks {
 		}
 
 		// Build the new title with " (copy)" suffix.
-		$original_title = $post->post_title;
-		if ( empty( trim( $original_title ) ) ) {
-			$original_title = __( 'Untitled', 'decker' );
-		}
-
-		/* translators: %s: original task title */
-		$new_title = sprintf( __( '%s (copy)', 'decker' ), $original_title );
+		$new_title = self::build_clone_title( $post );
 
 		// Gather meta values.
 		$stack        = get_post_meta( $task_id, 'stack', true );
 		$max_priority = (bool) get_post_meta( $task_id, 'max_priority', true );
 		$hidden       = (bool) get_post_meta( $task_id, 'hidden', true );
 		$responsable  = (int) get_post_meta( $task_id, 'responsable', true );
-		$duedate_raw  = get_post_meta( $task_id, 'duedate', true );
 
-		$duedate = null;
-		if ( ! empty( $duedate_raw ) ) {
-			try {
-				$duedate = new DateTime( $duedate_raw );
-			} catch ( Exception $e ) {
-				$duedate = null;
-			}
-		}
+		$duedate = self::parse_duedate_meta( $task_id );
 
-		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
-		if ( ! is_array( $assigned_users ) ) {
-			$assigned_users = array();
-		}
+		$assigned_users = self::get_task_assigned_users( $task_id );
 
 		// Get taxonomy terms.
-		$board_terms = wp_get_post_terms(
-			$task_id,
-			'decker_board',
-			array( 'fields' => 'ids' )
-		);
-		$board = ! empty( $board_terms ) && ! is_wp_error( $board_terms )
-			? (int) $board_terms[0]
-			: 0;
-
-		$label_terms = wp_get_post_terms(
-			$task_id,
-			'decker_label',
-			array( 'fields' => 'ids' )
-		);
-		$labels = ! is_wp_error( $label_terms ) ? $label_terms : array();
+		$board  = self::get_task_board_id( $task_id );
+		$labels = self::get_task_label_ids( $task_id );
 
 		// Determine archived status from original post status.
 		$archived = ( 'archived' === $post->post_status );
@@ -816,6 +1314,455 @@ class Decker_Tasks {
 		);
 
 		return $new_task_id;
+	}
+
+	/**
+	 * Build the cloned task title with the " (copy)" suffix.
+	 *
+	 * @param WP_Post $post The original task post.
+	 * @return string The new title.
+	 */
+	private static function build_clone_title( WP_Post $post ): string {
+		$original_title = $post->post_title;
+		if ( empty( trim( $original_title ) ) ) {
+			$original_title = __( 'Untitled', 'decker' );
+		}
+
+		/* translators: %s: original task title */
+		return sprintf( __( '%s (copy)', 'decker' ), $original_title );
+	}
+
+	/**
+	 * Parse the duedate meta value of a task into a DateTime object.
+	 *
+	 * @param int $task_id The task ID.
+	 * @return DateTime|null The parsed due date, or null when empty or invalid.
+	 */
+	private static function parse_duedate_meta( int $task_id ): ?DateTime {
+		$duedate_raw = get_post_meta( $task_id, 'duedate', true );
+
+		if ( empty( $duedate_raw ) ) {
+			return null;
+		}
+
+		try {
+			return new DateTime( $duedate_raw );
+		} catch ( Exception $e ) {
+			return null;
+		}
+	}
+
+	/**
+	 * Get the assigned users meta of a task as an array.
+	 *
+	 * @param int $task_id The task ID.
+	 * @return array The assigned user IDs, or an empty array when not set.
+	 */
+	private static function get_task_assigned_users( int $task_id ): array {
+		$assigned_users = get_post_meta( $task_id, 'assigned_users', true );
+		if ( ! is_array( $assigned_users ) ) {
+			$assigned_users = array();
+		}
+
+		return $assigned_users;
+	}
+
+	/**
+	 * Get the first board term ID assigned to a task.
+	 *
+	 * @param int $task_id The task ID.
+	 * @return int The board term ID, or 0 when none.
+	 */
+	private static function get_task_board_id( int $task_id ): int {
+		$board_terms = wp_get_post_terms(
+			$task_id,
+			'decker_board',
+			array( 'fields' => 'ids' )
+		);
+
+		return ! empty( $board_terms ) && ! is_wp_error( $board_terms )
+			? (int) $board_terms[0]
+			: 0;
+	}
+
+	/**
+	 * Get the label term IDs assigned to a task.
+	 *
+	 * @param int $task_id The task ID.
+	 * @return array The label term IDs, or an empty array on error.
+	 */
+	private static function get_task_label_ids( int $task_id ): array {
+		$label_terms = wp_get_post_terms(
+			$task_id,
+			'decker_label',
+			array( 'fields' => 'ids' )
+		);
+
+		return ! is_wp_error( $label_terms ) ? $label_terms : array();
+	}
+
+	/**
+	 * Merge a source task into a destination task.
+	 *
+	 * The destination task keeps its primary fields, while the source task
+	 * contributes assigned users, user-date relations, comments, attachments,
+	 * and description content. The source task is archived and renamed.
+	 *
+	 * @param int $source_task_id The source task ID.
+	 * @param int $destination_task_id The destination task ID.
+	 * @return true|WP_Error True on success or a WP_Error on failure.
+	 */
+	public static function merge_tasks( int $source_task_id, int $destination_task_id ) {
+		$source_post      = get_post( $source_task_id );
+		$destination_post = get_post( $destination_task_id );
+
+		$validation = self::validate_merge_request(
+			$source_post,
+			$destination_post,
+			$source_task_id,
+			$destination_task_id
+		);
+		if ( $validation instanceof WP_Error ) {
+			return $validation;
+		}
+
+		self::merge_assigned_users_meta( $source_task_id, $destination_task_id );
+		self::merge_relations_meta( $source_task_id, $destination_task_id );
+
+		$merged_description = self::build_merged_task_description(
+			(string) $destination_post->post_content,
+			(string) $source_post->post_content,
+			(string) $source_post->post_title,
+			$source_task_id
+		);
+
+		wp_update_post(
+			array(
+				'ID'           => $destination_task_id,
+				'post_content' => wp_kses(
+					$merged_description,
+					Decker::get_allowed_tags()
+				),
+			)
+		);
+
+		self::move_task_comments( $source_task_id, $destination_task_id );
+		self::merge_task_attachments( $source_task_id, $destination_task_id );
+		self::archive_merged_source( $source_task_id, $destination_task_id, $source_post->post_title );
+
+		return true;
+	}
+
+	/**
+	 * Validate a merge request and return a WP_Error when it cannot proceed.
+	 *
+	 * @param WP_Post|null $source_post         The source task post object.
+	 * @param WP_Post|null $destination_post    The destination task post object.
+	 * @param int          $source_task_id      The source task ID.
+	 * @param int          $destination_task_id The destination task ID.
+	 * @return WP_Error|null A WP_Error on failure, or null when valid.
+	 */
+	private static function validate_merge_request( $source_post, $destination_post, int $source_task_id, int $destination_task_id ) {
+		if ( ! $source_post || 'decker_task' !== $source_post->post_type ) {
+			return new WP_Error(
+				'invalid_source_task',
+				__( 'The source task was not found.', 'decker' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( ! $destination_post || 'decker_task' !== $destination_post->post_type ) {
+			return new WP_Error(
+				'invalid_destination_task',
+				__( 'The destination task was not found.', 'decker' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		if ( $source_task_id === $destination_task_id ) {
+			return new WP_Error(
+				'invalid_merge',
+				__( 'A task cannot be merged into itself.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( 'publish' !== $source_post->post_status ||
+			'publish' !== $destination_post->post_status ) {
+			return new WP_Error(
+				'invalid_task_status',
+				__( 'Only published tasks can be merged.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( get_post_meta( $source_task_id, 'merged_into', true ) ) {
+			return new WP_Error(
+				'already_merged',
+				__( 'This task has already been merged.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Merge the assigned-users meta of two tasks into the destination.
+	 *
+	 * @param int $source_task_id      The source task ID.
+	 * @param int $destination_task_id The destination task ID.
+	 */
+	private static function merge_assigned_users_meta( int $source_task_id, int $destination_task_id ) {
+		$destination_assigned_users = self::normalize_task_user_ids(
+			get_post_meta( $destination_task_id, 'assigned_users', true )
+		);
+		$source_assigned_users      = self::normalize_task_user_ids(
+			get_post_meta( $source_task_id, 'assigned_users', true )
+		);
+		$merged_assigned_users      = array_values(
+			array_unique(
+				array_merge(
+					$destination_assigned_users,
+					$source_assigned_users
+				)
+			)
+		);
+
+		update_post_meta(
+			$destination_task_id,
+			'assigned_users',
+			$merged_assigned_users
+		);
+	}
+
+	/**
+	 * Merge the user-date relations of two tasks into the destination.
+	 *
+	 * @param int $source_task_id      The source task ID.
+	 * @param int $destination_task_id The destination task ID.
+	 */
+	private static function merge_relations_meta( int $source_task_id, int $destination_task_id ) {
+		$merged_relations = self::merge_user_date_relations(
+			get_post_meta( $destination_task_id, '_user_date_relations', true ),
+			get_post_meta( $source_task_id, '_user_date_relations', true )
+		);
+
+		if ( ! empty( $merged_relations ) ) {
+			update_post_meta(
+				$destination_task_id,
+				'_user_date_relations',
+				$merged_relations
+			);
+		}
+	}
+
+	/**
+	 * Reparent all comments of the source task to the destination task.
+	 *
+	 * @param int $source_task_id      The source task ID.
+	 * @param int $destination_task_id The destination task ID.
+	 */
+	private static function move_task_comments( int $source_task_id, int $destination_task_id ) {
+		$source_comments = get_comments(
+			array(
+				'post_id' => $source_task_id,
+				'status'  => 'all',
+				'orderby' => 'comment_ID',
+				'order'   => 'ASC',
+			)
+		);
+
+		foreach ( $source_comments as $comment ) {
+			wp_update_comment(
+				array(
+					'comment_ID'      => $comment->comment_ID,
+					'comment_post_ID' => $destination_task_id,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Reparent and merge the attachments of the source task into the destination.
+	 *
+	 * @param int $source_task_id      The source task ID.
+	 * @param int $destination_task_id The destination task ID.
+	 */
+	private static function merge_task_attachments( int $source_task_id, int $destination_task_id ) {
+		$source_attachments      = get_attached_media( '', $source_task_id );
+		$destination_attachments = get_post_meta(
+			$destination_task_id,
+			'attachments',
+			true
+		);
+		$source_attachment_meta  = get_post_meta( $source_task_id, 'attachments', true );
+
+		$destination_attachments = is_array( $destination_attachments )
+			? array_map( 'intval', $destination_attachments )
+			: array();
+		$source_attachment_meta  = is_array( $source_attachment_meta )
+			? array_map( 'intval', $source_attachment_meta )
+			: array();
+
+		foreach ( $source_attachments as $attachment ) {
+			wp_update_post(
+				array(
+					'ID'          => $attachment->ID,
+					'post_parent' => $destination_task_id,
+				)
+			);
+			$destination_attachments[] = (int) $attachment->ID;
+		}
+
+		if ( ! empty( $source_attachment_meta ) ) {
+			$destination_attachments = array_merge(
+				$destination_attachments,
+				$source_attachment_meta
+			);
+		}
+
+		if ( ! empty( $destination_attachments ) ) {
+			update_post_meta(
+				$destination_task_id,
+				'attachments',
+				array_values( array_unique( $destination_attachments ) )
+			);
+		}
+
+		delete_post_meta( $source_task_id, 'attachments' );
+	}
+
+	/**
+	 * Mark the source task as merged, rename it and archive it.
+	 *
+	 * @param int    $source_task_id      The source task ID.
+	 * @param int    $destination_task_id The destination task ID.
+	 * @param string $source_title        The original source task title.
+	 */
+	private static function archive_merged_source( int $source_task_id, int $destination_task_id, string $source_title ) {
+		update_post_meta( $source_task_id, 'merged_into', $destination_task_id );
+
+		$renamed_source_title = sprintf(
+			'[MERGED #%1$d] %2$s',
+			$destination_task_id,
+			$source_title
+		);
+
+		wp_update_post(
+			array(
+				'ID'          => $source_task_id,
+				'post_status' => 'archived',
+				'post_title'  => sanitize_text_field( $renamed_source_title ),
+			)
+		);
+	}
+
+	/**
+	 * Normalize the assigned users meta into a list of unique user IDs.
+	 *
+	 * @param mixed $assigned_users The raw assigned users meta value.
+	 * @return array<int> Normalized user IDs.
+	 */
+	private static function normalize_task_user_ids( $assigned_users ): array {
+		if ( ! is_array( $assigned_users ) ) {
+			if ( is_scalar( $assigned_users ) && '' !== (string) $assigned_users ) {
+				$assigned_users = array( $assigned_users );
+			} else {
+				$assigned_users = array();
+			}
+		}
+
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', $assigned_users )
+				)
+			)
+		);
+	}
+
+	/**
+	 * Merge the user-date relations from two tasks without duplicates.
+	 *
+	 * @param mixed $destination_relations The destination relations meta.
+	 * @param mixed $source_relations The source relations meta.
+	 * @return array<int, array<string, int|string>> Merged relations.
+	 */
+	private static function merge_user_date_relations(
+		$destination_relations,
+		$source_relations
+	): array {
+		$destination_relations = is_array( $destination_relations )
+			? $destination_relations
+			: array();
+		$source_relations      = is_array( $source_relations )
+			? $source_relations
+			: array();
+
+		$merged_relations = array();
+		$seen_relations   = array();
+
+		foreach ( array_merge( $destination_relations, $source_relations ) as $relation ) {
+			if ( ! is_array( $relation ) ||
+				! isset( $relation['user_id'], $relation['date'] ) ) {
+				continue;
+			}
+
+			$user_id = (int) $relation['user_id'];
+			$date    = sanitize_text_field( (string) $relation['date'] );
+			$key     = $user_id . '|' . $date;
+
+			if ( isset( $seen_relations[ $key ] ) || ! $user_id || '' === $date ) {
+				continue;
+			}
+
+			$seen_relations[ $key ] = true;
+			$merged_relations[]     = array(
+				'user_id' => $user_id,
+				'date'    => $date,
+			);
+		}
+
+		return $merged_relations;
+	}
+
+	/**
+	 * Build the destination description for a merged task.
+	 *
+	 * @param string $destination_description The destination task description.
+	 * @param string $source_description The source task description.
+	 * @param string $source_title The source task title.
+	 * @param int    $source_task_id The source task ID.
+	 * @return string The merged description content.
+	 */
+	private static function build_merged_task_description(
+		string $destination_description,
+		string $source_description,
+		string $source_title,
+		int $source_task_id
+	): string {
+		$destination_description = trim( $destination_description );
+		$source_description      = trim( $source_description );
+
+		$merge_header = sprintf(
+			/* translators: 1: source task title, 2: source task ID */
+			__( 'Merged from task: %1$s (ID: %2$d)', 'decker' ),
+			$source_title,
+			$source_task_id
+		);
+
+		$merged_block = '<hr /><p><strong>' . esc_html( $merge_header ) . '</strong></p>';
+
+		if ( '' !== $source_description ) {
+			$merged_block .= "\n" . $source_description;
+		}
+
+		if ( '' === $destination_description ) {
+			return $merged_block;
+		}
+
+		return $destination_description . "\n\n" . $merged_block;
 	}
 
 	/**
@@ -929,41 +1876,17 @@ class Decker_Tasks {
 	 * @param int $user_id The user ID.
 	 */
 	public function add_user_date_relation( int $task_id, int $user_id ) {
-
-		$date = new DateTime(); // Current date and time.
-
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		$relations[] = array(
-			'user_id' => $user_id,
-			'date'    => $date->format( 'Y-m-d' ),
-		);
-
-		$result = update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->get_today_manager()->mark_for_today( $task_id, $user_id );
 	}
 
 	/**
-	 * Remove a user-date relation for a task.
+	 * Remove today's user-date relation for a task.
 	 *
 	 * @param int $task_id The task ID.
 	 * @param int $user_id The user ID.
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
-
-				$date = new DateTime(); // Current date and time.
-
-		$relations = get_post_meta( $task_id, '_user_date_relations', true );
-		$relations = $relations ? $relations : array();
-
-		foreach ( $relations as $key => $relation ) {
-			if ( $relation['user_id'] == $user_id && $relation['date'] == $date->format( 'Y-m-d' ) ) {
-				unset( $relations[ $key ] );
-				break;
-			}
-		}
-
-		update_post_meta( $task_id, '_user_date_relations', $relations );
+		$this->get_today_manager()->unmark_for_today( $task_id, $user_id );
 	}
 
 
@@ -1162,6 +2085,7 @@ class Decker_Tasks {
 			'supports'           => array(
 				'title',
 				'editor',
+				'revisions',
 				'author',
 				'custom-fields',
 				'comments',
@@ -1175,6 +2099,70 @@ class Decker_Tasks {
 		);
 
 		register_post_type( 'decker_task', $args );
+
+		$this->register_task_meta();
+	}
+
+	/**
+	 * Register the task detail meta fields for the REST API.
+	 *
+	 * The `decker_task` post type is exposed over REST, but its detail meta was
+	 * not registered, so the generic `/wp/v2/tasks` endpoint silently dropped
+	 * `stack`, `max_priority` and `duedate` on write and never returned them on
+	 * read. Registering them here makes those fields round-trip through REST.
+	 *
+	 * Writing the `stack` meta stays ordering-consistent because the existing
+	 * `added_post_meta` / `updated_post_meta` hooks recompute the task order.
+	 */
+	private function register_task_meta() {
+		$auth_callback = function ( $allowed, $meta_key, $post_id ) {
+			return current_user_can( 'edit_post', $post_id );
+		};
+
+		// `stack` is validated with a REST enum schema rather than a
+		// sanitize_callback so that only REST writes are constrained; internal
+		// meta writes (form save, drag-and-drop reorder) keep their raw values.
+		register_post_meta(
+			'decker_task',
+			'stack',
+			array(
+				'type'          => 'string',
+				'single'        => true,
+				'auth_callback' => $auth_callback,
+				'show_in_rest'  => array(
+					'schema' => array(
+						'type' => 'string',
+						'enum' => array( 'to-do', 'in-progress', 'done' ),
+					),
+				),
+			)
+		);
+
+		// Stored internally as '0'/'1' (and '' for legacy rows); the model reads
+		// it as `'1' === value`. Exposed as a boolean over REST without a
+		// value-altering sanitize_callback so internal writes are untouched.
+		register_post_meta(
+			'decker_task',
+			'max_priority',
+			array(
+				'type'          => 'boolean',
+				'single'        => true,
+				'show_in_rest'  => true,
+				'auth_callback' => $auth_callback,
+			)
+		);
+
+		register_post_meta(
+			'decker_task',
+			'duedate',
+			array(
+				'type'              => 'string',
+				'single'            => true,
+				'show_in_rest'      => true,
+				'auth_callback'     => $auth_callback,
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
 	}
 
 	/**
@@ -1494,22 +2482,40 @@ class Decker_Tasks {
 			
 			<!-- Relations List -->
 			<ul id="user-date-relations-list">
-				<?php
-				foreach ( $relations as $relation ) {
-					// Safely retrieve user data.
-					$user         = get_userdata( $relation['user_id'] );
-					$display_name = $user ? esc_html( $user->display_name ) : esc_html__( 'Unknown User', 'decker' );
-					$date         = esc_html( $relation['date'] );
-					?>
+				<?php $this->render_user_date_relations_list( $relations ); ?>
+			</ul>
+		</div>
+
+		<!-- Inline JavaScript for Meta Box Functionality -->
+		<?php
+		$this->render_user_date_meta_box_script();
+	}
+
+	/**
+	 * Render the existing user-date relations as list items.
+	 *
+	 * @param array $relations The list of user-date relations.
+	 */
+	private function render_user_date_relations_list( array $relations ) {
+		foreach ( $relations as $relation ) {
+			// Safely retrieve user data.
+			$user         = get_userdata( $relation['user_id'] );
+			$display_name = $user ? esc_html( $user->display_name ) : esc_html__( 'Unknown User', 'decker' );
+			$date         = esc_html( $relation['date'] );
+			?>
 					<li data-user-id="<?php echo esc_attr( $relation['user_id'] ); ?>" data-date="<?php echo esc_attr( $relation['date'] ); ?>">
 						<?php echo esc_html( $display_name ) . ' - ' . esc_html( $date ); ?>
 						<button type="button" class="button remove-relation"><?php esc_html_e( 'Remove', 'decker' ); ?></button>
 					</li>
-				<?php } ?>
-			</ul>
-		</div>
-		
-		<!-- Inline JavaScript for Meta Box Functionality -->
+				<?php
+		}
+	}
+
+	/**
+	 * Render the inline JavaScript for the user-date meta box.
+	 */
+	private function render_user_date_meta_box_script() {
+		?>
 		<script>
 		document.addEventListener('DOMContentLoaded', function () {
 			const addBtn = document.getElementById('add-user-date-relation');
@@ -1530,7 +2536,7 @@ class Decker_Tasks {
 				}
 
 				// Check if the user is already added with the same date.
-				const existing = Array.from(relationsList.children).some(item => 
+				const existing = Array.from(relationsList.children).some(item =>
 					item.getAttribute('data-user-id') === userId && item.getAttribute('data-date') === date
 				);
 				if (existing) {
@@ -1543,7 +2549,7 @@ class Decker_Tasks {
 				listItem.setAttribute('data-user-id', userId);
 				listItem.setAttribute('data-date', date);
 				listItem.innerHTML = `
-					${userName} - ${date} 
+					${userName} - ${date}
 					<button type="button" class="button remove-relation"><?php echo esc_js( __( 'Remove', 'decker' ) ); ?></button>
 				`;
 				relationsList.appendChild(listItem);
@@ -1710,52 +2716,119 @@ class Decker_Tasks {
 		// Ensure we're working with the correct post type and only on Insert post.
 		if ( ! $update && 'decker_task' === $postarr['post_type'] ) {
 
-			// Initialize variables.
-			$board = '';
-			$stack = '';
+			$board = $this->resolve_new_task_board( $postarr );
+			$stack = $this->resolve_new_task_stack( $postarr );
 
-			// 1. Attempt to retrieve 'decker_board' and 'stack' directly from $postarr.
-			if ( isset( $postarr['decker_board'] ) ) {
-				$board = intval( $postarr['decker_board'] );
-			}
-
-			if ( isset( $postarr['stack'] ) ) {
-				$stack = sanitize_text_field( $postarr['stack'] );
-			}
-
-			// 2. If not found directly, attempt to retrieve from 'meta_input' and 'tax_input'.
-			if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
-				$board = intval( $postarr['tax_input']['decker_board'][0] );
-			}
-
-			if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
-				$stack = sanitize_text_field( $postarr['meta_input']['stack'] );
-			}
-
-			// 3. Validate that both 'board' and 'stack' have been retrieved.
-			if ( ! empty( $board ) && ! empty( $stack ) ) {
-
-				// Calculate the new order value based on 'board' and 'stack'.
-				$new_order = $this->get_new_task_order( $board, $stack );
-
-				// Ensure that the new order is a valid number.
-				if ( is_numeric( $new_order ) ) {
-					// Assign the calculated menu_order to the post data.
-					$data['menu_order'] = intval( $new_order );
-				} else {
-					// Log an error if the new_order is not numeric.
-					error_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'] );
-				}
-			} else {
-				// Log a warning if either 'board' or 'stack' is missing.
-				error_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'] );
-			}
+			$data = $this->apply_calculated_menu_order( $data, $board, $stack, $postarr );
 		}
 
 		return $data;
 	}
 
+	/**
+	 * Resolve the board ID for a task being inserted from the post array.
+	 *
+	 * @param array $postarr The original post array containing input data.
+	 * @return int The board term ID, or 0 when absent.
+	 */
+	private function resolve_new_task_board( array $postarr ): int {
+		$board = '';
 
+		if ( isset( $postarr['decker_board'] ) ) {
+			$board = intval( $postarr['decker_board'] );
+		}
+
+		if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
+			$board = intval( $postarr['tax_input']['decker_board'][0] );
+		}
+
+		return (int) $board;
+	}
+
+	/**
+	 * Resolve the stack value for a task being inserted from the post array.
+	 *
+	 * @param array $postarr The original post array containing input data.
+	 * @return string The stack value, or '' when absent.
+	 */
+	private function resolve_new_task_stack( array $postarr ): string {
+		$stack = '';
+
+		if ( isset( $postarr['stack'] ) ) {
+			$stack = sanitize_text_field( $postarr['stack'] );
+		}
+
+		if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
+			$stack = sanitize_text_field( $postarr['meta_input']['stack'] );
+		}
+
+		return (string) $stack;
+	}
+
+	/**
+	 * Apply the calculated menu_order to the post data when board and stack are present.
+	 *
+	 * @param array  $data    The sanitized data to be saved for the post.
+	 * @param int    $board   The resolved board term ID.
+	 * @param string $stack   The resolved stack value.
+	 * @param array  $postarr The original post array containing input data.
+	 * @return array The data array, possibly with an updated menu_order.
+	 */
+	private function apply_calculated_menu_order( array $data, int $board, string $stack, array $postarr ): array {
+		// Validate that both 'board' and 'stack' have been retrieved.
+		if ( ! empty( $board ) && ! empty( $stack ) ) {
+
+			// Calculate the new order value based on 'board' and 'stack'.
+			$new_order = $this->get_new_task_order( $board, $stack );
+
+			// Ensure that the new order is a valid number.
+			if ( is_numeric( $new_order ) ) {
+				// Assign the calculated menu_order to the post data.
+				$data['menu_order'] = intval( $new_order );
+			} else {
+				// Log an error if the new_order is not numeric.
+				error_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'] );
+			}
+		} else {
+			// Log a warning if either 'board' or 'stack' is missing.
+			error_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'] );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Enforce the edit lock on generic REST updates of an existing task.
+	 *
+	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
+	 * registered meta), which bypasses the lock guard in save_decker_task. This
+	 * rejects an update while another user owns the active lock and requires a
+	 * valid `lock_generation` once the task carries one (detect-and-reject).
+	 * Creates (no existing id) and never-locked tasks remain updatable over REST.
+	 *
+	 * @param stdClass        $prepared_post The prepared post for insertion.
+	 * @param WP_REST_Request $request       The REST request.
+	 * @return stdClass|WP_Error The prepared post, or a 409 error when locked.
+	 */
+	public function guard_rest_task_update( $prepared_post, $request ) {
+		if ( empty( $prepared_post->ID ) ) {
+			return $prepared_post;
+		}
+
+		$generation = $request->get_param( 'lock_generation' );
+		$check      = $this->get_task_locks()->assert_user_can_save(
+			(int) $prepared_post->ID,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : null,
+			true
+		);
+
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+
+		return $prepared_post;
+	}
 
 	/**
 	 * Save the custom meta fields.
@@ -1766,35 +2839,73 @@ class Decker_Tasks {
 	 */
 	public function save_meta( $post_id, $post, $update ) {
 
+		// Bail out early when the request must not modify task meta.
+		if ( ! $this->can_save_task_meta( $post_id ) ) {
+			return $post_id;
+		}
+
+		// Enforce the edit lock so a stale admin session cannot overwrite newer
+		// changes after another user has taken over editing.
+		if ( is_wp_error( $this->get_task_locks()->assert_user_can_save( $post_id, get_current_user_id() ) ) ) {
+			return $post_id;
+		}
+
+		// The order of these calls is load-bearing: writing the 'stack' meta and the
+		// 'decker_board' term trigger reorder hooks mid-save, so details must run
+		// before taxonomies, and both before users and relations.
+		$this->save_task_detail_fields( $post_id );
+		$this->save_task_taxonomies( $post_id );
+		$this->save_task_assigned_users( $post_id );
+		$this->save_task_user_date_relations( $post_id );
+	}
+
+	/**
+	 * Determine whether the current request is allowed to save task meta.
+	 *
+	 * @param int $post_id The current post ID.
+	 * @return bool True when the meta may be saved, false otherwise.
+	 */
+	private function can_save_task_meta( int $post_id ): bool {
 		// Check if nonce is set and verified.
 		if ( ! isset( $_POST['decker_task_nonce'] ) ) {
-			return; // Exit if the nonce is not set.
+			return false; // Exit if the nonce is not set.
 		}
 
 		$nonce = sanitize_text_field( wp_unslash( $_POST['decker_task_nonce'] ) );
 		if ( ! wp_verify_nonce( $nonce, 'save_decker_task' ) ) {
-			return; // Exit if the nonce verification fails.
+			return false; // Exit if the nonce verification fails.
 		}
 
 		// Check autosave and post type.
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return $post_id;
+			return false;
 		}
 		if ( ! isset( $_POST['post_type'] ) || 'decker_task' !== $_POST['post_type'] ) {
-			return $post_id;
+			return false;
 		}
 
 		// Check the user's permissions.
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return $post_id;
+			return false;
 		}
 
 		// Prevent changes if the task is archived.
 		if ( 'archived' === get_post_status( $post_id ) ) {
-			return $post_id;
+			return false;
 		}
 
-		// Save task details.
+		return true;
+	}
+
+	/**
+	 * Save the task detail meta fields (duedate, max_priority, stack, nextcloud card).
+	 *
+	 * The nonce has already been verified by can_save_task_meta().
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function save_task_detail_fields( int $post_id ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['duedate'] ) ) {
 			$duedate = sanitize_text_field( wp_unslash( $_POST['duedate'] ) );
 			update_post_meta( $post_id, 'duedate', $duedate );
@@ -1808,6 +2919,18 @@ class Decker_Tasks {
 		if ( isset( $_POST['id_nextcloud_card'] ) ) {
 			update_post_meta( $post_id, 'id_nextcloud_card', sanitize_text_field( wp_unslash( $_POST['id_nextcloud_card'] ) ) );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Save the task taxonomies (labels first, then board), both as slugs.
+	 *
+	 * The nonce has already been verified by can_save_task_meta().
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function save_task_taxonomies( int $post_id ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['decker_labels'] ) ) {
 			$labels      = array_map( 'sanitize_text_field', wp_unslash( $_POST['decker_labels'] ) );
 			$label_slugs = array();
@@ -1826,16 +2949,39 @@ class Decker_Tasks {
 				wp_set_post_terms( $post_id, array( $board_term->slug ), 'decker_board' );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
 
-		// Save assigned users.
+	/**
+	 * Save the assigned users meta when posted.
+	 *
+	 * The nonce has already been verified by can_save_task_meta().
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function save_task_assigned_users( int $post_id ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['assigned_users'] ) ) {
 			$assigned_users = array_map( 'intval', wp_unslash( $_POST['assigned_users'] ) );
 			update_post_meta( $post_id, 'assigned_users', $assigned_users );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
 
+	/**
+	 * Decode and unconditionally save the user-date relations meta.
+	 *
+	 * The relations meta is always written (an empty array when the field is
+	 * absent) so previous relations are cleared. The nonce has already been
+	 * verified by can_save_task_meta().
+	 *
+	 * @param int $post_id The current post ID.
+	 */
+	private function save_task_user_date_relations( int $post_id ) {
 		// Save user date relations.
 		$relations = array();
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( isset( $_POST['user_date_relations'] ) ) {
 			// Remove slashes added by WordPress.
 			$relations_json = sanitize_text_field( wp_unslash( $_POST['user_date_relations'] ) );
@@ -1852,6 +2998,7 @@ class Decker_Tasks {
 				error_log( 'JSON decoding failed: ' . json_last_error_msg() );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		update_post_meta( $post_id, '_user_date_relations', $relations );
 	}
@@ -1897,17 +3044,22 @@ class Decker_Tasks {
 		global $pagenow;
 		$qv = &$query->query_vars;
 		if ( 'edit.php' == $pagenow && isset( $qv['post_type'] ) && 'decker_task' == $qv['post_type'] ) {
-			if ( isset( $qv['decker_board'] ) && is_numeric( $qv['decker_board'] ) && 0 != $qv['decker_board'] ) {
-				$term = get_term_by( 'id', $qv['decker_board'], 'decker_board' );
-				if ( $term ) {
-					$qv['decker_board'] = $term->slug;
-				}
-			}
-			if ( isset( $qv['decker_label'] ) && is_numeric( $qv['decker_label'] ) && 0 != $qv['decker_label'] ) {
-				$term = get_term_by( 'id', $qv['decker_label'], 'decker_label' );
-				if ( $term ) {
-					$qv['decker_label'] = $term->slug;
-				}
+			$this->map_taxonomy_filter_to_slug( $qv, 'decker_board' );
+			$this->map_taxonomy_filter_to_slug( $qv, 'decker_label' );
+		}
+	}
+
+	/**
+	 * Replace a numeric taxonomy query var with the matching term slug in place.
+	 *
+	 * @param array  $qv       The query vars array, passed by reference for in-place mutation.
+	 * @param string $taxonomy The taxonomy name.
+	 */
+	private function map_taxonomy_filter_to_slug( array &$qv, string $taxonomy ) {
+		if ( isset( $qv[ $taxonomy ] ) && is_numeric( $qv[ $taxonomy ] ) && 0 != $qv[ $taxonomy ] ) {
+			$term = get_term_by( 'id', $qv[ $taxonomy ], $taxonomy );
+			if ( $term ) {
+				$qv[ $taxonomy ] = $term->slug;
 			}
 		}
 	}
@@ -2024,76 +3176,84 @@ class Decker_Tasks {
 		}
 
 		// Retrieve and sanitize form data.
-		$id          = isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0;
-		$title       = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
-		$description = isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '';
-		$stack       = isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '';
-		$board       = isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0;
+		$core    = $this->read_task_core_fields();
+		$options = $this->read_task_option_fields();
 
-		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
+		// Enforce the edit lock server-side before applying changes to an
+		// existing task. A stale editing session (for example after another user
+		// took over the lock) must never overwrite newer changes, even when the
+		// active lock was released after the takeover (modal close / pagehide).
+		if ( $core['id'] > 0 ) {
+			// Public AJAX saves of an existing task must carry a session
+			// generation while locking is enabled; a missing token cannot be
+			// validated against a takeover and must not overwrite newer changes.
+			$lock_check = $this->get_task_locks()->assert_user_can_save(
+				$core['id'],
+				get_current_user_id(),
+				$options['lock_generation'],
+				true
+			);
+			if ( is_wp_error( $lock_check ) ) {
+				$error_data = array(
+					'message' => $lock_check->get_error_message(),
+					'code'    => $lock_check->get_error_code(),
+					'locked'  => true,
+				);
 
-		$duedate_raw = isset( $_POST['due_date'] ) ? sanitize_text_field( wp_unslash( $_POST['due_date'] ) ) : '';
+				$error_data_extra = $lock_check->get_error_data();
+				if ( is_array( $error_data_extra ) ) {
+					if ( isset( $error_data_extra['owner'] ) ) {
+						$error_data['owner'] = $error_data_extra['owner'];
+					}
+					if ( isset( $error_data_extra['generation'] ) ) {
+						$error_data['generation'] = $error_data_extra['generation'];
+					}
+				}
 
-		$mark_for_today = isset( $_POST['mark_for_today'] ) ? boolval( wp_unslash( $_POST['mark_for_today'] ) ) : false;
+				if ( $send_response ) {
+					wp_send_json_error( $error_data, 409 );
+					return;
+				}
 
-		try {
-			$duedate = new DateTime( $duedate_raw );
-		} catch ( Exception $e ) {
-			$duedate = new DateTime(); // Default value if conversion fails.
+				return array_merge( array( 'success' => false ), $error_data );
+			}
 		}
 
-		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
-		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
+		$lock_generation = is_string( $options['lock_generation'] ) ? $options['lock_generation'] : '';
 
-		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
+		$duedate = $this->parse_task_due_date( $options['duedate_raw'] );
+
+		$mark_for_today = $options['mark_for_today'];
 
 		// Handle assignees.
-		$assigned_users = array();
-
-		if ( isset( $_POST['assignees'] ) ) {
-			// Remove backslashes added by WordPress.
-			$assignees_raw = sanitize_text_field( wp_unslash( $_POST['assignees'] ) );
-
-			if ( is_string( $assignees_raw ) ) {
-				$assigned_users = array_map( 'absint', explode( ',', $assignees_raw ) );
-			} elseif ( is_array( $assignees_raw ) ) {
-				$assigned_users = array_map( 'absint', $assignees_raw );
-			}
-		}
+		$assigned_users = $this->read_id_list_field( 'assignees' );
 
 		// Handle labels.
-		$labels = array();
-
-		if ( isset( $_POST['labels'] ) ) {
-			// Remove slashes added by WordPress.
-			$labels_raw = sanitize_text_field( wp_unslash( $_POST['labels'] ) );
-
-			if ( is_string( $labels_raw ) ) {
-				$labels = array_map( 'absint', explode( ',', $labels_raw ) );
-			} elseif ( is_array( $labels_raw ) ) {
-				$labels = array_map( 'absint', $labels_raw );
-			}
-		}
+		$labels = $this->read_id_list_field( 'labels' );
 
 		// Call the common function to create or update the task.
 		$result = self::create_or_update_task(
-			$id,
-			$title,
-			$description,
-			$stack,
-			$board,
-			$max_priority,
+			$core['id'],
+			$core['title'],
+			$core['description'],
+			$core['stack'],
+			$core['board'],
+			$options['max_priority'],
 			$duedate,
-			$author,
-			$responsable,
-			$hidden,
+			$options['author'],
+			$options['responsable'],
+			$options['hidden'],
 			$assigned_users,
 			$labels
 		);
 
 		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-			return;
+			$error_data = array( 'message' => $result->get_error_message() );
+			if ( $send_response ) {
+				wp_send_json_error( $error_data );
+				return;
+			}
+			return array_merge( array( 'success' => false ), $error_data );
 		}
 
 		// Set today.
@@ -2103,10 +3263,22 @@ class Decker_Tasks {
 			$this->remove_user_date_relation( $result, get_current_user_id() );
 		}
 
+		// The save committed: rotate the generation so any other stale form (for
+		// example a second tab of the same user) is rejected on its next save, and
+		// hand the new token back so this form adopts it.
+		$new_generation = '';
+		if ( $core['id'] > 0 && '' !== $lock_generation ) {
+			$rotated = $this->get_task_locks()->rotate_generation( $core['id'], get_current_user_id(), $lock_generation );
+			if ( false !== $rotated ) {
+				$new_generation = $rotated;
+			}
+		}
+
 		$result_data = array(
-			'success' => ! is_wp_error( $result ),
-			'message' => is_wp_error( $result ) ? $result->get_error_message() : __( 'Task saved successfully.', 'decker' ),
-			'task_id' => $result,
+			'success'    => ! is_wp_error( $result ),
+			'message'    => is_wp_error( $result ) ? $result->get_error_message() : __( 'Task saved successfully.', 'decker' ),
+			'task_id'    => $result,
+			'generation' => $new_generation,
 		);
 
 		if ( $send_response ) {
@@ -2114,6 +3286,107 @@ class Decker_Tasks {
 		}
 
 		return $result_data;
+	}
+
+	/**
+	 * Read and sanitize the core task fields from the AJAX request.
+	 *
+	 * The nonce is verified by the caller when the response filter is enabled.
+	 *
+	 * @return array{id:int,title:string,description:string,stack:string,board:int}
+	 */
+	private function read_task_core_fields(): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		return array(
+			'id'          => isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0,
+			'title'       => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '',
+			'description' => isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '',
+			'stack'       => isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '',
+			'board'       => isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0,
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Read and sanitize the optional task fields from the AJAX request.
+	 *
+	 * The nonce is verified by the caller when the response filter is enabled.
+	 *
+	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string,lock_generation:string|null}
+	 */
+	private function read_task_option_fields(): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$max_priority = isset( $_POST['max_priority'] ) ? boolval( wp_unslash( $_POST['max_priority'] ) ) : false;
+
+		$duedate_raw = isset( $_POST['due_date'] ) ? sanitize_text_field( wp_unslash( $_POST['due_date'] ) ) : '';
+
+		$mark_for_today = isset( $_POST['mark_for_today'] ) ? boolval( wp_unslash( $_POST['mark_for_today'] ) ) : false;
+
+		$author = isset( $_POST['author'] ) ? intval( wp_unslash( $_POST['author'] ) ) : get_current_user_id();
+		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
+
+		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
+
+		// Session generation token from the editor form; null when the client did not send it.
+		$lock_generation = null;
+		if ( isset( $_POST['lock_generation'] ) ) {
+			$lock_generation_raw = sanitize_text_field( wp_unslash( $_POST['lock_generation'] ) );
+			if ( '' !== $lock_generation_raw ) {
+				$lock_generation = $lock_generation_raw;
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		return array(
+			'max_priority'    => $max_priority,
+			'mark_for_today'  => $mark_for_today,
+			'author'          => $author,
+			'responsable'     => $responsable,
+			'hidden'          => $hidden,
+			'duedate_raw'     => $duedate_raw,
+			'lock_generation' => $lock_generation,
+		);
+	}
+
+	/**
+	 * Parse a raw due-date string into a DateTime, falling back to today on failure.
+	 *
+	 * @param string $duedate_raw The raw due-date string.
+	 * @return DateTime The parsed date, or today when the value is invalid.
+	 */
+	private function parse_task_due_date( string $duedate_raw ): DateTime {
+		try {
+			return new DateTime( $duedate_raw );
+		} catch ( Exception $e ) {
+			return new DateTime(); // Default value if conversion fails.
+		}
+	}
+
+	/**
+	 * Read a comma-separated or array ID list field from the AJAX request.
+	 *
+	 * The nonce is verified by the caller when the response filter is enabled.
+	 *
+	 * @param string $field The $_POST field name.
+	 * @return array<int> The list of absint IDs, or an empty array when absent.
+	 */
+	private function read_id_list_field( string $field ): array {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		if ( ! isset( $_POST[ $field ] ) ) {
+			return array();
+		}
+
+		// Remove backslashes added by WordPress.
+		$raw = sanitize_text_field( wp_unslash( $_POST[ $field ] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		if ( is_string( $raw ) ) {
+			return array_map( 'absint', explode( ',', $raw ) );
+		} elseif ( is_array( $raw ) ) {
+			return array_map( 'absint', $raw );
+		}
+
+		return array();
 	}
 
 	/**
@@ -2159,6 +3432,75 @@ class Decker_Tasks {
 	) {
 
 		// Validate required fields.
+		$validation = self::validate_task_fields( $title, $stack, $board );
+		if ( $validation instanceof WP_Error ) {
+			return $validation;
+		}
+
+		// Convert DateTime objects to string format (otherwise pass null to undefined).
+		$duedate_str = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+
+		// Prepare the terms for tax_input.
+		$tax_input = self::build_task_tax_input( $board, $labels );
+
+		// Normalize assigned users (pluck WP_User IDs) and compute the newly added ones.
+		list( $assigned_users, $new_users ) = self::resolve_assigned_users_and_new( $id, $assigned_users );
+
+				// Prepare custom metadata.
+		$meta_input = array(
+			'stack'          => sanitize_text_field( $stack ),
+			'duedate'        => $duedate_str,
+			'max_priority'   => $max_priority ? '1' : '0',
+			'assigned_users' => $assigned_users,
+			'responsable'    => $responsable,
+			'hidden'         => $hidden,
+		);
+
+		// Preserve an existing Nextcloud link on update: callers that do not manage
+		// the link (the frontend form, the abilities adapter) pass 0 and must not
+		// wipe a card ID synced from elsewhere. On create there is nothing to
+		// preserve, so the supplied value (including 0) is written as-is.
+		if ( $id_nextcloud_card > 0 || $id <= 0 ) {
+			$meta_input['id_nextcloud_card'] = $id_nextcloud_card;
+		}
+
+		// Prepare the post data.
+		$post_data = self::build_task_post_data(
+			$title,
+			$description,
+			$archived,
+			$author,
+			$responsable,
+			$hidden,
+			$meta_input,
+			$tax_input,
+			$creation_date
+		);
+
+		// Determine if it's an update or creation.
+		if ( $id > 0 ) {
+			$task_id = self::update_existing_task( $id, $post_data, $stack, $responsable, $new_users );
+		} else {
+			$task_id = self::insert_new_task( $post_data );
+		}
+
+		if ( is_wp_error( $task_id ) ) {
+			return $task_id; // Return the error to handle it externally.
+		}
+
+			   // Return the ID of the created or updated task.
+		return $task_id;
+	}
+
+	/**
+	 * Validate the required fields for creating or updating a task.
+	 *
+	 * @param string $title The task title.
+	 * @param string $stack The task stack.
+	 * @param int    $board The board term ID.
+	 * @return WP_Error|null A WP_Error on failure, or null when valid.
+	 */
+	private static function validate_task_fields( string $title, string $stack, int $board ) {
 		if ( empty( $title ) ) {
 			return new WP_Error( 'missing_field', __( 'The title is required.', 'decker' ) );
 		}
@@ -2182,54 +3524,48 @@ class Decker_Tasks {
 			return new WP_Error( 'invalid', __( 'The board does not exist in the decker_board taxonomy.', 'decker' ) );
 		}
 
-		// Convert DateTime objects to string format (otherwise pass null to undefined).
-		$duedate_str = $duedate ? $duedate->format( 'Y-m-d' ) : null;
+		return null;
+	}
 
-		// Prepare the terms for tax_input.
+	/**
+	 * Build the tax_input array for a task from its board and labels.
+	 *
+	 * @param int   $board  The board term ID.
+	 * @param array $labels The label term IDs.
+	 * @return array The tax_input array.
+	 */
+	private static function build_task_tax_input( int $board, array $labels ): array {
 		$tax_input = array();
-
-		$new_users = array();
 
 		// Assign the 'decker_board' taxonomy with the board ID.
 		if ( $board > 0 ) {
 			$tax_input['decker_board'] = array( $board );
 		}
 
-				// Include labels in tax_input if any.
-		if ( ! empty( $labels ) ) {
-			// Make sure $labels contains valid term IDs.
-			$tax_input['decker_label'] = array_map( 'intval', $labels );
-		}
+		// Always set labels — even an empty set — so a save replaces the full label
+		// list and can clear every label. Omitting the key would leave the existing
+		// labels untouched (a silent merge), breaking "complete state" writes and
+		// the ability to deselect all labels in the UI.
+		$tax_input['decker_label'] = array_map( 'intval', $labels );
 
-		if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
-			if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
-				$assigned_users = wp_list_pluck( $assigned_users, 'ID' );
-			}
+		return $tax_input;
+	}
 
-			// Store previously assigned users before the update.
-			$previous_assigned_users = array();
-			if ( $id > 0 ) { // Only if updating.
-				$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
-				$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
-			}
-
-			// Compare new users with previously assigned ones.
-			$new_users = array_diff( $assigned_users, $previous_assigned_users );
-
-		}
-
-				// Prepare custom metadata.
-		$meta_input = array(
-			'id_nextcloud_card' => $id_nextcloud_card,
-			'stack'             => sanitize_text_field( $stack ),
-			'duedate'           => $duedate_str,
-			'max_priority'      => $max_priority ? '1' : '0',
-			'assigned_users'    => $assigned_users,
-			'responsable'       => $responsable,
-			'hidden'            => $hidden,
-		);
-
-				// Prepare the post data.
+	/**
+	 * Build the wp_insert_post/wp_update_post data array for a task.
+	 *
+	 * @param string        $title         The task title.
+	 * @param string        $description   The task description.
+	 * @param bool          $archived      Whether the task is archived.
+	 * @param int           $author        The author user ID.
+	 * @param int           $responsable   The responsable user ID.
+	 * @param bool          $hidden        Whether the task is hidden.
+	 * @param array         $meta_input    The meta_input array.
+	 * @param array         $tax_input     The tax_input array.
+	 * @param DateTime|null $creation_date The creation date, or null.
+	 * @return array The post data array.
+	 */
+	private static function build_task_post_data( string $title, string $description, bool $archived, int $author, int $responsable, bool $hidden, array $meta_input, array $tax_input, ?DateTime $creation_date ): array {
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $title ),
 			'post_content' => wp_kses( $description, Decker::get_allowed_tags() ),
@@ -2252,55 +3588,107 @@ class Decker_Tasks {
 
 		$post_data['hidden'] = $hidden;
 
-		// Determine if it's an update or creation.
-		if ( $id > 0 ) {
+		return $post_data;
+	}
 
-			$old_responsable = get_post_meta( $id, 'responsable', true );
+	/**
+	 * Normalize the assigned users list and compute the newly added users.
+	 *
+	 * Plucks IDs when WP_User objects are passed so the IDs flow into meta_input.
+	 * The newly added users are only computed when the list is non-empty,
+	 * preserving the original "no users -> zero decker_user_assigned actions".
+	 *
+	 * @param int   $id             The task ID, or 0 when creating.
+	 * @param array $assigned_users The assigned users (IDs or WP_User objects).
+	 * @return array{0:array,1:array} The normalized user IDs and the new users.
+	 */
+	private static function resolve_assigned_users_and_new( int $id, array $assigned_users ): array {
+		$new_users = array();
 
-			// Retrieve the current stack value as a string.
-			$source_stack = get_post_meta( $id, 'stack', true );
-
-					   // Update the existing post.
-			$post_data['ID'] = $id;
-			$task_id         = wp_update_post( $post_data );
-
-			// Check if the stack value has changed.
-			if ( ! is_wp_error( $task_id ) && $source_stack != $stack ) {
-
-				// Trigger general stack transition hook.
-				do_action( 'decker_stack_transition', $id, $source_stack, $stack );
-
-				// If the target stack is "done", trigger a specific hook for task completion.
-				if ( 'done' === $stack ) {
-					do_action( 'decker_task_completed', $id, $stack, get_current_user_id() );
-				}
+		if ( ! empty( $assigned_users ) && is_array( $assigned_users ) ) {
+			if ( isset( $assigned_users[0] ) && $assigned_users[0] instanceof WP_User ) {
+				$assigned_users = wp_list_pluck( $assigned_users, 'ID' );
 			}
 
-			// Trigger a hook after a task has been updated.
-			do_action( 'decker_task_updated', $task_id );
-
-			if ( $old_responsable != $responsable ) {
-				do_action( 'decker_task_responsable_changed', $id, (int) $old_responsable, (int) $responsable );
+			// Store previously assigned users before the update.
+			$previous_assigned_users = array();
+			if ( $id > 0 ) { // Only if updating.
+				$previous_assigned_users = get_post_meta( $id, 'assigned_users', true );
+				$previous_assigned_users = is_array( $previous_assigned_users ) ? $previous_assigned_users : array();
 			}
 
-					   // Trigger the event for each new user.
-			foreach ( $new_users as $new_user_id ) {
-				do_action( 'decker_user_assigned', $task_id, $new_user_id );
-			}
-		} else {
-			// Create a new post.
-			$task_id = wp_insert_post( $post_data );
-
-			// Trigger a hook after a new task has been created.
-			do_action( 'decker_task_created', $task_id );
+			// Compare new users with previously assigned ones.
+			$new_users = array_diff( $assigned_users, $previous_assigned_users );
 
 		}
 
-		if ( is_wp_error( $task_id ) ) {
-			return $task_id; // Return the error to handle it externally.
+		return array( $assigned_users, $new_users );
+	}
+
+	/**
+	 * Update an existing task and fire the related hooks in order.
+	 *
+	 * Fires decker_task_updated, decker_task_responsable_changed and
+	 * decker_user_assigned even when wp_update_post returns a WP_Error/0,
+	 * matching the original behavior (only the stack hooks are guarded).
+	 *
+	 * @param int    $id          The task ID.
+	 * @param array  $post_data   The post data to update.
+	 * @param string $stack       The new stack value.
+	 * @param int    $responsable The new responsable user ID.
+	 * @param array  $new_users   The newly added user IDs.
+	 * @return int|WP_Error The wp_update_post result.
+	 */
+	private static function update_existing_task( int $id, array $post_data, string $stack, int $responsable, array $new_users ) {
+		$old_responsable = get_post_meta( $id, 'responsable', true );
+
+		// Retrieve the current stack value as a string.
+		$source_stack = get_post_meta( $id, 'stack', true );
+
+				   // Update the existing post.
+		$post_data['ID'] = $id;
+		$task_id         = wp_update_post( $post_data );
+
+		// Check if the stack value has changed.
+		if ( ! is_wp_error( $task_id ) && $source_stack != $stack ) {
+
+			// Trigger general stack transition hook.
+			do_action( 'decker_stack_transition', $id, $source_stack, $stack );
+
+			// If the target stack is "done", trigger a specific hook for task completion.
+			if ( 'done' === $stack ) {
+				do_action( 'decker_task_completed', $id, $stack, get_current_user_id() );
+			}
 		}
 
-			   // Return the ID of the created or updated task.
+		// Trigger a hook after a task has been updated.
+		do_action( 'decker_task_updated', $task_id );
+
+		if ( $old_responsable != $responsable ) {
+			do_action( 'decker_task_responsable_changed', $id, (int) $old_responsable, (int) $responsable );
+		}
+
+				   // Trigger the event for each new user.
+		foreach ( $new_users as $new_user_id ) {
+			do_action( 'decker_user_assigned', $task_id, $new_user_id );
+		}
+
+		return $task_id;
+	}
+
+	/**
+	 * Insert a new task and fire the creation hook.
+	 *
+	 * @param array $post_data The post data to insert.
+	 * @return int|WP_Error The wp_insert_post result.
+	 */
+	private static function insert_new_task( array $post_data ) {
+		// Create a new post.
+		$task_id = wp_insert_post( $post_data );
+
+		// Trigger a hook after a new task has been created.
+		do_action( 'decker_task_created', $task_id );
+
 		return $task_id;
 	}
 
@@ -2330,50 +3718,63 @@ class Decker_Tasks {
 		$old_board_term_id = ! empty( $old_tt_ids ) ? (int) $old_tt_ids[0] : 0;
 
 		// Proceed only if the board has actually changed.
-		if ( $new_board_term_id !== $old_board_term_id ) {
-			// Get the current stack for the task.
-			$current_stack = get_post_meta( $object_id, 'stack', true );
-			$valid_stacks = array( 'to-do', 'in-progress', 'done' );
+		if ( $new_board_term_id === $old_board_term_id ) {
+			return;
+		}
 
-			global $wpdb;
+		// Get the current stack for the task.
+		$current_stack = get_post_meta( $object_id, 'stack', true );
+		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
 
-			// If the moved task is NOT of max priority, calculate its new order at the end of the destination board.
-			$is_max_priority = get_post_meta( $object_id, 'max_priority', true );
-			if ( empty( $is_max_priority ) || '0' === $is_max_priority ) {
-				// Get the next available order in the new board/stack.
-				$new_order = $this->get_new_task_order( $new_board_term_id, $current_stack );
-				if ( is_numeric( $new_order ) ) {
-					// Temporarily assign that menu_order to the moved task.
-					$wpdb->update(
-						$wpdb->posts,
-						array( 'menu_order' => intval( $new_order ) ),
-						array( 'ID' => $object_id ),
-						array( '%d' ),
-						array( '%d' )
-					);
-					clean_post_cache( $object_id );  // Clear cache to ensure updated read.
-				}
+		// If the moved task is NOT of max priority, push it to the end of the destination board.
+		$this->move_task_to_board_end( $object_id, $new_board_term_id, $current_stack );
+
+		// Reorder tasks in the new board (including the moved task).
+		// 1. Reorder new board.
+		if ( $new_board_term_id > 0 ) {
+			// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
+			// Call the static function to reorder.
+			$this->reorder_tasks_in_stack( $new_board_term_id, $current_stack );
+		}
+
+		// Reorder tasks in the old board (excluding the moved task).
+		// 2. Reorder old board.
+		if ( $old_board_term_id > 0 ) {
+			// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
+			// Call the static function to reorder.
+			$this->reorder_tasks_in_stack( $old_board_term_id, $current_stack, $object_id );
+		}
+
+		// At the end of handle_board_change_reorder().
+		set_transient( "decker_board_changed_{$object_id}", 1, 5 );
+	}
+
+	/**
+	 * Push a non-max-priority task to the end of its destination board stack.
+	 *
+	 * @param int    $object_id         Post ID of the task.
+	 * @param int    $new_board_term_id The destination board term ID.
+	 * @param string $current_stack     The current stack for the task.
+	 */
+	private function move_task_to_board_end( int $object_id, int $new_board_term_id, string $current_stack ) {
+		// If the moved task is NOT of max priority, calculate its new order at the end of the destination board.
+		$is_max_priority = get_post_meta( $object_id, 'max_priority', true );
+		if ( empty( $is_max_priority ) || '0' === $is_max_priority ) {
+			// Get the next available order in the new board/stack.
+			$new_order = $this->get_new_task_order( $new_board_term_id, $current_stack );
+			if ( is_numeric( $new_order ) ) {
+				global $wpdb;
+
+				// Temporarily assign that menu_order to the moved task.
+				$wpdb->update(
+					$wpdb->posts,
+					array( 'menu_order' => intval( $new_order ) ),
+					array( 'ID' => $object_id ),
+					array( '%d' ),
+					array( '%d' )
+				);
+				clean_post_cache( $object_id );  // Clear cache to ensure updated read.
 			}
-
-			// Reorder tasks in the new board (including the moved task).
-			// 1. Reorder new board.
-			if ( $new_board_term_id > 0 ) {
-				// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
-				// Call the static function to reorder.
-				$this->reorder_tasks_in_stack( $new_board_term_id, $current_stack );
-			}
-
-			// Reorder tasks in the old board (excluding the moved task).
-			// 2. Reorder old board.
-			if ( $old_board_term_id > 0 ) {
-				// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
-				// Call the static function to reorder.
-				$this->reorder_tasks_in_stack( $old_board_term_id, $current_stack, $object_id );
-			}
-
-			// At the end of handle_board_change_reorder().
-			set_transient( "decker_board_changed_{$object_id}", 1, 5 );
-
 		}
 	}
 
@@ -2482,6 +3883,25 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Get icon classes for a given stack.
+	 *
+	 * @param string $stack Stack slug.
+	 * @return string Icon class list.
+	 */
+	public static function get_stack_icon_classes( string $stack ): string {
+		switch ( $stack ) {
+			case 'to-do':
+				return 'ri-checkbox-blank-circle-line text-secondary';
+			case 'in-progress':
+				return 'ri-progress-3-line text-warning';
+			case 'done':
+				return 'ri-checkbox-circle-line text-success';
+			default:
+				return '';
+		}
+	}
+
+	/**
 	 * Get HTML icon for a given stack.
 	 *
 	 * @param string $stack Stack slug.
@@ -2490,33 +3910,18 @@ class Decker_Tasks {
 	public static function get_stack_icon_html( string $stack ): string {
 		$label         = self::get_stack_label( $stack );
 		$escaped_label = esc_attr( $label );
-		$icon_template = '<i class="%1$s" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+		$icon_template = '<i class="%1$s me-2" role="img" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="%2$s" data-bs-original-title="%2$s"></i>';
+		$icon_classes  = self::get_stack_icon_classes( $stack );
 
-		switch ( $stack ) {
-			case 'to-do':
-				$icon = sprintf(
-					$icon_template,
-					'ri-checkbox-blank-circle-line text-secondary me-2',
-					$escaped_label
-				);
-				break;
-			case 'in-progress':
-				$icon = sprintf(
-					$icon_template,
-					'ri-progress-3-line text-warning me-2',
-					$escaped_label
-				);
-				break;
-			case 'done':
-				$icon = sprintf(
-					$icon_template,
-					'ri-checkbox-circle-line text-success me-2',
-					$escaped_label
-				);
-				break;
-			default:
-				return esc_html( $stack );
+		if ( '' === $icon_classes ) {
+			return esc_html( $stack );
 		}
+
+		$icon = sprintf(
+			$icon_template,
+			$icon_classes,
+			$escaped_label
+		);
 
 		return $icon . '<span class="visually-hidden">' . esc_html( $label ) . '</span>';
 	}

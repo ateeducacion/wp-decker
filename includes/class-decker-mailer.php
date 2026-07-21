@@ -23,46 +23,43 @@ class Decker_Mailer {
 	/**
 	 * Send an HTML email with the Decker template.
 	 *
-	 * @param string $to The recipient email address.
+	 * @param string $to      The recipient email address.
 	 * @param string $subject The email subject.
 	 * @param string $content The email content/body.
 	 * @param array  $headers Additional headers for the email.
 	 * @return bool Whether the email was sent successfully.
 	 */
 	public function send_email( $to, $subject, $content, $headers = array() ) {
+		$options = get_option( 'decker_settings', array() );
 
-		// Add a prefix to the subject line.
+		// Honor an explicit global opt-out while preserving the historical default.
+		if (
+			array_key_exists( 'allow_email_notifications', $options ) &&
+			! $options['allow_email_notifications']
+		) {
+			return false;
+		}
+
 		$subject = '[Decker] ' . $subject;
-
-		// Build the HTML email template.
 		$message = $this->get_email_template( $content );
 
-		// Configure headers for HTML content.
 		$default_headers = array(
 			'Content-Type: text/html; charset=UTF-8',
 			'MIME-Version: 1.0',
 		);
+		$headers         = array_merge( $default_headers, $headers );
 
-		// Merge default headers with any additional headers provided.
-		$headers = array_merge( $default_headers, $headers );
-
-		// Send the email using WordPress's wp_mail function.
-		$sent = wp_mail( $to, $subject, $message, $headers );
-
-		return $sent;
+		return wp_mail( $to, $subject, $message, $headers );
 	}
 
 	/**
 	 * Get the HTML template for emails.
 	 *
-	 * This method generates the complete HTML structure for the email.
-	 * It includes a white frame, a blue top border, and the provided content.
-	 *
-	 * @param string $content The main content to be inserted in the template.
+	 * @param string $content The main content to insert into the template.
 	 * @return string The complete HTML email.
 	 */
 	private function get_email_template( $content ) {
-		$body = '
+		return '
         <!DOCTYPE html>
         <html>
         <head>
@@ -70,14 +67,12 @@ class Decker_Mailer {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Decker Email</title>
             <style>
-                /* Basic style reset */
                 body, html {
                     margin: 0;
                     padding: 0;
                     width: 100%;
                     height: 100%;
                 }
-                /* Main email container styles */
                 .email-container {
                     max-width: 600px;
                     margin: 0 auto;
@@ -86,19 +81,16 @@ class Decker_Mailer {
                     border-radius: 5px;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
                 }
-                /* Blue top border */
                 .email-header {
-                    border-top: 5px solid #0073aa; /* Blue color */
+                    border-top: 5px solid #0073aa;
                     padding: 10px 0;
                     margin-bottom: 20px;
                 }
-                /* Main content styles */
                 .email-content {
                     color: #333333;
                     line-height: 1.6;
                     font-family: Arial, sans-serif;
                 }
-                /* Footer styles */
                 .email-footer {
                     margin-top: 30px;
                     padding-top: 20px;
@@ -107,7 +99,6 @@ class Decker_Mailer {
                     font-size: 12px;
                     text-align: center;
                 }
-                /* Responsive design adjustments */
                 @media only screen and (max-width: 600px) {
                     .email-container {
                         padding: 15px;
@@ -118,20 +109,15 @@ class Decker_Mailer {
         <body style="background-color: #f4f4f4;">
             <div class="email-container">
                 <div class="email-header">
-                    <!-- Optional header content -->
                 </div>
-                
                 <div class="email-content">
                     ' . wp_kses_post( $content ) . '
                 </div>
-                
                 <div class="email-footer">
                     <p>' . esc_html__( 'This email was automatically sent by Decker', 'decker' ) . '</p>
                 </div>
             </div>
         </body>
         </html>';
-
-		return $body;
 	}
 }

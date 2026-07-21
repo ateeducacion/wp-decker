@@ -91,6 +91,29 @@ if ( $task_id && 'archived' == $task->status ) {
 	$disabled = true;
 }
 
+// Task edit locking. Acquire the lock for the current user when opening an
+// existing, non-archived card. When another user is actively editing it, keep
+// the card read-only and expose a takeover action instead.
+$lock_info    = array();
+$locked_state = false;
+if ( $task_id && ! $disabled && class_exists( 'Decker_Task_Locks' ) ) {
+	$task_locks      = new Decker_Task_Locks();
+	$current_user_id = get_current_user_id();
+	$lock_info       = $task_locks->get_lock_info( $task_id, $current_user_id );
+
+	if ( ! empty( $lock_info['locked'] ) ) {
+		// Another user owns the active lock: render a read-only view.
+		$disabled     = true;
+		$locked_state = true;
+	} else {
+		// Unlocked, stale or already ours: (re)acquire the lock.
+		$acquired = $task_locks->acquire_lock( $task_id, $current_user_id );
+		if ( ! is_wp_error( $acquired ) ) {
+			$lock_info = $acquired;
+		}
+	}
+}
+
 $task_comments = array();
 
 if ( $task_id ) {
@@ -107,53 +130,28 @@ if ( $task_id ) {
 
 }
 
-/**
- * Organizes and renders comments in a hierarchical structure.
- *
- * This function processes an array of comments, organizing them
- * into a nested structure based on their parent ID. It also allows
- * for specific handling of comments based on the current user's ID.
- *
- * @param array $task_comments        An array of comment objects or arrays,
- *                               each containing information about a comment.
- * @param int   $parent_id       The ID of the parent comment. Use 0 for top-level comments.
- * @param int   $current_user_id The ID of the currently logged-in user.
- *                               Used to customize rendering for the user.
- *
- * @return void
- */
-function render_comments( array $task_comments, int $parent_id, int $current_user_id ) {
-	foreach ( $task_comments as $comment ) {
-		if ( $comment->comment_parent == $parent_id ) {
-				   // Get replies recursively.
-			echo '<div class="d-flex align-items-start mb-2" style="margin-left:' . ( $comment->comment_parent ? '20px' : '0' ) . ';">';
-			echo '<img class="me-2 rounded-circle" src="' . esc_url( get_avatar_url( $comment->user_id, array( 'size' => 48 ) ) ) . '" alt="Avatar" height="32" />';
-			echo '<div class="w-100">';
-			echo '<h5 class="mt-0">' . esc_html( $comment->comment_author ) . ' <small class="text-muted float-end">' . esc_html( get_comment_date( '', $comment ) ) . '</small></h5>';
-			echo wp_kses_post( apply_filters( 'the_content', $comment->comment_content ) );
-
-				   // Show delete link if the comment belongs to the current user.
-			if ( get_current_user_id() == $comment->user_id ) {
-				echo '<a href="javascript:void(0);" onclick="deleteComment(' . esc_attr( $comment->comment_ID ) . ');" class="text-muted d-inline-block mt-2 comment-delete" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-delete-bin-line"></i> ' . esc_html__( 'Delete', 'decker' ) . '</a> ';
-
-			}
-
-			/* echo '<a href="javascript:void(0);" class="text-muted d-inline-block mt-2 comment-reply" data-comment-id="' . esc_attr( $comment->comment_ID ) . '"><i class="ri-reply-line"></i> Reply</a>'; */
-
-			echo '</div>';
-			echo '</div>';
-
-				   // Recursive call to render replies.
-			render_comments( $task_comments, $comment->comment_ID, $current_user_id );
-		}
-	}
-}
+// Load the comment rendering helper (render_comments()).
+require_once __DIR__ . '/partials/task-comments.php';
 ?>
 
 <!-- Task card -->
-<form id="task-form" class="needs-validation" target="_self" novalidate>
+<form id="task-form" class="needs-validation" target="_self" novalidate data-task-id="<?php echo esc_attr( $task_id ); ?>" data-lock="<?php echo esc_attr( wp_json_encode( $lock_info ) ); ?>">
 	<input type="hidden" name="action" value="save_decker_task">
 	<input type="hidden" name="task_id" value="<?php echo esc_attr( $task_id ); ?>">
+
+	<?php if ( $locked_state ) : ?>
+		<div class="alert alert-warning d-flex align-items-center justify-content-between decker-lock-banner" role="alert" data-decker-lock-banner>
+			<span class="d-flex align-items-center">
+				<i class="ri-lock-line me-2"></i>
+				<span class="decker-lock-message"><?php echo esc_html( $lock_info['message'] ); ?></span>
+			</span>
+			<?php if ( ! empty( $lock_info['can_take_over'] ) ) : ?>
+				<button type="button" class="btn btn-sm btn-warning ms-2 decker-take-over-lock" data-task-id="<?php echo esc_attr( $task_id ); ?>">
+					<i class="ri-lock-unlock-line me-1"></i><?php esc_html_e( 'Take over editing', 'decker' ); ?>
+				</button>
+			<?php endif; ?>
+		</div>
+	<?php endif; ?>
 	<div class="row">
 
 		<!-- Title -->
@@ -171,10 +169,27 @@ function render_comments( array $task_comments, int $parent_id, int $current_use
 				<input class="form-check-input" type="checkbox" id="task-max-priority" onchange="togglePriorityLabel(this)" <?php checked( $task_id ? $task->max_priority : $initial_max_priority ); ?> <?php disabled( $disabled ); ?>>
 				<label class="form-check-label" for="task-max-priority"><?php esc_html_e( 'Maximum Priority', 'decker' ); ?></label>
 			</div>
-			<div class="form-check form-switch">
-				<input class="form-check-input" type="checkbox" id="task-today" 
-				   <?php checked( $task->is_current_user_today_assigned() ); ?> <?php disabled( $disabled ); ?>>
-				<label class="form-check-label" for="task-today"><?php esc_html_e( 'For today', 'decker' ); ?></label>
+			<?php
+			// "For today" is a personal relation. For an existing, non-archived
+			// task the pristine form offers a lightweight quick-action button and
+			// keeps the checkbox hidden until a shared field is edited.
+			$today_marked     = $task_id ? $task->is_current_user_today_assigned() : false;
+			$show_today_quick = $task_id && 'archived' !== $task->status;
+			?>
+			<div id="task-today-control" class="decker-today-control">
+				<?php if ( $show_today_quick ) : ?>
+					<button type="button" id="task-today-quick" class="btn btn-sm <?php echo $today_marked ? 'btn-outline-secondary' : 'btn-success'; ?> decker-today-quick" data-task-id="<?php echo esc_attr( $task_id ); ?>" data-marked="<?php echo $today_marked ? '1' : '0'; ?>">
+						<i class="ri-calendar-check-line me-1" aria-hidden="true"></i>
+						<span class="decker-today-quick-label"><?php echo $today_marked ? esc_html__( 'Remove from today', 'decker' ) : esc_html__( 'Add to today', 'decker' ); ?></span>
+					</button>
+				<?php endif; ?>
+				<span class="form-check form-switch decker-today-checkbox <?php echo $show_today_quick ? 'd-none' : ''; ?>">
+					<input class="form-check-input" type="checkbox" id="task-today"
+						<?php checked( $today_marked ); ?>
+						<?php echo $show_today_quick ? 'tabindex="-1" aria-hidden="true"' : ''; ?>
+						<?php disabled( $disabled || $show_today_quick ); ?>>
+					<label class="form-check-label" for="task-today"><?php esc_html_e( 'For today', 'decker' ); ?></label>
+				</span>
 			</div>
 		</div>
 
@@ -652,6 +667,4 @@ foreach ( $user_dates as $user_id => $dates ) {
 
 
 </form>
-
-
 

@@ -276,20 +276,69 @@ class DeckerTasksRestTest extends Decker_Test_Base {
 		$response = rest_get_server()->dispatch( $request );
 		$this->assertEquals( 200, $response->get_status() );
 
-		// Set the order manually to ensure the test passes
-		wp_update_post(
+		// Clean cache again
+		clean_post_cache( $task1 );
+		clean_post_cache( $task2 );
+
+		// Check the real computed order: task1 was dragged below task2, so it
+		// must land at slot 2 and task2 must shift up to slot 1.
+		$this->assertEquals( 2, get_post( $task1 )->menu_order, 'Dragged task should land at slot 2' );
+		$this->assertEquals( 1, get_post( $task2 )->menu_order, 'Incumbent task should shift up to slot 1' );
+	}
+
+	/**
+	 * Test that an editor can reorder tasks via REST while lower roles cannot.
+	 */
+	public function test_order_endpoint_authorization() {
+		$task = self::factory()->task->create(
 			array(
-				'ID'         => $task1,
-				'menu_order' => 2,
+				'board' => $this->board_id,
+				'stack' => 'to-do',
 			)
 		);
 
-		// Clean cache again
-		clean_post_cache( $task1 );
+		$order_data = array(
+			'board_id'     => $this->board_id,
+			'source_stack' => 'to-do',
+			'target_stack' => 'in-progress',
+			'source_order' => 1,
+			'target_order' => 1,
+		);
 
-		// Check new order
-		$task = get_post( $task1 );
-		$this->assertEquals( 2, $task->menu_order, 'Menu order did not match expected value 2' );
+		// Subscriber should be denied.
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task . '/stack' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $order_data ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertContains( $response->get_status(), array( 401, 403 ), 'Subscribers must not mutate task stack' );
+
+		// Contributor should be denied as well.
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		wp_set_current_user( $contributor );
+
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task . '/order' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $order_data ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertContains( $response->get_status(), array( 401, 403 ), 'Contributors must not mutate task order' );
+
+		// Editor should succeed.
+		wp_set_current_user( $this->editor );
+
+		$request = new WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task . '/stack' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( $order_data ) );
+
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertEquals( 200, $response->get_status(), 'Editor should be allowed to mutate task stack' );
 	}
 
 	/**

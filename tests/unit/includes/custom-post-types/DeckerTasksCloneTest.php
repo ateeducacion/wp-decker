@@ -350,6 +350,47 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Lock that a blank source title yields the "Untitled (copy)" suffix.
+	 */
+	public function test_clone_task_with_blank_title_uses_untitled_suffix() {
+		// Create a valid task first; WordPress core rejects an insert whose
+		// title, content and excerpt are all empty, so we blank the title
+		// directly in the database afterwards to exercise the fallback.
+		$task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board_id,
+				'stack' => 'to-do',
+			)
+		);
+		$this->assertIsInt( $task_id );
+		$this->assertGreaterThan( 0, $task_id );
+
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->posts,
+			array( 'post_title' => '   ' ),
+			array( 'ID' => $task_id )
+		);
+		clean_post_cache( $task_id );
+		$this->assertSame( '   ', get_post( $task_id )->post_title );
+
+		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$this->assertNotWPError( $new_task_id );
+
+		$expected = sprintf(
+			/* translators: %s: original task title */
+			__( '%s (copy)', 'decker' ),
+			__( 'Untitled', 'decker' )
+		);
+
+		$this->assertEquals(
+			$expected,
+			get_post( $new_task_id )->post_title,
+			'Blank source title must clone as Untitled (copy).'
+		);
+	}
+
+	/**
 	 * Test that the cloned task post status matches the original.
 	 */
 	public function test_clone_preserves_post_status() {

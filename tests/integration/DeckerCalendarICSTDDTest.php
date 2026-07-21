@@ -135,7 +135,9 @@ class Decker_Calendar_ICS_TDD_Test extends Decker_Test_Base {
 		$events = $this->parse_ics( $ics );
 
 		$this->assertSame( '20250726T000000Z', $events[0]['DTSTART'] );
-		$this->assertSame( '20250727T000000Z', $events[0]['DTEND'] );
+		// RFC 5545: DTEND for a VALUE=DATE event is exclusive, so a stored
+		// (inclusive) end of 2025-07-27 is emitted as the following day.
+		$this->assertSame( '20250728T000000Z', $events[0]['DTEND'] );
 	}
 
 	/** @test */

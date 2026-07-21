@@ -121,6 +121,68 @@ class DeckerTaskManagerTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Test retrieving task counts by board and stack.
+	 */
+	public function test_get_board_task_counts_by_stack() {
+		wp_set_current_user( 1 );
+
+		$second_board = self::factory()->board->create_and_get(
+			array(
+				'name' => 'Second Board',
+				'slug' => 'second-board',
+			)
+		);
+
+		wp_set_current_user( $this->editor );
+
+		self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+				'stack' => 'to-do',
+			)
+		);
+		self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+				'stack' => 'to-do',
+			)
+		);
+		self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+				'stack' => 'in-progress',
+			)
+		);
+
+		$hidden_task_id = self::factory()->task->create(
+			array(
+				'board' => $this->board->term_id,
+				'stack' => 'to-do',
+			)
+		);
+		update_post_meta( $hidden_task_id, 'hidden', '1' );
+
+		self::factory()->task->create(
+			array(
+				'board' => $second_board->term_id,
+				'stack' => 'in-progress',
+			)
+		);
+
+		$counts = $this->task_manager->get_board_task_counts_by_stack(
+			array(
+				'to-do',
+				'in-progress',
+			)
+		);
+
+		$this->assertSame( 2, $counts[ $this->board->slug ]['to-do'] );
+		$this->assertSame( 1, $counts[ $this->board->slug ]['in-progress'] );
+		$this->assertSame( 1, $counts[ $second_board->slug ]['in-progress'] );
+		$this->assertArrayNotHasKey( 'to-do', $counts[ $second_board->slug ] );
+	}
+
+	/**
 	 * Test retrieving tasks assigned to a specific user.
 	 */
 	public function test_get_tasks_by_user() {

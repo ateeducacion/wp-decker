@@ -240,6 +240,10 @@ class Decker_Public {
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-public.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-public.css',
 
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-comments-popover.js',
+
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-labels-popover.js',
+
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/task-modal.js',
 
 			);
@@ -323,6 +327,10 @@ class Decker_Public {
 			// Add global search script.
 			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js';
 
+			// Add the AI improvement module.
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-ai.css';
+			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-ai.js';
+
 			// Add collaborative editing module if enabled.
 			$this->maybe_enqueue_collaboration();
 
@@ -384,6 +392,21 @@ class Decker_Public {
 					'clone_task'                  => __( 'Clone', 'decker' ),
 					'task_cloned_success'         => __( 'The task has been successfully cloned.', 'decker' ),
 					'error_cloning_task'          => __( 'An error occurred while cloning the task.', 'decker' ),
+					// Merge task strings.
+					'merge_task'                  => __( 'Merge into...', 'decker' ),
+					'merge_task_title'            => __( 'Merge task', 'decker' ),
+					'merge_task_text'             => __( 'Choose the destination task that should remain active.', 'decker' ),
+					'merge_task_search_placeholder' => __( 'Search tasks by title', 'decker' ),
+					'merge_task_search_hint'      => __( 'Type at least 2 characters to search for a destination task.', 'decker' ),
+					'merge_task_searching'        => __( 'Searching tasks...', 'decker' ),
+					'merge_task_no_results'       => __( 'No matching tasks found.', 'decker' ),
+					'merge_task_select_label'     => __( 'Destination task', 'decker' ),
+					'select_task_to_merge'        => __( 'Please select a destination task.', 'decker' ),
+					'confirm_merge_task_title'    => __( 'Are you sure you want to merge this task?', 'decker' ),
+					'confirm_merge_task_text'     => __( 'The current task will be archived and merged into the selected destination task.', 'decker' ),
+					'confirm_merge_task_button'   => __( 'Merge task', 'decker' ),
+					'task_merged_success'         => __( 'The task has been successfully merged.', 'decker' ),
+					'error_merging_task'          => __( 'An error occurred while merging the task.', 'decker' ),
 					// Extra keys from first version.
 					'success'                     => __( 'Success', 'decker' ),
 					'error'                       => __( 'Error', 'decker' ),
@@ -399,6 +422,26 @@ class Decker_Public {
 					'task_url_copied'             => __( 'Task URL copied!', 'decker' ),
 					'task_url_copy_error'         => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 					'copy_task_url'               => __( 'Copy Task URL', 'decker' ),
+					'loading_comments'            => __( 'Loading comments…', 'decker' ),
+					'no_comments'                 => __( 'No comments yet.', 'decker' ),
+					'comments_error'              => __( 'Could not load comments.', 'decker' ),
+					/* translators: %d is the number of additional comments not shown in the popover preview. */
+					'more_comments'               => __( 'and %d more', 'decker' ),
+					// Task edit lock strings.
+					'take_over_editing'           => __( 'Take over editing', 'decker' ),
+					'taking_over'                 => __( 'Taking over…', 'decker' ),
+					/* translators: %s is the display name of the user currently editing the card. */
+					'card_locked_by'              => __( 'This card is currently locked by %s.', 'decker' ),
+					'lock_lost_title'             => __( 'Editing taken over', 'decker' ),
+					'lock_lost_message'           => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
+					'lock_takeover_failed'        => __( 'The card could not be taken over. Please reload and try again.', 'decker' ),
+					'reload_card'                 => __( 'Reload card', 'decker' ),
+					// "For today" quick-action strings.
+					'add_to_today'                => __( 'Add to today', 'decker' ),
+					'remove_from_today'           => __( 'Remove from today', 'decker' ),
+					'adding_to_today'             => __( 'Adding to today…', 'decker' ),
+					'removing_from_today'         => __( 'Removing from today…', 'decker' ),
+					'today_update_failed'         => __( 'The task could not be updated.', 'decker' ),
 				),
 				'timeFormat24h'     => ( get_option( 'time_format' ) === 'H:i' ),
 				'disabled'          => isset( $disabled ) && $disabled ? true : false,
@@ -410,6 +453,7 @@ class Decker_Public {
 				'taskPermalinkStructure' => get_option( 'permalink_structure' )
 					? home_url( '/decker/task/%d/' )
 					: home_url( '/?decker_task=%d' ),
+				'ai'                => $this->get_ai_config(),
 			);
 
 			$last_handle = '';
@@ -479,6 +523,11 @@ class Decker_Public {
 				array(
 					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 					'nonce'   => wp_create_nonce( 'heartbeat-nonce' ),
+					'userId'  => get_current_user_id(),
+					'labels'  => array(
+						'delete'              => __( 'Delete', 'decker' ),
+						'delete_notification' => __( 'Delete notification', 'decker' ),
+					),
 				)
 			);
 
@@ -518,6 +567,56 @@ class Decker_Public {
 			);
 
 		}
+	}
+
+	/**
+	 * Build the AI configuration object passed to JavaScript.
+	 *
+	 * Exposes browser-only AI prompts and all required UI strings.
+	 *
+	 * @return array AI configuration array.
+	 */
+	private function get_ai_config() {
+		$options = get_option( 'decker_settings', array() );
+
+		return array(
+			'enabled'          => isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'],
+			'provider'         => Decker_AI_Manager::get_selected_provider( $options ),
+			'api_endpoint'     => Decker_AI_Manager::get_rest_endpoint_url(),
+			'server_available' => '' !== Decker_AI_Manager::get_api_key( $options ),
+			'strings'          => array(
+				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
+				'choose_action'            => __( 'Choose an action', 'decker' ),
+				'mode_improve_description' => __( 'Improve description', 'decker' ),
+				'mode_make_actionable'     => __( 'Make it actionable', 'decker' ),
+				'mode_generate_checklist'  => __( 'Generate checklist', 'decker' ),
+				'mode_summarize'           => __( 'Summarize', 'decker' ),
+				'improving'                => __( 'Improving text…', 'decker' ),
+				'preview_title'            => __( 'Review improvement', 'decker' ),
+				'original_text'            => __( 'Original', 'decker' ),
+				'improved_text'            => __( 'Improved', 'decker' ),
+				'accept'                   => __( 'Accept', 'decker' ),
+				'cancel'                   => __( 'Cancel', 'decker' ),
+				'error'                    => __( 'Error', 'decker' ),
+				'error_message'            => __( 'An error occurred while improving the text.', 'decker' ),
+				'no_content'               => __( 'No content', 'decker' ),
+				'no_content_message'       => __( 'Please add some text before using AI improvement.', 'decker' ),
+				'ai_unavailable_title'     => __( 'Browser AI unavailable', 'decker' ),
+				'ai_unavailable_intro'     => __( 'This AI action requires a compatible browser with built-in AI support.', 'decker' ),
+				'ai_chrome_unavailable'    => __( 'Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile.', 'decker' ),
+				'ai_edge_unavailable'      => __( 'Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile.', 'decker' ),
+				'ai_download_required'     => __( 'The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again.', 'decker' ),
+				'ai_browser_unsupported'   => __( 'This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled.', 'decker' ),
+				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
+				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
+				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
+				'ai_api_missing_key'       => __( 'The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it.', 'decker' ),
+				'ai_api_request_error'     => __( 'The Gemini API request failed. Please try again in a moment.', 'decker' ),
+				'yes'                      => _x( 'Yes', 'AI task context boolean value', 'decker' ),
+				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
+			),
+			'prompts'          => Decker_AI_Manager::get_prompt_config( $options ),
+		);
 	}
 
 	/**

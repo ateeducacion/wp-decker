@@ -113,13 +113,8 @@ foreach ( $tasks as $task ) {
 										?>
 										" data-bs-toggle="modal" data-bs-target="#task-modal" class="btn btn-success btn-sm ms-3"><i class="ri-add-circle-fill"></i> <?php esc_html_e( 'Add New Task', 'decker' ); ?></a>
 	
-									<?php if ( current_user_can( 'manage_options' ) ) { ?> 
-									<!-- <span class="label-to-show"> -->
-									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id ); ?>" class="btn btn-danger btn-sm ms-3"><?php esc_html_e( 'Fix Order', 'decker' ); ?></a>
-									<!-- </span> -->
-					<!-- 				<span class="label-to-hide">
-									<a href="javascript:void(0);" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id ); ?>" class="btn btn-danger btn-sm ms-3">Fix Order</a>
-									</span> -->
+									<?php if ( current_user_can( 'manage_options' ) ) { ?>
+									<button type="button" id="fix-order-btn" data-board-id="<?php echo esc_attr( $main_board->id ); ?>" class="btn btn-danger btn-sm ms-3"><?php esc_html_e( 'Fix Order', 'decker' ); ?></button>
 									<?php } ?>
 									</h4>
 								</div>

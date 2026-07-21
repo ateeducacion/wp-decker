@@ -362,13 +362,29 @@ class Decker_Events {
 	public function render_event_details_meta_box( $post ) {
 		wp_nonce_field( 'decker_event_meta_box', 'decker_event_meta_box_nonce' );
 
+		$meta = $this->get_event_meta_box_data( $post );
+
+		$this->render_allday_field( $meta['allday'] );
+		$this->render_allday_toggle_script();
+		$this->render_date_field( 'event_start', __( 'Start:', 'decker' ), $meta['input_type'], $meta['start_for_input'], $meta['step_attr'] );
+		$this->render_date_field( 'event_end', __( 'End:', 'decker' ), $meta['input_type'], $meta['end_for_input'], $meta['step_attr'] );
+		$this->render_location_url_fields( $meta['location'], $meta['url'] );
+		$this->render_category_field( $meta['category'] );
+	}
+
+	/**
+	 * Collect and prepare the values rendered by the event details meta box.
+	 *
+	 * @param WP_Post $post The post object.
+	 * @return array Associative array of prepared meta-box values.
+	 */
+	private function get_event_meta_box_data( $post ) {
 		$allday = get_post_meta( $post->ID, 'event_allday', true );
 		$start_utc = get_post_meta( $post->ID, 'event_start', true );
 		$end_utc = get_post_meta( $post->ID, 'event_end', true );
 		$location = get_post_meta( $post->ID, 'event_location', true );
 		$url = get_post_meta( $post->ID, 'event_url', true );
 		$category = get_post_meta( $post->ID, 'event_category', true );
-		$assigned_users = get_post_meta( $post->ID, 'event_assigned_users', true );
 
 		$start_for_input = '';
 		$end_for_input   = '';
@@ -384,10 +400,25 @@ class Decker_Events {
 		}
 
 				$step_attr  = $allday ? '' : ' step="60s"';          // 60s ⇒ hides seconds.
-		$value_attr = $allday
-			? esc_attr( $start_utc )
-			: esc_attr( gmdate( 'Y-m-d\TH:i', strtotime( $start_utc . ' UTC' ) ) );
 
+		return array(
+			'allday'          => $allday,
+			'location'        => $location,
+			'url'             => $url,
+			'category'        => $category,
+			'input_type'      => $input_type,
+			'start_for_input' => $start_for_input,
+			'end_for_input'   => $end_for_input,
+			'step_attr'       => $step_attr,
+		);
+	}
+
+	/**
+	 * Render the all-day checkbox and the date error container.
+	 *
+	 * @param string $allday The stored all-day flag.
+	 */
+	private function render_allday_field( $allday ) {
 		?>
 			<p>
 	<label>
@@ -400,7 +431,14 @@ class Decker_Events {
 <div id="event_date_error" style="color: red; display: none;">
 		<?php esc_html_e( 'End Date must be after Start Date.', 'decker' ); ?>
 </div>
+		<?php
+	}
 
+	/**
+	 * Render the inline script that toggles the date/datetime input types.
+	 */
+	private function render_allday_toggle_script() {
+		?>
 <!-- Script to handle field visibility and validation -->
 <script>
 (function($) {
@@ -434,42 +472,63 @@ class Decker_Events {
 	});
 })(jQuery);
 </script>
+		<?php
+	}
 
+	/**
+	 * Render a single start/end date input block.
+	 *
+	 * @param string $field_id   The input id/name (event_start or event_end).
+	 * @param string $label      The label text.
+	 * @param string $input_type The input type ('date' or 'datetime-local').
+	 * @param string $value      The pre-formatted input value.
+	 * @param string $step_attr  The optional step attribute fragment.
+	 */
+	private function render_date_field( $field_id, $label, $input_type, $value, $step_attr ) {
+		?>
 <p>
-	<label for="event_start"><?php esc_html_e( 'Start:', 'decker' ); ?></label><br>
-	<input type="<?php echo esc_attr( $input_type ); ?>" 
-		   id="event_start" 
-		   name="event_start"
-		   value="<?php echo esc_attr( $start_for_input ); ?>"
+	<label for="<?php echo esc_attr( $field_id ); ?>"><?php echo esc_html( $label ); ?></label><br>
+	<input type="<?php echo esc_attr( $input_type ); ?>"
+		   id="<?php echo esc_attr( $field_id ); ?>"
+		   name="<?php echo esc_attr( $field_id ); ?>"
+		   value="<?php echo esc_attr( $value ); ?>"
 		   class="widefat"<?php echo esc_attr( $step_attr ); ?>>
 	<small class="description">
 		<?php esc_html_e( 'Time is stored in UTC. Adjust accordingly.', 'decker' ); ?>
 	</small>
 
 </p>
-<p>
-	<label for="event_end"><?php esc_html_e( 'End:', 'decker' ); ?></label><br>
-	<input type="<?php echo esc_attr( $input_type ); ?>" 
-		   id="event_end" 
-		   name="event_end"
-		   value="<?php echo esc_attr( $end_for_input ); ?>"
-		   class="widefat"<?php echo esc_attr( $step_attr ); ?>>
-	<small class="description">
-		<?php esc_html_e( 'Time is stored in UTC. Adjust accordingly.', 'decker' ); ?>
-	</small>
+		<?php
+	}
 
-</p>
-
+	/**
+	 * Render the location and URL text inputs.
+	 *
+	 * @param string $location The stored location value.
+	 * @param string $url      The stored URL value.
+	 */
+	private function render_location_url_fields( $location, $url ) {
+		?>
 		<p>
 			<label for="event_location"><?php esc_html_e( 'Location:', 'decker' ); ?></label><br>
-			<input type="text" id="event_location" name="event_location" 
+			<input type="text" id="event_location" name="event_location"
 				value="<?php echo esc_attr( $location ); ?>" class="widefat">
 		</p>
 		<p>
 			<label for="event_url"><?php esc_html_e( 'URL:', 'decker' ); ?></label><br>
-			<input type="url" id="event_url" name="event_url" 
+			<input type="url" id="event_url" name="event_url"
 				value="<?php echo esc_attr( $url ); ?>" class="widefat">
 		</p>
+		<?php
+	}
+
+	/**
+	 * Render the category select.
+	 *
+	 * @param string $category The stored category value.
+	 */
+	private function render_category_field( $category ) {
+		?>
 		<p>
 			<label for="event_category"><?php esc_html_e( 'Category:', 'decker' ); ?></label><br>
 			<select id="event_category" name="event_category">
@@ -541,77 +600,148 @@ class Decker_Events {
 	 * @param array $data    The data to save (e.g., from $_POST).
 	 */
 	public function process_and_save_meta( $post_id, $data ) {
-		// Save all-day event status.
+		// Save all-day event status and capture the flag for branching.
+		$allday = $this->save_allday_flag( $post_id, $data );
+
+		// Process and save dates.
+		$start_input = $this->get_date_input( $data, 'event_start' );
+		$end_input   = $this->get_date_input( $data, 'event_end' );
+
+		if ( $allday ) {
+			$this->save_allday_dates( $post_id, $start_input, $end_input );
+		} else {
+			$this->save_timed_dates( $post_id, $start_input, $end_input );
+		}
+
+		// Save other fields.
+		$this->save_optional_text_fields( $post_id, $data );
+
+		// Save assigned users.
+		$this->save_assigned_users( $post_id, $data );
+	}
+
+	/**
+	 * Save the all-day flag as the '1'/'0' string and return it as a bool.
+	 *
+	 * @param int   $post_id The post ID.
+	 * @param array $data    The data being saved.
+	 * @return bool Whether the event is all-day.
+	 */
+	private function save_allday_flag( $post_id, $data ) {
 		$allday = ! empty( $data['event_allday'] ) && filter_var( $data['event_allday'], FILTER_VALIDATE_BOOLEAN );
 
 		update_post_meta( $post_id, 'event_allday', (bool) $allday ? '1' : '0' );
 
-		// Process and save dates.
-		$start_input = isset( $data['event_start'] ) ? sanitize_text_field( wp_unslash( $data['event_start'] ) ) : '';
-		$end_input   = isset( $data['event_end'] ) ? sanitize_text_field( wp_unslash( $data['event_end'] ) ) : '';
+		return $allday;
+	}
 
-		// a missing event_end is copied from start + 1 h.
-		if ( ! $allday && '' === $end_input && '' !== $start_input ) {
+	/**
+	 * Read a single date input, unslashed and sanitized.
+	 *
+	 * @param array  $data The data being saved.
+	 * @param string $key  The data key to read.
+	 * @return string The sanitized value, or '' when absent.
+	 */
+	private function get_date_input( $data, $key ) {
+		return isset( $data[ $key ] ) ? sanitize_text_field( wp_unslash( $data[ $key ] ) ) : '';
+	}
+
+	/**
+	 * Save the all-day start/end dates (date part only).
+	 *
+	 * @param int    $post_id     The post ID.
+	 * @param string $start_input The sanitized start input.
+	 * @param string $end_input   The sanitized end input.
+	 */
+	private function save_allday_dates( $post_id, $start_input, $end_input ) {
+		$start_input = substr( $start_input, 0, 10 );
+		$end_input   = substr( $end_input, 0, 10 );
+
+		// Only date part matters.
+		$start_date = $start_input ? gmdate( 'Y-m-d', strtotime( $start_input . ' UTC' ) ) : '';
+		$end_date   = $end_input ? gmdate( 'Y-m-d', strtotime( $end_input . ' UTC' ) ) : '';
+
+		// Enforce end ≥ start.
+		if ( $start_date && $end_date && strtotime( $end_date ) < strtotime( $start_date ) ) {
+			$end_date = $start_date;
+		}
+		if ( $start_date && ! $end_date ) {
+			$end_date = $start_date;
+		}
+
+		update_post_meta( $post_id, 'event_start', $start_date );
+		update_post_meta( $post_id, 'event_end', $end_date );
+	}
+
+	/**
+	 * Save the timed start/end dates as raw UTC strings.
+	 *
+	 * @param int    $post_id     The post ID.
+	 * @param string $start_input The sanitized start input.
+	 * @param string $end_input   The sanitized end input.
+	 */
+	private function save_timed_dates( $post_id, $start_input, $end_input ) {
+		// A missing event_end is copied from start + 1 h.
+		if ( '' === $end_input && '' !== $start_input ) {
 			$end_input = gmdate( 'Y-m-d H:i:s', strtotime( $start_input . ' UTC' ) + HOUR_IN_SECONDS );
 		}
 
-		if ( $allday ) {
-
-			$start_input = substr( $start_input, 0, 10 );
-			$end_input   = substr( $end_input, 0, 10 );
-
-			// Only date part matters.
-			$start_date = $start_input ? gmdate( 'Y-m-d', strtotime( $start_input . ' UTC' ) ) : '';
-			$end_date   = $end_input ? gmdate( 'Y-m-d', strtotime( $end_input . ' UTC' ) ) : '';
-
-			// Enforce end ≥ start.
-			if ( $start_date && $end_date && strtotime( $end_date ) < strtotime( $start_date ) ) {
-				$end_date = $start_date;
-			}
-			if ( $start_date && ! $end_date ) {
-				$end_date = $start_date;
-			}
-
-			update_post_meta( $post_id, 'event_start', $start_date );
-			update_post_meta( $post_id, 'event_end', $end_date );
-		} else {
-
 				   // If it comes in YYYY‑MM‑DD format → append 00:00:00.
-			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $start_input ) ) {
-				$start_input .= ' 00:00:00';
-			}
-			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end_input ) ) {
-						   $end_input .= ' 01:00:00'; // will be corrected below if appropriate.
-			}
-
-			// Timed event: if end missing or end ≤ start, default to start + 1 h (UTC).
-			// 2a) Malformed start?
-			if ( $start_input && false === strtotime( $start_input . ' UTC' ) ) {
-				$start_input = gmdate( 'Y-m-d H:i:s', 0 );
-				$end_input   = gmdate( 'Y-m-d H:i:s', HOUR_IN_SECONDS );
-			} else {
-				// 2b) Missing end → start + 1 h.
-				if ( $start_input && ! $end_input ) {
-					$start_ts = strtotime( $start_input . ' UTC' );
-					$end_input = gmdate( 'Y-m-d H:i:s', $start_ts + HOUR_IN_SECONDS );
-				}
-
-				// 2c) End ≤ start → adjust to start + 1 h.
-				if ( $start_input && $end_input && strtotime( $end_input . ' UTC' ) <= strtotime( $start_input . ' UTC' ) ) {
-					$start_ts  = strtotime( $start_input . ' UTC' );
-					$end_input = gmdate( 'Y-m-d H:i:s', $start_ts + HOUR_IN_SECONDS );
-				}
-			}
-
-			$start_input = gmdate( 'Y-m-d H:i:00', strtotime( $start_input . ' UTC' ) );
-			$end_input   = gmdate( 'Y-m-d H:i:00', strtotime( $end_input . ' UTC' ) );
-
-			// Save raw UTC strings.
-			update_post_meta( $post_id, 'event_start', $start_input );
-			update_post_meta( $post_id, 'event_end', $end_input );
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $start_input ) ) {
+			$start_input .= ' 00:00:00';
+		}
+		if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $end_input ) ) {
+					   $end_input .= ' 01:00:00'; // will be corrected below if appropriate.
 		}
 
-		// Save other fields.
+		list( $start_input, $end_input ) = $this->resolve_timed_range( $start_input, $end_input );
+
+		$start_input = gmdate( 'Y-m-d H:i:00', strtotime( $start_input . ' UTC' ) );
+		$end_input   = gmdate( 'Y-m-d H:i:00', strtotime( $end_input . ' UTC' ) );
+
+		// Save raw UTC strings.
+		update_post_meta( $post_id, 'event_start', $start_input );
+		update_post_meta( $post_id, 'event_end', $end_input );
+	}
+
+	/**
+	 * Resolve a timed start/end pair: fix malformed start and end ≤ start.
+	 *
+	 * Timed event: if end missing or end ≤ start, default to start + 1 h (UTC).
+	 *
+	 * @param string $start_input The normalized start input.
+	 * @param string $end_input   The normalized end input.
+	 * @return array The resolved array( $start_input, $end_input ).
+	 */
+	private function resolve_timed_range( $start_input, $end_input ) {
+		// 2a) Malformed start?
+		if ( $start_input && false === strtotime( $start_input . ' UTC' ) ) {
+			$start_input = gmdate( 'Y-m-d H:i:s', 0 );
+			$end_input   = gmdate( 'Y-m-d H:i:s', HOUR_IN_SECONDS );
+		} else {
+			// 2b) Missing end → start + 1 h.
+			if ( $start_input && ! $end_input ) {
+				$start_ts = strtotime( $start_input . ' UTC' );
+				$end_input = gmdate( 'Y-m-d H:i:s', $start_ts + HOUR_IN_SECONDS );
+			}
+
+			// 2c) End ≤ start → adjust to start + 1 h.
+			if ( $start_input && $end_input && strtotime( $end_input . ' UTC' ) <= strtotime( $start_input . ' UTC' ) ) {
+				$start_ts  = strtotime( $start_input . ' UTC' );
+				$end_input = gmdate( 'Y-m-d H:i:s', $start_ts + HOUR_IN_SECONDS );
+			}
+		}
+
+		return array( $start_input, $end_input );
+	}
+
+	/**
+	 * Save the optional text fields, preserving any absent key.
+	 *
+	 * @param int   $post_id The post ID.
+	 * @param array $data    The data being saved.
+	 */
+	private function save_optional_text_fields( $post_id, $data ) {
 		$fields_to_save = array(
 			'event_location' => 'sanitize_text_field',
 			'event_url'      => 'esc_url_raw',
@@ -623,8 +753,15 @@ class Decker_Events {
 				update_post_meta( $post_id, $key, call_user_func( $sanitize_callback, wp_unslash( $data[ $key ] ) ) );
 			}
 		}
+	}
 
-		// Save assigned users.
+	/**
+	 * Save the assigned users; an absent key clears them.
+	 *
+	 * @param int   $post_id The post ID.
+	 * @param array $data    The data being saved.
+	 */
+	private function save_assigned_users( $post_id, $data ) {
 		$assigned_users = array();
 		if ( isset( $data['event_assigned_users'] ) && is_array( $data['event_assigned_users'] ) ) {
 			$assigned_users = array_map( 'intval', $data['event_assigned_users'] );

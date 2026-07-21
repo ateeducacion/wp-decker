@@ -1,0 +1,52 @@
+name: Playground PR Preview
+
+# Posts a WordPress Playground preview link on every pull request, booting a
+# clean WordPress in the browser (WebAssembly) with this PR's build of the
+# Decker plugin installed and activated. Uses the official
+# WordPress/action-wp-playground-pr-preview action.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    name: WordPress Playground preview
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post Playground preview link
+        uses: WordPress/action-wp-playground-pr-preview@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          mode: comment
+          # Custom blueprint: install THIS PR's plugin from its branch ZIP and
+          # reproduce the demo environment (Spanish, two editor users, land on the
+          # Decker priority board). When `blueprint` is set, `plugin-path` is ignored.
+          blueprint: |
+            {
+              "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+              "preferredVersions": { "php": "latest", "wp": "latest" },
+              "siteOptions": { "blogname": "WordPress Playground Decker Demo" },
+              "features": { "networking": true },
+              "login": true,
+              "landingPage": "/?decker_page=priority",
+              "steps": [
+                { "step": "setSiteLanguage", "language": "es_ES" },
+                {
+                  "step": "runPHP",
+                  "code": "<?php require_once('/wordpress/wp-load.php'); wp_insert_user(array('user_login' => 'test_user_1', 'user_email' => 'test1@example.com', 'user_pass' => wp_generate_password(), 'role' => 'editor')); wp_insert_user(array('user_login' => 'test_user_2', 'user_email' => 'test2@example.com', 'user_pass' => wp_generate_password(), 'role' => 'editor')); ?>"
+                },
+                {
+                  "step": "installPlugin",
+                  "pluginData": {
+                    "resource": "url",
+                    "url": "https://github.com/${{ github.event.pull_request.head.repo.full_name }}/archive/refs/heads/${{ github.event.pull_request.head.ref }}.zip"
+                  },
+                  "options": { "activate": true }
+                }
+              ]
+            }

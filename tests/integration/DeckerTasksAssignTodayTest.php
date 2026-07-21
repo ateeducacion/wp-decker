@@ -184,4 +184,62 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		$this->assertEquals( $this->user_id, $relation['user_id'] );
 		$this->assertEquals( gmdate( 'Y-m-d' ), $relation['date'] );
 	}
+
+	/**
+	 * Calling add_user_date_relation twice for the same user and date must not
+	 * create a duplicate relation.
+	 */
+	public function test_add_user_date_relation_is_idempotent() {
+		$task_instance = new Decker_Tasks();
+
+		$task_instance->add_user_date_relation( $this->task_id, $this->user_id );
+		$task_instance->add_user_date_relation( $this->task_id, $this->user_id );
+
+		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );
+		$this->assertIsArray( $relations );
+		$this->assertCount( 1, $relations, 'Marking the same user/date twice must keep a single relation.' );
+	}
+
+	/**
+	 * Saving a task with mark_for_today twice must keep exactly one relation, and a
+	 * single unmark must clear it (no leftover duplicates keeping the task "today").
+	 */
+	public function test_mark_for_today_save_is_idempotent_and_unmarkable() {
+		add_filter( 'decker_save_task_send_response', '__return_false' );
+
+		$task_instance = new Decker_Tasks();
+		$board_id      = self::factory()->board->create();
+		$nonce         = wp_create_nonce( 'save_decker_task_nonce' );
+
+		$base_post = array(
+			'task_id'        => $this->task_id,
+			'title'          => 'Today Task',
+			'description'    => 'Task Description',
+			'stack'          => 'to-do',
+			'board'          => $board_id,
+			'mark_for_today' => true,
+			'nonce'          => $nonce,
+		);
+
+		// Save twice while marked for today.
+		$_POST = $base_post;
+		$task_instance->handle_save_decker_task();
+		$_POST = $base_post;
+		$task_instance->handle_save_decker_task();
+
+		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );
+		$this->assertIsArray( $relations );
+		$this->assertCount( 1, $relations, 'Saving twice with mark_for_today must not duplicate the relation.' );
+
+		// Now uncheck mark_for_today and save once: the task must no longer be "today".
+		$_POST                   = $base_post;
+		$_POST['mark_for_today'] = false;
+		$task_instance->handle_save_decker_task();
+
+		remove_filter( 'decker_save_task_send_response', '__return_false' );
+
+		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );
+		$this->assertIsArray( $relations );
+		$this->assertCount( 0, $relations, 'Unchecking mark_for_today once must remove the relation.' );
+	}
 }

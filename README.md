@@ -11,32 +11,52 @@
 
 ## Demo
 
-Try Decker instantly in your browser using WordPress Playground! The demo includes sample data to help you explore the features. Note that all changes will be lost when you close the browser window, as everything runs locally in your browser.
+Try Decker instantly in your browser using WordPress Playground. The demo includes sample data.
 
 [<kbd> <br> Preview in WordPress Playground <br> </kbd>](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/ateeducacion/wp-decker/refs/heads/main/blueprint.json)
 
+## Key Features
 
-### Key Features
-
-- **Customization**: Adjustable settings available in the WordPress admin panel.
-- **Multisite Support**: Fully compatible with WordPress multisite installations.
-- **WordPress Coding Standards Compliance**: Adheres to [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards) for quality and security.
-- **Continuous Integration Pipeline**: Set up for automated code verification and release generation on GitLab.
-- **Individual Calendar Feeds**: Subscribe to event-type specific calendar URLs (Meeting, Absence, Warning and Alert).
+- **Kanban board** with drag-and-drop and a distinctive priority system (including Max Priority).
+- **Import from Nextcloud Deck** (one-way) through the API.
+- **AI Description Improvements**: Gemini Nano (browser) or Gemini API (server-side).
+- **Individual Calendar Feeds** for event types (Meeting, Absence, Warning, Alert).
+- **Collaborative editing** of tasks (optional, WebRTC).
+- **Email-to-post** endpoint.
+- Multisite support.
+- Follows WordPress Coding Standards.
+- Continuous Integration pipeline.
 
 ## Installation
 
-1. **Download the latest release** from the [GitHub Releases page](https://github.com/ateeducacion/wp-decker/releases).
-2. Upload the downloaded ZIP file to your WordPress site via **Plugins > Add New > Upload Plugin**.
-3. Activate the plugin through the 'Plugins' menu in WordPress.
-4. Configure the plugin under 'Settings' by providing the necessary Nextcloud API details.
+1. Download the latest release from the [GitHub Releases page](https://github.com/ateeducacion/wp-decker/releases).
+2. Upload the ZIP via **Plugins → Add New → Upload Plugin**.
+3. Activate the plugin.
+4. Configure under **Settings → Decker** (AI provider, notifications, collaborative editing, etc.).
+
+## AI description improvements
+
+- **Gemini Nano (browser-based)** keeps the prompt inside a compatible browser.
+- **Gemini API (server-side)** sends the prompt from WordPress using a key stored in settings.
+
+The saved Gemini API key is never exposed in public JavaScript, REST responses, or the settings form after saving.
+
+## Documentation
+
+Plain Markdown documentation lives in the [`docs/`](docs/) folder:
+
+- [Installation](docs/installation.md)
+- [Configuration](docs/configuration.md)
+- [User Guide](docs/user-guide.md)
+- [Development](docs/development.md)
 
 ## Development
-
-For development, you can bring up a local WordPress environment with the plugin pre-installed by using the following command:
 
 ```bash
 make up
 ```
 
-This command will start a Dockerized WordPress instance accessible at [http://localhost:8888](http://localhost:8080) with the default admin username `admin` and password `password`. 
+This starts a Dockerized WordPress instance at http://localhost:8888  
+(admin / password).
+
+See [docs/development.md](docs/development.md) for more details, available hooks and Make targets.

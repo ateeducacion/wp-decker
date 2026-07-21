@@ -103,6 +103,7 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 		$result = BoardManager::save_board( $new_board_data, 0 );
 
 		$this->assertTrue( $result['success'] );
+		$this->assertEquals( 'Board created successfully', $result['message'] );
 
 		// Verify the board was created
 		$term = get_term_by( 'name', 'New Test Board', 'decker_board' );
@@ -134,6 +135,7 @@ class DeckerBoardManagerTest extends Decker_Test_Base {
 		$result = BoardManager::save_board( $updated_data, $this->test_board_id );
 
 		$this->assertTrue( $result['success'] );
+		$this->assertEquals( 'Board updated successfully', $result['message'] );
 
 		// Verify the board was updated
 		$term = get_term( $this->test_board_id, 'decker_board' );

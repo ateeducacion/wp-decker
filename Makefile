@@ -7,6 +7,24 @@ else
   SED_INPLACE = sed -i
 endif
 
+# ─── Port arbitration (local dev) ────────────────────────────────────────────
+# wp-decker and the documentate plugin both default to ports 8888/8889, so only
+# one wp-env stack can own them at a time. Before starting ours, stop whatever
+# publishes the ports we need. `docker stop` (not `rm`) keeps the other stack's
+# data — its own `make up` brings it back. Skipped under CI ($$CI set) and a
+# no-op when Docker is down, so it only ever acts on a developer's machine —
+# never stopping an environment CI just started.
+# Usage: $(call free_ports,8888 8889)
+define free_ports
+	@if [ -z "$$CI" ] && docker version >/dev/null 2>&1; then \
+		ids="$$(docker ps -q $(patsubst %,--filter publish=%,$(1)))"; \
+		if [ -n "$$ids" ]; then \
+			echo "Freeing port(s) '$(1)': stopping conflicting containers..."; \
+			docker stop $$ids >/dev/null; \
+		fi; \
+	fi
+endef
+
 # Check if Docker is running
 check-docker:
 	@docker version  > /dev/null || (echo "" && echo "Error: Docker is not running. Please ensure Docker is installed and running." && echo "" && exit 1)
@@ -14,18 +32,34 @@ check-docker:
 install-requirements:
 	npm -g i @wordpress/env
 
-start-if-not-running:
-	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8889)" = "000" ]; then \
-		echo "wp-env is NOT running. Starting (previous updating) containers..."; \
-		npx wp-env start --update; \
+# Ensure the environment is running. Used as a prerequisite by the test/check
+# targets: the probe keeps repeated `make test` runs fast, and `wp-env start`
+# is idempotent so re-running it is safe. Probes the development site (8888).
+start-if-not-running: check-docker
+	@if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8888)" = "000" ]; then \
+		echo "wp-env is not running. Starting..."; \
+		npx wp-env start; \
 		npx wp-env run cli wp plugin activate decker; \
-		open "http://localhost:8888/?decker_page=priority" || true; \
+		echo "Visit http://localhost:8888/wp-admin/ to access the Decker dashboard."; \
 	else \
-		echo "wp-env is already running, skipping start."; \
+		echo "wp-env is already running."; \
 	fi
 
-# Bring up Docker containers
-up: check-docker start-if-not-running
+# Bring up the environment. Always calls `wp-env start` (idempotent), so it
+# (re)syncs the containers instead of skipping when something only appears up.
+up: check-docker
+	$(call free_ports,8888 8889)
+	npx wp-env start
+	-npx wp-env run cli wp plugin activate decker
+	@echo "Visit http://localhost:8888/wp-admin/ to access the Decker dashboard."
+
+# Alias for `up` (some folks type `make start`).
+start: up
+
+# Update WordPress core/themes and (re)start the environment.
+update-env: check-docker
+	npx wp-env start --update
+	-npx wp-env run cli wp plugin activate decker
 
 flush-permalinks:
 	#npx wp-env run cli wp rewrite flush --hard
@@ -39,9 +73,13 @@ create-user:
 	fi
 	npx wp-env run cli sh -c 'wp user list --field=user_login | grep -q "^$(USER)$$" || wp user create $(USER) $(EMAIL) --role=$(ROLE) --user_pass=$(PASSWORD)'
 
-# Stop and remove Docker containers
+# Stop the environment (containers are stopped; data is preserved — use
+# `destroy` to remove containers and volumes entirely).
 down: check-docker
 	npx wp-env stop
+
+# Alias for `down` (some folks type `make stop`).
+stop: down
 
 # Clean the environments, the same that running "npx wp-env clean all"
 clean:
@@ -50,6 +88,11 @@ clean:
 
 destroy:
 	npx wp-env destroy
+
+# Reset the WordPress databases to a fresh install, then reactivate the plugin.
+reset: check-docker
+	npx wp-env reset
+	-npx wp-env run cli wp plugin activate decker
 
 # Pass the wp plugin-check
 check-plugin: check-docker start-if-not-running
@@ -77,12 +120,40 @@ test-verbose: start-if-not-running
 	CMD="$$CMD --debug --verbose"; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --colors=always
 
-test-e2e:
-	npm run test:e2e
+# Ensure tests environment has admin user and plugin active
+setup-tests-env:
+	@echo "Setting up tests environment..."
+	@npx wp-env run tests-cli wp core install \
+		--url=http://localhost:8889 \
+		--title="Decker Tests" \
+		--admin_user=admin \
+		--admin_password=password \
+		--admin_email=admin@example.com \
+		--skip-email 2>/dev/null || true
+	@npx wp-env run tests-cli wp plugin activate decker 2>/dev/null || true
+	@npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard 2>/dev/null || true
+	@# Keep the deterministic suite free of the external-service collaboration feature.
+	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
 
-test-e2e-visual:
-	npm run test:e2e -- --ui
+# Run E2E tests with Playwright against wp-env tests environment (port 8889).
+# The collaboration spec is excluded here (see test-e2e-collab).
+test-e2e: start-if-not-running setup-tests-env
+	WP_BASE_URL=http://localhost:8889 npm run test:e2e
 
+test-e2e-visual: start-if-not-running setup-tests-env
+	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
+
+# Run ONLY the collaboration spec. It needs the collaborative editing feature
+# enabled and reaches external services (esm.sh CDN + signalling server), so it
+# is kept out of the default CI gate. This enables the feature, runs the spec,
+# and restores the setting afterwards regardless of the outcome.
+test-e2e-collab: start-if-not-running setup-tests-env
+	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
+	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
+	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
+
+test-js:
+	npm run test:js
 
 logs:
 	npx wp-env logs
@@ -192,12 +263,14 @@ help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "General:"
-	@echo "  up                 - Bring up Docker containers in interactive mode"
-	@echo "  down               - Stop and remove Docker containers"
+	@echo "  up / start         - Start the WordPress environment (idempotent)"
+	@echo "  down / stop        - Stop the environment (data preserved)"
+	@echo "  update-env         - Update WordPress core/themes and restart"
 	@echo "  logs               - Show the docker container logs"
 	@echo "  logs-test          - Show logs from test environment"
-	@echo "  clean              - Clean up WordPress environment"
-	@echo "  destroy            - Destroy the WordPress environment"
+	@echo "  clean              - Reset both environments' databases"
+	@echo "  reset              - Reset the development database to a fresh install"
+	@echo "  destroy            - Remove the environment (containers and volumes)"
 	@echo "  flush-permalinks   - Flush the created permalinks"
 	@echo "  create-user        - Create a WordPress user if it doesn't exist."
 	@echo "                       Usage: make create-user USER=<username> EMAIL=<email> ROLE=<role> PASSWORD=<password>"
@@ -221,6 +294,7 @@ help:
 	@echo "                         make test FILE=tests/MyTest.php"
 	@echo "                         make test FILE=tests/MyTest.php FILTER=test_my_feature"
 	@echo ""
+	@echo "  test-js            - Run JavaScript unit tests with Jest"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
 	@echo ""

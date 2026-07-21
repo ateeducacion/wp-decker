@@ -11,104 +11,16 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  deployments: write
-  checks: write
 
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      # Determine the branch name
-      - name: Set branch name for blueprint URL
-        shell: bash
-        run: |
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            echo "BRANCH_NAME=${GITHUB_HEAD_REF}" >> $GITHUB_ENV
-          else
-            echo "BRANCH_NAME=${GITHUB_REF_NAME}" >> $GITHUB_ENV
-          fi
-
-      # Replace main.zip with <BRANCH_NAME>.zip in blueprint.json
-      - name: Patch blueprint.json with branch ZIP
-        run: |
-          sed -i "s|refs/heads/main.zip|refs/heads/${BRANCH_NAME}.zip|g" blueprint.json
-
-      # Convert blueprint.json to Base64, because github not processes well json in urls
-      - name: Encode blueprint for Playground
-        id: blueprint
-        run: |
-          # Base64-encode the blueprint (no line wraps)
-          BASE64_BLUEPRINT=$(base64 -w 0 blueprint.json)
-          echo "BASE64_BLUEPRINT=$BASE64_BLUEPRINT" >> $GITHUB_ENV
-
-      # Show final Playground URL in the Summary
-      - name: Add Playground URL to summary
-        run: |
-          echo "[Test in WP Playground](https://playground.wordpress.net/#${BASE64_BLUEPRINT})" >> $GITHUB_STEP_SUMMARY
-
-      # Create a GitHub Check Run with the Playground URL
-      - name: Create a check with a test link
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const encodedBlueprint = process.env.BASE64_BLUEPRINT;
-            const playgroundUrl = `https://playground.wordpress.net/#${encodedBlueprint}`;
-            github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: "Test on WP playground",
-              head_sha: context.payload.pull_request ? context.payload.pull_request.head.sha : context.sha,
-              status: "completed",
-              conclusion: "neutral",
-              output: {
-                title: "Test in WP playground",
-                summary: `[Test in WP Playground](${playgroundUrl})`
-              }
-            });
-
-      # Create a deployment with the Playground URL
-      - name: Create a deployment
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const encodedBlueprint = process.env.BASE64_BLUEPRINT;
-            const playgroundUrl = `https://playground.wordpress.net/#${encodedBlueprint}`;
-
-            const deployment = await github.rest.repos.createDeployment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: context.payload.pull_request ? context.payload.pull_request.head.ref : context.ref,
-              required_contexts: [],
-              environment: "playground",
-              transient_environment: true,
-              auto_merge: false,
-              description: "WordPress Playground Deployment"
-            });
-
-            if (deployment.data.id) {
-              await github.rest.repos.createDeploymentStatus({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                deployment_id: deployment.data.id,
-                state: "success",
-                environment_url: playgroundUrl,
-                description: "Playground environment ready"
-              });
-            }
-
-
-
-      - name: Pre-pull Docker images
-        run: |
-          docker pull mariadb:lts
-          docker pull wordpress
-          docker pull wordpress:cli
+      # Note: the WordPress Playground PR preview link is posted by the dedicated
+      # playground-preview.yml workflow (WordPress/action-wp-playground-pr-preview).
 
       - name: PHP setup
         uses: shivammathur/setup-php@v2
@@ -142,4 +54,20 @@ jobs:
       - name: Run unit tests
         run: make test
 
+      # E2E Tests with Playwright
+      - name: Install npm dependencies and Playwright
+        run: npm install && npx playwright install --with-deps chromium
 
+      - name: Run E2E tests
+        run: make test-e2e
+        env:
+          CI: true
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Upload E2E test artifacts
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: artifacts/
+          retention-days: 7

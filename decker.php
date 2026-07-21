@@ -69,17 +69,22 @@ function deactivate_decker() {
  */
 function decker_update_handler( $upgrader_object, $options ) {
 	// Check if the update is for your specific plugin.
-	if ( 'update' === $options['action'] && 'plugin' === $options['type'] ) {
-		$plugins_updated = $options['plugins'];
+	if ( 'update' !== ( $options['action'] ?? '' ) || 'plugin' !== ( $options['type'] ?? '' ) ) {
+		return;
+	}
 
-		// Replace with your plugin's base name (typically folder/main-plugin-file.php).
-		$plugin_file = plugin_basename( __FILE__ );
+	// Core's bulk path provides 'plugins' (array); the single-plugin path provides 'plugin' (string).
+	$plugins_updated = isset( $options['plugins'] )
+		? (array) $options['plugins']
+		: ( isset( $options['plugin'] ) ? array( $options['plugin'] ) : array() );
 
-		// Check if your plugin is in the list of updated plugins.
-		if ( in_array( $plugin_file, $plugins_updated ) ) {
-			// Perform update-specific tasks.
-			flush_rewrite_rules();
-		}
+	// Replace with your plugin's base name (typically folder/main-plugin-file.php).
+	$plugin_file = plugin_basename( __FILE__ );
+
+	// Check if your plugin is in the list of updated plugins.
+	if ( in_array( $plugin_file, $plugins_updated, true ) ) {
+		// Perform update-specific tasks.
+		flush_rewrite_rules();
 	}
 }
 
@@ -131,6 +136,14 @@ add_action( 'admin_notices', 'decker_multisite_restriction_notice' );
  * admin-specific hooks, and public-facing site hooks.
  */
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-ability-service.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-abilities.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-agent-ui.php';
+
+// Wire the agent-facing integrations from the bootstrap rather than at class-file
+// scope, so they can be mocked in tests and disabled without side effects on load.
+new Decker_Abilities();
+new Decker_Agent_UI();
 
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {

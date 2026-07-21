@@ -75,7 +75,11 @@ class DeckerTasksArchiveTest extends Decker_Test_Base {
 			'POST',
 			sprintf( '/wp/v2/tasks/%d', $this->task_id )
 		);
-		$request->set_body_params( array( 'status' => 'publish' ) );
+		$request->set_body_params(
+			array(
+				'status' => 'publish',
+			)
+		);
 		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
 
 		$response = rest_get_server()->dispatch( $request );

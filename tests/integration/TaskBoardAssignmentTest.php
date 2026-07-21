@@ -445,4 +445,109 @@ class TaskBoardAssignmentTest extends Decker_Test_Base {
 		$this->assertEquals( 1, $this->get_current_order( $taskC2 ), 'C2 should be first in Board 3' );
 		$this->assertEquals( 2, $this->get_current_order( $taskB2 ), 'B2 should be second in Board 3' );
 	}
+
+	/**
+	 * Helper to invoke the order/stack REST controller directly.
+	 *
+	 * @param int    $task_id      The task being dragged.
+	 * @param int    $board_id     The board term ID.
+	 * @param string $source_stack The stack the task came from.
+	 * @param string $target_stack The stack the task was dropped on.
+	 * @param int    $source_order The original 1-based index.
+	 * @param int    $target_order The dropped 1-based index.
+	 * @return WP_REST_Response
+	 */
+	private function dispatch_order( $task_id, $board_id, $source_stack, $target_stack, $source_order, $target_order ) {
+		$task_instance = new Decker_Tasks();
+
+		$request = new \WP_REST_Request( 'PUT', '/decker/v1/tasks/' . $task_id . '/order' );
+		$request->set_url_params( array( 'id' => $task_id ) );
+		$request->set_param( 'board_id', $board_id );
+		$request->set_param( 'source_stack', $source_stack );
+		$request->set_param( 'target_stack', $target_stack );
+		$request->set_param( 'source_order', $source_order );
+		$request->set_param( 'target_order', $target_order );
+
+		return $task_instance->update_task_stack_and_order( $request );
+	}
+
+	/**
+	 * Regression for the tie-break dead code: dragging a NEWER card above an older
+	 * one within the same stack must leave the moved card at the dropped slot, not
+	 * one slot below.
+	 */
+	public function testSameStackMoveNewerCardWinsTieBreak() {
+		// taskOld is created first (lower ID, slot 1); taskNew second (slot 2).
+		$task_old = self::factory()->task->create(
+			array(
+				'post_title' => 'Old card',
+				'board'      => $this->board1_id,
+				'stack'      => 'to-do',
+			)
+		);
+		$task_new = self::factory()->task->create(
+			array(
+				'post_title' => 'New card',
+				'board'      => $this->board1_id,
+				'stack'      => 'to-do',
+			)
+		);
+
+		$this->assertEquals( 1, $this->get_current_order( $task_old ), 'Old card starts at slot 1' );
+		$this->assertEquals( 2, $this->get_current_order( $task_new ), 'New card starts at slot 2' );
+
+		// Drag the newer card from slot 2 up to slot 1.
+		$response = $this->dispatch_order( $task_new, $this->board1_id, 'to-do', 'to-do', 2, 1 );
+		$this->assertEquals( 200, $response->get_status() );
+
+		// The dragged (newer) card must land exactly at slot 1.
+		$this->assertEquals( 1, $this->get_current_order( $task_new ), 'Dragged newer card must land at slot 1' );
+		$this->assertEquals( 2, $this->get_current_order( $task_old ), 'Incumbent older card must shift to slot 2' );
+	}
+
+	/**
+	 * Regression for the cross-stack off-by-one: moving a card to a target index
+	 * greater than its source index in a DIFFERENT stack must land at exactly the
+	 * dropped index, not one below it.
+	 */
+	public function testCrossStackMoveLandsAtDroppedIndex() {
+		// Source stack: a single card at slot 1.
+		$task_move = self::factory()->task->create(
+			array(
+				'post_title' => 'Card to move',
+				'board'      => $this->board1_id,
+				'stack'      => 'to-do',
+			)
+		);
+
+		// Target stack already has two cards (slots 1 and 2).
+		$task_p1 = self::factory()->task->create(
+			array(
+				'post_title' => 'Progress 1',
+				'board'      => $this->board1_id,
+				'stack'      => 'in-progress',
+			)
+		);
+		$task_p2 = self::factory()->task->create(
+			array(
+				'post_title' => 'Progress 2',
+				'board'      => $this->board1_id,
+				'stack'      => 'in-progress',
+			)
+		);
+
+		$this->assertEquals( 1, $this->get_current_order( $task_move ), 'Moving card starts at slot 1 in to-do' );
+		$this->assertEquals( 1, $this->get_current_order( $task_p1 ), 'P1 starts at slot 1 in in-progress' );
+		$this->assertEquals( 2, $this->get_current_order( $task_p2 ), 'P2 starts at slot 2 in in-progress' );
+
+		// Drop it at slot 2 of in-progress: source_order (1) < target_order (2),
+		// but the columns are different so no +1 adjustment should happen.
+		$response = $this->dispatch_order( $task_move, $this->board1_id, 'to-do', 'in-progress', 1, 2 );
+		$this->assertEquals( 200, $response->get_status() );
+
+		// Target stack should be: P1(1), moved(2), P2(3).
+		$this->assertEquals( 1, $this->get_current_order( $task_p1 ), 'P1 should remain at slot 1' );
+		$this->assertEquals( 2, $this->get_current_order( $task_move ), 'Moved card must land at slot 2 exactly' );
+		$this->assertEquals( 3, $this->get_current_order( $task_p2 ), 'P2 should shift down to slot 3' );
+	}
 }

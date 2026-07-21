@@ -69,7 +69,7 @@ defined( 'ABSPATH' ) || exit;
 					            <h6 class="m-0 fs-16 fw-semibold"> <?php esc_html_e( 'Notifications', 'decker' ); ?></h6>
 					        </div>
 					        <div class="col-auto">
-					            <a href="javascript: void(0);" class="text-dark text-decoration-underline">
+					            <a href="javascript: void(0);" class="text-dark text-decoration-underline js-clear-notifications">
 					                <small><?php esc_html_e( 'Clear All', 'decker' ); ?></small>
 					            </a>
 					        </div>
@@ -162,4 +162,3 @@ defined( 'ABSPATH' ) || exit;
 		</ul>
 	</div>
 </div>
-
