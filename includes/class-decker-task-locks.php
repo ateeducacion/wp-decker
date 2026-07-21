@@ -289,6 +289,36 @@ class Decker_Task_Locks {
 	}
 
 	/**
+	 * Invalidate every open editing session for a task.
+	 *
+	 * Mutations that reach a task outside the editor form (moving a card between
+	 * stacks, assigning a user, changing the due date, merging) leave any open
+	 * form holding data that is now stale. Those forms resubmit the whole task,
+	 * so without this the next save silently reverts the change.
+	 *
+	 * Rotating the token here turns that save into a 409 the client already
+	 * handles: the editor is told the card changed instead of overwriting it.
+	 * The lock owner and timestamp are preserved, so whoever is editing keeps
+	 * the lock and only has to reload.
+	 *
+	 * No-ops when the task was never locked (there is no session to invalidate).
+	 *
+	 * @param int $post_id The task post ID.
+	 * @return string|false The new generation, or false when nothing was rotated.
+	 */
+	public function invalidate_sessions( int $post_id ) {
+		$state = $this->state->read( $post_id );
+		if ( ! is_array( $state ) || '' === (string) $state['token'] ) {
+			return false;
+		}
+
+		$token = wp_generate_uuid4();
+		$this->state->save( $post_id, (int) $state['user'], $token, (int) $state['time'] );
+
+		return $token;
+	}
+
+	/**
 	 * Rotate the session generation after a successful save.
 	 *
 	 * A successful save rotates the token so any other form still holding the old

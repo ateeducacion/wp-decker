@@ -95,6 +95,9 @@ class Decker_Tasks {
 		// Enforce the edit lock (detect-and-reject) on generic /wp/v2/tasks
 		// updates, which bypass the save_decker_task guard.
 		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
+		// A generic REST update also supersedes every open form, so rotate the
+		// generation afterwards exactly like an AJAX save does.
+		add_action( 'rest_after_insert_decker_task', array( $this, 'rotate_generation_after_rest_update' ), 10, 3 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -333,6 +336,9 @@ class Decker_Tasks {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+
+		// The card moved: any open editor form now holds a stale stack.
+		$this->get_task_locks()->invalidate_sessions( $task_id );
 
 		return new WP_REST_Response(
 			array(
@@ -1229,6 +1235,14 @@ class Decker_Tasks {
 
 		$result = self::merge_tasks( $source_task_id, $destination_task_id );
 
+		if ( ! is_wp_error( $result ) ) {
+			// The destination absorbed content: invalidate any open editor form
+			// on either side of the merge.
+			$locks = $this->get_task_locks();
+			$locks->invalidate_sessions( $source_task_id );
+			$locks->invalidate_sessions( $destination_task_id );
+		}
+
 		if ( is_wp_error( $result ) ) {
 			$error_data = $result->get_error_data();
 			$status     = is_array( $error_data ) && isset( $error_data['status'] )
@@ -1812,6 +1826,8 @@ class Decker_Tasks {
 			// Trigger a hook after a user has been assigned.
 			do_action( 'decker_user_assigned', $task_id, $user_id );
 
+			// Assignees changed: invalidate any open editor form.
+			$this->get_task_locks()->invalidate_sessions( $task_id );
 		}
 
 		return new WP_REST_Response(
@@ -1858,6 +1874,9 @@ class Decker_Tasks {
 		if ( is_array( $assigned_users ) && in_array( $user_id, $assigned_users ) ) {
 			$assigned_users = array_diff( $assigned_users, array( $user_id ) );
 			update_post_meta( $task_id, 'assigned_users', $assigned_users );
+
+			// Assignees changed: invalidate any open editor form.
+			$this->get_task_locks()->invalidate_sessions( $task_id );
 		}
 
 		return new WP_REST_Response(
@@ -1960,6 +1979,11 @@ class Decker_Tasks {
 		}
 
 		do_action( 'decker_task_updated', $task_id ); // Invalidates .ics “all”.
+
+		if ( ! empty( $updated_meta ) ) {
+			// The due date changed: invalidate any open editor form.
+			$this->get_task_locks()->invalidate_sessions( $task_id );
+		}
 
 		 // Step 4: Return response.
 		return new WP_REST_Response(
@@ -2828,6 +2852,26 @@ class Decker_Tasks {
 		}
 
 		return $prepared_post;
+	}
+
+	/**
+	 * Invalidate open editing sessions after a generic REST update.
+	 *
+	 * `guard_rest_task_update()` only validates the submitted generation before
+	 * the write. Without this the token stays reusable, so a stale form (or a
+	 * second REST client of the same user) could still overwrite the update.
+	 *
+	 * @param WP_Post         $post     The task that was written.
+	 * @param WP_REST_Request $request  The REST request.
+	 * @param bool            $creating Whether the post was just created.
+	 * @return void
+	 */
+	public function rotate_generation_after_rest_update( $post, $request, $creating ) {
+		if ( $creating || ! $post instanceof WP_Post ) {
+			return;
+		}
+
+		$this->get_task_locks()->invalidate_sessions( (int) $post->ID );
 	}
 
 	/**
