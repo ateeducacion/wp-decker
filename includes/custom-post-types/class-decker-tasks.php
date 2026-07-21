@@ -3448,14 +3448,21 @@ class Decker_Tasks {
 
 				// Prepare custom metadata.
 		$meta_input = array(
-			'id_nextcloud_card' => $id_nextcloud_card,
-			'stack'             => sanitize_text_field( $stack ),
-			'duedate'           => $duedate_str,
-			'max_priority'      => $max_priority ? '1' : '0',
-			'assigned_users'    => $assigned_users,
-			'responsable'       => $responsable,
-			'hidden'            => $hidden,
+			'stack'          => sanitize_text_field( $stack ),
+			'duedate'        => $duedate_str,
+			'max_priority'   => $max_priority ? '1' : '0',
+			'assigned_users' => $assigned_users,
+			'responsable'    => $responsable,
+			'hidden'         => $hidden,
 		);
+
+		// Preserve an existing Nextcloud link on update: callers that do not manage
+		// the link (the frontend form, the abilities adapter) pass 0 and must not
+		// wipe a card ID synced from elsewhere. On create there is nothing to
+		// preserve, so the supplied value (including 0) is written as-is.
+		if ( $id_nextcloud_card > 0 || $id <= 0 ) {
+			$meta_input['id_nextcloud_card'] = $id_nextcloud_card;
+		}
 
 		// Prepare the post data.
 		$post_data = self::build_task_post_data(
@@ -3535,11 +3542,11 @@ class Decker_Tasks {
 			$tax_input['decker_board'] = array( $board );
 		}
 
-		// Include labels in tax_input if any.
-		if ( ! empty( $labels ) ) {
-			// Make sure $labels contains valid term IDs.
-			$tax_input['decker_label'] = array_map( 'intval', $labels );
-		}
+		// Always set labels — even an empty set — so a save replaces the full label
+		// list and can clear every label. Omitting the key would leave the existing
+		// labels untouched (a silent merge), breaking "complete state" writes and
+		// the ability to deselect all labels in the UI.
+		$tax_input['decker_label'] = array_map( 'intval', $labels );
 
 		return $tax_input;
 	}

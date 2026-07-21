@@ -136,6 +136,14 @@ add_action( 'admin_notices', 'decker_multisite_restriction_notice' );
  * admin-specific hooks, and public-facing site hooks.
  */
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-ability-service.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-abilities.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/class-decker-agent-ui.php';
+
+// Wire the agent-facing integrations from the bootstrap rather than at class-file
+// scope, so they can be mocked in tests and disabled without side effects on load.
+new Decker_Abilities();
+new Decker_Agent_UI();
 
 
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
