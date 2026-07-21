@@ -77,9 +77,12 @@ class DeckerTaskLockRestTest extends Decker_Test_Base {
 	 * @param string $route   The route below /decker/v1.
 	 * @return WP_REST_Response The dispatched response.
 	 */
-	private function dispatch( string $method, string $route ): WP_REST_Response {
+	private function dispatch( string $method, string $route, array $params = array() ): WP_REST_Response {
 		$request = new WP_REST_Request( $method, '/decker/v1' . $route );
 		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		if ( $params ) {
+			$request->set_query_params( $params );
+		}
 
 		return rest_get_server()->dispatch( $request );
 	}
@@ -137,16 +140,23 @@ class DeckerTaskLockRestTest extends Decker_Test_Base {
 	 * Releasing the lock only works for the owner.
 	 */
 	public function test_release_lock() {
-		$this->dispatch( 'POST', '/tasks/' . $this->task_id . '/lock' );
+		$generation = $this->dispatch( 'POST', '/tasks/' . $this->task_id . '/lock' )->get_data()['generation'];
 
 		// A different user cannot release user A's lock.
 		wp_set_current_user( $this->user_b );
 		$foreign = $this->dispatch( 'DELETE', '/tasks/' . $this->task_id . '/lock' )->get_data();
 		$this->assertFalse( $foreign['released'] );
 
-		// The owner can release it.
+		// The owner must present its session generation to release.
 		wp_set_current_user( $this->user_a );
-		$owner = $this->dispatch( 'DELETE', '/tasks/' . $this->task_id . '/lock' )->get_data();
+		$without_token = $this->dispatch( 'DELETE', '/tasks/' . $this->task_id . '/lock' )->get_data();
+		$this->assertFalse( $without_token['released'] );
+
+		$owner = $this->dispatch(
+			'DELETE',
+			'/tasks/' . $this->task_id . '/lock',
+			array( 'lock_generation' => $generation )
+		)->get_data();
 		$this->assertTrue( $owner['released'] );
 	}
 

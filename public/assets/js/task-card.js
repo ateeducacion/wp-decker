@@ -19,6 +19,10 @@
     // { postId: number, owned: boolean } or null when no card is being edited.
     let activeLock = null;
 
+    // Prevent a heartbeat response from invalidating the session while its save
+    // is rotating the generation on the server.
+    let taskSaveInFlight = false;
+
     let quill = null;
     let collabSession = null;
 
@@ -143,11 +147,22 @@
 
     /**
      * Read the lock state serialized by the server into the task form.
-     * @param {HTMLElement} context - The container element.
+     *
+     * Accepts either a page/modal container that contains `#task-form`, or the
+     * form element itself. `Element.querySelector()` only matches descendants,
+     * so passing the form must not look for a nested `#task-form` (which would
+     * miss `data-lock` and send an empty `lock_generation` on save).
+     *
+     * @param {HTMLElement} context - The container or the task form element.
      * @returns {Object|null} The lock info, or null when unavailable.
      */
     function readTaskLockState(context) {
-        const form = context.querySelector('#task-form');
+        if (!context) {
+            return null;
+        }
+        const form = (typeof context.matches === 'function' && context.matches('#task-form'))
+            ? context
+            : context.querySelector('#task-form');
         if (!form || !form.dataset.lock) {
             return null;
         }
@@ -156,6 +171,19 @@
         } catch (e) {
             return null;
         }
+    }
+
+    /**
+     * Whether a save AJAX body represents a lock conflict.
+     *
+     * The server returns HTTP 409 with success:false and code
+     * decker_task_locked; callers must not gate this on 2xx statuses alone.
+     *
+     * @param {Object|null} response - Parsed JSON response body.
+     * @returns {boolean} True when the response is a lock conflict.
+     */
+    function isTaskLockConflictResponse(response) {
+        return !!(response && response.data && response.data.code === 'decker_task_locked');
     }
 
     /**
@@ -338,13 +366,48 @@
             return;
         }
         const taskId = activeLock.postId;
+        // Send our session generation so the server releases only this session and
+        // never a newer session of the same user that took over.
+        const lock = readTaskLockState(document.getElementById('task-form'));
+        const generation = lock && lock.generation ? lock.generation : '';
+        const path = generation ? `?lock_generation=${encodeURIComponent(generation)}` : '';
         activeLock = null;
         // keepalive lets the request complete even while the modal/page unloads.
-        lockRequest('DELETE', taskId, '', { keepalive: true }).catch(() => {});
+        lockRequest('DELETE', taskId, path, { keepalive: true }).catch(() => {});
+    }
+
+    /**
+     * Clear in-memory lock tracking without contacting the server.
+     *
+     * Used when the lock was already released through another path (for example
+     * an explicit REST DELETE in tests) so a later pagehide does not issue a
+     * duplicate release request.
+     */
+    function clearActiveLockState() {
+        setLockHeartbeatSpeed(false);
+        activeLock = null;
     }
 
     // Expose the release helper so the modal close handler can call it.
     window.deckerReleaseActiveTaskLock = releaseActiveLock;
+    window.deckerClearActiveTaskLockState = clearActiveLockState;
+
+    /**
+     * Whether a task-lock heartbeat response belongs to an obsolete form state.
+     *
+     * @param {Object} info - The lock information returned by the heartbeat.
+     * @param {string} currentGeneration - Generation currently stored by the form.
+     * @param {boolean} saveInFlight - Whether the form is awaiting a save response.
+     * @returns {boolean} True when the heartbeat response must be ignored.
+     */
+    function shouldIgnoreTaskLockHeartbeat(info, currentGeneration, saveInFlight) {
+        if (saveInFlight) {
+            return true;
+        }
+
+        return !!(info && info.request_generation
+            && info.request_generation !== currentGeneration);
+    }
 
     // Release the lock when the tab is closed or the user navigates away
     // (covers the full-page view and closing without saving).
@@ -356,8 +419,14 @@
     // detect takeovers. Bound once at module load.
     if (window.jQuery) {
         jQuery(document).on('heartbeat-send.deckerLock', function (e, data) {
-            if (activeLock && activeLock.postId && activeLock.owned) {
-                data.decker_task_lock = { post_id: activeLock.postId };
+            if (!taskSaveInFlight && activeLock && activeLock.postId && activeLock.owned) {
+                // Send the session generation so the server refreshes only this
+                // exact session and never re-acquires on our behalf.
+                const lock = readTaskLockState(document.getElementById('task-form'));
+                data.decker_task_lock = {
+                    post_id: activeLock.postId,
+                    generation: lock && lock.generation ? lock.generation : '',
+                };
             }
         });
 
@@ -366,8 +435,19 @@
                 return;
             }
             const info = data.decker_task_lock;
-            if (info.locked && !info.owned_by_current_user) {
-                // We were the editor and just lost the lock to another user.
+            const currentLock = readTaskLockState(document.getElementById('task-form'));
+            const currentGeneration = currentLock && currentLock.generation
+                ? currentLock.generation
+                : '';
+            if (shouldIgnoreTaskLockHeartbeat(info, currentGeneration, taskSaveInFlight)) {
+                return;
+            }
+            // Lost to another active editor, or our session was superseded (a
+            // takeover, even one already released, or another session of the same
+            // user): block this stale editor. We never adopt a server-sent token
+            // into an open form — validity is proven only by the token we already
+            // hold, so a stale session can never be silently re-authorized.
+            if ((info.locked && !info.owned_by_current_user) || info.stale_session) {
                 setLockHeartbeatSpeed(false);
                 const modal = document.querySelector('.task-modal.show') || document;
                 handleLockLost(modal, info);
@@ -1714,6 +1794,10 @@
         const selectedAssigneesValues = assigneesSelect.getValue().map(item => parseInt(item.value, 10));
         const selectedLabelsValues = labelsSelect.getValue().map(item => parseInt(item.value, 10));
 
+        // Embed the lock generation from the form session so the server can
+        // reject this save after a takeover even if the active lock was released.
+        const lockGeneration = (readTaskLockState(form) || {}).generation ?? '';
+
         // Gather the form data
         const formData = {
             action: 'save_decker_task',
@@ -1731,6 +1815,7 @@
             description: quill.root.innerHTML,
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
+            lock_generation: lockGeneration,
         };
 
         // Disable save controls to prevent duplicate submissions
@@ -1749,64 +1834,104 @@
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
         xhr.onload = function() {
-            if (xhr.status >= 200 && xhr.status < 400) {
-                const response = JSON.parse(xhr.responseText);
-                if (response.success) {
-                    window.deckerHasUnsavedChanges = false;
-                    if (window.parent && window.parent.Swal) {
-                        window.parent.Swal.fire({
-                            icon: 'success',
-                            title: strings.task_saved_success,
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 1500,
-                            timerProgressBar: true
-                        });
-                    }
-                    const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
-                    if (modalElement) {
-                        var modalInstance = bootstrap.Modal.getInstance(modalElement);
-                        if (modalInstance) {
-                            modalInstance.hide();
-                        }
-                        
-                        // Reload the page if the request was successful
-                        location.reload();
-                    } else {
-                        // Redirect or update depending on the response
-                        window.location.href = `${homeUrl}?decker_page=task&id=${response.data.task_id}`;
-                    }
+            let response = null;
+            try {
+                response = JSON.parse(xhr.responseText);
+            } catch (e) {
+                response = null;
+            }
 
-                } else {
-                    // A stale editing session lost the lock (another user took over).
-                    if (response.data && response.data.code === 'decker_task_locked') {
-                        const lockContext = document.querySelector('.task-modal.show') || document;
-                        handleLockLost(lockContext, response.data);
-                        alert(response.data.message || strings.lock_lost_message);
-                        return;
-                    }
-                    alert(response.data.message || strings.error_saving_task);
-                    if (saveButton) {
-                        saveButton.disabled = false;
-                    }
-                    if (saveDropdown) {
-                        saveDropdown.disabled = false;
+            taskSaveInFlight = false;
+
+            if (xhr.status >= 200 && xhr.status < 400 && response && response.success) {
+                window.deckerHasUnsavedChanges = false;
+                // Adopt the server's rotated generation (only ever from our own
+                // save response) so the next save uses it and a second tab of the
+                // same user holding the old token can no longer overwrite us.
+                if (response.data && response.data.generation && form.dataset.lock) {
+                    try {
+                        const lock = JSON.parse(form.dataset.lock);
+                        lock.generation = response.data.generation;
+                        form.dataset.lock = JSON.stringify(lock);
+                    } catch (e) {
+                        // Leave the existing data-lock untouched when unparseable.
                     }
                 }
+                if (window.parent && window.parent.Swal) {
+                    window.parent.Swal.fire({
+                        icon: 'success',
+                        title: strings.task_saved_success,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    });
+                }
+                const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
+                if (modalElement) {
+                    var modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+
+                    // Reload the page if the request was successful
+                    location.reload();
+                    return;
+                }
+
+                // Full-page view: only navigate when this save created a new
+                // task. Reloading an existing card would fire pagehide and
+                // release the edit lock; the server also invalidates stale
+                // sessions via lock generation, but staying put avoids the race.
+                const savedId = response.data && response.data.task_id
+                    ? String(response.data.task_id)
+                    : '';
+                const currentId = formData.task_id ? String(formData.task_id) : '';
+                if (savedId && (!currentId || currentId === '0' || currentId !== savedId)) {
+                    window.location.href = `${homeUrl}?decker_page=task&id=${savedId}`;
+                    return;
+                }
+
+                // Return to pristine mode: keep Save disabled until the next edit.
+                if (saveButton) {
+                    saveButton.disabled = true;
+                }
+                if (saveDropdown) {
+                    // Existing-task split actions stay available (archive, etc.).
+                    saveDropdown.disabled = false;
+                }
+                return;
+            }
+
+            // Lock conflicts are returned as HTTP 409 with success:false.
+            // Handle them for any status so the previous editor is blocked
+            // immediately instead of only on 2xx bodies.
+            if (isTaskLockConflictResponse(response)) {
+                const lockContext = document.querySelector('.task-modal.show') || document;
+                handleLockLost(lockContext, response.data);
+                alert(response.data.message || strings.lock_lost_message);
+                return;
+            }
+
+            if (response && response.data && response.data.message) {
+                alert(response.data.message);
+            } else if (xhr.status >= 200 && xhr.status < 400) {
+                alert(strings.error_saving_task);
             } else {
                 console.error(strings.server_response_error);
                 alert(strings.an_error_occurred_saving_task);
-                if (saveButton) {
-                    saveButton.disabled = false;
-                }
-                if (saveDropdown) {
-                    saveDropdown.disabled = false;
-                }
+            }
+            if (saveButton) {
+                saveButton.disabled = false;
+            }
+            if (saveDropdown) {
+                saveDropdown.disabled = false;
             }
         };
 
         xhr.onerror = function() {
+            taskSaveInFlight = false;
             console.error(strings.request_error);
             alert(strings.error_saving_task);
             if (saveButton) {
@@ -1821,6 +1946,7 @@
             .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
             .join('&');
 
+        taskSaveInFlight = true;
         xhr.send(encodedData);
     }
 

@@ -92,6 +92,9 @@ class Decker_Tasks {
 		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		// Enforce the edit lock (detect-and-reject) on generic /wp/v2/tasks
+		// updates, which bypass the save_decker_task guard.
+		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
@@ -1072,7 +1075,12 @@ class Decker_Tasks {
 			return $error;
 		}
 
-		$released = $this->get_task_locks()->release_lock( $task_id, get_current_user_id() );
+		$generation = $request->get_param( 'lock_generation' );
+		$released   = $this->get_task_locks()->release_lock(
+			$task_id,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : ''
+		);
 
 		return new WP_REST_Response( array( 'released' => $released ), 200 );
 	}
@@ -1080,9 +1088,11 @@ class Decker_Tasks {
 	/**
 	 * Refresh the current user's task lock during a WordPress heartbeat.
 	 *
-	 * The front-end sends the id of the task open in edit mode. The lock is
-	 * refreshed when the user still owns it (or it is free/stale); if another
-	 * user has taken over, the returned payload reports the loss so the editor
+	 * The front-end sends the id of the task open in edit mode plus the session
+	 * generation embedded in its form. The lock is only refreshed when the user
+	 * still owns that exact session; a heartbeat never re-acquires a released
+	 * lock, so a previous editor cannot be re-authorized after a takeover. When
+	 * the session no longer matches, the payload reports the loss so the editor
 	 * can block further saves.
 	 *
 	 * @param array $response The heartbeat response.
@@ -1104,10 +1114,15 @@ class Decker_Tasks {
 			return $response;
 		}
 
-		$info = $this->get_task_locks()->acquire_lock( $task_id, $user_id );
+		$session_generation = isset( $data['decker_task_lock']['generation'] )
+			? sanitize_text_field( wp_unslash( $data['decker_task_lock']['generation'] ) )
+			: '';
+
+		$info = $this->get_task_locks()->refresh_lock( $task_id, $user_id, $session_generation );
 		if ( is_wp_error( $info ) ) {
 			return $response;
 		}
+		$info['request_generation'] = $session_generation;
 
 		$response['decker_task_lock'] = $info;
 
@@ -2782,7 +2797,38 @@ class Decker_Tasks {
 		return $data;
 	}
 
+	/**
+	 * Enforce the edit lock on generic REST updates of an existing task.
+	 *
+	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
+	 * registered meta), which bypasses the lock guard in save_decker_task. This
+	 * rejects an update while another user owns the active lock and requires a
+	 * valid `lock_generation` once the task carries one (detect-and-reject).
+	 * Creates (no existing id) and never-locked tasks remain updatable over REST.
+	 *
+	 * @param stdClass        $prepared_post The prepared post for insertion.
+	 * @param WP_REST_Request $request       The REST request.
+	 * @return stdClass|WP_Error The prepared post, or a 409 error when locked.
+	 */
+	public function guard_rest_task_update( $prepared_post, $request ) {
+		if ( empty( $prepared_post->ID ) ) {
+			return $prepared_post;
+		}
 
+		$generation = $request->get_param( 'lock_generation' );
+		$check      = $this->get_task_locks()->assert_user_can_save(
+			(int) $prepared_post->ID,
+			get_current_user_id(),
+			is_string( $generation ) ? $generation : null,
+			true
+		);
+
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+
+		return $prepared_post;
+	}
 
 	/**
 	 * Save the custom meta fields.
@@ -3135,15 +3181,34 @@ class Decker_Tasks {
 
 		// Enforce the edit lock server-side before applying changes to an
 		// existing task. A stale editing session (for example after another user
-		// took over the lock) must never overwrite newer changes.
+		// took over the lock) must never overwrite newer changes, even when the
+		// active lock was released after the takeover (modal close / pagehide).
 		if ( $core['id'] > 0 ) {
-			$lock_check = $this->get_task_locks()->assert_user_can_save( $core['id'], get_current_user_id() );
+			// Public AJAX saves of an existing task must carry a session
+			// generation while locking is enabled; a missing token cannot be
+			// validated against a takeover and must not overwrite newer changes.
+			$lock_check = $this->get_task_locks()->assert_user_can_save(
+				$core['id'],
+				get_current_user_id(),
+				$options['lock_generation'],
+				true
+			);
 			if ( is_wp_error( $lock_check ) ) {
 				$error_data = array(
 					'message' => $lock_check->get_error_message(),
 					'code'    => $lock_check->get_error_code(),
 					'locked'  => true,
 				);
+
+				$error_data_extra = $lock_check->get_error_data();
+				if ( is_array( $error_data_extra ) ) {
+					if ( isset( $error_data_extra['owner'] ) ) {
+						$error_data['owner'] = $error_data_extra['owner'];
+					}
+					if ( isset( $error_data_extra['generation'] ) ) {
+						$error_data['generation'] = $error_data_extra['generation'];
+					}
+				}
 
 				if ( $send_response ) {
 					wp_send_json_error( $error_data, 409 );
@@ -3153,6 +3218,8 @@ class Decker_Tasks {
 				return array_merge( array( 'success' => false ), $error_data );
 			}
 		}
+
+		$lock_generation = is_string( $options['lock_generation'] ) ? $options['lock_generation'] : '';
 
 		$duedate = $this->parse_task_due_date( $options['duedate_raw'] );
 
@@ -3181,8 +3248,12 @@ class Decker_Tasks {
 		);
 
 		if ( is_wp_error( $result ) ) {
-			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
-			return;
+			$error_data = array( 'message' => $result->get_error_message() );
+			if ( $send_response ) {
+				wp_send_json_error( $error_data );
+				return;
+			}
+			return array_merge( array( 'success' => false ), $error_data );
 		}
 
 		// Set today.
@@ -3192,10 +3263,22 @@ class Decker_Tasks {
 			$this->remove_user_date_relation( $result, get_current_user_id() );
 		}
 
+		// The save committed: rotate the generation so any other stale form (for
+		// example a second tab of the same user) is rejected on its next save, and
+		// hand the new token back so this form adopts it.
+		$new_generation = '';
+		if ( $core['id'] > 0 && '' !== $lock_generation ) {
+			$rotated = $this->get_task_locks()->rotate_generation( $core['id'], get_current_user_id(), $lock_generation );
+			if ( false !== $rotated ) {
+				$new_generation = $rotated;
+			}
+		}
+
 		$result_data = array(
-			'success' => ! is_wp_error( $result ),
-			'message' => is_wp_error( $result ) ? $result->get_error_message() : __( 'Task saved successfully.', 'decker' ),
-			'task_id' => $result,
+			'success'    => ! is_wp_error( $result ),
+			'message'    => is_wp_error( $result ) ? $result->get_error_message() : __( 'Task saved successfully.', 'decker' ),
+			'task_id'    => $result,
+			'generation' => $new_generation,
 		);
 
 		if ( $send_response ) {
@@ -3229,7 +3312,7 @@ class Decker_Tasks {
 	 *
 	 * The nonce is verified by the caller when the response filter is enabled.
 	 *
-	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string}
+	 * @return array{max_priority:bool,mark_for_today:bool,author:int,responsable:int,hidden:bool,duedate_raw:string,lock_generation:string|null}
 	 */
 	private function read_task_option_fields(): array {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
@@ -3243,15 +3326,25 @@ class Decker_Tasks {
 		$responsable = isset( $_POST['responsable'] ) ? intval( wp_unslash( $_POST['responsable'] ) ) : $author;
 
 		$hidden = isset( $_POST['hidden'] ) ? boolval( wp_unslash( $_POST['hidden'] ) ) : false;
+
+		// Session generation token from the editor form; null when the client did not send it.
+		$lock_generation = null;
+		if ( isset( $_POST['lock_generation'] ) ) {
+			$lock_generation_raw = sanitize_text_field( wp_unslash( $_POST['lock_generation'] ) );
+			if ( '' !== $lock_generation_raw ) {
+				$lock_generation = $lock_generation_raw;
+			}
+		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		return array(
-			'max_priority'   => $max_priority,
-			'mark_for_today' => $mark_for_today,
-			'author'         => $author,
-			'responsable'    => $responsable,
-			'hidden'         => $hidden,
-			'duedate_raw'    => $duedate_raw,
+			'max_priority'    => $max_priority,
+			'mark_for_today'  => $mark_for_today,
+			'author'          => $author,
+			'responsable'     => $responsable,
+			'hidden'          => $hidden,
+			'duedate_raw'     => $duedate_raw,
+			'lock_generation' => $lock_generation,
 		);
 	}
 

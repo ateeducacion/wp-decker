@@ -14,6 +14,33 @@ const USER_A = { username: 'lockusera', password: 'lock-pass-A-123', name: 'Lock
 const USER_B = { username: 'lockuserb', password: 'lock-pass-B-123', name: 'Lock User B' };
 
 /**
+ * Whether a response is the Decker save_decker_task AJAX action.
+ *
+ * @param {import('@playwright/test').Response} response The Playwright response.
+ * @return {boolean} True when the request is a task save.
+ */
+function isSaveTaskResponse( response ) {
+	const request = response.request();
+	const postData = request.postData() || '';
+
+	return response.url().includes( 'admin-ajax.php' ) &&
+		request.method() === 'POST' &&
+		postData.includes( 'action=save_decker_task' );
+}
+
+/**
+ * Read a single application/x-www-form-urlencoded field from a save response.
+ *
+ * @param {import('@playwright/test').Response} response The save response.
+ * @param {string}                              key      The field name.
+ * @return {string|null} The field value, or null when absent.
+ */
+function getSavePostParam( response, key ) {
+	const postData = response.request().postData() || '';
+	return new URLSearchParams( postData ).get( key );
+}
+
+/**
  * Log a specific user in through the WordPress login form in a fresh context.
  *
  * @param {import('@playwright/test').Browser} browser  The Playwright browser.
@@ -115,25 +142,90 @@ test.describe( 'Task edit locking', () => {
 		// The due date is a required field; a full save is blocked client-side
 		// (form validation) until it is set.
 		await b.page.fill( '#task-due-date', '2026-12-31' );
-		await b.page.locator( '#save-task' ).click();
-		await b.page.waitForLoadState( 'networkidle' );
+		const [ bSaveResponse ] = await Promise.all( [
+			b.page.waitForResponse( isSaveTaskResponse ),
+			b.page.locator( '#save-task' ).click(),
+		] );
+		expect( bSaveResponse.status() ).toBe( 200 );
+		// The browser must send a non-empty lock generation from data-lock.
+		const bGeneration = getSavePostParam( bSaveResponse, 'lock_generation' );
+		expect( bGeneration ).toBeTruthy();
+		expect( bGeneration ).not.toBe( '0' );
+		// Saving an existing full-page card must keep the session instead of
+		// redirecting, and return to pristine mode (Save disabled until dirty).
+		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
+		await expect( b.page.locator( '#save-task' ) ).toBeDisabled( { timeout: 10000 } );
 
-		// User A tries to save a stale change and is rejected.
+		// Explicitly release the active lock via REST (same outcome as modal
+		// close / pagehide) and wait for the response so the 409 below cannot
+		// be explained by an still-held _edit_lock — only by the generation
+		// mismatch from A's stale form.
+		const releaseResult = await b.page.evaluate( async ( id ) => {
+			const root = window.wpApiSettings && window.wpApiSettings.root
+				? window.wpApiSettings.root
+				: '/wp-json/';
+			const nonce = window.wpApiSettings && window.wpApiSettings.nonce
+				? window.wpApiSettings.nonce
+				: '';
+			// Release requires the session generation (owner + token must match),
+			// read from the form's data-lock exactly as the client sends it.
+			let generation = '';
+			const form = document.getElementById( 'task-form' );
+			if ( form && form.dataset.lock ) {
+				try {
+					generation = JSON.parse( form.dataset.lock ).generation || '';
+				} catch ( e ) {
+					generation = '';
+				}
+			}
+			const query = generation
+				? `?lock_generation=${ encodeURIComponent( generation ) }`
+				: '';
+			const response = await fetch( `${ root }decker/v1/tasks/${ id }/lock${ query }`, {
+				method: 'DELETE',
+				headers: { 'X-WP-Nonce': nonce },
+				credentials: 'same-origin',
+			} );
+			const data = await response.json();
+			// Drop in-memory ownership so pagehide does not fire a second DELETE.
+			if ( typeof window.deckerClearActiveTaskLockState === 'function' ) {
+				window.deckerClearActiveTaskLockState();
+			}
+			return { ok: response.ok, status: response.status, data };
+		}, taskId );
+		expect( releaseResult.ok ).toBe( true );
+		expect( releaseResult.data.released ).toBe( true );
+
+		// Close B's session before opening another B context for the final check.
+		await b.context.close();
+
+		// User A tries to save a stale change and is rejected with HTTP 409.
 		a.page.on( 'dialog', ( dialog ) => dialog.accept() );
 		await a.page.fill( '#task-title', 'Updated by user A' );
 		await a.page.fill( '#task-due-date', '2026-12-30' );
-		await a.page.locator( '#save-task' ).click();
+		const [ aSaveResponse ] = await Promise.all( [
+			a.page.waitForResponse( isSaveTaskResponse ),
+			a.page.locator( '#save-task' ).click(),
+		] );
+		const aGeneration = getSavePostParam( aSaveResponse, 'lock_generation' );
+		expect( aGeneration ).toBeTruthy();
+		// After takeover, A's form still carries the pre-takeover generation token.
+		expect( aGeneration ).not.toBe( bGeneration );
+		expect( aSaveResponse.status() ).toBe( 409 );
+		const aSaveBody = await aSaveResponse.json();
+		expect( aSaveBody.success ).toBe( false );
+		expect( aSaveBody.data.code ).toBe( 'decker_task_locked' );
 		await expect(
 			a.page.locator( '[data-decker-lock-lost]' )
 		).toBeVisible( { timeout: 10000 } );
 
 		// The final stored title is user B's value.
-		const final = await ( await loginAs( browser, baseURL, USER_B ) ).page;
-		await final.goto( `/?decker_page=task&id=${ taskId }` );
-		await expect( final.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
+		const final = await loginAs( browser, baseURL, USER_B );
+		await final.page.goto( `/?decker_page=task&id=${ taskId }` );
+		await expect( final.page.locator( '#task-title' ) ).toHaveValue( 'Updated by user B' );
 
 		await a.context.close();
-		await b.context.close();
+		await final.context.close();
 	} );
 
 	test( 'a fresh user can edit a card with no active lock', async ( {
@@ -148,8 +240,14 @@ test.describe( 'Task edit locking', () => {
 		await b.page.fill( '#task-title', 'Edited without a prior lock' );
 		// The due date is a required field; fill it so the full save is allowed.
 		await b.page.fill( '#task-due-date', '2026-12-31' );
-		await b.page.locator( '#save-task' ).click();
-		await b.page.waitForLoadState( 'networkidle' );
+		const [ saveResponse ] = await Promise.all( [
+			b.page.waitForResponse( isSaveTaskResponse ),
+			b.page.locator( '#save-task' ).click(),
+		] );
+		expect( saveResponse.status() ).toBe( 200 );
+		expect( getSavePostParam( saveResponse, 'lock_generation' ) ).toBeTruthy();
+		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Edited without a prior lock' );
+		await expect( b.page.locator( '#save-task' ) ).toBeDisabled( { timeout: 10000 } );
 
 		await b.page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( b.page.locator( '#task-title' ) ).toHaveValue( 'Edited without a prior lock' );

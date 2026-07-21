@@ -120,14 +120,28 @@ describe( 'task-card lock UI', () => {
 		global.alert = jest.fn();
 	} );
 
-	test( 'reads the serialized lock state from the form', () => {
-		const lock = { post_id: 7, locked: true, owner: { id: 3, display_name: 'Ana' } };
+	test( 'reads the serialized lock state from a container that holds the form', () => {
+		const lock = { post_id: 7, locked: true, owner: { id: 3, display_name: 'Ana' }, generation: 1 };
 		const context = buildDom( lock, true );
 
 		const parsed = readTaskLockState( context );
 
 		expect( parsed.locked ).toBe( true );
 		expect( parsed.owner.display_name ).toBe( 'Ana' );
+		expect( parsed.generation ).toBe( 1 );
+	} );
+
+	test( 'reads the serialized lock state when the form itself is the context', () => {
+		// sendFormByAjax() passes document.getElementById('task-form'), not a wrapper.
+		const lock = { post_id: 7, locked: false, owned_by_current_user: true, generation: 3 };
+		const context = buildDom( lock, false );
+		const form = context.querySelector( '#task-form' );
+
+		const parsed = readTaskLockState( form );
+
+		expect( parsed ).not.toBeNull();
+		expect( parsed.generation ).toBe( 3 );
+		expect( parsed.owned_by_current_user ).toBe( true );
 	} );
 
 	test( 'returns null when there is no lock data', () => {
@@ -135,6 +149,7 @@ describe( 'task-card lock UI', () => {
 		const context = document.getElementById( 'context' );
 
 		expect( readTaskLockState( context ) ).toBeNull();
+		expect( readTaskLockState( context.querySelector( '#task-form' ) ) ).toBeNull();
 	} );
 
 	test( 'renders the locked message with the owner display name', () => {
@@ -256,5 +271,75 @@ describe( 'task-card lock UI', () => {
 		expect( context.querySelector( '#task-title' ).disabled ).toBe( true );
 		expect( context.querySelector( '#save-task' ).disabled ).toBe( true );
 		expect( activeLock.owned ).toBe( false );
+	} );
+
+	test( 'detects lock conflict responses regardless of HTTP success envelope', () => {
+		const isTaskLockConflictResponse = compile( 'isTaskLockConflictResponse', {} );
+
+		expect( isTaskLockConflictResponse( {
+			success: false,
+			data: { code: 'decker_task_locked', message: 'locked', locked: true },
+		} ) ).toBe( true );
+
+		expect( isTaskLockConflictResponse( {
+			success: false,
+			data: { code: 'other_error', message: 'nope' },
+		} ) ).toBe( false );
+
+		expect( isTaskLockConflictResponse( null ) ).toBe( false );
+		expect( isTaskLockConflictResponse( { success: true } ) ).toBe( false );
+	} );
+
+	test( 'HTTP 409 lock conflict shows the lock-lost banner via handleLockLost', () => {
+		const lock = { post_id: 4, locked: false, owned_by_current_user: true, generation: 1 };
+		const context = buildDom( lock, false );
+		const activeLock = { postId: 4, owned: true };
+		const handleLockLost = compile( 'handleLockLost', {
+			activeLock,
+			disableEditingControls,
+			strings: STRINGS,
+			getTaskId: () => '4',
+			reloadTaskCard: jest.fn(),
+		} );
+		const isTaskLockConflictResponse = compile( 'isTaskLockConflictResponse', {} );
+
+		// Simulate the xhr.onload branch for a 409 body.
+		const response = {
+			success: false,
+			data: {
+				code: 'decker_task_locked',
+				message: 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.',
+				locked: true,
+				owner: { id: 2, display_name: 'Bruno' },
+			},
+		};
+		expect( isTaskLockConflictResponse( response ) ).toBe( true );
+
+		if ( isTaskLockConflictResponse( response ) ) {
+			handleLockLost( context, response.data );
+		}
+
+		expect( context.querySelector( '[data-decker-lock-lost]' ) ).not.toBeNull();
+		expect( context.querySelector( '#save-task' ).disabled ).toBe( true );
+	} );
+
+	test( 'ignores a delayed heartbeat submitted with the pre-save generation', () => {
+		const shouldIgnoreTaskLockHeartbeat = compile( 'shouldIgnoreTaskLockHeartbeat', {} );
+
+		expect( shouldIgnoreTaskLockHeartbeat(
+			{ request_generation: 'generation-a', stale_session: true },
+			'generation-b',
+			false
+		) ).toBe( true );
+		expect( shouldIgnoreTaskLockHeartbeat(
+			{ request_generation: 'generation-a', stale_session: true },
+			'generation-a',
+			true
+		) ).toBe( true );
+		expect( shouldIgnoreTaskLockHeartbeat(
+			{ request_generation: 'generation-a', stale_session: true },
+			'generation-a',
+			false
+		) ).toBe( false );
 	} );
 } );
