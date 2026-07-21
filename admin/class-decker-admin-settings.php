@@ -389,6 +389,7 @@ class Decker_Admin_Settings {
 			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons.
 			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field.
 			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
+			'task_editor_type'      => __( 'Task Editor Type', 'decker' ),
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
@@ -464,6 +465,29 @@ class Decker_Admin_Settings {
 		$value = isset( $options['ignored_users'] ) ? sanitize_text_field( $options['ignored_users'] ) : '';
 		echo '<input type="text" name="decker_settings[ignored_users]" class="regular-text" value="' . esc_attr( $value ) . '" pattern="^[0-9]+(,[0-9]+)*$" title="' . esc_attr__( 'Please enter comma-separated user IDs (numbers only)', 'decker' ) . '">';
 		echo '<p class="description">' . esc_html__( 'Enter comma-separated user IDs to ignore from Decker functionality.', 'decker' ) . '</p>';
+	}
+
+	/**
+	 * Render Task Editor Type Field.
+	 *
+	 * Outputs the HTML for the task_editor_type field.
+	 */
+	public function task_editor_type_render() {
+		$options     = get_option( 'decker_settings', array() );
+		$editor_type = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
+		$editors     = array(
+			'classic' => __( 'Classic Editor', 'decker' ),
+			'quill'   => __( 'Quill Editor', 'decker' ),
+		);
+
+		foreach ( $editors as $value => $label ) {
+			echo '<label style="margin-right: 15px;">';
+			echo '<input type="radio" name="decker_settings[task_editor_type]" value="' . esc_attr( $value ) . '" ' . checked( $editor_type, $value, false ) . '>';
+			echo esc_html( $label );
+			echo '</label>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'Choose which editor to use for task descriptions. Collaborative editing always uses Quill.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -555,6 +579,12 @@ class Decker_Admin_Settings {
 
 		// Validate user profile.
 		$input['minimum_user_profile'] = $this->validate_minimum_user_profile( $input );
+
+		// Validate task editor type. Quill stays the default during the transition period.
+		$valid_editors = array( 'classic', 'quill' );
+		if ( ! isset( $input['task_editor_type'] ) || ! in_array( $input['task_editor_type'], $valid_editors, true ) ) {
+			$input['task_editor_type'] = 'quill';
+		}
 
 		// Validate alert message.
 		$input['alert_message'] = $this->validate_alert_message( $input );

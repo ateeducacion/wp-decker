@@ -2038,3 +2038,25 @@ msgstr "No se encontró el artículo de la base de conocimiento solicitado."
 
 msgid "You are not allowed to access this article."
 msgstr "No tienes permiso para acceder a este artículo."
+
+msgid "Task Editor Type"
+msgstr "Tipo de editor de tareas"
+
+msgid "Classic Editor"
+msgstr "Editor clásico"
+
+msgid "Quill Editor"
+msgstr "Editor Quill"
+
+msgid ""
+"Choose which editor to use for task descriptions. Collaborative editing "
+"always uses Quill."
+msgstr ""
+"Elige qué editor usar para las descripciones de tareas. La edición "
+"colaborativa siempre usa Quill."
+
+msgid "Checklist"
+msgstr "Lista de verificación"
+
+msgid "This task is archived and cannot be edited."
+msgstr "Esta tarea está archivada y no se puede editar."

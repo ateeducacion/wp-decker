@@ -76,6 +76,11 @@ document.addEventListener('DOMContentLoaded', function () {
            window.quill = null; // Assuming that Quill doesn't need explicit destruction
         }
 
+        // Tear down the classic (TinyMCE) editor when it was used instead of Quill.
+        if (typeof window.destroyTaskEditor === 'function') {
+            window.destroyTaskEditor();
+        }
+
         // Destroy collaborative editing session if active
         if (window.DeckerCollaboration) {
             window.DeckerCollaboration.destroyAll();

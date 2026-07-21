@@ -116,6 +116,7 @@ describe( 'task-card lock UI', () => {
 			assigneesSelect: null,
 			labelsSelect: null,
 			quill: null,
+			taskEditor: null,
 		} );
 		global.alert = jest.fn();
 	} );

@@ -24,6 +24,7 @@
     let taskSaveInFlight = false;
 
     let quill = null;
+    let taskEditor = null;
     let collabSession = null;
 
     let assigneesSelect = null;
@@ -120,6 +121,11 @@
         // Disable Quill editor
         if (quill) {
             quill.disable();
+        }
+
+        // Disable the classic (TinyMCE) editor
+        if (taskEditor && typeof taskEditor.setMode === 'function') {
+            taskEditor.setMode('readonly');
         }
 
         // Show archived overlay message
@@ -223,6 +229,17 @@
         if (quill) {
             quill.disable();
         }
+        if (taskEditor && typeof taskEditor.setMode === 'function') {
+            taskEditor.setMode('readonly');
+        }
+        // Editor chrome not covered by the form-field selector: the Quicktags
+        // toolbar, media buttons and the Visual/Text switcher would otherwise
+        // keep mutating the textarea programmatically.
+        context.querySelectorAll(
+            '.wp-editor-wrap button, .wp-editor-wrap input[type="button"]'
+        ).forEach((button) => {
+            button.disabled = true;
+        });
         const saveButton = context.querySelector('#save-task');
         if (saveButton) {
             saveButton.disabled = true;
@@ -1270,6 +1287,145 @@
         });
     }
 
+    /**
+     * Initialize the WordPress classic (TinyMCE) editor for the task
+     * description when Quill is not in use.
+     *
+     * @param {HTMLElement} context The container element holding the task form.
+     * @return {Promise} Resolves once the editor is ready.
+     */
+    function initializeTaskEditor(context, readOnly) {
+        const textarea = context.querySelector('#task-description');
+
+        if (!textarea || typeof wp === 'undefined' || !wp.editor) {
+            return Promise.resolve();
+        }
+
+        if (taskEditor && taskEditor.initialized) {
+            return Promise.resolve();
+        }
+
+        return new Promise((resolve) => {
+            // Quicktags buttons modify the textarea programmatically and fire
+            // 'change' even when it is read-only or disabled, so dirty tracking
+            // must re-check the field state at event time (covers cards that
+            // are read-only from the start and locks applied while editing).
+            const markDirty = () => {
+                if (textarea.disabled || textarea.readOnly) {
+                    return;
+                }
+                enterDirtyEditMode(context);
+            };
+            const debouncedMarkDirty = debounce(markDirty, 150);
+
+            // Quicktags (Text tab) edits bypass TinyMCE events entirely; track
+            // the textarea directly so they still mark the card dirty.
+            textarea.addEventListener('input', debouncedMarkDirty);
+            textarea.addEventListener('change', debouncedMarkDirty);
+            if (readOnly) {
+                textarea.readOnly = true;
+            }
+
+            const config = {
+                tinymce: {
+                    wpautop: true,
+                    container: 'description-tab',
+                    // Locked or archived cards must not be editable, matching
+                    // the Quill readOnly behavior.
+                    readonly: readOnly ? true : false,
+                    toolbar1: 'formatselect bold italic link bullist numlist decker_checklist blockquote alignleft aligncenter alignright wp_adv fullscreen',
+                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    menubar: false,
+                    // Keep Quill's checklist markup (li[data-list]) intact through
+                    // TinyMCE's schema so both editors share the same stored format.
+                    extended_valid_elements: 'li[data-list|value|class|style]',
+                    // Draw the checkboxes for checklist items; state handling lives
+                    // in tinymce-checklist.js (DeckerChecklist).
+                    content_style: 'li[data-list]{list-style:none;position:relative;padding-left:1.7em;}' +
+                        'li[data-list]::before{content:"\\2610";position:absolute;left:0;top:0;width:1.4em;cursor:pointer;}' +
+                        'li[data-list="checked"]::before{content:"\\2611";}',
+                    setup: function(editor) {
+                        taskEditor = editor;
+                        if (window.DeckerChecklist) {
+                            window.DeckerChecklist.attach(editor);
+                        }
+                        editor.on('init', function() {
+                            // Use the local reference: taskEditor may already be
+                            // null if the modal was closed before init fired.
+                            editor.initialized = true;
+                            resolve();
+                        });
+                        // Only genuine user edits switch the card into dirty mode;
+                        // the initial content load (SetContent during init) is
+                        // intentionally excluded so opening a card stays pristine.
+                        editor.on('input keyup change ExecCommand', function() {
+                            debouncedMarkDirty();
+                        });
+                    }
+                },
+                // No Text tab or media buttons on read-only cards: Quicktags
+                // edits the textarea programmatically, bypassing readOnly.
+                quicktags: !readOnly,
+                mediaButtons: !readOnly
+            };
+
+            wp.editor.initialize('task-description', config);
+        });
+    }
+
+    /**
+     * Get the current task description from whichever editor is active.
+     *
+     * @param {HTMLElement} context The container element holding the task form.
+     * @return {string} The description HTML.
+     */
+    function getTaskDescription(context) {
+        if (context.querySelector('#editor') && quill) {
+            return quill.root.innerHTML;
+        }
+
+        // wp.editor.getContent() syncs TinyMCE into the textarea when the
+        // Visual tab is active and always returns the textarea value, so
+        // edits made in the Text (quicktags) tab are never lost.
+        if (
+            context.querySelector('#task-description') &&
+            typeof wp !== 'undefined' &&
+            wp.editor &&
+            typeof wp.editor.getContent === 'function'
+        ) {
+            return wp.editor.getContent('task-description');
+        }
+
+        if (taskEditor && typeof taskEditor.getContent === 'function') {
+            return taskEditor.getContent();
+        }
+
+        if (typeof tinyMCE !== 'undefined') {
+            const activeEditor = tinyMCE.get('task-description');
+            if (activeEditor) {
+                return activeEditor.getContent();
+            }
+        }
+
+        const textarea = context.querySelector('#task-description');
+        return textarea ? textarea.value : '';
+    }
+
+    /**
+     * Destroy the active classic editor instance so the card can be
+     * reinitialized cleanly. Quill teardown is handled separately.
+     */
+    function destroyTaskEditor() {
+        // Remove any instance bound to the textarea even if 'init' has not
+        // fired yet (fast modal open/close), so no orphan editor survives.
+        // wp.editor.remove() is a safe no-op when nothing was initialized.
+        if (typeof wp !== 'undefined' && wp.editor && typeof wp.editor.remove === 'function') {
+            wp.editor.remove('task-description');
+        }
+
+        taskEditor = null;
+    }
+
     // Function to initialize the tasks page within the given context
     function initializeTaskPage(context) {
         // A freshly rendered card always starts pristine, so the quick-action
@@ -1293,6 +1449,13 @@
             console.log('Task ID found in data-task-id:', taskElement.getAttribute('data-task-id'));
         } else {
             console.log('Task ID not found in data-task-id');
+        }
+
+        // When Quill is not selected, the card renders a classic-editor textarea
+        // instead of the #editor container. Initialize it here, honoring the
+        // same read-only conditions as the Quill editor.
+        if (context.querySelector('#task-description')) {
+            initializeTaskEditor(context, disabled || lockedByOther);
         }
 
         if (context.querySelector('#editor')) {
@@ -1812,7 +1975,7 @@
             hidden: form.querySelector('#task-hidden').checked ? 1 : 0,
             assignees: selectedAssigneesValues,
             labels: selectedLabelsValues,
-            description: quill.root.innerHTML,
+            description: getTaskDescription(form),
             max_priority: form.querySelector('#task-max-priority').checked ? 1 : 0,
             mark_for_today: form.querySelector('#task-today').checked ? 1 : 0,
             lock_generation: lockGeneration,
@@ -1966,6 +2129,7 @@
     window.initializeTaskPage = initializeTaskPage;
     window.sendFormByAjax = sendFormByAjax;
     window.deleteComment = deleteComment;
+    window.destroyTaskEditor = destroyTaskEditor;
     window.togglePriorityLabel = togglePriorityLabel;
 
     // Expose function to set task as archived (for collaborative sync)

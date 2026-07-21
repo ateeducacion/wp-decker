@@ -2005,3 +2005,23 @@ msgstr ""
 
 msgid "You are not allowed to access this article."
 msgstr ""
+
+msgid "Task Editor Type"
+msgstr ""
+
+msgid "Classic Editor"
+msgstr ""
+
+msgid "Quill Editor"
+msgstr ""
+
+msgid ""
+"Choose which editor to use for task descriptions. Collaborative editing "
+"always uses Quill."
+msgstr ""
+
+msgid "Checklist"
+msgstr ""
+
+msgid "This task is archived and cannot be edited."
+msgstr ""
