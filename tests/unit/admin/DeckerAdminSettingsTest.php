@@ -617,6 +617,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 				'signaling_server',
 				'alert_color',
 				'minimum_user_profile',
+				'task_editor_type',
 				'alert_message',
 				'ignored_users',
 			),

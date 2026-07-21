@@ -574,17 +574,6 @@ class Decker_Admin_Settings {
 		// Validate signaling server.
 		$input['signaling_server'] = $this->validate_signaling_server( $input );
 
-		// Validate collaborative editing.
-		$input['collaborative_editing'] = isset( $input['collaborative_editing'] ) && '1' === $input['collaborative_editing'] ? '1' : '0';
-
-		// Validate signaling server.
-		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {
-			// Include wss protocol for WebSocket signaling servers.
-			$input['signaling_server'] = esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
-		} else {
-			$input['signaling_server'] = 'wss://signaling.yjs.dev';
-		}
-
 		// Validate alert color.
 		$input['alert_color'] = $this->validate_alert_color( $input );
 
