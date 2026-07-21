@@ -69,7 +69,6 @@ class DeckerTasksArchiveTest extends Decker_Test_Base {
 
 		$data = $response->get_data();
 		$this->assertEquals( 'archived', $data['status'] );
-		$this->assertNotEmpty( $data['lock_generation'] );
 
 		// Test unarchiving
 		$request = new WP_REST_Request(
@@ -78,8 +77,7 @@ class DeckerTasksArchiveTest extends Decker_Test_Base {
 		);
 		$request->set_body_params(
 			array(
-				'status'          => 'publish',
-				'lock_generation' => $data['lock_generation'],
+				'status' => 'publish',
 			)
 		);
 		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );

@@ -364,46 +364,48 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The TOCTOU race: a takeover injected after A passes the lock check but
-	 * before A's wp_update_post() runs must not cause a lost update. A's write
-	 * lease serializes the takeover (it refuses) so A commits atomically; the
-	 * takeover only proceeds once A's save has finished.
+	 * The TOCTOU race: a takeover that lands after A passes the lock check but
+	 * before A's post write rotates the token, so A's write-time guard aborts the
+	 * write. A must fail closed with a 409 and leave the task unchanged rather than
+	 * overwrite the taken-over card.
 	 */
-	public function test_save_lease_serializes_a_takeover_injected_during_the_write() {
+	public function test_ajax_write_fails_closed_when_taken_over_before_write() {
 		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
 
 		$task_id  = $this->task_id;
 		$user_b   = $this->user_b;
+		$locks    = $this->locks;
 		$injected = false;
-		$takeover = null;
 
-		$callback = function ( $post_id ) use ( &$injected, &$takeover, $task_id, $user_b ) {
-			if ( $injected || (int) $post_id !== (int) $task_id ) {
-				return;
+		// Runs just before A's write guard (priority 10): B takes over, rotating
+		// the token, so A's guard then sees a stale token and aborts the write.
+		$takeover = function ( $maybe_empty, $postarr ) use ( $task_id, $user_b, $locks, &$injected ) {
+			if ( $injected || (int) ( $postarr['ID'] ?? 0 ) !== $task_id ) {
+				return $maybe_empty;
 			}
 			$injected = true;
-			// Runs inside A's wp_update_post(), after A claimed the write lease.
-			$takeover = ( new Decker_Task_Locks() )->take_over_lock( $post_id, $user_b );
+			$previous = get_current_user_id();
+			wp_set_current_user( $user_b );
+			$locks->take_over_lock( $task_id, $user_b );
+			wp_set_current_user( $previous );
+
+			return $maybe_empty;
 		};
-		add_action( 'pre_post_update', $callback, 10, 1 );
+		add_filter( 'wp_insert_post_empty_content', $takeover, 9, 2 );
 
 		wp_set_current_user( $this->user_a );
-		$_POST = $this->save_payload( 'Committed by user A', $info_a['generation'] );
+		$_POST = $this->save_payload( 'Must not overwrite user B', $info_a['generation'] );
 		$resp  = ( new Decker_Tasks() )->handle_save_decker_task();
 
-		remove_action( 'pre_post_update', $callback, 10 );
+		remove_filter( 'wp_insert_post_empty_content', $takeover, 9 );
 
-		$this->assertTrue( $injected, 'The takeover must have been injected during A\'s write.' );
-
-		// A's save committed atomically; B's takeover was refused by the lease.
-		$this->assertTrue( $resp['success'] );
-		$this->assertSame( 'Committed by user A', get_post( $this->task_id )->post_title );
-		$this->assertFalse( $takeover['owned_by_current_user'] );
-		$this->assertTrue( $takeover['locked'] );
-
-		// Once A's save has finished the lease is released and B can take over.
-		$after = $this->locks->take_over_lock( $this->task_id, $this->user_b );
-		$this->assertTrue( $after['owned_by_current_user'] );
+		$this->assertTrue( $injected, 'The takeover must have been injected before the write.' );
+		// A's save failed closed; the task keeps its pre-save content.
+		$this->assertFalse( $resp['success'] );
+		$this->assertSame( 'decker_task_locked', $resp['code'] );
+		$this->assertSame( 'Original title', get_post( $this->task_id )->post_title );
+		// B now owns the lock.
+		$this->assertTrue( $this->locks->get_lock_info( $this->task_id, $this->user_b )['owned_by_current_user'] );
 	}
 
 	/**
@@ -459,52 +461,12 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	 * takeover injected during the REST post write is refused, so A's update
 	 * commits atomically.
 	 */
-	public function test_rest_update_serializes_a_concurrent_takeover() {
-		$info_a = $this->locks->acquire_lock( $this->task_id, $this->user_a );
-
-		$task_id  = $this->task_id;
-		$user_b   = $this->user_b;
-		$injected = false;
-		$takeover = null;
-
-		$callback = function ( $post_id ) use ( &$injected, &$takeover, $task_id, $user_b ) {
-			if ( $injected || (int) $post_id !== (int) $task_id ) {
-				return;
-			}
-			$injected = true;
-			$takeover = ( new Decker_Task_Locks() )->take_over_lock( $post_id, $user_b );
-		};
-		add_action( 'pre_post_update', $callback, 10, 1 );
-
-		wp_set_current_user( $this->user_a );
-		do_action( 'init' );
-
-		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
-		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
-		$request->set_body_params(
-			array(
-				'title'           => 'REST commit by user A',
-				'lock_generation' => $info_a['generation'],
-			)
-		);
-
-		$response = rest_get_server()->dispatch( $request );
-
-		remove_action( 'pre_post_update', $callback, 10 );
-
-		$this->assertTrue( $injected, 'The takeover must have been injected during the REST write.' );
-		$this->assertLessThan( 300, $response->get_status() );
-		$this->assertSame( 'REST commit by user A', get_post( $this->task_id )->post_title );
-		// B's takeover was refused by the write lease.
-		$this->assertFalse( $takeover['owned_by_current_user'] );
-		$this->assertTrue( $takeover['locked'] );
-	}
-
 	/**
-	 * A REST client can continue its session with the rotated generation returned
-	 * by each successful update.
+	 * A REST client editing a locked task continues its session with the rotated
+	 * generation returned by each successful update.
 	 */
 	public function test_rest_updates_return_the_next_session_generation() {
+		$next_generation = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
 		wp_set_current_user( $this->user_a );
 		do_action( 'init' );
 
@@ -512,14 +474,17 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$first->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
 		$first->set_body_params(
 			array(
-				'title' => 'First REST update',
+				'title'           => 'First REST update',
+				'lock_generation' => $next_generation,
 			)
 		);
-		$first_response   = rest_get_server()->dispatch( $first );
-		$next_generation = $first_response->get_data()['lock_generation'] ?? '';
+		$first_response  = rest_get_server()->dispatch( $first );
+		$rotated         = $first_response->get_data()['lock_generation'] ?? '';
 
 		$this->assertLessThan( 300, $first_response->get_status() );
-		$this->assertNotEmpty( $next_generation );
+		$this->assertNotEmpty( $rotated );
+		$this->assertNotSame( $next_generation, $rotated );
+		$next_generation = $rotated;
 
 		$second = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
 		$second->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
@@ -537,36 +502,31 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * A request that loses its exact lease immediately before wp_insert_post must
-	 * fail closed and leave the newer writer's lease untouched.
+	 * A REST write whose token is rotated by a takeover immediately before the
+	 * post write must fail closed and leave the task unchanged.
 	 */
-	public function test_rest_write_fails_closed_after_lease_is_replaced() {
+	public function test_rest_write_fails_closed_when_generation_rotates_before_write() {
 		$generation = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
 		$task_id    = $this->task_id;
-		$user_a     = $this->user_a;
 		$user_b     = $this->user_b;
 		$locks      = $this->locks;
 		$injected   = false;
-		$lease_b    = false;
 
-		$replace_lease = function ( $maybe_empty, $postarr ) use ( $task_id, $user_a, $user_b, $locks, &$injected, &$lease_b ) {
+		// Just before A's write, B takes over — rotating the generation — so A's
+		// write-time guard (priority 10) sees a stale token and aborts the write.
+		$takeover = function ( $maybe_empty, $postarr ) use ( $task_id, $user_b, $locks, &$injected ) {
 			if ( $injected || (int) ( $postarr['ID'] ?? 0 ) !== $task_id ) {
 				return $maybe_empty;
 			}
-
-			$injected     = true;
-			$current      = json_decode( (string) get_post_meta( $task_id, Decker_Task_Lock_Store::STATE_META, true ), true );
-			$current['save'] = time() - 1;
-			update_post_meta( $task_id, Decker_Task_Lock_Store::STATE_META, wp_json_encode( $current ) );
-
+			$injected = true;
+			$previous = get_current_user_id();
 			wp_set_current_user( $user_b );
-			$info_b  = $locks->take_over_lock( $task_id, $user_b );
-			$lease_b = $locks->begin_save( $task_id, $user_b, $info_b['generation'] );
-			wp_set_current_user( $user_a );
+			$locks->take_over_lock( $task_id, $user_b );
+			wp_set_current_user( $previous );
 
 			return $maybe_empty;
 		};
-		add_filter( 'wp_insert_post_empty_content', $replace_lease, 9, 2 );
+		add_filter( 'wp_insert_post_empty_content', $takeover, 9, 2 );
 
 		wp_set_current_user( $this->user_a );
 		do_action( 'init' );
@@ -579,14 +539,11 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 			)
 		);
 		$response = rest_get_server()->dispatch( $request );
-		remove_filter( 'wp_insert_post_empty_content', $replace_lease, 9 );
+		remove_filter( 'wp_insert_post_empty_content', $takeover, 9 );
 
 		$this->assertTrue( $injected );
-		$this->assertNotEmpty( $lease_b );
 		$this->assertGreaterThanOrEqual( 400, $response->get_status() );
 		$this->assertSame( 'Original title', get_post( $this->task_id )->post_title );
-		$this->assertTrue( $this->locks->renew_save( $this->task_id, $lease_b ) );
-		$this->assertTrue( $this->locks->cancel_save( $this->task_id, $lease_b ) );
 	}
 
 	/**
@@ -616,60 +573,10 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * A token-less REST update of a never-locked task is serialized by an anonymous
-	 * write lease: a first lock acquisition injected during the write is blocked,
-	 * so it cannot interleave and later overwrite the REST change.
+	 * A validation failure does not rotate the generation, so the corrected retry
+	 * from the same form (same token) can still succeed.
 	 */
-	public function test_rest_update_of_never_locked_task_blocks_and_invalidates_concurrent_editor() {
-		$task_id   = $this->task_id;
-		$user_b    = $this->user_b;
-		$injected  = false;
-		$b_acquire = null;
-
-		$callback = function ( $post_id ) use ( &$injected, &$b_acquire, $task_id, $user_b ) {
-			if ( $injected || (int) $post_id !== (int) $task_id ) {
-				return;
-			}
-			$injected = true;
-			wp_set_current_user( $user_b );
-			$acquire_request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $post_id . '/lock' );
-			$acquire_request->set_param( 'id', $post_id );
-			$b_acquire = ( new Decker_Tasks() )->handle_acquire_task_lock( $acquire_request );
-			wp_set_current_user( $this->user_a );
-		};
-		add_action( 'pre_post_update', $callback, 10, 1 );
-
-		wp_set_current_user( $this->user_a );
-		do_action( 'init' );
-
-		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
-		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
-		$request->set_body_params( array( 'title' => 'Token-less REST update by A' ) );
-
-		$response = rest_get_server()->dispatch( $request );
-
-		remove_action( 'pre_post_update', $callback, 10 );
-
-		$this->assertTrue( $injected, 'The acquire must have been injected during the REST write.' );
-		$this->assertLessThan( 300, $response->get_status() );
-		$this->assertSame( 'Token-less REST update by A', get_post( $this->task_id )->post_title );
-		$this->assertSame( 409, $b_acquire->get_status() );
-		$this->assertTrue( $b_acquire->get_data()['locked'] );
-		$this->assertNotEmpty( $response->get_data()['lock_generation'] ?? '' );
-
-		wp_set_current_user( $this->user_b );
-		$_POST = $this->save_payload( 'Stale token-less overwrite by B' );
-		$stale = ( new Decker_Tasks() )->handle_save_decker_task();
-		$this->assertFalse( $stale['success'] );
-		$this->assertSame( 'decker_task_locked', $stale['code'] );
-		$this->assertSame( 'Token-less REST update by A', get_post( $this->task_id )->post_title );
-	}
-
-	/**
-	 * A validation failure after claiming a lease keeps the current generation so
-	 * the corrected retry from the same form can succeed.
-	 */
-	public function test_failed_ajax_save_cancels_lease_without_rotating_generation() {
+	public function test_failed_ajax_save_does_not_rotate_generation() {
 		$generation = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
 		wp_set_current_user( $this->user_a );
 

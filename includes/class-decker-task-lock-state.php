@@ -17,15 +17,11 @@ defined( 'ABSPATH' ) || exit;
  *
  * Reads, encodes and compare-and-swap-writes the `_decker_edit_lock_state` meta,
  * and answers predicates about a decoded state blob. The state is a JSON object
- * `{"user","token","time"[,"save","lease_id"]}`:
+ * `{"user","token","time"}`:
  *
  * - `user`/`token` — the current owner and its unique generation token.
- * - `time`         — last activity; 0 once the lock is released.
- * - `save`         — deadline of an in-progress commit (the write lease).
- * - `lease_id`     — unique request identifier required to renew or clear the
- *                    lease. Lease keys are omitted when inactive so states
- *                    without a save stay
- *                    byte-identical to the pre-lease format (CAS-compatible).
+ * - `time`         — last activity; 0 once the lock is released (the token is
+ *                    kept so a stale form is still rejected after release).
  *
  * The compare-and-swap is best-effort under true concurrency: WordPress has no
  * unique constraint on (post_id, meta_key), so the very first `add_post_meta`
@@ -35,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Task_Lock_State {
 
 	/**
-	 * Authoritative lock state meta (JSON: user, token, time, save).
+	 * Authoritative lock state meta (JSON: user, token, time).
 	 *
 	 * @var string
 	 */
@@ -56,25 +52,10 @@ class Decker_Task_Lock_State {
 	const CAS_MAX_ATTEMPTS = 5;
 
 	/**
-	 * Minimum write-lease duration in seconds (covers request setup / parsing).
-	 *
-	 * @var int
-	 */
-	const SAVE_LEASE_MIN = 60;
-
-	/**
-	 * Write-lease duration used when PHP's `max_execution_time` is unlimited
-	 * (e.g. CLI): a generous absolute window, since there is no request bound.
-	 *
-	 * @var int
-	 */
-	const SAVE_LEASE_UNBOUNDED = 300;
-
-	/**
 	 * Decode the authoritative lock state.
 	 *
 	 * @param int $post_id The task post ID.
-	 * @return array{user:int,token:string,time:int,save:int,lease_id:string}|null The state, or null when absent.
+	 * @return array{user:int,token:string,time:int}|null The state, or null when absent.
 	 */
 	public function read( int $post_id ) {
 		$raw = get_post_meta( $post_id, self::STATE_META, true );
@@ -91,8 +72,6 @@ class Decker_Task_Lock_State {
 			'user'  => isset( $decoded['user'] ) ? (int) $decoded['user'] : 0,
 			'token' => isset( $decoded['token'] ) ? (string) $decoded['token'] : '',
 			'time'  => isset( $decoded['time'] ) ? (int) $decoded['time'] : 0,
-			'save'  => isset( $decoded['save'] ) ? (int) $decoded['save'] : 0,
-			'lease_id' => isset( $decoded['lease_id'] ) ? (string) $decoded['lease_id'] : '',
 		);
 	}
 
@@ -125,21 +104,6 @@ class Decker_Task_Lock_State {
 	}
 
 	/**
-	 * Whether a fresh write lease is held (a commit is in progress).
-	 *
-	 * `save` is an absolute deadline chosen by the saving request, so a contender
-	 * checking the state never recomputes the lifetime from its own PHP config;
-	 * it simply compares the stored deadline against now.
-	 *
-	 * @param array|null $state The decoded state, or null.
-	 * @return bool True when the stored lease deadline is still in the future.
-	 */
-	public function is_saving( $state ): bool {
-		return is_array( $state )
-			&& (int) $state['save'] > time();
-	}
-
-	/**
 	 * Whether the state is an active lock held by exactly this session.
 	 *
 	 * @param array|null $state   The decoded state, or null.
@@ -154,27 +118,11 @@ class Decker_Task_Lock_State {
 	}
 
 	/**
-	 * An absolute write-lease deadline for the current (saving) request.
-	 *
-	 * Tied to this request's `max_execution_time` so the lease outlives any save
-	 * the request is allowed to run; unlimited execution falls back to a generous
-	 * fixed window. The saver stores this so a slow save does not expire early.
-	 *
-	 * @return int Unix timestamp at which the lease expires.
-	 */
-	public function save_deadline(): int {
-		$max      = (int) ini_get( 'max_execution_time' );
-		$duration = $max > 0 ? max( self::SAVE_LEASE_MIN, $max ) : self::SAVE_LEASE_UNBOUNDED;
-
-		return time() + $duration;
-	}
-
-	/**
 	 * Compare-and-swap write of the authoritative state.
 	 *
 	 * @param int        $post_id  The task post ID.
 	 * @param array|null $expected Previous state, or null when absent.
-	 * @param array      $new      Desired state (user/token/time[/save/lease_id]).
+	 * @param array      $new      Desired state (user/token/time).
 	 * @return bool True when this writer won the CAS.
 	 */
 	public function write( int $post_id, $expected, array $new ): bool {
@@ -209,24 +157,18 @@ class Decker_Task_Lock_State {
 	}
 
 	/**
-	 * Encode a state for storage. Key order is fixed and lease keys are omitted
-	 * so lease-free states match the pre-lease byte format for stable CAS.
+	 * Encode a state for storage. Key order is fixed for stable CAS comparisons.
 	 *
-	 * @param array $state The state (user/token/time[/save]).
+	 * @param array $state The state (user/token/time).
 	 * @return string JSON payload.
 	 */
 	private function encode( array $state ): string {
-		$payload = array(
-			'user'  => isset( $state['user'] ) ? (int) $state['user'] : 0,
-			'token' => isset( $state['token'] ) ? (string) $state['token'] : '',
-			'time'  => isset( $state['time'] ) ? (int) $state['time'] : 0,
+		return wp_json_encode(
+			array(
+				'user'  => isset( $state['user'] ) ? (int) $state['user'] : 0,
+				'token' => isset( $state['token'] ) ? (string) $state['token'] : '',
+				'time'  => isset( $state['time'] ) ? (int) $state['time'] : 0,
+			)
 		);
-
-		if ( ! empty( $state['save'] ) ) {
-			$payload['save'] = (int) $state['save'];
-			$payload['lease_id'] = isset( $state['lease_id'] ) ? (string) $state['lease_id'] : '';
-		}
-
-		return wp_json_encode( $payload );
 	}
 }

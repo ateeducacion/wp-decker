@@ -33,11 +33,11 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Write lease claimed for the current REST update, released after the write.
+	 * Token the current REST update validated with, re-checked at the post write.
 	 *
-	 * @var array{post_id:int,lease_id:string}|null
+	 * @var array{post_id:int,token:string}|null
 	 */
-	private $rest_write_lease = null;
+	private $rest_write_token = null;
 
 	/**
 	 * Generation produced by the completed REST update, pending response output.
@@ -47,11 +47,11 @@ class Decker_Tasks {
 	private $rest_response_generation = null;
 
 	/**
-	 * Write lease claimed by the current AJAX save.
+	 * Token the current AJAX save validated with, re-checked at the post write.
 	 *
-	 * @var array{post_id:int,lease_id:string}|null
+	 * @var array{post_id:int,token:string}|null
 	 */
-	private $ajax_write_lease = null;
+	private $ajax_write_token = null;
 
 	/**
 	 * Get the shared task edit-lock manager.
@@ -108,9 +108,10 @@ class Decker_Tasks {
 		// Seed the lock state on every task creation, independent of the
 		// editable-meta nonce guard, so admin, AJAX and REST creates are covered.
 		add_action( 'save_post_decker_task', array( $this, 'seed_task_lock_state' ), 10, 3 );
-		// Renew the exact request lease immediately before WordPress writes. Returning
-		// true from this filter fails closed if a stale request no longer owns it.
-		add_filter( 'wp_insert_post_empty_content', array( $this, 'guard_task_write_lease' ), 10, 2 );
+		// Re-check the request's validated token immediately before WordPress
+		// writes. Returning true aborts the write, so a takeover between validation
+		// and the write fails closed instead of overwriting newer content.
+		add_filter( 'wp_insert_post_empty_content', array( $this, 'guard_task_write_token' ), 10, 2 );
 		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
 		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
 		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
@@ -120,9 +121,9 @@ class Decker_Tasks {
 
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
 		// Enforce the edit lock on generic /wp/v2/tasks updates, which bypass the
-		// save_decker_task guard, and serialize the REST write with a lease.
+		// save_decker_task guard, and rotate the generation after the write.
 		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
-		add_action( 'rest_after_insert_decker_task', array( $this, 'release_rest_write_lease' ), 10, 3 );
+		add_action( 'rest_after_insert_decker_task', array( $this, 'rotate_rest_task_generation' ), 10, 3 );
 		add_filter( 'rest_prepare_decker_task', array( $this, 'add_rest_lock_generation' ), 10, 3 );
 		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
 		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
@@ -2853,17 +2854,17 @@ class Decker_Tasks {
 	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
 	 * registered meta), which bypasses the lock guard in save_decker_task. This
 	 * rejects an update while another user owns the active lock, requires a valid
-	 * `lock_generation` once the task carries one, and claims the write lease so a
-	 * takeover cannot interleave with the REST write (released in
-	 * {@see release_rest_write_lease()}). Creates (no existing id) and never-locked
-	 * tasks remain updatable over REST.
+	 * `lock_generation` once the task carries one, and remembers the validated token
+	 * so the write-time guard ({@see guard_task_write_token()}) can abort the REST
+	 * write if the generation rotates first. Creates (no existing id) and
+	 * never-locked tasks remain updatable over REST.
 	 *
 	 * @param stdClass        $prepared_post The prepared post for insertion.
 	 * @param WP_REST_Request $request       The REST request.
 	 * @return stdClass|WP_Error The prepared post, or a 409 error when locked.
 	 */
 	public function guard_rest_task_update( $prepared_post, $request ) {
-		$this->rest_write_lease = null;
+		$this->rest_write_token = null;
 
 		if ( empty( $prepared_post->ID ) ) {
 			return $prepared_post;
@@ -2880,109 +2881,84 @@ class Decker_Tasks {
 			return $check;
 		}
 
-		// Serialize the actual REST write with the write lease so a takeover — or a
-		// first lock acquisition on a never-locked task — cannot land between this
-		// guard and the post write. Uses a session lease when a token was supplied,
-		// otherwise an anonymous lease (never-locked task).
+		// Remember the token this update validated with so the write-time guard can
+		// abort the REST write if a takeover (or a concurrent acquire on a
+		// never-locked task) rotates the generation before WordPress writes.
 		if ( $locks->is_enabled() ) {
-			$token = (string) $generation;
-			$lease_id = $locks->begin_save( $post_id, $user_id, $token );
-			if ( false === $lease_id ) {
-				return new WP_Error(
-					'decker_task_locked',
-					__( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
-					array( 'status' => 409 )
-				);
-			}
-			$this->rest_write_lease = array(
-				'post_id'  => $post_id,
-				'lease_id' => $lease_id,
+			$this->rest_write_token = array(
+				'post_id' => $post_id,
+				'token'   => (string) $generation,
 			);
-			// Backstop: an error path cancels without rotating the client generation.
-			add_action( 'shutdown', array( $this, 'cancel_rest_write_lease' ), 1 );
 		}
 
 		return $prepared_post;
 	}
 
 	/**
-	 * Renew the exact request lease immediately before the actual task write.
+	 * Abort the actual task write when the request's validated token is stale.
 	 *
-	 * Returning true aborts wp_insert_post() when this request's lease has expired
-	 * and been replaced, so a stale writer fails closed instead of committing.
+	 * Returning true from wp_insert_post_empty_content aborts the write, so a
+	 * takeover (or a concurrent acquire) between token validation and the write
+	 * fails closed instead of overwriting newer content.
 	 *
 	 * @param bool  $maybe_empty Whether WordPress already considers the post empty.
 	 * @param array $postarr     The post data about to be written.
 	 * @return bool True when the write must be aborted.
 	 */
-	public function guard_task_write_lease( $maybe_empty, $postarr ): bool {
+	public function guard_task_write_token( $maybe_empty, $postarr ): bool {
 		if ( $maybe_empty || empty( $postarr['ID'] ) || 'decker_task' !== get_post_type( (int) $postarr['ID'] ) ) {
 			return (bool) $maybe_empty;
 		}
 
-		$post_id  = (int) $postarr['ID'];
-		$lease_id = $this->request_lease_id( $post_id );
-		if ( '' === $lease_id ) {
+		$post_id = (int) $postarr['ID'];
+		$token   = $this->request_write_token( $post_id );
+		if ( null === $token ) {
 			return false;
 		}
 
-		return ! $this->get_task_locks()->renew_save( $post_id, $lease_id );
+		return ! $this->get_task_locks()->token_is_current( $post_id, $token );
 	}
 
 	/**
-	 * Return the current request's lease identifier for a task.
+	 * Return the token the current request validated with for a task, or null.
 	 *
 	 * @param int $post_id The task post ID.
-	 * @return string The matching lease identifier, or an empty string.
+	 * @return string|null The validated token, or null when this request has none.
 	 */
-	private function request_lease_id( int $post_id ): string {
-		foreach ( array( $this->ajax_write_lease, $this->rest_write_lease ) as $lease ) {
-			if ( is_array( $lease ) && (int) $lease['post_id'] === $post_id ) {
-				return (string) $lease['lease_id'];
+	private function request_write_token( int $post_id ) {
+		foreach ( array( $this->ajax_write_token, $this->rest_write_token ) as $stash ) {
+			if ( is_array( $stash ) && (int) $stash['post_id'] === $post_id ) {
+				return (string) $stash['token'];
 			}
 		}
 
-		return '';
+		return null;
 	}
 
 	/**
-	 * Release the write lease claimed for a REST update (after-insert or shutdown).
+	 * Rotate the generation after a successful generic REST update, and stash it
+	 * for the response.
 	 *
-	 * @param WP_Post|null         $post     The updated task.
-	 * @param WP_REST_Request|null $request The REST request (unused).
+	 * @param WP_Post              $post     The updated task.
+	 * @param WP_REST_Request|null $request  The REST request (unused).
 	 * @param bool|null            $creating Whether the task was created (unused).
 	 * @return void
 	 */
-	public function release_rest_write_lease( $post = null, $request = null, $creating = null ) {
-		if ( ! is_array( $this->rest_write_lease ) ) {
+	public function rotate_rest_task_generation( $post, $request = null, $creating = null ) {
+		if ( ! is_array( $this->rest_write_token )
+			|| (int) $this->rest_write_token['post_id'] !== (int) $post->ID ) {
 			return;
 		}
 
-		$lease                  = $this->rest_write_lease;
-		$this->rest_write_lease = null;
-		remove_action( 'shutdown', array( $this, 'cancel_rest_write_lease' ), 1 );
-		$generation = $this->get_task_locks()->finish_save_successfully( $lease['post_id'], $lease['lease_id'] );
+		$token                  = $this->rest_write_token['token'];
+		$this->rest_write_token = null;
+		$generation = $this->get_task_locks()->rotate_generation( (int) $post->ID, get_current_user_id(), $token );
 		if ( false !== $generation ) {
 			$this->rest_response_generation = array(
-				'post_id'    => $lease['post_id'],
+				'post_id'    => (int) $post->ID,
 				'generation' => $generation,
 			);
 		}
-	}
-
-	/**
-	 * Cancel an unfinished REST lease without rotating the session generation.
-	 *
-	 * @return void
-	 */
-	public function cancel_rest_write_lease() {
-		if ( ! is_array( $this->rest_write_lease ) ) {
-			return;
-		}
-
-		$lease                  = $this->rest_write_lease;
-		$this->rest_write_lease = null;
-		$this->get_task_locks()->cancel_save( $lease['post_id'], $lease['lease_id'] );
 	}
 
 	/**
@@ -3396,29 +3372,16 @@ class Decker_Tasks {
 			}
 		}
 
-		// Claim a write lease so a takeover cannot interleave between the lock
-		// validation above and the database write below (a takeover refuses while
-		// the lease is held). Only meaningful for an owned, generation-checked
-		// session; a failure here means the session was just superseded.
+		// Remember the token we validated with. The write-time guard
+		// (guard_task_write_token) re-checks it right before the DB write, so a
+		// takeover between here and the write aborts the write instead of
+		// overwriting newer content. Only meaningful for a generation-checked save.
 		$lock_generation = is_string( $options['lock_generation'] ) ? $options['lock_generation'] : '';
-		$write_lease_id = false;
-		if ( $core['id'] > 0 && '' !== $lock_generation && $this->get_task_locks()->is_enabled() ) {
-			$write_lease_id = $this->get_task_locks()->begin_save( $core['id'], get_current_user_id(), $lock_generation );
-			if ( false === $write_lease_id ) {
-				$error_data = array(
-					'message' => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
-					'code'    => 'decker_task_locked',
-					'locked'  => true,
-				);
-				if ( $send_response ) {
-					wp_send_json_error( $error_data, 409 );
-					return;
-				}
-				return array_merge( array( 'success' => false ), $error_data );
-			}
-			$this->ajax_write_lease = array(
-				'post_id'  => $core['id'],
-				'lease_id' => $write_lease_id,
+		$guarded_save    = $core['id'] > 0 && '' !== $lock_generation && $this->get_task_locks()->is_enabled();
+		if ( $guarded_save ) {
+			$this->ajax_write_token = array(
+				'post_id' => $core['id'],
+				'token'   => $lock_generation,
 			);
 		}
 
@@ -3449,13 +3412,27 @@ class Decker_Tasks {
 		);
 
 		if ( is_wp_error( $result ) ) {
-			if ( false !== $write_lease_id ) {
-				$this->get_task_locks()->cancel_save( $core['id'], $write_lease_id );
-				$this->ajax_write_lease = null;
-			}
+			$this->ajax_write_token = null;
 			$error_data = array( 'message' => $result->get_error_message() );
 			if ( $send_response ) {
 				wp_send_json_error( $error_data );
+				return;
+			}
+			return array_merge( array( 'success' => false ), $error_data );
+		}
+
+		// Fail-closed: a takeover between validation and the write rotated the
+		// token, so guard_task_write_token aborted the write (wp_update_post
+		// returned 0). Report the conflict instead of a phantom success.
+		if ( $guarded_save && ! $result ) {
+			$this->ajax_write_token = null;
+			$error_data = array(
+				'message' => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
+				'code'    => 'decker_task_locked',
+				'locked'  => true,
+			);
+			if ( $send_response ) {
+				wp_send_json_error( $error_data, 409 );
 				return;
 			}
 			return array_merge( array( 'success' => false ), $error_data );
@@ -3468,15 +3445,14 @@ class Decker_Tasks {
 			$this->remove_user_date_relation( $result, get_current_user_id() );
 		}
 
-		// All writes are done: release the write lease so takeovers can proceed.
-		// A session save rotates the generation; hand the new one back so the form
-		// adopts it and a second same-user tab holding the old token is rejected.
+		// The save committed: rotate the generation so a second same-user tab
+		// holding the old token is rejected, and hand the new one back to the form.
 		$new_generation = '';
-		if ( false !== $write_lease_id ) {
-			$new_generation = $this->get_task_locks()->finish_save_successfully( $core['id'], $write_lease_id );
-			$this->ajax_write_lease = null;
-			if ( false === $new_generation ) {
-				$new_generation = '';
+		if ( $guarded_save ) {
+			$rotated = $this->get_task_locks()->rotate_generation( $core['id'], get_current_user_id(), $lock_generation );
+			$this->ajax_write_token = null;
+			if ( false !== $rotated ) {
+				$new_generation = $rotated;
 			}
 		}
 
