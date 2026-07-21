@@ -157,10 +157,19 @@ describe( 'initializeTaskEditor', () => {
 		expect( document.getElementById( 'task-description' ).readOnly ).toBe( true );
 	} );
 
+	test( 'read-only cards get no Text tab or media buttons (Quicktags bypasses readOnly)', () => {
+		build( true );
+
+		expect( capturedConfig.quicktags ).toBe( false );
+		expect( capturedConfig.mediaButtons ).toBe( false );
+	} );
+
 	test( 'stays editable by default', () => {
 		build( false );
 
 		expect( capturedConfig.tinymce.readonly ).toBe( false );
+		expect( capturedConfig.quicktags ).toBe( true );
+		expect( capturedConfig.mediaButtons ).toBe( true );
 		expect( document.getElementById( 'task-description' ).readOnly ).toBe( false );
 	} );
 
@@ -171,6 +180,54 @@ describe( 'initializeTaskEditor', () => {
 		textarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 
 		expect( enterDirtyEditMode ).toHaveBeenCalledWith( context );
+	} );
+
+	test( 'programmatic changes on a read-only textarea never mark the card dirty', () => {
+		build( true );
+
+		const textarea = document.getElementById( 'task-description' );
+		// Quicktags-style programmatic mutation: value assignment + change event.
+		textarea.value = 'mutated';
+		textarea.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+		expect( enterDirtyEditMode ).not.toHaveBeenCalled();
+	} );
+
+	test( 'changes are ignored after the textarea is disabled by a lost lock', () => {
+		build( false );
+
+		const textarea = document.getElementById( 'task-description' );
+		textarea.disabled = true;
+		textarea.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+
+		expect( enterDirtyEditMode ).not.toHaveBeenCalled();
+	} );
+
+	test( 'disableEditingControls disables Quicktags toolbar, media and switch buttons', () => {
+		document.body.innerHTML = `
+			<div id="ctx">
+				<form id="task-form">
+					<div class="wp-editor-wrap">
+						<button type="button" class="wp-switch-editor">Visual</button>
+						<button type="button" class="insert-media">Add media</button>
+						<input type="button" class="ed_button" value="b" />
+						<textarea id="task-description"></textarea>
+					</div>
+				</form>
+			</div>
+		`;
+		const disableEditingControls = instantiate( 'disableEditingControls', {
+			assigneesSelect: null,
+			labelsSelect: null,
+			quill: null,
+			taskEditor: null,
+		} );
+
+		disableEditingControls( document.getElementById( 'ctx' ) );
+
+		document.querySelectorAll( '.wp-editor-wrap button, .wp-editor-wrap input' ).forEach( ( el ) => {
+			expect( el.disabled ).toBe( true );
+		} );
 	} );
 
 	test( 'init callback survives an early destroy (uses the local editor)', async () => {

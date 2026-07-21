@@ -232,6 +232,14 @@
         if (taskEditor && typeof taskEditor.setMode === 'function') {
             taskEditor.setMode('readonly');
         }
+        // Editor chrome not covered by the form-field selector: the Quicktags
+        // toolbar, media buttons and the Visual/Text switcher would otherwise
+        // keep mutating the textarea programmatically.
+        context.querySelectorAll(
+            '.wp-editor-wrap button, .wp-editor-wrap input[type="button"]'
+        ).forEach((button) => {
+            button.disabled = true;
+        });
         const saveButton = context.querySelector('#save-task');
         if (saveButton) {
             saveButton.disabled = true;
@@ -1298,7 +1306,17 @@
         }
 
         return new Promise((resolve) => {
-            const debouncedMarkDirty = debounce(() => enterDirtyEditMode(context), 150);
+            // Quicktags buttons modify the textarea programmatically and fire
+            // 'change' even when it is read-only or disabled, so dirty tracking
+            // must re-check the field state at event time (covers cards that
+            // are read-only from the start and locks applied while editing).
+            const markDirty = () => {
+                if (textarea.disabled || textarea.readOnly) {
+                    return;
+                }
+                enterDirtyEditMode(context);
+            };
+            const debouncedMarkDirty = debounce(markDirty, 150);
 
             // Quicktags (Text tab) edits bypass TinyMCE events entirely; track
             // the textarea directly so they still mark the card dirty.
@@ -1345,8 +1363,10 @@
                         });
                     }
                 },
-                quicktags: true,
-                mediaButtons: true
+                // No Text tab or media buttons on read-only cards: Quicktags
+                // edits the textarea programmatically, bypassing readOnly.
+                quicktags: !readOnly,
+                mediaButtons: !readOnly
             };
 
             wp.editor.initialize('task-description', config);

@@ -2022,3 +2022,6 @@ msgstr ""
 
 msgid "Checklist"
 msgstr ""
+
+msgid "This task is archived and cannot be edited."
+msgstr ""

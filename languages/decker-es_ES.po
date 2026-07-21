@@ -2057,3 +2057,6 @@ msgstr ""
 
 msgid "Checklist"
 msgstr "Lista de verificación"
+
+msgid "This task is archived and cannot be edited."
+msgstr "Esta tarea está archivada y no se puede editar."

@@ -3228,6 +3228,22 @@ class Decker_Tasks {
 		// took over the lock) must never overwrite newer changes, even when the
 		// active lock was released after the takeover (modal close / pagehide).
 		if ( $core['id'] > 0 ) {
+			// Archived tasks are read-only: reject direct saves regardless of
+			// which editor the client used.
+			if ( 'archived' === get_post_status( $core['id'] ) ) {
+				$error_data = array(
+					'message' => __( 'This task is archived and cannot be edited.', 'decker' ),
+					'code'    => 'decker_task_archived',
+				);
+
+				if ( $send_response ) {
+					wp_send_json_error( $error_data, 403 );
+					return;
+				}
+
+				return array_merge( array( 'success' => false ), $error_data );
+			}
+
 			// Public AJAX saves of an existing task must carry a session
 			// generation while locking is enabled; a missing token cannot be
 			// validated against a takeover and must not overwrite newer changes.
