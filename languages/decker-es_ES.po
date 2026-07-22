@@ -2056,3 +2056,9 @@ msgstr "Esta tarea está archivada y no se puede editar."
 
 msgid "Show board status indicators"
 msgstr "Mostrar indicadores de estado de los tableros"
+
+msgid "This preference is saved only in this browser."
+msgstr "Esta preferencia se guarda solo en este navegador."
+
+msgid "Board status indicators"
+msgstr "Indicadores de estado de los tableros"

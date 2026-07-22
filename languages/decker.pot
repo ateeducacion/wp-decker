@@ -48,6 +48,12 @@ msgstr ""
 msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
 msgstr ""
 
+msgid "Show board status indicators"
+msgstr ""
+
+msgid "This preference is saved only in this browser."
+msgstr ""
+
 msgid "Enable AI improvements for task descriptions."
 msgstr ""
 
@@ -127,6 +133,9 @@ msgid "Allow Email Notifications"
 msgstr ""
 
 msgid "Collaborative Editing"
+msgstr ""
+
+msgid "Board status indicators"
 msgstr ""
 
 msgid "Signaling Server"
@@ -1935,9 +1944,6 @@ msgid "Scrollable"
 msgstr ""
 
 msgid "Sidebar User Info"
-msgstr ""
-
-msgid "Show board status indicators"
 msgstr ""
 
 msgid "Reset"

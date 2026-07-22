@@ -126,5 +126,12 @@ class Decker_Admin {
 			return;
 		}
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/decker-admin.js', array( 'jquery' ), $this->version, false );
+		wp_enqueue_script(
+			'decker-sidebar-preferences',
+			plugin_dir_url( __FILE__ ) . '../public/assets/js/sidebar-preferences.js',
+			array(),
+			$this->version,
+			true
+		);
 	}
 }

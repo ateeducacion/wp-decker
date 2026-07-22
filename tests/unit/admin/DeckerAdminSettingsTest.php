@@ -26,6 +26,20 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
+	 * Test the board status preference is rendered as browser-local UI.
+	 */
+	public function test_sidebar_board_status_render_is_browser_local() {
+		ob_start();
+		$this->admin_settings->sidebar_board_status_render();
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'id="sidebar-board-status-check"', $output );
+		$this->assertStringContainsString( 'data-decker-persistent', $output );
+		$this->assertStringNotContainsString( 'name="decker_settings', $output );
+		$this->assertStringContainsString( 'saved only in this browser', $output );
+	}
+
+	/**
 	 * Test the settings_validate method with valid input.
 	 */
 	public function test_settings_validate_with_valid_ignored_users() {
