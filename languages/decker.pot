@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Decker 0.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/decker\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-decker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -117,6 +117,9 @@ msgstr ""
 msgid "Minimum User Profile"
 msgstr ""
 
+msgid "Task Editor Type"
+msgstr ""
+
 msgid "Shared Key"
 msgstr ""
 
@@ -162,6 +165,15 @@ msgstr ""
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr ""
 
+msgid "Classic Editor"
+msgstr ""
+
+msgid "Quill Editor"
+msgstr ""
+
+msgid "Choose which editor to use for task descriptions. Collaborative editing always uses Quill."
+msgstr ""
+
 msgid "Are you sure you want to delete all Decker records? This action cannot be undone."
 msgstr ""
 
@@ -201,6 +213,111 @@ msgid "Enter comma-separated site IDs where Decker is permitted to be activated.
 msgstr ""
 
 msgid "No tasks found for this date."
+msgstr ""
+
+msgid "Permission-aware abilities for Decker task, board, and knowledge-base operations."
+msgstr ""
+
+msgid "List Decker tasks"
+msgstr ""
+
+msgid "Lists visible Decker tasks with optional search, board, stack, status, and pagination filters."
+msgstr ""
+
+msgid "Get a Decker task"
+msgstr ""
+
+msgid "Retrieves one visible Decker task by ID."
+msgstr ""
+
+msgid "Create a Decker task"
+msgstr ""
+
+msgid "Creates a task through the existing Decker task domain method."
+msgstr ""
+
+msgid "Update a Decker task"
+msgstr ""
+
+msgid "Updates selected fields while preserving unspecified values and edit locks."
+msgstr ""
+
+msgid "Move a Decker task"
+msgstr ""
+
+msgid "Moves a task to another stack or board through existing domain behavior."
+msgstr ""
+
+msgid "Archive or restore a Decker task"
+msgstr ""
+
+msgid "Archives or restores a task using an explicit, reversible archived state."
+msgstr ""
+
+msgid "List Decker boards"
+msgstr ""
+
+msgid "Lists boards that can be used to filter or create tasks."
+msgstr ""
+
+msgid "Search the Decker knowledge base"
+msgstr ""
+
+msgid "Searches accessible knowledge-base articles by text and optional board, returning summaries with an excerpt."
+msgstr ""
+
+msgid "Get a Decker knowledge-base article"
+msgstr ""
+
+msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
+msgstr ""
+
+msgid "The requested board does not exist."
+msgstr ""
+
+msgid "You are not allowed to create tasks for another author."
+msgstr ""
+
+msgid "You are not allowed to change the task author."
+msgstr ""
+
+msgid "The task title is required."
+msgstr ""
+
+msgid "The supplied task stack is invalid."
+msgstr ""
+
+msgid "One or more supplied user IDs are invalid."
+msgstr ""
+
+msgid "One or more supplied taxonomy term IDs are invalid."
+msgstr ""
+
+msgid "The due date must be a valid date in Y-m-d format."
+msgstr ""
+
+msgid "The requested knowledge-base article was not found."
+msgstr ""
+
+msgid "You are not allowed to access this article."
+msgstr ""
+
+msgid "You are not allowed to access Decker data."
+msgstr ""
+
+msgid "You are not allowed to access this task."
+msgstr ""
+
+msgid "You are not allowed to access this hidden task."
+msgstr ""
+
+msgid "Authentication is required."
+msgstr ""
+
+msgid "The requested task was not found."
+msgstr ""
+
+msgid "The task is not assigned to a valid board."
 msgstr ""
 
 msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings."
@@ -915,6 +1032,9 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
+msgid "This task is archived and cannot be edited."
+msgstr ""
+
 msgid "Task saved successfully."
 msgstr ""
 
@@ -1504,6 +1624,9 @@ msgstr ""
 msgid "Could not copy URL. Please copy it manually:"
 msgstr ""
 
+msgid "Checklist"
+msgstr ""
+
 msgid "No comments yet."
 msgstr ""
 
@@ -1814,6 +1937,9 @@ msgstr ""
 msgid "Sidebar User Info"
 msgstr ""
 
+msgid "Show board status indicators"
+msgstr ""
+
 msgid "Reset"
 msgstr ""
 
@@ -1896,132 +2022,4 @@ msgid "Help"
 msgstr ""
 
 msgid "Logout"
-msgstr ""
-
-msgid "Permission-aware abilities for Decker task, board, and knowledge-base operations."
-msgstr ""
-
-msgid "List Decker tasks"
-msgstr ""
-
-msgid "Lists visible Decker tasks with optional search, board, stack, status, and pagination filters."
-msgstr ""
-
-msgid "Get a Decker task"
-msgstr ""
-
-msgid "Retrieves one visible Decker task by ID."
-msgstr ""
-
-msgid "Create a Decker task"
-msgstr ""
-
-msgid "Creates a task through the existing Decker task domain method."
-msgstr ""
-
-msgid "Update a Decker task"
-msgstr ""
-
-msgid "Updates selected fields while preserving unspecified values and edit locks."
-msgstr ""
-
-msgid "Move a Decker task"
-msgstr ""
-
-msgid "Moves a task to another stack or board through existing domain behavior."
-msgstr ""
-
-msgid "Archive or restore a Decker task"
-msgstr ""
-
-msgid "Archives or restores a task using an explicit, reversible archived state."
-msgstr ""
-
-msgid "List Decker boards"
-msgstr ""
-
-msgid "Lists boards that can be used to filter or create tasks."
-msgstr ""
-
-msgid "Search the Decker knowledge base"
-msgstr ""
-
-msgid "Searches accessible knowledge-base articles by text and optional board."
-msgstr ""
-
-msgid "You are not allowed to access Decker data."
-msgstr ""
-
-msgid "You are not allowed to access this task."
-msgstr ""
-
-msgid "You are not allowed to access this hidden task."
-msgstr ""
-
-msgid "Authentication is required."
-msgstr ""
-
-msgid "The requested board does not exist."
-msgstr ""
-
-msgid "You are not allowed to create tasks for another author."
-msgstr ""
-
-msgid "You are not allowed to change the task author."
-msgstr ""
-
-msgid "The task title is required."
-msgstr ""
-
-msgid "The supplied task stack is invalid."
-msgstr ""
-
-msgid "One or more supplied user IDs are invalid."
-msgstr ""
-
-msgid "One or more supplied taxonomy term IDs are invalid."
-msgstr ""
-
-msgid "The due date must be a valid date in Y-m-d format."
-msgstr ""
-
-msgid "The requested task was not found."
-msgstr ""
-
-msgid "The task is not assigned to a valid board."
-msgstr ""
-
-msgid "Searches accessible knowledge-base articles by text and optional board, returning summaries with an excerpt."
-msgstr ""
-
-msgid "Get a Decker knowledge-base article"
-msgstr ""
-
-msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
-msgstr ""
-
-msgid "The requested knowledge-base article was not found."
-msgstr ""
-
-msgid "You are not allowed to access this article."
-msgstr ""
-
-msgid "Task Editor Type"
-msgstr ""
-
-msgid "Classic Editor"
-msgstr ""
-
-msgid "Quill Editor"
-msgstr ""
-
-msgid ""
-"Choose which editor to use for task descriptions. Collaborative editing "
-"always uses Quill."
-msgstr ""
-
-msgid "Checklist"
-msgstr ""
-
-msgid "This task is archived and cannot be edited."
 msgstr ""

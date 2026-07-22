@@ -730,7 +730,7 @@ class ThemeCustomizer {
         sessionStorage.setItem('__CONFIG__', JSON.stringify(this.config));
         // localStorage.setItem('__CONFIG__', JSON.stringify(this.config));
 
-        document.querySelectorAll('#theme-settings-offcanvas input[type=checkbox]').forEach(function (checkbox) {
+        document.querySelectorAll('#theme-settings-offcanvas input[type=checkbox]:not([data-decker-persistent])').forEach(function (checkbox) {
             checkbox.checked = false;
         })
 

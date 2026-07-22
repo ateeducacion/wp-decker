@@ -272,6 +272,10 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     white-space: nowrap;
 }
 
+.decker-hide-board-status .decker-sidebar-board-badges {
+    display: none;
+}
+
 .decker-sidebar-board-status {
     display: inline-flex;
     align-items: flex-start;
