@@ -83,6 +83,19 @@ class Decker_Admin_Settings {
 	}
 
 	/**
+	 * Render Board Status Indicators Field.
+	 *
+	 * Outputs a browser-local preference for the board status indicators.
+	 */
+	public function sidebar_board_status_render() {
+		echo '<label for="sidebar-board-status-check">';
+		echo '<input type="checkbox" id="sidebar-board-status-check" value="1" checked data-decker-persistent aria-describedby="sidebar-board-status-description"> ';
+		echo esc_html__( 'Show board status indicators', 'decker' );
+		echo '</label>';
+		echo '<p class="description" id="sidebar-board-status-description">' . esc_html__( 'This preference is saved only in this browser.', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render AI Enabled Field.
 	 *
 	 * Outputs the HTML for the ai_enabled field.
@@ -393,6 +406,7 @@ class Decker_Admin_Settings {
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
+			'sidebar_board_status'  => __( 'Board status indicators', 'decker' ),
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),
 			'ignored_users'         => __( 'Ignored Users', 'decker' ),

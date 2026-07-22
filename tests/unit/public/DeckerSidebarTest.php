@@ -8,6 +8,20 @@
 class DeckerSidebarTest extends Decker_Test_Base {
 
 	/**
+	 * Test the theme customizer renders the board status preference.
+	 */
+	public function test_right_sidebar_renders_board_status_preference() {
+		ob_start();
+		include plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/right-sidebar.php';
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'id="sidebar-board-status-check"', $output );
+		$this->assertStringContainsString( 'name="sidebar-board-status"', $output );
+		$this->assertStringContainsString( 'data-decker-persistent', $output );
+		$this->assertStringContainsString( 'Show board status indicators', $output );
+	}
+
+	/**
 	 * Test board badges render only non-zero to-do and in-progress counts.
 	 */
 	public function test_left_sidebar_renders_board_status_badges() {

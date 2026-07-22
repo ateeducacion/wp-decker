@@ -234,6 +234,7 @@ class Decker_Public {
 
 				// Custom files.
 				plugin_dir_url( __FILE__ ) . '../public/assets/js/app.js',
+				plugin_dir_url( __FILE__ ) . '../public/assets/js/sidebar-preferences.js',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/attex.css',
 				plugin_dir_url( __FILE__ ) . '../public/assets/css/app.css',
 

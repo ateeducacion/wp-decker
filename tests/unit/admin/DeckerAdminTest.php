@@ -81,14 +81,17 @@ class DeckerAdminTest extends WP_UnitTestCase {
 	public function test_enqueue_scripts() {
                 // Clear any previously enqueued script
 		wp_dequeue_script( 'decker' );
+		wp_dequeue_script( 'decker-sidebar-preferences' );
 
                 // Test with non-matching hook
 		$this->admin->enqueue_scripts( 'wrong_hook' );
 		$this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
+		$this->assertFalse( wp_script_is( 'decker-sidebar-preferences', 'enqueued' ) );
 
                 // Test with matching hook
 		$this->admin->enqueue_scripts( 'settings_page_decker_settings' );
 		$this->assertTrue( wp_script_is( 'decker', 'enqueued' ) );
+		$this->assertTrue( wp_script_is( 'decker-sidebar-preferences', 'enqueued' ) );
 	}
 
 

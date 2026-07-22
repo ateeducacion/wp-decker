@@ -1979,9 +1979,6 @@ msgstr "Lista los tableros que se pueden usar para filtrar o crear tareas."
 msgid "Search the Decker knowledge base"
 msgstr "Buscar en la base de conocimiento de Decker"
 
-msgid "Searches accessible knowledge-base articles by text and optional board."
-msgstr "Busca artículos accesibles de la base de conocimiento por texto y tablero opcional."
-
 msgid "You are not allowed to access Decker data."
 msgstr "No tienes permiso para acceder a los datos de Decker."
 
@@ -2048,15 +2045,20 @@ msgstr "Editor clásico"
 msgid "Quill Editor"
 msgstr "Editor Quill"
 
-msgid ""
-"Choose which editor to use for task descriptions. Collaborative editing "
-"always uses Quill."
-msgstr ""
-"Elige qué editor usar para las descripciones de tareas. La edición "
-"colaborativa siempre usa Quill."
+msgid "Choose which editor to use for task descriptions. Collaborative editing always uses Quill."
+msgstr "Elige qué editor usar para las descripciones de tareas. La edición colaborativa siempre usa Quill."
 
 msgid "Checklist"
 msgstr "Lista de verificación"
 
 msgid "This task is archived and cannot be edited."
 msgstr "Esta tarea está archivada y no se puede editar."
+
+msgid "Show board status indicators"
+msgstr "Mostrar indicadores de estado de los tableros"
+
+msgid "This preference is saved only in this browser."
+msgstr "Esta preferencia se guarda solo en este navegador."
+
+msgid "Board status indicators"
+msgstr "Indicadores de estado de los tableros"
