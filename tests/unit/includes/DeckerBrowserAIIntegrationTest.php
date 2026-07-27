@@ -32,10 +32,10 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 	public function test_ai_config_defaults_to_disabled() {
 		update_option( 'decker_settings', array() );
 
-		$public = new Decker_Public( 'decker', '1.0.0' );
-		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$assets = new Decker_Public_Assets();
+		$method = new ReflectionMethod( $assets, 'get_ai_config' );
 		$method->setAccessible( true );
-		$config = $method->invoke( $public );
+		$config = $method->invoke( $assets );
 
 		$this->assertFalse( $config['enabled'] );
 	}
@@ -51,10 +51,10 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 			)
 		);
 
-		$public = new Decker_Public( 'decker', '1.0.0' );
-		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$assets = new Decker_Public_Assets();
+		$method = new ReflectionMethod( $assets, 'get_ai_config' );
 		$method->setAccessible( true );
-		$config = $method->invoke( $public );
+		$config = $method->invoke( $assets );
 
 		$this->assertFalse( $config['enabled'] );
 	}
@@ -70,10 +70,10 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 			)
 		);
 
-		$public = new Decker_Public( 'decker', '1.0.0' );
-		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$assets = new Decker_Public_Assets();
+		$method = new ReflectionMethod( $assets, 'get_ai_config' );
 		$method->setAccessible( true );
-		$config = $method->invoke( $public );
+		$config = $method->invoke( $assets );
 
 		$this->assertSame(
 			'Custom AI prompt {{task_context}}',
@@ -85,10 +85,10 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 	 * AI config should default to the browser Gemini Nano provider.
 	 */
 	public function test_ai_config_defaults_to_browser_gemini_nano_provider() {
-		$public = new Decker_Public( 'decker', '1.0.0' );
-		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$assets = new Decker_Public_Assets();
+		$method = new ReflectionMethod( $assets, 'get_ai_config' );
 		$method->setAccessible( true );
-		$config = $method->invoke( $public );
+		$config = $method->invoke( $assets );
 
 		$this->assertSame(
 			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
@@ -101,10 +101,10 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 	 * AI config should expose only the simplified four browser AI actions.
 	 */
 	public function test_ai_config_exposes_only_simplified_ai_actions() {
-		$public = new Decker_Public( 'decker', '1.0.0' );
-		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$assets = new Decker_Public_Assets();
+		$method = new ReflectionMethod( $assets, 'get_ai_config' );
 		$method->setAccessible( true );
-		$config = $method->invoke( $public );
+		$config = $method->invoke( $assets );
 
 		$this->assertArrayHasKey( 'mode_improve_description', $config['strings'] );
 		$this->assertArrayHasKey( 'mode_make_actionable', $config['strings'] );
@@ -133,10 +133,10 @@ class DeckerBrowserAIIntegrationTest extends Decker_Test_Base {
 	 * Default AI prompt text should focus on returning only the task description.
 	 */
 	public function test_ai_config_prompt_text_focuses_on_task_description_only() {
-		$public = new Decker_Public( 'decker', '1.0.0' );
-		$method = new ReflectionMethod( $public, 'get_ai_config' );
+		$assets = new Decker_Public_Assets();
+		$method = new ReflectionMethod( $assets, 'get_ai_config' );
 		$method->setAccessible( true );
-		$config = $method->invoke( $public );
+		$config = $method->invoke( $assets );
 
 		$this->assertStringContainsString(
 			'Return only the description content for the task.',
