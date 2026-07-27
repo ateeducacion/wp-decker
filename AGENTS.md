@@ -18,6 +18,7 @@ These are natural-language guidelines for agents to follow when developing the D
 - Use `make lint` (PHP lint) and `make fix` (beautifier) to enforce standards.
 - Use `make test` to run all unit tests.
 - Use `make check-untranslated` to detect any untranslated Spanish strings.
+- **Before every `git push` / opening a PR**: run at least `make lint`, `make test` and **`make check-untranslated`** (see the pre-push gate below).
 
 ## Environment and tools
 
@@ -53,6 +54,19 @@ These are natural-language guidelines for agents to follow when developing the D
   $title = sprintf( _n( '%d comment', '%d comments', $count, 'decker' ), $count );
   ```
   When the call is inside an HTML attribute, hoist the result into a PHP variable in a regular `<?php ... ?>` block first, then echo the variable in the attribute — splitting the `<?php` block inside an attribute leaks indentation whitespace into the rendered HTML.
+
+### Pre-push gate (agents — mandatory)
+
+**Never push or open a PR without verifying translations.** CI runs `make check-untranslated` (`.github/workflows/ci.yml`) and **fails the job** if any Spanish `msgstr` is empty.
+
+Before `git push` or `gh pr create`:
+
+1. Search the diff for new/changed `__()` / `_e()` / `_n()` / `_x()` strings (including strings passed to `wp_localize_script()`).
+2. Update `languages/decker-es_ES.po` in the **same commit** (Spanish `msgstr` filled in — not left blank), together with `languages/decker.pot` and `languages/decker-es_ES.mo`.
+3. Run **`make check-untranslated`** and confirm it exits 0.
+4. If it fails, fix the empty `msgstr` entries (and re-run) before pushing.
+
+Do not treat “tests passed” as enough for a push: PHPUnit does not catch missing `.po` entries. Untranslated strings are a **CI blocker**, same as lint failures.
 
 ## PHP docblock formatting
 
