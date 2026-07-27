@@ -3203,10 +3203,13 @@ class Decker_Tasks {
 	 * Handles the creation or update of a Decker task via AJAX.
 	 *
 	 * This method processes form data sent via an AJAX request, validates and sanitizes
-	 * the input, and either creates a new task or updates an existing one. It returns a JSON
-	 * response indicating success or failure.
+	 * the input, and either creates a new task or updates an existing one.
 	 *
-	 * @return void Outputs a JSON response indicating the result of the operation.
+	 * When the decker_save_task_send_response filter is left at its default the
+	 * outcome is sent straight back as JSON and nothing is returned; callers that
+	 * disable it (the tests, and internal callers) get the payload instead.
+	 *
+	 * @return array|null The result payload, or null once a JSON response has been sent.
 	 *
 	 * @throws WP_Error If any validation or task creation/updating fails, an error is logged or returned.
 	 */

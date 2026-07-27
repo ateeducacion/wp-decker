@@ -250,22 +250,23 @@ class Decker_User_Extended {
 	 * @param WP_User $user The user object.
 	 */
 	private function render_email_notifications_row( $user ) {
-				// Check if email notifications are enabled globally.
-				$global_settings = get_option( 'decker_settings', array() );
-				$allow_email_notifications = isset( $global_settings['allow_email_notifications'] ) && '1' === $global_settings['allow_email_notifications'];
+		// Check if email notifications are enabled globally.
+		$global_settings           = get_option( 'decker_settings', array() );
+		$allow_email_notifications = isset( $global_settings['allow_email_notifications'] ) && '1' === $global_settings['allow_email_notifications'];
 
-			if ( $allow_email_notifications ) {
+		if ( ! $allow_email_notifications ) {
+			return;
+		}
 
-				// Retrieve user-specific email settings or default values.
-				$email_notifications = get_user_meta( $user->ID, 'decker_email_notifications', true );
-				$default_settings = array(
-					'task_assigned'   => '1',
-					'task_completed'  => '1',
-					'task_commented'  => '1',
-				);
-				$email_notifications = wp_parse_args( $email_notifications, $default_settings );
-
-				?>
+		// Retrieve user-specific email settings or default values.
+		$email_notifications = get_user_meta( $user->ID, 'decker_email_notifications', true );
+		$default_settings    = array(
+			'task_assigned'  => '1',
+			'task_completed' => '1',
+			'task_commented' => '1',
+		);
+		$email_notifications = wp_parse_args( $email_notifications, $default_settings );
+		?>
 			<!-- Email Notifications -->
 			<tr>
 				<th><?php esc_html_e( 'Email Notifications', 'decker' ); ?></th>
@@ -286,8 +287,7 @@ class Decker_User_Extended {
 					</label>
 				</td>
 			</tr>
-				<?php
-			}
+		<?php
 	}
 
 	/**
