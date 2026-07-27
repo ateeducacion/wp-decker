@@ -45,6 +45,33 @@ class Decker_User_Extended {
 	public function add_custom_user_profile_fields( $user ) {
 		wp_enqueue_script( 'wp-color-picker' );
 		wp_enqueue_style( 'wp-color-picker' );
+
+		$this->render_calendar_token_script( $user );
+		?>
+		<h3><?php esc_html_e( 'Decker Settings', 'decker' ); ?></h3>
+
+		<table class="form-table">
+			<?php
+			$this->render_calendar_token_row( $user );
+			$this->render_color_row( $user );
+			$this->render_default_board_row( $user );
+			$this->render_email_notifications_row( $user );
+			?>
+		</table>
+		<script type="text/javascript">
+			jQuery(document).ready(function($) {
+				$('#decker_color').wpColorPicker();
+			});
+		</script>
+		<?php
+	}
+
+	/**
+	 * Print the script that refreshes the calendar token over AJAX.
+	 *
+	 * @param WP_User $user The user object.
+	 */
+	private function render_calendar_token_script( $user ) {
 		?>
 		<script type="text/javascript">
 			jQuery(document).ready(function($) {
@@ -71,22 +98,15 @@ class Decker_User_Extended {
 			});
 		</script>
 		<?php
+	}
 
-		// Retrieve all boards for the select box.
-		$boards = get_terms(
-			array(
-				'taxonomy'   => 'decker_board',
-				'hide_empty' => false,
-			)
-		);
-
-		// Retrieve the user's selected default board.
-		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
-
+	/**
+	 * Print the calendar token field and the calendar subscription links.
+	 *
+	 * @param WP_User $user The user object.
+	 */
+	private function render_calendar_token_row( $user ) {
 		?>
-		<h3><?php esc_html_e( 'Decker Settings', 'decker' ); ?></h3>
-
-		<table class="form-table">
 			<!-- Calendar Token Field -->
 			<tr>
 				<th><label for="decker_calendar_token"><?php esc_html_e( 'Calendar Token', 'decker' ); ?></label></th>
@@ -159,7 +179,16 @@ class Decker_User_Extended {
 					</span>
 				</td>
 			</tr>
+		<?php
+	}
 
+	/**
+	 * Print the colour picker row.
+	 *
+	 * @param WP_User $user The user object.
+	 */
+	private function render_color_row( $user ) {
+		?>
 			<!-- Color Picker Field -->
 			<tr>
 				<th><label for="decker_color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
@@ -169,6 +198,26 @@ class Decker_User_Extended {
 					<span class="description"><?php esc_html_e( 'Select your favorite color.', 'decker' ); ?></span>
 				</td>
 			</tr>
+		<?php
+	}
+
+	/**
+	 * Print the default board selector.
+	 *
+	 * @param WP_User $user The user object.
+	 */
+	private function render_default_board_row( $user ) {
+		// Retrieve all boards for the select box.
+		$boards = get_terms(
+			array(
+				'taxonomy'   => 'decker_board',
+				'hide_empty' => false,
+			)
+		);
+
+		// Retrieve the user's selected default board.
+		$default_board = get_user_meta( $user->ID, 'decker_default_board', true );
+		?>
 			<!-- Default Board Select Box -->
 			<tr>
 				<th><label for="decker_default_board"><?php esc_html_e( 'Default Board', 'decker' ); ?></label></th>
@@ -192,7 +241,15 @@ class Decker_User_Extended {
 					<span class="description"><?php esc_html_e( 'Select your default board.', 'decker' ); ?></span>
 				</td>
 			</tr>
-			<?php
+		<?php
+	}
+
+	/**
+	 * Print the e-mail notification checkboxes when the feature is enabled globally.
+	 *
+	 * @param WP_User $user The user object.
+	 */
+	private function render_email_notifications_row( $user ) {
 				// Check if email notifications are enabled globally.
 				$global_settings = get_option( 'decker_settings', array() );
 				$allow_email_notifications = isset( $global_settings['allow_email_notifications'] ) && '1' === $global_settings['allow_email_notifications'];
@@ -231,14 +288,6 @@ class Decker_User_Extended {
 			</tr>
 				<?php
 			}
-			?>
-		</table>
-		<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				$('#decker_color').wpColorPicker();
-			});
-		</script>
-		<?php
 	}
 
 	/**

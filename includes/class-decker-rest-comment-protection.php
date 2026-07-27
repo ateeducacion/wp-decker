@@ -170,49 +170,74 @@ class Decker_REST_Comment_Protection {
 
 		// Block unauthenticated creation on protected post types.
 		if ( 0 === strpos( $route, '/wp/v2/comments' ) && 'POST' === $method ) {
-			$post_id = (int) $request->get_param( 'post' );
-			if ( $post_id && in_array( get_post_type( $post_id ), $this->protected_post_types, true ) ) {
-				return new WP_Error(
-					'rest_cannot_create_comment',
-					__( 'You are not authorized to access this resource.', 'decker' ),
-					array( 'status' => rest_authorization_required_code() )
-				);
-			}
-			return $result;
+			return $this->deny_protected_comment_creation( $request ) ?? $result;
 		}
 
 		// Handle single comment routes.
 		if ( preg_match( '#^/wp/v2/comments/(?P<id>\d+)#', $route, $matches ) ) {
-			$comment_id = (int) $matches['id'];
-			$comment    = get_comment( $comment_id );
-
-			if ( ! $comment ) {
-				return $result;
-			}
-
-			$is_protected = in_array( get_post_type( $comment->comment_post_ID ), $this->protected_post_types, true );
-			if ( ! $is_protected ) {
-				return $result;
-			}
-
-			if ( 'GET' === $method ) {
-				return new WP_Error(
-					'rest_forbidden_comment',
-					__( 'You are not authorized to access this resource.', 'decker' ),
-					array( 'status' => rest_authorization_required_code() )
-				);
-			}
-
-			if ( in_array( $method, array( 'PUT', 'PATCH', 'DELETE' ), true ) ) {
-				return new WP_Error(
-					'rest_cannot_edit_comment',
-					__( 'You are not authorized to access this resource.', 'decker' ),
-					array( 'status' => rest_authorization_required_code() )
-				);
-			}
+			return $this->deny_protected_comment_route( (int) $matches['id'], $method ) ?? $result;
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Refuse anonymous comment creation on a protected post type.
+	 *
+	 * @param WP_REST_Request $request Request used to generate the response.
+	 * @return WP_Error|null The refusal, or null when the request may proceed.
+	 */
+	private function deny_protected_comment_creation( $request ) {
+		$post_id = (int) $request->get_param( 'post' );
+
+		if ( $post_id && in_array( get_post_type( $post_id ), $this->protected_post_types, true ) ) {
+			return $this->unauthorized( 'rest_cannot_create_comment' );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Refuse anonymous access to a single comment on a protected post type.
+	 *
+	 * @param int    $comment_id Comment addressed by the route.
+	 * @param string $method     Upper-cased HTTP method.
+	 * @return WP_Error|null The refusal, or null when the request may proceed.
+	 */
+	private function deny_protected_comment_route( $comment_id, $method ) {
+		$comment = get_comment( $comment_id );
+
+		if ( ! $comment ) {
+			return null;
+		}
+
+		if ( ! in_array( get_post_type( $comment->comment_post_ID ), $this->protected_post_types, true ) ) {
+			return null;
+		}
+
+		if ( 'GET' === $method ) {
+			return $this->unauthorized( 'rest_forbidden_comment' );
+		}
+
+		if ( in_array( $method, array( 'PUT', 'PATCH', 'DELETE' ), true ) ) {
+			return $this->unauthorized( 'rest_cannot_edit_comment' );
+		}
+
+		return null;
+	}
+
+	/**
+	 * Build the standard refusal returned for protected comments.
+	 *
+	 * @param string $code Error code identifying which rule refused the request.
+	 * @return WP_Error
+	 */
+	private function unauthorized( $code ) {
+		return new WP_Error(
+			$code,
+			__( 'You are not authorized to access this resource.', 'decker' ),
+			array( 'status' => rest_authorization_required_code() )
+		);
 	}
 
 	/**

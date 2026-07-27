@@ -209,26 +209,9 @@ class Decker_AI_Gemini_API_Provider implements Decker_AI_Provider_Interface {
 			);
 		}
 
-		$text_parts = array();
-
-		if ( ! empty( $decoded['candidates'] ) && is_array( $decoded['candidates'] ) ) {
-			foreach ( $decoded['candidates'] as $candidate ) {
-				if (
-					empty( $candidate['content']['parts'] ) ||
-					! is_array( $candidate['content']['parts'] )
-				) {
-					continue;
-				}
-
-				foreach ( $candidate['content']['parts'] as $part ) {
-					if ( isset( $part['text'] ) && '' !== trim( $part['text'] ) ) {
-						$text_parts[] = $part['text'];
-					}
-				}
-			}
-		}
-
-		$content = $this->sanitize_response( implode( "\n", $text_parts ) );
+		$content = $this->sanitize_response(
+			implode( "\n", $this->extract_candidate_texts( $decoded ) )
+		);
 
 		if ( '' === $content ) {
 			return new WP_Error(
@@ -242,6 +225,53 @@ class Decker_AI_Gemini_API_Provider implements Decker_AI_Provider_Interface {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Collect the non-empty text parts across every candidate, in order.
+	 *
+	 * Candidates that carry no usable parts (for example one cut short by a
+	 * safety filter) are skipped rather than treated as an error.
+	 *
+	 * @param array $decoded Decoded response payload.
+	 * @return array<int, string> Text fragments in the order the API returned them.
+	 */
+	private function extract_candidate_texts( $decoded ) {
+		if ( empty( $decoded['candidates'] ) || ! is_array( $decoded['candidates'] ) ) {
+			return array();
+		}
+
+		$text_parts = array();
+
+		foreach ( $decoded['candidates'] as $candidate ) {
+			$text_parts = array_merge( $text_parts, $this->extract_part_texts( $candidate ) );
+		}
+
+		return $text_parts;
+	}
+
+	/**
+	 * Collect the non-empty text fragments of a single candidate.
+	 *
+	 * @param array $candidate One entry of the candidates list.
+	 * @return array<int, string> Text fragments, empty when the candidate carries none.
+	 */
+	private function extract_part_texts( $candidate ) {
+		$parts = isset( $candidate['content']['parts'] ) ? $candidate['content']['parts'] : null;
+
+		if ( empty( $parts ) || ! is_array( $parts ) ) {
+			return array();
+		}
+
+		$texts = array();
+
+		foreach ( $parts as $part ) {
+			if ( isset( $part['text'] ) && '' !== trim( $part['text'] ) ) {
+				$texts[] = $part['text'];
+			}
+		}
+
+		return $texts;
 	}
 
 	/**
