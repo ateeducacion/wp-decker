@@ -87,6 +87,21 @@ class Decker {
 	 * @access   private
 	 */
 	private function load_dependencies() {
+		$this->load_core_dependencies();
+		$this->load_post_type_dependencies();
+		$this->load_service_dependencies();
+		$this->load_model_dependencies();
+		$this->load_interface_dependencies();
+
+		$this->loader = new Decker_Loader();
+	}
+
+	/**
+	 * Load the loader, the AJAX layer and the task services everything else builds on.
+	 *
+	 * @access private
+	 */
+	private function load_core_dependencies() {
 
 		/**
 		 * The class responsible for orchestrating the actions and filters of the
@@ -109,25 +124,39 @@ class Decker {
 		 * User-specific "For today" relation service.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-today-manager.php';
+	}
 
-		/**
-		 * The classes responsible for defining the custom-post-types.
-		 */
+	/**
+	 * Load the custom post types, taxonomies and the controls attached to them.
+	 *
+	 * Collaborators are loaded before the post type that attaches them.
+	 *
+	 * @access private
+	 */
+	private function load_post_type_dependencies() {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-actions.php';
 
-		// Term screen controls, loaded before the taxonomies that attach them.
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-term-color-field.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-board-term-fields.php';
-
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-boards.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-labels.php';
+
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
+
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-meta-box.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-events.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb-revisions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb.php';
+	}
 
+	/**
+	 * Load the services that surround the content: mail, notifications, calendar and AI.
+	 *
+	 * @access private
+	 */
+	private function load_service_dependencies() {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-revision-manager.php';
 
@@ -145,10 +174,14 @@ class Decker {
 		 * The class responsible for protecting comments on custom post types via the REST API.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-rest-comment-protection.php';
+	}
 
-		/**
-		 * The class responsible for defining the MVC.
-		 */
+	/**
+	 * Load the entities and managers that make up the MVC layer.
+	 *
+	 * @access private
+	 */
+	private function load_model_dependencies() {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-term-entity.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-board.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
@@ -158,6 +191,14 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
+	}
+
+	/**
+	 * Load the admin and public-facing entry points.
+	 *
+	 * @access private
+	 */
+	private function load_interface_dependencies() {
 
 		/**
 		 * The class responsible for network-level settings in Multisite.
@@ -182,8 +223,6 @@ class Decker {
 		 * side of the site.
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'public/class-decker-public.php';
-
-		$this->loader = new Decker_Loader();
 	}
 
 	/**
