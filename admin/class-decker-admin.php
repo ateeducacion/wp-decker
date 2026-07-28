@@ -96,6 +96,8 @@ class Decker_Admin {
 	 * @access   private
 	 */
 	private function load_dependencies() {
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin-settings-fields.php';
+		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin-settings-validator.php';
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin-settings.php';
 
 		if ( ! has_action( 'admin_menu', array( 'Decker_Admin_Settings', 'create_menu' ) ) ) {
