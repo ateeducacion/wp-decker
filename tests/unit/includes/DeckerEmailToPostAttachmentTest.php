@@ -146,7 +146,7 @@ class DeckerEmailToPostAttachmentTest extends Decker_Test_Base {
 	 * The denylist matches the end of the name, so a trailing safe extension passes.
 	 *
 	 * This is not a hole: the stored file is renamed to a UUID carrying the
-	 * extension WordPress verified, so the ".php" part never reaches disk.
+	 * allowed extension, so the ".php" part never reaches disk.
 	 */
 	public function test_accepts_double_extension_ending_in_a_safe_type() {
 		$result = $this->upload( 'invoice.php.txt' );
@@ -195,11 +195,39 @@ class DeckerEmailToPostAttachmentTest extends Decker_Test_Base {
 	 *
 	 * The uploader takes no MIME type from the caller on purpose: whatever the
 	 * e-mail announced is attacker-controlled, so the type is derived from the
-	 * verified extension instead.
+	 * filename extension instead.
 	 */
 	public function test_mime_type_is_resolved_from_the_allowlist() {
 		$this->assertSame( 'text/plain', get_post_mime_type( $this->upload( 'notes.txt', 'plain content' ) ) );
 		$this->assertSame( 'text/csv', get_post_mime_type( $this->upload( 'rows.csv', 'a,b' ) ) );
+	}
+
+	/**
+	 * The type is resolved from the extension only; contents are never inspected.
+	 *
+	 * wp_check_filetype_and_ext() sniffs the real MIME only when its first
+	 * argument is a path to an existing file, and the attachment has not been
+	 * written yet at that point. So a file whose bytes contradict its extension
+	 * is still accepted under the extension's type.
+	 *
+	 * This documents a real limit rather than endorsing it. What keeps it safe
+	 * is that the stored file is renamed to a UUID carrying the allowed
+	 * extension, so mismatched bytes are never served as the type they imitate.
+	 */
+	public function test_contents_are_not_checked_against_the_extension() {
+		$result = $this->upload( 'harmless.txt', "<?php echo 'not executed'; ?>" );
+
+		$this->assertIsInt( $result );
+		$this->assertSame( 'text/plain', get_post_mime_type( $result ) );
+
+		$stored = get_post_meta( $result, '_wp_attached_file', true );
+		$this->assertStringEndsWith( '.txt', $stored );
+
+		// A PNG extension carrying non-image bytes is likewise accepted as image/png.
+		$png = $this->upload( 'fake.png', 'this is definitely not a PNG' );
+
+		$this->assertIsInt( $png );
+		$this->assertSame( 'image/png', get_post_mime_type( $png ) );
 	}
 
 	/**

@@ -290,8 +290,14 @@ class Decker_Email_To_Post {
 	 * Processes and uploads attachments as WordPress media.
 	 *
 	 * The MIME type announced by the e-mail is deliberately not accepted: it is
-	 * attacker-controlled, so the type is resolved from the WordPress allowlist
-	 * instead and the file is stored under a generated name.
+	 * attacker-controlled, so the type is resolved from the filename extension
+	 * against the WordPress allowlist instead, and the file is stored under a
+	 * generated name.
+	 *
+	 * Note that the file contents are never inspected. The type is derived from
+	 * the extension alone, so a file whose bytes do not match its extension is
+	 * still accepted; what protects the site is the denylist, the allowlist and
+	 * the rename, not content sniffing.
 	 *
 	 * @param string $filename Name of the file.
 	 * @param string $content  File content.
@@ -315,32 +321,37 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'invalid_filename', 'Nombre de archivo inválido.' );
 		}
 
-		$verified = $this->verify_attachment_type( $original_filename );
+		$allowed = $this->resolve_allowed_attachment_type( $original_filename );
 
-		if ( is_wp_error( $verified ) ) {
-			return $verified;
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
 		}
 
-		$file = $this->write_attachment_file( $content, $verified['ext'] );
+		$file = $this->write_attachment_file( $content, $allowed['ext'] );
 
 		if ( is_wp_error( $file ) ) {
 			return $file;
 		}
 
-		return $this->register_attachment( $file, $verified['type'], $original_filename, $post_id );
+		return $this->register_attachment( $file, $allowed['type'], $original_filename, $post_id );
 	}
 
 	/**
 	 * Resolve the extension and MIME type WordPress is willing to accept.
 	 *
-	 * Never trusts the attacker-controlled extension on its own: the name is
-	 * checked against an explicit denylist and then against the allowlist
-	 * WordPress derives from get_allowed_mime_types().
+	 * The name is checked against an explicit denylist and then mapped against
+	 * the allowlist WordPress derives from get_allowed_mime_types().
+	 *
+	 * This resolves the type from the filename extension only; it does not
+	 * verify it against the file contents. wp_check_filetype_and_ext() performs
+	 * content sniffing solely when its first argument is a path to an existing
+	 * file, and the attachment has not been written to disk at this point, so
+	 * the call returns the extension-to-MIME mapping and nothing more.
 	 *
 	 * @param string $original_filename Sanitized attachment name.
-	 * @return array{ext:string,type:string}|WP_Error Verified extension and type, or the refusal.
+	 * @return array{ext:string,type:string}|WP_Error Allowed extension and type, or the refusal.
 	 */
-	private function verify_attachment_type( $original_filename ) {
+	private function resolve_allowed_attachment_type( $original_filename ) {
 		$lower_filename = strtolower( $original_filename );
 
 		foreach ( self::DISALLOWED_EXTENSIONS as $disallowed_extension ) {
@@ -351,7 +362,7 @@ class Decker_Email_To_Post {
 
 		$filetype = wp_check_filetype_and_ext( $original_filename, $original_filename, get_allowed_mime_types() );
 
-		// Reject when WordPress cannot resolve a verified extension/type from the allowlist.
+		// Reject when WordPress cannot map the extension onto the allowlist.
 		if ( empty( $filetype['ext'] ) || empty( $filetype['type'] ) ) {
 			return new WP_Error( 'disallowed_file_type', 'Tipo de archivo no permitido.' );
 		}
@@ -366,7 +377,7 @@ class Decker_Email_To_Post {
 	 * Write the attachment body under a generated name inside the uploads folder.
 	 *
 	 * @param string $content   Raw file content.
-	 * @param string $extension Verified file extension.
+	 * @param string $extension Allowed file extension.
 	 * @return array{path:string,url:string}|WP_Error Stored file location, or the write error.
 	 */
 	private function write_attachment_file( $content, $extension ) {
@@ -402,7 +413,7 @@ class Decker_Email_To_Post {
 	 * Register a written file as a media attachment of the task.
 	 *
 	 * @param array{path:string,url:string} $file              Stored file location.
-	 * @param string                        $type              Verified MIME type.
+	 * @param string                        $type              MIME type resolved from the extension.
 	 * @param string                        $original_filename Name the sender used.
 	 * @param int                           $post_id           Task the attachment belongs to.
 	 * @return int|WP_Error Attachment ID, or the insertion error.
