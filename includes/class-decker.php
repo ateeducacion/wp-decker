@@ -102,6 +102,7 @@ class Decker {
 		/**
 		 * WordPress-compatible edit locking for task/card editing.
 		 */
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-lock-presenter.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-locks.php';
 
 		/**
@@ -114,11 +115,17 @@ class Decker {
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-user-extended.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-actions.php';
+
+		// Term screen controls, loaded before the taxonomies that attach them.
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-term-color-field.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-board-term-fields.php';
+
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-boards.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-labels.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-events.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb-revisions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';

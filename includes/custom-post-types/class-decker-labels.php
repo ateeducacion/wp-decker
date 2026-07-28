@@ -31,10 +31,9 @@ class Decker_Labels {
 	private function define_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_action( 'init', array( $this, 'register_meta' ) );
-		add_action( 'decker_label_add_form_fields', array( $this, 'add_color_field' ), 10, 2 );
-		add_action( 'decker_label_edit_form_fields', array( $this, 'edit_color_field' ), 10, 2 );
-		add_action( 'created_decker_label', array( $this, 'save_color_meta' ), 10, 2 );
-		add_action( 'edited_decker_label', array( $this, 'save_color_meta' ), 10, 2 );
+
+		// The colour picker owns its own hooks.
+		new Decker_Term_Color_Field( 'decker_label' );
 
 		add_action( 'admin_head', array( $this, 'hide_description' ) );
 		add_filter( 'manage_edit-decker_label_columns', array( $this, 'customize_columns' ) );
@@ -83,67 +82,6 @@ class Decker_Labels {
 		);
 
 		register_taxonomy( 'decker_label', array( 'decker_task' ), $args );
-	}
-
-	/**
-	 * Add color field in the add new term form.
-	 */
-	public function add_color_field() {
-		wp_nonce_field( 'decker_term_action', 'decker_term_nonce' );
-		?>
-		<div class="form-field term-color-wrap">
-			<label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label>
-			<input name="term-color" id="term-color" type="color" value="">
-		</div>
-		<?php
-	}
-
-	/**
-	 * Add color field in the edit term form.
-	 *
-	 * @param WP_Term $term The current term object.
-	 */
-	public function edit_color_field( $term ) {
-		wp_nonce_field( 'decker_term_action', 'decker_term_nonce' );
-
-		$term_id = $term->term_id;
-		$color   = get_term_meta( $term_id, 'term-color', true );
-		?>
-		<tr class="form-field term-color-wrap">
-			<th scope="row"><label for="term-color"><?php esc_html_e( 'Color', 'decker' ); ?></label></th>
-			<td>
-				<input name="term-color" id="term-color" type="color" value="<?php echo esc_attr( $color ) ? esc_attr( $color ) : ''; ?>">
-			</td>
-		</tr>
-		<?php
-	}
-
-	/**
-	 * Save the color meta when a term is created or edited.
-	 *
-	 * @param int $term_id The term ID.
-	 */
-	public function save_color_meta( $term_id ) {
-
-		// Check if nonce is set and verified.
-		if ( isset( $_POST['decker_term_nonce'] ) ) {
-			$nonce = sanitize_text_field( wp_unslash( $_POST['decker_term_nonce'] ) );
-			if ( ! wp_verify_nonce( $nonce, 'decker_term_action' ) ) {
-				return;
-			}
-		} else {
-			return;
-		}
-
-		// Check user capabilities.
-		if ( ! current_user_can( 'edit_term', $term_id ) ) {
-			return;
-		}
-
-		if ( isset( $_POST['term-color'] ) ) {
-			$term_color = sanitize_hex_color( wp_unslash( $_POST['term-color'] ) );
-			update_term_meta( $term_id, 'term-color', $term_color );
-		}
 	}
 
 	/**

@@ -60,7 +60,8 @@ class WP_UnitTest_Factory_For_Decker_Label extends WP_UnitTest_Factory_For_Term 
 		// Save color meta through Decker_Labels logic
 		$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 		$_POST['term-color']        = $args['color'];
-		( new Decker_Labels() )->save_color_meta( $term_id );
+		// Fire the hook WordPress fires, so the fields' owner stays an implementation detail.
+		do_action( 'edited_decker_label', $term_id, 0 );
 
 		return $term_id;
 	}
@@ -105,7 +106,8 @@ class WP_UnitTest_Factory_For_Decker_Label extends WP_UnitTest_Factory_For_Term 
 		if ( isset( $fields['color'] ) ) {
 			$_POST['decker_term_nonce'] = wp_create_nonce( 'decker_term_action' );
 			$_POST['term-color']        = $fields['color'];
-			( new Decker_Labels() )->save_color_meta( $term_id );
+			// Fire the hook WordPress fires, so the fields' owner stays an implementation detail.
+		do_action( 'edited_decker_label', $term_id, 0 );
 		}
 	}
 }
