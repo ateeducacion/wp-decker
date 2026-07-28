@@ -74,6 +74,11 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Labels::add_color_field()` / `edit_color_field()` / `save_color_meta()` | `Decker_Term_Color_Field` |
 | `Decker_Kb::track_last_editor()` / `get_last_editor()` / `get_latest_revision_id()` / `get_revision_admin_url()` | `Decker_Kb_Revisions` |
 | `Decker_Events::add_meta_boxes()` / `display_users_meta_box()` / `render_event_details_meta_box()` | `Decker_Event_Meta_Box` |
+| `Decker_Events::hide_visibility_options()` / `add_custom_columns()` / `render_custom_columns()` | `Decker_Event_Admin_Screen` |
+| `Decker_Admin_Settings::*_render()` (16 field renderers) / section callbacks | `Decker_Admin_Settings_Fields` (single public `render()` dispatcher) |
+| `Decker_Admin_Settings` private validators | `Decker_Admin_Settings_Validator::validate()` |
+| `Decker_Notification_Handler::add_notification_to_user()` / `remove_notification_from_user()` | `Decker_Notification_Store` |
+| `Decker_Notification_Handler::heartbeat_received()` / `modify_heartbeat_settings()` / `ajax_*()` | `Decker_Notification_Ajax` |
 | `Decker_Public::enqueue_scripts()` body | `Decker_Public_Assets` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:
