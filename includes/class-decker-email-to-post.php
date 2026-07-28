@@ -139,15 +139,7 @@ class Decker_Email_To_Post {
 			}
 
 			// Extract email content.
-			$email_data = array(
-				'from'        => $payload['metadata']['from'],
-				'to'          => $payload['metadata']['to'],
-				'cc'          => $payload['metadata']['cc'],
-				'bcc'         => $payload['metadata']['bcc'],
-				'subject'     => $payload['metadata']['subject'],
-				'body'        => $this->get_body( $message ),
-				'attachments' => $message->getAttachments(),
-			);
+			$email_data = $this->build_email_data( $payload['metadata'], $message );
 
 			// Validate sender.
 			$author = $this->get_author( $email_data['from'] );
@@ -155,10 +147,7 @@ class Decker_Email_To_Post {
 				return $author;
 			}
 
-			$assigned_users = $this->get_assigned_users( $email_data );
-			if ( empty( $assigned_users ) ) {
-				$assigned_users[] = $author->ID;
-			}
+			$assigned_users = $this->resolve_assigned_users( $email_data, $author );
 
 			// Temporarily set current user.
 			wp_set_current_user( $author->ID );
@@ -169,11 +158,8 @@ class Decker_Email_To_Post {
 				return $task_id;
 			}
 
-			// Handle attachments.
-			$attachments = $message->getAttachments();
-			if ( ! empty( $attachments ) ) {
-				$this->upload_task_attachments( $attachments, $task_id );
-			}
+			// Handle attachments. An empty list is a no-op.
+			$this->upload_task_attachments( $email_data['attachments'], $task_id );
 
 			// Reset user.
 			wp_set_current_user( 0 );
@@ -189,6 +175,44 @@ class Decker_Email_To_Post {
 
 			return new WP_Error( 'processing_error', $e->getMessage(), array( 'status' => 500 ) );
 		}
+	}
+
+	/**
+	 * Collect the parts of the e-mail the task is built from.
+	 *
+	 * @param array   $metadata Envelope fields supplied by the mail relay.
+	 * @param Message $message  Parsed message.
+	 * @return array<string, mixed> Normalized e-mail data.
+	 */
+	private function build_email_data( $metadata, $message ) {
+		return array(
+			'from'        => $metadata['from'],
+			'to'          => $metadata['to'],
+			'cc'          => $metadata['cc'],
+			'bcc'         => $metadata['bcc'],
+			'subject'     => $metadata['subject'],
+			'body'        => $this->get_body( $message ),
+			'attachments' => $message->getAttachments(),
+		);
+	}
+
+	/**
+	 * Work out who the task should be assigned to.
+	 *
+	 * Falls back to the sender when no recipient maps to a Decker user.
+	 *
+	 * @param array   $email_data Normalized e-mail data.
+	 * @param WP_User $author     Validated sender.
+	 * @return array<int, int> User IDs to assign.
+	 */
+	private function resolve_assigned_users( $email_data, $author ) {
+		$assigned_users = $this->get_assigned_users( $email_data );
+
+		if ( empty( $assigned_users ) ) {
+			$assigned_users[] = $author->ID;
+		}
+
+		return $assigned_users;
 	}
 
 	/**
@@ -217,16 +241,71 @@ class Decker_Email_To_Post {
 	}
 
 	/**
+	 * Executable and script extensions that are never accepted as attachments.
+	 *
+	 * Checked against the sanitized filename so a trailing script extension
+	 * cannot smuggle code through behind a harmless-looking one.
+	 *
+	 * @var array<int, string>
+	 */
+	private const DISALLOWED_EXTENSIONS = array(
+		'php',
+		'php3',
+		'php4',
+		'php5',
+		'php6',
+		'php7',
+		'php8',
+		'phtml',
+		'phps',
+		'phar',
+		'pht',
+		'phtm',
+		'cgi',
+		'pl',
+		'asp',
+		'aspx',
+		'jsp',
+		'jspx',
+		'sh',
+		'bash',
+		'exe',
+		'com',
+		'bat',
+		'cmd',
+		'msi',
+		'scr',
+		'dll',
+		'jar',
+		'py',
+		'rb',
+		'htaccess',
+		'htm',
+		'html',
+		'shtml',
+		'svg',
+	);
+
+	/**
 	 * Processes and uploads attachments as WordPress media.
+	 *
+	 * The MIME type announced by the e-mail is deliberately not accepted: it is
+	 * attacker-controlled, so the type is resolved from the filename extension
+	 * against the WordPress allowlist instead, and the file is stored under a
+	 * generated name.
+	 *
+	 * Note that the file contents are never inspected. The type is derived from
+	 * the extension alone, so a file whose bytes do not match its extension is
+	 * still accepted; what protects the site is the denylist, the allowlist and
+	 * the rename, not content sniffing.
 	 *
 	 * @param string $filename Name of the file.
 	 * @param string $content  File content.
-	 * @param string $type MIME type of the file.
-	 * @param int    $post_id Linked post.
-	 * @return int Attachment ID.
+	 * @param int    $post_id  Linked post.
+	 * @return int|WP_Error Attachment ID, or an error describing the refusal.
 	 */
-	private function upload_attachment( $filename, $content, $type, $post_id ) {
-				// Verify permissions and required data.
+	private function upload_attachment( $filename, $content, $post_id ) {
+		// Verify permissions and required data.
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Error( 'permission_error', 'No tienes permisos para subir archivos.' );
 		}
@@ -235,89 +314,81 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'invalid_post', 'ID de post inválido.' );
 		}
 
-		   // Extract only the MIME type without additional parameters.
-		$type = explode( ';', $type )[0];
-
-		   // Create a unique filename.
 		$original_filename = sanitize_file_name( $filename );
 
-		   // Reject attachments with no usable filename.
+		// Reject attachments with no usable filename.
 		if ( '' === $original_filename ) {
 			return new WP_Error( 'invalid_filename', 'Nombre de archivo inválido.' );
 		}
 
-		   // Validate the attachment against WordPress's allowed types. Never trust the
-		   // attacker-controlled extension or the e-mail Content-Type on their own.
-		$filetype = wp_check_filetype_and_ext( $original_filename, $original_filename, get_allowed_mime_types() );
+		$allowed = $this->resolve_allowed_attachment_type( $original_filename );
 
-		$verified_ext  = $filetype['ext'];
-		$verified_type = $filetype['type'];
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
+		}
 
-		   // Explicit denylist of executable / script extensions, checked against the
-		   // sanitized filename so double extensions cannot smuggle code through.
-		$disallowed_extensions = array(
-			'php',
-			'php3',
-			'php4',
-			'php5',
-			'php6',
-			'php7',
-			'php8',
-			'phtml',
-			'phps',
-			'phar',
-			'pht',
-			'phtm',
-			'cgi',
-			'pl',
-			'asp',
-			'aspx',
-			'jsp',
-			'jspx',
-			'sh',
-			'bash',
-			'exe',
-			'com',
-			'bat',
-			'cmd',
-			'msi',
-			'scr',
-			'dll',
-			'jar',
-			'py',
-			'rb',
-			'htaccess',
-			'htm',
-			'html',
-			'shtml',
-			'svg',
-		);
+		$file = $this->write_attachment_file( $content, $allowed['ext'] );
 
+		if ( is_wp_error( $file ) ) {
+			return $file;
+		}
+
+		return $this->register_attachment( $file, $allowed['type'], $original_filename, $post_id );
+	}
+
+	/**
+	 * Resolve the extension and MIME type WordPress is willing to accept.
+	 *
+	 * The name is checked against an explicit denylist and then mapped against
+	 * the allowlist WordPress derives from get_allowed_mime_types().
+	 *
+	 * This resolves the type from the filename extension only; it does not
+	 * verify it against the file contents. wp_check_filetype_and_ext() performs
+	 * content sniffing solely when its first argument is a path to an existing
+	 * file, and the attachment has not been written to disk at this point, so
+	 * the call returns the extension-to-MIME mapping and nothing more.
+	 *
+	 * @param string $original_filename Sanitized attachment name.
+	 * @return array{ext:string,type:string}|WP_Error Allowed extension and type, or the refusal.
+	 */
+	private function resolve_allowed_attachment_type( $original_filename ) {
 		$lower_filename = strtolower( $original_filename );
-		foreach ( $disallowed_extensions as $disallowed_extension ) {
+
+		foreach ( self::DISALLOWED_EXTENSIONS as $disallowed_extension ) {
 			if ( str_ends_with( $lower_filename, '.' . $disallowed_extension ) ) {
 				return new WP_Error( 'disallowed_file_type', 'Tipo de archivo no permitido.' );
 			}
 		}
 
-		   // Reject when WordPress cannot resolve a verified extension/type from the allowlist.
-		if ( empty( $verified_ext ) || empty( $verified_type ) ) {
+		$filetype = wp_check_filetype_and_ext( $original_filename, $original_filename, get_allowed_mime_types() );
+
+		// Reject when WordPress cannot map the extension onto the allowlist.
+		if ( empty( $filetype['ext'] ) || empty( $filetype['type'] ) ) {
 			return new WP_Error( 'disallowed_file_type', 'Tipo de archivo no permitido.' );
 		}
 
-		   // Use the verified MIME type from the allowlist, not the e-mail Content-Type.
-		$type = $verified_type;
+		return array(
+			'ext'  => $filetype['ext'],
+			'type' => $filetype['type'],
+		);
+	}
 
-		$extension  = $verified_ext;
+	/**
+	 * Write the attachment body under a generated name inside the uploads folder.
+	 *
+	 * @param string $content   Raw file content.
+	 * @param string $extension Allowed file extension.
+	 * @return array{path:string,url:string}|WP_Error Stored file location, or the write error.
+	 */
+	private function write_attachment_file( $content, $extension ) {
 		$upload_dir = wp_upload_dir();
 
-		   // Generate a unique file name using the native WordPress function.
+		// Generate a unique file name using the native WordPress function.
 		$obfuscated_name = wp_unique_filename(
 			$upload_dir['path'],
 			sanitize_file_name( wp_generate_uuid4() . '.' . $extension )
 		);
 
-			   // Build the full file path.
 		$file_path = $upload_dir['path'] . '/' . $obfuscated_name;
 
 		// Initialize WordPress Filesystem.
@@ -332,9 +403,24 @@ class Decker_Email_To_Post {
 			return new WP_Error( 'file_write_error', 'Error al escribir el archivo.' );
 		}
 
-		   // Prepare the attachment info array.
+		return array(
+			'path' => $file_path,
+			'url'  => $upload_dir['url'] . '/' . $obfuscated_name,
+		);
+	}
+
+	/**
+	 * Register a written file as a media attachment of the task.
+	 *
+	 * @param array{path:string,url:string} $file              Stored file location.
+	 * @param string                        $type              MIME type resolved from the extension.
+	 * @param string                        $original_filename Name the sender used.
+	 * @param int                           $post_id           Task the attachment belongs to.
+	 * @return int|WP_Error Attachment ID, or the insertion error.
+	 */
+	private function register_attachment( $file, $type, $original_filename, $post_id ) {
 		$attachment = array(
-			'guid'           => $upload_dir['url'] . '/' . $obfuscated_name,
+			'guid'           => $file['url'],
 			'post_mime_type' => $type,
 			'post_title'     => preg_replace( '/\.[^.]+$/', '', $original_filename ),
 			'post_content'   => '',
@@ -342,20 +428,19 @@ class Decker_Email_To_Post {
 			'post_parent'    => $post_id,  // Set the post parent.
 		);
 
-			   // Insert the attachment into the database.
-		$attachment_id = wp_insert_attachment( $attachment, $file_path, $post_id );
+		$attachment_id = wp_insert_attachment( $attachment, $file['path'], $post_id );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			wp_delete_file( $file_path );
+			wp_delete_file( $file['path'] );
 			return $attachment_id;
 		}
 
-			   // Generate attachment metadata.
+		// Generate attachment metadata.
 		require_once ABSPATH . 'wp-admin/includes/image.php';
-		$attachment_data = wp_generate_attachment_metadata( $attachment_id, $file_path );
+		$attachment_data = wp_generate_attachment_metadata( $attachment_id, $file['path'] );
 		wp_update_attachment_metadata( $attachment_id, $attachment_data );
 
-			   // Save the original name in the metadata.
+		// Save the original name in the metadata.
 		update_post_meta( $attachment_id, '_original_filename', $original_filename );
 
 		return $attachment_id;
@@ -630,12 +715,10 @@ class Decker_Email_To_Post {
 			try {
 				$filename = $attachment->getFilename();
 				$content  = $attachment->getContent();
-				$mimetype = $attachment->getContentType();
 
 				$result = $this->upload_attachment(
 					$filename,
 					$content,
-					$mimetype,
 					$task_id
 				);
 

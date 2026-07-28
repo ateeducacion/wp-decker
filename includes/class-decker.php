@@ -166,6 +166,11 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'admin/class-decker-admin.php';
 
 		/**
+		 * The class responsible for registering the public-facing styles and scripts.
+		 */
+		require_once plugin_dir_path( __DIR__ ) . 'public/class-decker-public-assets.php';
+
+		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.
 		 */

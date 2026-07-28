@@ -229,10 +229,11 @@ class DeckerPublicTest extends Decker_Test_Base {
 	public function test_get_ai_config_exposes_provider_metadata() {
 		update_option( 'decker_settings', array() );
 
-		$reflection = new ReflectionMethod( $this->decker_public, 'get_ai_config' );
+		$assets     = new Decker_Public_Assets();
+		$reflection = new ReflectionMethod( $assets, 'get_ai_config' );
 		$reflection->setAccessible( true );
 
-		$config = $reflection->invoke( $this->decker_public );
+		$config = $reflection->invoke( $assets );
 
 		$this->assertFalse( $config['enabled'] );
 		$this->assertSame(

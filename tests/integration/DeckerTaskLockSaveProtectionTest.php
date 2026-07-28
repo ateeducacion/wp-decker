@@ -127,6 +127,98 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A rejected save tells the client who holds the lock and which generation is current.
+	 *
+	 * The front-end needs the owner to render the "locked by" notice and the
+	 * generation to adopt the current token when the user takes over, so both
+	 * must survive on the rejection payload alongside the error itself.
+	 */
+	public function test_rejected_save_reports_lock_owner_and_generation() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		wp_set_current_user( $this->user_b );
+		$_POST = $this->save_payload( 'Updated by user B attempt' );
+
+		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+
+		$this->assertFalse( $resp['success'] );
+		$this->assertSame( 'decker_task_locked', $resp['code'] );
+		$this->assertTrue( $resp['locked'] );
+		$this->assertNotEmpty( $resp['message'] );
+
+		$this->assertArrayHasKey( 'owner', $resp );
+		$this->assertSame( $this->user_a, (int) $resp['owner']['id'] );
+
+		$this->assertArrayHasKey( 'generation', $resp );
+		$this->assertSame( $info['generation'], $resp['generation'] );
+	}
+
+	/**
+	 * A rejection without extra lock data still yields a well-formed payload.
+	 *
+	 * The archived guard carries no owner or generation, so the response must
+	 * stay clean rather than inventing empty keys.
+	 */
+	public function test_archived_rejection_payload_has_no_lock_extras() {
+		wp_update_post(
+			array(
+				'ID'          => $this->task_id,
+				'post_status' => 'archived',
+			)
+		);
+
+		wp_set_current_user( $this->user_a );
+		$_POST = $this->save_payload( 'Attempted overwrite' );
+
+		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+
+		$this->assertFalse( $resp['success'] );
+		$this->assertSame( 'decker_task_archived', $resp['code'] );
+		$this->assertArrayNotHasKey( 'owner', $resp );
+		$this->assertArrayNotHasKey( 'generation', $resp );
+		$this->assertArrayNotHasKey( 'locked', $resp );
+	}
+
+	/**
+	 * A committed save rotates the generation and hands the new token back.
+	 */
+	public function test_successful_save_returns_rotated_generation() {
+		$info = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		wp_set_current_user( $this->user_a );
+		$_POST = $this->save_payload( 'Owner update', $info['generation'] );
+
+		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+
+		$this->assertTrue( $resp['success'] );
+		$this->assertNotEmpty( $resp['generation'] );
+		$this->assertNotSame(
+			$info['generation'],
+			$resp['generation'],
+			'The generation must move on so stale forms are rejected.'
+		);
+	}
+
+	/**
+	 * Creating a task carries no generation to rotate.
+	 */
+	public function test_new_task_save_returns_empty_generation() {
+		wp_set_current_user( $this->user_a );
+
+		$_POST = array(
+			'task_id' => 0,
+			'title'   => 'Brand new task',
+			'stack'   => 'to-do',
+			'board'   => $this->board_id,
+		);
+
+		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+
+		$this->assertTrue( $resp['success'] );
+		$this->assertSame( '', $resp['generation'] );
+	}
+
+	/**
 	 * The active lock owner is allowed to save when they submit their session
 	 * generation (as the rendered editor form always does).
 	 */
