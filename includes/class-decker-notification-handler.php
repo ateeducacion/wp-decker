@@ -483,5 +483,4 @@ class Decker_Notification_Handler {
 			$new_user->display_name
 		);
 	}
-
 }

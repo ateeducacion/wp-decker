@@ -257,5 +257,4 @@ class Decker_Admin_Settings {
 	public function settings_validate( $input ) {
 		return $this->validator->validate( $input, get_option( 'decker_settings', array() ) );
 	}
-
 }
