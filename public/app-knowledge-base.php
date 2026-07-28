@@ -44,7 +44,7 @@ if ( ! function_exists( 'decker_get_kb_people_html' ) ) {
 	 */
 	function decker_get_kb_people_html( $post_id ) {
 		$author_id      = intval( get_post_field( 'post_author', $post_id ) );
-		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$last_editor_id = Decker_Kb_Revisions::get_last_editor( $post_id );
 		$author_name    = get_the_author_meta( 'display_name', $author_id );
 		$last_editor_name = $last_editor_id ? get_the_author_meta( 'display_name', $last_editor_id ) : '';
 		$author_label   = __( 'Author', 'decker' ) . ': ' . $author_name;
@@ -269,7 +269,7 @@ die();
 													echo '<td title="' . esc_attr( $exact_date ) . '">' . esc_html( $relative_date ) . '</td>';
 
 													// Actions.
-													$history_url  = Decker_Kb::get_revision_admin_url( $article->ID );
+													$history_url  = Decker_Kb_Revisions::get_revision_admin_url( $article->ID );
 													echo '<td class="text-end">';
 													// View button.
 													echo '<button type="button" class="btn btn-sm btn-secondary me-2 view-article-btn" ' .
@@ -468,8 +468,8 @@ die();
 																												 title="<?php echo esc_attr__( 'Comments', 'decker' ); ?>">
 																												 <i class="ri-chat-1-line"></i>
 																												 </button>
-																												 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
-																												 <a href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" class="btn btn-outline-dark" title="<?php echo esc_attr__( 'History', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
+																												 <?php if ( Decker_Kb_Revisions::get_revision_admin_url( $article->ID ) ) : ?>
+																												 <a href="<?php echo esc_url( Decker_Kb_Revisions::get_revision_admin_url( $article->ID ) ); ?>" class="btn btn-outline-dark" title="<?php echo esc_attr__( 'History', 'decker' ); ?>" target="_blank" rel="noopener noreferrer">
 																												 <i class="ri-history-line"></i>
 																												 </a>
 																												 <?php endif; ?>
@@ -513,8 +513,8 @@ die();
 																														 data-labels='<?php echo esc_attr( $article_data_json['labels'] ); ?>'
 																														 data-board='<?php echo esc_attr( $article_data_json['board'] ); ?>'>
 																														 <i class="ri-chat-1-line me-1"></i><?php esc_html_e( 'Comments', 'decker' ); ?></button></li>
-																														 <?php if ( Decker_Kb::get_revision_admin_url( $article->ID ) ) : ?>
-																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb::get_revision_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-history-line me-1"></i><?php esc_html_e( 'History', 'decker' ); ?></a></li>
+																														 <?php if ( Decker_Kb_Revisions::get_revision_admin_url( $article->ID ) ) : ?>
+																														 <li><a class="dropdown-item" href="<?php echo esc_url( Decker_Kb_Revisions::get_revision_admin_url( $article->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><i class="ri-history-line me-1"></i><?php esc_html_e( 'History', 'decker' ); ?></a></li>
 																														 <?php endif; ?>
 																														 <li><button class="dropdown-item kb-edit-btn" data-article-id="<?php echo esc_attr( $article->ID ); ?>"><i class="ri-pencil-line me-1"></i><?php esc_html_e( 'Edit', 'decker' ); ?></button></li>
 																														 <li><button class="dropdown-item add-child-btn" data-parent-id="<?php echo esc_attr( $article->ID ); ?>" data-bs-toggle="modal" data-bs-target="#kb-modal"><i class="ri-add-line me-1"></i><?php esc_html_e( 'Add Child', 'decker' ); ?></button></li>

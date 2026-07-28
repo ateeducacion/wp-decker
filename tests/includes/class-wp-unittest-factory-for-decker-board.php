@@ -80,7 +80,8 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
 			unset( $_POST['term-show-in-kb'] );
 		}
 
-		( new Decker_Boards() )->save_color_meta( $term_id );
+		// Fire the hook WordPress fires, so the fields' owner stays an implementation detail.
+		do_action( 'edited_decker_board', $term_id, 0 );
 
 		return $term_id;
 	}
@@ -146,7 +147,8 @@ class WP_UnitTest_Factory_For_Decker_Board extends WP_UnitTest_Factory_For_Term 
 			}
 		}
 
-		( new Decker_Boards() )->save_color_meta( $term_id );
+		// Fire the hook WordPress fires, so the fields' owner stays an implementation detail.
+		do_action( 'edited_decker_board', $term_id, 0 );
 
 		return $term_id;
 	}

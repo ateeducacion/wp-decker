@@ -135,7 +135,7 @@ class Decker_Task_Locks {
 			return $base;
 		}
 
-		$base['owner'] = $this->build_owner_info( $lock['user'] );
+		$base['owner'] = Decker_Task_Lock_Presenter::owner( $lock['user'] );
 
 		// A lock older than the window is stale and does not block a new editor.
 		if ( $lock['time'] <= ( time() - $this->get_lock_window() ) ) {
@@ -382,7 +382,7 @@ class Decker_Task_Locks {
 		$info = $this->get_lock_info( $post_id, $user_id );
 
 		if ( $info['locked'] ) {
-			return $this->locked_error( $info['message'], $info['owner'], $info['generation'] );
+			return Decker_Task_Lock_Presenter::locked_error( $info['message'], $info['owner'], $info['generation'] );
 		}
 
 		// A null or empty submitted generation both mean "no token" ('' cast).
@@ -390,7 +390,7 @@ class Decker_Task_Locks {
 
 		if ( $has_generation ) {
 			if ( (string) $session_generation !== $info['generation'] ) {
-				return $this->locked_error( $info['message'], $info['owner'], $info['generation'] );
+				return Decker_Task_Lock_Presenter::locked_error( $info['message'], $info['owner'], $info['generation'] );
 			}
 
 			return true;
@@ -402,7 +402,7 @@ class Decker_Task_Locks {
 		// never-locked task has no newer change to protect and stays saveable, so
 		// admin/meta and internal save paths keep working.
 		if ( $require_generation && '' !== $info['generation'] ) {
-			return $this->locked_error( '', $info['owner'], $info['generation'] );
+			return Decker_Task_Lock_Presenter::locked_error( '', $info['owner'], $info['generation'] );
 		}
 
 		return true;
@@ -421,30 +421,6 @@ class Decker_Task_Locks {
 		$token = $this->state->next_token( $state, $user_id, $bump );
 
 		$this->state->save( $post_id, $user_id, $token, time() );
-	}
-
-	/**
-	 * Build the standard `decker_task_locked` (409) error for a rejected save.
-	 *
-	 * @param string $message    Owner-specific message, or empty for the default takeover text.
-	 * @param mixed  $owner      The lock owner descriptor, or null.
-	 * @param string $generation The server generation to echo back.
-	 * @return WP_Error The lock-conflict error.
-	 */
-	private function locked_error( string $message, $owner, string $generation ): WP_Error {
-		if ( '' === $message ) {
-			$message = __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' );
-		}
-
-		return new WP_Error(
-			'decker_task_locked',
-			$message,
-			array(
-				'status'     => 409,
-				'owner'      => $owner,
-				'generation' => $generation,
-			)
-		);
 	}
 
 	/**
@@ -487,30 +463,5 @@ class Decker_Task_Locks {
 		}
 
 		return self::POST_TYPE === get_post_type( $post_id );
-	}
-
-	/**
-	 * Build the public owner descriptor for a lock, or null when unavailable.
-	 *
-	 * Only the id and display name are exposed; private data such as the email
-	 * address is never included.
-	 *
-	 * @param int $owner_id The lock owner user ID.
-	 * @return array{id:int,display_name:string}|null The owner descriptor.
-	 */
-	private function build_owner_info( int $owner_id ) {
-		if ( ! $owner_id ) {
-			return null;
-		}
-
-		$owner = get_userdata( $owner_id );
-		if ( ! $owner ) {
-			return null;
-		}
-
-		return array(
-			'id'           => $owner_id,
-			'display_name' => $owner->display_name,
-		);
 	}
 }

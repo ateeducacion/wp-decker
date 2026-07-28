@@ -255,7 +255,7 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 			)
 		);
 
-		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$last_editor_id = Decker_Kb_Revisions::get_last_editor( $post_id );
 		$this->assertEquals( $this->editor, $last_editor_id );
 	}
 
@@ -274,7 +274,7 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 		// Remove the meta to simulate an article created before this feature.
 		delete_post_meta( $post_id, '_last_editor' );
 
-		$last_editor_id = Decker_Kb::get_last_editor( $post_id );
+		$last_editor_id = Decker_Kb_Revisions::get_last_editor( $post_id );
 		$this->assertEquals( $this->administrator, $last_editor_id );
 	}
 
@@ -297,8 +297,8 @@ class DeckerKnowledgeBaseTest extends WP_Test_REST_TestCase {
 			)
 		);
 
-		$revision_id  = Decker_Kb::get_latest_revision_id( $post_id );
-		$revision_url = Decker_Kb::get_revision_admin_url( $post_id );
+		$revision_id  = Decker_Kb_Revisions::get_latest_revision_id( $post_id );
+		$revision_url = Decker_Kb_Revisions::get_revision_admin_url( $post_id );
 
 		$this->assertGreaterThan( 0, $revision_id );
 		$this->assertStringContainsString(

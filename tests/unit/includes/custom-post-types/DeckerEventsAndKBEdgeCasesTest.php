@@ -250,7 +250,7 @@ class KnowledgeBaseEdgeCasesTest extends WP_Test_REST_TestCase {
 		);
 		delete_post_meta( $post_id, '_last_editor' );
 
-		$this->assertSame( $this->admin_id, Decker_KB::get_last_editor( $post_id ) );
+		$this->assertSame( $this->admin_id, Decker_Kb_Revisions::get_last_editor( $post_id ) );
 	}
 
 	/**

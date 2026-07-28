@@ -1,6 +1,6 @@
 <?php
 /**
- * Characterization tests for Decker_Events::render_event_details_meta_box().
+ * Characterization tests for Decker_Event_Meta_Box::render_event_details_meta_box().
  *
  * These pin the exact rendered markup (including the pre-existing
  * `step=&quot;60s&quot;` quirk) so the markup-splitting refactor stays
@@ -57,7 +57,7 @@ class DeckerEventsMetaBoxTest extends Decker_Test_Base {
 	 */
 	private function render( $post_id ) {
 		ob_start();
-		( new Decker_Events() )->render_event_details_meta_box( get_post( $post_id ) );
+		( new Decker_Event_Meta_Box() )->render_event_details_meta_box( get_post( $post_id ) );
 		return ob_get_clean();
 	}
 

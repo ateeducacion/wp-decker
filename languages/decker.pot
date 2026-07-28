@@ -519,15 +519,15 @@ msgstr ""
 msgid "You are not authorized to access this resource."
 msgstr ""
 
+msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
+msgstr ""
+
 #. translators: %s is the display name of the user currently editing the card.
 #, php-format
 msgid "This card is currently locked by %s."
 msgstr ""
 
 msgid "Invalid task."
-msgstr ""
-
-msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
 msgstr ""
 
 msgid "You are not allowed to edit this card."
@@ -599,6 +599,21 @@ msgstr ""
 msgid "Terms in the Actions taxonomy cannot be more than two levels deep."
 msgstr ""
 
+msgid "Show in Boards"
+msgstr ""
+
+msgid "Display this board in the Boards section of the sidebar"
+msgstr ""
+
+msgid "Show in Knowledge Base"
+msgstr ""
+
+msgid "Display this board in the Knowledge Base section of the sidebar"
+msgstr ""
+
+msgid "Visibility"
+msgstr ""
+
 msgctxt "taxonomy general name"
 msgid "Boards"
 msgstr ""
@@ -629,65 +644,6 @@ msgid "Boards"
 msgstr ""
 
 msgid "Color"
-msgstr ""
-
-msgid "Show in Boards"
-msgstr ""
-
-msgid "Display this board in the Boards section of the sidebar"
-msgstr ""
-
-msgid "Show in Knowledge Base"
-msgstr ""
-
-msgid "Display this board in the Knowledge Base section of the sidebar"
-msgstr ""
-
-msgid "Visibility"
-msgstr ""
-
-msgctxt "post type general name"
-msgid "Events"
-msgstr ""
-
-msgctxt "post type singular name"
-msgid "Event"
-msgstr ""
-
-msgctxt "admin menu"
-msgid "Events"
-msgstr ""
-
-msgctxt "add new on admin bar"
-msgid "Event"
-msgstr ""
-
-msgctxt "event"
-msgid "Add New"
-msgstr ""
-
-msgid "Add New Event"
-msgstr ""
-
-msgid "New Event"
-msgstr ""
-
-msgid "Edit Event"
-msgstr ""
-
-msgid "View Event"
-msgstr ""
-
-msgid "Search Events"
-msgstr ""
-
-msgid "No events found."
-msgstr ""
-
-msgid "No events found in Trash."
-msgstr ""
-
-msgid "You do not have permission to access this resource."
 msgstr ""
 
 msgid "Event Details"
@@ -733,6 +689,50 @@ msgid "Info"
 msgstr ""
 
 msgid "Dark"
+msgstr ""
+
+msgctxt "post type general name"
+msgid "Events"
+msgstr ""
+
+msgctxt "post type singular name"
+msgid "Event"
+msgstr ""
+
+msgctxt "admin menu"
+msgid "Events"
+msgstr ""
+
+msgctxt "add new on admin bar"
+msgid "Event"
+msgstr ""
+
+msgctxt "event"
+msgid "Add New"
+msgstr ""
+
+msgid "Add New Event"
+msgstr ""
+
+msgid "New Event"
+msgstr ""
+
+msgid "Edit Event"
+msgstr ""
+
+msgid "View Event"
+msgstr ""
+
+msgid "Search Events"
+msgstr ""
+
+msgid "No events found."
+msgstr ""
+
+msgid "No events found in Trash."
+msgstr ""
+
+msgid "You do not have permission to access this resource."
 msgstr ""
 
 msgid "All Day Event"
