@@ -268,17 +268,29 @@ class DeckerTermFieldsTest extends Decker_Test_Base {
 
 	/**
 	 * A user without the capability cannot change term meta.
+	 *
+	 * The nonce is minted after switching user on purpose. WordPress nonces are
+	 * tied to the current user and session, so a nonce created as the
+	 * administrator would fail verification here and the save would be refused
+	 * before the capability check ever ran — the test would then pass even with
+	 * that check deleted.
 	 */
 	public function test_save_requires_the_edit_term_capability() {
 		$term = $this->make_term( 'decker_board', 'Capability guarded' );
 
-		$nonce = wp_create_nonce( 'decker_term_action' );
-
-		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
 
 		$_POST = array(
-			'decker_term_nonce' => $nonce,
+			'decker_term_nonce' => wp_create_nonce( 'decker_term_action' ),
 			'term-color'        => '#654321',
+		);
+
+		// Guard the guard: the nonce must be the valid one for this user, so
+		// that the capability check is what refuses the save.
+		$this->assertNotFalse(
+			wp_verify_nonce( $_POST['decker_term_nonce'], 'decker_term_action' ),
+			'The nonce must be valid for the subscriber, or this test proves nothing.'
 		);
 
 		do_action( 'edited_decker_board', $term->term_id, 0 );
