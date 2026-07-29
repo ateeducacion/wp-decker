@@ -1,6 +1,6 @@
 <?php
 /**
- * Characterization test for Decker_Tasks::display_user_date_meta_box().
+ * Characterization test for Decker_Task_Meta_Boxes::display_user_date_meta_box().
  *
  * Pins the echoed markup and script markers before the method is split into
  * render helpers.
@@ -62,7 +62,7 @@ class DeckerTasksMetaBoxLockInTest extends Decker_Test_Base {
 		$user = get_userdata( $this->editor );
 
 		ob_start();
-		( new Decker_Tasks() )->display_user_date_meta_box( get_post( $task_id ) );
+		( new Decker_Task_Meta_Boxes() )->display_user_date_meta_box( get_post( $task_id ) );
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'id="user-date-relations-list"', $html );

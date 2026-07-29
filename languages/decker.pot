@@ -880,6 +880,66 @@ msgstr ""
 msgid "Merged from task: %1$s (ID: %2$d)"
 msgstr ""
 
+msgid "Task Details"
+msgstr ""
+
+msgid "Task User and Date"
+msgstr ""
+
+msgid "Attachments"
+msgstr ""
+
+msgid "Max Priority"
+msgstr ""
+
+msgid "To-Do"
+msgstr ""
+
+msgid "In Progress"
+msgstr ""
+
+msgid "Done"
+msgstr ""
+
+msgid "Nextcloud Card ID"
+msgstr ""
+
+msgid "Hidden"
+msgstr ""
+
+msgid "Select Board"
+msgstr ""
+
+msgid "Assign User:"
+msgstr ""
+
+msgid "-- Select User --"
+msgstr ""
+
+msgid "Assign Date:"
+msgstr ""
+
+msgid "Add Relation"
+msgstr ""
+
+msgid "Unknown User"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Please select a user and date."
+msgstr ""
+
+msgid "This user and date combination already exists."
+msgstr ""
+
+msgid "Add Attachments"
+msgstr ""
+
+msgid "Select Attachments"
+msgstr ""
+
 msgid "Task not found."
 msgstr ""
 
@@ -902,15 +962,6 @@ msgid "Task is not marked for today."
 msgstr ""
 
 msgid "No Board"
-msgstr ""
-
-msgid "To-Do"
-msgstr ""
-
-msgid "In Progress"
-msgstr ""
-
-msgid "Done"
 msgstr ""
 
 msgid "Unknown"
@@ -979,57 +1030,6 @@ msgid "Archived"
 msgstr ""
 
 msgid "Archivado"
-msgstr ""
-
-msgid "Task Details"
-msgstr ""
-
-msgid "Task User and Date"
-msgstr ""
-
-msgid "Attachments"
-msgstr ""
-
-msgid "Max Priority"
-msgstr ""
-
-msgid "Nextcloud Card ID"
-msgstr ""
-
-msgid "Hidden"
-msgstr ""
-
-msgid "Select Board"
-msgstr ""
-
-msgid "Assign User:"
-msgstr ""
-
-msgid "-- Select User --"
-msgstr ""
-
-msgid "Assign Date:"
-msgstr ""
-
-msgid "Add Relation"
-msgstr ""
-
-msgid "Unknown User"
-msgstr ""
-
-msgid "Remove"
-msgstr ""
-
-msgid "Please select a user and date."
-msgstr ""
-
-msgid "This user and date combination already exists."
-msgstr ""
-
-msgid "Add Attachments"
-msgstr ""
-
-msgid "Select Attachments"
 msgstr ""
 
 msgid "Show All Boards"

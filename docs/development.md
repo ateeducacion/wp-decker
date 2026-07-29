@@ -98,6 +98,7 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Tasks::make_permission_callback()` / `lock_error_response()` | `Decker_Tasks_Rest_Support` (public statics) |
 | `Decker_Tasks` order/stack engine (`update_task_stack_and_order()`, `handle_fix_order()`, `reorder_tasks_in_stack()`, `get_new_task_order()`) | `Decker_Task_Order` |
 | `Decker_Tasks` order hook reactions (post-data filter, board/stack term changes) | `Decker_Task_Order_Hooks` |
+| `Decker_Tasks` edit-screen meta boxes (`add_meta_boxes()` and the eight display/render methods) | `Decker_Task_Meta_Boxes` |
 | `Decker_Public::enqueue_scripts()` body | `Decker_Public_Assets` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:

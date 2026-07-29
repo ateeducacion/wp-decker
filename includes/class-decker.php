@@ -153,6 +153,7 @@ class Decker {
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-order.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-order-hooks.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-meta-boxes.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 
