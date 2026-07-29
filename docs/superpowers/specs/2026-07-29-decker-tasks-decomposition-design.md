@@ -1,7 +1,7 @@
 # Decker_Tasks and Task decomposition — design
 
 Date: 2026-07-29
-Status: approved design — PRs A (#296), B (#297), C (#298), D (#299), E (#300), F (#301) merged; PR G1 in review
+Status: approved design — PRs A (#296), B (#297), C (#298), D (#299), E (#300), F (#301), G1 (#302) merged; PR G2 in review
 Predecessors: PRs #290, #291, #292, #294, #295 (PHPMD codesize campaign, 39 → 8 open alerts)
 
 ## Goal
@@ -23,7 +23,7 @@ rounds 2–5. `Task` keeps the data and loses the rendering.
 
 1. **`create_or_update_task` migrates to a single `$args` array** parsed with
    `wp_parse_args()` against defaults — the WordPress-canonical signature for
-   many-argument writes (`wp_insert_post( $postarr )`). All 46 call sites
+   many-argument writes (`wp_insert_post( $postarr )`). All 20 call sites
    (production: `Decker_Ability_Task_Store`, `Decker_Demo_Tasks`,
    `Decker_Email_To_Post`, internal; tests: lock-in suites and the task
    factory) and `docs/agent-interfaces.md` migrate in the same PR. No
@@ -142,7 +142,7 @@ established ritual (see Verification).
   private validate/build/insert/update pipeline. `Decker_Tasks` keeps
   `create_or_update_task` as a delegator with the **new** array signature —
   it is the documented entry point. (Superseded for F and G by the 2026-07-29
-  amendment in the PR F section: no delegator — see below.) All 46 call sites
+  amendment in the PR F section: no delegator — see above.) All 20 call sites
   and `docs/agent-interfaces.md` migrate here. In the same PR, `Task`'s rendering
   moves to `Decker_Task_Card_Renderer` (templates keep calling
   `$task->render_task_card()` via thin delegation on the model — those calls
