@@ -22,24 +22,24 @@ class Decker_Tasks_Rest_Support {
 	/**
 	 * Register a controller's REST route definitions against a namespace.
 	 *
-	 * Each definition needs `route`, `methods`, `callback` (a method name)
-	 * and `permission`, and may include `args`. The callback is resolved
-	 * against $handler_resolver: an object binds `array( $handler_resolver,
-	 * $definition['callback'] )` directly; a Closure instead receives the
-	 * callback name and returns the resolved callable, for the rare route
-	 * that can dispatch to more than one class (Decker_Tasks_Rest_Ops still
-	 * routes two callbacks to Decker_Tasks until the order engine moves).
+	 * Each definition needs `route`, `methods`, `permission` and `callback`,
+	 * and may include `args`. `callback` is normally a method name on the
+	 * owning controller, resolved as `array( $handler, $definition['callback'] )`;
+	 * a definition may instead give the resolved `array( $object, $method )`
+	 * callable directly, for the rare route that dispatches elsewhere (two
+	 * Decker_Tasks_Rest_Ops rows still route to Decker_Tasks until the order
+	 * engine moves to its own class).
 	 *
-	 * @param string            $namespace        The REST namespace, e.g. 'decker/v1'.
-	 * @param array<int, array> $definitions      The route definitions.
-	 * @param object|Closure    $handler_resolver The controller object, or a Closure( string $callback ): callable.
+	 * @param string            $namespace   The REST namespace, e.g. 'decker/v1'.
+	 * @param array<int, array> $definitions The route definitions.
+	 * @param object            $handler     The controller whose methods `callback` names resolve against.
 	 * @return void
 	 */
-	public static function register_routes( string $namespace, array $definitions, $handler_resolver ) {
+	public static function register_routes( string $namespace, array $definitions, $handler ) {
 		foreach ( $definitions as $definition ) {
-			$callback = ( $handler_resolver instanceof Closure )
-				? $handler_resolver( $definition['callback'] )
-				: array( $handler_resolver, $definition['callback'] );
+			$callback = is_array( $definition['callback'] )
+				? $definition['callback']
+				: array( $handler, $definition['callback'] );
 
 			$route_args = array(
 				'methods'             => $definition['methods'],

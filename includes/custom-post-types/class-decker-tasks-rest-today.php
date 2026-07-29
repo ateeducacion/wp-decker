@@ -52,22 +52,6 @@ class Decker_Tasks_Rest_Today {
 				'callback'   => 'unmark_user_date_relation',
 				'permission' => 'minimum_role',
 			),
-		);
-
-		Decker_Tasks_Rest_Support::register_routes(
-			'decker/v1',
-			array_merge( $routes, $this->get_task_today_route_definitions() ),
-			$this
-		);
-	}
-
-	/**
-	 * Get the REST route definition for the "For today" quick action.
-	 *
-	 * @return array<int, array<string, mixed>> The today route definition.
-	 */
-	private function get_task_today_route_definitions(): array {
-		return array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/today',
 				'methods'    => 'PUT',
@@ -81,6 +65,8 @@ class Decker_Tasks_Rest_Today {
 				),
 			),
 		);
+
+		Decker_Tasks_Rest_Support::register_routes( 'decker/v1', $routes, $this );
 	}
 
 	/**
