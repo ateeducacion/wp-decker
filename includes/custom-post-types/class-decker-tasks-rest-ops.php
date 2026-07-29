@@ -95,25 +95,17 @@ class Decker_Tasks_Rest_Ops {
 			),
 		);
 
-		foreach ( $routes as $definition ) {
-			// Two rows (update_task_stack_and_order, handle_fix_order) still live on
-			// Decker_Tasks until the order engine moves to its own class (PR C).
-			$handler = method_exists( $this, $definition['callback'] )
-				? array( $this, $definition['callback'] )
-				: array( $this->tasks, $definition['callback'] );
-
-			$route_args = array(
-				'methods'             => $definition['methods'],
-				'callback'            => $handler,
-				'permission_callback' => Decker_Tasks_Rest_Support::permission_callback( $definition['permission'] ),
-			);
-
-			if ( isset( $definition['args'] ) ) {
-				$route_args['args'] = $definition['args'];
+		Decker_Tasks_Rest_Support::register_routes(
+			'decker/v1',
+			$routes,
+			function ( $callback ) {
+				// Two rows (update_task_stack_and_order, handle_fix_order) still live
+				// on Decker_Tasks until the order engine moves to its own class (PR C).
+				return method_exists( $this, $callback )
+					? array( $this, $callback )
+					: array( $this->tasks, $callback );
 			}
-
-			register_rest_route( 'decker/v1', $definition['route'], $route_args );
-		}
+		);
 	}
 
 	/**

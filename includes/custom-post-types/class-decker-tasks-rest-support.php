@@ -2,8 +2,9 @@
 /**
  * Shared REST helpers for the task resource controllers.
  *
- * Builds the permission callback used by every task REST route and formats
- * a WP_Error as the WP_REST_Response shape the task endpoints return. Kept
+ * Builds the permission callback used by every task REST route, formats a
+ * WP_Error as the WP_REST_Response shape the task endpoints return, and
+ * registers a controller's route definitions against the REST server. Kept
  * static and stateless so each resource controller can call it without an
  * instance.
  *
@@ -17,6 +18,42 @@ defined( 'ABSPATH' ) || exit;
  * Class Decker_Tasks_Rest_Support
  */
 class Decker_Tasks_Rest_Support {
+
+	/**
+	 * Register a controller's REST route definitions against a namespace.
+	 *
+	 * Each definition needs `route`, `methods`, `callback` (a method name)
+	 * and `permission`, and may include `args`. The callback is resolved
+	 * against $handler_resolver: an object binds `array( $handler_resolver,
+	 * $definition['callback'] )` directly; a Closure instead receives the
+	 * callback name and returns the resolved callable, for the rare route
+	 * that can dispatch to more than one class (Decker_Tasks_Rest_Ops still
+	 * routes two callbacks to Decker_Tasks until the order engine moves).
+	 *
+	 * @param string            $namespace        The REST namespace, e.g. 'decker/v1'.
+	 * @param array<int, array> $definitions      The route definitions.
+	 * @param object|Closure    $handler_resolver The controller object, or a Closure( string $callback ): callable.
+	 * @return void
+	 */
+	public static function register_routes( string $namespace, array $definitions, $handler_resolver ) {
+		foreach ( $definitions as $definition ) {
+			$callback = ( $handler_resolver instanceof Closure )
+				? $handler_resolver( $definition['callback'] )
+				: array( $handler_resolver, $definition['callback'] );
+
+			$route_args = array(
+				'methods'             => $definition['methods'],
+				'callback'            => $callback,
+				'permission_callback' => self::permission_callback( $definition['permission'] ),
+			);
+
+			if ( isset( $definition['args'] ) ) {
+				$route_args['args'] = $definition['args'];
+			}
+
+			register_rest_route( $namespace, $definition['route'], $route_args );
+		}
+	}
 
 	/**
 	 * Build the permission callback closure for a given permission type.

@@ -74,19 +74,7 @@ class Decker_Tasks_Rest_Tools {
 			),
 		);
 
-		foreach ( $routes as $definition ) {
-			$route_args = array(
-				'methods'             => $definition['methods'],
-				'callback'            => array( $this, $definition['callback'] ),
-				'permission_callback' => Decker_Tasks_Rest_Support::permission_callback( $definition['permission'] ),
-			);
-
-			if ( isset( $definition['args'] ) ) {
-				$route_args['args'] = $definition['args'];
-			}
-
-			register_rest_route( 'decker/v1', $definition['route'], $route_args );
-		}
+		Decker_Tasks_Rest_Support::register_routes( 'decker/v1', $routes, $this );
 	}
 
 	/**
