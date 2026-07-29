@@ -97,19 +97,21 @@ class Decker_Task_Ajax_Save {
 		$labels = $this->reader->read_id_list_field( 'labels' );
 
 		// Call the common function to create or update the task.
-		$result = Decker_Tasks::create_or_update_task(
-			$core['id'],
-			$core['title'],
-			$core['description'],
-			$core['stack'],
-			$core['board'],
-			$options['max_priority'],
-			$duedate,
-			$options['author'],
-			$options['responsable'],
-			$options['hidden'],
-			$assigned_users,
-			$labels
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $core['id'],
+				'title'          => $core['title'],
+				'description'    => $core['description'],
+				'stack'          => $core['stack'],
+				'board'          => $core['board'],
+				'max_priority'   => $options['max_priority'],
+				'duedate'        => $duedate,
+				'author'         => $options['author'],
+				'responsable'    => $options['responsable'],
+				'hidden'         => $options['hidden'],
+				'assigned_users' => $assigned_users,
+				'labels'         => $labels,
+			)
 		);
 
 		if ( is_wp_error( $result ) ) {

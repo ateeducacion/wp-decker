@@ -122,22 +122,24 @@ class Decker_Demo_Tasks {
 		$end_date->modify( "+{$duration} days" );
 		$stack = $this->random->random_stack();
 
-		$task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$post_title,
-			$post_content,
-			$stack,
-			$board->term_id,
-			$max_priority,
-			$end_date, // due date is end of task.
-			1,
-			1,
-			false,
-			$assigned_users,
-			$assigned_labels,
-			$creation_date,
-			$archived,
-			0
+		$task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'                => 0,
+				'title'             => $post_title,
+				'description'       => $post_content,
+				'stack'             => $stack,
+				'board'             => $board->term_id,
+				'max_priority'      => $max_priority,
+				'duedate'           => $end_date, // due date is end of task.
+				'author'            => 1,
+				'responsable'       => 1,
+				'hidden'            => false,
+				'assigned_users'    => $assigned_users,
+				'labels'            => $assigned_labels,
+				'creation_date'     => $creation_date,
+				'archived'          => $archived,
+				'id_nextcloud_card' => 0,
+			)
 		);
 
 		if ( $task_id && ! is_wp_error( $task_id ) ) {

@@ -1,7 +1,7 @@
 # Decker_Tasks and Task decomposition — design
 
 Date: 2026-07-29
-Status: approved design — PRs A (#296), B (#297), C (#298), D (#299), E (#300) merged; PR F in review
+Status: approved design — PRs A (#296), B (#297), C (#298), D (#299), E (#300), F (#301) merged; PR G1 in review
 Predecessors: PRs #290, #291, #292, #294, #295 (PHPMD codesize campaign, 39 → 8 open alerts)
 
 ## Goal
@@ -74,11 +74,11 @@ Remaining in the coordinator afterwards: `__construct`, `define_hooks`,
 `register_task_meta`, `register_archived_post_status`,
 `append_post_status_list`, `restrict_rest_access`, `custom_task_permalink`,
 `custom_unique_filename`, `handle_task_deletion`, `handle_task_status_change`,
-`add_user_date_relation`, `remove_user_date_relation`, the stack presentation
-statics (`get_stack_label`, `get_stack_icon_classes`, `get_stack_icon_html`),
-and thin delegators where required (below). Estimated ≤ 22 methods, ≤ 10
-public, CC ≈ 45. If the stack presentation statics push a limit, they move to
-a small `Decker_Task_Stack_Labels` helper as part of PR E.
+the stack presentation statics (`get_stack_label`, `get_stack_icon_classes`,
+`get_stack_icon_html`), and thin delegators where required (below). Estimated
+≤ 22 methods, ≤ 10 public, CC ≈ 45. If the stack presentation statics push a
+limit, they move to a small `Decker_Task_Stack_Labels` helper as part of
+PR E.
 
 `Task` model: the rendering cluster (`render_task_card`, `render_task_menu`,
 `render_people_avatars`, card counters/background/CSS helpers,
@@ -130,6 +130,10 @@ established ritual (see Verification).
   and `Decker_Task_Request_Reader` — the `$_POST` readers split out on their
   own because the handler + readers land at ≈50 CC, the
   `ExcessiveClassComplexity` threshold edge, matching the PR C/E margin rule.
+  `add_user_date_relation`/`remove_user_date_relation` were also deleted from
+  `Decker_Tasks` in this PR, superseded by
+  `Decker_Task_Today_Manager::mark_for_today()`/`unmark_for_today()` (recorded
+  in `docs/development.md`) — no delegator, same no-anchor rule.
   PR G will move `create_or_update_task` the same way, without a delegator,
   and repoint the "stable surface" note above to its new location.
 - **PR G — write core + model.** `Decker_Task_Writer` owns
@@ -137,8 +141,9 @@ established ritual (see Verification).
   `wp_parse_args` defaults, same validation and hook firing order), plus the
   private validate/build/insert/update pipeline. `Decker_Tasks` keeps
   `create_or_update_task` as a delegator with the **new** array signature —
-  it is the documented entry point. All 46 call sites and
-  `docs/agent-interfaces.md` migrate here. In the same PR, `Task`'s rendering
+  it is the documented entry point. (Superseded for F and G by the 2026-07-29
+  amendment in the PR F section: no delegator — see below.) All 46 call sites
+  and `docs/agent-interfaces.md` migrate here. In the same PR, `Task`'s rendering
   moves to `Decker_Task_Card_Renderer` (templates keep calling
   `$task->render_task_card()` via thin delegation on the model — those calls
   are pinned by templates in ~12 places) and `TooManyFields` gets its
@@ -158,7 +163,10 @@ exists: `handle_save_decker_task` (integration tests), `create_or_update_task`
 (documented API, new signature), `$task->render_task_card()` /
 `render_task_menu()` / `render_people_avatars()` (template call sites),
 and `clone_task` / `merge_tasks` only if the plan's call-graph shows external
-callers. Hook callbacks move with their hooks and need none.
+callers. Hook callbacks move with their hooks and need none. (Superseded for
+F and G by the 2026-07-29 amendment in the PR F section: no delegator for
+`handle_save_decker_task` or `create_or_update_task` — every caller is
+in-repo and was retargeted.)
 
 ## Simplification commitments
 

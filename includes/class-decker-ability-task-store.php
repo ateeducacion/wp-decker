@@ -134,21 +134,23 @@ class Decker_Ability_Task_Store {
 		// Labels and the Nextcloud link are handled by the domain method:
 		// create_or_update_task() now replaces the full label set (clearing when
 		// empty) and preserves an existing id_nextcloud_card on update.
-		$result = Decker_Tasks::create_or_update_task(
-			$task_id,
-			(string) $state['title'],
-			(string) $state['description'],
-			(string) $state['stack'],
-			absint( $state['board_id'] ),
-			(bool) $state['max_priority'],
-			$state['due_date_object'],
-			absint( $state['author_id'] ),
-			absint( $state['responsible_user_id'] ),
-			(bool) $state['hidden'],
-			(array) $state['assignee_ids'],
-			$this->term_ids( $state['label_ids'] ),
-			null,
-			(bool) $state['archived']
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $task_id,
+				'title'          => (string) $state['title'],
+				'description'    => (string) $state['description'],
+				'stack'          => (string) $state['stack'],
+				'board'          => absint( $state['board_id'] ),
+				'max_priority'   => (bool) $state['max_priority'],
+				'duedate'        => $state['due_date_object'],
+				'author'         => absint( $state['author_id'] ),
+				'responsable'    => absint( $state['responsible_user_id'] ),
+				'hidden'         => (bool) $state['hidden'],
+				'assigned_users' => (array) $state['assignee_ids'],
+				'labels'         => $this->term_ids( $state['label_ids'] ),
+				'creation_date'  => null,
+				'archived'       => (bool) $state['archived'],
+			)
 		);
 
 		if ( is_wp_error( $result ) ) {

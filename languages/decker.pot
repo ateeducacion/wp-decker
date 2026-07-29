@@ -955,6 +955,21 @@ msgstr ""
 msgid "Select Attachments"
 msgstr ""
 
+msgid "The title is required."
+msgstr ""
+
+msgid "The stack is required."
+msgstr ""
+
+msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
+msgstr ""
+
+msgid "The board is required and must be a positive integer."
+msgstr ""
+
+msgid "The board does not exist in the decker_board taxonomy."
+msgstr ""
+
 msgid "Task not found."
 msgstr ""
 
@@ -1045,21 +1060,6 @@ msgid "Archived"
 msgstr ""
 
 msgid "Archivado"
-msgstr ""
-
-msgid "The title is required."
-msgstr ""
-
-msgid "The stack is required."
-msgstr ""
-
-msgid "The stack is invalid. Allowed values: to-do, in-progress, done."
-msgstr ""
-
-msgid "The board is required and must be a positive integer."
-msgstr ""
-
-msgid "The board does not exist in the decker_board taxonomy."
 msgstr ""
 
 msgid "Calendar Token"

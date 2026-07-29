@@ -1,6 +1,6 @@
 <?php
 /**
- * Characterization tests for Decker_Tasks::create_or_update_task().
+ * Characterization tests for Decker_Task_Writer::create_or_update_task().
  *
  * Pins validation codes, field persistence, WP_User normalization and the
  * exact hook firing order before the method is refactored into helpers.
@@ -46,91 +46,101 @@ class DeckerTasksCreateUpdateLockInTest extends Decker_Test_Base {
 	 */
 	public function test_create_or_update_task_validation_error_codes() {
 		// (a) Empty title.
-		$result = Decker_Tasks::create_or_update_task(
-			0,
-			'',
-			'desc',
-			'to-do',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => '',
+				'description'    => 'desc',
+				'stack'          => 'to-do',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 		$this->assertWPError( $result );
 		$this->assertEquals( 'missing_field', $result->get_error_code() );
 
 		// (b) Empty stack.
-		$result = Decker_Tasks::create_or_update_task(
-			0,
-			'Title',
-			'desc',
-			'',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => 'Title',
+				'description'    => 'desc',
+				'stack'          => '',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 		$this->assertWPError( $result );
 		$this->assertEquals( 'missing_field', $result->get_error_code() );
 
 		// (c) Invalid stack value.
-		$result = Decker_Tasks::create_or_update_task(
-			0,
-			'Title',
-			'desc',
-			'bogus',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => 'Title',
+				'description'    => 'desc',
+				'stack'          => 'bogus',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 		$this->assertWPError( $result );
 		$this->assertEquals( 'invalid_field', $result->get_error_code() );
 
 		// (d) Board 0.
-		$result = Decker_Tasks::create_or_update_task(
-			0,
-			'Title',
-			'desc',
-			'to-do',
-			0,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => 'Title',
+				'description'    => 'desc',
+				'stack'          => 'to-do',
+				'board'          => 0,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 		$this->assertWPError( $result );
 		$this->assertEquals( 'missing_field', $result->get_error_code() );
 
 		// (e) Nonexistent board term.
-		$result = Decker_Tasks::create_or_update_task(
-			0,
-			'Title',
-			'desc',
-			'to-do',
-			999999,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => 'Title',
+				'description'    => 'desc',
+				'stack'          => 'to-do',
+				'board'          => 999999,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 		$this->assertWPError( $result );
 		$this->assertEquals( 'invalid', $result->get_error_code() );
@@ -143,22 +153,24 @@ class DeckerTasksCreateUpdateLockInTest extends Decker_Test_Base {
 		$u1 = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$u2 = self::factory()->user->create( array( 'role' => 'editor' ) );
 
-		$task_id = Decker_Tasks::create_or_update_task(
-			0,
-			'T',
-			'<p>D</p>',
-			'in-progress',
-			$this->board_id,
-			true,
-			new DateTime( '2025-03-01' ),
-			$this->editor,
-			$u2,
-			true,
-			array( $u1, $u2 ),
-			array( $this->label_id ),
-			new DateTime( '2024-01-02 03:04:05' ),
-			true,
-			42
+		$task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'                => 0,
+				'title'             => 'T',
+				'description'       => '<p>D</p>',
+				'stack'             => 'in-progress',
+				'board'             => $this->board_id,
+				'max_priority'      => true,
+				'duedate'           => new DateTime( '2025-03-01' ),
+				'author'            => $this->editor,
+				'responsable'       => $u2,
+				'hidden'            => true,
+				'assigned_users'    => array( $u1, $u2 ),
+				'labels'            => array( $this->label_id ),
+				'creation_date'     => new DateTime( '2024-01-02 03:04:05' ),
+				'archived'          => true,
+				'id_nextcloud_card' => 42,
+			)
 		);
 
 		$this->assertNotWPError( $task_id );
@@ -199,19 +211,21 @@ class DeckerTasksCreateUpdateLockInTest extends Decker_Test_Base {
 			}
 		);
 
-		$task_id = Decker_Tasks::create_or_update_task(
-			0,
-			'T',
-			'D',
-			'to-do',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array( get_user_by( 'id', $u1 ) ),
-			array()
+		$task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => 'T',
+				'description'    => 'D',
+				'stack'          => 'to-do',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array( get_user_by( 'id', $u1 ) ),
+				'labels'         => array(),
+			)
 		);
 
 		$this->assertNotWPError( $task_id );
@@ -279,19 +293,21 @@ class DeckerTasksCreateUpdateLockInTest extends Decker_Test_Base {
 			2
 		);
 
-		$result = Decker_Tasks::create_or_update_task(
-			$task_id,
-			'T',
-			'D',
-			'done',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$new_resp,
-			false,
-			array( $this->editor, $extra ),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $task_id,
+				'title'          => 'T',
+				'description'    => 'D',
+				'stack'          => 'done',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $new_resp,
+				'hidden'         => false,
+				'assigned_users' => array( $this->editor, $extra ),
+				'labels'         => array(),
+			)
 		);
 		$this->assertNotWPError( $result );
 
@@ -354,19 +370,21 @@ class DeckerTasksCreateUpdateLockInTest extends Decker_Test_Base {
 			);
 		}
 
-		$result = Decker_Tasks::create_or_update_task(
-			$task_id,
-			'T',
-			'D',
-			'to-do',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $task_id,
+				'title'          => 'T',
+				'description'    => 'D',
+				'stack'          => 'to-do',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 		$this->assertNotWPError( $result );
 

@@ -251,19 +251,21 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 			return new WP_Error( 'missing_title', __( 'The task title is required.', 'decker' ) );
 		}
 
-		$task_id = Decker_Tasks::create_or_update_task(
-			0, // Create a new task.
-			$title,
-			$description ?? '',
-			$stack,
-			$board_id,
-			$max_priority,
-			$due_date,
-			get_current_user_id(),
-			get_current_user_id(),
-			false,
-			$user_ids,
-			$label_ids
+		$task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0, // Create a new task.
+				'title'          => $title,
+				'description'    => $description ?? '',
+				'stack'          => $stack,
+				'board'          => $board_id,
+				'max_priority'   => $max_priority,
+				'duedate'        => $due_date,
+				'author'         => get_current_user_id(),
+				'responsable'    => get_current_user_id(),
+				'hidden'         => false,
+				'assigned_users' => $user_ids,
+				'labels'         => $label_ids,
+			)
 		);
 
 		if ( is_wp_error( $task_id ) ) {
@@ -290,19 +292,21 @@ class DeckerTasksIntegrationTest extends Decker_Test_Base {
 	 * @return int|WP_Error The ID of the updated task, or WP_Error on failure.
 	 */
 	public function update_task( int $task_id, string $title, ?string $description, int $board_id, array $label_ids = array(), array $user_ids = array(), string $stack, bool $max_priority, DateTime $due_date ) {
-		$updated_task_id = Decker_Tasks::create_or_update_task(
-			$task_id,
-			$title,
-			$description ?? '',
-			$stack,
-			$board_id,
-			$max_priority,
-			$due_date,
-			get_current_user_id(),
-			get_current_user_id(),
-			false,
-			$user_ids,
-			$label_ids
+		$updated_task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $task_id,
+				'title'          => $title,
+				'description'    => $description ?? '',
+				'stack'          => $stack,
+				'board'          => $board_id,
+				'max_priority'   => $max_priority,
+				'duedate'        => $due_date,
+				'author'         => get_current_user_id(),
+				'responsable'    => get_current_user_id(),
+				'hidden'         => false,
+				'assigned_users' => $user_ids,
+				'labels'         => $label_ids,
+			)
 		);
 
 		if ( is_wp_error( $updated_task_id ) ) {

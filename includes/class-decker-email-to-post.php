@@ -332,19 +332,21 @@ class Decker_Email_To_Post {
 		$due_date = new DateTime( '+3 days' );
 
 		// Create task.
-		$task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$resolved['subject'],
-			$email_data['body'],
-			'to-do',
-			$resolved['board_id'],
-			false,
-			$due_date,
-			$author->ID,
-			$author->ID,
-			false,
-			$assigned_users,
-			array()
+		$task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => $resolved['subject'],
+				'description'    => $email_data['body'],
+				'stack'          => 'to-do',
+				'board'          => $resolved['board_id'],
+				'max_priority'   => false,
+				'duedate'        => $due_date,
+				'author'         => $author->ID,
+				'responsable'    => $author->ID,
+				'hidden'         => false,
+				'assigned_users' => $assigned_users,
+				'labels'         => array(),
+			)
 		);
 
 		return $task_id;

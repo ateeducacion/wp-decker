@@ -1,10 +1,9 @@
 <?php
 /**
- * Characterization tests for Decker_Tasks::save_meta().
+ * Characterization tests for Decker_Task_Meta_Saver::save_meta().
  *
  * Pins field persistence, the two UNCONDITIONAL writes (max_priority and
- * _user_date_relations) and the guard-clause order before save_meta is
- * refactored into helpers.
+ * _user_date_relations) and the guard-clause order.
  *
  * @package Decker
  */
