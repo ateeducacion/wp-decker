@@ -149,6 +149,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-meta-box.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-events.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb-reorder.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb-article-writer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb-revisions.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-kb.php';
 	}
