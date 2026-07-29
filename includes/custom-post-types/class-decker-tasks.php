@@ -38,7 +38,8 @@ class Decker_Tasks {
 		new Decker_Tasks_Rest_Tools( $this );
 
 		// Ordering reactions to WordPress events own their own hooks.
-		new Decker_Task_Order_Hooks( $this->get_order_engine() );
+		$this->order_engine = new Decker_Task_Order( $this );
+		new Decker_Task_Order_Hooks( $this->order_engine );
 	}
 
 	/**
@@ -75,11 +76,11 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Stack/order engine, created on first use.
+	 * Stack/order engine, created in the constructor.
 	 *
-	 * @var Decker_Task_Order|null
+	 * @var Decker_Task_Order
 	 */
-	private $order_engine = null;
+	private $order_engine;
 
 	/**
 	 * The stack/order engine for tasks.
@@ -87,9 +88,6 @@ class Decker_Tasks {
 	 * @return Decker_Task_Order
 	 */
 	public function get_order_engine(): Decker_Task_Order {
-		if ( null === $this->order_engine ) {
-			$this->order_engine = new Decker_Task_Order( $this );
-		}
 		return $this->order_engine;
 	}
 
