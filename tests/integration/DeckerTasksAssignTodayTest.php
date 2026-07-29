@@ -80,7 +80,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		$request->set_param( 'user_id', $this->user_id );
 		$request->set_url_params( array( 'id' => $this->task_id ) ); // Explicitly set 'id' parameter
 
-		$response = $task_instance->mark_user_date_relation( $request );
+		$response = ( new Decker_Tasks_Rest_Today( $task_instance ) )->mark_user_date_relation( $request );
 
 		if ( $response->get_status() !== 200 ) {
 			$this->fail( 'REST API response error: ' . json_encode( $response->get_data() ) );
@@ -112,7 +112,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		$request->set_param( 'user_id', $this->user_id );
 		$request->set_url_params( array( 'id' => $this->task_id ) ); // Explicitly set 'id' parameter
 
-		$response = $task_instance->unmark_user_date_relation( $request );
+		$response = ( new Decker_Tasks_Rest_Today( $task_instance ) )->unmark_user_date_relation( $request );
 
 		if ( $response->get_status() !== 200 ) {
 			$this->fail( 'REST API response error: ' . json_encode( $response->get_data() ) );

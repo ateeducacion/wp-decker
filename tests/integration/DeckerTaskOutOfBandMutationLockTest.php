@@ -191,7 +191,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/assign' );
 		$request->set_url_params( array( 'id' => $this->task_id ) );
 		$request->set_param( 'user_id', $this->user_b );
-		( new Decker_Tasks() )->assign_user_to_task( $request );
+		( new Decker_Tasks_Rest_Ops( new Decker_Tasks() ) )->assign_user_to_task( $request );
 
 		$this->assertNotSame( $generation, $this->current_generation() );
 		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );
@@ -209,7 +209,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/leave' );
 		$request->set_url_params( array( 'id' => $this->task_id ) );
 		$request->set_param( 'user_id', $this->user_b );
-		( new Decker_Tasks() )->remove_user_from_task( $request );
+		( new Decker_Tasks_Rest_Ops( new Decker_Tasks() ) )->remove_user_from_task( $request );
 
 		$this->assertNotSame( $generation, $this->current_generation() );
 		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );
@@ -226,7 +226,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 		$request->set_url_params( array( 'id' => $this->task_id ) );
 		$request->set_param( 'id', $this->task_id );
 		$request->set_param( 'duedate', '2026-12-31' );
-		( new Decker_Tasks() )->update_task_due_date( $request );
+		( new Decker_Tasks_Rest_Ops( new Decker_Tasks() ) )->update_task_due_date( $request );
 
 		$this->assertNotSame( $generation, $this->current_generation() );
 		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );

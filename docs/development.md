@@ -91,6 +91,11 @@ the new one. None of these changed behaviour; only their owner changed.
 | `TaskManager` "for today" query bodies (public entry points stay as delegators) | `Decker_Task_Today_Query`, `Decker_Task_Date_Relations` |
 | `Decker_Tasks::clone_task()` and its private readers | `Decker_Task_Clone` |
 | `Decker_Tasks::merge_tasks()` and the merge pipeline | `Decker_Task_Merge` |
+| `Decker_Tasks` lock REST routes + `refresh_task_lock_heartbeat()` | `Decker_Tasks_Rest_Locks` |
+| `Decker_Tasks` today REST routes (`handle_task_today()`, mark/unmark relations) | `Decker_Tasks_Rest_Today` |
+| `Decker_Tasks` field-op REST routes + REST insert guards | `Decker_Tasks_Rest_Ops` |
+| `Decker_Tasks::search_tasks()` / clone + merge REST transport | `Decker_Tasks_Rest_Tools` |
+| `Decker_Tasks::make_permission_callback()` / `lock_error_response()` | `Decker_Tasks_Rest_Support` (public statics) |
 | `Decker_Public::enqueue_scripts()` body | `Decker_Public_Assets` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:

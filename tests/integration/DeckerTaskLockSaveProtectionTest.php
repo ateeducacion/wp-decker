@@ -307,7 +307,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 				'generation' => $info_a['generation'],
 			),
 		);
-		$resp = $tasks->refresh_task_lock_heartbeat( array(), $payload );
+		$resp = ( new Decker_Tasks_Rest_Locks( $tasks ) )->refresh_task_lock_heartbeat( array(), $payload );
 		$this->assertFalse( $resp['decker_task_lock']['owned_by_current_user'] );
 		$this->assertNotEmpty( $resp['decker_task_lock']['stale_session'] );
 
@@ -391,7 +391,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 
 		// While user A still owns the lock, the heartbeat confirms ownership.
 		wp_set_current_user( $this->user_a );
-		$resp = $tasks->refresh_task_lock_heartbeat( array(), $payload );
+		$resp = ( new Decker_Tasks_Rest_Locks( $tasks ) )->refresh_task_lock_heartbeat( array(), $payload );
 		$this->assertTrue( $resp['decker_task_lock']['owned_by_current_user'] );
 
 		// User B takes over.
@@ -399,7 +399,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 
 		// User A's next heartbeat reports the lock is now held by user B.
 		wp_set_current_user( $this->user_a );
-		$resp = $tasks->refresh_task_lock_heartbeat( array(), $payload );
+		$resp = ( new Decker_Tasks_Rest_Locks( $tasks ) )->refresh_task_lock_heartbeat( array(), $payload );
 		$this->assertTrue( $resp['decker_task_lock']['locked'] );
 		$this->assertFalse( $resp['decker_task_lock']['owned_by_current_user'] );
 		$this->assertSame( $this->user_b, $resp['decker_task_lock']['owner']['id'] );

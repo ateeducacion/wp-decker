@@ -276,7 +276,7 @@ class HooksTest extends Decker_Test_Base {
 		$request->set_param( 'id', $task_id );
 		$request->set_param( 'user_id', $this->user_id );
 
-		$response = $task_instance->assign_user_to_task( $request );
+		$response = ( new Decker_Tasks_Rest_Ops( $task_instance ) )->assign_user_to_task( $request );
 
 		// Verify the REST API response.
 		$this->assertEquals( 200, $response->get_status(), 'REST API did not return a successful response.' );
