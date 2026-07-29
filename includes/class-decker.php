@@ -200,6 +200,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-taxonomy-manager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-boardmanager.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-labelmanager.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-task-date-relations.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-task-today-query.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-taskmanager.php';
 	}
 
