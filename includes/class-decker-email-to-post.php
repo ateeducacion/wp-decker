@@ -349,7 +349,6 @@ class Decker_Email_To_Post {
 
 		return $task_id;
 	}
-
 }
 
 

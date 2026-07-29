@@ -6,6 +6,9 @@
  * @subpackage Decker/includes
  */
 
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
 require_once __DIR__ . '/class-decker-demo-randomizer.php';
 require_once __DIR__ . '/class-decker-demo-tasks.php';
 
@@ -493,5 +496,4 @@ class Decker_Demo_Data {
 			}
 		}
 	}
-
 }
