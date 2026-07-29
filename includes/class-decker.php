@@ -144,6 +144,7 @@ class Decker {
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-admin-screen.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-meta-box.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-events.php';
 
@@ -161,6 +162,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-revision-manager.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-mailer.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-store.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-ajax.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ical-builder.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';

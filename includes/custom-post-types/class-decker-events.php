@@ -21,19 +21,6 @@ class Decker_Events {
 		$this->define_hooks();
 	}
 
-	/**
-	 * Hide visibility options for decker_event post type.
-	 */
-	public function hide_visibility_options() {
-		$screen = get_current_screen();
-		if ( $screen && 'decker_event' === $screen->post_type ) {
-			echo '<style type="text/css">
-				.misc-pub-section.misc-pub-visibility {
-					display: none;
-				}
-			</style>';
-		}
-	}
 
 	/**
 	 * Define the hooks for the events custom post type
@@ -49,11 +36,11 @@ class Decker_Events {
 		add_filter( 'use_block_editor_for_post_type', array( $this, 'force_classic_editor' ), 10, 2 );
 
 		// Hide visibility options.
-		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
+
+		// Admin list-table presentation owns its own hooks.
+		new Decker_Event_Admin_Screen();
 
 		// Add columns to admin.
-		add_filter( 'manage_decker_event_posts_columns', array( $this, 'add_custom_columns' ) );
-		add_action( 'manage_decker_event_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
 
 		add_action( 'rest_after_insert_decker_event', array( $this, 'rest_fix_datetime_meta' ), 10, 3 );
 	}
@@ -307,55 +294,6 @@ class Decker_Events {
 			update_post_meta( $post->ID, 'event_end', $end );
 		}
 	}
-
-	/**
-	 * Add custom columns to the event admin list table.
-	 *
-	 * @param array $columns Existing columns.
-	 * @return array Modified columns.
-	 */
-	public function add_custom_columns( $columns ) {
-		   unset( $columns['date'] ); // Optional: remove the default date column.
-
-		$columns['event_allday'] = __( 'All Day Event', 'decker' );
-		$columns['event_start'] = __( 'Start', 'decker' );
-		$columns['event_end']   = __( 'End', 'decker' );
-		$columns['event_category'] = __( 'Category', 'decker' );
-
-		   $columns['date'] = __( 'Date', 'decker' ); // Add it again at the end.
-		return $columns;
-	}
-
-	/**
-	 * Render content for custom columns in the event admin list.
-	 *
-	 * @param string $column  Column name.
-	 * @param int    $post_id Post ID.
-	 */
-	public function render_custom_columns( $column, $post_id ) {
-		switch ( $column ) {
-			case 'event_allday':
-				$allday = get_post_meta( $post_id, 'event_allday', true );
-				printf(
-					'<input type="checkbox" disabled %s>',
-					checked( $allday, '1', false )
-				);
-				break;
-			case 'event_start':
-				$start = get_post_meta( $post_id, 'event_start', true );
-				echo esc_html( $start );
-				break;
-			case 'event_end':
-				$end = get_post_meta( $post_id, 'event_end', true );
-				echo esc_html( $end );
-				break;
-			case 'event_category':
-				$category = get_post_meta( $post_id, 'event_category', true );
-				echo esc_html( $category );
-				break;
-		}
-	}
-
 
 	/**
 	 * Process and save meta data from a data array.

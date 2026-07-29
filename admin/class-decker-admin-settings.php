@@ -18,272 +18,29 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Admin_Settings {
 
 	/**
+	 * Renders the settings fields.
+	 *
+	 * @var Decker_Admin_Settings_Fields
+	 */
+	private $fields;
+
+	/**
+	 * Validates settings submissions.
+	 *
+	 * @var Decker_Admin_Settings_Validator
+	 */
+	private $validator;
+
+	/**
 	 * Constructor
 	 *
 	 * Initializes the class by defining hooks.
 	 */
 	public function __construct() {
+		$this->fields    = new Decker_Admin_Settings_Fields();
+		$this->validator = new Decker_Admin_Settings_Validator();
+
 		$this->define_hooks();
-	}
-
-	/**
-	 * Render Shared Key Field
-	 *
-	 * Outputs the HTML for the shared_key field, generating it only if it does not exist or does not meet the criteria.
-	 */
-	public function shared_key_render() {
-		$options = get_option( 'decker_settings', array() );
-
-		// Generate a new shared key (UUID) only if it does not exist or does not meet criteria.
-		if ( empty( $options['shared_key'] ) ) {
-			$options['shared_key'] = wp_generate_uuid4();
-			// Save the newly generated UUID back to the options.
-			update_option( 'decker_settings', $options );
-		}
-
-		$value = sanitize_text_field( $options['shared_key'] );
-		echo '<input type="text" name="decker_settings[shared_key]" pattern=".{8,}" value="' . esc_attr( $value ) . '" class="regular-text" pattern="" title="The key must be at least 8 characters long and include letters, numbers, and symbols." required>';
-		echo '<p class="description">' . esc_html__( 'Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:', 'decker' ) . '</p>';
-		echo '<pre style="background: #f5f5f5; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">';
-		echo 'POST ' . esc_url( get_site_url() ) . '/wp-json/decker/v1/email-to-post';
-		echo "\nHeader: Authorization: Bearer YOUR_SHARED_KEY";
-		echo '</pre>';
-	}
-
-	/**
-	 * Render Allow Email Notifications Field.
-	 *
-	 * Outputs the HTML for the allow_email_notifications field.
-	 */
-	public function allow_email_notifications_render() {
-		$options = get_option( 'decker_settings', array() );
-		$checked = isset( $options['allow_email_notifications'] ) && '1' === $options['allow_email_notifications'];
-
-		echo '<label>';
-		echo '<input type="checkbox" name="decker_settings[allow_email_notifications]" value="1" ' . checked( $checked, true, false ) . '>';
-		echo esc_html__( 'Enable email notifications for all plugin events.', 'decker' );
-		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'This setting allows users to manage email notifications in their profile. By default, all notifications are enabled.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Collaborative Editing Field.
-	 *
-	 * Outputs the HTML for the collaborative_editing field.
-	 */
-	public function collaborative_editing_render() {
-		$options = get_option( 'decker_settings', array() );
-		$checked = isset( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
-
-		echo '<label>';
-		echo '<input type="checkbox" name="decker_settings[collaborative_editing]" value="1" ' . checked( $checked, true, false ) . '>';
-		echo esc_html__( 'Enable real-time collaborative editing for tasks.', 'decker' );
-		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Board Status Indicators Field.
-	 *
-	 * Outputs a browser-local preference for the board status indicators.
-	 */
-	public function sidebar_board_status_render() {
-		echo '<label for="sidebar-board-status-check">';
-		echo '<input type="checkbox" id="sidebar-board-status-check" value="1" checked data-decker-persistent aria-describedby="sidebar-board-status-description"> ';
-		echo esc_html__( 'Show board status indicators', 'decker' );
-		echo '</label>';
-		echo '<p class="description" id="sidebar-board-status-description">' . esc_html__( 'This preference is saved only in this browser.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI Enabled Field.
-	 *
-	 * Outputs the HTML for the ai_enabled field.
-	 *
-	 * @return void
-	 */
-	public function ai_enabled_render() {
-		$options = get_option( 'decker_settings', array() );
-		$checked = isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'];
-
-		echo '<label>';
-		echo '<input type="checkbox" name="decker_settings[ai_enabled]" value="1" ' . checked( $checked, true, false ) . '>';
-		echo esc_html__( 'Enable AI improvements for task descriptions.', 'decker' );
-		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'When enabled, users can improve task descriptions with either Gemini Nano in supported browsers or the Gemini API through the server.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI Provider Field.
-	 *
-	 * Outputs the HTML for the ai_provider field.
-	 *
-	 * @return void
-	 */
-	public function ai_provider_render() {
-		$options  = get_option( 'decker_settings', array() );
-		$provider = Decker_AI_Manager::get_selected_provider( $options );
-		$choices  = array(
-			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO => __(
-				'Gemini Nano (browser-based)',
-				'decker'
-			),
-			Decker_AI_Manager::PROVIDER_GEMINI_API          => __(
-				'Gemini API (server-side)',
-				'decker'
-			),
-		);
-
-		foreach ( $choices as $value => $label ) {
-			echo '<p><label>';
-			echo '<input type="radio" name="decker_settings[ai_provider]" value="' . esc_attr( $value ) . '" ' . checked( $provider, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label></p>';
-		}
-
-		echo '<p class="description">' . esc_html__( 'Choose whether AI improvements run in the browser with Gemini Nano or through the Gemini API on the server.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI API Key Field.
-	 *
-	 * Outputs the HTML for the ai_api_key field.
-	 *
-	 * @return void
-	 */
-	public function ai_api_key_render() {
-		$options        = get_option( 'decker_settings', array() );
-		$has_saved_key  = ! empty( $options['ai_api_key'] );
-		$placeholder    = $has_saved_key ? '••••••••••••••••' : '';
-		$description    = $has_saved_key
-			? __( 'A Gemini API key is already stored. Leave this field empty to keep the current key.', 'decker' )
-			: __( 'Paste a Gemini API key to enable server-side Gemini requests. The saved key is never shown again after saving.', 'decker' );
-
-		echo '<input type="password" name="decker_settings[ai_api_key]" class="regular-text" value="" autocomplete="off" placeholder="' . esc_attr( $placeholder ) . '">';
-		echo '<p class="description">' . esc_html( $description ) . '</p>';
-	}
-
-	/**
-	 * Render AI Model Field.
-	 *
-	 * Outputs the HTML for the ai_model field.
-	 *
-	 * @return void
-	 */
-	public function ai_model_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = Decker_AI_Manager::get_model( $options );
-
-		echo '<input type="text" name="decker_settings[ai_model]" class="regular-text" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( Decker_AI_Manager::DEFAULT_GEMINI_MODEL ) . '">';
-		echo '<p class="description">' . esc_html__( 'Optional Gemini model name for server-side requests. Leave the default unless you need a different compatible text-generation model.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI Prompt Field.
-	 *
-	 * Outputs the HTML for the ai_prompt field.
-	 *
-	 * @return void
-	 */
-	public function ai_prompt_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = isset( $options['ai_prompt'] ) && '' !== $options['ai_prompt']
-			? sanitize_textarea_field( $options['ai_prompt'] )
-			: Decker::get_default_ai_prompt_template();
-
-		echo '<textarea name="decker_settings[ai_prompt]" class="large-text code" rows="12">' . esc_textarea( $value ) . '</textarea>';
-		echo '<p class="description">' . esc_html__( 'Customize the base prompt used for AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Signaling Server Field.
-	 *
-	 * Outputs the HTML for the signaling_server field.
-	 */
-	public function signaling_server_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = isset( $options['signaling_server'] ) ? sanitize_text_field( $options['signaling_server'] ) : 'wss://signaling.yjs.dev';
-
-		echo '<input type="url" name="decker_settings[signaling_server]" class="regular-text" value="' . esc_attr( $value ) . '" placeholder="wss://signaling.yjs.dev">';
-		echo '<p class="description">' . esc_html__( 'WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev).', 'decker' ) . '</p>';
-		echo '<p class="description"><strong>' . esc_html__( 'Public servers:', 'decker' ) . '</strong></p>';
-		echo '<ul class="description" style="list-style: disc; margin-left: 20px;">';
-		echo '<li><code>wss://signaling.yjs.dev</code> ' . esc_html__( '(Default - Global)', 'decker' ) . '</li>';
-		echo '<li><code>wss://y-webrtc-signaling-eu.herokuapp.com</code> ' . esc_html__( '(Europe)', 'decker' ) . '</li>';
-		echo '<li><code>wss://y-webrtc-signaling-us.herokuapp.com</code> ' . esc_html__( '(United States)', 'decker' ) . '</li>';
-		echo '</ul>';
-	}
-
-	/**
-	 * Render User Profile Field.
-	 *
-	 * Outputs the HTML for the minimum_user_profile field, displaying only roles with edit permissions.
-	 */
-	public function minimum_user_profile_render() {
-		// Get saved plugin options.
-		$options       = get_option( 'decker_settings', array() );
-
-		// Default to 'editor' if no user profile is selected.
-		$selected_role = isset( $options['minimum_user_profile'] ) && ! empty( $options['minimum_user_profile'] ) ? $options['minimum_user_profile'] : 'editor';
-
-		// Retrieve all registered roles in WordPress.
-		$roles = wp_roles()->roles;
-
-		// Filter roles to include only those with 'edit_posts' capability.
-		$editable_roles = array_filter(
-			$roles,
-			function ( $role ) {
-				return isset( $role['capabilities']['edit_posts'] ) && $role['capabilities']['edit_posts'];
-			}
-		);
-
-		// Render the select dropdown for user profiles.
-		echo '<select name="decker_settings[minimum_user_profile]" id="minimum_user_profile">';
-		foreach ( $editable_roles as $role_value => $role_data ) {
-			echo '<option value="' . esc_attr( $role_value ) . '" ' . selected( $selected_role, $role_value, false ) . '>' . esc_html( $role_data['name'] ) . '</option>';
-		}
-		echo '</select>';
-
-		// Add a description below the dropdown.
-		echo '<p class="description">' . esc_html__( 'Select the minimum user profile that can use Decker.', 'decker' ) . '</p>';
-	}
-
-
-	/**
-	 * Render Alert Message Field.
-	 *
-	 * Outputs the HTML for the alert_message field.
-	 */
-	public function alert_message_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = isset( $options['alert_message'] ) ? wp_kses_post( $options['alert_message'] ) : '';
-		echo '<textarea name="decker_settings[alert_message]" class="large-text" rows="5">' . esc_textarea( $value ) . '</textarea>';
-		echo '<p class="description">' . esc_html__( 'Enter the alert message to display as a banner. Supports HTML. Leave empty to hide.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Alert Color Field.
-	 *
-	 * Outputs the HTML for the alert_color field.
-	 */
-	public function alert_color_render() {
-		$options = get_option( 'decker_settings', array() );
-		$color   = isset( $options['alert_color'] ) ? $options['alert_color'] : 'info';
-
-		$colors = array(
-			'success' => 'Success',
-			'danger'  => 'Danger',
-			'warning' => 'Warning',
-			'info'    => 'Info',
-		);
-
-		foreach ( $colors as $value => $label ) {
-			echo '<label style="margin-right: 15px;">';
-			echo '<input type="radio" name="decker_settings[alert_color]" value="' . esc_attr( $value ) . '" ' . checked( $color, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label>';
-		}
-		echo '<p class="description">' . esc_html__( 'Select the color for the alert message.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -387,14 +144,14 @@ class Decker_Admin_Settings {
 		add_settings_section(
 			'decker_main_section',
 			__( 'Decker Configuration', 'decker' ),
-			array( $this, 'settings_section_callback' ),
+			array( $this->fields, 'settings_section_callback' ),
 			'decker'
 		);
 
 		add_settings_section(
 			'decker_ai_section',
 			__( 'AI Configuration', 'decker' ),
-			array( $this, 'ai_settings_section_callback' ),
+			array( $this->fields, 'ai_settings_section_callback' ),
 			'decker'
 		);
 
@@ -416,9 +173,10 @@ class Decker_Admin_Settings {
 			add_settings_field(
 				$field_id,
 				$field_title,
-				array( $this, $field_id . '_render' ),
+				array( $this->fields, 'render' ),
 				'decker',
-				'decker_main_section'
+				'decker_main_section',
+				array( 'field' => $field_id )
 			);
 		}
 
@@ -434,85 +192,12 @@ class Decker_Admin_Settings {
 			add_settings_field(
 				$field_id,
 				$field_title,
-				array( $this, $field_id . '_render' ),
+				array( $this->fields, 'render' ),
 				'decker',
-				'decker_ai_section'
+				'decker_ai_section',
+				array( 'field' => $field_id )
 			);
 		}
-	}
-
-	/**
-	 * Settings Section Callback.
-	 *
-	 * Outputs a description for the settings section.
-	 */
-	public function settings_section_callback() {
-		echo '<p>' . esc_html__( 'Configure the Decker plugin settings.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * AI Settings Section Callback.
-	 *
-	 * Outputs a description for the AI settings section.
-	 *
-	 * @return void
-	 */
-	public function ai_settings_section_callback() {
-		echo '<p>' . esc_html__( 'Configure how Decker improves task descriptions with AI. Browser-based Gemini Nano keeps the text in the browser, while the Gemini API sends the prompt to Google through your WordPress server using the saved API key.', 'decker' ) . '</p>';
-	}
-
-
-
-
-	/**
-	 * Render Clear All Data Button.
-	 *
-	 * Outputs the HTML for the clear_all_data_button field.
-	 */
-	/**
-	 * Render Ignored Users Field.
-	 *
-	 * Outputs the HTML for the ignored_users field.
-	 */
-	public function ignored_users_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value = isset( $options['ignored_users'] ) ? sanitize_text_field( $options['ignored_users'] ) : '';
-		echo '<input type="text" name="decker_settings[ignored_users]" class="regular-text" value="' . esc_attr( $value ) . '" pattern="^[0-9]+(,[0-9]+)*$" title="' . esc_attr__( 'Please enter comma-separated user IDs (numbers only)', 'decker' ) . '">';
-		echo '<p class="description">' . esc_html__( 'Enter comma-separated user IDs to ignore from Decker functionality.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Task Editor Type Field.
-	 *
-	 * Outputs the HTML for the task_editor_type field.
-	 */
-	public function task_editor_type_render() {
-		$options     = get_option( 'decker_settings', array() );
-		$editor_type = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
-		$editors     = array(
-			'classic' => __( 'Classic Editor', 'decker' ),
-			'quill'   => __( 'Quill Editor', 'decker' ),
-		);
-
-		foreach ( $editors as $value => $label ) {
-			echo '<label style="margin-right: 15px;">';
-			echo '<input type="radio" name="decker_settings[task_editor_type]" value="' . esc_attr( $value ) . '" ' . checked( $editor_type, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label>';
-		}
-
-		echo '<p class="description">' . esc_html__( 'Choose which editor to use for task descriptions. Collaborative editing always uses Quill.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render Clear All Data Button.
-	 *
-	 * Outputs the HTML for the clear_all_data_button field.
-	 */
-	public function clear_all_data_button_render() {
-		wp_nonce_field( 'decker_clear_all_data_action', 'decker_clear_all_data_nonce', true, true );
-		echo '<input type="submit" name="decker_clear_all_data" class="button button-secondary" style="background-color: red; color: white;" value="' . esc_attr__( 'Clear All Data', 'decker' ) . '" onclick="return confirm(\'' . esc_js( __( 'Are you sure you want to delete all Decker records? This action cannot be undone.', 'decker' ) ) . '\');">';
-		echo '<p class="description">' . esc_html__( 'Click the button to delete all Decker labels, tasks, and boards.', 'decker' ) . '</p>';
 	}
 
 	/**
@@ -564,225 +249,6 @@ class Decker_Admin_Settings {
 	 * @return array The validated fields.
 	 */
 	public function settings_validate( $input ) {
-		$input          = is_array( $input ) ? $input : array();
-		$current_values = get_option( 'decker_settings', array() );
-
-		$input = $this->strip_legacy_openai_fields( $input );
-
-		// Validate shared key.
-		$input['shared_key'] = $this->validate_shared_key( $input );
-
-		// Validate allow email notifications.
-		$input['allow_email_notifications'] = $this->sanitize_checkbox( $input, 'allow_email_notifications' );
-
-		// Validate collaborative editing.
-		$input['collaborative_editing'] = $this->sanitize_checkbox( $input, 'collaborative_editing' );
-
-		// Validate AI settings.
-		$input['ai_enabled']  = $this->sanitize_checkbox( $input, 'ai_enabled' );
-		$input['ai_provider'] = Decker_AI_Manager::get_selected_provider( $input );
-		$input['ai_api_key']  = $this->validate_ai_api_key( $input, $current_values );
-		$input['ai_model']    = $this->validate_ai_model( $input );
-		$input['ai_prompt']   = $this->validate_ai_prompt( $input );
-
-		// Validate signaling server.
-		$input['signaling_server'] = $this->validate_signaling_server( $input );
-
-		// Validate alert color.
-		$input['alert_color'] = $this->validate_alert_color( $input );
-
-		// Validate user profile.
-		$input['minimum_user_profile'] = $this->validate_minimum_user_profile( $input );
-
-		// Validate task editor type. Quill stays the default during the transition period.
-		$valid_editors = array( 'classic', 'quill' );
-		if ( ! isset( $input['task_editor_type'] ) || ! in_array( $input['task_editor_type'], $valid_editors, true ) ) {
-			$input['task_editor_type'] = 'quill';
-		}
-
-		// Validate alert message.
-		$input['alert_message'] = $this->validate_alert_message( $input );
-
-		// Validate ignored users.
-		$input['ignored_users'] = $this->validate_ignored_users( $input );
-
-		return $input;
-	}
-
-	/**
-	 * Strip Legacy OpenAI Fields.
-	 *
-	 * Removes the deprecated openai_* keys that are no longer stored.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return array The input array without the legacy OpenAI keys.
-	 */
-	private function strip_legacy_openai_fields( array $input ) {
-		unset(
-			$input['openai_api_url'],
-			$input['openai_api_key'],
-			$input['openai_model']
-		);
-
-		return $input;
-	}
-
-	/**
-	 * Sanitize Checkbox.
-	 *
-	 * Returns '1' when the given key is present and strictly equals '1', else '0'.
-	 *
-	 * @param array  $input The input fields being validated.
-	 * @param string $key   The checkbox key to read.
-	 * @return string Either '1' or '0'.
-	 */
-	private function sanitize_checkbox( array $input, $key ) {
-		return isset( $input[ $key ] ) && '1' === $input[ $key ] ? '1' : '0';
-	}
-
-	/**
-	 * Validate Shared Key.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized shared key, or '' when absent.
-	 */
-	private function validate_shared_key( array $input ) {
-		return isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
-	}
-
-	/**
-	 * Validate AI API Key.
-	 *
-	 * Sanitizes a newly provided key, otherwise keeps the previously stored one.
-	 *
-	 * @param array $input          The input fields being validated.
-	 * @param array $current_values The currently stored settings option.
-	 * @return string The validated API key.
-	 */
-	private function validate_ai_api_key( array $input, array $current_values ) {
-		return isset( $input['ai_api_key'] ) && '' !== trim( $input['ai_api_key'] )
-			? Decker_AI_Manager::sanitize_api_key( $input['ai_api_key'] )
-			: Decker_AI_Manager::get_api_key( $current_values );
-	}
-
-	/**
-	 * Validate AI Model.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized model name, or the default Gemini model.
-	 */
-	private function validate_ai_model( array $input ) {
-		return isset( $input['ai_model'] ) && '' !== trim( $input['ai_model'] )
-			? sanitize_text_field( $input['ai_model'] )
-			: Decker_AI_Manager::DEFAULT_GEMINI_MODEL;
-	}
-
-	/**
-	 * Validate AI Prompt.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized prompt, or the default prompt template.
-	 */
-	private function validate_ai_prompt( array $input ) {
-		return isset( $input['ai_prompt'] ) && '' !== trim( $input['ai_prompt'] )
-			? sanitize_textarea_field( $input['ai_prompt'] )
-			: Decker::get_default_ai_prompt_template();
-	}
-
-	/**
-	 * Validate Signaling Server.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized server URL, or the default public server.
-	 */
-	private function validate_signaling_server( array $input ) {
-		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {
-			// Include wss protocol for WebSocket signaling servers.
-			return esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
-		}
-
-		return 'wss://signaling.yjs.dev';
-	}
-
-	/**
-	 * Validate Alert Color.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string A valid alert color, defaulting to 'info'.
-	 */
-	private function validate_alert_color( array $input ) {
-		$valid_colors = array( 'success', 'danger', 'warning', 'info' );
-		if ( isset( $input['alert_color'] ) && ! in_array( $input['alert_color'], $valid_colors ) ) {
-			return 'info'; // Default to info if invalid.
-		}
-
-		return isset( $input['alert_color'] ) ? $input['alert_color'] : 'info';
-	}
-
-	/**
-	 * Validate Minimum User Profile.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string A valid role slug, defaulting to 'editor'.
-	 */
-	private function validate_minimum_user_profile( array $input ) {
-		$roles = wp_roles()->get_names();
-		if ( isset( $input['minimum_user_profile'] ) && ! array_key_exists( $input['minimum_user_profile'], $roles ) ) {
-			return 'editor'; // Default to editor if invalid.
-		}
-
-		return isset( $input['minimum_user_profile'] ) ? $input['minimum_user_profile'] : 'editor';
-	}
-
-	/**
-	 * Validate Alert Message.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The filtered alert message, or '' when absent.
-	 */
-	private function validate_alert_message( array $input ) {
-		return isset( $input['alert_message'] ) ? wp_kses_post( $input['alert_message'] ) : '';
-	}
-
-	/**
-	 * Validate Ignored Users.
-	 *
-	 * Keeps numeric user IDs that resolve to an existing user, dropping the rest,
-	 * and stores a transient when numeric-but-nonexistent IDs are present.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string A comma-separated list of valid user IDs, or '' when absent/none.
-	 */
-	private function validate_ignored_users( array $input ) {
-		// Initialize ignored_users if not set.
-		if ( ! isset( $input['ignored_users'] ) ) {
-			return '';
-		}
-
-		// Validate ignored users if not empty.
-		if ( empty( $input['ignored_users'] ) ) {
-			return $input['ignored_users'];
-		}
-
-		$user_ids = array_map( 'trim', explode( ',', $input['ignored_users'] ) );
-		$valid_user_ids = array();
-		$invalid_user_ids = array();
-
-		foreach ( $user_ids as $user_id ) {
-			if ( is_numeric( $user_id ) ) {
-				if ( get_user_by( 'id', $user_id ) ) {
-					$valid_user_ids[] = $user_id;
-				} else {
-					$invalid_user_ids[] = $user_id;
-				}
-			}
-		}
-
-		// Set transient if there were invalid IDs.
-		if ( ! empty( $invalid_user_ids ) ) {
-			set_transient( 'decker_invalid_user_ids', $invalid_user_ids, 45 );
-		}
-
-		return ! empty( $valid_user_ids ) ? implode( ',', $valid_user_ids ) : '';
+		return $this->validator->validate( $input, get_option( 'decker_settings', array() ) );
 	}
 }

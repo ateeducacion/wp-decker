@@ -30,7 +30,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	 */
 	public function test_sidebar_board_status_render_is_browser_local() {
 		ob_start();
-		$this->admin_settings->sidebar_board_status_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'sidebar_board_status' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'id="sidebar-board-status-check"', $output );
@@ -360,7 +360,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		update_option( 'decker_settings', array( 'collaborative_editing' => '0' ) );
 
 		ob_start();
-		$this->admin_settings->collaborative_editing_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'collaborative_editing' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[collaborative_editing]"', $output );
@@ -375,7 +375,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		update_option( 'decker_settings', array( 'collaborative_editing' => '1' ) );
 
 		ob_start();
-		$this->admin_settings->collaborative_editing_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'collaborative_editing' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[collaborative_editing]"', $output );
@@ -389,7 +389,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		update_option( 'decker_settings', array() );
 
 		ob_start();
-		$this->admin_settings->ai_enabled_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_enabled' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[ai_enabled]"', $output );
@@ -403,7 +403,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		update_option( 'decker_settings', array() );
 
 		ob_start();
-		$this->admin_settings->ai_prompt_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_prompt' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[ai_prompt]"', $output );
@@ -429,7 +429,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		);
 
 		ob_start();
-		$this->admin_settings->ai_api_key_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_api_key' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[ai_api_key]"', $output );
@@ -453,7 +453,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		);
 
 		ob_start();
-		$this->admin_settings->ai_provider_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_provider' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'browser_gemini_nano', $output );
@@ -468,7 +468,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		update_option( 'decker_settings', array() );
 
 		ob_start();
-		$this->admin_settings->signaling_server_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'signaling_server' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'name="decker_settings[signaling_server]"', $output );
@@ -483,7 +483,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		update_option( 'decker_settings', array( 'signaling_server' => 'wss://custom-server.example.com' ) );
 
 		ob_start();
-		$this->admin_settings->signaling_server_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'signaling_server' ) );
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'value="wss://custom-server.example.com"', $output );
@@ -516,7 +516,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		// Start output buffering.
 		ob_start();
-		$this->admin_settings->shared_key_render();
+		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'shared_key' ) );
 		$output = ob_get_clean();
 
 		// Retrieve the updated option.

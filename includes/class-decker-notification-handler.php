@@ -18,36 +18,38 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Decker_Notification_Handler {
 
 	/**
-	 * Maximum notifications to keep in user meta.
-	 *
-	 * @var int
-	 */
-	const MAX_NOTIFICATIONS = 15;
-
-	/**
 	 * The mailer instance.
 	 *
 	 * @var Decker_Mailer
 	 */
 	public $mailer;
 
+	/**
+	 * The notification store.
+	 *
+	 * @var Decker_Notification_Store
+	 */
+	private $store;
+
 
 	/**
 	 * Constructor
+	 *
+	 * Both collaborators can be injected so tests exercise the exact instances
+	 * the handler persists through, instead of parallel ones that would
+	 * register the Heartbeat and AJAX hooks a second time.
+	 *
+	 * @param Decker_Notification_Store|null $store Optional store to persist through.
+	 * @param Decker_Notification_Ajax|null  $ajax  Optional browser-facing side; when given, its hooks are already registered and no second instance is created.
 	 */
-	public function __construct() {
+	public function __construct( $store = null, $ajax = null ) {
 		$this->mailer = new Decker_Mailer();
+		$this->store  = $store instanceof Decker_Notification_Store ? $store : new Decker_Notification_Store();
 
-		// Heartbeat hook.
-		add_filter( 'heartbeat_received', array( $this, 'heartbeat_received' ), 10, 3 );
-
-		add_filter( 'heartbeat_settings', array( $this, 'modify_heartbeat_settings' ), 10, 1 );
-
-		// AJAX hooks.
-		add_action( 'wp_ajax_get_decker_notifications', array( $this, 'ajax_get_decker_notifications' ) );
-		add_action( 'wp_ajax_clear_decker_notifications', array( $this, 'ajax_clear_decker_notifications' ) );
-		add_action( 'wp_ajax_remove_decker_notification', array( $this, 'ajax_remove_decker_notification' ) );
-		add_action( 'wp_ajax_send_test_notification', array( $this, 'ajax_send_test_notification' ) );
+		if ( ! $ajax instanceof Decker_Notification_Ajax ) {
+			// The browser-facing side (Heartbeat + AJAX) registers its own hooks.
+			new Decker_Notification_Ajax( $this->store );
+		}
 
 		// Triggered when a new task is created.
 		add_action( 'decker_task_created', array( $this, 'handle_task_created' ) );
@@ -64,20 +66,6 @@ class Decker_Notification_Handler {
 		// Triggered when a responsable is changed.
 		add_action( 'decker_task_responsable_changed', array( $this, 'handle_responsable_changed' ), 10, 3 );
 	}
-
-	/**
-	 * Modifies the WordPress Heartbeat settings.
-	 *
-	 * Adjusts the heartbeat interval to n seconds.
-	 *
-	 * @param array $settings The existing Heartbeat settings.
-	 * @return array Modified Heartbeat settings with a new interval.
-	 */
-	public function modify_heartbeat_settings( $settings ) {
-		$settings['interval'] = 15; // Changed to 15 seconds.
-		return $settings;
-	}
-
 
 	/**
 	 * Checks if email notifications are enabled in the plugin settings.
@@ -198,7 +186,7 @@ class Decker_Notification_Handler {
 			}
 
 			// Store notification in user meta for Heartbeat and UI.
-			$this->add_notification_to_user(
+			$this->store->add_notification_to_user(
 				$user_id,
 				array(
 					'type'       => 'task_created',
@@ -266,7 +254,7 @@ class Decker_Notification_Handler {
 		/* error_log( 'Adding notification in handle_user_assigned() for user: ' . $user_id ); */
 
 		// Store notification in user meta for Heartbeat and UI.
-		$this->add_notification_to_user(
+		$this->store->add_notification_to_user(
 			$user_id,
 			array(
 				'type'       => 'task_assigned',
@@ -357,7 +345,7 @@ class Decker_Notification_Handler {
 		$finisher_name = $finisher ? $finisher->display_name : __( 'Unknown user', 'decker' );
 
 		// Store notification in user meta for Heartbeat and UI.
-		$this->add_notification_to_user(
+		$this->store->add_notification_to_user(
 			$user_id,
 			array(
 				'type'       => 'task_completed',
@@ -440,7 +428,7 @@ class Decker_Notification_Handler {
 		$author_name = $author ? $author->display_name : __( 'Unknown user', 'decker' );
 
 		// Store notification in user meta for Heartbeat and UI.
-		$this->add_notification_to_user(
+		$this->store->add_notification_to_user(
 			$user_id,
 			array(
 				'type'    => 'task_comment',
@@ -503,347 +491,5 @@ class Decker_Notification_Handler {
 			$old_responsible,
 			$new_user->display_name
 		);
-	}
-
-	/**
-	 * Process data from the Heartbeat API and add notifications to the response.
-	 *
-	 * @param array       $response Response data.
-	 * @param array       $data Data sent by the client.
-	 * @param string|null $screen_id Screen ID or null.
-	 *
-	 * @return array Modified response data with decker_notifications if any.
-	 */
-	public function heartbeat_received( $response, $data, $screen_id ) {
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			return $response;
-		}
-
-		$pending = $this->get_notifications_meta( $user_id, 'decker_pending_notifications' );
-		if ( empty( $pending ) ) {
-			return $response;
-		}
-
-		$response['decker_notifications'] = array();
-
-		foreach ( $pending as $notification ) {
-			// Prepare data for JS.
-			$response['decker_notifications'][] = $this->format_notification_for_heartbeat( $notification );
-		}
-
-		// Clear pending after sending them once.
-		delete_user_meta( $user_id, 'decker_pending_notifications' );
-
-		return $response;
-	}
-
-	/**
-	 * AJAX: Return the last 15 notifications from user meta.
-	 */
-	public function ajax_get_decker_notifications() {
-		check_ajax_referer( 'heartbeat-nonce', false, false ); // Optional, adjust if needed.
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			wp_send_json_error( 'Not logged in' );
-		}
-
-		$all_notifications = $this->get_notifications_meta( $user_id, 'decker_all_notifications' );
-
-		// Reverse so newest is at the front.
-		usort(
-			$all_notifications,
-			function ( $a, $b ) {
-				return strtotime( $a['time'] ) - strtotime( $b['time'] );
-			}
-		);
-		// Return only the last 15 (most recent first).
-		$last_notifications = array_slice( $all_notifications, 0, self::MAX_NOTIFICATIONS );
-
-		// Map them to the same structure used in JS.
-		$formatted = array();
-		foreach ( $last_notifications as $notification ) {
-			$formatted[] = $this->format_notification_for_client( $notification, 'Notification' );
-		}
-
-		wp_send_json_success( $formatted );
-	}
-
-	/**
-	 * AJAX: Clear all notifications for current user.
-	 */
-	public function ajax_clear_decker_notifications() {
-		check_ajax_referer( 'heartbeat-nonce', false, false ); // Optional, adjust if needed.
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			wp_send_json_error( 'Not logged in' );
-		}
-
-		delete_user_meta( $user_id, 'decker_all_notifications' );
-		delete_user_meta( $user_id, 'decker_pending_notifications' );
-		wp_send_json_success( 'All notifications cleared' );
-	}
-
-	/**
-	 * Removes a specific notification from user meta.
-	 *
-	 * @param int   $user_id User ID.
-	 * @param array $notification Notification data to remove.
-	 */
-	public function remove_notification_from_user( $user_id, $notification ) {
-		if ( ! $user_id ) {
-			return;
-		}
-
-		$all_notifications = get_user_meta( $user_id, 'decker_all_notifications', true );
-		if ( ! is_array( $all_notifications ) ) {
-			return;
-		}
-
-		$notification_id = isset( $notification['notification_id'] )
-			? sanitize_text_field( $notification['notification_id'] )
-			: '';
-
-		// Remove the notification matching type and task_id (if applicable).
-		$filtered = array_filter(
-			$all_notifications,
-			function ( $stored_notification ) use ( $notification, $notification_id ) {
-				if ( $notification_id ) {
-					return $this->get_notification_id( $stored_notification ) !== $notification_id;
-				}
-
-				return (
-					$stored_notification['type'] !== $notification['type']
-					|| ( isset( $stored_notification['task_id'] )
-					&& $stored_notification['task_id'] !== $notification['task_id'] )
-				);
-			}
-		);
-
-		update_user_meta( $user_id, 'decker_all_notifications', array_values( $filtered ) );
-	}
-
-	/**
-	 * AJAX: Remove one notification that has a matching task_id.
-	 */
-	public function ajax_remove_decker_notification() {
-		check_ajax_referer( 'heartbeat-nonce', false, false ); // Optional, adjust if needed.
-		$user_id = get_current_user_id();
-		if ( ! $user_id ) {
-			wp_send_json_error( 'Not logged in' );
-		}
-
-		$task_id         = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0;
-		$type            = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-		$notification_id = isset( $_POST['notification_id'] )
-			? sanitize_text_field( wp_unslash( $_POST['notification_id'] ) )
-			: '';
-
-		if ( ! $task_id && ! $type && ! $notification_id ) {
-			wp_send_json_error( 'No valid identifier provided' );
-		}
-
-		$notification_to_remove = array(
-			'type'            => $type,
-			'task_id'         => $task_id,
-			'notification_id' => $notification_id,
-		);
-		$this->remove_notification_from_user( $user_id, $notification_to_remove );
-
-		wp_send_json_success( 'Notification removed' );
-	}
-
-	/**
-	 * AJAX: Send test notification to all users (admin only).
-	 */
-	public function ajax_send_test_notification() {
-		check_ajax_referer( 'heartbeat-nonce', false, false );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( 'No permission' );
-		}
-
-		$message = isset( $_POST['message'] ) ? sanitize_text_field( wp_unslash( $_POST['message'] ) ) : '';
-		$user_id = isset( $_POST['user_id'] ) ? sanitize_text_field( wp_unslash( $_POST['user_id'] ) ) : 'all';
-		$type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : 'info';
-
-		if ( empty( $message ) ) {
-			wp_send_json_error( 'Message cannot be empty' );
-		}
-
-		// Determine the users to notify.
-		$users_to_notify = ( 'all' === $user_id ) ? get_users( array( 'fields' => 'ID' ) ) : array( $user_id );
-
-		foreach ( $users_to_notify as $uid ) {
-			$this->add_notification_to_user(
-				$uid,
-				array(
-					'type'       => $type,
-					'task_id'    => 0,
-					'title'      => $message,
-					'action'     => 'Manual Notification',
-					'time'       => gmdate( 'Y-m-d H:i:s' ),
-					'url'        => '#',
-				)
-			);
-		}
-
-		wp_send_json_success( 'Notification sent successfully' );
-	}
-
-	/**
-	 * Add a notification to a user's "all notifications" meta,
-	 * and also store it in "pending" so Heartbeat can push it once.
-	 *
-	 * @param int   $user_id  User ID.
-	 * @param array $notification Notification data.
-	 */
-	public function add_notification_to_user( $user_id, $notification ) {
-		if ( ! $user_id ) {
-			return;
-		}
-
-		$notification['notification_id'] = $this->get_notification_id( $notification );
-
-		// Save to "all notifications".
-		$all_notifications = get_user_meta( $user_id, 'decker_all_notifications', true );
-		if ( ! is_array( $all_notifications ) ) {
-			$all_notifications = array();
-		}
-
-		// Append this new item at the end so we can limit by self::MAX_NOTIFICATIONS.
-		$all_notifications[] = $notification;
-
-		// Prune if over limit.
-		if ( count( $all_notifications ) > self::MAX_NOTIFICATIONS ) {
-			// Remove the oldest.
-			array_shift( $all_notifications );
-		}
-		update_user_meta( $user_id, 'decker_all_notifications', $all_notifications );
-
-		// Also store it in pending so it is sent via Heartbeat next cycle.
-		$pending = get_user_meta( $user_id, 'decker_pending_notifications', true );
-		if ( ! is_array( $pending ) ) {
-			$pending = array();
-		}
-
-		$pending[] = $notification;
-		update_user_meta( $user_id, 'decker_pending_notifications', $pending );
-	}
-
-	/**
-	 * Gets a stable identifier for a notification.
-	 *
-	 * @param array $notification Notification data.
-	 * @return string
-	 */
-	private function get_notification_id( $notification ) {
-		if ( ! empty( $notification['notification_id'] ) ) {
-			return sanitize_text_field( $notification['notification_id'] );
-		}
-
-		$identifier_data = array(
-			'type'    => isset( $notification['type'] ) ? (string) $notification['type'] : '',
-			'task_id' => isset( $notification['task_id'] ) ? (string) $notification['task_id'] : '',
-			'title'   => isset( $notification['title'] ) ? (string) $notification['title'] : '',
-			'action'  => isset( $notification['action'] ) ? (string) $notification['action'] : '',
-			'time'    => isset( $notification['time'] ) ? (string) $notification['time'] : '',
-			'url'     => isset( $notification['url'] ) ? (string) $notification['url'] : '',
-		);
-
-		return md5( wp_json_encode( $identifier_data ) );
-	}
-
-	/**
-	 * Retrieves a notifications meta value, normalized to an array.
-	 *
-	 * @param int    $user_id  The user ID.
-	 * @param string $meta_key The user meta key to read.
-	 * @return array The stored notifications, or an empty array when none are stored.
-	 */
-	private function get_notifications_meta( $user_id, $meta_key ) {
-		$notifications = get_user_meta( $user_id, $meta_key, true );
-		if ( ! is_array( $notifications ) ) {
-			return array();
-		}
-
-		return $notifications;
-	}
-
-	/**
-	 * Maps a stored notification to the structure consumed by the JS client.
-	 *
-	 * @param array  $notification  Notification data.
-	 * @param string $default_title Title fallback when the notification has none.
-	 * @return array The formatted notification payload.
-	 */
-	private function format_notification_for_client( $notification, $default_title ) {
-		return array(
-			'notificationId' => $this->get_notification_id( $notification ),
-			'url'       => isset( $notification['url'] ) ? $notification['url'] : '#',
-			'taskId'    => isset( $notification['task_id'] ) ? $notification['task_id'] : 0,
-			'iconColor' => $this->get_icon_color_by_type( $notification['type'] ),
-			'iconClass' => $this->get_icon_class_by_type( $notification['type'] ),
-			'title'     => isset( $notification['title'] ) ? $notification['title'] : $default_title,
-			'action'    => isset( $notification['action'] ) ? $notification['action'] : '',
-			'time'      => isset( $notification['time'] ) ? $notification['time'] : '',
-		);
-	}
-
-	/**
-	 * Maps a stored notification to the Heartbeat payload structure.
-	 *
-	 * Adds the heartbeat-only 'type' key and uses the heartbeat default title.
-	 *
-	 * @param array $notification Notification data.
-	 * @return array The formatted Heartbeat notification payload.
-	 */
-	private function format_notification_for_heartbeat( $notification ) {
-		$formatted         = $this->format_notification_for_client( $notification, 'New Notification' );
-		$formatted['type'] = isset( $notification['type'] ) ? $notification['type'] : '';
-
-		return $formatted;
-	}
-
-	/**
-	 * Maps notification type to icon color.
-	 *
-	 * @param string $type Notification type.
-	 * @return string
-	 */
-	private function get_icon_color_by_type( $type ) {
-		switch ( $type ) {
-			case 'task_created':
-				return 'primary';
-			case 'task_assigned':
-				return 'warning';
-			case 'task_completed':
-				return 'success';
-			case 'task_comment':
-				return 'info';
-			default:
-				return 'primary';
-		}
-	}
-
-	/**
-	 * Maps notification type to icon class.
-	 *
-	 * @param string $type Notification type.
-	 * @return string
-	 */
-	private function get_icon_class_by_type( $type ) {
-		switch ( $type ) {
-			case 'task_created':
-				return 'ri-add-line';
-			case 'task_assigned':
-				return 'ri-user-add-line';
-			case 'task_completed':
-				return 'ri-checkbox-circle-line';
-			case 'task_comment':
-				return 'ri-message-3-line';
-			default:
-				return 'ri-information-line';
-		}
 	}
 }

@@ -15,6 +15,20 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	private $notifications;
 
 	/**
+	 * Notification store under test.
+	 *
+	 * @var Decker_Notification_Store
+	 */
+	private $store;
+
+	/**
+	 * Browser-facing notification endpoints under test.
+	 *
+	 * @var Decker_Notification_Ajax
+	 */
+	private $ajax;
+
+	/**
 	 * Test user ID.
 	 *
 	 * @var int
@@ -82,8 +96,12 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Initialize the notifications handler.
-		$this->notifications = new Decker_Notification_Handler();
+		// Initialize the notifications stack. The store and ajax instances are
+		// injected into the handler so the tests drive the same objects the
+		// handler persists through, and the Heartbeat/AJAX hooks register once.
+		$this->store         = new Decker_Notification_Store();
+		$this->ajax          = new Decker_Notification_Ajax( $this->store );
+		$this->notifications = new Decker_Notification_Handler( $this->store, $this->ajax );
 
 		// Track hooks being fired.
 		add_action( 'decker_user_assigned', array( $this, 'track_hook' ), 10, 2 );
@@ -142,7 +160,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$response = array();
 		$data     = array();
 
-		$result = $this->notifications->heartbeat_received( $response, $data, null );
+		$result = $this->ajax->heartbeat_received( $response, $data, null );
 
 		$this->assertEquals( $response, $result, 'Response should not be modified when no notifications exist.' );
 	}
@@ -167,7 +185,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 		$response = array();
 		$data     = array();
 
-		$result = $this->notifications->heartbeat_received( $response, $data, null );
+		$result = $this->ajax->heartbeat_received( $response, $data, null );
 
 		$this->assertArrayHasKey( 'decker_notifications', $result, 'Response should include notifications.' );
 		$this->assertCount( 1, $result['decker_notifications'], 'Response should include exactly one notification.' );
@@ -427,7 +445,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			'url'     => '#',
 		);
 
-		$this->notifications->add_notification_to_user( $this->test_user, $notification );
+		$this->store->add_notification_to_user( $this->test_user, $notification );
 
 		$all_notifications = get_user_meta( $this->test_user, 'decker_all_notifications', true );
 
@@ -463,7 +481,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			array( $first_notification, $second_notification )
 		);
 
-		$this->notifications->remove_notification_from_user(
+		$this->store->remove_notification_from_user(
 			$this->test_user,
 			array(
 				'notification_id' => 'notification-1',
@@ -488,7 +506,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		wp_set_current_user( 0 );
 
-		$result = $this->notifications->heartbeat_received( array( 'foo' => 'bar' ), array(), null );
+		$result = $this->ajax->heartbeat_received( array( 'foo' => 'bar' ), array(), null );
 
 		$this->assertSame( array( 'foo' => 'bar' ), $result, 'Anonymous heartbeat should return the response untouched.' );
 		$this->assertNotEmpty(
@@ -510,7 +528,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		$result = $this->notifications->heartbeat_received( array(), array(), null );
+		$result = $this->ajax->heartbeat_received( array(), array(), null );
 
 		$items = $result['decker_notifications'];
 
@@ -537,7 +555,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			array( array( 'type' => 'task_created' ) )
 		);
 
-		$result = $this->notifications->heartbeat_received( array( 'existing' => 1 ), array(), null );
+		$result = $this->ajax->heartbeat_received( array( 'existing' => 1 ), array(), null );
 
 		$this->assertSame( 1, $result['existing'], 'Existing response key should be preserved.' );
 		$this->assertCount( 1, $result['decker_notifications'], 'Should format exactly one notification.' );
@@ -549,6 +567,11 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 	/**
 	 * Locks the CURRENT ascending sort + front slice for the AJAX endpoint.
+	 *
+	 * This documents a bug rather than endorsing it: the endpoint's comments
+	 * promise newest-first but the code returns oldest-first and drops the
+	 * newest entries once over the cap. Tracked in issue #293 — when that is
+	 * fixed, this test must flip with it.
 	 */
 	public function test_ajax_get_notifications_returns_oldest_first_and_caps_at_15() {
 		$notifications = array();
@@ -565,7 +588,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		ob_start();
 		try {
-			$this->notifications->ajax_get_decker_notifications();
+			$this->ajax->ajax_get_decker_notifications();
 		} catch ( WPDieException $e ) {
 			$e->getMessage();
 		}
@@ -596,7 +619,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		ob_start();
 		try {
-			$this->notifications->ajax_get_decker_notifications();
+			$this->ajax->ajax_get_decker_notifications();
 		} catch ( WPDieException $e ) {
 			$e->getMessage();
 		}
@@ -618,7 +641,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		ob_start();
 		try {
-			$this->notifications->ajax_get_decker_notifications();
+			$this->ajax->ajax_get_decker_notifications();
 		} catch ( WPDieException $e ) {
 			$e->getMessage();
 		}
@@ -931,7 +954,7 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			'url'     => '#',
 		);
 
-		$this->notifications->add_notification_to_user( $this->test_user, $notification );
+		$this->store->add_notification_to_user( $this->test_user, $notification );
 
 		$all      = get_user_meta( $this->test_user, 'decker_all_notifications', true );
 		$expected = md5(
