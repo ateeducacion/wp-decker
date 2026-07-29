@@ -54,9 +54,9 @@ class Decker_Tasks_Rest_Ops {
 			'target_order'  => array( 'required' => true ),
 		);
 
-		// The order and fix-order rows still dispatch to Decker_Tasks until the
-		// order engine moves to its own class (PR C), so they give the resolved
-		// callable directly instead of a method name on this controller.
+		// The order and fix-order rows give the resolved callable on the order
+		// engine reached via $this->tasks->get_order_engine(), instead of a
+		// method name on this controller.
 		$routes = array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/order',
