@@ -370,5 +370,4 @@ class Task {
 
 		return false;
 	}
-
 }

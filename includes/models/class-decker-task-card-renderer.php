@@ -28,6 +28,8 @@ class Decker_Task_Card_Renderer {
 	private $task;
 
 	/**
+	 * Store the task the card is rendered for.
+	 *
 	 * @param Task $task The task being rendered.
 	 */
 	public function __construct( Task $task ) {

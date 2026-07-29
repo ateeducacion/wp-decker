@@ -25,6 +25,8 @@ class Decker_Task_Menu_Renderer {
 	private $task;
 
 	/**
+	 * Store the task the menu is rendered for.
+	 *
 	 * @param Task $task The task the menu is rendered for.
 	 */
 	public function __construct( Task $task ) {

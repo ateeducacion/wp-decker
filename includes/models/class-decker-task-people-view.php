@@ -26,6 +26,8 @@ class Decker_Task_People_View {
 	private $task;
 
 	/**
+	 * Store the task being inspected.
+	 *
 	 * @param Task $task The task being inspected.
 	 */
 	public function __construct( Task $task ) {
