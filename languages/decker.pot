@@ -1128,27 +1128,6 @@ msgstr ""
 msgid "Board deleted successfully"
 msgstr ""
 
-msgid "You do not have permission to manage labels"
-msgstr ""
-
-msgid "Label updated successfully"
-msgstr ""
-
-msgid "Label created successfully"
-msgstr ""
-
-msgid "You do not have permission to delete labels"
-msgstr ""
-
-msgid "Label deleted successfully"
-msgstr ""
-
-msgid "Invalid post type."
-msgstr ""
-
-msgid "No due date"
-msgstr ""
-
 msgid "🔥"
 msgstr ""
 
@@ -1179,6 +1158,9 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid "Close"
+msgstr ""
+
+msgid "No due date"
 msgstr ""
 
 msgid "Copy Task URL"
@@ -1212,6 +1194,24 @@ msgid "Mark for today"
 msgstr ""
 
 msgid "Unmark for today"
+msgstr ""
+
+msgid "You do not have permission to manage labels"
+msgstr ""
+
+msgid "Label updated successfully"
+msgstr ""
+
+msgid "Label created successfully"
+msgstr ""
+
+msgid "You do not have permission to delete labels"
+msgstr ""
+
+msgid "Label deleted successfully"
+msgstr ""
+
+msgid "Invalid post type."
 msgstr ""
 
 msgid "Analytics Dashboard"

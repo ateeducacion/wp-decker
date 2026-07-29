@@ -89,7 +89,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['to-do'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card( true ); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -103,7 +103,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['in-progress'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card( true ); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 
@@ -117,7 +117,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['done'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card( true ); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card( true ); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											

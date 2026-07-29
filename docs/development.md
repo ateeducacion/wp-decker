@@ -107,6 +107,9 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Tasks` `$_POST` readers | `Decker_Task_Request_Reader` |
 | `Decker_Tasks::add_user_date_relation()` / `remove_user_date_relation()` | `Decker_Task_Today_Manager::mark_for_today()` / `unmark_for_today()` |
 | `Decker_Tasks::create_or_update_task()` and the write pipeline | `Decker_Task_Writer::create_or_update_task( array $args )` — signature changed, no delegator |
+| `Task::render_task_card()` and the card display helpers (`get_card_background_style()`, `get_due_css_class()`, `render_card_board_name()`, `render_card_comments_counter()`, `render_card_labels_counter()`, `render_people_avatars()`, `get_relative_time()`, `get_formatted_date()`, `pastelize_color()`) | `Decker_Task_Card_Renderer` — `pastelize_color()` became a public static (parameter-pure); `get_relative_time()` / `get_formatted_date()` stay public instance methods |
+| `Task::render_task_menu()` and the menu-item builders (`get_menu_task_url()`, `get_admin_menu_items()`, `get_owner_menu_items()`, `get_archive_menu_item()`, `get_assignment_menu_items()`, `print_menu_dropdown()`) | `Decker_Task_Menu_Renderer` |
+| `Task::get_people_users()` / `get_people_names()` / `get_user_history_with_objects()` | `Decker_Task_People_View` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:
 

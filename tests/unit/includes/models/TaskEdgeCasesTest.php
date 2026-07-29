@@ -86,18 +86,14 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * A null color argument returns the default fallback grey.
 	 */
 	public function test_pastelize_color_with_null_returns_default() {
-		$task = new Task();
-
-		$this->assertSame( '#cccccc', $task->pastelize_color( null ) );
+		$this->assertSame( '#cccccc', Decker_Task_Card_Renderer::pastelize_color( null ) );
 	}
 
 	/**
 	 * An empty string returns the default fallback grey.
 	 */
 	public function test_pastelize_color_with_empty_string_returns_default() {
-		$task = new Task();
-
-		$this->assertSame( '#cccccc', $task->pastelize_color( '' ) );
+		$this->assertSame( '#cccccc', Decker_Task_Card_Renderer::pastelize_color( '' ) );
 	}
 
 	/**
@@ -105,19 +101,15 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * the default fallback grey.
 	 */
 	public function test_pastelize_color_with_three_char_hex_returns_default() {
-		$task = new Task();
-
-		$this->assertSame( '#cccccc', $task->pastelize_color( '#f00' ) );
+		$this->assertSame( '#cccccc', Decker_Task_Card_Renderer::pastelize_color( '#f00' ) );
 	}
 
 	/**
 	 * A valid 6-character hex color is averaged with white and returned.
 	 */
 	public function test_pastelize_color_with_valid_hex_blends_with_white() {
-		$task = new Task();
-
 		// #000000 averaged with #ffffff → #7f7f7f (128, 128, 128 → #808080).
-		$result = $task->pastelize_color( '#000000' );
+		$result = Decker_Task_Card_Renderer::pastelize_color( '#000000' );
 
 		$this->assertMatchesRegularExpression( '/^#[0-9a-f]{6}$/', $result );
 		// Result must be lighter than the original colour.
@@ -129,10 +121,8 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * A hex colour without the leading hash is also handled correctly.
 	 */
 	public function test_pastelize_color_accepts_hex_without_hash() {
-		$task = new Task();
-
-		$result_with    = $task->pastelize_color( '#ffffff' );
-		$result_without = $task->pastelize_color( 'ffffff' );
+		$result_with    = Decker_Task_Card_Renderer::pastelize_color( '#ffffff' );
+		$result_without = Decker_Task_Card_Renderer::pastelize_color( 'ffffff' );
 
 		$this->assertSame( $result_with, $result_without );
 	}
@@ -150,7 +140,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( '', $task->get_formatted_date() );
+		$this->assertSame( '', ( new Decker_Task_Card_Renderer( $task ) )->get_formatted_date() );
 	}
 
 	/**
@@ -163,7 +153,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( '2025-06-15', $task->get_formatted_date() );
+		$this->assertSame( '2025-06-15', ( new Decker_Task_Card_Renderer( $task ) )->get_formatted_date() );
 	}
 
 	// -----------------------------------------------------------------------
@@ -179,7 +169,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( __( 'No due date', 'decker' ), $task->get_relative_time() );
+		$this->assertSame( __( 'No due date', 'decker' ), ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 	}
 
 	/**
@@ -191,7 +181,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( __( 'Today', 'decker' ), $task->get_relative_time() );
+		$this->assertSame( __( 'Today', 'decker' ), ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 	}
 
 	/**
@@ -203,7 +193,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( __( 'Yesterday', 'decker' ), $task->get_relative_time() );
+		$this->assertSame( __( 'Yesterday', 'decker' ), ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 	}
 
 	/**
@@ -215,7 +205,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( __( 'Tomorrow', 'decker' ), $task->get_relative_time() );
+		$this->assertSame( __( 'Tomorrow', 'decker' ), ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 	}
 
 	/**
@@ -227,7 +217,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertStringContainsString( 'ago', $task->get_relative_time() );
+		$this->assertStringContainsString( 'ago', ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 	}
 
 	/**
@@ -239,7 +229,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertStringContainsString( 'in', $task->get_relative_time() );
+		$this->assertStringContainsString( 'in', ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 	}
 
 	// -----------------------------------------------------------------------
@@ -255,7 +245,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( array(), $task->get_user_history_with_objects() );
+		$this->assertSame( array(), ( new Decker_Task_People_View( $task ) )->get_user_history_with_objects() );
 	}
 
 	/**
@@ -278,7 +268,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 
 		$task = new Task( $task_id );
 
-		$this->assertSame( array(), $task->get_user_history_with_objects() );
+		$this->assertSame( array(), ( new Decker_Task_People_View( $task ) )->get_user_history_with_objects() );
 	}
 
 	/**
@@ -300,7 +290,7 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 		);
 
 		$task    = new Task( $task_id );
-		$history = $task->get_user_history_with_objects();
+		$history = ( new Decker_Task_People_View( $task ) )->get_user_history_with_objects();
 
 		$this->assertCount( 1, $history );
 		$this->assertInstanceOf( WP_User::class, $history[0]['user'] );

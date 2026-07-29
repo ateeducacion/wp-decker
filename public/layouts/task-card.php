@@ -268,7 +268,7 @@ require_once __DIR__ . '/partials/task-comments.php';
 		<!-- Due date -->
 		<div class="col-md-3 mb-3">
 			<div class="form-floating">
-				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( $task->get_formatted_date() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
+				<input class="form-control" id="task-due-date" type="date" name="date" value="<?php echo esc_attr( ( new Decker_Task_Card_Renderer( $task ) )->get_formatted_date() ); ?>" placeholder="<?php esc_attr_e( 'Select date', 'decker' ); ?>" required <?php disabled( $disabled ); ?>>
 				<label class="form-label" for="task-due-date"><?php esc_html_e( 'Due Date', 'decker' ); ?></label>
 				<div class="invalid-feedback"><?php esc_html_e( 'Please select a due date.', 'decker' ); ?></div>
 			</div>
@@ -446,7 +446,7 @@ require_once __DIR__ . '/partials/task-comments.php';
 				</thead>
 				<tbody>
 					<?php
-					$history = $task->get_user_history_with_objects();
+					$history = ( new Decker_Task_People_View( $task ) )->get_user_history_with_objects();
 					$timeline_data                = array();
 					foreach ( $history as $record ) {
 						$user      = $record['user'];
@@ -655,7 +655,7 @@ foreach ( $user_dates as $user_id => $dates ) {
 			</button>
 			<?php
 			if ( $task_id ) {
-				$task->render_task_menu( true );
+				( new Decker_Task_Menu_Renderer( $task ) )->render_task_menu( true );
 			}
 			?>
 

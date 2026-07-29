@@ -146,7 +146,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['delayed'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card(); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -160,7 +160,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['today'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card(); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 
@@ -174,7 +174,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['tomorrow'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card(); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
@@ -187,7 +187,7 @@ foreach ( $tasks as $task ) {
 
 											<?php foreach ( $columns['next-7-days'] as $task ) : ?>
 											<!-- Task Item -->
-												<?php $task->render_task_card(); ?>
+												<?php ( new Decker_Task_Card_Renderer( $task ) )->render_task_card(); ?>
 											<!-- Task Item End -->
 											<?php endforeach; ?>
 											
