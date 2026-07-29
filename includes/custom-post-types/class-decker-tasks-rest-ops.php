@@ -61,14 +61,14 @@ class Decker_Tasks_Rest_Ops {
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/order',
 				'methods'    => 'PUT',
-				'callback'   => array( $this->tasks, 'update_task_stack_and_order' ),
+				'callback'   => array( $this->tasks->get_order_engine(), 'update_task_stack_and_order' ),
 				'permission' => 'minimum_role',
 				'args'       => $order_args,
 			),
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/stack',
 				'methods'    => 'PUT',
-				'callback'   => array( $this->tasks, 'update_task_stack_and_order' ),
+				'callback'   => array( $this->tasks->get_order_engine(), 'update_task_stack_and_order' ),
 				'permission' => 'minimum_role',
 				'args'       => $order_args,
 			),
@@ -87,7 +87,7 @@ class Decker_Tasks_Rest_Ops {
 			array(
 				'route'      => '/fix-order/(?P<board_id>\d+)',
 				'methods'    => 'POST',
-				'callback'   => array( $this->tasks, 'handle_fix_order' ),
+				'callback'   => array( $this->tasks->get_order_engine(), 'handle_fix_order' ),
 				'permission' => 'manage_options',
 			),
 			array(

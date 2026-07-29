@@ -36,6 +36,9 @@ class Decker_Tasks {
 		new Decker_Tasks_Rest_Today( $this );
 		new Decker_Tasks_Rest_Ops( $this );
 		new Decker_Tasks_Rest_Tools( $this );
+
+		// Ordering reactions to WordPress events own their own hooks.
+		new Decker_Task_Order_Hooks( $this->get_order_engine() );
 	}
 
 	/**
@@ -72,6 +75,25 @@ class Decker_Tasks {
 	}
 
 	/**
+	 * Stack/order engine, created on first use.
+	 *
+	 * @var Decker_Task_Order|null
+	 */
+	private $order_engine = null;
+
+	/**
+	 * The stack/order engine for tasks.
+	 *
+	 * @return Decker_Task_Order
+	 */
+	public function get_order_engine(): Decker_Task_Order {
+		if ( null === $this->order_engine ) {
+			$this->order_engine = new Decker_Task_Order( $this );
+		}
+		return $this->order_engine;
+	}
+
+	/**
 	 * Define Hooks.
 	 *
 	 * Registers all the hooks related to the decker_task custom post type.
@@ -102,8 +124,6 @@ class Decker_Tasks {
 		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
 		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
 
-		add_filter( 'wp_insert_post_data', array( $this, 'modify_task_order_before_save' ), 10, 4 );
-
 		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
 
 		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
@@ -112,19 +132,6 @@ class Decker_Tasks {
 		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
 		add_filter( 'wp_unique_filename', array( $this, 'custom_unique_filename' ), 10, 4 );
-
-		add_action( 'set_object_terms', array( $this, 'handle_board_change_reorder' ), 10, 6 );
-
-		// Reorder when only the 'stack' meta is changed.
-		add_action( 'updated_post_meta', array( $this, 'handle_stack_change_reorder' ), 10, 4 );
-
-		// Also capture when the meta is added for the first time.
-		add_action(
-			'added_post_meta',
-			array( $this, 'handle_stack_change_reorder' ),
-			10,
-			4
-		);
 
 		add_filter( 'post_type_link', array( $this, 'custom_task_permalink' ), 10, 2 );
 	}
@@ -230,53 +237,6 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Get the new order for a task in a specific stack.
-	 *
-	 * This function retrieves the maximum menu_order value for tasks in the specified board and stack and returns the next incremented value.
-	 *
-	 * @param int    $board_term_id The board to calculate the order for.
-	 * @param string $stack The stack to calculate the order for.
-	 * @return int The new order value.
-	 */
-	private function get_new_task_order( int $board_term_id, string $stack ) {
-		// Query arguments to find posts in the specified stack.
-		$args = array(
-			'post_type'   => 'decker_task',
-			'post_status' => 'publish',
-			'tax_query'   => array(
-				array(
-					'taxonomy' => 'decker_board',
-					'field'    => 'term_id',
-					'terms'    => $board_term_id,
-				),
-			),
-			'meta_query' => array(
-				array(
-					'key'     => 'stack',
-					'value'   => $stack,
-					'compare' => '=',
-				),
-			),
-			'orderby'        => 'menu_order',
-			'order'          => 'DESC',
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		);
-
-		// Get the posts.
-		$posts = get_posts( $args );
-
-		// If a post exists, get its menu_order and increment it.
-		if ( ! empty( $posts ) ) {
-			$max_order = intval( get_post_field( 'menu_order', $posts[0] ) );
-			return $max_order + 1;
-		}
-
-		// If no posts exist, start with order 1.
-		return 1;
-	}
-
-	/**
 	 * Remove 'Add New' button for decker_task post type.
 	 */
 	public function remove_add_new_link() {
@@ -293,253 +253,6 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Update the stack and order of a task.
-	 *
-	 * @param WP_REST_Request $request The REST request.
-	 * @return WP_REST_Response The REST response.
-	 */
-	public function update_task_stack_and_order( $request ) {
-		$task_id      = intval( $request['id'] );
-		$board_id     = intval( $request->get_param( 'board_id' ) );
-		$source_stack = sanitize_text_field( $request->get_param( 'source_stack' ) );
-		$target_stack = sanitize_text_field( $request->get_param( 'target_stack' ) );
-		$source_order = intval( $request->get_param( 'source_order' ) );
-		$target_order = intval( $request->get_param( 'target_order' ) );
-
-		$invalid = $this->validate_stack_order_request(
-			$task_id,
-			$source_stack,
-			$target_stack,
-			$source_order,
-			$target_order
-		);
-		if ( $invalid instanceof WP_REST_Response ) {
-			return $invalid;
-		}
-
-		// Update the stack and the order.
-		$this->apply_stack_transition( $task_id, $source_stack, $target_stack );
-
-		$this->persist_task_menu_order( $task_id, $board_id, $source_stack, $target_stack, $source_order, $target_order );
-
-		// Reorder tasks in the source stack.
-		if ( $source_stack !== $target_stack ) {
-			$result = $this->reorder_tasks_in_stack( $board_id, $source_stack );
-		}
-		// Reorder tasks in the target stack.
-		$result = $this->reorder_tasks_in_stack( $board_id, $target_stack );
-
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
-
-		// The card moved: any open editor form now holds a stale stack.
-		$this->get_task_locks()->invalidate_sessions( $task_id );
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'status'  => 'success',
-				'message' => 'Task stack and order updated successfully.',
-			),
-			200
-		);
-	}
-
-	/**
-	 * Validate the parameters for a stack/order update request.
-	 *
-	 * @param int    $task_id      The task ID.
-	 * @param string $source_stack The source stack value.
-	 * @param string $target_stack The target stack value.
-	 * @param int    $source_order The source order index.
-	 * @param int    $target_order The target order index.
-	 * @return WP_REST_Response|null The error response when invalid, or null when valid.
-	 */
-	private function validate_stack_order_request( int $task_id, string $source_stack, string $target_stack, int $source_order, int $target_order ): ?WP_REST_Response {
-		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
-
-		if ( ! in_array( $source_stack, $valid_stacks ) || ! in_array( $target_stack, $valid_stacks ) ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Invalid stack value.',
-				),
-				400
-			);
-		}
-
-		if ( ! $task_id || ! $source_order || ! $target_order ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Invalid parameters.',
-				),
-				400
-			);
-		}
-
-		$task = get_post( $task_id );
-		if ( ! $task || 'decker_task' !== $task->post_type ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Task not found.',
-				),
-				404
-			);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Apply a stack transition for a task and fire the related hooks.
-	 *
-	 * @param int    $task_id      The task ID.
-	 * @param string $source_stack The source stack value.
-	 * @param string $target_stack The target stack value.
-	 */
-	private function apply_stack_transition( int $task_id, string $source_stack, string $target_stack ) {
-		if ( $source_stack != $target_stack ) {
-			update_post_meta( $task_id, 'stack', $target_stack );
-
-			// Trigger general stack transition hook.
-			do_action( 'decker_stack_transition', $task_id, $source_stack, $target_stack );
-
-			// If the target stack is "done", trigger a specific hook for task completion.
-			if ( 'done' === $target_stack ) {
-				do_action( 'decker_task_completed', $task_id, $target_stack, get_current_user_id() );
-			}
-		}
-	}
-
-	/**
-	 * Persist the task menu_order using raw SQL and shift incumbents at the destination.
-	 *
-	 * @param int    $task_id      The task ID.
-	 * @param int    $board_id     The board term ID.
-	 * @param string $source_stack The source stack value.
-	 * @param string $target_stack The target stack value.
-	 * @param int    $source_order The source order index.
-	 * @param int    $target_order The target order index.
-	 */
-	private function persist_task_menu_order( int $task_id, int $board_id, string $source_stack, string $target_stack, int $source_order, int $target_order ) {
-		global $wpdb;
-
-		$final_order = $target_order;
-		// The +1 adjustment is only valid for moves within the same stack, where
-		// source_order and target_order index the same column. For cross-stack moves
-		// the two indexes reference different columns, so use target_order directly.
-		if ( $source_stack === $target_stack && $target_order > $source_order ) {
-			$final_order = $target_order + 1;
-		}
-
-		// Perform the update using raw SQL.
-		$updated = $wpdb->update(
-			$wpdb->posts,  // The WordPress posts table.
-			array(
-				'menu_order'        => $final_order,
-				'post_modified'     => current_time( 'mysql' ),
-				'post_modified_gmt' => current_time( 'mysql', 1 ),
-			),
-			array( 'ID' => $task_id ), // The condition to match the correct row.
-			array( '%d', '%s', '%s' ), // The data types of the values: integer and strings.
-			array( '%d' )  // The data type of the condition (integer).
-		);
-
-		// Make room at the destination so the moved card deterministically occupies
-		// $final_order. Without this shift the moved card and the incumbent at that
-		// slot share a menu_order and the renumber tie-break would depend on
-		// post_modified second-granularity (flaky), dropping the card one slot off.
-		$wpdb->query(
-			$wpdb->prepare(
-				"UPDATE {$wpdb->posts} p
-				INNER JOIN {$wpdb->term_relationships} tr
-					ON p.ID = tr.object_id
-				INNER JOIN {$wpdb->term_taxonomy} tt
-					ON tr.term_taxonomy_id = tt.term_taxonomy_id
-				INNER JOIN {$wpdb->postmeta} pm_stack
-					ON p.ID = pm_stack.post_id
-					AND pm_stack.meta_key = 'stack'
-				SET p.menu_order = p.menu_order + 1
-				WHERE p.post_type = 'decker_task'
-					AND p.post_status = 'publish'
-					AND pm_stack.meta_value = %s
-					AND tt.term_id = %d
-					AND p.ID != %d
-					AND p.menu_order >= %d",
-				$target_stack,
-				$board_id,
-				$task_id,
-				$final_order
-			)
-		);
-	}
-
-	/**
-	 * Reorder tasks within a stack and board after a task is deleted.
-	 *
-	 * @param int    $board_term_id The board term ID.
-	 * @param string $stack The stack to reorder.
-	 * @param int    $exclude_post_id Task to exclude.
-	 */
-	public function reorder_tasks_in_stack( int $board_term_id, string $stack, int $exclude_post_id = 0 ) {
-		global $wpdb;
-
-		// This is the autoincrement value.
-		$wpdb->query( 'SET @rownum := 0' );
-
-		// Perform the UPDATE in a single statement.
-		$result = $wpdb->query(
-			$wpdb->prepare(
-				"
-				UPDATE {$wpdb->posts} p
-			    INNER JOIN (
-			        SELECT
-			            t.ID,
-			            (@rownum := @rownum + 1) AS new_menu_order
-			        FROM (
-			            SELECT 
-			                p.ID, 
-			                p.menu_order, 
-			                COALESCE(CAST(pm_priority.meta_value AS UNSIGNED), 0) AS meta_value,
-			                p.post_modified
-			            FROM {$wpdb->posts} p
-			            INNER JOIN {$wpdb->term_relationships} tr 
-			                ON p.ID = tr.object_id
-			            INNER JOIN {$wpdb->term_taxonomy} tt 
-			                ON tr.term_taxonomy_id = tt.term_taxonomy_id
-			            INNER JOIN {$wpdb->postmeta} pm_stack 
-			                ON p.ID = pm_stack.post_id 
-			                AND pm_stack.meta_key = 'stack'
-			            LEFT JOIN {$wpdb->postmeta} pm_priority 
-			                ON p.ID = pm_priority.post_id 
-			                AND pm_priority.meta_key = 'max_priority'
-			            WHERE 
-			                p.post_type = 'decker_task'
-			                AND p.post_status = 'publish'
-			                AND pm_stack.meta_value = %s
-			                AND tt.term_id = %d
-			                AND p.ID != %d
-			            GROUP BY 
-			                p.ID
-			            ORDER BY
-			                meta_value DESC,
-			                p.menu_order ASC,
-			                p.post_modified DESC,
-			                p.id ASC
-			        ) AS t
-			    ) AS ordered_tasks ON p.ID = ordered_tasks.ID
-			    SET p.menu_order = ordered_tasks.new_menu_order;",
-				$stack,
-				$board_term_id,
-				$exclude_post_id
-			)
-		);
-	}
-
-	/**
 	 * Handle task deletion to reorder tasks.
 	 *
 	 * @param int $post_id The ID of the post being deleted.
@@ -552,7 +265,7 @@ class Decker_Tasks {
 		$board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
 		$stack         = get_post_meta( $post_id, 'stack', true );
 		if ( $board_term_id > 0 && $stack ) {
-			$this->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
+			$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
 		}
 
 		do_action( 'decker_task_updated', $post_id ); // Invalidates .ics “all”.
@@ -578,7 +291,7 @@ class Decker_Tasks {
 			$stack = get_post_meta( $post->ID, 'stack', true );
 
 			if ( $board_term_id > 0 && $stack ) {
-				$this->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
+				$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
 			}
 		}
 	}
@@ -601,40 +314,6 @@ class Decker_Tasks {
 	 */
 	public function remove_user_date_relation( int $task_id, int $user_id ) {
 		$this->get_today_manager()->unmark_for_today( $task_id, $user_id );
-	}
-
-
-	/**
-	 * Handle fixing the order for tasks in the specified board.
-	 *
-	 * @param WP_REST_Request $request The REST request.
-	 * @return WP_REST_Response The REST response.
-	 */
-	public function handle_fix_order( $request ) {
-		$board_id = intval( $request['board_id'] );
-
-		if ( $board_id <= 0 ) {
-			return new WP_REST_Response(
-				array(
-					'message' => 'Invalid board ID.',
-				),
-				400
-			);
-		}
-
-		$stacks = array( 'to-do', 'in-progress', 'done' );
-
-		foreach ( $stacks as $stack ) {
-			$this->reorder_tasks_in_stack( $board_id, $stack );
-		}
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => 'Tasks reordered successfully for board ' . $board_id . '.',
-			),
-			200
-		);
 	}
 
 	/**
@@ -1270,113 +949,6 @@ class Decker_Tasks {
 	});
 	</script>
 		<?php
-	}
-
-	/**
-	 * Modifies the `menu_order` of a task before it is saved.
-	 *
-	 * Prevents direct user modification of the `menu_order` field and calculates
-	 * the appropriate value based on the `decker_board` and `stack` fields. This is
-	 * applied only when a new task is being created.
-	 *
-	 * @param array $data                The sanitized data to be saved for the post.
-	 * @param array $postarr             The original post array containing input data.
-	 * @param array $unsanitized_postarr The unsanitized post array.
-	 * @param bool  $update              Whether the post is being updated (true) or created (false).
-	 * @return array The modified data array with the updated `menu_order`.
-	 *
-	 * @throws WP_Error Logs warnings or errors in the error log if required fields are missing or invalid.
-	 */
-	public function modify_task_order_before_save( array $data, array $postarr, array $unsanitized_postarr, bool $update ) {
-
-		// Prevent the user from directly modifying the menu_order.
-		if ( isset( $postarr['menu_order'] ) ) {
-			// Remove the menu_order field so it won't be saved.
-			unset( $postarr['menu_order'] );
-		}
-
-		// Ensure we're working with the correct post type and only on Insert post.
-		if ( ! $update && 'decker_task' === $postarr['post_type'] ) {
-
-			$board = $this->resolve_new_task_board( $postarr );
-			$stack = $this->resolve_new_task_stack( $postarr );
-
-			$data = $this->apply_calculated_menu_order( $data, $board, $stack, $postarr );
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Resolve the board ID for a task being inserted from the post array.
-	 *
-	 * @param array $postarr The original post array containing input data.
-	 * @return int The board term ID, or 0 when absent.
-	 */
-	private function resolve_new_task_board( array $postarr ): int {
-		$board = '';
-
-		if ( isset( $postarr['decker_board'] ) ) {
-			$board = intval( $postarr['decker_board'] );
-		}
-
-		if ( empty( $board ) && isset( $postarr['tax_input']['decker_board'][0] ) ) {
-			$board = intval( $postarr['tax_input']['decker_board'][0] );
-		}
-
-		return (int) $board;
-	}
-
-	/**
-	 * Resolve the stack value for a task being inserted from the post array.
-	 *
-	 * @param array $postarr The original post array containing input data.
-	 * @return string The stack value, or '' when absent.
-	 */
-	private function resolve_new_task_stack( array $postarr ): string {
-		$stack = '';
-
-		if ( isset( $postarr['stack'] ) ) {
-			$stack = sanitize_text_field( $postarr['stack'] );
-		}
-
-		if ( empty( $stack ) && isset( $postarr['meta_input']['stack'] ) ) {
-			$stack = sanitize_text_field( $postarr['meta_input']['stack'] );
-		}
-
-		return (string) $stack;
-	}
-
-	/**
-	 * Apply the calculated menu_order to the post data when board and stack are present.
-	 *
-	 * @param array  $data    The sanitized data to be saved for the post.
-	 * @param int    $board   The resolved board term ID.
-	 * @param string $stack   The resolved stack value.
-	 * @param array  $postarr The original post array containing input data.
-	 * @return array The data array, possibly with an updated menu_order.
-	 */
-	private function apply_calculated_menu_order( array $data, int $board, string $stack, array $postarr ): array {
-		// Validate that both 'board' and 'stack' have been retrieved.
-		if ( ! empty( $board ) && ! empty( $stack ) ) {
-
-			// Calculate the new order value based on 'board' and 'stack'.
-			$new_order = $this->get_new_task_order( $board, $stack );
-
-			// Ensure that the new order is a valid number.
-			if ( is_numeric( $new_order ) ) {
-				// Assign the calculated menu_order to the post data.
-				$data['menu_order'] = intval( $new_order );
-			} else {
-				// Log an error if the new_order is not numeric.
-				error_log( "Invalid 'new_order' value: $new_order for post ID: " . $postarr['ID'] );
-			}
-		} else {
-			// Log a warning if either 'board' or 'stack' is missing.
-			error_log( "Missing 'decker_board' or 'stack' for post ID: " . $postarr['ID'] );
-		}
-
-		return $data;
 	}
 
 	/**
@@ -2309,177 +1881,6 @@ class Decker_Tasks {
 		do_action( 'decker_task_created', $task_id );
 
 		return $task_id;
-	}
-
-	/**
-	 * Reorders tasks when the board of a task is changed.
-	 *
-	 * This hook is triggered when a task is moved from one board to another.
-	 * It updates the task's `menu_order` if needed and reorders both the
-	 * old and new board stacks accordingly.
-	 *
-	 * @param int    $object_id   Post ID of the task.
-	 * @param array  $terms       New term IDs.
-	 * @param array  $tt_ids      New term taxonomy IDs.
-	 * @param string $taxonomy    Taxonomy slug.
-	 * @param bool   $append      Whether to append new terms.
-	 * @param array  $old_tt_ids  Old term taxonomy IDs.
-	 */
-	public function handle_board_change_reorder( $object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids ) {
-		// Only act for 'decker_board' taxonomy and 'decker_task' CPT, and only if terms are replaced.
-		if ( 'decker_board' !== $taxonomy || 'decker_task' !== get_post_type( $object_id ) || $append ) {
-			return;
-		}
-
-		// Get the new and old board term IDs.
-		// Assume that only one board is assigned at a time.
-		$new_board_term_id = ! empty( $tt_ids ) ? (int) $tt_ids[0] : 0;
-		$old_board_term_id = ! empty( $old_tt_ids ) ? (int) $old_tt_ids[0] : 0;
-
-		// Proceed only if the board has actually changed.
-		if ( $new_board_term_id === $old_board_term_id ) {
-			return;
-		}
-
-		// Get the current stack for the task.
-		$current_stack = get_post_meta( $object_id, 'stack', true );
-		$valid_stacks = array( 'to-do', 'in-progress', 'done' );
-
-		// If the moved task is NOT of max priority, push it to the end of the destination board.
-		$this->move_task_to_board_end( $object_id, $new_board_term_id, $current_stack );
-
-		// Reorder tasks in the new board (including the moved task).
-		// 1. Reorder new board.
-		if ( $new_board_term_id > 0 ) {
-			// error_log("Decker Reorder Hook: Reordering NEW board {$new_board_term_id} / stack {$current_stack}");
-			// Call the static function to reorder.
-			$this->reorder_tasks_in_stack( $new_board_term_id, $current_stack );
-		}
-
-		// Reorder tasks in the old board (excluding the moved task).
-		// 2. Reorder old board.
-		if ( $old_board_term_id > 0 ) {
-			// error_log("Decker Reorder Hook: Reordering OLD board {$old_board_term_id} / stack {$current_stack} (excluding {$object_id})");
-			// Call the static function to reorder.
-			$this->reorder_tasks_in_stack( $old_board_term_id, $current_stack, $object_id );
-		}
-
-		// At the end of handle_board_change_reorder().
-		set_transient( "decker_board_changed_{$object_id}", 1, 5 );
-	}
-
-	/**
-	 * Push a non-max-priority task to the end of its destination board stack.
-	 *
-	 * @param int    $object_id         Post ID of the task.
-	 * @param int    $new_board_term_id The destination board term ID.
-	 * @param string $current_stack     The current stack for the task.
-	 */
-	private function move_task_to_board_end( int $object_id, int $new_board_term_id, string $current_stack ) {
-		// If the moved task is NOT of max priority, calculate its new order at the end of the destination board.
-		$is_max_priority = get_post_meta( $object_id, 'max_priority', true );
-		if ( empty( $is_max_priority ) || '0' === $is_max_priority ) {
-			// Get the next available order in the new board/stack.
-			$new_order = $this->get_new_task_order( $new_board_term_id, $current_stack );
-			if ( is_numeric( $new_order ) ) {
-				global $wpdb;
-
-				// Temporarily assign that menu_order to the moved task.
-				$wpdb->update(
-					$wpdb->posts,
-					array( 'menu_order' => intval( $new_order ) ),
-					array( 'ID' => $object_id ),
-					array( '%d' ),
-					array( '%d' )
-				);
-				clean_post_cache( $object_id );  // Clear cache to ensure updated read.
-			}
-		}
-	}
-
-	/**
-	 * When the meta key 'stack' changes, move the task to the end of the
-	 * destination stack and reorder both stacks.
-	 *
-	 * @param int    $meta_id    Meta row ID.
-	 * @param int    $post_id    Post ID.
-	 * @param string $meta_key   Meta key.
-	 * @param mixed  $meta_value New meta value (destination stack).
-	 */
-	public function handle_stack_change_reorder( $meta_id, $post_id, $meta_key, $meta_value ) {
-
-		if ( 'stack' !== $meta_key || 'decker_task' !== get_post_type( $post_id ) ) {
-			return;
-		}
-
-		// Board term comes from taxonomy (source of truth).
-		$board_ids = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
-		$board_id  = ! empty( $board_ids ) ? (int) $board_ids[0] : 0;
-		if ( ! $board_id ) {
-			return; // Task without board -> nothing to do.
-		}
-
-		$new_stack = sanitize_key( $meta_value );
-		$old_stack = sanitize_key( get_metadata( 'post', $post_id, '_decker_prev_stack', true ) );
-
-		// -----------------------------------------------------------------
-		// LOG
-		// error_log( sprintf(
-		// '[Decker] Stack change: post=%d board=%d old=%s new=%s',
-		// $post_id,
-		// $board_id,
-		// $old_stack,
-		// $new_stack
-		// ) );
-		// -----------------------------------------------------------------
-
-		// 1. Re-position *at the end* of the destination stack (not on top).
-		$is_max = get_post_meta( $post_id, 'max_priority', true );
-
-		if ( empty( $is_max ) || '0' === $is_max ) {
-			global $wpdb;
-
-			$max_order = (int) $wpdb->get_var(
-				$wpdb->prepare(
-					"
-                SELECT COALESCE( MAX(p.menu_order), 0 )
-                FROM {$wpdb->posts} p
-                INNER JOIN {$wpdb->term_relationships} tr  ON p.ID = tr.object_id
-                INNER JOIN {$wpdb->term_taxonomy}  tt  ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                INNER JOIN {$wpdb->postmeta} pm        ON p.ID = pm.post_id
-                WHERE p.post_type   = 'decker_task'
-                  AND p.post_status = 'publish'
-                  AND tt.term_id    = %d           -- board
-                  AND pm.meta_key   = 'stack'
-                  AND pm.meta_value = %s           -- stack
-                  AND p.ID <> %d                   -- exclude current
-                ",
-					$board_id,
-					$new_stack,
-					$post_id
-				)
-			);
-
-			$wpdb->update(
-				$wpdb->posts,
-				array( 'menu_order' => $max_order + 1 ),
-				array( 'ID' => $post_id ),
-				array( '%d' ),
-				array( '%d' )
-			);
-			clean_post_cache( $post_id );
-		}
-
-		// 2. Reorder destination stack (include the moved task).
-		$this->reorder_tasks_in_stack( $board_id, $new_stack );
-
-		// 3. Reorder origin stack (exclude the moved task).
-		if ( $old_stack && $old_stack !== $new_stack ) {
-			$this->reorder_tasks_in_stack( $board_id, $old_stack, $post_id );
-		}
-
-			// Save current stack as “previous” for the next move.
-			update_post_meta( $post_id, '_decker_prev_stack', $new_stack );
 	}
 
 	/**
