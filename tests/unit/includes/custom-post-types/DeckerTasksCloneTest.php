@@ -65,7 +65,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 		);
 		$this->assertNotWPError( $task_id );
 
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 		$this->assertIsInt( $new_task_id );
 		$this->assertNotEquals( $task_id, $new_task_id );
@@ -156,7 +156,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 		);
 		$this->assertNotWPError( $task_id );
 
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 
 		$new_post = get_post( $new_task_id );
@@ -182,7 +182,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 		// Manually set a nextcloud card ID.
 		update_post_meta( $task_id, 'id_nextcloud_card', 12345 );
 
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 
 		$nc_id = get_post_meta( $new_task_id, 'id_nextcloud_card', true );
@@ -217,7 +217,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 			)
 		);
 
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 
 		$relations = get_post_meta(
@@ -235,7 +235,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 	 * Test that cloning an invalid task returns error.
 	 */
 	public function test_clone_invalid_task_returns_error() {
-		$result = Decker_Tasks::clone_task( 999999 );
+		$result = Decker_Task_Clone::clone_task( 999999 );
 		$this->assertWPError(
 			$result,
 			'Cloning a non-existent task should return WP_Error.'
@@ -340,7 +340,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 		);
 		$this->assertNotWPError( $task_id );
 
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 		$this->assertNotEquals(
 			$task_id,
@@ -374,7 +374,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 		clean_post_cache( $task_id );
 		$this->assertSame( '   ', get_post( $task_id )->post_title );
 
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 
 		$expected = sprintf(
@@ -403,7 +403,7 @@ class DeckerTasksCloneTest extends Decker_Test_Base {
 		$this->assertNotWPError( $task_id );
 
 		$original = get_post( $task_id );
-		$new_task_id = Decker_Tasks::clone_task( $task_id );
+		$new_task_id = Decker_Task_Clone::clone_task( $task_id );
 		$this->assertNotWPError( $new_task_id );
 
 		$cloned = get_post( $new_task_id );

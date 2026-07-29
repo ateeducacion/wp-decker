@@ -132,7 +132,7 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 
 		$attachment_id = $this->create_attachment_for_task( $source_task_id );
 
-		$result = Decker_Tasks::merge_tasks(
+		$result = Decker_Task_Merge::merge_tasks(
 			$source_task_id,
 			$destination_task_id
 		);
@@ -219,7 +219,7 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 
 		update_post_meta( $source_task_id, 'merged_into', $destination_task_id );
 
-		$result = Decker_Tasks::merge_tasks(
+		$result = Decker_Task_Merge::merge_tasks(
 			$source_task_id,
 			$destination_task_id
 		);
@@ -286,19 +286,19 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 		);
 
 		// Nonexistent source.
-		$result = Decker_Tasks::merge_tasks( 999999, $dest );
+		$result = Decker_Task_Merge::merge_tasks( 999999, $dest );
 		$this->assertWPError( $result );
 		$this->assertEquals( 'invalid_source_task', $result->get_error_code() );
 		$this->assertEquals( 404, $result->get_error_data()['status'] );
 
 		// Nonexistent destination.
-		$result = Decker_Tasks::merge_tasks( $source, 999999 );
+		$result = Decker_Task_Merge::merge_tasks( $source, 999999 );
 		$this->assertWPError( $result );
 		$this->assertEquals( 'invalid_destination_task', $result->get_error_code() );
 		$this->assertEquals( 404, $result->get_error_data()['status'] );
 
 		// Same ID.
-		$result = Decker_Tasks::merge_tasks( $source, $source );
+		$result = Decker_Task_Merge::merge_tasks( $source, $source );
 		$this->assertWPError( $result );
 		$this->assertEquals( 'invalid_merge', $result->get_error_code() );
 		$this->assertEquals( 400, $result->get_error_data()['status'] );
@@ -316,7 +316,7 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 				'post_status' => 'archived',
 			)
 		);
-		$result = Decker_Tasks::merge_tasks( $archived, $dest );
+		$result = Decker_Task_Merge::merge_tasks( $archived, $dest );
 		$this->assertWPError( $result );
 		$this->assertEquals( 'invalid_task_status', $result->get_error_code() );
 		$this->assertEquals( 400, $result->get_error_data()['status'] );
@@ -329,7 +329,7 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 			)
 		);
 		update_post_meta( $merged, 'merged_into', $dest );
-		$result = Decker_Tasks::merge_tasks( $merged, $dest );
+		$result = Decker_Task_Merge::merge_tasks( $merged, $dest );
 		$this->assertWPError( $result );
 		$this->assertEquals( 'already_merged', $result->get_error_code() );
 		$this->assertEquals( 400, $result->get_error_data()['status'] );
