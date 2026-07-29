@@ -40,7 +40,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test direct assignment using add_user_date_relation.
+	 * Test direct assignment using Decker_Task_Today_Manager::mark_for_today().
 	 */
 	public function test_assign_today_direct() {
 		$task_instance = new Decker_Tasks();
@@ -186,10 +186,10 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Calling add_user_date_relation twice for the same user and date must not
-	 * create a duplicate relation.
+	 * Calling Decker_Task_Today_Manager::mark_for_today() twice for the same user
+	 * and date must not create a duplicate relation.
 	 */
-	public function test_add_user_date_relation_is_idempotent() {
+	public function test_mark_for_today_is_idempotent() {
 		$task_instance = new Decker_Tasks();
 
 		$task_instance->get_today_manager()->mark_for_today( $this->task_id, $this->user_id );
