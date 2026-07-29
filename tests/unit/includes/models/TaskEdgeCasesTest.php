@@ -86,8 +86,6 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * A null color argument returns the default fallback grey.
 	 */
 	public function test_pastelize_color_with_null_returns_default() {
-		$task = new Task();
-
 		$this->assertSame( '#cccccc', Decker_Task_Card_Renderer::pastelize_color( null ) );
 	}
 
@@ -95,8 +93,6 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * An empty string returns the default fallback grey.
 	 */
 	public function test_pastelize_color_with_empty_string_returns_default() {
-		$task = new Task();
-
 		$this->assertSame( '#cccccc', Decker_Task_Card_Renderer::pastelize_color( '' ) );
 	}
 
@@ -105,8 +101,6 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * the default fallback grey.
 	 */
 	public function test_pastelize_color_with_three_char_hex_returns_default() {
-		$task = new Task();
-
 		$this->assertSame( '#cccccc', Decker_Task_Card_Renderer::pastelize_color( '#f00' ) );
 	}
 
@@ -114,8 +108,6 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * A valid 6-character hex color is averaged with white and returned.
 	 */
 	public function test_pastelize_color_with_valid_hex_blends_with_white() {
-		$task = new Task();
-
 		// #000000 averaged with #ffffff → #7f7f7f (128, 128, 128 → #808080).
 		$result = Decker_Task_Card_Renderer::pastelize_color( '#000000' );
 
@@ -129,8 +121,6 @@ class TaskEdgeCasesTest extends Decker_Test_Base {
 	 * A hex colour without the leading hash is also handled correctly.
 	 */
 	public function test_pastelize_color_accepts_hex_without_hash() {
-		$task = new Task();
-
 		$result_with    = Decker_Task_Card_Renderer::pastelize_color( '#ffffff' );
 		$result_without = Decker_Task_Card_Renderer::pastelize_color( 'ffffff' );
 

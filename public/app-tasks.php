@@ -251,6 +251,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 												}
 
 												foreach ( $tasks as $task ) {
+													$card_renderer = new Decker_Task_Card_Renderer( $task );
 													echo '<tr class="task">';
 
 													// Task max priority.
@@ -295,7 +296,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 													$people_names = ( new Decker_Task_People_View( $task ) )->get_people_names();
 													$people_text  = implode( ', ', $people_names );
 													echo '<td data-search="' . esc_attr( $people_text ) . '" data-order="' . esc_attr( $people_text ) . '">';
-													( new Decker_Task_Card_Renderer( $task ) )->render_people_avatars();
+													$card_renderer->render_people_avatars();
 													echo '</td>';
 
 													// Remaining time.
@@ -316,7 +317,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 													} else {
 														echo '<span class="due-none">';
 													}
-													echo esc_html( ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
+													echo esc_html( $card_renderer->get_relative_time() );
 													echo '</span></td>';
 
 
