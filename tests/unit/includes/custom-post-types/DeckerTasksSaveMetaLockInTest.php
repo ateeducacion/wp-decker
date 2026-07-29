@@ -74,7 +74,7 @@ class DeckerTasksSaveMetaLockInTest extends Decker_Test_Base {
 			),
 		);
 
-		( new Decker_Tasks() )->save_meta( $task_id, get_post( $task_id ), true );
+		( new Decker_Task_Meta_Saver( new Decker_Tasks() ) )->save_meta( $task_id, get_post( $task_id ), true );
 
 		$this->assertEquals( '2025-06-30', get_post_meta( $task_id, 'duedate', true ) );
 		$this->assertEquals( '1', get_post_meta( $task_id, 'max_priority', true ) );
@@ -129,7 +129,7 @@ class DeckerTasksSaveMetaLockInTest extends Decker_Test_Base {
 			'post_type'         => 'decker_task',
 		);
 
-		( new Decker_Tasks() )->save_meta( $task_id, get_post( $task_id ), true );
+		( new Decker_Task_Meta_Saver( new Decker_Tasks() ) )->save_meta( $task_id, get_post( $task_id ), true );
 
 		$this->assertSame( '', get_post_meta( $task_id, 'max_priority', true ), 'max_priority must be cleared when key absent.' );
 		$this->assertSame( array(), get_post_meta( $task_id, '_user_date_relations', true ), '_user_date_relations must be reset when key absent.' );
@@ -153,7 +153,7 @@ class DeckerTasksSaveMetaLockInTest extends Decker_Test_Base {
 			'stack'     => 'done',
 			'duedate'   => '2099-12-31',
 		);
-		( new Decker_Tasks() )->save_meta( $task_id, get_post( $task_id ), true );
+		( new Decker_Task_Meta_Saver( new Decker_Tasks() ) )->save_meta( $task_id, get_post( $task_id ), true );
 		$this->assertEquals( 'to-do', get_post_meta( $task_id, 'stack', true ) );
 		$this->assertEquals( '2020-01-01', get_post_meta( $task_id, 'duedate', true ) );
 
@@ -178,7 +178,7 @@ class DeckerTasksSaveMetaLockInTest extends Decker_Test_Base {
 			'stack'             => 'done',
 			'duedate'           => '2099-12-31',
 		);
-		( new Decker_Tasks() )->save_meta( $archived_id, get_post( $archived_id ), true );
+		( new Decker_Task_Meta_Saver( new Decker_Tasks() ) )->save_meta( $archived_id, get_post( $archived_id ), true );
 		$this->assertEquals( 'to-do', get_post_meta( $archived_id, 'stack', true ) );
 		$this->assertEquals( '2020-02-02', get_post_meta( $archived_id, 'duedate', true ) );
 
@@ -215,7 +215,7 @@ class DeckerTasksSaveMetaLockInTest extends Decker_Test_Base {
 			'stack'             => 'done',
 			'duedate'           => '2099-12-31',
 		);
-		( new Decker_Tasks() )->save_meta( $cap_task, get_post( $cap_task ), true );
+		( new Decker_Task_Meta_Saver( new Decker_Tasks() ) )->save_meta( $cap_task, get_post( $cap_task ), true );
 
 		remove_filter( 'user_has_cap', $deny_edit, 10 );
 

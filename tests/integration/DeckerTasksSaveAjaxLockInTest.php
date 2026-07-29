@@ -66,7 +66,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 			'due_date'     => '2025-05-01',
 		);
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $resp['success'] );
 		$task_id = $resp['task_id'];
@@ -94,7 +94,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 			'due_date'    => 'not-a-date',
 		);
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertTrue( $resp['success'] );
 		$task_id = $resp['task_id'];
 
@@ -126,7 +126,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 		);
 
 		$_POST = $base;
-		( new Decker_Tasks() )->handle_save_decker_task();
+		( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$this->assertIsArray( $relations );
@@ -141,7 +141,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 		// Save again without mark_for_today: relation removed.
 		$_POST = $base;
 		unset( $_POST['mark_for_today'] );
-		( new Decker_Tasks() )->handle_save_decker_task();
+		( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$found     = false;

@@ -114,7 +114,7 @@ class DeckerTaskArchivedSaveProtectionTest extends Decker_Test_Base {
 
 		$_POST = $this->save_payload( 'Attempted overwrite' );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp['success'] );
 		$this->assertSame( 'decker_task_archived', $resp['code'] );
@@ -130,7 +130,7 @@ class DeckerTaskArchivedSaveProtectionTest extends Decker_Test_Base {
 
 		$_POST = $this->save_payload( 'Updated title', $info['generation'] );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $resp['success'] );
 		$this->assertSame( 'Updated title', get_post( $this->task_id )->post_title );

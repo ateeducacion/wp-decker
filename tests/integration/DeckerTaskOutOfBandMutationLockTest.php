@@ -121,7 +121,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 			'lock_generation' => $generation,
 		);
 
-		return ( new Decker_Tasks() )->handle_save_decker_task();
+		return ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 	}
 
 	/**
@@ -295,7 +295,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 			'board'   => $this->board_id,
 		);
 
-		$response = ( new Decker_Tasks() )->handle_save_decker_task();
+		$response = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $response['success'] );
 	}

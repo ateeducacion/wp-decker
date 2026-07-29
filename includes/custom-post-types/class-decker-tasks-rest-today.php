@@ -175,7 +175,7 @@ class Decker_Tasks_Rest_Today {
 
 		// The relation is personal: always use the authenticated current user
 		// and ignore any client-supplied user_id.
-		$this->tasks->add_user_date_relation( $task_id, get_current_user_id() );
+		$this->tasks->get_today_manager()->mark_for_today( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(
@@ -207,7 +207,7 @@ class Decker_Tasks_Rest_Today {
 
 		// The relation is personal: always use the authenticated current user
 		// and ignore any client-supplied user_id.
-		$this->tasks->remove_user_date_relation( $task_id, get_current_user_id() );
+		$this->tasks->get_today_manager()->unmark_for_today( $task_id, get_current_user_id() );
 
 		return new WP_REST_Response(
 			array(

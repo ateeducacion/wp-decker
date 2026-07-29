@@ -40,7 +40,7 @@ class DeckerTasksAuthorTest extends Decker_Test_Base {
         wp_set_current_user( $creator_id );
 
         add_filter( 'decker_save_task_send_response', '__return_false' );
-        $tasks = new Decker_Tasks();
+        $tasks = new Decker_Task_Ajax_Save( new Decker_Tasks() );
 
         $_POST = array(
             'task_id'      => 0,
@@ -71,7 +71,7 @@ class DeckerTasksAuthorTest extends Decker_Test_Base {
         wp_set_current_user( $admin_id );
 
         add_filter( 'decker_save_task_send_response', '__return_false' );
-        $tasks = new Decker_Tasks();
+        $tasks = new Decker_Task_Ajax_Save( new Decker_Tasks() );
 
         $_POST = array(
             'task_id'      => 0,

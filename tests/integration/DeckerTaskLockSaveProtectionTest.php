@@ -119,7 +119,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_b );
 		$_POST = $this->save_payload( 'Updated by user B attempt' );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp['success'] );
 		$this->assertSame( 'decker_task_locked', $resp['code'] );
@@ -139,7 +139,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_b );
 		$_POST = $this->save_payload( 'Updated by user B attempt' );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp['success'] );
 		$this->assertSame( 'decker_task_locked', $resp['code'] );
@@ -170,7 +170,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_a );
 		$_POST = $this->save_payload( 'Attempted overwrite' );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp['success'] );
 		$this->assertSame( 'decker_task_archived', $resp['code'] );
@@ -188,7 +188,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_a );
 		$_POST = $this->save_payload( 'Owner update', $info['generation'] );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $resp['success'] );
 		$this->assertNotEmpty( $resp['generation'] );
@@ -212,7 +212,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 			'board'   => $this->board_id,
 		);
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $resp['success'] );
 		$this->assertSame( '', $resp['generation'] );
@@ -228,7 +228,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_a );
 		$_POST = $this->save_payload( 'Owner update', $info['generation'] );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $resp['success'] );
 		$this->assertSame( 'Owner update', get_post( $this->task_id )->post_title );
@@ -245,7 +245,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_a );
 		$_POST = $this->save_payload( 'Save without a token' );
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp['success'] );
 		$this->assertSame( 'decker_task_locked', $resp['code'] );
@@ -262,7 +262,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 
 		wp_set_current_user( $this->user_b );
 		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
-		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp_b = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertTrue( $resp_b['success'] );
 
 		// New owner leaves (modal close / pagehide): active lock released. The save
@@ -272,7 +272,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		// A malformed/old client omits the token; it must not fail open.
 		wp_set_current_user( $this->user_a );
 		$_POST  = $this->save_payload( 'Stale overwrite by A' );
-		$resp_a = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp_a = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp_a['success'] );
 		$this->assertSame( 'decker_task_locked', $resp_a['code'] );
@@ -294,7 +294,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$info_b = $this->locks->take_over_lock( $this->task_id, $this->user_b );
 		wp_set_current_user( $this->user_b );
 		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
-		$resp_b = $tasks->handle_save_decker_task();
+		$resp_b = ( new Decker_Task_Ajax_Save( $tasks ) )->handle_save_decker_task();
 		$this->assertTrue( $resp_b['success'] );
 		$b_generation = $resp_b['generation'];
 		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $b_generation ) );
@@ -317,7 +317,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		// A's original save is still rejected after the heartbeat.
 		wp_set_current_user( $this->user_a );
 		$_POST  = $this->save_payload( 'Updated by user A', $info_a['generation'] );
-		$resp_a = $tasks->handle_save_decker_task();
+		$resp_a = ( new Decker_Task_Ajax_Save( $tasks ) )->handle_save_decker_task();
 		$this->assertFalse( $resp_a['success'] );
 		$this->assertSame( 'decker_task_locked', $resp_a['code'] );
 		$this->assertSame( 'Updated by user B', get_post( $this->task_id )->post_title );
@@ -337,13 +337,13 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		// User B saves their change.
 		wp_set_current_user( $this->user_b );
 		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
-		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp_b = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertTrue( $resp_b['success'] );
 
 		// User A attempts to save a stale change with the original session token.
 		wp_set_current_user( $this->user_a );
 		$_POST  = $this->save_payload( 'Updated by user A', $info_a['generation'] );
-		$resp_a = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp_a = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp_a['success'] );
 		$this->assertSame( 'decker_task_locked', $resp_a['code'] );
@@ -362,7 +362,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 
 		wp_set_current_user( $this->user_b );
 		$_POST  = $this->save_payload( 'Updated by user B', $info_b['generation'] );
-		$resp_b = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp_b = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertTrue( $resp_b['success'] );
 
 		// Modal hide / pagehide releases the active lock but keeps generation. The
@@ -372,7 +372,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 
 		wp_set_current_user( $this->user_a );
 		$_POST  = $this->save_payload( 'Updated by user A', $info_a['generation'] );
-		$resp_a = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp_a = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertFalse( $resp_a['success'] );
 		$this->assertSame( 'decker_task_locked', $resp_a['code'] );
@@ -417,7 +417,7 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 			'board'   => $this->board_id,
 		);
 
-		$resp = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 
 		$this->assertTrue( $resp['success'] );
 	}
@@ -507,13 +507,13 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		// Tab 1 saves: the generation rotates and only tab 1 learns the new one.
 		wp_set_current_user( $this->user_a );
 		$_POST = $this->save_payload( 'Saved by tab 1', $tab1 );
-		$resp1 = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp1 = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertTrue( $resp1['success'] );
 		$this->assertNotSame( $tab1, $resp1['generation'] );
 
 		// Tab 2 saves stale content with the old shared token: rejected.
 		$_POST = $this->save_payload( 'Stale save by tab 2', $tab2 );
-		$resp2 = ( new Decker_Tasks() )->handle_save_decker_task();
+		$resp2 = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertFalse( $resp2['success'] );
 		$this->assertSame( 'decker_task_locked', $resp2['code'] );
 		$this->assertSame( 'Saved by tab 1', get_post( $this->task_id )->post_title );
@@ -528,12 +528,12 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		wp_set_current_user( $this->user_a );
 
 		$_POST = $this->save_payload( '', $generation );
-		$failed = ( new Decker_Tasks() )->handle_save_decker_task();
+		$failed = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertFalse( $failed['success'] );
 		$this->assertSame( $generation, $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
 
 		$_POST = $this->save_payload( 'Corrected AJAX save', $generation );
-		$corrected = ( new Decker_Tasks() )->handle_save_decker_task();
+		$corrected = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
 		$this->assertTrue( $corrected['success'] );
 		$this->assertSame( 'Corrected AJAX save', get_post( $this->task_id )->post_title );
 	}

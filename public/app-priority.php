@@ -30,7 +30,7 @@ if ( isset( $_POST['import_tasks_nonce'] ) ) {
 		// Mark selected tasks for today for the current user.
 		foreach ( $task_ids as $task_id ) {
 			$decker_tasks = new Decker_Tasks();
-			$decker_tasks->add_user_date_relation( $task_id, $current_user_id );
+			$decker_tasks->get_today_manager()->mark_for_today( $task_id, $current_user_id );
 		}
 
 		// Redirect to the same page to avoid form resubmission on refresh.
