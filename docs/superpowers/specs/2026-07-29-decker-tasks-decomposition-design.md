@@ -1,7 +1,7 @@
 # Decker_Tasks and Task decomposition — design
 
 Date: 2026-07-29
-Status: approved design — PRs A (#296), B (#297), C (#298), D (#299) merged; PR E in review
+Status: approved design — PRs A (#296), B (#297), C (#298), D (#299), E (#300) merged; PR F in review
 Predecessors: PRs #290, #291, #292, #294, #295 (PHPMD codesize campaign, 39 → 8 open alerts)
 
 ## Goal
@@ -121,6 +121,17 @@ established ritual (see Verification).
   and `Decker_Task_Ajax_Save` (the `wp_ajax` handler and its readers).
   `handle_save_decker_task` keeps a public delegator on `Decker_Tasks` — six
   integration files call it directly and pin the lock/archive semantics.
+
+  **Amendment (2026-07-29, delegator policy revised per user decision from PR
+  E final review L1):** no public delegators. `handle_save_decker_task` moves
+  to `Decker_Task_Ajax_Save` without a delegator — every caller is in-repo (6
+  test files + the two hook lines) and was retargeted. PR F therefore ships
+  three classes, not two: `Decker_Task_Meta_Saver`, `Decker_Task_Ajax_Save`,
+  and `Decker_Task_Request_Reader` — the `$_POST` readers split out on their
+  own because the handler + readers land at ≈50 CC, the
+  `ExcessiveClassComplexity` threshold edge, matching the PR C/E margin rule.
+  PR G will move `create_or_update_task` the same way, without a delegator,
+  and repoint the "stable surface" note above to its new location.
 - **PR G — write core + model.** `Decker_Task_Writer` owns
   `create_or_update_task( array $args )` (new canonical signature,
   `wp_parse_args` defaults, same validation and hook firing order), plus the

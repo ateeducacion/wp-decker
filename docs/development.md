@@ -99,9 +99,13 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Tasks` order/stack engine (`update_task_stack_and_order()`, `handle_fix_order()`, `reorder_tasks_in_stack()`, `get_new_task_order()`) | `Decker_Task_Order` |
 | `Decker_Tasks` order hook reactions (post-data filter, board/stack term changes) | `Decker_Task_Order_Hooks` |
 | `Decker_Tasks` edit-screen meta boxes (`add_meta_boxes()` and the eight display/render methods) | `Decker_Task_Meta_Boxes` |
-| `Decker_Tasks` admin list table (columns, sorting, taxonomy/status filters) | `Decker_Task_Admin_List` |
+| `Decker_Tasks` admin list table (columns, sorting, taxonomy/status filters, row actions) | `Decker_Task_Admin_List` |
 | `Decker_Tasks` edit-screen chrome (visibility/menu-order/permalink hiding, publish box title, Gutenberg disable, Add New removal) | `Decker_Task_Admin_Chrome` |
 | `Decker_Public::enqueue_scripts()` body | `Decker_Public_Assets` |
+| `Decker_Tasks::save_meta()` and the private meta-save pipeline | `Decker_Task_Meta_Saver` |
+| `Decker_Tasks::handle_save_decker_task()` + lock guards | `Decker_Task_Ajax_Save` (no delegator — direct callers must retarget) |
+| `Decker_Tasks` `$_POST` readers | `Decker_Task_Request_Reader` |
+| `Decker_Tasks::add_user_date_relation()` / `remove_user_date_relation()` | `Decker_Task_Today_Manager::mark_for_today()` / `unmark_for_today()` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:
 
