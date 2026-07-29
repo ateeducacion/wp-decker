@@ -468,7 +468,7 @@ class TaskBoardAssignmentTest extends Decker_Test_Base {
 		$request->set_param( 'source_order', $source_order );
 		$request->set_param( 'target_order', $target_order );
 
-		return $task_instance->update_task_stack_and_order( $request );
+		return $task_instance->get_order_engine()->update_task_stack_and_order( $request );
 	}
 
 	/**

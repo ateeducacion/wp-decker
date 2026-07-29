@@ -4,8 +4,8 @@
  *
  * Registers the assignment, due-date, stack/order and fix-order routes, and
  * guards generic /wp/v2/tasks writes with the task edit lock. The order
- * routes still dispatch to the injected Decker_Tasks instance until the
- * order engine moves to its own class.
+ * routes give the resolved callable on the order engine reached via the
+ * injected Decker_Tasks instance's get_order_engine() accessor.
  *
  * @package    Decker
  * @subpackage Decker/includes
@@ -54,21 +54,22 @@ class Decker_Tasks_Rest_Ops {
 			'target_order'  => array( 'required' => true ),
 		);
 
-		// The order and fix-order rows still dispatch to Decker_Tasks until the
-		// order engine moves to its own class (PR C), so they give the resolved
-		// callable directly instead of a method name on this controller.
-		$routes = array(
+		// The order and fix-order rows give the resolved callable on the order
+		// engine reached via $this->tasks->get_order_engine(), instead of a
+		// method name on this controller.
+		$order_engine = $this->tasks->get_order_engine();
+		$routes       = array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/order',
 				'methods'    => 'PUT',
-				'callback'   => array( $this->tasks, 'update_task_stack_and_order' ),
+				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),
 				'permission' => 'minimum_role',
 				'args'       => $order_args,
 			),
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/stack',
 				'methods'    => 'PUT',
-				'callback'   => array( $this->tasks, 'update_task_stack_and_order' ),
+				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),
 				'permission' => 'minimum_role',
 				'args'       => $order_args,
 			),
@@ -87,7 +88,7 @@ class Decker_Tasks_Rest_Ops {
 			array(
 				'route'      => '/fix-order/(?P<board_id>\d+)',
 				'methods'    => 'POST',
-				'callback'   => array( $this->tasks, 'handle_fix_order' ),
+				'callback'   => array( $order_engine, 'handle_fix_order' ),
 				'permission' => 'manage_options',
 			),
 			array(

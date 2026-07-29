@@ -152,7 +152,7 @@ class HooksTest extends Decker_Test_Base {
 		$request->set_param( 'source_order', 1 );
 		$request->set_param( 'target_order', 2 );
 
-		$response = $this->decker_tasks->update_task_stack_and_order( $request );
+		$response = $this->decker_tasks->get_order_engine()->update_task_stack_and_order( $request );
 
 		// Verify the response is successful.
 		$this->assertEquals( 200, $response->get_status(), 'Failed to update task stack and order.' );
@@ -232,7 +232,7 @@ class HooksTest extends Decker_Test_Base {
 		$request->set_param( 'source_order', 1 );
 		$request->set_param( 'target_order', 2 );
 
-		$response = $this->decker_tasks->update_task_stack_and_order( $request );
+		$response = $this->decker_tasks->get_order_engine()->update_task_stack_and_order( $request );
 
 		// Verify the response is successful.
 		$this->assertEquals( 200, $response->get_status(), 'Failed to update task stack and order.' );

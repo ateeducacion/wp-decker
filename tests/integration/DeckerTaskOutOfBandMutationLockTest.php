@@ -152,7 +152,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 		$request->set_param( 'source_order', 1 );
 		$request->set_param( 'target_order', 1 );
 
-		return ( new Decker_Tasks() )->update_task_stack_and_order( $request );
+		return ( new Decker_Tasks() )->get_order_engine()->update_task_stack_and_order( $request );
 	}
 
 	/**
