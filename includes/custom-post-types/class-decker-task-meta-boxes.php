@@ -4,8 +4,8 @@
  *
  * Everything the editor sees when opening a task: the details box with its
  * due date, priority, stack and Nextcloud card fields, the sidebar boxes for
- * labels, board, assigned users and the user/date relations, and the
- * attachments box. Reading the stored meta and turning it into form controls
+ * labels, board and assigned users, plus the user/date-relations and
+ * attachments boxes. Reading the stored meta and turning it into form controls
  * is a separate job from registering the post type or persisting a
  * submission, both of which stay in Decker_Tasks.
  *
