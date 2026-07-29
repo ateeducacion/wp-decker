@@ -1,6 +1,6 @@
 <?php
 /**
- * Task Post Type and Metaboxes for the Decker Plugin.
+ * Task Post Type for the Decker Plugin.
  *
  * @package    Decker
  * @subpackage Decker/includes
@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class Decker_Tasks.
  *
- * Handles the Custom Post Type and its metaboxes for tasks in the Decker plugin.
+ * Handles the Custom Post Type for tasks in the Decker plugin.
  */
 class Decker_Tasks {
 
