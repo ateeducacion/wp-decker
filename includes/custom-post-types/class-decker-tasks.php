@@ -43,6 +43,10 @@ class Decker_Tasks {
 
 		// The edit-screen meta boxes own their own hook.
 		new Decker_Task_Meta_Boxes();
+
+		// The admin list table and the edit-screen chrome own their own hooks.
+		new Decker_Task_Admin_List();
+		new Decker_Task_Admin_Chrome();
 	}
 
 	/**
@@ -108,28 +112,10 @@ class Decker_Tasks {
 		add_action( 'before_delete_post', array( $this, 'handle_task_deletion' ) );
 		add_action( 'transition_post_status', array( $this, 'handle_task_status_change' ), 10, 3 );
 
-		add_action( 'admin_head', array( $this, 'hide_visibility_options' ) );
-		add_action( 'admin_head', array( $this, 'disable_menu_order_field' ) );
-
 		add_action( 'save_post', array( $this, 'save_meta' ), 10, 3 );
-		add_action( 'admin_head', array( $this, 'hide_permalink_and_slug' ) );
-		add_action( 'admin_head', array( $this, 'change_publish_meta_box_title' ) );
-		add_filter( 'parse_query', array( $this, 'filter_tasks_by_status' ) );
-		add_filter( 'parse_query', array( $this, 'filter_tasks_by_taxonomies' ) );
-		add_action( 'restrict_manage_posts', array( $this, 'add_taxonomy_filters' ) );
-		add_action( 'use_block_editor_for_post_type', array( $this, 'disable_gutenberg' ), 10, 2 );
-
-		add_filter( 'manage_decker_task_posts_columns', array( $this, 'add_custom_columns' ) );
-		add_action( 'manage_decker_task_posts_custom_column', array( $this, 'render_custom_columns' ), 10, 2 );
-		add_filter( 'manage_edit-decker_task_sortable_columns', array( $this, 'make_columns_sortable' ) );
-		add_filter( 'post_row_actions', array( $this, 'remove_row_actions' ), 10, 2 );
-
-		add_action( 'pre_get_posts', array( $this, 'custom_order_by_stack' ) );
 
 		add_action( 'wp_ajax_save_decker_task', array( $this, 'handle_save_decker_task' ) );
 		add_action( 'wp_ajax_nopriv_save_decker_task', array( $this, 'handle_save_decker_task' ) );
-
-		add_action( 'admin_menu', array( $this, 'remove_add_new_link' ) );
 
 		add_filter( 'wp_unique_filename', array( $this, 'custom_unique_filename' ), 10, 4 );
 
@@ -166,90 +152,6 @@ class Decker_Tasks {
 			}
 		}
 		return $filename;
-	}
-
-
-	/**
-	 * Make custom columns sortable.
-	 *
-	 * @param array $columns Existing sortable columns.
-	 * @return array Modified sortable columns.
-	 */
-	public function make_columns_sortable( $columns ) {
-		$columns['stack'] = 'stack';
-		return $columns;
-	}
-
-	/**
-	 * Modify the order of the 'decker_task' post type in the admin when sorting by 'stack'.
-	 *
-	 * @param WP_Query $query The current query object.
-	 */
-	public function custom_order_by_stack( $query ) {
-		if ( ! is_admin() || ! $query->is_main_query() ) {
-			return;
-		}
-
-		if ( 'decker_task' === $query->get( 'post_type' ) && 'stack' === $query->get( 'orderby' ) ) {
-			$query->set( 'meta_key', 'stack' );
-			$query->set( 'orderby', 'meta_value' );
-		}
-	}
-
-	/**
-	 * Add custom columns to the task list table.
-	 *
-	 * @param array $columns Existing columns.
-	 * @return array Modified columns.
-	 */
-	public function add_custom_columns( $columns ) {
-		unset( $columns['date'] ); // Remove the date column if needed.
-		$columns['stack'] = __( 'Stack', 'decker' );
-		return $columns;
-	}
-
-	/**
-	 * Render custom columns in the task list table.
-	 *
-	 * @param string $column  The name of the column.
-	 * @param int    $post_id The ID of the post.
-	 */
-	public function render_custom_columns( $column, $post_id ) {
-		switch ( $column ) {
-			case 'stack':
-				echo esc_html( get_post_meta( $post_id, 'stack', true ) );
-				break;
-		}
-	}
-
-	/**
-	 * Remove row actions from the task list table.
-	 *
-	 * @param array  $actions Existing actions.
-	 * @param object $post    The current post object.
-	 * @return array Modified actions.
-	 */
-	public function remove_row_actions( $actions, $post ) {
-		if ( 'decker_task' === $post->post_type ) {
-			return array(); // Remove all actions.
-		}
-		return $actions;
-	}
-
-	/**
-	 * Remove 'Add New' button for decker_task post type.
-	 */
-	public function remove_add_new_link() {
-		global $submenu;
-		// Remove the "Add New" submenu link.
-		if ( isset( $submenu['edit.php?post_type=decker_task'] ) ) {
-			foreach ( $submenu['edit.php?post_type=decker_task'] as $key => $item ) {
-				// Searches for the "Add New Entry" item.
-				if ( 'post-new.php?post_type=decker_task' === $item[2] ) {
-					unset( $submenu['edit.php?post_type=decker_task'][ $key ] );
-				}
-			}
-		}
 	}
 
 	/**
@@ -498,20 +400,6 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Filter tasks to show only published by default in the admin list.
-	 *
-	 * @param WP_Query $query The current query object.
-	 */
-	public function filter_tasks_by_status( $query ) {
-		global $pagenow;
-		$post_type = isset( $_GET['post_type'] ) ? sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) : '';
-
-		if ( 'edit.php' === $pagenow && 'decker_task' === $post_type && ! isset( $_GET['post_status'] ) ) {
-			$query->set( 'post_status', 'publish' );
-		}
-	}
-
-	/**
 	 * Save the custom meta fields.
 	 *
 	 * @param int     $post_id The current post ID.
@@ -682,158 +570,6 @@ class Decker_Tasks {
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		update_post_meta( $post_id, '_user_date_relations', $relations );
-	}
-
-	/**
-	 * Hide the permalink and slug for decker_task.
-	 */
-	public function hide_permalink_and_slug() {
-		$screen = get_current_screen();
-		if ( $screen && 'decker_task' == $screen->post_type && 'post' == $screen->base ) {
-			echo '<style type="text/css">
-				#edit-slug-box, #post-name { display: none; }
-			</style>';
-		}
-	}
-
-	/**
-	 * Disables the menu_order field in the admin interface for decker_task.
-	 */
-	public function disable_menu_order_field() {
-		$screen = get_current_screen();
-		if ( $screen && 'decker_task' === $screen->post_type && 'post' === $screen->base ) {
-			?>
-			<script type="text/javascript">
-				document.addEventListener('DOMContentLoaded', function() {
-					// Disable the menu_order field.
-					var menuOrderField = document.getElementById('menu_order');
-					if (menuOrderField) {
-						menuOrderField.disabled = true;
-					}
-				});
-			</script>
-			<?php
-		}
-	}
-
-	/**
-	 * Filter tasks by taxonomies.
-	 *
-	 * @param WP_Query $query The current query object.
-	 */
-	public function filter_tasks_by_taxonomies( $query ) {
-		global $pagenow;
-		$qv = &$query->query_vars;
-		if ( 'edit.php' == $pagenow && isset( $qv['post_type'] ) && 'decker_task' == $qv['post_type'] ) {
-			$this->map_taxonomy_filter_to_slug( $qv, 'decker_board' );
-			$this->map_taxonomy_filter_to_slug( $qv, 'decker_label' );
-		}
-	}
-
-	/**
-	 * Replace a numeric taxonomy query var with the matching term slug in place.
-	 *
-	 * @param array  $qv       The query vars array, passed by reference for in-place mutation.
-	 * @param string $taxonomy The taxonomy name.
-	 */
-	private function map_taxonomy_filter_to_slug( array &$qv, string $taxonomy ) {
-		if ( isset( $qv[ $taxonomy ] ) && is_numeric( $qv[ $taxonomy ] ) && 0 != $qv[ $taxonomy ] ) {
-			$term = get_term_by( 'id', $qv[ $taxonomy ], $taxonomy );
-			if ( $term ) {
-				$qv[ $taxonomy ] = $term->slug;
-			}
-		}
-	}
-
-	/**
-	 * Add taxonomy filters to the admin posts list.
-	 */
-	public function add_taxonomy_filters() {
-		global $typenow;
-		if ( 'decker_task' == $typenow ) {
-			$this->add_taxonomy_filter( 'decker_board', __( 'Show All Boards', 'decker' ) );
-			$this->add_taxonomy_filter( 'decker_label', __( 'Show All Labels', 'decker' ) );
-		}
-	}
-
-	/**
-	 * Add a taxonomy filter to the admin posts list.
-	 *
-	 * @param string $taxonomy The taxonomy name.
-	 * @param string $label    The label for the dropdown.
-	 */
-	private function add_taxonomy_filter( $taxonomy, $label ) {
-		$selected      = isset( $_GET[ $taxonomy ] ) ? sanitize_text_field( wp_unslash( $_GET[ $taxonomy ] ) ) : '';
-		$info_taxonomy = get_taxonomy( $taxonomy );
-		wp_dropdown_categories(
-			array(
-				'show_option_all' => $label . $info_taxonomy->label,
-				'taxonomy'        => $taxonomy,
-				'name'            => $taxonomy,
-				'orderby'         => 'name',
-				'selected'        => $selected,
-				'show_count'      => true,
-				'hide_empty'      => true,
-			)
-		);
-	}
-
-	/**
-	 * Disable Gutenberg editor for decker_task.
-	 *
-	 * @param bool   $current_status The current status.
-	 * @param string $post_type      The post type.
-	 * @return bool The modified status.
-	 */
-	public function disable_gutenberg( $current_status, $post_type ) {
-		if ( 'decker_task' === $post_type ) {
-			return false;
-		}
-		return $current_status;
-	}
-
-	/**
-	 * Changes the title of the publish meta box for the 'decker_task' post type.
-	 *
-	 * Updates the title of the publish meta box to "Status" using JavaScript
-	 * when editing or creating a task of the 'decker_task' post type.
-	 *
-	 * @return void Outputs a script to modify the meta box title dynamically.
-	 */
-	public function change_publish_meta_box_title() {
-		global $post_type;
-		if ( 'decker_task' === $post_type ) {
-			echo '<script>
-	            jQuery(document).ready(function($) {
-	                jQuery("#submitdiv .hndle").text("' . esc_html__( 'Status', 'decker' ) . '");
-	            });
-	        </script>';
-		}
-	}
-
-	/**
-	 * Hide visibility options for decker_task post type.
-	 */
-	public function hide_visibility_options() {
-		global $post_type;
-		if ( 'decker_task' == $post_type ) {
-
-			echo '<style type="text/css">
-	            .misc-pub-section.misc-pub-visibility {
-	                display: none;
-	            }
-		        /* hide the parent of the group of password and private */
-		        .inline-edit-group.wp-clearfix .inline-edit-password-input,
-		        .inline-edit-group.wp-clearfix .inline-edit-private,
-		        .inline-edit-group.wp-clearfix .inline-edit-or,
-		        .inline-edit-group.wp-clearfix {
-		            display: none;
-		        }
-		        .page-title-action {
-	               	display: none !important;
-	            }
-			</style>';
-		}
 	}
 
 	/**

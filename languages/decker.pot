@@ -849,6 +849,15 @@ msgstr ""
 msgid "New Label Name"
 msgstr ""
 
+msgid "Status"
+msgstr ""
+
+msgid "Show All Boards"
+msgstr ""
+
+msgid "Show All Labels"
+msgstr ""
+
 msgid "Invalid task ID."
 msgstr ""
 
@@ -1030,15 +1039,6 @@ msgid "Archived"
 msgstr ""
 
 msgid "Archivado"
-msgstr ""
-
-msgid "Show All Boards"
-msgstr ""
-
-msgid "Show All Labels"
-msgstr ""
-
-msgid "Status"
 msgstr ""
 
 msgid "Task saved successfully."

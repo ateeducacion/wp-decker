@@ -1,7 +1,7 @@
 # Decker_Tasks and Task decomposition — design
 
 Date: 2026-07-29
-Status: approved design — PRs A (#296), B (#297), C (#298) merged; PR D in review
+Status: approved design — PRs A (#296), B (#297), C (#298), D (#299) merged; PR E in review
 Predecessors: PRs #290, #291, #292, #294, #295 (PHPMD codesize campaign, 39 → 8 open alerts)
 
 ## Goal
