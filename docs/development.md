@@ -86,6 +86,9 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Demo_Data` task/comment seeding and randomness helpers | `Decker_Demo_Tasks`, `Decker_Demo_Randomizer` |
 | `Decker_Calendar::handle_ical_request()` / `add_ical_endpoint()` and access checks | `Decker_Calendar_Ical_Feed` |
 | `Decker_Calendar::get_cached_ical()` / `flush_cache_*()` | `Decker_Calendar_Cache` |
+| `Decker_Kb::save_article()` and the write path | `Decker_Kb_Article_Writer` |
+| `Decker_Kb::reorder_articles()` and sibling renumbering | `Decker_Kb_Reorder` |
+| `TaskManager` "for today" query bodies (public entry points stay as delegators) | `Decker_Task_Today_Query`, `Decker_Task_Date_Relations` |
 | `Decker_Public::enqueue_scripts()` body | `Decker_Public_Assets` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:

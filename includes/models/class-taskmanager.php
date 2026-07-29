@@ -385,5 +385,4 @@ class TaskManager {
 	public function get_user_task_dates( int $user_id, int $max_days_back = 7 ): array {
 		return $this->today_query()->get_user_task_dates( $user_id, $max_days_back );
 	}
-
 }
