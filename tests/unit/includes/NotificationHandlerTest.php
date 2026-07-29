@@ -96,10 +96,12 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 			)
 		);
 
-		// Initialize the notifications handler.
-		$this->notifications = new Decker_Notification_Handler();
+		// Initialize the notifications stack. The store and ajax instances are
+		// injected into the handler so the tests drive the same objects the
+		// handler persists through, and the Heartbeat/AJAX hooks register once.
 		$this->store         = new Decker_Notification_Store();
 		$this->ajax          = new Decker_Notification_Ajax( $this->store );
+		$this->notifications = new Decker_Notification_Handler( $this->store, $this->ajax );
 
 		// Track hooks being fired.
 		add_action( 'decker_user_assigned', array( $this, 'track_hook' ), 10, 2 );
@@ -565,6 +567,11 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 	/**
 	 * Locks the CURRENT ascending sort + front slice for the AJAX endpoint.
+	 *
+	 * This documents a bug rather than endorsing it: the endpoint's comments
+	 * promise newest-first but the code returns oldest-first and drops the
+	 * newest entries once over the cap. Tracked in issue #293 — when that is
+	 * fixed, this test must flip with it.
 	 */
 	public function test_ajax_get_notifications_returns_oldest_first_and_caps_at_15() {
 		$notifications = array();

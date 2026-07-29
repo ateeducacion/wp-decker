@@ -34,13 +34,22 @@ class Decker_Notification_Handler {
 
 	/**
 	 * Constructor
+	 *
+	 * Both collaborators can be injected so tests exercise the exact instances
+	 * the handler persists through, instead of parallel ones that would
+	 * register the Heartbeat and AJAX hooks a second time.
+	 *
+	 * @param Decker_Notification_Store|null $store Optional store to persist through.
+	 * @param Decker_Notification_Ajax|null  $ajax  Optional browser-facing side; when given, its hooks are already registered and no second instance is created.
 	 */
-	public function __construct() {
+	public function __construct( $store = null, $ajax = null ) {
 		$this->mailer = new Decker_Mailer();
-		$this->store  = new Decker_Notification_Store();
+		$this->store  = $store instanceof Decker_Notification_Store ? $store : new Decker_Notification_Store();
 
-		// The browser-facing side (Heartbeat + AJAX) registers its own hooks.
-		new Decker_Notification_Ajax( $this->store );
+		if ( ! $ajax instanceof Decker_Notification_Ajax ) {
+			// The browser-facing side (Heartbeat + AJAX) registers its own hooks.
+			new Decker_Notification_Ajax( $this->store );
+		}
 
 		// Triggered when a new task is created.
 		add_action( 'decker_task_created', array( $this, 'handle_task_created' ) );

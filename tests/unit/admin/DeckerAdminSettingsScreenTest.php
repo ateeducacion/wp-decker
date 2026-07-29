@@ -21,10 +21,27 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 	private $html;
 
 	/**
+	 * Settings API globals as they were before the test registered anything.
+	 *
+	 * Saved so tear_down() can put back exactly what was there, instead of
+	 * wiping registrations that belong to other tests.
+	 *
+	 * @var array
+	 */
+	private $saved_settings_globals;
+
+	/**
 	 * Set up before each test.
 	 */
 	public function set_up(): void {
 		parent::set_up();
+
+		global $wp_settings_sections, $wp_settings_fields, $wp_registered_settings;
+		$this->saved_settings_globals = array(
+			'sections'   => $wp_settings_sections,
+			'fields'     => $wp_settings_fields,
+			'registered' => $wp_registered_settings,
+		);
 
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
@@ -48,9 +65,9 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 	 */
 	public function tear_down(): void {
 		global $wp_settings_sections, $wp_settings_fields, $wp_registered_settings;
-		$wp_settings_sections   = array();
-		$wp_settings_fields     = array();
-		$wp_registered_settings = array();
+		$wp_settings_sections   = $this->saved_settings_globals['sections'];
+		$wp_settings_fields     = $this->saved_settings_globals['fields'];
+		$wp_registered_settings = $this->saved_settings_globals['registered'];
 
 		delete_option( 'decker_settings' );
 		wp_set_current_user( 0 );
