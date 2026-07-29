@@ -2,7 +2,7 @@
 /**
  * Integration tests for server-side lock enforcement on task saves.
  *
- * These tests exercise Decker_Tasks::handle_save_decker_task() with real
+ * These tests exercise Decker_Task_Ajax_Save::handle_save_decker_task() with real
  * WordPress post meta to prove that a stale editing session cannot overwrite
  * newer changes once another user owns the active lock.
  *

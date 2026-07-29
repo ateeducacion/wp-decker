@@ -57,7 +57,7 @@ No public or unauthenticated agent endpoint is registered. Multisite execution s
 
 ## Relationship to existing behavior
 
-Task writes call `Decker_Tasks::create_or_update_task()`. The adapter does not reimplement creation, update, taxonomy assignment, stack-transition hooks, notifications, or archive behavior. Existing REST routes remain available and backward compatible.
+Task writes call `Decker_Task_Writer::create_or_update_task( array $args )`. The adapter does not reimplement creation, update, taxonomy assignment, stack-transition hooks, notifications, or archive behavior. Existing REST routes remain available and backward compatible.
 
 Writes carry the complete task state: unspecified fields keep their stored values, and an empty `label_ids` clears the task's labels rather than leaving them untouched. The adapter also re-reads and preserves the task's Nextcloud card link, which the shared domain method rewrites on every save.
 

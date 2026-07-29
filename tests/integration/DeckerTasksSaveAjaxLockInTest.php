@@ -1,10 +1,9 @@
 <?php
 /**
- * Characterization tests for Decker_Tasks::handle_save_decker_task().
+ * Characterization tests for Decker_Task_Ajax_Save::handle_save_decker_task().
  *
  * Pins CSV/array parsing of assignees and labels, every isset()-ternary
- * default, the due-date fallback and the mark_for_today round-trip before the
- * sanitization ladder is refactored into reader helpers.
+ * default, the due-date fallback and the mark_for_today round-trip.
  *
  * @package Decker
  */

@@ -55,9 +55,9 @@ apply_filters( 'decker_save_task_send_response', true );
 
 ## What counts as a stable surface
 
-The hooks above, plus `Decker_Tasks::create_or_update_task()`, are what integrations
-should build on. Everything else — class names, method names, which class registers
-which callback — is internal and gets reorganised as classes grow.
+The hooks above, plus `Decker_Task_Writer::create_or_update_task( array $args )`, are
+what integrations should build on. Everything else — class names, method names, which
+class registers which callback — is internal and gets reorganised as classes grow.
 
 Most public methods on these classes are public only because WordPress needs to call
 them as hook callbacks. Calling them directly, or unhooking them by name, is not
@@ -106,6 +106,7 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Tasks::handle_save_decker_task()` + lock guards | `Decker_Task_Ajax_Save` (no delegator — direct callers must retarget) |
 | `Decker_Tasks` `$_POST` readers | `Decker_Task_Request_Reader` |
 | `Decker_Tasks::add_user_date_relation()` / `remove_user_date_relation()` | `Decker_Task_Today_Manager::mark_for_today()` / `unmark_for_today()` |
+| `Decker_Tasks::create_or_update_task()` and the write pipeline | `Decker_Task_Writer::create_or_update_task( array $args )` — signature changed, no delegator |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:
 
