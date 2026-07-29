@@ -849,6 +849,37 @@ msgstr ""
 msgid "New Label Name"
 msgstr ""
 
+msgid "Invalid task ID."
+msgstr ""
+
+msgid "Untitled"
+msgstr ""
+
+#. translators: %s: original task title
+#, php-format
+msgid "%s (copy)"
+msgstr ""
+
+msgid "The source task was not found."
+msgstr ""
+
+msgid "The destination task was not found."
+msgstr ""
+
+msgid "A task cannot be merged into itself."
+msgstr ""
+
+msgid "Only published tasks can be merged."
+msgstr ""
+
+msgid "This task has already been merged."
+msgstr ""
+
+#. translators: 1: source task title, 2: source task ID
+#, php-format
+msgid "Merged from task: %1$s (ID: %2$d)"
+msgstr ""
+
 msgid "Task not found."
 msgstr ""
 
@@ -883,37 +914,6 @@ msgid "You do not have permission to merge one of the selected tasks."
 msgstr ""
 
 msgid "Task merged successfully."
-msgstr ""
-
-msgid "Invalid task ID."
-msgstr ""
-
-msgid "Untitled"
-msgstr ""
-
-#. translators: %s: original task title
-#, php-format
-msgid "%s (copy)"
-msgstr ""
-
-msgid "The source task was not found."
-msgstr ""
-
-msgid "The destination task was not found."
-msgstr ""
-
-msgid "A task cannot be merged into itself."
-msgstr ""
-
-msgid "Only published tasks can be merged."
-msgstr ""
-
-msgid "This task has already been merged."
-msgstr ""
-
-#. translators: 1: source task title, 2: source task ID
-#, php-format
-msgid "Merged from task: %1$s (ID: %2$d)"
 msgstr ""
 
 msgid "No Board"
