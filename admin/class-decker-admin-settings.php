@@ -201,12 +201,6 @@ class Decker_Admin_Settings {
 	}
 
 	/**
-	 * Render Clear All Data Button.
-	 *
-	 * Outputs the HTML for the clear_all_data_button field.
-	 */
-
-	/**
 	 * Options Page.
 	 *
 	 * Renders the settings page.
