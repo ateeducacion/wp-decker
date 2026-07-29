@@ -901,21 +901,6 @@ msgstr ""
 msgid "Task is not marked for today."
 msgstr ""
 
-msgid "You do not have permission to clone this task."
-msgstr ""
-
-msgid "Task cloned successfully."
-msgstr ""
-
-msgid "Please choose a destination task."
-msgstr ""
-
-msgid "You do not have permission to merge one of the selected tasks."
-msgstr ""
-
-msgid "Task merged successfully."
-msgstr ""
-
 msgid "No Board"
 msgstr ""
 
@@ -929,6 +914,21 @@ msgid "Done"
 msgstr ""
 
 msgid "Unknown"
+msgstr ""
+
+msgid "You do not have permission to clone this task."
+msgstr ""
+
+msgid "Task cloned successfully."
+msgstr ""
+
+msgid "Please choose a destination task."
+msgstr ""
+
+msgid "You do not have permission to merge one of the selected tasks."
+msgstr ""
+
+msgid "Task merged successfully."
 msgstr ""
 
 msgctxt "post type general name"
