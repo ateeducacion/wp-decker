@@ -159,6 +159,8 @@ class Decker {
 	 * @access private
 	 */
 	private function load_service_dependencies() {
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-attachment-uploader.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-board-resolver.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-email-to-post.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-revision-manager.php';
 

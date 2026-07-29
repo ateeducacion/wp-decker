@@ -14,7 +14,7 @@ class DeckerEmailToPostAttachmentTest extends Decker_Test_Base {
 	/**
 	 * Instance under test.
 	 *
-	 * @var Decker_Email_To_Post
+	 * @var Decker_Email_Attachment_Uploader
 	 */
 	private $email_to_post;
 
@@ -38,7 +38,7 @@ class DeckerEmailToPostAttachmentTest extends Decker_Test_Base {
 	public function set_up(): void {
 		parent::set_up();
 
-		$this->email_to_post = new Decker_Email_To_Post();
+		$this->email_to_post = new Decker_Email_Attachment_Uploader();
 
 		$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->user_id );
