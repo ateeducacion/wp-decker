@@ -1,6 +1,6 @@
 <?php
 /**
- * Characterization test for Decker_Tasks::filter_tasks_by_taxonomies().
+ * Characterization test for Decker_Task_Admin_List::filter_tasks_by_taxonomies().
  *
  * Pins the by-reference in-place mutation of $query->query_vars before the
  * method is refactored to share a helper.
@@ -46,7 +46,7 @@ class DeckerTasksAdminFiltersLockInTest extends Decker_Test_Base {
 			'decker_label' => (string) $this->label_id,
 		);
 
-		( new Decker_Tasks() )->filter_tasks_by_taxonomies( $query );
+		( new Decker_Task_Admin_List() )->filter_tasks_by_taxonomies( $query );
 
 		$this->assertEquals(
 			get_term( $this->board_id )->slug,
@@ -66,7 +66,7 @@ class DeckerTasksAdminFiltersLockInTest extends Decker_Test_Base {
 			'decker_board' => '0',
 			'decker_label' => 'already-a-slug',
 		);
-		( new Decker_Tasks() )->filter_tasks_by_taxonomies( $query2 );
+		( new Decker_Task_Admin_List() )->filter_tasks_by_taxonomies( $query2 );
 		$this->assertEquals( '0', $query2->query_vars['decker_board'] );
 		$this->assertEquals( 'already-a-slug', $query2->query_vars['decker_label'] );
 
