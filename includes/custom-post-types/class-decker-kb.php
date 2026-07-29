@@ -15,9 +15,26 @@
 class Decker_Kb {
 
 	/**
+	 * Sibling renumbering and the reorder endpoint.
+	 *
+	 * @var Decker_Kb_Reorder
+	 */
+	private $reorder;
+
+	/**
+	 * The article write path.
+	 *
+	 * @var Decker_Kb_Article_Writer
+	 */
+	private $writer;
+
+	/**
 	 * Constructor
 	 */
 	public function __construct() {
+		$this->reorder = new Decker_Kb_Reorder();
+		$this->writer  = new Decker_Kb_Article_Writer( $this->reorder );
+
 		$this->define_hooks();
 	}
 
@@ -48,7 +65,7 @@ class Decker_Kb {
 			array(
 				array(
 					'methods'             => 'POST',
-					'callback'            => array( $this, 'save_article' ),
+					'callback'            => array( $this->writer, 'save_article' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 				),
 				array(
@@ -66,7 +83,7 @@ class Decker_Kb {
 			array(
 				array(
 					'methods'             => 'POST',
-					'callback'            => array( $this, 'reorder_articles' ),
+					'callback'            => array( $this->reorder, 'reorder_articles' ),
 					'permission_callback' => array( $this, 'check_permissions' ),
 				),
 			)
@@ -124,196 +141,13 @@ class Decker_Kb {
 	}
 
 	/**
-	 * Save or update KB article
-	 *
-	 * @param WP_REST_Request $request Request object.
-	 * @return WP_REST_Response
-	 */
-	public function save_article( $request ) {
-		$params = $request->get_params();
-
-		$desired_position = isset( $params['menu_order'] ) ? max( 0, intval( $params['menu_order'] ) ) : null;
-
-		// Validate that board is provided only on create (no ID).
-		if ( empty( $params['id'] ) && empty( $params['board'] ) ) {
-			return $this->error_response( __( 'Board is required', 'decker' ) );
-		}
-
-		// Look up the existing post (with IDOR guards) when updating.
-		$existing_post = $this->get_existing_article( $params );
-		if ( $existing_post instanceof WP_REST_Response ) {
-			return $existing_post;
-		}
-
-		$old_parent_id = $existing_post ? intval( $existing_post->post_parent ) : null;
-
-		$post_data = $this->build_article_post_data( $params, $existing_post );
-
-		$post_id = wp_insert_post( $post_data );
-
-		if ( is_wp_error( $post_id ) ) {
-			return $this->error_response( $post_id->get_error_message() );
-		}
-
-		// Assign labels and board; a non-null return is a terminal error response.
-		$terms_error = $this->assign_article_terms( $post_id, $params );
-		if ( $terms_error ) {
-			return $terms_error;
-		}
-
-		$new_parent_id = intval( $post_data['post_parent'] );
-		$this->maybe_reorder_after_save( $params, $post_id, $old_parent_id, $new_parent_id, $desired_position );
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => __( 'Article saved successfully', 'decker' ),
-				'id'     => $post_id,
-			),
-			200
-		);
-	}
-
-	/**
-	 * Look up the existing KB article for an update request.
-	 *
-	 * Returns null when creating (no ID), the WP_Post when the update target is a
-	 * valid editable KB article, or a WP_REST_Response error when the IDOR guards
-	 * (missing/non-KB post or insufficient capability) reject the request.
-	 *
-	 * @param array $params Request params.
-	 * @return WP_Post|WP_REST_Response|null
-	 */
-	private function get_existing_article( array $params ) {
-		if ( empty( $params['id'] ) ) {
-			return null;
-		}
-
-		$post_id       = intval( $params['id'] );
-		$existing_post = get_post( $post_id );
-
-		// Ensure the target post exists and is actually a KB article.
-		if ( ! $existing_post || 'decker_kb' !== $existing_post->post_type ) {
-			return $this->error_response( __( 'Article not found', 'decker' ), 404 );
-		}
-
-		// Require per-post edit capability for updates.
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return $this->error_response( __( 'You do not have permission to edit this article', 'decker' ), 403 );
-		}
-
-		return $existing_post;
-	}
-
-	/**
-	 * Build the wp_insert_post() array for a save_article() request.
-	 *
-	 * Always sets post_parent and menu_order (provided param -> existing value -> 0)
-	 * so the caller can read post_parent unconditionally.
-	 *
-	 * @param array        $params        Request params.
-	 * @param WP_Post|null $existing_post Existing post on update, null on create.
-	 * @return array
-	 */
-	private function build_article_post_data( array $params, $existing_post ) {
-		$post_data = array(
-			'post_type'    => 'decker_kb',
-			'post_status'  => 'publish',
-		);
-
-		// Title and content always allowed.
-		if ( isset( $params['title'] ) ) {
-			$post_data['post_title'] = sanitize_text_field( $params['title'] );
-		}
-		if ( isset( $params['content'] ) ) {
-			$post_data['post_content'] = wp_kses_post( $params['content'] );
-		}
-
-		if ( ! empty( $params['id'] ) ) {
-			$post_data['ID'] = intval( $params['id'] );
-		}
-
-		// Parent and order: only set if provided. If not, preserve existing values on update.
-		if ( isset( $params['parent_id'] ) ) {
-			$post_data['post_parent'] = intval( $params['parent_id'] );
-		} elseif ( $existing_post ) {
-			$post_data['post_parent'] = $existing_post->post_parent;
-		} else {
-			$post_data['post_parent'] = 0;
-		}
-
-		if ( isset( $params['menu_order'] ) ) {
-			$post_data['menu_order'] = intval( $params['menu_order'] );
-		} elseif ( $existing_post ) {
-			$post_data['menu_order'] = $existing_post->menu_order;
-		} else {
-			$post_data['menu_order'] = 0;
-		}
-
-		return $post_data;
-	}
-
-	/**
-	 * Assign labels and board taxonomy terms for a saved article.
-	 *
-	 * Returns null on success, or a WP_REST_Response error when an invalid board
-	 * is supplied on create (the freshly created post is hard-deleted first).
-	 *
-	 * @param int   $post_id Saved post ID.
-	 * @param array $params  Request params.
-	 * @return WP_REST_Response|null
-	 */
-	private function assign_article_terms( $post_id, array $params ) {
-		// Handle labels: only update if provided; otherwise keep.
-		if ( isset( $params['labels'] ) && is_array( $params['labels'] ) ) {
-			wp_set_object_terms( $post_id, array_map( 'intval', $params['labels'] ), 'decker_label' );
-		}
-
-		// Handle board: update only if provided; otherwise keep current for updates.
-		if ( isset( $params['board'] ) ) {
-			$board_id = intval( $params['board'] );
-			if ( $board_id > 0 ) {
-				wp_set_object_terms( $post_id, array( $board_id ), 'decker_board' );
-			} elseif ( empty( $params['id'] ) ) {
-				// If creating and invalid board, reject.
-				wp_delete_post( $post_id, true );
-				return $this->error_response( __( 'Invalid board ID', 'decker' ) );
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Recalculate siblings after a save when order or parent changed in the request.
-	 *
-	 * @param array    $params           Request params.
-	 * @param int      $post_id          Saved post ID.
-	 * @param int|null $old_parent_id    Parent before the save (null on create).
-	 * @param int      $new_parent_id    Parent after the save.
-	 * @param int|null $desired_position Desired index (null appends).
-	 */
-	private function maybe_reorder_after_save( array $params, $post_id, $old_parent_id, $new_parent_id, $desired_position ) {
-		$parent_changed = ( null !== $old_parent_id && $old_parent_id !== $new_parent_id );
-
-		if ( ! isset( $params['menu_order'] ) && ! $parent_changed ) {
-			return;
-		}
-
-		$this->recalculate_siblings_with_position( $new_parent_id, $post_id, $desired_position );
-		if ( $parent_changed ) {
-			$this->recalculate_siblings( $old_parent_id );
-		}
-	}
-
-	/**
 	 * Build a standard error WP_REST_Response.
 	 *
 	 * @param string $message Human-readable error message.
 	 * @param int    $status  HTTP status code.
 	 * @return WP_REST_Response
 	 */
-	private function error_response( $message, $status = 400 ) {
+	public static function error_response( $message, $status = 400 ) {
 		return new WP_REST_Response(
 			array(
 				'success' => false,
@@ -321,165 +155,6 @@ class Decker_Kb {
 			),
 			$status
 		);
-	}
-
-	/**
-	 * REST callback to handle drag-and-drop reordering.
-	 *
-	 * Expects: moved_id, new_parent_id, new_order (array of IDs), old_parent_id, old_order (array of IDs).
-	 *
-	 * @param WP_REST_Request $request The request.
-	 * @return WP_REST_Response
-	 */
-	public function reorder_articles( $request ) {
-		$args = $this->parse_reorder_request( $request );
-
-		if ( ! $args['moved_id'] ) {
-			return $this->error_response( __( 'Invalid moved ID.', 'decker' ) );
-		}
-
-		// Update parent for moved item.
-		wp_update_post(
-			array(
-				'ID'          => $args['moved_id'],
-				'post_parent' => $args['new_parent_id'],
-			)
-		);
-
-		// Apply new order for target siblings.
-		$this->apply_explicit_order( $args['new_parent_id'], $args['new_order'] );
-
-		// Recalculate old siblings if provided.
-		$this->reorder_previous_parent( $args['old_parent_id'], $args['old_order'] );
-
-		return new WP_REST_Response( array( 'success' => true ), 200 );
-	}
-
-	/**
-	 * Normalize the reorder request params into typed values.
-	 *
-	 * The old_parent_id value stays nullable: null means "not provided" (skip
-	 * old-side recalculation), while 0 means the root parent.
-	 *
-	 * @param WP_REST_Request $request The request.
-	 * @return array {
-	 *     @type int      $moved_id      Moved post ID (0 default).
-	 *     @type int      $new_parent_id Target parent ID (0 default).
-	 *     @type int|null $old_parent_id Previous parent ID (null when absent).
-	 *     @type int[]    $new_order     Ordered IDs for the target parent.
-	 *     @type int[]    $old_order     Ordered IDs for the previous parent.
-	 * }
-	 */
-	private function parse_reorder_request( $request ) {
-		$params = $request->get_params();
-
-		return array(
-			'moved_id'      => isset( $params['moved_id'] ) ? intval( $params['moved_id'] ) : 0,
-			'new_parent_id' => isset( $params['new_parent_id'] ) ? intval( $params['new_parent_id'] ) : 0,
-			'old_parent_id' => isset( $params['old_parent_id'] ) ? intval( $params['old_parent_id'] ) : null,
-			'new_order'     => isset( $params['new_order'] ) && is_array( $params['new_order'] ) ? array_map( 'intval', $params['new_order'] ) : array(),
-			'old_order'     => isset( $params['old_order'] ) && is_array( $params['old_order'] ) ? array_map( 'intval', $params['old_order'] ) : array(),
-		);
-	}
-
-	/**
-	 * Recalculate the previous parent's siblings after a move.
-	 *
-	 * No-op when the old parent was not provided (null sentinel). Applies the
-	 * explicit order when supplied, otherwise resequences the remaining children.
-	 *
-	 * @param int|null $old_parent_id Previous parent ID (null skips).
-	 * @param array    $old_order     Ordered IDs for the previous parent.
-	 */
-	private function reorder_previous_parent( $old_parent_id, array $old_order ) {
-		if ( null === $old_parent_id ) {
-			return;
-		}
-
-		if ( $old_order ) {
-			$this->apply_explicit_order( $old_parent_id, $old_order );
-		} else {
-			$this->recalculate_siblings( $old_parent_id );
-		}
-	}
-
-	/**
-	 * Recalculate sequential menu_order for all children of a parent.
-	 *
-	 * @param int $parent_id Parent post ID.
-	 */
-	private function recalculate_siblings( $parent_id ) {
-		$children = get_children(
-			array(
-				'post_type'      => 'decker_kb',
-				'post_parent'    => intval( $parent_id ),
-				'orderby'        => 'menu_order',
-				'order'          => 'ASC',
-				'numberposts'    => -1,
-			)
-		);
-		$index = 0;
-		foreach ( $children as $child ) {
-			wp_update_post(
-				array(
-					'ID'         => $child->ID,
-					'menu_order' => $index++,
-				)
-			);
-		}
-	}
-
-	/**
-	 * Recalculate siblings placing the given post at desired position.
-	 *
-	 * @param int      $parent_id Parent ID.
-	 * @param int      $post_id   Post ID to position.
-	 * @param int|null $position  Desired index (0-based). If null, just recalc sequentially.
-	 */
-	private function recalculate_siblings_with_position( $parent_id, $post_id, $position ) {
-		$children = get_children(
-			array(
-				'post_type'      => 'decker_kb',
-				'post_parent'    => intval( $parent_id ),
-				'orderby'        => 'menu_order',
-				'order'          => 'ASC',
-				'numberposts'    => -1,
-			)
-		);
-
-		$ids = array();
-		foreach ( $children as $child ) {
-			if ( intval( $child->ID ) !== intval( $post_id ) ) {
-				$ids[] = intval( $child->ID );
-			}
-		}
-		if ( null === $position || $position < 0 ) {
-			$ids[] = intval( $post_id );
-		} else {
-			$position = min( $position, count( $ids ) );
-			array_splice( $ids, $position, 0, array( intval( $post_id ) ) );
-		}
-
-		$this->apply_explicit_order( $parent_id, $ids );
-	}
-
-	/**
-	 * Apply explicit ordering to children list by IDs.
-	 *
-	 * @param int   $parent_id Parent post ID.
-	 * @param array $ordered_ids Ordered IDs of children.
-	 */
-	private function apply_explicit_order( $parent_id, $ordered_ids ) {
-		$index = 0;
-		foreach ( $ordered_ids as $cid ) {
-			wp_update_post(
-				array(
-					'ID'          => intval( $cid ),
-					'post_parent' => intval( $parent_id ),
-					'menu_order'  => $index++,
-				)
-			);
-		}
 	}
 
 	/**
