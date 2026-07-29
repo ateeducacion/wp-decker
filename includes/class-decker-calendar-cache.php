@@ -67,7 +67,7 @@ class Decker_Calendar_Cache {
 		$events  = $this->calendar->get_events( $type );
 		$ics     = $this->calendar->generate_ical( $events, $type );
 
-		// Store in cache; object-cache users get it persistent, otros usan options.
+		// Store in cache; object-cache users get it persistent, the rest fall back to options.
 		set_transient( $key, $ics, Decker_Calendar::CACHE_TTL );
 
 		return $ics;

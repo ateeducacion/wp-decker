@@ -129,7 +129,7 @@ class Decker_Calendar_Ical_Feed {
 		if ( ! headers_sent() && ! ( defined( 'WP_TESTS_RUNNING' ) && WP_TESTS_RUNNING ) ) {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
-			// Ignore cache, because we are going to cache using traseints.
+			// Ignore browser caching; we cache server-side using transients.
 			header( 'Cache-Control: no-cache, must-revalidate' );
 			header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' ); // Date in past.
 			header( 'Pragma: no-cache' );
