@@ -169,6 +169,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-ajax.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-notification-handler.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ical-builder.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar-cache.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar-ical-feed.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-calendar.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-provider-interface.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ai-gemini-api-provider.php';
