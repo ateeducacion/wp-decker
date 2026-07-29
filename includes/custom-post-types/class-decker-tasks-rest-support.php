@@ -26,9 +26,9 @@ class Decker_Tasks_Rest_Support {
 	 * and may include `args`. `callback` is normally a method name on the
 	 * owning controller, resolved as `array( $handler, $definition['callback'] )`;
 	 * a definition may instead give the resolved `array( $object, $method )`
-	 * callable directly, for the rare route that dispatches elsewhere (two
-	 * Decker_Tasks_Rest_Ops rows still route to Decker_Tasks until the order
-	 * engine moves to its own class).
+	 * callable directly, for the rare route that dispatches elsewhere (the
+	 * three Decker_Tasks_Rest_Ops rows that route to the order engine via
+	 * Decker_Tasks::get_order_engine()).
 	 *
 	 * @param string            $namespace   The REST namespace, e.g. 'decker/v1'.
 	 * @param array<int, array> $definitions The route definitions.
