@@ -858,6 +858,12 @@ msgstr ""
 msgid "Show All Labels"
 msgstr ""
 
+msgid "Task saved successfully."
+msgstr ""
+
+msgid "This task is archived and cannot be edited."
+msgstr ""
+
 msgid "Invalid task ID."
 msgstr ""
 
@@ -1039,12 +1045,6 @@ msgid "Archived"
 msgstr ""
 
 msgid "Archivado"
-msgstr ""
-
-msgid "Task saved successfully."
-msgstr ""
-
-msgid "This task is archived and cannot be edited."
 msgstr ""
 
 msgid "The title is required."

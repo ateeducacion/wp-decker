@@ -40,13 +40,13 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test direct assignment using add_user_date_relation.
+	 * Test direct assignment using Decker_Task_Today_Manager::mark_for_today().
 	 */
 	public function test_assign_today_direct() {
 		$task_instance = new Decker_Tasks();
 
 		// Assign the task for today.
-		$task_instance->add_user_date_relation( $this->task_id, $this->user_id );
+		$task_instance->get_today_manager()->mark_for_today( $this->task_id, $this->user_id );
 
 		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );
 		$this->assertIsArray( $relations );
@@ -57,7 +57,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		$this->assertEquals( gmdate( 'Y-m-d' ), $relation['date'] );
 
 		// Remove the task for today.
-		$task_instance->remove_user_date_relation( $this->task_id, $this->user_id );
+		$task_instance->get_today_manager()->unmark_for_today( $this->task_id, $this->user_id );
 
 		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );
 		$this->assertIsArray( $relations );
@@ -105,7 +105,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		$task_instance = new Decker_Tasks();
 
 		// Add initial relation.
-		$task_instance->add_user_date_relation( $this->task_id, $this->user_id );
+		$task_instance->get_today_manager()->mark_for_today( $this->task_id, $this->user_id );
 
 		// Simulate REST API request.
 		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/unmark_relation' );
@@ -154,7 +154,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 		);
 
 		// Capture JSON response.
-		$response_data = $task_instance->handle_save_decker_task();
+		$response_data = ( new Decker_Task_Ajax_Save( $task_instance ) )->handle_save_decker_task();
 
 		// Remove the filter after test
 		remove_filter( 'decker_save_task_send_response', '__return_false' );
@@ -186,14 +186,14 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Calling add_user_date_relation twice for the same user and date must not
-	 * create a duplicate relation.
+	 * Calling Decker_Task_Today_Manager::mark_for_today() twice for the same user
+	 * and date must not create a duplicate relation.
 	 */
-	public function test_add_user_date_relation_is_idempotent() {
+	public function test_mark_for_today_is_idempotent() {
 		$task_instance = new Decker_Tasks();
 
-		$task_instance->add_user_date_relation( $this->task_id, $this->user_id );
-		$task_instance->add_user_date_relation( $this->task_id, $this->user_id );
+		$task_instance->get_today_manager()->mark_for_today( $this->task_id, $this->user_id );
+		$task_instance->get_today_manager()->mark_for_today( $this->task_id, $this->user_id );
 
 		$relations = get_post_meta( $this->task_id, '_user_date_relations', true );
 		$this->assertIsArray( $relations );
@@ -207,7 +207,7 @@ class DeckerTasksAssignTodayTest extends Decker_Test_Base {
 	public function test_mark_for_today_save_is_idempotent_and_unmarkable() {
 		add_filter( 'decker_save_task_send_response', '__return_false' );
 
-		$task_instance = new Decker_Tasks();
+		$task_instance = new Decker_Task_Ajax_Save( new Decker_Tasks() );
 		$board_id      = self::factory()->board->create();
 		$nonce         = wp_create_nonce( 'save_decker_task_nonce' );
 

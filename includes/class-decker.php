@@ -157,6 +157,10 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-admin-list.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-admin-chrome.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-meta-saver.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-ajax-save.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-request-reader.php';
+
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-meta-saver.php';
