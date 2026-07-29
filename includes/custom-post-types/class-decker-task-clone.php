@@ -4,8 +4,8 @@
  *
  * Reads the source task's fields, meta, board and labels, builds the copy's
  * title, and creates the duplicate through the canonical write path
- * (Decker_Tasks::create_or_update_task), so cloning fires the same hooks as
- * any other creation.
+ * (Decker_Task_Writer::create_or_update_task), so cloning fires the same
+ * hooks as any other creation.
  *
  * @package    Decker
  * @subpackage Decker/includes
@@ -58,22 +58,24 @@ class Decker_Task_Clone {
 		$archived = ( 'archived' === $post->post_status );
 
 		// Create the new task using the existing method.
-		$new_task_id = Decker_Tasks::create_or_update_task(
-			0,
-			$new_title,
-			$post->post_content,
-			! empty( $stack ) ? $stack : 'to-do',
-			$board,
-			$max_priority,
-			$duedate,
-			get_current_user_id(),
-			$responsable,
-			$hidden,
-			$assigned_users,
-			$labels,
-			null,
-			$archived,
-			0
+		$new_task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'                => 0,
+				'title'             => $new_title,
+				'description'       => $post->post_content,
+				'stack'             => ! empty( $stack ) ? $stack : 'to-do',
+				'board'             => $board,
+				'max_priority'      => $max_priority,
+				'duedate'           => $duedate,
+				'author'            => get_current_user_id(),
+				'responsable'       => $responsable,
+				'hidden'            => $hidden,
+				'assigned_users'    => $assigned_users,
+				'labels'            => $labels,
+				'creation_date'     => null,
+				'archived'          => $archived,
+				'id_nextcloud_card' => 0,
+			)
 		);
 
 		return $new_task_id;

@@ -8,7 +8,7 @@
 /**
  * Class WP_UnitTest_Factory_For_Decker_Task
  *
- * A factory that uses Decker_Tasks::create_or_update_task() for creating and updating decker_task posts.
+ * A factory that uses Decker_Task_Writer::create_or_update_task() for creating and updating decker_task posts.
  * It integrates with the WordPress Core unit test factories.
  */
 class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
@@ -61,7 +61,7 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 	}
 
 	/**
-	 * Creates a decker_task using Decker_Tasks::create_or_update_task().
+	 * Creates a decker_task using Decker_Task_Writer::create_or_update_task().
 	 *
 	 * This method receives the already merged arguments (defaults + input) from the parent's
 	 * generate_args() call. We handle final normalization here (e.g., parse duedate, ensure board is valid).
@@ -126,26 +126,28 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
         }
 
         // Use the method from the plugin.
-        $task_id = Decker_Tasks::create_or_update_task(
-			0, // 0 indicates a new task.
-			$args['post_title'],
-			$args['post_content'],
-			$args['stack'],
-			$args['board'],
-			$args['max_priority'],
-			$args['duedate'],
-			$args['author'],
-			$args['responsable'],
-			$args['hidden'],
-			$args['assigned_users'],
-			$args['labels']
+        $task_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0, // 0 indicates a new task.
+				'title'          => $args['post_title'],
+				'description'    => $args['post_content'],
+				'stack'          => $args['stack'],
+				'board'          => $args['board'],
+				'max_priority'   => $args['max_priority'],
+				'duedate'        => $args['duedate'],
+				'author'         => $args['author'],
+				'responsable'    => $args['responsable'],
+				'hidden'         => $args['hidden'],
+				'assigned_users' => $args['assigned_users'],
+				'labels'         => $args['labels'],
+			)
 		);
 
 		return $task_id;
 	}
 
 	/**
-	 * Updates a decker_task using Decker_Tasks::create_or_update_task().
+	 * Updates a decker_task using Decker_Task_Writer::create_or_update_task().
 	 *
 	 * @param int   $task_id Task ID to update.
 	 * @param array $fields  Fields to update.
@@ -235,19 +237,21 @@ class WP_UnitTest_Factory_For_Decker_Task extends WP_UnitTest_Factory_For_Post {
 		}
 
 		// Use the plugin method to update the task.
-		$updated_id = Decker_Tasks::create_or_update_task(
-			$task_id,
-			$args['post_title'],
-			$args['post_content'],
-			$args['stack'],
-			$args['board'],
-			$args['max_priority'],
-			$args['duedate'],
-			$args['author'],
-			$args['responsable'],
-			$args['hidden'],
-			$args['assigned_users'],
-			$args['labels']
+		$updated_id = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $task_id,
+				'title'          => $args['post_title'],
+				'description'    => $args['post_content'],
+				'stack'          => $args['stack'],
+				'board'          => $args['board'],
+				'max_priority'   => $args['max_priority'],
+				'duedate'        => $args['duedate'],
+				'author'         => $args['author'],
+				'responsable'    => $args['responsable'],
+				'hidden'         => $args['hidden'],
+				'assigned_users' => $args['assigned_users'],
+				'labels'         => $args['labels'],
+			)
 		);
 
 		return $updated_id;

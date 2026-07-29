@@ -171,19 +171,21 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 	public function test_invalid_input_is_rejected_and_creates_no_task() {
 		$before = wp_count_posts( 'decker_task' )->publish;
 
-		$result = Decker_Tasks::create_or_update_task(
-			0,
-			'', // Empty title -> missing_field.
-			'D',
-			'to-do',
-			$this->board_id,
-			false,
-			null,
-			$this->editor,
-			$this->editor,
-			false,
-			array(),
-			array()
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => 0,
+				'title'          => '', // Empty title -> missing_field.
+				'description'    => 'D',
+				'stack'          => 'to-do',
+				'board'          => $this->board_id,
+				'max_priority'   => false,
+				'duedate'        => null,
+				'author'         => $this->editor,
+				'responsable'    => $this->editor,
+				'hidden'         => false,
+				'assigned_users' => array(),
+				'labels'         => array(),
+			)
 		);
 
 		$this->assertInstanceOf( WP_Error::class, $result, 'Empty title must return a WP_Error.' );

@@ -232,19 +232,21 @@ class DeckerTaskRevisionsTest extends Decker_Test_Base {
 			)
 		);
 
-		$result = Decker_Tasks::create_or_update_task(
-			$task_id,
-			'Application path task updated',
-			'Application path updated description',
-			'in-progress',
-			$board_id,
-			true,
-			new DateTime( '2032-04-05' ),
-			$this->editor_id,
-			$this->editor_id,
-			false,
-			array( $this->editor_id ),
-			array( $label_id )
+		$result = Decker_Task_Writer::create_or_update_task(
+			array(
+				'id'             => $task_id,
+				'title'          => 'Application path task updated',
+				'description'    => 'Application path updated description',
+				'stack'          => 'in-progress',
+				'board'          => $board_id,
+				'max_priority'   => true,
+				'duedate'        => new DateTime( '2032-04-05' ),
+				'author'         => $this->editor_id,
+				'responsable'    => $this->editor_id,
+				'hidden'         => false,
+				'assigned_users' => array( $this->editor_id ),
+				'labels'         => array( $label_id ),
+			)
 		);
 
 		$this->assertNotWPError( $result );
