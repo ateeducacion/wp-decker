@@ -45,6 +45,13 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Run the AJAX save handler against the current $_POST payload.
+	 */
+	private function ajax_save() {
+		return ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+	}
+
+	/**
 	 * Lock CSV explode/absint parsing of assignees and labels.
 	 */
 	public function test_handle_save_decker_task_parses_csv_assignees_and_labels() {
@@ -66,7 +73,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 			'due_date'     => '2025-05-01',
 		);
 
-		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+		$resp = $this->ajax_save();
 
 		$this->assertTrue( $resp['success'] );
 		$task_id = $resp['task_id'];
@@ -94,7 +101,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 			'due_date'    => 'not-a-date',
 		);
 
-		$resp = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+		$resp = $this->ajax_save();
 		$this->assertTrue( $resp['success'] );
 		$task_id = $resp['task_id'];
 
@@ -126,7 +133,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 		);
 
 		$_POST = $base;
-		( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+		$this->ajax_save();
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$this->assertIsArray( $relations );
@@ -141,7 +148,7 @@ class DeckerTasksSaveAjaxLockInTest extends Decker_Test_Base {
 		// Save again without mark_for_today: relation removed.
 		$_POST = $base;
 		unset( $_POST['mark_for_today'] );
-		( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+		$this->ajax_save();
 
 		$relations = get_post_meta( $task_id, '_user_date_relations', true );
 		$found     = false;

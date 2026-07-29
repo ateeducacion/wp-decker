@@ -92,6 +92,13 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Run the AJAX save handler against the current $_POST payload.
+	 */
+	private function ajax_save() {
+		return ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+	}
+
+	/**
 	 * Open the editor form as user A and return its session generation.
 	 *
 	 * @return string The generation embedded in A's form.
@@ -121,7 +128,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 			'lock_generation' => $generation,
 		);
 
-		return ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+		return $this->ajax_save();
 	}
 
 	/**
@@ -295,7 +302,7 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 			'board'   => $this->board_id,
 		);
 
-		$response = ( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+		$response = $this->ajax_save();
 
 		$this->assertTrue( $response['success'] );
 	}
