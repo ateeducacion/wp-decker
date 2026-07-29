@@ -89,6 +89,8 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Kb::save_article()` and the write path | `Decker_Kb_Article_Writer` |
 | `Decker_Kb::reorder_articles()` and sibling renumbering | `Decker_Kb_Reorder` |
 | `TaskManager` "for today" query bodies (public entry points stay as delegators) | `Decker_Task_Today_Query`, `Decker_Task_Date_Relations` |
+| `Decker_Tasks::clone_task()` and its private readers | `Decker_Task_Clone` |
+| `Decker_Tasks::merge_tasks()` and the merge pipeline | `Decker_Task_Merge` |
 | `Decker_Public::enqueue_scripts()` body | `Decker_Public_Assets` |
 
 Note that unhooking one of these by name fails **silently** rather than fatally:
