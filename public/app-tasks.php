@@ -292,10 +292,10 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 
 
 													// People.
-													$people_names = $task->get_people_names();
+													$people_names = ( new Decker_Task_People_View( $task ) )->get_people_names();
 													$people_text  = implode( ', ', $people_names );
 													echo '<td data-search="' . esc_attr( $people_text ) . '" data-order="' . esc_attr( $people_text ) . '">';
-													$task->render_people_avatars();
+													( new Decker_Task_Card_Renderer( $task ) )->render_people_avatars();
 													echo '</td>';
 
 													// Remaining time.
@@ -316,13 +316,13 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 													} else {
 														echo '<span class="due-none">';
 													}
-													echo esc_html( $task->get_relative_time() );
+													echo esc_html( ( new Decker_Task_Card_Renderer( $task ) )->get_relative_time() );
 													echo '</span></td>';
 
 
 													// Context menu.
 													echo '<td class="text-end">';
-													$task->render_task_menu();
+													( new Decker_Task_Menu_Renderer( $task ) )->render_task_menu();
 													echo '</td>';
 													echo '</tr>';
 												}

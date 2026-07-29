@@ -185,7 +185,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 				static function ( WP_User $user ): int {
 					return $user->ID;
 				},
-				$task->get_people_users()
+				( new Decker_Task_People_View( $task ) )->get_people_users()
 			),
 			'The people list should show the responsible user first without duplicates.'
 		);
@@ -212,7 +212,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_people_avatars();
+		( new Decker_Task_Card_Renderer( $task ) )->render_people_avatars();
 		$html = ob_get_clean();
 		$assigned_user_html_position    = strpos( $html, 'Assigned User' );
 		$responsible_user_html_position = strpos( $html, 'Responsible User' );
@@ -268,7 +268,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_card();
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString(
@@ -332,7 +332,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_card();
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString(
@@ -369,7 +369,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_menu();
+		( new Decker_Task_Menu_Renderer( $task ) )->render_task_menu();
 		$html = ob_get_clean();
 
 		$positions = array(
@@ -411,7 +411,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_menu( true );
+		( new Decker_Task_Menu_Renderer( $task ) )->render_task_menu( true );
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'copy-task-url', $html );
@@ -443,7 +443,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_menu();
+		( new Decker_Task_Menu_Renderer( $task ) )->render_task_menu();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'unarchive-task', $html );
@@ -475,7 +475,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_menu();
+		( new Decker_Task_Menu_Renderer( $task ) )->render_task_menu();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'assign-to-me hidden"', $html, 'Assign-to-me should be hidden for an assigned user.' );
@@ -498,13 +498,13 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task_a = new Task( $task_a_id );
 
 		ob_start();
-		$task_a->render_task_card();
+		( new Decker_Task_Card_Renderer( $task_a ) )->render_task_card();
 		$html_a = ob_get_clean();
 
 		$this->assertStringContainsString( 'bg-danger-subtle text-danger', $html_a );
 		$this->assertStringContainsString( '🔥', $html_a );
 		$this->assertStringContainsString( 'due-past', $html_a );
-		$this->assertStringContainsString( 'title="' . $task_a->get_formatted_date() . '"', $html_a );
+		$this->assertStringContainsString( 'title="' . ( new Decker_Task_Card_Renderer( $task_a ) )->get_formatted_date() . '"', $html_a );
 
 		$task_b_id = self::factory()->task->create(
 			array(
@@ -515,7 +515,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task_b = new Task( $task_b_id );
 
 		ob_start();
-		$task_b->render_task_card();
+		( new Decker_Task_Card_Renderer( $task_b ) )->render_task_card();
 		$html_b = ob_get_clean();
 
 		$this->assertStringContainsString( 'due-today', $html_b );
@@ -533,13 +533,13 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_card( true );
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card( true );
 		$html_painted = ob_get_clean();
 
-		$this->assertStringContainsString( $task->pastelize_color( '#336699' ), $html_painted );
+		$this->assertStringContainsString( Decker_Task_Card_Renderer::pastelize_color( '#336699' ), $html_painted );
 
 		ob_start();
-		$task->render_task_card();
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card();
 		$html_plain = ob_get_clean();
 
 		$this->assertStringNotContainsString( 'background-color', $html_plain );
@@ -560,14 +560,14 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_id );
 
 		ob_start();
-		$task->render_task_card( true );
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card( true );
 		$html_striped = ob_get_clean();
 
 		$this->assertStringContainsString( 'repeating-linear-gradient', $html_striped );
 		$this->assertStringContainsString( 'gainsboro', $html_striped );
 
 		ob_start();
-		$task->render_task_card();
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card();
 		$html_flat = ob_get_clean();
 
 		$this->assertStringContainsString( 'background-color: gainsboro;', $html_flat );
@@ -584,7 +584,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task = new Task( $task_with_comments );
 
 		ob_start();
-		$task->render_task_card();
+		( new Decker_Task_Card_Renderer( $task ) )->render_task_card();
 		$html = ob_get_clean();
 
 		$this->assertStringContainsString( 'decker-comments-popover', $html );
@@ -596,7 +596,7 @@ class DeckerTaskTest extends Decker_Test_Base {
 		$task_empty = new Task( $task_without_comments );
 
 		ob_start();
-		$task_empty->render_task_card();
+		( new Decker_Task_Card_Renderer( $task_empty ) )->render_task_card();
 		$html_empty = ob_get_clean();
 
 		$this->assertStringContainsString( '<b>0</b>', $html_empty );
