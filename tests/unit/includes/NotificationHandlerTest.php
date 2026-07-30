@@ -566,14 +566,13 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Locks the CURRENT ascending sort + front slice for the AJAX endpoint.
+	 * The AJAX endpoint must return the newest notifications, newest first.
 	 *
-	 * This documents a bug rather than endorsing it: the endpoint's comments
-	 * promise newest-first but the code returns oldest-first and drops the
-	 * newest entries once over the cap. Tracked in issue #293 — when that is
-	 * fixed, this test must flip with it.
+	 * Regression test for issue #293: the endpoint used to sort ascending and
+	 * slice from the front, which kept the oldest entries and dropped the
+	 * newest ones once over the cap.
 	 */
-	public function test_ajax_get_notifications_returns_oldest_first_and_caps_at_15() {
+	public function test_ajax_get_notifications_returns_newest_first_and_caps_at_15() {
 		$notifications = array();
 		for ( $i = 1; $i <= 20; $i++ ) {
 			$notifications[] = array(
@@ -596,8 +595,13 @@ class DeckerNotificationHandlerTest extends Decker_Test_Base {
 
 		$this->assertTrue( $json['success'], 'Response should be successful.' );
 		$this->assertCount( 15, $json['data'], 'Should cap at MAX_NOTIFICATIONS.' );
-		$this->assertSame( 'n1', $json['data'][0]['title'], 'Oldest notification should be first.' );
-		$this->assertSame( 'n15', $json['data'][14]['title'], 'Newest five should be dropped from the front slice.' );
+		$this->assertSame( 'n20', $json['data'][0]['title'], 'Newest notification should be first.' );
+		$this->assertSame( 'n6', $json['data'][14]['title'], 'Oldest kept notification should be last.' );
+
+		$returned_titles = wp_list_pluck( $json['data'], 'title' );
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$this->assertNotContains( 'n' . $i, $returned_titles, 'Notifications beyond the cap must be excluded.' );
+		}
 	}
 
 	/**
