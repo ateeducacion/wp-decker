@@ -21,6 +21,18 @@ function isSaveTaskResponse( response ) {
 		postData.includes( 'action=save_decker_task' );
 }
 
+/**
+ * Read a single application/x-www-form-urlencoded field from a save response.
+ *
+ * @param {import('@playwright/test').Response} response The save response.
+ * @param {string}                              key      The field name.
+ * @return {string|null} The field value, or null when absent.
+ */
+function getSavePostParam( response, key ) {
+	const postData = response.request().postData() || '';
+	return new URLSearchParams( postData ).get( key );
+}
+
 test.describe( 'Task out-of-band mutation invalidation', () => {
 	let boardId;
 	let taskId;
@@ -52,6 +64,18 @@ test.describe( 'Task out-of-band mutation invalidation', () => {
 	} );
 
 	test( 'rejects a stale full-form save after the due date changes through REST', async ( { page } ) => {
+		// Keep the fast task-lock heartbeat from detecting the stale generation
+		// before this test can exercise the actual stale full-form save path.
+		await page.route( '**/admin-ajax.php', async ( route ) => {
+			const request = route.request();
+			const postData = request.postData() || '';
+			if ( request.method() === 'POST' && postData.includes( 'action=heartbeat' ) ) {
+				await route.abort();
+				return;
+			}
+			await route.continue();
+		} );
+
 		await page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( page.locator( '#task-title' ) ).toBeEnabled();
 
@@ -96,6 +120,7 @@ test.describe( 'Task out-of-band mutation invalidation', () => {
 			page.locator( '#save-task' ).click(),
 		] );
 
+		expect( getSavePostParam( saveResponse, 'lock_generation' ) ).toBe( lockState.generation );
 		expect( saveResponse.status() ).toBe( 409 );
 		const saveBody = await saveResponse.json();
 		expect( saveBody.success ).toBe( false );
