@@ -1,9 +1,9 @@
 name: Bootstrap issue 293 fix
 
 on:
-  push:
+  pull_request:
     branches:
-      - fix/293-newest-notifications
+      - main
 
 permissions:
   contents: write
