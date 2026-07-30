@@ -102,14 +102,14 @@ class Decker_Notification_Ajax {
 
 		$all_notifications = $this->store->get_notifications_meta( $user_id, 'decker_all_notifications' );
 
-		// Reverse so newest is at the front.
+		// Sort by time so the newest is at the front.
 		usort(
 			$all_notifications,
 			function ( $a, $b ) {
-				return strtotime( $a['time'] ) - strtotime( $b['time'] );
+				return strtotime( $b['time'] ) - strtotime( $a['time'] );
 			}
 		);
-		// Return only the last 15 (most recent first).
+		// Return only the newest 15 (most recent first).
 		$last_notifications = array_slice( $all_notifications, 0, Decker_Notification_Store::MAX_NOTIFICATIONS );
 
 		// Map them to the same structure used in JS.

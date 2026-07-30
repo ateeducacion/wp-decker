@@ -358,7 +358,10 @@ console.log('loading decker-heartbeat.js');
         })
             .done(function(response) {
                 if (response.success && Array.isArray(response.data)) {
-                    response.data.forEach(function(notification) {
+                    // The response is ordered newest first and addNotification()
+                    // prepends, so iterate a reversed copy to keep the newest
+                    // notification at the top of the panel.
+                    response.data.slice().reverse().forEach(function(notification) {
                         addNotification(notification, false);
                     });
                 }
