@@ -201,9 +201,9 @@ class DeckerTasksRestOpsEdgeCasesTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Removing a real assignment must persist a dense array and invalidate sessions.
+	 * Removing a real assignment must preserve the remaining user and invalidate sessions.
 	 */
-	public function test_leave_removes_user_without_sparse_indexes_and_invalidates_session() {
+	public function test_leave_removes_user_and_invalidates_session() {
 		update_post_meta( $this->task_id, 'assigned_users', array( $this->admin_id, $this->editor_id ) );
 		$generation = ( new Decker_Task_Locks() )->acquire_lock( $this->task_id, $this->admin_id )['generation'];
 
