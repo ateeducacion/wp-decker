@@ -55,8 +55,13 @@ test.describe( 'Task out-of-band mutation invalidation', () => {
 		await page.goto( `/?decker_page=task&id=${ taskId }` );
 		await expect( page.locator( '#task-title' ) ).toBeEnabled();
 
-		const initialGeneration = await page.locator( '#task-form' ).getAttribute( 'data-lock' );
-		expect( initialGeneration ).toBeTruthy();
+		// data-lock is a JSON blob; require a real acquired session generation,
+		// not just a truthy attribute, so a silent no-session render cannot
+		// turn the stale-save assertion into a false positive.
+		const lockState = JSON.parse(
+			await page.locator( '#task-form' ).getAttribute( 'data-lock' )
+		);
+		expect( lockState.generation ).toBeTruthy();
 
 		const mutation = await page.evaluate( async ( id ) => {
 			const root = window.wpApiSettings?.root || '/wp-json/';
@@ -68,7 +73,7 @@ test.describe( 'Task out-of-band mutation invalidation', () => {
 					'X-WP-Nonce': nonce,
 				},
 				credentials: 'same-origin',
-				body: JSON.stringify( { due_date: '2026-12-15' } ),
+				body: JSON.stringify( { duedate: '2026-12-15' } ),
 			} );
 
 			return {
@@ -78,6 +83,9 @@ test.describe( 'Task out-of-band mutation invalidation', () => {
 		}, taskId );
 
 		expect( mutation.status ).toBe( 200 );
+		// The endpoint answers 200 even when it updates nothing, so assert the
+		// mutation actually wrote the new value before relying on it.
+		expect( mutation.body.updated_meta ).toEqual( { duedate: '2026-12-15' } );
 
 		page.on( 'dialog', ( dialog ) => dialog.accept() );
 		await page.fill( '#task-title', 'Stale title that must not win' );
