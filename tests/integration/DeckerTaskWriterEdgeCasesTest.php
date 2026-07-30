@@ -92,7 +92,7 @@ class DeckerTaskWriterEdgeCasesTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Normalize WP_User objects and only fire assignment hooks for newly added users.
+	 * Normalize WP_User objects and only fire assignment hooks for new users on updates.
 	 */
 	public function test_assigned_user_objects_are_normalized_and_duplicate_hooks_are_not_fired() {
 		$user_one = self::factory()->user->create( array( 'role' => 'editor' ) );
@@ -104,23 +104,29 @@ class DeckerTaskWriterEdgeCasesTest extends Decker_Test_Base {
 		};
 		add_action( 'decker_user_assigned', $listener, 10, 2 );
 
-		$args                    = $this->get_valid_args();
-		$args['assigned_users']  = array( get_user_by( 'id', $user_one ) );
-		$task_id                 = Decker_Task_Writer::create_or_update_task( $args );
-		$args['id']              = $task_id;
-		$args['assigned_users']  = array( get_user_by( 'id', $user_one ), get_user_by( 'id', $user_two ) );
-		$updated_task_id         = Decker_Task_Writer::create_or_update_task( $args );
+		$args                   = $this->get_valid_args();
+		$args['assigned_users'] = array( get_user_by( 'id', $user_one ) );
+		$task_id                = Decker_Task_Writer::create_or_update_task( $args );
+
+		$this->assertSame( array( $user_one ), get_post_meta( $task_id, 'assigned_users', true ) );
+		$this->assertSame( array(), $assigned, 'Task creation must not emit update-only assignment hooks.' );
+
+		$args['id']             = $task_id;
+		$args['assigned_users'] = array( get_user_by( 'id', $user_one ), get_user_by( 'id', $user_two ) );
+		$updated_task_id        = Decker_Task_Writer::create_or_update_task( $args );
+		$repeated_task_id       = Decker_Task_Writer::create_or_update_task( $args );
 
 		remove_action( 'decker_user_assigned', $listener, 10 );
 
 		$this->assertSame( $task_id, $updated_task_id );
+		$this->assertSame( $task_id, $repeated_task_id );
 		$this->assertSame( array( $user_one, $user_two ), get_post_meta( $task_id, 'assigned_users', true ) );
 		$this->assertSame(
 			array(
-				array( $task_id, $user_one ),
 				array( $task_id, $user_two ),
 			),
-			$assigned
+			$assigned,
+			'Re-saving the same assignment set must not emit duplicate hooks.'
 		);
 	}
 
@@ -128,11 +134,11 @@ class DeckerTaskWriterEdgeCasesTest extends Decker_Test_Base {
 	 * Clear all labels when an update supplies an empty label set.
 	 */
 	public function test_empty_label_array_replaces_existing_labels() {
-		$label_one = self::factory()->label->create();
-		$label_two = self::factory()->label->create();
-		$args      = $this->get_valid_args();
+		$label_one     = self::factory()->label->create();
+		$label_two     = self::factory()->label->create();
+		$args          = $this->get_valid_args();
 		$args['labels'] = array( $label_one, $label_two );
-		$task_id         = Decker_Task_Writer::create_or_update_task( $args );
+		$task_id       = Decker_Task_Writer::create_or_update_task( $args );
 
 		$args['id']     = $task_id;
 		$args['labels'] = array();
@@ -145,12 +151,12 @@ class DeckerTaskWriterEdgeCasesTest extends Decker_Test_Base {
 	 * Preserve a linked Nextcloud card when an unrelated update passes the default zero value.
 	 */
 	public function test_update_does_not_clear_existing_nextcloud_card_with_default_zero() {
-		$args                       = $this->get_valid_args();
-		$args['id_nextcloud_card']  = 321;
-		$task_id                    = Decker_Task_Writer::create_or_update_task( $args );
-		$args['id']                 = $task_id;
-		$args['title']              = 'Updated title';
-		$args['id_nextcloud_card']  = 0;
+		$args                      = $this->get_valid_args();
+		$args['id_nextcloud_card'] = 321;
+		$task_id                   = Decker_Task_Writer::create_or_update_task( $args );
+		$args['id']                = $task_id;
+		$args['title']             = 'Updated title';
+		$args['id_nextcloud_card'] = 0;
 
 		Decker_Task_Writer::create_or_update_task( $args );
 
