@@ -6,6 +6,9 @@
  * @subpackage Decker/includes
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 
 	/**

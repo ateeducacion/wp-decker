@@ -9,6 +9,9 @@
  * @subpackage Decker/includes
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 /**
  * Calendar class to handle iCal and JSON endpoints.
  */

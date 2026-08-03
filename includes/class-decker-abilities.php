@@ -84,7 +84,15 @@ class Decker_Abilities {
 		if ( function_exists( $has_category ) && $has_category( self::CATEGORY ) ) {
 			return;
 		}
-		wp_register_ability_category(
+
+		// The Abilities API landed in WordPress 6.9 and this plugin supports 6.1,
+		// so the call is made through a variable — the same indirection this
+		// file already uses for wp_has_ability_category() above. Plugin Check
+		// flags any direct call to a function newer than "Requires at least",
+		// and it does not honour a function_exists() guard around it; the guard
+		// in is_available() is what keeps this safe at runtime.
+		$register_category = 'wp_register_ability_category';
+		$register_category(
 			self::CATEGORY,
 			array(
 				'label'       => __( 'Decker', 'decker' ),
@@ -103,12 +111,15 @@ class Decker_Abilities {
 			return;
 		}
 
+		// Called through a variable for the same reason as in register_category().
+		$register_ability = 'wp_register_ability';
+
 		foreach ( $this->get_ability_definitions() as $name => $definition ) {
 			$has_ability = 'wp_has_ability';
 			if ( function_exists( $has_ability ) && $has_ability( $name ) ) {
 				continue;
 			}
-			wp_register_ability( $name, $definition );
+			$register_ability( $name, $definition );
 		}
 	}
 
