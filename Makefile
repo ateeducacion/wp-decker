@@ -245,8 +245,31 @@ l10n-php:
 check-untranslated:
 	composer check-untranslated
 
+# Build and validate the runtime translation files that ship in the package.
+# They are generated from the committed .po sources and deliberately kept out
+# of the repository, so packaging must never assume they are already present.
+package-translations: mo l10n-php
+	@set -e; \
+	found=0; \
+	for po in languages/decker-*.po; do \
+		if [ ! -e "$$po" ]; then continue; fi; \
+		found=1; \
+		mo="$${po%.po}.mo"; \
+		l10n="$${po%.po}.l10n.php"; \
+		for f in "$$mo" "$$l10n"; do \
+			if [ ! -s "$$f" ]; then \
+				echo "Error: Missing or empty generated translation file: $$f" >&2; \
+				exit 1; \
+			fi; \
+		done; \
+	done; \
+	if [ "$$found" -eq 0 ]; then \
+		echo "Error: No translation source files found under languages/." >&2; \
+		exit 1; \
+	fi
+
 # Generate the decker-X.X.X.zip package
-package:
+package: package-translations
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: No se ha especificado una versión. Usa 'make package VERSION=1.2.3'"; \
 		exit 1; \
