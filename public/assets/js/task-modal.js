@@ -28,9 +28,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const modalTitle = modal.find('#NewTaskModalLabel');
                 if (taskId && taskId != 0) {
-                    const permalink = deckerVars.taskPermalinkStructure.replace('%d', taskId);
-                    const newTitle = `Task #${taskId} <a href="#" class="copy-task-url" data-task-url="${permalink}" title="${deckerVars.strings.copy_task_url}"><i class="ri-clipboard-line"></i></a>`;
-                    modalTitle.html(newTitle);
+                    const safeTaskId = String(parseInt(taskId, 10));
+                    const permalink = deckerVars.taskPermalinkStructure.replace('%d', safeTaskId);
+
+                    modalTitle.empty();
+                    modalTitle.append(document.createTextNode(`Task #${safeTaskId} `));
+                    const copyLink = jQuery('<a></a>')
+                        .attr('href', '#')
+                        .addClass('copy-task-url')
+                        .attr('data-task-url', permalink)
+                        .attr('title', deckerVars.strings.copy_task_url)
+                        .append(jQuery('<i></i>').addClass('ri-clipboard-line'));
+                    modalTitle.append(copyLink);
                 } else {
                     modalTitle.text('Task');
                 }
