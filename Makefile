@@ -235,6 +235,12 @@ po:
 mo:
 	composer make-mo
 
+# Generate .l10n.php files from .po files.
+# WordPress 6.5+ loads these instead of the .mo when both are present; the .mo
+# stays as the fallback for the 6.1-6.4 range declared in readme.txt.
+l10n-php:
+	composer make-php
+
 # Check the untranslated strings
 check-untranslated:
 	composer check-untranslated
