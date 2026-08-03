@@ -11,6 +11,7 @@
  * Plugin URI:        https://github.com/ateeducacion/wp-decker
  * Description:       Decker is a WordPress plugin focused on efficiently and structurally presenting a list of tasks. It is a simple task management plugin that utilizes a Kanban board and a unique priority system.
  * Version:           0.0.0
+ * Requires at least: 6.1
  * Author:            Área de Tecnología Educativa
  * Author URI:        https://www3.gobiernodecanarias.org/medusa/ecoescuela/ate/
  * License:           GPL-3.0+
