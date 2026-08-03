@@ -195,13 +195,15 @@ install-phpcs: check-docker start-if-not-running
 	fi
 
 
-# Check code style with PHP Code Sniffer inside the container
-lint: install-phpcs
-	npx wp-env run cli phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
+# Check code style with PHP Code Sniffer. Runs on the host against the
+# require-dev copy, so linting needs neither Docker nor a global install, and
+# the ruleset is the single place that decides what gets scanned.
+lint:
+	composer phpcs
 
-# Automatically fix code style with PHP Code Beautifier inside the container
-fix: install-phpcs
-	npx wp-env run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
+# Automatically fix code style with PHP Code Beautifier
+fix:
+	composer phpcbf
 
 # Run PHP Mess Detector ignoring vendor and node_modules
 phpmd:
