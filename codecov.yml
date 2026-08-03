@@ -1,0 +1,31 @@
+# Codecov configuration.
+#
+# Statuses are informational: Codecov comments the coverage of every pull
+# request but never marks it as failed. A large part of this plugin can only be
+# exercised with a full WordPress environment loaded, so a blocking threshold
+# would measure what is testable rather than what is well done.
+#
+# To make these blocking, set `informational: false`.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+# PHPUnit runs inside the wp-env container, where the plugin lives under
+# /var/www/html/wp-content/plugins/decker, and Clover records those absolute
+# paths. Stripping the prefix maps every entry back onto the repository;
+# without it Codecov cannot match a single file. The Jest LCOV report already
+# uses repository-relative paths and needs no fix.
+fixes:
+  - "/var/www/html/wp-content/plugins/decker/::"
+
+# Coverage arrives from two suites, each uploaded under its own flag (`php` and
+# `javascript`, set in the workflow). No `paths` are declared for them on
+# purpose: a path list also filters the report, and it would quietly drop the
+# root-level decker.php and uninstall.php from the PHP numbers.
+comment:
+  layout: "condensed_header, diff, flags, files"
