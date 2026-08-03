@@ -14,6 +14,13 @@
     <!-- Define the standard -->
     <rule ref="WordPress"/>
 
+    <!-- Check the code really runs on the minimum PHP the plugin declares.
+         phpcompatibility-wp was already in require-dev but no ruleset referenced
+         it, so it did nothing. Keep this in step with "Requires PHP" in
+         decker.php and readme.txt, and with the php-version CI installs. -->
+    <config name="testVersion" value="8.3-"/>
+    <rule ref="PHPCompatibilityWP"/>
+
     <!-- Exclude some directories -->
     <exclude-pattern>vendor/</exclude-pattern>
     <exclude-pattern>assets/</exclude-pattern>

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0d7f0c11c62d7c171fd9fa6ae45d424e",
+    "content-hash": "23fb44d59757915483e67259875a05bb",
     "packages": [
         {
             "name": "erseco/mime-mail-parser",
@@ -3662,7 +3662,9 @@
     "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
-    "platform": {},
+    "platform": {
+        "php": ">=8.3"
+    },
     "platform-dev": {},
     "platform-overrides": {
         "php": "8.3"
