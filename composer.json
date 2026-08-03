@@ -1,6 +1,6 @@
 {
     "require": {
-        "erseco/mime-mail-parser": "*"
+        "erseco/mime-mail-parser": "^1.0"
     },
     "require-dev": {
         "om/icalparser": "*",

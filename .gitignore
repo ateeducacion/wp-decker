@@ -1,7 +1,9 @@
 # Exclude common development files and folders
 /node_modules/
 /vendor/
-/composer.lock
+# composer.lock SÍ se versiona: la librería del parser de correo viaja copiada
+# dentro del plugin y `wp dist-archive` empaqueta el árbol de trabajo, así que
+# sin lock la versión que se distribuye la decide el día en que alguien instale.
 /package-lock.json
 *.log
 *.sql

@@ -234,7 +234,9 @@ class Decker_Email_To_Post {
 	private function parse_email( $raw_email ) {
 
 		// Parse raw email.
-		require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/MimeMailParser.php';
+		// Message.php is where the class lives. MimeMailParser.php is only a
+		// backwards-compatible shim that requires this same file.
+		require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/Message.php';
 		$message = new Erseco\Message( $raw_email );
 
 		return $message;
