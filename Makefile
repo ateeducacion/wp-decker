@@ -307,6 +307,10 @@ package: package-translations
 	@# --plugin-dirname is what makes the archive extract as decker/. Without it
 	@# WordPress names the plugin folder after the ZIP file and every release
 	@# lands in a new directory.
+	@# `--force` does not empty an existing archive: dist-archive 3.1 shells out
+	@# to the `zip` binary, which ADDS to one. Without this removal a file that a
+	@# new .distignore rule excludes would survive from an earlier build.
+	rm -f "$(CURDIR)/decker-$(VERSION).zip"
 	./vendor/bin/wp dist-archive . "$(CURDIR)/decker-$(VERSION).zip" \
 		--plugin-dirname=decker --force
 
