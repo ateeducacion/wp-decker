@@ -6,10 +6,10 @@
         "om/icalparser": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
-        "squizlabs/php_codesniffer": "*",
+        "squizlabs/php_codesniffer": "^3.13.5",
         "wp-cli/dist-archive-command": "^3.1",
         "wp-cli/i18n-command": "*",
-        "wp-coding-standards/wpcs": "*",
+        "wp-coding-standards/wpcs": "^3.4",
         "yoast/phpunit-polyfills": "*",
         "yoast/wp-test-utils": "*"
     },
