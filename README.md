@@ -62,3 +62,14 @@ This starts a Dockerized WordPress instance at http://localhost:8888
 (admin / password).
 
 See [docs/development.md](docs/development.md) for more details, available hooks and Make targets.
+
+### Working with AI coding agents
+
+Project conventions for agents live in [`AGENTS.md`](AGENTS.md), which
+[`CLAUDE.md`](CLAUDE.md) and [`.github/copilot-instructions.md`](.github/copilot-instructions.md)
+point at so every assistant reads the same rules.
+
+Reusable procedures ship as [agent skills](docs/development.md#agent-skills) in
+`.agents/skills/` (symlinked from `.claude/skills/`), covering plugin
+development, the REST API, the WordPress.org directory guidelines, Playground
+blueprints and security auditing. None of it is included in the release ZIP.
