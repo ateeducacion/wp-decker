@@ -2,6 +2,43 @@ document.addEventListener('DOMContentLoaded', function () {
     const modalElement = document.getElementById('task-modal');
 
     /**
+     * Return a task ID as a decimal string without numeric coercion.
+     *
+     * @param {number|string} taskId The task ID to validate.
+     * @return {string|null} The validated task ID, or null when invalid.
+     */
+    function normalizeTaskId(taskId) {
+        const value = String(taskId);
+        return /^(0|[1-9]\d*)$/.test(value) ? value : null;
+    }
+
+    /**
+     * Render the task modal title without interpreting task data as HTML.
+     *
+     * @param {jQuery} modalTitle The jQuery-wrapped title element.
+     * @param {number|string} taskId The task ID to render.
+     */
+    function renderTaskModalTitle(modalTitle, taskId) {
+        const safeTaskId = normalizeTaskId(taskId);
+        if (!safeTaskId || safeTaskId === '0') {
+            modalTitle.text('Task');
+            return;
+        }
+
+        const permalink = deckerVars.taskPermalinkStructure.replace('%d', safeTaskId);
+
+        modalTitle.empty();
+        modalTitle.append(document.createTextNode(`Task #${safeTaskId} `));
+        const copyLink = jQuery('<a></a>')
+            .attr('href', '#')
+            .addClass('copy-task-url')
+            .attr('data-task-url', permalink)
+            .attr('title', deckerVars.strings.copy_task_url)
+            .append(jQuery('<i></i>').addClass('ri-clipboard-line'));
+        modalTitle.append(copyLink);
+    }
+
+    /**
      * Fetch the task card markup and (re)initialize it inside the modal body.
      *
      * @param {jQuery} modal  The jQuery-wrapped modal element.
@@ -27,13 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 modal.find('#task-modal-body').html(data);
 
                 const modalTitle = modal.find('#NewTaskModalLabel');
-                if (taskId && taskId != 0) {
-                    const permalink = deckerVars.taskPermalinkStructure.replace('%d', taskId);
-                    const newTitle = `Task #${taskId} <a href="#" class="copy-task-url" data-task-url="${permalink}" title="${deckerVars.strings.copy_task_url}"><i class="ri-clipboard-line"></i></a>`;
-                    modalTitle.html(newTitle);
-                } else {
-                    modalTitle.text('Task');
-                }
+                renderTaskModalTitle(modalTitle, taskId);
 
                // After loading the content, initialize the JS functions
                 if (typeof window.initializeSendComments === 'function' && typeof window.initializeTaskPage === 'function') {
