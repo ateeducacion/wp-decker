@@ -7,26 +7,33 @@
  * @author     ATE <ate.educacion@gobiernodecanarias.org>
  */
 
-/**
- * Function to find and include wp-load.php dynamically.
- *
- * @param int $max_levels Maximum number of directory levels to traverse upward.
- * @return bool Returns true if wp-load.php is found and included, otherwise false.
- */
-function include_wp_load( $max_levels = 10 ) {
-	$dir = __DIR__;
-	for ( $i = 0; $i < $max_levels; $i++ ) {
-		if ( file_exists( $dir . '/wp-load.php' ) ) {
-			require_once $dir . '/wp-load.php';
-			return true;
+// task-card.php and event-card.php both declare this helper: each is fetched
+// directly over HTTP, so each has to be able to bootstrap WordPress on its own.
+// Without the guard, a request that loads both — one included as a template, the
+// other pulled into the same render — dies with "Cannot redeclare
+// include_wp_load()".
+if ( ! function_exists( 'include_wp_load' ) ) {
+	/**
+	 * Function to find and include wp-load.php dynamically.
+	 *
+	 * @param int $max_levels Maximum number of directory levels to traverse upward.
+	 * @return bool Returns true if wp-load.php is found and included, otherwise false.
+	 */
+	function include_wp_load( $max_levels = 10 ) {
+		$dir = __DIR__;
+		for ( $i = 0; $i < $max_levels; $i++ ) {
+			if ( file_exists( $dir . '/wp-load.php' ) ) {
+				require_once $dir . '/wp-load.php';
+				return true;
+			}
+			$parent_dir = dirname( $dir );
+			if ( $parent_dir === $dir ) {
+				break;
+			}
+			$dir = $parent_dir;
 		}
-		$parent_dir = dirname( $dir );
-		if ( $parent_dir === $dir ) {
-			break;
-		}
-		$dir = $parent_dir;
+		return false;
 	}
-	return false;
 }
 
 // Attempt to include wp-load.php when loading the event card in a modal.
