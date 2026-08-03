@@ -102,21 +102,42 @@ class DeckerTasksRestOpsEdgeCasesTest extends Decker_Test_Base {
 
 	/**
 	 * Missing identifiers must return a 400 response without changing metadata.
+	 *
+	 * Both endpoints guard the task ID and the user ID in a single condition, so
+	 * each branch is exercised separately.
 	 */
 	public function test_assign_and_leave_reject_missing_parameters() {
-		$assign = new WP_REST_Request( 'POST', '/decker/v1/tasks/0/assign' );
-		$assign->set_url_params( array( 'id' => 0 ) );
-		$assign_response = $this->controller->assign_user_to_task( $assign );
+		$missing_task = new WP_REST_Request( 'POST', '/decker/v1/tasks/0/assign' );
+		$missing_task->set_url_params( array( 'id' => 0 ) );
+		$missing_task->set_param( 'user_id', $this->editor_id );
+		$missing_task_response = $this->controller->assign_user_to_task( $missing_task );
 
-		$this->assertSame( 400, $assign_response->get_status() );
-		$this->assertFalse( $assign_response->get_data()['success'] );
-		$this->assertSame( '', get_post_meta( $this->task_id, 'assigned_users', true ) );
+		$this->assertSame( 400, $missing_task_response->get_status() );
+		$this->assertFalse( $missing_task_response->get_data()['success'] );
 
-		$leave = $this->task_request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/leave' );
+		$missing_user          = $this->task_request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/assign' );
+		$missing_user_response = $this->controller->assign_user_to_task( $missing_user );
+
+		$this->assertSame( 400, $missing_user_response->get_status() );
+		$this->assertFalse( $missing_user_response->get_data()['success'] );
+
+		$leave_missing_task = new WP_REST_Request( 'POST', '/decker/v1/tasks/0/leave' );
+		$leave_missing_task->set_url_params( array( 'id' => 0 ) );
+		$leave_missing_task->set_param( 'user_id', $this->editor_id );
+		$leave_missing_task_response = $this->controller->remove_user_from_task( $leave_missing_task );
+
+		$this->assertSame( 400, $leave_missing_task_response->get_status() );
+		$this->assertFalse( $leave_missing_task_response->get_data()['success'] );
+
+		$leave          = $this->task_request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/leave' );
 		$leave_response = $this->controller->remove_user_from_task( $leave );
 
 		$this->assertSame( 400, $leave_response->get_status() );
 		$this->assertFalse( $leave_response->get_data()['success'] );
+
+		// The factory writes assigned_users through Decker_Task_Writer, so an
+		// untouched task holds an empty array rather than an absent meta value.
+		$this->assertSame( array(), get_post_meta( $this->task_id, 'assigned_users', true ) );
 	}
 
 	/**
@@ -213,6 +234,9 @@ class DeckerTasksRestOpsEdgeCasesTest extends Decker_Test_Base {
 		$stored   = get_post_meta( $this->task_id, 'assigned_users', true );
 
 		$this->assertSame( 200, $response->get_status() );
+		// Characterization: the endpoint removes with array_diff(), which preserves
+		// keys, so the stored value is a sparse array rather than a list. Reindexing
+		// it in the endpoint would be an improvement, not a regression.
 		$this->assertSame( array( 1 => $this->editor_id ), $stored );
 		$this->assertNotSame( $generation, $this->lock_state->generation( $this->task_id ) );
 	}
@@ -246,8 +270,10 @@ class DeckerTasksRestOpsEdgeCasesTest extends Decker_Test_Base {
 		$data     = $response->get_data();
 
 		$this->assertSame( 200, $response->get_status() );
-		$this->assertSame( '2026-12-31alert(1)', $data['updated_meta']['duedate'] );
-		$this->assertSame( '2026-12-31alert(1)', get_post_meta( $this->task_id, 'duedate', true ) );
+		// sanitize_text_field() drops the whole <script> block, body included, and
+		// trims the surrounding whitespace.
+		$this->assertSame( '2026-12-31', $data['updated_meta']['duedate'] );
+		$this->assertSame( '2026-12-31', get_post_meta( $this->task_id, 'duedate', true ) );
 		$this->assertNotSame( $generation, $this->lock_state->generation( $this->task_id ) );
 	}
 }
