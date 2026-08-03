@@ -300,8 +300,19 @@ package: package-translations
 	$(SED_INPLACE) "s/define( 'DECKER_VERSION', '[^']*'/define( 'DECKER_VERSION', '$(VERSION)'/" decker.php
 	$(SED_INPLACE) "s/^Stable tag:.*/Stable tag: $(VERSION)/" readme.txt
 
-	# Create the ZIP package
-	composer archive --format=zip --file="decker-$(VERSION)"
+	@# Create the ZIP package with proper folder structure.
+	@# `wp dist-archive` reads .distignore straight from the working tree, so the
+	@# runtime translations that .gitignore keeps out of the repository are
+	@# packaged like any other file.
+	@# --plugin-dirname is what makes the archive extract as decker/. Without it
+	@# WordPress names the plugin folder after the ZIP file and every release
+	@# lands in a new directory.
+	@# `--force` does not empty an existing archive: dist-archive 3.1 shells out
+	@# to the `zip` binary, which ADDS to one. Without this removal a file that a
+	@# new .distignore rule excludes would survive from an earlier build.
+	rm -f "$(CURDIR)/decker-$(VERSION).zip"
+	./vendor/bin/wp dist-archive . "$(CURDIR)/decker-$(VERSION).zip" \
+		--plugin-dirname=decker --force
 
 	# Restore the version in decker.php & readme.txt
 	$(SED_INPLACE) "s/^ \* Version:.*/ * Version:           0.0.0/" decker.php

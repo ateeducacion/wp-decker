@@ -1,42 +1,39 @@
-# Exclude hidden files and directories
-.*                         export-ignore
+# Line endings are deliberately NOT normalised repo-wide here. Adding
+# `* text=auto eol=lf` would rewrite public/assets/js/app.js, which has mixed
+# endings (711 CR lines) and ships in the release ZIP; that belongs in its own
+# change, not in a packaging one.
+#
+# The two rules below are protective on their own: `-text` stops git from
+# re-encoding these files whatever the contributor's core.autocrlf is set to.
 
-# Exclude .po and .pot language files
-languages/*.po             export-ignore
-languages/*.pot            export-ignore
+# The .eml fixtures are real messages captured from Gmail, Zimbra and Nextcloud.
+# On the wire a mail line ends in CRLF (RFC 5322 §2.1), and that is the form the
+# parser meets in production, so these files are kept byte-for-byte as captured.
+#
+# Converting them to LF would not fail anything, which is exactly why it is a
+# trap: parsing all eleven fixtures with LF endings yields identical subjects,
+# headers and part checksums, so the suite would stay green while quietly losing
+# its only coverage of the real wire format. The inline fixtures in
+# tests/unit/includes/DeckerEmailToPostTest.php build their messages with
+# explicit "\r\n" for the same reason.
+tests/fixtures/*.eml -text
 
-# Exclude development files
-*.css.map 				   export-ignore
-/vendor/                   export-ignore
-# Test and coverage output. `composer archive` does not read .gitignore, so
-# without this the reports written by `make test-coverage` and the Playwright
-# runs would travel inside the release ZIP.
-artifacts/                 export-ignore
-# Agent instructions and skills. `.agents/` and `.claude/` already match the
-# `.*` rule above; these three do not, and a plugin ZIP has no use for them.
-AGENTS.md                  export-ignore
-CLAUDE.md                  export-ignore
-skills-lock.json           export-ignore
-blueprint.json             export-ignore
-codecov.yml                export-ignore
-CHANGELOG.md               export-ignore
-CODE_OF_CONDUCT.md         export-ignore
-composer.json              export-ignore
-composer.lock              export-ignore
-CONVENTIONS.md             export-ignore
-docker-compose.yml         export-ignore
-docs/                      export-ignore
-Makefile                   export-ignore
-mkdocs.yml                 export-ignore
-node_modules/              export-ignore
-package-lock.json          export-ignore
-package.json               export-ignore
-phpunit.xml.dist           export-ignore
-phpunit.xml.dist           export-ignore
-README.md                  export-ignore
-README.md                  export-ignore
-renovate.json              export-ignore
-sftp-config.json           export-ignore
-sonar-project.properties   export-ignore
-test.php                   export-ignore
-tests/                     export-ignore
+# Vendored third party, copied verbatim from upstream by composer's
+# post-install-cmd. Never re-encode it.
+admin/vendor/** -text
+
+# Nothing below feeds the release ZIP. That archive is built by `wp dist-archive`
+# and its exclusion list is .distignore, the single source of truth for what
+# ships.
+#
+# These rules only shape the source ZIP that GitHub serves at
+# archive/refs/heads/*.zip, the one blueprint.json installs in WordPress
+# Playground. Keep the list short and do not mirror .distignore into it: paths
+# git does not track (node_modules/, vendor/, artifacts/) never reach a git
+# archive in the first place.
+/.agents        export-ignore
+/.claude        export-ignore
+/.github        export-ignore
+/.gitattributes export-ignore
+/docs           export-ignore
+/tests          export-ignore
