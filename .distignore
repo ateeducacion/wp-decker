@@ -1,70 +1,87 @@
-# Directories
-.agents
-.claude
-.git
-.github
-.idea
-.wordpress-org
-artifacts
-bin
-build
-build-cs
-build-phpunit
-docs
-node_modules
-patches
-# Distributed via vendor/plugin-check/phpcs-sniffs instead
-/phpcs-sniffs/
-tests
-vendor
-wp-content
+# Files and directories kept out of the release ZIP.
+#
+# This is the single source of truth for what ships. `make package` builds the
+# archive with `wp dist-archive`, which reads this file straight from the working
+# tree, so the generated runtime translations that .gitignore keeps out of the
+# repository are packaged like any other file.
+#
+# `.gitattributes` does NOT feed this archive. It only shapes the source ZIP that
+# GitHub serves at archive/refs/heads/*.zip, the one blueprint.json installs in
+# WordPress Playground.
+#
+# Two matching rules to keep in mind, both inherited from
+# inmarelibero/gitignore-checker:
+#
+#   * Matching is case-insensitive, unlike git on Linux.
+#   * An unanchored rule matches at any depth. A bare `vendor` rule would strip
+#     admin/vendor/mime-mail-parser, which the plugin loads at runtime from
+#     includes/class-decker-email-to-post.php.
+#
+# Root-only rules therefore carry a leading slash. The few rules that must match
+# at any depth are grouped at the end.
 
-# Language stuff
-languages/*.pot
+# CI
+/.github
+/.gitlab-ci.yml
+
+# Agent instructions and vendored skills
+/.agents
+/.claude
+/.superpowers
+/AGENTS.md
+/CLAUDE.md
+/skills-lock.json
+
+# Development tooling and configuration
+/.editorconfig
+/.phpcs.xml.dist
+/.phpunit.result.cache
+/.stylelintrc
+/.wp-env.json
+/codecov.yml
+/composer.json
+/composer.lock
+/jest.config.js
+/Makefile
+/package.json
+/package-lock.json
+/phpunit.xml.dist
+/renovate.json
+
+# Tests and everything they write
+/artifacts
+/private
+/tests
+
+# Development dependencies. Only the root vendor/ is excluded: the runtime
+# libraries live in admin/vendor/, copied there by composer's post-install-cmd.
+/node_modules
+/vendor
+
+# Repository documentation. readme.txt is the user-facing one and does ship.
+/blueprint.json
+/CODE_OF_CONDUCT.md
+/CONVENTIONS.md
+/docs
+/README.md
+/SECURITY.md
+
+# Translation sources. Only the runtime files ship: .l10n.php (WordPress 6.5+),
+# .mo (fallback for 6.1-6.4) and the JS .json files. Both rules contain a slash,
+# which already anchors them to the root.
 languages/*.po
+languages/*.pot
 
-# Files
-.aider.chat.history.md
-.aider.input.history
-AGENTS.md
-CLAUDE.md
-skills-lock.json
-*.DS_Store
+# The packaging metadata itself
+/.distignore
+/.gitattributes
+/.gitignore
+
+# Rules that must match at any depth: none of these is ever legitimate inside a
+# release, wherever it turns up.
+.git
+node_modules
 .DS_Store
-.distignore
-.editorconfig
-.eslintrc.js
-.gherkin-lintignore
-.gherkin-lintrc
-.gitattributes
-.gitignore
-.nvmrc
-.php-cs-fixer.php
-.phpunit.result.cache
-.stylelintrc
-.typos.toml
-.wp-env.json
-.wp-env.override.json
-behat.yml
-codecov.yml
-CODE_OF_CONDUCT.md
-composer.json
-composer.lock
-CONVENTIONS.md
-CONTRIBUTING.md
-docker-compose.yml
-Makefile
-package.json
-package-lock.json
-phpcs.xml
-phpcs.xml.dist
-phpmd.xml
-phpstan.neon
-phpstan.neon.dist
-phpunit.xml
-phpunit.xml.dist
-plugin-check.iml
-README.md
-renovate.json
-SECURITY.md
+*.DS_Store
+.idea
 sftp-config.json
