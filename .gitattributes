@@ -1,4 +1,28 @@
-# Nothing here feeds the release ZIP. That archive is built by `wp dist-archive`
+# Line endings are deliberately NOT normalised repo-wide here. Adding
+# `* text=auto eol=lf` would rewrite public/assets/js/app.js, which has mixed
+# endings (711 CR lines) and ships in the release ZIP; that belongs in its own
+# change, not in a packaging one.
+#
+# The two rules below are protective on their own: `-text` stops git from
+# re-encoding these files whatever the contributor's core.autocrlf is set to.
+
+# The .eml fixtures are real messages captured from Gmail, Zimbra and Nextcloud.
+# On the wire a mail line ends in CRLF (RFC 5322 §2.1), and that is the form the
+# parser meets in production, so these files are kept byte-for-byte as captured.
+#
+# Converting them to LF would not fail anything, which is exactly why it is a
+# trap: parsing all eleven fixtures with LF endings yields identical subjects,
+# headers and part checksums, so the suite would stay green while quietly losing
+# its only coverage of the real wire format. The inline fixtures in
+# tests/unit/includes/DeckerEmailToPostTest.php build their messages with
+# explicit "\r\n" for the same reason.
+tests/fixtures/*.eml -text
+
+# Vendored third party, copied verbatim from upstream by composer's
+# post-install-cmd. Never re-encode it.
+admin/vendor/** -text
+
+# Nothing below feeds the release ZIP. That archive is built by `wp dist-archive`
 # and its exclusion list is .distignore, the single source of truth for what
 # ships.
 #
