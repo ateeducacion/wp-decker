@@ -47,9 +47,13 @@ start-if-not-running: check-docker
 
 # Bring up the environment. Always calls `wp-env start` (idempotent), so it
 # (re)syncs the containers instead of skipping when something only appears up.
+# WP_ENV_FLAGS passes options through to `wp-env start`; CI uses it to bring
+# the environment up with Xdebug in coverage mode:
+#   make up WP_ENV_FLAGS=--xdebug=coverage
+WP_ENV_FLAGS ?=
 up: check-docker
 	$(call free_ports,8888 8889)
-	npx wp-env start
+	npx wp-env start $(WP_ENV_FLAGS)
 	-npx wp-env run cli wp plugin activate decker
 	@echo "Visit http://localhost:8888/wp-admin/ to access the Decker dashboard."
 
@@ -112,6 +116,23 @@ test: start-if-not-running
 	if [ -n "$(FILE)" ]; then CMD="$$CMD $(FILE)"; fi; \
 	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
 	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD --testdox --colors=always
+
+# Run the PHPUnit suite with coverage, writing the reports CI uploads to
+# Codecov (clover.xml) plus a text summary and a browsable HTML report.
+# IMPORTANT: the containers need Xdebug in coverage mode, which is not the
+# default. If the report comes out at 0%, restart the environment with:
+#   npx wp-env start --xdebug=coverage
+test-coverage: start-if-not-running
+	@mkdir -p artifacts/coverage
+	@CMD="env XDEBUG_MODE=coverage ./vendor/bin/phpunit --testdox --colors=always --coverage-text=artifacts/coverage/coverage.txt --coverage-html artifacts/coverage/html --coverage-clover artifacts/coverage/clover.xml"; \
+	if [ -n "$(FILE)" ]; then CMD="$$CMD $(FILE)"; fi; \
+	if [ -n "$(FILTER)" ]; then CMD="$$CMD --filter $(FILTER)"; fi; \
+	npx wp-env run tests-cli --env-cwd=wp-content/plugins/decker $$CMD; \
+	EXIT_CODE=$$?; \
+	echo ""; \
+	grep -E "^\s*(Classes|Methods|Lines):" artifacts/coverage/coverage.txt 2>/dev/null || echo "Coverage data not available"; \
+	echo "Full report: artifacts/coverage/html/index.html"; \
+	exit $$EXIT_CODE
 
 # Run unit tests in verbose mode. Honor TEST filter if provided.
 test-verbose: start-if-not-running
@@ -323,6 +344,8 @@ help:
 	@echo "                         make test FILE=tests/MyTest.php"
 	@echo "                         make test FILE=tests/MyTest.php FILTER=test_my_feature"
 	@echo ""
+	@echo "  test-coverage      - Run PHPUnit with coverage into artifacts/coverage/"
+	@echo "                       (needs: npx wp-env start --xdebug=coverage)"
 	@echo "  test-js            - Run JavaScript unit tests with Jest"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"

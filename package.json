@@ -12,6 +12,6 @@
     "composer:tests-cli": "wp-env run tests-cli --env-cwd=wp-content/plugins/decker composer",
     "test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.js",
     "test:unit": "wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit",
-    "test:js": "jest --config jest.config.js"
+    "test:js": "jest --config jest.config.js --coverage"
   }
 }

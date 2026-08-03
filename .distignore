@@ -3,6 +3,7 @@
 .github
 .idea
 .wordpress-org
+artifacts
 bin
 build
 build-cs

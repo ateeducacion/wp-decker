@@ -11,6 +11,9 @@ on:
 
 permissions:
   contents: read
+  # Codecov authenticates with OIDC instead of a token kept as a secret.
+  # Without this permission no identity token can be issued.
+  id-token: write
 
 jobs:
   lint_and_test:
@@ -41,9 +44,10 @@ jobs:
       - name: Setup wp-env
         run: npm -g --no-fund i @wordpress/env
 
-      # Start wp-env environment
+      # Start wp-env environment. Xdebug is asked for at start-up: the
+      # containers do not enable it, and PHPUnit needs it to measure coverage.
       - name: Start wp-env
-        run: make up
+        run: make up WP_ENV_FLAGS=--xdebug=coverage
 
       - name: Run code linting
         run: make lint
@@ -51,12 +55,33 @@ jobs:
       - name: Run plugin check
         run: make check-plugin
 
-      - name: Run unit tests
-        run: make test
+      - name: Run unit tests with coverage
+        run: make test-coverage
+
+      - name: Upload PHP coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          use_oidc: true
+          files: artifacts/coverage/clover.xml
+          flags: php
+          # The uploader otherwise also picks up artifacts/coverage/coverage.txt,
+          # a human-readable summary it cannot parse as a coverage report.
+          disable_search: true
 
       # E2E Tests with Playwright
       - name: Install npm dependencies and Playwright
         run: npm install && npx playwright install --with-deps chromium
+
+      - name: Run JavaScript unit tests with coverage
+        run: make test-js
+
+      - name: Upload JavaScript coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          use_oidc: true
+          files: artifacts/coverage-js/lcov.info
+          flags: javascript
+          disable_search: true
 
       - name: Run E2E tests
         run: make test-e2e
