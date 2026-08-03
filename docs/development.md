@@ -35,6 +35,36 @@ Credentials: `admin` / `password`
 
 See `AGENTS.md` and `CONVENTIONS.md` for detailed agent and project conventions.
 
+## Agent skills
+
+Skills are folders of instructions an AI coding agent loads on demand. They live
+in `.agents/skills/` — the path GitHub Copilot, Codex and others read directly —
+and `.claude/skills/` holds symlinks to the same folders for Claude Code. There
+is one copy of every `SKILL.md`, never two.
+
+| Skill | Read it before |
+|-------|----------------|
+| `wp-plugin-development` | Touching hooks, activation/uninstall, the Settings API, options, cron or release packaging |
+| `wp-rest-api` | Adding or debugging routes: `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest` |
+| `wp-plugin-directory-guidelines` | Editing `readme.txt`, license headers or plugin naming — what `make check-plugin` enforces |
+| `blueprint` | Editing `blueprint.json` or the Playground preview |
+| `security-audit` | Hunting vulnerabilities and validating findings |
+
+The first four come from [`WordPress/agent-skills`](https://github.com/WordPress/agent-skills)
+(GPL-2.0-or-later); `security-audit` from
+[`cloudflare/security-audit-skill`](https://github.com/cloudflare/security-audit-skill).
+
+All of them are vendored verbatim. Do not reformat or patch them locally —
+diverging from upstream makes re-vendoring painful. To add one, drop it in
+`.agents/skills/<name>/` and symlink it:
+
+```bash
+ln -s ../../.agents/skills/<name> .claude/skills/<name>
+```
+
+Nothing under `.agents/`, `.claude/`, `AGENTS.md` or `CLAUDE.md` reaches the
+release ZIP; `.gitattributes` marks it `export-ignore`.
+
 ## Available hooks
 
 ### Actions

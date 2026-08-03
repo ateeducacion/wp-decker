@@ -12,6 +12,11 @@ languages/*.pot            export-ignore
 # without this the reports written by `make test-coverage` and the Playwright
 # runs would travel inside the release ZIP.
 artifacts/                 export-ignore
+# Agent instructions and skills. `.agents/` and `.claude/` already match the
+# `.*` rule above; these three do not, and a plugin ZIP has no use for them.
+AGENTS.md                  export-ignore
+CLAUDE.md                  export-ignore
+skills-lock.json           export-ignore
 blueprint.json             export-ignore
 codecov.yml                export-ignore
 CHANGELOG.md               export-ignore

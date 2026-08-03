@@ -137,10 +137,23 @@ _n( 'singular', 'plural', $count, 'decker' )
 - Update `readme.txt` for WordPress.org compatibility
 - Keep `CONVENTIONS.md` and `AGENTS.md` synchronized
 
+## Agent skills
+
+This repository ships skills in `.agents/skills/`, which Copilot loads on demand.
+Consult the relevant one before working in its area:
+
+- `wp-plugin-development` — hooks, activation/uninstall, Settings API, options, cron, packaging
+- `wp-rest-api` — `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest`
+- `wp-plugin-directory-guidelines` — `readme.txt`, license headers, naming; what `make check-plugin` enforces
+- `blueprint` — `blueprint.json` and the Playground preview
+- `security-audit` — vulnerability hunting and finding validation
+
+They are vendored verbatim from upstream: never reformat or edit them in place.
+
 ## Additional Resources
 
 - Project conventions: See `CONVENTIONS.md`
-- Agent-specific guidelines: See `AGENTS.md`
+- Agent-specific guidelines: See `AGENTS.md` (and `CLAUDE.md`, which imports it)
 - WordPress Coding Standards: https://developer.wordpress.org/coding-standards/
 - WordPress Plugin Handbook: https://developer.wordpress.org/plugins/
 

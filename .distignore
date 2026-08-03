@@ -1,4 +1,6 @@
 # Directories
+.agents
+.claude
 .git
 .github
 .idea
@@ -24,6 +26,9 @@ languages/*.po
 # Files
 .aider.chat.history.md
 .aider.input.history
+AGENTS.md
+CLAUDE.md
+skills-lock.json
 *.DS_Store
 .DS_Store
 .distignore
