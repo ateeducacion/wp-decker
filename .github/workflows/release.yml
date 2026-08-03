@@ -4,6 +4,14 @@ name: Release
 on:
   release:
     types: [published]
+  # Manual runs build and upload the ZIP as a workflow artifact without
+  # touching any release, so the packaging path can be exercised on demand.
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Version label for the package name (e.g. 1.2.3). Defaults to a dated dev label."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -28,19 +36,36 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Set environment variables
+        env:
+          RAW_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.release_tag }}
         run: |
-          RAW_TAG="${{ github.event.release.tag_name }}"
-          VERSION_TAG="${RAW_TAG#v}"  # Delete the initial 'v' if exists
-          if [ -z "$VERSION_TAG" ]; then
-            echo "::error::Could not determine release tag" >&2
-            exit 1
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION_TAG="${RAW_TAG#v}"  # Delete the initial 'v' if exists
+            if [ -z "$VERSION_TAG" ]; then
+              echo "::error::Could not determine release tag" >&2
+              exit 1
+            fi
+          else
+            VERSION_TAG="${INPUT_TAG#v}"
+            if [ -z "$VERSION_TAG" ]; then
+              VERSION_TAG="manual-$(date +%Y%m%d)-${GITHUB_SHA::7}"
+            fi
           fi
           echo "RELEASE_TAG=${VERSION_TAG}" >> $GITHUB_ENV
 
       - name: Create package using the Makefile
         run: make package VERSION=${RELEASE_TAG}
 
+      # Always kept, so a manual run leaves something downloadable to inspect.
+      - name: Upload ZIP as a workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: decker-${{ env.RELEASE_TAG }}
+          path: decker-${{ env.RELEASE_TAG }}.zip
+
       - name: Upload ZIP to the release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v3
         with:
           files: decker-${{ env.RELEASE_TAG }}.zip
