@@ -452,8 +452,11 @@ class Decker {
 	 */
 	public function maybe_create_demo_data() {
 
-		// Check if we are in wp-env-test environment (PHPUNIT).
-		if ( defined( 'WP_TESTS_DOMAIN' ) && WP_TESTS_DOMAIN === 'localhost:8889' ) {
+		// Check if we are in the PHPUnit environment. WP_TESTS_DOMAIN is defined by
+		// the WordPress test suite only, so its mere presence identifies the test
+		// run; matching a hardcoded host:port broke as soon as wp-env was started
+		// on any port other than the default 8889.
+		if ( defined( 'WP_TESTS_DOMAIN' ) ) {
 			// If we're in test environment, skip demo data creation.
 			return;
 		}
