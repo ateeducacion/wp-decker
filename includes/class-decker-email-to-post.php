@@ -233,10 +233,12 @@ class Decker_Email_To_Post {
 	 */
 	private function parse_email( $raw_email ) {
 
-		// Parse raw email.
-		// Message.php is where the class lives. MimeMailParser.php is only a
-		// backwards-compatible shim that requires this same file.
-		require_once __DIR__ . '/../admin/vendor/mime-mail-parser/src/Message.php';
+		// Parse raw email. A plain require of Message.php is not enough: the
+		// library spreads across several files that do not require each other,
+		// so the bundled copy needs its loader registered.
+		require_once __DIR__ . '/class-decker-bundled-autoloader.php';
+		Decker_Bundled_Autoloader::register();
+
 		$message = new Erseco\Message( $raw_email );
 
 		return $message;
