@@ -20,8 +20,10 @@
     "scripts": {
         "test": "vendor/bin/pest",
         "test-with-warnings": "vendor/bin/pest --display-warnings",
-        "lint": "phpcs . --ignore=vendor/,assets/,node_modules/,tests/js/,tester.php --colors --warning-severity=0 --extensions=php",
-        "fix": "phpcbf . --ignore=vendor/,assets/,node_modules/,tests/js/,tester.php --colors --warning-severity=0 --extensions=php"
+        "test-coverage": "mkdir -p coverage && vendor/bin/pest --coverage --min=75 --coverage-clover=coverage/clover.xml",
+        "lint": "phpcs --standard=phpcs.xml.dist --warning-severity=0",
+        "fix": "phpcbf --standard=phpcs.xml.dist --warning-severity=0",
+        "analyse": "phpstan analyse --memory-limit=512M"
     },
     "autoload": {
         "psr-4": {
@@ -43,8 +45,8 @@
         }
     },
     "require-dev": {
-        "pestphp/pest": "*",
-        "phpunit/phpunit": "*",
-        "squizlabs/php_codesniffer": "*"
+        "pestphp/pest": "^1.23.1 || 2.35.1 || ^3.0 || ^4.0",
+        "phpstan/phpstan": "^2.0",
+        "squizlabs/php_codesniffer": "^3.13 || ^4.0"
     }
 }

@@ -100,8 +100,25 @@ reset: check-docker
 
 # Pass the wp plugin-check
 check-plugin: check-docker start-if-not-running
-	npx wp-env run cli wp plugin install plugin-check --activate --color
-	npx wp-env run cli wp plugin check decker --exclude-directories=tests --exclude-checks=file_type,image_functions --ignore-warnings --color
+	@npx wp-env run cli wp plugin install plugin-check --activate --color || true
+	# `wp plugin check` exits 0 even when it reports errors, so the exit code
+	# decides nothing and a bare invocation could never fail the build. The
+	# output is what has to be read.
+	@echo "Running WordPress Plugin Check..."
+	@TMPFILE=$$(mktemp); \
+	npx wp-env run cli wp plugin check decker \
+		--exclude-directories=tests \
+		--exclude-checks=file_type,image_functions \
+		--ignore-warnings \
+		--color 2>&1 | tee $$TMPFILE; \
+	ERRORS=$$(sed 's/\x1B\[[0-9;]*[mK]//g' $$TMPFILE | grep -cE '\bERROR\b' || true); \
+	rm -f $$TMPFILE; \
+	echo ""; \
+	if [ "$$ERRORS" -gt 0 ]; then \
+		echo "Plugin Check: ✗ $$ERRORS error(s) found."; \
+		exit 1; \
+	fi; \
+	echo "Plugin Check: ✓ No errors found."
 
 # Combined check for lint, tests, untranslated, and more
 check: fix lint check-plugin test check-untranslated mo
@@ -195,13 +212,15 @@ install-phpcs: check-docker start-if-not-running
 	fi
 
 
-# Check code style with PHP Code Sniffer inside the container
-lint: install-phpcs
-	npx wp-env run cli phpcs --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
+# Check code style with PHP Code Sniffer. Runs on the host against the
+# require-dev copy, so linting needs neither Docker nor a global install, and
+# the ruleset is the single place that decides what gets scanned.
+lint:
+	composer phpcs
 
-# Automatically fix code style with PHP Code Beautifier inside the container
-fix: install-phpcs
-	npx wp-env run cli phpcbf --standard=wp-content/plugins/decker/.phpcs.xml.dist wp-content/plugins/decker
+# Automatically fix code style with PHP Code Beautifier
+fix:
+	composer phpcbf
 
 # Run PHP Mess Detector ignoring vendor and node_modules
 phpmd:

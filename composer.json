@@ -1,15 +1,16 @@
-{    
+{
     "require": {
-        "erseco/mime-mail-parser": "*"
+        "php": ">=8.3",
+        "erseco/mime-mail-parser": "^1.0"
     },
     "require-dev": {
         "om/icalparser": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
-        "squizlabs/php_codesniffer": "*",
+        "squizlabs/php_codesniffer": "^3.13.5",
         "wp-cli/dist-archive-command": "^3.1",
         "wp-cli/i18n-command": "*",
-        "wp-coding-standards/wpcs": "*",
+        "wp-coding-standards/wpcs": "^3.4",
         "yoast/phpunit-polyfills": "*",
         "yoast/wp-test-utils": "*"
     },
@@ -24,10 +25,10 @@
         ],
         "phpunit": "vendor/bin/phpunit",
         "test": "phpunit",
-        "phpcs": "phpcs --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/,tests/ --colors --warning-severity=0 --extensions=php",
-        "phpcbf": "phpcbf --standard=WordPress . --ignore=vendor/,assets/,node_modules/,tests/js/,wp/,wp-content/ --colors --warning-severity=0 --extensions=php", 
+        "phpcs": "phpcs --standard=.phpcs.xml.dist",
+        "phpcbf": "phpcbf --standard=.phpcs.xml.dist",
         "make-pot": "wp i18n make-pot . languages/decker.pot --domain=decker --exclude=vendor,assets,node_modules,tests,wp,wp-content --include=**/*.php",
-        "pot-remove-refs": "sed -i.bak '/^#: /d' languages/decker.pot && rm languages/decker.pot.bak",      
+        "pot-remove-refs": "sed -i.bak '/^#: /d' languages/decker.pot && rm languages/decker.pot.bak",
         "update-po": "wp i18n update-po languages/decker.pot languages/decker-es_ES.po",
         "make-mo": "wp i18n make-mo languages/ languages/",
         "make-php": "wp i18n make-php languages/ languages/",
@@ -40,6 +41,9 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "composer/installers": true
+        },
+        "platform": {
+            "php": "8.3"
         }
     },
     "autoload": {

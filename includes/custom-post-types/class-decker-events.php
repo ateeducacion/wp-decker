@@ -9,6 +9,9 @@
  * @subpackage Decker/includes/custom-post-types
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 /**
  * Class to handle the events custom post type
  */

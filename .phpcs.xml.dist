@@ -2,8 +2,24 @@
 <ruleset name="WordPress Coding Standards">
     <description>Custom rules for Decker Plugin</description>
 
+    <!-- What to scan. Listing it here rather than passing a path on the command
+         line keeps the ruleset self-contained, so PHPCS checks the same thing
+         however it is invoked: from composer, from the Makefile or from CI. -->
+    <file>admin</file>
+    <file>includes</file>
+    <file>public</file>
+    <file>decker.php</file>
+    <file>uninstall.php</file>
+
     <!-- Define the standard -->
     <rule ref="WordPress"/>
+
+    <!-- Check the code really runs on the minimum PHP the plugin declares.
+         phpcompatibility-wp was already in require-dev but no ruleset referenced
+         it, so it did nothing. Keep this in step with "Requires PHP" in
+         decker.php and readme.txt, and with the php-version CI installs. -->
+    <config name="testVersion" value="8.3-"/>
+    <rule ref="PHPCompatibilityWP"/>
 
     <!-- Exclude some directories -->
     <exclude-pattern>vendor/</exclude-pattern>

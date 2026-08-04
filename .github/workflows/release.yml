@@ -35,6 +35,14 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      # `composer install` has just regenerated admin/vendor/ from the version
+      # pinned in composer.lock. If it does not match the committed copy, either
+      # someone edited it by hand or updated it without committing the result —
+      # and since `wp dist-archive` packages the working tree, the release would
+      # ship a library nobody reviewed.
+      - name: Check the bundled library matches the lock
+        run: git diff --exit-code -- admin/vendor
+
       - name: Set environment variables
         env:
           RAW_TAG: ${{ github.event.release.tag_name }}
