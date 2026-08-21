@@ -104,11 +104,16 @@ check-plugin: check-docker start-if-not-running
 	# `wp plugin check` exits 0 even when it reports errors, so the exit code
 	# decides nothing and a bare invocation could never fail the build. The
 	# output is what has to be read.
+	#
+	# `offloading_files` is Guideline 8 (remote JS/CSS). Decker loads Bootstrap,
+	# Remix Icon, DataTables and similar from CDNs on purpose and is not
+	# submitted to WordPress.org, so OffloadedContent is excluded rather than
+	# vendoring every library.
 	@echo "Running WordPress Plugin Check..."
 	@TMPFILE=$$(mktemp); \
 	npx wp-env run cli wp plugin check decker \
 		--exclude-directories=tests \
-		--exclude-checks=file_type,image_functions \
+		--exclude-checks=file_type,image_functions,offloading_files \
 		--ignore-warnings \
 		--color 2>&1 | tee $$TMPFILE; \
 	ERRORS=$$(sed 's/\x1B\[[0-9;]*[mK]//g' $$TMPFILE | grep -cE '\bERROR\b' || true); \
