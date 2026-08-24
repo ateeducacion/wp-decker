@@ -637,4 +637,30 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertSame( 'publish', get_post( $this->task_id )->post_status );
 	}
 
+
+	/**
+	 * Deleting a card is allowed even while another user holds the active lock.
+	 *
+	 * This is intended behaviour, not a hole in the guard: deletion decides
+	 * whether the card should exist at all, which is not the edit lock's
+	 * business — the lock only stops a stale form from silently overwriting
+	 * newer text. Pinned here so the exemption survives a future reading of
+	 * the guard that mistakes it for an oversight.
+	 */
+	public function test_delete_is_allowed_while_another_user_holds_the_lock() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		wp_set_current_user( $this->user_b );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'DELETE', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_param( 'force', true );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		$this->assertNull( get_post( $this->task_id ) );
+	}
+
 }

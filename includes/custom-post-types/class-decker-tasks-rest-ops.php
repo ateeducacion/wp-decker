@@ -36,6 +36,13 @@ class Decker_Tasks_Rest_Ops {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		// Enforce the edit lock (detect-and-reject) on generic /wp/v2/tasks
 		// updates, which bypass the save_decker_task guard.
+		//
+		// Deletions are deliberately NOT covered. `rest_pre_insert_decker_task`
+		// does not run for DELETE, and that is the behaviour we want: removing a
+		// card is allowed even while other people have it open. Deleting is a
+		// decision about whether the card should exist at all, not an edit that
+		// could silently overwrite someone's newer text, so it is not the edit
+		// lock's business. Do not "close this gap" by guarding delete as well.
 		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
 		// A generic REST update that writes content supersedes every open form, so
 		// rotate the generation afterwards exactly like an AJAX save does.
