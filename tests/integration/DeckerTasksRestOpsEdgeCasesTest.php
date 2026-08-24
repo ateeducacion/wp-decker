@@ -276,4 +276,38 @@ class DeckerTasksRestOpsEdgeCasesTest extends Decker_Test_Base {
 		$this->assertSame( '2026-12-31', get_post_meta( $this->task_id, 'duedate', true ) );
 		$this->assertNotSame( $generation, $this->lock_state->generation( $this->task_id ) );
 	}
+
+	/**
+	 * Dragging a task in the calendar view must work for the ordinary Decker
+	 * users who see that view, not only for administrators. The existing
+	 * due-date tests call the controller directly and so never exercised the
+	 * route's permission callback.
+	 */
+	public function test_due_date_route_is_allowed_for_a_non_admin_editor() {
+		wp_set_current_user( $this->editor_id );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/update_due_date' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_param( 'duedate', '2027-03-01' );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		$this->assertSame( '2027-03-01', get_post_meta( $this->task_id, 'duedate', true ) );
+	}
+
+	/**
+	 * The route stays closed to users below the editing bar.
+	 */
+	public function test_due_date_route_is_forbidden_for_a_subscriber() {
+		$subscriber = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		wp_set_current_user( $subscriber );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/update_due_date' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_param( 'duedate', '2027-03-01' );
+
+		$this->assertSame( 403, rest_get_server()->dispatch( $request )->get_status() );
+	}
+
 }

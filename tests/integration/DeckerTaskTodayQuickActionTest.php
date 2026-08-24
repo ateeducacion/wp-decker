@@ -402,4 +402,95 @@ class DeckerTaskTodayQuickActionTest extends Decker_Test_Base {
 		$this->assertTrue( $removed['changed'] );
 		$this->assertFalse( $removed['marked'] );
 	}
+
+	/**
+	 * Dispatch a request to one of the board-card relation endpoints.
+	 *
+	 * Mirrors toggleMarkForToday(): the board card posts a client-supplied
+	 * `user_id` and `date`, both of which the server must ignore.
+	 *
+	 * @param int    $task_id The task ID.
+	 * @param string $action  Either 'mark_relation' or 'unmark_relation'.
+	 * @return WP_REST_Response The dispatched response.
+	 */
+	private function dispatch_relation( int $task_id, string $action ): WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $task_id . '/' . $action );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body( wp_json_encode( array( 'user_id' => $this->user_a, 'date' => gmdate( 'Y-m-d' ) ) ) );
+
+		return rest_get_server()->dispatch( $request );
+	}
+
+	/**
+	 * The board-card route still marks the current user on a healthy task.
+	 */
+	public function test_mark_relation_marks_the_current_user() {
+		$response = $this->dispatch_relation( $this->task_id, 'mark_relation' );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['success'] );
+		$this->assertCount( 1, $this->relations( $this->task_id ) );
+	}
+
+	/**
+	 * The board-card route must refuse a task that does not exist instead of
+	 * reporting success and writing relations against a phantom post ID.
+	 */
+	public function test_mark_relation_rejects_a_missing_task() {
+		$response = $this->dispatch_relation( 999999, 'mark_relation' );
+
+		$this->assertSame( 404, $response->get_status() );
+		$this->assertFalse( $response->get_data()['success'] );
+		$this->assertSame( array(), $this->relations( 999999 ) );
+	}
+
+	/**
+	 * Unmarking a task that does not exist is refused for the same reason.
+	 */
+	public function test_unmark_relation_rejects_a_missing_task() {
+		$response = $this->dispatch_relation( 999999, 'unmark_relation' );
+
+		$this->assertSame( 404, $response->get_status() );
+		$this->assertFalse( $response->get_data()['success'] );
+	}
+
+	/**
+	 * Both quick-action routes must agree about archived tasks: the board card
+	 * cannot mark one just because it took the older endpoint.
+	 */
+	public function test_mark_relation_rejects_an_archived_task() {
+		wp_update_post(
+			array(
+				'ID'          => $this->task_id,
+				'post_status' => 'archived',
+			)
+		);
+
+		$response = $this->dispatch_relation( $this->task_id, 'mark_relation' );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertFalse( $response->get_data()['success'] );
+		$this->assertSame( 'decker_task_archived', $response->get_data()['code'] );
+		$this->assertSame( array(), $this->relations( $this->task_id ) );
+	}
+
+	/**
+	 * A failed write must surface as an error. Reporting success while the
+	 * relation was never stored is worse than failing: the card shows the task
+	 * as marked for today and the state is silently lost on the next reload.
+	 */
+	public function test_mark_relation_reports_a_failed_write() {
+		// Short-circuit the meta write so the manager exhausts its CAS retries.
+		add_filter( 'update_post_metadata', '__return_false' );
+
+		$response = $this->dispatch_relation( $this->task_id, 'mark_relation' );
+
+		remove_filter( 'update_post_metadata', '__return_false' );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertFalse( $response->get_data()['success'] );
+		$this->assertSame( 'decker_today_conflict', $response->get_data()['code'] );
+	}
+
 }

@@ -37,8 +37,8 @@ class Decker_Tasks_Rest_Ops {
 		// Enforce the edit lock (detect-and-reject) on generic /wp/v2/tasks
 		// updates, which bypass the save_decker_task guard.
 		add_filter( 'rest_pre_insert_decker_task', array( $this, 'guard_rest_task_update' ), 10, 2 );
-		// A generic REST update also supersedes every open form, so rotate the
-		// generation afterwards exactly like an AJAX save does.
+		// A generic REST update that writes content supersedes every open form, so
+		// rotate the generation afterwards exactly like an AJAX save does.
 		add_action( 'rest_after_insert_decker_task', array( $this, 'rotate_generation_after_rest_update' ), 10, 3 );
 	}
 
@@ -91,11 +91,14 @@ class Decker_Tasks_Rest_Ops {
 				'callback'   => array( $order_engine, 'handle_fix_order' ),
 				'permission' => 'manage_options',
 			),
+			// Dragging a task in the calendar view calls this; it is an ordinary
+			// per-task edit, so it takes the same object-level capability as the
+			// other task routes rather than an administrator-only one.
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/update_due_date',
 				'methods'    => 'POST',
 				'callback'   => 'update_task_due_date',
-				'permission' => 'manage_options',
+				'permission' => 'edit_task',
 			),
 		);
 
@@ -266,6 +269,20 @@ class Decker_Tasks_Rest_Ops {
 	}
 
 	/**
+	 * Request parameters that cannot carry task content.
+	 *
+	 * `status` is the payload of the archive/unarchive quick action; the rest is
+	 * REST plumbing. The list is deliberately closed: any other parameter (title,
+	 * content, excerpt, meta, taxonomies) could have come from a stale form, so
+	 * an unrecognised one keeps the generation requirement rather than skipping
+	 * it. Parameters prefixed with `_` are core's own plumbing and are ignored
+	 * separately.
+	 *
+	 * @var string[]
+	 */
+	private const CONTENTLESS_PARAMS = array( 'id', 'status', 'context', 'lock_generation' );
+
+	/**
 	 * Enforce the edit lock on generic REST updates of an existing task.
 	 *
 	 * `decker_task` is writable through `/wp/v2/tasks/{id}` (title, content and
@@ -273,6 +290,12 @@ class Decker_Tasks_Rest_Ops {
 	 * rejects an update while another user owns the active lock and requires a
 	 * valid `lock_generation` once the task carries one (detect-and-reject).
 	 * Creates (no existing id) and never-locked tasks remain updatable over REST.
+	 *
+	 * A content-less update is exempt from the generation requirement: archiving
+	 * posts a bare status transition from a card that has no form open, so it can
+	 * never present a token, and having none is not evidence of staleness when
+	 * there is no content to overwrite. An active lock held by someone else still
+	 * blocks it — archiving a card out from under its editor is a real conflict.
 	 *
 	 * @param stdClass        $prepared_post The prepared post for insertion.
 	 * @param WP_REST_Request $request       The REST request.
@@ -288,7 +311,7 @@ class Decker_Tasks_Rest_Ops {
 			(int) $prepared_post->ID,
 			get_current_user_id(),
 			is_string( $generation ) ? $generation : null,
-			true
+			$this->writes_task_content( $request )
 		);
 
 		if ( is_wp_error( $check ) ) {
@@ -296,6 +319,29 @@ class Decker_Tasks_Rest_Ops {
 		}
 
 		return $prepared_post;
+	}
+
+	/**
+	 * Determine whether a REST update submits content a stale form could clobber.
+	 *
+	 * Query parameters count too: `POST /wp/v2/tasks/{id}?title=...` reaches
+	 * `prepare_item_for_database()` exactly like a body parameter would.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return bool True when the request carries anything beyond a status transition.
+	 */
+	private function writes_task_content( $request ): bool {
+		foreach ( array_keys( $request->get_params() ) as $param ) {
+			if ( str_starts_with( (string) $param, '_' ) ) {
+				continue;
+			}
+
+			if ( ! in_array( $param, self::CONTENTLESS_PARAMS, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -312,6 +358,13 @@ class Decker_Tasks_Rest_Ops {
 	 */
 	public function rotate_generation_after_rest_update( $post, $request, $creating ) {
 		if ( $creating || ! $post instanceof WP_Post ) {
+			return;
+		}
+
+		// A content-less update (the archive quick action) supersedes nothing an
+		// open form holds, so the editor keeps their session instead of being
+		// forced to reload by a passing archive.
+		if ( ! $this->writes_task_content( $request ) ) {
 			return;
 		}
 
