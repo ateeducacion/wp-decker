@@ -545,4 +545,122 @@ class DeckerTaskLockSaveProtectionTest extends Decker_Test_Base {
 		$this->assertSame( 'Corrected AJAX save', get_post( $this->task_id )->post_title );
 	}
 
+
+	/**
+	 * Archiving posts only a status transition, which carries no form content and
+	 * therefore cannot overwrite a newer change. It must succeed on a task that
+	 * merely carries a generation from an earlier editing session, even though
+	 * the quick action has no form and submits no token.
+	 */
+	public function test_status_only_rest_update_is_allowed_without_a_generation() {
+		// An earlier editing session leaves the task carrying a generation.
+		$generation = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $generation ) );
+
+		wp_set_current_user( $this->user_b );
+		do_action( 'init' );
+
+		// Replicates archiveTaskHandler(): a JSON body carrying only the status.
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( array( 'status' => 'archived' ) ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'archived', get_post( $this->task_id )->post_status );
+	}
+
+	/**
+	 * A status-only update is still refused while another user owns the active
+	 * lock: archiving a card out from under its editor is a real conflict.
+	 */
+	public function test_status_only_rest_update_is_blocked_while_another_user_holds_the_lock() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		wp_set_current_user( $this->user_b );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params( array( 'status' => 'archived' ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'decker_task_locked', $response->get_data()['code'] );
+		$this->assertSame( 'publish', get_post( $this->task_id )->post_status );
+	}
+
+	/**
+	 * A status-only update writes no content, so it must not rotate the
+	 * generation: the owner's open form stays saveable afterwards.
+	 */
+	public function test_status_only_rest_update_does_not_rotate_the_generation() {
+		$generation = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params( array( 'status' => 'archived' ) );
+
+		$this->assertSame( 200, rest_get_server()->dispatch( $request )->get_status() );
+		$this->assertSame( $generation, $this->locks->get_lock_info( $this->task_id, $this->user_a )['generation'] );
+	}
+
+	/**
+	 * A content field smuggled alongside the status still requires a valid token:
+	 * the exemption is for content-less transitions, not for any request that
+	 * happens to mention a status.
+	 */
+	public function test_status_plus_content_rest_update_still_requires_a_generation() {
+		$generation = $this->locks->acquire_lock( $this->task_id, $this->user_a )['generation'];
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_a, $generation ) );
+
+		wp_set_current_user( $this->user_b );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'POST', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body_params(
+			array(
+				'status' => 'archived',
+				'title'  => 'Smuggled stale title',
+			)
+		);
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'decker_task_locked', $response->get_data()['code'] );
+		$this->assertSame( 'Original title', get_post( $this->task_id )->post_title );
+		$this->assertSame( 'publish', get_post( $this->task_id )->post_status );
+	}
+
+
+	/**
+	 * Deleting a card is allowed even while another user holds the active lock.
+	 *
+	 * This is intended behaviour, not a hole in the guard: deletion decides
+	 * whether the card should exist at all, which is not the edit lock's
+	 * business — the lock only stops a stale form from silently overwriting
+	 * newer text. Pinned here so the exemption survives a future reading of
+	 * the guard that mistakes it for an oversight.
+	 */
+	public function test_delete_is_allowed_while_another_user_holds_the_lock() {
+		$this->locks->acquire_lock( $this->task_id, $this->user_a );
+
+		wp_set_current_user( $this->user_b );
+		do_action( 'init' );
+
+		$request = new WP_REST_Request( 'DELETE', '/wp/v2/tasks/' . $this->task_id );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_param( 'force', true );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status(), (string) wp_json_encode( $response->get_data() ) );
+		$this->assertNull( get_post( $this->task_id ) );
+	}
+
 }

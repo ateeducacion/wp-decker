@@ -80,20 +80,10 @@ class Decker_Tasks_Rest_Today {
 	 */
 	public function handle_task_today( $request ) {
 		$task_id = (int) $request['id'];
-		$post    = get_post( $task_id );
-
-		if ( ! $post || 'decker_task' !== $post->post_type ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'code'    => 'decker_invalid_task',
-					'message' => __( 'Task not found.', 'decker' ),
-				),
-				404
-			);
-		}
 
 		// Identity is derived from the session; a client-supplied user is refused.
+		// This endpoint is the strict one: the older relation routes below still
+		// accept (and ignore) the `user_id` their board-card client sends.
 		if ( null !== $request->get_param( 'user_id' ) ) {
 			return new WP_REST_Response(
 				array(
@@ -105,15 +95,9 @@ class Decker_Tasks_Rest_Today {
 			);
 		}
 
-		if ( 'archived' === $post->post_status ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'code'    => 'decker_task_archived',
-					'message' => __( 'This task is archived and cannot be marked for today.', 'decker' ),
-				),
-				409
-			);
+		$rejection = $this->reject_ineligible_task( $task_id );
+		if ( $rejection instanceof WP_REST_Response ) {
+			return $rejection;
 		}
 
 		$marked = (bool) $request->get_param( 'marked' );
@@ -161,29 +145,7 @@ class Decker_Tasks_Rest_Today {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function mark_user_date_relation( $request ) {
-		$task_id = (int) $request['id'];
-
-		if ( ! $task_id ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Invalid parameters.',
-				),
-				400
-			);
-		}
-
-		// The relation is personal: always use the authenticated current user
-		// and ignore any client-supplied user_id.
-		$this->tasks->get_today_manager()->mark_for_today( $task_id, get_current_user_id() );
-
-		return new WP_REST_Response(
-			array(
-				'success' => true,
-				'message' => 'Relation marked successfully.',
-			),
-			200
-		);
+		return $this->write_relation( (int) $request['id'], true, 'Relation marked successfully.' );
 	}
 
 	/**
@@ -193,28 +155,78 @@ class Decker_Tasks_Rest_Today {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function unmark_user_date_relation( $request ) {
-		$task_id = (int) $request['id'];
+		return $this->write_relation( (int) $request['id'], false, 'Relation unmarked successfully.' );
+	}
 
-		if ( ! $task_id ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => 'Invalid parameters.',
-				),
-				400
-			);
+	/**
+	 * Apply the current user's "For today" relation through a relation route.
+	 *
+	 * The relation is personal: the authenticated user is always the subject and
+	 * any client-supplied `user_id` is ignored. A failed write is reported as
+	 * such — answering `success: true` while nothing was stored leaves the card
+	 * showing a relation that disappears on the next reload.
+	 *
+	 * @param int    $task_id The task post ID.
+	 * @param bool   $marked  The relation state to apply.
+	 * @param string $message The success message for this route.
+	 * @return WP_REST_Response The REST response.
+	 */
+	private function write_relation( int $task_id, bool $marked, string $message ): WP_REST_Response {
+		$rejection = $this->reject_ineligible_task( $task_id );
+		if ( $rejection instanceof WP_REST_Response ) {
+			return $rejection;
 		}
 
-		// The relation is personal: always use the authenticated current user
-		// and ignore any client-supplied user_id.
-		$this->tasks->get_today_manager()->unmark_for_today( $task_id, get_current_user_id() );
+		$result = $this->tasks->get_today_manager()->set_today_state( $task_id, get_current_user_id(), $marked );
+
+		if ( is_wp_error( $result ) ) {
+			return Decker_Tasks_Rest_Support::error_response( $result );
+		}
 
 		return new WP_REST_Response(
 			array(
 				'success' => true,
-				'message' => 'Relation unmarked successfully.',
+				'message' => $message,
 			),
 			200
 		);
+	}
+
+	/**
+	 * Reject a task that cannot carry a "For today" relation.
+	 *
+	 * Shared by every quick-action route so the board card and the open card
+	 * agree on which tasks qualify, instead of the older relation routes
+	 * accepting archived and non-existent tasks.
+	 *
+	 * @param int $task_id The task post ID.
+	 * @return WP_REST_Response|null The rejection, or null when the task qualifies.
+	 */
+	private function reject_ineligible_task( int $task_id ) {
+		$post = $task_id > 0 ? get_post( $task_id ) : null;
+
+		if ( ! $post || 'decker_task' !== $post->post_type ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_invalid_task',
+					'message' => __( 'Task not found.', 'decker' ),
+				),
+				404
+			);
+		}
+
+		if ( 'archived' === $post->post_status ) {
+			return new WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => 'decker_task_archived',
+					'message' => __( 'This task is archived and cannot be marked for today.', 'decker' ),
+				),
+				409
+			);
+		}
+
+		return null;
 	}
 }
