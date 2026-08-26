@@ -75,9 +75,12 @@ function renderTable() {
  * Run setupAllTasksTable against stubs and return what it did.
  *
  * @param {string} initialBoard Board name coming from the URL, if any.
+ * @param {string} type         The task view, as the ?type= URL parameter.
  * @return {Object} Captured DataTables options, searches and event handlers.
  */
-function setupTable( initialBoard = '' ) {
+function setupTable( initialBoard = '', type = '' ) {
+	window.history.replaceState( {}, '', type ? `/?type=${ type }` : '/' );
+
 	const searches = [];
 	const handlers = {};
 	const table = {
@@ -117,6 +120,9 @@ function setupTable( initialBoard = '' ) {
 		'updateUrlWithFilters',
 		`
 		${ constants }
+		${ extractFunctionSource( 'getUrlParam' ) }
+		${ extractFunctionSource( 'getTableView' ) }
+		${ extractFunctionSource( 'readAllTablePreferences' ) }
 		${ extractFunctionSource( 'readTablePreferences' ) }
 		${ extractFunctionSource( 'writeTablePreferences' ) }
 		return (${ extractFunctionSource( 'setupAllTasksTable' ) });
@@ -138,55 +144,127 @@ describe( 'task list table preferences', () => {
 		renderTable();
 	} );
 
-	test( 'restores the stored order and page length', () => {
+	/**
+	 * Seed the stored preferences.
+	 *
+	 * @param {Object|string} value The value to store, verbatim when a string.
+	 */
+	function store( value ) {
 		window.localStorage.setItem(
 			PREFERENCE_KEY,
-			JSON.stringify( { order: [ [ 1, 'asc' ] ], length: 100 } )
+			typeof value === 'string' ? value : JSON.stringify( value )
 		);
+	}
 
-		const { options } = setupTable();
+	/**
+	 * Read the stored preferences back.
+	 *
+	 * @return {Object} The parsed preferences.
+	 */
+	function stored() {
+		return JSON.parse( window.localStorage.getItem( PREFERENCE_KEY ) );
+	}
+
+	test( 'restores the order and page length of the view being opened', () => {
+		store( {
+			my: { order: [ [ 1, 'asc' ] ], length: 100 },
+			archived: { order: [ [ 3, 'asc' ] ], length: 25 },
+		} );
+
+		const { options } = setupTable( '', 'my' );
 
 		expect( options.order ).toEqual( [ [ 1, 'asc' ] ] );
 		expect( options.pageLength ).toBe( 100 );
 	} );
 
-	test( 'keeps the defaults when nothing was stored yet', () => {
-		const { options } = setupTable();
+	test( 'does not inherit the order of a sibling view', () => {
+		store( { my: { order: [ [ 1, 'asc' ] ], length: 100 } } );
+
+		const { options } = setupTable( '', 'archived' );
 
 		expect( options.order ).toEqual( [ [ 0, 'desc' ] ] );
 		expect( options.pageLength ).toBe( 50 );
 	} );
 
-	test( 'stores the order and page length whenever they change', () => {
-		const { handlers } = setupTable();
+	test( 'treats the task list with no type as its own view', () => {
+		store( { all: { order: [ [ 6, 'desc' ] ], length: 200 } } );
+
+		const { options } = setupTable();
+
+		expect( options.order ).toEqual( [ [ 6, 'desc' ] ] );
+		expect( options.pageLength ).toBe( 200 );
+	} );
+
+	test( 'keeps the defaults when nothing was stored yet', () => {
+		const { options } = setupTable( '', 'my' );
+
+		expect( options.order ).toEqual( [ [ 0, 'desc' ] ] );
+		expect( options.pageLength ).toBe( 50 );
+	} );
+
+	test( 'stores the order and page length under the current view', () => {
+		const { handlers } = setupTable( '', 'my' );
 
 		expect( typeof handlers[ 'order.dt' ] ).toBe( 'function' );
 		expect( typeof handlers[ 'length.dt' ] ).toBe( 'function' );
 
 		handlers[ 'order.dt' ]();
 
-		expect(
-			JSON.parse( window.localStorage.getItem( PREFERENCE_KEY ) )
-		).toEqual( { order: [ [ 4, 'asc' ] ], length: 200 } );
+		expect( stored() ).toEqual( {
+			my: { order: [ [ 4, 'asc' ] ], length: 200 },
+		} );
+	} );
+
+	test( 'leaves the other views alone when storing', () => {
+		store( { archived: { order: [ [ 3, 'asc' ] ], length: 25 } } );
+
+		const { handlers } = setupTable( '', 'my' );
+		handlers[ 'order.dt' ]();
+
+		expect( stored() ).toEqual( {
+			archived: { order: [ [ 3, 'asc' ] ], length: 25 },
+			my: { order: [ [ 4, 'asc' ] ], length: 200 },
+		} );
+	} );
+
+	test( 'ignores a type that is not one of the task views', () => {
+		const { options, handlers } = setupTable( '', 'bogus' );
+
+		expect( options.order ).toEqual( [ [ 0, 'desc' ] ] );
+
+		handlers[ 'order.dt' ]();
+
+		// A crafted ?type= must not seed a preference of its own.
+		expect( Object.keys( stored() ) ).toEqual( [ 'all' ] );
 	} );
 
 	test.each( [
 		[ 'not JSON at all', 'not json' ],
-		[ 'the wrong shape', JSON.stringify( { order: 'board' } ) ],
-		[ 'an unknown column', JSON.stringify( { order: [ [ 42, 'asc' ] ] } ) ],
-		[ 'an unknown direction', JSON.stringify( { order: [ [ 1, 'up' ] ] } ) ],
-		[ 'a length off the menu', JSON.stringify( { length: 37 } ) ],
-	] )( 'ignores a stored preference with %s', ( _label, stored ) => {
-		window.localStorage.setItem( PREFERENCE_KEY, stored );
+		[ 'the wrong shape', JSON.stringify( { my: 'board' } ) ],
+		[ 'a flat legacy value', JSON.stringify( { order: [ [ 1, 'asc' ] ] } ) ],
+		[
+			'an unknown column',
+			JSON.stringify( { my: { order: [ [ 42, 'asc' ] ] } } ),
+		],
+		[
+			'an unknown direction',
+			JSON.stringify( { my: { order: [ [ 1, 'up' ] ] } } ),
+		],
+		[
+			'a length off the menu',
+			JSON.stringify( { my: { length: 37 } } ),
+		],
+	] )( 'ignores a stored preference with %s', ( _label, value ) => {
+		store( value );
 
-		const { options } = setupTable();
+		const { options } = setupTable( '', 'my' );
 
 		expect( options.order ).toEqual( [ [ 0, 'desc' ] ] );
 		expect( options.pageLength ).toBe( 50 );
 	} );
 
 	test( 'stays usable when storage is blocked', () => {
-		const storage = jest
+		const getter = jest
 			.spyOn( window.localStorage.__proto__, 'getItem' )
 			.mockImplementation( () => {
 				throw new Error( 'blocked' );
@@ -197,29 +275,28 @@ describe( 'task list table preferences', () => {
 				throw new Error( 'blocked' );
 			} );
 
-		const { options, handlers } = setupTable();
+		const { options, handlers } = setupTable( '', 'my' );
 
 		expect( options.order ).toEqual( [ [ 0, 'desc' ] ] );
 		expect( () => handlers[ 'order.dt' ]() ).not.toThrow();
 
-		storage.mockRestore();
+		getter.mockRestore();
 		setter.mockRestore();
 	} );
 
 	test( 'never stores the filters, which stay URL driven', () => {
-		const { handlers } = setupTable();
+		const { handlers } = setupTable( 'ATedu', 'my' );
 
 		handlers[ 'length.dt' ]();
 
-		expect(
-			Object.keys(
-				JSON.parse( window.localStorage.getItem( PREFERENCE_KEY ) )
-			).sort()
-		).toEqual( [ 'length', 'order' ] );
+		expect( Object.keys( stored().my ).sort() ).toEqual( [
+			'length',
+			'order',
+		] );
 	} );
 
 	test( 'still applies the board filter coming from the URL', () => {
-		const { searches } = setupTable( 'ATedu' );
+		const { searches } = setupTable( 'ATedu', 'my' );
 
 		expect( searches ).toEqual( [ { index: 1, value: 'ATedu' } ] );
 	} );

@@ -371,26 +371,52 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 	// Set locale to Spanish
 	// dayjs.locale('es');
 
-	// Keys the task list remembers between page loads. Every quick action here
+	// What the task list remembers between page loads. Every quick action here
 	// (mark for today, archive, clone, save) reloads the page, so the sort the
 	// user picked has to outlive the DataTable instance.
 	const TABLE_PREFERENCES_KEY = 'decker.tasks.tablePreferences';
 	const TABLE_DEFAULT_ORDER = [[0, 'desc']];
 	const TABLE_DEFAULT_LENGTH = 50;
 	const TABLE_LENGTHS = [25, 50, 100, 200, -1];
+	// Preferences are kept per view, not per page: the three task lists share
+	// this table but are different sets of work, and inheriting the sort of
+	// My Tasks in Archived Tasks is more surprising than useful. The board
+	// filter is a filter *within* a view, so it does not scope anything.
+	const TABLE_VIEWS = ['all', 'active', 'my', 'archived'];
 
 	/**
-	 * Read the stored order and page length, ignoring anything this table can no
-	 * longer apply. Stored preferences never expire, so a column that moved or
-	 * disappeared in an update must not break the list.
+	 * Resolve the task view being displayed, the way the page itself does.
+	 * An unknown ?type= falls back to the full list instead of storing a
+	 * preference of its own.
 	 */
-	function readTablePreferences() {
+	function getTableView() {
+		const type = getUrlParam('type');
+		return TABLE_VIEWS.includes(type) ? type : 'all';
+	}
+
+	/**
+	 * Read every stored view preference, or an empty set when unreadable.
+	 */
+	function readAllTablePreferences() {
 		let stored;
 		try {
 			stored = JSON.parse(localStorage.getItem(TABLE_PREFERENCES_KEY));
 		} catch {
 			return {};
 		}
+
+		return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+	}
+
+	/**
+	 * Read the order and page length stored for a view, ignoring anything this
+	 * table can no longer apply. Stored preferences never expire, so a column
+	 * that moved or disappeared in an update must not break the list.
+	 *
+	 * @param {string} view The task view the preferences belong to.
+	 */
+	function readTablePreferences(view) {
+		const stored = readAllTablePreferences()[view];
 
 		if (!stored || typeof stored !== 'object') {
 			return {};
@@ -411,23 +437,31 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 	}
 
 	/**
-	 * Store the current order and page length. Filters are deliberately left out:
-	 * the board filter is driven by the URL and the #boardFilter select, and a
-	 * restored hidden filter would just look like missing tasks.
+	 * Store the current order and page length for a view, leaving the other
+	 * views untouched. Filters are deliberately left out: the board filter is
+	 * driven by the URL and the #boardFilter select, and a restored hidden
+	 * filter would just look like missing tasks.
+	 *
+	 * @param {string} view  The task view the preferences belong to.
+	 * @param {Object} table The DataTables API instance.
 	 */
-	function writeTablePreferences(table) {
+	function writeTablePreferences(view, table) {
+		const preferences = readAllTablePreferences();
+		preferences[view] = {
+			order: table.order(),
+			length: table.page.len(),
+		};
+
 		try {
-			localStorage.setItem(TABLE_PREFERENCES_KEY, JSON.stringify({
-				order: table.order(),
-				length: table.page.len(),
-			}));
+			localStorage.setItem(TABLE_PREFERENCES_KEY, JSON.stringify(preferences));
 		} catch {
 			// The list stays usable when storage is blocked or full.
 		}
 	}
 
 	function setupAllTasksTable(initialBoard) {
-		const preferences = readTablePreferences();
+		const view = getTableView();
+		const preferences = readTablePreferences(view);
 
 		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
 			// Initialize DataTables only if it hasn't been initialized yet
@@ -530,9 +564,9 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 				}
 			});
 
-			// Remember the sort and page size the user picked.
+			// Remember the sort and page size the user picked for this view.
 			tablaElement.on('order.dt length.dt', function () {
-				writeTablePreferences(tablaElement);
+				writeTablePreferences(view, tablaElement);
 			});
 
 			// Filter by board using combobox
