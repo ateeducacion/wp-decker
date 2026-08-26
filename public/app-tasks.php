@@ -371,7 +371,106 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 	// Set locale to Spanish
 	// dayjs.locale('es');
 
+	// What the task list remembers between page loads. Every quick action here
+	// (mark for today, archive, clone, save) reloads the page, so the sort the
+	// user picked has to outlive the DataTable instance.
+	const TABLE_PREFERENCES_KEY = 'decker.tasks.tablePreferences';
+	const TABLE_DEFAULT_ORDER = [[0, 'desc']];
+	const TABLE_DEFAULT_LENGTH = 50;
+	const TABLE_LENGTHS = [25, 50, 100, 200, -1];
+	// Preferences are kept per view, not per page: the three task lists share
+	// this table but are different sets of work, and inheriting the sort of
+	// My Tasks in Archived Tasks is more surprising than useful. The board
+	// filter is a filter *within* a view, so it does not scope anything.
+	// A missing type is the active list -- both load the published tasks, and
+	// the /decker/tasks/ rewrite points there too -- so it is not a view of
+	// its own.
+	const TABLE_DEFAULT_VIEW = 'active';
+	const TABLE_VIEWS = ['active', 'my', 'archived'];
+	// Columns the table refuses to sort by, shared with its columnDefs below so
+	// stored preferences and the table cannot disagree about them.
+	const TABLE_UNORDERABLE_COLUMNS = [4, 7];
+
+	/**
+	 * Resolve the task view being displayed, the way the page itself does.
+	 * A missing or unknown ?type= is the active list, so it never stores a
+	 * preference of its own.
+	 */
+	function getTableView() {
+		const type = getUrlParam('type');
+		return TABLE_VIEWS.includes(type) ? type : TABLE_DEFAULT_VIEW;
+	}
+
+	/**
+	 * Read every stored view preference, or an empty set when unreadable.
+	 */
+	function readAllTablePreferences() {
+		let stored;
+		try {
+			stored = JSON.parse(localStorage.getItem(TABLE_PREFERENCES_KEY));
+		} catch {
+			return {};
+		}
+
+		return stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {};
+	}
+
+	/**
+	 * Read the order and page length stored for a view, ignoring anything this
+	 * table can no longer apply. Stored preferences never expire, so a column
+	 * that disappeared or is no longer orderable must not break the list.
+	 *
+	 * @param {string} view The task view the preferences belong to.
+	 */
+	function readTablePreferences(view) {
+		const stored = readAllTablePreferences()[view];
+
+		if (!stored || typeof stored !== 'object') {
+			return {};
+		}
+
+		const columns = document.querySelectorAll('#tablaTareas thead th').length;
+		const valid = Array.isArray(stored.order) && stored.order.length > 0 &&
+			stored.order.every(function (rule) {
+				return Array.isArray(rule) && Number.isInteger(rule[0]) &&
+					rule[0] >= 0 && rule[0] < columns &&
+					!TABLE_UNORDERABLE_COLUMNS.includes(rule[0]) &&
+					(rule[1] === 'asc' || rule[1] === 'desc');
+			});
+
+		return {
+			order: valid ? stored.order : undefined,
+			length: TABLE_LENGTHS.includes(stored.length) ? stored.length : undefined,
+		};
+	}
+
+	/**
+	 * Store the current order and page length for a view, leaving the other
+	 * views untouched. Filters are deliberately left out: the board filter is
+	 * driven by the URL and the #boardFilter select, and a restored hidden
+	 * filter would just look like missing tasks.
+	 *
+	 * @param {string} view  The task view the preferences belong to.
+	 * @param {Object} table The DataTables API instance.
+	 */
+	function writeTablePreferences(view, table) {
+		const preferences = readAllTablePreferences();
+		preferences[view] = {
+			order: table.order(),
+			length: table.page.len(),
+		};
+
+		try {
+			localStorage.setItem(TABLE_PREFERENCES_KEY, JSON.stringify(preferences));
+		} catch {
+			// The list stays usable when storage is blocked or full.
+		}
+	}
+
 	function setupAllTasksTable(initialBoard) {
+		const view = getTableView();
+		const preferences = readTablePreferences(view);
+
 		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
 			// Initialize DataTables only if it hasn't been initialized yet
 			tablaElement = jQuery('#tablaTareas').DataTable({
@@ -422,7 +521,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 						}
 					},
 					{
-						targets: [4, 7],
+						targets: TABLE_UNORDERABLE_COLUMNS,
 						orderable: false
 					},
 					{
@@ -457,9 +556,9 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 					[25, 50, 100, 200, -1],
 					[25, 50, 100, 200, 'All'],
 				],
-				pageLength: 50,
+				pageLength: preferences.length ?? TABLE_DEFAULT_LENGTH,
 				responsive: true,
-				order: [[0, 'desc']], 
+				order: preferences.order ?? TABLE_DEFAULT_ORDER,
 
 				initComplete: function () {
 					// Move SearchBuilder to the desired location
@@ -471,6 +570,11 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 						tablaElement.column(1).search(initialBoard).draw();
 					}
 				}
+			});
+
+			// Remember the sort and page size the user picked for this view.
+			tablaElement.on('order.dt length.dt', function () {
+				writeTablePreferences(view, tablaElement);
 			});
 
 			// Filter by board using combobox
