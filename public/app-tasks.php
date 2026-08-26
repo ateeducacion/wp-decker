@@ -371,7 +371,64 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 	// Set locale to Spanish
 	// dayjs.locale('es');
 
+	// Keys the task list remembers between page loads. Every quick action here
+	// (mark for today, archive, clone, save) reloads the page, so the sort the
+	// user picked has to outlive the DataTable instance.
+	const TABLE_PREFERENCES_KEY = 'decker.tasks.tablePreferences';
+	const TABLE_DEFAULT_ORDER = [[0, 'desc']];
+	const TABLE_DEFAULT_LENGTH = 50;
+	const TABLE_LENGTHS = [25, 50, 100, 200, -1];
+
+	/**
+	 * Read the stored order and page length, ignoring anything this table can no
+	 * longer apply. Stored preferences never expire, so a column that moved or
+	 * disappeared in an update must not break the list.
+	 */
+	function readTablePreferences() {
+		let stored;
+		try {
+			stored = JSON.parse(localStorage.getItem(TABLE_PREFERENCES_KEY));
+		} catch {
+			return {};
+		}
+
+		if (!stored || typeof stored !== 'object') {
+			return {};
+		}
+
+		const columns = document.querySelectorAll('#tablaTareas thead th').length;
+		const valid = Array.isArray(stored.order) && stored.order.length > 0 &&
+			stored.order.every(function (rule) {
+				return Array.isArray(rule) && Number.isInteger(rule[0]) &&
+					rule[0] >= 0 && rule[0] < columns &&
+					(rule[1] === 'asc' || rule[1] === 'desc');
+			});
+
+		return {
+			order: valid ? stored.order : undefined,
+			length: TABLE_LENGTHS.includes(stored.length) ? stored.length : undefined,
+		};
+	}
+
+	/**
+	 * Store the current order and page length. Filters are deliberately left out:
+	 * the board filter is driven by the URL and the #boardFilter select, and a
+	 * restored hidden filter would just look like missing tasks.
+	 */
+	function writeTablePreferences(table) {
+		try {
+			localStorage.setItem(TABLE_PREFERENCES_KEY, JSON.stringify({
+				order: table.order(),
+				length: table.page.len(),
+			}));
+		} catch {
+			// The list stays usable when storage is blocked or full.
+		}
+	}
+
 	function setupAllTasksTable(initialBoard) {
+		const preferences = readTablePreferences();
+
 		if (!jQuery.fn.DataTable.isDataTable('#tablaTareas')) {
 			// Initialize DataTables only if it hasn't been initialized yet
 			tablaElement = jQuery('#tablaTareas').DataTable({
@@ -457,9 +514,9 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 					[25, 50, 100, 200, -1],
 					[25, 50, 100, 200, 'All'],
 				],
-				pageLength: 50,
+				pageLength: preferences.length ?? TABLE_DEFAULT_LENGTH,
 				responsive: true,
-				order: [[0, 'desc']], 
+				order: preferences.order ?? TABLE_DEFAULT_ORDER,
 
 				initComplete: function () {
 					// Move SearchBuilder to the desired location
@@ -471,6 +528,11 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 						tablaElement.column(1).search(initialBoard).draw();
 					}
 				}
+			});
+
+			// Remember the sort and page size the user picked.
+			tablaElement.on('order.dt length.dt', function () {
+				writeTablePreferences(tablaElement);
 			});
 
 			// Filter by board using combobox
