@@ -242,13 +242,18 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 						   // Get the board slug from the URL.
 				$current_board_slug = isset( $_GET['slug'] ) ? sanitize_title( wp_unslash( $_GET['slug'] ) ) : '';
 
-			$boards            = BoardManager::get_all_boards();
-			$board_task_counts = $task_manager->get_board_task_counts_by_stack(
-				array(
-					'to-do',
-					'in-progress',
+			$boards = BoardManager::get_all_boards();
+
+			// No counts means no badges below, so the query is skipped entirely
+			// when an administrator has turned the indicators off.
+			$board_task_counts = Decker::show_board_status_indicators()
+				? $task_manager->get_board_task_counts_by_stack(
+					array(
+						'to-do',
+						'in-progress',
+					)
 				)
-			);
+				: array();
 
 			foreach ( $boards as $board ) {
 				// Only show boards that have show_in_boards set to true.

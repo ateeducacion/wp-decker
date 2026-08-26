@@ -171,15 +171,6 @@ defined( 'ABSPATH' ) || exit;
 					</div>
 				</div>
 
-				<div id="sidebar-board-status">
-					<div class="d-flex justify-content-between align-items-center mt-3">
-						<label class="fs-16 fw-bold m-0" for="sidebar-board-status-check"><?php esc_html_e( 'Show board status indicators', 'decker' ); ?></label>
-						<div class="form-check form-switch">
-							<input type="checkbox" class="form-check-input" name="sidebar-board-status" id="sidebar-board-status-check" data-decker-persistent>
-						</div>
-					</div>
-				</div>
-
 			</div>
 		</div>
 

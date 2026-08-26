@@ -57,7 +57,7 @@ msgstr ""
 msgid "Show board status indicators"
 msgstr ""
 
-msgid "This preference is saved only in this browser."
+msgid "Shows the to-do and in-progress counts next to every board in the sidebar, for all users of this site."
 msgstr ""
 
 msgid "Enable AI improvements for task descriptions."
@@ -976,9 +976,6 @@ msgstr ""
 msgid "The user is derived from the session and cannot be provided."
 msgstr ""
 
-msgid "This task is archived and cannot be marked for today."
-msgstr ""
-
 msgid "Task added to today."
 msgstr ""
 
@@ -989,6 +986,9 @@ msgid "Task removed from today."
 msgstr ""
 
 msgid "Task is not marked for today."
+msgstr ""
+
+msgid "This task is archived and cannot be marked for today."
 msgstr ""
 
 msgid "No Board"

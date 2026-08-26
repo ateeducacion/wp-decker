@@ -86,12 +86,15 @@ class DeckerAdminTest extends WP_UnitTestCase {
                 // Test with non-matching hook
 		$this->admin->enqueue_scripts( 'wrong_hook' );
 		$this->assertFalse( wp_script_is( 'decker', 'enqueued' ) );
-		$this->assertFalse( wp_script_is( 'decker-sidebar-preferences', 'enqueued' ) );
 
                 // Test with matching hook
 		$this->admin->enqueue_scripts( 'settings_page_decker_settings' );
 		$this->assertTrue( wp_script_is( 'decker', 'enqueued' ) );
-		$this->assertTrue( wp_script_is( 'decker-sidebar-preferences', 'enqueued' ) );
+
+		// The sidebar preferences module drove the browser-local board status
+		// checkbox. That setting is stored site-wide now, and the module only
+		// manages the front-end side navigation, which wp-admin does not have.
+		$this->assertFalse( wp_script_is( 'decker-sidebar-preferences', 'enqueued' ) );
 	}
 
 

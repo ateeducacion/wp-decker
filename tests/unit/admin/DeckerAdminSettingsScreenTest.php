@@ -169,16 +169,15 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The browser-local board status toggle renders without a persisted name.
+	 * The board status toggle submits as part of decker_settings.
 	 *
-	 * It must not submit as part of decker_settings: the preference lives in
-	 * the browser only.
+	 * It is a site-wide setting, not a per-browser preference, so it has to
+	 * travel with the rest of the form.
 	 */
-	public function test_board_status_toggle_is_browser_local() {
+	public function test_board_status_toggle_is_a_stored_setting() {
 		$html = $this->render_screen();
 
-		$this->assertStringContainsString( 'id="sidebar-board-status-check"', $html );
-		$this->assertStringNotContainsString( 'name="decker_settings[sidebar_board_status]"', $html );
+		$this->assertStringContainsString( 'name="decker_settings[sidebar_board_status]"', $html );
 	}
 
 	/**
