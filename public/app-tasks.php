@@ -418,7 +418,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 	/**
 	 * Read the order and page length stored for a view, ignoring anything this
 	 * table can no longer apply. Stored preferences never expire, so a column
-	 * that moved or disappeared in an update must not break the list.
+	 * that disappeared or is no longer orderable must not break the list.
 	 *
 	 * @param {string} view The task view the preferences belong to.
 	 */
