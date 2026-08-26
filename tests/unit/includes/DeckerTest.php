@@ -55,6 +55,32 @@ class DeckerTest extends Decker_Test_Base {
 	/**
 	 * Test current_user_has_at_least_minimum_role.
 	 */
+	/**
+	 * Board status indicators are on until an administrator turns them off.
+	 */
+	public function test_board_status_indicators_are_shown_by_default() {
+		delete_option( 'decker_settings' );
+
+		$this->assertTrue( Decker::show_board_status_indicators() );
+
+		update_option( 'decker_settings', array( 'alert_message' => 'unrelated' ) );
+
+		$this->assertTrue( Decker::show_board_status_indicators() );
+	}
+
+	/**
+	 * The indicators follow the stored site-wide setting, for every user.
+	 */
+	public function test_board_status_indicators_follow_the_stored_setting() {
+		update_option( 'decker_settings', array( 'sidebar_board_status' => '0' ) );
+
+		$this->assertFalse( Decker::show_board_status_indicators() );
+
+		update_option( 'decker_settings', array( 'sidebar_board_status' => '1' ) );
+
+		$this->assertTrue( Decker::show_board_status_indicators() );
+	}
+
 	public function test_current_user_has_at_least_minimum_role() {
                // Configure Decker settings
 		update_option( 'decker_settings', array( 'minimum_user_profile' => 'editor' ) );

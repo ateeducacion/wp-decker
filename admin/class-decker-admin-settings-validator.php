@@ -38,6 +38,9 @@ class Decker_Admin_Settings_Validator {
 		// Validate collaborative editing.
 		$input['collaborative_editing'] = $this->sanitize_checkbox( $input, 'collaborative_editing' );
 
+		// Validate the sidebar board status indicators.
+		$input['sidebar_board_status'] = $this->sanitize_checkbox( $input, 'sidebar_board_status' );
+
 		// Validate AI settings.
 		$input['ai_enabled']  = $this->sanitize_checkbox( $input, 'ai_enabled' );
 		$input['ai_provider'] = Decker_AI_Manager::get_selected_provider( $input );

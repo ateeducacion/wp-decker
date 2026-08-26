@@ -113,14 +113,14 @@ class Decker_Admin_Settings_Fields {
 	/**
 	 * Render Board Status Indicators Field.
 	 *
-	 * Outputs a browser-local preference for the board status indicators.
+	 * Outputs the HTML for the sidebar_board_status field.
 	 */
 	private function sidebar_board_status_render() {
 		echo '<label for="sidebar-board-status-check">';
-		echo '<input type="checkbox" id="sidebar-board-status-check" value="1" checked data-decker-persistent aria-describedby="sidebar-board-status-description"> ';
+		echo '<input type="checkbox" id="sidebar-board-status-check" name="decker_settings[sidebar_board_status]" value="1" ' . checked( Decker::show_board_status_indicators(), true, false ) . ' aria-describedby="sidebar-board-status-description"> ';
 		echo esc_html__( 'Show board status indicators', 'decker' );
 		echo '</label>';
-		echo '<p class="description" id="sidebar-board-status-description">' . esc_html__( 'This preference is saved only in this browser.', 'decker' ) . '</p>';
+		echo '<p class="description" id="sidebar-board-status-description">' . esc_html__( 'Shows the to-do and in-progress counts next to every board in the sidebar, for all users of this site.', 'decker' ) . '</p>';
 	}
 
 	/**

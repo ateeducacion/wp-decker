@@ -23,9 +23,7 @@
 		'use strict';
 
 		const EXPANDED_MENU_KEY = 'decker.sidebar.expandedMenu';
-		const SHOW_BOARD_STATUS_KEY = 'decker.sidebar.showBoardStatus';
 		const SIDEBAR_SIZE_KEY = 'decker.sidebar.size';
-		const HIDE_BOARD_STATUS_CLASS = 'decker-hide-board-status';
 
 		/**
 		 * Read a preference without breaking the interface when storage is unavailable.
@@ -117,51 +115,6 @@
 		}
 
 		/**
-		 * Apply the board status indicator preference.
-		 *
-		 * @param {boolean} showIndicators Whether status indicators should be visible.
-		 */
-		function applyBoardStatusPreference( showIndicators ) {
-			document.documentElement.classList.toggle(
-				HIDE_BOARD_STATUS_CLASS,
-				! showIndicators
-			);
-
-			const toggle = document.getElementById(
-				'sidebar-board-status-check'
-			);
-			if ( toggle ) {
-				toggle.checked = showIndicators;
-			}
-		}
-
-		/**
-		 * Restore and observe the board status indicator preference.
-		 */
-		function initializeBoardStatusPreference() {
-			const toggle = document.getElementById(
-				'sidebar-board-status-check'
-			);
-			const showIndicators =
-				readPreference( SHOW_BOARD_STATUS_KEY ) !== 'false';
-
-			applyBoardStatusPreference( showIndicators );
-
-			if ( ! toggle || toggle.dataset.deckerPreferenceBound === 'true' ) {
-				return;
-			}
-
-			toggle.dataset.deckerPreferenceBound = 'true';
-			toggle.addEventListener( 'change', function () {
-				writePreference(
-					SHOW_BOARD_STATUS_KEY,
-					toggle.checked ? 'true' : 'false'
-				);
-				applyBoardStatusPreference( toggle.checked );
-			} );
-		}
-
-		/**
 		 * Restore and observe the desktop sidebar size controlled by the menu button.
 		 */
 		function initializeSidebarSize() {
@@ -203,13 +156,11 @@
 			}
 
 			initializeExpandedMenu();
-			initializeBoardStatusPreference();
 			initializeSidebarSize();
 		}
 
 		return {
 			EXPANDED_MENU_KEY,
-			SHOW_BOARD_STATUS_KEY,
 			SIDEBAR_SIZE_KEY,
 			init,
 		};

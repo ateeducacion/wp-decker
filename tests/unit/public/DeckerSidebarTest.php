@@ -8,23 +8,24 @@
 class DeckerSidebarTest extends Decker_Test_Base {
 
 	/**
-	 * Test the theme customizer renders the board status preference.
+	 * Test the theme customizer no longer offers a per-browser board status toggle.
+	 *
+	 * The indicators are a site-wide setting now, so the appearance panel, which
+	 * every user can reach, must not pretend otherwise.
 	 */
-	public function test_right_sidebar_renders_board_status_preference() {
+	public function test_right_sidebar_does_not_offer_a_board_status_toggle() {
 		ob_start();
 		include plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/right-sidebar.php';
 		$output = ob_get_clean();
 
-		$this->assertStringContainsString( 'id="sidebar-board-status-check"', $output );
-		$this->assertStringContainsString( 'name="sidebar-board-status"', $output );
-		$this->assertStringContainsString( 'data-decker-persistent', $output );
-		$this->assertStringContainsString( 'Show board status indicators', $output );
+		$this->assertStringNotContainsString( 'sidebar-board-status', $output );
+		$this->assertStringNotContainsString( 'Show board status indicators', $output );
 	}
 
 	/**
-	 * Test board badges render only non-zero to-do and in-progress counts.
+	 * Seed two boards, one with a to-do and an in-progress task and one without.
 	 */
-	public function test_left_sidebar_renders_board_status_badges() {
+	private function seed_boards_with_counts() {
 		do_action( 'init' );
 
 		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
@@ -72,14 +73,30 @@ class DeckerSidebarTest extends Decker_Test_Base {
 		$_GET['decker_page'] = 'board';
 		$_GET['slug']        = $board_with_counts->slug;
 		set_query_var( 'decker_page', 'board' );
+	}
 
+	/**
+	 * Render the left sidebar.
+	 *
+	 * @return string The sidebar markup.
+	 */
+	private function render_left_sidebar() {
 		ob_start();
 		// Use include (not include_once): another test may have already loaded the
 		// template in this process, which would make include_once a no-op and yield
 		// empty output. The function declarations are function_exists-guarded, so
 		// re-including only re-renders the markup.
 		include plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/left-sidebar.php';
-		$output = ob_get_clean();
+		return ob_get_clean();
+	}
+
+	/**
+	 * Test board badges render only non-zero to-do and in-progress counts.
+	 */
+	public function test_left_sidebar_renders_board_status_badges() {
+		$this->seed_boards_with_counts();
+
+		$output = $this->render_left_sidebar();
 
 		$this->assertStringContainsString(
 			'decker-sidebar-board-link',
@@ -138,5 +155,20 @@ class DeckerSidebarTest extends Decker_Test_Base {
 			'/<span class="decker-sidebar-board-title">Empty Board<\/span>(?:(?!<\/a>).)*decker-sidebar-board-badges/s',
 			$output
 		);
+	}
+
+	/**
+	 * Test the site-wide setting hides the badges for every user.
+	 */
+	public function test_left_sidebar_hides_board_status_badges_when_disabled() {
+		$this->seed_boards_with_counts();
+		update_option( 'decker_settings', array( 'sidebar_board_status' => '0' ) );
+
+		$output = $this->render_left_sidebar();
+
+		$this->assertStringNotContainsString( 'decker-sidebar-board-badges', $output );
+		// The boards themselves stay listed.
+		$this->assertStringContainsString( 'Infrastructure and Development', $output );
+		$this->assertStringContainsString( 'Empty Board', $output );
 	}
 }

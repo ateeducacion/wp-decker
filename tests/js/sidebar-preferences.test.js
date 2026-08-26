@@ -36,7 +36,6 @@ function renderSidebar( expandedMenu = '' ) {
 				</div>
 			</li>
 		</ul>
-		<input type="checkbox" id="sidebar-board-status-check" name="sidebar-board-status">
 	`;
 }
 
@@ -102,35 +101,18 @@ describe( 'sidebar preferences', () => {
 		).toHaveLength( 0 );
 	} );
 
-	test( 'persists the board status indicator visibility', () => {
+	test( 'does not touch the board status indicators, a site-wide setting', () => {
 		preferences.init();
-		const toggle = document.getElementById( 'sidebar-board-status-check' );
 
-		expect( toggle.checked ).toBe( true );
-
-		toggle.checked = false;
-		toggle.dispatchEvent( new Event( 'change', { bubbles: true } ) );
-
-		expect(
-			window.localStorage.getItem( preferences.SHOW_BOARD_STATUS_KEY )
-		).toBe( 'false' );
+		expect( preferences.SHOW_BOARD_STATUS_KEY ).toBeUndefined();
+		expect( Object.keys( window.localStorage ) ).not.toContain(
+			'decker.sidebar.showBoardStatus'
+		);
 		expect(
 			document.documentElement.classList.contains(
 				'decker-hide-board-status'
 			)
-		).toBe( true );
-
-		renderSidebar();
-		preferences.init();
-
-		expect(
-			document.getElementById( 'sidebar-board-status-check' ).checked
 		).toBe( false );
-		expect(
-			document.documentElement.classList.contains(
-				'decker-hide-board-status'
-			)
-		).toBe( true );
 	} );
 
 	test( 'stores and restores the desktop sidebar size changed by the menu button', () => {

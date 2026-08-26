@@ -26,17 +26,52 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the board status preference is rendered as browser-local UI.
+	 * Render the board status field.
+	 *
+	 * @return string The field markup.
 	 */
-	public function test_sidebar_board_status_render_is_browser_local() {
+	private function render_board_status_field() {
 		ob_start();
 		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'sidebar_board_status' ) );
-		$output = ob_get_clean();
+		return ob_get_clean();
+	}
 
-		$this->assertStringContainsString( 'id="sidebar-board-status-check"', $output );
-		$this->assertStringContainsString( 'data-decker-persistent', $output );
-		$this->assertStringNotContainsString( 'name="decker_settings', $output );
-		$this->assertStringContainsString( 'saved only in this browser', $output );
+	/**
+	 * Test the board status preference is a stored, site-wide setting.
+	 */
+	public function test_sidebar_board_status_render_is_a_stored_setting() {
+		delete_option( 'decker_settings' );
+
+		$output = $this->render_board_status_field();
+
+		$this->assertStringContainsString( 'name="decker_settings[sidebar_board_status]"', $output );
+		// On by default, so an install that never saved the settings keeps its
+		// indicators.
+		$this->assertStringContainsString( "checked='checked'", $output );
+		$this->assertStringNotContainsString( 'saved only in this browser', $output );
+		$this->assertStringNotContainsString( 'data-decker-persistent', $output );
+	}
+
+	/**
+	 * Test the board status field reflects the stored value.
+	 */
+	public function test_sidebar_board_status_render_reflects_a_disabled_setting() {
+		update_option( 'decker_settings', array( 'sidebar_board_status' => '0' ) );
+
+		$this->assertStringNotContainsString( "checked='checked'", $this->render_board_status_field() );
+	}
+
+	/**
+	 * Test the board status checkbox is validated like the other checkboxes.
+	 */
+	public function test_settings_validate_stores_the_board_status_checkbox() {
+		$validated = $this->admin_settings->settings_validate( array( 'sidebar_board_status' => '1' ) );
+
+		$this->assertSame( '1', $validated['sidebar_board_status'] );
+
+		$validated = $this->admin_settings->settings_validate( array() );
+
+		$this->assertSame( '0', $validated['sidebar_board_status'] );
 	}
 
 	/**
@@ -651,6 +686,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 				'shared_key',
 				'allow_email_notifications',
 				'collaborative_editing',
+				'sidebar_board_status',
 				'ai_enabled',
 				'ai_provider',
 				'ai_api_key',
