@@ -97,7 +97,7 @@ function setupTable( initialBoard = '', type = '' ) {
 			} );
 			return table;
 		},
-		order: () => [ [ 4, 'asc' ] ],
+		order: () => [ [ 3, 'asc' ] ],
 		page: { len: () => 200 },
 	};
 
@@ -186,13 +186,22 @@ describe( 'task list table preferences', () => {
 		expect( options.pageLength ).toBe( 50 );
 	} );
 
-	test( 'treats the task list with no type as its own view', () => {
-		store( { all: { order: [ [ 6, 'desc' ] ], length: 200 } } );
+	test( 'treats the task list with no type as active', () => {
+		// The untyped list and Active Tasks load the same published tasks, so
+		// they are one logical view and share one preference.
+		store( { active: { order: [ [ 6, 'desc' ] ], length: 200 } } );
 
 		const { options } = setupTable();
 
 		expect( options.order ).toEqual( [ [ 6, 'desc' ] ] );
 		expect( options.pageLength ).toBe( 200 );
+	} );
+
+	test( 'stores an untyped visit under the active view', () => {
+		const { handlers } = setupTable();
+		handlers[ 'order.dt' ]();
+
+		expect( Object.keys( stored() ) ).toEqual( [ 'active' ] );
 	} );
 
 	test( 'keeps the defaults when nothing was stored yet', () => {
@@ -211,7 +220,7 @@ describe( 'task list table preferences', () => {
 		handlers[ 'order.dt' ]();
 
 		expect( stored() ).toEqual( {
-			my: { order: [ [ 4, 'asc' ] ], length: 200 },
+			my: { order: [ [ 3, 'asc' ] ], length: 200 },
 		} );
 	} );
 
@@ -223,7 +232,7 @@ describe( 'task list table preferences', () => {
 
 		expect( stored() ).toEqual( {
 			archived: { order: [ [ 3, 'asc' ] ], length: 25 },
-			my: { order: [ [ 4, 'asc' ] ], length: 200 },
+			my: { order: [ [ 3, 'asc' ] ], length: 200 },
 		} );
 	} );
 
@@ -235,7 +244,7 @@ describe( 'task list table preferences', () => {
 		handlers[ 'order.dt' ]();
 
 		// A crafted ?type= must not seed a preference of its own.
-		expect( Object.keys( stored() ) ).toEqual( [ 'all' ] );
+		expect( Object.keys( stored() ) ).toEqual( [ 'active' ] );
 	} );
 
 	test.each( [
@@ -249,6 +258,16 @@ describe( 'task list table preferences', () => {
 		[
 			'an unknown direction',
 			JSON.stringify( { my: { order: [ [ 1, 'up' ] ] } } ),
+		],
+		[
+			'a column the table does not sort',
+			JSON.stringify( { my: { order: [ [ 4, 'asc' ] ] } } ),
+		],
+		[
+			'a column the table does not sort, second in the order',
+			JSON.stringify( {
+				my: { order: [ [ 1, 'asc' ], [ 7, 'desc' ] ] },
+			} ),
 		],
 		[
 			'a length off the menu',
@@ -293,6 +312,15 @@ describe( 'task list table preferences', () => {
 			'length',
 			'order',
 		] );
+	} );
+
+	test( 'sorts by no column the table marks as unorderable', () => {
+		const { options } = setupTable( '', 'my' );
+		const unorderable = options.columnDefs.find(
+			( definition ) => definition.orderable === false
+		).targets;
+
+		expect( unorderable ).toEqual( [ 4, 7 ] );
 	} );
 
 	test( 'still applies the board filter coming from the URL', () => {

@@ -382,16 +382,23 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 	// this table but are different sets of work, and inheriting the sort of
 	// My Tasks in Archived Tasks is more surprising than useful. The board
 	// filter is a filter *within* a view, so it does not scope anything.
-	const TABLE_VIEWS = ['all', 'active', 'my', 'archived'];
+	// A missing type is the active list -- both load the published tasks, and
+	// the /decker/tasks/ rewrite points there too -- so it is not a view of
+	// its own.
+	const TABLE_DEFAULT_VIEW = 'active';
+	const TABLE_VIEWS = ['active', 'my', 'archived'];
+	// Columns the table refuses to sort by, shared with its columnDefs below so
+	// stored preferences and the table cannot disagree about them.
+	const TABLE_UNORDERABLE_COLUMNS = [4, 7];
 
 	/**
 	 * Resolve the task view being displayed, the way the page itself does.
-	 * An unknown ?type= falls back to the full list instead of storing a
+	 * A missing or unknown ?type= is the active list, so it never stores a
 	 * preference of its own.
 	 */
 	function getTableView() {
 		const type = getUrlParam('type');
-		return TABLE_VIEWS.includes(type) ? type : 'all';
+		return TABLE_VIEWS.includes(type) ? type : TABLE_DEFAULT_VIEW;
 	}
 
 	/**
@@ -427,6 +434,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 			stored.order.every(function (rule) {
 				return Array.isArray(rule) && Number.isInteger(rule[0]) &&
 					rule[0] >= 0 && rule[0] < columns &&
+					!TABLE_UNORDERABLE_COLUMNS.includes(rule[0]) &&
 					(rule[1] === 'asc' || rule[1] === 'desc');
 			});
 
@@ -513,7 +521,7 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 						}
 					},
 					{
-						targets: [4, 7],
+						targets: TABLE_UNORDERABLE_COLUMNS,
 						orderable: false
 					},
 					{
