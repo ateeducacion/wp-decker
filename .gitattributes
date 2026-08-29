@@ -33,7 +33,6 @@ admin/vendor/** -text
 # archive in the first place.
 /.agents        export-ignore
 /.claude        export-ignore
-/.grok          export-ignore
 /.github        export-ignore
 /.gitattributes export-ignore
 /docs           export-ignore
