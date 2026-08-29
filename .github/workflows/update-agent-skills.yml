@@ -1,0 +1,37 @@
+---
+name: Update Agent Skills
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - id: update
+        uses: devantler-tech/actions/update-agent-skills@v13.2.3
+        with:
+          dir: .agents/skills
+
+      - name: Open pull request
+        if: steps.update.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: 'chore(deps): update agent skills'
+          title: 'chore(deps): update agent skills'
+          body: |
+            ```text
+            ${{ steps.update.outputs.updated-skills }}
+            ```
+          branch: deps/agent-skills-update
