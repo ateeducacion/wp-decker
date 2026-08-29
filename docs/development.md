@@ -38,13 +38,13 @@ See `AGENTS.md` and `CONVENTIONS.md` for detailed agent and project conventions.
 ## Agent skills
 
 Skills are folders of instructions an AI coding agent loads on demand. They live
-under `.agents/skills/` (Copilot, Codex, Cursor), `.claude/skills/` (Claude Code)
-and `.grok/skills/` (Grok Build). Install and refresh them with the GitHub CLI:
+under `.agents/skills/` (Copilot, Codex, Cursor) and `.claude/skills/`
+(Claude Code). Grok Build reads Claude Code skills automatically. Install and
+refresh them with the GitHub CLI:
 
 ```bash
 gh skill add WordPress/agent-skills wp-performance --agent github-copilot
 gh skill add WordPress/agent-skills wp-performance --agent claude-code
-gh skill add WordPress/agent-skills wp-performance --agent grok
 gh skill update --all
 ```
 
@@ -72,8 +72,8 @@ The WordPress ones come from [`WordPress/agent-skills`](https://github.com/WordP
 All of them are vendored verbatim. Do not reformat or patch them locally —
 `gh skill update` is how they stay current.
 
-Nothing under `.agents/`, `.claude/`, `.grok/`, `AGENTS.md` or `CLAUDE.md`
-reaches the release ZIP; `.gitattributes` marks it `export-ignore`.
+Nothing under `.agents/`, `.claude/`, `AGENTS.md` or `CLAUDE.md` reaches the
+release ZIP; `.gitattributes` marks it `export-ignore`.
 
 ## Available hooks
 

@@ -86,7 +86,10 @@ Recurring procedures live as skills under:
 
 - `.agents/skills/` — GitHub Copilot, Codex, Cursor and the other agents that share this path
 - `.claude/skills/` — Claude Code
-- `.grok/skills/` — Grok Build (the documented project path is `./.grok/skills/`, walked up to the repo root; see [Skills, Plugins & Marketplaces](https://docs.x.ai/build/features/skills-plugins-marketplaces))
+
+Grok Build does not need a third copy under `.grok/skills/`: it automatically
+reads Claude Code skills alongside `.grok/`
+([Skills, Plugins & Marketplaces](https://docs.x.ai/build/features/skills-plugins-marketplaces)).
 
 Install and refresh them with the GitHub CLI (`gh skill add` is an alias of
 `gh skill install`). Repeat for each host directory you care about:
@@ -94,7 +97,6 @@ Install and refresh them with the GitHub CLI (`gh skill add` is an alias of
 ```bash
 gh skill add WordPress/agent-skills wp-performance --agent github-copilot
 gh skill add WordPress/agent-skills wp-performance --agent claude-code
-gh skill add WordPress/agent-skills wp-performance --agent grok
 gh skill update --all
 ```
 
