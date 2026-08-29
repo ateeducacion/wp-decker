@@ -140,12 +140,16 @@ _n( 'singular', 'plural', $count, 'decker' )
 ## Agent skills
 
 This repository ships skills in `.agents/skills/`, which Copilot loads on demand.
-Consult the relevant one before working in its area:
+They are installed with `gh skill add` (see `AGENTS.md`). Consult the relevant
+one before working in its area:
 
 - `wp-plugin-development` — hooks, activation/uninstall, Settings API, options, cron, packaging
 - `wp-rest-api` — `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest`
 - `wp-plugin-directory-guidelines` — `readme.txt`, license headers, naming; what `make check-plugin` enforces
 - `blueprint` — `blueprint.json` and the Playground preview
+- `wp-performance` — backend profiling (WP-CLI profile/doctor, autoload, object cache, cron, HTTP API)
+- `wp-project-triage` — inspect what kind of WordPress repo this is before changing tooling
+- `wp-plugin-security` — input, output, AJAX/REST, capabilities, files
 - `security-audit` — vulnerability hunting and finding validation
 
 They are vendored verbatim from upstream: never reformat or edit them in place.

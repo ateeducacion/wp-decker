@@ -27,6 +27,7 @@
 # Agent instructions and vendored skills
 /.agents
 /.claude
+/.grok
 /.superpowers
 /AGENTS.md
 /CLAUDE.md
