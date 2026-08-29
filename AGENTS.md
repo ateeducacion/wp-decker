@@ -82,11 +82,40 @@ Do not treat “tests passed” as enough for a push: PHPUnit does not catch mis
 
 ## Skills
 
-Recurring procedures live as skills in `.agents/skills/`, the path GitHub
-Copilot, Codex and other agents read directly. Claude Code reads
-`.claude/skills/`, which contains **symlinks** to those same directories, not
-copies. When adding a skill, create it in `.agents/skills/` and link it from
-`.claude/skills/`; never duplicate a `SKILL.md`.
+Recurring procedures live as skills under:
+
+- `.agents/skills/` — GitHub Copilot, Codex, Cursor and the other agents that share this path
+- `.claude/skills/` — Claude Code
+
+Grok Build does not need a third copy under `.grok/skills/`: it automatically
+reads Claude Code skills alongside `.grok/`
+([Skills, Plugins & Marketplaces](https://docs.x.ai/build/features/skills-plugins-marketplaces)).
+
+Install and refresh them with the GitHub CLI (`gh skill add` is an alias of
+`gh skill install`). Repeat for each host directory you care about:
+
+```bash
+gh skill add WordPress/agent-skills wp-performance --agent github-copilot
+gh skill add WordPress/agent-skills wp-performance --agent claude-code
+gh skill update --all
+```
+
+`gh skill` copies the skill into each host directory and injects source
+metadata into the `SKILL.md` frontmatter so later updates work. Older Claude
+Code entries remain as **symlinks** into `.agents/skills/`; newer ones are
+copies. Do not convert one layout into the other by hand, and never duplicate
+a skill by copying `SKILL.md` yourself.
+
+### Skill compatibility
+
+Project compatibility requirements always take precedence over generic skill
+recommendations. This plugin supports WordPress 6.1+, while some vendored
+WordPress agent skills target WordPress 7.0+.
+
+Do not introduce APIs or behavior that require a newer WordPress version unless
+the project minimum version is intentionally being raised in the same change.
+When following a skill, verify that every suggested WordPress API is available
+in the plugin's supported version range.
 
 | Skill | Read it before | Origin |
 | --- | --- | --- |
@@ -94,15 +123,17 @@ copies. When adding a skill, create it in `.agents/skills/` and link it from
 | `wp-rest-api` | Adding or debugging routes: `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest` (the `Decker_Tasks_Rest_*` classes) | idem |
 | `wp-plugin-directory-guidelines` | Editing `readme.txt`, license headers or plugin naming — this is what `make check-plugin` enforces | idem |
 | `blueprint` | Editing `blueprint.json` or the Playground preview | idem |
+| `wp-performance` | Profiling or improving backend performance (WP-CLI profile/doctor, autoload, object cache, cron, HTTP API) | idem |
+| `wp-project-triage` | Inspecting what kind of WordPress repo this is before changing tooling or layout | idem |
+| `wp-plugin-security` | Writing or reviewing code that handles input, output, AJAX/REST, capabilities or files | [`fernandotellado/ai-skills`](https://github.com/fernandotellado/ai-skills), GPL-2.0-or-later |
 | `security-audit` | Hunting vulnerabilities and validating findings | [`cloudflare/security-audit-skill`](https://github.com/cloudflare/security-audit-skill) |
 
 All of them are **third party and vendored verbatim**. Do not reformat or edit
-them: diverging from upstream makes future updates harder. Fix the problem
-upstream and re-vendor instead.
+them: diverging from upstream makes `gh skill update` harder. Fix the problem
+upstream and re-install instead.
 
-`skills-lock.json` records provenance for skills fetched with a skills
-installer; `security-audit` is the only one so far. The `WordPress/agent-skills`
-set was vendored by hand and is therefore not listed there.
+Provenance lives in each `SKILL.md` frontmatter (`metadata.github-repo`,
+`github-path`, `github-tree-sha`).
 
 Skills, `AGENTS.md` and `CLAUDE.md` are excluded from the release ZIP via
 `.gitattributes`.

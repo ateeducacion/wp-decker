@@ -1,9 +1,13 @@
 ---
-name: blueprint
+compatibility: WordPress 7.0+, PHP 7.4.0+. Optionally Playground CLI or a browser
 description: Use when the deliverable is WordPress Playground Blueprint JSON or a Blueprint bundle, including creating, editing, reviewing, validating schema keys, choosing steps/resources, and debugging Blueprint files. For only running or sharing a Playground environment, use wp-playground.
-compatibility: "WordPress 7.0+, PHP 7.4.0+. Optionally Playground CLI or a browser"
+metadata:
+    github-path: skills/blueprint
+    github-ref: refs/heads/trunk
+    github-repo: https://github.com/WordPress/agent-skills
+    github-tree-sha: 0e64f8bc9f5b3ab7b4e71c9eca3f8ed74b50fe7c
+name: blueprint
 ---
-
 # WordPress Playground Blueprints
 
 ## Overview

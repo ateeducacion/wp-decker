@@ -70,6 +70,6 @@ Project conventions for agents live in [`AGENTS.md`](AGENTS.md), which
 point at so every assistant reads the same rules.
 
 Reusable procedures ship as [agent skills](docs/development.md#agent-skills) in
-`.agents/skills/` (symlinked from `.claude/skills/`), covering plugin
-development, the REST API, the WordPress.org directory guidelines, Playground
-blueprints and security auditing. None of it is included in the release ZIP.
+`.agents/skills/` and `.claude/skills/`, installed with `gh skill add`. They cover plugin development, the REST API, WordPress.org
+directory guidelines, Playground blueprints, performance, project triage,
+plugin security and security auditing. None of it is included in the release ZIP.

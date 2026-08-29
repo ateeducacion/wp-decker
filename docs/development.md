@@ -38,9 +38,19 @@ See `AGENTS.md` and `CONVENTIONS.md` for detailed agent and project conventions.
 ## Agent skills
 
 Skills are folders of instructions an AI coding agent loads on demand. They live
-in `.agents/skills/` — the path GitHub Copilot, Codex and others read directly —
-and `.claude/skills/` holds symlinks to the same folders for Claude Code. There
-is one copy of every `SKILL.md`, never two.
+under `.agents/skills/` (Copilot, Codex, Cursor) and `.claude/skills/`
+(Claude Code). Grok Build reads Claude Code skills automatically. Install and
+refresh them with the GitHub CLI:
+
+```bash
+gh skill add WordPress/agent-skills wp-performance --agent github-copilot
+gh skill add WordPress/agent-skills wp-performance --agent claude-code
+gh skill update --all
+```
+
+`gh skill add` is an alias of `gh skill install`. Each host gets its own copy;
+older Claude Code entries remain as symlinks into `.agents/skills/`. Do not
+convert one layout into the other by hand.
 
 | Skill | Read it before |
 |-------|----------------|
@@ -48,19 +58,19 @@ is one copy of every `SKILL.md`, never two.
 | `wp-rest-api` | Adding or debugging routes: `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest` |
 | `wp-plugin-directory-guidelines` | Editing `readme.txt`, license headers or plugin naming — what `make check-plugin` enforces |
 | `blueprint` | Editing `blueprint.json` or the Playground preview |
+| `wp-performance` | Profiling or improving backend performance |
+| `wp-project-triage` | Inspecting what kind of WordPress repo this is before changing tooling |
+| `wp-plugin-security` | Writing or reviewing code that handles input, output, AJAX/REST, capabilities or files |
 | `security-audit` | Hunting vulnerabilities and validating findings |
 
-The first four come from [`WordPress/agent-skills`](https://github.com/WordPress/agent-skills)
-(GPL-2.0-or-later); `security-audit` from
+The WordPress ones come from [`WordPress/agent-skills`](https://github.com/WordPress/agent-skills)
+(GPL-2.0-or-later); `wp-plugin-security` from
+[`fernandotellado/ai-skills`](https://github.com/fernandotellado/ai-skills);
+`security-audit` from
 [`cloudflare/security-audit-skill`](https://github.com/cloudflare/security-audit-skill).
 
 All of them are vendored verbatim. Do not reformat or patch them locally —
-diverging from upstream makes re-vendoring painful. To add one, drop it in
-`.agents/skills/<name>/` and symlink it:
-
-```bash
-ln -s ../../.agents/skills/<name> .claude/skills/<name>
-```
+`gh skill update` is how they stay current.
 
 Nothing under `.agents/`, `.claude/`, `AGENTS.md` or `CLAUDE.md` reaches the
 release ZIP; `.gitattributes` marks it `export-ignore`.

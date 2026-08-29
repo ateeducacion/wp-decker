@@ -30,7 +30,6 @@
 /.superpowers
 /AGENTS.md
 /CLAUDE.md
-/skills-lock.json
 
 # Development tooling and configuration
 /.editorconfig

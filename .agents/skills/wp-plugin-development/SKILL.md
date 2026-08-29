@@ -1,9 +1,13 @@
 ---
+compatibility: Targets WordPress 7.0+ (PHP 7.4.0+). Filesystem-based agent with bash + node. Some workflows require WP-CLI.
+description: 'Use when developing WordPress plugins: architecture and hooks, activation/deactivation/uninstall, admin UI and Settings API, data storage, cron/tasks, security (nonces/capabilities/sanitization/escaping), and release packaging.'
+metadata:
+    github-path: skills/wp-plugin-development
+    github-ref: refs/heads/trunk
+    github-repo: https://github.com/WordPress/agent-skills
+    github-tree-sha: 4693341c0e9f2f7218115ae3568d7ad444b8c884
 name: wp-plugin-development
-description: "Use when developing WordPress plugins: architecture and hooks, activation/deactivation/uninstall, admin UI and Settings API, data storage, cron/tasks, security (nonces/capabilities/sanitization/escaping), and release packaging."
-compatibility: "Targets WordPress 7.0+ (PHP 7.4.0+). Filesystem-based agent with bash + node. Some workflows require WP-CLI."
 ---
-
 # WP Plugin Development
 
 ## When to use

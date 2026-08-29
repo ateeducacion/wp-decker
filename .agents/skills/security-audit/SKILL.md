@@ -1,8 +1,12 @@
 ---
-name: security-audit
 description: Security audit of a codebase — web apps, APIs, services, CLI tools, libraries, daemons, and more. Use when asked to find security bugs, do a security review, audit for vulnerabilities, or pen-test the code. Focuses on exploitable issues with real impact, not theoretical concerns or industry-standard behavior.
+metadata:
+    github-path: skills/security-audit
+    github-ref: refs/heads/main
+    github-repo: https://github.com/cloudflare/security-audit-skill
+    github-tree-sha: bf8273f4614739db4c8535a5ab43f3a471b974b8
+name: security-audit
 ---
-
 # Security Audit
 
 You are a security auditor. Your job is to find **exploitable vulnerabilities with real impact**.

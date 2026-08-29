@@ -1,9 +1,13 @@
 ---
+compatibility: Targets WordPress 7.0+ (PHP 7.4.0+).
+description: Use when reviewing WordPress plugins for GPL compliance, checking license headers or compatibility, evaluating upsell/freemium/trialware patterns, validating plugin naming or trademark rules, checking plugin slugs, understanding why a plugin was rejected from WordPress.org, or answering any question about the 18 WordPress.org Plugin Directory guidelines — even if the user doesn't mention 'guidelines' explicitly.
+metadata:
+    github-path: skills/wp-plugin-directory-guidelines
+    github-ref: refs/heads/trunk
+    github-repo: https://github.com/WordPress/agent-skills
+    github-tree-sha: 19d785d6ba82c0100e2cc793af64ec3a8c9538e6
 name: wp-plugin-directory-guidelines
-description: "Use when reviewing WordPress plugins for GPL compliance, checking license headers or compatibility, evaluating upsell/freemium/trialware patterns, validating plugin naming or trademark rules, checking plugin slugs, understanding why a plugin was rejected from WordPress.org, or answering any question about the 18 WordPress.org Plugin Directory guidelines — even if the user doesn't mention 'guidelines' explicitly."
-compatibility: "Targets WordPress 7.0+ (PHP 7.4.0+)."
 ---
-
 ## Overview
 
 Authoritative reference for the 18 WordPress.org Plugin Directory guidelines. Covers GPL licensing, plugin naming/trademark rules, trialware restrictions, and all other submission requirements.
