@@ -9,9 +9,9 @@ add it there.
 `CONVENTIONS.md` holds the longer-form style guide, and
 `.github/copilot-instructions.md` mirrors the same rules for GitHub Copilot.
 
-Skills live in `.agents/skills/` and `.claude/skills/` (Grok Build reads
-`.agents/skills/` too). They are third-party and installed with `gh skill add`:
-read them, do not reformat them. Consult the relevant one before touching hooks or admin UI
+Skills live in `.agents/skills/`, `.claude/skills/` and `.grok/skills/`. They
+are third-party and installed with `gh skill add`: read them, do not reformat
+them. Consult the relevant one before touching hooks or admin UI
 (`wp-plugin-development`), the REST API (`wp-rest-api`), the WordPress.org
 `readme.txt` (`wp-plugin-directory-guidelines`), `blueprint.json` (`blueprint`),
 performance work (`wp-performance`), a repo inventory (`wp-project-triage`) or
