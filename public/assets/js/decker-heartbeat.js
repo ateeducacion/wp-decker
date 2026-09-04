@@ -77,31 +77,41 @@ console.log('loading decker-heartbeat.js');
     window.deckerServerAvailable = true;
 
     /**
-     * Returns the localized server response error message.
+     * Returns a localized Decker UI string.
      *
-     * @return {string} Localized warning message or an empty string.
+     * @param {string} key String key from deckerVars.strings.
+     * @return {string} Localized string or an empty string.
      */
-    function getServerWarningMessage() {
+    function getDeckerString(key) {
         if (
             typeof deckerVars === 'undefined'
             || !deckerVars.strings
-            || !deckerVars.strings.server_response_error
+            || !deckerVars.strings[key]
         ) {
             return '';
         }
 
-        return deckerVars.strings.server_response_error;
+        return deckerVars.strings[key];
     }
 
     /**
-     * Shows a non-blocking warning when WordPress Heartbeat cannot reach the server.
+     * Shows a persistent warning when WordPress Heartbeat cannot reach the server.
      */
     function showServerUnavailableWarning() {
-        var closeButton;
-        var message = getServerWarningMessage();
+        var content;
+        var icon;
+        var message;
+        var spinner;
+        var title;
+        var unsavedChanges;
         var warning;
 
-        if (document.getElementById(serverWarningId) || !message) {
+        if (document.getElementById(serverWarningId)) {
+            return;
+        }
+
+        message = getDeckerString('server_response_error');
+        if (!message) {
             return;
         }
 
@@ -110,35 +120,57 @@ console.log('loading decker-heartbeat.js');
         warning.classList.add(
             'alert',
             'alert-danger',
-            'alert-dismissible',
-            'fade',
-            'show',
+            'd-flex',
+            'align-items-start',
+            'gap-3',
             'position-fixed',
             'top-0',
             'start-50',
             'translate-middle-x',
             'mt-3',
-            'shadow-sm'
+            'shadow'
         );
         warning.setAttribute('role', 'alert');
         warning.setAttribute('aria-live', 'assertive');
         warning.style.zIndex = '1100';
-        warning.appendChild(document.createTextNode(message));
+        warning.style.width = 'min(90vw, 720px)';
 
-        closeButton = document.createElement('button');
-        closeButton.type = 'button';
-        closeButton.classList.add('btn-close');
-        closeButton.setAttribute('data-bs-dismiss', 'alert');
+        icon = document.createElement('i');
+        icon.classList.add('ri-server-line', 'fs-3', 'flex-shrink-0');
+        icon.setAttribute('aria-hidden', 'true');
+
+        content = document.createElement('div');
+        content.classList.add('flex-grow-1');
+
+        title = document.createElement('strong');
+        title.classList.add('d-block', 'mb-1');
+        title.textContent = 'Decker';
+
+        content.appendChild(title);
+        content.appendChild(document.createTextNode(message));
 
         if (
-            typeof deckerVars !== 'undefined'
-            && deckerVars.strings
-            && deckerVars.strings.cancel
+            window.deckerHasUnsavedChanges === true
+            && getDeckerString('unsaved_changes_title')
         ) {
-            closeButton.setAttribute('aria-label', deckerVars.strings.cancel);
+            unsavedChanges = document.createElement('div');
+            unsavedChanges.classList.add('fw-semibold', 'mt-1');
+            unsavedChanges.textContent = getDeckerString('unsaved_changes_title');
+            content.appendChild(unsavedChanges);
         }
 
-        warning.appendChild(closeButton);
+        spinner = document.createElement('span');
+        spinner.classList.add(
+            'spinner-border',
+            'spinner-border-sm',
+            'flex-shrink-0',
+            'mt-1'
+        );
+        spinner.setAttribute('aria-hidden', 'true');
+
+        warning.appendChild(icon);
+        warning.appendChild(content);
+        warning.appendChild(spinner);
         document.body.appendChild(warning);
     }
 
@@ -154,15 +186,44 @@ console.log('loading decker-heartbeat.js');
     }
 
     /**
+     * Shows a short confirmation after Heartbeat restores the connection.
+     */
+    function showServerRestoredToast() {
+        var success = getDeckerString('success');
+
+        if (typeof Swal === 'undefined' || !success) {
+            return;
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Decker',
+            text: success,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true
+        });
+    }
+
+    /**
      * Updates the shared server availability state and corresponding UI.
      *
      * @param {boolean} isAvailable Whether Heartbeat can currently reach WordPress.
      */
     function setServerAvailability(isAvailable) {
+        var wasUnavailable = window.deckerServerAvailable === false;
+
         window.deckerServerAvailable = isAvailable;
 
         if (isAvailable) {
             hideServerUnavailableWarning();
+
+            if (wasUnavailable) {
+                showServerRestoredToast();
+            }
+
             return;
         }
 
