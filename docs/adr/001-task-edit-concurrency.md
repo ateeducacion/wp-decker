@@ -6,16 +6,16 @@
 
 ## Context
 
-Decker is an internal Kanban board for one team (~17 concurrent users, same
-organisation, no hostile actors, no external API consumers). The observed
-incident class: a user leaves a task form open, another user takes over
-editing and saves, and the first user's stale form later silently overwrites
-the newer content. Infrequent, but real. `decker_task` supports WordPress
-revisions. Recovery is partial by design: revisions capture the standard
-WordPress fields (title, description) but **not** post meta or taxonomy terms
-(assignees, labels, board, stack, due date). A clobbered meta field is
-restored by hand by whoever is editing the card — in every residual scenario
-below, that person is actively looking at it.
+Decker is an internal Kanban board for one team in a low-usage deployment,
+with no hostile actors or external API consumers. The observed incident class:
+a user leaves a task form open, another user takes over editing and saves, and
+the first user's stale form later silently overwrites the newer content.
+Infrequent, but real. `decker_task` supports WordPress revisions. Recovery is
+partial by design: revisions capture the standard WordPress fields (title,
+description) but **not** post meta or taxonomy terms (assignees, labels, board,
+stack, due date). A clobbered meta field is restored by hand by whoever is
+editing the card — in every residual scenario below, that person is actively
+looking at it.
 
 WordPress core provides **advisory** locking only: `wp_set_post_lock()` /
 `wp_check_post_lock()` write and read `_edit_lock` with plain meta writes,
@@ -75,16 +75,16 @@ Mechanism (state: one meta key `_decker_edit_lock_state` =
 Serialising concurrent writes (leases, CAS, write-time re-checks) is **out of
 scope**: the requirement is "no user's edits are silently overwritten by a
 stale form", where "stale" means minutes-to-hours old — human timescales.
-Sub-second interleavings are not stale forms. At 17 users we judge them
-*very unlikely* — they need two people writing the same card within the same
-request — and partially recoverable. These are qualitative judgements from
-the team's observed usage, not measured rates; we have no instrumentation for
-concurrent writes. Treat the column below as an ordering of plausibility, not
-as frequencies.
+Sub-second interleavings are not stale forms. For the current low-usage
+scenario we judge them *very unlikely* — they need two people writing the same
+card within the same request — and partially recoverable. These are qualitative
+judgements from the team's observed usage, not measured rates; we have no
+instrumentation for concurrent writes. Treat the column below as an ordering
+of plausibility, not as frequencies.
 
 ## Accepted residual risks
 
-| # | Residual race | Window | Plausibility @ 17 users (qualitative) | Consequence | Recovery |
+| # | Residual race | Window | Plausibility (qualitative) | Consequence | Recovery |
 |---|---|---|---|---|---|
 | 1 | Takeover lands between a save's token validation and its `wp_update_post()` | ~tens of ms, requires a takeover in that exact window | very unlikely | The pre-takeover save commits; the taker starts from it or overwrites it | Revisions (title/desc); meta fixed by the taker, who is looking at the card |
 | 2 | Two saves presenting the **same** valid token commit concurrently (double-submit, two same-user tabs racing) | ~request duration | unlikely (client disables Save while submitting) | Last write wins between the same user's own sessions | Revisions (title/desc); meta re-entered by the same user |
@@ -122,4 +122,4 @@ accept it; but "revisions recover it" is not true of a whole task.
   tested at the unit, integration, REST, JS and E2E levels.
 - Future reviewers: before proposing serialisation mechanisms for the
   sub-second windows above, re-read the frequency × recoverability table and
-  argue with its numbers, not with the theoretical existence of the race.
+  argue with its assumptions, not with the theoretical existence of the race.
