@@ -1,4 +1,4 @@
-/* global jQuery, heartbeat, Swal */
+/* global jQuery, heartbeat, Swal, DeckerData, deckerVars */
 /* eslint-disable */
 
 /**
@@ -72,6 +72,102 @@ console.log('loading decker-heartbeat.js');
 
     var notificationReadStateKey = 'decker_notification_read_'
         + (DeckerData.userId || 0);
+    var serverWarningId = 'decker-server-unavailable-warning';
+
+    window.deckerServerAvailable = true;
+
+    /**
+     * Returns the localized server response error message.
+     *
+     * @return {string} Localized warning message or an empty string.
+     */
+    function getServerWarningMessage() {
+        if (
+            typeof deckerVars === 'undefined'
+            || !deckerVars.strings
+            || !deckerVars.strings.server_response_error
+        ) {
+            return '';
+        }
+
+        return deckerVars.strings.server_response_error;
+    }
+
+    /**
+     * Shows a non-blocking warning when WordPress Heartbeat cannot reach the server.
+     */
+    function showServerUnavailableWarning() {
+        var closeButton;
+        var message = getServerWarningMessage();
+        var warning;
+
+        if (document.getElementById(serverWarningId) || !message) {
+            return;
+        }
+
+        warning = document.createElement('div');
+        warning.id = serverWarningId;
+        warning.classList.add(
+            'alert',
+            'alert-danger',
+            'alert-dismissible',
+            'fade',
+            'show',
+            'position-fixed',
+            'top-0',
+            'start-50',
+            'translate-middle-x',
+            'mt-3',
+            'shadow-sm'
+        );
+        warning.setAttribute('role', 'alert');
+        warning.setAttribute('aria-live', 'assertive');
+        warning.style.zIndex = '1100';
+        warning.appendChild(document.createTextNode(message));
+
+        closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.classList.add('btn-close');
+        closeButton.setAttribute('data-bs-dismiss', 'alert');
+
+        if (
+            typeof deckerVars !== 'undefined'
+            && deckerVars.strings
+            && deckerVars.strings.cancel
+        ) {
+            closeButton.setAttribute('aria-label', deckerVars.strings.cancel);
+        }
+
+        warning.appendChild(closeButton);
+        document.body.appendChild(warning);
+    }
+
+    /**
+     * Removes the server availability warning if it is visible.
+     */
+    function hideServerUnavailableWarning() {
+        var warning = document.getElementById(serverWarningId);
+
+        if (warning) {
+            warning.remove();
+        }
+    }
+
+    /**
+     * Updates the shared server availability state and corresponding UI.
+     *
+     * @param {boolean} isAvailable Whether Heartbeat can currently reach WordPress.
+     */
+    function setServerAvailability(isAvailable) {
+        window.deckerServerAvailable = isAvailable;
+
+        if (isAvailable) {
+            hideServerUnavailableWarning();
+            return;
+        }
+
+        showServerUnavailableWarning();
+    }
 
     function getStoredReadNotifications() {
         var parsedNotifications;
@@ -436,6 +532,21 @@ console.log('loading decker-heartbeat.js');
             clearAllNotifications();
         });
     }
+
+    /**
+     * Mark WordPress as unavailable after Heartbeat declares the connection lost.
+     */
+    $(document).on('heartbeat-connection-lost', function(event, error, status) {
+        console.warn('Heartbeat connection lost:', error, status);
+        setServerAvailability(false);
+    });
+
+    /**
+     * Clear the warning as soon as Heartbeat confirms that WordPress responds again.
+     */
+    $(document).on('heartbeat-connection-restored', function() {
+        setServerAvailability(true);
+    });
 
     // Send data to the server on each heartbeat:
     $(document).on('heartbeat-send', function(e, data) {
