@@ -220,6 +220,7 @@ class Decker_Public_Assets {
 			plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js',
 
 			plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js',
+			plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-session-expiry.js',
 
 			// Add global search script.
 			plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js',
