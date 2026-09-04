@@ -341,6 +341,7 @@ class Decker_Public_Assets {
 			'error_uploading_attachment'    => __( 'Error uploading attachment.', 'decker' ),
 			'delete'                        => __( 'Delete', 'decker' ),
 			'server_response_error'         => __( 'Server response error.', 'decker' ),
+			'session_expired_message'       => __( 'Your session has expired. Please reload the page and try again.', 'decker' ),
 			'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
 			'request_error'                 => __( 'Request error.', 'decker' ),
 			'error_saving_task'             => __( 'Error saving task.', 'decker' ),
