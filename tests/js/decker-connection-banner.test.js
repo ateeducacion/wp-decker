@@ -1,8 +1,9 @@
 /**
  * Unit tests for the connection banner in decker-heartbeat.js.
  *
- * The real setConnectionState is extracted from the source file and executed
- * with mocked collaborators, so behavior (not a copy) is tested.
+ * The real setConnectionState and renderConnectionState are extracted from the
+ * source file and executed with mocked collaborators, so behavior (not a copy)
+ * is tested.
  *
  * @package Decker
  */
@@ -155,5 +156,49 @@ describe( 'decker-heartbeat connection banner', () => {
 
 		expect( banner() ).toBeNull();
 		expect( showConnectionRestoredToast ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'decker-heartbeat connection state priority', () => {
+	/**
+	 * Render with a given combination of problems and report what it asked for.
+	 *
+	 * @param {Object} problems Flags: offline, serverDown, sessionExpired.
+	 * @return {string} The state handed to setConnectionState.
+	 */
+	function render( problems ) {
+		const setConnectionState = jest.fn();
+		compile( 'renderConnectionState', {
+			navigator: { onLine: ! problems.offline },
+			serverDown: !! problems.serverDown,
+			sessionExpired: !! problems.sessionExpired,
+			setConnectionState,
+		} )();
+
+		return setConnectionState.mock.calls[ 0 ][ 0 ];
+	}
+
+	test( 'no problem renders no banner', () => {
+		expect( render( {} ) ).toBe( '' );
+	} );
+
+	test( 'a missing network outranks everything else', () => {
+		expect(
+			render( { offline: true, serverDown: true, sessionExpired: true } )
+		).toBe( 'offline' );
+	} );
+
+	test( 'an unreachable server outranks an expired session', () => {
+		expect( render( { serverDown: true, sessionExpired: true } ) ).toBe(
+			'server'
+		);
+	} );
+
+	test( 'the network coming back does not hide a server that is still down', () => {
+		expect( render( { serverDown: true } ) ).toBe( 'server' );
+	} );
+
+	test( 'the network coming back does not hide a session that is still expired', () => {
+		expect( render( { sessionExpired: true } ) ).toBe( 'session' );
 	} );
 } );

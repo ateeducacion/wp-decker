@@ -73,6 +73,8 @@ console.log('loading decker-heartbeat.js');
     var notificationReadStateKey = 'decker_notification_read_'
         + (DeckerData.userId || 0);
     var CONNECTION_BANNER_ID = 'decker-connection-banner';
+    var serverDown = false;
+    var sessionExpired = false;
 
     /**
      * Returns a localized Decker UI string.
@@ -169,23 +171,42 @@ console.log('loading decker-heartbeat.js');
         document.body.appendChild(banner);
     }
 
-    // The browser knows it has no network before any request is attempted.
-    $(window).on('offline', function() {
-        setConnectionState('offline');
-    });
+    /**
+     * Renders the worst problem currently known, or clears the banner.
+     *
+     * Each signal owns its own flag and every handler re-renders from all of
+     * them, so recovering from one problem cannot hide another one that is
+     * still true. Being offline outranks an unreachable server, which outranks
+     * an expired session: there is no point offering a log-in link to a browser
+     * that cannot reach the network. Whether the browser has a network is not
+     * tracked here, because the browser already tracks it.
+     */
+    function renderConnectionState() {
+        setConnectionState(
+            false === navigator.onLine ? 'offline'
+                : serverDown ? 'server'
+                    : sessionExpired ? 'session' : ''
+        );
+    }
 
-    $(window).on('online', function() {
-        setConnectionState('');
-    });
+    // The browser knows it has no network before any request is attempted.
+    $(window).on('offline', renderConnectionState);
+    $(window).on('online', renderConnectionState);
 
     // Heartbeat already retried and gave up, so this is the server, not a blip.
     $(document).on('heartbeat-connection-lost', function(event, error, status) {
         console.warn('Heartbeat connection lost:', error, status);
-        setConnectionState(false === navigator.onLine ? 'offline' : 'server');
+        serverDown = true;
+        renderConnectionState();
     });
 
+    // Deliberately does not render: core triggers this from the same
+    // clearErrorState() call that is about to trigger heartbeat-tick for this
+    // very response, and that tick renders knowing whether the session survived
+    // the outage. Rendering here would announce "connection restored" a
+    // microsecond before the session banner appeared.
     $(document).on('heartbeat-connection-restored', function() {
-        setConnectionState('');
+        serverDown = false;
     });
 
     function getStoredReadNotifications() {
@@ -571,11 +592,8 @@ console.log('loading decker-heartbeat.js');
         // WordPress reports this on every tick, logged in or not: wp_auth_check()
         // is filtered onto both heartbeat_send and heartbeat_nopriv_send. A lost
         // session therefore looks like a normal, successful response.
-        if (false === data['wp-auth-check']) {
-            setConnectionState('session');
-        } else if (true === data['wp-auth-check']) {
-            setConnectionState('');
-        }
+        sessionExpired = false === data['wp-auth-check'];
+        renderConnectionState();
 
         if (data.decker_notifications && Array.isArray(data.decker_notifications)) {
 

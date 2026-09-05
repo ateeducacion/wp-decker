@@ -31,9 +31,10 @@ gone the request falls through to the no-privilege handler and still reports
 `false`. Loading the `wp-auth-check` script is not required, and is not done —
 its admin-styled overlay would look foreign on a Decker page.
 
-`navigator.onLine` is consulted only to label a Heartbeat failure that happens
-while the browser reports no network. It is never used as the sole signal: it is
-a link-layer check, so it says nothing about whether WordPress is reachable.
+`navigator.onLine` is read live rather than tracked: the browser already keeps
+that state, and a copy of it can only go stale. It is never treated as proof
+that WordPress is reachable — it is a link-layer check — only as the most urgent
+problem to report when it is false.
 
 `heartbeat-nonces-expired` is deliberately **not** handled. It fires only while
 the user is still logged in with a nonce that no longer verifies, and core heals
@@ -41,6 +42,16 @@ that case by itself on the same tick — `wp_refresh_heartbeat_nonces()` returns
 fresh Heartbeat and REST nonces, which `heartbeat.js` writes back into
 `wpApiSettings`. Reacting to it would show a warning that clears itself on the
 next tick.
+
+Each signal owns an independent flag and every handler re-renders from all of
+them, worst problem first: offline, then unreachable server, then expired
+session. Storing a single current state instead would let one subsystem's
+recovery hide another subsystem's still-unsolved problem — coming back online
+would clear an expired-session warning that is still true. `heartbeat-connection-restored`
+is the one handler that deliberately does not render: core triggers it from the
+same `clearErrorState()` call that is about to trigger `heartbeat-tick` for that
+same response, and that tick renders knowing whether the session survived the
+outage.
 
 All three states share **one** banner, because from the user's point of view they
 say the same thing: your changes cannot be saved right now. They differ in
@@ -56,11 +67,13 @@ reading the board while the server is down.
 
 ## Consequences
 
-Detection follows Heartbeat semantics: transient request failures are retried by
-WordPress before Decker says anything, and the banner appears one Heartbeat
-interval (15 s by default) after the failure at worst. That interval is a fit for
-a low-usage deployment; a busier one should raise it, which trades detection
-latency for request load.
+Detection follows WordPress Heartbeat's own retry semantics and may take several
+Heartbeat intervals, depending on the failure. `setErrorState()` reports a lost
+connection immediately on a timeout (30 s) or a `503`, but for any other error it
+waits for the third consecutive failure. An expired session, by contrast, is
+visible on the first tick that carries it. The default 15-second interval is a
+fit for a low-usage deployment; a busier one should raise it, which trades
+detection latency for request load.
 
 Because there is no additional polling, the cost of this feature is zero extra
 requests per tab — a user with several Decker tabs open pays nothing beyond the
