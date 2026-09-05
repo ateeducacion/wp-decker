@@ -1,4 +1,4 @@
-/* global jQuery, heartbeat, Swal */
+/* global jQuery, heartbeat, Swal, DeckerData, deckerVars */
 /* eslint-disable */
 
 /**
@@ -72,6 +72,142 @@ console.log('loading decker-heartbeat.js');
 
     var notificationReadStateKey = 'decker_notification_read_'
         + (DeckerData.userId || 0);
+    var CONNECTION_BANNER_ID = 'decker-connection-banner';
+    var serverDown = false;
+    var sessionExpired = false;
+
+    /**
+     * Returns a localized Decker UI string.
+     *
+     * @param {string} key String key from deckerVars.strings.
+     * @return {string} Localized string, or an empty string when missing.
+     */
+    function deckerString(key) {
+        return (typeof deckerVars !== 'undefined'
+            && deckerVars.strings
+            && deckerVars.strings[key]) || '';
+    }
+
+    /**
+     * Confirms recovery with the toast style already used elsewhere in Decker.
+     */
+    function showConnectionRestoredToast() {
+        if (typeof Swal === 'undefined' || !deckerString('connection_restored')) {
+            return;
+        }
+
+        Swal.fire({
+            icon: 'success',
+            text: deckerString('connection_restored'),
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true
+        });
+    }
+
+    /**
+     * Shows, replaces or clears the connection banner.
+     *
+     * An offline browser, an unreachable server and an expired session all mean
+     * "your changes cannot be saved right now", so they share a single banner and
+     * differ only in wording, colour and whether a log-in link is offered. The
+     * current state lives in the element itself, so calling this repeatedly with
+     * the same state is a no-op.
+     *
+     * @param {string} state 'offline', 'server', 'session', or '' when all is well.
+     */
+    function setConnectionState(state) {
+        var banner = document.getElementById(CONNECTION_BANNER_ID);
+        var previous = banner ? banner.getAttribute('data-state') : '';
+        var link;
+        var variant;
+
+        if (state === previous) {
+            return;
+        }
+
+        if (banner) {
+            banner.remove();
+        }
+
+        if (!state) {
+            // Logging back in is not a connection problem; do not claim it was.
+            if ('session' !== previous) {
+                showConnectionRestoredToast();
+            }
+
+            return;
+        }
+
+        variant = {
+            offline: { css: 'alert-warning', icon: 'ri-wifi-off-line', text: 'connection_offline' },
+            server: { css: 'alert-danger', icon: 'ri-server-line', text: 'connection_lost' },
+            session: { css: 'alert-danger', icon: 'ri-shield-user-line', text: 'session_expired_message' }
+        }[state];
+
+        banner = document.createElement('div');
+        banner.id = CONNECTION_BANNER_ID;
+        banner.setAttribute('data-state', state);
+        banner.setAttribute('role', 'alert');
+        banner.className = 'alert ' + variant.css
+            + ' d-flex align-items-center gap-2 position-fixed top-0 start-50'
+            + ' translate-middle-x mt-3 shadow';
+        banner.style.zIndex = '1080';
+        banner.innerHTML = '<i class="' + variant.icon + ' fs-4" aria-hidden="true"></i><span></span>';
+        banner.querySelector('span').textContent = deckerString(variant.text);
+
+        if ('session' === state && typeof deckerVars !== 'undefined' && deckerVars.login_url) {
+            link = document.createElement('a');
+            link.className = 'alert-link text-nowrap';
+            link.href = deckerVars.login_url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = deckerString('log_in_again');
+            banner.appendChild(link);
+        }
+
+        document.body.appendChild(banner);
+    }
+
+    /**
+     * Renders the worst problem currently known, or clears the banner.
+     *
+     * Each signal owns its own flag and every handler re-renders from all of
+     * them, so recovering from one problem cannot hide another one that is
+     * still true. Being offline outranks an unreachable server, which outranks
+     * an expired session: there is no point offering a log-in link to a browser
+     * that cannot reach the network. Whether the browser has a network is not
+     * tracked here, because the browser already tracks it.
+     */
+    function renderConnectionState() {
+        setConnectionState(
+            false === navigator.onLine ? 'offline'
+                : serverDown ? 'server'
+                    : sessionExpired ? 'session' : ''
+        );
+    }
+
+    // The browser knows it has no network before any request is attempted.
+    $(window).on('offline', renderConnectionState);
+    $(window).on('online', renderConnectionState);
+
+    // Heartbeat already retried and gave up, so this is the server, not a blip.
+    $(document).on('heartbeat-connection-lost', function(event, error, status) {
+        console.warn('Heartbeat connection lost:', error, status);
+        serverDown = true;
+        renderConnectionState();
+    });
+
+    // Deliberately does not render: core triggers this from the same
+    // clearErrorState() call that is about to trigger heartbeat-tick for this
+    // very response, and that tick renders knowing whether the session survived
+    // the outage. Rendering here would announce "connection restored" a
+    // microsecond before the session banner appeared.
+    $(document).on('heartbeat-connection-restored', function() {
+        serverDown = false;
+    });
 
     function getStoredReadNotifications() {
         var parsedNotifications;
@@ -452,6 +588,12 @@ console.log('loading decker-heartbeat.js');
     $(document).on('heartbeat-tick', function(event, data) {
 
         console.log('Heartbeat data received:', data); // Full debug
+
+        // WordPress reports this on every tick, logged in or not: wp_auth_check()
+        // is filtered onto both heartbeat_send and heartbeat_nopriv_send. A lost
+        // session therefore looks like a normal, successful response.
+        sessionExpired = false === data['wp-auth-check'];
+        renderConnectionState();
 
         if (data.decker_notifications && Array.isArray(data.decker_notifications)) {
 

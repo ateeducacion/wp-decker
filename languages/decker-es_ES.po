@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-08-26T08:59:16+00:00\n"
+"PO-Revision-Date: 2026-09-05T07:15:57+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1539,6 +1539,21 @@ msgstr "Error al subir el archivo adjunto."
 
 msgid "Server response error."
 msgstr "Error en la respuesta del servidor."
+
+msgid "No internet connection. Your changes cannot be saved right now."
+msgstr "Sin conexión a internet. Ahora mismo no se pueden guardar los cambios."
+
+msgid "The server is not responding. Your changes cannot be saved right now."
+msgstr "El servidor no responde. Ahora mismo no se pueden guardar los cambios."
+
+msgid "Connection restored."
+msgstr "Conexión restablecida."
+
+msgid "Your session has expired. Log in again to keep working."
+msgstr "Tu sesión ha caducado. Inicia sesión de nuevo para seguir trabajando."
+
+msgid "Log in again"
+msgstr "Iniciar sesión de nuevo"
 
 msgid "An error occurred while saving the task."
 msgstr "Ocurrió un error al guardar la tarea."

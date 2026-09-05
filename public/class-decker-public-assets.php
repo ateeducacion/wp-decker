@@ -302,6 +302,7 @@ class Decker_Public_Assets {
 		return array(
 			'ajax_url'               => admin_url( 'admin-ajax.php' ),
 			'home_url'               => home_url( '/' ),
+			'login_url'              => wp_login_url( home_url( '/' ) ),
 			'nonces'                 => array(
 				'task_comment_nonce'      => wp_create_nonce( 'task_comment_nonce' ),
 				'wp_rest_nonce'           => wp_create_nonce( 'wp_rest' ),
@@ -341,6 +342,12 @@ class Decker_Public_Assets {
 			'error_uploading_attachment'    => __( 'Error uploading attachment.', 'decker' ),
 			'delete'                        => __( 'Delete', 'decker' ),
 			'server_response_error'         => __( 'Server response error.', 'decker' ),
+			// Connection banner strings.
+			'connection_offline'            => __( 'No internet connection. Your changes cannot be saved right now.', 'decker' ),
+			'connection_lost'               => __( 'The server is not responding. Your changes cannot be saved right now.', 'decker' ),
+			'connection_restored'           => __( 'Connection restored.', 'decker' ),
+			'session_expired_message'       => __( 'Your session has expired. Log in again to keep working.', 'decker' ),
+			'log_in_again'                  => __( 'Log in again', 'decker' ),
 			'an_error_occurred_saving_task' => __( 'An error occurred while saving the task.', 'decker' ),
 			'request_error'                 => __( 'Request error.', 'decker' ),
 			'error_saving_task'             => __( 'Error saving task.', 'decker' ),
