@@ -1507,6 +1507,21 @@ msgstr ""
 msgid "Server response error."
 msgstr ""
 
+msgid "No internet connection. Your changes cannot be saved right now."
+msgstr ""
+
+msgid "The server is not responding. Your changes cannot be saved right now."
+msgstr ""
+
+msgid "Connection restored."
+msgstr ""
+
+msgid "Your session has expired. Log in again to keep working."
+msgstr ""
+
+msgid "Log in again"
+msgstr ""
+
 msgid "An error occurred while saving the task."
 msgstr ""
 

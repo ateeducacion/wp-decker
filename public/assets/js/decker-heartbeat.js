@@ -72,133 +72,31 @@ console.log('loading decker-heartbeat.js');
 
     var notificationReadStateKey = 'decker_notification_read_'
         + (DeckerData.userId || 0);
-    var serverWarningId = 'decker-server-unavailable-warning';
-
-    window.deckerServerAvailable = true;
+    var CONNECTION_BANNER_ID = 'decker-connection-banner';
 
     /**
      * Returns a localized Decker UI string.
      *
      * @param {string} key String key from deckerVars.strings.
-     * @return {string} Localized string or an empty string.
+     * @return {string} Localized string, or an empty string when missing.
      */
-    function getDeckerString(key) {
-        if (
-            typeof deckerVars === 'undefined'
-            || !deckerVars.strings
-            || !deckerVars.strings[key]
-        ) {
-            return '';
-        }
-
-        return deckerVars.strings[key];
+    function deckerString(key) {
+        return (typeof deckerVars !== 'undefined'
+            && deckerVars.strings
+            && deckerVars.strings[key]) || '';
     }
 
     /**
-     * Shows a persistent warning when WordPress Heartbeat cannot reach the server.
+     * Confirms recovery with the toast style already used elsewhere in Decker.
      */
-    function showServerUnavailableWarning() {
-        var content;
-        var icon;
-        var message;
-        var spinner;
-        var title;
-        var unsavedChanges;
-        var warning;
-
-        if (document.getElementById(serverWarningId)) {
-            return;
-        }
-
-        message = getDeckerString('server_response_error');
-        if (!message) {
-            return;
-        }
-
-        warning = document.createElement('div');
-        warning.id = serverWarningId;
-        warning.classList.add(
-            'alert',
-            'alert-danger',
-            'd-flex',
-            'align-items-start',
-            'gap-3',
-            'position-fixed',
-            'top-0',
-            'start-50',
-            'translate-middle-x',
-            'mt-3',
-            'shadow'
-        );
-        warning.setAttribute('role', 'alert');
-        warning.setAttribute('aria-live', 'assertive');
-        warning.style.zIndex = '1100';
-        warning.style.width = 'min(90vw, 720px)';
-
-        icon = document.createElement('i');
-        icon.classList.add('ri-server-line', 'fs-3', 'flex-shrink-0');
-        icon.setAttribute('aria-hidden', 'true');
-
-        content = document.createElement('div');
-        content.classList.add('flex-grow-1');
-
-        title = document.createElement('strong');
-        title.classList.add('d-block', 'mb-1');
-        title.textContent = 'Decker';
-
-        content.appendChild(title);
-        content.appendChild(document.createTextNode(message));
-
-        if (
-            window.deckerHasUnsavedChanges === true
-            && getDeckerString('unsaved_changes_title')
-        ) {
-            unsavedChanges = document.createElement('div');
-            unsavedChanges.classList.add('fw-semibold', 'mt-1');
-            unsavedChanges.textContent = getDeckerString('unsaved_changes_title');
-            content.appendChild(unsavedChanges);
-        }
-
-        spinner = document.createElement('span');
-        spinner.classList.add(
-            'spinner-border',
-            'spinner-border-sm',
-            'flex-shrink-0',
-            'mt-1'
-        );
-        spinner.setAttribute('aria-hidden', 'true');
-
-        warning.appendChild(icon);
-        warning.appendChild(content);
-        warning.appendChild(spinner);
-        document.body.appendChild(warning);
-    }
-
-    /**
-     * Removes the server availability warning if it is visible.
-     */
-    function hideServerUnavailableWarning() {
-        var warning = document.getElementById(serverWarningId);
-
-        if (warning) {
-            warning.remove();
-        }
-    }
-
-    /**
-     * Shows a short confirmation after Heartbeat restores the connection.
-     */
-    function showServerRestoredToast() {
-        var success = getDeckerString('success');
-
-        if (typeof Swal === 'undefined' || !success) {
+    function showConnectionRestoredToast() {
+        if (typeof Swal === 'undefined' || !deckerString('connection_restored')) {
             return;
         }
 
         Swal.fire({
             icon: 'success',
-            title: 'Decker',
-            text: success,
+            text: deckerString('connection_restored'),
             toast: true,
             position: 'top-end',
             showConfirmButton: false,
@@ -208,27 +106,87 @@ console.log('loading decker-heartbeat.js');
     }
 
     /**
-     * Updates the shared server availability state and corresponding UI.
+     * Shows, replaces or clears the connection banner.
      *
-     * @param {boolean} isAvailable Whether Heartbeat can currently reach WordPress.
+     * An offline browser, an unreachable server and an expired session all mean
+     * "your changes cannot be saved right now", so they share a single banner and
+     * differ only in wording, colour and whether a log-in link is offered. The
+     * current state lives in the element itself, so calling this repeatedly with
+     * the same state is a no-op.
+     *
+     * @param {string} state 'offline', 'server', 'session', or '' when all is well.
      */
-    function setServerAvailability(isAvailable) {
-        var wasUnavailable = window.deckerServerAvailable === false;
+    function setConnectionState(state) {
+        var banner = document.getElementById(CONNECTION_BANNER_ID);
+        var previous = banner ? banner.getAttribute('data-state') : '';
+        var link;
+        var variant;
 
-        window.deckerServerAvailable = isAvailable;
+        if (state === previous) {
+            return;
+        }
 
-        if (isAvailable) {
-            hideServerUnavailableWarning();
+        if (banner) {
+            banner.remove();
+        }
 
-            if (wasUnavailable) {
-                showServerRestoredToast();
+        if (!state) {
+            // Logging back in is not a connection problem; do not claim it was.
+            if ('session' !== previous) {
+                showConnectionRestoredToast();
             }
 
             return;
         }
 
-        showServerUnavailableWarning();
+        variant = {
+            offline: { css: 'alert-warning', icon: 'ri-wifi-off-line', text: 'connection_offline' },
+            server: { css: 'alert-danger', icon: 'ri-server-line', text: 'connection_lost' },
+            session: { css: 'alert-danger', icon: 'ri-shield-user-line', text: 'session_expired_message' }
+        }[state];
+
+        banner = document.createElement('div');
+        banner.id = CONNECTION_BANNER_ID;
+        banner.setAttribute('data-state', state);
+        banner.setAttribute('role', 'alert');
+        banner.className = 'alert ' + variant.css
+            + ' d-flex align-items-center gap-2 position-fixed top-0 start-50'
+            + ' translate-middle-x mt-3 shadow';
+        banner.style.zIndex = '1080';
+        banner.innerHTML = '<i class="' + variant.icon + ' fs-4" aria-hidden="true"></i><span></span>';
+        banner.querySelector('span').textContent = deckerString(variant.text);
+
+        if ('session' === state && typeof deckerVars !== 'undefined' && deckerVars.login_url) {
+            link = document.createElement('a');
+            link.className = 'alert-link text-nowrap';
+            link.href = deckerVars.login_url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = deckerString('log_in_again');
+            banner.appendChild(link);
+        }
+
+        document.body.appendChild(banner);
     }
+
+    // The browser knows it has no network before any request is attempted.
+    $(window).on('offline', function() {
+        setConnectionState('offline');
+    });
+
+    $(window).on('online', function() {
+        setConnectionState('');
+    });
+
+    // Heartbeat already retried and gave up, so this is the server, not a blip.
+    $(document).on('heartbeat-connection-lost', function(event, error, status) {
+        console.warn('Heartbeat connection lost:', error, status);
+        setConnectionState(false === navigator.onLine ? 'offline' : 'server');
+    });
+
+    $(document).on('heartbeat-connection-restored', function() {
+        setConnectionState('');
+    });
 
     function getStoredReadNotifications() {
         var parsedNotifications;
@@ -594,21 +552,6 @@ console.log('loading decker-heartbeat.js');
         });
     }
 
-    /**
-     * Mark WordPress as unavailable after Heartbeat declares the connection lost.
-     */
-    $(document).on('heartbeat-connection-lost', function(event, error, status) {
-        console.warn('Heartbeat connection lost:', error, status);
-        setServerAvailability(false);
-    });
-
-    /**
-     * Clear the warning as soon as Heartbeat confirms that WordPress responds again.
-     */
-    $(document).on('heartbeat-connection-restored', function() {
-        setServerAvailability(true);
-    });
-
     // Send data to the server on each heartbeat:
     $(document).on('heartbeat-send', function(e, data) {
         data.decker_custom_data = {
@@ -624,6 +567,15 @@ console.log('loading decker-heartbeat.js');
     $(document).on('heartbeat-tick', function(event, data) {
 
         console.log('Heartbeat data received:', data); // Full debug
+
+        // WordPress reports this on every tick, logged in or not: wp_auth_check()
+        // is filtered onto both heartbeat_send and heartbeat_nopriv_send. A lost
+        // session therefore looks like a normal, successful response.
+        if (false === data['wp-auth-check']) {
+            setConnectionState('session');
+        } else if (true === data['wp-auth-check']) {
+            setConnectionState('');
+        }
 
         if (data.decker_notifications && Array.isArray(data.decker_notifications)) {
 
