@@ -20,7 +20,7 @@ jobs:
           ref: main
 
       - id: update
-        uses: devantler-tech/actions/update-agent-skills@v13.2.3
+        uses: devantler-tech/actions/update-agent-skills@v13.3.0
         with:
           dir: .agents/skills
 
