@@ -88,4 +88,4 @@ may not trigger CI; do not assume green checks will appear automatically.
 
 Maintainer preference: use `actions/checkout@v7` and
 `devantler-tech/actions/update-agent-skills@v13.3.3`; prefer the floating major
-`v13` when upstream provides it. These two actions are exceptions to SHA pinning.
+`v13` when upstream provides it. Use `peter-evans/create-pull-request@v8` too. Keep all actions in the skill-update workflow on version tags, not SHAs.
