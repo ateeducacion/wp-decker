@@ -1,149 +1,87 @@
-<!-- AGENTS.md -->
+# AGENTS.md — Decker
 
-# Agents Coding Conventions for Plugin “Decker”
+Decker manages tasks, boards and a knowledge base in WordPress. Minimum versions:
+WordPress 6.1 and PHP 8.3. Keep `decker.php` as bootstrap, with domain classes in
+`includes/`, admin screens in `admin/`, and frontend code in `public/`.
 
-These are natural-language guidelines for agents to follow when developing the Decker WordPress plugin.
+## Project boundaries
 
-## Project conventions
+- Use the existing Bootstrap 5/jQuery UI and WordPress enqueue mechanisms.
+- `Decker_Abilities::is_available()` gates optional Abilities API registration;
+  the service is lazy. Keep the plugin working when those APIs are absent.
+  Do not raise the WordPress minimum merely to follow an upstream skill.
+- Task saves use the generation-token and takeover rules in `Decker_Task_Locks`
+  and `Decker_Task_Lock_State`. Preserve stale-form rejection, including another
+  tab of the same user; locking stands down for explicitly enabled collaboration.
+- Mail parser runtime code is copied by Composer into `admin/vendor/`; update the
+  dependency/source, not the vendored copy.
+- Preserve existing classes, hooks and stored identifiers unless the task changes
+  their contract. `docs/adr/` documents durable decisions.
 
-- Follow **WordPress Coding Standards**:
-  - PHP code: 4 spaces indentation, PSR‑12 style where compatible, proper escaping, sanitization, use WP APIs.
-  - Use English for source code (identifiers, comments, docblocks).
-  - Use Spanish for user‑facing translations/strings and test assertions to check no untranslated strings remain.
+## Verification
 
-## Testing and development workflow
+- PHP: `make lint`, `make test`; do not replace `.phpcs.xml.dist` with a generic
+  standard. Current source uses tabs; PHPCS is authoritative over stale editor hints.
+- JS: `npm run test:js`; browser behavior: `make test-e2e`.
+- Before pushing: run `make lint`, `make test` and `make check-untranslated`.
+- Changed strings require the POT, Spanish PO and compiled catalogs in the same
+  commit. PHPUnit does not catch untranslated strings.
+- Packaging: `make check-plugin`; complexity checks use `make phpmd` / `phpmd.xml`.
+- wp-env uses the existing project configuration; do not create a second stack.
 
-- Use **TDD** (Test‑Driven Development) with factories to create test fixtures.
-- Tests live under `/tests/` and use factory classes.
-- Use `make lint` (PHP lint) and `make fix` (beautifier) to enforce standards.
-- Use `make test` to run all unit tests.
-- Use `make check-untranslated` to detect any untranslated Spanish strings.
-- **Before every `git push` / opening a PR**: run at least `make lint`, `make test` and **`make check-untranslated`** (see the pre-push gate below).
+Read [translation notes](.agents/references/translations.md) when changing strings
+or localized JS, including placeholder comments and plural forms.
 
-## Environment and tools
+## Working conventions
 
-- Develop plugin within `@wordpress/env` environment.
-- Use Alpine‑based Docker containers if setting up with Docker.
-- For Linux commands: assume **Ubuntu Server**.
-- On macOS desktop (when relevant): use **Homebrew** to install tools.
-- Use `vim` as terminal editor, not `nano`.
+- Branches use English names with `feature/` or `hotfix/`; PRs target `main`.
+- Follow the repository PHPCS ruleset and current source. English PHPDoc precedes
+  functions/methods. Unslash request data before sanitizing; escape at output.
+- Check capabilities and resource ownership as well as nonces at write boundaries;
+  follow the full caller chain before declaring a deliberately delegated guard missing.
+- Read only the domain docs needed by the task. Keep changes focused and report
+  what changed, what was verified, and any unresolved check failure concisely.
+- Agent guidance/workflow changes need frontmatter, link, provenance and `actionlint`
+  checks. Runtime changes need the relevant tests above. Do not weaken CI gates.
+- No production deployment, release publication or data mutation is implied by
+  a local implementation task. Respect authorization already given in the session.
 
-## Frontend technologies
-
-- In admin or public UI, use **Bootstrap 5** and **jQuery** consistently.
-- Keep frontend assets minimal: enqueue properly via WP APIs, use minified versions.
-
-## Code style and structure
-
-- All PHP functions and methods must have English docblock comments immediately before declaration.
-- Prefer simplicity and clarity: avoid overly complex abstractions.
-- Load translation strings properly (`__()`, `_e()`), text domain declared in main plugin file.
-- Keep plugin bootstrap file small (`decker.php`), modularize into separate files/classes with specific responsibility.
-
-## Translations (mandatory)
-
-- Every time you add, change or remove a user-facing string (PHP `__()`/`_e()`/`_n()`/`_x()`, JavaScript strings localized via `wp_localize_script`, etc.) you MUST update the translation catalogues **in the same change set** — never defer this to a follow-up commit:
-  1. Run `make check-untranslated` (or `composer check-untranslated`) to regenerate `languages/decker.pot`, refresh `languages/decker-es_ES.po` and rebuild the `.mo` files.
-  2. Translate every new `msgid` into Spanish (project default user-facing language). The `untranslated` step fails the build if any `msgstr ""` is left for `decker-es_ES.po`, so the PR cannot be considered done until `msgattrib --untranslated languages/decker-es_ES.po` outputs nothing.
-  3. Commit `languages/decker.pot`, `languages/decker-es_ES.po` and `languages/decker-es_ES.mo` together with the code that introduced the strings.
-- Plural strings must use `_n( 'singular', 'plural', $count, 'decker' )` and add an `msgid_plural` block with both `msgstr[0]` and `msgstr[1]` translated.
-- Strings exposed to JavaScript must travel through `wp_localize_script()` so they end up inside the `.pot`; do not hard-code English text in JS files.
-- **Every i18n call that contains a placeholder (`%s`, `%d`, `%1$s`, …) MUST be preceded by a `translators:` comment** describing each placeholder. PHPCS (`WordPress.WP.I18n.MissingTranslatorsComment`) fails CI without it. Use `/* translators: ... */` (or `// translators: ...`) directly above the call. Example:
-  ```php
-  /* translators: %d is the number of comments on the task. */
-  $title = sprintf( _n( '%d comment', '%d comments', $count, 'decker' ), $count );
-  ```
-  When the call is inside an HTML attribute, hoist the result into a PHP variable in a regular `<?php ... ?>` block first, then echo the variable in the attribute — splitting the `<?php` block inside an attribute leaks indentation whitespace into the rendered HTML.
-
-### Pre-push gate (agents — mandatory)
-
-**Never push or open a PR without verifying translations.** CI runs `make check-untranslated` (`.github/workflows/ci.yml`) and **fails the job** if any Spanish `msgstr` is empty.
-
-Before `git push` or `gh pr create`:
-
-1. Search the diff for new/changed `__()` / `_e()` / `_n()` / `_x()` strings (including strings passed to `wp_localize_script()`).
-2. Update `languages/decker-es_ES.po` in the **same commit** (Spanish `msgstr` filled in — not left blank), together with `languages/decker.pot` and `languages/decker-es_ES.mo`.
-3. Run **`make check-untranslated`** and confirm it exits 0.
-4. If it fails, fix the empty `msgstr` entries (and re-run) before pushing.
-
-Do not treat “tests passed” as enough for a push: PHPUnit does not catch missing `.po` entries. Untranslated strings are a **CI blocker**, same as lint failures.
-
-## PHP docblock formatting
-
-- Align `@param` blocks so all variable names start at the same column, leaving exactly one space between the longest type name and its `$variable`. Example for a function whose longest type is `DateTime`:
-  ```php
-  /**
-   * @param int      $task_id        Target task post ID.
-   * @param int[]    $assigned_users Author candidates.
-   * @param DateTime $start_date     Earliest plausible date.
-   */
-  ```
-  Adding extra spaces before `$task_id` triggers `Squiz.Commenting.FunctionComment.SpacingAfterParamType` — PHPCS expects the minimum spacing that keeps every `$variable` aligned with the longest type, not more.
+English source strings use the plugin text domain; Spanish translations and
+assertions preserve the user-facing language. Update catalogs with string changes,
+use plural-aware translation functions, and add `translators:` comments for
+placeholders. JS strings/nonces/URLs use the existing localization pipeline.
 
 ## Skills
 
-Recurring procedures live as skills under:
+Load only the skill relevant to the task. Local contracts override generic examples.
+- [blueprint](.agents/skills/blueprint/SKILL.md): WordPress Playground blueprint JSON.
+- [github-actions-hardening](.agents/skills/github-actions-hardening/SKILL.md): Author/review GitHub Actions workflows.
+- [playwright-cli](.agents/skills/playwright-cli/SKILL.md): Terminal browser exploration; keep the existing test runner.
+- [security-audit](.agents/skills/security-audit/SKILL.md): Requested vulnerability audits.
+- [wp-abilities-api](.agents/skills/wp-abilities-api/SKILL.md): Optional Abilities API integration.
+- [wp-performance](.agents/skills/wp-performance/SKILL.md): Measured backend performance work.
+- [wp-plugin-development](.agents/skills/wp-plugin-development/SKILL.md): WordPress hooks, lifecycle and settings.
+- [wp-plugin-directory-guidelines](.agents/skills/wp-plugin-directory-guidelines/SKILL.md): Distribution/readme and directory checks.
+- [wp-plugin-security](.agents/skills/wp-plugin-security/SKILL.md): WordPress input/output and authorization review.
+- [wp-project-triage](.agents/skills/wp-project-triage/SKILL.md): Identify existing WordPress tooling and layout.
+- [wp-rest-api](.agents/skills/wp-rest-api/SKILL.md): REST schemas, routes and permissions.
 
-- `.agents/skills/` — GitHub Copilot, Codex, Cursor and the other agents that share this path
-- `.claude/skills/` — Claude Code
+### Skill maintenance
 
-Grok Build does not need a third copy under `.grok/skills/`: it automatically
-reads Claude Code skills alongside `.grok/`
-([Skills, Plugins & Marketplaces](https://docs.x.ai/build/features/skills-plugins-marketplaces)).
+Install upstream skills with `gh skills install OWNER/REPO skills/NAME --dir .agents/skills`.
+Keep upstream text and `metadata.github-*` unchanged; fix upstream and reinstall.
+Local skills have no GitHub provenance and the updater skips them. Put project
+exceptions in local guidance, not inside installed upstream folders.
 
-Install and refresh them with the GitHub CLI (`gh skill add` is an alias of
-`gh skill install`). Repeat for each host directory you care about:
+WordPress skills may target 7.0+: verify APIs against this project's supported
+versions. Do not upgrade requirements, scaffold new packages or change architecture
+merely because a generic skill recommends it. Resolve example `skills/...` paths
+under the actual `.agents/skills/` installation; use existing commands first.
 
-```bash
-gh skill add WordPress/agent-skills wp-performance --agent github-copilot
-gh skill add WordPress/agent-skills wp-performance --agent claude-code
-gh skill update --all
-```
+New Claude entries are symlinks to `../../.agents/skills/NAME`.
+Preserve existing Claude copies; the workflow updates both host directories.
 
-`gh skill` copies the skill into each host directory and injects source
-metadata into the `SKILL.md` frontmatter so later updates work. Older Claude
-Code entries remain as **symlinks** into `.agents/skills/`; newer ones are
-copies. Do not convert one layout into the other by hand, and never duplicate
-a skill by copying `SKILL.md` yourself.
-
-### Skill compatibility
-
-Project compatibility requirements always take precedence over generic skill
-recommendations. This plugin supports WordPress 6.1+, while some vendored
-WordPress agent skills target WordPress 7.0+.
-
-Do not introduce APIs or behavior that require a newer WordPress version unless
-the project minimum version is intentionally being raised in the same change.
-When following a skill, verify that every suggested WordPress API is available
-in the plugin's supported version range.
-
-| Skill | Read it before | Origin |
-| --- | --- | --- |
-| `wp-plugin-development` | Touching hooks, activation/uninstall, the Settings API, options, cron or release packaging | [`WordPress/agent-skills`](https://github.com/WordPress/agent-skills), GPL-2.0-or-later |
-| `wp-rest-api` | Adding or debugging routes: `register_rest_route`, `permission_callback`, schema/args, `register_meta`, `show_in_rest` (the `Decker_Tasks_Rest_*` classes) | idem |
-| `wp-plugin-directory-guidelines` | Editing `readme.txt`, license headers or plugin naming — this is what `make check-plugin` enforces | idem |
-| `blueprint` | Editing `blueprint.json` or the Playground preview | idem |
-| `wp-performance` | Profiling or improving backend performance (WP-CLI profile/doctor, autoload, object cache, cron, HTTP API) | idem |
-| `wp-project-triage` | Inspecting what kind of WordPress repo this is before changing tooling or layout | idem |
-| `wp-plugin-security` | Writing or reviewing code that handles input, output, AJAX/REST, capabilities or files | [`fernandotellado/ai-skills`](https://github.com/fernandotellado/ai-skills), GPL-2.0-or-later |
-| `security-audit` | Hunting vulnerabilities and validating findings | [`cloudflare/security-audit-skill`](https://github.com/cloudflare/security-audit-skill) |
-
-All of them are **third party and vendored verbatim**. Do not reformat or edit
-them: diverging from upstream makes `gh skill update` harder. Fix the problem
-upstream and re-install instead.
-
-Provenance lives in each `SKILL.md` frontmatter (`metadata.github-repo`,
-`github-path`, `github-tree-sha`).
-
-Skills, `AGENTS.md` and `CLAUDE.md` are excluded from the release ZIP via
-`.gitattributes`.
-
-## Aider-specific usage
-
-- Always load `AGENTS.md` as conventions file: e.g. `/read AGENTS.md` or via config.
-- Do not expect Aider to modify `AGENTS.md` or `README.md` contents.
-- Use `/ask` mode to plan large changes, then use `/code` or `/architect` to apply.
-- Review every diff Aider produces, especially in architect mode before accepting.
-- After planning, say “go ahead” to proceed.
-- Avoid adding unnecessary files to the chat—add only those being modified.
-
+`.github/workflows/update-agent-skills.yml` checks weekly/on dispatch, scoped to
+installed skills, and opens a review PR on `main`. It never merges updates.
+Review prompt diffs as behavior changes. PRs made with the default GitHub token
+may not trigger CI; do not assume green checks will appear automatically.
