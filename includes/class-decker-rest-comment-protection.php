@@ -74,49 +74,67 @@ class Decker_REST_Comment_Protection {
 	}
 
 	/**
-	 * Prepares to filter the comment collection query for unauthenticated users.
+	 * Check whether the current user may reach Decker's protected post types at all.
 	 *
-	 * This function hooks into `comments_clauses` only when a REST API request for comments
-	 * is being processed, ensuring the filter is not applied globally.
+	 * This mirrors the capability the REST guards of `decker_kb`, `tasks` and
+	 * `decker_event` require, so a comment is never easier to read than the post
+	 * it belongs to. Being logged in is not enough: a subscriber has no access to
+	 * a task, and therefore none to its comments either.
 	 *
-	 * @param array           $args    Request arguments.
-	 * @param WP_REST_Request $request The request object.
-	 * @return array The original arguments.
+	 * @return bool True when the user may access Decker content.
 	 */
-	public function prepare_comment_collection_query( $args, $request ) {
-		if ( ! is_user_logged_in() ) {
-			add_filter( 'comments_clauses', array( $this, 'filter_comment_collection_query' ) );
-		}
-		return $args;
+	private function can_access_protected_posts() {
+		return current_user_can( 'edit_posts' );
 	}
 
 	/**
-	 * Exclude comments from protected post types in collection queries for unauthenticated users.
+	 * Check whether the current user may read the comments of a given post.
 	 *
-	 * This function is hooked dynamically by `prepare_comment_collection_query`.
+	 * Adds the per-post check on top of the collection-level capability, so a post
+	 * the user cannot read (a draft, a private or a password-protected one) does
+	 * not expose its comments.
 	 *
-	 * @param array $clauses The clauses for the comments query.
-	 * @return array The modified clauses.
+	 * @param int $post_id Post the comment belongs to.
+	 * @return bool True when the user may read that post's comments.
 	 */
-	public function filter_comment_collection_query( $clauses ) {
-		// Remove the filter immediately to prevent it from affecting other queries.
-		remove_filter( 'comments_clauses', array( $this, 'filter_comment_collection_query' ) );
+	private function can_access_protected_post( $post_id ) {
+		if ( ! $this->can_access_protected_posts() ) {
+			return false;
+		}
 
-		global $wpdb;
+		return ! $post_id || current_user_can( 'read_post', $post_id );
+	}
 
-		// Add a JOIN clause to link comments to the posts table.
-		$clauses['join'] .= " LEFT JOIN {$wpdb->posts} p ON p.ID = {$wpdb->comments}.comment_post_ID";
+	/**
+	 * Restrict the comment collection to post types the current user may read.
+	 *
+	 * The restriction is applied to the query variables rather than to the SQL
+	 * clauses. WP_Comment_Query caches its results under a key built from the
+	 * query vars alone (`WP_Comment_Query::get_comment_ids()`), so narrowing the
+	 * clauses would leave the cache key identical for authorized and
+	 * unauthorized users: an authorized user's cached result set would then be
+	 * served verbatim to the next anonymous request with the same arguments.
+	 * `post_type` is a real query var, so restricting it both filters the query
+	 * and varies the cache key.
+	 *
+	 * Users who may access the protected post types see their comments as before.
+	 *
+	 * @param array           $args    Query arguments handed to WP_Comment_Query.
+	 * @param WP_REST_Request $request Request object (unused).
+	 * @return array The possibly restricted arguments.
+	 */
+	public function prepare_comment_collection_query( $args, $request ) {
+		if ( $this->can_access_protected_posts() ) {
+			return $args;
+		}
 
-		// Add a WHERE clause to exclude comments from protected post types.
-		$where_clause = $wpdb->prepare(
-			' AND (p.post_type IS NULL OR p.post_type NOT IN (' . implode( ', ', array_fill( 0, count( $this->protected_post_types ), '%s' ) ) . '))',
-			$this->protected_post_types
-		);
+		$allowed = array_values( array_diff( get_post_types(), $this->protected_post_types ) );
 
-		// Also check for comments without a parent post (comment_post_ID = 0) and allow them.
-		$clauses['where'] .= " AND ({$wpdb->comments}.comment_post_ID = 0 OR " . substr( trim( $where_clause ), 4 ) . ')';
+		if ( ! empty( $allowed ) ) {
+			$args['post_type'] = $allowed;
+		}
 
-		return $clauses;
+		return $args;
 	}
 
 	/**
@@ -153,7 +171,10 @@ class Decker_REST_Comment_Protection {
 	}
 
 	/**
-	 * Block access to single comments on protected post types for unauthenticated users.
+	 * Block access to single comments on protected post types.
+	 *
+	 * Access follows the parent post: only a user who may reach the protected post
+	 * type, and may read that particular post, may read or modify its comments.
 	 *
 	 * @param mixed           $result  Dispatch result, will be used if not null.
 	 * @param WP_REST_Server  $server  Server instance.
@@ -161,10 +182,6 @@ class Decker_REST_Comment_Protection {
 	 * @return mixed A WP_Error if access is denied, otherwise the original $result.
 	 */
 	public function protect_single_comment_access( $result, $server, $request ) {
-		if ( is_user_logged_in() ) {
-			return $result;
-		}
-
 		$route  = $request->get_route();
 		$method = strtoupper( $request->get_method() );
 
@@ -182,7 +199,7 @@ class Decker_REST_Comment_Protection {
 	}
 
 	/**
-	 * Refuse anonymous comment creation on a protected post type.
+	 * Refuse comment creation on a protected post type by a user without access.
 	 *
 	 * @param WP_REST_Request $request Request used to generate the response.
 	 * @return WP_Error|null The refusal, or null when the request may proceed.
@@ -190,7 +207,11 @@ class Decker_REST_Comment_Protection {
 	private function deny_protected_comment_creation( $request ) {
 		$post_id = (int) $request->get_param( 'post' );
 
-		if ( $post_id && in_array( get_post_type( $post_id ), $this->protected_post_types, true ) ) {
+		if ( ! $post_id || ! in_array( get_post_type( $post_id ), $this->protected_post_types, true ) ) {
+			return null;
+		}
+
+		if ( ! $this->can_access_protected_post( $post_id ) ) {
 			return $this->unauthorized( 'rest_cannot_create_comment' );
 		}
 
@@ -198,7 +219,7 @@ class Decker_REST_Comment_Protection {
 	}
 
 	/**
-	 * Refuse anonymous access to a single comment on a protected post type.
+	 * Refuse access to a single comment on a protected post type.
 	 *
 	 * @param int    $comment_id Comment addressed by the route.
 	 * @param string $method     Upper-cased HTTP method.
@@ -215,7 +236,11 @@ class Decker_REST_Comment_Protection {
 			return null;
 		}
 
-		if ( 'GET' === $method ) {
+		if ( $this->can_access_protected_post( (int) $comment->comment_post_ID ) ) {
+			return null;
+		}
+
+		if ( 'GET' === $method || 'HEAD' === $method ) {
 			return $this->unauthorized( 'rest_forbidden_comment' );
 		}
 
@@ -241,19 +266,21 @@ class Decker_REST_Comment_Protection {
 	}
 
 	/**
-	 * Prevent unauthenticated users from creating comments on protected post types.
+	 * Prevent users without access to a protected post from commenting on it.
 	 *
 	 * @param array|WP_Error  $prepared_comment An array of comment data or a WP_Error.
 	 * @param WP_REST_Request $request          The request object.
 	 * @return array|WP_Error The comment data or a WP_Error if denied.
 	 */
 	public function protect_comment_creation( $prepared_comment, $request ) {
-		if ( is_user_logged_in() || is_wp_error( $prepared_comment ) ) {
+		if ( is_wp_error( $prepared_comment ) ) {
 			return $prepared_comment;
 		}
 
 		$post_id = (int) $request['post'];
-		if ( $post_id && in_array( get_post_type( $post_id ), $this->protected_post_types, true ) ) {
+		if ( $post_id
+			&& in_array( get_post_type( $post_id ), $this->protected_post_types, true )
+			&& ! $this->can_access_protected_post( $post_id ) ) {
 			return new WP_Error(
 				'rest_cannot_create_comment',
 				__( 'You are not authorized to access this resource.', 'decker' ),
@@ -265,14 +292,14 @@ class Decker_REST_Comment_Protection {
 	}
 
 	/**
-	 * Prevent unauthenticated users from updating or deleting comments on protected post types.
+	 * Prevent users without access from updating or deleting comments on protected post types.
 	 *
 	 * @param WP_Error|null|true $result WP_Error if authentication error, null if authentication method wasn't used, true if authentication succeeded.
 	 * @return WP_Error|null|true
 	 */
 	public function protect_comment_modification( $result ) {
-		// Let existing errors through, and allow authenticated users.
-		if ( is_user_logged_in() || is_wp_error( $result ) ) {
+		// Let existing errors through, and allow users who may access Decker content.
+		if ( is_wp_error( $result ) || $this->can_access_protected_posts() ) {
 			return $result;
 		}
 
