@@ -90,9 +90,9 @@ class Decker_REST_Comment_Protection {
 	/**
 	 * Check whether the current user may read the comments of a given post.
 	 *
-	 * Adds the per-post check on top of the collection-level capability, so a post
+	 * Adds the per-post checks on top of the collection-level capability, so a post
 	 * the user cannot read (a draft, a private or a password-protected one) does
-	 * not expose its comments.
+	 * not expose its comments, and neither does a task hidden from them.
 	 *
 	 * @param int $post_id Post the comment belongs to.
 	 * @return bool True when the user may read that post's comments.
@@ -102,7 +102,16 @@ class Decker_REST_Comment_Protection {
 			return false;
 		}
 
-		return ! $post_id || current_user_can( 'read_post', $post_id );
+		if ( ! $post_id ) {
+			return true;
+		}
+
+		if ( ! current_user_can( 'read_post', $post_id ) ) {
+			return false;
+		}
+
+		// A task hidden from this user hides its comments with it.
+		return ! Decker_Tasks::is_hidden_from_current_user( $post_id );
 	}
 
 	/**
