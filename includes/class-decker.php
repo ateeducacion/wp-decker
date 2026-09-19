@@ -346,6 +346,26 @@ class Decker {
 	}
 
 	/**
+	 * Check whether a REST route addresses a given base, the way WordPress routes it.
+	 *
+	 * WP_REST_Server::match_request_to_handler() compiles every registered route with
+	 * the `i` modifier, so `/wp/v2/Decker_Kb` and `/WP/V2/decker_kb` both dispatch to
+	 * the `/wp/v2/decker_kb` handler. Route guards must therefore compare the
+	 * requested route case-insensitively, or an attacker can skip them by changing
+	 * the capitalisation of the request path.
+	 *
+	 * The base is matched as a whole path segment: `/wp/v2/tasks` matches the
+	 * collection and its item routes, but never an unrelated `/wp/v2/tasksomething`.
+	 *
+	 * @param string $route Requested route, as returned by WP_REST_Request::get_route().
+	 * @param string $base  Canonical route base to test, e.g. `/wp/v2/decker_kb`.
+	 * @return bool True when the route addresses the given base.
+	 */
+	public static function rest_route_matches( $route, $base ) {
+		return 1 === preg_match( '#^' . preg_quote( $base, '#' ) . '(?:/|$)#i', (string) $route );
+	}
+
+	/**
 	 * Check if the current user has at least the required role.
 	 *
 	 * @return bool True if the user has the required role or higher, false otherwise.
