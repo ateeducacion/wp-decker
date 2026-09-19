@@ -134,28 +134,14 @@ class Decker_Ability_Task_Access {
 	/**
 	 * Determine whether a hidden task must be concealed.
 	 *
+	 * Delegates to the post type, which applies the same rule to the REST
+	 * endpoints, so both paths cannot drift apart.
+	 *
 	 * @param WP_Post $post Task post.
 	 * @return bool True when access must be denied.
 	 */
 	private function is_hidden_from_current_user( WP_Post $post ): bool {
-		if ( ! get_post_meta( $post->ID, 'hidden', true ) ) {
-			return false;
-		}
-
-		if ( current_user_can( 'manage_options' ) ) {
-			return false;
-		}
-
-		$user_id      = get_current_user_id();
-		$responsible  = absint( get_post_meta( $post->ID, 'responsable', true ) );
-		$assignee_ids = get_post_meta( $post->ID, 'assigned_users', true );
-		$assignee_ids = is_array( $assignee_ids ) ? array_map( 'absint', $assignee_ids ) : array();
-
-		if ( (int) $post->post_author === $user_id || $responsible === $user_id ) {
-			return false;
-		}
-
-		return ! in_array( $user_id, $assignee_ids, true );
+		return Decker_Tasks::is_hidden_from_current_user( $post->ID );
 	}
 
 	/**
