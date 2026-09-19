@@ -132,7 +132,7 @@ class Decker_Actions {
 	 * @return mixed The result to send to the client.
 	 */
 	public function restrict_rest_access( $result, $server, $request ) {
-		if ( false !== strpos( $request->get_route(), '/wp/v2/actions' ) ) {
+		if ( false !== stripos( $request->get_route(), '/wp/v2/actions' ) ) {
 			if ( ! is_user_logged_in() ) {
 				return new WP_Error( 'rest_forbidden', __( 'You are not authorized to access this resource.', 'decker' ), array( 'status' => 401 ) );
 			}

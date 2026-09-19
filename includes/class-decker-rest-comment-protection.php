@@ -169,12 +169,12 @@ class Decker_REST_Comment_Protection {
 		$method = strtoupper( $request->get_method() );
 
 		// Block unauthenticated creation on protected post types.
-		if ( 0 === strpos( $route, '/wp/v2/comments' ) && 'POST' === $method ) {
+		if ( Decker::rest_route_matches( $route, '/wp/v2/comments' ) && 'POST' === $method ) {
 			return $this->deny_protected_comment_creation( $request ) ?? $result;
 		}
 
 		// Handle single comment routes.
-		if ( preg_match( '#^/wp/v2/comments/(?P<id>\d+)#', $route, $matches ) ) {
+		if ( preg_match( '#^/wp/v2/comments/(?P<id>\d+)#i', $route, $matches ) ) {
 			return $this->deny_protected_comment_route( (int) $matches['id'], $method ) ?? $result;
 		}
 
@@ -278,7 +278,7 @@ class Decker_REST_Comment_Protection {
 
 		// This hook runs on all authenticated REST requests. We must check if this is a comment modification request.
 		$request_uri = ! empty( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
-		if ( ! preg_match( '#/wp/v2/comments/(?P<id>\d+)#', $request_uri, $matches ) ) {
+		if ( ! preg_match( '#/wp/v2/comments/(?P<id>\d+)#i', $request_uri, $matches ) ) {
 			return $result;
 		}
 

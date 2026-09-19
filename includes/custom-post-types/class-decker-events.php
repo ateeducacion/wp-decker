@@ -199,7 +199,7 @@ class Decker_Events {
 	public function restrict_rest_access( $result, $rest_server, $request ) {
 		$route = $request->get_route();
 
-		if ( strpos( $route, '/wp/v2/decker_event' ) === 0 ) {
+		if ( Decker::rest_route_matches( $route, '/wp/v2/decker_event' ) ) {
 				   // Use the specific capability of the CPT.
 			if ( ! current_user_can( 'edit_posts' ) ) {
 				return new WP_Error(
