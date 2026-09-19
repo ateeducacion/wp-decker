@@ -452,6 +452,88 @@ class DeckerRestRouteCaseBypassTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Run the `rest_authentication_errors` guard against a simulated request.
+	 *
+	 * That guard reads `$_SERVER` directly and is only invoked from
+	 * WP_REST_Server::serve_request(), which dispatch() does not go through, so it
+	 * is exercised here by calling it with the superglobals it inspects.
+	 *
+	 * @param string $uri    Request URI to simulate.
+	 * @param string $method Request method to simulate.
+	 * @return mixed The guard's return value.
+	 */
+	private function run_authentication_guard( $uri, $method ) {
+		$protection = new Decker_REST_Comment_Protection();
+		$protection->register_rest_comment_protection_hooks();
+
+		$original = array(
+			'uri'    => isset( $_SERVER['REQUEST_URI'] ) ? $_SERVER['REQUEST_URI'] : null,
+			'method' => isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : null,
+		);
+
+		$_SERVER['REQUEST_URI']    = $uri;
+		$_SERVER['REQUEST_METHOD'] = $method;
+
+		try {
+			return $protection->protect_comment_modification( null );
+		} finally {
+			foreach ( array( 'REQUEST_URI' => 'uri', 'REQUEST_METHOD' => 'method' ) as $key => $name ) {
+				if ( null === $original[ $name ] ) {
+					unset( $_SERVER[ $key ] );
+				} else {
+					$_SERVER[ $key ] = $original[ $name ];
+				}
+			}
+		}
+	}
+
+	/**
+	 * The authentication guard refuses anonymous writes on every case variant.
+	 */
+	public function test_authentication_guard_refuses_protected_comment_writes() {
+		foreach ( $this->route_variants( 'comments', '/' . $this->task_comment_id ) as $route ) {
+			foreach ( array( 'PUT', 'PATCH', 'DELETE' ) as $method ) {
+				$result = $this->run_authentication_guard( $route, $method );
+
+				$this->assertWPError(
+					$result,
+					sprintf( '%s %s was not refused by the authentication guard.', $method, $route )
+				);
+				$this->assertEquals( 'rest_cannot_edit_comment', $result->get_error_code() );
+			}
+		}
+	}
+
+	/**
+	 * The authentication guard leaves everything else alone.
+	 */
+	public function test_authentication_guard_ignores_unrelated_requests() {
+		// A read on a protected comment: handled by the dispatch guard, not this one.
+		$this->assertNull( $this->run_authentication_guard( '/wp/v2/Comments/' . $this->task_comment_id, 'GET' ) );
+
+		// A write on a comment belonging to an ordinary post.
+		$this->assertNull( $this->run_authentication_guard( '/wp/v2/comments/' . $this->public_comment_id, 'DELETE' ) );
+
+		// A route that has nothing to do with comments.
+		$this->assertNull( $this->run_authentication_guard( '/wp/v2/posts/' . $this->public_post_id, 'DELETE' ) );
+
+		// A comment that does not exist.
+		$this->assertNull( $this->run_authentication_guard( '/wp/v2/comments/999999', 'DELETE' ) );
+	}
+
+	/**
+	 * The authentication guard preserves an error raised by another filter.
+	 */
+	public function test_authentication_guard_preserves_existing_errors() {
+		$protection = new Decker_REST_Comment_Protection();
+		$protection->register_rest_comment_protection_hooks();
+
+		$existing = new WP_Error( 'rest_disabled', 'The REST API is disabled.' );
+
+		$this->assertSame( $existing, $protection->protect_comment_modification( $existing ) );
+	}
+
+	/**
 	 * The comment collection keeps excluding protected post types on every variant.
 	 */
 	public function test_comment_collection_excludes_protected_comments_on_case_variants() {
