@@ -25,13 +25,13 @@ jobs:
           persist-credentials: false
 
       - id: update
-        uses: devantler-tech/actions/update-agent-skills@v13.5.1
+        uses: devantler-tech/actions/update-agent-skills@v13.6.5
         with:
           dir: .agents/skills
 
       # Preserve existing host-specific copies and refresh their provenance too.
       - id: claude
-        uses: devantler-tech/actions/update-agent-skills@v13.5.1
+        uses: devantler-tech/actions/update-agent-skills@v13.6.5
         with:
           dir: .claude/skills
 
