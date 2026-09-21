@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Post Playground preview link
-        uses: WordPress/action-wp-playground-pr-preview@v3
+        uses: WordPress/action-wp-playground-pr-preview@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           mode: comment
