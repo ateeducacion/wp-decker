@@ -17,8 +17,14 @@ name: PHPMD
 
 on:
   push:
+    paths-ignore:
+      - '.agents/skills/**'
+      - '.claude/skills/**'
     branches: [ "main" ]
   pull_request:
+    paths-ignore:
+      - '.agents/skills/**'
+      - '.claude/skills/**'
     # The branches below must be a subset of the branches above
     branches: [ "main" ]
   schedule:
