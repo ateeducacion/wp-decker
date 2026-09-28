@@ -10,7 +10,9 @@
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
-namespace Erseco;
+declare(strict_types=1);
+
+namespace Erseco\MimeMailParser;
 
 /**
  * Parser safety limits.
@@ -54,6 +56,46 @@ final class ParserOptions
         public int $maxHeaderLineLength = self::DEFAULT_MAX_HEADER_LINE_LENGTH,
         public int $maxDecodedPartBytes = self::DEFAULT_MAX_DECODED_PART_BYTES
     ) {
+        $this->assertPositive('maxMessageBytes', $this->maxMessageBytes);
+        $this->assertPositive('maxParts', $this->maxParts);
+        $this->assertNonNegative('maxDepth', $this->maxDepth);
+        $this->assertPositive('maxHeaders', $this->maxHeaders);
+        $this->assertPositive('maxHeaderLineLength', $this->maxHeaderLineLength);
+        $this->assertPositive('maxDecodedPartBytes', $this->maxDecodedPartBytes);
+    }
+
+    /**
+     * Assert that an option is greater than zero.
+     *
+     * @param string $name  Option name.
+     * @param int    $value Option value.
+     *
+     * @return void
+     */
+    private function assertPositive(string $name, int $value): void
+    {
+        if ($value <= 0) {
+            throw new \InvalidArgumentException(
+                sprintf('%s must be greater than zero.', $name)
+            );
+        }
+    }
+
+    /**
+     * Assert that an option is zero or greater.
+     *
+     * @param string $name  Option name.
+     * @param int    $value Option value.
+     *
+     * @return void
+     */
+    private function assertNonNegative(string $name, int $value): void
+    {
+        if ($value < 0) {
+            throw new \InvalidArgumentException(
+                sprintf('%s must be zero or greater.', $name)
+            );
+        }
     }
 
     /**

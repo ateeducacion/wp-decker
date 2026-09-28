@@ -49,6 +49,12 @@ class Decker_Bundled_Autoloader {
 		}
 
 		spl_autoload_register( array( self::class, 'autoload' ) );
+
+		// Parser 1.1+ declares canonical classes and provides the old names as aliases.
+		$aliases = self::base_dir() . 'LegacyAliases.php';
+		if ( is_readable( $aliases ) ) {
+			require_once $aliases;
+		}
 	}
 
 	/**
@@ -63,6 +69,9 @@ class Decker_Bundled_Autoloader {
 		}
 
 		$relative = substr( $class_name, strlen( self::NAMESPACE_PREFIX ) );
+		if ( 0 === strpos( $relative, 'MimeMailParser\\' ) ) {
+			$relative = substr( $relative, strlen( 'MimeMailParser\\' ) );
+		}
 		$path     = self::base_dir() . str_replace( '\\', '/', $relative ) . '.php';
 
 		if ( is_readable( $path ) ) {

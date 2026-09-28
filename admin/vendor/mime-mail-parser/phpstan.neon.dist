@@ -4,6 +4,6 @@ parameters:
         - src
     excludePaths:
         - vendor
-    # Target the oldest supported runtime while analysis may run on newer PHP.
-    phpVersion: 80000
+    # Target the minimum supported runtime while analysis may run on newer PHP.
+    phpVersion: 80200
     treatPhpDocTypesAsCertain: false

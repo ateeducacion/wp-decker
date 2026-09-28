@@ -1,0 +1,14 @@
+# Coverage policy is enforced in CI and Codecov.
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 0%
+    patch:
+      default:
+        target: 90%
+
+comment:
+  layout: "diff, files"
+  require_changes: true
