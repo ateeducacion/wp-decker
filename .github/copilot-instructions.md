@@ -48,7 +48,7 @@ Decker is a WordPress plugin for task management with a Kanban board interface. 
 
 ### Test-Driven Development (TDD)
 - Write tests BEFORE implementing features when possible
-- Use PHPUnit for PHP tests, Jest for JavaScript tests
+- Use PHPUnit for PHP tests, Vitest for JavaScript tests
 - Tests live under `/tests/` directory
 - Use factory classes to create test fixtures
 - Run tests with `make test`

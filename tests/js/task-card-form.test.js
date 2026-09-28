@@ -8,6 +8,8 @@
  * @package Decker
  */
 
+import { afterEach, describe, expect, test, vi } from 'vitest';
+
 /* eslint-disable no-undef */
 
 // ── Mock helpers ─────────────────────────────────────────────────────
@@ -16,12 +18,12 @@ function createMockYMap( initial = {} ) {
 	const store = new Map( Object.entries( initial ) );
 	return {
 		get: ( k ) => store.get( k ),
-		set: jest.fn( ( k, v ) => store.set( k, v ) ),
+		set: vi.fn( ( k, v ) => store.set( k, v ) ),
 		get size() {
 			return store.size;
 		},
-		observe: jest.fn(),
-		unobserve: jest.fn(),
+		observe: vi.fn(),
+		unobserve: vi.fn(),
 		_store: store,
 	};
 }
@@ -33,10 +35,10 @@ function createMockAwareness( peerCount = 1 ) {
 	}
 	return {
 		clientID: 0,
-		getStates: jest.fn( () => states ),
-		setLocalStateField: jest.fn(),
-		on: jest.fn(),
-		off: jest.fn(),
+		getStates: vi.fn( () => states ),
+		setLocalStateField: vi.fn(),
+		on: vi.fn(),
+		off: vi.fn(),
 	};
 }
 
@@ -45,15 +47,15 @@ function createMockSession( formFields, awareness, syncedImmediately = true ) {
 	return {
 		formFields,
 		awareness,
-		onSynced: jest.fn( ( cb ) => {
+		onSynced: vi.fn( ( cb ) => {
 			if ( syncedImmediately ) {
 				cb();
 			} else {
 				syncCallback = cb;
 			}
 		} ),
-		setActiveField: jest.fn(),
-		clearActiveField: jest.fn(),
+		setActiveField: vi.fn(),
+		clearActiveField: vi.fn(),
 		_triggerSync() {
 			if ( syncCallback ) {
 				syncCallback();

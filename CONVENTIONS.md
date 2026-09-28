@@ -19,7 +19,7 @@
 
 ## Test-Driven Development (TDD)
 - Use a Test-Driven Development (TDD) approach where possible.
-- Write unit tests with PHPUnit for PHP and Jest for JavaScript.
+- Write unit tests with PHPUnit for PHP and Vitest for JavaScript.
 - Integrate testing into the development workflow, running tests automatically before merging.
 
 ### Version Control

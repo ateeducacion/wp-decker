@@ -7,17 +7,12 @@
  * @package Decker
  */
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const source = fs.readFileSync(
-	path.join( __dirname, '../../public/assets/js/tinymce-checklist.js' ),
-	'utf8'
-);
-
-beforeAll( () => {
-	// The script registers window.DeckerChecklist when evaluated.
-	new Function( source )();
+beforeAll( async () => {
+	// The script registers window.DeckerChecklist when evaluated. Importing it
+	// (rather than evaluating its source by hand) lets the coverage report see it.
+	await import( '../../public/assets/js/tinymce-checklist.js' );
 } );
 
 /**
@@ -49,10 +44,10 @@ function createFakeEditor( container ) {
 		undoManager: {
 			transact: ( callback ) => callback(),
 		},
-		execCommand: jest.fn(),
-		nodeChanged: jest.fn(),
-		fire: jest.fn(),
-		addButton: jest.fn(),
+		execCommand: vi.fn(),
+		nodeChanged: vi.fn(),
+		fire: vi.fn(),
+		addButton: vi.fn(),
 		on( name, callback ) {
 			name.split( ' ' ).forEach( ( eventName ) => {
 				( handlers[ eventName ] = handlers[ eventName ] || [] ).push( callback );
@@ -168,7 +163,7 @@ describe( 'DeckerChecklist editor behavior', () => {
 
 	test( 'click on the marker area toggles the item', () => {
 		const li = document.getElementById( 'b' );
-		const event = { target: li, offsetX: 10, preventDefault: jest.fn() };
+		const event = { target: li, offsetX: 10, preventDefault: vi.fn() };
 
 		fake.emit( 'click', event );
 
@@ -179,7 +174,7 @@ describe( 'DeckerChecklist editor behavior', () => {
 	test( 'click on the item text does not toggle', () => {
 		const li = document.getElementById( 'b' );
 
-		fake.emit( 'click', { target: li, offsetX: 120, preventDefault: jest.fn() } );
+		fake.emit( 'click', { target: li, offsetX: 120, preventDefault: vi.fn() } );
 
 		expect( li.getAttribute( 'data-list' ) ).toBe( 'checked' );
 	} );

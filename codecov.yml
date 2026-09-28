@@ -18,7 +18,7 @@ coverage:
 # PHPUnit runs inside the wp-env container, where the plugin lives under
 # /var/www/html/wp-content/plugins/decker, and Clover records those absolute
 # paths. Stripping the prefix maps every entry back onto the repository;
-# without it Codecov cannot match a single file. The Jest LCOV report already
+# without it Codecov cannot match a single file. The Vitest LCOV report already
 # uses repository-relative paths and needs no fix.
 fixes:
   - "/var/www/html/wp-content/plugins/decker/::"

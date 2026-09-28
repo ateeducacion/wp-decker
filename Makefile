@@ -381,7 +381,7 @@ help:
 	@echo ""
 	@echo "  test-coverage      - Run PHPUnit with coverage into artifacts/coverage/"
 	@echo "                       (needs: npx wp-env start --xdebug=coverage)"
-	@echo "  test-js            - Run JavaScript unit tests with Jest"
+	@echo "  test-js            - Run JavaScript unit tests with Vitest"
 	@echo "  test-e2e           - Run E2E tests (non-interactive)"
 	@echo "  test-e2e-visual    - Run E2E tests with visual test UI"
 	@echo ""

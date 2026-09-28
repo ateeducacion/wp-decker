@@ -1,10 +1,12 @@
 {
   "devDependencies": {
+    "@vitest/coverage-v8": "^5.0.2",
     "@wordpress/e2e-test-utils-playwright": "^2.0.0",
     "@wordpress/env": "^11.0.0",
     "@wordpress/scripts": "^36.0.0",
-    "jest": "^30.0.0",
-    "jest-environment-jsdom": "^30.0.0"
+    "jsdom": "^26.1.0",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   },
   "scripts": {
     "wp-env": "wp-env",
@@ -12,6 +14,6 @@
     "composer:tests-cli": "wp-env run tests-cli --env-cwd=wp-content/plugins/decker composer",
     "test:e2e": "wp-scripts test-playwright --config tests/e2e/playwright.config.js",
     "test:unit": "wp-env run tests-cli --env-cwd=wp-content/plugins/decker ./vendor/bin/phpunit",
-    "test:js": "jest --config jest.config.js --coverage"
+    "test:js": "wp-scripts test-unit-js"
   }
 }

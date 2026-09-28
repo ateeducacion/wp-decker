@@ -8,8 +8,9 @@
  * @package Decker
  */
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const source = fs.readFileSync(
 	path.join( __dirname, '../../public/assets/js/task-card.js' ),
@@ -72,7 +73,7 @@ describe( 'getTaskDescription', () => {
 	} );
 
 	test( 'prefers wp.editor.getContent so Text-tab edits are never lost', () => {
-		const getContent = jest.fn( () => 'from wp.editor' );
+		const getContent = vi.fn( () => 'from wp.editor' );
 		const getTaskDescription = instantiate( 'getTaskDescription', {
 			quill: null,
 			taskEditor: { getContent: () => 'stale tinymce buffer' },
@@ -100,7 +101,7 @@ describe( 'getTaskDescription', () => {
 
 describe( 'destroyTaskEditor', () => {
 	test( 'removes the instance even when init has not fired yet', () => {
-		const remove = jest.fn();
+		const remove = vi.fn();
 		const destroyTaskEditor = instantiate( 'destroyTaskEditor', {
 			taskEditor: { initialized: false },
 			wp: { editor: { remove } },
@@ -129,7 +130,7 @@ describe( 'initializeTaskEditor', () => {
 
 	function build( readOnly ) {
 		capturedConfig = null;
-		enterDirtyEditMode = jest.fn();
+		enterDirtyEditMode = vi.fn();
 		document.body.innerHTML = '<form id="f"><textarea id="task-description">hola</textarea></form>';
 		context = document.getElementById( 'f' );
 

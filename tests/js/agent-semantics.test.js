@@ -7,12 +7,12 @@
  * @package Decker
  */
 
+import { beforeEach, describe, expect, test } from 'vitest';
+
 /* eslint-disable no-undef */
 
-const path = require( 'path' );
-
 // Load the browser IIFE against the jsdom globals; it attaches window.DeckerAgentSemantics.
-require( path.resolve( __dirname, '../../public/assets/js/agent-semantics.js' ) );
+import '../../public/assets/js/agent-semantics.js';
 const { enhance } = window.DeckerAgentSemantics;
 
 function setBoard() {

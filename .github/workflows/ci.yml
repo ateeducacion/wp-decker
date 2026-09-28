@@ -74,6 +74,13 @@ jobs:
           # a human-readable summary it cannot parse as a coverage report.
           disable_search: true
 
+      # Vitest 5 and @wordpress/scripts 36 need a recent Node 22 (see their
+      # engines), which the runner's preinstalled Node does not guarantee.
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
       # E2E Tests with Playwright
       - name: Install npm dependencies and Playwright
         run: npm install && npx playwright install --with-deps chromium

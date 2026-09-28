@@ -4,8 +4,9 @@
  * @package Decker
  */
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 const source = fs.readFileSync(
 	path.join( __dirname, '../../public/assets/js/task-modal.js' ),

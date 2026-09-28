@@ -8,10 +8,11 @@
  * @package Decker
  */
 
-/* eslint-disable no-undef */
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+/* eslint-disable no-undef */
 
 const SOURCE = fs.readFileSync(
 	path.resolve( __dirname, '../../public/assets/js/decker-heartbeat.js' ),
@@ -83,7 +84,7 @@ describe( 'decker-heartbeat connection banner', () => {
 
 	beforeEach( () => {
 		document.body.innerHTML = '';
-		showConnectionRestoredToast = jest.fn();
+		showConnectionRestoredToast = vi.fn();
 		setConnectionState = compile( 'setConnectionState', {
 			CONNECTION_BANNER_ID: 'decker-connection-banner',
 			deckerString: ( key ) => STRINGS[ key ] || '',
@@ -167,7 +168,7 @@ describe( 'decker-heartbeat connection state priority', () => {
 	 * @return {string} The state handed to setConnectionState.
 	 */
 	function render( problems ) {
-		const setConnectionState = jest.fn();
+		const setConnectionState = vi.fn();
 		compile( 'renderConnectionState', {
 			navigator: { onLine: ! problems.offline },
 			serverDown: !! problems.serverDown,

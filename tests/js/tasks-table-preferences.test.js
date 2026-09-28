@@ -8,8 +8,9 @@
  * @package Decker
  */
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const source = fs.readFileSync(
 	path.join( __dirname, '../../public/app-tasks.php' ),
@@ -283,12 +284,12 @@ describe( 'task list table preferences', () => {
 	} );
 
 	test( 'stays usable when storage is blocked', () => {
-		const getter = jest
+		const getter = vi
 			.spyOn( window.localStorage.__proto__, 'getItem' )
 			.mockImplementation( () => {
 				throw new Error( 'blocked' );
 			} );
-		const setter = jest
+		const setter = vi
 			.spyOn( window.localStorage.__proto__, 'setItem' )
 			.mockImplementation( () => {
 				throw new Error( 'blocked' );
