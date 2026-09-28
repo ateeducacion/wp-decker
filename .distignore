@@ -40,12 +40,12 @@
 /codecov.yml
 /composer.json
 /composer.lock
-/jest.config.js
 /Makefile
 /package.json
 /package-lock.json
 /phpunit.xml.dist
 /renovate.json
+/vitest.config.mjs
 
 # Tests and everything they write
 /artifacts

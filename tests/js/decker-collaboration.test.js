@@ -1,11 +1,37 @@
 /**
  * Unit tests for decker-collaboration.js
  *
- * Tests the DeckerCollaboration IIFE by loading it in jsdom with mocked globals.
- * All CDN dependencies (Yjs, y-webrtc, y-quill, Quill) are mocked at global scope.
+ * Tests the DeckerCollaboration IIFE by importing it in jsdom. Its esm.sh imports
+ * (Yjs, y-webrtc, y-quill) are mocked with vi.mock and delegate to per-test
+ * global mocks; Quill is a plain mock object.
  *
  * @package Decker
  */
+
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+// The module imports its CDN dependencies from esm.sh. Each URL is mocked with
+// a constructor that delegates to the per-test global mock set up in
+// beforeEach, so tests keep asserting on global.Y.Doc, global.WebrtcProvider
+// and global.QuillBinding.
+vi.mock( 'https://esm.sh/yjs@13.6.20', () => ( {
+	// eslint-disable-next-line object-shorthand -- a method is not constructible.
+	Doc: function ( ...args ) {
+		return new globalThis.Y.Doc( ...args );
+	},
+} ) );
+vi.mock( 'https://esm.sh/y-webrtc@10.3.0?deps=yjs@13.6.20', () => ( {
+	// eslint-disable-next-line object-shorthand -- a method is not constructible.
+	WebrtcProvider: function ( ...args ) {
+		return new globalThis.WebrtcProvider( ...args );
+	},
+} ) );
+vi.mock( 'https://esm.sh/y-quill@1.0.0?deps=yjs@13.6.20', () => ( {
+	// eslint-disable-next-line object-shorthand -- a method is not constructible.
+	QuillBinding: function ( ...args ) {
+		return new globalThis.QuillBinding( ...args );
+	},
+} ) );
 
 /* eslint-disable no-undef */
 
@@ -15,14 +41,14 @@
 function createMockQuill() {
 	return {
 		clipboard: {
-			convert: jest.fn( () => ( { ops: [ { insert: 'hello' } ] } ) ),
-			dangerouslyPasteHTML: jest.fn(),
+			convert: vi.fn( () => ( { ops: [ { insert: 'hello' } ] } ) ),
+			dangerouslyPasteHTML: vi.fn(),
 		},
-		getText: jest.fn( () => 'content' ),
-		setContents: jest.fn(),
-		getModule: jest.fn( () => null ), // no cursors module by default
-		on: jest.fn(),
-		off: jest.fn(),
+		getText: vi.fn( () => 'content' ),
+		setContents: vi.fn(),
+		getModule: vi.fn( () => null ), // no cursors module by default
+		on: vi.fn(),
+		off: vi.fn(),
 	};
 }
 
@@ -36,12 +62,12 @@ function createMockYText( initialLength = 0 ) {
 		set length( v ) {
 			length = v;
 		},
-		applyDelta: jest.fn( () => {
+		applyDelta: vi.fn( () => {
 			length = 5;
 		} ),
-		toDelta: jest.fn( () => [ { insert: 'hello' } ] ),
-		insert: jest.fn(),
-		toString: jest.fn( () => 'content' ),
+		toDelta: vi.fn( () => [ { insert: 'hello' } ] ),
+		insert: vi.fn(),
+		toString: vi.fn( () => 'content' ),
 	};
 }
 
@@ -54,16 +80,16 @@ function createMockYMap() {
 		get size() {
 			return store.size;
 		},
-		observe: jest.fn(),
+		observe: vi.fn(),
 	};
 }
 
 /** Build a minimal mock Y.Doc */
 function createMockYDoc( ytext, ymap ) {
 	return {
-		getText: jest.fn( () => ytext ),
-		getMap: jest.fn( () => ymap ),
-		destroy: jest.fn(),
+		getText: vi.fn( () => ytext ),
+		getMap: vi.fn( () => ymap ),
+		destroy: vi.fn(),
 	};
 }
 
@@ -78,26 +104,26 @@ function createMockProvider() {
 
 	const awareness = {
 		clientID: 1,
-		getStates: jest.fn( () => awarenessStates ),
-		setLocalStateField: jest.fn(),
-		on: jest.fn(),
-		off: jest.fn(),
+		getStates: vi.fn( () => awarenessStates ),
+		setLocalStateField: vi.fn(),
+		on: vi.fn(),
+		off: vi.fn(),
 	};
 
 	const provider = {
 		awareness,
 		signalingConns: [],
 		connected: false,
-		on: jest.fn( ( event, cb ) => {
+		on: vi.fn( ( event, cb ) => {
 			if ( ! handlers[ event ] ) {
 				handlers[ event ] = [];
 			}
 			handlers[ event ].push( cb );
 		} ),
-		off: jest.fn(),
-		connect: jest.fn(),
-		disconnect: jest.fn(),
-		destroy: jest.fn(),
+		off: vi.fn(),
+		connect: vi.fn(),
+		disconnect: vi.fn(),
+		destroy: vi.fn(),
 		_fire( event, payload ) {
 			( handlers[ event ] || [] ).forEach( ( cb ) => cb( payload ) );
 		},
@@ -118,30 +144,28 @@ let mockProvider;
 let mockBinding;
 
 beforeEach( () => {
-	jest.useFakeTimers();
+	vi.useFakeTimers();
 
 	mockYText = createMockYText( 0 );
 	mockYMap = createMockYMap();
 	mockYDoc = createMockYDoc( mockYText, mockYMap );
 	mockProvider = createMockProvider();
 	mockQuill = createMockQuill();
-	mockBinding = { destroy: jest.fn() };
+	mockBinding = { destroy: vi.fn() };
 
-	// Set up global mocks expected by the IIFE's import statements.
-	// The IIFE uses ES module imports from esm.sh URLs; we need to
-	// intercept those. Since Jest with jsdom can't natively import
-	// from URLs, we load the file by stripping the imports and
-	// injecting the globals.
-	//
-	// Strategy: read the file, replace the `import` statements with
-	// global assignments, then eval in the jsdom context.
-
-	// Global mock classes
+	// Global mock classes. The module calls them with `new`, which a mock
+	// only supports with a `function` implementation, not an arrow.
 	global.Y = {
-		Doc: jest.fn( () => mockYDoc ),
+		Doc: vi.fn( function () {
+			return mockYDoc;
+		} ),
 	};
-	global.WebrtcProvider = jest.fn( () => mockProvider );
-	global.QuillBinding = jest.fn( () => mockBinding );
+	global.WebrtcProvider = vi.fn( function () {
+		return mockProvider;
+	} );
+	global.QuillBinding = vi.fn( function () {
+		return mockBinding;
+	} );
 
 	// WebSocket constant needed by isSignalingConnected()
 	global.WebSocket = { OPEN: 1 };
@@ -166,8 +190,8 @@ beforeEach( () => {
 } );
 
 afterEach( () => {
-	jest.useRealTimers();
-	jest.restoreAllMocks();
+	vi.useRealTimers();
+	vi.restoreAllMocks();
 	delete global.Y;
 	delete global.WebrtcProvider;
 	delete global.QuillBinding;
@@ -178,37 +202,11 @@ afterEach( () => {
 } );
 
 /**
- * Load the collaboration module by reading the source file, stripping
- * the ESM import lines, and evaluating the resulting IIFE.
+ * Evaluate the collaboration module afresh, with its CDN imports mocked.
  */
-function loadModule() {
-	const fs = require( 'fs' );
-	const path = require( 'path' );
-	const filePath = path.resolve(
-		__dirname,
-		'../../public/assets/js/decker-collaboration.js'
-	);
-	let source = fs.readFileSync( filePath, 'utf8' );
-
-	// Strip the three ESM import statements at the top
-	source = source.replace( /^import .* from ['"]https:\/\/esm\.sh\/.*['"];?\s*$/gm, '' );
-
-	// Replace references used in module scope
-	// Y.Doc, Y.Text, Y.Map → our globals
-	// WebrtcProvider, QuillBinding → our globals
-	// We need to make the Y, WebrtcProvider and QuillBinding available
-	// in the function scope.  They are used like `new Y.Doc()`, etc.
-
-	// Wrap to inject globals
-	const wrappedSource = `
-		var Y = global.Y;
-		var WebrtcProvider = global.WebrtcProvider;
-		var QuillBinding = global.QuillBinding;
-		${ source }
-	`;
-
-	// eslint-disable-next-line no-eval
-	eval( wrappedSource );
+async function loadModule() {
+	vi.resetModules();
+	await import( '../../public/assets/js/decker-collaboration.js' );
 }
 
 /** Helper: init a session and return it */
@@ -220,13 +218,13 @@ function initSession( quill = mockQuill ) {
 // ── Tests ────────────────────────────────────────────────────────────
 
 describe( 'DeckerCollaboration', () => {
-	test( 'clipboard.convert is called with {html: ...} object format', () => {
-		loadModule();
+	test( 'clipboard.convert is called with {html: ...} object format', async () => {
+		await loadModule();
 		const session = initSession();
 
 		// Simulate sync so onSynced fires immediately
 		mockProvider._fire( 'synced', { synced: true } );
-		jest.runAllTimers();
+		vi.runAllTimers();
 
 		const html = '<p>Test content</p>';
 		session.initializeContentWithFallback( html );
@@ -236,14 +234,14 @@ describe( 'DeckerCollaboration', () => {
 		} );
 	} );
 
-	test( 'onSynced fires immediately when already synced', () => {
-		loadModule();
+	test( 'onSynced fires immediately when already synced', async () => {
+		await loadModule();
 		const session = initSession();
 
 		// Trigger sync
 		mockProvider._fire( 'synced', true );
 
-		const callback = jest.fn();
+		const callback = vi.fn();
 		session.onSynced( callback );
 
 		// Should fire synchronously since already synced
@@ -251,10 +249,10 @@ describe( 'DeckerCollaboration', () => {
 	} );
 
 	test( 'onSynced fires via promise when sync completes later', async () => {
-		loadModule();
+		await loadModule();
 		const session = initSession();
 
-		const callback = jest.fn();
+		const callback = vi.fn();
 		session.onSynced( callback );
 
 		// Not yet synced
@@ -269,8 +267,8 @@ describe( 'DeckerCollaboration', () => {
 		expect( callback ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'synced event handler accepts boolean true correctly', () => {
-		loadModule();
+	test( 'synced event handler accepts boolean true correctly', async () => {
+		await loadModule();
 		const session = initSession();
 
 		mockProvider._fire( 'synced', true );
@@ -278,8 +276,8 @@ describe( 'DeckerCollaboration', () => {
 		expect( session.isSynced() ).toBe( true );
 	} );
 
-	test( 'synced event handler accepts {synced: true} object correctly', () => {
-		loadModule();
+	test( 'synced event handler accepts {synced: true} object correctly', async () => {
+		await loadModule();
 		const session = initSession();
 
 		mockProvider._fire( 'synced', { synced: true } );
@@ -287,8 +285,8 @@ describe( 'DeckerCollaboration', () => {
 		expect( session.isSynced() ).toBe( true );
 	} );
 
-	test( 'synced event handler ignores false values', () => {
-		loadModule();
+	test( 'synced event handler ignores false values', async () => {
+		await loadModule();
 		const session = initSession();
 
 		mockProvider._fire( 'synced', false );
@@ -298,12 +296,12 @@ describe( 'DeckerCollaboration', () => {
 		expect( session.isSynced() ).toBe( false );
 	} );
 
-	test( 'destroy() calls clearTimeout for sync and single-user timers', () => {
-		loadModule();
+	test( 'destroy() calls clearTimeout for sync and single-user timers', async () => {
+		await loadModule();
 		const session = initSession();
 
-		const clearTimeoutSpy = jest.spyOn( global, 'clearTimeout' );
-		const clearIntervalSpy = jest.spyOn( global, 'clearInterval' );
+		const clearTimeoutSpy = vi.spyOn( global, 'clearTimeout' );
+		const clearIntervalSpy = vi.spyOn( global, 'clearInterval' );
 
 		session.destroy();
 
@@ -316,8 +314,8 @@ describe( 'DeckerCollaboration', () => {
 		clearIntervalSpy.mockRestore();
 	} );
 
-	test( 'destroy() sets isSynced to true to prevent post-destroy callbacks', () => {
-		loadModule();
+	test( 'destroy() sets isSynced to true to prevent post-destroy callbacks', async () => {
+		await loadModule();
 		const session = initSession();
 
 		expect( session.isSynced() ).toBe( false );
@@ -326,20 +324,20 @@ describe( 'DeckerCollaboration', () => {
 	} );
 
 	test( 'maxSingleUserChecks exhaustion resolves sync promise', async () => {
-		loadModule();
+		await loadModule();
 
 		// Make signaling appear NOT connected so single-user detection
 		// can't trigger early (needs signalingOk === true for early detect)
 		mockProvider.signalingConns = [];
 
 		const session = initSession();
-		const callback = jest.fn();
+		const callback = vi.fn();
 		session.onSynced( callback );
 
 		// Run through all single-user checks (100ms each) + initial delay. The probe
 		// now waits a longer quiet window (~2s ceiling) before proceeding when alone.
 		for ( let i = 0; i <= 22; i++ ) {
-			jest.advanceTimersByTime( 100 );
+			vi.advanceTimersByTime( 100 );
 			await Promise.resolve(); // flush microtasks
 		}
 
@@ -347,12 +345,12 @@ describe( 'DeckerCollaboration', () => {
 		expect( callback ).toHaveBeenCalledTimes( 1 );
 	} );
 
-	test( 'initializeContentWithFallback does nothing when ytext already has content', () => {
+	test( 'initializeContentWithFallback does nothing when ytext already has content', async () => {
 		// Make ytext have existing content
 		mockYText = createMockYText( 10 );
 		mockYDoc = createMockYDoc( mockYText, mockYMap );
 
-		loadModule();
+		await loadModule();
 		const session = initSession();
 
 		// Trigger sync
@@ -365,8 +363,8 @@ describe( 'DeckerCollaboration', () => {
 		expect( mockYText.applyDelta ).not.toHaveBeenCalled();
 	} );
 
-	test( 'initializeContentWithFallback populates ytext when empty', () => {
-		loadModule();
+	test( 'initializeContentWithFallback populates ytext when empty', async () => {
+		await loadModule();
 		const session = initSession();
 
 		// Trigger sync
@@ -384,7 +382,7 @@ describe( 'DeckerCollaboration', () => {
 } );
 
 // ── Race-condition regression guards (enter/leave content replacement) ──
-describe( 'DeckerCollaboration seeding race guards', () => {
+describe( 'DeckerCollaboration seeding race guards', async () => {
 	/** Make the signaling socket appear OPEN. */
 	function connectSignaling() {
 		mockProvider.signalingConns = [ { ws: { readyState: 1 } } ];
@@ -395,8 +393,8 @@ describe( 'DeckerCollaboration seeding race guards', () => {
 		mockProvider._awarenessStates.set( clientId, { user: { name: 'Peer' } } );
 	}
 
-	test( 'does NOT seed DB content when a peer is present in awareness', () => {
-		loadModule();
+	test( 'does NOT seed DB content when a peer is present in awareness', async () => {
+		await loadModule();
 		const session = initSession();
 
 		// A peer is already in the room (its awareness is visible).
@@ -413,8 +411,8 @@ describe( 'DeckerCollaboration seeding race guards', () => {
 		expect( mockYText.insert ).not.toHaveBeenCalled();
 	} );
 
-	test( 'does NOT seed DB content once a peers event has fired (peerEverSeen latch)', () => {
-		loadModule();
+	test( 'does NOT seed DB content once a peers event has fired (peerEverSeen latch)', async () => {
+		await loadModule();
 		const session = initSession();
 
 		// y-webrtc reports a connected peer before the Yjs doc finishes syncing.
@@ -427,8 +425,8 @@ describe( 'DeckerCollaboration seeding race guards', () => {
 		expect( mockYText.applyDelta ).not.toHaveBeenCalled();
 	} );
 
-	test( 'still seeds DB content when genuinely alone (no peers)', () => {
-		loadModule();
+	test( 'still seeds DB content when genuinely alone (no peers)', async () => {
+		await loadModule();
 		const session = initSession();
 
 		mockProvider._fire( 'synced', { synced: true } );
@@ -442,28 +440,28 @@ describe( 'DeckerCollaboration seeding race guards', () => {
 	} );
 
 	test( 'does NOT declare single-user prematurely (~300ms); waits the settle window', async () => {
-		loadModule();
+		await loadModule();
 		connectSignaling();
 
 		const session = initSession();
 
 		// Advance ~300ms (the old premature threshold) — must NOT be synced yet.
 		for ( let i = 0; i < 4; i++ ) {
-			jest.advanceTimersByTime( 100 );
+			vi.advanceTimersByTime( 100 );
 			await Promise.resolve();
 		}
 		expect( session.isSynced() ).toBe( false );
 
 		// Advance through the full quiet window — now a genuinely-alone user resolves.
 		for ( let i = 0; i < 14; i++ ) {
-			jest.advanceTimersByTime( 100 );
+			vi.advanceTimersByTime( 100 );
 			await Promise.resolve();
 		}
 		expect( session.isSynced() ).toBe( true );
 	} );
 
 	test( 'does NOT declare single-user while a peer is present; waits for real sync', async () => {
-		loadModule();
+		await loadModule();
 		connectSignaling();
 		addAwarenessPeer( 2 ); // peer present from the start
 
@@ -472,7 +470,7 @@ describe( 'DeckerCollaboration seeding race guards', () => {
 		// Even well past the single-user window, presence of a peer prevents the
 		// premature single-user resolution (sync must come from the peer).
 		for ( let i = 0; i < 20; i++ ) {
-			jest.advanceTimersByTime( 100 );
+			vi.advanceTimersByTime( 100 );
 			await Promise.resolve();
 		}
 		expect( session.isSynced() ).toBe( false );

@@ -1,10 +1,12 @@
 /**
- * Placeholder test to verify Jest is working.
+ * Placeholder test to verify Vitest is working.
  *
  * @package Decker
  */
+
+import { describe, expect, test } from 'vitest';
 describe( 'Decker JS test setup', () => {
-	test( 'Jest runs in jsdom environment', () => {
+	test( 'Vitest runs in jsdom environment', () => {
 		expect( typeof document ).toBe( 'object' );
 	} );
 } );

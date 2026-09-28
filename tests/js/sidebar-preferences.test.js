@@ -4,7 +4,9 @@
  * @package
  */
 
-const preferences = require( '../../public/assets/js/sidebar-preferences.js' );
+import { beforeEach, describe, expect, test } from 'vitest';
+
+import preferences from '../../public/assets/js/sidebar-preferences.js';
 
 /**
  * Render the sidebar elements managed by the preferences module.

@@ -4,6 +4,10 @@
  * @package Decker
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
 function extractFunctionSource( source, functionName ) {
 	const start = source.indexOf( `function ${ functionName }` );
 	if ( start === -1 ) {
@@ -35,14 +39,14 @@ function createMockFormFields( initial = {} ) {
 
 	return {
 		get: ( key ) => store.get( key ),
-		set: jest.fn( ( key, value ) => store.set( key, value ) ),
+		set: vi.fn( ( key, value ) => store.set( key, value ) ),
 		get size() {
 			return store.size;
 		},
-		observe: jest.fn( ( callback ) => {
+		observe: vi.fn( ( callback ) => {
 			observer = callback;
 		} ),
-		unobserve: jest.fn( ( callback ) => {
+		unobserve: vi.fn( ( callback ) => {
 			if ( observer === callback ) {
 				observer = null;
 			}
@@ -70,16 +74,16 @@ function createMockAwareness() {
 
 	return {
 		clientID: 1,
-		getStates: jest.fn( () => states ),
-		on: jest.fn( ( event, callback ) => {
+		getStates: vi.fn( () => states ),
+		on: vi.fn( ( event, callback ) => {
 			handlers.set( event, callback );
 		} ),
-		off: jest.fn( ( event, callback ) => {
+		off: vi.fn( ( event, callback ) => {
 			if ( handlers.get( event ) === callback ) {
 				handlers.delete( event );
 			}
 		} ),
-		setLocalStateField: jest.fn(),
+		setLocalStateField: vi.fn(),
 		emit( event ) {
 			const handler = handlers.get( event );
 			if ( handler ) {
@@ -134,8 +138,6 @@ describe( 'Task card collaboration cleanup', () => {
 	let initFormFieldsCollaboration;
 
 	beforeEach( () => {
-		const fs = require( 'fs' );
-		const path = require( 'path' );
 		const taskCardFile = path.resolve(
 			__dirname,
 			'../../public/assets/js/task-card.js'
@@ -190,11 +192,11 @@ describe( 'Task card collaboration cleanup', () => {
 			// stay synchronous and deterministic in this focused unit test.
 			( callback ) => {
 				const immediateCallback = ( ...args ) => callback( ...args );
-				immediateCallback.cancel = jest.fn();
+				immediateCallback.cancel = vi.fn();
 				return immediateCallback;
 			},
-			jest.fn(),
-			jest.fn(),
+			vi.fn(),
+			vi.fn(),
 			( element ) => {
 				const highLabel = document.getElementById( 'high-label' );
 				if ( highLabel ) {
@@ -206,7 +208,7 @@ describe( 'Task card collaboration cleanup', () => {
 
 	afterEach( () => {
 		document.body.innerHTML = '';
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	} );
 
 	test( 'destroy unregisters observers and removes local field listeners', () => {
@@ -216,9 +218,9 @@ describe( 'Task card collaboration cleanup', () => {
 		const session = {
 			formFields,
 			awareness,
-			onSynced: jest.fn( ( callback ) => callback() ),
-			setActiveField: jest.fn(),
-			clearActiveField: jest.fn(),
+			onSynced: vi.fn( ( callback ) => callback() ),
+			setActiveField: vi.fn(),
+			clearActiveField: vi.fn(),
 		};
 
 		const binding = initFormFieldsCollaboration( session, context );
@@ -256,7 +258,7 @@ describe( 'Task card collaboration cleanup', () => {
 	} );
 
 	test( 'destroy prevents pending remote updates from mutating the torn-down DOM', () => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 
 		const context = setupDOM();
 		const formFields = createMockFormFields( { title: 'Remote title' } );
@@ -264,9 +266,9 @@ describe( 'Task card collaboration cleanup', () => {
 		const session = {
 			formFields,
 			awareness,
-			onSynced: jest.fn( ( callback ) => callback() ),
-			setActiveField: jest.fn(),
-			clearActiveField: jest.fn(),
+			onSynced: vi.fn( ( callback ) => callback() ),
+			setActiveField: vi.fn(),
+			clearActiveField: vi.fn(),
 		};
 
 		const binding = initFormFieldsCollaboration( session, context );
@@ -280,14 +282,14 @@ describe( 'Task card collaboration cleanup', () => {
 
 		formFields.emit( [ 'title' ] );
 		awareness.emit( 'change' );
-		jest.runAllTimers();
+		vi.runAllTimers();
 
 		expect( titleInput.value ).toBe( 'Stable after destroy' );
 		expect(
 			context.querySelectorAll( '.decker-field-editor' )
 		).toHaveLength( 0 );
 
-		jest.useRealTimers();
+		vi.useRealTimers();
 	} );
 
 	test( 'does NOT seed form fields from the snapshot when a peer is present', () => {
@@ -298,9 +300,9 @@ describe( 'Task card collaboration cleanup', () => {
 			formFields,
 			awareness,
 			hasPeers: () => true,
-			onSynced: jest.fn( ( callback ) => callback() ),
-			setActiveField: jest.fn(),
-			clearActiveField: jest.fn(),
+			onSynced: vi.fn( ( callback ) => callback() ),
+			setActiveField: vi.fn(),
+			clearActiveField: vi.fn(),
 		};
 
 		initFormFieldsCollaboration( session, context );
@@ -315,20 +317,20 @@ describe( 'Task card collaboration cleanup', () => {
 		const formFields = createMockFormFields(); // empty
 		const awareness = {
 			clientID: 1,
-			getStates: jest.fn(
+			getStates: vi.fn(
 				() => new Map( [ [ 1, { user: { name: 'Me' } } ] ] )
 			),
-			on: jest.fn(),
-			off: jest.fn(),
-			setLocalStateField: jest.fn(),
+			on: vi.fn(),
+			off: vi.fn(),
+			setLocalStateField: vi.fn(),
 		};
 		const session = {
 			formFields,
 			awareness,
 			hasPeers: () => false,
-			onSynced: jest.fn( ( callback ) => callback() ),
-			setActiveField: jest.fn(),
-			clearActiveField: jest.fn(),
+			onSynced: vi.fn( ( callback ) => callback() ),
+			setActiveField: vi.fn(),
+			clearActiveField: vi.fn(),
 		};
 
 		initFormFieldsCollaboration( session, context );

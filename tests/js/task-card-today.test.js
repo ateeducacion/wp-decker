@@ -7,10 +7,11 @@
  * @package Decker
  */
 
-/* eslint-disable no-undef */
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+/* eslint-disable no-undef */
 
 /**
  * Extract a top-level function definition from a source string.
@@ -113,8 +114,8 @@ describe( 'task-card today quick action', () => {
 		showTodayCheckbox = compile( 'showTodayCheckbox', {} );
 		enterDirtyEditMode = compile( 'enterDirtyEditMode', { showTodayCheckbox } );
 		window.deckerHasUnsavedChanges = false;
-		global.fetch = jest.fn();
-		global.alert = jest.fn();
+		global.fetch = vi.fn();
+		global.alert = vi.fn();
 		global.wpApiSettings = { nonce: 'nonce-123', root: 'http://x/wp-json/' };
 	} );
 
@@ -185,8 +186,8 @@ describe( 'task-card today quick action', () => {
 		} );
 
 		const setTodayQuickActionLoading = compile( 'setTodayQuickActionLoading', { strings: STRINGS } );
-		const onTodayQuickActionSuccess = jest.fn();
-		const notifyTodayResult = jest.fn();
+		const onTodayQuickActionSuccess = vi.fn();
+		const notifyTodayResult = vi.fn();
 		const submitTodayQuickAction = compile( 'submitTodayQuickAction', {
 			getTaskId: () => '5',
 			deckerRestUrl: 'http://x/wp-json/decker/v1/',
@@ -225,8 +226,8 @@ describe( 'task-card today quick action', () => {
 			deckerRestUrl: 'http://x/wp-json/decker/v1/',
 			wpApiSettings: window.wpApiSettings,
 			setTodayQuickActionLoading: compile( 'setTodayQuickActionLoading', { strings: STRINGS } ),
-			onTodayQuickActionSuccess: jest.fn(),
-			notifyTodayResult: jest.fn(),
+			onTodayQuickActionSuccess: vi.fn(),
+			notifyTodayResult: vi.fn(),
 			strings: STRINGS,
 		} );
 		const initializeTodayQuickAction = compile( 'initializeTodayQuickAction', { submitTodayQuickAction } );
@@ -249,8 +250,8 @@ describe( 'task-card today quick action', () => {
 			deckerRestUrl: 'http://x/wp-json/decker/v1/',
 			wpApiSettings: window.wpApiSettings,
 			setTodayQuickActionLoading: compile( 'setTodayQuickActionLoading', { strings: STRINGS } ),
-			onTodayQuickActionSuccess: jest.fn(),
-			notifyTodayResult: jest.fn(),
+			onTodayQuickActionSuccess: vi.fn(),
+			notifyTodayResult: vi.fn(),
 			strings: STRINGS,
 		} );
 		const initializeTodayQuickAction = compile( 'initializeTodayQuickAction', { submitTodayQuickAction } );
@@ -269,7 +270,7 @@ describe( 'task-card today quick action', () => {
 		const context = buildDom( { marked: false } );
 		window.deckerHasUnsavedChanges = true;
 
-		const submitTodayQuickAction = jest.fn();
+		const submitTodayQuickAction = vi.fn();
 		const initializeTodayQuickAction = compile( 'initializeTodayQuickAction', { submitTodayQuickAction } );
 		initializeTodayQuickAction( context );
 		context.querySelector( '#task-today-quick' ).click();
@@ -279,12 +280,12 @@ describe( 'task-card today quick action', () => {
 
 	test( 'success toggles the button in place and keeps the card open', () => {
 		const context = buildDom( { marked: false } );
-		window.deckerReleaseActiveTaskLock = jest.fn();
+		window.deckerReleaseActiveTaskLock = vi.fn();
 		window.deckerHasUnsavedChanges = true; // ensure it gets reset
 		window.deckerTodayChangedInSession = false;
-		const notifyTodayResult = jest.fn();
+		const notifyTodayResult = vi.fn();
 		const dispatched = [];
-		document.dispatchEvent = jest.fn( ( e ) => dispatched.push( e ) );
+		document.dispatchEvent = vi.fn( ( e ) => dispatched.push( e ) );
 
 		const updateTodayQuickButton = compile( 'updateTodayQuickButton', { strings: STRINGS } );
 		const onTodayQuickActionSuccess = compile( 'onTodayQuickActionSuccess', {
@@ -313,9 +314,9 @@ describe( 'task-card today quick action', () => {
 		const context = buildDom( { marked: false } );
 		global.fetch.mockResolvedValue( { ok: false, json: () => Promise.resolve( { success: false, message: 'Nope' } ) } );
 
-		window.deckerReleaseActiveTaskLock = jest.fn();
-		const onTodayQuickActionSuccess = jest.fn();
-		const notifyTodayResult = jest.fn();
+		window.deckerReleaseActiveTaskLock = vi.fn();
+		const onTodayQuickActionSuccess = vi.fn();
+		const notifyTodayResult = vi.fn();
 		const setTodayQuickActionLoading = compile( 'setTodayQuickActionLoading', { strings: STRINGS } );
 		const submitTodayQuickAction = compile( 'submitTodayQuickAction', {
 			getTaskId: () => '5',

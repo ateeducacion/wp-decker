@@ -7,10 +7,11 @@
  * @package Decker
  */
 
-/* eslint-disable no-undef */
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const fs = require( 'fs' );
-const path = require( 'path' );
+/* eslint-disable no-undef */
 
 /**
  * Extract a top-level function definition from a source string.
@@ -118,7 +119,7 @@ describe( 'task-card lock UI', () => {
 			quill: null,
 			taskEditor: null,
 		} );
-		global.alert = jest.fn();
+		global.alert = vi.fn();
 	} );
 
 	test( 'reads the serialized lock state from a container that holds the form', () => {
@@ -198,13 +199,13 @@ describe( 'task-card lock UI', () => {
 		const lock = { post_id: 9, locked: true, can_take_over: true, message: 'locked' };
 		const context = buildDom( lock, true );
 
-		const lockRequest = jest.fn( () =>
+		const lockRequest = vi.fn( () =>
 			Promise.resolve( {
 				ok: true,
 				json: () => Promise.resolve( { owned_by_current_user: true } ),
 			} )
 		);
-		const reloadTaskCard = jest.fn();
+		const reloadTaskCard = vi.fn();
 
 		const wireTakeOverButton = compile( 'wireTakeOverButton', {
 			strings: STRINGS,
@@ -225,13 +226,13 @@ describe( 'task-card lock UI', () => {
 		const lock = { post_id: 9, locked: true, can_take_over: true, message: 'locked' };
 		const context = buildDom( lock, true );
 
-		const lockRequest = jest.fn( () =>
+		const lockRequest = vi.fn( () =>
 			Promise.resolve( {
 				ok: false,
 				json: () => Promise.resolve( { code: 'decker_task_cannot_edit' } ),
 			} )
 		);
-		const reloadTaskCard = jest.fn();
+		const reloadTaskCard = vi.fn();
 
 		const wireTakeOverButton = compile( 'wireTakeOverButton', {
 			strings: STRINGS,
@@ -260,7 +261,7 @@ describe( 'task-card lock UI', () => {
 			disableEditingControls,
 			strings: STRINGS,
 			getTaskId: () => '4',
-			reloadTaskCard: jest.fn(),
+			reloadTaskCard: vi.fn(),
 		} );
 
 		handleLockLost( context, { owner: { id: 2, display_name: 'Bruno' } } );
@@ -300,7 +301,7 @@ describe( 'task-card lock UI', () => {
 			disableEditingControls,
 			strings: STRINGS,
 			getTaskId: () => '4',
-			reloadTaskCard: jest.fn(),
+			reloadTaskCard: vi.fn(),
 		} );
 		const isTaskLockConflictResponse = compile( 'isTaskLockConflictResponse', {} );
 
