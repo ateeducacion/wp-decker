@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "erseco/mime-mail-parser",
-            "version": "v1.1.1",
+            "version": "v1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/erseco/mime-mail-parser.git",
-                "reference": "7e81f9bffdf017f25dc6e8abc84e91f4e1f20d3d"
+                "reference": "70da60e1edf26dd3e03be5429fa91ef3145b0ceb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/erseco/mime-mail-parser/zipball/7e81f9bffdf017f25dc6e8abc84e91f4e1f20d3d",
-                "reference": "7e81f9bffdf017f25dc6e8abc84e91f4e1f20d3d",
+                "url": "https://api.github.com/repos/erseco/mime-mail-parser/zipball/70da60e1edf26dd3e03be5429fa91ef3145b0ceb",
+                "reference": "70da60e1edf26dd3e03be5429fa91ef3145b0ceb",
                 "shasum": ""
             },
             "require": {
@@ -62,7 +62,7 @@
                 "issues": "https://github.com/erseco/mime-mail-parser/issues",
                 "source": "https://github.com/erseco/mime-mail-parser"
             },
-            "time": "2026-09-19T22:46:06+00:00"
+            "time": "2026-09-28T15:44:56+00:00"
         }
     ],
     "packages-dev": [

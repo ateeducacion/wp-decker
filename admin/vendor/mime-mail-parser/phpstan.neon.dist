@@ -1,9 +1,0 @@
-parameters:
-    level: max
-    paths:
-        - src
-    excludePaths:
-        - vendor
-    # Target the minimum supported runtime while analysis may run on newer PHP.
-    phpVersion: 80200
-    treatPhpDocTypesAsCertain: false
