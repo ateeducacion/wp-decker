@@ -10,7 +10,9 @@
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
-namespace Erseco;
+declare(strict_types=1);
+
+namespace Erseco\MimeMailParser;
 
 /**
  * MessagePart class for handling individual parts of an email message.
@@ -28,16 +30,23 @@ class MessagePart implements \JsonSerializable
     /** @var array<string, string> */
     protected array $headers;
 
+    protected ?ParserOptions $options;
+
     /**
      * Create a new MessagePart instance.
      *
      * @param string                $content The content of the message part.
      * @param array<string, string> $headers The headers associated with this part.
+     * @param ParserOptions|null    $options Optional parser limits for nested messages.
      */
-    public function __construct(string $content, array $headers = [])
-    {
+    public function __construct(
+        string $content,
+        array $headers = [],
+        ?ParserOptions $options = null
+    ) {
         $this->content = $content;
         $this->headers = $headers;
+        $this->options = $options;
     }
 
     /**
@@ -48,6 +57,60 @@ class MessagePart implements \JsonSerializable
     public function getContentType(): string
     {
         return $this->getStringHeader('Content-Type');
+    }
+
+    /**
+     * Get the normalized MIME media type without parameters.
+     *
+     * @return string Lowercase media type or an empty string.
+     */
+    public function getMediaType(): string
+    {
+        $contentType = $this->getContentType();
+
+        if ($contentType === '') {
+            return '';
+        }
+
+        return strtolower(trim(explode(';', $contentType, 2)[0]));
+    }
+
+    /**
+     * Get decoded Content-Type parameters.
+     *
+     * @return array<string, string>
+     */
+    public function getContentTypeParameters(): array
+    {
+        return $this->getHeaderParameters('Content-Type');
+    }
+
+    /**
+     * Get the normalized Content-Disposition token.
+     *
+     * @return string|null Lowercase disposition or null when absent.
+     */
+    public function getDisposition(): ?string
+    {
+        $disposition = $this->getStringHeader('Content-Disposition');
+
+        if ($disposition === '') {
+            return null;
+        }
+
+        $value = strtolower(trim(explode(';', $disposition, 2)[0]));
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
+     * Get decoded Content-Disposition parameters.
+     *
+     * @return array<string, string>
+     */
+    public function getDispositionParameters(): array
+    {
+        return $this->getHeaderParameters('Content-Disposition');
     }
 
     /**
@@ -155,7 +218,7 @@ class MessagePart implements \JsonSerializable
      */
     protected function isTextualPart(): bool
     {
-        return str_starts_with(strtolower($this->getContentType()), 'text/');
+        return str_starts_with($this->getMediaType(), 'text/');
     }
 
     /**
@@ -179,7 +242,7 @@ class MessagePart implements \JsonSerializable
      */
     public function isHtml(): bool
     {
-        return str_starts_with(strtolower($this->getContentType()), 'text/html');
+        return $this->getMediaType() === 'text/html';
     }
 
     /**
@@ -189,7 +252,7 @@ class MessagePart implements \JsonSerializable
      */
     public function isText(): bool
     {
-        return str_starts_with(strtolower($this->getContentType()), 'text/plain');
+        return $this->getMediaType() === 'text/plain';
     }
 
     /**
@@ -199,7 +262,38 @@ class MessagePart implements \JsonSerializable
      */
     public function isImage(): bool
     {
-        return str_starts_with(strtolower($this->getContentType()), 'image/');
+        return str_starts_with($this->getMediaType(), 'image/');
+    }
+
+    /**
+     * Check if this part contains an attached RFC 822 message.
+     *
+     * @return bool
+     */
+    public function isMessage(): bool
+    {
+        return $this->getMediaType() === 'message/rfc822';
+    }
+
+    /**
+     * Parse an attached RFC 822 message.
+     *
+     * @param ParserOptions|null $options Optional parser limits. When omitted,
+     *                                    the parent message limits are reused.
+     *
+     * @return Message|null Parsed message or null for non-message parts.
+     */
+    public function getMessage(?ParserOptions $options = null): ?Message
+    {
+        if (!$this->isMessage()) {
+            return null;
+        }
+
+        return Message::fromString(
+            $this->getContent(),
+            false,
+            $options ?? $this->options
+        );
     }
 
     /**
@@ -209,10 +303,7 @@ class MessagePart implements \JsonSerializable
      */
     public function isInline(): bool
     {
-        return str_starts_with(
-            strtolower(ltrim($this->getStringHeader('Content-Disposition'))),
-            'inline'
-        );
+        return $this->getDisposition() === 'inline';
     }
 
     /**
@@ -222,9 +313,9 @@ class MessagePart implements \JsonSerializable
      */
     public function isAttachment(): bool
     {
-        $disposition = strtolower(ltrim($this->getStringHeader('Content-Disposition')));
+        $disposition = $this->getDisposition();
 
-        if (str_starts_with($disposition, 'attachment')) {
+        if ($disposition === 'attachment') {
             return true;
         }
 
@@ -301,6 +392,49 @@ class MessagePart implements \JsonSerializable
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
+    }
+
+    /**
+     * Extract all decoded parameters from a MIME header.
+     *
+     * Extended and continued RFC 2231 forms are collapsed to their base names.
+     *
+     * @param string $headerName Header name.
+     *
+     * @return array<string, string>
+     */
+    protected function getHeaderParameters(string $headerName): array
+    {
+        $header = $this->getHeader($headerName, '');
+
+        if (!is_string($header) || $header === '') {
+            return [];
+        }
+
+        $pattern = '/(?:^|;)\s*(?<name>[!#$%&\'*+\\-.^_\x60|~0-9A-Za-z]+)\s*=/';
+        preg_match_all($pattern, $header, $matches);
+
+        $parameters = [];
+
+        foreach ($matches['name'] as $rawName) {
+            $name = strtolower($rawName);
+
+            if (preg_match('/^(?<base>.+?)\*(?:\d+)?\*?$/', $name, $parameterMatch)) {
+                $name = $parameterMatch['base'];
+            }
+
+            if (array_key_exists($name, $parameters)) {
+                continue;
+            }
+
+            $value = $this->getHeaderParameter($headerName, $name);
+
+            if ($value !== null) {
+                $parameters[$name] = $value;
+            }
+        }
+
+        return $parameters;
     }
 
     /**

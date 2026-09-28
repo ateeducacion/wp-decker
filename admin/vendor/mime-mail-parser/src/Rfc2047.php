@@ -10,7 +10,9 @@
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
-namespace Erseco;
+declare(strict_types=1);
+
+namespace Erseco\MimeMailParser;
 
 /**
  * Decode RFC 2047 encoded words without requiring mbstring or iconv.

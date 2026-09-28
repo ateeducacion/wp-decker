@@ -9,6 +9,7 @@
         "email",
         "email parser"
     ],
+    "homepage": "https://github.com/erseco/mime-mail-parser",
     "license": "MIT",
     "authors": [
         {
@@ -17,18 +18,26 @@
             "role": "Developer"
         }
     ],
+    "support": {
+        "issues": "https://github.com/erseco/mime-mail-parser/issues",
+        "source": "https://github.com/erseco/mime-mail-parser"
+    },
     "scripts": {
         "test": "vendor/bin/pest",
         "test-with-warnings": "vendor/bin/pest --display-warnings",
-        "test-coverage": "mkdir -p coverage && vendor/bin/pest --coverage --min=75 --coverage-clover=coverage/clover.xml",
+        "test-coverage": "mkdir -p coverage && vendor/bin/pest --coverage --min=90 --coverage-clover=coverage/clover.xml",
         "lint": "phpcs --standard=phpcs.xml.dist --warning-severity=0",
         "fix": "phpcbf --standard=phpcs.xml.dist --warning-severity=0",
-        "analyse": "phpstan analyse --memory-limit=512M"
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "bench": "php bench/benchmark.php"
     },
     "autoload": {
         "psr-4": {
-            "Erseco\\": "src/"
-        }
+            "Erseco\\MimeMailParser\\": "src/"
+        },
+        "files": [
+            "src/LegacyAliases.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
@@ -36,7 +45,7 @@
         }
     },
     "require": {
-        "php": "^8.0"
+        "php": "^8.2"
     },
     "config": {
         "sort-packages": true,
@@ -45,7 +54,7 @@
         }
     },
     "require-dev": {
-        "pestphp/pest": "^1.23.1 || 2.35.1 || ^3.0 || ^4.0",
+        "pestphp/pest": "^1.23.1 || ^2.35.1 || ^3.0 || ^4.0",
         "phpstan/phpstan": "^2.0",
         "squizlabs/php_codesniffer": "^3.13 || ^4.0"
     }

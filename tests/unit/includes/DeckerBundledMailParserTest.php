@@ -75,6 +75,14 @@ class DeckerBundledMailParserTest extends Decker_Test_Base {
 			'Erseco\ParserContext',
 			'Erseco\ParserOptions',
 			'Erseco\ParserLimitExceededException',
+			'Erseco\Rfc2047',
+			'Erseco\MimeMailParser\Message',
+			'Erseco\MimeMailParser\MessagePart',
+			'Erseco\MimeMailParser\ParserContext',
+			'Erseco\MimeMailParser\ParserOptions',
+			'Erseco\MimeMailParser\ParserLimitExceededException',
+			'Erseco\MimeMailParser\Rfc2047',
+			'Erseco\MimeMailParser\Address',
 		);
 
 		$checks = '';

@@ -10,7 +10,9 @@
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
-namespace Erseco;
+declare(strict_types=1);
+
+namespace Erseco\MimeMailParser;
 
 /**
  * Message class for parsing email messages.
@@ -117,23 +119,69 @@ class Message implements \JsonSerializable
             throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
         }
 
-        $options = $options ?? ParserOptions::defaults();
-        $fileSize = filesize($path);
+        $handle = fopen($path, 'rb');
 
-        if ($fileSize !== false) {
-            if ($fileSize > $options->maxMessageBytes) {
-                throw new ParserLimitExceededException(
-                    'maxMessageBytes',
-                    $options->maxMessageBytes,
-                    $fileSize
-                );
-            }
+        if ($handle === false) {
+            throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
         }
 
-        $message = file_get_contents($path);
+        try {
+            return self::fromStream($handle, $ignoreSignature, $options);
+        } finally {
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Create a Message instance from a readable stream.
+     *
+     * The caller retains ownership of the stream. Its current position is used
+     * as the start of the message and the stream is left open.
+     *
+     * @param resource           $stream          Readable stream resource.
+     * @param bool               $ignoreSignature Whether to ignore message signatures.
+     * @param ParserOptions|null $options         Optional safety limits.
+     *
+     * @throws \InvalidArgumentException      When the supplied value is not a stream resource.
+     * @throws \RuntimeException              When the stream cannot be read.
+     * @throws ParserLimitExceededException   When the stream exceeds maxMessageBytes.
+     *
+     * @return self
+     */
+    public static function fromStream(
+        $stream,
+        bool $ignoreSignature = false,
+        ?ParserOptions $options = null
+    ): self {
+        if (!is_resource($stream) || get_resource_type($stream) !== 'stream') {
+            throw new \InvalidArgumentException('Expected a readable stream resource.');
+        }
+
+        $metadata = stream_get_meta_data($stream);
+        $mode = $metadata['mode'];
+
+        if ($mode !== '' && !strpbrk($mode, 'r+')) {
+            throw new \InvalidArgumentException('Expected a readable stream resource.');
+        }
+
+        $options = $options ?? ParserOptions::defaults();
+        $readLimit = $options->maxMessageBytes < PHP_INT_MAX
+            ? $options->maxMessageBytes + 1
+            : $options->maxMessageBytes;
+        $message = stream_get_contents($stream, $readLimit);
 
         if ($message === false) {
-            throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
+            throw new \RuntimeException('Unable to read email message from stream.');
+        }
+
+        $messageSize = strlen($message);
+
+        if ($messageSize > $options->maxMessageBytes) {
+            throw new ParserLimitExceededException(
+                'maxMessageBytes',
+                $options->maxMessageBytes,
+                $messageSize
+            );
         }
 
         return new self($message, $ignoreSignature, $options);
@@ -227,6 +275,16 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * Get the Message-ID without angle brackets.
+     *
+     * @return string Message ID.
+     */
+    public function getMessageId(): string
+    {
+        return $this->getId();
+    }
+
+    /**
      * Get the message subject.
      *
      * @return string Subject.
@@ -254,6 +312,26 @@ class Message implements \JsonSerializable
     public function getTo(): string
     {
         return $this->getStringHeader('To');
+    }
+
+    /**
+     * Get the Cc header.
+     *
+     * @return string Cc header.
+     */
+    public function getCc(): string
+    {
+        return $this->getStringHeader('Cc');
+    }
+
+    /**
+     * Get the Bcc header.
+     *
+     * @return string Bcc header.
+     */
+    public function getBcc(): string
+    {
+        return $this->getStringHeader('Bcc');
     }
 
     /**
@@ -319,6 +397,26 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * Get the Cc header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded Cc header.
+     */
+    public function getDecodedCc(): string
+    {
+        return $this->getDecodedStringHeader('Cc');
+    }
+
+    /**
+     * Get the Bcc header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded Bcc header.
+     */
+    public function getDecodedBcc(): string
+    {
+        return $this->getDecodedStringHeader('Bcc');
+    }
+
+    /**
      * Get the Reply-To header with RFC 2047 decoding applied.
      *
      * @return string Decoded Reply-To header.
@@ -326,6 +424,56 @@ class Message implements \JsonSerializable
     public function getDecodedReplyTo(): string
     {
         return $this->getDecodedStringHeader('Reply-To');
+    }
+
+    /**
+     * Get structured From addresses.
+     *
+     * @return list<Address>
+     */
+    public function getFromAddresses(): array
+    {
+        return Address::parseList($this->getDecodedFrom());
+    }
+
+    /**
+     * Get structured To addresses.
+     *
+     * @return list<Address>
+     */
+    public function getToAddresses(): array
+    {
+        return Address::parseList($this->getDecodedTo());
+    }
+
+    /**
+     * Get structured Cc addresses.
+     *
+     * @return list<Address>
+     */
+    public function getCcAddresses(): array
+    {
+        return Address::parseList($this->getDecodedCc());
+    }
+
+    /**
+     * Get structured Bcc addresses.
+     *
+     * @return list<Address>
+     */
+    public function getBccAddresses(): array
+    {
+        return Address::parseList($this->getDecodedBcc());
+    }
+
+    /**
+     * Get structured Reply-To addresses.
+     *
+     * @return list<Address>
+     */
+    public function getReplyToAddresses(): array
+    {
+        return Address::parseList($this->getDecodedReplyTo());
     }
 
     /**
@@ -403,6 +551,26 @@ class Message implements \JsonSerializable
                 static fn (MessagePart $part): bool => $part->isAttachment()
             )
         );
+    }
+
+    /**
+     * Get attached RFC 822 messages.
+     *
+     * @return list<Message>
+     */
+    public function getAttachedMessages(): array
+    {
+        $messages = [];
+
+        foreach ($this->parts as $part) {
+            $message = $part->getMessage($this->options);
+
+            if ($message !== null) {
+                $messages[] = $message;
+            }
+        }
+
+        return $messages;
     }
 
     /**
@@ -545,7 +713,7 @@ class Message implements \JsonSerializable
             $this->context->partCount
         );
 
-        $part = new MessagePart($body, $headers);
+        $part = new MessagePart($body, $headers, $this->options);
         $decodedSize = strlen($part->getContent());
         $this->assertWithinLimit(
             'maxDecodedPartBytes',
