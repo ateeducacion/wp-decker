@@ -5,7 +5,7 @@ metadata:
     github-path: skills/wp-plugin-development
     github-ref: refs/heads/trunk
     github-repo: https://github.com/WordPress/agent-skills
-    github-tree-sha: 4693341c0e9f2f7218115ae3568d7ad444b8c884
+    github-tree-sha: 80b5aa0ab920f4635233a3b658cc25c563024ae1
 name: wp-plugin-development
 ---
 # WP Plugin Development

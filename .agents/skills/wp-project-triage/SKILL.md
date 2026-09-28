@@ -5,7 +5,7 @@ metadata:
     github-path: skills/wp-project-triage
     github-ref: refs/heads/trunk
     github-repo: https://github.com/WordPress/agent-skills
-    github-tree-sha: cbda736124bdbce5cffa77646e18d1b11ebeda5a
+    github-tree-sha: ae37f5f5e02a2e280290abc2e093dad864415acd
 name: wp-project-triage
 ---
 # WP Project Triage
