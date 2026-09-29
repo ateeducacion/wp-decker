@@ -28,4 +28,6 @@ fixes:
 # purpose: a path list also filters the report, and it would quietly drop the
 # root-level decker.php and uninstall.php from the PHP numbers.
 comment:
-  layout: "condensed_header, diff, flags, files"
+  # `header` prints the project total and its change against the base, which
+  # the condensed header leaves out; `flags` splits PHP and JavaScript.
+  layout: "header, diff, flags, files, footer"
