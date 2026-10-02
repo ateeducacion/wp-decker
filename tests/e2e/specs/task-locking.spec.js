@@ -54,6 +54,8 @@ async function loginAs( browser, baseURL, user ) {
 	const context = await browser.newContext( { baseURL, storageState: { cookies: [], origins: [] } } );
 	const page = await context.newPage();
 	await page.goto( '/wp-login.php' );
+	// WordPress focuses the username after 200 ms; wait so it cannot redirect password typing.
+	await expect( page.locator( '#user_login' ) ).toBeFocused();
 	await page.fill( '#user_login', user.username );
 	await page.fill( '#user_pass', user.password );
 	// Wait for the post-login redirect so the auth cookie is fully committed

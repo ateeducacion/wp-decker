@@ -336,6 +336,8 @@ class Decker_Public_Assets {
 			'confirm_delete_comment'        => __( 'Are you sure you want to delete this comment?', 'decker' ),
 			'failed_delete_comment'         => __( 'Failed to delete comment.', 'decker' ),
 			'error_deleting_comment'        => __( 'Error deleting comment.', 'decker' ),
+			'invalid_attachment_url'        => __( 'Please enter a valid HTTP or HTTPS URL.', 'decker' ),
+			'error_attachment_link'         => __( 'Could not update the attachment link.', 'decker' ),
 			'please_select_file'            => __( 'Please select a file to upload.', 'decker' ),
 			'confirm_delete_attachment'     => __( 'Are you sure you want to delete this attachment?', 'decker' ),
 			'failed_delete_attachment'      => __( 'Failed to delete attachment.', 'decker' ),

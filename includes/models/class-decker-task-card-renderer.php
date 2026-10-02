@@ -99,7 +99,7 @@ class Decker_Task_Card_Renderer {
 					?>
 					<span class="text-nowrap mb-2 d-inline-block">
 						<i class="ri-attachment-2 text-muted"></i>
-						<b><?php echo esc_html( count( get_attached_media( '', $this->task->ID ) ) ); ?></b>
+						<b><?php echo esc_html( count( get_attached_media( '', $this->task->ID ) ) + count( get_post_meta( $this->task->ID, '_decker_attachment_link' ) ) ); ?></b>
 					</span>
 					<?php
 					$this->render_card_labels_counter();

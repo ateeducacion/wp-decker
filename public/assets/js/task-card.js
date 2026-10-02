@@ -236,7 +236,7 @@
         // toolbar, media buttons and the Visual/Text switcher would otherwise
         // keep mutating the textarea programmatically.
         context.querySelectorAll(
-            '.wp-editor-wrap button, .wp-editor-wrap input[type="button"]'
+            '.wp-editor-wrap button, .wp-editor-wrap input[type="button"], #add-attachment-link, #upload-file, .remove-attachment'
         ).forEach((button) => {
             button.disabled = true;
         });
@@ -1664,6 +1664,41 @@
             });
         }
         
+        context.querySelectorAll('[name="attachment-type"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const isLink = radio.value === 'link';
+                context.querySelector('#attachment-file-controls').hidden = isLink;
+                context.querySelector('#attachment-link-controls').hidden = !isLink;
+                context.querySelector('#attachment-url').disabled = !isLink;
+                context.querySelector('#attachment-url').setCustomValidity('');
+            });
+        });
+        const attachmentUrl = context.querySelector('#attachment-url');
+        if (attachmentUrl) {
+            attachmentUrl.addEventListener('input', () => attachmentUrl.setCustomValidity(''));
+            attachmentUrl.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    context.querySelector('#add-attachment-link').click();
+                }
+            });
+            context.querySelector('#add-attachment-link').addEventListener('click', () => {
+                attachmentUrl.value = attachmentUrl.value.trim();
+                let valid = false;
+                try {
+                    const url = new URL(attachmentUrl.value);
+                    valid = ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password;
+                    if (valid) attachmentUrl.value = url.href;
+                } catch (e) {
+                    // Native validation displays the localized error below.
+                }
+                attachmentUrl.setCustomValidity(valid ? '' : strings.invalid_attachment_url);
+                if (attachmentUrl.reportValidity()) {
+                    updateAttachmentLink('POST', attachmentUrl.value, context);
+                }
+            });
+        }
+
         // Show/hide the "High" label for highest priority
         var taskMaxPriority = context.querySelector('#task-max-priority');
         if (taskMaxPriority) {
@@ -1819,7 +1854,7 @@
             if (data.id) {
                 // Use data.source_url as the attachment URL and data.title.rendered for the title
                 //const extension = data.mime_type.split('/')[1]; // "png"
-                const extension = file.name.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)[1];
+                const extension = (file.name.match(/\.([0-9a-z]+)$/i) || [])[1] || '';
                 addAttachmentToList(data.id, data.source_url, data.title.rendered, extension, context);
                 context.querySelector('#file-input').value = '';
             } else {
@@ -1832,24 +1867,59 @@
         });
     }
 
+    // Links use the same task permissions and editing-session token as task saves.
+    function updateAttachmentLink(method, url, context, listItem) {
+        const button = listItem ? listItem.querySelector('.remove-attachment') : context.querySelector('#add-attachment-link');
+        if (button.disabled) return;
+        button.disabled = true;
+        fetch(`${deckerRestUrl}tasks/${context.querySelector('input[name="task_id"]').value}/attachment-links`, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': wpApiSettings.nonce },
+            body: JSON.stringify({ url, lock_generation: (readTaskLockState(context) || {}).generation || '' })
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || strings.error_attachment_link);
+            if (listItem) {
+                listItem.remove();
+                updateAttachmentCount(context, -1);
+            } else {
+                addAttachmentToList(null, data.url, data.url, '', context, true);
+                context.querySelector('#attachment-url').value = '';
+            }
+        })
+        .catch(error => alert(error.message || strings.error_attachment_link))
+        .finally(() => {
+            const lock = readTaskLockState(context);
+            button.disabled = !!(lock && lock.locked) || context.querySelector('#attachment-type-link').disabled;
+        });
+    }
+
     // Function to add an attachment to the list
-    function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle, attachmentExtension, context) {
+    function addAttachmentToList(attachmentId, attachmentUrl, attachmentTitle, attachmentExtension, context, isLink = false) {
         var attachmentsList = context.querySelector('#attachments-list');
         var li = document.createElement('li');
-        var attachmentFilename = `${attachmentTitle}.${attachmentExtension}`; 
+        var attachmentFilename = isLink || !attachmentExtension ? attachmentTitle : `${attachmentTitle}.${attachmentExtension}`;
 
         li.className = 'list-group-item d-flex justify-content-between align-items-center';
-        li.setAttribute('data-attachment-id', attachmentId);
+        if (isLink) {
+            li.dataset.attachmentUrl = attachmentUrl;
+        } else {
+            li.setAttribute('data-attachment-id', attachmentId);
+        }
 
         const link = document.createElement('a');
         link.href = attachmentUrl;
         link.target = '_blank';
-        link.download = attachmentFilename;
+        link.rel = 'noopener noreferrer';
+        link.className = 'text-break me-2';
+        if (!isLink) link.download = attachmentFilename;
         link.textContent = attachmentFilename;
 
         const icon = document.createElement('i');
-        icon.className = 'bi bi-box-arrow-up-right ms-2';
-        link.appendChild(icon);
+        icon.className = isLink ? 'ri-link me-2' : 'ri-file-line me-2';
+        icon.setAttribute('aria-hidden', 'true');
+        link.prepend(icon);
 
         const buttonContainer = document.createElement('div');
         const deleteButton = document.createElement('button');
@@ -1875,11 +1945,13 @@
         if (event.target && event.target.classList.contains('remove-attachment')) {
             var listItem = event.target.closest('li');
             var attachmentId = listItem.getAttribute('data-attachment-id');
-            const modalElement = document.querySelector('.task-modal.show'); // Selects the open modal, or null if not in a modal
-            if (modalElement) {
-                deleteAttachment(attachmentId, listItem, modalElement);
+            const context = listItem.closest('.task-modal') || document;
+            if (listItem.dataset.attachmentUrl) {
+                if (confirm(strings.confirm_delete_attachment)) {
+                    updateAttachmentLink('DELETE', listItem.dataset.attachmentUrl, context, listItem);
+                }
             } else {
-                deleteAttachment(attachmentId, listItem, document); // Assumes it's loaded directly on the page
+                deleteAttachment(attachmentId, listItem, context);
             }
         }
     });

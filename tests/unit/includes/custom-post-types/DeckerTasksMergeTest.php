@@ -131,6 +131,9 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 		);
 
 		$attachment_id = $this->create_attachment_for_task( $source_task_id );
+		add_post_meta( $source_task_id, '_decker_attachment_link', 'https://example.org/source' );
+		add_post_meta( $source_task_id, '_decker_attachment_link', 'https://example.org/shared' );
+		add_post_meta( $destination_task_id, '_decker_attachment_link', 'https://example.org/shared' );
 
 		$result = Decker_Task_Merge::merge_tasks(
 			$source_task_id,
@@ -188,6 +191,9 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 			$destination_task_id,
 			(int) $moved_attachment->post_parent
 		);
+
+		$this->assertSame( array( 'https://example.org/shared', 'https://example.org/source' ), get_post_meta( $destination_task_id, '_decker_attachment_link' ) );
+		$this->assertSame( array(), get_post_meta( $source_task_id, '_decker_attachment_link' ) );
 
 		$this->assertEquals( 'archived', $source_post->post_status );
 		$this->assertEquals(

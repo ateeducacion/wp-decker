@@ -247,6 +247,13 @@ class Decker_Task_Merge {
 			);
 		}
 
+		$destination_links = get_post_meta( $destination_task_id, '_decker_attachment_link' );
+		foreach ( get_post_meta( $source_task_id, '_decker_attachment_link' ) as $url ) {
+			if ( ! in_array( $url, $destination_links, true ) ) {
+				add_post_meta( $destination_task_id, '_decker_attachment_link', wp_slash( $url ) );
+			}
+		}
+		delete_post_meta( $source_task_id, '_decker_attachment_link' );
 		delete_post_meta( $source_task_id, 'attachments' );
 	}
 
