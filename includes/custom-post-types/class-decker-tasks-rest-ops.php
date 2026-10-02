@@ -150,11 +150,8 @@ class Decker_Tasks_Rest_Ops {
 			return $check;
 		}
 
-		$url    = trim( $request->get_param( 'url' ) );
-		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
-		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) || ! filter_var( $url, FILTER_VALIDATE_URL )
-			|| esc_url_raw( $url, array( 'http', 'https' ) ) !== $url
-			|| null !== wp_parse_url( $url, PHP_URL_USER ) || null !== wp_parse_url( $url, PHP_URL_PASS ) ) {
+		$url = trim( $request->get_param( 'url' ) );
+		if ( ! $this->is_valid_attachment_url( $url ) ) {
 			return new WP_Error( 'decker_invalid_link', __( 'Please enter a valid HTTP or HTTPS URL.', 'decker' ), array( 'status' => 400 ) );
 		}
 
@@ -172,6 +169,19 @@ class Decker_Tasks_Rest_Ops {
 		}
 
 		return new WP_REST_Response( array( 'url' => $url ), 200 );
+	}
+
+	/**
+	 * Validate an HTTP or HTTPS attachment URL without embedded credentials.
+	 *
+	 * @param string $url The attachment URL.
+	 * @return bool Whether the URL can be stored unchanged.
+	 */
+	private function is_valid_attachment_url( $url ) {
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		return in_array( $scheme, array( 'http', 'https' ), true ) && filter_var( $url, FILTER_VALIDATE_URL )
+			&& esc_url_raw( $url, array( 'http', 'https' ) ) === $url
+			&& null === wp_parse_url( $url, PHP_URL_USER ) && null === wp_parse_url( $url, PHP_URL_PASS );
 	}
 
 	/**
