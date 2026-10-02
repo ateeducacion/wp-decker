@@ -4,10 +4,10 @@
  *
  * app-task-full.php renders the page chrome and, for a resolvable task,
  * includes layouts/task-card.php — the same partial the task modal loads over
- * AJAX. The partial declares include_wp_load() at file scope, so it can only be
- * included once per PHP process; exactly one test here therefore renders a
- * valid task, and it uses a deliberately rich fixture so a single pass exercises
- * the comment, attachment, label, assignee and history branches together.
+ * AJAX. Exactly one test renders a valid full page, whose DECKER_TASK constant
+ * is declared by that page; the new-task test renders the partial directly.
+ * The rich existing-task fixture exercises the comment, attachment, label,
+ * assignee and history branches together.
  *
  * @package Decker
  */
@@ -125,6 +125,17 @@ class DeckerAppTaskFullTest extends Decker_Test_Base {
 			)
 		);
 
+		$attachment_id = self::factory()->attachment->create(
+			array(
+				'post_parent'    => $task_id,
+				'post_title'     => 'Reference',
+				'post_mime_type' => 'application/pdf',
+			)
+		);
+		update_post_meta( $attachment_id, '_wp_attached_file', 'reference.pdf' );
+		$link_url = 'https://example.org/document?a=1&b=2';
+		add_post_meta( $task_id, '_decker_attachment_link', $link_url );
+
 		set_query_var( 'id', $task_id );
 		$output = $this->render_task_page();
 
@@ -157,13 +168,39 @@ class DeckerAppTaskFullTest extends Decker_Test_Base {
 		// The comment belongs to the current user, so the delete affordance renders.
 		$this->assertStringContainsString( 'data-comment-id="' . $comment_id . '"', $output );
 
-		// With no media attached the attachment tab counts zero.
-		$this->assertStringContainsString( 'id="attachment-count">0<', $output );
+		// Files and links share the list and count, while retaining their own actions.
+		$this->assertStringContainsString( 'id="attachment-count">2<', $output );
+		$this->assertStringContainsString( 'data-attachment-id="' . $attachment_id . '"', $output );
+		$this->assertStringContainsString( 'Reference.pdf', $output );
+		$this->assertStringContainsString( 'ri-file-line', $output );
+		$this->assertStringContainsString( 'data-attachment-url="' . esc_attr( $link_url ) . '"', $output );
+		$this->assertStringContainsString( 'href="' . esc_url( $link_url ) . '" target="_blank" rel="noopener noreferrer"', $output );
+		$this->assertStringContainsString( esc_html( $link_url ), $output );
+		$this->assertStringContainsString( 'ri-link', $output );
 
 		// An unlocked task is editable: no lock banner, and the today quick action shows.
 		$this->assertStringNotContainsString( 'decker-lock-banner', $output );
 		$this->assertStringContainsString( 'id="task-today-quick"', $output );
 		$this->assertStringContainsString( 'Add to today', $output );
+	}
+
+	/**
+	 * New cards require a save before adding attachments and never list unattached media.
+	 */
+	public function test_new_task_disables_attachments_until_saved() {
+		self::factory()->attachment->create( array( 'post_title' => 'Unrelated upload' ) );
+		$_GET['nonce'] = wp_create_nonce( 'decker_task_card' );
+		set_query_var( 'id', 0 );
+		BoardManager::reset_instance();
+		LabelManager::reset_instance();
+		ob_start();
+		include plugin_dir_path( DECKER_PLUGIN_FILE ) . 'public/layouts/task-card.php';
+		$output = ob_get_clean();
+
+		$this->assertStringContainsString( 'id="attachment-count">0<', $output );
+		$this->assertStringNotContainsString( 'Unrelated upload', $output );
+		$this->assertStringContainsString( 'Save the task before adding attachments.', $output );
+		$this->assertMatchesRegularExpression( '/<fieldset class="mt-3"\s+disabled/', $output );
 	}
 
 	/**

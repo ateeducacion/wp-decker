@@ -345,10 +345,11 @@ require_once __DIR__ . '/partials/task-comments.php';
 			<?php
 				   // Get attachments associated with the task.
 
-			$attachments = get_attached_media( '', $task_id );
+			$attachments = $task_id ? get_attached_media( '', $task_id ) : array();
+			$attachment_links = $task_id ? get_post_meta( $task_id, '_decker_attachment_link' ) : array();
 
 			?>
-			<span class="badge bg-light text-dark" id="attachment-count"><?php echo count( $attachments ); ?></span>
+			<span class="badge bg-light text-dark" id="attachment-count"><?php echo count( $attachments ) + count( $attachment_links ); ?></span>
 			</a>
 		</li>
 		<li class="nav-item">
@@ -419,26 +420,47 @@ require_once __DIR__ . '/partials/task-comments.php';
 					<?php
 					foreach ( $attachments as $attachment ) :
 
-						$attachment_url   = $attachment->guid;
+						$attachment_url   = wp_get_attachment_url( $attachment->ID );
 						$file_extension   = pathinfo( $attachment_url, PATHINFO_EXTENSION );
-						$attachment_title = $attachment->post_title . '.' . $file_extension;
+						$attachment_title = $attachment->post_title . ( $file_extension ? '.' . $file_extension : '' );
 
 						?>
 						<li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-id="<?php echo esc_attr( $attachment->ID ); ?>">
 							<a href="<?php echo esc_url( $attachment_url ); ?>" download="<?php echo esc_attr( $attachment_title ); ?>">
-								<?php echo esc_html( $attachment_title ); ?> <i class="bi bi-box-arrow-up-right ms-2"></i>
+								<i class="ri-file-line me-2" aria-hidden="true"></i><?php echo esc_html( $attachment_title ); ?>
 							</a>
 							<div>
 								<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_html_e( 'Delete', 'decker' ); ?></button>
 							</div>
 						</li>
 					<?php endforeach; ?>
+					<?php foreach ( $attachment_links as $attachment_link ) : ?>
+						<li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-url="<?php echo esc_attr( $attachment_link ); ?>">
+							<a class="text-break me-2" href="<?php echo esc_url( $attachment_link, array( 'http', 'https' ) ); ?>" target="_blank" rel="noopener noreferrer">
+								<i class="ri-link me-2" aria-hidden="true"></i><?php echo esc_html( $attachment_link ); ?>
+							</a>
+							<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php disabled( $disabled ); ?>><?php esc_html_e( 'Delete', 'decker' ); ?></button>
+						</li>
+					<?php endforeach; ?>
 				</ul>
-				<br>
-				<div class="d-flex align-items-center">
-					<input type="file" id="file-input" class="form-control me-2" <?php echo $disabled ? 'disabled' : ''; ?> />
-					<button type="button" class="btn btn-sm btn-success" id="upload-file" <?php echo $disabled ? 'disabled' : ''; ?>><?php esc_html_e( 'Upload', 'decker' ); ?></button>
-				</div>
+
+				<fieldset class="mt-3" <?php disabled( $disabled || ! $task_id ); ?>>
+					<legend class="fs-6"><?php esc_html_e( 'Add attachment', 'decker' ); ?></legend>
+					<div class="input-group">
+						<select class="form-select w-auto flex-grow-0" name="attachment-type" id="attachment-type" aria-label="<?php esc_attr_e( 'Add attachment', 'decker' ); ?>">
+							<option value="file"><?php esc_html_e( 'File', 'decker' ); ?></option>
+							<option value="link"><?php esc_html_e( 'Link', 'decker' ); ?></option>
+						</select>
+						<input type="file" id="file-input" class="form-control" aria-label="<?php esc_attr_e( 'File', 'decker' ); ?>" />
+						<input type="url" id="attachment-url" class="form-control" placeholder="https://" aria-label="<?php esc_attr_e( 'URL', 'decker' ); ?>" aria-describedby="attachment-url-help" disabled hidden />
+						<button type="button" class="btn btn-success rounded-end" id="upload-file"><?php esc_html_e( 'Upload', 'decker' ); ?></button>
+						<button type="button" class="btn btn-success text-nowrap rounded-end" id="add-attachment-link" hidden><?php esc_html_e( 'Add link', 'decker' ); ?></button>
+					</div>
+					<small id="attachment-url-help" class="form-text" hidden><?php esc_html_e( 'Use a complete HTTP or HTTPS URL.', 'decker' ); ?></small>
+				</fieldset>
+				<?php if ( ! $task_id ) : ?>
+					<p class="form-text"><?php esc_html_e( 'Save the task before adding attachments.', 'decker' ); ?></p>
+				<?php endif; ?>
 			</div>
 
 		<!-- History -->

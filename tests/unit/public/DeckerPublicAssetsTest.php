@@ -361,6 +361,8 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'confirm_delete_comment',
 				'failed_delete_comment',
 				'error_deleting_comment',
+				'invalid_attachment_url',
+				'error_attachment_link',
 				'please_select_file',
 				'confirm_delete_attachment',
 				'failed_delete_attachment',

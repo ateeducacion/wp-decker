@@ -67,6 +67,19 @@ class Decker_Tasks_Rest_Ops {
 		$order_engine = $this->tasks->get_order_engine();
 		$routes       = array(
 			array(
+				'route'      => '/tasks/(?P<id>\d+)/attachment-links',
+				'methods'    => 'POST, DELETE',
+				'callback'   => 'update_attachment_link',
+				'permission' => 'edit_task',
+				'args'       => array(
+					'url' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'lock_generation' => array( 'type' => 'string' ),
+				),
+			),
+			array(
 				'route'      => '/tasks/(?P<id>\d+)/order',
 				'methods'    => 'PUT',
 				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),
@@ -110,6 +123,65 @@ class Decker_Tasks_Rest_Ops {
 		);
 
 		Decker_Tasks_Rest_Support::register_routes( 'decker/v1', $routes, $this );
+	}
+
+	/**
+	 * Add or remove an external link without replacing other task attachments.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response|WP_Error The result or validation error.
+	 */
+	public function update_attachment_link( WP_REST_Request $request ) {
+		$task_id = (int) $request['id'];
+		if ( 'decker_task' !== get_post_type( $task_id ) ) {
+			return new WP_Error( 'decker_invalid_task', __( 'Task not found.', 'decker' ), array( 'status' => 404 ) );
+		}
+		if ( 'archived' === get_post_status( $task_id ) ) {
+			return new WP_Error( 'decker_task_archived', __( 'You are not allowed to edit this card.', 'decker' ), array( 'status' => 403 ) );
+		}
+
+		$check = $this->tasks->get_task_locks()->assert_user_can_save(
+			$task_id,
+			get_current_user_id(),
+			$request->get_param( 'lock_generation' ),
+			true
+		);
+		if ( is_wp_error( $check ) ) {
+			return $check;
+		}
+
+		$url = trim( $request->get_param( 'url' ) );
+		if ( ! $this->is_valid_attachment_url( $url ) ) {
+			return new WP_Error( 'decker_invalid_link', __( 'Please enter a valid HTTP or HTTPS URL.', 'decker' ), array( 'status' => 400 ) );
+		}
+
+		$key = '_decker_attachment_link';
+		if ( 'DELETE' === $request->get_method() ) {
+			$changed = delete_post_meta( $task_id, $key, $url );
+		} else {
+			if ( in_array( $url, get_post_meta( $task_id, $key ), true ) ) {
+				return new WP_Error( 'decker_duplicate_link', __( 'This link is already attached.', 'decker' ), array( 'status' => 409 ) );
+			}
+			$changed = add_post_meta( $task_id, $key, wp_slash( $url ) );
+		}
+		if ( ! $changed ) {
+			return new WP_Error( 'decker_link_not_saved', __( 'Could not update the attachment link.', 'decker' ), array( 'status' => 500 ) );
+		}
+
+		return new WP_REST_Response( array( 'url' => $url ), 200 );
+	}
+
+	/**
+	 * Validate an HTTP or HTTPS attachment URL without embedded credentials.
+	 *
+	 * @param string $url The attachment URL.
+	 * @return bool Whether the URL can be stored unchanged.
+	 */
+	private function is_valid_attachment_url( $url ) {
+		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+		return in_array( $scheme, array( 'http', 'https' ), true ) && filter_var( $url, FILTER_VALIDATE_URL )
+			&& esc_url_raw( $url, array( 'http', 'https' ) ) === $url
+			&& null === wp_parse_url( $url, PHP_URL_USER ) && null === wp_parse_url( $url, PHP_URL_PASS );
 	}
 
 	/**

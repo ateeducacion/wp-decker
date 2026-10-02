@@ -973,6 +973,15 @@ msgstr ""
 msgid "Task not found."
 msgstr ""
 
+msgid "Please enter a valid HTTP or HTTPS URL."
+msgstr ""
+
+msgid "This link is already attached."
+msgstr ""
+
+msgid "Could not update the attachment link."
+msgstr ""
+
 msgid "The user is derived from the session and cannot be provided."
 msgstr ""
 
@@ -1997,7 +2006,28 @@ msgstr ""
 msgid "Replying to"
 msgstr ""
 
+msgid "Add attachment"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "Link"
+msgstr ""
+
+msgid "URL"
+msgstr ""
+
 msgid "Upload"
+msgstr ""
+
+msgid "Add link"
+msgstr ""
+
+msgid "Use a complete HTTP or HTTPS URL."
+msgstr ""
+
+msgid "Save the task before adding attachments."
 msgstr ""
 
 msgid "Nickname"
