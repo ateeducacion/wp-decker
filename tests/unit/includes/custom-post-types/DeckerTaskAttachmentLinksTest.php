@@ -51,6 +51,9 @@ class DeckerTaskAttachmentLinksTest extends Decker_Test_Base {
 		$this->assertSame( 409, $this->mutate( $task_id, 'https://example.org/new' )->get_status() );
 		$this->assertSame( 200, $this->mutate( $task_id, $url, 'DELETE', $new_lock['generation'] )->get_status() );
 		$this->assertSame( array( 'http://intranet.local/resource' ), get_post_meta( $task_id, $key ) );
+		$missing = $this->mutate( $task_id, $url, 'DELETE', $new_lock['generation'] );
+		$this->assertSame( 500, $missing->get_status() );
+		$this->assertSame( 'decker_link_not_saved', $missing->get_data()['code'] );
 
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
 		$this->assertSame( 403, $this->mutate( $task_id, $url )->get_status() );

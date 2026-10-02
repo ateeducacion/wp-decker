@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-02T08:48:36+00:00\n"
+"PO-Revision-Date: 2026-10-02T09:13:33+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -2048,11 +2048,11 @@ msgstr "Archivo"
 msgid "Link"
 msgstr "Enlace"
 
-msgid "Upload"
-msgstr "Subir"
-
 msgid "URL"
 msgstr "URL"
+
+msgid "Upload"
+msgstr "Subir"
 
 msgid "Add link"
 msgstr "Añadir enlace"

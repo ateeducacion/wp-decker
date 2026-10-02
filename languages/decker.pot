@@ -2015,10 +2015,10 @@ msgstr ""
 msgid "Link"
 msgstr ""
 
-msgid "Upload"
+msgid "URL"
 msgstr ""
 
-msgid "URL"
+msgid "Upload"
 msgstr ""
 
 msgid "Add link"

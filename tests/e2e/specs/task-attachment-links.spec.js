@@ -22,8 +22,8 @@ test( 'adds, reloads and removes links alongside uploaded files', async ( { page
 		const file = page.locator( '#attachments-list [data-attachment-id]' );
 		await expect( file ).toHaveCount( 1 );
 		mediaId = await file.getAttribute( 'data-attachment-id' );
-		await page.locator( '#attachment-type-link' ).check();
-		await expect( page.locator( '#attachment-file-controls' ) ).toBeHidden();
+		await page.locator( '#attachment-type' ).selectOption( 'link' );
+		await expect( page.locator( '#file-input' ) ).toBeHidden();
 		await page.locator( '#attachment-url' ).fill( 'javascript:alert(1)' );
 		await page.locator( '#add-attachment-link' ).click();
 		await expect( page.locator( '#attachment-count' ) ).toHaveText( '1' );
@@ -39,8 +39,9 @@ test( 'adds, reloads and removes links alongside uploaded files', async ( { page
 		await page.locator( 'a[href="#attachments-tab"]' ).click();
 		await expect( link ).toHaveCount( 1 );
 		await expect( file ).toHaveCount( 1 );
-		await page.locator( '#attachment-type-link' ).check();
 		await page.setViewportSize( { width: 1440, height: 1100 } );
+		await page.locator( '#task-form' ).screenshot( { path: 'artifacts/task-attachment-files.png' } );
+		await page.locator( '#attachment-type' ).selectOption( 'link' );
 		await page.locator( '#attachment-url' ).fill( 'https://example.org/documento' );
 		await page.locator( '#task-form' ).screenshot( { path: 'artifacts/task-attachment-links.png' } );
 		page.once( 'dialog', dialog => dialog.accept() );

@@ -446,31 +446,17 @@ require_once __DIR__ . '/partials/task-comments.php';
 
 				<fieldset class="mt-3" <?php disabled( $disabled || ! $task_id ); ?>>
 					<legend class="fs-6"><?php esc_html_e( 'Add attachment', 'decker' ); ?></legend>
-					<div class="d-flex gap-3 mb-3">
-						<div class="form-check">
-							<input class="form-check-input" type="radio" name="attachment-type" id="attachment-type-file" value="file" checked>
-							<label class="form-check-label" for="attachment-type-file"><i class="ri-file-line me-1" aria-hidden="true"></i><?php esc_html_e( 'File', 'decker' ); ?></label>
-						</div>
-						<div class="form-check">
-							<input class="form-check-input" type="radio" name="attachment-type" id="attachment-type-link" value="link">
-							<label class="form-check-label" for="attachment-type-link"><i class="ri-link me-1" aria-hidden="true"></i><?php esc_html_e( 'Link', 'decker' ); ?></label>
-						</div>
+					<div class="input-group">
+						<select class="form-select w-auto flex-grow-0" name="attachment-type" id="attachment-type" aria-label="<?php esc_attr_e( 'Add attachment', 'decker' ); ?>">
+							<option value="file"><?php esc_html_e( 'File', 'decker' ); ?></option>
+							<option value="link"><?php esc_html_e( 'Link', 'decker' ); ?></option>
+						</select>
+						<input type="file" id="file-input" class="form-control" aria-label="<?php esc_attr_e( 'File', 'decker' ); ?>" />
+						<input type="url" id="attachment-url" class="form-control" placeholder="https://" aria-label="<?php esc_attr_e( 'URL', 'decker' ); ?>" aria-describedby="attachment-url-help" disabled hidden />
+						<button type="button" class="btn btn-success rounded-end" id="upload-file"><?php esc_html_e( 'Upload', 'decker' ); ?></button>
+						<button type="button" class="btn btn-success text-nowrap rounded-end" id="add-attachment-link" hidden><?php esc_html_e( 'Add link', 'decker' ); ?></button>
 					</div>
-					<div id="attachment-file-controls">
-						<label class="form-label" for="file-input"><?php esc_html_e( 'File', 'decker' ); ?></label>
-						<div class="d-flex align-items-center">
-							<input type="file" id="file-input" class="form-control me-2" />
-							<button type="button" class="btn btn-sm btn-success" id="upload-file"><?php esc_html_e( 'Upload', 'decker' ); ?></button>
-						</div>
-					</div>
-					<div id="attachment-link-controls" hidden>
-						<label class="form-label" for="attachment-url"><?php esc_html_e( 'URL', 'decker' ); ?></label>
-						<div class="d-flex align-items-center">
-							<input type="url" id="attachment-url" class="form-control me-2" placeholder="https://" aria-describedby="attachment-url-help" disabled />
-							<button type="button" class="btn btn-sm btn-success text-nowrap" id="add-attachment-link"><?php esc_html_e( 'Add link', 'decker' ); ?></button>
-						</div>
-						<small id="attachment-url-help" class="form-text"><?php esc_html_e( 'Use a complete HTTP or HTTPS URL.', 'decker' ); ?></small>
-					</div>
+					<small id="attachment-url-help" class="form-text" hidden><?php esc_html_e( 'Use a complete HTTP or HTTPS URL.', 'decker' ); ?></small>
 				</fieldset>
 				<?php if ( ! $task_id ) : ?>
 					<p class="form-text"><?php esc_html_e( 'Save the task before adding attachments.', 'decker' ); ?></p>

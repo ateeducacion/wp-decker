@@ -1664,11 +1664,14 @@
             });
         }
         
-        context.querySelectorAll('[name="attachment-type"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                const isLink = radio.value === 'link';
-                context.querySelector('#attachment-file-controls').hidden = isLink;
-                context.querySelector('#attachment-link-controls').hidden = !isLink;
+        context.querySelectorAll('[name="attachment-type"]').forEach(select => {
+            select.addEventListener('change', () => {
+                const isLink = select.value === 'link';
+                context.querySelector('#file-input').hidden = isLink;
+                context.querySelector('#upload-file').hidden = isLink;
+                context.querySelector('#attachment-url').hidden = !isLink;
+                context.querySelector('#add-attachment-link').hidden = !isLink;
+                context.querySelector('#attachment-url-help').hidden = !isLink;
                 context.querySelector('#attachment-url').disabled = !isLink;
                 context.querySelector('#attachment-url').setCustomValidity('');
             });
@@ -1891,7 +1894,7 @@
         .catch(error => alert(error.message || strings.error_attachment_link))
         .finally(() => {
             const lock = readTaskLockState(context);
-            button.disabled = !!(lock && lock.locked) || context.querySelector('#attachment-type-link').disabled;
+            button.disabled = !!(lock && lock.locked) || context.querySelector('#attachment-type').disabled;
         });
     }
 
