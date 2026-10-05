@@ -9,6 +9,11 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 5
+    groups:
+      # One pull request for the weekly actions bump.
+      actions:
+        patterns:
+          - "*"
 
   # 2. Composer (PHP deps del plugin)
   - package-ecosystem: "composer"
@@ -19,6 +24,16 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 5
+    groups:
+      # PHPCS, PHPUnit and the rest together, including a minor or patch
+      # of mime-mail-parser: they share composer.lock. A major bump stays
+      # in its own pull request.
+      php-dev:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
 
   # 3. npm (JS/CSS build del plugin)
   - package-ecosystem: "npm"
@@ -29,4 +44,10 @@ updates:
       prefix: "chore"
       include: "scope"
     open-pull-requests-limit: 5
-
+    groups:
+      # vite, vitest and @vitest/* share the lockfile: one pull request.
+      vite:
+        patterns:
+          - "vite"
+          - "vitest"
+          - "@vitest/*"
