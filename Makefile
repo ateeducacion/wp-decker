@@ -227,9 +227,11 @@ lint:
 fix:
 	composer phpcbf
 
-# Run PHP Mess Detector ignoring vendor and node_modules
+# Run PHP Mess Detector ignoring vendor, node_modules and tests. PHPMD 3 wants
+# one --exclude per pattern, anchored between slashes: it matches the absolute
+# path, and a comma-separated list no longer works.
 phpmd:
-	phpmd . text cleancode,codesize,controversial,design,naming,unusedcode --exclude vendor,node_modules,tests
+	phpmd analyze . --format text --ruleset cleancode --ruleset codesize --ruleset controversial --ruleset design --ruleset naming --ruleset unusedcode --exclude "*/vendor/*" --exclude "*/node_modules/*" --exclude "*/tests/*"
 
 # Finds the CLI container used by wp-env
 cli-container:
