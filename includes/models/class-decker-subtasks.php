@@ -96,7 +96,7 @@ class Decker_Subtasks {
 			return array();
 		}
 
-		return array_map( array( __CLASS__, 'adopt_linked_task' ), self::read_stored( $task_id ) );
+		return array_map( array( 'Decker_Subtask_Links', 'adopt' ), self::read_stored( $task_id ) );
 	}
 
 	/**
@@ -109,7 +109,7 @@ class Decker_Subtasks {
 	 * @param int $task_id The parent task ID.
 	 * @return array<int, array> The stored subtask items.
 	 */
-	private static function read_stored( int $task_id ): array {
+	public static function read_stored( int $task_id ): array {
 		$stored = get_post_meta( $task_id, self::META_KEY, true );
 
 		if ( ! is_array( $stored ) ) {
@@ -117,84 +117,6 @@ class Decker_Subtasks {
 		}
 
 		return Decker_Subtask_Sanitizer::sanitize_list( $stored, $task_id );
-	}
-
-	/**
-	 * Take the row pointing at a task off the list that holds it.
-	 *
-	 * Archiving a promoted task is how someone says that step is over and out
-	 * of the way, so the row goes with it instead of sitting in the parent's
-	 * list naming a card nobody can reach. Unarchiving does not bring it back:
-	 * the list is a list, not a history.
-	 *
-	 * @param int $task_id The task that was archived.
-	 * @return void
-	 */
-	public static function detach_from_parent( int $task_id ): void {
-		$parent_id = self::get_parent_task_id( $task_id );
-		if ( null === $parent_id ) {
-			return;
-		}
-
-		$kept = array();
-		foreach ( self::read_stored( $parent_id ) as $item ) {
-			if ( (int) $item['task_id'] !== $task_id ) {
-				$kept[] = $item;
-			}
-		}
-
-		self::set( $parent_id, $kept );
-	}
-
-	/**
-	 * Show a promoted item as the task it became.
-	 *
-	 * Once an item is promoted it stops being the work and becomes a pointer
-	 * to it, so the stored copy of its title, owner, date and state is a
-	 * snapshot that starts drifting the moment anyone touches that task. The
-	 * row reads them from the task instead, which is also why it is no longer
-	 * editable here. The stored copy survives untouched and is what is left if
-	 * the task is ever deleted.
-	 *
-	 * The owner is carried along as a name and a face: it is the task's
-	 * responsable, who need not be anyone on this card, so the row cannot look
-	 * them up in the parent's people.
-	 *
-	 * @param array $item The subtask item.
-	 * @return array<string, mixed> The item as it is shown.
-	 */
-	private static function adopt_linked_task( array $item ): array {
-		$linked = (int) $item['task_id'];
-		if ( $linked <= 0 ) {
-			return $item;
-		}
-
-		$post = get_post( $linked );
-		if ( ! $post instanceof WP_Post || 'decker_task' !== $post->post_type || 'trash' === $post->post_status ) {
-			return $item;
-		}
-
-		$item['title'] = mb_substr( (string) $post->post_title, 0, self::MAX_TITLE_LENGTH );
-
-		$responsable = (int) get_post_meta( $linked, 'responsable', true );
-		if ( $responsable <= 0 ) {
-			$responsable = (int) $post->post_author;
-		}
-		$item['assignee'] = $responsable;
-
-		$duedate         = (string) get_post_meta( $linked, 'duedate', true );
-		$item['duedate'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $duedate ) ? $duedate : '';
-
-		$stack = (string) get_post_meta( $linked, 'stack', true );
-		if ( in_array( $stack, self::get_statuses(), true ) ) {
-			$item['status'] = $stack;
-		}
-
-		$user                    = $responsable > 0 ? get_userdata( $responsable ) : false;
-		$item['assignee_name']   = $user instanceof WP_User ? $user->display_name : '';
-		$item['assignee_avatar'] = $user instanceof WP_User ? get_avatar_url( $user->ID, array( 'size' => 48 ) ) : '';
-
-		return $item;
 	}
 
 	/**
@@ -219,81 +141,9 @@ class Decker_Subtasks {
 
 		// The promotion links just changed, so the map built for this request
 		// no longer describes them.
-		self::$parents = null;
+		Decker_Subtask_Links::forget();
 
 		return self::get( $task_id );
-	}
-
-	/**
-	 * Child task ID to the task whose list holds it, for every stored list.
-	 *
-	 * Null until first needed, and reset on every write.
-	 *
-	 * @var array<int, int>|null
-	 */
-	private static $parents = null;
-
-	/**
-	 * The task this one was promoted out of, if any.
-	 *
-	 * Looked up rather than stored: the item holds the only link, and a second
-	 * copy of it on the child would need writing on promotion, clearing on
-	 * unlink, and a backfill for every task promoted before it existed — three
-	 * ways to disagree with the list, which stays the one source.
-	 *
-	 * @param int $task_id The task that may be a subtask.
-	 * @return int|null The parent task ID, or null when it is not one.
-	 */
-	public static function get_parent_task_id( int $task_id ): ?int {
-		if ( $task_id <= 0 ) {
-			return null;
-		}
-
-		$parents = self::parent_map();
-
-		return isset( $parents[ $task_id ] ) ? $parents[ $task_id ] : null;
-	}
-
-	/**
-	 * Every promotion link on the site, read once per request.
-	 *
-	 * A board renders dozens of cards and each one asks whether it came out of
-	 * a list, so asking per card would be a query per card. Every stored list
-	 * is read in one go instead and the links are indexed by child.
-	 *
-	 * @return array<int, int> Child task ID to parent task ID.
-	 */
-	private static function parent_map(): array {
-		if ( null !== self::$parents ) {
-			return self::$parents;
-		}
-
-		global $wpdb;
-
-		self::$parents = array();
-
-		// Direct query: there is no meta API call that reads one meta key
-		// across every post, and the alternative is one query per card. The
-		// result is held for the rest of the request and dropped on any write.
-		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare( "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s", self::META_KEY )
-		);
-
-		foreach ( (array) $rows as $row ) {
-			$items = maybe_unserialize( $row->meta_value );
-			if ( ! is_array( $items ) ) {
-				continue;
-			}
-
-			foreach ( $items as $item ) {
-				$child = isset( $item['task_id'] ) ? (int) $item['task_id'] : 0;
-				if ( $child > 0 ) {
-					self::$parents[ $child ] = (int) $row->post_id;
-				}
-			}
-		}
-
-		return self::$parents;
 	}
 
 	/**

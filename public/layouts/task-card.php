@@ -163,7 +163,7 @@ require_once __DIR__ . '/partials/task-comments.php';
 	// A task that was promoted out of someone's list says so, and says whose:
 	// otherwise it arrives on the board with no sign that it is a step of
 	// something larger.
-	$parent_task_id = ( Decker_Subtasks::is_enabled() && $task_id ) ? Decker_Subtasks::get_parent_task_id( $task_id ) : null;
+	$parent_task_id = ( Decker_Subtasks::is_enabled() && $task_id ) ? Decker_Subtask_Links::get_parent_task_id( $task_id ) : null;
 	if ( $parent_task_id ) :
 		$parent_task_url = add_query_arg(
 			array(

@@ -167,9 +167,9 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 			)
 		);
 
-		$this->assertSame( $this->task_id, Decker_Subtasks::get_parent_task_id( $child ) );
-		$this->assertNull( Decker_Subtasks::get_parent_task_id( $loose ) );
-		$this->assertNull( Decker_Subtasks::get_parent_task_id( 0 ) );
+		$this->assertSame( $this->task_id, Decker_Subtask_Links::get_parent_task_id( $child ) );
+		$this->assertNull( Decker_Subtask_Links::get_parent_task_id( $loose ) );
+		$this->assertNull( Decker_Subtask_Links::get_parent_task_id( 0 ) );
 	}
 
 	/**

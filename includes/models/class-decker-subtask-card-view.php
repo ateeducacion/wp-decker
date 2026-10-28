@@ -90,7 +90,7 @@ class Decker_Subtask_Card_View {
 			return;
 		}
 
-		$parent_id = Decker_Subtasks::get_parent_task_id( $this->task->ID );
+		$parent_id = Decker_Subtask_Links::get_parent_task_id( $this->task->ID );
 		if ( null === $parent_id ) {
 			return;
 		}
