@@ -256,6 +256,7 @@ if ( ! $has_today_tasks ) {
 															   class="task-title-link d-block">
 																<?php echo esc_html( $task->title ); ?>
 															</a>
+															<?php ( new Decker_Subtask_Card_View( $task ) )->render_progress(); ?>
 															<div class="avatar-group mt-2">
 																<?php if ( $task->responsable ) : ?>
 																	<a href="#" class="avatar-group-item position-relative <?php echo $task->responsable->today ? ' today' : ''; ?>"
@@ -312,23 +313,31 @@ if ( ! $has_today_tasks ) {
 												?>
 												<tr>
 													<td><?php echo wp_kses_post( $board ); ?></td>
-													<td class="descripcion" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?php echo esc_attr( $task->title ); ?>">
-																				   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
-														<a href="
+													<td class="descripcion" title="<?php echo esc_attr( $task->title ); ?>">
 														<?php
-														echo esc_url(
-															add_query_arg(
-																array(
-																	'decker_page' => 'task',
-																	'id' => $task->ID,
-																),
-																home_url( '/' )
-															)
-														);
+														// The title keeps the 150px cap it has always had, moved
+														// onto its own span so the subtask counter beside it is
+														// not swallowed by the ellipsis.
 														?>
-																	" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
-															<?php echo esc_html( $task->title ); ?>
-														</a>
+														<span class="d-inline-block align-middle text-truncate" style="max-width: 150px;">
+																				   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
+															<a href="
+															<?php
+															echo esc_url(
+																add_query_arg(
+																	array(
+																		'decker_page' => 'task',
+																		'id' => $task->ID,
+																	),
+																	home_url( '/' )
+																)
+															);
+															?>
+																		" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+																<?php echo esc_html( $task->title ); ?>
+															</a>
+														</span>
+														<?php ( new Decker_Subtask_Card_View( $task ) )->render_progress(); ?>
 													</td>
 													<td class="d-none d-md-table-cell">
 														<div class="avatar-group mt-2">
@@ -435,6 +444,7 @@ if ( ! $has_today_tasks ) {
 																															   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
 																															   <?php echo esc_html( $task->title ); ?>
 																															   </a>
+																															   <?php ( new Decker_Subtask_Card_View( $task ) )->render_progress(); ?>
 																														</td>
 														</tr>
 														<?php

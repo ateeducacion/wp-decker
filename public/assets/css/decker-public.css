@@ -757,6 +757,12 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     text-decoration: underline;
 }
 
+/* The same green halo the card's people wear for "today", at the size these
+   16-20px faces can carry: the 4px of .today would swallow the chip. */
+.decker-subtask-avatar-today {
+    box-shadow: 0 0 0 2px rgba(0, 255, 1, 0.7);
+}
+
 .decker-subtasks-list .decker-subtask-assignee-static {
     padding-left: 0.5rem;
     color: var(--bs-secondary-color, #6c757d);
