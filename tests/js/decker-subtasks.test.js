@@ -39,7 +39,9 @@ function renderCard( items, options = {} ) {
 
 	document.body.innerHTML = `
 		<div id="card">
-			<form id="task-form" data-lock='{"generation":"gen-1"}'></form>
+			<form id="task-form" data-lock='{"generation":"gen-1"}'>
+				<input id="task-due-date" type="date" value="${ options.taskDueDate ?? '' }">
+			</form>
 			<span class="badge" id="subtask-count">0/0</span>
 			<div class="decker-subtasks"
 				data-task-id="${ options.taskId ?? 42 }"
@@ -132,6 +134,7 @@ describe( 'subtask pane', () => {
 	beforeEach( () => {
 		mockFetchEcho();
 		vi.useRealTimers();
+		global.deckerVars.current_user_id = 0;
 	} );
 
 	test( 'renders one row per stored item', () => {
@@ -471,6 +474,136 @@ describe( 'subtask pane', () => {
 
 		expect( avatar.hidden ).toBe( true );
 		expect( avatar.hasAttribute( 'src' ) ).toBe( false );
+	} );
+
+	test( 'a new item starts out the viewer’s, due when the task is', async () => {
+		global.deckerVars.current_user_id = 7;
+
+		const context = renderCard( [], {
+			people: [ { id: 7, name: 'Fran' } ],
+			taskDueDate: '2026-12-01',
+		} );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-new' ).value = 'Typed step';
+		context.querySelector( '.decker-subtask-add-btn' ).click();
+		await settle();
+
+		expect( lastBody().items[ 0 ].assignee ).toBe( 7 );
+		expect( lastBody().items[ 0 ].duedate ).toBe( '2026-12-01' );
+	} );
+
+	test( 'a viewer who is not on the card is not assigned by default', async () => {
+		global.deckerVars.current_user_id = 99;
+
+		const context = renderCard( [], { people: [ { id: 7, name: 'Fran' } ] } );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-new' ).value = 'Typed step';
+		context.querySelector( '.decker-subtask-add-btn' ).click();
+		await settle();
+
+		expect( lastBody().items[ 0 ].assignee ).toBe( 0 );
+		expect( lastBody().items[ 0 ].duedate ).toBe( '' );
+	} );
+
+	test( 'the assignee field becomes the card’s own picker, with the face on it', () => {
+		const created = [];
+		global.Choices = class {
+			constructor( element, config ) {
+				created.push( { element, config } );
+			}
+			destroy() {}
+		};
+		global.Choices.defaults = {
+			templates: {
+				item: () => document.createElement( 'div' ),
+				choice: () => document.createElement( 'div' ),
+			},
+		};
+
+		try {
+			const context = renderCard( [ item( { assignee: 7 } ) ], {
+				people: [
+					{ id: 7, name: 'Fran', avatar: 'https://example.test/fran.png' },
+				],
+			} );
+			window.deckerInitSubtasks( context );
+
+			expect( created ).toHaveLength( 1 );
+			expect(
+				created[ 0 ].element.classList.contains( 'decker-subtask-assignee' )
+			).toBe( true );
+
+			const templates = created[ 0 ].config.callbackOnCreateTemplates();
+			const data = {
+				customProperties: { avatar: 'https://example.test/fran.png' },
+			};
+
+			[ 'item', 'choice' ].forEach( ( name ) => {
+				const rendered = templates[ name ].call( {}, {}, data );
+				expect( rendered.firstChild.getAttribute( 'src' ) ).toBe(
+					'https://example.test/fran.png'
+				);
+			} );
+
+			// Nothing to show for the unassigned entry, so no broken image.
+			expect(
+				templates.item.call( {}, {}, {} ).querySelector( 'img' )
+			).toBe( null );
+		} finally {
+			delete global.Choices;
+		}
+	} );
+
+	test( 'a slow write does not undo what was typed while it was away', async () => {
+		// The reply to the first write describes the list as it was before the
+		// second item existed, and it lands last.
+		const replies = [];
+		global.fetch = vi.fn( ( url, options ) => {
+			const sent = JSON.parse( options.body ).items;
+			return new Promise( ( resolve ) => {
+				replies.push( () =>
+					resolve( {
+						ok: true,
+						json: () =>
+							Promise.resolve( {
+								success: true,
+								items: sent,
+								progress: {
+									total: sent.length,
+									done: 0,
+									counts: {},
+									percent: 0,
+								},
+							} ),
+					} )
+				);
+			} );
+		} );
+
+		const context = renderCard( [] );
+		window.deckerInitSubtasks( context );
+
+		const input = context.querySelector( '.decker-subtask-new' );
+		const add = context.querySelector( '.decker-subtask-add-btn' );
+
+		input.value = 'First';
+		add.click();
+		input.value = 'Second';
+		add.click();
+		expect( replies ).toHaveLength( 2 );
+
+		replies[ 1 ]();
+		await settle();
+		replies[ 0 ]();
+		await settle();
+
+		expect(
+			Array.from( context.querySelectorAll( '.decker-subtask-title' ) ).map(
+				( field ) => field.value
+			)
+		).toEqual( [ 'First', 'Second' ] );
 	} );
 
 	test( 'typing a title is debounced into a single write', async () => {

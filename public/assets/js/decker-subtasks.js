@@ -10,7 +10,7 @@
  * generation: the server rejects a stale form, which is also what keeps two
  * people (or two tabs) from clobbering each other's list.
  */
-/* global bootstrap, Sortable, deckerVars, wpApiSettings */
+/* global bootstrap, Choices, Sortable, deckerVars, wpApiSettings */
 
 (function () {
     'use strict';
@@ -129,7 +129,9 @@
 
         this.saveTimer = null;
         this.savePending = false;
+        this.saveSeq = 0;
         this.sortable = null;
+        this.pickers = [];
 
         if (!Array.isArray(this.items)) {
             this.items = [];
@@ -187,6 +189,7 @@
                 return;
             }
 
+            this.destroyAssigneePickers();
             this.listEl.textContent = '';
             this.items.forEach(function (item) {
                 this.listEl.appendChild(this.buildRow(item));
@@ -315,23 +318,28 @@
         /**
          * Build the assignee select, limited to the people on the card.
          *
+         * Upgraded to Choices.js like the card's own people pickers, so the row
+         * shows the face rather than only the name. Without Choices (it comes
+         * from a CDN) the plain select and a small avatar beside it carry the
+         * same information.
+         *
          * @param {Object} item The subtask item.
          * @return {HTMLElement} The select.
          */
         buildAssigneeField: function (item) {
             const wrap = document.createElement('span');
             wrap.className = 'decker-subtask-assignee-field';
+            const enhance = !this.readOnly && typeof Choices !== 'undefined';
 
-            // The avatar is the whole point of picking a person: the board
-            // shows faces, so the row should too. It is decorative — the
-            // select right beside it already names who is assigned.
-            const avatar = document.createElement('img');
-            avatar.className = 'decker-subtask-avatar';
-            avatar.alt = '';
-            avatar.setAttribute('aria-hidden', 'true');
-            avatar.width = 22;
-            avatar.height = 22;
-            wrap.appendChild(avatar);
+            if (!enhance) {
+                const avatar = document.createElement('img');
+                avatar.className = 'decker-subtask-avatar';
+                avatar.alt = '';
+                avatar.setAttribute('aria-hidden', 'true');
+                avatar.width = 20;
+                avatar.height = 20;
+                wrap.appendChild(avatar);
+            }
 
             const select = document.createElement('select');
             select.className = 'form-select form-select-sm decker-subtask-assignee';
@@ -347,6 +355,9 @@
                 const option = document.createElement('option');
                 option.value = String(person.id);
                 option.textContent = person.name;
+                if (person.avatar) {
+                    option.dataset.customProperties = JSON.stringify({ avatar: person.avatar });
+                }
                 select.appendChild(option);
             });
 
@@ -354,6 +365,8 @@
             wrap.appendChild(select);
 
             if (!this.readOnly) {
+                // Choices.js forwards the pick to the original select, so this
+                // one listener serves both the enhanced and the plain field.
                 select.addEventListener('change', function () {
                     item.assignee = parseInt(select.value, 10) || 0;
                     this.applyAssigneeAvatar(wrap.closest('.decker-subtask-row'), item);
@@ -361,7 +374,74 @@
                 }.bind(this));
             }
 
+            if (enhance) {
+                this.enhanceAssignee(select);
+            }
+
             return wrap;
+        },
+
+        /**
+         * Turn one assignee select into a Choices.js picker showing faces.
+         *
+         * @param {HTMLElement} select The select to upgrade.
+         */
+        enhanceAssignee: function (select) {
+            this.pickers.push(new Choices(select, {
+                allowHTML: true,
+                shouldSort: false,
+                // A card's people are the responsable plus the assignees, so
+                // the list is short; searching a handful of names is friction.
+                searchEnabled: this.people.length > 7,
+                itemSelectText: '',
+                callbackOnCreateTemplates: function () {
+                    const base = Choices.defaults.templates;
+
+                    /**
+                     * Put the person's picture before their name.
+                     *
+                     * @param {HTMLElement} el   The rendered element.
+                     * @param {Object}      data The choice data.
+                     * @return {HTMLElement} The same element.
+                     */
+                    const withAvatar = function (el, data) {
+                        const url = data.customProperties && data.customProperties.avatar;
+                        if (!url) {
+                            return el;
+                        }
+                        const img = document.createElement('img');
+                        img.className = 'decker-subtask-avatar';
+                        img.src = url;
+                        img.alt = '';
+                        img.width = 20;
+                        img.height = 20;
+                        el.insertBefore(img, el.firstChild);
+                        return el;
+                    };
+
+                    return Object.assign({}, base, {
+                        item: function (...args) {
+                            return withAvatar(base.item.apply(this, args), args[1]);
+                        },
+                        choice: function (...args) {
+                            return withAvatar(base.choice.apply(this, args), args[1]);
+                        }
+                    });
+                }
+            }));
+        },
+
+        /**
+         * Tear the assignee pickers down before their rows are replaced.
+         *
+         * Choices.js listens on the document, so an instance whose row was
+         * dropped would keep doing so.
+         */
+        destroyAssigneePickers: function () {
+            this.pickers.forEach(function (picker) {
+                picker.destroy();
+            });
+            this.pickers = [];
         },
 
         /**
@@ -375,7 +455,9 @@
                 return;
             }
 
-            const avatar = row.querySelector('.decker-subtask-avatar');
+            // Direct child only: an upgraded field renders the face inside the
+            // Choices item, which Choices itself keeps in step.
+            const avatar = row.querySelector('.decker-subtask-assignee-field > .decker-subtask-avatar');
             if (!avatar) {
                 return;
             }
@@ -641,19 +723,53 @@
                 return;
             }
 
+            const assignee = this.defaultAssignee();
+            const duedate = this.defaultDueDate();
+
             titles.forEach(function (title) {
                 this.items.push({
                     id: this.nextId(),
                     title: title.slice(0, 255),
                     status: 'to-do',
-                    assignee: 0,
-                    duedate: '',
+                    assignee: assignee,
+                    duedate: duedate,
                     task_id: 0
                 });
             }, this);
 
             this.renderAll();
             this.save(true);
+        },
+
+        /**
+         * The person a new item starts out assigned to.
+         *
+         * Whoever is breaking a task down is usually breaking down their own
+         * work, so the viewer is the default — but only when they are on the
+         * card, since the server rejects anyone else.
+         *
+         * @return {number} The user ID, or 0 when the viewer is not on the card.
+         */
+        defaultAssignee: function () {
+            const me = (typeof deckerVars !== 'undefined' && parseInt(deckerVars.current_user_id, 10)) || 0;
+
+            return this.people.some(function (person) {
+                return person.id === me;
+            }) ? me : 0;
+        },
+
+        /**
+         * The date a new item starts out due: the parent task's.
+         *
+         * Read from the form rather than from the saved task, so a due date
+         * that was changed but not yet saved is the one that is inherited.
+         *
+         * @return {string} The date in Y-m-d, or an empty string.
+         */
+        defaultDueDate: function () {
+            const field = this.context.querySelector('#task-due-date');
+
+            return (field && field.value) || '';
         },
 
         /**
@@ -811,6 +927,12 @@
                 return Promise.resolve(false);
             }
 
+            // Writes are whole-list replacements, so two of them in flight at
+            // once (typing a second item before the first write answered) can
+            // come back out of order. The sequence marks which answer still
+            // describes what is stored.
+            const seq = ++this.saveSeq;
+
             this.setStatusMessage(text('saving', 'Saving…'), false);
 
             const url = `${wpApiSettings.root}decker/v1/tasks/${encodeURIComponent(this.taskId)}/subtasks`;
@@ -844,6 +966,13 @@
                     // what was sent, and re-rendering then would detach the
                     // controls under the user's cursor for nothing, so the rows
                     // are rebuilt only when the stored list actually differs.
+                    // A newer write is already on its way, and its answer —
+                    // not this one — will describe the stored list. Adopting
+                    // here would drop whatever was typed in the meantime.
+                    if (seq !== this.saveSeq) {
+                        return true;
+                    }
+
                     const stored = result.data.items;
                     if (JSON.stringify(stored) !== JSON.stringify(this.items)) {
                         this.items = stored;

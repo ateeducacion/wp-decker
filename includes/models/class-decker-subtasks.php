@@ -53,12 +53,20 @@ class Decker_Subtasks {
 	/**
 	 * Whether the subtasks feature is enabled for this site.
 	 *
+	 * On by default: a missing key is a site that has never saved the settings
+	 * screen, and a feature nobody can see is a feature nobody adopts. Clearing
+	 * the checkbox stores '0', so an explicit opt-out is never overridden.
+	 *
 	 * @return bool True when the setting is on.
 	 */
 	public static function is_enabled(): bool {
 		$options = get_option( 'decker_settings', array() );
 
-		return ! empty( $options['subtasks_enabled'] ) && '1' === $options['subtasks_enabled'];
+		if ( ! is_array( $options ) || ! isset( $options['subtasks_enabled'] ) ) {
+			return true;
+		}
+
+		return '1' === $options['subtasks_enabled'];
 	}
 
 	/**

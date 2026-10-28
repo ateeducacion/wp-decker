@@ -759,10 +759,32 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .decker-subtasks-list .decker-subtask-avatar {
     flex: 0 0 auto;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     object-fit: cover;
+}
+
+/* The assignee field is a Choices.js picker like the card's own people
+   pickers. Choices is styled for a stacked form, so the margin goes and the
+   control shrinks to the row's height; the face sits before the name in both
+   the closed control and the open list. */
+.decker-subtasks-list .decker-subtask-assignee-field .choices {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+.decker-subtasks-list .decker-subtask-assignee-field .choices__inner {
+    min-height: 0;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.decker-subtasks-list .decker-subtask-assignee-field .choices__item {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
 }
 
 .decker-subtasks-list .decker-subtask-row > .decker-subtask-duedate {
@@ -876,24 +898,31 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     background-color: #198754;
 }
 
-/* The card has seven tabs once subtasks are on, and Bootstrap's 1rem of
-   horizontal padding pushed the last one onto a second row inside the modal.
-   Tightening the padding and the count badges keeps them on one line without
-   shortening any label. */
-.decker-task-tabs .nav-link {
-    padding-right: 0.6rem;
-    padding-left: 0.6rem;
+/* The card has seven tabs once subtasks are on, and attex's 1.25rem of
+   horizontal padding on `.nav-tabs.nav-bordered li a` pushed the last one onto
+   a second row. The selector has to match that one class for class, or the
+   theme keeps winning; nowrap then keeps the row a row, scrolling sideways on a
+   phone rather than stacking. No label is shortened. */
+.nav-tabs.nav-bordered.decker-task-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
 }
 
-.decker-task-tabs .nav-link .badge {
+.nav-tabs.nav-bordered.decker-task-tabs li a {
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+    white-space: nowrap;
+}
+
+.nav-tabs.nav-bordered.decker-task-tabs li a .badge {
     padding: 0.2em 0.4em;
     font-size: 0.65em;
 }
 
 @media (max-width: 575.98px) {
-    .decker-task-tabs .nav-link {
-        padding-right: 0.45rem;
-        padding-left: 0.45rem;
+    .nav-tabs.nav-bordered.decker-task-tabs li a {
+        padding-right: 0.4rem;
+        padding-left: 0.4rem;
         font-size: 0.875rem;
     }
 }

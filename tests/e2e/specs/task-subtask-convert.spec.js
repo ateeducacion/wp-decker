@@ -66,8 +66,11 @@ test( 'promotes a subtask typed in the card into a task of its own', async ( {
 		await newItem.press( 'Enter' );
 		await expect( rows ).toHaveCount( 2 );
 
-		// An assignee on the item is what the reported failure had.
-		await rows.nth( 0 ).locator( '.decker-subtask-assignee' ).selectOption( { index: 1 } );
+		// An assignee on the item is what the reported failure had, and a new
+		// item now starts out assigned to whoever typed it.
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
+		).not.toHaveValue( '0' );
 		await rows.nth( 0 ).locator( '.decker-subtask-duedate' ).fill( '2026-10-29' );
 		await rows.nth( 1 ).locator( '.decker-subtask-duedate' ).fill( '2026-10-29' );
 		await expect( page.locator( '.decker-subtasks-status' ) ).toHaveText(

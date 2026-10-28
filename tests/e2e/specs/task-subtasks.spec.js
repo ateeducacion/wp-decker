@@ -87,7 +87,25 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		).toHaveCount( 1 );
 		await expect( page.locator( '#subtask-count' ) ).toHaveText( '1/2' );
 
-		// Give the second item an owner and a date.
+		// A new item starts out assigned to whoever typed it, and the owner is
+		// changed through the Choices.js picker, which is what hides the plain
+		// select a test could otherwise drive directly.
+		await expect(
+			rows.nth( 1 ).locator( '.decker-subtask-assignee' )
+		).not.toHaveValue( '0' );
+
+		const picker = rows.nth( 0 ).locator( '.decker-subtask-assignee-field' );
+		await picker.click();
+		await picker
+			.locator( '.choices__list--dropdown .choices__item' )
+			.filter( { hasText: /Unassigned|Sin asignar/ } )
+			.first()
+			.click();
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
+		).toHaveValue( '0' );
+
+		// Give the second item a date.
 		await rows.nth( 1 ).locator( '.decker-subtask-duedate' ).fill( '2026-11-20' );
 		await expect( page.locator( '.decker-subtasks-status' ) ).toHaveText(
 			/Saved|Guardado/
@@ -104,6 +122,9 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		await expect(
 			rows.nth( 1 ).locator( '.decker-subtask-duedate' )
 		).toHaveValue( '2026-11-20' );
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
+		).toHaveValue( '0' );
 
 		await page.setViewportSize( { width: 1440, height: 1100 } );
 		await page

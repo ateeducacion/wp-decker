@@ -200,7 +200,7 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 	 * The routes are closed while the feature is off.
 	 */
 	public function test_write_is_refused_when_the_feature_is_disabled() {
-		update_option( 'decker_settings', array() );
+		update_option( 'decker_settings', array( 'subtasks_enabled' => '0' ) );
 
 		$response = $this->put_items( array( array( 'title' => 'Step' ) ) );
 

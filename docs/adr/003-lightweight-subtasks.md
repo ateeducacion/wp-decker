@@ -93,9 +93,9 @@ can compare over the phone.
 ## Consequences
 
 - No existing task query, counter or ordering behavior changes.
-- The feature is gated by `decker_settings[subtasks_enabled]`; turning it off
-  hides the tab, the card counter and the menu entry, and the stored lists are
-  kept.
+- The feature is gated by `decker_settings[subtasks_enabled]`, which is on
+  unless it has been explicitly cleared; turning it off hides the tab, the card
+  counter and the menu entry, and the stored lists are kept.
 - Cloning a task copies its list, since a task broken into steps is usually
   cloned to reuse that breakdown.
 - Item titles accept a multi-line paste as one item per line, which is how an

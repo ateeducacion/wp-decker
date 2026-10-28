@@ -53,7 +53,10 @@ class Decker_Demo_Randomizer {
 	 * @return bool
 	 */
 	public function random_boolean( $true_probability = 0.5 ) {
-		return ( $this->custom_rand() / mt_getrandmax() ) < $true_probability;
+		// The bound matters: custom_rand() defaults to PHP_INT_MAX, so dividing
+		// that by mt_getrandmax() yielded a ratio around 1e9 and this never
+		// returned true — no demo task was ever archived or max priority.
+		return ( $this->custom_rand( 0, mt_getrandmax() ) / mt_getrandmax() ) < $true_probability;
 	}
 
 	/**

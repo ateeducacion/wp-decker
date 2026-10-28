@@ -492,10 +492,18 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The feature flag drives is_enabled().
+	 * The feature flag drives is_enabled(), and defaults to on.
 	 */
 	public function test_is_enabled_follows_the_setting() {
+		// A site that has never saved the settings screen has no key at all.
+		delete_option( 'decker_settings' );
+		$this->assertTrue( Decker_Subtasks::is_enabled() );
+
 		update_option( 'decker_settings', array() );
+		$this->assertTrue( Decker_Subtasks::is_enabled() );
+
+		// Clearing the checkbox stores '0', which has to stick.
+		update_option( 'decker_settings', array( 'subtasks_enabled' => '0' ) );
 		$this->assertFalse( Decker_Subtasks::is_enabled() );
 
 		update_option( 'decker_settings', array( 'subtasks_enabled' => '1' ) );

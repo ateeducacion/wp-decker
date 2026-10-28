@@ -110,7 +110,7 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 	public function test_nothing_renders_while_the_feature_is_disabled() {
 		$this->store( array( array( 'title' => 'Step' ) ) );
 
-		update_option( 'decker_settings', array() );
+		update_option( 'decker_settings', array( 'subtasks_enabled' => '0' ) );
 
 		$this->assertSame( '', $this->render( 'progress' ) );
 		$this->assertSame( '', $this->render( 'chips' ) );

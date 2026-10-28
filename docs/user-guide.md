@@ -27,12 +27,14 @@ Available parameters include `title`, `description`, `board`, `stack`, `maximum_
 
 ## Subtasks
 
-Enable **Settings → Decker → Subtasks** to get a *Subtasks* tab on every task.
+Every task has a *Subtasks* tab. It can be turned off in **Settings → Decker
+→ Subtasks**.
 
 - Each subtask has a title, one of the three task states (to-do, in progress,
   done), an optional assignee and an optional due date. Clicking the state icon
   cycles through the three; the change is saved straight away, with no card save.
-- The assignee list is limited to the people already on the task.
+- The assignee list is limited to the people already on the task, and shows
+  their picture. A new subtask starts out yours and due when the task is.
 - Pasting several lines into the "add" field creates one subtask per line, which
   is how an existing checklist or spreadsheet column gets in.
 - Subtasks are reordered by dragging the handle on the left.
