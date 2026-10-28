@@ -334,7 +334,7 @@ class Decker_Public_Assets {
 	 * @return array<string, string> Map of string key to translated text.
 	 */
 	private function get_ui_strings() {
-		return array(
+		$strings = array(
 			// Common strings.
 			'confirm_delete_comment'        => __( 'Are you sure you want to delete this comment?', 'decker' ),
 			'failed_delete_comment'         => __( 'Failed to delete comment.', 'decker' ),
@@ -429,7 +429,21 @@ class Decker_Public_Assets {
 			'adding_to_today'               => __( 'Adding to today…', 'decker' ),
 			'removing_from_today'           => __( 'Removing from today…', 'decker' ),
 			'today_update_failed'           => __( 'The task could not be updated.', 'decker' ),
-			// Subtask strings.
+		);
+
+		return array_merge( $strings, $this->get_subtask_strings() );
+	}
+
+	/**
+	 * The strings the subtask pane and its chips use.
+	 *
+	 * Kept apart from the rest so neither list grows past the point of
+	 * being readable in one screen.
+	 *
+	 * @return array<string, string> Localized strings.
+	 */
+	private function get_subtask_strings() {
+		return array(
 			'saving'                        => __( 'Saving…', 'decker' ),
 			'saved'                         => __( 'Saved', 'decker' ),
 			'stack_to_do'                   => __( 'To-Do', 'decker' ),

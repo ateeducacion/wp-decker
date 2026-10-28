@@ -745,8 +745,24 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     min-width: 8rem;
 }
 
-.decker-subtasks-list .decker-subtask-row > .decker-subtask-assignee {
-    flex: 0 0 9rem;
+.decker-subtasks-list .decker-subtask-row > .decker-subtask-assignee-field {
+    display: flex;
+    flex: 0 0 11rem;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+}
+
+.decker-subtasks-list .decker-subtask-assignee {
+    min-width: 0;
+}
+
+.decker-subtasks-list .decker-subtask-avatar {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .decker-subtasks-list .decker-subtask-row > .decker-subtask-duedate {
@@ -773,7 +789,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
         flex-wrap: wrap;
     }
 
-    .decker-subtasks-list .decker-subtask-row > .decker-subtask-assignee,
+    .decker-subtasks-list .decker-subtask-row > .decker-subtask-assignee-field,
     .decker-subtasks-list .decker-subtask-row > .decker-subtask-duedate {
         flex: 1 1 45%;
     }
@@ -858,4 +874,26 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 
 .decker-subtask-dot-done {
     background-color: #198754;
+}
+
+/* The card has seven tabs once subtasks are on, and Bootstrap's 1rem of
+   horizontal padding pushed the last one onto a second row inside the modal.
+   Tightening the padding and the count badges keeps them on one line without
+   shortening any label. */
+.decker-task-tabs .nav-link {
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
+}
+
+.decker-task-tabs .nav-link .badge {
+    padding: 0.2em 0.4em;
+    font-size: 0.65em;
+}
+
+@media (max-width: 575.98px) {
+    .decker-task-tabs .nav-link {
+        padding-right: 0.45rem;
+        padding-left: 0.45rem;
+        font-size: 0.875rem;
+    }
 }

@@ -91,7 +91,7 @@ class Decker_Subtasks {
 			return array();
 		}
 
-		return self::sanitize_list( $stored, $task_id );
+		return Decker_Subtask_Sanitizer::sanitize_list( $stored, $task_id );
 	}
 
 	/**
@@ -102,7 +102,7 @@ class Decker_Subtasks {
 	 * @return array<int, array> The sanitized list as stored.
 	 */
 	public static function set( int $task_id, array $items ): array {
-		$clean = self::sanitize_list( $items, $task_id );
+		$clean = Decker_Subtask_Sanitizer::sanitize_list( $items, $task_id );
 
 		if ( empty( $clean ) ) {
 			delete_post_meta( $task_id, self::META_KEY );
@@ -111,139 +111,6 @@ class Decker_Subtasks {
 		}
 
 		return $clean;
-	}
-
-	/**
-	 * Sanitize a raw list of items, assigning ids and dropping unusable rows.
-	 *
-	 * The stored array order is the display order, so no explicit position
-	 * field is kept: reordering is a write of the list in the new order.
-	 *
-	 * @param array $items   The raw items.
-	 * @param int   $task_id The parent task ID, used to validate assignees.
-	 * @return array<int, array> The sanitized items.
-	 */
-	public static function sanitize_list( array $items, int $task_id ): array {
-		$allowed_assignees = self::get_allowed_assignees( $task_id );
-		$clean             = array();
-		$used_ids          = array();
-
-		foreach ( $items as $raw ) {
-			if ( count( $clean ) >= self::MAX_ITEMS ) {
-				break;
-			}
-
-			$item = self::sanitize_item( $raw, $allowed_assignees );
-			if ( null === $item ) {
-				continue;
-			}
-
-			// Reject a missing, non-positive or already used id and mint the next
-			// free one, so every item in a stored list is addressable by id.
-			if ( $item['id'] <= 0 || in_array( $item['id'], $used_ids, true ) ) {
-				$item['id'] = self::next_id( $used_ids );
-			}
-
-			$used_ids[] = $item['id'];
-			$clean[]    = $item;
-		}
-
-		return $clean;
-	}
-
-	/**
-	 * Sanitize a single raw item.
-	 *
-	 * @param mixed $raw               The raw item.
-	 * @param array $allowed_assignees User IDs that may be assigned to an item.
-	 * @return array|null The sanitized item, or null when it cannot be stored.
-	 */
-	public static function sanitize_item( $raw, array $allowed_assignees ): ?array {
-		if ( ! is_array( $raw ) ) {
-			return null;
-		}
-
-		$title = isset( $raw['title'] ) ? sanitize_text_field( (string) $raw['title'] ) : '';
-		$title = trim( $title );
-
-		// A title is the only required field: an item without one carries no
-		// information and would render as an unlabeled row.
-		if ( '' === $title ) {
-			return null;
-		}
-
-		if ( mb_strlen( $title ) > self::MAX_TITLE_LENGTH ) {
-			$title = mb_substr( $title, 0, self::MAX_TITLE_LENGTH );
-		}
-
-		$status = isset( $raw['status'] ) ? sanitize_key( (string) $raw['status'] ) : '';
-		if ( ! in_array( $status, self::get_statuses(), true ) ) {
-			$status = 'to-do';
-		}
-
-		$assignee = isset( $raw['assignee'] ) ? absint( $raw['assignee'] ) : 0;
-		if ( ! in_array( $assignee, $allowed_assignees, true ) ) {
-			$assignee = 0;
-		}
-
-		return array(
-			'id'       => isset( $raw['id'] ) ? absint( $raw['id'] ) : 0,
-			'title'    => $title,
-			'status'   => $status,
-			'assignee' => $assignee,
-			'duedate'  => self::sanitize_date( isset( $raw['duedate'] ) ? $raw['duedate'] : '' ),
-			'task_id'  => self::sanitize_promoted_task( isset( $raw['task_id'] ) ? $raw['task_id'] : 0 ),
-		);
-	}
-
-	/**
-	 * Validate a Y-m-d date string.
-	 *
-	 * @param mixed $value The raw date value.
-	 * @return string The date in Y-m-d form, or an empty string.
-	 */
-	private static function sanitize_date( $value ): string {
-		$value = is_string( $value ) ? trim( $value ) : '';
-
-		if ( '' === $value ) {
-			return '';
-		}
-
-		$date = DateTime::createFromFormat( 'Y-m-d', $value );
-
-		// createFromFormat accepts out-of-range parts (2026-13-45) and rolls them
-		// over, so the round-trip comparison is what actually validates the date.
-		if ( ! $date instanceof DateTime || $date->format( 'Y-m-d' ) !== $value ) {
-			return '';
-		}
-
-		return $value;
-	}
-
-	/**
-	 * Validate the task an item was promoted into.
-	 *
-	 * @param mixed $value The raw task ID.
-	 * @return int The task ID, or 0 when it does not point at a task.
-	 */
-	private static function sanitize_promoted_task( $value ): int {
-		$task_id = absint( $value );
-
-		if ( $task_id <= 0 || 'decker_task' !== get_post_type( $task_id ) ) {
-			return 0;
-		}
-
-		return $task_id;
-	}
-
-	/**
-	 * The lowest free item id given the ids already in use.
-	 *
-	 * @param array<int, int> $used_ids The ids already taken.
-	 * @return int The next id.
-	 */
-	private static function next_id( array $used_ids ): int {
-		return empty( $used_ids ) ? 1 : ( max( $used_ids ) + 1 );
 	}
 
 	/**
@@ -261,7 +128,16 @@ class Decker_Subtasks {
 			return array();
 		}
 
-		$ids = array( (int) get_post_meta( $task_id, 'responsable', true ) );
+		// Resolved the way Task does it: a task with no `responsable` meta is
+		// its author's, so the author has to be offered here too. Without the
+		// fallback a task created outside the card form (over the generic REST
+		// endpoint, by the mail parser) offers nobody at all.
+		$responsable = (int) get_post_meta( $task_id, 'responsable', true );
+		if ( $responsable <= 0 ) {
+			$responsable = (int) get_post_field( 'post_author', $task_id );
+		}
+
+		$ids = array( $responsable );
 
 		$assigned = get_post_meta( $task_id, 'assigned_users', true );
 		if ( is_array( $assigned ) ) {

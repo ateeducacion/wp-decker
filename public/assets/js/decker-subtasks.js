@@ -218,6 +218,7 @@
             row.appendChild(this.buildTitleField(item));
             row.appendChild(this.buildAssigneeField(item));
             row.appendChild(this.buildDueDateField(item));
+            this.applyAssigneeAvatar(row, item);
 
             if (!this.readOnly) {
                 row.appendChild(this.buildRowActions(item));
@@ -318,6 +319,20 @@
          * @return {HTMLElement} The select.
          */
         buildAssigneeField: function (item) {
+            const wrap = document.createElement('span');
+            wrap.className = 'decker-subtask-assignee-field';
+
+            // The avatar is the whole point of picking a person: the board
+            // shows faces, so the row should too. It is decorative — the
+            // select right beside it already names who is assigned.
+            const avatar = document.createElement('img');
+            avatar.className = 'decker-subtask-avatar';
+            avatar.alt = '';
+            avatar.setAttribute('aria-hidden', 'true');
+            avatar.width = 22;
+            avatar.height = 22;
+            wrap.appendChild(avatar);
+
             const select = document.createElement('select');
             select.className = 'form-select form-select-sm decker-subtask-assignee';
             select.disabled = this.readOnly;
@@ -336,15 +351,49 @@
             });
 
             select.value = String(item.assignee || 0);
+            wrap.appendChild(select);
 
             if (!this.readOnly) {
                 select.addEventListener('change', function () {
                     item.assignee = parseInt(select.value, 10) || 0;
+                    this.applyAssigneeAvatar(wrap.closest('.decker-subtask-row'), item);
                     this.save(true);
                 }.bind(this));
             }
 
-            return select;
+            return wrap;
+        },
+
+        /**
+         * Show the assigned person's picture on a row, or hide it when nobody is.
+         *
+         * @param {HTMLElement} row  The row element.
+         * @param {Object}      item The subtask item.
+         */
+        applyAssigneeAvatar: function (row, item) {
+            if (!row) {
+                return;
+            }
+
+            const avatar = row.querySelector('.decker-subtask-avatar');
+            if (!avatar) {
+                return;
+            }
+
+            const person = this.people.filter(function (candidate) {
+                return candidate.id === item.assignee;
+            })[0];
+
+            if (person && person.avatar) {
+                avatar.src = person.avatar;
+                avatar.title = person.name;
+                avatar.hidden = false;
+                return;
+            }
+
+            avatar.removeAttribute('src');
+            avatar.removeAttribute('title');
+            avatar.hidden = true;
         },
 
         /**
@@ -654,13 +703,29 @@
             button.setAttribute('aria-busy', 'true');
             this.setStatusMessage(text('saving', 'Saving…'), false);
 
-            const url = `${wpApiSettings.root}decker/v1/tasks/${encodeURIComponent(this.taskId)}/subtasks/${encodeURIComponent(item.id)}/convert`;
+            const itemId = item.id;
 
-            // Any unsaved title edit has to land first: the new task is built
-            // from the stored item, not from what the row currently shows.
-            this.flush()
-                .then(function () {
-                    return fetch(url, {
+            // The server promotes the item it has STORED, so the list is always
+            // written first — not only when a debounced edit is pending. A row
+            // the viewer can see is not proof the server kept it: if an earlier
+            // write failed, converting would ask for an id that was never
+            // stored and come back "subtask not found", blaming the wrong step.
+            this.send()
+                .then(function (saved) {
+                    if (!saved) {
+                        // send() already reported why the list could not be
+                        // written, which is the error that actually matters.
+                        return null;
+                    }
+
+                    if (!this.items.some(function (candidate) {
+                        return candidate.id === itemId;
+                    })) {
+                        this.setStatusMessage(text('subtasks_save_failed', 'The subtasks could not be saved.'), true);
+                        return null;
+                    }
+
+                    return fetch(`${wpApiSettings.root}decker/v1/tasks/${encodeURIComponent(this.taskId)}/subtasks/${encodeURIComponent(itemId)}/convert`, {
                         method: 'POST',
                         headers: {
                             'X-WP-Nonce': wpApiSettings.nonce,
@@ -671,12 +736,18 @@
                     });
                 }.bind(this))
                 .then(function (response) {
+                    if (!response) {
+                        return null;
+                    }
                     return response.json().then(function (data) {
                         return { ok: response.ok, data: data };
                     });
                 })
                 .then(function (result) {
                     button.removeAttribute('aria-busy');
+                    if (!result) {
+                        return;
+                    }
                     if (!result.ok || !result.data || !result.data.success) {
                         this.reportFailure(result.data);
                         return;
@@ -695,11 +766,12 @@
          * Queue a write of the whole list.
          *
          * @param {boolean} immediate Whether to skip the debounce window.
-         * @return {Promise} Resolved once the write has been attempted.
+         * @return {Promise<boolean>} Whether the list is now stored. A debounced
+         *                            save resolves false: nothing is written yet.
          */
         save: function (immediate) {
             if (this.readOnly) {
-                return Promise.resolve();
+                return Promise.resolve(false);
             }
 
             window.clearTimeout(this.saveTimer);
@@ -711,17 +783,17 @@
             this.savePending = true;
             this.saveTimer = window.setTimeout(this.send.bind(this), SAVE_DEBOUNCE_MS);
 
-            return Promise.resolve();
+            return Promise.resolve(false);
         },
 
         /**
          * Write a pending debounced change immediately, if there is one.
          *
-         * @return {Promise} Resolved once the pending write has been attempted.
+         * @return {Promise<boolean>} Whether a pending write reached the server.
          */
         flush: function () {
             if (!this.savePending) {
-                return Promise.resolve();
+                return Promise.resolve(false);
             }
             window.clearTimeout(this.saveTimer);
             return this.send();
@@ -730,13 +802,13 @@
         /**
          * Write the current list to the server.
          *
-         * @return {Promise} Resolved once the write has been attempted.
+         * @return {Promise<boolean>} Whether the list is now stored.
          */
         send: function () {
             this.savePending = false;
 
             if (this.readOnly || this.taskId === '0') {
-                return Promise.resolve();
+                return Promise.resolve(false);
             }
 
             this.setStatusMessage(text('saving', 'Saving…'), false);
@@ -763,7 +835,7 @@
                 .then(function (result) {
                     if (!result.ok || !result.data || !result.data.success) {
                         this.reportFailure(result.data);
-                        return;
+                        return false;
                     }
 
                     // Adopt the stored list: the server drops empty titles, caps
@@ -778,9 +850,12 @@
                         this.renderAll();
                     }
                     this.setStatusMessage(text('saved', 'Saved'), false);
+
+                    return true;
                 }.bind(this))
                 .catch(function () {
                     this.reportFailure(null);
+                    return false;
                 }.bind(this));
         },
 

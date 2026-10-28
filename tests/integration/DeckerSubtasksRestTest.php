@@ -360,6 +360,53 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A task whose board is gone cannot hand one to the promoted subtask.
+	 */
+	public function test_convert_is_refused_when_the_parent_lost_its_board() {
+		$this->put_items( array( array( 'title' => 'Step' ) ) );
+
+		wp_delete_term( $this->board_id, 'decker_board' );
+
+		$response = $this->convert_item( 1 );
+
+		$this->assertSame( 409, $response->get_status() );
+		$this->assertSame( 'decker_subtask_no_board', $response->get_data()['code'] );
+	}
+
+	/**
+	 * The convert route runs the same guards as the write route.
+	 */
+	public function test_convert_is_refused_on_an_archived_task() {
+		$this->put_items( array( array( 'title' => 'Step' ) ) );
+
+		wp_update_post(
+			array(
+				'ID'          => $this->task_id,
+				'post_status' => 'archived',
+			)
+		);
+
+		$response = $this->convert_item( 1 );
+
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'decker_task_archived', $response->get_data()['code'] );
+	}
+
+	/**
+	 * An entry that is not an item at all is refused, not stored.
+	 */
+	public function test_a_non_object_entry_is_refused() {
+		$request = new WP_REST_Request( 'PUT', "/decker/v1/tasks/{$this->task_id}/subtasks" );
+		$request->set_header( 'content-type', 'application/json' );
+		$request->set_body( wp_json_encode( array( 'items' => array( 'not an item' ) ) ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertNotSame( 200, $response->get_status() );
+		$this->assertSame( array(), Decker_Subtasks::get( $this->task_id ) );
+	}
+
+	/**
 	 * A later list write cannot forge or drop a promotion link.
 	 */
 	public function test_promotion_links_are_not_client_writable() {

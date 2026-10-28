@@ -1163,6 +1163,28 @@ msgstr ""
 msgid "Board deleted successfully"
 msgstr ""
 
+#. translators: %d is the number of open subtasks the card has no room to show.
+#, php-format
+msgid "%d more open subtask"
+msgid_plural "%d more open subtasks"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: number of completed subtasks, 2: total number of subtasks.
+#, php-format
+msgid "%1$d of %2$d subtasks done"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+#. translators: %d is the number of subtasks not shown in the preview.
+#, php-format
+msgid "and %d more subtask"
+msgid_plural "and %d more subtasks"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "🔥"
 msgstr ""
 
@@ -1189,28 +1211,6 @@ msgstr ""
 #, php-format
 msgid "%d label"
 msgid_plural "%d labels"
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "Close"
-msgstr ""
-
-#. translators: %d is the number of open subtasks the card has no room to show.
-#, php-format
-msgid "%d more open subtask"
-msgid_plural "%d more open subtasks"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: 1: number of completed subtasks, 2: total number of subtasks.
-#, php-format
-msgid "%1$d of %2$d subtasks done"
-msgstr ""
-
-#. translators: %d is the number of subtasks not shown in the preview.
-#, php-format
-msgid "and %d more subtask"
-msgid_plural "and %d more subtasks"
 msgstr[0] ""
 msgstr[1] ""
 

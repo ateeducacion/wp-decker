@@ -80,6 +80,14 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A missing task id reads as empty rather than querying for post 0.
+	 */
+	public function test_a_missing_task_id_reads_as_empty() {
+		$this->assertSame( array(), Decker_Subtasks::get( 0 ) );
+		$this->assertSame( array(), Decker_Subtasks::get_allowed_assignees( 0 ) );
+	}
+
+	/**
 	 * A stored list round-trips with ids assigned and defaults filled in.
 	 */
 	public function test_set_assigns_ids_and_defaults() {
@@ -315,6 +323,37 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 
 		$this->assertSame( 1, $progress['total'] );
 		$this->assertSame( 1, $progress['done'] );
+	}
+
+	/**
+	 * A task with no responsable meta still offers its author.
+	 *
+	 * Task resolves the responsable that way, so a task created outside the
+	 * card form — over the generic REST endpoint, by the mail parser — would
+	 * otherwise offer nobody at all and silently drop every assignee.
+	 */
+	public function test_allowed_assignees_fall_back_to_the_author() {
+		$task_id = self::factory()->task->create(
+			array(
+				'board'  => self::factory()->board->create(),
+				'author' => $this->assignee_id,
+			)
+		);
+		delete_post_meta( $task_id, 'responsable' );
+
+		$this->assertSame( array( $this->assignee_id ), Decker_Subtasks::get_allowed_assignees( $task_id ) );
+
+		$items = Decker_Subtasks::set(
+			$task_id,
+			array(
+				array(
+					'title'    => 'Assigned to the author',
+					'assignee' => $this->assignee_id,
+				),
+			)
+		);
+
+		$this->assertSame( $this->assignee_id, $items[0]['assignee'] );
 	}
 
 	/**

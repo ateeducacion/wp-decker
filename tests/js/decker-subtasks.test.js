@@ -2,22 +2,29 @@
  * Unit tests for the subtask pane in decker-subtasks.js.
  *
  * The module is an IIFE that publishes window.deckerInitSubtasks, so the real
- * file is evaluated once with its globals stubbed and then driven through the
+ * file is imported once with its globals stubbed and then driven through the
  * DOM, rather than having its functions copied here.
  *
  * @package Decker
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 /* eslint-disable no-undef */
 
-const SOURCE = fs.readFileSync(
-	path.resolve( __dirname, '../../public/assets/js/decker-subtasks.js' ),
-	'utf8'
-);
+// The globals the module reads are installed before it is imported: the IIFE
+// runs at import time. Importing it (rather than evaluating its source by hand)
+// is what lets the coverage reporter instrument the file.
+global.deckerVars = { strings: {}, home_url: 'https://example.test/' };
+global.wpApiSettings = {
+	root: 'https://example.test/wp-json/',
+	nonce: 'abc',
+};
+// Sortable is loaded globally in production; the pane degrades to a
+// non-draggable list without it, which is what the tests exercise.
+global.Sortable = undefined;
+
+await import( '../../public/assets/js/decker-subtasks.js' );
 
 /**
  * Render the card markup the pane expects.
@@ -122,17 +129,6 @@ function mockFetchEcho() {
 }
 
 describe( 'subtask pane', () => {
-	beforeAll( () => {
-		global.deckerVars = { strings: {}, home_url: 'https://example.test/' };
-		global.wpApiSettings = { root: 'https://example.test/wp-json/', nonce: 'abc' };
-		// Sortable is loaded globally in production; the pane degrades to a
-		// non-draggable list without it, which is what the tests exercise.
-		global.Sortable = undefined;
-
-		// eslint-disable-next-line no-new-func
-		new Function( SOURCE ).call( global );
-	} );
-
 	beforeEach( () => {
 		mockFetchEcho();
 		vi.useRealTimers();
@@ -410,6 +406,71 @@ describe( 'subtask pane', () => {
 		await settle();
 
 		expect( global.fetch ).not.toHaveBeenCalled();
+	} );
+
+	test( 'converting writes the list first, then promotes', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-convert' ).click();
+		await settle();
+		await settle();
+
+		const urls = global.fetch.mock.calls.map( ( call ) => call[ 0 ] );
+		expect( urls[ 0 ] ).toContain( '/tasks/42/subtasks' );
+		expect( urls[ 0 ] ).not.toContain( '/convert' );
+		expect( urls[ 1 ] ).toContain( '/tasks/42/subtasks/1/convert' );
+	} );
+
+	test( 'a list that could not be saved is not converted', async () => {
+		// The reported failure: a write had been rejected, so the item the row
+		// showed had never reached the server, and converting it came back
+		// "subtask not found" — blaming the wrong step.
+		global.fetch = vi.fn( () =>
+			Promise.resolve( {
+				ok: false,
+				json: () =>
+					Promise.resolve( {
+						success: false,
+						code: 'decker_task_locked',
+						message: 'This card is locked.',
+					} ),
+			} )
+		);
+
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-convert' ).click();
+		await settle();
+		await settle();
+
+		// Only the write was attempted, and its error is what is reported.
+		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+		expect( global.fetch.mock.calls[ 0 ][ 0 ] ).not.toContain( '/convert' );
+		expect(
+			context.querySelector( '.decker-subtasks-status' ).textContent
+		).toBe( 'This card is locked.' );
+	} );
+
+	test( 'the assigned person’s picture is shown, and hidden when nobody is', async () => {
+		const context = renderCard( [ item( { assignee: 7 } ) ], {
+			people: [ { id: 7, name: 'Fran', avatar: 'https://example.test/fran.png' } ],
+		} );
+		window.deckerInitSubtasks( context );
+
+		const avatar = context.querySelector( '.decker-subtask-avatar' );
+		expect( avatar.getAttribute( 'src' ) ).toBe( 'https://example.test/fran.png' );
+		expect( avatar.hidden ).toBe( false );
+		expect( avatar.getAttribute( 'alt' ) ).toBe( '' );
+
+		const select = context.querySelector( '.decker-subtask-assignee' );
+		select.value = '0';
+		select.dispatchEvent( new window.Event( 'change' ) );
+		await settle();
+
+		expect( avatar.hidden ).toBe( true );
+		expect( avatar.hasAttribute( 'src' ) ).toBe( false );
 	} );
 
 	test( 'typing a title is debounced into a single write', async () => {

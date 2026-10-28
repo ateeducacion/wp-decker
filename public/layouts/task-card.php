@@ -328,7 +328,7 @@ require_once __DIR__ . '/partials/task-comments.php';
 
 
 	<!-- Tabs: Description, Commetns and Attachments -->
-	<ul class="nav nav-tabs nav-bordered mb-3">
+	<ul class="nav nav-tabs nav-bordered mb-3 decker-task-tabs">
 		<li class="nav-item">
 			<a href="#description-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link active"><?php esc_html_e( 'Description', 'decker' ); ?>
 			</a>
@@ -411,8 +411,9 @@ require_once __DIR__ . '/partials/task-comments.php';
 				$user = get_userdata( $user_id );
 				if ( $user instanceof WP_User ) {
 					$subtask_people[] = array(
-						'id'   => $user->ID,
-						'name' => $user->display_name,
+						'id'     => $user->ID,
+						'name'   => $user->display_name,
+						'avatar' => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
 					);
 				}
 			}

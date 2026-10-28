@@ -218,6 +218,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-label.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-task.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-subtasks.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-subtask-sanitizer.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-subtask-card-view.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-task-card-renderer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-task-menu-renderer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/models/class-decker-task-people-view.php';

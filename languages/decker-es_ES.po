@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-28T11:28:52+00:00\n"
+"PO-Revision-Date: 2026-10-28T12:07:31+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1196,6 +1196,28 @@ msgstr "No tienes permiso para borrar tableros"
 msgid "Board deleted successfully"
 msgstr "Tablero eliminado correctamente"
 
+#. translators: %d is the number of open subtasks the card has no room to show.
+#, php-format
+msgid "%d more open subtask"
+msgid_plural "%d more open subtasks"
+msgstr[0] "%d subtarea abierta más"
+msgstr[1] "%d subtareas abiertas más"
+
+#. translators: 1: number of completed subtasks, 2: total number of subtasks.
+#, php-format
+msgid "%1$d of %2$d subtasks done"
+msgstr "%1$d de %2$d subtareas hechas"
+
+msgid "Close"
+msgstr "Cerrar"
+
+#. translators: %d is the number of subtasks not shown in the preview.
+#, php-format
+msgid "and %d more subtask"
+msgid_plural "and %d more subtasks"
+msgstr[0] "y %d subtarea más"
+msgstr[1] "y %d subtareas más"
+
 msgid "🔥"
 msgstr "🔥"
 
@@ -1224,28 +1246,6 @@ msgid "%d label"
 msgid_plural "%d labels"
 msgstr[0] "%d etiqueta"
 msgstr[1] "%d etiquetas"
-
-msgid "Close"
-msgstr "Cerrar"
-
-#. translators: %d is the number of open subtasks the card has no room to show.
-#, php-format
-msgid "%d more open subtask"
-msgid_plural "%d more open subtasks"
-msgstr[0] "%d subtarea abierta más"
-msgstr[1] "%d subtareas abiertas más"
-
-#. translators: 1: number of completed subtasks, 2: total number of subtasks.
-#, php-format
-msgid "%1$d of %2$d subtasks done"
-msgstr "%1$d de %2$d subtareas hechas"
-
-#. translators: %d is the number of subtasks not shown in the preview.
-#, php-format
-msgid "and %d more subtask"
-msgid_plural "and %d more subtasks"
-msgstr[0] "y %d subtarea más"
-msgstr[1] "y %d subtareas más"
 
 msgid "No due date"
 msgstr "Sin fecha límite"

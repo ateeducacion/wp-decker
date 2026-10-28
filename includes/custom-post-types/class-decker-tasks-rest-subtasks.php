@@ -142,15 +142,42 @@ class Decker_Tasks_Rest_Subtasks {
 			return $this->error( 'decker_subtask_already_converted', __( 'This subtask has already been converted into a task.', 'decker' ), 409 );
 		}
 
-		$parent = new Task( $task_id );
+		$new_task_id = $this->create_task_from_item( $items[ $index ], new Task( $task_id ) );
 
+		if ( $new_task_id instanceof WP_REST_Response ) {
+			return $new_task_id;
+		}
+
+		$items[ $index ]['task_id'] = $new_task_id;
+		$items                      = Decker_Subtasks::set( $task_id, $items );
+
+		$response             = $this->list_response( $items )->get_data();
+		$response['task_id']  = (int) $new_task_id;
+		$response['task_url'] = add_query_arg(
+			array(
+				'decker_page' => 'task',
+				'id'          => (int) $new_task_id,
+			),
+			home_url( '/' )
+		);
+
+		return new WP_REST_Response( $response, 200 );
+	}
+
+	/**
+	 * Create the task a promoted subtask becomes.
+	 *
+	 * @param array $item   The subtask item being promoted.
+	 * @param Task  $parent The task it belongs to.
+	 * @return int|WP_REST_Response The new task ID, or the response to return.
+	 */
+	private function create_task_from_item( array $item, Task $parent ) {
 		if ( ! $parent->board instanceof Board ) {
 			return $this->error( 'decker_subtask_no_board', __( 'The parent task has no board, so the subtask cannot become a task.', 'decker' ), 409 );
 		}
 
-		$item        = $items[ $index ];
-		$responsable = $item['assignee'] > 0 ? $item['assignee'] : 0;
-		if ( 0 === $responsable && $parent->responsable instanceof WP_User ) {
+		$responsable = $item['assignee'];
+		if ( $responsable <= 0 && $parent->responsable instanceof WP_User ) {
 			$responsable = $parent->responsable->ID;
 		}
 
@@ -170,20 +197,7 @@ class Decker_Tasks_Rest_Subtasks {
 			return $this->error( 'decker_subtask_convert_failed', $new_task_id->get_error_message(), 400 );
 		}
 
-		$items[ $index ]['task_id'] = (int) $new_task_id;
-		$items                      = Decker_Subtasks::set( $task_id, $items );
-
-		$response             = $this->list_response( $items )->get_data();
-		$response['task_id']  = (int) $new_task_id;
-		$response['task_url'] = add_query_arg(
-			array(
-				'decker_page' => 'task',
-				'id'          => (int) $new_task_id,
-			),
-			home_url( '/' )
-		);
-
-		return new WP_REST_Response( $response, 200 );
+		return (int) $new_task_id;
 	}
 
 	/**
