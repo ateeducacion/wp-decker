@@ -219,6 +219,15 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 		$this->assertStringNotContainsString( 'Finished', $markup );
 		$this->assertStringContainsString( 'decker-subtask-chip-more', $markup );
 		$this->assertStringContainsString( '>+3</a>', $markup );
+
+		// Only the last chip shares its row with the +N; the rest take the
+		// whole width of the card.
+		$this->assertSame( 1, substr_count( $markup, 'decker-subtask-chip-with-more' ) );
+		$this->assertLessThan(
+			strpos( $markup, 'decker-subtask-chip-more' ),
+			strpos( $markup, 'decker-subtask-chip-with-more' ),
+			'The marked chip must be the one right before the +N.'
+		);
 	}
 
 	/**
@@ -231,6 +240,7 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 
 		$this->assertStringContainsString( 'Only one', $markup );
 		$this->assertStringNotContainsString( 'decker-subtask-chip-more', $markup );
+		$this->assertStringNotContainsString( 'decker-subtask-chip-with-more', $markup );
 	}
 
 	/**

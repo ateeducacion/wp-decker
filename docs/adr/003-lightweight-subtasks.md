@@ -90,6 +90,11 @@ their own work — and it has a consequence worth stating: two people see
 different chips on the same card, so a chip row is not something two of them
 can compare over the phone.
 
+Each chip takes a row of its own, the full width of the card. Side by side
+they had to be capped at 150px and most of a real title was ellipsis, which
+defeats the point of showing it; a card is a column, so vertical space is the
+cheap one. Only the last chip gives up part of its row, to the `+N`.
+
 ## Consequences
 
 - No existing task query, counter or ordering behavior changes.

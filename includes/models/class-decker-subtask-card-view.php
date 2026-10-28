@@ -100,10 +100,22 @@ class Decker_Subtask_Card_View {
 		$task_url = $this->task_url();
 		?>
 		<div class="decker-subtask-chips">
-			<?php foreach ( $selection['chips'] as $item ) : ?>
-				<?php $mine = $viewer > 0 && $viewer === (int) $item['assignee']; ?>
+			<?php $last = count( $selection['chips'] ) - 1; ?>
+			<?php foreach ( $selection['chips'] as $index => $item ) : ?>
+				<?php
+				$mine = $viewer > 0 && $viewer === (int) $item['assignee'];
+				// A chip owns the full width of the card, except the last one
+				// when it has to leave room for the +N beside it.
+				$classes = 'decker-subtask-chip';
+				if ( $mine ) {
+					$classes .= ' decker-subtask-chip-mine';
+				}
+				if ( $index === $last && $selection['remaining'] > 0 ) {
+					$classes .= ' decker-subtask-chip-with-more';
+				}
+				?>
 				<a href="<?php echo esc_url( $task_url ); ?>"
-					class="decker-subtask-chip<?php echo $mine ? ' decker-subtask-chip-mine' : ''; ?>"
+					class="<?php echo esc_attr( $classes ); ?>"
 					data-bs-toggle="modal"
 					data-bs-target="#task-modal"
 					data-task-id="<?php echo esc_attr( $this->task->ID ); ?>"

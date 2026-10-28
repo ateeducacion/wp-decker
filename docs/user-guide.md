@@ -40,8 +40,8 @@ Every task has a *Subtasks* tab. It can be turned off in **Settings → Decker
 - Subtasks are reordered by dragging the handle on the left.
 - The board card and the task list show `done/total` plus a bar in the three
   state colors. Clicking it opens the card on the Subtasks tab.
-- The board card also shows up to three subtasks as chips, with a `+N` for the
-  rest. Only open ones get a chip — finished work is already in the counter —
+- The board card also shows up to three subtasks as chips, one per row and the
+  full width of the card, with a `+N` beside the last one for the rest. Only open ones get a chip — finished work is already in the counter —
   and **your own come first, tinted blue**, so you can see what is yours
   without opening the card. Two people therefore see different chips on the
   same card. The rest of the order is: started before untouched, then the order

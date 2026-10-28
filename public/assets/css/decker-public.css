@@ -825,11 +825,15 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     margin-top: 0.5rem;
 }
 
+/* One chip per row, the full width of the card: the title is what has to be
+   read at a glance, and capped at 150px most of it was ellipsis. */
 .decker-subtask-chip {
-    display: inline-flex;
+    display: flex;
+    flex: 1 1 100%;
     align-items: center;
     gap: 5px;
-    max-width: 150px;
+    min-width: 0;
+    max-width: 100%;
     padding: 2px 8px 2px 6px;
     border: 1px solid var(--bs-border-color, #e0e4e8);
     border-radius: 9px;
@@ -867,8 +871,14 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     white-space: nowrap;
 }
 
+/* The last chip gives up part of its row so the +N can sit beside it. */
+.decker-subtask-chip-with-more {
+    flex: 1 1 0;
+}
+
 /* Dashed, because it is a remainder rather than a subtask of its own. */
 .decker-subtask-chip-more {
+    flex: 0 0 auto;
     padding-left: 8px;
     border-style: dashed;
     background-color: transparent;
