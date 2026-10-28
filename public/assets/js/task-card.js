@@ -666,7 +666,7 @@
      * @param {boolean} success - Whether the action succeeded.
      */
     function notifyTodayResult(message, success) {
-        const swal = (window.parent && window.parent.Swal) || window.Swal;
+        const swal = window.Swal;
         if (swal) {
             swal.fire({
                 icon: success ? 'success' : 'error',
@@ -2101,8 +2101,8 @@
                         // Leave the existing data-lock untouched when unparseable.
                     }
                 }
-                if (window.parent && window.parent.Swal) {
-                    window.parent.Swal.fire({
+                if (window.Swal) {
+                    window.Swal.fire({
                         icon: 'success',
                         title: strings.task_saved_success,
                         toast: true,

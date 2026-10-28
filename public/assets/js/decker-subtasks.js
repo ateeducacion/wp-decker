@@ -96,10 +96,11 @@
     /**
      * Ask the viewer to confirm something that cannot be undone.
      *
-     * SweetAlert like the rest of the card (the card can live in the modal's
-     * iframe, so the parent's instance is the one that paints over the whole
-     * page); window.confirm only where it is missing, which in practice is the
-     * test environment.
+     * SweetAlert like the rest of the card; window.confirm only where it is
+     * missing, which in practice is the test environment. The card is always
+     * in this document, so this window's instance is the one to use: reaching
+     * for window.parent throws outright when the site is framed by another
+     * origin, as WordPress Playground frames it.
      *
      * @param {string} question The question, as the dialog title.
      * @param {string} detail   What it is about, usually the item's title.
@@ -107,7 +108,7 @@
      * @return {Promise<boolean>} Whether the viewer confirmed.
      */
     function ask(question, detail, confirm) {
-        const swal = (window.parent && window.parent.Swal) || window.Swal;
+        const swal = window.Swal;
 
         if (!swal) {
             return Promise.resolve(

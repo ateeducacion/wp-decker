@@ -483,6 +483,38 @@ describe( 'subtask pane', () => {
 		delete window.Swal;
 	} );
 
+	test( 'a cross-origin frame around the site does not swallow the question', async () => {
+		const fire = vi.fn( () => Promise.resolve( { isConfirmed: true } ) );
+		window.Swal = { fire };
+
+		// WordPress Playground serves the site inside a frame of another
+		// origin, where reading any property of window.parent throws instead
+		// of returning undefined. Going through it killed the click.
+		const original = Object.getOwnPropertyDescriptor( window, 'parent' );
+		Object.defineProperty( window, 'parent', {
+			configurable: true,
+			get() {
+				return new Proxy( {}, {
+					get() {
+						throw new Error( 'Blocked a frame with origin' );
+					},
+				} );
+			},
+		} );
+
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+
+		expect( fire ).toHaveBeenCalled();
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+
+		Object.defineProperty( window, 'parent', original );
+		delete window.Swal;
+	} );
+
 	test( 'promoting a subtask asks first, and a no promotes nothing', async () => {
 		window.confirm.mockReturnValue( false );
 		const context = renderCard( [ item() ] );
