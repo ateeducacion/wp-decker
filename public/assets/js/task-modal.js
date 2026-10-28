@@ -161,8 +161,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // If a "For today" change was made while the card was open, refresh the
         // parent view so the board/priority today indicators are up to date.
-        if (window.deckerTodayChangedInSession) {
+        // Subtask edits do the same: the card's chips, its counter and the
+        // faces on them are rendered by PHP, so the board behind the modal is
+        // stale the moment one changes.
+        if (window.deckerTodayChangedInSession || window.deckerSubtasksChangedInSession) {
             window.deckerTodayChangedInSession = false;
+            window.deckerSubtasksChangedInSession = false;
             window.location.reload();
         }
     });

@@ -138,6 +138,7 @@ describe( 'subtask pane', () => {
 		// Deleting a row asks first; the tests that do not care about the
 		// question answer yes.
 		window.confirm = vi.fn( () => true );
+		window.deckerSubtasksChangedInSession = false;
 	} );
 
 	test( 'renders one row per stored item', () => {
@@ -285,6 +286,19 @@ describe( 'subtask pane', () => {
 
 		expect( window.confirm ).toHaveBeenCalled();
 		expect( lastBody().items.map( ( i ) => i.title ) ).toEqual( [ 'Second' ] );
+	} );
+
+	test( 'a stored change asks the board behind the modal to refresh', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		expect( window.deckerSubtasksChangedInSession ).toBeFalsy();
+		context.querySelector( '.decker-subtask-status' ).click();
+		await settle();
+
+		// The chips, the counter and the faces on them are PHP-rendered, so
+		// the card behind the modal is stale until the view reloads.
+		expect( window.deckerSubtasksChangedInSession ).toBe( true );
 	} );
 
 	test( 'the list is written with a method every host forwards', async () => {

@@ -123,6 +123,7 @@ class Decker_Subtask_Card_View {
 					title="<?php echo esc_attr( $this->get_chip_title( $item ) ); ?>">
 					<span class="decker-subtask-dot decker-subtask-dot-<?php echo esc_attr( $item['status'] ); ?>"></span>
 					<span class="decker-subtask-chip-label"><?php echo esc_html( $item['title'] ); ?></span>
+					<?php $this->render_chip_avatar( $item ); ?>
 				</a>
 			<?php endforeach; ?>
 
@@ -146,6 +147,29 @@ class Decker_Subtask_Card_View {
 					">+<?php echo esc_html( $selection['remaining'] ); ?></a>
 			<?php endif; ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Echoes the assignee's face at the end of a chip.
+	 *
+	 * Nothing when the item is unassigned: an empty circle on every chip would
+	 * be noise, and the card already shows the task's own people below. The
+	 * name is in the chip's tooltip, so the image is decorative here.
+	 *
+	 * @param array $item The subtask item.
+	 * @return void
+	 */
+	private function render_chip_avatar( array $item ): void {
+		$user = $item['assignee'] > 0 ? get_userdata( $item['assignee'] ) : false;
+		if ( ! $user instanceof WP_User ) {
+			return;
+		}
+		?>
+		<img src="<?php echo esc_url( get_avatar_url( $user->ID, array( 'size' => 32 ) ) ); ?>"
+			alt=""
+			aria-hidden="true"
+			class="decker-subtask-chip-avatar rounded-circle">
 		<?php
 	}
 

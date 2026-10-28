@@ -933,6 +933,7 @@
                         this.reportFailure(result.data);
                         return;
                     }
+                    window.deckerSubtasksChangedInSession = true;
                     this.items = result.data.items;
                     this.renderAll();
                     this.setStatusMessage(text('subtask_converted', 'The subtask is now a task of its own.'), false);
@@ -1040,6 +1041,11 @@
                     if (seq !== this.saveSeq) {
                         return true;
                     }
+
+                    // The board card behind the modal is PHP-rendered, so it
+                    // now shows a stale list; the modal refreshes the view on
+                    // close, the way the "For today" quick action does.
+                    window.deckerSubtasksChangedInSession = true;
 
                     const stored = result.data.items;
                     if (JSON.stringify(stored) !== JSON.stringify(this.items)) {

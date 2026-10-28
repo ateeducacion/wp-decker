@@ -323,6 +323,31 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * An assigned chip ends with that person's face.
+	 */
+	public function test_a_chip_shows_the_face_of_whoever_it_is_assigned_to() {
+		$this->store(
+			array(
+				array(
+					'title'    => 'Assigned',
+					'assignee' => $this->teammate,
+				),
+				array( 'title' => 'Nobody' ),
+			)
+		);
+
+		$markup = $this->render( 'chips' );
+
+		// One face, on the assigned chip: an empty circle on every unassigned
+		// chip would be noise.
+		$this->assertSame( 1, substr_count( $markup, 'decker-subtask-chip-avatar' ) );
+		$this->assertStringContainsString( esc_url( get_avatar_url( $this->teammate, array( 'size' => 32 ) ) ), $markup );
+
+		// It is decorative: the name is already in the chip's tooltip.
+		$this->assertStringContainsString( 'alt=""', $markup );
+	}
+
+	/**
 	 * Each chip carries the state as a dot class, not only as a colour.
 	 */
 	public function test_chips_carry_their_state_as_a_class() {

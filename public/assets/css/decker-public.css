@@ -878,6 +878,15 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     white-space: nowrap;
 }
 
+/* The assignee's face, pinned to the end of the chip. */
+.decker-subtask-chip-avatar {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    object-fit: cover;
+}
+
 /* The last chip gives up part of its row so the +N can sit beside it. */
 .decker-subtask-chip-with-more {
     flex: 1 1 0;
