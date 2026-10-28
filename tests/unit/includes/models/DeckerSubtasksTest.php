@@ -144,6 +144,35 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A promoted task knows which list it came out of, and an ordinary one does not.
+	 */
+	public function test_a_promoted_task_points_back_at_its_parent() {
+		$child = self::factory()->task->create( array( 'board' => self::factory()->board->create() ) );
+		$loose = self::factory()->task->create( array( 'board' => self::factory()->board->create() ) );
+
+		update_post_meta(
+			$this->task_id,
+			Decker_Subtasks::META_KEY,
+			array(
+				array(
+					'id'       => 1,
+					// A title carrying the same needle the lookup searches for
+					// must not pass for a link.
+					'title'    => 's:7:"task_id";i:' . $loose . ';',
+					'status'   => 'to-do',
+					'assignee' => 0,
+					'duedate'  => '',
+					'task_id'  => $child,
+				),
+			)
+		);
+
+		$this->assertSame( $this->task_id, Decker_Subtasks::get_parent_task_id( $child ) );
+		$this->assertNull( Decker_Subtasks::get_parent_task_id( $loose ) );
+		$this->assertNull( Decker_Subtasks::get_parent_task_id( 0 ) );
+	}
+
+	/**
 	 * A task with no stored list reads as empty.
 	 */
 	public function test_get_returns_empty_list_for_a_task_without_subtasks() {

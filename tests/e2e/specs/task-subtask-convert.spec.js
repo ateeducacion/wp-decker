@@ -115,14 +115,23 @@ test( 'promotes a subtask into a task of its own, and unlinks it without deletin
 			rows.nth( 0 ).locator( '.decker-subtask-convert' )
 		).toHaveCount( 0 );
 
-		// Taking a promoted row off the list is an unlink, and archiving the
-		// task it became is the opt-in on that same question.
 		const childUrl = await rows
 			.nth( 0 )
 			.locator( '.decker-subtask-open' )
 			.getAttribute( 'href' );
 		childId = new URL( childUrl, page.url() ).searchParams.get( 'id' );
 
+		// The task it became says which list it came out of, and links back.
+		await page.goto( `/?decker_page=task&id=${ childId }` );
+		const back = page.locator( '.decker-subtask-of a' );
+		await expect( back ).toHaveText( task.title.rendered );
+		await expect( back ).toHaveAttribute( 'href', new RegExp( `id=${ task.id }` ) );
+
+		await page.goto( `/?decker_page=task&id=${ task.id }` );
+		await page.locator( 'a[href="#subtasks-tab"]' ).click();
+
+		// Taking a promoted row off the list is an unlink, and archiving the
+		// task it became is the opt-in on that same question.
 		await rows.nth( 0 ).locator( '.decker-subtask-unlink' ).click();
 		await page.locator( '.swal2-checkbox input' ).check();
 		await page.locator( '.swal2-confirm' ).click();

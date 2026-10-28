@@ -67,7 +67,17 @@ read as that task from then on — title, responsable, due date and state come
 from the task on every read, and the row is no longer editable here: the title
 is a link to the task, and the owner is stated rather than picked, since the
 task's responsable need not be anyone on this card. The stored copy is left
-untouched and is what the row falls back to if the task is ever deleted. And so
+untouched and is what the row falls back to if the task is ever deleted.
+
+The promoted task says which list it came out of, at the top of its own card.
+That link is looked up, not stored: `Decker_Subtasks::get_parent_task_id()`
+finds the list holding the id, narrowed by meta key so it reads only the tasks
+that have a list, and confirms the match against that list rather than trusting
+the `LIKE`. A copy of the link on the child would have to be written on
+promotion, cleared on unlink and backfilled for everything promoted before it
+existed — three ways to disagree with the list, which stays the one source.
+
+And so
 taking it off the list is an unlink, not a delete: a different icon, no red,
 and a question that says the task stays on the board. Archiving that task is an
 opt-in checkbox on the same question — clearing the list usually means the work

@@ -182,6 +182,55 @@ class Decker_Subtasks {
 	}
 
 	/**
+	 * The task this one was promoted out of, if any.
+	 *
+	 * Looked up rather than stored: the item holds the only link, and a second
+	 * copy of it on the child would need writing on promotion, clearing on
+	 * unlink, and a backfill for every task promoted before it existed — three
+	 * ways to disagree with the list, which stays the one source. The query is
+	 * narrowed by meta key first, so it reads the few tasks that have a list at
+	 * all, and the match is confirmed against that list rather than trusted:
+	 * the needle could also occur inside an item title.
+	 *
+	 * @param int $task_id The task that may be a subtask.
+	 * @return int|null The parent task ID, or null when it is not one.
+	 */
+	public static function get_parent_task_id( int $task_id ): ?int {
+		if ( $task_id <= 0 ) {
+			return null;
+		}
+
+		$candidates = get_posts(
+			array(
+				'post_type'              => 'decker_task',
+				'post_status'            => 'any',
+				'posts_per_page'         => 5,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+					array(
+						'key'     => self::META_KEY,
+						'value'   => 's:7:"task_id";i:' . $task_id . ';',
+						'compare' => 'LIKE',
+					),
+				),
+			)
+		);
+
+		foreach ( $candidates as $candidate ) {
+			foreach ( self::get( (int) $candidate ) as $item ) {
+				if ( (int) $item['task_id'] === $task_id ) {
+					return (int) $candidate;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * The users that may be assigned to a subtask of the given task.
 	 *
 	 * Restricted to the people already on the card (the responsable plus the
