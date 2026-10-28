@@ -73,6 +73,77 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A promoted item is read as the task it became, not as the stored copy.
+	 */
+	public function test_a_promoted_item_is_read_from_its_task() {
+		$child = self::factory()->task->create(
+			array(
+				'board'       => self::factory()->board->create(),
+				'post_title'  => 'Renamed on its own card',
+				'responsable' => $this->outsider_id,
+				'duedate'     => '2026-12-24',
+			)
+		);
+		update_post_meta( $child, 'stack', 'in-progress' );
+
+		update_post_meta(
+			$this->task_id,
+			Decker_Subtasks::META_KEY,
+			array(
+				array(
+					'id'       => 1,
+					'title'    => 'What it was called when it was promoted',
+					'status'   => 'to-do',
+					'assignee' => $this->assignee_id,
+					'duedate'  => '',
+					'task_id'  => $child,
+				),
+			)
+		);
+
+		$items = Decker_Subtasks::get( $this->task_id );
+
+		$this->assertSame( 'Renamed on its own card', $items[0]['title'] );
+		$this->assertSame( '2026-12-24', $items[0]['duedate'] );
+		$this->assertSame( 'in-progress', $items[0]['status'] );
+
+		// The owner is the task's responsable, who is not even on this card,
+		// so the row carries their name and face rather than a user id the
+		// pane could not resolve.
+		$this->assertSame( $this->outsider_id, $items[0]['assignee'] );
+		$this->assertSame(
+			get_userdata( $this->outsider_id )->display_name,
+			$items[0]['assignee_name']
+		);
+		$this->assertNotSame( '', $items[0]['assignee_avatar'] );
+	}
+
+	/**
+	 * With the task gone, the stored copy is all that is left of the item.
+	 */
+	public function test_a_promoted_item_falls_back_to_the_stored_copy() {
+		update_post_meta(
+			$this->task_id,
+			Decker_Subtasks::META_KEY,
+			array(
+				array(
+					'id'       => 1,
+					'title'    => 'Its task was deleted',
+					'status'   => 'to-do',
+					'assignee' => 0,
+					'duedate'  => '',
+					'task_id'  => 999999,
+				),
+			)
+		);
+
+		$items = Decker_Subtasks::get( $this->task_id );
+
+		$this->assertSame( 'Its task was deleted', $items[0]['title'] );
+		$this->assertArrayNotHasKey( 'assignee_name', $items[0] );
+	}
+
+	/**
 	 * A task with no stored list reads as empty.
 	 */
 	public function test_get_returns_empty_list_for_a_task_without_subtasks() {

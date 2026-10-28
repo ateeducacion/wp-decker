@@ -745,6 +745,23 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     min-width: 8rem;
 }
 
+/* The title of a promoted row is a link to its task, in the same box the
+   editable rows use so the column still lines up. */
+.decker-subtasks-list a.decker-subtask-title-link {
+    display: block;
+    text-decoration: none;
+    line-height: 1.5;
+}
+
+.decker-subtasks-list a.decker-subtask-title-link:hover {
+    text-decoration: underline;
+}
+
+.decker-subtasks-list .decker-subtask-assignee-static {
+    padding-left: 0.5rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
 .decker-subtasks-list .decker-subtask-row > .decker-subtask-assignee-field {
     display: flex;
     flex: 0 0 11rem;

@@ -387,15 +387,39 @@ describe( 'subtask pane', () => {
 		expect( context.querySelector( '.decker-subtask-handle' ) ).toBeNull();
 	} );
 
-	test( 'a promoted item is frozen and links to its task', () => {
-		const context = renderCard( [ item( { task_id: 99 } ) ] );
+	test( 'a promoted item shows its task and is not editable here', () => {
+		const context = renderCard( [
+			item( {
+				task_id: 99,
+				title: 'Whatever the task is called now',
+				assignee_name: 'Someone off this card',
+				assignee_avatar: 'https://example.com/face.png',
+			} ),
+		] );
 		window.deckerInitSubtasks( context );
 
-		expect( context.querySelector( '.decker-subtask-title' ).readOnly ).toBe(
+		// The title is a link to the task, not a field.
+		const title = context.querySelector( '.decker-subtask-title' );
+		expect( title.tagName ).toBe( 'A' );
+		expect( title.textContent ).toBe( 'Whatever the task is called now' );
+		expect( title.href ).toContain( 'id=99' );
+
+		// Its owner is the task's responsable, who need not be on this card,
+		// so the row states them instead of offering a pick.
+		expect( context.querySelector( '.decker-subtask-assignee' ) ).toBeNull();
+		expect(
+			context.querySelector( '.decker-subtask-assignee-name' ).textContent
+		).toBe( 'Someone off this card' );
+
+		// Nothing on the row can be changed from here.
+		expect( context.querySelector( '.decker-subtask-duedate' ).disabled ).toBe(
+			true
+		);
+		expect( context.querySelector( '.decker-subtask-status' ).disabled ).toBe(
 			true
 		);
 		expect( context.querySelector( '.decker-subtask-convert' ) ).toBeNull();
-		expect( context.querySelector( '.decker-subtask-row a' ).href ).toContain(
+		expect( context.querySelector( '.decker-subtask-open' ).href ).toContain(
 			'id=99'
 		);
 	} );

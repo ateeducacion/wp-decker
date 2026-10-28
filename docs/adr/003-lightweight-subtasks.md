@@ -62,7 +62,12 @@ the item carries none) and leaves the item in the list, linked to the task it
 became. Trello settled on the same split — a checklist item carries an assignee
 and a due date, and converts into a card when it outgrows the list.
 
-Once promoted, the row stops being the work and becomes a pointer to it, so
+Once promoted, the row stops being the work and becomes a pointer to it. It is
+read as that task from then on — title, responsable, due date and state come
+from the task on every read, and the row is no longer editable here: the title
+is a link to the task, and the owner is stated rather than picked, since the
+task's responsable need not be anyone on this card. The stored copy is left
+untouched and is what the row falls back to if the task is ever deleted. And so
 taking it off the list is an unlink, not a delete: a different icon, no red,
 and a question that says the task stays on the board. Archiving that task is an
 opt-in checkbox on the same question — clearing the list usually means the work

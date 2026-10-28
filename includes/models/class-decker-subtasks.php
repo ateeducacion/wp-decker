@@ -85,6 +85,9 @@ class Decker_Subtasks {
 	 * value that is not an array of items yields an empty list rather than
 	 * leaking malformed rows into the renderers.
 	 *
+	 * An item that was promoted is shown as the task it became — see
+	 * adopt_linked_task() — so the two never say different things.
+	 *
 	 * @param int $task_id The parent task ID.
 	 * @return array<int, array> The subtask items.
 	 */
@@ -99,15 +102,72 @@ class Decker_Subtasks {
 			return array();
 		}
 
-		return Decker_Subtask_Sanitizer::sanitize_list( $stored, $task_id );
+		$items = Decker_Subtask_Sanitizer::sanitize_list( $stored, $task_id );
+
+		return array_map( array( __CLASS__, 'adopt_linked_task' ), $items );
+	}
+
+	/**
+	 * Show a promoted item as the task it became.
+	 *
+	 * Once an item is promoted it stops being the work and becomes a pointer
+	 * to it, so the stored copy of its title, owner, date and state is a
+	 * snapshot that starts drifting the moment anyone touches that task. The
+	 * row reads them from the task instead, which is also why it is no longer
+	 * editable here. The stored copy survives untouched and is what is left if
+	 * the task is ever deleted.
+	 *
+	 * The owner is carried along as a name and a face: it is the task's
+	 * responsable, who need not be anyone on this card, so the row cannot look
+	 * them up in the parent's people.
+	 *
+	 * @param array $item The subtask item.
+	 * @return array<string, mixed> The item as it is shown.
+	 */
+	private static function adopt_linked_task( array $item ): array {
+		$linked = (int) $item['task_id'];
+		if ( $linked <= 0 ) {
+			return $item;
+		}
+
+		$post = get_post( $linked );
+		if ( ! $post instanceof WP_Post || 'decker_task' !== $post->post_type || 'trash' === $post->post_status ) {
+			return $item;
+		}
+
+		$item['title'] = mb_substr( (string) $post->post_title, 0, self::MAX_TITLE_LENGTH );
+
+		$responsable = (int) get_post_meta( $linked, 'responsable', true );
+		if ( $responsable <= 0 ) {
+			$responsable = (int) $post->post_author;
+		}
+		$item['assignee'] = $responsable;
+
+		$duedate         = (string) get_post_meta( $linked, 'duedate', true );
+		$item['duedate'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $duedate ) ? $duedate : '';
+
+		$stack = (string) get_post_meta( $linked, 'stack', true );
+		if ( in_array( $stack, self::get_statuses(), true ) ) {
+			$item['status'] = $stack;
+		}
+
+		$user                    = $responsable > 0 ? get_userdata( $responsable ) : false;
+		$item['assignee_name']   = $user instanceof WP_User ? $user->display_name : '';
+		$item['assignee_avatar'] = $user instanceof WP_User ? get_avatar_url( $user->ID, array( 'size' => 48 ) ) : '';
+
+		return $item;
 	}
 
 	/**
 	 * Replace the whole subtask list of a task.
 	 *
+	 * Returns the list the way get() reads it back, not the raw stored one, so
+	 * the answer to a write and the next page load agree about the promoted
+	 * rows: those are shown as the task they became, not as what was sent.
+	 *
 	 * @param int   $task_id The parent task ID.
 	 * @param array $items   The raw items to store.
-	 * @return array<int, array> The sanitized list as stored.
+	 * @return array<int, array> The list as it is now read.
 	 */
 	public static function set( int $task_id, array $items ): array {
 		$clean = Decker_Subtask_Sanitizer::sanitize_list( $items, $task_id );
@@ -118,7 +178,7 @@ class Decker_Subtasks {
 			update_post_meta( $task_id, self::META_KEY, $clean );
 		}
 
-		return $clean;
+		return self::get( $task_id );
 	}
 
 	/**

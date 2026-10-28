@@ -96,7 +96,17 @@ test( 'promotes a subtask into a task of its own, and unlinks it without deletin
 		await expect(
 			rows.nth( 0 ).locator( '.decker-subtask-convert' )
 		).toHaveCount( 0 );
-		await expect( rows.nth( 0 ).locator( 'a' ) ).toHaveCount( 1 );
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-open' )
+		).toHaveCount( 1 );
+		// And the row now shows the task, not the frozen copy: the title is a
+		// link to it and nothing on the row can be edited.
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-title-link' )
+		).toHaveCount( 1 );
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-duedate' )
+		).toBeDisabled();
 
 		// And it survives reopening the card.
 		await page.goto( `/?decker_page=task&id=${ task.id }` );
@@ -107,7 +117,10 @@ test( 'promotes a subtask into a task of its own, and unlinks it without deletin
 
 		// Taking a promoted row off the list is an unlink, and archiving the
 		// task it became is the opt-in on that same question.
-		const childUrl = await rows.nth( 0 ).locator( 'a' ).getAttribute( 'href' );
+		const childUrl = await rows
+			.nth( 0 )
+			.locator( '.decker-subtask-open' )
+			.getAttribute( 'href' );
 		childId = new URL( childUrl, page.url() ).searchParams.get( 'id' );
 
 		await rows.nth( 0 ).locator( '.decker-subtask-unlink' ).click();
