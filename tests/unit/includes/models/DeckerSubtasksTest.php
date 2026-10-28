@@ -173,6 +173,62 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Archiving a promoted task takes its row off the parent's list.
+	 */
+	public function test_archiving_a_promoted_task_takes_its_row_off_the_list() {
+		$child = self::factory()->task->create( array( 'board' => self::factory()->board->create() ) );
+
+		Decker_Subtasks::set(
+			$this->task_id,
+			array(
+				array(
+					'title'   => 'Promoted',
+					'task_id' => $child,
+				),
+				array( 'title' => 'Still a step' ),
+			)
+		);
+		$this->assertCount( 2, Decker_Subtasks::get( $this->task_id ) );
+
+		wp_update_post(
+			array(
+				'ID'          => $child,
+				'post_status' => 'archived',
+			)
+		);
+
+		$items = Decker_Subtasks::get( $this->task_id );
+
+		$this->assertSame( array( 'Still a step' ), wp_list_pluck( $items, 'title' ) );
+
+		// And it stays gone: the list is a list, not a history.
+		wp_update_post(
+			array(
+				'ID'          => $child,
+				'post_status' => 'publish',
+			)
+		);
+		$this->assertCount( 1, Decker_Subtasks::get( $this->task_id ) );
+	}
+
+	/**
+	 * Archiving a task that is nobody's subtask leaves every list alone.
+	 */
+	public function test_archiving_an_ordinary_task_changes_no_list() {
+		Decker_Subtasks::set( $this->task_id, array( array( 'title' => 'A step' ) ) );
+
+		$loose = self::factory()->task->create( array( 'board' => self::factory()->board->create() ) );
+		wp_update_post(
+			array(
+				'ID'          => $loose,
+				'post_status' => 'archived',
+			)
+		);
+
+		$this->assertCount( 1, Decker_Subtasks::get( $this->task_id ) );
+	}
+
+	/**
 	 * A task with no stored list reads as empty.
 	 */
 	public function test_get_returns_empty_list_for_a_task_without_subtasks() {

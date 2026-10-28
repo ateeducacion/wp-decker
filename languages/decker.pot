@@ -1163,6 +1163,11 @@ msgstr ""
 msgid "Board deleted successfully"
 msgstr ""
 
+#. translators: %s is the title of the task this one is a subtask of.
+#, php-format
+msgid "Subtask of %s"
+msgstr ""
+
 #. translators: %d is the number of open subtasks the card has no room to show.
 #, php-format
 msgid "%d more open subtask"

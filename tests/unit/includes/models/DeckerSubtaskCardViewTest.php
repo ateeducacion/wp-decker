@@ -79,6 +79,8 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 		ob_start();
 		if ( 'progress' === $part ) {
 			$view->render_progress();
+		} elseif ( 'parent' === $part ) {
+			$view->render_parent_link();
 		} else {
 			$view->render_chips();
 		}
@@ -345,6 +347,37 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 
 		// It is decorative: the name is already in the chip's tooltip.
 		$this->assertStringContainsString( 'alt=""', $markup );
+	}
+
+	/**
+	 * A task promoted out of a list says so on its own card.
+	 */
+	public function test_a_promoted_task_card_links_back_to_its_list() {
+		// The fixture task is the one with the list; the card under test is
+		// the task one of its items became.
+		$child = self::factory()->task->create( array( 'board' => self::factory()->board->create() ) );
+
+		Decker_Subtasks::set(
+			$this->task_id,
+			array(
+				array(
+					'title'   => 'Promoted',
+					'task_id' => $child,
+				),
+			)
+		);
+
+		$view = new Decker_Subtask_Card_View( new Task( $child ) );
+		ob_start();
+		$view->render_parent_link();
+		$markup = (string) ob_get_clean();
+
+		$this->assertStringContainsString( 'decker-subtask-of', $markup );
+		$this->assertStringContainsString( get_the_title( $this->task_id ), $markup );
+		$this->assertStringContainsString( 'id=' . $this->task_id, html_entity_decode( $markup ) );
+
+		// A task nobody promoted says nothing at all.
+		$this->assertSame( '', $this->render( 'parent' ) );
 	}
 
 	/**

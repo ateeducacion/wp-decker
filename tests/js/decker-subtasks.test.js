@@ -469,6 +469,37 @@ describe( 'subtask pane', () => {
 		delete window.Swal;
 	} );
 
+	test( 'a failed archive says so, and the unlink still stands', async () => {
+		window.Swal = {
+			fire: vi.fn( () => Promise.resolve( { isConfirmed: true, value: 1 } ) ),
+		};
+
+		const echo = global.fetch;
+		global.fetch = vi.fn( ( url, options ) => {
+			if ( url.includes( 'wp/v2/tasks/' ) ) {
+				return Promise.resolve( { ok: false, json: () => Promise.resolve( {} ) } );
+			}
+			return echo( url, options );
+		} );
+
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+		await settle();
+
+		// The row is gone either way: the list was written before the
+		// archiving was attempted, so only the archiving failed.
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+
+		const status = context.querySelector( '.decker-subtasks-status' );
+		expect( status.textContent ).toBe( 'The task could not be archived.' );
+		expect( status.classList.contains( 'text-danger' ) ).toBe( true );
+
+		delete window.Swal;
+	} );
+
 	test( 'unlinking without ticking leaves the task alone', async () => {
 		window.Swal = {
 			fire: vi.fn( () => Promise.resolve( { isConfirmed: true, value: 0 } ) ),

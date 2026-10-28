@@ -77,6 +77,57 @@ class Decker_Subtask_Card_View {
 	}
 
 	/**
+	 * Echoes the line saying this task came out of another task's list.
+	 *
+	 * A promoted task joins the board like any other card, with nothing on it
+	 * to say it is one step of something bigger; the card says so, above its
+	 * own title, and links to the list it belongs to.
+	 *
+	 * @return void
+	 */
+	public function render_parent_link(): void {
+		if ( ! Decker_Subtasks::is_enabled() ) {
+			return;
+		}
+
+		$parent_id = Decker_Subtasks::get_parent_task_id( $this->task->ID );
+		if ( null === $parent_id ) {
+			return;
+		}
+
+		$url = add_query_arg(
+			array(
+				'decker_page' => 'task',
+				'id'          => $parent_id,
+				'decker_tab'  => 'subtasks',
+			),
+			home_url( '/' )
+		);
+		?>
+		<p class="small text-muted mb-1 text-truncate decker-subtask-of">
+			<i class="ri-corner-down-right-line me-1"></i>
+			<a href="<?php echo esc_url( $url ); ?>"
+				class="text-reset"
+				data-bs-toggle="modal"
+				data-bs-target="#task-modal"
+				data-task-id="<?php echo esc_attr( $parent_id ); ?>"
+				data-decker-open-tab="subtasks"
+				title="
+				<?php
+				echo esc_attr(
+					sprintf(
+						/* translators: %s is the title of the task this one is a subtask of. */
+						__( 'Subtask of %s', 'decker' ),
+						get_the_title( $parent_id )
+					)
+				);
+				?>
+				"><?php echo esc_html( get_the_title( $parent_id ) ); ?></a>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Echoes the row of subtask chips under the card's counters.
 	 *
 	 * Only a few open items get a chip — see

@@ -186,6 +186,12 @@ class Decker_Tasks {
 			return;
 		}
 
+		if ( 'archived' === $new_status && 'archived' !== $old_status ) {
+			// A task promoted out of a subtask list leaves that list when it
+			// is archived: the step is over and out of the way.
+			Decker_Subtasks::detach_from_parent( (int) $post->ID );
+		}
+
 		if ( 'archived' === $new_status && 'publish' === $old_status ) {
 
 			$board_term_id = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );

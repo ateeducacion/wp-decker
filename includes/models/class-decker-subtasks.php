@@ -96,15 +96,54 @@ class Decker_Subtasks {
 			return array();
 		}
 
+		return array_map( array( __CLASS__, 'adopt_linked_task' ), self::read_stored( $task_id ) );
+	}
+
+	/**
+	 * Read the stored list without showing promoted items as their task.
+	 *
+	 * What a write has to start from: feeding get() back into set() would
+	 * store the borrowed title, owner and date of every promoted row over the
+	 * snapshot those rows fall back to.
+	 *
+	 * @param int $task_id The parent task ID.
+	 * @return array<int, array> The stored subtask items.
+	 */
+	private static function read_stored( int $task_id ): array {
 		$stored = get_post_meta( $task_id, self::META_KEY, true );
 
 		if ( ! is_array( $stored ) ) {
 			return array();
 		}
 
-		$items = Decker_Subtask_Sanitizer::sanitize_list( $stored, $task_id );
+		return Decker_Subtask_Sanitizer::sanitize_list( $stored, $task_id );
+	}
 
-		return array_map( array( __CLASS__, 'adopt_linked_task' ), $items );
+	/**
+	 * Take the row pointing at a task off the list that holds it.
+	 *
+	 * Archiving a promoted task is how someone says that step is over and out
+	 * of the way, so the row goes with it instead of sitting in the parent's
+	 * list naming a card nobody can reach. Unarchiving does not bring it back:
+	 * the list is a list, not a history.
+	 *
+	 * @param int $task_id The task that was archived.
+	 * @return void
+	 */
+	public static function detach_from_parent( int $task_id ): void {
+		$parent_id = self::get_parent_task_id( $task_id );
+		if ( null === $parent_id ) {
+			return;
+		}
+
+		$kept = array();
+		foreach ( self::read_stored( $parent_id ) as $item ) {
+			if ( (int) $item['task_id'] !== $task_id ) {
+				$kept[] = $item;
+			}
+		}
+
+		self::set( $parent_id, $kept );
 	}
 
 	/**
@@ -178,8 +217,21 @@ class Decker_Subtasks {
 			update_post_meta( $task_id, self::META_KEY, $clean );
 		}
 
+		// The promotion links just changed, so the map built for this request
+		// no longer describes them.
+		self::$parents = null;
+
 		return self::get( $task_id );
 	}
+
+	/**
+	 * Child task ID to the task whose list holds it, for every stored list.
+	 *
+	 * Null until first needed, and reset on every write.
+	 *
+	 * @var array<int, int>|null
+	 */
+	private static $parents = null;
 
 	/**
 	 * The task this one was promoted out of, if any.
@@ -187,10 +239,7 @@ class Decker_Subtasks {
 	 * Looked up rather than stored: the item holds the only link, and a second
 	 * copy of it on the child would need writing on promotion, clearing on
 	 * unlink, and a backfill for every task promoted before it existed — three
-	 * ways to disagree with the list, which stays the one source. The query is
-	 * narrowed by meta key first, so it reads the few tasks that have a list at
-	 * all, and the match is confirmed against that list rather than trusted:
-	 * the needle could also occur inside an item title.
+	 * ways to disagree with the list, which stays the one source.
 	 *
 	 * @param int $task_id The task that may be a subtask.
 	 * @return int|null The parent task ID, or null when it is not one.
@@ -200,34 +249,51 @@ class Decker_Subtasks {
 			return null;
 		}
 
-		$candidates = get_posts(
-			array(
-				'post_type'              => 'decker_task',
-				'post_status'            => 'any',
-				'posts_per_page'         => 5,
-				'fields'                 => 'ids',
-				'no_found_rows'          => true,
-				'update_post_meta_cache' => false,
-				'update_post_term_cache' => false,
-				'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-					array(
-						'key'     => self::META_KEY,
-						'value'   => 's:7:"task_id";i:' . $task_id . ';',
-						'compare' => 'LIKE',
-					),
-				),
-			)
+		$parents = self::parent_map();
+
+		return isset( $parents[ $task_id ] ) ? $parents[ $task_id ] : null;
+	}
+
+	/**
+	 * Every promotion link on the site, read once per request.
+	 *
+	 * A board renders dozens of cards and each one asks whether it came out of
+	 * a list, so asking per card would be a query per card. Every stored list
+	 * is read in one go instead and the links are indexed by child.
+	 *
+	 * @return array<int, int> Child task ID to parent task ID.
+	 */
+	private static function parent_map(): array {
+		if ( null !== self::$parents ) {
+			return self::$parents;
+		}
+
+		global $wpdb;
+
+		self::$parents = array();
+
+		// Direct query: there is no meta API call that reads one meta key
+		// across every post, and the alternative is one query per card. The
+		// result is held for the rest of the request and dropped on any write.
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare( "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s", self::META_KEY )
 		);
 
-		foreach ( $candidates as $candidate ) {
-			foreach ( self::get( (int) $candidate ) as $item ) {
-				if ( (int) $item['task_id'] === $task_id ) {
-					return (int) $candidate;
+		foreach ( (array) $rows as $row ) {
+			$items = maybe_unserialize( $row->meta_value );
+			if ( ! is_array( $items ) ) {
+				continue;
+			}
+
+			foreach ( $items as $item ) {
+				$child = isset( $item['task_id'] ) ? (int) $item['task_id'] : 0;
+				if ( $child > 0 ) {
+					self::$parents[ $child ] = (int) $row->post_id;
 				}
 			}
 		}
 
-		return null;
+		return self::$parents;
 	}
 
 	/**

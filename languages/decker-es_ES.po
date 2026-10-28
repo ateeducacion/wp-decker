@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-28T20:25:57+00:00\n"
+"PO-Revision-Date: 2026-10-28T20:43:23+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1195,6 +1195,11 @@ msgstr "No tienes permiso para borrar tableros"
 
 msgid "Board deleted successfully"
 msgstr "Tablero eliminado correctamente"
+
+#. translators: %s is the title of the task this one is a subtask of.
+#, php-format
+msgid "Subtask of %s"
+msgstr "Subtarea de %s"
 
 #. translators: %d is the number of open subtasks the card has no room to show.
 #, php-format

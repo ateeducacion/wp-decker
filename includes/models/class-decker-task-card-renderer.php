@@ -81,6 +81,8 @@ class Decker_Task_Card_Renderer {
 					<span class="task-id label-to-show" style="display: none;">#<?php echo esc_html( $this->task->ID ); ?></span>
 				</small>
 
+				<?php $this->subtasks()->render_parent_link(); ?>
+
 				<h5 class="my-2 fs-16" id="task-<?php echo esc_attr( $this->task->ID ); ?>">
 					<a href="<?php echo esc_url( $task_url ); ?>" data-bs-toggle="modal" data-bs-target="#task-modal" class="text-body" data-task-id="<?php echo esc_attr( $this->task->ID ); ?>">
 						<?php echo esc_html( $this->task->title ); ?>
