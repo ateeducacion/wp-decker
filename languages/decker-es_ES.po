@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-28T17:41:55+00:00\n"
+"PO-Revision-Date: 2026-10-28T19:46:03+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1823,6 +1823,26 @@ msgstr "La subtarea ya es una tarea independiente."
 
 msgid "Open the task this subtask became"
 msgstr "Abrir la tarea en la que se convirtió esta subtarea"
+
+msgid "Unlink from this task"
+msgstr "Desvincular de esta tarea"
+
+msgid "Unlink this subtask?"
+msgstr "¿Desvincular esta subtarea?"
+
+#. translators: %1$s is the title of the subtask being unlinked.
+#, php-format
+msgid "“%1$s” leaves this list. The task it became stays on the board."
+msgstr "«%1$s» sale de esta lista. La tarea en la que se convirtió sigue en el tablero."
+
+msgid "Archive that task too"
+msgstr "Archivar también esa tarea"
+
+msgid "Yes, unlink"
+msgstr "Sí, desvincular"
+
+msgid "The task could not be archived."
+msgstr "No se ha podido archivar la tarea."
 
 #. translators: %1$s is the name of the subtask state (To-Do, In Progress or Done).
 #, php-format

@@ -102,34 +102,50 @@
      * for window.parent throws outright when the site is framed by another
      * origin, as WordPress Playground frames it.
      *
-     * @param {string} question The question, as the dialog title.
-     * @param {string} detail   What it is about, usually the item's title.
-     * @param {string} confirm  The label of the confirming button.
-     * @return {Promise<boolean>} Whether the viewer confirmed.
+     * @param {string} question  The question, as the dialog title.
+     * @param {string} detail    What it is about, usually the item's title.
+     * @param {string} confirm   The label of the confirming button.
+     * @param {Object} [options] `checkbox` adds an opt-in the answer carries
+     *                           back as `checked`; `danger: false` drops the
+     *                           red button, for a question that destroys
+     *                           nothing.
+     * @return {Promise<{confirmed: boolean, checked: boolean}>} The answer.
      */
-    function ask(question, detail, confirm) {
+    function ask(question, detail, confirm, options) {
+        const settings = options || {};
         const swal = window.Swal;
 
         if (!swal) {
-            return Promise.resolve(
-                window.confirm(detail ? `${question} ${detail}` : question)
-            );
+            return Promise.resolve({
+                confirmed: window.confirm(detail ? `${question} ${detail}` : question),
+                checked: false
+            });
         }
 
-        return swal
-            .fire({
-                title: question,
-                text: detail,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: confirm,
-                cancelButtonText: text('cancel', 'Cancel'),
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6'
-            })
-            .then(function (result) {
-                return !!(result && result.isConfirmed);
-            });
+        const dialog = {
+            title: question,
+            text: detail,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: confirm,
+            cancelButtonText: text('cancel', 'Cancel'),
+            confirmButtonColor: false === settings.danger ? '#3085d6' : '#d33',
+            cancelButtonColor: '#3085d6'
+        };
+
+        if (settings.checkbox) {
+            dialog.input = 'checkbox';
+            dialog.inputValue = 0;
+            dialog.inputPlaceholder = settings.checkbox;
+        }
+
+        return swal.fire(dialog).then(function (result) {
+            const confirmed = !!(result && result.isConfirmed);
+            return {
+                confirmed: confirmed,
+                checked: confirmed && !!(result && result.value)
+            };
+        });
     }
 
     /**
@@ -595,8 +611,8 @@
                     text('confirm_convert_subtask_title', 'Turn this subtask into a task of its own?'),
                     (item.title || '').trim(),
                     text('yes_convert', 'Yes, convert')
-                ).then(function (confirmed) {
-                    if (confirmed) {
+                ).then(function (answer) {
+                    if (answer.confirmed) {
                         this.convert(item, button);
                     }
                 }.bind(this));
@@ -612,20 +628,28 @@
          * @return {HTMLElement} The button.
          */
         buildDeleteButton: function (item) {
+            // A promoted item owns a real task now, so taking it off the list
+            // destroys nothing: it is an unlink, and says so with its own
+            // icon, its own colour and a question that promises the task
+            // survives — with archiving it as an opt-in, since wanting the
+            // list clean usually means the work is over.
+            const linked = parseInt(item.task_id, 10) > 0;
+
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'btn btn-link btn-sm p-1 text-danger decker-subtask-delete';
-            button.title = text('subtask_delete', 'Delete subtask');
+            button.className = 'btn btn-link btn-sm p-1 decker-subtask-delete '
+                + (linked ? 'text-muted decker-subtask-unlink' : 'text-danger');
+            button.title = linked
+                ? text('subtask_unlink', 'Unlink from this task')
+                : text('subtask_delete', 'Delete subtask');
             button.setAttribute('aria-label', button.title);
-            button.innerHTML = '<i class="ri-delete-bin-line"></i>';
+            button.innerHTML = linked
+                ? '<i class="ri-link-unlink"></i>'
+                : '<i class="ri-delete-bin-line"></i>';
 
             button.addEventListener('click', function () {
-                ask(
-                    text('confirm_delete_subtask_title', 'Are you sure you want to delete this subtask?'),
-                    (item.title || '').trim(),
-                    text('yes_delete', 'Yes, delete')
-                ).then(function (confirmed) {
-                    if (!confirmed) {
+                this.askBeforeRemoving(item, linked).then(function (answer) {
+                    if (!answer.confirmed) {
                         return;
                     }
 
@@ -633,11 +657,78 @@
                         return candidate !== item;
                     });
                     this.renderAll();
-                    this.save(true);
+
+                    // Archiving only after the shorter list is stored, so a
+                    // failure on either side keeps its own message.
+                    this.save(true).then(function () {
+                        if (linked && answer.checked) {
+                            return this.archive(item.task_id);
+                        }
+                    }.bind(this));
                 }.bind(this));
             }.bind(this));
 
             return button;
+        },
+
+        /**
+         * Ask before taking an item off the list.
+         *
+         * @param {Object}  item   The subtask item.
+         * @param {boolean} linked Whether it already became a task.
+         * @return {Promise<{confirmed: boolean, checked: boolean}>} The answer.
+         */
+        askBeforeRemoving: function (item, linked) {
+            const title = (item.title || '').trim();
+
+            if (!linked) {
+                return ask(
+                    text('confirm_delete_subtask_title', 'Are you sure you want to delete this subtask?'),
+                    title,
+                    text('yes_delete', 'Yes, delete')
+                );
+            }
+
+            return ask(
+                text('confirm_unlink_subtask_title', 'Unlink this subtask?'),
+                format(
+                    text('confirm_unlink_subtask_text', '\u201c%1$s\u201d leaves this list. The task it became stays on the board.'),
+                    [ title ]
+                ),
+                text('yes_unlink', 'Yes, unlink'),
+                {
+                    checkbox: text('archive_linked_task', 'Archive that task too'),
+                    danger: false
+                }
+            );
+        },
+
+        /**
+         * Archive the task an unlinked item had become.
+         *
+         * @param {number} taskId The task id.
+         * @return {Promise} Resolved once the attempt is over.
+         */
+        archive: function (taskId) {
+            const failed = function () {
+                this.setStatusMessage(text('task_archive_failed', 'The task could not be archived.'), true);
+            }.bind(this);
+
+            return fetch(`${wpApiSettings.root}wp/v2/tasks/${encodeURIComponent(taskId)}`, {
+                method: 'POST',
+                headers: {
+                    'X-WP-Nonce': wpApiSettings.nonce,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ status: 'archived' })
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        failed();
+                    }
+                })
+                .catch(failed);
         },
 
         /**

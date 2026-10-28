@@ -463,6 +463,13 @@ class Decker_Public_Assets {
 			'yes_convert'                   => __( 'Yes, convert', 'decker' ),
 			'subtask_converted'             => __( 'The subtask is now a task of its own.', 'decker' ),
 			'subtask_open_task'             => __( 'Open the task this subtask became', 'decker' ),
+			'subtask_unlink'                => __( 'Unlink from this task', 'decker' ),
+			'confirm_unlink_subtask_title'  => __( 'Unlink this subtask?', 'decker' ),
+			/* translators: %1$s is the title of the subtask being unlinked. */
+			'confirm_unlink_subtask_text'   => __( '“%1$s” leaves this list. The task it became stays on the board.', 'decker' ),
+			'archive_linked_task'           => __( 'Archive that task too', 'decker' ),
+			'yes_unlink'                    => __( 'Yes, unlink', 'decker' ),
+			'task_archive_failed'           => __( 'The task could not be archived.', 'decker' ),
 			/* translators: %1$s is the name of the subtask state (To-Do, In Progress or Done). */
 			'subtask_state'                 => __( 'State: %1$s', 'decker' ),
 			/* translators: 1: number of completed subtasks, 2: total number of subtasks. */

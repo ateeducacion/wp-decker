@@ -400,6 +400,72 @@ describe( 'subtask pane', () => {
 		);
 	} );
 
+	test( 'a promoted item is unlinked, not deleted', () => {
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		const button = context.querySelector( '.decker-subtask-delete' );
+		expect( button.classList.contains( 'decker-subtask-unlink' ) ).toBe( true );
+		expect( button.classList.contains( 'text-danger' ) ).toBe( false );
+		expect( button.title ).toBe( 'Unlink from this task' );
+	} );
+
+	test( 'unlinking offers to archive the task, and does it when ticked', async () => {
+		const fire = vi.fn( () =>
+			Promise.resolve( { isConfirmed: true, value: 1 } )
+		);
+		window.Swal = { fire };
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+		await settle();
+
+		// The question says the task survives, and the archiving is opt-in.
+		expect( fire.mock.calls[ 0 ][ 0 ] ).toMatchObject( {
+			input: 'checkbox',
+			inputValue: 0,
+			inputPlaceholder: 'Archive that task too',
+		} );
+		expect( fire.mock.calls[ 0 ][ 0 ].text ).toContain(
+			'stays on the board'
+		);
+
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+
+		const archiving = global.fetch.mock.calls.find( ( call ) =>
+			call[ 0 ].includes( 'wp/v2/tasks/99' )
+		);
+		expect( archiving ).toBeDefined();
+		expect( JSON.parse( archiving[ 1 ].body ) ).toEqual( {
+			status: 'archived',
+		} );
+
+		delete window.Swal;
+	} );
+
+	test( 'unlinking without ticking leaves the task alone', async () => {
+		window.Swal = {
+			fire: vi.fn( () => Promise.resolve( { isConfirmed: true, value: 0 } ) ),
+		};
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+		await settle();
+
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+		expect(
+			global.fetch.mock.calls.some( ( call ) =>
+				call[ 0 ].includes( 'wp/v2/tasks/' )
+			)
+		).toBe( false );
+
+		delete window.Swal;
+	} );
+
 	test( 'the pane adopts the list the server stored', async () => {
 		global.fetch = vi.fn( () =>
 			Promise.resolve( {

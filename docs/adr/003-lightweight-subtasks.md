@@ -62,6 +62,15 @@ the item carries none) and leaves the item in the list, linked to the task it
 became. Trello settled on the same split — a checklist item carries an assignee
 and a due date, and converts into a card when it outgrows the list.
 
+Once promoted, the row stops being the work and becomes a pointer to it, so
+taking it off the list is an unlink, not a delete: a different icon, no red,
+and a question that says the task stays on the board. Archiving that task is an
+opt-in checkbox on the same question — clearing the list usually means the work
+is over, but the client decides, and the archiving goes through `wp/v2/tasks`
+after the shorter list is stored, so a failure on either side keeps its own
+message. Nothing is written into the child task: the item still holds the only
+link, and a reverse one would need its own meta and a backfill.
+
 If cross-task reporting on items ever becomes a real requirement rather than an
 anticipated one, that is the point to revisit child posts, with the promotion
 path already in place.

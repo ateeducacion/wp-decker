@@ -1791,6 +1791,26 @@ msgstr ""
 msgid "Open the task this subtask became"
 msgstr ""
 
+msgid "Unlink from this task"
+msgstr ""
+
+msgid "Unlink this subtask?"
+msgstr ""
+
+#. translators: %1$s is the title of the subtask being unlinked.
+#, php-format
+msgid "“%1$s” leaves this list. The task it became stays on the board."
+msgstr ""
+
+msgid "Archive that task too"
+msgstr ""
+
+msgid "Yes, unlink"
+msgstr ""
+
+msgid "The task could not be archived."
+msgstr ""
+
 #. translators: %1$s is the name of the subtask state (To-Do, In Progress or Done).
 #, php-format
 msgid "State: %1$s"
