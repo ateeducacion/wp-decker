@@ -188,6 +188,7 @@ class Decker_Subtask_Links {
 				'assignee'        => $responsable,
 				'assignee_name'   => '',
 				'assignee_avatar' => '',
+				'assignee_today'  => false,
 			);
 		}
 
@@ -195,6 +196,39 @@ class Decker_Subtask_Links {
 			'assignee'        => $responsable,
 			'assignee_name'   => $user->display_name,
 			'assignee_avatar' => get_avatar_url( $user->ID, array( 'size' => 48 ) ),
+			'assignee_today'  => self::is_marked_for_today( $post->ID, $responsable ),
 		);
+	}
+
+	/**
+	 * Whether someone put a task on their plate for today.
+	 *
+	 * The same `_user_date_relations` entry Task reads for the green halo on a
+	 * card's people, read here without building a Task: a board asks this once
+	 * per promoted row.
+	 *
+	 * @param int $task_id The task.
+	 * @param int $user_id The person.
+	 * @return bool Whether it is marked for today by them.
+	 */
+	private static function is_marked_for_today( int $task_id, int $user_id ): bool {
+		$relations = get_post_meta( $task_id, '_user_date_relations', true );
+		if ( ! is_array( $relations ) ) {
+			return false;
+		}
+
+		$today = ( new DateTime() )->format( 'Y-m-d' );
+
+		foreach ( $relations as $relation ) {
+			if ( ! isset( $relation['user_id'], $relation['date'] ) ) {
+				continue;
+			}
+
+			if ( (int) $relation['user_id'] === $user_id && $relation['date'] === $today ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

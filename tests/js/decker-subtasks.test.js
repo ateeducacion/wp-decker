@@ -434,6 +434,24 @@ describe( 'subtask pane', () => {
 		expect( button.title ).toBe( 'Unlink from this task' );
 	} );
 
+	test( "a promoted row wears the halo when its task is on someone's plate", () => {
+		const context = renderCard( [
+			item( {
+				task_id: 99,
+				assignee_name: 'Someone',
+				assignee_avatar: 'https://example.com/face.png',
+				assignee_today: true,
+			} ),
+		] );
+		window.deckerInitSubtasks( context );
+
+		expect(
+			context
+				.querySelector( '.decker-subtask-avatar' )
+				.classList.contains( 'decker-subtask-avatar-today' )
+		).toBe( true );
+	} );
+
 	test( 'unlinking offers to archive the task, and does it when ticked', async () => {
 		const fire = vi.fn( () =>
 			Promise.resolve( { isConfirmed: true, value: 1 } )

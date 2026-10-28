@@ -488,7 +488,11 @@
 
             if (item.assignee_avatar) {
                 const avatar = document.createElement('img');
-                avatar.className = 'decker-subtask-avatar';
+                // The green halo the card's people wear when they put a task
+                // on their plate for today.
+                avatar.className = item.assignee_today
+                    ? 'decker-subtask-avatar decker-subtask-avatar-today'
+                    : 'decker-subtask-avatar';
                 avatar.src = item.assignee_avatar;
                 avatar.alt = '';
                 avatar.setAttribute('aria-hidden', 'true');

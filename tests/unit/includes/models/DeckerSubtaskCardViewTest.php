@@ -381,6 +381,45 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A promoted chip wears the green halo when its task is on someone's plate.
+	 */
+	public function test_a_promoted_chip_shows_the_today_halo() {
+		$child = self::factory()->task->create( array( 'board' => self::factory()->board->create() ) );
+		update_post_meta( $child, 'responsable', $this->teammate );
+
+		$this->store(
+			array(
+				array(
+					'title'   => 'Promoted',
+					'task_id' => $child,
+				),
+			)
+		);
+
+		$this->assertStringNotContainsString(
+			'decker-subtask-avatar-today',
+			$this->render( 'chips' ),
+			'Nobody put that task on their plate yet.'
+		);
+
+		update_post_meta(
+			$child,
+			'_user_date_relations',
+			array(
+				array(
+					'user_id' => $this->teammate,
+					'date'    => gmdate( 'Y-m-d' ),
+				),
+			)
+		);
+
+		$this->assertStringContainsString(
+			'decker-subtask-avatar-today',
+			$this->render( 'chips' )
+		);
+	}
+
+	/**
 	 * Each chip carries the state as a dot class, not only as a colour.
 	 */
 	public function test_chips_carry_their_state_as_a_class() {

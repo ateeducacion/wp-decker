@@ -208,6 +208,9 @@ class Decker_Subtask_Card_View {
 	 * be noise, and the card already shows the task's own people below. The
 	 * name is in the chip's tooltip, so the image is decorative here.
 	 *
+	 * A promoted item whose task that person put on their plate for today gets
+	 * the green halo the card's own people wear, scaled down to the chip.
+	 *
 	 * @param array $item The subtask item.
 	 * @return void
 	 */
@@ -216,11 +219,16 @@ class Decker_Subtask_Card_View {
 		if ( ! $user instanceof WP_User ) {
 			return;
 		}
+
+		$classes = 'decker-subtask-chip-avatar rounded-circle';
+		if ( ! empty( $item['assignee_today'] ) ) {
+			$classes .= ' decker-subtask-avatar-today';
+		}
 		?>
 		<img src="<?php echo esc_url( get_avatar_url( $user->ID, array( 'size' => 32 ) ) ); ?>"
 			alt=""
 			aria-hidden="true"
-			class="decker-subtask-chip-avatar rounded-circle">
+			class="<?php echo esc_attr( $classes ); ?>">
 		<?php
 	}
 
