@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-28T12:07:31+00:00\n"
+"PO-Revision-Date: 2026-10-28T20:50:10+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1196,6 +1196,11 @@ msgstr "No tienes permiso para borrar tableros"
 msgid "Board deleted successfully"
 msgstr "Tablero eliminado correctamente"
 
+#. translators: %s is the title of the task this one is a subtask of.
+#, php-format
+msgid "Subtask of %s"
+msgstr "Subtarea de %s"
+
 #. translators: %d is the number of open subtasks the card has no room to show.
 #, php-format
 msgid "%d more open subtask"
@@ -1797,6 +1802,12 @@ msgstr "Fecha de vencimiento"
 msgid "Delete subtask"
 msgstr "Eliminar subtarea"
 
+msgid "Are you sure you want to delete this subtask?"
+msgstr "¿Está seguro de que desea eliminar esta subtarea?"
+
+msgid "This subtask is past its due date"
+msgstr "Esta subtarea ha pasado su fecha de vencimiento"
+
 msgid "Drag to reorder"
 msgstr "Arrastrar para reordenar"
 
@@ -1806,11 +1817,37 @@ msgstr "Sin asignar"
 msgid "Convert into a task"
 msgstr "Convertir en tarea"
 
+msgid "Turn this subtask into a task of its own?"
+msgstr "¿Convertir esta subtarea en una tarea independiente?"
+
+msgid "Yes, convert"
+msgstr "Sí, convertir"
+
 msgid "The subtask is now a task of its own."
 msgstr "La subtarea ya es una tarea independiente."
 
 msgid "Open the task this subtask became"
 msgstr "Abrir la tarea en la que se convirtió esta subtarea"
+
+msgid "Unlink from this task"
+msgstr "Desvincular de esta tarea"
+
+msgid "Unlink this subtask?"
+msgstr "¿Desvincular esta subtarea?"
+
+#. translators: %1$s is the title of the subtask being unlinked.
+#, php-format
+msgid "“%1$s” leaves this list. The task it became stays on the board."
+msgstr "«%1$s» sale de esta lista. La tarea en la que se convirtió sigue en el tablero."
+
+msgid "Archive that task too"
+msgstr "Archivar también esa tarea"
+
+msgid "Yes, unlink"
+msgstr "Sí, desvincular"
+
+msgid "The task could not be archived."
+msgstr "No se ha podido archivar la tarea."
 
 #. translators: %1$s is the name of the subtask state (To-Do, In Progress or Done).
 #, php-format
@@ -2102,6 +2139,9 @@ msgstr "Restablecer"
 
 msgid "Send"
 msgstr "Enviar"
+
+msgid "Subtask of"
+msgstr "Subtarea de"
 
 msgid "Task title"
 msgstr "Título de la tarea"

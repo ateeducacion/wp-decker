@@ -23,7 +23,10 @@ the expensive one.
 
 A subtask is an entry in a single private post meta on its parent
 (`_decker_subtasks`), owned by `Decker_Subtasks` and written only through
-`PUT decker/v1/tasks/<id>/subtasks`.
+`decker/v1/tasks/<id>/subtasks`. The route is registered `EDITABLE`, so it
+takes a POST as well as a PUT, and the browser posts: some hosts — WordPress
+Playground among them — never hand PHP the body of a PUT, and the whole list
+travels in that body.
 
 An item holds exactly what the spreadsheets held: a title, one of the three
 task states, an assignee, a due date. The states reuse the `stack` vocabulary
@@ -58,6 +61,36 @@ from it (inheriting the parent's board, and its responsable and due date when
 the item carries none) and leaves the item in the list, linked to the task it
 became. Trello settled on the same split — a checklist item carries an assignee
 and a due date, and converts into a card when it outgrows the list.
+
+Once promoted, the row stops being the work and becomes a pointer to it. It is
+read as that task from then on — title, responsable, due date and state come
+from the task on every read, and the row is no longer editable here: the title
+is a link to the task, and the owner is stated rather than picked, since the
+task's responsable need not be anyone on this card. The stored copy is left
+untouched and is what the row falls back to if the task is ever deleted.
+
+The promoted task says which list it came out of, both on its board card and at
+the top of its editor. That link is looked up, not stored: a copy on the child
+would have to be written on promotion, cleared on unlink and backfilled for
+everything promoted before it existed — three ways to disagree with the list,
+which stays the one source. The lookup reads every stored list in one query and
+indexes it by child for the rest of the request, because a board asks the
+question once per card.
+
+Archiving a promoted task takes its row off the parent's list: that is how
+someone says the step is over and out of the way, and a row naming an archived
+card is worse than no row. Unarchiving does not put it back — the list is a
+list, not a history — and the row's own state otherwise follows the task's
+stack, since the two vocabularies are the same three words.
+
+And so
+taking it off the list is an unlink, not a delete: a different icon, no red,
+and a question that says the task stays on the board. Archiving that task is an
+opt-in checkbox on the same question — clearing the list usually means the work
+is over, but the client decides, and the archiving goes through `wp/v2/tasks`
+after the shorter list is stored, so a failure on either side keeps its own
+message. Nothing is written into the child task: the item still holds the only
+link, and a reverse one would need its own meta and a backfill.
 
 If cross-task reporting on items ever becomes a real requirement rather than an
 anticipated one, that is the point to revisit child posts, with the promotion

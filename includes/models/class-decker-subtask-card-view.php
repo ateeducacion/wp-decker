@@ -77,6 +77,57 @@ class Decker_Subtask_Card_View {
 	}
 
 	/**
+	 * Echoes the line saying this task came out of another task's list.
+	 *
+	 * A promoted task joins the board like any other card, with nothing on it
+	 * to say it is one step of something bigger; the card says so, above its
+	 * own title, and links to the list it belongs to.
+	 *
+	 * @return void
+	 */
+	public function render_parent_link(): void {
+		if ( ! Decker_Subtasks::is_enabled() ) {
+			return;
+		}
+
+		$parent_id = Decker_Subtask_Links::get_parent_task_id( $this->task->ID );
+		if ( null === $parent_id ) {
+			return;
+		}
+
+		$url = add_query_arg(
+			array(
+				'decker_page' => 'task',
+				'id'          => $parent_id,
+				'decker_tab'  => 'subtasks',
+			),
+			home_url( '/' )
+		);
+		?>
+		<p class="small text-muted mb-1 text-truncate decker-subtask-of">
+			<i class="ri-corner-down-right-line me-1"></i>
+			<a href="<?php echo esc_url( $url ); ?>"
+				class="text-reset"
+				data-bs-toggle="modal"
+				data-bs-target="#task-modal"
+				data-task-id="<?php echo esc_attr( $parent_id ); ?>"
+				data-decker-open-tab="subtasks"
+				title="
+				<?php
+				echo esc_attr(
+					sprintf(
+						/* translators: %s is the title of the task this one is a subtask of. */
+						__( 'Subtask of %s', 'decker' ),
+						get_the_title( $parent_id )
+					)
+				);
+				?>
+				"><?php echo esc_html( get_the_title( $parent_id ) ); ?></a>
+		</p>
+		<?php
+	}
+
+	/**
 	 * Echoes the row of subtask chips under the card's counters.
 	 *
 	 * Only a few open items get a chip — see
@@ -92,7 +143,7 @@ class Decker_Subtask_Card_View {
 		}
 
 		$viewer    = get_current_user_id();
-		$selection = Decker_Subtasks::select_card_chips( $items, $viewer );
+		$selection = Decker_Subtasks::select_card_chips( $items );
 		if ( empty( $selection['chips'] ) ) {
 			return;
 		}
@@ -123,6 +174,7 @@ class Decker_Subtask_Card_View {
 					title="<?php echo esc_attr( $this->get_chip_title( $item ) ); ?>">
 					<span class="decker-subtask-dot decker-subtask-dot-<?php echo esc_attr( $item['status'] ); ?>"></span>
 					<span class="decker-subtask-chip-label"><?php echo esc_html( $item['title'] ); ?></span>
+					<?php $this->render_chip_avatar( $item ); ?>
 				</a>
 			<?php endforeach; ?>
 
@@ -146,6 +198,29 @@ class Decker_Subtask_Card_View {
 					">+<?php echo esc_html( $selection['remaining'] ); ?></a>
 			<?php endif; ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Echoes the assignee's face at the end of a chip.
+	 *
+	 * Nothing when the item is unassigned: an empty circle on every chip would
+	 * be noise, and the card already shows the task's own people below. The
+	 * name is in the chip's tooltip, so the image is decorative here.
+	 *
+	 * @param array $item The subtask item.
+	 * @return void
+	 */
+	private function render_chip_avatar( array $item ): void {
+		$user = $item['assignee'] > 0 ? get_userdata( $item['assignee'] ) : false;
+		if ( ! $user instanceof WP_User ) {
+			return;
+		}
+		?>
+		<img src="<?php echo esc_url( get_avatar_url( $user->ID, array( 'size' => 32 ) ) ); ?>"
+			alt=""
+			aria-hidden="true"
+			class="decker-subtask-chip-avatar rounded-circle">
 		<?php
 	}
 

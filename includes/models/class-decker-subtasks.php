@@ -85,6 +85,9 @@ class Decker_Subtasks {
 	 * value that is not an array of items yields an empty list rather than
 	 * leaking malformed rows into the renderers.
 	 *
+	 * An item that was promoted is shown as the task it became — see
+	 * adopt_linked_task() — so the two never say different things.
+	 *
 	 * @param int $task_id The parent task ID.
 	 * @return array<int, array> The subtask items.
 	 */
@@ -93,6 +96,20 @@ class Decker_Subtasks {
 			return array();
 		}
 
+		return array_map( array( 'Decker_Subtask_Links', 'adopt' ), self::read_stored( $task_id ) );
+	}
+
+	/**
+	 * Read the stored list without showing promoted items as their task.
+	 *
+	 * What a write has to start from: feeding get() back into set() would
+	 * store the borrowed title, owner and date of every promoted row over the
+	 * snapshot those rows fall back to.
+	 *
+	 * @param int $task_id The parent task ID.
+	 * @return array<int, array> The stored subtask items.
+	 */
+	public static function read_stored( int $task_id ): array {
 		$stored = get_post_meta( $task_id, self::META_KEY, true );
 
 		if ( ! is_array( $stored ) ) {
@@ -105,9 +122,13 @@ class Decker_Subtasks {
 	/**
 	 * Replace the whole subtask list of a task.
 	 *
+	 * Returns the list the way get() reads it back, not the raw stored one, so
+	 * the answer to a write and the next page load agree about the promoted
+	 * rows: those are shown as the task they became, not as what was sent.
+	 *
 	 * @param int   $task_id The parent task ID.
 	 * @param array $items   The raw items to store.
-	 * @return array<int, array> The sanitized list as stored.
+	 * @return array<int, array> The list as it is now read.
 	 */
 	public static function set( int $task_id, array $items ): array {
 		$clean = Decker_Subtask_Sanitizer::sanitize_list( $items, $task_id );
@@ -118,7 +139,11 @@ class Decker_Subtasks {
 			update_post_meta( $task_id, self::META_KEY, $clean );
 		}
 
-		return $clean;
+		// The promotion links just changed, so the map built for this request
+		// no longer describes them.
+		Decker_Subtask_Links::forget();
+
+		return self::get( $task_id );
 	}
 
 	/**
@@ -191,17 +216,16 @@ class Decker_Subtasks {
 	 * carry them, and what the board is scanned for is what is still open — a
 	 * finished task showing no chips is the right signal.
 	 *
-	 * The remaining items are ordered so that the viewer's own work surfaces
-	 * first, which is the whole reason the chips exist: with a cap of three,
-	 * whoever opens the board sees their own steps without opening the card.
-	 * Two people therefore see different chips on the same card.
+	 * The rest keep the order they are stored in. The list is hand-ordered by
+	 * dragging, so the card showing a different order than the card's own
+	 * Subtasks tab made the two impossible to read against each other; whose
+	 * item it is shows as the chip's tint instead of as a place in the row.
 	 *
-	 * @param array $items   The subtask items.
-	 * @param int   $user_id The viewer, whose items come first. 0 for none.
-	 * @param int   $limit   How many chips the card has room for.
+	 * @param array $items The subtask items.
+	 * @param int   $limit How many chips the card has room for.
 	 * @return array{chips:array<int, array>,remaining:int} The chips and the overflow count.
 	 */
-	public static function select_card_chips( array $items, int $user_id, int $limit = 3 ): array {
+	public static function select_card_chips( array $items, int $limit = 3 ): array {
 		$open = array();
 
 		foreach ( $items as $item ) {
@@ -210,35 +234,12 @@ class Decker_Subtasks {
 			}
 		}
 
-		// usort is stable as of PHP 8.0, so items of equal rank keep the order
-		// the list was saved in.
-		usort(
-			$open,
-			function ( array $left, array $right ) use ( $user_id ): int {
-				return self::chip_rank( $left, $user_id ) <=> self::chip_rank( $right, $user_id );
-			}
-		);
-
 		$chips = array_slice( $open, 0, max( 0, $limit ) );
 
 		return array(
 			'chips'     => $chips,
 			'remaining' => count( $open ) - count( $chips ),
 		);
-	}
-
-	/**
-	 * The sort rank of an open item: mine before everyone's, started before not.
-	 *
-	 * @param array $item    The subtask item.
-	 * @param int   $user_id The viewer.
-	 * @return int The rank, lowest first.
-	 */
-	private static function chip_rank( array $item, int $user_id ): int {
-		$mine    = $user_id > 0 && (int) $item['assignee'] === $user_id;
-		$started = 'in-progress' === $item['status'];
-
-		return ( $mine ? 0 : 2 ) + ( $started ? 0 : 1 );
 	}
 
 	/**

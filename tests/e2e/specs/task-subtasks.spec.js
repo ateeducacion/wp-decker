@@ -170,6 +170,7 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		await page.goto( `/?decker_page=task&id=${ task.id }` );
 		await page.locator( 'a[href="#subtasks-tab"]' ).click();
 		await rows.nth( 1 ).locator( '.decker-subtask-delete' ).click();
+		await page.locator( '.swal2-confirm' ).click();
 		await expect( rows ).toHaveCount( 1 );
 		await expect( page.locator( '#subtask-count' ) ).toHaveText( '1/1' );
 

@@ -47,7 +47,10 @@ class Decker_Tasks_Rest_Subtasks {
 		$routes = array(
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/subtasks',
-				'methods'    => 'PUT',
+				// EDITABLE, not PUT alone: some hosts — WordPress Playground
+				// among them — never hand PHP the body of a PUT, so the list
+				// would arrive empty. The browser posts; PUT stays accepted.
+				'methods'    => WP_REST_Server::EDITABLE,
 				'callback'   => 'replace_subtasks',
 				'permission' => 'edit_task',
 				'args'       => array(

@@ -21,7 +21,7 @@ async function setSubtasksEnabled( page, enabled ) {
 	await expect( page.locator( SETTING ) ).toBeChecked( { checked: enabled } );
 }
 
-test( 'promotes a subtask typed in the card into a task of its own', async ( {
+test( 'promotes a subtask into a task of its own, and unlinks it without deleting it', async ( {
 	page,
 	requestUtils,
 } ) => {
@@ -43,6 +43,8 @@ test( 'promotes a subtask typed in the card into a task of its own', async ( {
 			meta: { stack: 'to-do', max_priority: true },
 		},
 	} );
+
+	let childId = null;
 
 	try {
 		await setSubtasksEnabled( page, true );
@@ -78,6 +80,8 @@ test( 'promotes a subtask typed in the card into a task of its own', async ( {
 		);
 
 		await rows.nth( 0 ).locator( '.decker-subtask-convert' ).click();
+		// Promotion cannot be undone, so it asks first.
+		await page.locator( '.swal2-confirm' ).click();
 
 		// The status line must report success, not "Subtask not found".
 		await expect( page.locator( '.decker-subtasks-status' ) ).toHaveText(
@@ -92,7 +96,17 @@ test( 'promotes a subtask typed in the card into a task of its own', async ( {
 		await expect(
 			rows.nth( 0 ).locator( '.decker-subtask-convert' )
 		).toHaveCount( 0 );
-		await expect( rows.nth( 0 ).locator( 'a' ) ).toHaveCount( 1 );
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-open' )
+		).toHaveCount( 1 );
+		// And the row now shows the task, not the frozen copy: the title is a
+		// link to it and nothing on the row can be edited.
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-title-link' )
+		).toHaveCount( 1 );
+		await expect(
+			rows.nth( 0 ).locator( '.decker-subtask-duedate' )
+		).toBeDisabled();
 
 		// And it survives reopening the card.
 		await page.goto( `/?decker_page=task&id=${ task.id }` );
@@ -100,12 +114,54 @@ test( 'promotes a subtask typed in the card into a task of its own', async ( {
 		await expect(
 			rows.nth( 0 ).locator( '.decker-subtask-convert' )
 		).toHaveCount( 0 );
+
+		const childUrl = await rows
+			.nth( 0 )
+			.locator( '.decker-subtask-open' )
+			.getAttribute( 'href' );
+		childId = new URL( childUrl, page.url() ).searchParams.get( 'id' );
+
+		// The task it became says which list it came out of, and links back.
+		await page.goto( `/?decker_page=task&id=${ childId }` );
+		const back = page.locator( '.decker-subtask-of a' );
+		await expect( back ).toHaveText( task.title.rendered );
+		await expect( back ).toHaveAttribute( 'href', new RegExp( `id=${ task.id }` ) );
+
+		await page.goto( `/?decker_page=task&id=${ task.id }` );
+		await page.locator( 'a[href="#subtasks-tab"]' ).click();
+
+		// Taking a promoted row off the list is an unlink, and archiving the
+		// task it became is the opt-in on that same question.
+		await rows.nth( 0 ).locator( '.decker-subtask-unlink' ).click();
+		await page.locator( '.swal2-checkbox input' ).check();
+		await page.locator( '.swal2-confirm' ).click();
+
+		await expect( rows ).toHaveCount( 1 );
+		await expect( page.locator( '.decker-subtasks-status' ) ).not.toHaveClass(
+			/text-danger/
+		);
+
+		// The task survived the unlink, archived because the box was ticked.
+		await expect
+			.poll( async () => {
+				const child = await requestUtils.rest( {
+					path: `/wp/v2/tasks/${ childId }`,
+				} );
+				return child.status;
+			} )
+			.toBe( 'archived' );
 	} finally {
 		await setSubtasksEnabled( page, false );
 		await requestUtils.rest( {
 			path: `/wp/v2/tasks/${ task.id }?force=true`,
 			method: 'DELETE',
 		} );
+		if ( childId ) {
+			await requestUtils.rest( {
+				path: `/wp/v2/tasks/${ childId }?force=true`,
+				method: 'DELETE',
+			} );
+		}
 		await requestUtils.rest( {
 			path: `/wp/v2/decker_board/${ board.id }?force=true`,
 			method: 'DELETE',

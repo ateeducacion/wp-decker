@@ -135,6 +135,10 @@ describe( 'subtask pane', () => {
 		mockFetchEcho();
 		vi.useRealTimers();
 		global.deckerVars.current_user_id = 0;
+		// Deleting a row asks first; the tests that do not care about the
+		// question answer yes.
+		window.confirm = vi.fn( () => true );
+		window.deckerSubtasksChangedInSession = false;
 	} );
 
 	test( 'renders one row per stored item', () => {
@@ -280,7 +284,50 @@ describe( 'subtask pane', () => {
 			.click();
 		await settle();
 
+		expect( window.confirm ).toHaveBeenCalled();
 		expect( lastBody().items.map( ( i ) => i.title ) ).toEqual( [ 'Second' ] );
+	} );
+
+	test( 'a stored change asks the board behind the modal to refresh', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		expect( window.deckerSubtasksChangedInSession ).toBeFalsy();
+		context.querySelector( '.decker-subtask-status' ).click();
+		await settle();
+
+		// The chips, the counter and the faces on them are PHP-rendered, so
+		// the card behind the modal is stale until the view reloads.
+		expect( window.deckerSubtasksChangedInSession ).toBe( true );
+	} );
+
+	test( 'the list is written with a method every host forwards', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-status' ).click();
+		await settle();
+
+		// Not PUT: some hosts — WordPress Playground among them — never hand
+		// PHP the body of a PUT, and the whole list travels in that body.
+		expect( global.fetch.mock.calls[ 0 ][ 1 ].method ).toBe( 'POST' );
+	} );
+
+	test( 'a delete the user calls off changes nothing', async () => {
+		window.confirm.mockReturnValue( false );
+		const context = renderCard( [ item(), item( { id: 2, title: 'Second' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context
+			.querySelectorAll( '.decker-subtask-row' )[ 0 ]
+			.querySelector( '.decker-subtask-delete' )
+			.click();
+		await settle();
+
+		expect( global.fetch ).not.toHaveBeenCalled();
+		expect(
+			context.querySelectorAll( '.decker-subtask-row' )
+		).toHaveLength( 2 );
 	} );
 
 	test( 'the assignee select only offers the people on the card', () => {
@@ -303,11 +350,14 @@ describe( 'subtask pane', () => {
 		const context = renderCard( [ item( { duedate: '2000-01-01' } ) ] );
 		window.deckerInitSubtasks( context );
 
-		expect(
-			context
-				.querySelector( '.decker-subtask-duedate' )
-				.classList.contains( 'is-invalid' )
-		).toBe( true );
+		const field = context.querySelector( '.decker-subtask-duedate' );
+
+		// Its own class: Bootstrap's is-invalid paints an error icon inside
+		// the field, which read as a rejected value rather than a late one.
+		expect( field.classList.contains( 'decker-subtask-overdue' ) ).toBe(
+			true
+		);
+		expect( field.classList.contains( 'is-invalid' ) ).toBe( false );
 	} );
 
 	test( 'a finished item past its date is not flagged', () => {
@@ -319,7 +369,7 @@ describe( 'subtask pane', () => {
 		expect(
 			context
 				.querySelector( '.decker-subtask-duedate' )
-				.classList.contains( 'is-invalid' )
+				.classList.contains( 'decker-subtask-overdue' )
 		).toBe( false );
 	} );
 
@@ -337,17 +387,138 @@ describe( 'subtask pane', () => {
 		expect( context.querySelector( '.decker-subtask-handle' ) ).toBeNull();
 	} );
 
-	test( 'a promoted item is frozen and links to its task', () => {
-		const context = renderCard( [ item( { task_id: 99 } ) ] );
+	test( 'a promoted item shows its task and is not editable here', () => {
+		const context = renderCard( [
+			item( {
+				task_id: 99,
+				title: 'Whatever the task is called now',
+				assignee_name: 'Someone off this card',
+				assignee_avatar: 'https://example.com/face.png',
+			} ),
+		] );
 		window.deckerInitSubtasks( context );
 
-		expect( context.querySelector( '.decker-subtask-title' ).readOnly ).toBe(
+		// The title is a link to the task, not a field.
+		const title = context.querySelector( '.decker-subtask-title' );
+		expect( title.tagName ).toBe( 'A' );
+		expect( title.textContent ).toBe( 'Whatever the task is called now' );
+		expect( title.href ).toContain( 'id=99' );
+
+		// Its owner is the task's responsable, who need not be on this card,
+		// so the row states them instead of offering a pick.
+		expect( context.querySelector( '.decker-subtask-assignee' ) ).toBeNull();
+		expect(
+			context.querySelector( '.decker-subtask-assignee-name' ).textContent
+		).toBe( 'Someone off this card' );
+
+		// Nothing on the row can be changed from here.
+		expect( context.querySelector( '.decker-subtask-duedate' ).disabled ).toBe(
+			true
+		);
+		expect( context.querySelector( '.decker-subtask-status' ).disabled ).toBe(
 			true
 		);
 		expect( context.querySelector( '.decker-subtask-convert' ) ).toBeNull();
-		expect( context.querySelector( '.decker-subtask-row a' ).href ).toContain(
+		expect( context.querySelector( '.decker-subtask-open' ).href ).toContain(
 			'id=99'
 		);
+	} );
+
+	test( 'a promoted item is unlinked, not deleted', () => {
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		const button = context.querySelector( '.decker-subtask-delete' );
+		expect( button.classList.contains( 'decker-subtask-unlink' ) ).toBe( true );
+		expect( button.classList.contains( 'text-danger' ) ).toBe( false );
+		expect( button.title ).toBe( 'Unlink from this task' );
+	} );
+
+	test( 'unlinking offers to archive the task, and does it when ticked', async () => {
+		const fire = vi.fn( () =>
+			Promise.resolve( { isConfirmed: true, value: 1 } )
+		);
+		window.Swal = { fire };
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+		await settle();
+
+		// The question says the task survives, and the archiving is opt-in.
+		expect( fire.mock.calls[ 0 ][ 0 ] ).toMatchObject( {
+			input: 'checkbox',
+			inputValue: 0,
+			inputPlaceholder: 'Archive that task too',
+		} );
+		expect( fire.mock.calls[ 0 ][ 0 ].text ).toContain(
+			'stays on the board'
+		);
+
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+
+		const archiving = global.fetch.mock.calls.find( ( call ) =>
+			call[ 0 ].includes( 'wp/v2/tasks/99' )
+		);
+		expect( archiving ).toBeDefined();
+		expect( JSON.parse( archiving[ 1 ].body ) ).toEqual( {
+			status: 'archived',
+		} );
+
+		delete window.Swal;
+	} );
+
+	test( 'a failed archive says so, and the unlink still stands', async () => {
+		window.Swal = {
+			fire: vi.fn( () => Promise.resolve( { isConfirmed: true, value: 1 } ) ),
+		};
+
+		const echo = global.fetch;
+		global.fetch = vi.fn( ( url, options ) => {
+			if ( url.includes( 'wp/v2/tasks/' ) ) {
+				return Promise.resolve( { ok: false, json: () => Promise.resolve( {} ) } );
+			}
+			return echo( url, options );
+		} );
+
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+		await settle();
+
+		// The row is gone either way: the list was written before the
+		// archiving was attempted, so only the archiving failed.
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+
+		const status = context.querySelector( '.decker-subtasks-status' );
+		expect( status.textContent ).toBe( 'The task could not be archived.' );
+		expect( status.classList.contains( 'text-danger' ) ).toBe( true );
+
+		delete window.Swal;
+	} );
+
+	test( 'unlinking without ticking leaves the task alone', async () => {
+		window.Swal = {
+			fire: vi.fn( () => Promise.resolve( { isConfirmed: true, value: 0 } ) ),
+		};
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+		await settle();
+
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+		expect(
+			global.fetch.mock.calls.some( ( call ) =>
+				call[ 0 ].includes( 'wp/v2/tasks/' )
+			)
+		).toBe( false );
+
+		delete window.Swal;
 	} );
 
 	test( 'the pane adopts the list the server stored', async () => {
@@ -408,6 +579,73 @@ describe( 'subtask pane', () => {
 		context.querySelector( '.decker-subtask-add-btn' ).click();
 		await settle();
 
+		expect( global.fetch ).not.toHaveBeenCalled();
+	} );
+
+	test( 'the confirmation is a SweetAlert dialog where there is one', async () => {
+		const fire = vi.fn( () => Promise.resolve( { isConfirmed: false } ) );
+		window.Swal = { fire };
+		const context = renderCard( [ item( { title: 'Second pass' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+
+		expect( window.confirm ).not.toHaveBeenCalled();
+		expect( fire.mock.calls[ 0 ][ 0 ] ).toMatchObject( {
+			text: 'Second pass',
+			icon: 'warning',
+			showCancelButton: true,
+		} );
+		// It answered no, so the row is still there.
+		expect(
+			context.querySelectorAll( '.decker-subtask-row' )
+		).toHaveLength( 1 );
+		delete window.Swal;
+	} );
+
+	test( 'a cross-origin frame around the site does not swallow the question', async () => {
+		const fire = vi.fn( () => Promise.resolve( { isConfirmed: true } ) );
+		window.Swal = { fire };
+
+		// WordPress Playground serves the site inside a frame of another
+		// origin, where reading any property of window.parent throws instead
+		// of returning undefined. Going through it killed the click.
+		const original = Object.getOwnPropertyDescriptor( window, 'parent' );
+		Object.defineProperty( window, 'parent', {
+			configurable: true,
+			get() {
+				return new Proxy( {}, {
+					get() {
+						throw new Error( 'Blocked a frame with origin' );
+					},
+				} );
+			},
+		} );
+
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+
+		expect( fire ).toHaveBeenCalled();
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+
+		Object.defineProperty( window, 'parent', original );
+		delete window.Swal;
+	} );
+
+	test( 'promoting a subtask asks first, and a no promotes nothing', async () => {
+		window.confirm.mockReturnValue( false );
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-convert' ).click();
+		await settle();
+		await settle();
+
+		expect( window.confirm ).toHaveBeenCalled();
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
 

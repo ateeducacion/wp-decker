@@ -159,6 +159,31 @@ require_once __DIR__ . '/partials/task-comments.php';
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>
+	<?php
+	// A task that was promoted out of someone's list says so, and says whose:
+	// otherwise it arrives on the board with no sign that it is a step of
+	// something larger.
+	$parent_task_id = ( Decker_Subtasks::is_enabled() && $task_id ) ? Decker_Subtask_Links::get_parent_task_id( $task_id ) : null;
+	if ( $parent_task_id ) :
+		$parent_task_url = add_query_arg(
+			array(
+				'decker_page' => 'task',
+				'id'          => $parent_task_id,
+				'decker_tab'  => 'subtasks',
+			),
+			home_url( '/' )
+		);
+		?>
+	<p class="small text-muted mb-2 decker-subtask-of">
+		<i class="ri-corner-down-right-line me-1"></i>
+		<?php esc_html_e( 'Subtask of', 'decker' ); ?>
+		<a href="<?php echo esc_url( $parent_task_url ); ?>"
+			data-bs-toggle="modal"
+			data-bs-target="#task-modal"
+			data-task-id="<?php echo esc_attr( $parent_task_id ); ?>"
+			data-decker-open-tab="subtasks"><?php echo esc_html( get_the_title( $parent_task_id ) ); ?></a>
+	</p>
+	<?php endif; ?>
 	<div class="row">
 
 		<!-- Title -->

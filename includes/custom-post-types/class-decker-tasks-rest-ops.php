@@ -81,14 +81,16 @@ class Decker_Tasks_Rest_Ops {
 			),
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/order',
-				'methods'    => 'PUT',
+				// See the subtasks route: a PUT body does not survive every
+				// host, so the board drags post instead.
+				'methods'    => WP_REST_Server::EDITABLE,
 				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),
 				'permission' => 'minimum_role',
 				'args'       => $order_args,
 			),
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/stack',
-				'methods'    => 'PUT',
+				'methods'    => WP_REST_Server::EDITABLE,
 				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),
 				'permission' => 'minimum_role',
 				'args'       => $order_args,

@@ -6,7 +6,7 @@
  * and again here for every edit.
  *
  * Every change writes the whole list back through
- * PUT decker/v1/tasks/<id>/subtasks, carrying the editor form's lock
+ * decker/v1/tasks/<id>/subtasks, carrying the editor form's lock
  * generation: the server rejects a stale form, which is also what keeps two
  * people (or two tabs) from clobbering each other's list.
  */
@@ -91,6 +91,61 @@
         } catch (e) {
             return fallback;
         }
+    }
+
+    /**
+     * Ask the viewer to confirm something that cannot be undone.
+     *
+     * SweetAlert like the rest of the card; window.confirm only where it is
+     * missing, which in practice is the test environment. The card is always
+     * in this document, so this window's instance is the one to use: reaching
+     * for window.parent throws outright when the site is framed by another
+     * origin, as WordPress Playground frames it.
+     *
+     * @param {string} question  The question, as the dialog title.
+     * @param {string} detail    What it is about, usually the item's title.
+     * @param {string} confirm   The label of the confirming button.
+     * @param {Object} [options] `checkbox` adds an opt-in the answer carries
+     *                           back as `checked`; `danger: false` drops the
+     *                           red button, for a question that destroys
+     *                           nothing.
+     * @return {Promise<{confirmed: boolean, checked: boolean}>} The answer.
+     */
+    function ask(question, detail, confirm, options) {
+        const settings = options || {};
+        const swal = window.Swal;
+
+        if (!swal) {
+            return Promise.resolve({
+                confirmed: window.confirm(detail ? `${question} ${detail}` : question),
+                checked: false
+            });
+        }
+
+        const dialog = {
+            title: question,
+            text: detail,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: confirm,
+            cancelButtonText: text('cancel', 'Cancel'),
+            confirmButtonColor: false === settings.danger ? '#3085d6' : '#d33',
+            cancelButtonColor: '#3085d6'
+        };
+
+        if (settings.checkbox) {
+            dialog.input = 'checkbox';
+            dialog.inputValue = 0;
+            dialog.inputPlaceholder = settings.checkbox;
+        }
+
+        return swal.fire(dialog).then(function (result) {
+            const confirmed = !!(result && result.isConfirmed);
+            return {
+                confirmed: confirmed,
+                checked: confirmed && !!(result && result.value)
+            };
+        });
     }
 
     /**
@@ -203,6 +258,30 @@
         },
 
         /**
+         * Whether a row's own fields are read-only.
+         *
+         * A promoted item is not edited here any more: what the row shows is
+         * the task it became, and the way to change any of it is to open that
+         * task. The pane as a whole is read-only on a locked card.
+         *
+         * @param {Object} item The subtask item.
+         * @return {boolean} Whether the row is frozen.
+         */
+        frozen: function (item) {
+            return this.readOnly || parseInt(item.task_id, 10) > 0;
+        },
+
+        /**
+         * The frontend URL of the task a promoted item became.
+         *
+         * @param {Object} item The subtask item.
+         * @return {string} The URL.
+         */
+        linkedTaskUrl: function (item) {
+            return `${deckerVars.home_url}?decker_page=task&id=${encodeURIComponent(item.task_id)}`;
+        },
+
+        /**
          * Build the row element for one item.
          *
          * @param {Object} item The subtask item.
@@ -255,10 +334,10 @@
             const button = document.createElement('button');
             button.type = 'button';
             button.className = 'btn btn-link p-0 border-0 decker-subtask-status';
-            button.disabled = this.readOnly;
+            button.disabled = this.frozen(item);
             button.appendChild(document.createElement('i'));
 
-            if (!this.readOnly) {
+            if (!button.disabled) {
                 button.addEventListener('click', function () {
                     const current = STATUSES.indexOf(item.status);
                     item.status = STATUSES[(current + 1) % STATUSES.length];
@@ -280,6 +359,18 @@
          * @return {HTMLElement} The field.
          */
         buildTitleField: function (item) {
+            if (parseInt(item.task_id, 10) > 0) {
+                // The row is a pointer now: it carries the task's own title,
+                // and clicking it goes there rather than pretending to edit
+                // a copy nobody reads.
+                const link = document.createElement('a');
+                link.className = 'form-control form-control-sm decker-subtask-title decker-subtask-title-link text-truncate';
+                link.href = this.linkedTaskUrl(item);
+                link.textContent = item.title;
+                link.title = text('subtask_open_task', 'Open the task this subtask became');
+                return link;
+            }
+
             const input = document.createElement('input');
             input.type = 'text';
             input.className = 'form-control form-control-sm decker-subtask-title';
@@ -287,11 +378,7 @@
             input.maxLength = 255;
             input.setAttribute('aria-label', text('subtask_title', 'Subtask'));
 
-            if (item.task_id) {
-                // A promoted item is edited on its own card from now on, so the
-                // title here is frozen and the row links to that task instead.
-                input.readOnly = true;
-            } else if (this.readOnly) {
+            if (this.readOnly) {
                 input.readOnly = true;
             } else {
                 input.addEventListener('input', function () {
@@ -327,6 +414,10 @@
          * @return {HTMLElement} The select.
          */
         buildAssigneeField: function (item) {
+            if (parseInt(item.task_id, 10) > 0) {
+                return this.buildLinkedAssignee(item);
+            }
+
             const wrap = document.createElement('span');
             wrap.className = 'decker-subtask-assignee-field';
             const enhance = !this.readOnly && typeof Choices !== 'undefined';
@@ -377,6 +468,39 @@
             if (enhance) {
                 this.enhanceAssignee(select);
             }
+
+            return wrap;
+        },
+
+        /**
+         * Build the static owner of a promoted row: the task's responsable.
+         *
+         * Not a select: that person is whoever the task is assigned to now,
+         * who need not be on this card at all, so there is nothing to pick
+         * from and nothing to pick.
+         *
+         * @param {Object} item The subtask item.
+         * @return {HTMLElement} The field.
+         */
+        buildLinkedAssignee: function (item) {
+            const wrap = document.createElement('span');
+            wrap.className = 'decker-subtask-assignee-field decker-subtask-assignee-static';
+
+            if (item.assignee_avatar) {
+                const avatar = document.createElement('img');
+                avatar.className = 'decker-subtask-avatar';
+                avatar.src = item.assignee_avatar;
+                avatar.alt = '';
+                avatar.setAttribute('aria-hidden', 'true');
+                avatar.width = 20;
+                avatar.height = 20;
+                wrap.appendChild(avatar);
+            }
+
+            const name = document.createElement('span');
+            name.className = 'text-truncate decker-subtask-assignee-name';
+            name.textContent = item.assignee_name || text('subtask_unassigned', 'Unassigned');
+            wrap.appendChild(name);
 
             return wrap;
         },
@@ -489,10 +613,10 @@
             input.type = 'date';
             input.className = 'form-control form-control-sm decker-subtask-duedate';
             input.value = item.duedate || '';
-            input.disabled = this.readOnly;
+            input.disabled = this.frozen(item);
             input.setAttribute('aria-label', text('subtask_duedate', 'Due date'));
 
-            if (!this.readOnly) {
+            if (!input.disabled) {
                 input.addEventListener('change', function () {
                     item.duedate = input.value;
                     this.applyStatus(input.closest('.decker-subtask-row'), item);
@@ -527,8 +651,8 @@
          */
         buildOpenButton: function (item) {
             const link = document.createElement('a');
-            link.className = 'btn btn-link btn-sm p-1 text-muted';
-            link.href = `${deckerVars.home_url}?decker_page=task&id=${encodeURIComponent(item.task_id)}`;
+            link.className = 'btn btn-link btn-sm p-1 text-muted decker-subtask-open';
+            link.href = this.linkedTaskUrl(item);
             link.title = text('subtask_open_task', 'Open the task this subtask became');
             link.setAttribute('aria-label', link.title);
             link.innerHTML = '<i class="ri-external-link-line"></i>';
@@ -550,7 +674,17 @@
             button.innerHTML = '<i class="ri-git-branch-line"></i>';
 
             button.addEventListener('click', function () {
-                this.convert(item, button);
+                // Promotion is one-way: the item freezes and a real task
+                // appears on the board, so it asks first, like deleting does.
+                ask(
+                    text('confirm_convert_subtask_title', 'Turn this subtask into a task of its own?'),
+                    (item.title || '').trim(),
+                    text('yes_convert', 'Yes, convert')
+                ).then(function (answer) {
+                    if (answer.confirmed) {
+                        this.convert(item, button);
+                    }
+                }.bind(this));
             }.bind(this));
 
             return button;
@@ -563,22 +697,107 @@
          * @return {HTMLElement} The button.
          */
         buildDeleteButton: function (item) {
+            // A promoted item owns a real task now, so taking it off the list
+            // destroys nothing: it is an unlink, and says so with its own
+            // icon, its own colour and a question that promises the task
+            // survives — with archiving it as an opt-in, since wanting the
+            // list clean usually means the work is over.
+            const linked = parseInt(item.task_id, 10) > 0;
+
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'btn btn-link btn-sm p-1 text-danger decker-subtask-delete';
-            button.title = text('subtask_delete', 'Delete subtask');
+            button.className = 'btn btn-link btn-sm p-1 decker-subtask-delete '
+                + (linked ? 'text-muted decker-subtask-unlink' : 'text-danger');
+            button.title = linked
+                ? text('subtask_unlink', 'Unlink from this task')
+                : text('subtask_delete', 'Delete subtask');
             button.setAttribute('aria-label', button.title);
-            button.innerHTML = '<i class="ri-delete-bin-line"></i>';
+            button.innerHTML = linked
+                ? '<i class="ri-link-unlink"></i>'
+                : '<i class="ri-delete-bin-line"></i>';
 
             button.addEventListener('click', function () {
-                this.items = this.items.filter(function (candidate) {
-                    return candidate !== item;
-                });
-                this.renderAll();
-                this.save(true);
+                this.askBeforeRemoving(item, linked).then(function (answer) {
+                    if (!answer.confirmed) {
+                        return;
+                    }
+
+                    this.items = this.items.filter(function (candidate) {
+                        return candidate !== item;
+                    });
+                    this.renderAll();
+
+                    // Archiving only after the shorter list is stored, so a
+                    // failure on either side keeps its own message.
+                    this.save(true).then(function () {
+                        if (linked && answer.checked) {
+                            return this.archive(item.task_id);
+                        }
+                    }.bind(this));
+                }.bind(this));
             }.bind(this));
 
             return button;
+        },
+
+        /**
+         * Ask before taking an item off the list.
+         *
+         * @param {Object}  item   The subtask item.
+         * @param {boolean} linked Whether it already became a task.
+         * @return {Promise<{confirmed: boolean, checked: boolean}>} The answer.
+         */
+        askBeforeRemoving: function (item, linked) {
+            const title = (item.title || '').trim();
+
+            if (!linked) {
+                return ask(
+                    text('confirm_delete_subtask_title', 'Are you sure you want to delete this subtask?'),
+                    title,
+                    text('yes_delete', 'Yes, delete')
+                );
+            }
+
+            return ask(
+                text('confirm_unlink_subtask_title', 'Unlink this subtask?'),
+                format(
+                    text('confirm_unlink_subtask_text', '\u201c%1$s\u201d leaves this list. The task it became stays on the board.'),
+                    [ title ]
+                ),
+                text('yes_unlink', 'Yes, unlink'),
+                {
+                    checkbox: text('archive_linked_task', 'Archive that task too'),
+                    danger: false
+                }
+            );
+        },
+
+        /**
+         * Archive the task an unlinked item had become.
+         *
+         * @param {number} taskId The task id.
+         * @return {Promise} Resolved once the attempt is over.
+         */
+        archive: function (taskId) {
+            const failed = function () {
+                this.setStatusMessage(text('task_archive_failed', 'The task could not be archived.'), true);
+            }.bind(this);
+
+            return fetch(`${wpApiSettings.root}wp/v2/tasks/${encodeURIComponent(taskId)}`, {
+                method: 'POST',
+                headers: {
+                    'X-WP-Nonce': wpApiSettings.nonce,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ status: 'archived' })
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        failed();
+                    }
+                })
+                .catch(failed);
         },
 
         /**
@@ -607,11 +826,18 @@
             row.classList.toggle('decker-subtask-done', item.status === 'done');
 
             // An unfinished item past its date is flagged on the row itself; the
-            // card counter only carries the aggregate.
+            // card counter only carries the aggregate. Its own class, not
+            // Bootstrap's is-invalid: the date is late, not wrong, and the
+            // error styling made it look like the form had rejected it.
             const overdue = !!item.duedate && item.status !== 'done' && item.duedate < today();
             const dateField = row.querySelector('.decker-subtask-duedate');
             if (dateField) {
-                dateField.classList.toggle('is-invalid', overdue);
+                dateField.classList.toggle('decker-subtask-overdue', overdue);
+                if (overdue) {
+                    dateField.title = text('subtask_overdue', 'This subtask is past its due date');
+                } else {
+                    dateField.removeAttribute('title');
+                }
             }
         },
 
@@ -868,6 +1094,7 @@
                         this.reportFailure(result.data);
                         return;
                     }
+                    window.deckerSubtasksChangedInSession = true;
                     this.items = result.data.items;
                     this.renderAll();
                     this.setStatusMessage(text('subtask_converted', 'The subtask is now a task of its own.'), false);
@@ -937,8 +1164,11 @@
 
             const url = `${wpApiSettings.root}decker/v1/tasks/${encodeURIComponent(this.taskId)}/subtasks`;
 
+            // POST, although the route is a replacement: some hosts — the
+            // WordPress Playground demo among them — never pass the body of a
+            // PUT to PHP, and the whole list travels in that body.
             return fetch(url, {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'X-WP-Nonce': wpApiSettings.nonce,
                     'Content-Type': 'application/json'
@@ -972,6 +1202,11 @@
                     if (seq !== this.saveSeq) {
                         return true;
                     }
+
+                    // The board card behind the modal is PHP-rendered, so it
+                    // now shows a stale list; the modal refreshes the view on
+                    // close, the way the "For today" quick action does.
+                    window.deckerSubtasksChangedInSession = true;
 
                     const stored = result.data.items;
                     if (JSON.stringify(stored) !== JSON.stringify(this.items)) {
