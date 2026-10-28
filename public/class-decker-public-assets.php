@@ -219,6 +219,9 @@ class Decker_Public_Assets {
 		return array(
 			plugin_dir_url( __FILE__ ) . '../public/assets/js/task-card.js',
 
+			// Loaded after task-card.js, which calls into it once a card renders.
+			plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-subtasks.js',
+
 			plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-heartbeat.js',
 
 			// Add global search script.
@@ -331,7 +334,7 @@ class Decker_Public_Assets {
 	 * @return array<string, string> Map of string key to translated text.
 	 */
 	private function get_ui_strings() {
-		return array(
+		$strings = array(
 			// Common strings.
 			'confirm_delete_comment'        => __( 'Are you sure you want to delete this comment?', 'decker' ),
 			'failed_delete_comment'         => __( 'Failed to delete comment.', 'decker' ),
@@ -426,6 +429,40 @@ class Decker_Public_Assets {
 			'adding_to_today'               => __( 'Adding to today…', 'decker' ),
 			'removing_from_today'           => __( 'Removing from today…', 'decker' ),
 			'today_update_failed'           => __( 'The task could not be updated.', 'decker' ),
+		);
+
+		return array_merge( $strings, $this->get_subtask_strings() );
+	}
+
+	/**
+	 * The strings the subtask pane and its chips use.
+	 *
+	 * Kept apart from the rest so neither list grows past the point of
+	 * being readable in one screen.
+	 *
+	 * @return array<string, string> Localized strings.
+	 */
+	private function get_subtask_strings() {
+		return array(
+			'saving'                        => __( 'Saving…', 'decker' ),
+			'saved'                         => __( 'Saved', 'decker' ),
+			'stack_to_do'                   => __( 'To-Do', 'decker' ),
+			'stack_in_progress'             => __( 'In Progress', 'decker' ),
+			'stack_done'                    => __( 'Done', 'decker' ),
+			'subtask_title'                 => __( 'Subtask', 'decker' ),
+			'subtask_assignee'              => __( 'Assignee', 'decker' ),
+			'subtask_duedate'               => __( 'Due date', 'decker' ),
+			'subtask_delete'                => __( 'Delete subtask', 'decker' ),
+			'subtask_reorder'               => __( 'Drag to reorder', 'decker' ),
+			'subtask_unassigned'            => __( 'Unassigned', 'decker' ),
+			'subtask_convert'               => __( 'Convert into a task', 'decker' ),
+			'subtask_converted'             => __( 'The subtask is now a task of its own.', 'decker' ),
+			'subtask_open_task'             => __( 'Open the task this subtask became', 'decker' ),
+			/* translators: %1$s is the name of the subtask state (To-Do, In Progress or Done). */
+			'subtask_state'                 => __( 'State: %1$s', 'decker' ),
+			/* translators: 1: number of completed subtasks, 2: total number of subtasks. */
+			'subtasks_progress'             => __( '%1$d of %2$d done', 'decker' ),
+			'subtasks_save_failed'          => __( 'The subtasks could not be saved.', 'decker' ),
 		);
 	}
 

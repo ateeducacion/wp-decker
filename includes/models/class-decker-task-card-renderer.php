@@ -28,6 +28,13 @@ class Decker_Task_Card_Renderer {
 	private $task;
 
 	/**
+	 * The subtask view for this card, built on first use.
+	 *
+	 * @var Decker_Subtask_Card_View|null
+	 */
+	private $subtask_view = null;
+
+	/**
 	 * Store the task the card is rendered for.
 	 *
 	 * @param Task $task The task being rendered.
@@ -42,13 +49,7 @@ class Decker_Task_Card_Renderer {
 	 * @param bool $draw_background_color Whether to include background color styling. Defaults to false.
 	 */
 	public function render_task_card( bool $draw_background_color = false ) {
-		$task_url = add_query_arg(
-			array(
-				'decker_page' => 'task',
-				'id'          => esc_attr( $this->task->ID ),
-			),
-			home_url( '/' )
-		);
+		$task_url             = $this->get_task_url();
 		$priority_badge_class = $this->task->max_priority ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary';
 		$priority_label      = $this->task->max_priority ? __( '🔥', 'decker' ) : __( 'Normal', 'decker' );
 
@@ -103,8 +104,11 @@ class Decker_Task_Card_Renderer {
 					</span>
 					<?php
 					$this->render_card_labels_counter();
+					$this->subtasks()->render_progress();
 					?>
 				</p>
+
+				<?php $this->subtasks()->render_chips(); ?>
 
 				<?php ( new Decker_Task_Menu_Renderer( $this->task ) )->render_task_menu(); ?>
 
@@ -250,6 +254,46 @@ class Decker_Task_Card_Renderer {
 			</span>
 			<?php
 		endif;
+	}
+
+	/**
+	 * The subtask view for this card.
+	 *
+	 * @return Decker_Subtask_Card_View The view.
+	 */
+	private function subtasks(): Decker_Subtask_Card_View {
+		if ( null === $this->subtask_view ) {
+			$this->subtask_view = new Decker_Subtask_Card_View( $this->task );
+		}
+
+		return $this->subtask_view;
+	}
+
+	/**
+	 * Echoes the subtask progress counter for the task.
+	 *
+	 * Kept on the card renderer because the task table reaches the counter
+	 * through the renderer it already builds per row.
+	 *
+	 * @return void
+	 */
+	public function render_card_subtasks_progress(): void {
+		$this->subtasks()->render_progress();
+	}
+
+	/**
+	 * The frontend URL of the task this card points at.
+	 *
+	 * @return string The task URL.
+	 */
+	private function get_task_url(): string {
+		return add_query_arg(
+			array(
+				'decker_page' => 'task',
+				'id'          => $this->task->ID,
+			),
+			home_url( '/' )
+		);
 	}
 
 	/**

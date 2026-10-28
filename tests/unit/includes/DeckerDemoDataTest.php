@@ -32,6 +32,9 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 	/**
 	 * Helper: count posts of a type carrying a given board term.
 	 *
+	 * The statuses are spelled out because 'any' drops the plugin's own
+	 * 'archived' status, which a fifth of the demo tasks carry.
+	 *
 	 * @param string $post_type Post type.
 	 * @param int    $board_id  Board term ID.
 	 * @return WP_Post[]
@@ -40,7 +43,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 		return get_posts(
 			array(
 				'post_type'   => $post_type,
-				'post_status' => 'any',
+				'post_status' => array( 'publish', 'archived' ),
 				'numberposts' => -1,
 				'tax_query'   => array(
 					array(
@@ -140,7 +143,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 		$tasks = get_posts(
 			array(
 				'post_type'   => 'decker_task',
-				'post_status' => 'any',
+				'post_status' => array( 'publish', 'archived' ),
 				'numberposts' => -1,
 			)
 		);
@@ -176,6 +179,53 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Seeded subtasks are well formed, and some tasks get a breakdown.
+	 */
+	public function test_create_sample_data_seeds_subtasks_on_some_tasks() {
+		( new Decker_Demo_Data() )->create_sample_data();
+
+		$tasks = get_posts(
+			array(
+				'post_type'   => 'decker_task',
+				'post_status' => array( 'publish', 'archived' ),
+				'numberposts' => -1,
+			)
+		);
+		$this->assertNotEmpty( $tasks );
+
+		$with_subtasks = 0;
+
+		foreach ( $tasks as $task ) {
+			$items = Decker_Subtasks::get( $task->ID );
+			if ( empty( $items ) ) {
+				continue;
+			}
+
+			++$with_subtasks;
+			$this->assertGreaterThanOrEqual( 2, count( $items ) );
+			$this->assertLessThanOrEqual( 8, count( $items ) );
+
+			$allowed = Decker_Subtasks::get_allowed_assignees( $task->ID );
+
+			foreach ( $items as $item ) {
+				$this->assertNotSame( '', $item['title'] );
+				$this->assertContains( $item['status'], Decker_Subtasks::get_statuses(), true );
+				if ( $item['assignee'] ) {
+					$this->assertContains( $item['assignee'], $allowed );
+				}
+				if ( '' !== $item['duedate'] ) {
+					$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $item['duedate'] );
+				}
+			}
+		}
+
+		// Half the tasks are left without a breakdown, so with the volume the
+		// generator creates both groups are always represented.
+		$this->assertGreaterThan( 0, $with_subtasks );
+		$this->assertLessThan( count( $tasks ), $with_subtasks );
+	}
+
+	/**
 	 * Comment counts always fall into one of the defined buckets.
 	 */
 	public function test_create_sample_data_comment_counts_match_buckets() {
@@ -184,7 +234,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 		$tasks = get_posts(
 			array(
 				'post_type'   => 'decker_task',
-				'post_status' => 'any',
+				'post_status' => array( 'publish', 'archived' ),
 				'numberposts' => -1,
 			)
 		);
@@ -320,7 +370,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 		$events = get_posts(
 			array(
 				'post_type'   => 'decker_event',
-				'post_status' => 'any',
+				'post_status' => array( 'publish', 'archived' ),
 				'numberposts' => -1,
 			)
 		);
@@ -393,7 +443,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 			get_posts(
 				array(
 					'post_type'   => 'decker_task',
-					'post_status' => 'any',
+					'post_status' => array( 'publish', 'archived' ),
 					'numberposts' => -1,
 				)
 			)
@@ -429,7 +479,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 			get_posts(
 				array(
 					'post_type'   => 'decker_task',
-					'post_status' => 'any',
+					'post_status' => array( 'publish', 'archived' ),
 					'numberposts' => -1,
 				)
 			)

@@ -54,6 +54,12 @@ msgstr ""
 msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
 msgstr ""
 
+msgid "Enable subtasks on task cards."
+msgstr ""
+
+msgid "Adds a Subtasks tab to every task, where a task can be broken down into steps with their own state, assignee and due date. The card shows how many are done. Turning this off hides the tab and the counter; the stored subtasks are kept."
+msgstr ""
+
 msgid "Show board status indicators"
 msgstr ""
 
@@ -163,6 +169,9 @@ msgid "Allow Email Notifications"
 msgstr ""
 
 msgid "Collaborative Editing"
+msgstr ""
+
+msgid "Subtasks"
 msgstr ""
 
 msgid "Board status indicators"
@@ -982,6 +991,23 @@ msgstr ""
 msgid "Could not update the attachment link."
 msgstr ""
 
+#. translators: %d is the maximum number of subtasks allowed on a task.
+#, php-format
+msgid "A task cannot hold more than %d subtasks."
+msgstr ""
+
+msgid "Subtask not found."
+msgstr ""
+
+msgid "This subtask has already been converted into a task."
+msgstr ""
+
+msgid "The parent task has no board, so the subtask cannot become a task."
+msgstr ""
+
+msgid "Subtasks are disabled on this site."
+msgstr ""
+
 msgid "The user is derived from the session and cannot be provided."
 msgstr ""
 
@@ -1137,6 +1163,28 @@ msgstr ""
 msgid "Board deleted successfully"
 msgstr ""
 
+#. translators: %d is the number of open subtasks the card has no room to show.
+#, php-format
+msgid "%d more open subtask"
+msgid_plural "%d more open subtasks"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: number of completed subtasks, 2: total number of subtasks.
+#, php-format
+msgid "%1$d of %2$d subtasks done"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+#. translators: %d is the number of subtasks not shown in the preview.
+#, php-format
+msgid "and %d more subtask"
+msgid_plural "and %d more subtasks"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "🔥"
 msgstr ""
 
@@ -1165,9 +1213,6 @@ msgid "%d label"
 msgid_plural "%d labels"
 msgstr[0] ""
 msgstr[1] ""
-
-msgid "Close"
-msgstr ""
 
 msgid "No due date"
 msgstr ""
@@ -1427,6 +1472,9 @@ msgid "Task not found"
 msgstr ""
 
 msgid "My Tasks"
+msgstr ""
+
+msgid "Tasks with Subtasks"
 msgstr ""
 
 msgid "P."
@@ -1696,6 +1744,52 @@ msgid "Removing from today…"
 msgstr ""
 
 msgid "The task could not be updated."
+msgstr ""
+
+msgid "Saving…"
+msgstr ""
+
+msgid "Saved"
+msgstr ""
+
+msgid "Subtask"
+msgstr ""
+
+msgid "Assignee"
+msgstr ""
+
+msgid "Due date"
+msgstr ""
+
+msgid "Delete subtask"
+msgstr ""
+
+msgid "Drag to reorder"
+msgstr ""
+
+msgid "Unassigned"
+msgstr ""
+
+msgid "Convert into a task"
+msgstr ""
+
+msgid "The subtask is now a task of its own."
+msgstr ""
+
+msgid "Open the task this subtask became"
+msgstr ""
+
+#. translators: %1$s is the name of the subtask state (To-Do, In Progress or Done).
+#, php-format
+msgid "State: %1$s"
+msgstr ""
+
+#. translators: 1: number of completed subtasks, 2: total number of subtasks.
+#, php-format
+msgid "%1$d of %2$d done"
+msgstr ""
+
+msgid "The subtasks could not be saved."
 msgstr ""
 
 msgid "Loading content. Please wait."
@@ -2001,6 +2095,21 @@ msgid "Gantt"
 msgstr ""
 
 msgid "Information"
+msgstr ""
+
+msgid "No subtasks yet. Break this task down into the steps it actually takes."
+msgstr ""
+
+msgid "Add a subtask and press Enter"
+msgstr ""
+
+msgid "New subtask"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Pasting several lines adds one subtask per line."
 msgstr ""
 
 msgid "Replying to"

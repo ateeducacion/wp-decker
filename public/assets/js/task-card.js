@@ -1803,6 +1803,12 @@
             }
         }
 
+        // The subtask pane owns its own rows and writes; it is only present
+        // when the feature is enabled.
+        if (typeof window.deckerInitSubtasks === 'function') {
+            window.deckerInitSubtasks(context);
+        }
+
     }
 
     // Function to handle changes in the "task-today" checkbox

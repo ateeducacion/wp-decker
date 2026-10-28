@@ -151,7 +151,64 @@ class Decker_Demo_Tasks {
 
 			// Seed comments so the board comments popover has something to preview.
 			$this->seed_task_comments( $task_id, $assigned_users, $start_date, $end_date );
+
+			// Seed subtasks so the card counter, the chips and the tab have
+			// something to show without anyone typing a list first.
+			$this->seed_task_subtasks( $task_id, $assigned_users, $end_date );
 		}
+	}
+
+	/**
+	 * Seeds a subtask list on a task, in the three states and partly assigned.
+	 *
+	 * Half the tasks keep an empty list: a board where every card carries a
+	 * progress bar is not what the feature looks like in use.
+	 *
+	 * @param int      $task_id        Target task post ID.
+	 * @param int[]    $assigned_users Users available as item assignees.
+	 * @param DateTime $end_date       The task due date, reused by some items.
+	 */
+	private function seed_task_subtasks( $task_id, $assigned_users, $end_date ) {
+		if ( $this->random->random_boolean( 0.5 ) ) {
+			return;
+		}
+
+		$titles = $this->get_demo_subtask_titles();
+		$count  = $this->random->custom_rand( 2, min( 8, count( $titles ) ) );
+		$items  = array();
+
+		foreach ( $this->random->wp_rand_elements( $titles, $count ) as $title ) {
+			$items[] = array(
+				'title'    => $title,
+				'status'   => $this->random->random_stack(),
+				'assignee' => ( ! empty( $assigned_users ) && $this->random->random_boolean( 0.7 ) )
+					? $assigned_users[ array_rand( $assigned_users ) ]
+					: 0,
+				'duedate'  => $this->random->random_boolean( 0.4 ) ? $end_date->format( 'Y-m-d' ) : '',
+			);
+		}
+
+		Decker_Subtasks::set( $task_id, $items );
+	}
+
+	/**
+	 * Returns the demo subtask title pool.
+	 *
+	 * @return array Array of step titles.
+	 */
+	private function get_demo_subtask_titles() {
+		return array(
+			'Draft the first version',
+			'Review with the team',
+			'Collect the required data',
+			'Write the acceptance tests',
+			'Update the documentation',
+			'Ask the provider for a quote',
+			'Prepare the staging deployment',
+			'Check the accessibility of the form',
+			'Translate the new strings',
+			'Close the related ticket',
+		);
 	}
 
 	/**

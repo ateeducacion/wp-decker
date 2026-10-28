@@ -258,7 +258,8 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 		$chain = array(
 			'decker-ai'        => 'global-search',
 			'global-search'    => 'decker-heartbeat',
-			'decker-heartbeat' => 'task-card',
+			'decker-heartbeat' => 'decker-subtasks',
+			'decker-subtasks'  => 'task-card',
 		);
 
 		foreach ( $chain as $handle => $expected_dependency ) {
@@ -442,6 +443,23 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'adding_to_today',
 				'removing_from_today',
 				'today_update_failed',
+				'saving',
+				'saved',
+				'stack_to_do',
+				'stack_in_progress',
+				'stack_done',
+				'subtask_title',
+				'subtask_assignee',
+				'subtask_duedate',
+				'subtask_delete',
+				'subtask_reorder',
+				'subtask_unassigned',
+				'subtask_convert',
+				'subtask_converted',
+				'subtask_open_task',
+				'subtask_state',
+				'subtasks_progress',
+				'subtasks_save_failed',
 			),
 			array_keys( $vars['strings'] )
 		);
