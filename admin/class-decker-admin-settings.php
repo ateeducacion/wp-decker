@@ -163,6 +163,7 @@ class Decker_Admin_Settings {
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'collaborative_editing' => __( 'Collaborative Editing', 'decker' ),
+			'subtasks_enabled'      => __( 'Subtasks', 'decker' ),
 			'sidebar_board_status'  => __( 'Board status indicators', 'decker' ),
 			'signaling_server'      => __( 'Signaling Server', 'decker' ),
 			'clear_all_data_button' => __( 'Clear All Data', 'decker' ),

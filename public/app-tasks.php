@@ -195,6 +195,8 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 								$page_title = __( 'Active Tasks', 'decker' );
 							} elseif ( 'my' === $selected_type ) {
 								$page_title = __( 'My Tasks', 'decker' );
+							} elseif ( 'subtasks' === $selected_type ) {
+								$page_title = __( 'Tasks with Subtasks', 'decker' );
 							} elseif ( 'archived' === $selected_type ) {
 								$page_title     = __( 'Archived Tasks', 'decker' );
 								$class_disabled = ' disabled';
@@ -250,6 +252,18 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 													$tasks = $task_manager->get_tasks_by_status( 'publish' );
 												}
 
+												// Narrow the published list to the broken-down tasks. The
+												// list is already loaded with its meta primed, so this
+												// filters in memory rather than running a second query.
+												if ( 'subtasks' === $selected_type ) {
+													$tasks = array_filter(
+														$tasks,
+														function ( $task ) {
+															return ! empty( Decker_Subtasks::get( $task->ID ) );
+														}
+													);
+												}
+
 												foreach ( $tasks as $task ) {
 													$card_renderer = new Decker_Task_Card_Renderer( $task );
 													echo '<tr class="task">';
@@ -281,7 +295,14 @@ table#tablaTareas td:nth-child(6) .avatar-group {
 															),
 															home_url( '/' )
 														)
-													) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr( $task->ID ) . '">' . esc_html( $task->title ) . '</a></td>';
+													) . '" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="' . esc_attr( $task->ID ) . '">' . esc_html( $task->title ) . '</a>';
+
+													// Appended to the title cell rather than given a column
+													// of its own: the column set is persisted per user, so a
+													// new column would invalidate every saved layout.
+													$card_renderer->render_card_subtasks_progress();
+
+													echo '</td>';
 
 
 													// Labels.

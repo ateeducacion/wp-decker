@@ -11,6 +11,7 @@ All main settings are under **Settings → Decker**.
 | Shared Key | Bearer token for the email-to-post REST endpoint |
 | Allow Email Notifications | Global switch for email notifications |
 | Collaborative Editing | Enable real-time collaborative editing of tasks (WebRTC) |
+| Subtasks | Show the Subtasks tab and the card progress counter. Turning it off keeps the stored subtasks |
 | Signaling Server | WebRTC signaling server URL (default: `wss://signaling.yjs.dev`) |
 | Ignored Users | Comma-separated list of user IDs excluded from Decker |
 | Clear All Data | Destructive action that deletes all boards, labels and tasks |

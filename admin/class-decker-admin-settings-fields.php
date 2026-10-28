@@ -111,6 +111,19 @@ class Decker_Admin_Settings_Fields {
 	}
 
 	/**
+	 * Render Subtasks Field.
+	 *
+	 * Outputs the HTML for the subtasks_enabled field.
+	 */
+	private function subtasks_enabled_render() {
+		echo '<label>';
+		echo '<input type="checkbox" name="decker_settings[subtasks_enabled]" value="1" ' . checked( Decker_Subtasks::is_enabled(), true, false ) . '>';
+		echo esc_html__( 'Enable subtasks on task cards.', 'decker' );
+		echo '</label>';
+		echo '<p class="description">' . esc_html__( 'Adds a Subtasks tab to every task, where a task can be broken down into steps with their own state, assignee and due date. The card shows how many are done. Turning this off hides the tab and the counter; the stored subtasks are kept.', 'decker' ) . '</p>';
+	}
+
+	/**
 	 * Render Board Status Indicators Field.
 	 *
 	 * Outputs the HTML for the sidebar_board_status field.

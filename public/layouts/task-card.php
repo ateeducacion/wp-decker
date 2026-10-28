@@ -333,6 +333,20 @@ require_once __DIR__ . '/partials/task-comments.php';
 			<a href="#description-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link active"><?php esc_html_e( 'Description', 'decker' ); ?>
 			</a>
 		</li>
+		<?php
+		$subtasks_enabled  = Decker_Subtasks::is_enabled();
+		$subtask_items     = $subtasks_enabled && $task_id ? Decker_Subtasks::get( $task_id ) : array();
+		$subtask_progress  = Decker_Subtasks::progress( $subtask_items );
+		if ( $subtasks_enabled ) :
+			?>
+		<li class="nav-item">
+			<a href="#subtasks-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Subtasks', 'decker' ); ?>
+			   <span class="badge bg-light text-dark" id="subtask-count"><?php echo esc_html( $subtask_progress['done'] . '/' . $subtask_progress['total'] ); ?></span>
+			</a>
+		</li>
+			<?php
+		endif;
+		?>
 		<li class="nav-item">
 			<a href="#comments-tab" data-bs-toggle="tab" aria-expanded="false" class="nav-link<?php echo ( 0 === $task_id ) ? ' disabled' : ''; ?>" <?php disabled( 0 === $task_id ); ?>><?php esc_html_e( 'Comments', 'decker' ); ?>
 			   <span class="badge bg-light text-dark" id="comment-count"><?php echo count( $task_comments ); ?></span>
@@ -384,6 +398,57 @@ require_once __DIR__ . '/partials/task-comments.php';
 				<textarea name="description" id="task-description" rows="12" class="form-control"><?php echo esc_textarea( $task_id ? $task->description : $initial_description ); ?></textarea>
 			<?php endif; ?>
 		</div>
+
+		<?php if ( $subtasks_enabled ) : ?>
+			<?php
+			// The rows are rendered by decker-subtasks.js from this payload so
+			// that the row markup lives in one place instead of being written
+			// once in PHP for the first paint and again in JS for every edit.
+			// The card counter is server-rendered, so progress stays visible on
+			// the board even when this pane never gets to run.
+			$subtask_people = array();
+			foreach ( Decker_Subtasks::get_allowed_assignees( $task_id ) as $user_id ) {
+				$user = get_userdata( $user_id );
+				if ( $user instanceof WP_User ) {
+					$subtask_people[] = array(
+						'id'   => $user->ID,
+						'name' => $user->display_name,
+					);
+				}
+			}
+			?>
+		<!-- Subtasks -->
+		<div class="tab-pane" id="subtasks-tab">
+			<div class="decker-subtasks"
+				data-task-id="<?php echo esc_attr( $task_id ); ?>"
+				data-readonly="<?php echo $disabled ? '1' : '0'; ?>"
+				data-items="<?php echo esc_attr( wp_json_encode( $subtask_items ) ); ?>"
+				data-people="<?php echo esc_attr( wp_json_encode( $subtask_people ) ); ?>">
+
+				<div class="d-flex align-items-center gap-2 mb-3">
+					<div class="progress flex-grow-1 decker-subtasks-progress" style="height: 8px;" role="presentation"></div>
+					<small class="text-muted text-nowrap decker-subtasks-summary"></small>
+				</div>
+
+				<div class="decker-subtasks-list"></div>
+
+				<p class="text-muted decker-subtasks-empty d-none"><?php esc_html_e( 'No subtasks yet. Break this task down into the steps it actually takes.', 'decker' ); ?></p>
+
+				<?php if ( ! $disabled ) : ?>
+				<div class="input-group mt-3 decker-subtasks-add">
+					<input type="text" class="form-control decker-subtask-new"
+						placeholder="<?php esc_attr_e( 'Add a subtask and press Enter', 'decker' ); ?>"
+						aria-label="<?php esc_attr_e( 'New subtask', 'decker' ); ?>"
+						maxlength="<?php echo esc_attr( Decker_Subtasks::MAX_TITLE_LENGTH ); ?>">
+					<button type="button" class="btn btn-success decker-subtask-add-btn"><?php esc_html_e( 'Add', 'decker' ); ?></button>
+				</div>
+				<small class="form-text"><?php esc_html_e( 'Pasting several lines adds one subtask per line.', 'decker' ); ?></small>
+				<?php endif; ?>
+
+				<div class="small mt-2 decker-subtasks-status" role="status" aria-live="polite"></div>
+			</div>
+		</div>
+		<?php endif; ?>
 
 		<!-- Comments -->
 		<div class="tab-pane" id="comments-tab">

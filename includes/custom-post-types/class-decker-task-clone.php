@@ -78,7 +78,40 @@ class Decker_Task_Clone {
 			)
 		);
 
+		if ( is_wp_error( $new_task_id ) ) {
+			return $new_task_id;
+		}
+
+		self::clone_subtasks( $task_id, (int) $new_task_id );
+
 		return $new_task_id;
+	}
+
+	/**
+	 * Copy the subtask list onto the clone.
+	 *
+	 * A task broken down into steps is usually cloned precisely to reuse that
+	 * breakdown, so the list travels with the card. Item states are copied
+	 * as-is, the same way the clone keeps the original's stack, and the
+	 * promotion links are dropped: the copies are new items that have not
+	 * become tasks of their own.
+	 *
+	 * @param int $task_id     The original task ID.
+	 * @param int $new_task_id The clone's task ID.
+	 * @return void
+	 */
+	private static function clone_subtasks( int $task_id, int $new_task_id ): void {
+		$items = Decker_Subtasks::get( $task_id );
+
+		if ( empty( $items ) ) {
+			return;
+		}
+
+		foreach ( $items as $index => $item ) {
+			$items[ $index ]['task_id'] = 0;
+		}
+
+		Decker_Subtasks::set( $new_task_id, $items );
 	}
 
 	/**

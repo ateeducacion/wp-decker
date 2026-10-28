@@ -38,6 +38,9 @@ class Decker_Admin_Settings_Validator {
 		// Validate collaborative editing.
 		$input['collaborative_editing'] = $this->sanitize_checkbox( $input, 'collaborative_editing' );
 
+		// Validate subtasks.
+		$input['subtasks_enabled'] = $this->sanitize_checkbox( $input, 'subtasks_enabled' );
+
 		// Validate the sidebar board status indicators.
 		$input['sidebar_board_status'] = $this->sanitize_checkbox( $input, 'sidebar_board_status' );
 

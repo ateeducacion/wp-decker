@@ -1,0 +1,435 @@
+/**
+ * Unit tests for the subtask pane in decker-subtasks.js.
+ *
+ * The module is an IIFE that publishes window.deckerInitSubtasks, so the real
+ * file is evaluated once with its globals stubbed and then driven through the
+ * DOM, rather than having its functions copied here.
+ *
+ * @package Decker
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+
+/* eslint-disable no-undef */
+
+const SOURCE = fs.readFileSync(
+	path.resolve( __dirname, '../../public/assets/js/decker-subtasks.js' ),
+	'utf8'
+);
+
+/**
+ * Render the card markup the pane expects.
+ *
+ * @param {Array}  items    The stored subtask items.
+ * @param {Object} options  Extra rendering options.
+ * @return {HTMLElement} The card context element.
+ */
+function renderCard( items, options = {} ) {
+	const people = options.people || [ { id: 7, name: 'Fran' } ];
+	const readOnly = options.readOnly ? '1' : '0';
+
+	document.body.innerHTML = `
+		<div id="card">
+			<form id="task-form" data-lock='{"generation":"gen-1"}'></form>
+			<span class="badge" id="subtask-count">0/0</span>
+			<div class="decker-subtasks"
+				data-task-id="${ options.taskId ?? 42 }"
+				data-readonly="${ readOnly }"
+				data-items='${ JSON.stringify( items ) }'
+				data-people='${ JSON.stringify( people ) }'>
+				<div class="progress decker-subtasks-progress"></div>
+				<small class="decker-subtasks-summary"></small>
+				<div class="decker-subtasks-list"></div>
+				<p class="decker-subtasks-empty d-none">Empty</p>
+				<div class="decker-subtasks-add">
+					<input type="text" class="decker-subtask-new">
+					<button type="button" class="decker-subtask-add-btn">Add</button>
+				</div>
+				<div class="decker-subtasks-status"></div>
+			</div>
+		</div>
+	`;
+
+	return document.getElementById( 'card' );
+}
+
+/**
+ * Build a stored item with the shape the server returns.
+ *
+ * @param {Object} overrides Fields to override.
+ * @return {Object} The item.
+ */
+function item( overrides = {} ) {
+	return {
+		id: 1,
+		title: 'Step',
+		status: 'to-do',
+		assignee: 0,
+		duedate: '',
+		task_id: 0,
+		...overrides,
+	};
+}
+
+/**
+ * Resolve the pending microtasks so a fetch chain settles.
+ *
+ * @return {Promise} A promise resolved after the queue drains.
+ */
+function settle() {
+	return new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+}
+
+/**
+ * The payload of the last fetch call.
+ *
+ * @return {Object} The parsed request body.
+ */
+function lastBody() {
+	const calls = global.fetch.mock.calls;
+	return JSON.parse( calls[ calls.length - 1 ][ 1 ].body );
+}
+
+/**
+ * Make fetch answer with a stored list, echoing what was submitted.
+ */
+function mockFetchEcho() {
+	global.fetch = vi.fn( ( url, options ) => {
+		const body = JSON.parse( options.body );
+		const items = ( body.items || [] ).map( ( entry, index ) => ( {
+			...item(),
+			...entry,
+			id: entry.id || index + 1,
+		} ) );
+
+		return Promise.resolve( {
+			ok: true,
+			json: () =>
+				Promise.resolve( {
+					success: true,
+					items,
+					progress: {
+						total: items.length,
+						done: items.filter( ( i ) => i.status === 'done' ).length,
+						counts: {},
+						percent: 0,
+					},
+				} ),
+		} );
+	} );
+}
+
+describe( 'subtask pane', () => {
+	beforeAll( () => {
+		global.deckerVars = { strings: {}, home_url: 'https://example.test/' };
+		global.wpApiSettings = { root: 'https://example.test/wp-json/', nonce: 'abc' };
+		// Sortable is loaded globally in production; the pane degrades to a
+		// non-draggable list without it, which is what the tests exercise.
+		global.Sortable = undefined;
+
+		// eslint-disable-next-line no-new-func
+		new Function( SOURCE ).call( global );
+	} );
+
+	beforeEach( () => {
+		mockFetchEcho();
+		vi.useRealTimers();
+	} );
+
+	test( 'renders one row per stored item', () => {
+		const context = renderCard( [ item(), item( { id: 2, title: 'Second' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		const rows = context.querySelectorAll( '.decker-subtask-row' );
+		expect( rows ).toHaveLength( 2 );
+		expect( rows[ 1 ].querySelector( '.decker-subtask-title' ).value ).toBe(
+			'Second'
+		);
+	} );
+
+	test( 'shows the empty state and no rows for a task without subtasks', () => {
+		const context = renderCard( [] );
+		window.deckerInitSubtasks( context );
+
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 0 );
+		expect(
+			context.querySelector( '.decker-subtasks-empty' ).classList.contains( 'd-none' )
+		).toBe( false );
+	} );
+
+	test( 'updates the tab badge from the stored list', () => {
+		const context = renderCard( [
+			item( { status: 'done' } ),
+			item( { id: 2 } ),
+			item( { id: 3 } ),
+		] );
+		window.deckerInitSubtasks( context );
+
+		expect( context.querySelector( '#subtask-count' ).textContent ).toBe( '1/3' );
+	} );
+
+	test( 'draws one progress segment per represented state', () => {
+		const context = renderCard( [
+			item( { status: 'done' } ),
+			item( { id: 2, status: 'in-progress' } ),
+			item( { id: 3, status: 'to-do' } ),
+			item( { id: 4, status: 'to-do' } ),
+		] );
+		window.deckerInitSubtasks( context );
+
+		const segments = context.querySelectorAll(
+			'.decker-subtasks-progress .progress-bar'
+		);
+		expect( segments ).toHaveLength( 3 );
+		expect( segments[ 0 ].className ).toContain( 'bg-success' );
+		expect( segments[ 1 ].className ).toContain( 'bg-warning' );
+		expect( segments[ 2 ].className ).toContain( 'bg-secondary' );
+	} );
+
+	test( 'cycles an item through the three states and saves each step', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		const button = context.querySelector( '.decker-subtask-status' );
+
+		button.click();
+		await settle();
+		expect( lastBody().items[ 0 ].status ).toBe( 'in-progress' );
+
+		button.click();
+		await settle();
+		expect( lastBody().items[ 0 ].status ).toBe( 'done' );
+
+		button.click();
+		await settle();
+		expect( lastBody().items[ 0 ].status ).toBe( 'to-do' );
+	} );
+
+	test( 'sends the form lock generation with every write', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-status' ).click();
+		await settle();
+
+		expect( lastBody().lock_generation ).toBe( 'gen-1' );
+	} );
+
+	test( 'adds one item per line when several lines are pasted', async () => {
+		const context = renderCard( [] );
+		window.deckerInitSubtasks( context );
+
+		const input = context.querySelector( '.decker-subtask-new' );
+		const event = new window.Event( 'paste', { bubbles: true, cancelable: true } );
+		event.clipboardData = {
+			getData: () => 'Primero\nSegundo\n\n  Tercero  \n',
+		};
+		input.dispatchEvent( event );
+		await settle();
+
+		expect( lastBody().items.map( ( i ) => i.title ) ).toEqual( [
+			'Primero',
+			'Segundo',
+			'Tercero',
+		] );
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 3 );
+	} );
+
+	test( 'a single-line paste is left to the browser', async () => {
+		const context = renderCard( [] );
+		window.deckerInitSubtasks( context );
+
+		const input = context.querySelector( '.decker-subtask-new' );
+		const event = new window.Event( 'paste', { bubbles: true, cancelable: true } );
+		event.clipboardData = { getData: () => 'Just one line' };
+		input.dispatchEvent( event );
+		await settle();
+
+		expect( event.defaultPrevented ).toBe( false );
+		expect( global.fetch ).not.toHaveBeenCalled();
+	} );
+
+	test( 'Enter adds the typed item without submitting the card form', async () => {
+		const context = renderCard( [] );
+		window.deckerInitSubtasks( context );
+
+		const input = context.querySelector( '.decker-subtask-new' );
+		input.value = 'Typed step';
+
+		const event = new window.KeyboardEvent( 'keydown', {
+			key: 'Enter',
+			bubbles: true,
+			cancelable: true,
+		} );
+		input.dispatchEvent( event );
+		await settle();
+
+		expect( event.defaultPrevented ).toBe( true );
+		expect( lastBody().items[ 0 ].title ).toBe( 'Typed step' );
+		expect( input.value ).toBe( '' );
+	} );
+
+	test( 'deleting a row drops it from the saved list', async () => {
+		const context = renderCard( [ item(), item( { id: 2, title: 'Second' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context
+			.querySelectorAll( '.decker-subtask-row' )[ 0 ]
+			.querySelector( '.decker-subtask-delete' )
+			.click();
+		await settle();
+
+		expect( lastBody().items.map( ( i ) => i.title ) ).toEqual( [ 'Second' ] );
+	} );
+
+	test( 'the assignee select only offers the people on the card', () => {
+		const context = renderCard( [ item( { assignee: 7 } ) ], {
+			people: [
+				{ id: 7, name: 'Fran' },
+				{ id: 9, name: 'Humberto' },
+			],
+		} );
+		window.deckerInitSubtasks( context );
+
+		const select = context.querySelector( '.decker-subtask-assignee' );
+		expect(
+			Array.from( select.options ).map( ( option ) => option.value )
+		).toEqual( [ '0', '7', '9' ] );
+		expect( select.value ).toBe( '7' );
+	} );
+
+	test( 'an unfinished item past its date is flagged', () => {
+		const context = renderCard( [ item( { duedate: '2000-01-01' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		expect(
+			context
+				.querySelector( '.decker-subtask-duedate' )
+				.classList.contains( 'is-invalid' )
+		).toBe( true );
+	} );
+
+	test( 'a finished item past its date is not flagged', () => {
+		const context = renderCard( [
+			item( { duedate: '2000-01-01', status: 'done' } ),
+		] );
+		window.deckerInitSubtasks( context );
+
+		expect(
+			context
+				.querySelector( '.decker-subtask-duedate' )
+				.classList.contains( 'is-invalid' )
+		).toBe( false );
+	} );
+
+	test( 'a read-only card offers no editing controls', () => {
+		const context = renderCard( [ item() ], { readOnly: true } );
+		window.deckerInitSubtasks( context );
+
+		expect( context.querySelector( '.decker-subtask-status' ).disabled ).toBe(
+			true
+		);
+		expect( context.querySelector( '.decker-subtask-title' ).readOnly ).toBe(
+			true
+		);
+		expect( context.querySelector( '.decker-subtask-delete' ) ).toBeNull();
+		expect( context.querySelector( '.decker-subtask-handle' ) ).toBeNull();
+	} );
+
+	test( 'a promoted item is frozen and links to its task', () => {
+		const context = renderCard( [ item( { task_id: 99 } ) ] );
+		window.deckerInitSubtasks( context );
+
+		expect( context.querySelector( '.decker-subtask-title' ).readOnly ).toBe(
+			true
+		);
+		expect( context.querySelector( '.decker-subtask-convert' ) ).toBeNull();
+		expect( context.querySelector( '.decker-subtask-row a' ).href ).toContain(
+			'id=99'
+		);
+	} );
+
+	test( 'the pane adopts the list the server stored', async () => {
+		global.fetch = vi.fn( () =>
+			Promise.resolve( {
+				ok: true,
+				json: () =>
+					Promise.resolve( {
+						success: true,
+						// The server dropped the blank title the client sent.
+						items: [ item( { title: 'Kept' } ) ],
+						progress: { total: 1, done: 0, counts: {}, percent: 0 },
+					} ),
+			} )
+		);
+
+		const context = renderCard( [ item( { title: 'Kept' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		const input = context.querySelector( '.decker-subtask-new' );
+		input.value = '   ';
+		context.querySelector( '.decker-subtask-add-btn' ).click();
+		await settle();
+
+		expect( context.querySelectorAll( '.decker-subtask-row' ) ).toHaveLength( 1 );
+	} );
+
+	test( 'a rejected write is reported and nothing is silently lost', async () => {
+		global.fetch = vi.fn( () =>
+			Promise.resolve( {
+				ok: false,
+				json: () =>
+					Promise.resolve( {
+						success: false,
+						code: 'decker_task_locked',
+						message: 'This card is locked.',
+					} ),
+			} )
+		);
+
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-status' ).click();
+		await settle();
+
+		const status = context.querySelector( '.decker-subtasks-status' );
+		expect( status.textContent ).toBe( 'This card is locked.' );
+		expect( status.classList.contains( 'text-danger' ) ).toBe( true );
+	} );
+
+	test( 'a new card does not write anything', async () => {
+		const context = renderCard( [], { taskId: 0 } );
+		window.deckerInitSubtasks( context );
+
+		const input = context.querySelector( '.decker-subtask-new' );
+		input.value = 'Step';
+		context.querySelector( '.decker-subtask-add-btn' ).click();
+		await settle();
+
+		expect( global.fetch ).not.toHaveBeenCalled();
+	} );
+
+	test( 'typing a title is debounced into a single write', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		const title = context.querySelector( '.decker-subtask-title' );
+		title.value = 'Ste';
+		title.dispatchEvent( new window.Event( 'input' ) );
+		title.value = 'Step two';
+		title.dispatchEvent( new window.Event( 'input' ) );
+
+		expect( global.fetch ).not.toHaveBeenCalled();
+
+		// The blur flush is what guarantees the last keystrokes are not lost
+		// when the modal closes before the debounce window elapses.
+		title.dispatchEvent( new window.Event( 'blur' ) );
+		await settle();
+
+		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+		expect( lastBody().items[ 0 ].title ).toBe( 'Step two' );
+	} );
+} );

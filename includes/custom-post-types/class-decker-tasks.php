@@ -36,6 +36,7 @@ class Decker_Tasks {
 		new Decker_Tasks_Rest_Today( $this );
 		new Decker_Tasks_Rest_Ops( $this );
 		new Decker_Tasks_Rest_Tools( $this );
+		new Decker_Tasks_Rest_Subtasks( $this );
 
 		// Ordering reactions to WordPress events own their own hooks.
 		$this->order_engine = new Decker_Task_Order( $this );
@@ -309,6 +310,13 @@ class Decker_Tasks {
 				'sanitize_callback' => 'sanitize_text_field',
 			)
 		);
+
+		// The subtask list (Decker_Subtasks::META_KEY) is deliberately not
+		// registered. Exposing it over the generic /wp/v2/tasks endpoint would
+		// let a client write items straight into the meta, bypassing both the
+		// per-field sanitization in Decker_Subtasks and the edit-lock check that
+		// guards the dedicated subtask route. Like _decker_attachment_link, it
+		// stays a private meta written only through its own endpoint.
 	}
 
 	/**

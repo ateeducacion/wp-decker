@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-02T09:13:33+00:00\n"
+"PO-Revision-Date: 2026-10-28T11:28:52+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -54,6 +54,12 @@ msgstr "Activar la edición colaborativa en tiempo real para las tareas."
 
 msgid "When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC."
 msgstr "Al activarlo, varias personas podrán editar la misma tarea a la vez con sincronización en tiempo real mediante WebRTC."
+
+msgid "Enable subtasks on task cards."
+msgstr "Activar subtareas en las tarjetas."
+
+msgid "Adds a Subtasks tab to every task, where a task can be broken down into steps with their own state, assignee and due date. The card shows how many are done. Turning this off hides the tab and the counter; the stored subtasks are kept."
+msgstr "Añade una pestaña Subtareas a cada tarea, donde la tarea se puede desglosar en pasos con su propio estado, responsable y fecha de vencimiento. La tarjeta muestra cuántos están hechos. Al desactivarlo se ocultan la pestaña y el contador; las subtareas guardadas se conservan."
 
 msgid "Show board status indicators"
 msgstr "Mostrar indicadores de estado de los tableros"
@@ -165,6 +171,9 @@ msgstr "Permitir notificaciones por correo electrónico"
 
 msgid "Collaborative Editing"
 msgstr "Edición colaborativa"
+
+msgid "Subtasks"
+msgstr "Subtareas"
 
 msgid "Board status indicators"
 msgstr "Indicadores de estado de los tableros"
@@ -1014,6 +1023,23 @@ msgstr "Este enlace ya está adjunto."
 msgid "Could not update the attachment link."
 msgstr "No se pudo actualizar el enlace adjunto."
 
+#. translators: %d is the maximum number of subtasks allowed on a task.
+#, php-format
+msgid "A task cannot hold more than %d subtasks."
+msgstr "Una tarea no puede tener más de %d subtareas."
+
+msgid "Subtask not found."
+msgstr "Subtarea no encontrada."
+
+msgid "This subtask has already been converted into a task."
+msgstr "Esta subtarea ya se ha convertido en una tarea."
+
+msgid "The parent task has no board, so the subtask cannot become a task."
+msgstr "La tarea padre no tiene tablero, así que la subtarea no puede convertirse en tarea."
+
+msgid "Subtasks are disabled on this site."
+msgstr "Las subtareas están desactivadas en este sitio."
+
 msgid "The user is derived from the session and cannot be provided."
 msgstr "El usuario se obtiene de la sesión y no se puede proporcionar."
 
@@ -1201,6 +1227,25 @@ msgstr[1] "%d etiquetas"
 
 msgid "Close"
 msgstr "Cerrar"
+
+#. translators: %d is the number of open subtasks the card has no room to show.
+#, php-format
+msgid "%d more open subtask"
+msgid_plural "%d more open subtasks"
+msgstr[0] "%d subtarea abierta más"
+msgstr[1] "%d subtareas abiertas más"
+
+#. translators: 1: number of completed subtasks, 2: total number of subtasks.
+#, php-format
+msgid "%1$d of %2$d subtasks done"
+msgstr "%1$d de %2$d subtareas hechas"
+
+#. translators: %d is the number of subtasks not shown in the preview.
+#, php-format
+msgid "and %d more subtask"
+msgid_plural "and %d more subtasks"
+msgstr[0] "y %d subtarea más"
+msgstr[1] "y %d subtareas más"
 
 msgid "No due date"
 msgstr "Sin fecha límite"
@@ -1461,6 +1506,9 @@ msgstr "Tarea no encontrada"
 
 msgid "My Tasks"
 msgstr "Mis Tareas"
+
+msgid "Tasks with Subtasks"
+msgstr "Tareas con subtareas"
 
 msgid "P."
 msgstr "P."
@@ -1730,6 +1778,52 @@ msgstr "Quitando de hoy…"
 
 msgid "The task could not be updated."
 msgstr "No se pudo actualizar la tarea."
+
+msgid "Saving…"
+msgstr "Guardando…"
+
+msgid "Saved"
+msgstr "Guardado"
+
+msgid "Subtask"
+msgstr "Subtarea"
+
+msgid "Assignee"
+msgstr "Responsable"
+
+msgid "Due date"
+msgstr "Fecha de vencimiento"
+
+msgid "Delete subtask"
+msgstr "Eliminar subtarea"
+
+msgid "Drag to reorder"
+msgstr "Arrastrar para reordenar"
+
+msgid "Unassigned"
+msgstr "Sin asignar"
+
+msgid "Convert into a task"
+msgstr "Convertir en tarea"
+
+msgid "The subtask is now a task of its own."
+msgstr "La subtarea ya es una tarea independiente."
+
+msgid "Open the task this subtask became"
+msgstr "Abrir la tarea en la que se convirtió esta subtarea"
+
+#. translators: %1$s is the name of the subtask state (To-Do, In Progress or Done).
+#, php-format
+msgid "State: %1$s"
+msgstr "Estado: %1$s"
+
+#. translators: 1: number of completed subtasks, 2: total number of subtasks.
+#, php-format
+msgid "%1$d of %2$d done"
+msgstr "%1$d de %2$d hechas"
+
+msgid "The subtasks could not be saved."
+msgstr "No se han podido guardar las subtareas."
 
 msgid "Loading content. Please wait."
 msgstr "Cargando contenido. Por favor, espere."
@@ -2035,6 +2129,21 @@ msgstr "Gantt"
 
 msgid "Information"
 msgstr "Información"
+
+msgid "No subtasks yet. Break this task down into the steps it actually takes."
+msgstr "Todavía no hay subtareas. Desglosa esta tarea en los pasos que realmente lleva."
+
+msgid "Add a subtask and press Enter"
+msgstr "Añade una subtarea y pulsa Intro"
+
+msgid "New subtask"
+msgstr "Nueva subtarea"
+
+msgid "Add"
+msgstr "Añadir"
+
+msgid "Pasting several lines adds one subtask per line."
+msgstr "Al pegar varias líneas se añade una subtarea por línea."
 
 msgid "Replying to"
 msgstr "Respondiendo a"

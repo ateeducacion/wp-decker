@@ -686,6 +686,7 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 				'shared_key',
 				'allow_email_notifications',
 				'collaborative_editing',
+				'subtasks_enabled',
 				'sidebar_board_status',
 				'ai_enabled',
 				'ai_provider',

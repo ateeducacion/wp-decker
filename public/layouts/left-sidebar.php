@@ -184,6 +184,21 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 									);
 									?>
 																	"><?php esc_html_e( 'My Tasks', 'decker' ); ?></a></li>
+			<?php if ( Decker_Subtasks::is_enabled() ) : ?>
+			<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'subtasks' ) ); ?>"><a href="
+								  <?php
+									echo esc_url(
+										add_query_arg(
+											array(
+												'decker_page' => 'tasks',
+												'type'        => 'subtasks',
+											),
+											home_url( '/' )
+										)
+									);
+									?>
+																	"><?php esc_html_e( 'Tasks with Subtasks', 'decker' ); ?></a></li>
+			<?php endif; ?>
 			<li class="<?php echo esc_attr( decker_is_active_subpage( 'type', 'archived' ) ); ?>"><span class="badge bg-warning float-end"><?php echo esc_html( $archived_tasks_count ); ?></span><a href="
 								  <?php
 									echo esc_url(
