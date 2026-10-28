@@ -94,6 +94,44 @@
     }
 
     /**
+     * Ask the viewer to confirm something that cannot be undone.
+     *
+     * SweetAlert like the rest of the card (the card can live in the modal's
+     * iframe, so the parent's instance is the one that paints over the whole
+     * page); window.confirm only where it is missing, which in practice is the
+     * test environment.
+     *
+     * @param {string} question The question, as the dialog title.
+     * @param {string} detail   What it is about, usually the item's title.
+     * @param {string} confirm  The label of the confirming button.
+     * @return {Promise<boolean>} Whether the viewer confirmed.
+     */
+    function ask(question, detail, confirm) {
+        const swal = (window.parent && window.parent.Swal) || window.Swal;
+
+        if (!swal) {
+            return Promise.resolve(
+                window.confirm(detail ? `${question} ${detail}` : question)
+            );
+        }
+
+        return swal
+            .fire({
+                title: question,
+                text: detail,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: confirm,
+                cancelButtonText: text('cancel', 'Cancel'),
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6'
+            })
+            .then(function (result) {
+                return !!(result && result.isConfirmed);
+            });
+    }
+
+    /**
      * Today's date as a Y-m-d string in the browser's timezone.
      *
      * @return {string} The current date.
@@ -550,7 +588,17 @@
             button.innerHTML = '<i class="ri-git-branch-line"></i>';
 
             button.addEventListener('click', function () {
-                this.convert(item, button);
+                // Promotion is one-way: the item freezes and a real task
+                // appears on the board, so it asks first, like deleting does.
+                ask(
+                    text('confirm_convert_subtask_title', 'Turn this subtask into a task of its own?'),
+                    (item.title || '').trim(),
+                    text('yes_convert', 'Yes, convert')
+                ).then(function (confirmed) {
+                    if (confirmed) {
+                        this.convert(item, button);
+                    }
+                }.bind(this));
             }.bind(this));
 
             return button;
@@ -571,19 +619,21 @@
             button.innerHTML = '<i class="ri-delete-bin-line"></i>';
 
             button.addEventListener('click', function () {
-                const title = (item.title || '').trim();
-                const named = text('confirm_delete_subtask', 'Are you sure you want to delete the subtask "%1$s"?');
-                const unnamed = text('confirm_delete_subtask_untitled', 'Are you sure you want to delete this subtask?');
-                const question = title ? format(named, [title]) : unnamed;
-                if (!window.confirm(question)) {
-                    return;
-                }
+                ask(
+                    text('confirm_delete_subtask_title', 'Are you sure you want to delete this subtask?'),
+                    (item.title || '').trim(),
+                    text('yes_delete', 'Yes, delete')
+                ).then(function (confirmed) {
+                    if (!confirmed) {
+                        return;
+                    }
 
-                this.items = this.items.filter(function (candidate) {
-                    return candidate !== item;
-                });
-                this.renderAll();
-                this.save(true);
+                    this.items = this.items.filter(function (candidate) {
+                        return candidate !== item;
+                    });
+                    this.renderAll();
+                    this.save(true);
+                }.bind(this));
             }.bind(this));
 
             return button;

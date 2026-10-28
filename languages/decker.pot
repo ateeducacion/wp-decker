@@ -1764,11 +1764,6 @@ msgstr ""
 msgid "Delete subtask"
 msgstr ""
 
-#. translators: %1$s is the title of the subtask being deleted.
-#, php-format
-msgid "Are you sure you want to delete the subtask \"%1$s\"?"
-msgstr ""
-
 msgid "Are you sure you want to delete this subtask?"
 msgstr ""
 
@@ -1782,6 +1777,12 @@ msgid "Unassigned"
 msgstr ""
 
 msgid "Convert into a task"
+msgstr ""
+
+msgid "Turn this subtask into a task of its own?"
+msgstr ""
+
+msgid "Yes, convert"
 msgstr ""
 
 msgid "The subtask is now a task of its own."

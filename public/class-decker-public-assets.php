@@ -361,6 +361,7 @@ class Decker_Public_Assets {
 			'edit_html_content'             => __( 'Edit the content in HTML format', 'decker' ),
 			'ok'                            => __( 'OK', 'decker' ),
 			'cancel'                        => __( 'Cancel', 'decker' ),
+			'yes_delete'                    => __( 'Yes, delete', 'decker' ),
 			// Additional strings (from first version).
 			'confirm_archive_task_title'    => __( 'Are you sure you want to archive this task?', 'decker' ),
 			'confirm_archive_task_text'     => __( 'This action will move the task to the archive.', 'decker' ),
@@ -453,13 +454,13 @@ class Decker_Public_Assets {
 			'subtask_assignee'              => __( 'Assignee', 'decker' ),
 			'subtask_duedate'               => __( 'Due date', 'decker' ),
 			'subtask_delete'                => __( 'Delete subtask', 'decker' ),
-			/* translators: %1$s is the title of the subtask being deleted. */
-			'confirm_delete_subtask'        => __( 'Are you sure you want to delete the subtask "%1$s"?', 'decker' ),
-			'confirm_delete_subtask_untitled' => __( 'Are you sure you want to delete this subtask?', 'decker' ),
+			'confirm_delete_subtask_title'  => __( 'Are you sure you want to delete this subtask?', 'decker' ),
 			'subtask_overdue'               => __( 'This subtask is past its due date', 'decker' ),
 			'subtask_reorder'               => __( 'Drag to reorder', 'decker' ),
 			'subtask_unassigned'            => __( 'Unassigned', 'decker' ),
 			'subtask_convert'               => __( 'Convert into a task', 'decker' ),
+			'confirm_convert_subtask_title' => __( 'Turn this subtask into a task of its own?', 'decker' ),
+			'yes_convert'                   => __( 'Yes, convert', 'decker' ),
 			'subtask_converted'             => __( 'The subtask is now a task of its own.', 'decker' ),
 			'subtask_open_task'             => __( 'Open the task this subtask became', 'decker' ),
 			/* translators: %1$s is the name of the subtask state (To-Do, In Progress or Done). */

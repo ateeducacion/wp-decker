@@ -78,6 +78,8 @@ test( 'promotes a subtask typed in the card into a task of its own', async ( {
 		);
 
 		await rows.nth( 0 ).locator( '.decker-subtask-convert' ).click();
+		// Promotion cannot be undone, so it asks first.
+		await page.locator( '.swal2-confirm' ).click();
 
 		// The status line must report success, not "Subtask not found".
 		await expect( page.locator( '.decker-subtasks-status' ) ).toHaveText(

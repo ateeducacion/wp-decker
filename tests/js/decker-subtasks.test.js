@@ -447,6 +447,41 @@ describe( 'subtask pane', () => {
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
 
+	test( 'the confirmation is a SweetAlert dialog where there is one', async () => {
+		const fire = vi.fn( () => Promise.resolve( { isConfirmed: false } ) );
+		window.Swal = { fire };
+		const context = renderCard( [ item( { title: 'Second pass' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-delete' ).click();
+		await settle();
+
+		expect( window.confirm ).not.toHaveBeenCalled();
+		expect( fire.mock.calls[ 0 ][ 0 ] ).toMatchObject( {
+			text: 'Second pass',
+			icon: 'warning',
+			showCancelButton: true,
+		} );
+		// It answered no, so the row is still there.
+		expect(
+			context.querySelectorAll( '.decker-subtask-row' )
+		).toHaveLength( 1 );
+		delete window.Swal;
+	} );
+
+	test( 'promoting a subtask asks first, and a no promotes nothing', async () => {
+		window.confirm.mockReturnValue( false );
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-convert' ).click();
+		await settle();
+		await settle();
+
+		expect( window.confirm ).toHaveBeenCalled();
+		expect( global.fetch ).not.toHaveBeenCalled();
+	} );
+
 	test( 'converting writes the list first, then promotes', async () => {
 		const context = renderCard( [ item() ] );
 		window.deckerInitSubtasks( context );
