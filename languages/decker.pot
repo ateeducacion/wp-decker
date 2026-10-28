@@ -1764,6 +1764,17 @@ msgstr ""
 msgid "Delete subtask"
 msgstr ""
 
+#. translators: %1$s is the title of the subtask being deleted.
+#, php-format
+msgid "Are you sure you want to delete the subtask \"%1$s\"?"
+msgstr ""
+
+msgid "Are you sure you want to delete this subtask?"
+msgstr ""
+
+msgid "This subtask is past its due date"
+msgstr ""
+
 msgid "Drag to reorder"
 msgstr ""
 

@@ -132,6 +132,25 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The write also takes a POST.
+	 *
+	 * The browser posts: some hosts — WordPress Playground among them — never
+	 * hand PHP the body of a PUT, and the whole list travels in that body.
+	 */
+	public function test_the_list_can_also_be_written_with_a_post() {
+		$request = new WP_REST_Request( 'POST', "/decker/v1/tasks/{$this->task_id}/subtasks" );
+		$request->set_header( 'content-type', 'application/json' );
+		$request->set_body( wp_json_encode( array( 'items' => array( array( 'title' => 'Posted' ) ) ) ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$stored = Decker_Subtasks::get( $this->task_id );
+		$this->assertCount( 1, $stored );
+		$this->assertSame( 'Posted', $stored[0]['title'] );
+	}
+
+	/**
 	 * A valid write stores the list and returns it with its progress.
 	 */
 	public function test_replace_stores_the_list_and_returns_progress() {

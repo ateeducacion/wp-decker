@@ -6,7 +6,7 @@
  * and again here for every edit.
  *
  * Every change writes the whole list back through
- * PUT decker/v1/tasks/<id>/subtasks, carrying the editor form's lock
+ * decker/v1/tasks/<id>/subtasks, carrying the editor form's lock
  * generation: the server rejects a stale form, which is also what keeps two
  * people (or two tabs) from clobbering each other's list.
  */
@@ -571,6 +571,14 @@
             button.innerHTML = '<i class="ri-delete-bin-line"></i>';
 
             button.addEventListener('click', function () {
+                const title = (item.title || '').trim();
+                const named = text('confirm_delete_subtask', 'Are you sure you want to delete the subtask "%1$s"?');
+                const unnamed = text('confirm_delete_subtask_untitled', 'Are you sure you want to delete this subtask?');
+                const question = title ? format(named, [title]) : unnamed;
+                if (!window.confirm(question)) {
+                    return;
+                }
+
                 this.items = this.items.filter(function (candidate) {
                     return candidate !== item;
                 });
@@ -607,11 +615,18 @@
             row.classList.toggle('decker-subtask-done', item.status === 'done');
 
             // An unfinished item past its date is flagged on the row itself; the
-            // card counter only carries the aggregate.
+            // card counter only carries the aggregate. Its own class, not
+            // Bootstrap's is-invalid: the date is late, not wrong, and the
+            // error styling made it look like the form had rejected it.
             const overdue = !!item.duedate && item.status !== 'done' && item.duedate < today();
             const dateField = row.querySelector('.decker-subtask-duedate');
             if (dateField) {
-                dateField.classList.toggle('is-invalid', overdue);
+                dateField.classList.toggle('decker-subtask-overdue', overdue);
+                if (overdue) {
+                    dateField.title = text('subtask_overdue', 'This subtask is past its due date');
+                } else {
+                    dateField.removeAttribute('title');
+                }
             }
         },
 
@@ -937,8 +952,11 @@
 
             const url = `${wpApiSettings.root}decker/v1/tasks/${encodeURIComponent(this.taskId)}/subtasks`;
 
+            // POST, although the route is a replacement: some hosts — the
+            // WordPress Playground demo among them — never pass the body of a
+            // PUT to PHP, and the whole list travels in that body.
             return fetch(url, {
-                method: 'PUT',
+                method: 'POST',
                 headers: {
                     'X-WP-Nonce': wpApiSettings.nonce,
                     'Content-Type': 'application/json'

@@ -285,7 +285,9 @@ allDaySwitch.addEventListener('change', () => {
 
                 // Build request parameters
                 const url = wpApiSettings.root + wpApiSettings.versionString + 'decker_event' + (isEdit ? '/' + eventId : '');
-                const method = isEdit ? 'PUT' : 'POST';
+                // Always POST: the core item route takes it, and some hosts
+                // never pass the body of a PUT to PHP.
+                const method = 'POST';
 
 
 const isAllDay = form.querySelector('#event-allday').checked;

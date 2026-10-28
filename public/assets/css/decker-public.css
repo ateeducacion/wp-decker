@@ -791,6 +791,13 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     flex: 0 0 9.5rem;
 }
 
+/* A late item, not an invalid one: the border and the text turn red, without
+   the error icon Bootstrap's .is-invalid paints inside the field. */
+.decker-subtasks-list .decker-subtask-duedate.decker-subtask-overdue {
+    border-color: var(--bs-danger, #f1556c);
+    color: var(--bs-danger, #f1556c);
+}
+
 .decker-subtasks-list .decker-subtask-row.decker-subtask-done .decker-subtask-title {
     text-decoration: line-through;
     opacity: 0.65;

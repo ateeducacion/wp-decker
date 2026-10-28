@@ -135,6 +135,9 @@ describe( 'subtask pane', () => {
 		mockFetchEcho();
 		vi.useRealTimers();
 		global.deckerVars.current_user_id = 0;
+		// Deleting a row asks first; the tests that do not care about the
+		// question answer yes.
+		window.confirm = vi.fn( () => true );
 	} );
 
 	test( 'renders one row per stored item', () => {
@@ -280,7 +283,37 @@ describe( 'subtask pane', () => {
 			.click();
 		await settle();
 
+		expect( window.confirm ).toHaveBeenCalled();
 		expect( lastBody().items.map( ( i ) => i.title ) ).toEqual( [ 'Second' ] );
+	} );
+
+	test( 'the list is written with a method every host forwards', async () => {
+		const context = renderCard( [ item() ] );
+		window.deckerInitSubtasks( context );
+
+		context.querySelector( '.decker-subtask-status' ).click();
+		await settle();
+
+		// Not PUT: some hosts — WordPress Playground among them — never hand
+		// PHP the body of a PUT, and the whole list travels in that body.
+		expect( global.fetch.mock.calls[ 0 ][ 1 ].method ).toBe( 'POST' );
+	} );
+
+	test( 'a delete the user calls off changes nothing', async () => {
+		window.confirm.mockReturnValue( false );
+		const context = renderCard( [ item(), item( { id: 2, title: 'Second' } ) ] );
+		window.deckerInitSubtasks( context );
+
+		context
+			.querySelectorAll( '.decker-subtask-row' )[ 0 ]
+			.querySelector( '.decker-subtask-delete' )
+			.click();
+		await settle();
+
+		expect( global.fetch ).not.toHaveBeenCalled();
+		expect(
+			context.querySelectorAll( '.decker-subtask-row' )
+		).toHaveLength( 2 );
 	} );
 
 	test( 'the assignee select only offers the people on the card', () => {
@@ -303,11 +336,14 @@ describe( 'subtask pane', () => {
 		const context = renderCard( [ item( { duedate: '2000-01-01' } ) ] );
 		window.deckerInitSubtasks( context );
 
-		expect(
-			context
-				.querySelector( '.decker-subtask-duedate' )
-				.classList.contains( 'is-invalid' )
-		).toBe( true );
+		const field = context.querySelector( '.decker-subtask-duedate' );
+
+		// Its own class: Bootstrap's is-invalid paints an error icon inside
+		// the field, which read as a rejected value rather than a late one.
+		expect( field.classList.contains( 'decker-subtask-overdue' ) ).toBe(
+			true
+		);
+		expect( field.classList.contains( 'is-invalid' ) ).toBe( false );
 	} );
 
 	test( 'a finished item past its date is not flagged', () => {
@@ -319,7 +355,7 @@ describe( 'subtask pane', () => {
 		expect(
 			context
 				.querySelector( '.decker-subtask-duedate' )
-				.classList.contains( 'is-invalid' )
+				.classList.contains( 'decker-subtask-overdue' )
 		).toBe( false );
 	} );
 

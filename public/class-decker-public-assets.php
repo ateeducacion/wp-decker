@@ -453,6 +453,10 @@ class Decker_Public_Assets {
 			'subtask_assignee'              => __( 'Assignee', 'decker' ),
 			'subtask_duedate'               => __( 'Due date', 'decker' ),
 			'subtask_delete'                => __( 'Delete subtask', 'decker' ),
+			/* translators: %1$s is the title of the subtask being deleted. */
+			'confirm_delete_subtask'        => __( 'Are you sure you want to delete the subtask "%1$s"?', 'decker' ),
+			'confirm_delete_subtask_untitled' => __( 'Are you sure you want to delete this subtask?', 'decker' ),
+			'subtask_overdue'               => __( 'This subtask is past its due date', 'decker' ),
 			'subtask_reorder'               => __( 'Drag to reorder', 'decker' ),
 			'subtask_unassigned'            => __( 'Unassigned', 'decker' ),
 			'subtask_convert'               => __( 'Convert into a task', 'decker' ),

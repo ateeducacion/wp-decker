@@ -260,7 +260,9 @@ function showTooltip(message, duration = 2000){
                                 },
                             };
 
-                            var method = 'PUT';
+                            // POST, not PUT: the core item route takes it, and
+                            // some hosts never pass a PUT body to PHP.
+                            var method = 'POST';
 
                         } else if ('task' == info.event.extendedProps.type ) {
                             var eventId=info.event.id.replace('task_', '');

@@ -242,7 +242,9 @@ foreach ( $tasks as $task ) {
 
 				if (sourceStack === targetStack) {
 					fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/order', {
-						method: 'PUT',
+						// POST, not PUT: some hosts do not pass the body of a
+						// PUT to PHP and the move would arrive without its stacks.
+						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
 							'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'
@@ -270,7 +272,9 @@ foreach ( $tasks as $task ) {
 					.catch(error => console.error('Error:', error));
 				} else {
 					fetch('<?php echo esc_url( rest_url( 'decker/v1/tasks/' ) ); ?>' + encodeURIComponent(taskId) + '/stack', {
-						method: 'PUT',
+						// POST, not PUT: some hosts do not pass the body of a
+						// PUT to PHP and the move would arrive without its stacks.
+						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
 							'X-WP-Nonce': '<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>'

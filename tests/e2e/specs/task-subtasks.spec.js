@@ -169,6 +169,7 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		// Deleting the last open item leaves the task fully done.
 		await page.goto( `/?decker_page=task&id=${ task.id }` );
 		await page.locator( 'a[href="#subtasks-tab"]' ).click();
+		page.once( 'dialog', ( dialog ) => dialog.accept() );
 		await rows.nth( 1 ).locator( '.decker-subtask-delete' ).click();
 		await expect( rows ).toHaveCount( 1 );
 		await expect( page.locator( '#subtask-count' ) ).toHaveText( '1/1' );

@@ -23,7 +23,10 @@ the expensive one.
 
 A subtask is an entry in a single private post meta on its parent
 (`_decker_subtasks`), owned by `Decker_Subtasks` and written only through
-`PUT decker/v1/tasks/<id>/subtasks`.
+`decker/v1/tasks/<id>/subtasks`. The route is registered `EDITABLE`, so it
+takes a POST as well as a PUT, and the browser posts: some hosts — WordPress
+Playground among them — never hand PHP the body of a PUT, and the whole list
+travels in that body.
 
 An item holds exactly what the spreadsheets held: a title, one of the three
 task states, an assignee, a due date. The states reuse the `stack` vocabulary
