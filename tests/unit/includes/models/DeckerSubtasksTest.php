@@ -384,8 +384,7 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 				$this->chip_item( 'Done one', 'done' ),
 				$this->chip_item( 'Still open' ),
 				$this->chip_item( 'Done two', 'done' ),
-			),
-			0
+			)
 		);
 
 		$this->assertSame( array( 'Still open' ), wp_list_pluck( $selection['chips'], 'title' ) );
@@ -397,8 +396,7 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	 */
 	public function test_card_chips_of_a_finished_task_are_empty() {
 		$selection = Decker_Subtasks::select_card_chips(
-			array( $this->chip_item( 'A', 'done' ), $this->chip_item( 'B', 'done' ) ),
-			0
+			array( $this->chip_item( 'A', 'done' ), $this->chip_item( 'B', 'done' ) )
 		);
 
 		$this->assertSame( array(), $selection['chips'] );
@@ -406,59 +404,26 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The viewer's own items come first, which is the point of the chips.
+	 * The chips are the first open items, in the order the list is stored in.
+	 *
+	 * The list is hand-ordered by dragging, so a card that reordered it on its
+	 * own could not be read against the card's own Subtasks tab.
 	 */
-	public function test_card_chips_put_the_viewers_items_first() {
+	public function test_card_chips_keep_the_stored_order() {
 		$selection = Decker_Subtasks::select_card_chips(
 			array(
 				$this->chip_item( 'Someone else, started', 'in-progress', $this->assignee_id ),
 				$this->chip_item( 'Nobody' ),
 				$this->chip_item( 'Mine, not started', 'to-do', $this->user_id ),
 				$this->chip_item( 'Mine, started', 'in-progress', $this->user_id ),
-			),
-			$this->user_id
+			)
 		);
 
 		$this->assertSame(
-			array( 'Mine, started', 'Mine, not started', 'Someone else, started' ),
+			array( 'Someone else, started', 'Nobody', 'Mine, not started' ),
 			wp_list_pluck( $selection['chips'], 'title' )
 		);
 		$this->assertSame( 1, $selection['remaining'] );
-	}
-
-	/**
-	 * With nothing of the viewer's own, started items come before untouched ones.
-	 */
-	public function test_card_chips_prefer_started_items() {
-		$selection = Decker_Subtasks::select_card_chips(
-			array(
-				$this->chip_item( 'Untouched one' ),
-				$this->chip_item( 'Started', 'in-progress' ),
-				$this->chip_item( 'Untouched two' ),
-			),
-			$this->user_id
-		);
-
-		$this->assertSame(
-			array( 'Started', 'Untouched one', 'Untouched two' ),
-			wp_list_pluck( $selection['chips'], 'title' )
-		);
-	}
-
-	/**
-	 * Items of equal rank keep the order the list was saved in.
-	 */
-	public function test_card_chips_keep_the_stored_order_within_a_rank() {
-		$selection = Decker_Subtasks::select_card_chips(
-			array(
-				$this->chip_item( 'First' ),
-				$this->chip_item( 'Second' ),
-				$this->chip_item( 'Third' ),
-			),
-			$this->user_id
-		);
-
-		$this->assertSame( array( 'First', 'Second', 'Third' ), wp_list_pluck( $selection['chips'], 'title' ) );
 	}
 
 	/**
@@ -470,25 +435,10 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 			$items[] = $this->chip_item( 'Step ' . $i, $i <= 8 ? 'done' : 'to-do' );
 		}
 
-		$selection = Decker_Subtasks::select_card_chips( $items, $this->user_id );
+		$selection = Decker_Subtasks::select_card_chips( $items );
 
 		$this->assertCount( 3, $selection['chips'] );
 		$this->assertSame( 45, $selection['remaining'], '56 items, 8 done, 3 shown.' );
-	}
-
-	/**
-	 * A logged-out render has no "mine", and must not treat assignee 0 as the viewer.
-	 */
-	public function test_card_chips_without_a_viewer_have_no_owner_preference() {
-		$selection = Decker_Subtasks::select_card_chips(
-			array(
-				$this->chip_item( 'Unassigned' ),
-				$this->chip_item( 'Started', 'in-progress' ),
-			),
-			0
-		);
-
-		$this->assertSame( array( 'Started', 'Unassigned' ), wp_list_pluck( $selection['chips'], 'title' ) );
 	}
 
 	/**

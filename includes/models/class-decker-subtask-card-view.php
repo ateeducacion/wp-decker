@@ -92,7 +92,7 @@ class Decker_Subtask_Card_View {
 		}
 
 		$viewer    = get_current_user_id();
-		$selection = Decker_Subtasks::select_card_chips( $items, $viewer );
+		$selection = Decker_Subtasks::select_card_chips( $items );
 		if ( empty( $selection['chips'] ) ) {
 			return;
 		}

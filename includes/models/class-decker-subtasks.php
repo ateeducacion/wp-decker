@@ -191,17 +191,16 @@ class Decker_Subtasks {
 	 * carry them, and what the board is scanned for is what is still open — a
 	 * finished task showing no chips is the right signal.
 	 *
-	 * The remaining items are ordered so that the viewer's own work surfaces
-	 * first, which is the whole reason the chips exist: with a cap of three,
-	 * whoever opens the board sees their own steps without opening the card.
-	 * Two people therefore see different chips on the same card.
+	 * The rest keep the order they are stored in. The list is hand-ordered by
+	 * dragging, so the card showing a different order than the card's own
+	 * Subtasks tab made the two impossible to read against each other; whose
+	 * item it is shows as the chip's tint instead of as a place in the row.
 	 *
-	 * @param array $items   The subtask items.
-	 * @param int   $user_id The viewer, whose items come first. 0 for none.
-	 * @param int   $limit   How many chips the card has room for.
+	 * @param array $items The subtask items.
+	 * @param int   $limit How many chips the card has room for.
 	 * @return array{chips:array<int, array>,remaining:int} The chips and the overflow count.
 	 */
-	public static function select_card_chips( array $items, int $user_id, int $limit = 3 ): array {
+	public static function select_card_chips( array $items, int $limit = 3 ): array {
 		$open = array();
 
 		foreach ( $items as $item ) {
@@ -210,35 +209,12 @@ class Decker_Subtasks {
 			}
 		}
 
-		// usort is stable as of PHP 8.0, so items of equal rank keep the order
-		// the list was saved in.
-		usort(
-			$open,
-			function ( array $left, array $right ) use ( $user_id ): int {
-				return self::chip_rank( $left, $user_id ) <=> self::chip_rank( $right, $user_id );
-			}
-		);
-
 		$chips = array_slice( $open, 0, max( 0, $limit ) );
 
 		return array(
 			'chips'     => $chips,
 			'remaining' => count( $open ) - count( $chips ),
 		);
-	}
-
-	/**
-	 * The sort rank of an open item: mine before everyone's, started before not.
-	 *
-	 * @param array $item    The subtask item.
-	 * @param int   $user_id The viewer.
-	 * @return int The rank, lowest first.
-	 */
-	private static function chip_rank( array $item, int $user_id ): int {
-		$mine    = $user_id > 0 && (int) $item['assignee'] === $user_id;
-		$started = 'in-progress' === $item['status'];
-
-		return ( $mine ? 0 : 2 ) + ( $started ? 0 : 1 );
 	}
 
 	/**

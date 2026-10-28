@@ -244,7 +244,7 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The viewer's own item is tinted and comes first; a teammate's is not.
+	 * The viewer's own item is tinted, and the list order is left alone.
 	 */
 	public function test_the_viewers_own_chip_is_marked() {
 		$this->store(
@@ -263,9 +263,9 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 		$markup = $this->render( 'chips' );
 
 		$this->assertLessThan(
-			strpos( $markup, 'Theirs' ),
 			strpos( $markup, 'Mine' ),
-			"The viewer's own subtask must come first."
+			strpos( $markup, 'Theirs' ),
+			'The chips follow the order the list is stored in.'
 		);
 		$this->assertSame( 1, substr_count( $markup, 'decker-subtask-chip-mine' ) );
 	}
