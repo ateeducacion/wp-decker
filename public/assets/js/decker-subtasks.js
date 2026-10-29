@@ -149,18 +149,6 @@
     }
 
     /**
-     * Today's date as a Y-m-d string in the browser's timezone.
-     *
-     * @return {string} The current date.
-     */
-    function today() {
-        const now = new Date();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        return `${now.getFullYear()}-${month}-${day}`;
-    }
-
-    /**
      * Controller for one subtask pane.
      *
      * @param {HTMLElement} root    The .decker-subtasks container.
@@ -299,7 +287,6 @@
             row.appendChild(this.buildStatusButton(item));
             row.appendChild(this.buildTitleField(item));
             row.appendChild(this.buildAssigneeField(item));
-            row.appendChild(this.buildDueDateField(item));
             this.applyAssigneeAvatar(row, item);
 
             if (!this.readOnly) {
@@ -607,31 +594,6 @@
         },
 
         /**
-         * Build the due-date field.
-         *
-         * @param {Object} item The subtask item.
-         * @return {HTMLElement} The input.
-         */
-        buildDueDateField: function (item) {
-            const input = document.createElement('input');
-            input.type = 'date';
-            input.className = 'form-control form-control-sm decker-subtask-duedate';
-            input.value = item.duedate || '';
-            input.disabled = this.frozen(item);
-            input.setAttribute('aria-label', text('subtask_duedate', 'Due date'));
-
-            if (!input.disabled) {
-                input.addEventListener('change', function () {
-                    item.duedate = input.value;
-                    this.applyStatus(input.closest('.decker-subtask-row'), item);
-                    this.save(true);
-                }.bind(this));
-            }
-
-            return input;
-        },
-
-        /**
          * Build the per-row actions: open or promote, and delete.
          *
          * @param {Object} item The subtask item.
@@ -805,7 +767,7 @@
         },
 
         /**
-         * Reflect an item's state and overdue-ness on its row.
+         * Reflect an item's state on its row.
          *
          * @param {HTMLElement} row  The row element.
          * @param {Object}      item The subtask item.
@@ -828,21 +790,6 @@
             }
 
             row.classList.toggle('decker-subtask-done', item.status === 'done');
-
-            // An unfinished item past its date is flagged on the row itself; the
-            // card counter only carries the aggregate. Its own class, not
-            // Bootstrap's is-invalid: the date is late, not wrong, and the
-            // error styling made it look like the form had rejected it.
-            const overdue = !!item.duedate && item.status !== 'done' && item.duedate < today();
-            const dateField = row.querySelector('.decker-subtask-duedate');
-            if (dateField) {
-                dateField.classList.toggle('decker-subtask-overdue', overdue);
-                if (overdue) {
-                    dateField.title = text('subtask_overdue', 'This subtask is past its due date');
-                } else {
-                    dateField.removeAttribute('title');
-                }
-            }
         },
 
         /**
@@ -954,7 +901,6 @@
             }
 
             const assignee = this.defaultAssignee();
-            const duedate = this.defaultDueDate();
 
             titles.forEach(function (title) {
                 this.items.push({
@@ -962,7 +908,6 @@
                     title: title.slice(0, 255),
                     status: 'to-do',
                     assignee: assignee,
-                    duedate: duedate,
                     task_id: 0
                 });
             }, this);
@@ -986,20 +931,6 @@
             return this.people.some(function (person) {
                 return person.id === me;
             }) ? me : 0;
-        },
-
-        /**
-         * The date a new item starts out due: the parent task's.
-         *
-         * Read from the form rather than from the saved task, so a due date
-         * that was changed but not yet saved is the one that is inherited.
-         *
-         * @return {string} The date in Y-m-d, or an empty string.
-         */
-        defaultDueDate: function () {
-            const field = this.context.querySelector('#task-due-date');
-
-            return (field && field.value) || '';
         },
 
         /**

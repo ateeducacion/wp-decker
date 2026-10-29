@@ -103,7 +103,7 @@ class Decker_Subtasks {
 	 * Read the stored list without showing promoted items as their task.
 	 *
 	 * What a write has to start from: feeding get() back into set() would
-	 * store the borrowed title, owner and date of every promoted row over the
+	 * store the borrowed title, owner and state of every promoted row over the
 	 * snapshot those rows fall back to.
 	 *
 	 * @param int $task_id The parent task ID.

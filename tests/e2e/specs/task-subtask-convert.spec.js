@@ -58,8 +58,8 @@ test( 'promotes a subtask into a task of its own, and unlinks it without deletin
 		const rows = page.locator( '.decker-subtask-row' );
 		const newItem = page.locator( '.decker-subtask-new' );
 
-		// Exactly the flow a user runs: type, Enter, type, Enter, then set an
-		// assignee and a date on the first one, then promote it.
+		// Exactly the flow a user runs: type, Enter, type, Enter, then promote
+		// the first one.
 		await newItem.fill( 'hola' );
 		await newItem.press( 'Enter' );
 		await expect( rows ).toHaveCount( 1 );
@@ -73,8 +73,6 @@ test( 'promotes a subtask into a task of its own, and unlinks it without deletin
 		await expect(
 			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
 		).not.toHaveValue( '0' );
-		await rows.nth( 0 ).locator( '.decker-subtask-duedate' ).fill( '2026-10-29' );
-		await rows.nth( 1 ).locator( '.decker-subtask-duedate' ).fill( '2026-10-29' );
 		await expect( page.locator( '.decker-subtasks-status' ) ).toHaveText(
 			/Saved|Guardado/
 		);
@@ -105,8 +103,8 @@ test( 'promotes a subtask into a task of its own, and unlinks it without deletin
 			rows.nth( 0 ).locator( '.decker-subtask-title-link' )
 		).toHaveCount( 1 );
 		await expect(
-			rows.nth( 0 ).locator( '.decker-subtask-duedate' )
-		).toBeDisabled();
+			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
+		).toHaveCount( 0 );
 
 		// And it survives reopening the card.
 		await page.goto( `/?decker_page=task&id=${ task.id }` );

@@ -132,7 +132,7 @@ class Decker_Subtask_Links {
 	 * Show a promoted item as the task it became.
 	 *
 	 * Once an item is promoted it stops being the work and becomes a pointer
-	 * to it, so the stored copy of its title, owner, date and state is a
+	 * to it, so the stored copy of its title, owner and state is a
 	 * snapshot that starts drifting the moment anyone touches that task. The
 	 * row reads them from the task instead, which is also why it is no longer
 	 * editable here. The stored copy survives untouched and is what is left if
@@ -156,12 +156,10 @@ class Decker_Subtask_Links {
 			return $item;
 		}
 
-		$stack   = (string) get_post_meta( $linked, 'stack', true );
-		$duedate = (string) get_post_meta( $linked, 'duedate', true );
+		$stack = (string) get_post_meta( $linked, 'stack', true );
 
-		$item['title']   = mb_substr( (string) $post->post_title, 0, Decker_Subtasks::MAX_TITLE_LENGTH );
-		$item['duedate'] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', $duedate ) ? $duedate : '';
-		$item['status']  = in_array( $stack, Decker_Subtasks::get_statuses(), true ) ? $stack : $item['status'];
+		$item['title']  = mb_substr( (string) $post->post_title, 0, Decker_Subtasks::MAX_TITLE_LENGTH );
+		$item['status'] = in_array( $stack, Decker_Subtasks::get_statuses(), true ) ? $stack : $item['status'];
 
 		return array_merge( $item, self::owner( $post ) );
 	}

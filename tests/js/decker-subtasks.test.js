@@ -76,7 +76,6 @@ function item( overrides = {} ) {
 		title: 'Step',
 		status: 'to-do',
 		assignee: 0,
-		duedate: '',
 		task_id: 0,
 		...overrides,
 	};
@@ -346,31 +345,13 @@ describe( 'subtask pane', () => {
 		expect( select.value ).toBe( '7' );
 	} );
 
-	test( 'an unfinished item past its date is flagged', () => {
-		const context = renderCard( [ item( { duedate: '2000-01-01' } ) ] );
-		window.deckerInitSubtasks( context );
-
-		const field = context.querySelector( '.decker-subtask-duedate' );
-
-		// Its own class: Bootstrap's is-invalid paints an error icon inside
-		// the field, which read as a rejected value rather than a late one.
-		expect( field.classList.contains( 'decker-subtask-overdue' ) ).toBe(
-			true
-		);
-		expect( field.classList.contains( 'is-invalid' ) ).toBe( false );
-	} );
-
-	test( 'a finished item past its date is not flagged', () => {
-		const context = renderCard( [
-			item( { duedate: '2000-01-01', status: 'done' } ),
-		] );
+	test( 'a row carries no due date field', () => {
+		const context = renderCard( [ item() ] );
 		window.deckerInitSubtasks( context );
 
 		expect(
-			context
-				.querySelector( '.decker-subtask-duedate' )
-				.classList.contains( 'decker-subtask-overdue' )
-		).toBe( false );
+			context.querySelector( '.decker-subtasks-list input[type="date"]' )
+		).toBeNull();
 	} );
 
 	test( 'a read-only card offers no editing controls', () => {
@@ -412,9 +393,6 @@ describe( 'subtask pane', () => {
 		).toBe( 'Someone off this card' );
 
 		// Nothing on the row can be changed from here.
-		expect( context.querySelector( '.decker-subtask-duedate' ).disabled ).toBe(
-			true
-		);
 		expect( context.querySelector( '.decker-subtask-status' ).disabled ).toBe(
 			true
 		);
@@ -732,7 +710,7 @@ describe( 'subtask pane', () => {
 		expect( avatar.hasAttribute( 'src' ) ).toBe( false );
 	} );
 
-	test( 'a new item starts out the viewer’s, due when the task is', async () => {
+	test( 'a new item starts out the viewer’s, with no date of its own', async () => {
 		global.deckerVars.current_user_id = 7;
 
 		const context = renderCard( [], {
@@ -746,7 +724,7 @@ describe( 'subtask pane', () => {
 		await settle();
 
 		expect( lastBody().items[ 0 ].assignee ).toBe( 7 );
-		expect( lastBody().items[ 0 ].duedate ).toBe( '2026-12-01' );
+		expect( lastBody().items[ 0 ].duedate ).toBeUndefined();
 	} );
 
 	test( 'a viewer who is not on the card is not assigned by default', async () => {
@@ -760,7 +738,7 @@ describe( 'subtask pane', () => {
 		await settle();
 
 		expect( lastBody().items[ 0 ].assignee ).toBe( 0 );
-		expect( lastBody().items[ 0 ].duedate ).toBe( '' );
+		expect( lastBody().items[ 0 ].duedate ).toBeUndefined();
 	} );
 
 	test( 'the assignee field becomes the card’s own picker, with the face on it', () => {

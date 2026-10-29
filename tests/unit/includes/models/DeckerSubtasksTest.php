@@ -95,7 +95,6 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 					'title'    => 'What it was called when it was promoted',
 					'status'   => 'to-do',
 					'assignee' => $this->assignee_id,
-					'duedate'  => '',
 					'task_id'  => $child,
 				),
 			)
@@ -104,7 +103,7 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 		$items = Decker_Subtasks::get( $this->task_id );
 
 		$this->assertSame( 'Renamed on its own card', $items[0]['title'] );
-		$this->assertSame( '2026-12-24', $items[0]['duedate'] );
+		$this->assertArrayNotHasKey( 'duedate', $items[0] );
 		$this->assertSame( 'in-progress', $items[0]['status'] );
 
 		// The owner is the task's responsable, who is not even on this card,
@@ -131,7 +130,6 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 					'title'    => 'Its task was deleted',
 					'status'   => 'to-do',
 					'assignee' => 0,
-					'duedate'  => '',
 					'task_id'  => 999999,
 				),
 			)
@@ -161,7 +159,6 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 					'title'    => 's:7:"task_id";i:' . $loose . ';',
 					'status'   => 'to-do',
 					'assignee' => 0,
-					'duedate'  => '',
 					'task_id'  => $child,
 				),
 			)
@@ -263,7 +260,7 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 		$this->assertSame( 'to-do', $items[0]['status'] );
 		$this->assertSame( 'in-progress', $items[1]['status'] );
 		$this->assertSame( 0, $items[0]['assignee'] );
-		$this->assertSame( '', $items[0]['duedate'] );
+		$this->assertArrayNotHasKey( 'duedate', $items[0] );
 		$this->assertSame( 0, $items[0]['task_id'] );
 
 		$this->assertEquals( $items, Decker_Subtasks::get( $this->task_id ) );
@@ -332,35 +329,52 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Only a real calendar date in Y-m-d form is stored.
+	 * A due date sent by an old client is not part of the model any more.
 	 */
-	public function test_due_dates_are_validated() {
+	public function test_a_submitted_due_date_is_discarded() {
 		$items = Decker_Subtasks::set(
 			$this->task_id,
 			array(
 				array(
-					'title'   => 'Valid',
+					'title'   => 'Still a step',
 					'duedate' => '2026-11-15',
-				),
-				array(
-					'title'   => 'Rolled over',
-					'duedate' => '2026-13-45',
-				),
-				array(
-					'title'   => 'Wrong format',
-					'duedate' => '15/11/2026',
-				),
-				array(
-					'title'   => 'Not a date',
-					'duedate' => 'tomorrow',
 				),
 			)
 		);
 
-		$this->assertSame( '2026-11-15', $items[0]['duedate'] );
-		$this->assertSame( '', $items[1]['duedate'] );
-		$this->assertSame( '', $items[2]['duedate'] );
-		$this->assertSame( '', $items[3]['duedate'] );
+		$this->assertSame( 'Still a step', $items[0]['title'] );
+		$this->assertArrayNotHasKey( 'duedate', $items[0] );
+
+		$stored = get_post_meta( $this->task_id, Decker_Subtasks::META_KEY, true );
+		$this->assertArrayNotHasKey( 'duedate', $stored[0] );
+	}
+
+	/**
+	 * A list stored before the date was dropped still reads back in full.
+	 */
+	public function test_a_legacy_stored_due_date_is_ignored() {
+		update_post_meta(
+			$this->task_id,
+			Decker_Subtasks::META_KEY,
+			array(
+				array(
+					'id'       => 1,
+					'title'    => 'Stored when items had dates',
+					'status'   => 'in-progress',
+					'assignee' => $this->assignee_id,
+					'duedate'  => '2026-11-15',
+					'task_id'  => 0,
+				),
+			)
+		);
+
+		$items = Decker_Subtasks::get( $this->task_id );
+
+		$this->assertCount( 1, $items );
+		$this->assertArrayNotHasKey( 'duedate', $items[0] );
+		$this->assertSame( 'Stored when items had dates', $items[0]['title'] );
+		$this->assertSame( 'in-progress', $items[0]['status'] );
+		$this->assertSame( $this->assignee_id, $items[0]['assignee'] );
 	}
 
 	/**
@@ -526,7 +540,6 @@ class DeckerSubtasksTest extends Decker_Test_Base {
 			'title'    => $title,
 			'status'   => $status,
 			'assignee' => $assignee,
-			'duedate'  => '',
 			'task_id'  => 0,
 		);
 	}
