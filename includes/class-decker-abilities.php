@@ -365,7 +365,8 @@ class Decker_Abilities {
 			return $schema;
 		}
 
-		unset( $properties['task_id'] );
+		// A task that does not exist yet has nothing to be stale against.
+		unset( $properties['task_id'], $properties['expected_modified'] );
 		return $this->object_schema( $properties, array( 'title', 'board_id' ) );
 	}
 

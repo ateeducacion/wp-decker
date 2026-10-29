@@ -11,18 +11,31 @@
  */
 
 import { createServer } from 'node:http';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import * as client from '../../skills/decker-tasks/scripts/decker-client.mjs';
+import * as client from '../../skills/decker/scripts/decker-client.mjs';
 
 const NONCE = 'a1b2c3d4e5';
 const USERNAME = 'decker.user';
 const PASSWORD = 'correct horse battery staple';
 
 let configDir;
+
+/**
+ * Write a JSON change file into the test's temporary directory.
+ *
+ * @param {object} contents Contents to write.
+ * @return {string} Path to the file.
+ */
+function writeTempJson( contents ) {
+	const path = join( configDir, 'changes.json' );
+	writeFileSync( path, JSON.stringify( contents ) );
+
+	return path;
+}
 
 /**
  * Start an HTTP server on a loopback port.
@@ -71,6 +84,29 @@ const state = {
 	usersRouteBlocked: false,
 	/** The last /wp/v2 collection request the server saw. */
 	lastCollection: null,
+	/** The last write the server saw. */
+	lastWrite: null,
+	/** The stored task, mutated by the write path. */
+	task: null,
+	/** Whether the task changes right after the next read. */
+	changeAfterNextRead: false,
+};
+
+/** The task the simulator starts each test with. */
+const INITIAL_TASK = {
+	id: 31,
+	title: 'A task',
+	description: 'Body',
+	board_id: 7,
+	stack: 'to-do',
+	label_ids: [ 8, 9 ],
+	assignee_ids: [ 45 ],
+	responsible_user_id: 45,
+	author_id: 45,
+	max_priority: false,
+	hidden: false,
+	archived: false,
+	modified: '2026-10-29T10:00:00',
 };
 
 let wordpress;
@@ -228,6 +264,40 @@ beforeAll( async () => {
 			const ability = restPath.slice( '/wp-abilities/v1/abilities/'.length, -'/run'.length );
 			state.lastRun = { ability, method: request.method, query: Object.fromEntries( url.searchParams ) };
 
+			if ( 'decker/update-task' === ability || 'decker/create-task' === ability ) {
+				const payload = JSON.parse( await readBody( request ) ).input ?? {};
+				state.lastWrite = { ability, input: payload };
+
+				if ( 'decker/update-task' === ability
+					&& undefined !== payload.expected_modified
+					&& payload.expected_modified !== state.task.modified ) {
+					response.writeHead( 409, { 'content-type': 'application/json' } );
+					response.end( JSON.stringify( {
+						code: 'decker_task_stale',
+						message: 'The task changed after it was read.',
+						data: { status: 409 },
+					} ) );
+					return;
+				}
+
+				const { task_id: ignoredId, expected_modified: ignoredModified, ...changes } = payload;
+				state.task = { ...state.task, ...changes, modified: '2026-10-29T12:00:00' };
+
+				response.writeHead( 200, { 'content-type': 'application/json' } );
+				response.end( JSON.stringify( state.task ) );
+				return;
+			}
+
+			if ( 'decker/get-task' === ability && state.changeAfterNextRead ) {
+				// Simulates the real race: someone else saves the task in the
+				// window between the client's read and its write.
+				state.changeAfterNextRead = false;
+				response.writeHead( 200, { 'content-type': 'application/json' } );
+				response.end( JSON.stringify( state.task ) );
+				state.task = { ...state.task, modified: '2026-10-29T11:30:00' };
+				return;
+			}
+
 			const bodies = {
 				'decker/list-boards': { boards: [ { id: 7, name: 'Board A', slug: 'board-a', description: '' } ] },
 				'decker/list-tasks': {
@@ -237,7 +307,7 @@ beforeAll( async () => {
 					total: 1,
 					total_pages: 1,
 				},
-				'decker/get-task': { id: 31, title: 'A task', board_id: 7 },
+				'decker/get-task': state.task,
 				'decker/list-users': state.usersRouteBlocked
 					? null
 					: {
@@ -326,6 +396,9 @@ beforeEach( () => {
 	state.lastRun = null;
 	state.usersRouteBlocked = false;
 	state.lastCollection = null;
+	state.lastWrite = null;
+	state.task = { ...INITIAL_TASK, label_ids: [ 8, 9 ], assignee_ids: [ 45 ] };
+	state.changeAfterNextRead = false;
 } );
 
 afterEach( () => {
@@ -859,6 +932,250 @@ describe( 'read commands', () => {
 
 		expect( error.message ).toContain( 'tasks list' );
 		expect( error.message ).toContain( 'labels list' );
+	} );
+} );
+
+describe( 'write commands', () => {
+	beforeEach( async () => {
+		await login();
+	} );
+
+	it( 'refuses to write without an explicit confirmation flag', async () => {
+		await expect(
+			client.tasksUpdate( 31, { title: 'Renamed' } )
+		).rejects.toMatchObject( {
+			code: 'usage_confirmation_required',
+			exit: client.EXIT.USAGE,
+		} );
+
+		expect( state.lastWrite ).toBeNull();
+		expect( state.task.title ).toBe( 'A task' );
+	} );
+
+	it( 'previews a change without touching the server state', async () => {
+		const result = await client.tasksUpdate( 31, { title: 'Renamed', 'dry-run': true } );
+
+		expect( result ).toMatchObject( {
+			dry_run: true,
+			changed: false,
+			before: { title: 'A task' },
+			after: { title: 'Renamed' },
+		} );
+		expect( state.lastWrite ).toBeNull();
+		expect( state.task.title ).toBe( 'A task' );
+	} );
+
+	it( 'applies a confirmed change and sends the read timestamp with it', async () => {
+		const result = await client.tasksUpdate( 31, { title: 'Renamed', yes: true } );
+
+		expect( result ).toMatchObject( { changed: true, task: { title: 'Renamed' } } );
+		expect( state.lastWrite.input ).toMatchObject( {
+			task_id: 31,
+			title: 'Renamed',
+			expected_modified: '2026-10-29T10:00:00',
+		} );
+	} );
+
+	it( 'reports a no-op instead of writing it', async () => {
+		// Writing an unchanged value would still bump post_modified and could
+		// create a revision, so the client does not send it.
+		const result = await client.tasksUpdate( 31, { title: 'A task', yes: true } );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'surfaces a stale write as a conflict and does not retry it', async () => {
+		// The task changes in the window between the client's read and its
+		// write, which is the race the timestamp exists to catch.
+		state.changeAfterNextRead = true;
+
+		const error = await client
+			.tasksUpdate( 31, { title: 'Renamed', yes: true } )
+			.catch( ( caught ) => caught );
+
+		expect( error.code ).toBe( 'decker_task_stale' );
+		expect( error.exit ).toBe( client.EXIT.CONFLICT );
+		// It sent the timestamp it actually read, and the server refused it.
+		expect( state.lastWrite.input.expected_modified ).toBe( '2026-10-29T10:00:00' );
+		// One attempt only: a silent retry would overwrite the other change.
+		expect( state.task.title ).toBe( 'A task' );
+		expect( state.task.modified ).toBe( '2026-10-29T11:30:00' );
+	} );
+
+	it( 'adds one label and keeps the others', async () => {
+		const result = await client.tasksLabelChange( 31, { label: '12', yes: true }, true );
+
+		expect( result.changed ).toBe( true );
+		expect( state.lastWrite.input.label_ids.sort() ).toEqual( [ 8, 9, 12 ].sort() );
+		expect( state.task.label_ids ).toContain( 8 );
+		expect( state.task.label_ids ).toContain( 9 );
+	} );
+
+	it( 'removes one label and keeps the others', async () => {
+		await client.tasksLabelChange( 31, { label: '9', yes: true }, false );
+
+		expect( state.lastWrite.input.label_ids ).toEqual( [ 8 ] );
+	} );
+
+	it( 'treats adding an existing label as a no-op', async () => {
+		const result = await client.tasksLabelChange( 31, { label: '8', yes: true }, true );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'treats removing an absent label as a no-op', async () => {
+		const result = await client.tasksLabelChange( 31, { label: '99', yes: true }, false );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'clears every label only when that is what was asked', async () => {
+		await client.tasksUpdate( 31, { 'json-file': writeTempJson( { label_ids: [] } ), yes: true } );
+
+		// An explicit empty array clears; an omitted field would have preserved.
+		expect( state.lastWrite.input.label_ids ).toEqual( [] );
+		expect( state.lastWrite.input ).not.toHaveProperty( 'assignee_ids' );
+		expect( state.lastWrite.input ).not.toHaveProperty( 'title' );
+	} );
+
+	it( 'needs a label id', async () => {
+		await expect(
+			client.tasksLabelChange( 31, { yes: true }, true )
+		).rejects.toMatchObject( { code: 'usage_missing_label' } );
+	} );
+
+	it( 'assigns a user without disturbing the existing assignees', async () => {
+		await client.tasksAssign( 31, { user: '46', yes: true }, true );
+
+		expect( state.lastWrite.input.assignee_ids.sort() ).toEqual( [ 45, 46 ] );
+		expect( state.lastWrite.input ).not.toHaveProperty( 'label_ids' );
+	} );
+
+	it( 'unassigns a user without disturbing the others', async () => {
+		state.task.assignee_ids = [ 45, 46 ];
+
+		await client.tasksAssign( 31, { user: '46', yes: true }, false );
+
+		expect( state.lastWrite.input.assignee_ids ).toEqual( [ 45 ] );
+	} );
+
+	it( 'assigning an already assigned user changes nothing', async () => {
+		const result = await client.tasksAssign( 31, { user: '45', yes: true }, true );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+	} );
+
+	it( 'changes the responsible user without touching the assignees', async () => {
+		await client.tasksResponsible( 31, { user: '46', yes: true } );
+
+		// Author, responsible user and assignees are three different things.
+		expect( state.lastWrite.input ).toMatchObject( { responsible_user_id: 46 } );
+		expect( state.lastWrite.input ).not.toHaveProperty( 'assignee_ids' );
+		expect( state.lastWrite.input ).not.toHaveProperty( 'author_id' );
+	} );
+
+	it( 'never sends the author through a write command', async () => {
+		await expect(
+			client.tasksUpdate( 31, { 'json-file': writeTempJson( { author_id: 99 } ), yes: true } )
+		).rejects.toMatchObject( { code: 'usage_unknown_field' } );
+
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'rejects an unknown field before sending it', async () => {
+		await expect(
+			client.tasksUpdate( 31, { 'json-file': writeTempJson( { nonsense: 1 } ), yes: true } )
+		).rejects.toMatchObject( { code: 'usage_unknown_field', exit: client.EXIT.USAGE } );
+	} );
+
+	it( 'reports an unreadable or malformed change file', async () => {
+		expect( () => client.readJsonFile( join( configDir, 'missing.json' ) ) ).toThrowError(
+			/Could not read/
+		);
+
+		const broken = join( configDir, 'broken.json' );
+		writeFileSync( broken, '{ not json' );
+		expect( () => client.readJsonFile( broken ) ).toThrowError( /not valid JSON/ );
+
+		const list = join( configDir, 'list.json' );
+		writeFileSync( list, '[1,2]' );
+		expect( () => client.readJsonFile( list ) ).toThrowError( /must contain a JSON object/ );
+	} );
+
+	it( 'requires a title and a board to create a task', async () => {
+		await expect( client.tasksCreate( { title: 'Only a title', yes: true } ) ).rejects.toMatchObject(
+			{ code: 'usage_missing_fields' }
+		);
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'previews a creation by reading, never by writing', async () => {
+		const result = await client.tasksCreate( {
+			title: 'New task',
+			board: '7',
+			'dry-run': true,
+		} );
+
+		expect( result ).toMatchObject( {
+			dry_run: true,
+			created: false,
+			board_exists: true,
+			would_create: { title: 'New task', board_id: 7 },
+		} );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'reports a board that does not exist in a dry run', async () => {
+		const result = await client.tasksCreate( { title: 'New task', board: '999', 'dry-run': true } );
+
+		expect( result ).toMatchObject( { board_exists: false, board: null } );
+	} );
+
+	it( 'creates a task once confirmed', async () => {
+		const result = await client.tasksCreate( { title: 'New task', board: '7', yes: true } );
+
+		expect( result ).toMatchObject( { created: true } );
+		expect( state.lastWrite ).toMatchObject( {
+			ability: 'decker/create-task',
+			input: { title: 'New task', board_id: 7 },
+		} );
+	} );
+
+	it( 'ignores a task id or timestamp smuggled in through the change file', async () => {
+		await client.tasksUpdate( 31, {
+			'json-file': writeTempJson( { task_id: 999, expected_modified: 'whenever', title: 'Renamed' } ),
+			yes: true,
+		} );
+
+		expect( state.lastWrite.input.task_id ).toBe( 31 );
+		expect( state.lastWrite.input.expected_modified ).toBe( '2026-10-29T10:00:00' );
+	} );
+
+	it( 'lists a task\'s labels with their names', async () => {
+		await expect( client.tasksLabels( 31 ) ).resolves.toMatchObject( {
+			ok: true,
+			task_id: 31,
+			labels: [ { id: 8, name: 'Añadir café' }, { id: 9, name: 'Urgent' } ],
+		} );
+	} );
+
+	it( 'routes the write commands through the dispatcher', async () => {
+		await expect(
+			client.run( [ 'tasks', 'label-add', '31', '--label', '12', '--dry-run' ] )
+		).resolves.toMatchObject( { dry_run: true } );
+
+		await expect(
+			client.run( [ 'tasks', 'assign', '31', '--user', '46', '--dry-run' ] )
+		).resolves.toMatchObject( { dry_run: true } );
+
+		await expect(
+			client.run( [ 'tasks', 'responsible', '31', '--user', '46' ] )
+		).rejects.toMatchObject( { code: 'usage_confirmation_required' } );
+
+		expect( state.lastWrite ).toBeNull();
 	} );
 } );
 

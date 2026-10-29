@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-29T06:23:54+00:00\n"
+"PO-Revision-Date: 2026-10-29T06:40:35+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -296,6 +296,12 @@ msgstr "Obtener un artículo de la base de conocimiento de Decker"
 
 msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
 msgstr "Recupera un artículo accesible de la base de conocimiento, incluido su contenido completo, por ID."
+
+msgid "The supplied expected_modified value is not a valid date."
+msgstr "El valor de expected_modified no es una fecha válida."
+
+msgid "The task changed after it was read, so the update was not applied. Read the task again, rebuild the change and retry."
+msgstr "La tarea cambió después de leerla, así que no se aplicó la actualización. Vuelve a leer la tarea, rehaz el cambio e inténtalo de nuevo."
 
 msgid "The requested board does not exist."
 msgstr "El tablero solicitado no existe."

@@ -296,6 +296,12 @@ msgstr ""
 msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
 msgstr ""
 
+msgid "The supplied expected_modified value is not a valid date."
+msgstr ""
+
+msgid "The task changed after it was read, so the update was not applied. Read the task again, rebuild the change and retry."
+msgstr ""
+
 msgid "The requested board does not exist."
 msgstr ""
 

@@ -1424,6 +1424,407 @@ export async function tasksShow( id, options = {} ) {
 }
 
 /**
+ * Read and parse a JSON file supplied by the user.
+ *
+ * A file is used rather than a command-line argument so that a description or
+ * a comment keeps its newlines and quoting intact.
+ *
+ * @param {string} path Path to the file.
+ * @return {object} Parsed object.
+ */
+export function readJsonFile( path ) {
+	let raw;
+	try {
+		raw = readFileSync( path, 'utf8' );
+	} catch {
+		throw new DeckerError( 'usage_unreadable_file', `Could not read ${ path }.`, EXIT.USAGE );
+	}
+
+	let parsed;
+	try {
+		parsed = JSON.parse( raw );
+	} catch {
+		throw new DeckerError( 'usage_invalid_json', `${ path } is not valid JSON.`, EXIT.USAGE );
+	}
+
+	if ( null === parsed || 'object' !== typeof parsed || Array.isArray( parsed ) ) {
+		throw new DeckerError( 'usage_invalid_json', `${ path } must contain a JSON object.`, EXIT.USAGE );
+	}
+
+	return parsed;
+}
+
+/**
+ * The task fields a write may carry.
+ *
+ * An unknown field is rejected locally rather than sent: the ability schema
+ * sets additionalProperties:false, so it would be refused anyway, and a typo
+ * is clearer when it names the field.
+ *
+ * @var {string[]}
+ */
+const WRITABLE_FIELDS = [
+	'title',
+	'description',
+	'stack',
+	'board_id',
+	'max_priority',
+	'due_date',
+	'responsible_user_id',
+	'hidden',
+	'assignee_ids',
+	'label_ids',
+	'archived',
+];
+
+/**
+ * Check a change set against the writable fields.
+ *
+ * @param {object} changes Proposed changes.
+ * @return {object} The same changes.
+ */
+export function assertWritableFields( changes ) {
+	const unknown = Object.keys( changes ).filter( ( field ) => ! WRITABLE_FIELDS.includes( field ) );
+
+	if ( unknown.length ) {
+		throw new DeckerError(
+			'usage_unknown_field',
+			`Not a writable task field: ${ unknown.join( ', ' ) }. Allowed: ${ WRITABLE_FIELDS.join( ', ' ) }.`,
+			EXIT.USAGE
+		);
+	}
+
+	return changes;
+}
+
+/**
+ * Apply a change set to one task.
+ *
+ * Every mutation goes through here, so the same four rules hold for all of
+ * them: the task is read first, the change is shown before it is applied, a
+ * no-op is reported instead of written, and the write carries the `modified`
+ * value from that read so the server refuses it if anything changed in
+ * between.
+ *
+ * `--yes` guards against an accidental invocation. It is NOT authorization
+ * from the human: an agent must still show the proposed change and get
+ * conversational approval before calling this.
+ *
+ * @param {object} context Request context.
+ * @param {object} options Mutation options.
+ * @param {number} options.taskId  Task ID.
+ * @param {object} options.changes Fields to change.
+ * @param {object} options.flags   Parsed flags.
+ * @param {string} [options.ability] Ability to invoke.
+ * @return {Promise<object>} Command result.
+ */
+export async function applyChanges( context, { taskId, changes, flags, ability = 'decker/update-task' } ) {
+	assertWritableFields( changes );
+
+	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	const before = {};
+	const after = {};
+	for ( const [ field, value ] of Object.entries( changes ) ) {
+		if ( ! sameValue( current[ field ], value ) ) {
+			before[ field ] = current[ field ];
+			after[ field ] = value;
+		}
+	}
+
+	if ( 0 === Object.keys( after ).length ) {
+		// Nothing to do. Reported rather than written, so an idempotent call
+		// does not touch post_modified or create a revision.
+		return { ok: true, task_id: taskId, changed: false, reason: 'no_change', task: current };
+	}
+
+	const preview = { ok: true, task_id: taskId, title: current.title, before, after };
+
+	if ( flags[ 'dry-run' ] ) {
+		return { ...preview, dry_run: true, changed: false };
+	}
+
+	if ( ! flags.yes ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would change the task. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	const task = await restRequest( context, 'POST', abilityPath( ability ), {
+		body: {
+			input: {
+				task_id: taskId,
+				// Refuses the write if the task changed since the read above,
+				// rather than overwriting whatever changed.
+				expected_modified: current.modified,
+				...changes,
+			},
+		},
+	} );
+
+	return { ...preview, changed: true, task };
+}
+
+/**
+ * Compare two field values for equality.
+ *
+ * Collections are compared as sets of numbers, because order carries no
+ * meaning for labels or assignees and the server may return them in any order.
+ *
+ * @param {any} left  Stored value.
+ * @param {any} right Proposed value.
+ * @return {boolean} True when they are equivalent.
+ */
+export function sameValue( left, right ) {
+	if ( Array.isArray( left ) && Array.isArray( right ) ) {
+		const sortedLeft = [ ...new Set( left.map( Number ) ) ].sort( ( a, b ) => a - b );
+		const sortedRight = [ ...new Set( right.map( Number ) ) ].sort( ( a, b ) => a - b );
+
+		return JSON.stringify( sortedLeft ) === JSON.stringify( sortedRight );
+	}
+
+	return left === right;
+}
+
+/**
+ * Read a task id from a positional argument.
+ *
+ * @param {string|number} value Raw value.
+ * @return {number} Task ID.
+ */
+export function taskIdArgument( value ) {
+	const taskId = Number( value );
+
+	if ( ! Number.isInteger( taskId ) || taskId < 1 ) {
+		throw new DeckerError( 'usage_invalid_task_id', 'A task id is required.', EXIT.USAGE );
+	}
+
+	return taskId;
+}
+
+/**
+ * `decker tasks create`.
+ *
+ * @param {object} flags     Parsed flags.
+ * @param {object} [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksCreate( flags, options = {} ) {
+	const fields = flags[ 'json-file' ] ? readJsonFile( String( flags[ 'json-file' ] ) ) : {};
+
+	if ( 'title' in flags && true !== flags.title ) {
+		fields.title = String( flags.title );
+	}
+	const board = integerFlag( flags, 'board' );
+	if ( undefined !== board ) {
+		fields.board_id = board;
+	}
+	const stack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] );
+	if ( undefined !== stack ) {
+		fields.stack = stack;
+	}
+
+	assertWritableFields( fields );
+
+	if ( ! fields.title || ! fields.board_id ) {
+		throw new DeckerError(
+			'usage_missing_fields',
+			'A new task needs at least a title and a board_id. Supply them with --title and --board, or in --json-file.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	if ( flags[ 'dry-run' ] ) {
+		// A dry run may read to prepare the preview, but never writes. The board
+		// is read back so an invalid id is reported before anything is created.
+		const boards = await restRequest( context, 'GET', abilityPath( 'decker/list-boards' ) );
+		const target = ( boards.boards ?? [] ).find( ( entry ) => entry.id === fields.board_id );
+
+		return {
+			ok: true,
+			dry_run: true,
+			created: false,
+			would_create: fields,
+			board: target ?? null,
+			board_exists: Boolean( target ),
+		};
+	}
+
+	if ( ! flags.yes ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would create a task. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	const task = await restRequest( context, 'POST', abilityPath( 'decker/create-task' ), {
+		body: { input: fields },
+	} );
+
+	return { ok: true, created: true, task };
+}
+
+/**
+ * `decker tasks update ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksUpdate( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const changes = flags[ 'json-file' ] ? readJsonFile( String( flags[ 'json-file' ] ) ) : {};
+
+	if ( 'title' in flags && true !== flags.title ) {
+		changes.title = String( flags.title );
+	}
+
+	// task_id in the file must not fight the one on the command line.
+	delete changes.task_id;
+	delete changes.expected_modified;
+
+	if ( 0 === Object.keys( changes ).length ) {
+		throw new DeckerError(
+			'usage_no_changes',
+			'Nothing to update. Supply the fields in --json-file, or use --title.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, { taskId, changes, flags } );
+}
+
+/**
+ * `decker tasks labels ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksLabels( id, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const context = await createContext( options );
+
+	const task = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	const ids = task.label_ids ?? [];
+	if ( 0 === ids.length ) {
+		return { ok: true, task_id: taskId, labels: [] };
+	}
+
+	// Names, not just ids: an id alone is useless to the person reading this.
+	const { items } = await restRequest( context, 'GET', '/wp/v2/labels', {
+		params: { include: ids.join( ',' ), per_page: 100, _fields: 'id,name,slug' },
+		withMeta: true,
+	} );
+
+	return { ok: true, task_id: taskId, labels: items };
+}
+
+/**
+ * `decker tasks label-add ID --label N` and `label-remove`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {boolean}       add       Whether to add or remove.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksLabelChange( id, flags, add, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const labelId = integerFlag( flags, 'label' );
+
+	if ( undefined === labelId ) {
+		throw new DeckerError( 'usage_missing_label', '--label <id> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	// One label changes; every other label is preserved. The whole collection
+	// has to be sent back, which is exactly why the write carries
+	// expected_modified.
+	const existing = ( current.label_ids ?? [] ).map( Number );
+	const label_ids = add
+		? [ ...new Set( [ ...existing, labelId ] ) ]
+		: existing.filter( ( value ) => value !== labelId );
+
+	return applyChanges( context, { taskId, changes: { label_ids }, flags } );
+}
+
+/**
+ * `decker tasks assign ID --user N` and `unassign`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {boolean}       add       Whether to assign or unassign.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksAssign( id, flags, add, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const userId = integerFlag( flags, 'user' );
+
+	if ( undefined === userId ) {
+		throw new DeckerError( 'usage_missing_user', '--user <id> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	const existing = ( current.assignee_ids ?? [] ).map( Number );
+	const assignee_ids = add
+		? [ ...new Set( [ ...existing, userId ] ) ]
+		: existing.filter( ( value ) => value !== userId );
+
+	return applyChanges( context, { taskId, changes: { assignee_ids }, flags } );
+}
+
+/**
+ * `decker tasks responsible ID --user N`.
+ *
+ * The responsible user is not an assignee: Decker keeps author, responsible
+ * user and assignees apart, and so does this command.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksResponsible( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const userId = integerFlag( flags, 'user' );
+
+	if ( undefined === userId ) {
+		throw new DeckerError( 'usage_missing_user', '--user <id> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, {
+		taskId,
+		changes: { responsible_user_id: userId },
+		flags,
+	} );
+}
+
+/**
  * Dispatch a command line.
  *
  * @param {string[]} argv      Arguments without the node binary and script.
@@ -1465,12 +1866,29 @@ export async function run( argv, options = {} ) {
 	}
 
 	if ( 'tasks' === command ) {
-		if ( 'list' === subcommand ) {
-			return tasksList( parseFlags( rest ).flags, options );
-		}
-		if ( 'show' === subcommand ) {
-			const { positional } = parseFlags( rest );
-			return tasksShow( positional[ 0 ], options );
+		const { flags, positional } = parseFlags( rest );
+
+		switch ( subcommand ) {
+			case 'list':
+				return tasksList( flags, options );
+			case 'show':
+				return tasksShow( positional[ 0 ], options );
+			case 'create':
+				return tasksCreate( flags, options );
+			case 'update':
+				return tasksUpdate( positional[ 0 ], flags, options );
+			case 'labels':
+				return tasksLabels( positional[ 0 ], options );
+			case 'label-add':
+				return tasksLabelChange( positional[ 0 ], flags, true, options );
+			case 'label-remove':
+				return tasksLabelChange( positional[ 0 ], flags, false, options );
+			case 'assign':
+				return tasksAssign( positional[ 0 ], flags, true, options );
+			case 'unassign':
+				return tasksAssign( positional[ 0 ], flags, false, options );
+			case 'responsible':
+				return tasksResponsible( positional[ 0 ], flags, options );
 		}
 	}
 
@@ -1488,6 +1906,16 @@ export async function run( argv, options = {} ) {
 			'                    [--status publish|archived] [--search TEXT]',
 			'                    [--include-hidden] [--page N] [--per-page N]',
 			'  decker tasks show <id>',
+			'',
+			'Writes need --yes to apply, and support --dry-run to preview:',
+			'  decker tasks create --title TEXT --board ID [--json-file FILE]',
+			'  decker tasks update <id> --json-file FILE [--title TEXT]',
+			'  decker tasks labels <id>',
+			'  decker tasks label-add <id> --label ID',
+			'  decker tasks label-remove <id> --label ID',
+			'  decker tasks assign <id> --user ID',
+			'  decker tasks unassign <id> --user ID',
+			'  decker tasks responsible <id> --user ID',
 		].join( '\n' ),
 		EXIT.USAGE
 	);

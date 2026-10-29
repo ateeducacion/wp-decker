@@ -164,6 +164,12 @@ class Decker_Ability_Command_Service {
 	 * introduces no new storage and no second locking system: the comparison is
 	 * against post_modified_gmt, which WordPress already maintains.
 	 *
+	 * Known limit, inherited from that column: it has one-second granularity,
+	 * so a change saved within the same second as the caller's read carries an
+	 * identical timestamp and is not detected. Narrowing that window further
+	 * would need a real revision counter, which is more than this guard is for;
+	 * the edit lock remains the primary defence against concurrent editing.
+	 *
 	 * @param WP_Post $post  Task post.
 	 * @param array   $input Ability input.
 	 * @return true|WP_Error True when the write may proceed.

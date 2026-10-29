@@ -25,7 +25,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import * as client from '../../skills/decker-tasks/scripts/decker-client.mjs';
+import * as client from '../../skills/decker/scripts/decker-client.mjs';
 
 const live = '1' === process.env.DECKER_CAS_LIVE;
 const site = process.env.DECKER_CAS_SITE ?? 'http://localhost:8889';
