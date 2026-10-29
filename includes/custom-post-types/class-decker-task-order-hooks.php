@@ -46,6 +46,11 @@ class Decker_Task_Order_Hooks {
 			10,
 			4
 		);
+
+		// Max priority pulls a card to the front of its stack, which is part of
+		// the stored order, so a change to it needs the same recalculation.
+		add_action( 'updated_post_meta', array( $this, 'handle_priority_change_reorder' ), 10, 4 );
+		add_action( 'added_post_meta', array( $this, 'handle_priority_change_reorder' ), 10, 4 );
 	}
 
 	/**
@@ -239,6 +244,44 @@ class Decker_Task_Order_Hooks {
 				clean_post_cache( $object_id );  // Clear cache to ensure updated read.
 			}
 		}
+	}
+
+	/**
+	 * Renumber a task's stack when its 'max_priority' meta changes.
+	 *
+	 * The order of a stack is `max_priority DESC, menu_order ASC`, and the
+	 * renumbering pass in the engine applies exactly that rule. Without this
+	 * hook a priority change moved the card on the board, which sorts by the
+	 * rule, while `menu_order` still said otherwise — so anything reading the
+	 * stored order, including the agent listing and the position arithmetic
+	 * built on it, disagreed with the board until the next reorder.
+	 *
+	 * The metadata API only fires these actions when the value really changes,
+	 * so an ordinary save that rewrites the same value costs nothing.
+	 *
+	 * @param int    $meta_id    Meta row ID.
+	 * @param int    $post_id    Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value New meta value.
+	 */
+	public function handle_priority_change_reorder( $meta_id, $post_id, $meta_key, $meta_value ) {
+
+		if ( 'max_priority' !== $meta_key || 'decker_task' !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		$stack = sanitize_key( get_post_meta( $post_id, 'stack', true ) );
+		if ( ! $stack ) {
+			return; // Not on a stack yet; the stack hook will renumber when it is.
+		}
+
+		$board_ids = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$board_id  = ! empty( $board_ids ) ? (int) $board_ids[0] : 0;
+		if ( ! $board_id ) {
+			return; // Task without board -> nothing to do.
+		}
+
+		$this->order->reorder_tasks_in_stack( $board_id, $stack );
 	}
 
 	/**

@@ -417,7 +417,7 @@ class DeckerAbilitiesStaleWriteTest extends Decker_Test_Base {
 			array(
 				'task_id'           => $this->task_id,
 				'expected_modified' => $stale,
-				'assigned_user_ids' => array( $third ),
+				'assignee_ids'      => array( $third ),
 			)
 		);
 

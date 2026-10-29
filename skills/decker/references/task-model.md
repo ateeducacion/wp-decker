@@ -90,6 +90,9 @@ Order is `menu_order` within a board and stack, with `max_priority` cards
 pulled to the front. The stored rule is `max_priority DESC, menu_order ASC,
 post_modified DESC, id ASC`.
 
+Setting or clearing `max_priority` renumbers that stack straight away, so the
+stored `menu_order` always agrees with the rule and with what the board shows.
+
 It is not an alphabetical or chronological sort, and it is not global: the same
 position number means a different place in each board/stack pair. A new task
 joins the end of its stack.

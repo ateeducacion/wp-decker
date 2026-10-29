@@ -202,6 +202,40 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Priority alone pulls the card to the front, with no reorder behind it.
+	 *
+	 * test_max_priority_sorts_to_the_front() reorders the card afterwards, so it
+	 * passes even if nothing reacts to the priority change itself. Here the only
+	 * write is the flag: the stored order has to follow the same rule as the
+	 * board, because the client derives positions from this listing.
+	 */
+	public function test_priority_alone_reorders_the_stack() {
+		$this->service->update_task(
+			array(
+				'task_id'      => $this->tasks['third'],
+				'max_priority' => true,
+			)
+		);
+
+		$this->assertSame(
+			array(
+				$this->tasks['third'],
+				$this->tasks['first'],
+				$this->tasks['second'],
+				$this->tasks['fourth'],
+			),
+			$this->sequence(),
+			'The priority card must lead the stack without a reorder call.'
+		);
+
+		$this->assertSame(
+			1,
+			(int) get_post( $this->tasks['third'] )->menu_order,
+			'menu_order must agree with the order the board shows.'
+		);
+	}
+
+	/**
 	 * Moving a card inside its stack lands it where it was dropped.
 	 */
 	public function test_same_stack_move_lands_at_the_target() {
