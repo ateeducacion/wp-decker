@@ -97,7 +97,8 @@ Two things worth knowing before touching order:
 - **Position a card by naming its neighbour**, not by index: `--after ID` or
   `--before ID`. The server resolves that, where the whole stack is visible, so
   it is exact whatever the caller can see, and the neighbour's stack is the
-  destination, so it moves the card there too. It writes nothing when the card
+  destination, so it moves the card between stacks too — within the same board
+  only, as moving between boards is `move-task`. It writes nothing when the card
   is already in that position, and it refuses when only one of the two cards has
   `max_priority`, because priority pulls a card to the front and the two cannot
   then be adjacent.

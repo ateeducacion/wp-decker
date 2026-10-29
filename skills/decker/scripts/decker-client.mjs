@@ -219,10 +219,12 @@ export class Session {
 	 * @param {URL}     input          Target URL.
 	 * @param {object}  [init]         Fetch init.
 	 * @param {boolean} [followRedirects] Whether to follow redirects.
-	 * @param {boolean} [allowBodyReplay] Whether a 307/308 may resend the body.
+	 * @param {boolean} [allowRedirect]    Whether a redirect may be followed at
+	 *                                     all, rather than ending the request
+	 *                                     with an unknown outcome.
 	 * @return {Promise<Response>} The final response.
 	 */
-	async request( input, init = {}, followRedirects = true, allowBodyReplay = true ) {
+	async request( input, init = {}, followRedirects = true, allowRedirect = true ) {
 		let url = input;
 		let method = init.method ?? 'GET';
 		let body = init.body ?? null;
@@ -285,13 +287,21 @@ export class Session {
 			const replaysBody =
 				[ 307, 308 ].includes( response.status ) && 'GET' !== method && 'HEAD' !== method;
 
-			if ( replaysBody && ! allowBodyReplay ) {
-				// A 307/308 says the request was not processed here, so following
-				// it is one write, not two. But that is the server's word for it:
-				// an application that applied the write and then redirected with
-				// 307 instead of 303 would have it applied twice, and a mutation
-				// is not worth that bet. The caller reports an uncertain outcome
-				// and the agent reads the task back.
+			if ( ! allowRedirect ) {
+				// No redirect of a mutating REST call is followed, whichever
+				// kind it is, because none of them says what happened to the
+				// write.
+				//
+				// A 307/308 says the request was not processed here, so
+				// following it would be one write and not two — but that is the
+				// server's word for it, and an application that applied the
+				// write and then redirected with 307 instead of 303 would have
+				// it applied twice. A 301/302/303 is worse: the method degrades
+				// to GET, so following it fetches a page that may answer 200
+				// with valid JSON while the write itself was never confirmed,
+				// and that would be reported as a success. Neither is worth the
+				// bet. The caller reports an uncertain outcome and the agent
+				// reads the task back.
 				await response.body?.cancel();
 				throw new DeckerError(
 					'rest_redirect_not_followed',

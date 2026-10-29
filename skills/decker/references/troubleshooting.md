@@ -67,6 +67,12 @@ without it. Match their priority, or place it next to another card.
 neighbour does not exist, is not on a board, or is a hidden task this account
 may not see — all three answer the same way on purpose.
 
+**`rest_redirect_not_followed`, reported as `rest_outcome_unknown`.** The
+server answered a mutating request with a redirect. None is followed: a 307/308
+would resend the body, and a 301/302/303 turns the request into a GET, which
+can answer 200 with valid JSON while the write was never confirmed. Read the
+task back; do not repeat the command.
+
 **`decker_task_archived` (403) on a placement.** The card being moved is
 archived, so it is in no stack at all. Unarchive it in the Decker interface
 first; nothing was written.

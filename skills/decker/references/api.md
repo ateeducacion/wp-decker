@@ -91,9 +91,12 @@ not exact when the stack holds tasks the caller cannot list, which is what
 `/place` exists for.
 
 The place endpoint takes exactly one of `after_task_id` or `before_task_id` and
-nothing else: no board, no stack, no index. The neighbour's board and stack are
-the destination, so it moves the card there as well as positioning it, and it
-needs no prior read. It answers with `relative_to`, `side`, `stack`, `adjacent`
+nothing else: no board, no stack, no index. The neighbour's stack is the
+destination, so it moves the card between stacks as well as positioning it, and
+it needs no prior read. **Within one board only**: a neighbour on another board
+is refused with `decker_anchor_other_board`, because moving a card to another
+board is a different operation, with its own ability (`decker/move-task`), and
+not something to arrive at by naming a neighbour. It answers with `relative_to`, `side`, `stack`, `adjacent`
 — read back from the stored order — and `changed`, which is `false` when the
 card was already there, in which case nothing is written and no open editor
 form is invalidated.

@@ -220,6 +220,68 @@ class DeckerAbilitiesRestExposureTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A contributor holds edit_posts, and that is not enough.
+	 *
+	 * The default minimum role is editor, so a contributor is refused the
+	 * Decker screens. They hold `edit_posts` but not `publish_posts`, and a
+	 * created task is published, so authorizing an ability on `edit_posts`
+	 * alone would let that account publish through the abilities what it
+	 * cannot publish anywhere else, interface included.
+	 */
+	public function test_a_contributor_can_neither_list_nor_create() {
+		$contributor = self::factory()->user->create( array( 'role' => 'contributor' ) );
+		$this->assertTrue( user_can( $contributor, 'edit_posts' ) );
+		$this->assertFalse( user_can( $contributor, 'publish_posts' ) );
+
+		$listed = $this->run_as( $contributor, 'GET', 'decker/list-tasks', array() );
+		$this->assertSame( 403, $listed->get_status(), wp_json_encode( $listed->get_data() ) );
+
+		$created = $this->run_as(
+			$contributor,
+			'POST',
+			'decker/create-task',
+			array(
+				'title'    => 'Contributor task',
+				'board_id' => $this->board_id,
+			)
+		);
+
+		$this->assertSame( 403, $created->get_status() );
+		$this->assertSame(
+			0,
+			count(
+				get_posts(
+					array(
+						'post_type'   => 'decker_task',
+						'title'       => 'Contributor task',
+						'post_status' => 'any',
+					)
+				)
+			)
+		);
+	}
+
+	/**
+	 * An author is refused at the default minimum, and allowed when configured.
+	 *
+	 * The abilities answer to the same gate as the Decker screens, so the
+	 * configured role is what decides, not the capability alone.
+	 */
+	public function test_an_author_follows_the_configured_minimum_role() {
+		$author = self::factory()->user->create( array( 'role' => 'author' ) );
+
+		$refused = $this->run_as( $author, 'GET', 'decker/list-tasks', array() );
+		$this->assertSame( 403, $refused->get_status(), wp_json_encode( $refused->get_data() ) );
+
+		update_option( 'decker_settings', array( 'minimum_user_profile' => 'author' ) );
+
+		$allowed = $this->run_as( $author, 'GET', 'decker/list-tasks', array() );
+		$this->assertSame( 200, $allowed->get_status(), wp_json_encode( $allowed->get_data() ) );
+
+		delete_option( 'decker_settings' );
+	}
+
+	/**
 	 * The method rules follow the ability annotations.
 	 */
 	public function test_method_rules_are_enforced() {

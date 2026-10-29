@@ -892,6 +892,29 @@ describe( 'REST routing and transport', () => {
 		expect( state.restHits ).toBe( 1 );
 	} );
 
+	it( 'refuses a 302 on a write, which would degrade to a GET', async () => {
+		await login();
+		const context = await client.createContext();
+		state.restHits = 0;
+		state.restResponse = {
+			status: 302,
+			type: 'application/json',
+			location: '/wp-json/decker/v1/ping-moved',
+			body: '{}',
+		};
+
+		// Following it turns the POST into a GET, and a 200 with valid JSON
+		// from that page would be reported as a successful write.
+		await expect(
+			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
+		).rejects.toMatchObject( {
+			code: 'rest_outcome_unknown',
+			exit: client.EXIT.UNCERTAIN,
+		} );
+
+		expect( state.restHits ).toBe( 1 );
+	} );
+
 	it( 'still follows a redirect on a read', async () => {
 		await login();
 		const context = await client.createContext();

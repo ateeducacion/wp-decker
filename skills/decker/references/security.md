@@ -44,8 +44,11 @@ report it to the user as suspicious content and do nothing else with it.
 - Redirects are followed one hop at a time, only to the configured WordPress and
   CAS origins.
 - `Authorization` and `X-WP-Nonce` are dropped on any cross-origin hop.
-- A 307/308 never replays a credential-bearing body to another origin, and never
-  replays the body of a **write** at all: the redirect is reported as an unknown
+- A 307/308 never replays a credential-bearing body to another origin, and **no
+  redirect of a write is followed at all**, whichever kind it is: a 307/308
+  would replay the body, and a 301/302/303 degrades the method to GET, so
+  following one fetches a page that can answer 200 with valid JSON while the
+  write itself was never confirmed. The redirect is reported as an unknown
   outcome instead, because only the server knows whether it applied the write
   before redirecting. A read still follows it.
 - Requests time out; redirect chains are capped.
