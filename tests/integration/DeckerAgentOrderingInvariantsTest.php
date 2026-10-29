@@ -236,6 +236,52 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Creating an ordinary task does not renumber its stack twice.
+	 *
+	 * The insert already renumbers for the board term and for the stack meta.
+	 * The priority hook must not add a third pass when the meta arrives saying
+	 * "not priority", which is what every ordinary creation writes: there is
+	 * nothing pulled to the front, so the order it would recompute is the one
+	 * already stored. A card created *with* priority does need that pass, and
+	 * this pins both numbers so a change to either is deliberate.
+	 */
+	public function test_creating_a_task_renumbers_no_more_than_it_must() {
+		$renumbers = 0;
+		$count     = function ( $query ) use ( &$renumbers ) {
+			if ( false !== strpos( $query, 'ordered_tasks' ) ) {
+				++$renumbers;
+			}
+			return $query;
+		};
+		add_filter( 'query', $count );
+
+		self::factory()->task->create(
+			array(
+				'post_title' => 'Ordinary',
+				'board'      => $this->board_id,
+				'stack'      => 'to-do',
+			)
+		);
+		$ordinary  = $renumbers;
+		$renumbers = 0;
+
+		self::factory()->task->create(
+			array(
+				'post_title'   => 'Priority',
+				'board'        => $this->board_id,
+				'stack'        => 'to-do',
+				'max_priority' => true,
+			)
+		);
+		$priority = $renumbers;
+
+		remove_filter( 'query', $count );
+
+		$this->assertSame( 2, $ordinary, 'The board term and the stack meta renumber once each; nothing else should.' );
+		$this->assertSame( 3, $priority, 'A card created with priority needs the extra pass that pulls it to the front.' );
+	}
+
+	/**
 	 * Moving a card inside its stack lands it where it was dropped.
 	 */
 	public function test_same_stack_move_lands_at_the_target() {

@@ -257,7 +257,17 @@ class Decker_Task_Order_Hooks {
 	 * built on it, disagreed with the board until the next reorder.
 	 *
 	 * The metadata API only fires these actions when the value really changes,
-	 * so an ordinary save that rewrites the same value costs nothing.
+	 * so an ordinary save that rewrites the same value costs nothing. The first
+	 * write of the meta is skipped when it says *not* priority, which is what
+	 * creating an ordinary task does: nothing was pulled to the front, so
+	 * nothing can be out of place, and the renumbering the insert already does
+	 * for the board and the stack stands. Clearing an existing flag is a real
+	 * change and still renumbers.
+	 *
+	 * Deletion of the meta row is deliberately not hooked. Every Decker write
+	 * path keeps the key with '1', '0' or '', and hooking `deleted_post_meta`
+	 * would add a renumber to every task deletion, where the stack is already
+	 * renumbered by Decker_Tasks::handle_task_deletion().
 	 *
 	 * @param int    $meta_id    Meta row ID.
 	 * @param int    $post_id    Post ID.
@@ -268,6 +278,10 @@ class Decker_Task_Order_Hooks {
 
 		if ( 'max_priority' !== $meta_key || 'decker_task' !== get_post_type( $post_id ) ) {
 			return;
+		}
+
+		if ( 'added_post_meta' === current_action() && empty( $meta_value ) ) {
+			return; // Never was priority: the stored order cannot disagree yet.
 		}
 
 		$stack = sanitize_key( get_post_meta( $post_id, 'stack', true ) );
