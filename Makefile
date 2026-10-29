@@ -203,6 +203,9 @@ test-e2e-collab: start-if-not-running setup-tests-env
 # username is a disposable test account and the password is the literal string
 # "password". No institutional credential and no production system is involved.
 #
+# The fixture terms are created with --user=admin: Decker's taxonomies require a
+# capability and wp-cli runs as nobody by default.
+#
 # WP Cassify is installed and activated ONLY in the tests environment (port
 # 8889), and is deactivated again whatever the outcome. That matters: an active
 # Cassify redirects wp-login.php to CAS, so leaving it on would send your own
@@ -223,6 +226,8 @@ test-cas: start-if-not-running setup-tests-env
 	npx wp-env run tests-cli wp option update wp_cassify_ssl_check_certificate 'enabled'; \
 	npx wp-env run tests-cli wp option update wp_cassify_disable_authentication ''; \
 	npx wp-env run tests-cli sh -c "wp user get $(CAS_TEST_USER) >/dev/null 2>&1 || wp user create $(CAS_TEST_USER) $(CAS_TEST_USER)@example.com --role=editor --user_pass=unused-cas-handles-login"; \
+	npx wp-env run tests-cli sh -c "wp term list decker_board --field=name --user=admin | grep -qx 'CAS Live Board' || wp term create decker_board 'CAS Live Board' --user=admin"; \
+	npx wp-env run tests-cli sh -c "for l in 'CAS Live Alpha' 'CAS Live Beta'; do wp term list decker_label --field=name --user=admin | grep -qx \"\$$l\" || wp term create decker_label \"\$$l\" --user=admin; done"; \
 	DECKER_CAS_LIVE=1 \
 	DECKER_CAS_SITE=http://localhost:8889 \
 	DECKER_CAS_URL='$(CAS_BASE_URL)login' \

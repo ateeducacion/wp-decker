@@ -20,7 +20,7 @@
  * @vitest-environment node
  */
 
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -33,6 +33,18 @@ const casUrl = process.env.DECKER_CAS_URL ?? 'https://www.casserverpac4j.dev/log
 const username = process.env.DECKER_CAS_USER ?? 'deckertest';
 
 let configDir;
+
+/**
+ * Write a description change file for the update command.
+ *
+ * @return {string} Path to the file.
+ */
+function descriptionFile() {
+	const path = join( configDir, 'description.json' );
+	writeFileSync( path, JSON.stringify( { description: 'Written by the live test' } ) );
+
+	return path;
+}
 
 beforeEach( () => {
 	configDir = mkdtempSync( join( tmpdir(), 'decker-cas-live-' ) );
@@ -152,6 +164,85 @@ describe.skipIf( ! live )( 'live CAS authentication', () => {
 		expect( found.ok ).toBe( true );
 		expect( found.users.some( ( user ) => user.slug === username ) ).toBe( true );
 	}, 60000 );
+
+	it( 'creates, labels, assigns and updates a task, verifying each step', async () => {
+		await login();
+
+		const boards = await client.boardsList();
+		const board = boards.boards.find( ( entry ) => 'CAS Live Board' === entry.name );
+		expect( board, 'make test-cas must have created the board' ).toBeDefined();
+
+		const labels = await client.labelsList( { 'per-page': '100' } );
+		const alpha = labels.labels.find( ( entry ) => 'CAS Live Alpha' === entry.name );
+		const beta = labels.labels.find( ( entry ) => 'CAS Live Beta' === entry.name );
+		expect( alpha ).toBeDefined();
+		expect( beta ).toBeDefined();
+
+		const me = await client.usersSearch( username, {} );
+		const myId = me.users.find( ( user ) => user.slug === username ).id;
+
+		// A write without --yes must not create anything.
+		await expect(
+			client.tasksCreate( { title: 'Unconfirmed task', board: String( board.id ) } )
+		).rejects.toMatchObject( { code: 'usage_confirmation_required' } );
+
+		const created = await client.tasksCreate( {
+			title: 'CAS live task',
+			board: String( board.id ),
+			yes: true,
+		} );
+		expect( created.created ).toBe( true );
+		const taskId = created.task.id;
+
+		// Read it back through a fresh request, not from the create response.
+		const readBack = await client.tasksShow( taskId );
+		expect( readBack.task ).toMatchObject( {
+			title: 'CAS live task',
+			board_id: board.id,
+			stack: 'to-do',
+		} );
+
+		// Two labels, then a third operation that must preserve them.
+		await client.tasksLabelChange( taskId, { label: String( alpha.id ), yes: true }, true );
+		await client.tasksLabelChange( taskId, { label: String( beta.id ), yes: true }, true );
+
+		const withLabels = await client.tasksLabels( taskId );
+		expect( withLabels.labels.map( ( entry ) => entry.id ).sort() ).toEqual(
+			[ alpha.id, beta.id ].sort()
+		);
+
+		// Assigning must not disturb the labels.
+		await client.tasksAssign( taskId, { user: String( myId ), yes: true }, true );
+		const afterAssign = await client.tasksShow( taskId );
+		expect( afterAssign.task.assignee_ids ).toContain( myId );
+		expect( afterAssign.task.label_ids.sort() ).toEqual( [ alpha.id, beta.id ].sort() );
+
+		// Removing one label must leave the other.
+		await client.tasksLabelChange( taskId, { label: String( beta.id ), yes: true }, false );
+		const afterRemoval = await client.tasksShow( taskId );
+		expect( afterRemoval.task.label_ids ).toEqual( [ alpha.id ] );
+		// ...and must not have dropped the assignee.
+		expect( afterRemoval.task.assignee_ids ).toContain( myId );
+
+		// A description change must preserve labels and assignees.
+		await client.tasksUpdate( taskId, { 'json-file': descriptionFile(), yes: true } );
+		const afterDescription = await client.tasksShow( taskId );
+		expect( afterDescription.task.description ).toContain( 'Written by the live test' );
+		expect( afterDescription.task.label_ids ).toEqual( [ alpha.id ] );
+		expect( afterDescription.task.assignee_ids ).toContain( myId );
+
+		// A no-op is reported, not written.
+		const noop = await client.tasksUpdate( taskId, { title: 'CAS live task', yes: true } );
+		expect( noop ).toMatchObject( { changed: false, reason: 'no_change' } );
+
+		// The stale-write guard is NOT asserted here. post_modified_gmt has
+		// one-second granularity and this whole sequence runs inside a second
+		// or two, so a conflict cannot be produced reliably from outside the
+		// server. DeckerAbilitiesStaleWriteTest covers it deterministically by
+		// pushing the stored timestamp forward.
+		const final = await client.tasksShow( taskId );
+		expect( final.task.title ).toBe( 'CAS live task' );
+	}, 120000 );
 
 	it( 'logs out and then reports no session', async () => {
 		await login();
