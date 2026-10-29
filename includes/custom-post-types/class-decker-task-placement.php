@@ -100,6 +100,15 @@ class Decker_Task_Placement {
 			return new WP_REST_Response( $answer, 200 );
 		}
 
+		// Checked after the adjacency read-back, not with the other
+		// validation: two cards of different priority can already be adjacent
+		// at the boundary between the two groups, and a request for a
+		// placement that is already true is answered rather than refused.
+		$mismatch = $this->priority_error( $task_id, $anchor_id );
+		if ( is_wp_error( $mismatch ) ) {
+			return $mismatch;
+		}
+
 		$this->order->apply_stack_transition( $task_id, $source_stack, $target_stack );
 		$this->shift_task_beside( $task_id, $anchor_id, $board_id, $target_stack, $side );
 
@@ -178,6 +187,19 @@ class Decker_Task_Placement {
 			return new WP_Error( 'decker_invalid_task', __( 'Task not found.', 'decker' ), array( 'status' => 404 ) );
 		}
 
+		// An archived card is not in any stack: the renumber pass and the
+		// adjacency read-back both look at published tasks only, so moving one
+		// would shift its neighbours and then report that the placement did
+		// not hold. Refused before anything is written, like the other routes
+		// that decline to edit an archived card.
+		if ( 'publish' !== $task->post_status ) {
+			return new WP_Error(
+				'decker_task_archived',
+				__( 'You are not allowed to edit this card.', 'decker' ),
+				array( 'status' => 403 )
+			);
+		}
+
 		if ( $anchor_id === $task_id ) {
 			return new WP_Error(
 				'decker_invalid_anchor',
@@ -211,7 +233,7 @@ class Decker_Task_Placement {
 	}
 
 	/**
-	 * Whether the two cards can end up adjacent at all.
+	 * Whether the two cards are on the same board.
 	 *
 	 * @param int $task_id   The task to move.
 	 * @param int $anchor_id The neighbour.
@@ -227,19 +249,34 @@ class Decker_Task_Placement {
 			);
 		}
 
-		// The renumber pass sorts max_priority first, so a card pinned to the
-		// front cannot sit next to one that is not, whatever this does to
-		// menu_order. Refusing up front beats writing a move and then
-		// reporting that it did not hold.
-		if ( (bool) get_post_meta( $task_id, 'max_priority', true ) !== (bool) get_post_meta( $anchor_id, 'max_priority', true ) ) {
-			return new WP_Error(
-				'decker_priority_mismatch',
-				__( 'Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first.', 'decker' ),
-				array( 'status' => 409 )
-			);
+		return null;
+	}
+
+	/**
+	 * Whether a move across the priority boundary could hold.
+	 *
+	 * The renumber pass sorts max_priority first, so a card pinned to the
+	 * front cannot be moved to sit next to one that is not: whatever this
+	 * writes to menu_order, the sort puts the two groups back. Refusing up
+	 * front beats writing a move and then reporting that it did not hold.
+	 *
+	 * The one placement across the boundary that does hold is the one that is
+	 * already true, and place() answers that before asking this.
+	 *
+	 * @param int $task_id   The task to move.
+	 * @param int $anchor_id The neighbour.
+	 * @return WP_Error|null An error, or null when both carry the same priority.
+	 */
+	private function priority_error( int $task_id, int $anchor_id ): ?WP_Error {
+		if ( (bool) get_post_meta( $task_id, 'max_priority', true ) === (bool) get_post_meta( $anchor_id, 'max_priority', true ) ) {
+			return null;
 		}
 
-		return null;
+		return new WP_Error(
+			'decker_priority_mismatch',
+			__( 'Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first.', 'decker' ),
+			array( 'status' => 409 )
+		);
 	}
 
 	/**

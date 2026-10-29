@@ -638,6 +638,11 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 
 	/**
 	 * Priority pulls a card to the front, so it refuses rather than lying.
+	 *
+	 * The neighbour is not the card that already follows the priority one:
+	 * that placement is already true and is answered instead of refused, which
+	 * test_a_placement_already_true_across_the_priority_boundary_is_answered
+	 * covers. This one asks for a move the sort would undo.
 	 */
 	public function test_placing_beside_a_card_of_different_priority_is_refused() {
 		$this->service->update_task(
@@ -648,7 +653,7 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 		);
 		$before = $this->sequence();
 
-		$response = $this->place( $this->tasks['first'], 'after', $this->tasks['fourth'] );
+		$response = $this->place( $this->tasks['third'], 'after', $this->tasks['fourth'] );
 
 		$this->assertTrue( $response->is_error() );
 		$this->assertSame( 409, $response->as_error()->get_error_data()['status'] );
@@ -690,6 +695,90 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 
 		$this->assertTrue( $response->is_error() );
 		$this->assertSame( 'decker_anchor_other_board', $response->as_error()->get_error_code() );
+	}
+
+	/**
+	 * A card the caller may not see cannot be moved either.
+	 *
+	 * The hidden-task rule is not a capability: an editor holds edit_post over
+	 * other people's cards, so without the namespace guard the per-task routes
+	 * would let somebody act on a card they are not allowed to see, by id.
+	 */
+	public function test_a_hidden_card_cannot_be_moved_by_someone_it_is_hidden_from() {
+		$other  = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$hidden = self::factory()->task->create(
+			array(
+				'post_title'  => 'Not yours',
+				'board'       => $this->board_id,
+				'stack'       => 'to-do',
+				'post_author' => $other,
+			)
+		);
+		update_post_meta( $hidden, 'hidden', '1' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+		$before = $this->sequence();
+
+		$placed = $this->place( $hidden, 'after', $this->tasks['first'] );
+		$this->assertTrue( $placed->is_error() );
+		$this->assertSame( 403, $placed->as_error()->get_error_data()['status'] );
+		$this->assertSame( 'rest_forbidden', $placed->as_error()->get_error_code() );
+
+		// The same holds for the drag route, which the guard covers too.
+		$dragged = $this->reorder( $hidden, 'to-do', 'to-do', 1, 3 );
+		$this->assertSame( 403, $dragged->get_status() );
+
+		$this->assertSame( $before, $this->sequence() );
+	}
+
+	/**
+	 * An archived card is refused before anything is written.
+	 *
+	 * It is in no stack, so the renumber pass and the adjacency read-back both
+	 * skip it: moving one would shift its neighbours and then report that the
+	 * placement did not hold.
+	 */
+	public function test_an_archived_card_cannot_be_placed() {
+		wp_update_post(
+			array(
+				'ID'          => $this->tasks['fourth'],
+				'post_status' => 'archived',
+			)
+		);
+		$before = $this->sequence();
+
+		$response = $this->place( $this->tasks['fourth'], 'after', $this->tasks['first'] );
+
+		$this->assertTrue( $response->is_error() );
+		$this->assertSame( 403, $response->as_error()->get_error_data()['status'] );
+		$this->assertSame( 'decker_task_archived', $response->as_error()->get_error_code() );
+		$this->assertSame( $before, $this->sequence() );
+	}
+
+	/**
+	 * Two cards of different priority already adjacent are not a conflict.
+	 *
+	 * The boundary between the two groups is a legitimate place for them to
+	 * meet, so a request for a placement that is already true is answered
+	 * rather than refused with a mismatch.
+	 */
+	public function test_a_placement_already_true_across_the_priority_boundary_is_answered() {
+		$this->service->update_task(
+			array(
+				'task_id'      => $this->tasks['first'],
+				'max_priority' => true,
+			)
+		);
+		$before = $this->sequence();
+		$this->assertSame( $this->tasks['first'], $before[0] );
+
+		$response = $this->place( $this->tasks['second'], 'after', $this->tasks['first'] );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertTrue( $response->get_data()['adjacent'] );
+		$this->assertFalse( $response->get_data()['changed'] );
+		$this->assertSame( $before, $this->sequence() );
 	}
 
 	/**

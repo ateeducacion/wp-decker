@@ -101,10 +101,28 @@ form is invalidated.
 It refuses rather than guessing: 404 for a neighbour that does not exist **or
 is a hidden task the caller may not see** (the same answer, so the route cannot
 confirm that a hidden task exists), 400 for a neighbour on another board or for
-zero or two neighbours, and 409 `decker_priority_mismatch` when only one of the
-two cards has `max_priority`, because that pulls it to the front of the stack
-and the two cannot be adjacent. The sequence itself is never returned: it
-contains tasks the caller may not be allowed to see.
+zero or two neighbours, 403 for an archived card, and 409
+`decker_priority_mismatch` when only one of the two cards has `max_priority`,
+because that pulls it to the front of the stack and the two cannot be
+adjacent. That last refusal is deliberate and a little wider than strictly
+necessary: the boundary between the two groups is a position where cards of
+different priority do meet, and a placement that is **already** true there is
+answered with `changed: false` rather than refused, but a move across the
+boundary is not attempted, because the renumber pass sorts priority first and
+would undo it. The sequence itself is never returned: it contains tasks the
+caller may not be allowed to see.
+
+Every `decker/v1/tasks/{id}` route, this one included, refuses a card hidden
+from the caller with 403 `rest_forbidden` before the callback runs. The
+object-level capability is not enough on its own: `edit_post` is held over
+other people's cards by an editor, while Decker's hidden-task rule answers to
+participation, not to capabilities.
+
+`adjacent` and `changed` are statements about the whole stack, so both disclose
+whether a card the caller cannot see sits between the two named ones — their
+presence, never their identity or content. That is accepted: verified adjacency
+is the contract this route exists to provide, and it cannot be verified against
+a partial view.
 
 Other `decker/v1` routes exist (`stack`, `assign`, `leave`, `lock`,
 `update_due_date`, `subtasks`, `attachment-links`, `fix-order`). The client

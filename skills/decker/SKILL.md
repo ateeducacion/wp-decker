@@ -110,7 +110,11 @@ around them:
   actual order instead of trying again. Use `--after`/`--before` instead.
 - A placement refused with `decker_priority_mismatch` is not a failure to work
   around: maximum priority pulls a card to the front of its stack, so the two
-  cards cannot be adjacent until their priority matches. Say so.
+  cards cannot be adjacent until their priority matches. Say so. If the two are
+  already adjacent at the boundary between the groups, the placement is
+  answered instead, with `changed: false`.
+- An archived card cannot be placed: it is in no stack. Say that rather than
+  trying another neighbour.
 
 Author, responsible user and assignees are three different things. "Assign it
 to Ana" means an assignee; "Ana is in charge" means the responsible user. Ask

@@ -324,7 +324,7 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Restricts REST API access for decker_event post type.
+	 * Restrict REST access to tasks, in both the generic and the Decker namespace.
 	 *
 	 * @param mixed           $result The pre-calculated result to return.
 	 * @param WP_REST_Server  $rest_server The REST server instance.
@@ -332,14 +332,18 @@ class Decker_Tasks {
 	 * @return mixed WP_Error if unauthorized, otherwise the original result.
 	 */
 	public function restrict_rest_access( $result, $rest_server, $request ) {
-		$route = $request->get_route();
+		$route   = $request->get_route();
+		$generic = Decker::rest_route_matches( $route, '/wp/v2/tasks' );
 
-		if ( ! Decker::rest_route_matches( $route, '/wp/v2/tasks' ) ) {
+		if ( ! $generic && ! Decker::rest_route_matches( $route, '/decker/v1/tasks' ) ) {
 			return $result;
 		}
 
-		// Use the specific capability of the CPT.
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		// Use the specific capability of the CPT. The decker/v1 routes carry
+		// their own permission callbacks, which answer to the configured
+		// minimum role rather than to edit_posts, so this one stays where it
+		// has always applied.
+		if ( $generic && ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this resource.', 'decker' ),
@@ -349,7 +353,12 @@ class Decker_Tasks {
 
 		// A hidden task is reachable only by the people it is not hidden from,
 		// whatever the capability. The route carries the task being addressed.
-		if ( preg_match( '#^/wp/v2/tasks/(?P<id>\d+)#i', $route, $matches )
+		//
+		// Both namespaces are covered here rather than in each permission
+		// callback: edit_task resolves to edit_post, which an editor holds for
+		// other people's posts, so the per-task routes would otherwise let
+		// somebody who cannot see a hidden card still act on it by id.
+		if ( preg_match( '#^/(?:wp/v2|decker/v1)/tasks/(?P<id>\d+)#i', $route, $matches )
 			&& self::is_hidden_from_current_user( (int) $matches['id'] ) ) {
 			return new WP_Error(
 				'rest_forbidden',

@@ -67,6 +67,15 @@ without it. Match their priority, or place it next to another card.
 neighbour does not exist, is not on a board, or is a hidden task this account
 may not see — all three answer the same way on purpose.
 
+**`decker_task_archived` (403) on a placement.** The card being moved is
+archived, so it is in no stack at all. Unarchive it in the Decker interface
+first; nothing was written.
+
+**`rest_forbidden` (403) on a task route.** The card is hidden and this account
+is not one of the people it is hidden from. It is not a capability problem and
+raising the account's role does not change it: a hidden card answers to its
+author, its responsible user, its assignees and administrators only.
+
 **`session_too_large`.** The macOS keychain command interface takes a line of
 at most 4096 bytes, and the session did not fit. Log in again, or set
 `DECKER_SESSION_STORE=file` to store it in a `0600` file instead.
