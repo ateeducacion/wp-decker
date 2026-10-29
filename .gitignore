@@ -44,12 +44,15 @@ sftp-config.json
 .php-cs-fixer.cache
 tests/junit.xml
 
-decker/
+# Anchored, like the rules above: unanchored, `decker/` matched at any depth and
+# hid skills/decker/, the installable Agent Skill. These ignore a built or
+# extracted copy of the plugin sitting beside the source.
+/decker/
 .aider*
 .env
 
-wp/
-wp-content/
+/wp/
+/wp-content/
 wordpress-develop/
 artifacts/
 
