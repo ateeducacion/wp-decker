@@ -221,6 +221,6 @@ class Decker_Task_Today_Manager {
 	 * @return string The Y-m-d date.
 	 */
 	private function today(): string {
-		return ( new DateTime() )->format( 'Y-m-d' );
+		return Decker_Task_Date_Relations::today_string();
 	}
 }

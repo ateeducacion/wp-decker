@@ -19,6 +19,37 @@ defined( 'ABSPATH' ) || exit;
 class Decker_Task_Date_Relations {
 
 	/**
+	 * The current date and time in the site's timezone.
+	 *
+	 * The single definition of "now" for date relations. Every caller that
+	 * decides which day a relation belongs to goes through here, so a mark, a
+	 * listing and a card badge cannot disagree about what "today" means.
+	 *
+	 * PHP's own clock is deliberately not used: it runs in the server's
+	 * timezone, which on a typical WordPress host is UTC while the site is
+	 * configured for somewhere else. Near midnight that writes a relation
+	 * against the wrong day -- the day before or after the one the person
+	 * actually sees in Decker.
+	 *
+	 * Returns a mutable DateTime, because the callers clone it and apply
+	 * modify() and setTime() to build their date windows.
+	 *
+	 * @return DateTime Now, in the site's timezone.
+	 */
+	public static function now(): DateTime {
+		return new DateTime( 'now', wp_timezone() );
+	}
+
+	/**
+	 * Today's date in the site's timezone, as stored in a relation.
+	 *
+	 * @return string Date in Y-m-d form.
+	 */
+	public static function today_string(): string {
+		return self::now()->format( 'Y-m-d' );
+	}
+
+	/**
 	 * Checks if a user has a relation within a date range.
 	 *
 	 * @param array    $relations  Array of user-date relations.

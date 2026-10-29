@@ -90,6 +90,16 @@ const state = {
 	task: null,
 	/** Whether the task changes right after the next read. */
 	changeAfterNextRead: false,
+	/** The last today call the server saw. */
+	lastToday: null,
+	/** The last order call the server saw. */
+	lastOrder: null,
+	/** The last comment posted. */
+	lastComment: null,
+	/** Whether the task is marked for today. */
+	todayMarked: false,
+	/** The tasks a stack read returns, in order. */
+	stackTasks: [],
 };
 
 /** The task the simulator starts each test with. */
@@ -264,11 +274,17 @@ beforeAll( async () => {
 			const ability = restPath.slice( '/wp-abilities/v1/abilities/'.length, -'/run'.length );
 			state.lastRun = { ability, method: request.method, query: Object.fromEntries( url.searchParams ) };
 
-			if ( 'decker/update-task' === ability || 'decker/create-task' === ability ) {
+			const writeAbilities = [
+				'decker/update-task',
+				'decker/create-task',
+				'decker/move-task',
+				'decker/archive-task',
+			];
+			if ( writeAbilities.includes( ability ) ) {
 				const payload = JSON.parse( await readBody( request ) ).input ?? {};
 				state.lastWrite = { ability, input: payload };
 
-				if ( 'decker/update-task' === ability
+				if ( 'decker/create-task' !== ability
 					&& undefined !== payload.expected_modified
 					&& payload.expected_modified !== state.task.modified ) {
 					response.writeHead( 409, { 'content-type': 'application/json' } );
@@ -301,10 +317,10 @@ beforeAll( async () => {
 			const bodies = {
 				'decker/list-boards': { boards: [ { id: 7, name: 'Board A', slug: 'board-a', description: '' } ] },
 				'decker/list-tasks': {
-					tasks: [ { id: 31, title: 'A task', board_id: 7 } ],
+					tasks: state.stackTasks,
 					page: 1,
 					per_page: 20,
-					total: 1,
+					total: state.stackTasks.length,
 					total_pages: 1,
 				},
 				'decker/get-task': state.task,
@@ -328,6 +344,48 @@ beforeAll( async () => {
 
 			response.writeHead( 200, { 'content-type': 'application/json' } );
 			response.end( JSON.stringify( bodies[ ability ] ?? {} ) );
+			return;
+		}
+
+		if ( restPath.match( /^\/decker\/v1\/tasks\/\d+\/today$/ ) ) {
+			const body = JSON.parse( await readBody( request ) );
+			state.lastToday = { method: request.method, marked: body.marked };
+			response.writeHead( 200, { 'content-type': 'application/json' } );
+			response.end( JSON.stringify( {
+				marked: Boolean( body.marked ),
+				changed: Boolean( body.marked ) !== state.todayMarked,
+				date: '2026-10-29',
+			} ) );
+			state.todayMarked = Boolean( body.marked );
+			return;
+		}
+
+		if ( restPath.match( /^\/decker\/v1\/tasks\/\d+\/order$/ ) ) {
+			state.lastOrder = { method: request.method, body: JSON.parse( await readBody( request ) ) };
+			response.writeHead( 200, { 'content-type': 'application/json' } );
+			response.end( JSON.stringify( { success: true } ) );
+			return;
+		}
+
+		if ( '/wp/v2/comments' === restPath ) {
+			if ( 'POST' === request.method ) {
+				const body = JSON.parse( await readBody( request ) );
+				state.lastComment = body;
+				response.writeHead( 201, { 'content-type': 'application/json' } );
+				response.end( JSON.stringify( { id: 500, post: body.post, content: { raw: body.content } } ) );
+				return;
+			}
+
+			state.lastCollection = { path: restPath, query: Object.fromEntries( url.searchParams ) };
+			response.writeHead( 200, {
+				'content-type': 'application/json',
+				'x-wp-total': '2',
+				'x-wp-totalpages': '1',
+			} );
+			response.end( JSON.stringify( [
+				{ id: 501, author_name: 'Ada', date: '2026-10-29T09:00:00', content: { rendered: '<p>Primero</p>' } },
+				{ id: 502, author_name: 'Bob', date: '2026-10-29T09:05:00', content: { rendered: '<p>Segundo</p>' } },
+			] ) );
 			return;
 		}
 
@@ -399,6 +457,18 @@ beforeEach( () => {
 	state.lastWrite = null;
 	state.task = { ...INITIAL_TASK, label_ids: [ 8, 9 ], assignee_ids: [ 45 ] };
 	state.changeAfterNextRead = false;
+	state.lastToday = null;
+	state.lastOrder = null;
+	state.lastComment = null;
+	state.todayMarked = false;
+	// Task 31 sits third in a four-card stack, so a reorder has somewhere to go
+	// in both directions and the sequence is not sorted by id.
+	state.stackTasks = [
+		{ id: 77, title: 'First', board_id: 7, stack: 'to-do' },
+		{ id: 12, title: 'Second', board_id: 7, stack: 'to-do' },
+		{ id: 31, title: 'A task', board_id: 7, stack: 'to-do' },
+		{ id: 55, title: 'Fourth', board_id: 7, stack: 'to-do' },
+	];
 } );
 
 afterEach( () => {
@@ -1176,6 +1246,235 @@ describe( 'write commands', () => {
 		).rejects.toMatchObject( { code: 'usage_confirmation_required' } );
 
 		expect( state.lastWrite ).toBeNull();
+	} );
+} );
+
+describe( 'today, comments, ordering and archiving', () => {
+	beforeEach( async () => {
+		await login();
+	} );
+
+	it( 'marks a task for today over POST, not PUT', async () => {
+		const result = await client.tasksToday( 31, { mark: true, yes: true } );
+
+		expect( result ).toMatchObject( { marked: true, task_id: 31 } );
+		// PUT bodies do not survive every proxy; the route accepts both.
+		expect( state.lastToday ).toMatchObject( { method: 'POST', marked: true } );
+	} );
+
+	it( 'unmarks a task for today', async () => {
+		await client.tasksToday( 31, { unmark: true, yes: true } );
+
+		expect( state.lastToday ).toMatchObject( { marked: false } );
+	} );
+
+	it( 'refuses an ambiguous or missing today instruction', async () => {
+		for ( const flags of [ { yes: true }, { mark: true, unmark: true, yes: true } ] ) {
+			await expect( client.tasksToday( 31, flags ) ).rejects.toMatchObject( {
+				code: 'usage_mark_or_unmark',
+				exit: client.EXIT.USAGE,
+			} );
+		}
+		expect( state.lastToday ).toBeNull();
+	} );
+
+	it( 'needs confirmation to change the today state', async () => {
+		await expect( client.tasksToday( 31, { mark: true } ) ).rejects.toMatchObject( {
+			code: 'usage_confirmation_required',
+		} );
+		expect( state.lastToday ).toBeNull();
+	} );
+
+	it( 'never sends a user id with a today change', async () => {
+		await client.tasksToday( 31, { mark: true, yes: true } );
+
+		// The relation is personal: the server decides whose it is.
+		expect( state.lastToday ).not.toHaveProperty( 'user_id' );
+	} );
+
+	it( 'lists comments oldest first, with only the fields that matter', async () => {
+		const result = await client.tasksComments( 31, {} );
+
+		expect( result ).toMatchObject( { ok: true, task_id: 31, total: 2 } );
+		expect( result.comments ).toHaveLength( 2 );
+		expect( state.lastCollection.query ).toMatchObject( {
+			post: '31',
+			order: 'asc',
+			orderby: 'date',
+			_fields: 'id,author,author_name,date,content',
+		} );
+	} );
+
+	it( 'posts a comment from a file, preserving its text', async () => {
+		const path = join( configDir, 'comment.txt' );
+		writeFileSync( path, 'Línea uno\n\nLínea dos con acentos: ñáé' );
+
+		const result = await client.tasksComment( 31, { 'text-file': path, yes: true } );
+
+		expect( result ).toMatchObject( { created: true, task_id: 31 } );
+		// Newlines and non-ASCII survive the round trip.
+		expect( state.lastComment.content ).toBe( 'Línea uno\n\nLínea dos con acentos: ñáé' );
+		expect( state.lastComment.post ).toBe( 31 );
+	} );
+
+	it( 'needs a text file and refuses an empty comment', async () => {
+		await expect( client.tasksComment( 31, { yes: true } ) ).rejects.toMatchObject( {
+			code: 'usage_missing_text_file',
+		} );
+
+		const empty = join( configDir, 'empty.txt' );
+		writeFileSync( empty, '   \n' );
+		await expect(
+			client.tasksComment( 31, { 'text-file': empty, yes: true } )
+		).rejects.toMatchObject( { code: 'usage_empty_comment' } );
+
+		expect( state.lastComment ).toBeNull();
+	} );
+
+	it( 'needs confirmation to post a comment', async () => {
+		const path = join( configDir, 'comment.txt' );
+		writeFileSync( path, 'Hola' );
+
+		await expect(
+			client.tasksComment( 31, { 'text-file': path } )
+		).rejects.toMatchObject( { code: 'usage_confirmation_required' } );
+
+		expect( state.lastComment ).toBeNull();
+	} );
+
+	it( 'moves a task through the move ability, not a bare update', async () => {
+		await client.tasksMove( 31, { stack: 'in-progress', yes: true } );
+
+		// move-task runs the domain transition that recalculates ordering and
+		// fires the stack hooks; update-task would not.
+		expect( state.lastWrite.ability ).toBe( 'decker/move-task' );
+		expect( state.lastWrite.input ).toMatchObject( { stack: 'in-progress' } );
+	} );
+
+	it( 'needs a target to move to', async () => {
+		await expect( client.tasksMove( 31, { yes: true } ) ).rejects.toMatchObject( {
+			code: 'usage_missing_target',
+		} );
+	} );
+
+	it( 'reads the real board position instead of inventing one', async () => {
+		await client.tasksReorder( 31, { position: '1', yes: true } );
+
+		// Task 31 is third in the fixture stack, so source_order must be 3.
+		// A guessed value would silently reorder other people's cards.
+		expect( state.lastOrder.body ).toMatchObject( {
+			board_id: 7,
+			source_stack: 'to-do',
+			target_stack: 'to-do',
+			source_order: 3,
+			target_order: 1,
+		} );
+		expect( state.lastOrder.method ).toBe( 'POST' );
+	} );
+
+	it( 'reports the resulting sequence by reading it back', async () => {
+		const result = await client.tasksReorder( 31, { position: '2', yes: true } );
+
+		expect( result.sequence ).toEqual( [ 77, 12, 31, 55 ] );
+		expect( result.changed ).toBe( true );
+	} );
+
+	it( 'treats a move to the current position as a no-op', async () => {
+		const result = await client.tasksReorder( 31, { position: '3', yes: true } );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+		expect( state.lastOrder ).toBeNull();
+	} );
+
+	it( 'rejects a position past the end of the stack', async () => {
+		await expect(
+			client.tasksReorder( 31, { position: '9', yes: true } )
+		).rejects.toMatchObject( { code: 'usage_position_out_of_range', exit: client.EXIT.USAGE } );
+
+		expect( state.lastOrder ).toBeNull();
+	} );
+
+	it( 'needs a position', async () => {
+		await expect( client.tasksReorder( 31, { yes: true } ) ).rejects.toMatchObject( {
+			code: 'usage_missing_position',
+		} );
+	} );
+
+	it( 'reports a task missing from its own stack as a conflict', async () => {
+		// The board moved under the client between its reads.
+		state.stackTasks = [ { id: 77, title: 'First', board_id: 7, stack: 'to-do' } ];
+
+		await expect(
+			client.tasksReorder( 31, { position: '1', yes: true } )
+		).rejects.toMatchObject( {
+			code: 'order_task_not_in_stack',
+			exit: client.EXIT.CONFLICT,
+		} );
+	} );
+
+	it( 'previews a reorder without touching the board', async () => {
+		const result = await client.tasksReorder( 31, { position: '1', 'dry-run': true } );
+
+		expect( result ).toMatchObject( { dry_run: true, changed: false } );
+		expect( result.would_move ).toMatchObject( { source_order: 3, target_order: 1 } );
+		expect( state.lastOrder ).toBeNull();
+	} );
+
+	it( 'archives and restores through the archive ability', async () => {
+		await client.tasksArchive( 31, { yes: true }, true );
+		expect( state.lastWrite ).toMatchObject( {
+			ability: 'decker/archive-task',
+			input: { archived: true },
+		} );
+
+		state.task.archived = true;
+		await client.tasksArchive( 31, { yes: true }, false );
+		expect( state.lastWrite.input ).toMatchObject( { archived: false } );
+	} );
+
+	it( 'treats archiving an archived task as a no-op', async () => {
+		state.task.archived = true;
+
+		const result = await client.tasksArchive( 31, { yes: true }, true );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'toggles max priority', async () => {
+		await client.tasksPriority( 31, { on: true, yes: true } );
+
+		expect( state.lastWrite.input ).toMatchObject( { max_priority: true } );
+		// Priority is a field of the task, not an ordering call.
+		expect( state.lastOrder ).toBeNull();
+	} );
+
+	it( 'refuses an ambiguous priority instruction', async () => {
+		for ( const flags of [ { yes: true }, { on: true, off: true, yes: true } ] ) {
+			await expect( client.tasksPriority( 31, flags ) ).rejects.toMatchObject( {
+				code: 'usage_on_or_off',
+			} );
+		}
+	} );
+
+	it( 'routes every new command through the dispatcher', async () => {
+		await expect(
+			client.run( [ 'tasks', 'today', '31', '--mark', '--dry-run' ] )
+		).resolves.toMatchObject( { dry_run: true } );
+		await expect( client.run( [ 'tasks', 'comments', '31' ] ) ).resolves.toMatchObject( { ok: true } );
+		await expect(
+			client.run( [ 'tasks', 'reorder', '31', '--position', '1', '--dry-run' ] )
+		).resolves.toMatchObject( { dry_run: true } );
+		await expect(
+			client.run( [ 'tasks', 'archive', '31', '--dry-run' ] )
+		).resolves.toMatchObject( { dry_run: true } );
+		await expect(
+			client.run( [ 'tasks', 'priority', '31', '--on', '--dry-run' ] )
+		).resolves.toMatchObject( { dry_run: true } );
+
+		expect( state.lastWrite ).toBeNull();
+		expect( state.lastOrder ).toBeNull();
+		expect( state.lastToday ).toBeNull();
 	} );
 } );
 

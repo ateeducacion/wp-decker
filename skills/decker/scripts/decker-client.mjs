@@ -1825,6 +1825,338 @@ export async function tasksResponsible( id, flags, options = {} ) {
 }
 
 /**
+ * `decker tasks today ID --mark|--unmark`.
+ *
+ * Marking a task for today is personal and date-specific. It is not a due
+ * date, and it never touches another user's relation: the endpoint applies the
+ * change to the authenticated user and rejects a client-supplied user id.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksToday( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+
+	if ( Boolean( flags.mark ) === Boolean( flags.unmark ) ) {
+		throw new DeckerError(
+			'usage_mark_or_unmark',
+			'Use exactly one of --mark or --unmark.',
+			EXIT.USAGE
+		);
+	}
+
+	const marked = Boolean( flags.mark );
+	const context = await createContext( options );
+
+	if ( flags[ 'dry-run' ] ) {
+		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_set: { marked } };
+	}
+
+	if ( ! flags.yes ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			`This would ${ marked ? 'mark' : 'unmark' } the task for today. Re-run with --yes to apply it.`,
+			EXIT.USAGE
+		);
+	}
+
+	// POST rather than PUT: the route accepts both and a PUT body does not
+	// survive every proxy. The operation is idempotent server-side, so a
+	// repeated call reports the same state rather than changing anything.
+	const result = await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/today`, {
+		body: { marked },
+	} );
+
+	return { ok: true, task_id: taskId, ...result };
+}
+
+/**
+ * `decker tasks comments ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksComments( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const context = await createContext( options );
+	const page = integerFlag( flags, 'page' ) ?? 1;
+	const perPage = integerFlag( flags, 'per-page', { min: 1, max: 100 } ) ?? 25;
+
+	// Core's own comments route, with Decker's comment protection applied on
+	// top of it server-side. There is no separate comment store.
+	const { items, total, total_pages: totalPages } = await restRequest( context, 'GET', '/wp/v2/comments', {
+		params: {
+			post: taskId,
+			page,
+			per_page: perPage,
+			orderby: 'date',
+			order: 'asc',
+			_fields: 'id,author,author_name,date,content',
+		},
+		withMeta: true,
+	} );
+
+	return { ok: true, task_id: taskId, comments: items, page, per_page: perPage, total, total_pages: totalPages };
+}
+
+/**
+ * `decker tasks comment ID --text-file FILE`.
+ *
+ * The text comes from a file so that newlines, quoting and non-ASCII survive
+ * the shell intact.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksComment( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const path = flags[ 'text-file' ];
+
+	if ( ! path || true === path ) {
+		throw new DeckerError(
+			'usage_missing_text_file',
+			'--text-file <path> is required; the comment text is read from a file so its formatting survives.',
+			EXIT.USAGE
+		);
+	}
+
+	let text;
+	try {
+		text = readFileSync( String( path ), 'utf8' );
+	} catch {
+		throw new DeckerError( 'usage_unreadable_file', `Could not read ${ path }.`, EXIT.USAGE );
+	}
+
+	if ( ! text.trim() ) {
+		throw new DeckerError( 'usage_empty_comment', 'The comment text is empty.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	if ( flags[ 'dry-run' ] ) {
+		return { ok: true, dry_run: true, created: false, task_id: taskId, would_post: text };
+	}
+
+	if ( ! flags.yes ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would post a comment. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	// Never retried. A comment creation whose response was lost may well have
+	// been stored, and a retry would post it twice.
+	const comment = await restRequest( context, 'POST', '/wp/v2/comments', {
+		body: { post: taskId, content: text },
+	} );
+
+	return { ok: true, created: true, task_id: taskId, comment };
+}
+
+/**
+ * `decker tasks move ID --stack X [--board N]`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksMove( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const stack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] );
+	const board = integerFlag( flags, 'board' );
+
+	if ( undefined === stack && undefined === board ) {
+		throw new DeckerError(
+			'usage_missing_target',
+			'Give --stack, --board, or both.',
+			EXIT.USAGE
+		);
+	}
+
+	const changes = {};
+	if ( undefined !== stack ) {
+		changes.stack = stack;
+	}
+	if ( undefined !== board ) {
+		changes.board_id = board;
+	}
+
+	const context = await createContext( options );
+
+	// move-task, not update-task: the ability exists so the stack and board
+	// transition runs through the domain behaviour that recalculates ordering
+	// and fires the stack-transition hooks.
+	return applyChanges( context, { taskId, changes, flags, ability: 'decker/move-task' } );
+}
+
+/**
+ * `decker tasks reorder ID --position N [--stack X]`.
+ *
+ * The order endpoint takes the source and target positions, not a bare index,
+ * so the current board state is read first. The client never invents a
+ * position: a guessed source_order silently reorders somebody else's cards.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksReorder( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const position = integerFlag( flags, 'position' );
+
+	if ( undefined === position ) {
+		throw new DeckerError( 'usage_missing_position', '--position <n> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	const task = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	const targetStack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] ) ?? task.stack;
+
+	// Read the board as it is now, so source_order is the task's real position
+	// rather than a guess, and so the target can be checked against the real
+	// length of the destination stack.
+	const siblings = await readStack( context, task.board_id, targetStack );
+	const current = await readStack( context, task.board_id, task.stack );
+	const sourceOrder = current.findIndex( ( entry ) => entry.id === taskId ) + 1;
+
+	if ( sourceOrder < 1 ) {
+		throw new DeckerError(
+			'order_task_not_in_stack',
+			'The task was not found in its own board and stack; re-read it before reordering.',
+			EXIT.CONFLICT
+		);
+	}
+
+	const limit = targetStack === task.stack ? siblings.length : siblings.length + 1;
+	if ( position > limit ) {
+		throw new DeckerError(
+			'usage_position_out_of_range',
+			`--position must be between 1 and ${ limit } for that stack.`,
+			EXIT.USAGE
+		);
+	}
+
+	const payload = {
+		board_id: task.board_id,
+		source_stack: task.stack,
+		target_stack: targetStack,
+		source_order: sourceOrder,
+		target_order: position,
+	};
+
+	if ( sourceOrder === position && targetStack === task.stack ) {
+		return { ok: true, task_id: taskId, changed: false, reason: 'no_change', order: payload };
+	}
+
+	if ( flags[ 'dry-run' ] ) {
+		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_move: payload };
+	}
+
+	if ( ! flags.yes ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would reorder the board. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	// POST, which this route accepts alongside PUT for the same proxy reason.
+	await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/order`, { body: payload } );
+
+	const after = await readStack( context, task.board_id, targetStack );
+
+	return {
+		ok: true,
+		task_id: taskId,
+		changed: true,
+		order: payload,
+		// The resulting sequence, read back rather than assumed.
+		stack: targetStack,
+		sequence: after.map( ( entry ) => entry.id ),
+	};
+}
+
+/**
+ * Read one board stack in its stored order.
+ *
+ * @param {object} context  Request context.
+ * @param {number} boardId  Board ID.
+ * @param {string} stack    Stack slug.
+ * @return {Promise<object[]>} Tasks in order.
+ */
+export async function readStack( context, boardId, stack ) {
+	const result = await restRequest( context, 'GET', abilityPath( 'decker/list-tasks' ), {
+		params: { input: { board_id: boardId, stack, per_page: 100 } },
+	} );
+
+	return result.tasks ?? [];
+}
+
+/**
+ * `decker tasks archive ID` and `decker tasks restore ID`.
+ *
+ * Archiving is reversible, which is why there is no delete command at all.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {boolean}       archived  Target state.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksArchive( id, flags, archived, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const context = await createContext( options );
+
+	return applyChanges( context, {
+		taskId,
+		changes: { archived },
+		flags,
+		ability: 'decker/archive-task',
+	} );
+}
+
+/**
+ * `decker tasks priority ID --on|--off`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksPriority( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+
+	if ( Boolean( flags.on ) === Boolean( flags.off ) ) {
+		throw new DeckerError(
+			'usage_on_or_off',
+			'Use exactly one of --on or --off.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, {
+		taskId,
+		changes: { max_priority: Boolean( flags.on ) },
+		flags,
+	} );
+}
+
+/**
  * Dispatch a command line.
  *
  * @param {string[]} argv      Arguments without the node binary and script.
@@ -1889,6 +2221,22 @@ export async function run( argv, options = {} ) {
 				return tasksAssign( positional[ 0 ], flags, false, options );
 			case 'responsible':
 				return tasksResponsible( positional[ 0 ], flags, options );
+			case 'today':
+				return tasksToday( positional[ 0 ], flags, options );
+			case 'comments':
+				return tasksComments( positional[ 0 ], flags, options );
+			case 'comment':
+				return tasksComment( positional[ 0 ], flags, options );
+			case 'move':
+				return tasksMove( positional[ 0 ], flags, options );
+			case 'reorder':
+				return tasksReorder( positional[ 0 ], flags, options );
+			case 'archive':
+				return tasksArchive( positional[ 0 ], flags, true, options );
+			case 'restore':
+				return tasksArchive( positional[ 0 ], flags, false, options );
+			case 'priority':
+				return tasksPriority( positional[ 0 ], flags, options );
 		}
 	}
 
@@ -1916,6 +2264,14 @@ export async function run( argv, options = {} ) {
 			'  decker tasks assign <id> --user ID',
 			'  decker tasks unassign <id> --user ID',
 			'  decker tasks responsible <id> --user ID',
+			'  decker tasks today <id> --mark|--unmark',
+			'  decker tasks comments <id>',
+			'  decker tasks comment <id> --text-file FILE',
+			'  decker tasks move <id> --stack X [--board ID]',
+			'  decker tasks reorder <id> --position N [--stack X]',
+			'  decker tasks priority <id> --on|--off',
+			'  decker tasks archive <id>',
+			'  decker tasks restore <id>',
 		].join( '\n' ),
 		EXIT.USAGE
 	);
