@@ -213,9 +213,7 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 				if ( $item['assignee'] ) {
 					$this->assertContains( $item['assignee'], $allowed );
 				}
-				if ( '' !== $item['duedate'] ) {
-					$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2}$/', $item['duedate'] );
-				}
+				$this->assertArrayNotHasKey( 'duedate', $item );
 			}
 		}
 

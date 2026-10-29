@@ -299,7 +299,6 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 					'title'    => 'A rather long subtask title that the chip truncates',
 					'status'   => 'in-progress',
 					'assignee' => $this->teammate,
-					'duedate'  => '2026-11-20',
 				),
 			)
 		);
@@ -310,7 +309,6 @@ class DeckerSubtaskCardViewTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'A rather long subtask title that the chip truncates', $markup );
 		$this->assertStringContainsString( $user->display_name, $markup );
 		$this->assertStringContainsString( 'In Progress', $markup );
-		$this->assertStringContainsString( wp_date( get_option( 'date_format' ), strtotime( '2026-11-20' ) ), $markup );
 	}
 
 	/**

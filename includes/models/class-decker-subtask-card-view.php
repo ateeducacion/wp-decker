@@ -233,7 +233,7 @@ class Decker_Subtask_Card_View {
 	}
 
 	/**
-	 * The tooltip of one subtask chip: its full title, owner and due date.
+	 * The tooltip of one subtask chip: its full title, owner and state.
 	 *
 	 * The chip itself truncates to one line, so the untruncated title has to be
 	 * reachable without opening the card.
@@ -248,13 +248,6 @@ class Decker_Subtask_Card_View {
 			$user = get_userdata( $item['assignee'] );
 			if ( $user instanceof WP_User ) {
 				$parts[] = $user->display_name;
-			}
-		}
-
-		if ( '' !== $item['duedate'] ) {
-			$date = DateTime::createFromFormat( 'Y-m-d', $item['duedate'] );
-			if ( $date instanceof DateTime ) {
-				$parts[] = wp_date( get_option( 'date_format' ), $date->getTimestamp() );
 			}
 		}
 

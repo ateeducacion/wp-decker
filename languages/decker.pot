@@ -1775,16 +1775,10 @@ msgstr ""
 msgid "Assignee"
 msgstr ""
 
-msgid "Due date"
-msgstr ""
-
 msgid "Delete subtask"
 msgstr ""
 
 msgid "Are you sure you want to delete this subtask?"
-msgstr ""
-
-msgid "This subtask is past its due date"
 msgstr ""
 
 msgid "Drag to reorder"

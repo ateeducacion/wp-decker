@@ -17,7 +17,7 @@ Decker is a WordPress plugin developed for internal use at the Área de Tecnolog
 ### Key Features
 
 – **Import from Nextcloud Deck through API**: Imports boards and cards from Nextcloud.
-– **Subtasks**: Break a task into steps with their own state, assignee and due date, and see the progress on the card.
+– **Subtasks**: Break a task into steps with their own state and assignee, and see the progress on the card.
 – **Customization**: Adjustable settings available in the WordPress admin panel.  
 - **AI Description Improvements**: Improve task descriptions with Gemini Nano in supported browsers or with the Gemini API through WordPress.  
 – **Multisite Support**: Fully compatible with WordPress multisite installations.  

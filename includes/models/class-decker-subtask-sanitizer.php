@@ -81,7 +81,6 @@ class Decker_Subtask_Sanitizer {
 			'title'    => $title,
 			'status'   => self::sanitize_status( isset( $raw['status'] ) ? $raw['status'] : '' ),
 			'assignee' => self::sanitize_assignee( isset( $raw['assignee'] ) ? $raw['assignee'] : 0, $allowed_assignees ),
-			'duedate'  => self::sanitize_date( isset( $raw['duedate'] ) ? $raw['duedate'] : '' ),
 			'task_id'  => self::sanitize_promoted_task( isset( $raw['task_id'] ) ? $raw['task_id'] : 0 ),
 		);
 	}
@@ -125,30 +124,6 @@ class Decker_Subtask_Sanitizer {
 		$assignee = absint( $value );
 
 		return in_array( $assignee, $allowed_assignees, true ) ? $assignee : 0;
-	}
-
-	/**
-	 * Validate a Y-m-d date string.
-	 *
-	 * @param mixed $value The raw date value.
-	 * @return string The date in Y-m-d form, or an empty string.
-	 */
-	private static function sanitize_date( $value ): string {
-		$value = is_string( $value ) ? trim( $value ) : '';
-
-		if ( '' === $value ) {
-			return '';
-		}
-
-		$date = DateTime::createFromFormat( 'Y-m-d', $value );
-
-		// createFromFormat accepts out-of-range parts (2026-13-45) and rolls them
-		// over, so the round-trip comparison is what actually validates the date.
-		if ( ! $date instanceof DateTime || $date->format( 'Y-m-d' ) !== $value ) {
-			return '';
-		}
-
-		return $value;
 	}
 
 	/**

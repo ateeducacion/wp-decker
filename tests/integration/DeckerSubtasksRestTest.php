@@ -186,7 +186,7 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 					'title'    => '  <script>alert(1)</script>Step  ',
 					'status'   => 'blocked',
 					'assignee' => $this->user_b,
-					'duedate'  => 'whenever',
+					'duedate'  => '2026-11-20',
 				),
 			)
 		);
@@ -196,7 +196,7 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 		$this->assertStringNotContainsString( '<script>', $item['title'] );
 		$this->assertSame( 'to-do', $item['status'] );
 		$this->assertSame( 0, $item['assignee'], 'A user who is not on the task cannot own a subtask.' );
-		$this->assertSame( '', $item['duedate'] );
+		$this->assertArrayNotHasKey( 'duedate', $item, 'A due date sent by an old client is dropped.' );
 	}
 
 	/**
@@ -318,7 +318,6 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 					'title'    => 'Becomes its own task',
 					'status'   => 'in-progress',
 					'assignee' => $this->user_a,
-					'duedate'  => '2026-11-20',
 				),
 			)
 		);
@@ -333,7 +332,7 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 		$this->assertSame( 'decker_task', get_post_type( $new_task_id ) );
 		$this->assertSame( 'Becomes its own task', get_post( $new_task_id )->post_title );
 		$this->assertSame( 'in-progress', get_post_meta( $new_task_id, 'stack', true ) );
-		$this->assertSame( '2026-11-20', get_post_meta( $new_task_id, 'duedate', true ) );
+		$this->assertSame( '2026-12-01', get_post_meta( $new_task_id, 'duedate', true ), 'The new task starts on the parent due date.' );
 		$this->assertSame( (string) $this->user_a, (string) get_post_meta( $new_task_id, 'responsable', true ) );
 
 		$board_terms = wp_get_post_terms( $new_task_id, 'decker_board', array( 'fields' => 'ids' ) );
@@ -346,10 +345,38 @@ class DeckerSubtasksRestTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * An item with no date of its own inherits the parent's.
+	 * A parent with no due date promotes an item that has none either.
 	 */
-	public function test_convert_falls_back_to_the_parent_due_date() {
-		$this->put_items( array( array( 'title' => 'No date of its own' ) ) );
+	public function test_convert_works_without_a_parent_due_date() {
+		delete_post_meta( $this->task_id, 'duedate' );
+
+		$this->put_items( array( array( 'title' => 'No date anywhere' ) ) );
+
+		$response = $this->convert_item( 1 );
+		$this->assertSame( 200, $response->get_status() );
+
+		$new_task_id = $response->get_data()['task_id'];
+		$this->assertSame( '', get_post_meta( $new_task_id, 'duedate', true ) );
+	}
+
+	/**
+	 * A date stored before the model dropped it is not used on promotion.
+	 */
+	public function test_convert_ignores_a_legacy_item_due_date() {
+		update_post_meta(
+			$this->task_id,
+			Decker_Subtasks::META_KEY,
+			array(
+				array(
+					'id'       => 1,
+					'title'    => 'Stored when items had dates',
+					'status'   => 'to-do',
+					'assignee' => 0,
+					'duedate'  => '2026-01-05',
+					'task_id'  => 0,
+				),
+			)
+		);
 
 		$new_task_id = $this->convert_item( 1 )->get_data()['task_id'];
 

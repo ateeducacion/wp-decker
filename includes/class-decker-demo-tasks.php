@@ -154,7 +154,7 @@ class Decker_Demo_Tasks {
 
 			// Seed subtasks so the card counter, the chips and the tab have
 			// something to show without anyone typing a list first.
-			$this->seed_task_subtasks( $task_id, $assigned_users, $end_date );
+			$this->seed_task_subtasks( $task_id, $assigned_users );
 		}
 	}
 
@@ -164,11 +164,10 @@ class Decker_Demo_Tasks {
 	 * Half the tasks keep an empty list: a board where every card carries a
 	 * progress bar is not what the feature looks like in use.
 	 *
-	 * @param int      $task_id        Target task post ID.
-	 * @param int[]    $assigned_users Users available as item assignees.
-	 * @param DateTime $end_date       The task due date, reused by some items.
+	 * @param int   $task_id        Target task post ID.
+	 * @param int[] $assigned_users Users available as item assignees.
 	 */
-	private function seed_task_subtasks( $task_id, $assigned_users, $end_date ) {
+	private function seed_task_subtasks( $task_id, $assigned_users ) {
 		if ( $this->random->random_boolean( 0.5 ) ) {
 			return;
 		}
@@ -184,7 +183,6 @@ class Decker_Demo_Tasks {
 				'assignee' => ( ! empty( $assigned_users ) && $this->random->random_boolean( 0.7 ) )
 					? $assigned_users[ array_rand( $assigned_users ) ]
 					: 0,
-				'duedate'  => $this->random->random_boolean( 0.4 ) ? $end_date->format( 'Y-m-d' ) : '',
 			);
 		}
 

@@ -119,8 +119,8 @@ class Decker_Tasks_Rest_Subtasks {
 	 * Promote a subtask into a task of its own.
 	 *
 	 * The new task inherits the parent's board (a task cannot exist without
-	 * one) and falls back to the parent's responsable and due date when the
-	 * item carries none. The item stays in the list, linked to the task it
+	 * one) and its due date, and falls back to the parent's responsable when
+	 * the item carries none. The item stays in the list, linked to the task it
 	 * became, so the parent keeps showing the whole breakdown.
 	 *
 	 * @param WP_REST_Request $request The REST request.
@@ -189,7 +189,7 @@ class Decker_Tasks_Rest_Subtasks {
 				'title'          => $item['title'],
 				'stack'          => $item['status'],
 				'board'          => $parent->board->id,
-				'duedate'        => $this->resolve_promoted_duedate( $item['duedate'], $parent->duedate ),
+				'duedate'        => $parent->duedate,
 				'author'         => get_current_user_id(),
 				'responsable'    => $responsable,
 				'assigned_users' => $item['assignee'] > 0 ? array( $item['assignee'] ) : array(),
@@ -201,24 +201,6 @@ class Decker_Tasks_Rest_Subtasks {
 		}
 
 		return (int) $new_task_id;
-	}
-
-	/**
-	 * The due date a promoted subtask starts with.
-	 *
-	 * @param string        $item_duedate   The item due date in Y-m-d form, or empty.
-	 * @param DateTime|null $parent_duedate The parent task due date.
-	 * @return DateTime|null The due date for the new task.
-	 */
-	private function resolve_promoted_duedate( string $item_duedate, ?DateTime $parent_duedate ): ?DateTime {
-		if ( '' !== $item_duedate ) {
-			$date = DateTime::createFromFormat( 'Y-m-d', $item_duedate );
-			if ( $date instanceof DateTime ) {
-				return $date;
-			}
-		}
-
-		return $parent_duedate;
 	}
 
 	/**
