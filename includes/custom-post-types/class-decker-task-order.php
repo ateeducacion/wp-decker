@@ -238,6 +238,11 @@ class Decker_Task_Order {
 			array( '%d' )  // The data type of the condition (integer).
 		);
 
+		// The row was written with raw SQL, which does not go through
+		// wp_update_post(), so WordPress still holds the old menu_order in the
+		// post cache. See flush_stack_cache() for why that matters.
+		clean_post_cache( $task_id );
+
 		// Make room at the destination so the moved card deterministically occupies
 		// $final_order. Without this shift the moved card and the incumbent at that
 		// slot share a menu_order and the renumber tie-break would depend on
@@ -327,6 +332,62 @@ class Decker_Task_Order {
 				$exclude_post_id
 			)
 		);
+
+		$this->flush_stack_cache( $board_term_id, $stack );
+
+		return $result;
+	}
+
+	/**
+	 * Drop the cached post objects for a board and stack.
+	 *
+	 * Every menu_order write in this class is raw SQL: a bulk UPDATE with a
+	 * JOIN cannot be expressed through wp_update_post(), and going row by row
+	 * would be far slower. The cost is that WordPress never learns the values
+	 * changed, so get_post() keeps serving the menu_order it cached before the
+	 * move.
+	 *
+	 * Without a persistent object cache that only lasts until the end of the
+	 * request, which is why it went unnoticed. With one -- Redis or Memcached,
+	 * which is the normal production setup -- the `posts` group survives the
+	 * request, so a board keeps rendering the old order after a drag until
+	 * something else happens to invalidate those posts.
+	 *
+	 * ponytail: one extra SELECT per renumber to learn which rows were touched,
+	 * because a bulk UPDATE does not report them. Collect the ids in the caller
+	 * if that ever shows up in a profile.
+	 *
+	 * @param int    $board_term_id Board term ID.
+	 * @param string $stack         Stack slug.
+	 * @return void
+	 */
+	private function flush_stack_cache( int $board_term_id, string $stack ): void {
+		global $wpdb;
+
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr
+					ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt
+					ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->postmeta} pm_stack
+					ON p.ID = pm_stack.post_id
+					AND pm_stack.meta_key = 'stack'
+				WHERE p.post_type = 'decker_task'
+					AND p.post_status = 'publish'
+					AND pm_stack.meta_value = %s
+					AND tt.term_id = %d
+				GROUP BY p.ID",
+				$stack,
+				$board_term_id
+			)
+		);
+
+		foreach ( $ids as $id ) {
+			clean_post_cache( (int) $id );
+		}
 	}
 
 	/**

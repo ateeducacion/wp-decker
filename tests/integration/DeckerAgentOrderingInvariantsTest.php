@@ -358,6 +358,69 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * get_post() must see the new order, not the one it cached.
+	 *
+	 * Every menu_order write in the order engine is raw SQL, so WordPress never
+	 * learns the values changed and keeps serving the cached post objects.
+	 * Without a persistent object cache that only lasts until the end of the
+	 * request, which is why it went unnoticed; with Redis or Memcached -- the
+	 * normal production setup -- the `posts` group survives the request and a
+	 * board keeps rendering the old order after a drag.
+	 *
+	 * Found while writing these tests: the stored column and the served
+	 * sequence appeared to disagree, and the disagreement was the stale cache.
+	 */
+	public function test_the_post_cache_sees_the_new_order() {
+		// Prime the cache the way a page render would, before the move.
+		foreach ( $this->tasks as $id ) {
+			get_post( $id );
+		}
+
+		$this->reorder( $this->tasks['fourth'], 'to-do', 'to-do', 4, 1 );
+
+		$cached = array();
+		foreach ( $this->sequence() as $id ) {
+			$cached[] = (int) get_post( $id )->menu_order;
+		}
+
+		$sorted = $cached;
+		sort( $sorted );
+		$this->assertSame(
+			$sorted,
+			$cached,
+			'get_post() is serving a stale menu_order: ' . wp_json_encode( $cached )
+		);
+
+		// The card that was dropped at the front holds the lowest order.
+		$this->assertSame( min( $cached ), $cached[0] );
+	}
+
+	/**
+	 * A cross-stack move refreshes both stacks' cached objects.
+	 */
+	public function test_the_post_cache_is_refreshed_in_both_stacks() {
+		foreach ( $this->tasks as $id ) {
+			get_post( $id );
+		}
+
+		$this->reorder( $this->tasks['second'], 'to-do', 'in-progress', 2, 1 );
+
+		$this->assertSame(
+			'in-progress',
+			get_post_meta( $this->tasks['second'], 'stack', true )
+		);
+
+		$remaining = array();
+		foreach ( $this->sequence() as $id ) {
+			$remaining[] = (int) get_post( $id )->menu_order;
+		}
+
+		$sorted = $remaining;
+		sort( $sorted );
+		$this->assertSame( $sorted, $remaining, wp_json_encode( $remaining ) );
+	}
+
+	/**
 	 * Repeated reads return the same order.
 	 */
 	public function test_order_is_stable_across_reads() {
