@@ -103,7 +103,8 @@ around them:
   or `--before ID`. The server resolves it, where the whole stack is visible, so
   it is exact. The neighbour's stack is the destination, so this also moves a
   card between stacks in one step — on the same board. To move a card to
-  another board, use the move operation, not a neighbour there.
+  another board, use the move operation, not a neighbour there. `--stack`
+  cannot be combined with them: the neighbour's stack is the destination.
 - `--position N` is the older form and **cannot be exact** when the stack holds
   tasks this account may not see: a position counts them, and they cannot be
   listed. It verifies where the card landed and reports

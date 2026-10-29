@@ -115,11 +115,15 @@ boundary is not attempted, because the renumber pass sorts priority first and
 would undo it. The sequence itself is never returned: it contains tasks the
 caller may not be allowed to see.
 
-Every `decker/v1/tasks/{id}` route, this one included, refuses a card hidden
-from the caller with 403 `rest_forbidden` before the callback runs. The
-object-level capability is not enough on its own: `edit_post` is held over
-other people's cards by an editor, while Decker's hidden-task rule answers to
-participation, not to capabilities.
+Every `decker/v1/tasks/{id}` route, this one included, requires the
+configured minimum role as well as whatever else it asks for, and refuses a
+card hidden from the caller with 403 `rest_forbidden` before the callback
+runs. A capability is not enough on its own, in either direction: `edit_post`
+is held over other people's cards by an editor and over their own by an author,
+while Decker's hidden-task rule answers to participation and its minimum role
+to configuration, neither of which is a capability. The abilities answer to the
+same gate, so the two surfaces an agent reaches cannot disagree about who is
+allowed in.
 
 `adjacent` and `changed` are statements about the whole stack, so both disclose
 whether a card the caller cannot see sits between the two named ones — their

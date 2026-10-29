@@ -1712,6 +1712,19 @@ describe( 'today, comments, ordering and archiving', () => {
 		expect( state.lastPlace ).toBeNull();
 	} );
 
+	it( 'refuses --stack next to a neighbour, instead of ignoring it', async () => {
+		// The neighbour's stack is the destination, so the flag is either
+		// redundant or a contradiction the server would silently win.
+		await expect(
+			client.tasksReorder( 31, { after: '55', stack: 'done', yes: true } )
+		).rejects.toMatchObject( {
+			code: 'usage_conflicting_position',
+			exit: client.EXIT.USAGE,
+		} );
+
+		expect( state.lastPlace ).toBeNull();
+	} );
+
 	it( 'needs a position', async () => {
 		await expect( client.tasksReorder( 31, { yes: true } ) ).rejects.toMatchObject( {
 			code: 'usage_missing_position',

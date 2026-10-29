@@ -373,6 +373,63 @@ class DeckerAbilitiesStaleWriteTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A meta-only write by another route is detected too.
+	 *
+	 * `/assign` changes `assigned_users` with update_post_meta(), which leaves
+	 * post_modified_gmt alone, so the guard used to see an unchanged task and
+	 * let the agent's own assignee list through — dropping the colleague's
+	 * assignee, with no same-second race involved. Those routes now stamp the
+	 * task as modified.
+	 */
+	public function test_an_assignment_by_another_route_is_not_lost() {
+		global $wpdb;
+		do_action( 'rest_api_init' );
+
+		$third = self::factory()->user->create( array( 'role' => 'editor' ) );
+
+		// Push the task into the past so the colleague's write lands in a
+		// different second, which is the window this guard can see. See
+		// test_same_second_change_is_not_detected() for the one it cannot.
+		$earlier = gmdate( 'Y-m-d H:i:s', time() - 5 );
+		$wpdb->update(
+			$wpdb->posts,
+			array(
+				'post_modified'     => $earlier,
+				'post_modified_gmt' => $earlier,
+			),
+			array( 'ID' => $this->task_id )
+		);
+		clean_post_cache( $this->task_id );
+
+		$stale = $this->read_modified();
+
+		// The colleague assigns somebody through the existing route.
+		wp_set_current_user( $this->colleague_id );
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/assign' );
+		$request->set_url_params( array( 'id' => $this->task_id ) );
+		$request->set_param( 'user_id', $this->colleague_id );
+		$assigned = rest_get_server()->dispatch( $request );
+		$this->assertSame( 200, $assigned->get_status(), wp_json_encode( $assigned->get_data() ) );
+
+		// The agent writes the assignee list it read before that.
+		wp_set_current_user( $this->agent_id );
+		$result = $this->service->update_task(
+			array(
+				'task_id'           => $this->task_id,
+				'expected_modified' => $stale,
+				'assigned_user_ids' => array( $third ),
+			)
+		);
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_task_stale', $result->get_error_code() );
+
+		$stored = array_map( 'absint', (array) get_post_meta( $this->task_id, 'assigned_users', true ) );
+		$this->assertContains( $this->colleague_id, $stored, "The colleague's assignee was dropped." );
+		$this->assertNotContains( $third, $stored );
+	}
+
+	/**
 	 * The field is accepted by the schemas that need it.
 	 */
 	public function test_schemas_accept_the_field() {

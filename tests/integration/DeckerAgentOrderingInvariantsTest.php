@@ -733,6 +733,45 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Editing your own card is not enough to reorder it.
+	 *
+	 * An author may edit their own published posts, so the object-level
+	 * capability alone would let an account that cannot open Decker place its
+	 * own card — and the placement shifts everybody else's menu_order with it.
+	 * Every route registered for the Decker screens requires the configured
+	 * minimum role as well, which is the gate those screens use.
+	 */
+	public function test_an_author_below_the_minimum_role_cannot_place_its_own_card() {
+		$author = self::factory()->user->create( array( 'role' => 'author' ) );
+		wp_set_current_user( $author );
+		$own = self::factory()->task->create(
+			array(
+				'post_title'  => 'Mine',
+				'board'       => $this->board_id,
+				'stack'       => 'to-do',
+				'post_author' => $author,
+			)
+		);
+
+		// The premise: WordPress lets an author edit their own published post,
+		// so the object-level capability is satisfied here.
+		$this->assertTrue( current_user_can( 'edit_post', $own ) );
+		$this->assertFalse( Decker::current_user_has_at_least_minimum_role() );
+		$before = $this->sequence();
+
+		$refused = $this->place( $own, 'after', $this->tasks['first'] );
+		$this->assertSame( 403, $refused->as_error()->get_error_data()['status'] );
+		$this->assertSame( 403, $this->reorder( $own, 'to-do', 'to-do', 5, 1 )->get_status() );
+		$this->assertSame( $before, $this->sequence() );
+
+		// Allowed once the configured minimum lets that role into Decker.
+		update_option( 'decker_settings', array( 'minimum_user_profile' => 'author' ) );
+		$allowed = $this->place( $own, 'after', $this->tasks['first'] );
+		$this->assertSame( 200, $allowed->get_status(), wp_json_encode( $allowed->get_data() ) );
+		delete_option( 'decker_settings' );
+	}
+
+	/**
 	 * An archived card is refused before anything is written.
 	 *
 	 * It is in no stack, so the renumber pass and the adjacency read-back both

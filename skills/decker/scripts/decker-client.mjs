@@ -2312,6 +2312,16 @@ export async function tasksReorder( id, flags, options = {} ) {
 		);
 	}
 
+	if ( anchors.length && 'stack' in flags ) {
+		// The neighbour's stack is the destination, so --stack is either
+		// redundant or a contradiction, and the server would silently win.
+		throw new DeckerError(
+			'usage_conflicting_position',
+			'--stack cannot be combined with --after or --before: the stack of the card named there is the destination.',
+			EXIT.USAGE
+		);
+	}
+
 	if ( undefined !== afterId ) {
 		return tasksPlace( id, afterId, 'after', flags, options );
 	}

@@ -58,13 +58,41 @@ class Decker_Tasks_Rest_Support {
 	/**
 	 * Build the permission callback closure for a given permission type.
 	 *
+	 * Every route registered here backs a Decker screen, so every one of them
+	 * requires the configured minimum role as well as whatever else it asks
+	 * for. A capability on its own is weaker than the interface: an author may
+	 * edit their own published posts, so `edit_task` alone would let an
+	 * account that cannot open Decker reorder a card of its own and shift
+	 * everybody else's `menu_order` with it, and `edit_posts` alone would let
+	 * it read through the search and lock routes. The abilities answer to the
+	 * same gate, so the two surfaces an agent can reach cannot disagree about
+	 * who is allowed in.
+	 *
 	 * @param string $permission The permission key ('minimum_role' or a capability slug).
 	 * @return callable The permission callback.
 	 */
 	public static function permission_callback( string $permission ): callable {
+		$specific = self::specific_permission_callback( $permission );
+
+		return function ( $request ) use ( $specific ) {
+			if ( ! Decker::current_user_has_at_least_minimum_role() ) {
+				return false;
+			}
+
+			return $specific( $request );
+		};
+	}
+
+	/**
+	 * Build the route's own permission check, without the minimum-role gate.
+	 *
+	 * @param string $permission The permission key ('minimum_role' or a capability slug).
+	 * @return callable The permission callback.
+	 */
+	private static function specific_permission_callback( string $permission ): callable {
 		if ( 'minimum_role' === $permission ) {
 			return function () {
-				return Decker::current_user_has_at_least_minimum_role();
+				return true;
 			};
 		}
 

@@ -163,7 +163,14 @@ class DeckerTasksRestToolsEdgeCasesTest extends Decker_Test_Base {
 		$author = self::factory()->user->create( array( 'role' => 'author' ) );
 		wp_set_current_user( $author );
 
+		// Every task route also requires the configured minimum role, so the
+		// caller has to clear that gate for this to exercise the route's own
+		// object-level refusal rather than the gate.
+		update_option( 'decker_settings', array( 'minimum_user_profile' => 'author' ) );
+
 		$response = $this->dispatch( 'POST', '/decker/v1/tasks/' . $task_id . '/clone' );
+
+		delete_option( 'decker_settings' );
 
 		$this->assertSame( 403, $response->get_status() );
 		$this->assertFalse( $response->get_data()['success'] );

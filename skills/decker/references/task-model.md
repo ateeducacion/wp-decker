@@ -52,7 +52,11 @@ entry never means rewriting the collection by hand.
 `modified` is the optimistic-concurrency token. A write may carry
 `expected_modified`, and the server refuses it with HTTP 409 when the task has
 changed since that read, instead of overwriting whatever changed. The client
-always sends it.
+always sends it. The Decker routes that change a task by writing meta alone —
+assigning a person, leaving a task, setting a due date — stamp the task as
+modified for exactly this reason, so a change made through the interface is
+visible to the token and cannot be overwritten by a caller that read the task
+before it.
 
 Two further rules, both server-side:
 
