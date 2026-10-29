@@ -105,11 +105,14 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
 		).toHaveValue( '0' );
 
-		// Give the second item a date.
-		await rows.nth( 1 ).locator( '.decker-subtask-duedate' ).fill( '2026-11-20' );
 		await expect( page.locator( '.decker-subtasks-status' ) ).toHaveText(
 			/Saved|Guardado/
 		);
+
+		// Subtasks carry no date of their own: that lives on the task.
+		await expect(
+			page.locator( '.decker-subtasks-list input[type="date"]' )
+		).toHaveCount( 0 );
 
 		// Everything above was written as it happened, with no card save.
 		await page.reload();
@@ -119,9 +122,6 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		await expect(
 			rows.nth( 0 ).locator( '.decker-subtask-status i.ri-checkbox-circle-line' )
 		).toHaveCount( 1 );
-		await expect(
-			rows.nth( 1 ).locator( '.decker-subtask-duedate' )
-		).toHaveValue( '2026-11-20' );
 		await expect(
 			rows.nth( 0 ).locator( '.decker-subtask-assignee' )
 		).toHaveValue( '0' );

@@ -139,3 +139,68 @@ cheap one. Only the last chip gives up part of its row, to the `+N`.
 - Item titles accept a multi-line paste as one item per line, which is how an
   existing spreadsheet column gets in.
 - A task holds at most 200 items, bounding the serialized meta and the render.
+
+## Addendum — 2026-10-29: Remove due dates from lightweight subtasks
+
+### Context
+
+The first implementation gave every item a due date of its own, prefilled from
+the parent task's when the item was created. In use that turned out to be a
+second planning layer: moving the task's deadline left every item sitting on
+the old one, and nothing reconciled the two. Those dates also went nowhere —
+they were not in the calendar, not in search, not in upcoming, not in any of
+the planning views — so they could be wrong without anything noticing, while
+looking exactly as authoritative as the task's own date.
+
+### Decision
+
+Subtasks have no due date. The deadline belongs to the task; an item is a step
+of executing it, not something scheduled on its own. A step that needs its own
+deadline is promoted into a task, which is what promotion was already for.
+
+`duedate` is gone from the item model, from `Decker_Subtask_Sanitizer`, from
+the REST payload and from the row. A `duedate` sent by a client is dropped like
+any other unknown field.
+
+### Consequences
+
+- One field fewer in the model, and `sanitize_date()`,
+  `resolve_promoted_duedate()`, `buildDueDateField()`, `defaultDueDate()` and
+  the overdue flagging all go with it.
+- The row loses a column, so the pane is narrower and reads as a checklist.
+- There are no longer two dates that can disagree about the same work.
+- A single step cannot carry its own deadline any more.
+- Promotion is how that is recovered: the new task starts on the parent's due
+  date and is edited from there like any other card.
+- States, assignees, ordering, progress and the card chips are unchanged.
+
+### Backward compatibility
+
+The feature had not been released, so no site holds subtask dates that anyone
+depends on; no backup meta and no migration are shipped for them. A stored
+`duedate` left over from a development install is simply ignored on read — the
+sanitizer does not return it — and disappears the next time the list is
+written. Everything else on such an item (title, state, assignee, promotion
+link) is preserved.
+
+Tasks promoted before this change keep their due dates: they are ordinary
+tasks, and nothing here touches task meta. A legacy item date is not used when
+promoting after this change either — the new task starts on the parent task's
+current due date, or on none when the parent has none.
+
+### Alternatives considered
+
+1. **Keep independent per-subtask dates.** The status quo, and the source of
+   the drift described above.
+2. **Inherit the parent's date dynamically.** The row would always agree with
+   the task, but then the field shows information it cannot change, which is a
+   worse version of showing nothing.
+3. **Keep the field, hide it in the UI.** Dead data that the API still returns
+   and that the next person has to decide what to do with.
+
+Removal won on both counts: nothing to keep in sync, and nothing to explain.
+
+This addendum supersedes the part of the original decision above that lists a
+due date among a subtask's properties. The rest of that decision — the
+serialized meta on the parent, the write path and its lock contract, the card
+chips and the promotion path — stands unchanged.
