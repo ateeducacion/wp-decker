@@ -110,6 +110,19 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Read the stored menu_order of the stack, in listing order.
+	 *
+	 * @param string $stack Stack slug.
+	 * @return int[] The stored values.
+	 */
+	private function stored_orders( string $stack = 'to-do' ): array {
+		return array_map(
+			static fn( $id ) => (int) get_post( $id )->menu_order,
+			$this->sequence( $stack )
+		);
+	}
+
+	/**
 	 * Dispatch the order endpoint the way the board drag does.
 	 *
 	 * @param int    $task_id      Task to move.
@@ -314,6 +327,70 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 			),
 			$this->sequence(),
 			'The card was asked for the third position.'
+		);
+	}
+
+	/**
+	 * Restoring an archived card does not give two cards one position.
+	 *
+	 * Archiving renumbers the stack but the archived card keeps its old
+	 * `menu_order`, so restoring it used to collide with whoever inherited
+	 * that number. Positions are indices over the stack, so the collision
+	 * makes the next position move land on the wrong card.
+	 */
+	public function test_restoring_an_archived_card_keeps_positions_unique() {
+		$this->service->update_task(
+			array(
+				'task_id'  => $this->tasks['second'],
+				'archived' => true,
+			)
+		);
+
+		$this->assertSame(
+			array( 1, 2, 3 ),
+			$this->stored_orders(),
+			'Archiving renumbers what is left on the board.'
+		);
+
+		$this->service->update_task(
+			array(
+				'task_id'  => $this->tasks['second'],
+				'archived' => false,
+			)
+		);
+
+		$this->assertSame(
+			array( 1, 2, 3, 4 ),
+			$this->stored_orders(),
+			'The restored card must not share a position with another.'
+		);
+
+		// And the arithmetic built on those positions still holds.
+		$this->reorder( $this->tasks['first'], 'to-do', 'to-do', 1, 4 );
+		$this->assertSame( $this->tasks['first'], $this->sequence()[3] );
+	}
+
+	/**
+	 * Trashing a card compacts the stack, as deleting one does.
+	 *
+	 * `wp_trash_post()` does not fire `before_delete_post`, so the deletion
+	 * handler never sees it; the status transition does, and that is where it
+	 * is handled.
+	 */
+	public function test_trashing_a_card_compacts_the_stack() {
+		wp_trash_post( $this->tasks['first'] );
+
+		$this->assertSame( array( 1, 2, 3 ), $this->stored_orders() );
+
+		$this->reorder( $this->tasks['second'], 'to-do', 'to-do', 1, 3 );
+
+		$this->assertSame(
+			array(
+				$this->tasks['third'],
+				$this->tasks['fourth'],
+				$this->tasks['second'],
+			),
+			$this->sequence()
 		);
 	}
 

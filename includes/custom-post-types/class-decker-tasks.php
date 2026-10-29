@@ -158,11 +158,10 @@ class Decker_Tasks {
 	/**
 	 * Handle task deletion to reorder tasks.
 	 *
-	 * The board is a taxonomy term, not post meta. Reading it with
-	 * get_post_meta() returned nothing for every task, so the stack was never
-	 * renumbered after a deletion and kept a gap: the positions a client or the
-	 * board drag sends are indices over the visible stack, and with a gap in
-	 * the stored values the card landed one slot short of where it was asked.
+	 * A gap in the stored menu_order makes the next position move land short,
+	 * because the positions a client and the board drag send are indices over
+	 * the visible stack. See renumber_task_stack() for the lookup this used to
+	 * get wrong.
 	 *
 	 * @param int $post_id The ID of the post being deleted.
 	 */
@@ -171,12 +170,7 @@ class Decker_Tasks {
 			return;
 		}
 
-		$board_terms   = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
-		$board_term_id = ! is_wp_error( $board_terms ) && ! empty( $board_terms ) ? (int) $board_terms[0] : 0;
-		$stack         = get_post_meta( $post_id, 'stack', true );
-		if ( $board_term_id > 0 && $stack ) {
-			$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
-		}
+		$this->renumber_task_stack( (int) $post_id, false );
 
 		do_action( 'decker_task_updated', $post_id ); // Invalidates .ics “all”.
 	}
@@ -189,24 +183,55 @@ class Decker_Tasks {
 	 * @param WP_Post $post The post object.
 	 */
 	public function handle_task_status_change( $new_status, $old_status, $post ) {
-		if ( 'decker_task' !== $post->post_type ) {
+		if ( 'decker_task' !== $post->post_type || $new_status === $old_status ) {
 			return;
 		}
 
 		if ( 'archived' === $new_status && 'publish' === $old_status ) {
-
 			// A task promoted out of a subtask list leaves that list when it
 			// is archived: the step is over and out of the way.
 			Decker_Subtask_Links::detach_from_parent( (int) $post->ID );
+		}
 
-			$board_term_id = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
-			$board_term_id = ! empty( $board_term_id ) ? $board_term_id[0] : 0;
+		// The board holds published tasks, so the order changes when a card
+		// enters or leaves that set, whichever status it comes from or goes to:
+		// archived, trashed or draft. A card leaving used to be the only case
+		// handled, which left the one coming back holding a menu_order that
+		// meanwhile belonged to somebody else -- two cards with one position,
+		// and positions are indices over the stack.
+		//
+		// Creation is not such a transition: the insert already renumbers for
+		// the board term and for the stack meta, and a third pass would be the
+		// one removed in this same branch.
+		$entering = 'publish' === $new_status && 'new' !== $old_status;
+		$leaving  = 'publish' === $old_status;
 
-			$stack = get_post_meta( $post->ID, 'stack', true );
+		if ( $entering || $leaving ) {
+			$this->renumber_task_stack( (int) $post->ID, $entering );
+		}
+	}
 
-			if ( $board_term_id > 0 && $stack ) {
-				$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
-			}
+	/**
+	 * Renumber the stack a task belongs to.
+	 *
+	 * The board is a taxonomy term, never post meta: reading it with
+	 * get_post_meta() found nothing for every task created the normal way,
+	 * which is why a deletion used to leave a gap in the stored menu_order.
+	 *
+	 * @param int  $post_id The task ID.
+	 * @param bool $include Whether the task itself takes part. A card on its
+	 *                      way off the board is excluded; one coming back takes
+	 *                      part, so its stale menu_order cannot collide with an
+	 *                      incumbent's.
+	 * @return void
+	 */
+	private function renumber_task_stack( int $post_id, bool $include ): void {
+		$terms         = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$board_term_id = ! is_wp_error( $terms ) && ! empty( $terms ) ? (int) $terms[0] : 0;
+		$stack         = get_post_meta( $post_id, 'stack', true );
+
+		if ( $board_term_id > 0 && $stack ) {
+			$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $include ? 0 : $post_id );
 		}
 	}
 
