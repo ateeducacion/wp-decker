@@ -60,6 +60,9 @@ Filter on the server; never fetch broadly and sift. `--mine`,
 authenticated user, and they answer different questions — ask which one the
 person means if their wording does not say.
 
+If a listing comes back with `truncated: true`, the server stopped scanning and
+the answer is incomplete: say so rather than presenting it as the full picture.
+
 Paginate instead of raising `--per-page` to pull everything in. Use
 `tasks list` for an overview and `tasks show` only for the tasks you actually
 need the description of: task bodies are the bulk of the context cost.
@@ -92,7 +95,11 @@ around them:
   conflict if the task changed in between. **Do not retry a conflict.** Re-read
   the task, rebuild the change, and ask the user again.
 - A write whose outcome is unknown exits 10. Read the task back before doing
-  anything else; never repeat it, because it may have been applied.
+  anything else; never repeat it, because it may have been applied. Any
+  transport failure or 5xx on a write counts, not just an obvious one.
+- `reorder` verifies where the card landed. If it reports
+  `order_not_as_requested`, the board did change but not as asked — tell the
+  user the actual order instead of trying again.
 
 Author, responsible user and assignees are three different things. "Assign it
 to Ana" means an assignee; "Ana is in charge" means the responsible user. Ask

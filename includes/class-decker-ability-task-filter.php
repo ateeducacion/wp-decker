@@ -81,9 +81,21 @@ class Decker_Ability_Task_Filter {
 		$meta = array();
 
 		if ( ! empty( $input['today'] ) ) {
+			// Narrowed to this user and this date rather than every task that
+			// has ever carried a relation: the PHP pass is capped, so without
+			// this a user's own task could fall outside the candidate set on a
+			// busy site. The value is a serialized array, so these are prefixes
+			// of its records and matches() still decides. "i:5;" cannot match
+			// "i:15;", because the terminator is part of the needle.
 			$meta[] = array(
 				'key'     => Decker_Task_Today_Manager::META_KEY,
-				'compare' => 'EXISTS',
+				'value'   => sprintf( '"user_id";i:%d;', get_current_user_id() ),
+				'compare' => 'LIKE',
+			);
+			$meta[] = array(
+				'key'     => Decker_Task_Today_Manager::META_KEY,
+				'value'   => sprintf( '"date";s:10:"%s";', Decker_Task_Date_Relations::today_string() ),
+				'compare' => 'LIKE',
 			);
 		}
 

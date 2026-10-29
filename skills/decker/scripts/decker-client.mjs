@@ -694,7 +694,12 @@ export async function restRequest( context, method, path, { params = {}, body = 
 	}
 
 	if ( ! response.ok ) {
-		throw errorForStatus( response.status, 'string' === typeof data?.code ? data.code : '' );
+		const failure = errorForStatus( response.status, 'string' === typeof data?.code ? data.code : '' );
+
+		// A 5xx on a write is not a failure, it is an unknown: a proxy can
+		// answer 502 after the backend has already persisted the operation.
+		// A 4xx is certain -- the request was rejected before any work.
+		throw response.status >= 500 ? uncertainOnWrite( failure ) : failure;
 	}
 
 	if ( ! withMeta ) {
@@ -2180,11 +2185,15 @@ export async function tasksReorder( id, flags, options = {} ) {
 		target_order: position,
 	};
 
-	// A hidden task belonging to somebody else still occupies a position and is
-	// not in this listing, and that cannot be detected from here. The server
-	// only uses source_order to decide the direction of the move, so the cost
-	// is landing a slot off rather than anywhere at all -- which is why the
-	// resulting sequence is read back below instead of being assumed.
+	// A hidden task belonging to somebody else occupies a real position and
+	// cannot be listed here, so an index derived from this view is not the
+	// index the ordering engine works with, and the card can land anywhere
+	// between the neighbours it was aimed at. An earlier comment here claimed
+	// the error was bounded to one slot; it is not, and
+	// DeckerAgentOrderingInvariantsTest records what actually happens. The
+	// outcome is therefore verified below rather than assumed, and a move that
+	// did not land where it was asked is reported as a failure instead of a
+	// success with a surprising sequence.
 
 
 	if ( sourceOrder === position && targetStack === task.stack ) {
@@ -2207,6 +2216,19 @@ export async function tasksReorder( id, flags, options = {} ) {
 	await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/order`, { body: payload } );
 
 	const after = await readStack( context, task.board_id, targetStack );
+	const sequence = after.map( ( entry ) => entry.id );
+	const landed = sequence.indexOf( taskId ) + 1;
+
+	if ( landed !== position ) {
+		// Reported, not smoothed over. The board did change, so there is
+		// nothing to undo blindly, and the agent has to tell the user where the
+		// card actually is.
+		throw new DeckerError(
+			'order_not_as_requested',
+			`The board was reordered but the task is at position ${ landed || 'unknown' }, not ${ position }. The stack contains tasks this account cannot see, so a position cannot be set exactly. Current order: ${ sequence.join( ', ' ) }.`,
+			EXIT.CONFLICT
+		);
+	}
 
 	return {
 		ok: true,
@@ -2215,7 +2237,8 @@ export async function tasksReorder( id, flags, options = {} ) {
 		order: payload,
 		// The resulting sequence, read back rather than assumed.
 		stack: targetStack,
-		sequence: after.map( ( entry ) => entry.id ),
+		position: landed,
+		sequence,
 	};
 }
 

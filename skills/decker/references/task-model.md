@@ -95,11 +95,15 @@ Two things worth knowing before touching order:
 - Changing a task's stack is not the same as placing it at a position. `move`
   changes the stack and lets the domain recalculate; `reorder` positions it.
 - A position is a position *within the stack as the server sees it*, which
-  includes hidden tasks the caller may not be able to list. The client reads the
-  stack with hidden tasks included and paginates it fully, and refuses to
-  reorder when it cannot read the whole stack; a hidden task belonging to
-  somebody else can still shift a position by one, which is why the resulting
-  sequence is read back rather than assumed.
+  includes hidden tasks the caller cannot list. The client reads the stack with
+  hidden tasks included and paginates it fully, and refuses to reorder when it
+  could not read the whole stack. **It cannot set a position exactly when the
+  stack holds tasks belonging to other people that it cannot see**: the index it
+  derives is not the index the engine uses, and the card can land anywhere
+  between the neighbours it was aimed at, not merely one slot away. So the
+  client reads the order back and compares: a card that did not land where it
+  was asked is reported as a conflict naming where it actually is, never as a
+  success.
 - Stored `menu_order` values are **not** guaranteed contiguous. The renumbering
   pass excludes the card being moved, so it keeps an intermediate value while
   the others are renumbered. What holds is the relative sequence, and that no

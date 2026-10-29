@@ -421,6 +421,60 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A position derived from a partial view of the stack does not land there.
+	 *
+	 * Hidden tasks occupy real positions, and a client cannot list the ones
+	 * belonging to other people, so an index computed from what it can see is
+	 * not the index the engine works with. This records how far off the result
+	 * can be, which is what the client's refusal and verification are sized
+	 * against: it is not bounded to a single slot.
+	 */
+	public function test_a_position_from_a_partial_view_is_not_honoured() {
+		// Real order: first, hidden_one, hidden_two, fourth.
+		$hidden_one = self::factory()->task->create(
+			array(
+				'post_title' => 'Hidden one',
+				'board'      => $this->board_id,
+				'stack'      => 'to-do',
+			)
+		);
+		$hidden_two = self::factory()->task->create(
+			array(
+				'post_title' => 'Hidden two',
+				'board'      => $this->board_id,
+				'stack'      => 'to-do',
+			)
+		);
+		update_post_meta( $hidden_one, 'hidden', '1' );
+		update_post_meta( $hidden_two, 'hidden', '1' );
+		wp_update_post( array( 'ID' => $this->tasks['second'], 'menu_order' => 90 ) );
+		wp_update_post( array( 'ID' => $this->tasks['third'], 'menu_order' => 91 ) );
+		wp_update_post( array( 'ID' => $hidden_one, 'menu_order' => 2 ) );
+		wp_update_post( array( 'ID' => $hidden_two, 'menu_order' => 3 ) );
+		wp_update_post( array( 'ID' => $this->tasks['fourth'], 'menu_order' => 4 ) );
+
+		// A client that cannot see the hidden tasks sees [first, fourth, ...]
+		// and asks for `first` at its second visible position.
+		$this->reorder( $this->tasks['first'], 'to-do', 'to-do', 1, 2 );
+
+		$visible = array_values(
+			array_filter(
+				$this->sequence(),
+				static fn( $id ) => ! get_post_meta( $id, 'hidden', true )
+			)
+		);
+
+		// The request was "put first after fourth". Recorded as an assertion so
+		// a future change to the engine shows up here rather than silently
+		// changing what the client has to defend against.
+		$this->assertNotSame(
+			array( $this->tasks['fourth'], $this->tasks['first'] ),
+			array_slice( $visible, 0, 2 ),
+			'If this now passes, the engine honours a partial-view index and the client may stop refusing.'
+		);
+	}
+
+	/**
 	 * Repeated reads return the same order.
 	 */
 	public function test_order_is_stable_across_reads() {

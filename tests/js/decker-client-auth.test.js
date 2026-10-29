@@ -104,6 +104,8 @@ const state = {
 	stackTruncated: false,
 	/** How many times a task was read. */
 	getTaskReads: 0,
+	/** The order a reorder leaves behind, when it differs from the request. */
+	reorderOutcome: null,
 };
 
 /** The task the simulator starts each test with. */
@@ -380,6 +382,14 @@ beforeAll( async () => {
 
 		if ( restPath.match( /^\/decker\/v1\/tasks\/\d+\/order$/ ) ) {
 			state.lastOrder = { method: request.method, body: JSON.parse( await readBody( request ) ) };
+
+			if ( state.reorderOutcome ) {
+				state.stackTasks = state.reorderOutcome.map( ( id ) => ( {
+					id,
+					board_id: 7,
+					stack: 'to-do',
+				} ) );
+			}
 			response.writeHead( 200, { 'content-type': 'application/json' } );
 			response.end( JSON.stringify( { success: true } ) );
 			return;
@@ -489,6 +499,7 @@ beforeEach( () => {
 	];
 	state.stackTruncated = false;
 	state.getTaskReads = 0;
+	state.reorderOutcome = null;
 } );
 
 afterEach( () => {
@@ -1422,6 +1433,10 @@ describe( 'today, comments, ordering and archiving', () => {
 	} );
 
 	it( 'reads the real board position instead of inventing one', async () => {
+		// The simulator has to actually perform the move, because the client
+		// verifies the outcome rather than trusting the response.
+		state.reorderOutcome = [ 31, 77, 12, 55 ];
+
 		await client.tasksReorder( 31, { position: '1', yes: true } );
 
 		// Task 31 is third in the fixture stack, so source_order must be 3.
@@ -1437,9 +1452,11 @@ describe( 'today, comments, ordering and archiving', () => {
 	} );
 
 	it( 'reports the resulting sequence by reading it back', async () => {
+		state.reorderOutcome = [ 77, 31, 12, 55 ];
+
 		const result = await client.tasksReorder( 31, { position: '2', yes: true } );
 
-		expect( result.sequence ).toEqual( [ 77, 12, 31, 55 ] );
+		expect( result.sequence ).toEqual( [ 77, 31, 12, 55 ] );
 		expect( result.changed ).toBe( true );
 	} );
 
@@ -1778,5 +1795,81 @@ describe( 'review findings', () => {
 		// A hidden task occupies a position on the board, so a listing that
 		// omits it yields a position that does not exist.
 		expect( state.lastRun.query ).toMatchObject( { 'input[include_hidden]': '1' } );
+	} );
+} );
+
+describe( 'second review findings', () => {
+	beforeEach( async () => {
+		await login();
+	} );
+
+	it( 'reports a 5xx on a write as an uncertain outcome', async () => {
+		const context = await client.createContext();
+		state.restResponse = {
+			status: 502,
+			type: 'application/json',
+			body: JSON.stringify( { code: 'bad_gateway', message: 'upstream' } ),
+		};
+
+		// A proxy can answer 502 after the backend has already persisted the
+		// write, so the result is unknown rather than failed.
+		await expect(
+			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
+		).rejects.toMatchObject( {
+			code: 'rest_outcome_unknown',
+			exit: client.EXIT.UNCERTAIN,
+		} );
+	} );
+
+	it( 'still reports a 5xx on a read as a server error', async () => {
+		const context = await client.createContext();
+		state.restResponse = {
+			status: 503,
+			type: 'application/json',
+			body: JSON.stringify( { code: 'unavailable' } ),
+		};
+
+		await expect( client.restRequest( context, 'GET', '/decker/v1/ping' ) ).rejects.toMatchObject(
+			{ exit: client.EXIT.SERVER }
+		);
+	} );
+
+	it( 'reports a 4xx on a write as certain, not uncertain', async () => {
+		const context = await client.createContext();
+		state.restResponse = {
+			status: 403,
+			type: 'application/json',
+			body: JSON.stringify( { code: 'forbidden' } ),
+		};
+
+		// A 4xx is a rejection before any work, so there is nothing uncertain.
+		await expect(
+			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
+		).rejects.toMatchObject( { exit: client.EXIT.FORBIDDEN } );
+	} );
+
+	it( 'refuses to call a reorder a success when the card landed elsewhere', async () => {
+		// Stands in for a stack holding tasks this account cannot see: the
+		// engine puts the card somewhere other than the requested position.
+		state.reorderOutcome = [ 77, 12, 55, 31 ];
+
+		const error = await client
+			.tasksReorder( 31, { position: '1', yes: true } )
+			.catch( ( caught ) => caught );
+
+		expect( error.code ).toBe( 'order_not_as_requested' );
+		expect( error.exit ).toBe( client.EXIT.CONFLICT );
+		// The message says where it actually is and what the order now is.
+		expect( error.message ).toContain( 'position 4' );
+		expect( error.message ).toContain( '77, 12, 55, 31' );
+	} );
+
+	it( 'reports the position it verified when the move did land', async () => {
+		state.reorderOutcome = [ 31, 77, 12, 55 ];
+
+		const result = await client.tasksReorder( 31, { position: '1', yes: true } );
+
+		expect( result ).toMatchObject( { changed: true, position: 1 } );
+		expect( result.sequence ).toEqual( [ 31, 77, 12, 55 ] );
 	} );
 } );

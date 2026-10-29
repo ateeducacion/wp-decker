@@ -72,6 +72,12 @@ needs PUT or DELETE, which matters where a proxy handles methods unevenly.
 unauthorized caller reports the malformed input first. Authorization is not
 weakened by this; only the order of the errors differs.
 
+**`order_not_as_requested`.** The reorder was applied but the card is not at
+the position that was asked for, and the message says where it is. This happens
+when the stack holds tasks the account cannot see: they occupy real positions,
+so a position derived from the visible order is not the one the server uses.
+The board did change — report the actual order to the user rather than retrying.
+
 **`order_stack_truncated`.** The stack holds more tasks than the client can
 read in one pass, so it cannot establish an exact position and refuses rather
 than guess one. Reorder in the Decker interface, or narrow the board.
