@@ -46,6 +46,13 @@ jobs:
       - name: Check untranslated strings
         run: make check-untranslated
 
+      # Validates the installable Agent Skill: metadata, that every file it
+      # references exists, that its client runs, and that git tracks all of it.
+      # Needs no wp-env, so it runs before the environment comes up and fails
+      # fast. The skill's client tests themselves run with `make test-js`.
+      - name: Check the agent skill
+        run: make check-skill
+
       # Install wp-env globally
       - name: Setup wp-env
         run: npm -g --no-fund i @wordpress/env

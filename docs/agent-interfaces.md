@@ -94,6 +94,43 @@ The edit lock is advisory and only enforced when Decker's post-locking feature i
 
 No public or unauthenticated agent endpoint is registered. Multisite execution stays scoped to the current site.
 
+## The installable Agent Skill
+
+`skills/decker/` is an Agent Skill: `SKILL.md`, five `references/` documents and
+a dependency-free Node client. It is installed with
+
+```
+gh skill install ateeducacion/wp-decker skills/decker --agent <agent> --scope user
+```
+
+and is verified by installing it, for Claude Code and for Codex, rather than by
+checking that the file exists. `make check-skill` validates the metadata, that
+every file `SKILL.md` references exists, that the client runs, and that git
+tracks all of it.
+
+That last check earns its place: an unanchored `decker/` rule in `.gitignore`
+hid the whole directory twice during development. `git add -A` skipped the files
+in silence, the working tree looked clean, and the only thing that noticed was
+an actual install reporting no `SKILL.md` in the repository. The ignore rules
+for a built or extracted plugin copy are now anchored to the root.
+
+### Versioning
+
+Both artifacts come from the same repository and the same tag, so there is
+nothing to keep in step: the plugin ZIP is built by `make package VERSION=x`
+from the working tree, and the skill is installed from the same revision.
+
+The client carries **no version constant of its own** and no compatibility
+table to maintain. It discovers what the site supports at runtime: `doctor`
+reports which routing answers and which Decker abilities the site exposes, so a
+plugin too old to expose them is reported as `none exposed: update the Decker
+plugin` instead of failing later with a confusing 404.
+
+The skill is excluded from the plugin ZIP (`/skills` in `.distignore`) because
+it is not plugin runtime code, but deliberately **not** export-ignored in
+`.gitattributes`, since `gh skill install` reads the repository. `make
+check-skill` asserts both.
+
 ## Relationship to existing behavior
 
 Task writes call `Decker_Task_Writer::create_or_update_task( array $args )`. The adapter does not reimplement creation, update, taxonomy assignment, stack-transition hooks, notifications, or archive behavior. Existing REST routes remain available and backward compatible.

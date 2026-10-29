@@ -84,6 +84,12 @@ languages/*.pot
 
 # Rules that must match at any depth: none of these is ever legitimate inside a
 # release, wherever it turns up.
+
+# A leftover release archive in the checkout was being packaged INSIDE the next
+# release: .gitignore keeps *.zip out of the repository, but dist-archive reads
+# the working tree, so anyone holding an old decker-X.Y.Z.zip shipped it. The
+# rule also stops the archive being built from including itself.
+*.zip
 .git
 node_modules
 .DS_Store

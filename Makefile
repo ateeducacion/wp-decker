@@ -248,6 +248,43 @@ test-cas: check-docker up setup-tests-env
 	DECKER_CAS_USER='$(CAS_TEST_USER)' \
 	npx vitest run tests/js/decker-client-cas-live.test.js --coverage=false
 
+# Validate the installable Agent Skill: its metadata, that everything it
+# references exists, that its client actually runs, and that git is really
+# tracking all of it.
+#
+# The git check is not paranoia. An unanchored `decker/` rule in .gitignore hid
+# skills/decker/ twice during development: `git add -A` skipped the files
+# without a word, the working tree looked clean, and `gh skill install` was the
+# only thing that noticed the skill had shipped without its SKILL.md.
+SKILL_DIR = skills/decker
+check-skill:
+	@set -e; \
+	echo "Checking $(SKILL_DIR)..."; \
+	test -f "$(SKILL_DIR)/SKILL.md" || { echo "ERROR: SKILL.md is missing."; exit 1; }; \
+	grep -q '^name: decker$$' "$(SKILL_DIR)/SKILL.md" || { echo "ERROR: SKILL.md needs 'name: decker' in its frontmatter."; exit 1; }; \
+	grep -q '^description: ' "$(SKILL_DIR)/SKILL.md" || { echo "ERROR: SKILL.md needs a description."; exit 1; }; \
+	for f in $$(grep -oE 'references/[a-z-]+\.md' "$(SKILL_DIR)/SKILL.md" | sort -u); do \
+		test -f "$(SKILL_DIR)/$$f" || { echo "ERROR: SKILL.md references $$f, which does not exist."; exit 1; }; \
+	done; \
+	node --input-type=module -e 'import("./$(SKILL_DIR)/scripts/decker-client.mjs")' >/dev/null; \
+	node "$(SKILL_DIR)/scripts/decker-client.mjs" --nonexistent-command >/dev/null 2>&1 && \
+		{ echo "ERROR: the client exits 0 on an unknown command."; exit 1; }; \
+	untracked="$$(git ls-files --others --exclude-standard --ignored "$(SKILL_DIR)")"; \
+	if [ -n "$$untracked" ]; then \
+		echo "ERROR: these skill files are ignored by git and would not ship:"; \
+		echo "$$untracked"; \
+		exit 1; \
+	fi; \
+	for f in $$(find "$(SKILL_DIR)" -type f); do \
+		git ls-files --error-unmatch "$$f" >/dev/null 2>&1 || { echo "ERROR: $$f is not tracked by git."; exit 1; }; \
+	done; \
+	grep -qE '^/skills$$' .distignore || { echo "ERROR: .distignore must keep /skills out of the plugin ZIP."; exit 1; }; \
+	grep -qE '^/skills' .gitattributes && { echo "ERROR: /skills must NOT be export-ignored; gh skill install reads the repository."; exit 1; }; \
+	if git ls-files | grep -qE '(^|/)session\.json$$|(^|/)\.env$$'; then \
+		echo "ERROR: a session or environment file is tracked."; exit 1; \
+	fi; \
+	echo "Skill OK: metadata, references, client and packaging rules all check out."
+
 test-js:
 	npm run test:js
 
