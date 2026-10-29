@@ -102,6 +102,8 @@ const state = {
 	lastToday: null,
 	/** The last order call the server saw. */
 	lastOrder: null,
+	lastPlace: null,
+	placeOutcome: null,
 	/** The last comment posted. */
 	lastComment: null,
 	/** Whether the task is marked for today. */
@@ -394,6 +396,41 @@ beforeAll( async () => {
 			return;
 		}
 
+		if ( restPath.match( /^\/decker\/v1\/tasks\/\d+\/place$/ ) ) {
+			const taskId = Number( restPath.split( '/' )[ 4 ] );
+			const body = JSON.parse( await readBody( request ) );
+			state.lastPlace = { method: request.method, task_id: taskId, body };
+
+			if ( state.placeOutcome ) {
+				response.writeHead( state.placeOutcome.status ?? 200, {
+					'content-type': 'application/json',
+				} );
+				response.end( JSON.stringify( state.placeOutcome.body ) );
+				return;
+			}
+
+			// The server owns the move, so the simulator performs it the way the
+			// engine does: by neighbour id, over the whole stack.
+			const side = undefined === body.after_task_id ? 'before' : 'after';
+			const anchorId = body.after_task_id ?? body.before_task_id;
+			const without = state.stackTasks.filter( ( entry ) => entry.id !== taskId );
+			const anchorAt = without.findIndex( ( entry ) => entry.id === anchorId );
+			const moved = state.stackTasks.find( ( entry ) => entry.id === taskId );
+			without.splice( 'after' === side ? anchorAt + 1 : anchorAt, 0, moved );
+			state.stackTasks = without;
+
+			response.writeHead( 200, { 'content-type': 'application/json' } );
+			response.end( JSON.stringify( {
+				success: true,
+				relative_to: anchorId,
+				side,
+				stack: 'to-do',
+				adjacent: true,
+				changed: true,
+			} ) );
+			return;
+		}
+
 		if ( restPath.match( /^\/decker\/v1\/tasks\/\d+\/order$/ ) ) {
 			state.lastOrder = { method: request.method, body: JSON.parse( await readBody( request ) ) };
 
@@ -502,6 +539,8 @@ beforeEach( () => {
 	state.changeAfterNextRead = false;
 	state.lastToday = null;
 	state.lastOrder = null;
+	state.lastPlace = null;
+	state.placeOutcome = null;
 	state.lastComment = null;
 	state.todayMarked = false;
 	// Task 31 sits third in a four-card stack, so a reorder has somewhere to go
@@ -1548,6 +1587,106 @@ describe( 'today, comments, ordering and archiving', () => {
 		).rejects.toMatchObject( { code: 'usage_position_out_of_range', exit: client.EXIT.USAGE } );
 
 		expect( state.lastOrder ).toBeNull();
+	} );
+
+	it( 'places a task after a neighbour without reading the board', async () => {
+		state.getTaskReads = 0;
+
+		const result = await client.tasksReorder( 31, { after: '55', yes: true } );
+
+		// No index, no stack read: the id is resolved by the server, which can
+		// see the cards this account cannot.
+		expect( state.lastPlace ).toMatchObject( {
+			method: 'POST',
+			task_id: 31,
+			body: { after_task_id: 55 },
+		} );
+		expect( state.lastOrder ).toBeNull();
+		expect( state.getTaskReads ).toBe( 0 );
+		expect( result ).toMatchObject( {
+			ok: true,
+			task_id: 31,
+			placed: 'after',
+			relative_to: 55,
+			changed: true,
+		} );
+		expect( state.stackTasks.map( ( entry ) => entry.id ) ).toEqual( [ 77, 12, 55, 31 ] );
+	} );
+
+	it( 'places a task before a neighbour', async () => {
+		await client.tasksReorder( 31, { before: '77', yes: true } );
+
+		expect( state.lastPlace.body ).toEqual( { before_task_id: 77 } );
+		expect( state.stackTasks.map( ( entry ) => entry.id ) ).toEqual( [ 31, 77, 12, 55 ] );
+	} );
+
+	it( 'reports a placement the server could not honour', async () => {
+		// Should not happen; it is reported rather than returned as a success.
+		state.placeOutcome = {
+			status: 200,
+			body: { success: true, relative_to: 55, side: 'after', adjacent: false, changed: true },
+		};
+
+		await expect(
+			client.tasksReorder( 31, { after: '55', yes: true } )
+		).rejects.toMatchObject( {
+			code: 'order_not_as_requested',
+			exit: client.EXIT.CONFLICT,
+		} );
+	} );
+
+	it( 'passes through a placement the server refused', async () => {
+		state.placeOutcome = {
+			status: 409,
+			body: { code: 'decker_priority_mismatch', message: 'Priority pulls it to the front.' },
+		};
+
+		await expect(
+			client.tasksReorder( 31, { after: '55', yes: true } )
+		).rejects.toMatchObject( { code: 'decker_priority_mismatch' } );
+	} );
+
+	it( 'reports an unchanged placement as unchanged', async () => {
+		state.placeOutcome = {
+			status: 200,
+			body: { success: true, relative_to: 12, side: 'after', adjacent: true, changed: false },
+		};
+
+		await expect(
+			client.tasksReorder( 31, { after: '12', yes: true } )
+		).resolves.toMatchObject( { ok: true, changed: false } );
+	} );
+
+	it( 'previews a placement without performing it, and needs --yes', async () => {
+		await expect(
+			client.tasksReorder( 31, { after: '55', 'dry-run': true } )
+		).resolves.toMatchObject( {
+			dry_run: true,
+			changed: false,
+			would_place: { task_id: 31, after_task_id: 55 },
+		} );
+		expect( state.lastPlace ).toBeNull();
+
+		await expect( client.tasksReorder( 31, { after: '55' } ) ).rejects.toMatchObject( {
+			code: 'usage_confirmation_required',
+		} );
+		expect( state.lastPlace ).toBeNull();
+	} );
+
+	it( 'refuses a neighbour that is the task itself, or two of them', async () => {
+		await expect(
+			client.tasksReorder( 31, { after: '31', yes: true } )
+		).rejects.toMatchObject( { code: 'usage_invalid_anchor', exit: client.EXIT.USAGE } );
+
+		await expect(
+			client.tasksReorder( 31, { after: '55', before: '77', yes: true } )
+		).rejects.toMatchObject( { code: 'usage_conflicting_position' } );
+
+		await expect(
+			client.tasksReorder( 31, { after: '55', position: '1', yes: true } )
+		).rejects.toMatchObject( { code: 'usage_conflicting_position' } );
+
+		expect( state.lastPlace ).toBeNull();
 	} );
 
 	it( 'needs a position', async () => {

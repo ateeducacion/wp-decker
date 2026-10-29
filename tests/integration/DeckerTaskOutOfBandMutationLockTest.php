@@ -188,6 +188,37 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Placing a card beside another one invalidates an open form too: it is a
+	 * stack and order change like a drag, reached by neighbour id instead.
+	 */
+	public function test_placement_invalidates_an_open_form() {
+		$neighbour = self::factory()->task->create(
+			array(
+				'post_title' => 'Neighbour',
+				'board'      => $this->board_id,
+				'stack'      => 'in-progress',
+			)
+		);
+
+		$generation = $this->open_form_as_a();
+
+		wp_set_current_user( $this->user_b );
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/place' );
+		$request->set_url_params( array( 'id' => $this->task_id ) );
+		$request->set_param( 'after_task_id', $neighbour );
+		( new Decker_Tasks() )->get_order_engine()->place_task_beside( $request );
+
+		$this->assertNotSame(
+			$generation,
+			$this->current_generation(),
+			'Placing the card should have rotated the generation.'
+		);
+
+		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );
+		$this->assertSame( 'in-progress', $this->get_stack( $this->task_id ) );
+	}
+
+	/**
 	 * Assigning a user invalidates an open form, which would otherwise resubmit
 	 * the assignee list it was rendered with.
 	 */

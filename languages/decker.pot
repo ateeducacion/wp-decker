@@ -976,6 +976,24 @@ msgstr ""
 msgid "Select Attachments"
 msgstr ""
 
+msgid "Give exactly one of after_task_id or before_task_id."
+msgstr ""
+
+msgid "Task not found."
+msgstr ""
+
+msgid "A task cannot be placed next to itself."
+msgstr ""
+
+msgid "The task to place this one next to was not found."
+msgstr ""
+
+msgid "Both tasks have to be on the same board."
+msgstr ""
+
+msgid "Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first."
+msgstr ""
+
 msgid "The title is required."
 msgstr ""
 
@@ -989,9 +1007,6 @@ msgid "The board is required and must be a positive integer."
 msgstr ""
 
 msgid "The board does not exist in the decker_board taxonomy."
-msgstr ""
-
-msgid "Task not found."
 msgstr ""
 
 msgid "Please enter a valid HTTP or HTTPS URL."

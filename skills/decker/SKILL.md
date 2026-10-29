@@ -43,7 +43,9 @@ tasks assign <id> --user ID | tasks unassign <id> --user ID
 tasks responsible <id> --user ID
 tasks comment <id> --text-file FILE
 tasks today <id> --mark|--unmark
-tasks move <id> --stack X [--board ID] | tasks reorder <id> --position N
+tasks move <id> --stack X [--board ID]
+tasks reorder <id> --after ID|--before ID   (exact; prefer this)
+tasks reorder <id> --position N [--stack X] (only with a full view)
 tasks priority <id> --on|--off
 tasks archive <id> | tasks restore <id>
 ```
@@ -97,9 +99,18 @@ around them:
 - A write whose outcome is unknown exits 10. Read the task back before doing
   anything else; never repeat it, because it may have been applied. Any
   transport failure or 5xx on a write counts, not just an obvious one.
-- `reorder` verifies where the card landed. If it reports
-  `order_not_as_requested`, the board did change but not as asked — tell the
-  user the actual order instead of trying again.
+- To position a card, say which card it goes next to: `reorder <id> --after ID`
+  or `--before ID`. The server resolves it, where the whole stack is visible, so
+  it is exact. The neighbour's stack is the destination, so this also moves a
+  card between stacks in one step.
+- `--position N` is the older form and **cannot be exact** when the stack holds
+  tasks this account may not see: a position counts them, and they cannot be
+  listed. It verifies where the card landed and reports
+  `order_not_as_requested` if that is not where it was asked — tell the user the
+  actual order instead of trying again. Use `--after`/`--before` instead.
+- A placement refused with `decker_priority_mismatch` is not a failure to work
+  around: maximum priority pulls a card to the front of its stack, so the two
+  cards cannot be adjacent until their priority matches. Say so.
 
 Author, responsible user and assignees are three different things. "Assign it
 to Ana" means an assignee; "Ana is in charge" means the responsible user. Ask

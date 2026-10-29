@@ -74,7 +74,8 @@ and `slug`.
 | Route | Method | Used for |
 | --- | --- | --- |
 | `/decker/v1/tasks/{id}/today` | POST (also PUT) | Personal "for today" relation |
-| `/decker/v1/tasks/{id}/order` | POST (also PUT) | Position within a board and stack |
+| `/decker/v1/tasks/{id}/order` | POST (also PUT) | Position by index, within a board and stack |
+| `/decker/v1/tasks/{id}/place` | POST (also PUT) | Position next to a named card |
 
 Both accept POST as well as PUT, because a PUT body does not survive every
 host. Same callback, same domain operation, two transports.
@@ -85,7 +86,25 @@ client-supplied `user_id` on both transports.
 The order endpoint takes `board_id`, `source_stack`, `target_stack`,
 `source_order` and `target_order` — positions, not a bare index. The client
 reads the live stack first so `source_order` is the task's real position: a
-guessed value silently reorders other people's cards.
+guessed value silently reorders other people's cards. Even then the result is
+not exact when the stack holds tasks the caller cannot list, which is what
+`/place` exists for.
+
+The place endpoint takes exactly one of `after_task_id` or `before_task_id` and
+nothing else: no board, no stack, no index. The neighbour's board and stack are
+the destination, so it moves the card there as well as positioning it, and it
+needs no prior read. It answers with `relative_to`, `side`, `stack`, `adjacent`
+— read back from the stored order — and `changed`, which is `false` when the
+card was already there, in which case nothing is written and no open editor
+form is invalidated.
+
+It refuses rather than guessing: 404 for a neighbour that does not exist **or
+is a hidden task the caller may not see** (the same answer, so the route cannot
+confirm that a hidden task exists), 400 for a neighbour on another board or for
+zero or two neighbours, and 409 `decker_priority_mismatch` when only one of the
+two cards has `max_priority`, because that pulls it to the front of the stack
+and the two cannot be adjacent. The sequence itself is never returned: it
+contains tasks the caller may not be allowed to see.
 
 Other `decker/v1` routes exist (`stack`, `assign`, `leave`, `lock`,
 `update_due_date`, `subtasks`, `attachment-links`, `fix-order`). The client

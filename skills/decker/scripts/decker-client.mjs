@@ -2201,11 +2201,86 @@ export async function tasksMove( id, flags, options = {} ) {
 }
 
 /**
+ * `decker tasks reorder ID --after ID | --before ID`.
+ *
+ * The exact form. A neighbour is an id, and an id means the same thing to this
+ * client and to the server, so the move is resolved there, where the whole
+ * stack is visible — hidden cards belonging to other people included. Nothing
+ * about the board has to be read first, and nothing has to be guessed.
+ *
+ * The neighbour's stack is the destination, so this also moves a card to
+ * another stack and positions it in one call.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {number}        anchorId  The neighbour to place it next to.
+ * @param {'after'|'before'} side   Which side of the neighbour.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+async function tasksPlace( id, anchorId, side, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+
+	if ( anchorId === taskId ) {
+		throw new DeckerError(
+			'usage_invalid_anchor',
+			'A task cannot be placed next to itself.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+	const intent = { task_id: taskId, [ `${ side }_task_id` ]: anchorId };
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_place: intent };
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would reorder the board. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	// POST, which this route accepts alongside PUT for the same proxy reason.
+	const result = await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/place`, {
+		body: { [ `${ side }_task_id` ]: anchorId },
+	} );
+
+	// The server states the outcome as a fact about the two cards, having read
+	// the stored order back. It should always hold; if it ever does not, that
+	// is reported rather than dressed up as a success.
+	if ( true !== result.adjacent ) {
+		throw new DeckerError(
+			'order_not_as_requested',
+			`The board was reordered but the task did not end up ${ side } ${ anchorId }. Read the stack back before doing anything else.`,
+			EXIT.CONFLICT
+		);
+	}
+
+	return {
+		ok: true,
+		task_id: taskId,
+		changed: false !== result.changed,
+		placed: side,
+		relative_to: anchorId,
+		stack: result.stack,
+	};
+}
+
+/**
  * `decker tasks reorder ID --position N [--stack X]`.
  *
- * The order endpoint takes the source and target positions, not a bare index,
- * so the current board state is read first. The client never invents a
- * position: a guessed source_order silently reorders somebody else's cards.
+ * The index form, kept for a stack whose cards the caller can all see. The
+ * order endpoint takes the source and target positions, not a bare index, so
+ * the current board state is read first. The client never invents a position: a
+ * guessed source_order silently reorders somebody else's cards.
+ *
+ * Prefer `--after`/`--before`, which cannot be off: an index counts cards this
+ * account may not be allowed to list, so it is not the index the engine works
+ * with. See tasksPlace().
  *
  * @param {string|number} id        Task ID.
  * @param {object}        flags     Parsed flags.
@@ -2215,9 +2290,32 @@ export async function tasksMove( id, flags, options = {} ) {
 export async function tasksReorder( id, flags, options = {} ) {
 	const taskId = taskIdArgument( id );
 	const position = integerFlag( flags, 'position' );
+	const afterId = integerFlag( flags, 'after' );
+	const beforeId = integerFlag( flags, 'before' );
+	const anchors = [ afterId, beforeId ].filter( ( value ) => undefined !== value );
+
+	if ( anchors.length > 1 || ( anchors.length && undefined !== position ) ) {
+		throw new DeckerError(
+			'usage_conflicting_position',
+			'Give exactly one of --after ID, --before ID or --position N.',
+			EXIT.USAGE
+		);
+	}
+
+	if ( undefined !== afterId ) {
+		return tasksPlace( id, afterId, 'after', flags, options );
+	}
+
+	if ( undefined !== beforeId ) {
+		return tasksPlace( id, beforeId, 'before', flags, options );
+	}
 
 	if ( undefined === position ) {
-		throw new DeckerError( 'usage_missing_position', '--position <n> is required.', EXIT.USAGE );
+		throw new DeckerError(
+			'usage_missing_position',
+			'--after ID, --before ID or --position N is required. Prefer --after/--before: a position counts cards this account may not be able to see.',
+			EXIT.USAGE
+		);
 	}
 
 	const context = await createContext( options );
@@ -2536,7 +2634,8 @@ export async function run( argv, options = {} ) {
 			'  decker tasks comments <id>',
 			'  decker tasks comment <id> --text-file FILE',
 			'  decker tasks move <id> --stack X [--board ID]',
-			'  decker tasks reorder <id> --position N [--stack X]',
+			'  decker tasks reorder <id> --after ID|--before ID   (exact)',
+			'  decker tasks reorder <id> --position N [--stack X] (needs a full view)',
 			'  decker tasks priority <id> --on|--off',
 			'  decker tasks archive <id>',
 			'  decker tasks restore <id>',

@@ -89,6 +89,21 @@ class Decker_Tasks_Rest_Ops {
 				'args'       => $order_args,
 			),
 			array(
+				// Placing a card next to another one, by id. Unlike /order this
+				// needs no index from the caller, so it is exact for someone
+				// who cannot see every card in the stack. It is an ordinary
+				// per-task edit, so it takes the object-level capability rather
+				// than the board-wide role /order inherited from the drag UI.
+				'route'      => '/tasks/(?P<id>\d+)/place',
+				'methods'    => WP_REST_Server::EDITABLE,
+				'callback'   => array( $order_engine, 'place_task_beside' ),
+				'permission' => 'edit_task',
+				'args'       => array(
+					'after_task_id'  => array( 'type' => 'integer' ),
+					'before_task_id' => array( 'type' => 'integer' ),
+				),
+			),
+			array(
 				'route'      => '/tasks/(?P<id>\d+)/stack',
 				'methods'    => WP_REST_Server::EDITABLE,
 				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),

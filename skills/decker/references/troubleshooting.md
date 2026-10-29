@@ -59,6 +59,14 @@ repeat the command** — repeating it is how a task or a comment gets created
 twice. The same failures on a read are reported as ordinary read failures,
 because nothing was at stake.
 
+**`decker_priority_mismatch` (409) on a placement.** Maximum priority pulls a
+card to the front of its stack, so a card with it cannot sit next to one
+without it. Match their priority, or place it next to another card.
+
+**`decker_anchor_not_found` (404) on a placement.** The card named as the
+neighbour does not exist, is not on a board, or is a hidden task this account
+may not see — all three answer the same way on purpose.
+
 **`session_too_large`.** The macOS keychain command interface takes a line of
 at most 4096 bytes, and the session did not fit. Log in again, or set
 `DECKER_SESSION_STORE=file` to store it in a `0600` file instead.

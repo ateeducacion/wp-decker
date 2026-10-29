@@ -332,6 +332,49 @@ test.describe( 'Agent REST writes render on the board', () => {
 		expect( [ ...after ].sort() ).toEqual( [ ...cards ].sort() );
 	} );
 
+	test( 'a placement by neighbour id renders where it was asked', async ( {
+		page,
+		requestUtils,
+	} ) => {
+		const board = await ensureTerm( requestUtils, 'decker_board', {
+			name: 'E2E Agent Place Board',
+			slug: 'e2e-agent-place-board',
+		} );
+
+		const cards = [];
+		for ( const title of [ 'Place one', 'Place two', 'Place three' ] ) {
+			const created = await runAbility( requestUtils, 'decker/create-task', {
+				title,
+				board_id: board.id,
+				stack: 'to-do',
+			} );
+			cards.push( created.id );
+		}
+
+		const sequence = async () => {
+			await page.goto( '/?decker_page=board&slug=e2e-agent-place-board' );
+			return ( await page
+				.locator( '#task-list-to-do .task.card' )
+				.evaluateAll( ( nodes ) => nodes.map( ( n ) => Number( n.dataset.taskId ) ) )
+			).filter( ( id ) => cards.includes( id ) );
+		};
+
+		expect( await sequence() ).toEqual( cards );
+
+		// No index anywhere: the neighbour is an id, so this needs nothing read
+		// from the board first. That is the whole point of the route.
+		const placed = await requestUtils.rest( {
+			path: `/decker/v1/tasks/${ cards[ 0 ] }/place`,
+			method: 'POST',
+			data: { after_task_id: cards[ 2 ] },
+		} );
+		expect( placed.adjacent ).toBe( true );
+
+		// The rendered board, not the stored column.
+		const after = await sequence();
+		expect( after ).toEqual( [ cards[ 1 ], cards[ 2 ], cards[ 0 ] ] );
+	} );
+
 	test( 'a "for today" mark over REST shows on the card', async ( {
 		page,
 		requestUtils,

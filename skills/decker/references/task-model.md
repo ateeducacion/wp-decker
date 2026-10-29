@@ -94,16 +94,23 @@ Two things worth knowing before touching order:
 
 - Changing a task's stack is not the same as placing it at a position. `move`
   changes the stack and lets the domain recalculate; `reorder` positions it.
-- A position is a position *within the stack as the server sees it*, which
-  includes hidden tasks the caller cannot list. The client reads the stack with
-  hidden tasks included and paginates it fully, and refuses to reorder when it
-  could not read the whole stack. **It cannot set a position exactly when the
-  stack holds tasks belonging to other people that it cannot see**: the index it
-  derives is not the index the engine uses, and the card can land anywhere
-  between the neighbours it was aimed at, not merely one slot away. So the
-  client reads the order back and compares: a card that did not land where it
-  was asked is reported as a conflict naming where it actually is, never as a
-  success.
+- **Position a card by naming its neighbour**, not by index: `--after ID` or
+  `--before ID`. The server resolves that, where the whole stack is visible, so
+  it is exact whatever the caller can see, and the neighbour's stack is the
+  destination, so it moves the card there too. It writes nothing when the card
+  is already in that position, and it refuses when only one of the two cards has
+  `max_priority`, because priority pulls a card to the front and the two cannot
+  then be adjacent.
+- A position by index is a position *within the stack as the server sees it*,
+  which includes hidden tasks the caller cannot list. The client reads the stack
+  with hidden tasks included and paginates it fully, and refuses to reorder when
+  it could not read the whole stack. **The index form cannot set a position
+  exactly when the stack holds tasks belonging to other people that it cannot
+  see**: the index it derives is not the index the engine uses, and the card can
+  land anywhere between the neighbours it was aimed at, not merely one slot
+  away. So the client reads the order back and compares: a card that did not
+  land where it was asked is reported as a conflict naming where it actually is,
+  never as a success. This is why `--after`/`--before` exists and is preferred.
 - Stored `menu_order` values are **not** guaranteed contiguous. The renumbering
   pass excludes the card being moved, so it keeps an intermediate value while
   the others are renumbered. What holds is the relative sequence, and that no

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-29T08:26:25+00:00\n"
+"PO-Revision-Date: 2026-10-29T15:00:49+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1008,6 +1008,24 @@ msgstr "Agregar Adjuntos"
 msgid "Select Attachments"
 msgstr "Seleccionar Adjuntos"
 
+msgid "Give exactly one of after_task_id or before_task_id."
+msgstr "Indica exactamente uno de after_task_id o before_task_id."
+
+msgid "Task not found."
+msgstr "Tarea no encontrada."
+
+msgid "A task cannot be placed next to itself."
+msgstr "Una tarea no se puede colocar junto a sí misma."
+
+msgid "The task to place this one next to was not found."
+msgstr "No se ha encontrado la tarea junto a la que colocar esta."
+
+msgid "Both tasks have to be on the same board."
+msgstr "Las dos tareas tienen que estar en el mismo tablero."
+
+msgid "Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first."
+msgstr "La prioridad máxima lleva la tarjeta al principio de su pila, así que esas dos no pueden quedar contiguas. Iguala primero su prioridad."
+
 msgid "The title is required."
 msgstr "El título es obligatorio."
 
@@ -1022,9 +1040,6 @@ msgstr "El tablero es obligatorio y debe ser un número entero positivo."
 
 msgid "The board does not exist in the decker_board taxonomy."
 msgstr "El tablero no existe en la taxonomía decker_board."
-
-msgid "Task not found."
-msgstr "Tarea no encontrada."
 
 msgid "Please enter a valid HTTP or HTTPS URL."
 msgstr "Introduce una URL HTTP o HTTPS válida."

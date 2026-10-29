@@ -137,6 +137,19 @@ class Decker_Task_Order {
 	}
 
 	/**
+	 * Place a task immediately before or after another card.
+	 *
+	 * Kept as the route callback; the work lives in Decker_Task_Placement,
+	 * which owns the neighbour resolution and the slot arithmetic.
+	 *
+	 * @param WP_REST_Request $request The REST request.
+	 * @return WP_REST_Response|WP_Error The result, or a validation error.
+	 */
+	public function place_task_beside( $request ) {
+		return ( new Decker_Task_Placement( $this->tasks, $this ) )->place( $request );
+	}
+
+	/**
 	 * Validate the parameters for a stack/order update request.
 	 *
 	 * @param int    $task_id      The task ID.
@@ -190,7 +203,7 @@ class Decker_Task_Order {
 	 * @param string $source_stack The source stack value.
 	 * @param string $target_stack The target stack value.
 	 */
-	private function apply_stack_transition( int $task_id, string $source_stack, string $target_stack ) {
+	public function apply_stack_transition( int $task_id, string $source_stack, string $target_stack ) {
 		if ( $source_stack != $target_stack ) {
 			update_post_meta( $task_id, 'stack', $target_stack );
 
@@ -361,7 +374,7 @@ class Decker_Task_Order {
 	 * @param string $stack         Stack slug.
 	 * @return void
 	 */
-	private function flush_stack_cache( int $board_term_id, string $stack ): void {
+	public function flush_stack_cache( int $board_term_id, string $stack ): void {
 		global $wpdb;
 
 		$ids = $wpdb->get_col(

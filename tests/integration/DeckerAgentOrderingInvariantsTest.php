@@ -132,6 +132,22 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Dispatch the placement endpoint the way the agent client does.
+	 *
+	 * @param int    $task_id   Task to move.
+	 * @param string $side      Either "after" or "before".
+	 * @param int    $anchor_id The neighbour to place it next to.
+	 * @return WP_REST_Response|WP_Error Response.
+	 */
+	private function place( int $task_id, string $side, int $anchor_id ) {
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $task_id . '/place' );
+		$request->set_url_params( array( 'id' => $task_id ) );
+		$request->set_param( $side . '_task_id', $anchor_id );
+
+		return rest_get_server()->dispatch( $request );
+	}
+
+	/**
 	 * The fixture starts in a known order that is not the id order.
 	 */
 	public function test_the_fixture_order_is_deterministic() {
@@ -472,6 +488,208 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 			array_slice( $visible, 0, 2 ),
 			'If this now passes, the engine honours a partial-view index and the client may stop refusing.'
 		);
+	}
+
+	/**
+	 * Placing a card by neighbour id is exact despite invisible tasks.
+	 *
+	 * This is the same stack as the partial-view test above, where an index
+	 * cannot work. A neighbour is an id, and an id means the same thing to the
+	 * caller and to the engine, so the move is resolved on the server where the
+	 * whole stack is visible — including the two hidden cards in between.
+	 */
+	public function test_placing_beside_a_card_is_exact_with_hidden_tasks_in_between() {
+		// Real order: first, hidden_one, hidden_two, fourth.
+		$hidden_one = self::factory()->task->create(
+			array(
+				'post_title' => 'Hidden one',
+				'board'      => $this->board_id,
+				'stack'      => 'to-do',
+			)
+		);
+		$hidden_two = self::factory()->task->create(
+			array(
+				'post_title' => 'Hidden two',
+				'board'      => $this->board_id,
+				'stack'      => 'to-do',
+			)
+		);
+		update_post_meta( $hidden_one, 'hidden', '1' );
+		update_post_meta( $hidden_two, 'hidden', '1' );
+		wp_update_post( array( 'ID' => $this->tasks['second'], 'menu_order' => 90 ) );
+		wp_update_post( array( 'ID' => $this->tasks['third'], 'menu_order' => 91 ) );
+		wp_update_post( array( 'ID' => $hidden_one, 'menu_order' => 2 ) );
+		wp_update_post( array( 'ID' => $hidden_two, 'menu_order' => 3 ) );
+		wp_update_post( array( 'ID' => $this->tasks['fourth'], 'menu_order' => 4 ) );
+
+		$response = $this->place( $this->tasks['first'], 'after', $this->tasks['fourth'] );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertTrue( $response->get_data()['adjacent'] );
+
+		$sequence = $this->sequence();
+		$this->assertSame(
+			array_search( $this->tasks['first'], $sequence, true ),
+			array_search( $this->tasks['fourth'], $sequence, true ) + 1,
+			'first must sit immediately after fourth: ' . wp_json_encode( $sequence )
+		);
+
+		// And the hidden cards keep their own relative order. They are absent
+		// from the agent listing, so this reads the stored column.
+		$this->assertLessThan(
+			(int) get_post( $hidden_two )->menu_order,
+			(int) get_post( $hidden_one )->menu_order
+		);
+	}
+
+	/**
+	 * Placing before a card puts it immediately ahead of it.
+	 */
+	public function test_placing_before_a_card() {
+		$response = $this->place( $this->tasks['fourth'], 'before', $this->tasks['second'] );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame(
+			array(
+				$this->tasks['first'],
+				$this->tasks['fourth'],
+				$this->tasks['second'],
+				$this->tasks['third'],
+			),
+			$this->sequence()
+		);
+	}
+
+	/**
+	 * The neighbour's stack is the destination, so this also moves the card.
+	 */
+	public function test_placing_beside_a_card_in_another_stack_moves_it_there() {
+		$this->service->update_task(
+			array(
+				'task_id' => $this->tasks['third'],
+				'stack'   => 'in-progress',
+			)
+		);
+
+		$response = $this->place( $this->tasks['first'], 'before', $this->tasks['third'] );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+
+		$this->assertSame( 'in-progress', get_post_meta( $this->tasks['first'], 'stack', true ) );
+		$this->assertSame(
+			array( $this->tasks['first'], $this->tasks['third'] ),
+			$this->sequence( 'in-progress' )
+		);
+		// The stack it left is renumbered contiguously.
+		$this->assertSame(
+			array( $this->tasks['second'], $this->tasks['fourth'] ),
+			$this->sequence()
+		);
+	}
+
+	/**
+	 * Placement is idempotent: asking for a position it already holds is a no-op.
+	 */
+	public function test_placing_a_card_where_it_already_is() {
+		$before = $this->sequence();
+
+		$response = $this->place( $this->tasks['second'], 'after', $this->tasks['first'] );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertTrue( $response->get_data()['adjacent'] );
+		$this->assertFalse( $response->get_data()['changed'] );
+		$this->assertSame( $before, $this->sequence() );
+
+		// And nothing was written, so an open editor form survives it.
+		$locks      = ( new Decker_Tasks() )->get_task_locks();
+		$generation = (string) $locks->acquire_lock( $this->tasks['second'], $this->user_id )['generation'];
+		$this->place( $this->tasks['second'], 'after', $this->tasks['first'] );
+		$this->assertSame(
+			$generation,
+			(string) $locks->get_lock_info( $this->tasks['second'], $this->user_id )['generation']
+		);
+	}
+
+	/**
+	 * A hidden card the caller may not see cannot be used as a neighbour.
+	 *
+	 * It answers as if the task did not exist: a different error would let this
+	 * route confirm that a hidden task exists.
+	 */
+	public function test_a_hidden_card_is_not_a_usable_neighbour() {
+		$other  = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$hidden = self::factory()->task->create(
+			array(
+				'post_title'  => 'Not yours',
+				'board'       => $this->board_id,
+				'stack'       => 'to-do',
+				'post_author' => $other,
+			)
+		);
+		update_post_meta( $hidden, 'hidden', '1' );
+
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+
+		$response = $this->place( $this->tasks['first'], 'after', $hidden );
+
+		$this->assertTrue( $response->is_error() );
+		$this->assertSame( 404, $response->as_error()->get_error_data()['status'] );
+		$this->assertSame( 'decker_anchor_not_found', $response->as_error()->get_error_code() );
+	}
+
+	/**
+	 * Priority pulls a card to the front, so it refuses rather than lying.
+	 */
+	public function test_placing_beside_a_card_of_different_priority_is_refused() {
+		$this->service->update_task(
+			array(
+				'task_id'      => $this->tasks['fourth'],
+				'max_priority' => true,
+			)
+		);
+		$before = $this->sequence();
+
+		$response = $this->place( $this->tasks['first'], 'after', $this->tasks['fourth'] );
+
+		$this->assertTrue( $response->is_error() );
+		$this->assertSame( 409, $response->as_error()->get_error_data()['status'] );
+		$this->assertSame( 'decker_priority_mismatch', $response->as_error()->get_error_code() );
+		// Refused before anything was written.
+		$this->assertSame( $before, $this->sequence() );
+	}
+
+	/**
+	 * Both halves of the request are validated.
+	 */
+	public function test_placement_rejects_a_missing_or_doubled_neighbour() {
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->tasks['first'] . '/place' );
+		$request->set_url_params( array( 'id' => $this->tasks['first'] ) );
+		$this->assertSame( 400, rest_get_server()->dispatch( $request )->as_error()->get_error_data()['status'] );
+
+		$request->set_param( 'after_task_id', $this->tasks['second'] );
+		$request->set_param( 'before_task_id', $this->tasks['third'] );
+		$this->assertSame( 400, rest_get_server()->dispatch( $request )->as_error()->get_error_data()['status'] );
+
+		$self = $this->place( $this->tasks['first'], 'after', $this->tasks['first'] );
+		$this->assertSame( 400, $self->as_error()->get_error_data()['status'] );
+	}
+
+	/**
+	 * A card on another board is not a usable neighbour.
+	 */
+	public function test_a_card_on_another_board_is_not_a_usable_neighbour() {
+		$other_board = self::factory()->board->create( array( 'name' => 'Another board' ) );
+		$elsewhere   = self::factory()->task->create(
+			array(
+				'post_title' => 'Elsewhere',
+				'board'      => $other_board,
+				'stack'      => 'to-do',
+			)
+		);
+
+		$response = $this->place( $this->tasks['first'], 'after', $elsewhere );
+
+		$this->assertTrue( $response->is_error() );
+		$this->assertSame( 'decker_anchor_other_board', $response->as_error()->get_error_code() );
 	}
 
 	/**
