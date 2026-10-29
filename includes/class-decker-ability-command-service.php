@@ -135,11 +135,73 @@ class Decker_Ability_Command_Service {
 			return $lock_check;
 		}
 
+		$stale_check = $this->assert_not_stale( $post, $input );
+		if ( is_wp_error( $stale_check ) ) {
+			return $stale_check;
+		}
+
 		$state = $this->store->get_write_state( $post );
 
 		return is_wp_error( $state ) ? $state : array(
 			'post'  => $post,
 			'state' => $state,
 		);
+	}
+
+	/**
+	 * Reject a write built from a stale read.
+	 *
+	 * The edit lock is advisory and only active when Decker's post-locking
+	 * feature is on, so on its own it does not stop an agent from overwriting a
+	 * change made between its read and its write. That matters most for the
+	 * read-modify-write operations: adding one label or one assignee means
+	 * sending the whole collection back, so a lost update silently drops
+	 * someone else's label or assignee.
+	 *
+	 * `expected_modified` is the task's `modified` value as the read returned
+	 * it. When it no longer matches, the write is refused with 409 and nothing
+	 * is persisted. It is optional, so existing callers are unaffected, and it
+	 * introduces no new storage and no second locking system: the comparison is
+	 * against post_modified_gmt, which WordPress already maintains.
+	 *
+	 * @param WP_Post $post  Task post.
+	 * @param array   $input Ability input.
+	 * @return true|WP_Error True when the write may proceed.
+	 */
+	private function assert_not_stale( WP_Post $post, $input ) {
+		$input = is_array( $input ) ? $input : array();
+
+		if ( ! isset( $input['expected_modified'] ) || '' === $input['expected_modified'] ) {
+			return true;
+		}
+
+		$current = mysql_to_rfc3339( $post->post_modified_gmt );
+
+		// Compared as instants, so an equivalent timestamp written with a
+		// different offset is not reported as a conflict.
+		$expected_time = strtotime( (string) $input['expected_modified'] );
+		$current_time  = strtotime( (string) $current );
+
+		if ( false === $expected_time ) {
+			return new WP_Error(
+				'decker_invalid_expected_modified',
+				__( 'The supplied expected_modified value is not a valid date.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( $expected_time !== $current_time ) {
+			return new WP_Error(
+				'decker_task_stale',
+				__( 'The task changed after it was read, so the update was not applied. Read the task again, rebuild the change and retry.', 'decker' ),
+				array(
+					'status'            => 409,
+					'expected_modified' => (string) $input['expected_modified'],
+					'current_modified'  => $current,
+				)
+			);
+		}
+
+		return true;
 	}
 }

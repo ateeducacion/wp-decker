@@ -272,6 +272,12 @@ msgstr ""
 msgid "Archives or restores a task using an explicit, reversible archived state."
 msgstr ""
 
+msgid "List Decker users"
+msgstr ""
+
+msgid "Lists users who can be set as a task assignee or responsible user, with an optional name search."
+msgstr ""
+
 msgid "List Decker boards"
 msgstr ""
 

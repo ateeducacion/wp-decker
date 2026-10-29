@@ -136,6 +136,7 @@ class Decker_Abilities {
 			'decker/update-task'           => $this->definition( __( 'Update a Decker task', 'decker' ), __( 'Updates selected fields while preserving unspecified values and edit locks.', 'decker' ), $this->task_write_schema( true ), $this->task_schema(), 'update_task', 'can_edit_task', false, true ),
 			'decker/move-task'             => $this->definition( __( 'Move a Decker task', 'decker' ), __( 'Moves a task to another stack or board through existing domain behavior.', 'decker' ), $this->move_task_schema(), $this->task_schema(), 'move_task', 'can_edit_task', false, true ),
 			'decker/archive-task'          => $this->definition( __( 'Archive or restore a Decker task', 'decker' ), __( 'Archives or restores a task using an explicit, reversible archived state.', 'decker' ), $this->archive_task_schema(), $this->task_schema(), 'archive_task', 'can_edit_task', false, true ),
+			'decker/list-users'            => $this->definition( __( 'List Decker users', 'decker' ), __( 'Lists users who can be set as a task assignee or responsible user, with an optional name search.', 'decker' ), $this->list_users_input_schema(), $this->users_schema(), 'list_users', 'can_list_tasks', true, true ),
 			'decker/list-boards'           => $this->definition( __( 'List Decker boards', 'decker' ), __( 'Lists boards that can be used to filter or create tasks.', 'decker' ), null, $this->boards_schema(), 'list_boards', 'can_list_tasks', true, true ),
 			'decker/search-knowledge-base' => $this->definition( __( 'Search the Decker knowledge base', 'decker' ), __( 'Searches accessible knowledge-base articles by text and optional board, returning summaries with an excerpt.', 'decker' ), $this->knowledge_base_input_schema(), $this->knowledge_base_output_schema(), 'search_knowledge_base', 'can_list_tasks', true, true ),
 			'decker/get-knowledge-article' => $this->definition( __( 'Get a Decker knowledge-base article', 'decker' ), __( 'Retrieves one accessible knowledge-base article, including its full content, by ID.', 'decker' ), $this->knowledge_article_input_schema(), $this->knowledge_article_output_schema(), 'get_knowledge_article', 'can_list_tasks', true, true ),
@@ -164,7 +165,14 @@ class Decker_Abilities {
 			'execute_callback'    => array( $this->service(), $execute_method ),
 			'permission_callback' => array( $this->service(), $permission_method ),
 			'meta'                => array(
-				'annotations' => array(
+				// Exposes the ability under /wp-abilities/v1/<name>/run. The flag is
+				// explicit rather than relying on the `public` meta, which only exists
+				// from WordPress 7.1: an explicit `show_in_rest` is honoured by every
+				// WordPress that has the Abilities API at all. Read-only abilities are
+				// then reachable with GET and the mutating ones with POST; none is
+				// annotated destructive, so no route requires DELETE.
+				'show_in_rest' => true,
+				'annotations'  => array(
 					'readonly'    => $readonly,
 					'destructive' => false,
 					'idempotent'  => $idempotent,
@@ -216,7 +224,84 @@ class Decker_Abilities {
 					'type' => 'boolean',
 					'default' => false,
 				),
+				// Relation to the *authenticated* user. There is deliberately no
+				// user_id parameter: an agent must not be able to list another
+				// person's workload by passing their ID.
+				'relation'       => array(
+					'type' => 'string',
+					'enum' => array( 'any', 'assigned', 'responsible', 'author' ),
+				),
+				'today'          => array(
+					'type' => 'boolean',
+					'default' => false,
+				),
 			)
+		);
+	}
+
+	/**
+	 * Get the list-users input schema.
+	 *
+	 * @return array<string, mixed> Schema.
+	 */
+	private function list_users_input_schema(): array {
+		return $this->object_schema(
+			array(
+				'search'   => array(
+					'type' => 'string',
+					'maxLength' => 200,
+				),
+				'page'     => array(
+					'type' => 'integer',
+					'minimum' => 1,
+					'default' => 1,
+				),
+				'per_page' => array(
+					'type' => 'integer',
+					'minimum' => 1,
+					'maximum' => 100,
+					'default' => 50,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Get the users output schema.
+	 *
+	 * Only the fields needed to resolve a name to an ID. Email addresses,
+	 * roles, capabilities and registration data are deliberately absent: an
+	 * agent resolving an assignee has no use for them, and they would end up in
+	 * a language model's context.
+	 *
+	 * @return array<string, mixed> Schema.
+	 */
+	private function users_schema(): array {
+		return $this->object_schema(
+			array(
+				'users'       => array(
+					'type'  => 'array',
+					'items' => $this->object_schema(
+						array(
+							'id'   => $this->positive_integer_schema(),
+							'name' => array( 'type' => 'string' ),
+							'slug' => array( 'type' => 'string' ),
+						),
+						array( 'id', 'name', 'slug' )
+					),
+				),
+				'page'        => $this->positive_integer_schema(),
+				'per_page'    => $this->positive_integer_schema(),
+				'total'       => array(
+					'type' => 'integer',
+					'minimum' => 0,
+				),
+				'total_pages' => array(
+					'type' => 'integer',
+					'minimum' => 0,
+				),
+			),
+			array( 'users', 'page', 'per_page', 'total', 'total_pages' )
 		);
 	}
 
@@ -238,6 +323,14 @@ class Decker_Abilities {
 	private function task_write_schema( bool $update ): array {
 		$properties = array(
 			'task_id'             => $this->positive_integer_schema(),
+			// Optimistic concurrency: the `modified` value the caller read. When
+			// it no longer matches, the write is refused with 409 instead of
+			// overwriting whatever changed in between. Omit it to keep the
+			// previous behaviour.
+			'expected_modified'   => array(
+				'type'   => 'string',
+				'format' => 'date-time',
+			),
 			'title'               => array(
 				'type' => 'string',
 				'minLength' => 1,
@@ -285,6 +378,10 @@ class Decker_Abilities {
 		$schema = $this->object_schema(
 			array(
 				'task_id'  => $this->positive_integer_schema(),
+				'expected_modified' => array(
+					'type'   => 'string',
+					'format' => 'date-time',
+				),
 				'stack'    => array(
 					'type' => 'string',
 					'enum' => self::STACKS,
@@ -306,6 +403,10 @@ class Decker_Abilities {
 		return $this->object_schema(
 			array(
 				'task_id'  => $this->positive_integer_schema(),
+				'expected_modified' => array(
+					'type'   => 'string',
+					'format' => 'date-time',
+				),
 				'archived' => array( 'type' => 'boolean' ),
 			),
 			array( 'task_id', 'archived' )
@@ -498,7 +599,15 @@ class Decker_Abilities {
 
 		if ( ! empty( $required ) ) {
 			$schema['required'] = $required;
+
+			return $schema;
 		}
+
+		// With every property optional the ability is meaningful with no input at
+		// all, which is how a plain GET on the REST run route arrives. The schema
+		// default is what normalize_input() applies, so without it such a call is
+		// rejected as "input is not of type object".
+		$schema['default'] = array();
 
 		return $schema;
 	}

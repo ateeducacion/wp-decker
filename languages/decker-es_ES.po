@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-28T22:08:25+00:00\n"
+"PO-Revision-Date: 2026-10-29T06:23:54+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -272,6 +272,12 @@ msgstr "Archivar o restaurar una tarea de Decker"
 
 msgid "Archives or restores a task using an explicit, reversible archived state."
 msgstr "Archiva o restaura una tarea usando un estado de archivado explícito y reversible."
+
+msgid "List Decker users"
+msgstr "Listar usuarios de Decker"
+
+msgid "Lists users who can be set as a task assignee or responsible user, with an optional name search."
+msgstr "Lista los usuarios que se pueden asignar a una tarea o establecer como responsable, con búsqueda opcional por nombre."
 
 msgid "List Decker boards"
 msgstr "Listar tableros de Decker"

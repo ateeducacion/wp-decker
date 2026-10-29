@@ -58,6 +58,7 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 				'decker/update-task',
 				'decker/move-task',
 				'decker/archive-task',
+				'decker/list-users',
 				'decker/list-boards',
 				'decker/search-knowledge-base',
 				'decker/get-knowledge-article',
@@ -68,6 +69,7 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 		foreach ( $definitions as $definition ) {
 			$this->assertFalse( $definition['output_schema']['additionalProperties'] );
 			$this->assertArrayHasKey( 'annotations', $definition['meta'] );
+			$this->assertTrue( $definition['meta']['show_in_rest'] );
 			if ( isset( $definition['input_schema'] ) ) {
 				$this->assertFalse( $definition['input_schema']['additionalProperties'] );
 			}
