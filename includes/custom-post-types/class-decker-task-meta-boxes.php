@@ -252,7 +252,8 @@ class Decker_Task_Meta_Boxes {
 			<!-- Date Selection -->
 			<p>
 				<label for="assigned_date"><?php esc_html_e( 'Assign Date:', 'decker' ); ?></label>
-				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( gmdate( 'Y-m-d' ) ); ?>">
+				<?php // The site's today, like every other reader of the relations: gmdate() here stored yesterday for a site ahead of UTC. ?>
+				<input type="date" id="assigned_date" class="widefat" value="<?php echo esc_attr( Decker_Task_Date_Relations::today_string() ); ?>">
 			</p>
 			
 			<!-- Add Relation Button -->

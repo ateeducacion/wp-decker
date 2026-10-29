@@ -619,6 +619,21 @@ export function flattenParams( params, prefix = '' ) {
  * @return {DeckerError} The mapped error.
  */
 function errorForStatus( status, code = '' ) {
+	// A few of the server's codes mean something the status cannot say. Keyed
+	// by code, because WordPress's own message is content and is deliberately
+	// not surfaced to the model; the code is a fixed identifier.
+	const byCode = {
+		decker_priority_mismatch: [
+			'Maximum priority pulls a card to the front of its stack, so these two cards cannot be adjacent. Re-reading will not change that: set or clear max_priority on one of them, or use --position.',
+			EXIT.CONFLICT,
+		],
+	};
+
+	if ( byCode[ code ] ) {
+		const [ byCodeMessage, byCodeExit ] = byCode[ code ];
+		return new DeckerError( code, byCodeMessage, byCodeExit, status );
+	}
+
 	const map = {
 		400: [ 'request_invalid', 'The request was rejected as invalid.', EXIT.USAGE ],
 		401: [ 'auth_session_expired', 'Not authenticated. Run `decker auth login`.', EXIT.AUTH ],
@@ -2343,6 +2358,17 @@ export async function tasksReorder( id, flags, options = {} ) {
 	const task = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
 		params: { input: { task_id: taskId } },
 	} );
+
+	// Without a board there is no stack to count: the listing would span every
+	// board, and the server writes the menu_order before the board-scoped
+	// renumber finds nothing to renumber, leaving a value that means nothing.
+	if ( ! task.board_id ) {
+		throw new DeckerError(
+			'order_task_without_board',
+			'The task is on no board, so it has no position. Move it to a board first.',
+			EXIT.CONFLICT
+		);
+	}
 
 	const targetStack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] ) ?? task.stack;
 

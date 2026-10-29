@@ -269,6 +269,43 @@ class DeckerAbilitiesStaleWriteTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A write that carries only the token asks for nothing, and is refused.
+	 *
+	 * The schema's minProperties cannot see this: `expected_modified` is a
+	 * property of the same object, so `{ task_id, expected_modified }` passes
+	 * validation while requesting no change. Saving it would stamp the task as
+	 * modified and rotate the edit generation, making a colleague with the task
+	 * open reload for a change nobody asked for.
+	 */
+	public function test_a_write_with_only_the_token_is_refused() {
+		$before = $this->read_modified();
+
+		$result = $this->service->update_task(
+			array(
+				'task_id'           => $this->task_id,
+				'expected_modified' => $before,
+			)
+		);
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_no_change_requested', $result->get_error_code() );
+		$this->assertSame( 400, $result->get_error_data()['status'] );
+		$this->assertSame( $before, $this->read_modified(), 'The task must not be stamped as modified.' );
+
+		// Same for the constrained writes, where the change set is what counts.
+		$moved = $this->service->move_task(
+			array(
+				'task_id'           => $this->task_id,
+				'expected_modified' => $before,
+			)
+		);
+
+		$this->assertWPError( $moved );
+		$this->assertSame( 'decker_no_change_requested', $moved->get_error_code() );
+		$this->assertSame( $before, $this->read_modified() );
+	}
+
+	/**
 	 * An unparseable timestamp is a bad request, not a conflict.
 	 */
 	public function test_invalid_timestamp_is_rejected() {

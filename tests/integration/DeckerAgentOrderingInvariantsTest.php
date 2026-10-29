@@ -934,6 +934,35 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	 * Every route registered for the Decker screens requires the configured
 	 * minimum role as well, which is the gate those screens use.
 	 */
+	/**
+	 * An administrator-only route does not also demand a core role.
+	 *
+	 * The minimum-role gate only knows the five core slugs and reads the
+	 * current user's roles, so wrapping it around a manage_options route
+	 * refused a site administrator whose capability comes from a custom role,
+	 * and a network administrator with no role on the subsite -- on the board
+	 * repair route that only they are allowed to call.
+	 */
+	public function test_a_custom_role_with_manage_options_can_fix_the_order() {
+		do_action( 'rest_api_init' );
+		add_role( 'decker_ops', 'Decker Ops', array( 'read' => true, 'manage_options' => true ) );
+		$operator = self::factory()->user->create( array( 'role' => 'decker_ops' ) );
+		wp_set_current_user( $operator );
+
+		// The premise: the capability holds, the role gate does not.
+		$this->assertTrue( current_user_can( 'manage_options' ) );
+		$this->assertFalse( Decker::current_user_has_at_least_minimum_role() );
+
+		$request = new WP_REST_Request( 'POST', '/decker/v1/fix-order/' . $this->board_id );
+		$request->set_url_params( array( 'board_id' => $this->board_id ) );
+		$response = rest_get_server()->dispatch( $request );
+
+		remove_role( 'decker_ops' );
+		wp_set_current_user( $this->user_id );
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+	}
+
 	public function test_an_author_below_the_minimum_role_cannot_place_its_own_card() {
 		$author = self::factory()->user->create( array( 'role' => 'author' ) );
 		wp_set_current_user( $author );

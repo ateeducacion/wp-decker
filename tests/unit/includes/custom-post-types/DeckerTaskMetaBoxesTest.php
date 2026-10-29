@@ -117,6 +117,41 @@ class DeckerTaskMetaBoxesTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The relations box offers the site's today, not the server's.
+	 *
+	 * Every reader of `_user_date_relations` resolves "today" in the site
+	 * timezone, so a box that pre-fills gmdate() stores a relation against the
+	 * wrong day for a site ahead of or behind UTC -- invisible to the card
+	 * badge and to the listing filter that look for the site's date.
+	 */
+	public function test_user_date_box_offers_the_site_today() {
+		$post = $this->create_task_post( array( 'stack' => 'to-do' ) );
+
+		// One timezone ahead of UTC and one behind, so that whatever the hour
+		// of the run, at least one of them is on a different date than UTC and
+		// the assertion cannot pass by coincidence.
+		$dates = array();
+
+		foreach ( array( 'Pacific/Kiritimati', 'Pacific/Midway' ) as $timezone ) {
+			update_option( 'timezone_string', $timezone );
+			$today   = Decker_Task_Date_Relations::today_string();
+			$dates[] = $today;
+
+			$this->assertStringContainsString(
+				'id="assigned_date" class="widefat" value="' . $today . '"',
+				$this->render( 'display_user_date_meta_box', $post ),
+				'The box must offer the site date in ' . $timezone . '.'
+			);
+		}
+
+		$this->assertNotSame(
+			array( gmdate( 'Y-m-d' ), gmdate( 'Y-m-d' ) ),
+			$dates,
+			'Both timezones agreed with UTC, so the test proved nothing.'
+		);
+	}
+
+	/**
 	 * A task with no priority or hidden flag renders unchecked boxes.
 	 */
 	public function test_details_box_leaves_unset_flags_unchecked() {

@@ -116,9 +116,15 @@ class Decker_Task_Placement {
 			$this->order->reorder_tasks_in_stack( $board_id, $source_stack );
 		}
 
-		$result = $this->order->reorder_tasks_in_stack( $board_id, $target_stack );
-		if ( is_wp_error( $result ) ) {
-			return $result;
+		// The engine renumbers with raw SQL and reports false on failure, never
+		// a WP_Error. Left unchecked, a failed renumber answered 200 with a
+		// stack whose stored order no longer matches what was asked.
+		if ( false === $this->order->reorder_tasks_in_stack( $board_id, $target_stack ) ) {
+			return new WP_Error(
+				'decker_order_write_failed',
+				__( 'The order could not be written, so the stack may be left as it was. Read the task again before retrying.', 'decker' ),
+				array( 'status' => 500 )
+			);
 		}
 
 		// The card moved: any open editor form now holds a stale stack.

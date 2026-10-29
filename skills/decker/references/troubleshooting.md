@@ -61,7 +61,14 @@ because nothing was at stake.
 
 **`decker_priority_mismatch` (409) on a placement.** Maximum priority pulls a
 card to the front of its stack, so a card with it cannot sit next to one
-without it. Match their priority, or place it next to another card.
+without it. Match their priority, or place it next to another card. Unlike the
+other 409, **re-reading the task does not help**: nothing changed under the
+caller, the placement is simply impossible while the flags differ.
+
+**`decker_no_change_requested` (400) on a write.** The write named no field to
+change -- a task id and a concurrency token on their own. The write is refused
+rather than applied, because saving it would stamp the task as modified and
+force a colleague with it open to reload for nothing.
 
 **`decker_anchor_not_found` (404) on a placement.** The card named as the
 neighbour does not exist, is not on a board, or is a hidden task this account
@@ -104,6 +111,10 @@ the position that was asked for, and the message says where it is. This happens
 when the stack holds tasks the account cannot see: they occupy real positions,
 so a position derived from the visible order is not the one the server uses.
 The board did change — report the actual order to the user rather than retrying.
+
+**`order_task_without_board`.** A task on no board has no position, so
+`--position` is refused rather than counting cards across every board. Move the
+task to a board first; `move-task` does that.
 
 **`order_stack_truncated`.** The stack holds more tasks than the client can
 read in one pass, so it cannot establish an exact position and refuses rather

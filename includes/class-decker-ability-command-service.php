@@ -58,6 +58,19 @@ class Decker_Ability_Command_Service {
 	 * @return array<string, mixed>|WP_Error Updated task or error.
 	 */
 	public function update_task( $input ) {
+		$nothing = $this->nothing_to_change(
+			array_diff_key(
+				(array) $input,
+				array(
+					'task_id'           => true,
+					'expected_modified' => true,
+				)
+			)
+		);
+		if ( $nothing instanceof WP_Error ) {
+			return $nothing;
+		}
+
 		$loaded = $this->load_writable_task( $input );
 		if ( is_wp_error( $loaded ) ) {
 			return $loaded;
@@ -100,6 +113,31 @@ class Decker_Ability_Command_Service {
 	}
 
 	/**
+	 * Refuse a write that asks for nothing.
+	 *
+	 * `minProperties` cannot express this on its own: the concurrency token is
+	 * a property of the same schema, so `{ task_id, expected_modified }`
+	 * satisfies the schema while requesting no change. Writing it would not be
+	 * harmless -- the save stamps the task as modified and rotates the edit
+	 * generation, so a colleague with the task open is made to reload for a
+	 * change nobody asked for.
+	 *
+	 * @param array $fields The fields the write would change.
+	 * @return WP_Error|null The error, or null when there is something to write.
+	 */
+	private function nothing_to_change( array $fields ): ?WP_Error {
+		if ( ! empty( $fields ) ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'decker_no_change_requested',
+			__( 'The write carried no field to change. Send at least one field besides the task id.', 'decker' ),
+			array( 'status' => 400 )
+		);
+	}
+
+	/**
 	 * Update a writable task with a constrained change set.
 	 *
 	 * @param array $input   Ability input.
@@ -107,6 +145,11 @@ class Decker_Ability_Command_Service {
 	 * @return array<string, mixed>|WP_Error Updated task or error.
 	 */
 	private function update_with_changes( $input, array $changes ) {
+		$nothing = $this->nothing_to_change( $changes );
+		if ( $nothing instanceof WP_Error ) {
+			return $nothing;
+		}
+
 		$loaded = $this->load_writable_task( $input );
 		if ( is_wp_error( $loaded ) ) {
 			return $loaded;

@@ -296,6 +296,9 @@ msgstr ""
 msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
 msgstr ""
 
+msgid "The write carried no field to change. Send at least one field besides the task id."
+msgstr ""
+
 msgid "The supplied expected_modified value is not a valid date."
 msgstr ""
 
@@ -974,6 +977,9 @@ msgid "Add Attachments"
 msgstr ""
 
 msgid "Select Attachments"
+msgstr ""
+
+msgid "The order could not be written, so the stack may be left as it was. Read the task again before retrying."
 msgstr ""
 
 msgid "Give exactly one of after_task_id or before_task_id."

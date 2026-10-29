@@ -74,6 +74,15 @@ class Decker_Tasks_Rest_Support {
 	public static function permission_callback( string $permission ): callable {
 		$specific = self::specific_permission_callback( $permission );
 
+		// A route that asks for manage_options is already stricter than the
+		// gate, and the gate only knows the five core role slugs: wrapping it
+		// would refuse a site administrator whose capability comes from a
+		// custom role, or a network administrator with no role on the subsite,
+		// on the board repair route they are the only ones allowed to call.
+		if ( 'manage_options' === $permission ) {
+			return $specific;
+		}
+
 		return function ( $request ) use ( $specific ) {
 			if ( ! Decker::current_user_has_at_least_minimum_role() ) {
 				return false;

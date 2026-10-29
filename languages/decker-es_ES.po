@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-29T15:00:49+00:00\n"
+"PO-Revision-Date: 2026-10-29T23:37:22+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -296,6 +296,9 @@ msgstr "Obtener un artículo de la base de conocimiento de Decker"
 
 msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
 msgstr "Recupera un artículo accesible de la base de conocimiento, incluido su contenido completo, por ID."
+
+msgid "The write carried no field to change. Send at least one field besides the task id."
+msgstr "La escritura no incluía ningún campo que cambiar. Envía al menos un campo además del identificador de la tarea."
 
 msgid "The supplied expected_modified value is not a valid date."
 msgstr "El valor de expected_modified no es una fecha válida."
@@ -1007,6 +1010,9 @@ msgstr "Agregar Adjuntos"
 
 msgid "Select Attachments"
 msgstr "Seleccionar Adjuntos"
+
+msgid "The order could not be written, so the stack may be left as it was. Read the task again before retrying."
+msgstr "No se pudo escribir el orden, así que la columna puede haber quedado como estaba. Vuelve a leer la tarea antes de reintentarlo."
 
 msgid "Give exactly one of after_task_id or before_task_id."
 msgstr "Indica exactamente uno de after_task_id o before_task_id."

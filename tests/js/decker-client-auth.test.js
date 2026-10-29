@@ -1658,15 +1658,36 @@ describe( 'today, comments, ordering and archiving', () => {
 		} );
 	} );
 
-	it( 'passes through a placement the server refused', async () => {
+	it( 'passes through a placement the server refused, without advising a retry', async () => {
 		state.placeOutcome = {
 			status: 409,
 			body: { code: 'decker_priority_mismatch', message: 'Priority pulls it to the front.' },
 		};
 
+		const failure = await client
+			.tasksReorder( 31, { after: '55', yes: true } )
+			.catch( ( error ) => error );
+
+		expect( failure.code ).toBe( 'decker_priority_mismatch' );
+		// The generic 409 text told the model to re-read and try again, which
+		// for this code can only loop: re-reading never clears the flag.
+		expect( failure.message ).not.toMatch( /try again/i );
+		expect( failure.message ).toMatch( /max_priority/ );
+	} );
+
+	it( 'refuses a position for a task that is on no board', async () => {
+		// Without a board the stack read spans every board, and the server
+		// writes the menu_order before its board-scoped renumber finds nothing.
+		state.task = { ...state.task, board_id: 0 };
+
 		await expect(
-			client.tasksReorder( 31, { after: '55', yes: true } )
-		).rejects.toMatchObject( { code: 'decker_priority_mismatch' } );
+			client.tasksReorder( 31, { position: '1', yes: true } )
+		).rejects.toMatchObject( {
+			code: 'order_task_without_board',
+			exit: client.EXIT.CONFLICT,
+		} );
+
+		expect( state.lastOrder ).toBeNull();
 	} );
 
 	it( 'reports an unchanged placement as unchanged', async () => {
