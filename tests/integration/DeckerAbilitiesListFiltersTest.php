@@ -244,6 +244,30 @@ class DeckerAbilitiesListFiltersTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The task editor stores user_id as a string, and that must still match.
+	 *
+	 * The meta box reads the id from a data attribute and posts the relations
+	 * as JSON, so the saver stores "5" where Decker_Task_Today_Manager stores
+	 * 5. Every reader casts, so the two have always been interchangeable; a
+	 * narrowing query that only accepts one of them would hide from the agent
+	 * listing a task the board shows as marked for today.
+	 */
+	public function test_today_filter_matches_a_relation_stored_as_a_string() {
+		update_post_meta(
+			$this->tasks['authored'],
+			'_user_date_relations',
+			array(
+				array(
+					'user_id' => (string) $this->me_id,
+					'date'    => Decker_Task_Date_Relations::today_string(),
+				),
+			)
+		);
+
+		$this->assertSame( array( $this->tasks['authored'] ), $this->ids( array( 'today' => true ) ) );
+	}
+
+	/**
 	 * A relation from another date must not appear in today's list.
 	 */
 	public function test_today_filter_ignores_other_dates() {

@@ -11,7 +11,15 @@
  */
 
 import { createServer } from 'node:http';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	chmodSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	statSync,
+	symlinkSync,
+	writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -258,10 +266,16 @@ beforeAll( async () => {
 			return;
 		}
 
+		state.restHits += 1;
+
 		if ( state.restResponse ) {
 			const canned = state.restResponse;
 			state.restResponse = null;
-			response.writeHead( canned.status, { 'content-type': canned.type } );
+			const headers = { 'content-type': canned.type };
+			if ( canned.location ) {
+				headers.location = canned.location;
+			}
+			response.writeHead( canned.status, headers );
 			response.end( canned.body );
 			return;
 		}
@@ -477,6 +491,7 @@ beforeEach( () => {
 	state.sessionValid = true;
 	state.prettyRouting = true;
 	state.restResponse = null;
+	state.restHits = 0;
 	state.stallMs = 0;
 	state.entryRedirectOrigin = null;
 	state.lastRun = null;
@@ -708,6 +723,27 @@ describe( 'session lifecycle', () => {
 		await expect( client.authStatus() ).resolves.toMatchObject( { authenticated: false } );
 	} );
 
+	it( 'repairs the permissions of a session file that already existed', async () => {
+		const path = join( configDir, 'session.json' );
+		writeFileSync( path, '{}' );
+		chmodSync( path, 0o644 );
+
+		await login();
+
+		// writeFileSync's `mode` only applies when it creates the file, so
+		// without an explicit chmod the cookies would stay world-readable.
+		expect( statSync( path ).mode & 0o777 ).toBe( 0o600 );
+	} );
+
+	it( 'refuses to write the session through a symlink', async () => {
+		const target = join( configDir, 'elsewhere.json' );
+		writeFileSync( target, '{}' );
+		symlinkSync( target, join( configDir, 'session.json' ) );
+
+		await expect( login() ).rejects.toThrow();
+		expect( readFileSync( target, 'utf8' ) ).toBe( '{}' );
+	} );
+
 	it( 'clears the stored session on logout', async () => {
 		await login();
 		expect( client.sessionStore.read() ).not.toBeNull();
@@ -791,6 +827,45 @@ describe( 'REST routing and transport', () => {
 			code: 'rest_outcome_unknown',
 			exit: client.EXIT.UNCERTAIN,
 		} );
+	} );
+
+	it( 'refuses to let a 307 resend a write body, and calls it uncertain', async () => {
+		await login();
+		const context = await client.createContext();
+		state.restHits = 0;
+		state.restResponse = {
+			status: 307,
+			type: 'application/json',
+			location: '/wp-json/decker/v1/ping-moved',
+			body: '{}',
+		};
+
+		// A 307 says the write was not processed, but only the server knows
+		// that: an application that applied it and then redirected with 307
+		// would have it applied twice.
+		await expect(
+			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
+		).rejects.toMatchObject( {
+			code: 'rest_outcome_unknown',
+			exit: client.EXIT.UNCERTAIN,
+		} );
+
+		expect( state.restHits ).toBe( 1 );
+	} );
+
+	it( 'still follows a redirect on a read', async () => {
+		await login();
+		const context = await client.createContext();
+		state.restResponse = {
+			status: 307,
+			type: 'application/json',
+			location: '/wp-json/decker/v1/ping-moved',
+			body: '{}',
+		};
+
+		await expect( client.restRequest( context, 'GET', '/decker/v1/ping' ) ).resolves.toMatchObject(
+			{ echo: '/decker/v1/ping-moved' }
+		);
 	} );
 
 	it( 'reports malformed JSON on a read', async () => {

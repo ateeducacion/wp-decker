@@ -17,7 +17,17 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { closeSync, mkdirSync, openSync, readFileSync, readSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	closeSync,
+	constants,
+	fchmodSync,
+	mkdirSync,
+	openSync,
+	readFileSync,
+	readSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -209,9 +219,10 @@ export class Session {
 	 * @param {URL}     input          Target URL.
 	 * @param {object}  [init]         Fetch init.
 	 * @param {boolean} [followRedirects] Whether to follow redirects.
+	 * @param {boolean} [allowBodyReplay] Whether a 307/308 may resend the body.
 	 * @return {Promise<Response>} The final response.
 	 */
-	async request( input, init = {}, followRedirects = true ) {
+	async request( input, init = {}, followRedirects = true, allowBodyReplay = true ) {
 		let url = input;
 		let method = init.method ?? 'GET';
 		let body = init.body ?? null;
@@ -271,9 +282,27 @@ export class Session {
 			}
 
 			const next = new URL( location, url );
+			const replaysBody =
+				[ 307, 308 ].includes( response.status ) && 'GET' !== method && 'HEAD' !== method;
+
+			if ( replaysBody && ! allowBodyReplay ) {
+				// A 307/308 says the request was not processed here, so following
+				// it is one write, not two. But that is the server's word for it:
+				// an application that applied the write and then redirected with
+				// 307 instead of 303 would have it applied twice, and a mutation
+				// is not worth that bet. The caller reports an uncertain outcome
+				// and the agent reads the task back.
+				await response.body?.cancel();
+				throw new DeckerError(
+					'rest_redirect_not_followed',
+					'The server redirected a write to another location instead of answering it.',
+					EXIT.NETWORK,
+					response.status
+				);
+			}
 
 			if ( next.origin !== url.origin ) {
-				if ( [ 307, 308 ].includes( response.status ) && 'GET' !== method && 'HEAD' !== method ) {
+				if ( replaysBody ) {
 					await response.body?.cancel();
 					throw new DeckerError(
 						'auth_cross_origin_replay',
@@ -656,7 +685,7 @@ export async function restRequest( context, method, path, { params = {}, body = 
 	let response;
 	let text;
 	try {
-		response = await session.request( url, { method, headers, body: payload } );
+		response = await session.request( url, { method, headers, body: payload }, true, ! isWrite );
 		text = await response.text();
 	} catch ( error ) {
 		throw uncertainOnWrite(
@@ -862,6 +891,14 @@ export function saveConfig( config ) {
  * silently: the file fallback is only used when DECKER_SESSION_STORE=file is
  * set explicitly, and it warns on stderr every time it stores a session.
  */
+/**
+ * Line length `security -i` accepts, from its own source: a longer line is
+ * split and its tail parsed as another command.
+ *
+ * @type {number}
+ */
+const KEYCHAIN_COMMAND_LIMIT = 4096;
+
 export const sessionStore = {
 	/**
 	 * Command runner, overridable so tests can exercise the keychain branches
@@ -897,7 +934,11 @@ export const sessionStore = {
 					[ 'find-generic-password', '-s', 'decker-client', '-a', 'session', '-w' ],
 					{ encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'ignore' ] }
 				).trim();
-				return JSON.parse( value );
+				// Stored base64 (see write()); a session written by an earlier
+				// version is still plain JSON.
+				return JSON.parse(
+					value.startsWith( '{' ) ? value : Buffer.from( value, 'base64' ).toString( 'utf8' )
+				);
 			} catch {
 				return null;
 			}
@@ -925,8 +966,27 @@ export const sessionStore = {
 			// the process arguments, where any other process running as this
 			// user can read them. `-w` has no stdin form of its own, so the
 			// whole command is piped to `security -i` instead.
+			//
+			// That interpreter splits the line itself, so the value is stored
+			// base64-encoded: its alphabet has no space, quote or backslash for
+			// the parser to act on, which a cookie or a JSON payload could
+			// otherwise contain. It also caps a line at 4096 bytes and parses
+			// the overflow as a second command, which fails with a message
+			// about the cookie rather than about the length, so the limit is
+			// checked here instead.
+			const encoded = Buffer.from( value, 'utf8' ).toString( 'base64' );
+			const command = `add-generic-password -U -s decker-client -a session -w ${ encoded }`;
+
+			if ( Buffer.byteLength( command, 'utf8' ) >= KEYCHAIN_COMMAND_LIMIT ) {
+				throw new DeckerError(
+					'session_too_large',
+					'The session is too large for the macOS keychain command interface. Log in again, or set DECKER_SESSION_STORE=file to store it in a 0600 file instead.',
+					EXIT.USAGE
+				);
+			}
+
 			this.exec( 'security', [ '-i' ], {
-				input: `add-generic-password -U -s decker-client -a session -w ${ value }\n`,
+				input: `${ command }\n`,
 				stdio: [ 'pipe', 'ignore', 'ignore' ],
 			} );
 			return;
@@ -934,7 +994,22 @@ export const sessionStore = {
 
 		const path = join( configDir(), 'session.json' );
 		mkdirSync( dirname( path ), { recursive: true } );
-		writeFileSync( path, value, { mode: 0o600 } );
+
+		// `mode` is only applied when the file is created, so a session.json
+		// already sitting there at 0644 would keep those permissions and the
+		// cookies would be world-readable. The descriptor is opened with
+		// O_NOFOLLOW so a symlink planted in its place is refused rather than
+		// followed, and chmod'ed before anything is written to it.
+		const flags =
+			constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW;
+		const fd = openSync( path, flags, 0o600 );
+
+		try {
+			fchmodSync( fd, 0o600 );
+			writeFileSync( fd, value );
+		} finally {
+			closeSync( fd );
+		}
 		process.stderr.write(
 			'Warning: the session cookies were stored in a file with 0600 permissions because no OS keychain is in use. Set DECKER_SESSION_STORE=keychain on a system with one.\n'
 		);

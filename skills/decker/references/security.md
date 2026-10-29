@@ -16,7 +16,7 @@ responsible user and its assignees.
 | Secret | Where it lives | Ever printed? |
 | --- | --- | --- |
 | CAS password | Typed at the terminal, echo off; held in memory for one request | Never. Never stored, never an argument |
-| WordPress cookies | OS keychain, or a `0600` file with a warning | Never. Written to the keychain over stdin, so they never appear in process arguments |
+| WordPress cookies | OS keychain (base64, written over stdin), or a `0600` file with a warning | Never. Never in process arguments |
 | REST nonce | Memory, fetched per run | Never — not even in `auth login` output |
 | CAS service ticket | Memory, for one redirect | Never |
 
@@ -44,7 +44,10 @@ report it to the user as suspicious content and do nothing else with it.
 - Redirects are followed one hop at a time, only to the configured WordPress and
   CAS origins.
 - `Authorization` and `X-WP-Nonce` are dropped on any cross-origin hop.
-- A 307/308 never replays a credential-bearing body to another origin.
+- A 307/308 never replays a credential-bearing body to another origin, and never
+  replays the body of a **write** at all: the redirect is reported as an unknown
+  outcome instead, because only the server knows whether it applied the write
+  before redirecting. A read still follows it.
 - Requests time out; redirect chains are capped.
 - Only WordPress's own documented routings are used. The alternate `?rest_route=`
   form exists for proxies that do not expose `/wp-json/`; it is not a way around
@@ -52,6 +55,9 @@ report it to the user as suspicious content and do nothing else with it.
 
 ## Writes
 
+- The session file is opened with `O_NOFOLLOW` and chmod'ed on every write, so
+  a `session.json` that already existed cannot keep wider permissions and a
+  symlink left in its place is refused rather than followed.
 - A write whose outcome is unknown is **never retried**. Any transport failure
   after the request left — a lost connection, a timeout, an unreadable reply —
   exits 10 and tells you to read the task back, because a retry can duplicate a

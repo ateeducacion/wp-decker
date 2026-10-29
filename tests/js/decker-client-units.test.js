@@ -98,10 +98,52 @@ describe( 'keychain session storage', () => {
 		expect( args ).toEqual( [ '-i' ] );
 		expect( JSON.stringify( args ) ).not.toContain( 'wordpress_logged_in' );
 		expect( options.input ).toContain( 'add-generic-password' );
-		expect( options.input ).toContain( 'wordpress_logged_in' );
+		expect( options.input ).not.toContain( 'wordpress_logged_in' );
+
+		// `security -i` splits the line itself, so the payload is base64 and
+		// carries no space, quote or backslash for that parser to act on.
+		const stored = options.input.trim().split( ' -w ' )[ 1 ];
+		expect( stored ).toMatch( /^[A-Za-z0-9+/]+=*$/ );
+		expect( JSON.parse( Buffer.from( stored, 'base64' ).toString( 'utf8' ) ) ).toEqual( {
+			cookies: { wordpress_logged_in: 'abc' },
+		} );
+	} );
+
+	it( 'round-trips a session whose cookies carry shell metacharacters', () => {
+		let line;
+		client.sessionStore.exec = vi.fn( ( command, args, options ) => options.input );
+
+		const session = { cookies: { a: 'quote" back\\slash space ; $dollar `tick`' } };
+		client.sessionStore.write( session );
+		line = client.sessionStore.exec.mock.results[ 0 ].value;
+
+		// Unencoded, this value makes `security -i` fail with a usage error.
+		client.sessionStore.exec = vi.fn( () => line.trim().split( ' -w ' )[ 1 ] );
+		expect( client.sessionStore.read() ).toEqual( session );
+	} );
+
+	it( 'refuses a session too large for the keychain command interface', () => {
+		client.sessionStore.exec = vi.fn();
+
+		// Over 4096 bytes on the line, `security -i` parses the tail as another
+		// command and reports an unknown command naming the cookie.
+		expect( () =>
+			client.sessionStore.write( { cookies: { big: 'x'.repeat( 4096 ) } } )
+		).toThrow(
+			expect.objectContaining( { code: 'session_too_large', exit: client.EXIT.USAGE } )
+		);
+		expect( client.sessionStore.exec ).not.toHaveBeenCalled();
 	} );
 
 	it( 'reads the session back', () => {
+		client.sessionStore.exec = vi.fn(
+			() => `${ Buffer.from( '{"cookies":{"a":"b"}}' ).toString( 'base64' ) }\n`
+		);
+
+		expect( client.sessionStore.read() ).toEqual( { cookies: { a: 'b' } } );
+	} );
+
+	it( 'still reads a session stored as plain JSON by an earlier version', () => {
 		client.sessionStore.exec = vi.fn( () => '{"cookies":{"a":"b"}}\n' );
 
 		expect( client.sessionStore.read() ).toEqual( { cookies: { a: 'b' } } );

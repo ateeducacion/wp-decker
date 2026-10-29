@@ -59,6 +59,10 @@ repeat the command** — repeating it is how a task or a comment gets created
 twice. The same failures on a read are reported as ordinary read failures,
 because nothing was at stake.
 
+**`session_too_large`.** The macOS keychain command interface takes a line of
+at most 4096 bytes, and the session did not fit. Log in again, or set
+`DECKER_SESSION_STORE=file` to store it in a `0600` file instead.
+
 **`not_found` on a `/wp/v2/users/...` route.** Known on the target deployment:
 some user routes return an institutional HTML 404 page. Resolve users through
 the routes `doctor` reports as working.

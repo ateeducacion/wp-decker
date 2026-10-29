@@ -87,10 +87,27 @@ class Decker_Ability_Task_Filter {
 			// busy site. The value is a serialized array, so these are prefixes
 			// of its records and matches() still decides. "i:5;" cannot match
 			// "i:15;", because the terminator is part of the needle.
+			//
+			// Both serializations have to be accepted: the task editor posts
+			// the relations as JSON and stores user_id as the string it read
+			// from the DOM, while Decker_Task_Today_Manager stores an integer.
+			// matches() casts, so the stored type never mattered until this
+			// query existed; an integer-only needle hides from "--today" every
+			// task marked from the editor.
+			$user_id = (string) get_current_user_id();
+
 			$meta[] = array(
-				'key'     => Decker_Task_Today_Manager::META_KEY,
-				'value'   => sprintf( '"user_id";i:%d;', get_current_user_id() ),
-				'compare' => 'LIKE',
+				'relation' => 'OR',
+				array(
+					'key'     => Decker_Task_Today_Manager::META_KEY,
+					'value'   => sprintf( '"user_id";i:%s;', $user_id ),
+					'compare' => 'LIKE',
+				),
+				array(
+					'key'     => Decker_Task_Today_Manager::META_KEY,
+					'value'   => sprintf( '"user_id";s:%d:"%s";', strlen( $user_id ), $user_id ),
+					'compare' => 'LIKE',
+				),
 			);
 			$meta[] = array(
 				'key'     => Decker_Task_Today_Manager::META_KEY,
