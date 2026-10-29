@@ -195,6 +195,40 @@ test-e2e-collab: start-if-not-running setup-tests-env
 	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
 	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
 
+# Run the CAS end-to-end test: the real client, over real HTTP, through a real
+# Apereo CAS server, into a real WordPress with Decker.
+#
+# The CAS server is the public Apereo/pac4j demo at casserverpac4j.dev, whose
+# FakeAuthenticationHandler accepts any credentials. Nothing secret is sent: the
+# username is a disposable test account and the password is the literal string
+# "password". No institutional credential and no production system is involved.
+#
+# WP Cassify is installed and activated ONLY in the tests environment (port
+# 8889), and is deactivated again whatever the outcome. That matters: an active
+# Cassify redirects wp-login.php to CAS, so leaving it on would send your own
+# login to an external demo server. It is deliberately NOT added to
+# .wp-env.json, which would activate it in the development environment too.
+CAS_BASE_URL ?= https://www.casserverpac4j.dev/
+CAS_TEST_USER ?= deckertest
+test-cas: start-if-not-running setup-tests-env
+	@set -e; \
+	trap 'echo "Deactivating wp-cassify..."; npx wp-env run tests-cli wp plugin deactivate wp-cassify >/dev/null 2>&1 || true' EXIT INT TERM; \
+	npx wp-env run tests-cli wp plugin install wp-cassify --activate; \
+	npx wp-env run tests-cli wp option update wp_cassify_base_url '$(CAS_BASE_URL)'; \
+	npx wp-env run tests-cli wp option update wp_cassify_login_servlet 'login'; \
+	npx wp-env run tests-cli wp option update wp_cassify_logout_servlet 'logout'; \
+	npx wp-env run tests-cli wp option update wp_cassify_service_validate_servlet 'p3/serviceValidate'; \
+	npx wp-env run tests-cli wp option update wp_cassify_protocol_version '3'; \
+	npx wp-env run tests-cli wp option update wp_cassify_create_user_if_not_exist ''; \
+	npx wp-env run tests-cli wp option update wp_cassify_ssl_check_certificate 'enabled'; \
+	npx wp-env run tests-cli wp option update wp_cassify_disable_authentication ''; \
+	npx wp-env run tests-cli sh -c "wp user get $(CAS_TEST_USER) >/dev/null 2>&1 || wp user create $(CAS_TEST_USER) $(CAS_TEST_USER)@example.com --role=editor --user_pass=unused-cas-handles-login"; \
+	DECKER_CAS_LIVE=1 \
+	DECKER_CAS_SITE=http://localhost:8889 \
+	DECKER_CAS_URL='$(CAS_BASE_URL)login' \
+	DECKER_CAS_USER='$(CAS_TEST_USER)' \
+	npx vitest run tests/js/decker-client-cas-live.test.js --coverage=false
+
 test-js:
 	npm run test:js
 

@@ -10,8 +10,12 @@
 *.sql.gz
 *.tar.gz
 *.zip
-wp-decker*/
-decker*/
+# Anchored to the root on purpose: these ignore an extracted or built copy of
+# the plugin sitting beside the source. Unanchored, `decker*/` matched at any
+# depth and silently swallowed skills/decker-tasks/, the installable Agent
+# Skill, so it could never be committed.
+/wp-decker*/
+/decker*/
 *.swp
 *.swo
 *.bak

@@ -1,0 +1,467 @@
+<!DOCTYPE html><html lang="en">
+
+<head>
+    <meta charset="UTF-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge" /><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" /><title>CAS Server Pac4j Login</title>
+    
+        <link rel="stylesheet" type="text/css" href="/webjars/normalize.css/8.0.1/normalize-112272e51c80ffe5bd01becd2ce7d656.css" /><link rel="stylesheet" type="text/css" href="/webjars/bootstrap/5.3.8/css/bootstrap-grid.min-895b9494c7178ac12ad9c56d81305665.css" /><link rel="stylesheet" type="text/css" href="/webjars/material-components-web/14.0.0/dist/material-components-web.min-9da9033e8d04504fe54b3dbb1298fd78.css" /><link rel="stylesheet" type="text/css" href="/webjars/mdi__font/7.4.47/css/materialdesignicons.min-2c83c4bce691e18f82409f87b2bf84e4.css" /><link rel="stylesheet" type="text/css" href="/webjars/datatables/2.3.8/css/dataTables.dataTables-db97b6e9410c0ffb95559762d9cbb547.css" /><link rel="stylesheet" type="text/css" href="/webjars/datatables/2.3.8/css/dataTables.jqueryui-d76597361a57d4aabd895fa82379b36f.css" /><link rel="stylesheet" type="text/css" href="/webjars/jquery-ui/1.14.2/dist/themes/cupertino/jquery-ui.min-17b77f071c099548f491917cac891ddf.css" /><link rel="stylesheet" type="text/css" href="/css/cas-be9ee2e5d43d44111b7d931af7bc5f48.css" /><link rel="stylesheet" type="text/css" href="/css/custom-c14be2cfb07365fa4f0bb7715fedffae.css" /><link rel="shortcut icon" href="/favicon-ca85a6da0bfd721283ee36001c41a9fd.ico" /></head>
+
+<body class="login mdc-typography">
+    <script type="text/javascript" src="/webjars/jquery/4.0.0/dist/jquery.min-a8e7cabd4d49dfaf0146678ee147dfc5.js"></script>
+<script type="text/javascript" src="/webjars/datatables/2.3.8/js/dataTables.min-f3bfd2b9426c0c4c546c66e3daf8b149.js"></script>
+<script type="text/javascript" src="/webjars/datatables/2.3.8/js/dataTables.jqueryui-b4effb0d29dc32e52611b0301fc89aaa.js"></script>
+<script type="text/javascript" src="/webjars/fingerprintjs__fingerprintjs/5.0.1/dist/fp-43f4be9f68314d0902fbf0ff6914bdf0.js"></script>
+<script type="text/javascript" src="/webjars/dexie/4.4.2/dist/dexie.min-db35511d76fbc60dd31826e9dcdce1e9.js"></script>
+
+<script type="text/javascript" src="/webjars/material-components-web/14.0.0/dist/material-components-web.min-3c99031127092dd1984f2e3aa6aeed8b.js"></script>
+<script type="text/javascript" src="/js/cas-eaf4e06cc4a39f58cbcb37322fcd459c.js"></script>
+<script type="text/javascript" src="/js/material-681f4d964d9fefe32c2624fc6dc48f39.js"></script>
+<script type="text/javascript" src="/js/custom-63dd40a49197131d92472a1288f662f6.js"></script>
+<script>
+    const rememberUsername = "false"
+    const trackGeoLocation = false;
+    
+    if (typeof resourceLoadedSuccessfully === "function") {
+        resourceLoadedSuccessfully();
+    }
+</script>
+
+<div>
+
+    <style>
+        :root {
+            --bg-image: url(\/images\/background-3889017d458352237bd20d0717da0264\.jpg);
+        }
+    </style>
+
+    <style>
+        :root {
+            --cas-brand-height: 86px;
+            --cas-bar-height: 102px;
+        }
+
+        .cas-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            gap: 0.75rem;
+            min-width: 0;
+            height: var(--cas-brand-height);
+        }
+
+        .cas-brand a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-width: 0;
+            flex: 0 1 auto;
+        }
+
+        header > nav .cas-brand .cas-logo {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        header#app-bar .mdc-top-app-bar__row {
+            height: var(--cas-bar-height);
+        }
+
+        body .mdc-top-app-bar--fixed-adjust {
+            padding-top: var(--cas-bar-height);
+        }
+
+        @media screen and (max-width: 767.99px) {
+            :root {
+                --cas-brand-height: 72px;
+                --cas-bar-height: 88px;
+            }
+
+            .cas-brand {
+                gap: 0.5rem;
+            }
+        }
+
+        @media screen and (max-width: 479.99px) {
+            :root {
+                --cas-brand-height: 58px;
+                --cas-bar-height: 74px;
+            }
+        }
+    </style>
+
+    <header id="app-bar" class="mdc-top-app-bar mdc-top-app-bar--fixed mdc-elevation--z4 shadow-sm"
+            role="banner">
+        <nav class="mdc-top-app-bar__row navbar navbar-dark bg-dark">
+            <div class="container-fluid container-fluid d-flex align-items-center justify-content-between">
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                </section>
+                <section class="mdc-top-app-bar__section">
+                    <div class="cas-brand mx-auto">
+                        <h1 class="visually-hidden">CAS Server Pac4j</h1>
+                        <a target="_blank" href="https://www.casinthecloud.com/index-en.html">
+                            <img class="cas-logo" src="https://www.casinthecloud.com/img/logo/new_cas_in_the_cloud_logo.png" /></a>
+                        <a target="_blank" href="https://www.pac4j.org">
+                            <img class="cas-logo" src="https://www.pac4j.org/img/logo.png" /></a>
+                    </div>
+                </section>
+                <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+                    </section>
+            </div>
+        </nav>
+    </header>
+
+    <div id="logindrawer">
+        <aside id="app-drawer"
+               class="mdc-drawer mdc-drawer--dismissible mdc-drawer--modal offcanvas offcanvas-start">
+            
+            <div class="mdc-drawer__header offcanvas-header flex-column">
+                <h2 class="mdc-drawer__title offcanvas-title">CAS Server Pac4j</h2>
+                <div class="mdc-drawer__subtitle offcanvas-title">Central Authentication Service</div>
+            </div>
+            <div class="mdc-drawer__content offcanvas-body">
+                <nav class="mdc-list list-group list-group-flush">
+                    <a href="/actuator" class="mdc-list-item list-group-item list-group-item-action">
+                        <i class="mdi mdi-cogs fa fa-cogs" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Actuator Endpoints</span>
+                    </a>
+                    <a class="mdc-list-item list-group-item list-group-item-action" href="https://apereo.github.io/cas">
+                        <i class="mdi mdi-file-code-outline fas fa-file-code" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Documentation</span>
+                    </a>
+                    <a class="mdc-list-item list-group-item list-group-item-action" href="https://github.com/apereo/cas/pulls">
+                        <i class="mdi mdi-call-merge fas fa-code-branch" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Pull Requests</span>
+                    </a>
+                    <a class="mdc-list-item list-group-item list-group-item-action"
+                       href="https://apereo.github.io/cas/developer/Contributor-Guidelines.html">
+                        <i class="mdi mdi-information fas fa-info-circle" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Contributor Guidelines</span>
+                    </a>
+                    <a class="mdc-list-item list-group-item list-group-item-action" href="https://apereo.github.io/cas/Support.html">
+                        <i class="mdi mdi-help-circle fas fa-question-circle" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Support</span>
+                    </a>
+                    <a class="mdc-list-item list-group-item list-group-item-action" href="https://apereo.github.io/cas/Mailing-Lists.html">
+                        <i class="mdi mdi-email-newsletter fas fa-envelope-open-text" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Mailing Lists</span>
+                    </a>
+                    <a class="mdc-list-item list-group-item list-group-item-action" href="https://apereo.github.io/">
+                        <i class="mdi mdi-post fas fa-newspaper" aria-hidden="true"></i>&nbsp;
+                        <span class="mdc-list-item__text">Blog</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+    </div>
+
+    <script>let countMessages = 0;</script>
+    <div
+            class="mdc-dialog cas-notification-dialog modal"
+            id="cas-notification-dialog" role="alertdialog"
+            aria-modal="true" aria-label="Notifications"
+            aria-describedby="notif-dialog-content">
+        <div class="mdc-dialog__container modal-dialog">
+            <div class="mdc-dialog__surface modal-content">
+                <div class="mdc-dialog__content modal-body" id="notif-dialog-content">
+                    <div id="cookiesSupportedDiv" class="cas-notification-message mdc-typography--body1" style="display: none">
+                        <h3 class="mdc-typography--headline6 mdi mdi-alert-circle fas fa-exclamation-circle">Cookies Disabled</h3>
+                        <p class="text-wrap small text-justify">Your browser does not support cookies. The browser's ability to store or read cookies is essential for single sign-on to work. Please consult your browser settings and ensure cookie support is turned on.</p>
+                    </div>
+
+                </div>
+                <footer class="mdc-dialog__actions modal-footer">
+                    <button type="button" class="mdc-button mdc-button--raised mdc-dialog__button btn btn-primary drop-button"
+                            data-mdc-dialog-action="accept"
+                            data-mdc-dialog-button-default
+                            data-bs-dismiss="modal">
+                        <span class="mdc-button__label">OK</span>
+                    </button>
+                </footer>
+            </div>
+        </div>
+        <div class="mdc-dialog__scrim"></div>
+    </div>
+
+    <script type="text/javascript">
+        function supportsCookies() {
+            try {
+                document.cookie = 'testcookie=1';
+                const ret = document.cookie.indexOf('testcookie=') !== -1;
+                document.cookie = 'testcookie=1; expires=Thu, 01-Jan-1970 00:00:01 GMT';
+                return ret;
+            } catch (e) {
+                console.log(e);
+                return false;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!supportsCookies()) {
+                countMessages++;
+                window.jQuery('#cookiesSupportedDiv').show();
+            }
+
+            if (countMessages === 0) {
+                window.jQuery('#notifications-count').remove();
+                window.jQuery('#cas-notifications-menu').remove();
+            } else {
+                window.jQuery('#notifications-count').text(`(${countMessages})`)
+            }
+        });
+    </script>
+</div>
+
+    <div class="mdc-drawer-scrim"></div>
+
+    <div class="fade-in mdc-drawer-app-content mdc-top-app-bar--fixed-adjust d-flex justify-content-center bgimage">
+        <main id="main-content" class="container-lg py-4" role="main">
+            <div id="content" class="d-flex justify-content-center">
+   <div class="d-flex justify-content-center flex-md-row flex-column mdc-card mdc-card-content card flex-grow-1">
+
+        <section id="loginForm"
+                 class="login-section login-form card-body">
+            <div class="d-flex flex-column justify-content-between m-auto">
+
+        <div>
+            <div id="serviceui" class="banner banner-info mb-4 text-justify">
+
+        <div class="d-flex align-items-center pr-2">
+            <div id="servicedesc" class="ml-2">
+                <strong><i class="mdi mdi-web" aria-hidden="true"></i>any CAS app</strong>
+                <p></p>
+                </div>
+        </div>
+
+    </div>
+        </div>
+
+        <div class="form-wrapper">
+
+            <form method="post" id="fm1" action="login" onsubmit="loginFormSubmission();">
+                <div id="login-form-controls">
+                    <h2 class="text-center">
+                        <i class="mdi mdi-login fas fa-shield-alt" aria-hidden="true"></i>
+                        <span>Enter Username & Password</span>
+                    </h2>
+
+                    <section class="cas-field form-group my-3" id="usernameSection">
+                        <label for="username"
+                               class="mdc-text-field mdc-text-field--outlined control-label w-100">
+                            <span class="mdc-notched-outline">
+                                <span class="mdc-notched-outline__leading"></span>
+                                <span class="mdc-notched-outline__notch">
+                                    <span class="mdc-floating-label">Username:</span>
+                                </span>
+                                <span class="mdc-notched-outline__trailing"></span>
+                            </span>
+                            <input class="mdc-text-field__input form-control" id="username"
+                                   type="text"
+                                   autocapitalize="none"
+                                   spellcheck="false"
+                                   aria-describedby="usernameValidationMessage"
+                                   autocomplete="username" required name="username" value=""/></label>
+
+                        <div class="mdc-text-field-helper-line invalid-feedback">
+                            <div class="mdc-text-field-helper-text mdc-text-field-helper-text--validation-msg"
+                                 aria-hidden="true">
+                                <span id="usernameValidationMessage">Username is a required field.</span>
+                            </div>
+                        </div>
+
+                        <script type="text/javascript">
+                            /*<![CDATA[*/
+                            let username = "";
+                            let disabled = false;
+
+                            if (username != null && username !== "") {
+                                $("#username").val(username);
+                                if (disabled) {
+                                    $("#usernameSection").hide();
+                                }
+                            }
+                            /*]]>*/
+                        </script>
+                    </section>
+
+                    <section class="cas-field form-group my-3 mdc-input-group form-group" id="passwordSection">
+                        <div class="mdc-input-group-field mdc-input-group-field-append">
+                            <label for="password"
+                                   class="mdc-text-field caps-check mdc-text-field--outlined control-label mdc-text-field--with-trailing-icon control-label w-100">
+                                    <span class="mdc-notched-outline">
+                                        <span class="mdc-notched-outline__leading"></span>
+                                        <span class="mdc-notched-outline__notch">
+                                            <span class="mdc-floating-label">Password:</span>
+                                        </span>
+                                        <span class="mdc-notched-outline__trailing"></span>
+                                    </span>
+                                <input class="mdc-text-field__input form-control pwd"
+                                       type="password"
+                                       id="password"
+                                       required
+                                       aria-describedby="passwordValidationMessage"
+                                       autocomplete="current-password" name="password" value=""/><button
+                                        class="reveal-password mdc-button mdc-button--unelevated mdc-input-group-append mdc-icon-button btn btn-primary"
+                                        type="button" title="Toggle password" aria-pressed="false">
+                                    <i class="mdi mdi-eye reveal-password-icon fas fa-eye" aria-hidden="true"></i>
+                                    <span class="sr-only">Show password</span>
+                                </button>
+                            </label>
+                            <div class="mdc-text-field-helper-line invalid-feedback">
+                                <div class="mdc-text-field-helper-text mdc-text-field-helper-text--validation-msg"
+                                     aria-hidden="true">
+                                    <span id="passwordValidationMessage">Password is a required field.</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="mdc-text-field-helper-line invalid-feedback caps-warn">
+                            <div class="mdc-text-field-helper-text mdc-text-field-helper-text--persistent mdc-text-field-helper-text--validation-msg text-danger">
+                                <span>CAPSLOCK key is turned on!</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="cas-field form-group my-3">
+                        </section>
+
+                    <section class="cas-field">
+                        <input type="hidden" name="execution" value="a897f36c-2b88-47b8-a181-3222a4f7258b_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"/><input type="hidden" name="_eventId" value="submit"/><input type="hidden" name="geolocation"/><input type="hidden" name="deviceFingerprint"/><script
+                                type="text/javascript">captureFingerprint();</script>
+                    </section>
+
+                    <p id="fieldsLegend"
+                       class="text-muted mb-3">* Indicates required fields</p>
+
+                    <div id="termsOfUse"
+                         class="text-muted mb-3">By logging in via CAS, you agree with our <strong><a target='_blank' href='https://www.apache.org/licenses/LICENSE-2.0'>Terms of Use Policy</a></strong>.</div>
+
+                    <button
+                class="mdc-button mdc-button--raised btn btn-primary btn-primary flex-shrink-0 drop-button"
+                name="submitBtn"
+                id="submitBtn"
+                type="submit">
+            <i class="mdi fas mdi-login fa-shield-alt" aria-hidden="true"></i>
+            <span class="mdc-button__label">Login</span>
+        </button>
+
+        </div>
+            </form>
+
+            <hr class="my-4"/><div>
+                <div id="pmlinks" class="pmlinks-panel">
+    <style>
+        .pmlinks-panel {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            border-radius: 6px;
+            padding: .75rem 1rem;
+            margin-top: 1rem;
+            font-size: .875rem;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .pmlinks-panel .pmlinks-title {
+            margin: 0 0 .5rem;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        .pmlinks-panel ul {
+            margin: 0;
+            padding-left: 1.1rem;
+        }
+
+        .pmlinks-panel li {
+            margin-bottom: .35rem;
+        }
+
+        .pmlinks-panel li ul {
+            margin-top: .35rem;
+        }
+
+        .pmlinks-panel .k {
+            color: #6b7280;
+        }
+
+        .pmlinks-panel code {
+            background-color: rgba(0, 0, 0, .06);
+            border-radius: 3px;
+            padding: 0 .3em;
+            font-size: .85em;
+            word-break: break-word;
+        }
+    </style>
+
+    <p class="pmlinks-title">This CAS server is meant to test the integration of the pac4j clients via the CAS, SAML and OIDC protocols.</p>
+    <ul>
+        <li><strong>Accounts</strong>: <code>alice</code> / <code>pwd</code>, <code>bob</code> / <code>pwd</code></li>
+        <li><strong>CAS support</strong>: <span class="k">url:</span> <code>https?://.*</code></li>
+        <li><strong>OIDC support</strong>:
+            <ul>
+                <li><span class="k">id:</span> <code>myclient</code>, <span class="k">secret:</span> <code>mysecret</code>, <span class="k">url:</span> <code>https?://.*</code></li>
+                <li><span class="k">id:</span> <code>pkceclient</code>, <span class="k">url:</span> <code>https?://.*</code></li>
+            </ul>
+        </li>
+        <li><strong>SAML support</strong>:
+            <ul>
+                <li><span class="k">entityId:</span> <code>http://localhost:8081.*</code></li>
+                <li><span class="k">entityId:</span> <code>http://localhost:8080/callback.*</code></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+                </div>
+
+            <script type="text/javascript">
+                /*<![CDATA[*/
+                var i = "One moment please..."
+                var j = "Login"
+                    /*]]>*/
+                    $(window).on("pageshow", function () {
+                        $(":submit").prop("disabled", false);
+                        $(":submit").attr("value", j);
+                    });
+                $(document).ready(function () {
+                    $("#fm1").submit(function () {
+                        $(":submit").attr("disabled", true);
+                        $(":submit").attr("value", i);
+                        return true;
+                    });
+                });
+            </script>
+        </div>
+
+        <div>
+            <div id="sidebar">
+            <div class="sidebar-content">
+                <p id="securityNotice" class="text-justify">For security reasons, please <a href="logout">log out</a> and exit your web browser when you are done accessing services that require authentication!</p>
+            </div>
+        </div>
+        </div>
+    </div>
+        </section>
+        </div>
+</div>
+        </main>
+    </div>
+
+    <footer class="py-3 d-flex justify-content-center align-items-center cas-footer"
+        id="casFooter" role="contentinfo">
+    <span id="copyright" class="me-2 d-inline-block">Copyright &copy; 2005&ndash;2026 Apereo, Inc.</span>
+    <span id="poweredBy" class="px-3 d-inline-block">
+        <span>Powered by</span>
+        <a href="https://github.com/apereo/cas">Apereo CAS</a>
+    </span>
+    <code class="version">8.0.1.2 8/25/26, 4:48 PM</code>
+    <code class="host pl-2">🖥️ casserverpac4j-web-1</code>
+    <code id="clientIpAddress" class="clientIpAddress pl-2">🌍 79.116.2.70</code>
+    </footer>
+
+</body>
+
+</html>

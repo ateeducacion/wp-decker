@@ -31,6 +31,12 @@
 /AGENTS.md
 /CLAUDE.md
 
+# The installable Agent Skill. It is released from this repository and this tag,
+# but it is not plugin runtime code and must not add weight to the WordPress ZIP.
+# It stays out of .gitattributes on purpose: `gh skill add` reads the repository,
+# so export-ignoring it would break installation.
+/skills
+
 # Development tooling and configuration
 /.editorconfig
 /.phpcs.xml.dist
