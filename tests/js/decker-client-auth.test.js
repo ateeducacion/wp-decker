@@ -100,6 +100,10 @@ const state = {
 	todayMarked: false,
 	/** The tasks a stack read returns, in order. */
 	stackTasks: [],
+	/** Whether a stack read reports the scan was truncated. */
+	stackTruncated: false,
+	/** How many times a task was read. */
+	getTaskReads: 0,
 };
 
 /** The task the simulator starts each test with. */
@@ -115,7 +119,9 @@ const INITIAL_TASK = {
 	author_id: 45,
 	max_priority: false,
 	hidden: false,
-	archived: false,
+	// Deliberately no `archived` key: the real response reports `status`, and a
+	// simulator that invented `archived` is what hid the archive no-op bug.
+	status: 'publish',
 	modified: '2026-10-29T10:00:00',
 };
 
@@ -299,9 +305,20 @@ beforeAll( async () => {
 				const { task_id: ignoredId, expected_modified: ignoredModified, ...changes } = payload;
 				state.task = { ...state.task, ...changes, modified: '2026-10-29T12:00:00' };
 
+				// As the server does: an archive write changes the status, and
+				// `archived` is not part of what a read returns.
+				if ( undefined !== changes.archived ) {
+					state.task.status = changes.archived ? 'archived' : 'publish';
+					delete state.task.archived;
+				}
+
 				response.writeHead( 200, { 'content-type': 'application/json' } );
 				response.end( JSON.stringify( state.task ) );
 				return;
+			}
+
+			if ( 'decker/get-task' === ability ) {
+				state.getTaskReads++;
 			}
 
 			if ( 'decker/get-task' === ability && state.changeAfterNextRead ) {
@@ -319,9 +336,10 @@ beforeAll( async () => {
 				'decker/list-tasks': {
 					tasks: state.stackTasks,
 					page: 1,
-					per_page: 20,
+					per_page: 100,
 					total: state.stackTasks.length,
 					total_pages: 1,
+					...( state.stackTruncated ? { truncated: true } : {} ),
 				},
 				'decker/get-task': state.task,
 				'decker/list-users': state.usersRouteBlocked
@@ -469,6 +487,8 @@ beforeEach( () => {
 		{ id: 31, title: 'A task', board_id: 7, stack: 'to-do' },
 		{ id: 55, title: 'Fourth', board_id: 7, stack: 'to-do' },
 	];
+	state.stackTruncated = false;
+	state.getTaskReads = 0;
 } );
 
 afterEach( () => {
@@ -757,18 +777,62 @@ describe( 'REST routing and transport', () => {
 		await expect(
 			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
 		).rejects.toMatchObject( {
-			code: 'rest_not_json',
+			code: 'rest_outcome_unknown',
 			exit: client.EXIT.UNCERTAIN,
 		} );
 	} );
 
-	it( 'reports malformed JSON', async () => {
+	it( 'reports malformed JSON on a read', async () => {
 		await login();
 		const context = await client.createContext();
 		state.restResponse = { status: 200, type: 'application/json', body: '{"a":' };
 
 		await expect( client.restRequest( context, 'GET', '/decker/v1/ping' ) ).rejects.toMatchObject( {
 			code: 'rest_malformed_json',
+			exit: client.EXIT.NETWORK,
+		} );
+	} );
+
+	it( 'treats an unreadable reply to a write as an uncertain outcome', async () => {
+		await login();
+		const context = await client.createContext();
+		state.restResponse = { status: 200, type: 'application/json', body: '{"a":' };
+
+		// The request left; a reply that cannot be read says nothing about
+		// whether the server applied it, so it must not look retryable.
+		await expect(
+			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
+		).rejects.toMatchObject( {
+			code: 'rest_outcome_unknown',
+			exit: client.EXIT.UNCERTAIN,
+		} );
+	} );
+
+	it( 'treats a lost connection during a write as an uncertain outcome', async () => {
+		const context = {
+			session: new client.Session( {
+				origins: [ 'https://example.org' ],
+				fetch: async () => {
+					throw new Error( 'connection reset' );
+				},
+			} ),
+			baseUrl: new URL( 'https://example.org/' ),
+			routing: 'wp-json',
+			nonce: 'a1b2c3d4e5',
+		};
+
+		// A read that fails is simply a failed read.
+		await expect(
+			client.restRequest( context, 'GET', '/decker/v1/ping' )
+		).rejects.toMatchObject( { code: 'network_failed', exit: client.EXIT.NETWORK } );
+
+		// The same failure on a write is not: the request left, so the server
+		// may well have applied it, and repeating it would duplicate the work.
+		await expect(
+			client.restRequest( context, 'POST', '/decker/v1/ping', { body: { a: 1 } } )
+		).rejects.toMatchObject( {
+			code: 'rest_outcome_unknown',
+			exit: client.EXIT.UNCERTAIN,
 		} );
 	} );
 
@@ -1426,16 +1490,28 @@ describe( 'today, comments, ordering and archiving', () => {
 			ability: 'decker/archive-task',
 			input: { archived: true },
 		} );
+		expect( state.task.status ).toBe( 'archived' );
 
-		state.task.archived = true;
 		await client.tasksArchive( 31, { yes: true }, false );
 		expect( state.lastWrite.input ).toMatchObject( { archived: false } );
+		expect( state.task.status ).toBe( 'publish' );
 	} );
 
 	it( 'treats archiving an archived task as a no-op', async () => {
-		state.task.archived = true;
+		// The real response says status: 'archived'; there is no `archived`
+		// field to compare, which is why this used to write every time -- and
+		// every write rotates the edit generation, invalidating somebody's open
+		// form for no change at all.
+		state.task.status = 'archived';
 
 		const result = await client.tasksArchive( 31, { yes: true }, true );
+
+		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'restoring a published task is also a no-op', async () => {
+		const result = await client.tasksArchive( 31, { yes: true }, false );
 
 		expect( result ).toMatchObject( { changed: false, reason: 'no_change' } );
 		expect( state.lastWrite ).toBeNull();
@@ -1606,5 +1682,101 @@ describe( 'remaining flag and edge paths', () => {
 		// reported rather than throwing out of doctor.
 		expect( report.ok ).toBe( false );
 		expect( Object.keys( report.checks ).length ).toBeGreaterThan( 0 );
+	} );
+} );
+
+describe( 'review findings', () => {
+	beforeEach( async () => {
+		await login();
+	} );
+
+	it( 'does not lose a label added between the read and the write', async () => {
+		// The change and the concurrency token must come from the SAME read.
+		// They used to come from two: the collection was computed from the
+		// first and the token from the second, so a label added in between was
+		// absent from the set but present in the token's state, and the server
+		// accepted the write and dropped it.
+		state.changeAfterNextRead = true;
+
+		const error = await client
+			.tasksLabelChange( 31, { label: '12', yes: true }, true )
+			.catch( ( caught ) => caught );
+
+		expect( error.code ).toBe( 'decker_task_stale' );
+		expect( error.exit ).toBe( client.EXIT.CONFLICT );
+		// Nothing was written, so the other change survives.
+		expect( state.task.label_ids ).toEqual( [ 8, 9 ] );
+	} );
+
+	it( 'does not lose an assignee added between the read and the write', async () => {
+		state.changeAfterNextRead = true;
+
+		const error = await client
+			.tasksAssign( 31, { user: '46', yes: true }, true )
+			.catch( ( caught ) => caught );
+
+		expect( error.code ).toBe( 'decker_task_stale' );
+		expect( state.task.assignee_ids ).toEqual( [ 45 ] );
+	} );
+
+	it( 'reads the task exactly once per mutation', async () => {
+		state.getTaskReads = 0;
+
+		await client.tasksLabelChange( 31, { label: '12', yes: true }, true );
+
+		// Two reads are two chances for the state to move underneath.
+		expect( state.getTaskReads ).toBe( 1 );
+	} );
+
+	it( 'refuses a switch given a value it cannot interpret', async () => {
+		await expect(
+			client.tasksUpdate( 31, { title: 'x', yes: 'maybe' } )
+		).rejects.toMatchObject( { code: 'usage_invalid_switch', exit: client.EXIT.USAGE } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'honours an explicitly negative switch instead of treating it as true', async () => {
+		// "--yes=false" is a refusal. A non-empty string is truthy in
+		// JavaScript, so it used to perform the write.
+		for ( const value of [ 'false', '0', 'no', 'off' ] ) {
+			await expect(
+				client.tasksUpdate( 31, { title: 'Renamed', yes: value } )
+			).rejects.toMatchObject( { code: 'usage_confirmation_required' } );
+		}
+		expect( state.lastWrite ).toBeNull();
+
+		for ( const value of [ 'true', '1', 'yes', 'on' ] ) {
+			state.task = { ...INITIAL_TASK, title: 'A task' };
+			state.lastWrite = null;
+			await client.tasksUpdate( 31, { title: 'Renamed', yes: value } );
+			expect( state.lastWrite, `--yes=${ value } must apply` ).not.toBeNull();
+		}
+	} );
+
+	it( 'does not let --dry-run=false silence the confirmation requirement', async () => {
+		await expect(
+			client.tasksUpdate( 31, { title: 'Renamed', 'dry-run': 'false' } )
+		).rejects.toMatchObject( { code: 'usage_confirmation_required' } );
+		expect( state.lastWrite ).toBeNull();
+	} );
+
+	it( 'refuses to reorder from a stack it could not read completely', async () => {
+		state.stackTruncated = true;
+
+		await expect(
+			client.tasksReorder( 31, { position: '1', yes: true } )
+		).rejects.toMatchObject( {
+			code: 'order_stack_truncated',
+			exit: client.EXIT.CONFLICT,
+		} );
+		expect( state.lastOrder ).toBeNull();
+	} );
+
+	it( 'asks for hidden tasks when reading a stack to reorder', async () => {
+		await client.tasksReorder( 31, { position: '1', 'dry-run': true } );
+
+		// A hidden task occupies a position on the board, so a listing that
+		// omits it yields a position that does not exist.
+		expect( state.lastRun.query ).toMatchObject( { 'input[include_hidden]': '1' } );
 	} );
 } );

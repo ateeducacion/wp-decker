@@ -377,6 +377,59 @@ class DeckerAbilitiesListFiltersTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A relation filter narrows the query instead of scanning a capped set.
+	 *
+	 * The PHP pass is bounded, so before this narrowing a user's own task could
+	 * be missing from their own listing once a board held more tasks than the
+	 * cap. `any` and `responsible` cannot be a single WP_Query constraint -- one
+	 * is an OR across a column and two meta keys, the other falls back to the
+	 * author -- so the candidates are collected up front and passed as post__in.
+	 */
+	public function test_relation_filters_narrow_the_query() {
+		$filter = new Decker_Ability_Task_Filter();
+
+		foreach ( array( 'any', 'responsible' ) as $relation ) {
+			$narrowed = $filter->narrow(
+				array( 'post_type' => 'decker_task' ),
+				$filter->normalize( array( 'relation' => $relation ) )
+			);
+
+			$this->assertArrayHasKey( 'post__in', $narrowed, $relation );
+			$this->assertNotEmpty( $narrowed['post__in'], $relation );
+			// My own tasks are candidates; the colleague's unrelated one is not.
+			$this->assertContains( $this->tasks['authored'], $narrowed['post__in'], $relation );
+			$this->assertNotContains( $this->tasks['unrelated'], $narrowed['post__in'], $relation );
+		}
+
+		// `author` is an exact column match, so it needs no candidate list.
+		$by_author = $filter->narrow(
+			array( 'post_type' => 'decker_task' ),
+			$filter->normalize( array( 'relation' => 'author' ) )
+		);
+		$this->assertSame( $this->me_id, $by_author['author'] );
+		$this->assertArrayNotHasKey( 'post__in', $by_author );
+	}
+
+	/**
+	 * A narrowed query with no candidates returns nothing, not everything.
+	 */
+	public function test_narrowing_cannot_fail_open() {
+		$stranger = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $stranger );
+		$filter = new Decker_Ability_Task_Filter();
+
+		$narrowed = $filter->narrow(
+			array( 'post_type' => 'decker_task' ),
+			$filter->normalize( array( 'relation' => 'any' ) )
+		);
+
+		// An impossible ID rather than an absent constraint, which would list
+		// every task on the site.
+		$this->assertSame( array( 0 ), $narrowed['post__in'] );
+		$this->assertSame( array(), $this->ids( array( 'relation' => 'any' ) ) );
+	}
+
+	/**
 	 * With no authenticated user, a relation filter matches nothing.
 	 *
 	 * The REST layer rejects an anonymous caller before this point, but the

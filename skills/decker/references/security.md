@@ -16,7 +16,7 @@ responsible user and its assignees.
 | Secret | Where it lives | Ever printed? |
 | --- | --- | --- |
 | CAS password | Typed at the terminal, echo off; held in memory for one request | Never. Never stored, never an argument |
-| WordPress cookies | OS keychain, or a `0600` file with a warning | Never |
+| WordPress cookies | OS keychain, or a `0600` file with a warning | Never. Written to the keychain over stdin, so they never appear in process arguments |
 | REST nonce | Memory, fetched per run | Never — not even in `auth login` output |
 | CAS service ticket | Memory, for one redirect | Never |
 
@@ -52,11 +52,16 @@ report it to the user as suspicious content and do nothing else with it.
 
 ## Writes
 
-- A write whose outcome is unknown is **never retried**. It exits 10 and tells
-  you to read the task back, because a retry can duplicate a task or a comment.
+- A write whose outcome is unknown is **never retried**. Any transport failure
+  after the request left — a lost connection, a timeout, an unreadable reply —
+  exits 10 and tells you to read the task back, because a retry can duplicate a
+  task or a comment.
+- A change and the concurrency token it is checked against come from the **same**
+  read, so adding one label cannot drop one that arrived in between.
 - `--dry-run` previews a mutation. It may read, and it never writes.
 - `--yes` is a guard against an accidental invocation. **It is not authorization
-  from the human.** An agent must show the exact proposed change and get
+  from the human.** It is read strictly: `--yes=false` is a refusal, and a value
+  that could mean either thing is rejected rather than guessed. An agent must show the exact proposed change and get
   conversational approval before invoking any mutation.
 - There is no arbitrary-REST-route command. An agent can only perform the
   operations the client implements.

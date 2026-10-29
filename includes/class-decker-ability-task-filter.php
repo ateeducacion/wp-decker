@@ -66,23 +66,22 @@ class Decker_Ability_Task_Filter {
 	}
 
 	/**
-	 * Build the SQL constraints that narrow the candidate set.
+	 * Narrow a task query to the candidates the filters can possibly match.
 	 *
-	 * These only narrow: which user and which date a relation belongs to is
+	 * This only narrows: which user and which date a relation belongs to is
 	 * decided by matches(), because a LIKE over a serialized array cannot tell
-	 * whether two values belong to the same entry.
+	 * whether two values belong to the same entry. Both halves live in this
+	 * class so they cannot drift apart.
 	 *
-	 * @param array $input Normalized input.
-	 * @return array<string, mixed> Constraints as {author, meta}.
+	 * @param array $arguments Query arguments to narrow.
+	 * @param array $input     Normalized input.
+	 * @return array<string, mixed> Narrowed query arguments.
 	 */
-	public function query_constraints( array $input ): array {
-		$constraints = array(
-			'author' => 0,
-			'meta'   => array(),
-		);
+	public function narrow( array $arguments, array $input ): array {
+		$meta = array();
 
 		if ( ! empty( $input['today'] ) ) {
-			$constraints['meta'][] = array(
+			$meta[] = array(
 				'key'     => Decker_Task_Today_Manager::META_KEY,
 				'compare' => 'EXISTS',
 			);
@@ -90,19 +89,108 @@ class Decker_Ability_Task_Filter {
 
 		if ( 'author' === $input['relation'] ) {
 			// post_author is a real column, so this one constraint is exact.
-			$constraints['author'] = get_current_user_id();
+			$arguments['author'] = get_current_user_id();
 		}
 
 		if ( 'assigned' === $input['relation'] ) {
 			// LIKE '5' also matches the serialized "i:15", so matches() rechecks.
-			$constraints['meta'][] = array(
+			$meta[] = array(
 				'key'     => 'assigned_users',
 				'value'   => (string) get_current_user_id(),
 				'compare' => 'LIKE',
 			);
 		}
 
-		return $constraints;
+		if ( 'any' === $input['relation'] || 'responsible' === $input['relation'] ) {
+			// These two cannot be a single WP_Query constraint: "any" is an OR
+			// across a column and two meta keys, and "responsible" falls back to
+			// the author when the meta is absent. Without narrowing, the PHP
+			// pass had to scan a capped candidate set, so on a board with more
+			// tasks than the cap a user's own task could be missing from their
+			// own listing. The candidates are collected with cheap targeted
+			// queries instead, which is exact and bounded by how many tasks
+			// relate to this one user.
+			$arguments['post__in'] = $this->related_task_ids( $input['relation'] );
+		}
+
+		if ( ! empty( $meta ) ) {
+			$arguments['meta_query'] = array_merge(
+				isset( $arguments['meta_query'] ) ? (array) $arguments['meta_query'] : array(),
+				$meta
+			);
+		}
+
+		return $arguments;
+	}
+
+	/**
+	 * Collect the IDs of tasks related to the current user.
+	 *
+	 * Three targeted queries rather than one scan: tasks they authored, tasks
+	 * where they are the stored responsible user, and tasks listing them as an
+	 * assignee. matches() still re-checks every candidate, because the assignee
+	 * query is a LIKE over a serialized array and the responsible fallback has
+	 * to be resolved per task.
+	 *
+	 * @param string $relation Requested relation.
+	 * @return int[] Candidate task IDs, or array( 0 ) when there are none.
+	 */
+	private function related_task_ids( string $relation ): array {
+		$user_id = get_current_user_id();
+		if ( $user_id <= 0 ) {
+			// An impossible ID, so the listing is empty rather than unfiltered.
+			return array( 0 );
+		}
+
+		$base = array(
+			'post_type'              => 'decker_task',
+			'post_status'            => array( 'publish', 'archived' ),
+			'posts_per_page'         => -1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		);
+
+		$queries = array(
+			// Authored: also covers "responsible" when the meta is absent.
+			array_merge( $base, array( 'author' => $user_id ) ),
+			array_merge(
+				$base,
+				array(
+					'meta_query' => array(
+						array(
+							'key'   => 'responsable',
+							'value' => (string) $user_id,
+						),
+					),
+				)
+			),
+		);
+
+		if ( 'any' === $relation ) {
+			$queries[] = array_merge(
+				$base,
+				array(
+					'meta_query' => array(
+						array(
+							'key'     => 'assigned_users',
+							'value'   => (string) $user_id,
+							'compare' => 'LIKE',
+						),
+					),
+				)
+			);
+		}
+
+		$ids = array();
+		foreach ( $queries as $arguments ) {
+			$ids = array_merge( $ids, ( new WP_Query( $arguments ) )->posts );
+		}
+
+		$ids = array_values( array_unique( array_map( 'absint', $ids ) ) );
+
+		return empty( $ids ) ? array( 0 ) : $ids;
 	}
 
 	/**

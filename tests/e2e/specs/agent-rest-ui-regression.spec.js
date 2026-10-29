@@ -301,9 +301,15 @@ test.describe( 'Agent REST writes render on the board', () => {
 		// populated, and the invariant is about these three.
 		expect( await sequence() ).toEqual( cards );
 
-		// Move the last card to the front through the order endpoint, over POST,
-		// with the real source position — which is what the client reads from
-		// the board before writing.
+		// The real position, read from the board, not a hardcoded 3: the stack
+		// may hold cards from an earlier run, and inventing a position is
+		// exactly what the client is written never to do.
+		const all = await page
+			.locator( '#task-list-to-do .task.card' )
+			.evaluateAll( ( nodes ) => nodes.map( ( n ) => Number( n.dataset.taskId ) ) );
+		const sourceOrder = all.indexOf( cards[ 2 ] ) + 1;
+		expect( sourceOrder ).toBeGreaterThan( 0 );
+
 		await requestUtils.rest( {
 			path: `/decker/v1/tasks/${ cards[ 2 ] }/order`,
 			method: 'POST',
@@ -311,7 +317,7 @@ test.describe( 'Agent REST writes render on the board', () => {
 				board_id: board.id,
 				source_stack: 'to-do',
 				target_stack: 'to-do',
-				source_order: 3,
+				source_order: sourceOrder,
 				target_order: 1,
 			},
 		} );

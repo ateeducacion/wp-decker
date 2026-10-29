@@ -21,7 +21,7 @@ These are a contract: a script or an agent may branch on them.
 | 7 | Rate limited | Wait and retry |
 | 8 | Server error | Retry a read; **never** retry a write blindly |
 | 9 | Network failure or timeout | Check connectivity and the site URL |
-| 10 | **A write whose outcome is unknown** | Read the task back before doing anything else |
+| 10 | **A write whose outcome is unknown** (`rest_outcome_unknown`) | Read the task back before doing anything else; never repeat it |
 
 Successful output is JSON on stdout. Errors are JSON on stderr. Nothing else is
 ever written to stdout, so stdout is always parseable.
@@ -50,9 +50,14 @@ configured, not the check removed.
 JSON. A proxy may be intercepting the REST API, or the site URL may be wrong.
 
 **`rest_not_json`.** The server answered with HTML where JSON was expected —
-usually a login page or a proxy error page. On a read this is a transport
-failure. On a write it exits **10**: the write may or may not have been applied.
-Read the task back. Do not retry: a retry can duplicate a task or a comment.
+usually a login page or a proxy error page.
+
+**`rest_outcome_unknown` (exit 10).** Any transport failure on a write: a lost
+connection, a timeout, an unreadable reply, HTML instead of JSON. The request
+left, so the server may well have applied it. **Read the task back and do not
+repeat the command** — repeating it is how a task or a comment gets created
+twice. The same failures on a read are reported as ordinary read failures,
+because nothing was at stake.
 
 **`not_found` on a `/wp/v2/users/...` route.** Known on the target deployment:
 some user routes return an institutional HTML 404 page. Resolve users through
@@ -66,6 +71,15 @@ needs PUT or DELETE, which matters where a proxy handles methods unevenly.
 *before* it calls the permission callback, so a malformed request from an
 unauthorized caller reports the malformed input first. Authorization is not
 weakened by this; only the order of the errors differs.
+
+**`order_stack_truncated`.** The stack holds more tasks than the client can
+read in one pass, so it cannot establish an exact position and refuses rather
+than guess one. Reorder in the Decker interface, or narrow the board.
+
+**`usage_invalid_switch`.** A switch was given a value that could mean either
+thing, such as `--yes=perhaps`. Switches take no value, or one of `true`,
+`false`, `1`, `0`, `yes`, `no`. `--yes=false` is a refusal and is honoured as
+one.
 
 **The warning about storing cookies in a file.** Expected on any system without
 a supported OS keychain. The file is `0600`. Set `DECKER_SESSION_STORE=keychain`

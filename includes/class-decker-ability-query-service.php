@@ -357,16 +357,11 @@ class Decker_Ability_Query_Service {
 			);
 		}
 
-		$constraints = $this->filter->query_constraints( $input );
-		$meta_query  = array_merge( $meta_query, $constraints['meta'] );
-
-		if ( $constraints['author'] > 0 ) {
-			$arguments['author'] = $constraints['author'];
-		}
-
 		if ( ! empty( $meta_query ) ) {
 			$arguments['meta_query'] = $meta_query;
 		}
+
+		$arguments = $this->filter->narrow( $arguments, $input );
 
 		if ( $input['board_id'] > 0 ) {
 			$arguments['tax_query'] = $this->build_board_tax_query( $input['board_id'] );

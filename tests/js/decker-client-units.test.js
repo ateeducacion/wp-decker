@@ -84,26 +84,21 @@ describe( 'keychain session storage', () => {
 		process.env.DECKER_SESSION_STORE = 'keychain';
 	} );
 
-	it( 'stores the session through the keychain command', () => {
+	it( 'stores the session without putting it in the process arguments', () => {
 		const exec = vi.fn();
 		client.sessionStore.exec = exec;
 
 		client.sessionStore.write( { cookies: { wordpress_logged_in: 'abc' } } );
 
-		const [ command, args ] = exec.mock.calls[ 0 ];
+		const [ command, args, options ] = exec.mock.calls[ 0 ];
 		expect( command ).toBe( 'security' );
-		expect( args.slice( 0, 6 ) ).toEqual( [
-			'add-generic-password',
-			'-U',
-			'-s',
-			'decker-client',
-			'-a',
-			'session',
-		] );
-		// The value is the serialized session and nothing else.
-		expect( JSON.parse( args[ args.length - 1 ] ) ).toEqual( {
-			cookies: { wordpress_logged_in: 'abc' },
-		} );
+
+		// The whole command goes in on stdin. Passing `-w <value>` as arguments
+		// would expose the session cookies to any process running as this user.
+		expect( args ).toEqual( [ '-i' ] );
+		expect( JSON.stringify( args ) ).not.toContain( 'wordpress_logged_in' );
+		expect( options.input ).toContain( 'add-generic-password' );
+		expect( options.input ).toContain( 'wordpress_logged_in' );
 	} );
 
 	it( 'reads the session back', () => {
@@ -186,6 +181,30 @@ describe( 'terminal password reader', () => {
 		// The prompt is written to the terminal, never the password.
 		expect( calls ).toContainEqual( [ 'write', 7, 'Password: ' ] );
 		expect( JSON.stringify( calls ) ).not.toContain( 'hunter2' );
+	} );
+
+	it( 'reads a password with accents and other multi-byte characters', () => {
+		// Decoding one byte at a time corrupted every multi-byte character, so
+		// a correct password with an "ñ" was rejected by CAS.
+		for ( const secret of [ 'contraseña', 'mot-de-passe-éàü', 'Ωμέγα', '密码123', 'añil€' ] ) {
+			const bytes = [ ...Buffer.from( `${ secret }\n`, 'utf8' ) ];
+			const io = {
+				open: () => 7,
+				write: () => {},
+				close: () => {},
+				exec: () => {},
+				read: ( fd, buffer ) => {
+					const byte = bytes.shift();
+					if ( undefined === byte ) {
+						return 0;
+					}
+					buffer[ 0 ] = byte;
+					return 1;
+				},
+			};
+
+			expect( client.readPasswordFromTty( 'p', io ) ).toBe( secret );
+		}
 	} );
 
 	it( 'stops at a carriage return and at end of input', () => {
@@ -306,6 +325,22 @@ describe( 'URL and parameter helpers', () => {
 
 		expect( flags ).toEqual( { label: '12', yes: true, user: '45' } );
 		expect( positional ).toEqual( [ '31', 'extra' ] );
+	} );
+
+	it( 'reads switches strictly', () => {
+		expect( client.switchFlag( {}, 'yes' ) ).toBe( false );
+		expect( client.switchFlag( { yes: true }, 'yes' ) ).toBe( true );
+
+		for ( const value of [ 'true', '1', 'yes', 'on', 'TRUE', ' Yes ' ] ) {
+			expect( client.switchFlag( { yes: value }, 'yes' ), value ).toBe( true );
+		}
+		for ( const value of [ 'false', '0', 'no', 'off', '' ] ) {
+			expect( client.switchFlag( { yes: value }, 'yes' ), value ).toBe( false );
+		}
+
+		expect( () => client.switchFlag( { yes: 'perhaps' }, 'yes' ) ).toThrowError(
+			/takes no value, or one of/
+		);
 	} );
 
 	it( 'validates integer and enum flags', () => {

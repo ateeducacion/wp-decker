@@ -627,17 +627,55 @@ export async function restRequest( context, method, path, { params = {}, body = 
 
 	// A write is never replayed: the server may have applied it before the
 	// response was lost, so a retry could duplicate a task or a comment.
-	const response = await session.request( url, { method, headers, body: payload } );
+	const isWrite = ! [ 'GET', 'HEAD' ].includes( method );
+
+	/**
+	 * Re-report a transport failure on a write as an uncertain outcome.
+	 *
+	 * Once the request has left, a lost connection or an unreadable reply says
+	 * nothing about whether the server applied it. Reporting that as an
+	 * ordinary network error invites a retry, which is exactly what must not
+	 * happen: it is how a task or a comment gets created twice.
+	 *
+	 * @param {DeckerError} error The transport error.
+	 * @return {DeckerError} The error to throw.
+	 */
+	const uncertainOnWrite = ( error ) => {
+		if ( ! isWrite ) {
+			return error;
+		}
+
+		return new DeckerError(
+			'rest_outcome_unknown',
+			`${ error.message } The outcome of this write is unknown: read the task back before doing anything else, and do not repeat the command.`,
+			EXIT.UNCERTAIN,
+			error.status
+		);
+	};
+
+	let response;
+	let text;
+	try {
+		response = await session.request( url, { method, headers, body: payload } );
+		text = await response.text();
+	} catch ( error ) {
+		throw uncertainOnWrite(
+			error instanceof DeckerError
+				? error
+				: new DeckerError( 'network_failed', 'The request failed or timed out.', EXIT.NETWORK )
+		);
+	}
+
 	const type = response.headers.get( 'content-type' ) ?? '';
-	const text = await response.text();
 
 	if ( ! type.includes( 'json' ) ) {
-		const isWrite = ! [ 'GET', 'HEAD' ].includes( method );
-		throw new DeckerError(
-			'rest_not_json',
-			`The server answered ${ response.status } with ${ type || 'no content type' } instead of JSON, which usually means a login page or a proxy error page.${ isWrite ? ' The outcome of this write is unknown: read the task before retrying.' : '' }`,
-			isWrite ? EXIT.UNCERTAIN : EXIT.NETWORK,
-			response.status
+		throw uncertainOnWrite(
+			new DeckerError(
+				'rest_not_json',
+				`The server answered ${ response.status } with ${ type || 'no content type' } instead of JSON, which usually means a login page or a proxy error page.`,
+				EXIT.NETWORK,
+				response.status
+			)
 		);
 	}
 
@@ -645,11 +683,13 @@ export async function restRequest( context, method, path, { params = {}, body = 
 	try {
 		data = JSON.parse( text );
 	} catch {
-		throw new DeckerError(
-			'rest_malformed_json',
-			'The server returned malformed JSON.',
-			EXIT.NETWORK,
-			response.status
+		throw uncertainOnWrite(
+			new DeckerError(
+				'rest_malformed_json',
+				'The server returned malformed JSON.',
+				EXIT.NETWORK,
+				response.status
+			)
 		);
 	}
 
@@ -712,6 +752,43 @@ export function integerFlag( flags, name, { min = 1, max = Number.MAX_SAFE_INTEG
 	}
 
 	return value;
+}
+
+/**
+ * Read a flag that is meant to be a switch.
+ *
+ * A bare `--yes` is true and an absent flag is false, but a value has to be
+ * one it could plausibly mean: `--yes=false` used to be accepted as true,
+ * because a non-empty string is truthy, so an explicit refusal performed the
+ * write. Anything ambiguous is rejected rather than guessed.
+ *
+ * @param {object} flags Parsed flags.
+ * @param {string} name  Flag name.
+ * @return {boolean} Whether the switch is on.
+ */
+export function switchFlag( flags, name ) {
+	const value = flags[ name ];
+	if ( undefined === value || null === value ) {
+		return false;
+	}
+
+	if ( true === value ) {
+		return true;
+	}
+
+	const text = String( value ).trim().toLowerCase();
+	if ( [ 'true', '1', 'yes', 'on' ].includes( text ) ) {
+		return true;
+	}
+	if ( [ 'false', '0', 'no', 'off', '' ].includes( text ) ) {
+		return false;
+	}
+
+	throw new DeckerError(
+		'usage_invalid_switch',
+		`--${ name } takes no value, or one of: true, false, 1, 0, yes, no.`,
+		EXIT.USAGE
+	);
 }
 
 /**
@@ -838,11 +915,15 @@ export const sessionStore = {
 		const value = JSON.stringify( session );
 
 		if ( 'keychain' === this.backend() ) {
-			this.exec(
-				'security',
-				[ 'add-generic-password', '-U', '-s', 'decker-client', '-a', 'session', '-w', value ],
-				{ stdio: [ 'ignore', 'ignore', 'ignore' ] }
-			);
+			// The command goes in on stdin rather than as arguments: `security
+			// add-generic-password -w <value>` would put the session cookies in
+			// the process arguments, where any other process running as this
+			// user can read them. `-w` has no stdin form of its own, so the
+			// whole command is piped to `security -i` instead.
+			this.exec( 'security', [ '-i' ], {
+				input: `add-generic-password -U -s decker-client -a session -w ${ value }\n`,
+				stdio: [ 'pipe', 'ignore', 'ignore' ],
+			} );
 			return;
 		}
 
@@ -912,17 +993,20 @@ export function readPasswordFromTty( prompt, io = {} ) {
 		write( tty, prompt );
 		exec( 'stty', [ '-echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
 
+		// Bytes are accumulated and decoded once at the end. Decoding each byte
+		// on its own corrupts every multi-byte character, so a password with an
+		// "ñ" or an accent came back mangled and CAS rejected a correct one.
 		const buffer = Buffer.alloc( 1 );
-		let password = '';
+		const typed = [];
 		for ( ;; ) {
 			const got = read( tty, buffer, 0, 1, null );
-			if ( 0 === got || '\n' === buffer.toString() || '\r' === buffer.toString() ) {
+			if ( 0 === got || 0x0a === buffer[ 0 ] || 0x0d === buffer[ 0 ] ) {
 				break;
 			}
-			password += buffer.toString();
+			typed.push( buffer[ 0 ] );
 		}
 
-		return password;
+		return Buffer.from( typed ).toString( 'utf8' );
 	} finally {
 		try {
 			exec( 'stty', [ 'echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
@@ -1079,7 +1163,9 @@ export async function authLogin( flags, { fetch: fetchImpl, readPassword = readP
 		);
 	}
 
-	const allowHttp = Boolean( flags[ 'allow-insecure-http' ] ?? config.allowInsecureHttp );
+	const allowHttp = undefined === flags[ 'allow-insecure-http' ]
+		? Boolean( config.allowInsecureHttp )
+		: switchFlag( flags, 'allow-insecure-http' );
 	const baseUrl = checkedUrl( siteUrl, allowHttp );
 	const casUrl = checkedUrl( casLoginUrl, allowHttp );
 
@@ -1392,7 +1478,7 @@ export async function tasksList( flags, options = {} ) {
 		'responsible-by-me': 'responsible',
 		'authored-by-me': 'author',
 	};
-	const requested = Object.keys( relations ).filter( ( flag ) => flags[ flag ] );
+	const requested = Object.keys( relations ).filter( ( flag ) => switchFlag( flags, flag ) );
 	if ( requested.length > 1 ) {
 		throw new DeckerError(
 			'usage_conflicting_flags',
@@ -1404,11 +1490,11 @@ export async function tasksList( flags, options = {} ) {
 		input.relation = relations[ requested[ 0 ] ];
 	}
 
-	if ( flags.today ) {
+	if ( switchFlag( flags, 'today' ) ) {
 		input.today = true;
 	}
 
-	if ( flags[ 'include-hidden' ] ) {
+	if ( switchFlag( flags, 'include-hidden' ) ) {
 		input.include_hidden = true;
 	}
 
@@ -1527,20 +1613,32 @@ export function assertWritableFields( changes ) {
  * from the human: an agent must still show the proposed change and get
  * conversational approval before calling this.
  *
+ * There is exactly **one** read, and both the change and the concurrency token
+ * come from it. An earlier version let the caller read the task, compute a
+ * collection from it, and then re-read here for the token: that reopened the
+ * very race the token exists to close, because a label added between the two
+ * reads was absent from the computed set but present in the token's read, so
+ * the server accepted the write and the label was lost. Callers that need the
+ * current state to build their change pass `derive` instead.
+ *
  * @param {object} context Request context.
  * @param {object} options Mutation options.
  * @param {number} options.taskId  Task ID.
- * @param {object} options.changes Fields to change.
+ * @param {object} [options.changes] Fields to change.
+ * @param {Function} [options.derive] Builds the changes from the task as read.
  * @param {object} options.flags   Parsed flags.
  * @param {string} [options.ability] Ability to invoke.
  * @return {Promise<object>} Command result.
  */
-export async function applyChanges( context, { taskId, changes, flags, ability = 'decker/update-task' } ) {
-	assertWritableFields( changes );
-
+export async function applyChanges( context, { taskId, changes, derive, flags, ability = 'decker/update-task' } ) {
 	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
 		params: { input: { task_id: taskId } },
 	} );
+
+	// Derived from the same read that produced the token below, so there is no
+	// window between deciding the change and claiming the state it was based on.
+	changes = derive ? derive( current ) : changes;
+	assertWritableFields( changes );
 
 	const before = {};
 	const after = {};
@@ -1559,11 +1657,11 @@ export async function applyChanges( context, { taskId, changes, flags, ability =
 
 	const preview = { ok: true, task_id: taskId, title: current.title, before, after };
 
-	if ( flags[ 'dry-run' ] ) {
+	if ( switchFlag( flags, 'dry-run' ) ) {
 		return { ...preview, dry_run: true, changed: false };
 	}
 
-	if ( ! flags.yes ) {
+	if ( ! switchFlag( flags, 'yes' ) ) {
 		throw new DeckerError(
 			'usage_confirmation_required',
 			'This would change the task. Re-run with --yes to apply it, or --dry-run to preview it.',
@@ -1657,7 +1755,7 @@ export async function tasksCreate( flags, options = {} ) {
 
 	const context = await createContext( options );
 
-	if ( flags[ 'dry-run' ] ) {
+	if ( switchFlag( flags, 'dry-run' ) ) {
 		// A dry run may read to prepare the preview, but never writes. The board
 		// is read back so an invalid id is reported before anything is created.
 		const boards = await restRequest( context, 'GET', abilityPath( 'decker/list-boards' ) );
@@ -1673,7 +1771,7 @@ export async function tasksCreate( flags, options = {} ) {
 		};
 	}
 
-	if ( ! flags.yes ) {
+	if ( ! switchFlag( flags, 'yes' ) ) {
 		throw new DeckerError(
 			'usage_confirmation_required',
 			'This would create a task. Re-run with --yes to apply it, or --dry-run to preview it.',
@@ -1768,19 +1866,23 @@ export async function tasksLabelChange( id, flags, add, options = {} ) {
 	}
 
 	const context = await createContext( options );
-	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
-		params: { input: { task_id: taskId } },
-	} );
 
 	// One label changes; every other label is preserved. The whole collection
-	// has to be sent back, which is exactly why the write carries
-	// expected_modified.
-	const existing = ( current.label_ids ?? [] ).map( Number );
-	const label_ids = add
-		? [ ...new Set( [ ...existing, labelId ] ) ]
-		: existing.filter( ( value ) => value !== labelId );
+	// has to be sent back, which is why it must be built from the same read
+	// that provides the concurrency token -- hence `derive`, not a read here.
+	return applyChanges( context, {
+		taskId,
+		derive: ( current ) => {
+			const existing = ( current.label_ids ?? [] ).map( Number );
 
-	return applyChanges( context, { taskId, changes: { label_ids }, flags } );
+			return {
+				label_ids: add
+					? [ ...new Set( [ ...existing, labelId ] ) ]
+					: existing.filter( ( value ) => value !== labelId ),
+			};
+		},
+		flags,
+	} );
 }
 
 /**
@@ -1801,16 +1903,20 @@ export async function tasksAssign( id, flags, add, options = {} ) {
 	}
 
 	const context = await createContext( options );
-	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
-		params: { input: { task_id: taskId } },
+
+	return applyChanges( context, {
+		taskId,
+		derive: ( current ) => {
+			const existing = ( current.assignee_ids ?? [] ).map( Number );
+
+			return {
+				assignee_ids: add
+					? [ ...new Set( [ ...existing, userId ] ) ]
+					: existing.filter( ( value ) => value !== userId ),
+			};
+		},
+		flags,
 	} );
-
-	const existing = ( current.assignee_ids ?? [] ).map( Number );
-	const assignee_ids = add
-		? [ ...new Set( [ ...existing, userId ] ) ]
-		: existing.filter( ( value ) => value !== userId );
-
-	return applyChanges( context, { taskId, changes: { assignee_ids }, flags } );
 }
 
 /**
@@ -1856,7 +1962,7 @@ export async function tasksResponsible( id, flags, options = {} ) {
 export async function tasksToday( id, flags, options = {} ) {
 	const taskId = taskIdArgument( id );
 
-	if ( Boolean( flags.mark ) === Boolean( flags.unmark ) ) {
+	if ( switchFlag( flags, 'mark' ) === switchFlag( flags, 'unmark' ) ) {
 		throw new DeckerError(
 			'usage_mark_or_unmark',
 			'Use exactly one of --mark or --unmark.',
@@ -1864,14 +1970,14 @@ export async function tasksToday( id, flags, options = {} ) {
 		);
 	}
 
-	const marked = Boolean( flags.mark );
+	const marked = switchFlag( flags, 'mark' );
 	const context = await createContext( options );
 
-	if ( flags[ 'dry-run' ] ) {
+	if ( switchFlag( flags, 'dry-run' ) ) {
 		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_set: { marked } };
 	}
 
-	if ( ! flags.yes ) {
+	if ( ! switchFlag( flags, 'yes' ) ) {
 		throw new DeckerError(
 			'usage_confirmation_required',
 			`This would ${ marked ? 'mark' : 'unmark' } the task for today. Re-run with --yes to apply it.`,
@@ -1956,11 +2062,11 @@ export async function tasksComment( id, flags, options = {} ) {
 
 	const context = await createContext( options );
 
-	if ( flags[ 'dry-run' ] ) {
+	if ( switchFlag( flags, 'dry-run' ) ) {
 		return { ok: true, dry_run: true, created: false, task_id: taskId, would_post: text };
 	}
 
-	if ( ! flags.yes ) {
+	if ( ! switchFlag( flags, 'yes' ) ) {
 		throw new DeckerError(
 			'usage_confirmation_required',
 			'This would post a comment. Re-run with --yes to apply it, or --dry-run to preview it.',
@@ -2074,15 +2180,22 @@ export async function tasksReorder( id, flags, options = {} ) {
 		target_order: position,
 	};
 
+	// A hidden task belonging to somebody else still occupies a position and is
+	// not in this listing, and that cannot be detected from here. The server
+	// only uses source_order to decide the direction of the move, so the cost
+	// is landing a slot off rather than anywhere at all -- which is why the
+	// resulting sequence is read back below instead of being assumed.
+
+
 	if ( sourceOrder === position && targetStack === task.stack ) {
 		return { ok: true, task_id: taskId, changed: false, reason: 'no_change', order: payload };
 	}
 
-	if ( flags[ 'dry-run' ] ) {
+	if ( switchFlag( flags, 'dry-run' ) ) {
 		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_move: payload };
 	}
 
-	if ( ! flags.yes ) {
+	if ( ! switchFlag( flags, 'yes' ) ) {
 		throw new DeckerError(
 			'usage_confirmation_required',
 			'This would reorder the board. Re-run with --yes to apply it, or --dry-run to preview it.',
@@ -2115,11 +2228,46 @@ export async function tasksReorder( id, flags, options = {} ) {
  * @return {Promise<object[]>} Tasks in order.
  */
 export async function readStack( context, boardId, stack ) {
-	const result = await restRequest( context, 'GET', abilityPath( 'decker/list-tasks' ), {
-		params: { input: { board_id: boardId, stack, per_page: 100 } },
-	} );
+	const tasks = [];
+	let page = 1;
 
-	return result.tasks ?? [];
+	for ( ;; ) {
+		const result = await restRequest( context, 'GET', abilityPath( 'decker/list-tasks' ), {
+			params: {
+				input: {
+					board_id: boardId,
+					stack,
+					page,
+					per_page: 100,
+					// Hidden tasks occupy a position: the ordering engine's query
+					// filters by status, stack and board and does not exclude
+					// them. Leaving them out made the client compute a position
+					// that does not exist on the board.
+					include_hidden: true,
+				},
+			},
+		} );
+
+		tasks.push( ...( result.tasks ?? [] ) );
+
+		if ( result.truncated ) {
+			// The server stopped scanning, so this view of the stack is not the
+			// whole stack and a position derived from it would be a guess.
+			throw new DeckerError(
+				'order_stack_truncated',
+				'The board is too large to establish an exact position. Narrow the board or reorder it in the Decker interface.',
+				EXIT.CONFLICT
+			);
+		}
+
+		const pages = Number( result.total_pages ?? 1 );
+		if ( ! Number.isFinite( pages ) || page >= pages ) {
+			break;
+		}
+		page++;
+	}
+
+	return tasks;
 }
 
 /**
@@ -2137,9 +2285,14 @@ export async function tasksArchive( id, flags, archived, options = {} ) {
 	const taskId = taskIdArgument( id );
 	const context = await createContext( options );
 
+	// The read reports `status` ("publish" or "archived"); there is no
+	// `archived` field in the response, so comparing one made every call a
+	// write -- and every write rotates the edit generation, invalidating
+	// somebody's open form for no change at all.
 	return applyChanges( context, {
 		taskId,
-		changes: { archived },
+		derive: ( current ) =>
+			archived === ( 'archived' === current.status ) ? {} : { archived },
 		flags,
 		ability: 'decker/archive-task',
 	} );
@@ -2156,7 +2309,7 @@ export async function tasksArchive( id, flags, archived, options = {} ) {
 export async function tasksPriority( id, flags, options = {} ) {
 	const taskId = taskIdArgument( id );
 
-	if ( Boolean( flags.on ) === Boolean( flags.off ) ) {
+	if ( switchFlag( flags, 'on' ) === switchFlag( flags, 'off' ) ) {
 		throw new DeckerError(
 			'usage_on_or_off',
 			'Use exactly one of --on or --off.',
@@ -2168,7 +2321,7 @@ export async function tasksPriority( id, flags, options = {} ) {
 
 	return applyChanges( context, {
 		taskId,
-		changes: { max_priority: Boolean( flags.on ) },
+		changes: { max_priority: switchFlag( flags, 'on' ) },
 		flags,
 	} );
 }

@@ -22,6 +22,9 @@ behaviours that look surprising from outside.
 | `order` | `menu_order` | Position within board and stack |
 | `modified` | `post_modified_gmt` | Also the concurrency token |
 
+There is **no `archived` field in a read**: the archive state is `status`,
+either `publish` or `archived`. A write takes `archived` as a boolean.
+
 Three people-shaped fields, three different meanings: the **author** wrote it,
 the **responsible user** owns it, the **assignees** work on it. A task with no
 `responsable` meta reports its author as the responsible user, which is why
@@ -91,6 +94,12 @@ Two things worth knowing before touching order:
 
 - Changing a task's stack is not the same as placing it at a position. `move`
   changes the stack and lets the domain recalculate; `reorder` positions it.
+- A position is a position *within the stack as the server sees it*, which
+  includes hidden tasks the caller may not be able to list. The client reads the
+  stack with hidden tasks included and paginates it fully, and refuses to
+  reorder when it cannot read the whole stack; a hidden task belonging to
+  somebody else can still shift a position by one, which is why the resulting
+  sequence is read back rather than assumed.
 - Stored `menu_order` values are **not** guaranteed contiguous. The renumbering
   pass excludes the card being moved, so it keeps an intermediate value while
   the others are renumbered. What holds is the relative sequence, and that no
