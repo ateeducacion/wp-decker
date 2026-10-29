@@ -213,10 +213,24 @@ test-e2e-collab: start-if-not-running setup-tests-env
 # .wp-env.json, which would activate it in the development environment too.
 CAS_BASE_URL ?= https://www.casserverpac4j.dev/
 CAS_TEST_USER ?= deckertest
-test-cas: start-if-not-running setup-tests-env
+# Depends on `up`, not `start-if-not-running`: that probe only checks whether
+# something answers on port 8888, and another project's stack answering is
+# enough for it to decide we are already up. This is the only target that
+# drives the site over HTTP, so a foreign stack owning the port means wp-cli
+# configures one WordPress while the requests reach another -- which looks
+# exactly like CAS being misconfigured. `up` frees the ports first.
+test-cas: check-docker up setup-tests-env
 	@set -e; \
 	trap 'echo "Deactivating wp-cassify..."; npx wp-env run tests-cli wp plugin deactivate wp-cassify >/dev/null 2>&1 || true' EXIT INT TERM; \
 	npx wp-env run tests-cli wp plugin install wp-cassify --activate; \
+	if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8889/wp-content/plugins/wp-cassify/readme.txt)" != "200" ]; then \
+		echo ""; \
+		echo "ERROR: the site on :8889 does not serve the plugin that was just installed."; \
+		echo "Another wp-env stack is probably holding the port, so wp-cli and HTTP"; \
+		echo "are talking to different WordPress installations. Run 'make up' and retry."; \
+		echo ""; \
+		exit 1; \
+	fi; \
 	npx wp-env run tests-cli wp option update wp_cassify_base_url '$(CAS_BASE_URL)'; \
 	npx wp-env run tests-cli wp option update wp_cassify_login_servlet 'login'; \
 	npx wp-env run tests-cli wp option update wp_cassify_logout_servlet 'logout'; \
