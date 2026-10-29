@@ -180,17 +180,21 @@ setup-tests-env:
 
 # Run E2E tests with Playwright against wp-env tests environment (port 8889).
 # The collaboration spec is excluded here (see test-e2e-collab).
-test-e2e: start-if-not-running setup-tests-env
+#
+# Depends on `up`, not `start-if-not-running`: these drive the site over HTTP,
+# and that probe accepts another project's wp-env stack answering on 8888 as
+# proof we are up, which leaves Playwright talking to the wrong WordPress.
+test-e2e: check-docker up setup-tests-env
 	WP_BASE_URL=http://localhost:8889 npm run test:e2e
 
-test-e2e-visual: start-if-not-running setup-tests-env
+test-e2e-visual: check-docker up setup-tests-env
 	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
 
 # Run ONLY the collaboration spec. It needs the collaborative editing feature
 # enabled and reaches external services (esm.sh CDN + signalling server), so it
 # is kept out of the default CI gate. This enables the feature, runs the spec,
 # and restores the setting afterwards regardless of the outcome.
-test-e2e-collab: start-if-not-running setup-tests-env
+test-e2e-collab: check-docker up setup-tests-env
 	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
 	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
 	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true

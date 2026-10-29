@@ -782,6 +782,14 @@ export function saveConfig( config ) {
  */
 export const sessionStore = {
 	/**
+	 * Command runner, overridable so tests can exercise the keychain branches
+	 * without touching a real keychain.
+	 *
+	 * @type {Function}
+	 */
+	exec: execFileSync,
+
+	/**
 	 * Decide which backend to use.
 	 *
 	 * @return {'keychain'|'file'} Backend name.
@@ -802,7 +810,7 @@ export const sessionStore = {
 	read() {
 		if ( 'keychain' === this.backend() ) {
 			try {
-				const value = execFileSync(
+				const value = this.exec(
 					'security',
 					[ 'find-generic-password', '-s', 'decker-client', '-a', 'session', '-w' ],
 					{ encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'ignore' ] }
@@ -830,7 +838,7 @@ export const sessionStore = {
 		const value = JSON.stringify( session );
 
 		if ( 'keychain' === this.backend() ) {
-			execFileSync(
+			this.exec(
 				'security',
 				[ 'add-generic-password', '-U', '-s', 'decker-client', '-a', 'session', '-w', value ],
 				{ stdio: [ 'ignore', 'ignore', 'ignore' ] }
@@ -854,7 +862,7 @@ export const sessionStore = {
 	clear() {
 		if ( 'keychain' === this.backend() ) {
 			try {
-				execFileSync(
+				this.exec(
 					'security',
 					[ 'delete-generic-password', '-s', 'decker-client', '-a', 'session' ],
 					{ stdio: [ 'ignore', 'ignore', 'ignore' ] }
@@ -877,12 +885,21 @@ export const sessionStore = {
  * is never accepted as a command-line argument.
  *
  * @param {string} prompt Prompt to show.
+ * @param {object} [io]    Filesystem calls, overridable for tests only.
  * @return {string} The password.
  */
-export function readPasswordFromTty( prompt ) {
+export function readPasswordFromTty( prompt, io = {} ) {
+	const {
+		open = openSync,
+		write = writeFileSync,
+		read = readSync,
+		close = closeSync,
+		exec = execFileSync,
+	} = io;
+
 	let tty;
 	try {
-		tty = openSync( '/dev/tty', 'r+' );
+		tty = open( '/dev/tty', 'r+' );
 	} catch {
 		throw new DeckerError(
 			'auth_no_tty',
@@ -892,14 +909,14 @@ export function readPasswordFromTty( prompt ) {
 	}
 
 	try {
-		writeFileSync( tty, prompt );
-		execFileSync( 'stty', [ '-echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
+		write( tty, prompt );
+		exec( 'stty', [ '-echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
 
 		const buffer = Buffer.alloc( 1 );
 		let password = '';
 		for ( ;; ) {
-			const read = readSync( tty, buffer, 0, 1, null );
-			if ( 0 === read || '\n' === buffer.toString() || '\r' === buffer.toString() ) {
+			const got = read( tty, buffer, 0, 1, null );
+			if ( 0 === got || '\n' === buffer.toString() || '\r' === buffer.toString() ) {
 				break;
 			}
 			password += buffer.toString();
@@ -908,10 +925,10 @@ export function readPasswordFromTty( prompt ) {
 		return password;
 	} finally {
 		try {
-			execFileSync( 'stty', [ 'echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
-			writeFileSync( tty, '\n' );
+			exec( 'stty', [ 'echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
+			write( tty, '\n' );
 		} finally {
-			closeSync( tty );
+			close( tty );
 		}
 	}
 }
@@ -2282,7 +2299,7 @@ export async function run( argv, options = {} ) {
  *
  * @return {Promise<void>} Resolves once the process result is written.
  */
-async function main() {
+export async function main() {
 	try {
 		const result = await run( process.argv.slice( 2 ) );
 		process.stdout.write( `${ JSON.stringify( result, null, '\t' ) }\n` );

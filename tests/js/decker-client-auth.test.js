@@ -1492,3 +1492,119 @@ describe( 'command dispatch', () => {
 		await expect( client.run( [ 'auth', 'status' ] ) ).resolves.toMatchObject( { authenticated: true } );
 	} );
 } );
+
+describe( 'remaining flag and edge paths', () => {
+	beforeEach( async () => {
+		await login();
+	} );
+
+	it( 'passes the status and include-hidden filters through', async () => {
+		await client.tasksList( { status: 'archived', 'include-hidden': true } );
+
+		expect( state.lastRun.query ).toMatchObject( {
+			'input[status]': 'archived',
+			'input[include_hidden]': '1',
+		} );
+	} );
+
+	it( 'passes a search term and a stack on create', async () => {
+		await client.tasksList( { search: 'documentation' } );
+		expect( state.lastRun.query ).toMatchObject( { 'input[search]': 'documentation' } );
+
+		await client.tasksCreate( {
+			title: 'With a stack',
+			board: '7',
+			stack: 'done',
+			yes: true,
+		} );
+		expect( state.lastWrite.input ).toMatchObject( { stack: 'done' } );
+	} );
+
+	it( 'reports a task with no labels without asking for names', async () => {
+		state.task.label_ids = [];
+
+		await expect( client.tasksLabels( 31 ) ).resolves.toEqual( {
+			ok: true,
+			task_id: 31,
+			labels: [],
+		} );
+		// No point querying the taxonomy for an empty set.
+		expect( state.lastCollection ).toBeNull();
+	} );
+
+	it( 'moves to another board without a stack', async () => {
+		await client.tasksMove( 31, { board: '9', yes: true } );
+
+		expect( state.lastWrite.input ).toMatchObject( { board_id: 9 } );
+		expect( state.lastWrite.input ).not.toHaveProperty( 'stack' );
+	} );
+
+	it( 'reorders into another stack, allowing one past its current length', async () => {
+		const result = await client.tasksReorder( 31, {
+			position: '1',
+			stack: 'in-progress',
+			'dry-run': true,
+		} );
+
+		expect( result.would_move ).toMatchObject( {
+			source_stack: 'to-do',
+			target_stack: 'in-progress',
+			target_order: 1,
+		} );
+	} );
+
+	it( 'previews a today change without sending it', async () => {
+		const result = await client.tasksToday( 31, { mark: true, 'dry-run': true } );
+
+		expect( result ).toMatchObject( { dry_run: true, would_set: { marked: true } } );
+		expect( state.lastToday ).toBeNull();
+	} );
+
+	it( 'paginates comments', async () => {
+		await client.tasksComments( 31, { page: '2', 'per-page': '5' } );
+
+		expect( state.lastCollection.query ).toMatchObject( { page: '2', per_page: '5' } );
+	} );
+
+	it( 'previews a comment without posting it', async () => {
+		const path = join( configDir, 'preview.txt' );
+		writeFileSync( path, 'Draft only' );
+
+		const result = await client.tasksComment( 31, { 'text-file': path, 'dry-run': true } );
+
+		expect( result ).toMatchObject( { dry_run: true, would_post: 'Draft only' } );
+		expect( state.lastComment ).toBeNull();
+	} );
+
+	it( 'logs out through the dispatcher', async () => {
+		await expect( client.run( [ 'auth', 'logout' ] ) ).resolves.toMatchObject( {
+			session_cleared: true,
+		} );
+	} );
+
+	it( 'reports when neither REST routing answers with JSON', async () => {
+		const session = new client.Session( {
+			origins: [ 'https://example.org' ],
+			fetch: async () => {
+				throw new Error( 'refused' );
+			},
+		} );
+
+		await expect(
+			client.detectRouting( session, new URL( 'https://example.org/' ) )
+		).rejects.toMatchObject( { code: 'rest_unavailable', exit: client.EXIT.NETWORK } );
+	} );
+
+	it( 'reports a routing failure from doctor', async () => {
+		state.prettyRouting = false;
+		state.restResponse = { status: 500, type: 'text/html', body: '<html>down</html>' };
+		client.saveConfig( { ...client.loadConfig(), routing: undefined } );
+
+		const report = await client.doctor();
+
+		// Either the probe failed or the abilities check did; both must be
+		// reported rather than throwing out of doctor.
+		expect( report.ok ).toBe( false );
+		expect( Object.keys( report.checks ).length ).toBeGreaterThan( 0 );
+	} );
+} );

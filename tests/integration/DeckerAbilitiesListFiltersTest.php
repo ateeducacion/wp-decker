@@ -377,6 +377,27 @@ class DeckerAbilitiesListFiltersTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * With no authenticated user, a relation filter matches nothing.
+	 *
+	 * The REST layer rejects an anonymous caller before this point, but the
+	 * filter must not fall open if it is ever reached another way: "related to
+	 * me" with no "me" is no tasks, not every task.
+	 */
+	public function test_relation_and_today_match_nothing_for_an_anonymous_user() {
+		wp_set_current_user( 0 );
+
+		foreach ( array( 'any', 'assigned', 'responsible', 'author' ) as $relation ) {
+			$this->assertSame(
+				array(),
+				$this->ids( array( 'relation' => $relation ) ),
+				$relation . ' must match nothing without a current user'
+			);
+		}
+
+		$this->assertSame( array(), $this->ids( array( 'today' => true ) ) );
+	}
+
+	/**
 	 * An unknown relation value is ignored rather than silently matching nothing.
 	 */
 	public function test_unknown_relation_is_ignored() {
