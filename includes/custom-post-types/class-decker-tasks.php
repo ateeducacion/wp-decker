@@ -158,6 +158,12 @@ class Decker_Tasks {
 	/**
 	 * Handle task deletion to reorder tasks.
 	 *
+	 * The board is a taxonomy term, not post meta. Reading it with
+	 * get_post_meta() returned nothing for every task, so the stack was never
+	 * renumbered after a deletion and kept a gap: the positions a client or the
+	 * board drag sends are indices over the visible stack, and with a gap in
+	 * the stored values the card landed one slot short of where it was asked.
+	 *
 	 * @param int $post_id The ID of the post being deleted.
 	 */
 	public function handle_task_deletion( $post_id ) {
@@ -165,7 +171,8 @@ class Decker_Tasks {
 			return;
 		}
 
-		$board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
+		$board_terms   = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$board_term_id = ! is_wp_error( $board_terms ) && ! empty( $board_terms ) ? (int) $board_terms[0] : 0;
 		$stack         = get_post_meta( $post_id, 'stack', true );
 		if ( $board_term_id > 0 && $stack ) {
 			$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );

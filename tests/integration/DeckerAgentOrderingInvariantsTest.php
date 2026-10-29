@@ -282,6 +282,42 @@ class DeckerAgentOrderingInvariantsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A position asked for after a deletion is the position the card gets.
+	 *
+	 * Deleting a card used to leave a gap in the stored `menu_order`, because
+	 * the deletion handler looked for the board in post meta while the board is
+	 * a taxonomy term, so it never renumbered. The positions a client and the
+	 * board drag send are indices over the visible stack, so with a gap the
+	 * card landed one slot short: asked for the third position, it came back
+	 * second.
+	 */
+	public function test_a_position_after_a_deletion_is_exact() {
+		wp_delete_post( $this->tasks['first'], true );
+
+		$this->assertSame(
+			array( 1, 2, 3 ),
+			array_map(
+				static fn( $id ) => (int) get_post( $id )->menu_order,
+				$this->sequence()
+			),
+			'The stack must be renumbered after a deletion.'
+		);
+
+		// Move the card that is now first to the third position.
+		$this->reorder( $this->tasks['second'], 'to-do', 'to-do', 1, 3 );
+
+		$this->assertSame(
+			array(
+				$this->tasks['third'],
+				$this->tasks['fourth'],
+				$this->tasks['second'],
+			),
+			$this->sequence(),
+			'The card was asked for the third position.'
+		);
+	}
+
+	/**
 	 * Moving a card inside its stack lands it where it was dropped.
 	 */
 	public function test_same_stack_move_lands_at_the_target() {

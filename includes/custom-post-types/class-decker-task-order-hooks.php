@@ -269,6 +269,12 @@ class Decker_Task_Order_Hooks {
 	 * would add a renumber to every task deletion, where the stack is already
 	 * renumbered by Decker_Tasks::handle_task_deletion().
 	 *
+	 * '' and '0' both mean "not priority" to Decker but are different values to
+	 * the metadata API, so a task saved alternately through the admin editor
+	 * and the writer renumbers once for a change that is not one. It is
+	 * harmless -- the pass recomputes the order the stack already has -- and
+	 * normalizing the two write paths belongs with them, not here.
+	 *
 	 * @param int    $meta_id    Meta row ID.
 	 * @param int    $post_id    Post ID.
 	 * @param string $meta_key   Meta key.
