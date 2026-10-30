@@ -48,9 +48,8 @@ class DeckerTodayTimezoneTest extends Decker_Test_Base {
 		// A fixed offset only shifts the date for part of the day, so the side
 		// is chosen from the current UTC hour: ahead of UTC late in the UTC day,
 		// behind it early. Either way the site's calendar day differs from the
-		// server's.
-		$utc_hour = (int) gmdate( 'G' );
-		update_option( 'timezone_string', $utc_hour >= 12 ? 'Pacific/Kiritimati' : 'Pacific/Midway' );
+		// server's. See timezone_for_utc_hour() for where the cut falls.
+		update_option( 'timezone_string', self::timezone_for_utc_hour( (int) gmdate( 'G' ) ) );
 
 		$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 		wp_set_current_user( $this->user_id );
@@ -69,6 +68,37 @@ class DeckerTodayTimezoneTest extends Decker_Test_Base {
 		update_option( 'timezone_string', $this->original_timezone );
 		wp_set_current_user( 0 );
 		parent::tear_down();
+	}
+
+	/**
+	 * The site timezone that puts the site on another calendar day.
+	 *
+	 * @param int $utc_hour The current UTC hour, 0-23.
+	 * @return string A timezone identifier.
+	 */
+	private static function timezone_for_utc_hour( $utc_hour ) {
+		// Kiritimati is UTC+14 and Midway UTC-11, so the cut is at 11: from
+		// 11:00 UTC on, +14 rolls into tomorrow; before it, -11 falls back
+		// into yesterday. A cut at 12 left the 11:00-11:59 UTC hour with both
+		// clocks on the same day, and the suite failed there once a day.
+		return $utc_hour >= 11 ? 'Pacific/Kiritimati' : 'Pacific/Midway';
+	}
+
+	/**
+	 * The rule has to hold at every hour, not only when CI happens to run.
+	 */
+	public function test_the_timezone_rule_shifts_the_day_at_every_utc_hour() {
+		foreach ( range( 0, 23 ) as $utc_hour ) {
+			$timestamp = strtotime( sprintf( '2026-06-15 %02d:30:00 UTC', $utc_hour ) );
+			$site_date = ( new DateTimeImmutable( '@' . $timestamp ) )
+				->setTimezone( new DateTimeZone( self::timezone_for_utc_hour( $utc_hour ) ) )
+				->format( 'Y-m-d' );
+			$this->assertNotSame(
+				gmdate( 'Y-m-d', $timestamp ),
+				$site_date,
+				"At {$utc_hour}:30 UTC the chosen timezone leaves the site on the server's calendar day."
+			);
+		}
 	}
 
 	/**
