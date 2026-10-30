@@ -196,15 +196,42 @@ class TaskManager {
 					'terms'    => $board->slug,
 				),
 			),
-			'meta_key'  => 'max_priority', // Define field to use in order.
-			'meta_type' => 'BOOL',
-			'orderby'   => array(
-				'max_priority' => 'DESC',
-				'menu_order'   => 'ASC',
+			// Deliberately not ordered by the max_priority meta: ordering by a
+			// meta_key joins the meta table, so a task with no such row -- an
+			// import, a wp_insert_post() elsewhere, a third-party
+			// delete_post_meta() -- was dropped from the board without a word.
+			// The column is ordered here and priority is applied below.
+			'orderby'     => array(
+				'menu_order' => 'ASC',
+				'ID'         => 'ASC',
 			),
 			'numberposts' => -1,
 		);
-		return $this->get_tasks( $args );
+
+		$tasks = $this->get_tasks( $args );
+
+		// Priority pulls a card to the front of its stack. A missing meta row
+		// means "not priority", the way the renumbering engine reads it with
+		// COALESCE. usort is stable, so menu_order is kept inside each group.
+		usort(
+			$tasks,
+			static function ( Task $first, Task $second ): int {
+				return ( $second->max_priority ? 1 : 0 ) <=> ( $first->max_priority ? 1 : 0 );
+			}
+		);
+
+		// A hidden task belongs to the people it concerns: its author, its
+		// responsible user, its assignees and administrators. The board is a
+		// per-user view, so it answers to the same rule as the REST routes and
+		// the task listings rather than showing every card to everyone.
+		return array_values(
+			array_filter(
+				$tasks,
+				static function ( Task $task ): bool {
+					return ! Decker_Tasks::is_hidden_from_current_user( $task->ID );
+				}
+			)
+		);
 	}
 
 	/**

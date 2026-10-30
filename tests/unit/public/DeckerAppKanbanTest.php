@@ -155,6 +155,101 @@ class DeckerAppKanbanTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * A hidden task is on the board only for the people it concerns.
+	 *
+	 * The per-task rule is Decker_Tasks::is_hidden_from_current_user(): author,
+	 * responsible user, assignees and administrators. The board used to ignore
+	 * it and render every card, title and all, to anybody who could open
+	 * Decker.
+	 */
+	public function test_hidden_tasks_are_only_shown_to_the_people_they_concern() {
+		$owner = self::factory()->user->create( array( 'role' => 'editor' ) );
+
+		$this->create_task(
+			array(
+				'post_title'  => 'Visible Card',
+				'stack'       => 'to-do',
+			)
+		);
+		$this->create_task(
+			array(
+				'post_title'  => 'Hidden Card',
+				'stack'       => 'to-do',
+				'hidden'      => true,
+				'post_author' => $owner,
+				'author'      => $owner,
+				'responsable' => $owner,
+			)
+		);
+
+		// A colleague the task is hidden from: not in the column, not counted.
+		$output = $this->render_board_page( 'sprint-board' );
+		$this->assertStringContainsString( 'Visible Card', $output );
+		$this->assertStringNotContainsString( 'Hidden Card', $output );
+		$this->assertStringContainsString( 'TO-DO (1)', $output );
+
+		// The responsible user sees it, and it is counted for them.
+		wp_set_current_user( $owner );
+		$owner_output = $this->render_board_page( 'sprint-board' );
+		$this->assertStringContainsString( 'Hidden Card', $owner_output );
+		$this->assertStringContainsString( 'TO-DO (2)', $owner_output );
+
+		// So does an administrator.
+		wp_set_current_user( 1 );
+		$admin_output = $this->render_board_page( 'sprint-board' );
+		$this->assertStringContainsString( 'Hidden Card', $admin_output );
+	}
+
+	/**
+	 * A task with no max_priority meta row is still on the board.
+	 *
+	 * Ordering by a meta_key joins the meta table, so a task without the row
+	 * was dropped from the board entirely -- silently, with nothing to say a
+	 * card was missing. A missing row means "not priority", which is how the
+	 * renumbering engine reads it.
+	 */
+	public function test_a_task_without_the_priority_meta_is_still_listed() {
+		$this->create_task(
+			array(
+				'post_title' => 'Ordinary Card',
+				'stack'      => 'to-do',
+			)
+		);
+		$orphan = $this->create_task(
+			array(
+				'post_title' => 'Imported Card',
+				'stack'      => 'to-do',
+			)
+		);
+		$priority = $this->create_task(
+			array(
+				'post_title'   => 'Priority Card',
+				'stack'        => 'to-do',
+				'max_priority' => true,
+			)
+		);
+
+		// As an import or a third-party write would leave it.
+		delete_post_meta( $orphan, 'max_priority' );
+
+		$output = $this->render_board_page( 'sprint-board' );
+
+		$this->assertStringContainsString( 'Imported Card', $output );
+		$this->assertStringContainsString( 'TO-DO (3)', $output );
+
+		// And priority still leads the column.
+		$this->assertLessThan(
+			strpos( $output, 'Ordinary Card' ),
+			strpos( $output, 'Priority Card' ),
+			'A max_priority card must still come first.'
+		);
+		$this->assertSame(
+			$priority,
+			(int) ( new TaskManager() )->get_tasks_by_board( new Board( $this->board ) )[0]->ID
+		);
+	}
+
+	/**
 	 * An unknown board slug stops the page with an explicit error.
 	 */
 	public function test_unknown_board_slug_halts_with_an_error() {
