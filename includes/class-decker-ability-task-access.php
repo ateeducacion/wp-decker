@@ -33,6 +33,27 @@ class Decker_Ability_Task_Access {
 	/**
 	 * Check permission for collection read operations.
 	 *
+	 * Every ability reaches this check, directly or through
+	 * check_task_access(), so it is where Decker's access policy is applied.
+	 *
+	 * Two conditions, not one. `edit_posts` is the capability Decker's data
+	 * surfaces have always required, and the configured minimum role is the
+	 * gate on Decker's own screens: an ability is one of those screens'
+	 * operations performed somewhere else, so it answers to the same gate. On
+	 * its own, `edit_posts` would be weaker than the interface, because a
+	 * contributor holds it without holding `publish_posts` and without being
+	 * allowed into Decker at the default minimum of editor — and a created
+	 * task is published, so that account could publish through an ability what
+	 * it cannot publish anywhere else. On its own, the minimum role would be
+	 * weaker too, since it can be configured down to a role that holds no post
+	 * capability at all.
+	 *
+	 * Deliberately not a `publish_posts` check: whoever the minimum role lets
+	 * into Decker creates published tasks in the interface as well, so
+	 * requiring it here would make the abilities stricter than the screens
+	 * they stand in for, which is a second policy rather than one applied
+	 * consistently.
+	 *
 	 * @param array|null $input Optional ability input.
 	 * @return bool|WP_Error True when permitted, otherwise a structured error.
 	 */
@@ -41,7 +62,7 @@ class Decker_Ability_Task_Access {
 			return $this->authentication_error();
 		}
 
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( 'edit_posts' ) || ! Decker::current_user_has_at_least_minimum_role() ) {
 			return $this->permission_error( 'decker_forbidden', __( 'You are not allowed to access Decker data.', 'decker' ) );
 		}
 

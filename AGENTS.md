@@ -26,8 +26,22 @@ WordPress 6.1 and PHP 8.3. Keep `decker.php` as bootstrap, with domain classes i
 - Before pushing: run `make lint`, `make test` and `make check-untranslated`.
 - Changed strings require the POT, Spanish PO and compiled catalogs in the same
   commit. PHPUnit does not catch untranslated strings.
-- Packaging: `make check-plugin`; complexity checks use `make phpmd` / `phpmd.xml`.
+- Packaging: `make check-plugin`. Complexity: `make phpmd` needs a global phpmd and
+  there is no `phpmd.xml`; use `./vendor/bin/phpmd <files> text codesize,design` and
+  ignore `CamelCase*`/`MissingImport` (WPCS is snake_case, so they fire repo-wide).
 - wp-env uses the existing project configuration; do not create a second stack.
+- Targets that drive the site over HTTP must depend on `up`, not `start-if-not-running`:
+  that probe treats any answer on 8888 as "already running", including another
+  project's wp-env stack, and then wp-cli configures one WordPress while the requests
+  reach another.
+- `wp-env run tests-cli` and the site on :8889 share the database but NOT the
+  filesystem: a plugin installed with wp-cli there is invisible to the web container.
+- PHPUnit loads only `decker.php` (see `tests/bootstrap.php`), never the site's active
+  plugins, so activating one in the tests environment does not affect `make test`.
+- Live CAS chain: `make test-cas` (opt-in, external demo CAS, not in CI).
+  Agent skill: `make check-skill`.
+- No JS linter is configured. `npx wp-scripts lint-js` fails en masse on existing
+  files; do not reformat to it.
 
 Read [translation notes](.agents/references/translations.md) when changing strings
 or localized JS, including placeholder comments and plural forms.
@@ -35,6 +49,12 @@ or localized JS, including placeholder comments and plural forms.
 ## Working conventions
 
 - Branches use English names with `feature/` or `hotfix/`; PRs target `main`.
+- `.gitignore`/`.distignore` rules must be root-anchored (`/decker/`, not `decker/`):
+  unanchored ones match at any depth and silently hide new directories, which
+  `git add -A` then skips without a word.
+- `make check-untranslated` regenerates the catalogs and bumps `PO-Revision-Date`;
+  revert `languages/` when no strings actually changed.
+- wp-cli needs `--user=admin` to create Decker taxonomy terms.
 - Follow the repository PHPCS ruleset and current source. English PHPDoc precedes
   functions/methods. Unslash request data before sanitizing; escape at output.
 - Check capabilities and resource ownership as well as nonces at write boundaries;

@@ -215,7 +215,7 @@ class Decker_Subtask_Links {
 			return false;
 		}
 
-		$today = ( new DateTime() )->format( 'Y-m-d' );
+		$today = Decker_Task_Date_Relations::today_string();
 
 		foreach ( $relations as $relation ) {
 			if ( ! isset( $relation['user_id'], $relation['date'] ) ) {

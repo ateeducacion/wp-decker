@@ -180,20 +180,114 @@ setup-tests-env:
 
 # Run E2E tests with Playwright against wp-env tests environment (port 8889).
 # The collaboration spec is excluded here (see test-e2e-collab).
-test-e2e: start-if-not-running setup-tests-env
+#
+# Depends on `up`, not `start-if-not-running`: these drive the site over HTTP,
+# and that probe accepts another project's wp-env stack answering on 8888 as
+# proof we are up, which leaves Playwright talking to the wrong WordPress.
+test-e2e: check-docker up setup-tests-env
 	WP_BASE_URL=http://localhost:8889 npm run test:e2e
 
-test-e2e-visual: start-if-not-running setup-tests-env
+test-e2e-visual: check-docker up setup-tests-env
 	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
 
 # Run ONLY the collaboration spec. It needs the collaborative editing feature
 # enabled and reaches external services (esm.sh CDN + signalling server), so it
 # is kept out of the default CI gate. This enables the feature, runs the spec,
 # and restores the setting afterwards regardless of the outcome.
-test-e2e-collab: start-if-not-running setup-tests-env
+test-e2e-collab: check-docker up setup-tests-env
 	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
 	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
 	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
+
+# Run the CAS end-to-end test: the real client, over real HTTP, through a real
+# Apereo CAS server, into a real WordPress with Decker.
+#
+# The CAS server is the public Apereo/pac4j demo at casserverpac4j.dev, whose
+# FakeAuthenticationHandler accepts any credentials. Nothing secret is sent: the
+# username is a disposable test account and the password is the literal string
+# "password". No institutional credential and no production system is involved.
+#
+# The fixture terms are created with --user=admin: Decker's taxonomies require a
+# capability and wp-cli runs as nobody by default.
+#
+# WP Cassify is installed and activated ONLY in the tests environment (port
+# 8889), and is deactivated again whatever the outcome. That matters: an active
+# Cassify redirects wp-login.php to CAS, so leaving it on would send your own
+# login to an external demo server. It is deliberately NOT added to
+# .wp-env.json, which would activate it in the development environment too.
+CAS_BASE_URL ?= https://www.casserverpac4j.dev/
+CAS_TEST_USER ?= deckertest
+# Depends on `up`, not `start-if-not-running`: that probe only checks whether
+# something answers on port 8888, and another project's stack answering is
+# enough for it to decide we are already up. This is the only target that
+# drives the site over HTTP, so a foreign stack owning the port means wp-cli
+# configures one WordPress while the requests reach another -- which looks
+# exactly like CAS being misconfigured. `up` frees the ports first.
+test-cas: check-docker up setup-tests-env
+	@set -e; \
+	trap 'echo "Deactivating wp-cassify..."; npx wp-env run tests-cli wp plugin deactivate wp-cassify >/dev/null 2>&1 || true' EXIT INT TERM; \
+	npx wp-env run tests-cli wp plugin install wp-cassify --activate; \
+	if [ "$$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8889/wp-content/plugins/wp-cassify/readme.txt)" != "200" ]; then \
+		echo ""; \
+		echo "ERROR: the site on :8889 does not serve the plugin that was just installed."; \
+		echo "Another wp-env stack is probably holding the port, so wp-cli and HTTP"; \
+		echo "are talking to different WordPress installations. Run 'make up' and retry."; \
+		echo ""; \
+		exit 1; \
+	fi; \
+	npx wp-env run tests-cli wp option update wp_cassify_base_url '$(CAS_BASE_URL)'; \
+	npx wp-env run tests-cli wp option update wp_cassify_login_servlet 'login'; \
+	npx wp-env run tests-cli wp option update wp_cassify_logout_servlet 'logout'; \
+	npx wp-env run tests-cli wp option update wp_cassify_service_validate_servlet 'p3/serviceValidate'; \
+	npx wp-env run tests-cli wp option update wp_cassify_protocol_version '3'; \
+	npx wp-env run tests-cli wp option update wp_cassify_create_user_if_not_exist ''; \
+	npx wp-env run tests-cli wp option update wp_cassify_ssl_check_certificate 'enabled'; \
+	npx wp-env run tests-cli wp option update wp_cassify_disable_authentication ''; \
+	npx wp-env run tests-cli sh -c "wp user get $(CAS_TEST_USER) >/dev/null 2>&1 || wp user create $(CAS_TEST_USER) $(CAS_TEST_USER)@example.com --role=editor --user_pass=unused-cas-handles-login"; \
+	npx wp-env run tests-cli sh -c "wp term list decker_board --field=name --user=admin | grep -qx 'CAS Live Board' || wp term create decker_board 'CAS Live Board' --user=admin"; \
+	npx wp-env run tests-cli sh -c "for l in 'CAS Live Alpha' 'CAS Live Beta'; do wp term list decker_label --field=name --user=admin | grep -qx \"\$$l\" || wp term create decker_label \"\$$l\" --user=admin; done"; \
+	DECKER_CAS_LIVE=1 \
+	DECKER_CAS_SITE=http://localhost:8889 \
+	DECKER_CAS_URL='$(CAS_BASE_URL)login' \
+	DECKER_CAS_USER='$(CAS_TEST_USER)' \
+	npx vitest run tests/js/decker-client-cas-live.test.js --coverage=false
+
+# Validate the installable Agent Skill: its metadata, that everything it
+# references exists, that its client actually runs, and that git is really
+# tracking all of it.
+#
+# The git check is not paranoia. An unanchored `decker/` rule in .gitignore hid
+# skills/decker/ twice during development: `git add -A` skipped the files
+# without a word, the working tree looked clean, and `gh skill install` was the
+# only thing that noticed the skill had shipped without its SKILL.md.
+SKILL_DIR = skills/decker
+check-skill:
+	@set -e; \
+	echo "Checking $(SKILL_DIR)..."; \
+	test -f "$(SKILL_DIR)/SKILL.md" || { echo "ERROR: SKILL.md is missing."; exit 1; }; \
+	grep -q '^name: decker$$' "$(SKILL_DIR)/SKILL.md" || { echo "ERROR: SKILL.md needs 'name: decker' in its frontmatter."; exit 1; }; \
+	grep -q '^description: ' "$(SKILL_DIR)/SKILL.md" || { echo "ERROR: SKILL.md needs a description."; exit 1; }; \
+	for f in $$(grep -oE 'references/[a-z-]+\.md' "$(SKILL_DIR)/SKILL.md" | sort -u); do \
+		test -f "$(SKILL_DIR)/$$f" || { echo "ERROR: SKILL.md references $$f, which does not exist."; exit 1; }; \
+	done; \
+	node --input-type=module -e 'import("./$(SKILL_DIR)/scripts/decker-client.mjs")' >/dev/null; \
+	node "$(SKILL_DIR)/scripts/decker-client.mjs" --nonexistent-command >/dev/null 2>&1 && \
+		{ echo "ERROR: the client exits 0 on an unknown command."; exit 1; }; \
+	untracked="$$(git ls-files --others --exclude-standard --ignored "$(SKILL_DIR)")"; \
+	if [ -n "$$untracked" ]; then \
+		echo "ERROR: these skill files are ignored by git and would not ship:"; \
+		echo "$$untracked"; \
+		exit 1; \
+	fi; \
+	for f in $$(find "$(SKILL_DIR)" -type f); do \
+		git ls-files --error-unmatch "$$f" >/dev/null 2>&1 || { echo "ERROR: $$f is not tracked by git."; exit 1; }; \
+	done; \
+	grep -qE '^/skills$$' .distignore || { echo "ERROR: .distignore must keep /skills out of the plugin ZIP."; exit 1; }; \
+	grep -qE '^/skills' .gitattributes && { echo "ERROR: /skills must NOT be export-ignored; gh skill install reads the repository."; exit 1; }; \
+	if git ls-files | grep -qE '(^|/)session\.json$$|(^|/)\.env$$'; then \
+		echo "ERROR: a session or environment file is tracked."; exit 1; \
+	fi; \
+	echo "Skill OK: metadata, references, client and packaging rules all check out."
 
 test-js:
 	npm run test:js

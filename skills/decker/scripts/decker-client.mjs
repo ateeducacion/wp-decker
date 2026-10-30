@@ -1,0 +1,2714 @@
+#!/usr/bin/env node
+/**
+ * Decker REST client.
+ *
+ * A dependency-free client for Decker's WordPress REST and Abilities API
+ * endpoints, authenticating through CAS with an ordinary WordPress session.
+ * It runs on Node 22+ with built-ins only, so an installed Agent Skill needs
+ * no `npm install` and carries no dependency tree.
+ *
+ * Secrets never reach stdout: the password is read from the terminal with echo
+ * disabled, the session cookies live in the OS keychain, and no error message
+ * or log line carries a cookie, a CAS ticket or a REST nonce.
+ *
+ * Phase 3 scope: transport, CAS authentication, session storage, nonce
+ * bootstrap, route detection and `doctor`. Resource commands arrive in the
+ * later phases.
+ */
+
+import { execFileSync } from 'node:child_process';
+import {
+	closeSync,
+	constants,
+	fchmodSync,
+	mkdirSync,
+	openSync,
+	readFileSync,
+	readSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
+
+/**
+ * Stable process exit codes. Documented in references/troubleshooting.md; an
+ * agent and a shell script both branch on these, so the numbers are a contract.
+ */
+export const EXIT = {
+	OK: 0,
+	UNKNOWN: 1,
+	USAGE: 2,
+	AUTH: 3,
+	FORBIDDEN: 4,
+	NOT_FOUND: 5,
+	CONFLICT: 6,
+	RATE_LIMITED: 7,
+	SERVER: 8,
+	NETWORK: 9,
+	UNCERTAIN: 10,
+};
+
+/** Maximum redirects followed in one logical request. */
+const MAX_REDIRECTS = 10;
+
+/** A WordPress REST nonce as wp_create_nonce() renders it. */
+const NONCE_PATTERN = /^[A-Za-z0-9]{10}$/;
+
+/**
+ * An error carrying a stable code and exit status, safe to print.
+ *
+ * The message is written by this module and never interpolates a response
+ * body, a header or a credential, so a structured error can be shown to a
+ * language model without leaking private task content.
+ */
+export class DeckerError extends Error {
+	/**
+	 * @param {string} code    Stable error code.
+	 * @param {string} message Human-readable, secret-free message.
+	 * @param {number} exit    Process exit code.
+	 * @param {number} [status] HTTP status, when one applies.
+	 */
+	constructor( code, message, exit = EXIT.UNKNOWN, status = 0 ) {
+		super( message );
+		this.name = 'DeckerError';
+		this.code = code;
+		this.exit = exit;
+		this.status = status;
+	}
+
+	/**
+	 * Render the error as the CLI's stderr JSON payload.
+	 *
+	 * @return {object} Serializable error.
+	 */
+	toJSON() {
+		const payload = { ok: false, code: this.code, message: this.message };
+		if ( this.status ) {
+			payload.status = this.status;
+		}
+		return payload;
+	}
+}
+
+/**
+ * Parse and check a URL before it is ever requested.
+ *
+ * Rejects embedded credentials, fragments and — unless explicitly allowed for
+ * local testing — plain HTTP, so TLS is never silently dropped.
+ *
+ * @param {string}  value           URL to check.
+ * @param {boolean} [allowHttp]     Whether to permit http: (local tests only).
+ * @return {URL} The parsed URL.
+ */
+export function checkedUrl( value, allowHttp = false ) {
+	let url;
+	try {
+		url = new URL( value );
+	} catch {
+		throw new DeckerError( 'config_invalid_url', 'Invalid URL.', EXIT.USAGE );
+	}
+
+	const allowed = allowHttp ? [ 'https:', 'http:' ] : [ 'https:' ];
+	if ( url.username || url.password || url.hash || ! allowed.includes( url.protocol ) ) {
+		throw new DeckerError(
+			'config_invalid_url',
+			'Use an HTTPS URL without credentials or a fragment.',
+			EXIT.USAGE
+		);
+	}
+
+	return url;
+}
+
+/**
+ * An HTTP session with a cookie jar and an origin allowlist.
+ *
+ * Redirects are followed by hand so that each hop can be checked: a hop to an
+ * unconfigured origin is refused, credential headers are stripped when the
+ * origin changes, and a 307/308 never replays a password body to another host.
+ *
+ * ponytail: the jar keys cookies by origin and ignores Domain and Path. Decker
+ * talks to one WordPress host and one CAS host, so per-origin is enough; swap
+ * in a real jar if a deployment ever spreads cookies across subdomains.
+ */
+export class Session {
+	/**
+	 * @param {object}   options             Session options.
+	 * @param {string[]} options.origins     Allowed origins.
+	 * @param {number}   [options.timeoutMs] Per-request timeout.
+	 * @param {boolean}  [options.allowHttp] Whether http: is permitted.
+	 * @param {Function} [options.fetch]     Fetch implementation.
+	 */
+	constructor( { origins, timeoutMs = 15000, allowHttp = false, fetch: fetchImpl = globalThis.fetch } ) {
+		this.origins = new Set( origins );
+		this.timeoutMs = timeoutMs;
+		this.allowHttp = allowHttp;
+		this.fetch = fetchImpl;
+		/** @type {Map<string, Map<string, string>>} */
+		this.cookies = new Map();
+	}
+
+	/**
+	 * Store the cookies a response set.
+	 *
+	 * @param {string}   origin  Origin that served the response.
+	 * @param {Response} response Response to read.
+	 * @return {void}
+	 */
+	storeCookies( origin, response ) {
+		const jar = this.cookies.get( origin ) ?? new Map();
+
+		for ( const header of response.headers.getSetCookie() ) {
+			const [ pair ] = header.split( ';' );
+			const index = pair.indexOf( '=' );
+			if ( index < 1 ) {
+				continue;
+			}
+			const name = pair.slice( 0, index ).trim();
+			const value = pair.slice( index + 1 ).trim();
+			if ( '' === value || 'deleted' === value ) {
+				jar.delete( name );
+			} else {
+				jar.set( name, value );
+			}
+		}
+
+		this.cookies.set( origin, jar );
+	}
+
+	/**
+	 * Render the Cookie header for an origin.
+	 *
+	 * @param {string} origin Origin.
+	 * @return {string} Cookie header value, empty when there is none.
+	 */
+	cookieHeader( origin ) {
+		const jar = this.cookies.get( origin );
+		if ( ! jar || 0 === jar.size ) {
+			return '';
+		}
+
+		return [ ...jar ].map( ( [ name, value ] ) => `${ name }=${ value }` ).join( '; ' );
+	}
+
+	/**
+	 * Export the WordPress session cookies for secure storage.
+	 *
+	 * @param {string} origin WordPress origin.
+	 * @return {object} Serializable cookie map.
+	 */
+	exportCookies( origin ) {
+		return Object.fromEntries( this.cookies.get( origin ) ?? [] );
+	}
+
+	/**
+	 * Restore previously stored cookies.
+	 *
+	 * @param {string} origin  WordPress origin.
+	 * @param {object} cookies Cookie map.
+	 * @return {void}
+	 */
+	importCookies( origin, cookies ) {
+		this.cookies.set( origin, new Map( Object.entries( cookies ?? {} ) ) );
+	}
+
+	/**
+	 * Perform a request, following redirects under the session's rules.
+	 *
+	 * @param {URL}     input          Target URL.
+	 * @param {object}  [init]         Fetch init.
+	 * @param {boolean} [followRedirects] Whether to follow redirects.
+	 * @param {boolean} [allowRedirect]    Whether a redirect may be followed at
+	 *                                     all, rather than ending the request
+	 *                                     with an unknown outcome.
+	 * @return {Promise<Response>} The final response.
+	 */
+	async request( input, init = {}, followRedirects = true, allowRedirect = true ) {
+		let url = input;
+		let method = init.method ?? 'GET';
+		let body = init.body ?? null;
+		const headers = new Headers( init.headers );
+
+		for ( let hop = 0; hop <= MAX_REDIRECTS; hop++ ) {
+			checkedUrl( url.href, this.allowHttp );
+
+			if ( ! this.origins.has( url.origin ) ) {
+				throw new DeckerError(
+					'auth_untrusted_redirect',
+					'Refused a redirect to an origin that is not the configured WordPress or CAS host.',
+					EXIT.AUTH
+				);
+			}
+
+			const cookie = this.cookieHeader( url.origin );
+			headers.delete( 'cookie' );
+			if ( cookie ) {
+				headers.set( 'cookie', cookie );
+			}
+
+			let response;
+			try {
+				response = await this.fetch( url, {
+					method,
+					body,
+					headers,
+					redirect: 'manual',
+					signal: AbortSignal.timeout( this.timeoutMs ),
+				} );
+			} catch {
+				// The cause is deliberately dropped: a fetch error can quote the
+				// request, and the request carries the session cookie.
+				throw new DeckerError(
+					'network_failed',
+					'The request failed or timed out.',
+					EXIT.NETWORK
+				);
+			}
+
+			this.storeCookies( url.origin, response );
+
+			if ( ! [ 301, 302, 303, 307, 308 ].includes( response.status ) ) {
+				return response;
+			}
+
+			const location = response.headers.get( 'location' );
+			if ( ! followRedirects || ! location ) {
+				await response.body?.cancel();
+				throw new DeckerError(
+					'auth_unexpected_redirect',
+					'The server redirected unexpectedly; the session may have expired.',
+					EXIT.AUTH,
+					response.status
+				);
+			}
+
+			const next = new URL( location, url );
+			const replaysBody =
+				[ 307, 308 ].includes( response.status ) && 'GET' !== method && 'HEAD' !== method;
+
+			if ( ! allowRedirect ) {
+				// No redirect of a mutating REST call is followed, whichever
+				// kind it is, because none of them says what happened to the
+				// write.
+				//
+				// A 307/308 says the request was not processed here, so
+				// following it would be one write and not two — but that is the
+				// server's word for it, and an application that applied the
+				// write and then redirected with 307 instead of 303 would have
+				// it applied twice. A 301/302/303 is worse: the method degrades
+				// to GET, so following it fetches a page that may answer 200
+				// with valid JSON while the write itself was never confirmed,
+				// and that would be reported as a success. Neither is worth the
+				// bet. The caller reports an uncertain outcome and the agent
+				// reads the task back.
+				await response.body?.cancel();
+				throw new DeckerError(
+					'rest_redirect_not_followed',
+					'The server redirected a write to another location instead of answering it.',
+					EXIT.NETWORK,
+					response.status
+				);
+			}
+
+			if ( next.origin !== url.origin ) {
+				if ( replaysBody ) {
+					await response.body?.cancel();
+					throw new DeckerError(
+						'auth_cross_origin_replay',
+						'Refused to replay a credential-bearing request to another origin.',
+						EXIT.AUTH
+					);
+				}
+				headers.delete( 'authorization' );
+				headers.delete( 'x-wp-nonce' );
+			}
+
+			if ( 303 === response.status || ( [ 301, 302 ].includes( response.status ) && 'GET' !== method && 'HEAD' !== method ) ) {
+				method = 'GET';
+				body = null;
+				headers.delete( 'content-type' );
+			}
+
+			await response.body?.cancel();
+			url = next;
+		}
+
+		throw new DeckerError(
+			'auth_redirect_loop',
+			'Too many redirects while authenticating.',
+			EXIT.AUTH
+		);
+	}
+}
+
+/**
+ * Find the login form that carries a password field and read its fields.
+ *
+ * ponytail: the form is located with regular expressions rather than a parser,
+ * which keeps the client dependency-free. It handles the conventional CAS and
+ * wp-login.php markup; a form built by JavaScript, or one with no password
+ * input, is reported as unsupported rather than guessed at. Install a real HTML
+ * parser if a deployment needs more.
+ *
+ * @param {string} html    Page HTML.
+ * @param {string} pageUrl URL the HTML came from.
+ * @return {{action: string, fields: object}} Form action and hidden fields.
+ */
+export function parseLoginForm( html, pageUrl ) {
+	const forms = html.match( /<form\b[\s\S]*?<\/form>/gi ) ?? [];
+	const form = forms.find( ( candidate ) => /<input\b[^>]*type\s*=\s*["']?password["']?/i.test( candidate ) );
+
+	if ( ! form ) {
+		throw new DeckerError(
+			'auth_form_unsupported',
+			'No password form was found. The deployment may require interactive login, MFA or a CAPTCHA, which this client deliberately does not attempt.',
+			EXIT.AUTH
+		);
+	}
+
+	const actionMatch = /<form\b[^>]*\baction\s*=\s*["']([^"']*)["']/i.exec( form );
+	const action = new URL( actionMatch?.[ 1 ] || pageUrl, pageUrl ).href;
+
+	const fields = {};
+	for ( const input of form.match( /<input\b[^>]*>/gi ) ?? [] ) {
+		if ( ! /type\s*=\s*["']?hidden["']?/i.test( input ) || /\bdisabled\b/i.test( input ) ) {
+			continue;
+		}
+		const name = /\bname\s*=\s*["']([^"']*)["']/i.exec( input )?.[ 1 ];
+		if ( ! name ) {
+			continue;
+		}
+		const value = /\bvalue\s*=\s*["']([^"']*)["']/i.exec( input )?.[ 1 ] ?? '';
+		// Hidden CAS state such as `execution` and `lt` must be sent back as-is.
+		fields[ name ] = decodeHtmlEntities( value );
+	}
+
+	return { action, fields };
+}
+
+/**
+ * Decode the few HTML entities that appear in form values.
+ *
+ * @param {string} value Raw attribute value.
+ * @return {string} Decoded value.
+ */
+function decodeHtmlEntities( value ) {
+	return value
+		.replace( /&lt;/g, '<' )
+		.replace( /&gt;/g, '>' )
+		.replace( /&quot;/g, '"' )
+		.replace( /&#0?39;/g, "'" )
+		.replace( /&amp;/g, '&' );
+}
+
+/**
+ * Authenticate against CAS and establish a WordPress session.
+ *
+ * The flow starts at a WordPress URL so the CAS callback lands inside the
+ * cookie path WordPress expects, follows the redirect to CAS, submits the
+ * login form with its hidden state preserved, and follows the service ticket
+ * back. WordPress validates the ticket; this client is an HTTP form client,
+ * not a CAS server.
+ *
+ * @param {Session} session        Session to authenticate.
+ * @param {object}  options        Login options.
+ * @param {URL}     options.entryUrl  WordPress entry point.
+ * @param {URL}     options.casUrl    CAS login URL.
+ * @param {string}  options.username  Username.
+ * @param {string}  options.password  Password.
+ * @return {Promise<void>} Resolves once WordPress accepted the ticket.
+ */
+export async function casLogin( session, { entryUrl, casUrl, username, password } ) {
+	const landing = await session.request( entryUrl );
+
+	if ( ! landing.ok ) {
+		await landing.body?.cancel();
+		throw new DeckerError(
+			'auth_entry_failed',
+			'The WordPress entry point did not load.',
+			EXIT.AUTH,
+			landing.status
+		);
+	}
+
+	const landingUrl = new URL( landing.url );
+	if ( landingUrl.origin !== casUrl.origin ) {
+		await landing.body?.cancel();
+		throw new DeckerError(
+			'auth_cas_not_reached',
+			'WordPress did not redirect to the configured CAS host. Check the CAS login URL, or whether the session is already valid.',
+			EXIT.AUTH
+		);
+	}
+
+	const { action, fields } = parseLoginForm( await landing.text(), landing.url );
+	const actionUrl = checkedUrl( action, session.allowHttp );
+
+	if ( actionUrl.origin !== casUrl.origin ) {
+		throw new DeckerError(
+			'auth_cross_origin_form',
+			'Refused to submit the login form to an origin other than the configured CAS host.',
+			EXIT.AUTH
+		);
+	}
+
+	const body = new URLSearchParams( fields );
+	body.set( 'username', username );
+	body.set( 'password', password );
+	body.set( '_eventId', 'submit' );
+
+	const submitted = await session.request( actionUrl, { method: 'POST', body } );
+	const ok = submitted.ok;
+	const status = submitted.status;
+	await submitted.body?.cancel();
+
+	if ( ! ok ) {
+		throw new DeckerError(
+			'auth_login_rejected',
+			'CAS rejected the login. Check the username and password, or whether the account requires an interactive challenge.',
+			EXIT.AUTH,
+			status
+		);
+	}
+}
+
+/**
+ * Fetch a REST nonce for the current session.
+ *
+ * Core's `rest-nonce` AJAX action is used rather than scraping a plugin admin
+ * page: it is authenticated, it exists on every WordPress, and it needs no
+ * capability beyond being logged in, so an ordinary Decker user does not have
+ * to be able to load any particular administration screen.
+ *
+ * @param {Session} session  Authenticated session.
+ * @param {URL}     adminAjaxUrl Site admin-ajax.php URL.
+ * @return {Promise<string>} The nonce.
+ */
+export async function fetchNonce( session, adminAjaxUrl ) {
+	const url = new URL( adminAjaxUrl );
+	url.searchParams.set( 'action', 'rest-nonce' );
+
+	const response = await session.request( url );
+	const status = response.status;
+	const text = ( await response.text() ).trim();
+
+	if ( ! NONCE_PATTERN.test( text ) ) {
+		// "0", "-1" and a login page all mean the same thing: no session.
+		throw new DeckerError(
+			'auth_session_expired',
+			'No valid session. Run `decker auth login`.',
+			EXIT.AUTH,
+			status
+		);
+	}
+
+	return text;
+}
+
+/**
+ * Detect which REST routing the site serves.
+ *
+ * Pretty permalinks under `/wp-json/` are preferred; the documented
+ * `?rest_route=` form is the fallback for a site whose permalinks or proxy do
+ * not expose `/wp-json/`. Both are WordPress's own routing: neither bypasses
+ * an access control.
+ *
+ * @param {Session} session Session to probe with.
+ * @param {URL}     baseUrl Site base URL.
+ * @return {Promise<'wp-json'|'rest-route'>} Detected routing.
+ */
+export async function detectRouting( session, baseUrl ) {
+	for ( const routing of [ 'wp-json', 'rest-route' ] ) {
+		const url = restUrl( baseUrl, routing, '/' );
+		let response;
+		try {
+			response = await session.request( url );
+		} catch {
+			continue;
+		}
+
+		const type = response.headers.get( 'content-type' ) ?? '';
+		const ok = response.ok && type.includes( 'json' );
+		await response.body?.cancel();
+
+		if ( ok ) {
+			return routing;
+		}
+	}
+
+	throw new DeckerError(
+		'rest_unavailable',
+		'The WordPress REST API did not answer with JSON through either /wp-json/ or ?rest_route=. Check the site URL and whether a proxy blocks the REST API.',
+		EXIT.NETWORK
+	);
+}
+
+/**
+ * Build a REST URL for the configured routing.
+ *
+ * @param {URL}    baseUrl Site base URL.
+ * @param {string} routing Detected routing.
+ * @param {string} path    REST path, starting with a slash.
+ * @param {object} [params] Query parameters, nested objects flattened to
+ *                          bracket syntax.
+ * @return {URL} Request URL.
+ */
+export function restUrl( baseUrl, routing, path, params = {} ) {
+	const basePath = baseUrl.pathname.endsWith( '/' ) ? baseUrl.pathname : `${ baseUrl.pathname }/`;
+	const url = new URL( baseUrl );
+
+	if ( 'rest-route' === routing ) {
+		url.pathname = basePath;
+		url.searchParams.set( 'rest_route', path );
+	} else {
+		url.pathname = `${ basePath }wp-json${ path }`;
+	}
+
+	for ( const [ key, value ] of Object.entries( flattenParams( params ) ) ) {
+		url.searchParams.set( key, value );
+	}
+
+	return url;
+}
+
+/**
+ * Flatten nested parameters into PHP's bracket syntax.
+ *
+ * The Abilities run route reads GET input from the `input` query parameter, and
+ * nothing in WordPress JSON-decodes a string there, so `input[task_id]=12` is
+ * the form that validates. WordPress 6.9 — the deployed baseline — also applies
+ * no type coercion, so booleans are sent as `1`/`0` rather than `true`/`false`,
+ * which a string cast would read as true.
+ *
+ * @param {object} params Parameters.
+ * @param {string} [prefix] Current key prefix.
+ * @return {object} Flat key/value pairs.
+ */
+export function flattenParams( params, prefix = '' ) {
+	const flat = {};
+
+	for ( const [ key, value ] of Object.entries( params ) ) {
+		if ( undefined === value || null === value ) {
+			continue;
+		}
+
+		const name = prefix ? `${ prefix }[${ key }]` : key;
+
+		if ( 'boolean' === typeof value ) {
+			flat[ name ] = value ? '1' : '0';
+		} else if ( Array.isArray( value ) ) {
+			value.forEach( ( item, index ) => {
+				Object.assign( flat, flattenParams( { [ index ]: item }, name ) );
+			} );
+		} else if ( 'object' === typeof value ) {
+			Object.assign( flat, flattenParams( value, name ) );
+		} else {
+			flat[ name ] = String( value );
+		}
+	}
+
+	return flat;
+}
+
+/**
+ * Map an HTTP status to a stable error.
+ *
+ * @param {number} status HTTP status.
+ * @param {string} [code] Error code reported by WordPress.
+ * @return {DeckerError} The mapped error.
+ */
+function errorForStatus( status, code = '' ) {
+	// A few of the server's codes mean something the status cannot say. Keyed
+	// by code, because WordPress's own message is content and is deliberately
+	// not surfaced to the model; the code is a fixed identifier.
+	const byCode = {
+		decker_priority_mismatch: [
+			'Maximum priority pulls a card to the front of its stack, so these two cards cannot be adjacent. Re-reading will not change that: set or clear max_priority on one of them, or use --position.',
+			EXIT.CONFLICT,
+		],
+	};
+
+	if ( byCode[ code ] ) {
+		const [ byCodeMessage, byCodeExit ] = byCode[ code ];
+		return new DeckerError( code, byCodeMessage, byCodeExit, status );
+	}
+
+	const map = {
+		400: [ 'request_invalid', 'The request was rejected as invalid.', EXIT.USAGE ],
+		401: [ 'auth_session_expired', 'Not authenticated. Run `decker auth login`.', EXIT.AUTH ],
+		403: [ 'forbidden', 'The server refused this operation for this user.', EXIT.FORBIDDEN ],
+		404: [ 'not_found', 'The requested resource or route does not exist.', EXIT.NOT_FOUND ],
+		405: [ 'method_not_allowed', 'That route does not accept this HTTP method.', EXIT.USAGE ],
+		409: [ 'conflict', 'The task changed since it was read. Re-read it and try again; the write was not applied.', EXIT.CONFLICT ],
+		429: [ 'rate_limited', 'The server is rate limiting requests. Retry later.', EXIT.RATE_LIMITED ],
+	};
+
+	const [ mapped, message, exit ] = map[ status ] ?? [
+		status >= 500 ? 'server_error' : 'request_failed',
+		status >= 500 ? 'The server reported an error.' : 'The request failed.',
+		status >= 500 ? EXIT.SERVER : EXIT.UNKNOWN,
+	];
+
+	// WordPress's own code is more specific than the status, and is a fixed
+	// identifier rather than content, so it is safe to surface.
+	return new DeckerError( code || mapped, message, exit, status );
+}
+
+/**
+ * Perform an authenticated REST request and decode the JSON response.
+ *
+ * @param {object} context         Client context.
+ * @param {string} method          HTTP method.
+ * @param {string} path            REST path.
+ * @param {object} [options]       Request options.
+ * @param {object} [options.params] Query parameters.
+ * @param {object} [options.body]  JSON body.
+ * @param {boolean} [options.withMeta] Return pagination metadata alongside the
+ *                                     body, read from the X-WP-Total headers.
+ * @return {Promise<any>} Decoded response, or {items, total, total_pages}.
+ */
+export async function restRequest( context, method, path, { params = {}, body = null, withMeta = false } = {} ) {
+	const { session, baseUrl, routing, nonce } = context;
+	const url = restUrl( baseUrl, routing, path, params );
+
+	const headers = new Headers( { accept: 'application/json', 'x-wp-nonce': nonce } );
+	let payload = null;
+	if ( null !== body ) {
+		headers.set( 'content-type', 'application/json' );
+		payload = JSON.stringify( body );
+	}
+
+	// A write is never replayed: the server may have applied it before the
+	// response was lost, so a retry could duplicate a task or a comment.
+	const isWrite = ! [ 'GET', 'HEAD' ].includes( method );
+
+	/**
+	 * Re-report a transport failure on a write as an uncertain outcome.
+	 *
+	 * Once the request has left, a lost connection or an unreadable reply says
+	 * nothing about whether the server applied it. Reporting that as an
+	 * ordinary network error invites a retry, which is exactly what must not
+	 * happen: it is how a task or a comment gets created twice.
+	 *
+	 * @param {DeckerError} error The transport error.
+	 * @return {DeckerError} The error to throw.
+	 */
+	const uncertainOnWrite = ( error ) => {
+		if ( ! isWrite ) {
+			return error;
+		}
+
+		return new DeckerError(
+			'rest_outcome_unknown',
+			`${ error.message } The outcome of this write is unknown: read the task back before doing anything else, and do not repeat the command.`,
+			EXIT.UNCERTAIN,
+			error.status
+		);
+	};
+
+	let response;
+	let text;
+	try {
+		response = await session.request( url, { method, headers, body: payload }, true, ! isWrite );
+		text = await response.text();
+	} catch ( error ) {
+		throw uncertainOnWrite(
+			error instanceof DeckerError
+				? error
+				: new DeckerError( 'network_failed', 'The request failed or timed out.', EXIT.NETWORK )
+		);
+	}
+
+	const type = response.headers.get( 'content-type' ) ?? '';
+
+	if ( ! type.includes( 'json' ) ) {
+		throw uncertainOnWrite(
+			new DeckerError(
+				'rest_not_json',
+				`The server answered ${ response.status } with ${ type || 'no content type' } instead of JSON, which usually means a login page or a proxy error page.`,
+				EXIT.NETWORK,
+				response.status
+			)
+		);
+	}
+
+	let data;
+	try {
+		data = JSON.parse( text );
+	} catch {
+		throw uncertainOnWrite(
+			new DeckerError(
+				'rest_malformed_json',
+				'The server returned malformed JSON.',
+				EXIT.NETWORK,
+				response.status
+			)
+		);
+	}
+
+	if ( ! response.ok ) {
+		const failure = errorForStatus( response.status, 'string' === typeof data?.code ? data.code : '' );
+
+		// A 5xx on a write is not a failure, it is an unknown: a proxy can
+		// answer 502 after the backend has already persisted the operation.
+		// A 4xx is certain -- the request was rejected before any work.
+		throw response.status >= 500 ? uncertainOnWrite( failure ) : failure;
+	}
+
+	if ( ! withMeta ) {
+		return data;
+	}
+
+	// WordPress reports collection totals in headers, not in the body. A proxy
+	// that strips them leaves null rather than a guessed number.
+	const total = response.headers.get( 'x-wp-total' );
+	const totalPages = response.headers.get( 'x-wp-totalpages' );
+
+	return {
+		items: data,
+		total: null === total ? null : Number( total ),
+		total_pages: null === totalPages ? null : Number( totalPages ),
+	};
+}
+
+/**
+ * Build the REST path that runs an ability.
+ *
+ * @param {string} name Ability name, such as `decker/list-tasks`.
+ * @return {string} REST path.
+ */
+export function abilityPath( name ) {
+	return `/wp-abilities/v1/abilities/${ name }/run`;
+}
+
+/**
+ * Read a positive integer flag.
+ *
+ * Input is validated before a request is sent, so a typo costs nothing and
+ * reports what was wrong rather than a puzzling server error.
+ *
+ * @param {object} flags Parsed flags.
+ * @param {string} name  Flag name.
+ * @param {object} [bounds] Optional {min, max}.
+ * @return {number|undefined} The value, or undefined when absent.
+ */
+export function integerFlag( flags, name, { min = 1, max = Number.MAX_SAFE_INTEGER } = {} ) {
+	if ( ! ( name in flags ) || true === flags[ name ] ) {
+		if ( true === flags[ name ] ) {
+			throw new DeckerError( 'usage_missing_value', `--${ name } needs a value.`, EXIT.USAGE );
+		}
+		return undefined;
+	}
+
+	const value = Number( flags[ name ] );
+	if ( ! Number.isInteger( value ) || value < min || value > max ) {
+		throw new DeckerError(
+			'usage_invalid_value',
+			`--${ name } must be a whole number between ${ min } and ${ max }.`,
+			EXIT.USAGE
+		);
+	}
+
+	return value;
+}
+
+/**
+ * Read a flag that is meant to be a switch.
+ *
+ * A bare `--yes` is true and an absent flag is false, but a value has to be
+ * one it could plausibly mean: `--yes=false` used to be accepted as true,
+ * because a non-empty string is truthy, so an explicit refusal performed the
+ * write. Anything ambiguous is rejected rather than guessed.
+ *
+ * @param {object} flags Parsed flags.
+ * @param {string} name  Flag name.
+ * @return {boolean} Whether the switch is on.
+ */
+export function switchFlag( flags, name ) {
+	const value = flags[ name ];
+	if ( undefined === value || null === value ) {
+		return false;
+	}
+
+	if ( true === value ) {
+		return true;
+	}
+
+	const text = String( value ).trim().toLowerCase();
+	if ( [ 'true', '1', 'yes', 'on' ].includes( text ) ) {
+		return true;
+	}
+	if ( [ 'false', '0', 'no', 'off', '' ].includes( text ) ) {
+		return false;
+	}
+
+	throw new DeckerError(
+		'usage_invalid_switch',
+		`--${ name } takes no value, or one of: true, false, 1, 0, yes, no.`,
+		EXIT.USAGE
+	);
+}
+
+/**
+ * Read a flag from a fixed set of values.
+ *
+ * @param {object}   flags   Parsed flags.
+ * @param {string}   name    Flag name.
+ * @param {string[]} allowed Allowed values.
+ * @return {string|undefined} The value, or undefined when absent.
+ */
+export function enumFlag( flags, name, allowed ) {
+	if ( ! ( name in flags ) ) {
+		return undefined;
+	}
+
+	const value = String( flags[ name ] );
+	if ( ! allowed.includes( value ) ) {
+		throw new DeckerError(
+			'usage_invalid_value',
+			`--${ name } must be one of: ${ allowed.join( ', ' ) }.`,
+			EXIT.USAGE
+		);
+	}
+
+	return value;
+}
+
+/**
+ * Resolve the configuration directory.
+ *
+ * @return {string} Directory path.
+ */
+function configDir() {
+	return process.env.DECKER_CONFIG_DIR || join( process.env.XDG_CONFIG_HOME || join( homedir(), '.config' ), 'decker' );
+}
+
+/**
+ * Read the stored configuration.
+ *
+ * @return {object} Configuration, empty when absent.
+ */
+export function loadConfig() {
+	try {
+		return JSON.parse( readFileSync( join( configDir(), 'config.json' ), 'utf8' ) );
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * Write the configuration. It holds no secrets.
+ *
+ * @param {object} config Configuration to store.
+ * @return {void}
+ */
+export function saveConfig( config ) {
+	const path = join( configDir(), 'config.json' );
+	mkdirSync( dirname( path ), { recursive: true } );
+	writeFileSync( path, `${ JSON.stringify( config, null, '\t' ) }\n`, { mode: 0o600 } );
+}
+
+/**
+ * Session-secret storage.
+ *
+ * macOS Keychain is used when available. Nothing is written in plaintext
+ * silently: the file fallback is only used when DECKER_SESSION_STORE=file is
+ * set explicitly, and it warns on stderr every time it stores a session.
+ */
+/**
+ * Line length `security -i` accepts, from its own source: a longer line is
+ * split and its tail parsed as another command.
+ *
+ * @type {number}
+ */
+const KEYCHAIN_COMMAND_LIMIT = 4096;
+
+export const sessionStore = {
+	/**
+	 * Command runner, overridable so tests can exercise the keychain branches
+	 * without touching a real keychain.
+	 *
+	 * @type {Function}
+	 */
+	exec: execFileSync,
+
+	/**
+	 * Decide which backend to use.
+	 *
+	 * @return {'keychain'|'file'} Backend name.
+	 */
+	backend() {
+		if ( process.env.DECKER_SESSION_STORE ) {
+			return 'file' === process.env.DECKER_SESSION_STORE ? 'file' : 'keychain';
+		}
+
+		return 'darwin' === process.platform ? 'keychain' : 'file';
+	},
+
+	/**
+	 * Read the stored session.
+	 *
+	 * @return {object|null} Stored session, or null when there is none.
+	 */
+	read() {
+		if ( 'keychain' === this.backend() ) {
+			try {
+				const value = this.exec(
+					'security',
+					[ 'find-generic-password', '-s', 'decker-client', '-a', 'session', '-w' ],
+					{ encoding: 'utf8', stdio: [ 'ignore', 'pipe', 'ignore' ] }
+				).trim();
+				// Stored base64 (see write()); a session written by an earlier
+				// version is still plain JSON.
+				return JSON.parse(
+					value.startsWith( '{' ) ? value : Buffer.from( value, 'base64' ).toString( 'utf8' )
+				);
+			} catch {
+				return null;
+			}
+		}
+
+		try {
+			return JSON.parse( readFileSync( join( configDir(), 'session.json' ), 'utf8' ) );
+		} catch {
+			return null;
+		}
+	},
+
+	/**
+	 * Store the session.
+	 *
+	 * @param {object} session Session data (cookies only; no password).
+	 * @return {void}
+	 */
+	write( session ) {
+		const value = JSON.stringify( session );
+
+		if ( 'keychain' === this.backend() ) {
+			// The command goes in on stdin rather than as arguments: `security
+			// add-generic-password -w <value>` would put the session cookies in
+			// the process arguments, where any other process running as this
+			// user can read them. `-w` has no stdin form of its own, so the
+			// whole command is piped to `security -i` instead.
+			//
+			// That interpreter splits the line itself, so the value is stored
+			// base64-encoded: its alphabet has no space, quote or backslash for
+			// the parser to act on, which a cookie or a JSON payload could
+			// otherwise contain. It also caps a line at 4096 bytes and parses
+			// the overflow as a second command, which fails with a message
+			// about the cookie rather than about the length, so the limit is
+			// checked here instead.
+			const encoded = Buffer.from( value, 'utf8' ).toString( 'base64' );
+			const command = `add-generic-password -U -s decker-client -a session -w ${ encoded }`;
+
+			if ( Buffer.byteLength( command, 'utf8' ) >= KEYCHAIN_COMMAND_LIMIT ) {
+				throw new DeckerError(
+					'session_too_large',
+					'The session is too large for the macOS keychain command interface. Log in again, or set DECKER_SESSION_STORE=file to store it in a 0600 file instead.',
+					EXIT.USAGE
+				);
+			}
+
+			this.exec( 'security', [ '-i' ], {
+				input: `${ command }\n`,
+				stdio: [ 'pipe', 'ignore', 'ignore' ],
+			} );
+			return;
+		}
+
+		const path = join( configDir(), 'session.json' );
+		mkdirSync( dirname( path ), { recursive: true } );
+
+		// `mode` is only applied when the file is created, so a session.json
+		// already sitting there at 0644 would keep those permissions and the
+		// cookies would be world-readable. The descriptor is opened with
+		// O_NOFOLLOW so a symlink planted in its place is refused rather than
+		// followed, and chmod'ed before anything is written to it.
+		const flags =
+			constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW;
+		const fd = openSync( path, flags, 0o600 );
+
+		try {
+			fchmodSync( fd, 0o600 );
+			writeFileSync( fd, value );
+		} finally {
+			closeSync( fd );
+		}
+		process.stderr.write(
+			'Warning: the session cookies were stored in a file with 0600 permissions because no OS keychain is in use. Set DECKER_SESSION_STORE=keychain on a system with one.\n'
+		);
+	},
+
+	/**
+	 * Remove the stored session.
+	 *
+	 * @return {void}
+	 */
+	clear() {
+		if ( 'keychain' === this.backend() ) {
+			try {
+				this.exec(
+					'security',
+					[ 'delete-generic-password', '-s', 'decker-client', '-a', 'session' ],
+					{ stdio: [ 'ignore', 'ignore', 'ignore' ] }
+				);
+			} catch {
+				// Nothing stored; logging out is still a success.
+			}
+			return;
+		}
+
+		rmSync( join( configDir(), 'session.json' ), { force: true } );
+	},
+};
+
+/**
+ * Read a password from the terminal with echo disabled.
+ *
+ * The terminal is opened directly rather than read from stdin so that the
+ * password never travels through a pipe an agent runtime could capture, and it
+ * is never accepted as a command-line argument.
+ *
+ * @param {string} prompt Prompt to show.
+ * @param {object} [io]    Filesystem calls, overridable for tests only.
+ * @return {string} The password.
+ */
+export function readPasswordFromTty( prompt, io = {} ) {
+	const {
+		open = openSync,
+		write = writeFileSync,
+		read = readSync,
+		close = closeSync,
+		exec = execFileSync,
+	} = io;
+
+	let tty;
+	try {
+		tty = open( '/dev/tty', 'r+' );
+	} catch {
+		throw new DeckerError(
+			'auth_no_tty',
+			'A terminal is required to type the password. Run `decker auth login` yourself in a terminal; the password is never accepted as an argument or through a pipe.',
+			EXIT.USAGE
+		);
+	}
+
+	try {
+		write( tty, prompt );
+		exec( 'stty', [ '-echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
+
+		// Bytes are accumulated and decoded once at the end. Decoding each byte
+		// on its own corrupts every multi-byte character, so a password with an
+		// "ñ" or an accent came back mangled and CAS rejected a correct one.
+		const buffer = Buffer.alloc( 1 );
+		const typed = [];
+		for ( ;; ) {
+			const got = read( tty, buffer, 0, 1, null );
+			if ( 0 === got || 0x0a === buffer[ 0 ] || 0x0d === buffer[ 0 ] ) {
+				break;
+			}
+			typed.push( buffer[ 0 ] );
+		}
+
+		return Buffer.from( typed ).toString( 'utf8' );
+	} finally {
+		try {
+			exec( 'stty', [ 'echo' ], { stdio: [ tty, 'ignore', 'ignore' ] } );
+			write( tty, '\n' );
+		} finally {
+			close( tty );
+		}
+	}
+}
+
+/**
+ * Build the request context for an authenticated command.
+ *
+ * @param {object} [options] Context options.
+ * @param {Function} [options.fetch] Fetch implementation, for tests.
+ * @return {Promise<object>} Context with an authenticated session and a nonce.
+ */
+export async function createContext( { fetch: fetchImpl } = {} ) {
+	const config = loadConfig();
+
+	if ( ! config.siteUrl ) {
+		throw new DeckerError(
+			'config_missing',
+			'No site configured. Run `decker auth login --site <url> --cas <url>`.',
+			EXIT.USAGE
+		);
+	}
+
+	const allowHttp = Boolean( config.allowInsecureHttp );
+	const baseUrl = checkedUrl( config.siteUrl, allowHttp );
+	const origins = [ baseUrl.origin ];
+	if ( config.casLoginUrl ) {
+		origins.push( checkedUrl( config.casLoginUrl, allowHttp ).origin );
+	}
+
+	const session = new Session( {
+		origins,
+		allowHttp,
+		timeoutMs: config.timeoutMs ?? 15000,
+		fetch: fetchImpl,
+	} );
+
+	const stored = sessionStore.read();
+	if ( ! stored?.cookies ) {
+		throw new DeckerError(
+			'auth_required',
+			'No stored session. Run `decker auth login`.',
+			EXIT.AUTH
+		);
+	}
+	session.importCookies( baseUrl.origin, stored.cookies );
+
+	const nonce = await fetchNonce( session, adminAjaxUrl( baseUrl ) );
+	const routing = config.routing ?? ( await detectRouting( session, baseUrl ) );
+
+	return { session, baseUrl, routing, nonce, config };
+}
+
+/**
+ * Build the admin-ajax.php URL for a site.
+ *
+ * @param {URL} baseUrl Site base URL.
+ * @return {URL} admin-ajax.php URL.
+ */
+export function adminAjaxUrl( baseUrl ) {
+	const basePath = baseUrl.pathname.endsWith( '/' ) ? baseUrl.pathname : `${ baseUrl.pathname }/`;
+	const url = new URL( baseUrl );
+	url.pathname = `${ basePath }wp-admin/admin-ajax.php`;
+	return url;
+}
+
+/**
+ * Build the WordPress admin URL used as the CAS entry point.
+ *
+ * Starting at the admin URL keeps the CAS callback inside the path WordPress
+ * sets its logged-in cookie for.
+ *
+ * @param {URL} baseUrl Site base URL.
+ * @return {URL} Admin URL.
+ */
+export function adminUrl( baseUrl ) {
+	const basePath = baseUrl.pathname.endsWith( '/' ) ? baseUrl.pathname : `${ baseUrl.pathname }/`;
+	const url = new URL( baseUrl );
+	url.pathname = `${ basePath }wp-admin/`;
+	return url;
+}
+
+/**
+ * Parse command-line flags.
+ *
+ * @param {string[]} argv Arguments after the command words.
+ * @return {object} Flags and positional arguments.
+ */
+export function parseFlags( argv ) {
+	const flags = {};
+	const positional = [];
+
+	for ( let index = 0; index < argv.length; index++ ) {
+		const argument = argv[ index ];
+
+		if ( ! argument.startsWith( '--' ) ) {
+			positional.push( argument );
+			continue;
+		}
+
+		const name = argument.slice( 2 );
+		if ( name.includes( '=' ) ) {
+			const [ key, ...rest ] = name.split( '=' );
+			flags[ key ] = rest.join( '=' );
+			continue;
+		}
+
+		const next = argv[ index + 1 ];
+		if ( undefined === next || next.startsWith( '--' ) ) {
+			flags[ name ] = true;
+		} else {
+			flags[ name ] = next;
+			index++;
+		}
+	}
+
+	if ( 'password' in flags ) {
+		throw new DeckerError(
+			'usage_password_argument',
+			'A password is never accepted as a command-line argument. Run `decker auth login` and type it at the prompt.',
+			EXIT.USAGE
+		);
+	}
+
+	return { flags, positional };
+}
+
+/**
+ * `decker auth login`.
+ *
+ * @param {object} flags            Parsed flags.
+ * @param {object} [options]        Options.
+ * @param {Function} [options.fetch] Fetch implementation.
+ * @param {Function} [options.readPassword] Password reader, for tests.
+ * @return {Promise<object>} Command result.
+ */
+export async function authLogin( flags, { fetch: fetchImpl, readPassword = readPasswordFromTty } = {} ) {
+	const config = loadConfig();
+
+	const siteUrl = flags.site ?? config.siteUrl;
+	const casLoginUrl = flags.cas ?? config.casLoginUrl;
+	const username = flags.user ?? config.username;
+
+	if ( ! siteUrl || ! casLoginUrl || ! username ) {
+		throw new DeckerError(
+			'usage_missing_options',
+			'Needs --site, --cas and --user the first time; they are then remembered.',
+			EXIT.USAGE
+		);
+	}
+
+	const allowHttp = undefined === flags[ 'allow-insecure-http' ]
+		? Boolean( config.allowInsecureHttp )
+		: switchFlag( flags, 'allow-insecure-http' );
+	const baseUrl = checkedUrl( siteUrl, allowHttp );
+	const casUrl = checkedUrl( casLoginUrl, allowHttp );
+
+	const session = new Session( {
+		origins: [ baseUrl.origin, casUrl.origin ],
+		allowHttp,
+		timeoutMs: config.timeoutMs ?? 15000,
+		fetch: fetchImpl,
+	} );
+
+	const password = readPassword( `Password for ${ username }: ` );
+	try {
+		await casLogin( session, { entryUrl: adminUrl( baseUrl ), casUrl, username, password } );
+	} finally {
+		// The CAS password is never stored, and the only copy is dropped here.
+	}
+
+	const nonce = await fetchNonce( session, adminAjaxUrl( baseUrl ) );
+	const routing = await detectRouting( session, baseUrl );
+
+	sessionStore.write( { cookies: session.exportCookies( baseUrl.origin ) } );
+	saveConfig( {
+		...config,
+		siteUrl: baseUrl.href,
+		casLoginUrl: casUrl.href,
+		username,
+		routing,
+		allowInsecureHttp: allowHttp,
+	} );
+
+	// The nonce is deliberately not reported: it is a credential, and a fresh
+	// one is fetched per run.
+	return {
+		ok: true,
+		authenticated: true,
+		site: baseUrl.href,
+		user: username,
+		routing,
+		session_storage: sessionStore.backend(),
+		nonce_acquired: NONCE_PATTERN.test( nonce ),
+	};
+}
+
+/**
+ * `decker auth status`.
+ *
+ * @param {object} [options]        Options.
+ * @param {Function} [options.fetch] Fetch implementation.
+ * @return {Promise<object>} Command result.
+ */
+export async function authStatus( { fetch: fetchImpl } = {} ) {
+	const config = loadConfig();
+	const stored = sessionStore.read();
+
+	if ( ! config.siteUrl || ! stored?.cookies ) {
+		return {
+			ok: true,
+			authenticated: false,
+			site: config.siteUrl ?? null,
+			session_storage: sessionStore.backend(),
+		};
+	}
+
+	const baseUrl = checkedUrl( config.siteUrl, Boolean( config.allowInsecureHttp ) );
+	const session = new Session( {
+		origins: [ baseUrl.origin ],
+		allowHttp: Boolean( config.allowInsecureHttp ),
+		timeoutMs: config.timeoutMs ?? 15000,
+		fetch: fetchImpl,
+	} );
+	session.importCookies( baseUrl.origin, stored.cookies );
+
+	try {
+		await fetchNonce( session, adminAjaxUrl( baseUrl ) );
+	} catch ( error ) {
+		if ( error instanceof DeckerError && 'auth_session_expired' === error.code ) {
+			return {
+				ok: true,
+				authenticated: false,
+				site: baseUrl.href,
+				user: config.username ?? null,
+				reason: 'session_expired',
+				session_storage: sessionStore.backend(),
+			};
+		}
+		throw error;
+	}
+
+	return {
+		ok: true,
+		authenticated: true,
+		site: baseUrl.href,
+		user: config.username ?? null,
+		routing: config.routing ?? null,
+		session_storage: sessionStore.backend(),
+	};
+}
+
+/**
+ * `decker auth logout`.
+ *
+ * @return {object} Command result.
+ */
+export function authLogout() {
+	sessionStore.clear();
+
+	return { ok: true, authenticated: false, session_cleared: true };
+}
+
+/**
+ * `decker doctor`.
+ *
+ * Reports what the client can and cannot reach, without ever printing a
+ * credential or a response body.
+ *
+ * @param {object} [options]        Options.
+ * @param {Function} [options.fetch] Fetch implementation.
+ * @return {Promise<object>} Diagnostic report.
+ */
+export async function doctor( { fetch: fetchImpl } = {} ) {
+	const config = loadConfig();
+	const report = {
+		ok: true,
+		node: process.version,
+		node_supported: 22 <= Number( process.versions.node.split( '.' )[ 0 ] ),
+		site: config.siteUrl ?? null,
+		cas: config.casLoginUrl ?? null,
+		session_storage: sessionStore.backend(),
+		session_stored: Boolean( sessionStore.read()?.cookies ),
+		checks: {},
+	};
+
+	if ( ! config.siteUrl ) {
+		report.ok = false;
+		report.checks.config = 'missing: run `decker auth login --site <url> --cas <url> --user <name>`';
+		return report;
+	}
+
+	const allowHttp = Boolean( config.allowInsecureHttp );
+	const baseUrl = checkedUrl( config.siteUrl, allowHttp );
+	const session = new Session( {
+		origins: [ baseUrl.origin ],
+		allowHttp,
+		timeoutMs: config.timeoutMs ?? 15000,
+		fetch: fetchImpl,
+	} );
+
+	const stored = sessionStore.read();
+	if ( stored?.cookies ) {
+		session.importCookies( baseUrl.origin, stored.cookies );
+	}
+
+	try {
+		report.checks.routing = await detectRouting( session, baseUrl );
+	} catch ( error ) {
+		report.ok = false;
+		report.checks.routing = error instanceof DeckerError ? error.code : 'failed';
+		return report;
+	}
+
+	try {
+		await fetchNonce( session, adminAjaxUrl( baseUrl ) );
+		report.checks.session = 'valid';
+	} catch ( error ) {
+		report.ok = false;
+		report.checks.session = error instanceof DeckerError ? error.code : 'failed';
+		return report;
+	}
+
+	try {
+		const context = { session, baseUrl, routing: report.checks.routing, nonce: await fetchNonce( session, adminAjaxUrl( baseUrl ) ) };
+		const abilities = await restRequest( context, 'GET', '/wp-abilities/v1/abilities', { params: { per_page: 100 } } );
+		const names = ( Array.isArray( abilities ) ? abilities : abilities?.abilities ?? [] )
+			.map( ( ability ) => ability?.name )
+			.filter( ( name ) => 'string' === typeof name && name.startsWith( 'decker/' ) );
+		report.checks.abilities = names.length ? names : 'none exposed: update the Decker plugin';
+		if ( ! names.length ) {
+			report.ok = false;
+		}
+	} catch ( error ) {
+		report.ok = false;
+		report.checks.abilities = error instanceof DeckerError ? error.code : 'failed';
+	}
+
+	return report;
+}
+
+/**
+ * `decker boards list`.
+ *
+ * @param {object} [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function boardsList( options = {} ) {
+	const context = await createContext( options );
+	const result = await restRequest( context, 'GET', abilityPath( 'decker/list-boards' ) );
+
+	return { ok: true, boards: result.boards ?? [] };
+}
+
+/**
+ * `decker labels list`.
+ *
+ * Labels come from the taxonomy's own REST route: Decker has no list-labels
+ * ability, and adding one for a plain taxonomy read would duplicate what
+ * WordPress already exposes with the same permissions.
+ *
+ * @param {object} flags     Parsed flags.
+ * @param {object} [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function labelsList( flags, options = {} ) {
+	const context = await createContext( options );
+	const page = integerFlag( flags, 'page' ) ?? 1;
+	const perPage = integerFlag( flags, 'per-page', { min: 1, max: 100 } ) ?? 100;
+
+	const { items, total, total_pages: totalPages } = await restRequest( context, 'GET', '/wp/v2/labels', {
+		params: {
+			page,
+			per_page: perPage,
+			// Only the fields an agent needs to resolve a name to an id, so a
+			// large taxonomy does not fill the model's context with term meta.
+			_fields: 'id,name,slug,count',
+		},
+		withMeta: true,
+	} );
+
+	return { ok: true, labels: items, page, per_page: perPage, total, total_pages: totalPages };
+}
+
+/**
+ * `decker users search QUERY`.
+ *
+ * @param {string} query     Search text.
+ * @param {object} flags     Parsed flags.
+ * @param {object} [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function usersSearch( query, flags, options = {} ) {
+	if ( ! query || ! String( query ).trim() ) {
+		throw new DeckerError(
+			'usage_missing_query',
+			'Usage: decker users search <query>',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	// Decker's own ability, not /wp/v2/users: `list_users` is an administrator
+	// capability, so core answers an ordinary user with HTTP 200 and an empty
+	// array, which reads as "no such person". The deployment's proxy also
+	// answers some /wp/v2/users requests with an HTML error page.
+	const result = await restRequest( context, 'GET', abilityPath( 'decker/list-users' ), {
+		params: {
+			input: {
+				search: String( query ).trim(),
+				page: integerFlag( flags, 'page' ) ?? 1,
+				per_page: integerFlag( flags, 'per-page', { min: 1, max: 100 } ) ?? 50,
+			},
+		},
+	} );
+
+	return { ok: true, ...result };
+}
+
+/**
+ * `decker tasks list`.
+ *
+ * Every filter is applied by the server, against the authenticated user. There
+ * is no client-side filtering: it would be wrong over a paginated response and
+ * it would pull tasks into the model's context only to discard them.
+ *
+ * @param {object} flags     Parsed flags.
+ * @param {object} [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksList( flags, options = {} ) {
+	const context = await createContext( options );
+
+	const input = {
+		page: integerFlag( flags, 'page' ) ?? 1,
+		per_page: integerFlag( flags, 'per-page', { min: 1, max: 100 } ) ?? 20,
+	};
+
+	const board = integerFlag( flags, 'board' );
+	if ( undefined !== board ) {
+		input.board_id = board;
+	}
+
+	const stack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] );
+	if ( undefined !== stack ) {
+		input.stack = stack;
+	}
+
+	const status = enumFlag( flags, 'status', [ 'publish', 'archived' ] );
+	if ( undefined !== status ) {
+		input.status = status;
+	}
+
+	if ( 'search' in flags && true !== flags.search ) {
+		input.search = String( flags.search );
+	}
+
+	// The relation flags are mutually exclusive: they are different questions,
+	// and silently letting the last one win would answer the wrong one.
+	const relations = {
+		mine: 'any',
+		'assigned-to-me': 'assigned',
+		'responsible-by-me': 'responsible',
+		'authored-by-me': 'author',
+	};
+	const requested = Object.keys( relations ).filter( ( flag ) => switchFlag( flags, flag ) );
+	if ( requested.length > 1 ) {
+		throw new DeckerError(
+			'usage_conflicting_flags',
+			`Use only one of: ${ Object.keys( relations ).map( ( flag ) => `--${ flag }` ).join( ', ' ) }.`,
+			EXIT.USAGE
+		);
+	}
+	if ( requested.length === 1 ) {
+		input.relation = relations[ requested[ 0 ] ];
+	}
+
+	if ( switchFlag( flags, 'today' ) ) {
+		input.today = true;
+	}
+
+	if ( switchFlag( flags, 'include-hidden' ) ) {
+		input.include_hidden = true;
+	}
+
+	const result = await restRequest( context, 'GET', abilityPath( 'decker/list-tasks' ), {
+		params: { input },
+	} );
+
+	return { ok: true, ...result };
+}
+
+/**
+ * `decker tasks show ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksShow( id, options = {} ) {
+	const taskId = Number( id );
+	if ( ! Number.isInteger( taskId ) || taskId < 1 ) {
+		throw new DeckerError( 'usage_invalid_task_id', 'Usage: decker tasks show <id>', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+	const task = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	return { ok: true, task };
+}
+
+/**
+ * Read and parse a JSON file supplied by the user.
+ *
+ * A file is used rather than a command-line argument so that a description or
+ * a comment keeps its newlines and quoting intact.
+ *
+ * @param {string} path Path to the file.
+ * @return {object} Parsed object.
+ */
+export function readJsonFile( path ) {
+	let raw;
+	try {
+		raw = readFileSync( path, 'utf8' );
+	} catch {
+		throw new DeckerError( 'usage_unreadable_file', `Could not read ${ path }.`, EXIT.USAGE );
+	}
+
+	let parsed;
+	try {
+		parsed = JSON.parse( raw );
+	} catch {
+		throw new DeckerError( 'usage_invalid_json', `${ path } is not valid JSON.`, EXIT.USAGE );
+	}
+
+	if ( null === parsed || 'object' !== typeof parsed || Array.isArray( parsed ) ) {
+		throw new DeckerError( 'usage_invalid_json', `${ path } must contain a JSON object.`, EXIT.USAGE );
+	}
+
+	return parsed;
+}
+
+/**
+ * The task fields a write may carry.
+ *
+ * An unknown field is rejected locally rather than sent: the ability schema
+ * sets additionalProperties:false, so it would be refused anyway, and a typo
+ * is clearer when it names the field.
+ *
+ * @var {string[]}
+ */
+const WRITABLE_FIELDS = [
+	'title',
+	'description',
+	'stack',
+	'board_id',
+	'max_priority',
+	'due_date',
+	'responsible_user_id',
+	'hidden',
+	'assignee_ids',
+	'label_ids',
+	'archived',
+];
+
+/**
+ * Check a change set against the writable fields.
+ *
+ * @param {object} changes Proposed changes.
+ * @return {object} The same changes.
+ */
+export function assertWritableFields( changes ) {
+	const unknown = Object.keys( changes ).filter( ( field ) => ! WRITABLE_FIELDS.includes( field ) );
+
+	if ( unknown.length ) {
+		throw new DeckerError(
+			'usage_unknown_field',
+			`Not a writable task field: ${ unknown.join( ', ' ) }. Allowed: ${ WRITABLE_FIELDS.join( ', ' ) }.`,
+			EXIT.USAGE
+		);
+	}
+
+	return changes;
+}
+
+/**
+ * Apply a change set to one task.
+ *
+ * Every mutation goes through here, so the same four rules hold for all of
+ * them: the task is read first, the change is shown before it is applied, a
+ * no-op is reported instead of written, and the write carries the `modified`
+ * value from that read so the server refuses it if anything changed in
+ * between.
+ *
+ * `--yes` guards against an accidental invocation. It is NOT authorization
+ * from the human: an agent must still show the proposed change and get
+ * conversational approval before calling this.
+ *
+ * There is exactly **one** read, and both the change and the concurrency token
+ * come from it. An earlier version let the caller read the task, compute a
+ * collection from it, and then re-read here for the token: that reopened the
+ * very race the token exists to close, because a label added between the two
+ * reads was absent from the computed set but present in the token's read, so
+ * the server accepted the write and the label was lost. Callers that need the
+ * current state to build their change pass `derive` instead.
+ *
+ * @param {object} context Request context.
+ * @param {object} options Mutation options.
+ * @param {number} options.taskId  Task ID.
+ * @param {object} [options.changes] Fields to change.
+ * @param {Function} [options.derive] Builds the changes from the task as read.
+ * @param {object} options.flags   Parsed flags.
+ * @param {string} [options.ability] Ability to invoke.
+ * @return {Promise<object>} Command result.
+ */
+export async function applyChanges( context, { taskId, changes, derive, flags, ability = 'decker/update-task' } ) {
+	const current = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	// Derived from the same read that produced the token below, so there is no
+	// window between deciding the change and claiming the state it was based on.
+	changes = derive ? derive( current ) : changes;
+	assertWritableFields( changes );
+
+	const before = {};
+	const after = {};
+	for ( const [ field, value ] of Object.entries( changes ) ) {
+		if ( ! sameValue( current[ field ], value ) ) {
+			before[ field ] = current[ field ];
+			after[ field ] = value;
+		}
+	}
+
+	if ( 0 === Object.keys( after ).length ) {
+		// Nothing to do. Reported rather than written, so an idempotent call
+		// does not touch post_modified or create a revision.
+		return { ok: true, task_id: taskId, changed: false, reason: 'no_change', task: current };
+	}
+
+	const preview = { ok: true, task_id: taskId, title: current.title, before, after };
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		return { ...preview, dry_run: true, changed: false };
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would change the task. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	const task = await restRequest( context, 'POST', abilityPath( ability ), {
+		body: {
+			input: {
+				task_id: taskId,
+				// Refuses the write if the task changed since the read above,
+				// rather than overwriting whatever changed.
+				expected_modified: current.modified,
+				...changes,
+			},
+		},
+	} );
+
+	return { ...preview, changed: true, task };
+}
+
+/**
+ * Compare two field values for equality.
+ *
+ * Collections are compared as sets of numbers, because order carries no
+ * meaning for labels or assignees and the server may return them in any order.
+ *
+ * @param {any} left  Stored value.
+ * @param {any} right Proposed value.
+ * @return {boolean} True when they are equivalent.
+ */
+export function sameValue( left, right ) {
+	if ( Array.isArray( left ) && Array.isArray( right ) ) {
+		const sortedLeft = [ ...new Set( left.map( Number ) ) ].sort( ( a, b ) => a - b );
+		const sortedRight = [ ...new Set( right.map( Number ) ) ].sort( ( a, b ) => a - b );
+
+		return JSON.stringify( sortedLeft ) === JSON.stringify( sortedRight );
+	}
+
+	return left === right;
+}
+
+/**
+ * Read a task id from a positional argument.
+ *
+ * @param {string|number} value Raw value.
+ * @return {number} Task ID.
+ */
+export function taskIdArgument( value ) {
+	const taskId = Number( value );
+
+	if ( ! Number.isInteger( taskId ) || taskId < 1 ) {
+		throw new DeckerError( 'usage_invalid_task_id', 'A task id is required.', EXIT.USAGE );
+	}
+
+	return taskId;
+}
+
+/**
+ * `decker tasks create`.
+ *
+ * @param {object} flags     Parsed flags.
+ * @param {object} [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksCreate( flags, options = {} ) {
+	const fields = flags[ 'json-file' ] ? readJsonFile( String( flags[ 'json-file' ] ) ) : {};
+
+	if ( 'title' in flags && true !== flags.title ) {
+		fields.title = String( flags.title );
+	}
+	const board = integerFlag( flags, 'board' );
+	if ( undefined !== board ) {
+		fields.board_id = board;
+	}
+	const stack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] );
+	if ( undefined !== stack ) {
+		fields.stack = stack;
+	}
+
+	assertWritableFields( fields );
+
+	if ( ! fields.title || ! fields.board_id ) {
+		throw new DeckerError(
+			'usage_missing_fields',
+			'A new task needs at least a title and a board_id. Supply them with --title and --board, or in --json-file.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		// A dry run may read to prepare the preview, but never writes. The board
+		// is read back so an invalid id is reported before anything is created.
+		const boards = await restRequest( context, 'GET', abilityPath( 'decker/list-boards' ) );
+		const target = ( boards.boards ?? [] ).find( ( entry ) => entry.id === fields.board_id );
+
+		return {
+			ok: true,
+			dry_run: true,
+			created: false,
+			would_create: fields,
+			board: target ?? null,
+			board_exists: Boolean( target ),
+		};
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would create a task. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	const task = await restRequest( context, 'POST', abilityPath( 'decker/create-task' ), {
+		body: { input: fields },
+	} );
+
+	return { ok: true, created: true, task };
+}
+
+/**
+ * `decker tasks update ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksUpdate( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const changes = flags[ 'json-file' ] ? readJsonFile( String( flags[ 'json-file' ] ) ) : {};
+
+	if ( 'title' in flags && true !== flags.title ) {
+		changes.title = String( flags.title );
+	}
+
+	// task_id in the file must not fight the one on the command line.
+	delete changes.task_id;
+	delete changes.expected_modified;
+
+	if ( 0 === Object.keys( changes ).length ) {
+		throw new DeckerError(
+			'usage_no_changes',
+			'Nothing to update. Supply the fields in --json-file, or use --title.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, { taskId, changes, flags } );
+}
+
+/**
+ * `decker tasks labels ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksLabels( id, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const context = await createContext( options );
+
+	const task = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	const ids = task.label_ids ?? [];
+	if ( 0 === ids.length ) {
+		return { ok: true, task_id: taskId, labels: [] };
+	}
+
+	// Names, not just ids: an id alone is useless to the person reading this.
+	const { items } = await restRequest( context, 'GET', '/wp/v2/labels', {
+		params: { include: ids.join( ',' ), per_page: 100, _fields: 'id,name,slug' },
+		withMeta: true,
+	} );
+
+	return { ok: true, task_id: taskId, labels: items };
+}
+
+/**
+ * `decker tasks label-add ID --label N` and `label-remove`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {boolean}       add       Whether to add or remove.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksLabelChange( id, flags, add, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const labelId = integerFlag( flags, 'label' );
+
+	if ( undefined === labelId ) {
+		throw new DeckerError( 'usage_missing_label', '--label <id> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	// One label changes; every other label is preserved. The whole collection
+	// has to be sent back, which is why it must be built from the same read
+	// that provides the concurrency token -- hence `derive`, not a read here.
+	return applyChanges( context, {
+		taskId,
+		derive: ( current ) => {
+			const existing = ( current.label_ids ?? [] ).map( Number );
+
+			return {
+				label_ids: add
+					? [ ...new Set( [ ...existing, labelId ] ) ]
+					: existing.filter( ( value ) => value !== labelId ),
+			};
+		},
+		flags,
+	} );
+}
+
+/**
+ * `decker tasks assign ID --user N` and `unassign`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {boolean}       add       Whether to assign or unassign.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksAssign( id, flags, add, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const userId = integerFlag( flags, 'user' );
+
+	if ( undefined === userId ) {
+		throw new DeckerError( 'usage_missing_user', '--user <id> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, {
+		taskId,
+		derive: ( current ) => {
+			const existing = ( current.assignee_ids ?? [] ).map( Number );
+
+			return {
+				assignee_ids: add
+					? [ ...new Set( [ ...existing, userId ] ) ]
+					: existing.filter( ( value ) => value !== userId ),
+			};
+		},
+		flags,
+	} );
+}
+
+/**
+ * `decker tasks responsible ID --user N`.
+ *
+ * The responsible user is not an assignee: Decker keeps author, responsible
+ * user and assignees apart, and so does this command.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksResponsible( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const userId = integerFlag( flags, 'user' );
+
+	if ( undefined === userId ) {
+		throw new DeckerError( 'usage_missing_user', '--user <id> is required.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, {
+		taskId,
+		changes: { responsible_user_id: userId },
+		flags,
+	} );
+}
+
+/**
+ * `decker tasks today ID --mark|--unmark`.
+ *
+ * Marking a task for today is personal and date-specific. It is not a due
+ * date, and it never touches another user's relation: the endpoint applies the
+ * change to the authenticated user and rejects a client-supplied user id.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksToday( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+
+	if ( switchFlag( flags, 'mark' ) === switchFlag( flags, 'unmark' ) ) {
+		throw new DeckerError(
+			'usage_mark_or_unmark',
+			'Use exactly one of --mark or --unmark.',
+			EXIT.USAGE
+		);
+	}
+
+	const marked = switchFlag( flags, 'mark' );
+	const context = await createContext( options );
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_set: { marked } };
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			`This would ${ marked ? 'mark' : 'unmark' } the task for today. Re-run with --yes to apply it.`,
+			EXIT.USAGE
+		);
+	}
+
+	// POST rather than PUT: the route accepts both and a PUT body does not
+	// survive every proxy. The operation is idempotent server-side, so a
+	// repeated call reports the same state rather than changing anything.
+	const result = await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/today`, {
+		body: { marked },
+	} );
+
+	return { ok: true, task_id: taskId, ...result };
+}
+
+/**
+ * `decker tasks comments ID`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksComments( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const context = await createContext( options );
+	const page = integerFlag( flags, 'page' ) ?? 1;
+	const perPage = integerFlag( flags, 'per-page', { min: 1, max: 100 } ) ?? 25;
+
+	// Core's own comments route, with Decker's comment protection applied on
+	// top of it server-side. There is no separate comment store.
+	const { items, total, total_pages: totalPages } = await restRequest( context, 'GET', '/wp/v2/comments', {
+		params: {
+			post: taskId,
+			page,
+			per_page: perPage,
+			orderby: 'date',
+			order: 'asc',
+			_fields: 'id,author,author_name,date,content',
+		},
+		withMeta: true,
+	} );
+
+	return { ok: true, task_id: taskId, comments: items, page, per_page: perPage, total, total_pages: totalPages };
+}
+
+/**
+ * `decker tasks comment ID --text-file FILE`.
+ *
+ * The text comes from a file so that newlines, quoting and non-ASCII survive
+ * the shell intact.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksComment( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const path = flags[ 'text-file' ];
+
+	if ( ! path || true === path ) {
+		throw new DeckerError(
+			'usage_missing_text_file',
+			'--text-file <path> is required; the comment text is read from a file so its formatting survives.',
+			EXIT.USAGE
+		);
+	}
+
+	let text;
+	try {
+		text = readFileSync( String( path ), 'utf8' );
+	} catch {
+		throw new DeckerError( 'usage_unreadable_file', `Could not read ${ path }.`, EXIT.USAGE );
+	}
+
+	if ( ! text.trim() ) {
+		throw new DeckerError( 'usage_empty_comment', 'The comment text is empty.', EXIT.USAGE );
+	}
+
+	const context = await createContext( options );
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		return { ok: true, dry_run: true, created: false, task_id: taskId, would_post: text };
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would post a comment. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	// Never retried. A comment creation whose response was lost may well have
+	// been stored, and a retry would post it twice.
+	const comment = await restRequest( context, 'POST', '/wp/v2/comments', {
+		body: { post: taskId, content: text },
+	} );
+
+	return { ok: true, created: true, task_id: taskId, comment };
+}
+
+/**
+ * `decker tasks move ID --stack X [--board N]`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksMove( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const stack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] );
+	const board = integerFlag( flags, 'board' );
+
+	if ( undefined === stack && undefined === board ) {
+		throw new DeckerError(
+			'usage_missing_target',
+			'Give --stack, --board, or both.',
+			EXIT.USAGE
+		);
+	}
+
+	const changes = {};
+	if ( undefined !== stack ) {
+		changes.stack = stack;
+	}
+	if ( undefined !== board ) {
+		changes.board_id = board;
+	}
+
+	const context = await createContext( options );
+
+	// move-task, not update-task: the ability exists so the stack and board
+	// transition runs through the domain behaviour that recalculates ordering
+	// and fires the stack-transition hooks.
+	return applyChanges( context, { taskId, changes, flags, ability: 'decker/move-task' } );
+}
+
+/**
+ * `decker tasks reorder ID --after ID | --before ID`.
+ *
+ * The exact form. A neighbour is an id, and an id means the same thing to this
+ * client and to the server, so the move is resolved there, where the whole
+ * stack is visible — hidden cards belonging to other people included. Nothing
+ * about the board has to be read first, and nothing has to be guessed.
+ *
+ * The neighbour's stack is the destination, so this also moves a card to
+ * another stack and positions it in one call.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {number}        anchorId  The neighbour to place it next to.
+ * @param {'after'|'before'} side   Which side of the neighbour.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+async function tasksPlace( id, anchorId, side, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+
+	if ( anchorId === taskId ) {
+		throw new DeckerError(
+			'usage_invalid_anchor',
+			'A task cannot be placed next to itself.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+	const intent = { task_id: taskId, [ `${ side }_task_id` ]: anchorId };
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_place: intent };
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would reorder the board. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	// POST, which this route accepts alongside PUT for the same proxy reason.
+	const result = await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/place`, {
+		body: { [ `${ side }_task_id` ]: anchorId },
+	} );
+
+	// The server states the outcome as a fact about the two cards, having read
+	// the stored order back. It should always hold; if it ever does not, that
+	// is reported rather than dressed up as a success.
+	if ( true !== result.adjacent ) {
+		throw new DeckerError(
+			'order_not_as_requested',
+			`The board was reordered but the task did not end up ${ side } ${ anchorId }. Read the stack back before doing anything else.`,
+			EXIT.CONFLICT
+		);
+	}
+
+	return {
+		ok: true,
+		task_id: taskId,
+		changed: false !== result.changed,
+		placed: side,
+		relative_to: anchorId,
+		stack: result.stack,
+	};
+}
+
+/**
+ * `decker tasks reorder ID --position N [--stack X]`.
+ *
+ * The index form, kept for a stack whose cards the caller can all see. The
+ * order endpoint takes the source and target positions, not a bare index, so
+ * the current board state is read first. The client never invents a position: a
+ * guessed source_order silently reorders somebody else's cards.
+ *
+ * Prefer `--after`/`--before`, which cannot be off: an index counts cards this
+ * account may not be allowed to list, so it is not the index the engine works
+ * with. See tasksPlace().
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksReorder( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const position = integerFlag( flags, 'position' );
+	const afterId = integerFlag( flags, 'after' );
+	const beforeId = integerFlag( flags, 'before' );
+	const anchors = [ afterId, beforeId ].filter( ( value ) => undefined !== value );
+
+	if ( anchors.length > 1 || ( anchors.length && undefined !== position ) ) {
+		throw new DeckerError(
+			'usage_conflicting_position',
+			'Give exactly one of --after ID, --before ID or --position N.',
+			EXIT.USAGE
+		);
+	}
+
+	if ( anchors.length && 'stack' in flags ) {
+		// The neighbour's stack is the destination, so --stack is either
+		// redundant or a contradiction, and the server would silently win.
+		throw new DeckerError(
+			'usage_conflicting_position',
+			'--stack cannot be combined with --after or --before: the stack of the card named there is the destination.',
+			EXIT.USAGE
+		);
+	}
+
+	if ( undefined !== afterId ) {
+		return tasksPlace( id, afterId, 'after', flags, options );
+	}
+
+	if ( undefined !== beforeId ) {
+		return tasksPlace( id, beforeId, 'before', flags, options );
+	}
+
+	if ( undefined === position ) {
+		throw new DeckerError(
+			'usage_missing_position',
+			'--after ID, --before ID or --position N is required. Prefer --after/--before: a position counts cards this account may not be able to see.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	const task = await restRequest( context, 'GET', abilityPath( 'decker/get-task' ), {
+		params: { input: { task_id: taskId } },
+	} );
+
+	// Without a board there is no stack to count: the listing would span every
+	// board, and the server writes the menu_order before the board-scoped
+	// renumber finds nothing to renumber, leaving a value that means nothing.
+	if ( ! task.board_id ) {
+		throw new DeckerError(
+			'order_task_without_board',
+			'The task is on no board, so it has no position. Move it to a board first.',
+			EXIT.CONFLICT
+		);
+	}
+
+	const targetStack = enumFlag( flags, 'stack', [ 'to-do', 'in-progress', 'done' ] ) ?? task.stack;
+
+	// Read the board as it is now, so source_order is the task's real position
+	// rather than a guess, and so the target can be checked against the real
+	// length of the destination stack.
+	const siblings = await readStack( context, task.board_id, targetStack );
+	const current = await readStack( context, task.board_id, task.stack );
+	const sourceOrder = current.findIndex( ( entry ) => entry.id === taskId ) + 1;
+
+	if ( sourceOrder < 1 ) {
+		throw new DeckerError(
+			'order_task_not_in_stack',
+			'The task was not found in its own board and stack; re-read it before reordering.',
+			EXIT.CONFLICT
+		);
+	}
+
+	const limit = targetStack === task.stack ? siblings.length : siblings.length + 1;
+	if ( position > limit ) {
+		throw new DeckerError(
+			'usage_position_out_of_range',
+			`--position must be between 1 and ${ limit } for that stack.`,
+			EXIT.USAGE
+		);
+	}
+
+	const payload = {
+		board_id: task.board_id,
+		source_stack: task.stack,
+		target_stack: targetStack,
+		source_order: sourceOrder,
+		target_order: position,
+	};
+
+	// A hidden task belonging to somebody else occupies a real position and
+	// cannot be listed here, so an index derived from this view is not the
+	// index the ordering engine works with, and the card can land anywhere
+	// between the neighbours it was aimed at. An earlier comment here claimed
+	// the error was bounded to one slot; it is not, and
+	// DeckerAgentOrderingInvariantsTest records what actually happens. The
+	// outcome is therefore verified below rather than assumed, and a move that
+	// did not land where it was asked is reported as a failure instead of a
+	// success with a surprising sequence.
+
+
+	if ( sourceOrder === position && targetStack === task.stack ) {
+		return { ok: true, task_id: taskId, changed: false, reason: 'no_change', order: payload };
+	}
+
+	if ( switchFlag( flags, 'dry-run' ) ) {
+		return { ok: true, dry_run: true, changed: false, task_id: taskId, would_move: payload };
+	}
+
+	if ( ! switchFlag( flags, 'yes' ) ) {
+		throw new DeckerError(
+			'usage_confirmation_required',
+			'This would reorder the board. Re-run with --yes to apply it, or --dry-run to preview it.',
+			EXIT.USAGE
+		);
+	}
+
+	// POST, which this route accepts alongside PUT for the same proxy reason.
+	await restRequest( context, 'POST', `/decker/v1/tasks/${ taskId }/order`, { body: payload } );
+
+	const after = await readStack( context, task.board_id, targetStack );
+	const sequence = after.map( ( entry ) => entry.id );
+	const landed = sequence.indexOf( taskId ) + 1;
+
+	if ( landed !== position ) {
+		// Reported, not smoothed over. The board did change, so there is
+		// nothing to undo blindly, and the agent has to tell the user where the
+		// card actually is.
+		throw new DeckerError(
+			'order_not_as_requested',
+			`The board was reordered but the task is at position ${ landed || 'unknown' }, not ${ position }. The stack contains tasks this account cannot see, so a position cannot be set exactly. Current order: ${ sequence.join( ', ' ) }.`,
+			EXIT.CONFLICT
+		);
+	}
+
+	return {
+		ok: true,
+		task_id: taskId,
+		changed: true,
+		order: payload,
+		// The resulting sequence, read back rather than assumed.
+		stack: targetStack,
+		position: landed,
+		sequence,
+	};
+}
+
+/**
+ * Read one board stack in its stored order.
+ *
+ * @param {object} context  Request context.
+ * @param {number} boardId  Board ID.
+ * @param {string} stack    Stack slug.
+ * @return {Promise<object[]>} Tasks in order.
+ */
+export async function readStack( context, boardId, stack ) {
+	const tasks = [];
+	let page = 1;
+
+	for ( ;; ) {
+		const result = await restRequest( context, 'GET', abilityPath( 'decker/list-tasks' ), {
+			params: {
+				input: {
+					board_id: boardId,
+					stack,
+					page,
+					per_page: 100,
+					// Hidden tasks occupy a position: the ordering engine's query
+					// filters by status, stack and board and does not exclude
+					// them. Leaving them out made the client compute a position
+					// that does not exist on the board.
+					include_hidden: true,
+				},
+			},
+		} );
+
+		tasks.push( ...( result.tasks ?? [] ) );
+
+		if ( result.truncated ) {
+			// The server stopped scanning, so this view of the stack is not the
+			// whole stack and a position derived from it would be a guess.
+			throw new DeckerError(
+				'order_stack_truncated',
+				'The board is too large to establish an exact position. Narrow the board or reorder it in the Decker interface.',
+				EXIT.CONFLICT
+			);
+		}
+
+		const pages = Number( result.total_pages ?? 1 );
+		if ( ! Number.isFinite( pages ) || page >= pages ) {
+			break;
+		}
+		page++;
+	}
+
+	return tasks;
+}
+
+/**
+ * `decker tasks archive ID` and `decker tasks restore ID`.
+ *
+ * Archiving is reversible, which is why there is no delete command at all.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {boolean}       archived  Target state.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksArchive( id, flags, archived, options = {} ) {
+	const taskId = taskIdArgument( id );
+	const context = await createContext( options );
+
+	// The read reports `status` ("publish" or "archived"); there is no
+	// `archived` field in the response, so comparing one made every call a
+	// write -- and every write rotates the edit generation, invalidating
+	// somebody's open form for no change at all.
+	return applyChanges( context, {
+		taskId,
+		derive: ( current ) =>
+			archived === ( 'archived' === current.status ) ? {} : { archived },
+		flags,
+		ability: 'decker/archive-task',
+	} );
+}
+
+/**
+ * `decker tasks priority ID --on|--off`.
+ *
+ * @param {string|number} id        Task ID.
+ * @param {object}        flags     Parsed flags.
+ * @param {object}        [options] Options.
+ * @return {Promise<object>} Command result.
+ */
+export async function tasksPriority( id, flags, options = {} ) {
+	const taskId = taskIdArgument( id );
+
+	if ( switchFlag( flags, 'on' ) === switchFlag( flags, 'off' ) ) {
+		throw new DeckerError(
+			'usage_on_or_off',
+			'Use exactly one of --on or --off.',
+			EXIT.USAGE
+		);
+	}
+
+	const context = await createContext( options );
+
+	return applyChanges( context, {
+		taskId,
+		changes: { max_priority: switchFlag( flags, 'on' ) },
+		flags,
+	} );
+}
+
+/**
+ * Dispatch a command line.
+ *
+ * @param {string[]} argv      Arguments without the node binary and script.
+ * @param {object}   [options] Options passed to the commands.
+ * @return {Promise<object>} Command result.
+ */
+export async function run( argv, options = {} ) {
+	const [ command, subcommand, ...rest ] = argv;
+
+	if ( 'auth' === command ) {
+		const { flags } = parseFlags( rest );
+
+		if ( 'login' === subcommand ) {
+			return authLogin( flags, options );
+		}
+		if ( 'status' === subcommand ) {
+			return authStatus( options );
+		}
+		if ( 'logout' === subcommand ) {
+			return authLogout();
+		}
+	}
+
+	if ( 'doctor' === command ) {
+		return doctor( options );
+	}
+
+	if ( 'boards' === command && 'list' === subcommand ) {
+		return boardsList( options );
+	}
+
+	if ( 'labels' === command && 'list' === subcommand ) {
+		return labelsList( parseFlags( rest ).flags, options );
+	}
+
+	if ( 'users' === command && 'search' === subcommand ) {
+		const { flags, positional } = parseFlags( rest );
+		return usersSearch( positional.join( ' ' ), flags, options );
+	}
+
+	if ( 'tasks' === command ) {
+		const { flags, positional } = parseFlags( rest );
+
+		switch ( subcommand ) {
+			case 'list':
+				return tasksList( flags, options );
+			case 'show':
+				return tasksShow( positional[ 0 ], options );
+			case 'create':
+				return tasksCreate( flags, options );
+			case 'update':
+				return tasksUpdate( positional[ 0 ], flags, options );
+			case 'labels':
+				return tasksLabels( positional[ 0 ], options );
+			case 'label-add':
+				return tasksLabelChange( positional[ 0 ], flags, true, options );
+			case 'label-remove':
+				return tasksLabelChange( positional[ 0 ], flags, false, options );
+			case 'assign':
+				return tasksAssign( positional[ 0 ], flags, true, options );
+			case 'unassign':
+				return tasksAssign( positional[ 0 ], flags, false, options );
+			case 'responsible':
+				return tasksResponsible( positional[ 0 ], flags, options );
+			case 'today':
+				return tasksToday( positional[ 0 ], flags, options );
+			case 'comments':
+				return tasksComments( positional[ 0 ], flags, options );
+			case 'comment':
+				return tasksComment( positional[ 0 ], flags, options );
+			case 'move':
+				return tasksMove( positional[ 0 ], flags, options );
+			case 'reorder':
+				return tasksReorder( positional[ 0 ], flags, options );
+			case 'archive':
+				return tasksArchive( positional[ 0 ], flags, true, options );
+			case 'restore':
+				return tasksArchive( positional[ 0 ], flags, false, options );
+			case 'priority':
+				return tasksPriority( positional[ 0 ], flags, options );
+		}
+	}
+
+	throw new DeckerError(
+		'usage_unknown_command',
+		[
+			'Usage:',
+			'  decker doctor',
+			'  decker auth <login|status|logout>',
+			'  decker boards list',
+			'  decker labels list [--page N] [--per-page N]',
+			'  decker users search <query> [--page N] [--per-page N]',
+			'  decker tasks list [--mine|--assigned-to-me|--responsible-by-me|--authored-by-me]',
+			'                    [--today] [--board ID] [--stack to-do|in-progress|done]',
+			'                    [--status publish|archived] [--search TEXT]',
+			'                    [--include-hidden] [--page N] [--per-page N]',
+			'  decker tasks show <id>',
+			'',
+			'Writes need --yes to apply, and support --dry-run to preview:',
+			'  decker tasks create --title TEXT --board ID [--json-file FILE]',
+			'  decker tasks update <id> --json-file FILE [--title TEXT]',
+			'  decker tasks labels <id>',
+			'  decker tasks label-add <id> --label ID',
+			'  decker tasks label-remove <id> --label ID',
+			'  decker tasks assign <id> --user ID',
+			'  decker tasks unassign <id> --user ID',
+			'  decker tasks responsible <id> --user ID',
+			'  decker tasks today <id> --mark|--unmark',
+			'  decker tasks comments <id>',
+			'  decker tasks comment <id> --text-file FILE',
+			'  decker tasks move <id> --stack X [--board ID]',
+			'  decker tasks reorder <id> --after ID|--before ID   (exact)',
+			'  decker tasks reorder <id> --position N [--stack X] (needs a full view)',
+			'  decker tasks priority <id> --on|--off',
+			'  decker tasks archive <id>',
+			'  decker tasks restore <id>',
+		].join( '\n' ),
+		EXIT.USAGE
+	);
+}
+
+/**
+ * CLI entry point. JSON on stdout, diagnostics on stderr, stable exit codes.
+ *
+ * @return {Promise<void>} Resolves once the process result is written.
+ */
+export async function main() {
+	try {
+		const result = await run( process.argv.slice( 2 ) );
+		process.stdout.write( `${ JSON.stringify( result, null, '\t' ) }\n` );
+		process.exitCode = false === result.ok ? EXIT.UNKNOWN : EXIT.OK;
+	} catch ( error ) {
+		const wrapped = error instanceof DeckerError
+			? error
+			: new DeckerError( 'unknown_error', 'The command failed.', EXIT.UNKNOWN );
+		process.stderr.write( `${ JSON.stringify( wrapped.toJSON(), null, '\t' ) }\n` );
+		process.exitCode = wrapped.exit;
+	}
+}
+
+if ( process.argv[ 1 ] && import.meta.url === `file://${ process.argv[ 1 ] }` ) {
+	await main();
+}

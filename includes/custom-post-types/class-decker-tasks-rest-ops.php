@@ -89,6 +89,21 @@ class Decker_Tasks_Rest_Ops {
 				'args'       => $order_args,
 			),
 			array(
+				// Placing a card next to another one, by id. Unlike /order this
+				// needs no index from the caller, so it is exact for someone
+				// who cannot see every card in the stack. It is an ordinary
+				// per-task edit, so it takes the object-level capability rather
+				// than the board-wide role /order inherited from the drag UI.
+				'route'      => '/tasks/(?P<id>\d+)/place',
+				'methods'    => WP_REST_Server::EDITABLE,
+				'callback'   => array( $order_engine, 'place_task_beside' ),
+				'permission' => 'edit_task',
+				'args'       => array(
+					'after_task_id'  => array( 'type' => 'integer' ),
+					'before_task_id' => array( 'type' => 'integer' ),
+				),
+			),
+			array(
 				'route'      => '/tasks/(?P<id>\d+)/stack',
 				'methods'    => WP_REST_Server::EDITABLE,
 				'callback'   => array( $order_engine, 'update_task_stack_and_order' ),
@@ -125,6 +140,41 @@ class Decker_Tasks_Rest_Ops {
 		);
 
 		Decker_Tasks_Rest_Support::register_routes( 'decker/v1', $routes, $this );
+	}
+
+	/**
+	 * Record that a task changed, for the readers that compare timestamps.
+	 *
+	 * These three routes write meta and nothing else, so WordPress leaves
+	 * post_modified_gmt alone — and that column is the precondition the
+	 * abilities' `expected_modified` compares against. Without this, a caller
+	 * that read the assignees, lost the race to `/assign` and then wrote its
+	 * own list would be told nothing had changed, and the other person's
+	 * assignee would be dropped. Rotating the editor generation does not cover
+	 * it: that no-ops when nobody holds the card open.
+	 *
+	 * Raw SQL rather than wp_update_post(), which would run the save hooks for
+	 * a change that is not a save, so the post cache is flushed by hand. The
+	 * column's one-second granularity still applies, as `expected_modified`
+	 * documents.
+	 *
+	 * @param int $task_id The task that changed.
+	 */
+	private function stamp_modified( int $task_id ) {
+		global $wpdb;
+
+		$wpdb->update(
+			$wpdb->posts,
+			array(
+				'post_modified'     => current_time( 'mysql' ),
+				'post_modified_gmt' => current_time( 'mysql', 1 ),
+			),
+			array( 'ID' => $task_id ),
+			array( '%s', '%s' ),
+			array( '%d' )
+		);
+
+		clean_post_cache( $task_id );
 	}
 
 	/**
@@ -235,6 +285,7 @@ class Decker_Tasks_Rest_Ops {
 
 			// Assignees changed: invalidate any open editor form.
 			$this->tasks->get_task_locks()->invalidate_sessions( $task_id );
+			$this->stamp_modified( (int) $task_id );
 		}
 
 		return new WP_REST_Response(
@@ -284,6 +335,7 @@ class Decker_Tasks_Rest_Ops {
 
 			// Assignees changed: invalidate any open editor form.
 			$this->tasks->get_task_locks()->invalidate_sessions( $task_id );
+			$this->stamp_modified( (int) $task_id );
 		}
 
 		return new WP_REST_Response(
@@ -337,6 +389,7 @@ class Decker_Tasks_Rest_Ops {
 		if ( ! empty( $updated_meta ) ) {
 			// The due date changed: invalidate any open editor form.
 			$this->tasks->get_task_locks()->invalidate_sessions( $task_id );
+			$this->stamp_modified( (int) $task_id );
 		}
 
 		 // Step 4: Return response.

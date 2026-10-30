@@ -188,6 +188,37 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Placing a card beside another one invalidates an open form too: it is a
+	 * stack and order change like a drag, reached by neighbour id instead.
+	 */
+	public function test_placement_invalidates_an_open_form() {
+		$neighbour = self::factory()->task->create(
+			array(
+				'post_title' => 'Neighbour',
+				'board'      => $this->board_id,
+				'stack'      => 'in-progress',
+			)
+		);
+
+		$generation = $this->open_form_as_a();
+
+		wp_set_current_user( $this->user_b );
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/place' );
+		$request->set_url_params( array( 'id' => $this->task_id ) );
+		$request->set_param( 'after_task_id', $neighbour );
+		( new Decker_Tasks() )->get_order_engine()->place_task_beside( $request );
+
+		$this->assertNotSame(
+			$generation,
+			$this->current_generation(),
+			'Placing the card should have rotated the generation.'
+		);
+
+		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );
+		$this->assertSame( 'in-progress', $this->get_stack( $this->task_id ) );
+	}
+
+	/**
 	 * Assigning a user invalidates an open form, which would otherwise resubmit
 	 * the assignee list it was rendered with.
 	 */
@@ -326,5 +357,144 @@ class DeckerTaskOutOfBandMutationLockTest extends Decker_Test_Base {
 		$stack = get_post_meta( $task_id, 'stack', true );
 
 		return is_string( $stack ) ? $stack : '';
+	}
+
+	/**
+	 * An ability update must invalidate the open form, like every other
+	 * out-of-band path.
+	 *
+	 * This is the everyday case: the user has the task open in the browser and
+	 * asks an agent to change something. The agent is allowed to write -- it is
+	 * acting as that same user, who owns the lock -- but the open form still
+	 * holds the pre-change values, so its next save would revert the agent's
+	 * work. Every other out-of-band path rotates the generation to stop that;
+	 * the abilities called the shared writer directly and skipped it.
+	 */
+	public function test_ability_update_invalidates_the_open_form() {
+		$generation = $this->open_form_as_a();
+
+		$result = ( new Decker_Ability_Service() )->update_task(
+			array(
+				'task_id'     => $this->task_id,
+				'description' => 'Added by the agent',
+			)
+		);
+		$this->assertIsArray( $result, wp_json_encode( $result ) );
+
+		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );
+
+		// The agent's change survived the stale save attempt.
+		$this->assertSame( 'Added by the agent', get_post( $this->task_id )->post_content );
+	}
+
+	/**
+	 * An ability move invalidates the open form.
+	 */
+	public function test_ability_move_invalidates_the_open_form() {
+		$generation = $this->open_form_as_a();
+
+		$result = ( new Decker_Ability_Service() )->move_task(
+			array(
+				'task_id' => $this->task_id,
+				'stack'   => 'in-progress',
+			)
+		);
+		$this->assertIsArray( $result, wp_json_encode( $result ) );
+
+		$this->assertStaleSaveRejected( $this->save_as_a( $generation ) );
+		$this->assertSame( 'in-progress', get_post_meta( $this->task_id, 'stack', true ) );
+	}
+
+	/**
+	 * An ability archive invalidates the open form.
+	 */
+	public function test_ability_archive_invalidates_the_open_form() {
+		$generation = $this->open_form_as_a();
+
+		$result = ( new Decker_Ability_Service() )->archive_task(
+			array(
+				'task_id'  => $this->task_id,
+				'archived' => true,
+			)
+		);
+		$this->assertIsArray( $result, wp_json_encode( $result ) );
+
+		$response = $this->save_as_a( $generation );
+
+		// Rejected, but by the archived-task guard, which runs before the lock
+		// one: an archived task refuses modifications whatever generation the
+		// form carries. The invariant under test is that the stale save does not
+		// revert the archive, not which guard caught it first.
+		$this->assertFalse( $response['success'], wp_json_encode( $response ) );
+		$this->assertContains(
+			$response['code'],
+			array( 'decker_task_archived', 'decker_task_locked' )
+		);
+		$this->assertSame( 'archived', get_post_status( $this->task_id ) );
+
+		// The generation did rotate, which is what protects a non-archive write.
+		$this->assertNotSame(
+			$generation,
+			( new Decker_Task_Lock_State() )->generation( $this->task_id )
+		);
+	}
+
+	/**
+	 * Invalidating the form must not take the lock away.
+	 *
+	 * Whoever is editing keeps the lock and only has to reload, which is why
+	 * invalidate_sessions() is the right call and rotate_generation() is not.
+	 */
+	public function test_ability_write_keeps_the_lock_with_its_owner() {
+		$generation = $this->open_form_as_a();
+		$before     = $this->locks->get_lock_info( $this->task_id, $this->user_a );
+
+		( new Decker_Ability_Service() )->update_task(
+			array(
+				'task_id'     => $this->task_id,
+				'description' => 'Added by the agent',
+			)
+		);
+
+		$after = $this->locks->get_lock_info( $this->task_id, $this->user_a );
+
+		$this->assertSame( $before['user_id'] ?? null, $after['user_id'] ?? null );
+		$this->assertNotSame( $generation, (string) ( $after['generation'] ?? '' ) );
+	}
+
+	/**
+	 * A form opened after the agent's write saves normally.
+	 *
+	 * The protection must reject a stale form, not every form.
+	 */
+	public function test_a_form_opened_after_the_write_still_saves() {
+		( new Decker_Ability_Service() )->update_task(
+			array(
+				'task_id'     => $this->task_id,
+				'description' => 'Added by the agent',
+			)
+		);
+
+		$generation = $this->open_form_as_a();
+		$response   = $this->save_as_a( $generation );
+
+		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
+	}
+
+	/**
+	 * Creating a task through an ability has no session to invalidate.
+	 */
+	public function test_ability_create_does_not_fail_without_a_session() {
+		wp_set_current_user( $this->user_a );
+
+		$created = ( new Decker_Ability_Service() )->create_task(
+			array(
+				'title'    => 'Created by the agent',
+				'board_id' => $this->board_id,
+			)
+		);
+
+		$this->assertIsArray( $created, wp_json_encode( $created ) );
+		$this->assertSame( 'Created by the agent', get_post( $created['id'] )->post_title );
 	}
 }

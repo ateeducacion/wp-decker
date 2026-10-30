@@ -31,6 +31,12 @@
 /AGENTS.md
 /CLAUDE.md
 
+# The installable Agent Skill. It is released from this repository and this tag,
+# but it is not plugin runtime code and must not add weight to the WordPress ZIP.
+# It stays out of .gitattributes on purpose: `gh skill add` reads the repository,
+# so export-ignoring it would break installation.
+/skills
+
 # Development tooling and configuration
 /.editorconfig
 /.phpcs.xml.dist
@@ -78,6 +84,12 @@ languages/*.pot
 
 # Rules that must match at any depth: none of these is ever legitimate inside a
 # release, wherever it turns up.
+
+# A leftover release archive in the checkout was being packaged INSIDE the next
+# release: .gitignore keeps *.zip out of the repository, but dist-archive reads
+# the working tree, so anyone holding an old decker-X.Y.Z.zip shipped it. The
+# rule also stops the archive being built from including itself.
+*.zip
 .git
 node_modules
 .DS_Store

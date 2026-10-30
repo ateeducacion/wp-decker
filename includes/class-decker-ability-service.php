@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-task-store.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-input-validator.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-task-access.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-user-query.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-task-filter.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-query-service.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-decker-ability-command-service.php';
 
@@ -49,6 +51,13 @@ class Decker_Ability_Service {
 	private $commands;
 
 	/**
+	 * User lookups.
+	 *
+	 * @var Decker_Ability_User_Query
+	 */
+	private $users;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {
@@ -58,6 +67,7 @@ class Decker_Ability_Service {
 		$this->access   = new Decker_Ability_Task_Access( $store );
 		$this->queries  = new Decker_Ability_Query_Service( $store, $validator, $this->access );
 		$this->commands = new Decker_Ability_Command_Service( $store, $validator );
+		$this->users    = new Decker_Ability_User_Query();
 	}
 
 	/**
@@ -127,6 +137,16 @@ class Decker_Ability_Service {
 	 */
 	public function list_boards() {
 		return $this->queries->list_boards();
+	}
+
+	/**
+	 * List users who can be assigned to a task.
+	 *
+	 * @param array|null $input Ability input.
+	 * @return array<string, mixed>|WP_Error Users or error.
+	 */
+	public function list_users( $input = null ) {
+		return $this->users->list_users( $input );
 	}
 
 	/**

@@ -25,6 +25,7 @@ class Decker_Ability_Query_Service {
 	 */
 	private const MAX_HIDDEN_SCAN = 2000;
 
+
 	/**
 	 * Task store.
 	 *
@@ -47,6 +48,13 @@ class Decker_Ability_Query_Service {
 	private $access;
 
 	/**
+	 * Relation and "for today" filters.
+	 *
+	 * @var Decker_Ability_Task_Filter
+	 */
+	private $filter;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param Decker_Ability_Task_Store      $store     Task store.
@@ -57,6 +65,7 @@ class Decker_Ability_Query_Service {
 		$this->store     = $store;
 		$this->validator = $validator;
 		$this->access    = $access;
+		$this->filter    = new Decker_Ability_Task_Filter();
 	}
 
 	/**
@@ -72,7 +81,7 @@ class Decker_Ability_Query_Service {
 			return $validation;
 		}
 
-		return $input['include_hidden'] ? $this->list_including_hidden( $input ) : $this->list_default( $input );
+		return $this->filter->requires_php_filter( $input ) ? $this->list_filtered( $input ) : $this->list_default( $input );
 	}
 
 	/**
@@ -96,16 +105,16 @@ class Decker_Ability_Query_Service {
 	}
 
 	/**
-	 * List tasks when hidden tasks are requested.
+	 * List tasks when a rule has to be resolved in PHP.
 	 *
-	 * The "author/responsible/assignee may see their own hidden task" rule cannot
-	 * be expressed in SQL, so visibility is resolved in PHP over a bounded set of
-	 * candidates; totals and pages describe only the tasks this user may see.
+	 * Totals and pages describe only the tasks that survive the filters, so a
+	 * page is never padded with, or emptied by, tasks that were filtered out.
+	 * The scan is bounded and the result flagged truncated at the cap.
 	 *
 	 * @param array $input Normalized input.
 	 * @return array<string, mixed> Task collection.
 	 */
-	private function list_including_hidden( array $input ): array {
+	private function list_filtered( array $input ): array {
 		$arguments                   = $this->build_task_query_arguments( $input );
 		$arguments['posts_per_page'] = self::MAX_HIDDEN_SCAN;
 		$arguments['no_found_rows']  = true;
@@ -115,8 +124,10 @@ class Decker_Ability_Query_Service {
 
 		$visible = array_filter(
 			$query->posts,
-			function ( $post ) {
-				return $post instanceof WP_Post && $this->access->is_visible_in_list( $post, true );
+			function ( $post ) use ( $input ) {
+				return $post instanceof WP_Post
+					&& $this->access->is_visible_in_list( $post, $input['include_hidden'] )
+					&& $this->filter->matches( $post, $input );
 			}
 		);
 
@@ -261,6 +272,8 @@ class Decker_Ability_Query_Service {
 				'page'           => 1,
 				'per_page'       => 20,
 				'include_hidden' => false,
+				'relation'       => '',
+				'today'          => false,
 			)
 		);
 
@@ -270,9 +283,12 @@ class Decker_Ability_Query_Service {
 		$input['status']         = sanitize_key( $input['status'] );
 		$input['page']           = max( 1, absint( $input['page'] ) );
 		$input['per_page']       = min( 100, max( 1, absint( $input['per_page'] ) ) );
-		$input['include_hidden'] = (bool) $input['include_hidden'];
-
-		return $input;
+		// WordPress 6.9 does not coerce GET input to the schema types, so over the
+		// REST run route this arrives as the string "false" or "0", which a plain
+		// (bool) cast turns into true and leaks hidden tasks into a listing that
+		// asked to exclude them. rest_sanitize_boolean() reads the string value.
+		$input['include_hidden'] = rest_sanitize_boolean( $input['include_hidden'] );
+		return array_merge( $input, $this->filter->normalize( $input ) );
 	}
 
 	/**
@@ -344,6 +360,8 @@ class Decker_Ability_Query_Service {
 		if ( ! empty( $meta_query ) ) {
 			$arguments['meta_query'] = $meta_query;
 		}
+
+		$arguments = $this->filter->narrow( $arguments, $input );
 
 		if ( $input['board_id'] > 0 ) {
 			$arguments['tax_query'] = $this->build_board_tax_query( $input['board_id'] );

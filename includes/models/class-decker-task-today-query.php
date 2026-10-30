@@ -69,7 +69,7 @@ class Decker_Task_Today_Query {
 			update_meta_cache( 'post', $post_ids );
 		}
 
-		$today    = ( new DateTime() )->format( 'Y-m-d' );
+		$today    = Decker_Task_Date_Relations::today_string();
 
 		// Additional filtering: Check tasks that are not truly assigned to the specified user.
 		// Filtering serialized data can be risky and unreliable due to how data is stored.
@@ -174,7 +174,7 @@ class Decker_Task_Today_Query {
 
 		update_meta_cache( 'post', $post_ids );
 
-		$today = new DateTime();
+		$today = Decker_Task_Date_Relations::now();
 		$min_date = ( clone $today )->modify( "-$max_days_back days" );
 		$today_str = $today->format( 'Y-m-d' );
 
@@ -246,7 +246,7 @@ class Decker_Task_Today_Query {
 	 * @return array Array with start and end dates.
 	 */
 	private function calculate_date_range( int $days, ?DateTime $specific_date = null ): array {
-		$today = ( new DateTime() )->setTime( 23, 59 );
+		$today = Decker_Task_Date_Relations::now()->setTime( 23, 59 );
 
 		if ( $specific_date ) {
 			// If a specific date is provided, use it as both start and end date.
@@ -256,7 +256,7 @@ class Decker_Task_Today_Query {
 			$end_date->setTime( 23, 59 );
 		} else {
 			// Otherwise use the days parameter.
-			$start_date = ( new DateTime() )->setTime( 0, 0 )->modify( "-$days days" );
+			$start_date = Decker_Task_Date_Relations::now()->setTime( 0, 0 )->modify( "-$days days" );
 			$end_date = $today;
 		}
 
@@ -307,7 +307,7 @@ class Decker_Task_Today_Query {
 	 * @return array Array with today and min_date.
 	 */
 	private function get_date_constraints( int $max_days_back ): array {
-		$today = new DateTime();
+		$today = Decker_Task_Date_Relations::now();
 		$min_date = ( clone $today )->modify( "-$max_days_back days" );
 
 		return array(

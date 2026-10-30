@@ -129,6 +129,81 @@ class DeckerTaskTodayQuickActionTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * The route accepts POST as well as PUT.
+	 *
+	 * The deployment this plugin targets sits behind a proxy that handles
+	 * methods unevenly, and the order route already carries a comment saying a
+	 * PUT body does not survive every host. POST reaches the same callback and
+	 * the same domain operation, so there is one implementation behind two
+	 * transports rather than a second code path to keep in step.
+	 */
+	public function test_route_accepts_both_put_and_post() {
+		$routes  = rest_get_server()->get_routes();
+		$methods = array();
+
+		foreach ( $routes['/decker/v1/tasks/(?P<id>\d+)/today'] as $handler ) {
+			$methods = array_merge( $methods, array_keys( $handler['methods'] ) );
+		}
+
+		$this->assertContains( 'PUT', $methods );
+		$this->assertContains( 'POST', $methods );
+	}
+
+	/**
+	 * A POST marks the task exactly as a PUT does.
+	 */
+	public function test_post_marks_the_task_like_a_put() {
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/today' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body( wp_json_encode( array( 'marked' => true ) ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['marked'] );
+		$this->assertSame(
+			array(
+				array(
+					'user_id' => $this->user_a,
+					'date'    => Decker_Task_Date_Relations::today_string(),
+				),
+			),
+			$this->relations( $this->task_id )
+		);
+	}
+
+	/**
+	 * A POST still refuses a client-supplied user id.
+	 *
+	 * The second transport must not be a softer door: the operation applies to
+	 * the authenticated user and nobody else.
+	 */
+	public function test_post_also_rejects_a_client_supplied_user_id() {
+		$request = new WP_REST_Request( 'POST', '/decker/v1/tasks/' . $this->task_id . '/today' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+		$request->set_body( wp_json_encode( array( 'marked' => true, 'user_id' => 999999 ) ) );
+
+		$response = rest_get_server()->dispatch( $request );
+
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( array(), $this->relations( $this->task_id ) );
+	}
+
+	/**
+	 * The relation is stored against the site's date, not the server's.
+	 */
+	public function test_relation_uses_the_site_date() {
+		$this->dispatch_today( $this->task_id, array( 'marked' => true ) );
+
+		$this->assertSame(
+			current_time( 'Y-m-d' ),
+			$this->relations( $this->task_id )[0]['date']
+		);
+	}
+
+	/**
 	 * Marking uses the authenticated current user, not a client-supplied id.
 	 */
 	public function test_mark_uses_current_user_identity() {

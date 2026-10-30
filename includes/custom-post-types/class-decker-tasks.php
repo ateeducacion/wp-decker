@@ -158,6 +158,11 @@ class Decker_Tasks {
 	/**
 	 * Handle task deletion to reorder tasks.
 	 *
+	 * A gap in the stored menu_order makes the next position move land short,
+	 * because the positions a client and the board drag send are indices over
+	 * the visible stack. See renumber_task_stack() for the lookup this used to
+	 * get wrong.
+	 *
 	 * @param int $post_id The ID of the post being deleted.
 	 */
 	public function handle_task_deletion( $post_id ) {
@@ -165,11 +170,7 @@ class Decker_Tasks {
 			return;
 		}
 
-		$board_term_id = (int) get_post_meta( $post_id, 'decker_board', true );
-		$stack         = get_post_meta( $post_id, 'stack', true );
-		if ( $board_term_id > 0 && $stack ) {
-			$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post_id );
-		}
+		$this->renumber_task_stack( (int) $post_id, false );
 
 		do_action( 'decker_task_updated', $post_id ); // Invalidates .ics “all”.
 	}
@@ -182,24 +183,55 @@ class Decker_Tasks {
 	 * @param WP_Post $post The post object.
 	 */
 	public function handle_task_status_change( $new_status, $old_status, $post ) {
-		if ( 'decker_task' !== $post->post_type ) {
+		if ( 'decker_task' !== $post->post_type || $new_status === $old_status ) {
 			return;
 		}
 
 		if ( 'archived' === $new_status && 'publish' === $old_status ) {
-
 			// A task promoted out of a subtask list leaves that list when it
 			// is archived: the step is over and out of the way.
 			Decker_Subtask_Links::detach_from_parent( (int) $post->ID );
+		}
 
-			$board_term_id = wp_get_post_terms( $post->ID, 'decker_board', array( 'fields' => 'ids' ) );
-			$board_term_id = ! empty( $board_term_id ) ? $board_term_id[0] : 0;
+		// The board holds published tasks, so the order changes when a card
+		// enters or leaves that set, whichever status it comes from or goes to:
+		// archived, trashed or draft. A card leaving used to be the only case
+		// handled, which left the one coming back holding a menu_order that
+		// meanwhile belonged to somebody else -- two cards with one position,
+		// and positions are indices over the stack.
+		//
+		// Creation is not such a transition: the insert already renumbers for
+		// the board term and for the stack meta, and a third pass would be the
+		// one removed in this same branch.
+		$entering = 'publish' === $new_status && 'new' !== $old_status;
+		$leaving  = 'publish' === $old_status;
 
-			$stack = get_post_meta( $post->ID, 'stack', true );
+		if ( $entering || $leaving ) {
+			$this->renumber_task_stack( (int) $post->ID, $entering );
+		}
+	}
 
-			if ( $board_term_id > 0 && $stack ) {
-				$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $post->ID );
-			}
+	/**
+	 * Renumber the stack a task belongs to.
+	 *
+	 * The board is a taxonomy term, never post meta: reading it with
+	 * get_post_meta() found nothing for every task created the normal way,
+	 * which is why a deletion used to leave a gap in the stored menu_order.
+	 *
+	 * @param int  $post_id The task ID.
+	 * @param bool $include Whether the task itself takes part. A card on its
+	 *                      way off the board is excluded; one coming back takes
+	 *                      part, so its stale menu_order cannot collide with an
+	 *                      incumbent's.
+	 * @return void
+	 */
+	private function renumber_task_stack( int $post_id, bool $include ): void {
+		$terms         = wp_get_post_terms( $post_id, 'decker_board', array( 'fields' => 'ids' ) );
+		$board_term_id = ! is_wp_error( $terms ) && ! empty( $terms ) ? (int) $terms[0] : 0;
+		$stack         = get_post_meta( $post_id, 'stack', true );
+
+		if ( $board_term_id > 0 && $stack ) {
+			$this->get_order_engine()->reorder_tasks_in_stack( $board_term_id, $stack, $include ? 0 : $post_id );
 		}
 	}
 
@@ -324,7 +356,7 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Restricts REST API access for decker_event post type.
+	 * Restrict REST access to tasks, in both the generic and the Decker namespace.
 	 *
 	 * @param mixed           $result The pre-calculated result to return.
 	 * @param WP_REST_Server  $rest_server The REST server instance.
@@ -332,14 +364,18 @@ class Decker_Tasks {
 	 * @return mixed WP_Error if unauthorized, otherwise the original result.
 	 */
 	public function restrict_rest_access( $result, $rest_server, $request ) {
-		$route = $request->get_route();
+		$route   = $request->get_route();
+		$generic = Decker::rest_route_matches( $route, '/wp/v2/tasks' );
 
-		if ( ! Decker::rest_route_matches( $route, '/wp/v2/tasks' ) ) {
+		if ( ! $generic && ! Decker::rest_route_matches( $route, '/decker/v1/tasks' ) ) {
 			return $result;
 		}
 
-		// Use the specific capability of the CPT.
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		// Use the specific capability of the CPT. The decker/v1 routes carry
+		// their own permission callbacks, which answer to the configured
+		// minimum role rather than to edit_posts, so this one stays where it
+		// has always applied.
+		if ( $generic && ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error(
 				'rest_forbidden',
 				__( 'You do not have permission to access this resource.', 'decker' ),
@@ -349,7 +385,12 @@ class Decker_Tasks {
 
 		// A hidden task is reachable only by the people it is not hidden from,
 		// whatever the capability. The route carries the task being addressed.
-		if ( preg_match( '#^/wp/v2/tasks/(?P<id>\d+)#i', $route, $matches )
+		//
+		// Both namespaces are covered here rather than in each permission
+		// callback: edit_task resolves to edit_post, which an editor holds for
+		// other people's posts, so the per-task routes would otherwise let
+		// somebody who cannot see a hidden card still act on it by id.
+		if ( preg_match( '#^/(?:wp/v2|decker/v1)/tasks/(?P<id>\d+)#i', $route, $matches )
 			&& self::is_hidden_from_current_user( (int) $matches['id'] ) ) {
 			return new WP_Error(
 				'rest_forbidden',

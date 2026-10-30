@@ -58,13 +58,50 @@ class Decker_Tasks_Rest_Support {
 	/**
 	 * Build the permission callback closure for a given permission type.
 	 *
+	 * Every route registered here backs a Decker screen, so every one of them
+	 * requires the configured minimum role as well as whatever else it asks
+	 * for. A capability on its own is weaker than the interface: an author may
+	 * edit their own published posts, so `edit_task` alone would let an
+	 * account that cannot open Decker reorder a card of its own and shift
+	 * everybody else's `menu_order` with it, and `edit_posts` alone would let
+	 * it read through the search and lock routes. The abilities answer to the
+	 * same gate, so the two surfaces an agent can reach cannot disagree about
+	 * who is allowed in.
+	 *
 	 * @param string $permission The permission key ('minimum_role' or a capability slug).
 	 * @return callable The permission callback.
 	 */
 	public static function permission_callback( string $permission ): callable {
+		$specific = self::specific_permission_callback( $permission );
+
+		// A route that asks for manage_options is already stricter than the
+		// gate, and the gate only knows the five core role slugs: wrapping it
+		// would refuse a site administrator whose capability comes from a
+		// custom role, or a network administrator with no role on the subsite,
+		// on the board repair route they are the only ones allowed to call.
+		if ( 'manage_options' === $permission ) {
+			return $specific;
+		}
+
+		return function ( $request ) use ( $specific ) {
+			if ( ! Decker::current_user_has_at_least_minimum_role() ) {
+				return false;
+			}
+
+			return $specific( $request );
+		};
+	}
+
+	/**
+	 * Build the route's own permission check, without the minimum-role gate.
+	 *
+	 * @param string $permission The permission key ('minimum_role' or a capability slug).
+	 * @return callable The permission callback.
+	 */
+	private static function specific_permission_callback( string $permission ): callable {
 		if ( 'minimum_role' === $permission ) {
 			return function () {
-				return Decker::current_user_has_at_least_minimum_role();
+				return true;
 			};
 		}
 

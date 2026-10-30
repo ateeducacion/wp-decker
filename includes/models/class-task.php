@@ -341,7 +341,7 @@ class Task {
 
 			if ( $user_date_relations && is_array( $user_date_relations ) ) {
 
-				$today = ( new DateTime() )->format( 'Y-m-d' ); // Get today's date in 'Y-m-d' format.
+				$today = Decker_Task_Date_Relations::today_string();
 
 				foreach ( $user_date_relations as $relation ) {
 

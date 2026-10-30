@@ -24,6 +24,45 @@ There is no delete ability. Archiving is reversible and is not marked destructiv
 
 Decker has no board-level access control: every user with `edit_posts` can see every board and every non-hidden task, exactly as the board UI presents them. The only per-task restriction is the hidden-visibility rule (see below).
 
+## REST exposure
+
+Every Decker ability sets `meta.show_in_rest => true`, so each one is reachable at:
+
+```
+/wp-json/wp-abilities/v1/abilities/<namespace>/<ability>/run
+```
+
+`show_in_rest` is set explicitly rather than through the `public` meta, which only
+exists from WordPress 7.1; an explicit value is honoured by every WordPress that
+has the Abilities API at all. The route base is `abilities` in both 6.9 and 7.1.
+
+Core derives the HTTP method from the annotations: read-only abilities require
+`GET`, mutating ones `POST`. No Decker ability is annotated destructive, so none
+requires `DELETE` — and none requires `PUT`, which matters where a proxy handles
+methods unevenly.
+
+### Input transport differs by WordPress version
+
+`GET` input is read from the `input` query parameter and `POST` input from
+`input` in the JSON body. On `GET` the parameter must use bracket syntax
+(`?input[task_id]=123`), not URL-encoded JSON: nothing in the request path
+JSON-decodes a string, so `?input={"task_id":123}` is rejected as
+`ability_invalid_input` with HTTP 400.
+
+WordPress 7.1 coerces `GET` scalars to the schema types before the ability runs;
+**6.9 does not**, so on the deployed 6.9 baseline every `GET` value arrives as a
+string. Decker's read path therefore coerces defensively — `absint()` for ids and
+`rest_sanitize_boolean()` for flags, so that `input[include_hidden]=false` is
+false rather than a non-empty string. Mutating abilities are `POST`-only and
+receive natively typed JSON, so they rely on schema validation.
+
+Abilities whose input is entirely optional declare a `default` of `{}`, so a bare
+`GET` on the run route works instead of failing type validation.
+
+Core validates input *before* it calls the permission callback, so a malformed
+request can return 400 where a well-formed one from the same caller would return
+401 or 403. Authorization is not weakened by this; only the error ordering differs.
+
 ## Schemas and responses
 
 Every ability uses explicit JSON Schema types, required fields, limits, enum values, and `additionalProperties: false`. Arbitrary metadata is not accepted. Task responses include task, board, label, assignee, responsible-user, due-date, priority, visibility, order, status, and modification data.
@@ -54,6 +93,43 @@ Missing authentication returns HTTP `401`; an authenticated but forbidden reques
 The edit lock is advisory and only enforced when Decker's post-locking feature is active. There is no optimistic-concurrency token (ETag / `If-Unmodified-Since`) yet, so a concurrent UI edit and agent write can still race; add one if stronger guarantees are required.
 
 No public or unauthenticated agent endpoint is registered. Multisite execution stays scoped to the current site.
+
+## The installable Agent Skill
+
+`skills/decker/` is an Agent Skill: `SKILL.md`, five `references/` documents and
+a dependency-free Node client. It is installed with
+
+```
+gh skill install ateeducacion/wp-decker skills/decker --agent <agent> --scope user
+```
+
+and is verified by installing it, for Claude Code and for Codex, rather than by
+checking that the file exists. `make check-skill` validates the metadata, that
+every file `SKILL.md` references exists, that the client runs, and that git
+tracks all of it.
+
+That last check earns its place: an unanchored `decker/` rule in `.gitignore`
+hid the whole directory twice during development. `git add -A` skipped the files
+in silence, the working tree looked clean, and the only thing that noticed was
+an actual install reporting no `SKILL.md` in the repository. The ignore rules
+for a built or extracted plugin copy are now anchored to the root.
+
+### Versioning
+
+Both artifacts come from the same repository and the same tag, so there is
+nothing to keep in step: the plugin ZIP is built by `make package VERSION=x`
+from the working tree, and the skill is installed from the same revision.
+
+The client carries **no version constant of its own** and no compatibility
+table to maintain. It discovers what the site supports at runtime: `doctor`
+reports which routing answers and which Decker abilities the site exposes, so a
+plugin too old to expose them is reported as `none exposed: update the Decker
+plugin` instead of failing later with a confusing 404.
+
+The skill is excluded from the plugin ZIP (`/skills` in `.distignore`) because
+it is not plugin runtime code, but deliberately **not** export-ignored in
+`.gitattributes`, since `gh skill install` reads the repository. `make
+check-skill` asserts both.
 
 ## Relationship to existing behavior
 

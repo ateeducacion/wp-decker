@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Decker 0.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-decker_2\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/wp-decker\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -272,6 +272,12 @@ msgstr ""
 msgid "Archives or restores a task using an explicit, reversible archived state."
 msgstr ""
 
+msgid "List Decker users"
+msgstr ""
+
+msgid "Lists users who can be set as a task assignee or responsible user, with an optional name search."
+msgstr ""
+
 msgid "List Decker boards"
 msgstr ""
 
@@ -288,6 +294,15 @@ msgid "Get a Decker knowledge-base article"
 msgstr ""
 
 msgid "Retrieves one accessible knowledge-base article, including its full content, by ID."
+msgstr ""
+
+msgid "The write carried no field to change. Send at least one field besides the task id."
+msgstr ""
+
+msgid "The supplied expected_modified value is not a valid date."
+msgstr ""
+
+msgid "The task changed after it was read, so the update was not applied. Read the task again, rebuild the change and retry."
 msgstr ""
 
 msgid "The requested board does not exist."
@@ -964,6 +979,27 @@ msgstr ""
 msgid "Select Attachments"
 msgstr ""
 
+msgid "The order could not be written, so the stack may be left as it was. Read the task again before retrying."
+msgstr ""
+
+msgid "Give exactly one of after_task_id or before_task_id."
+msgstr ""
+
+msgid "Task not found."
+msgstr ""
+
+msgid "A task cannot be placed next to itself."
+msgstr ""
+
+msgid "The task to place this one next to was not found."
+msgstr ""
+
+msgid "Both tasks have to be on the same board."
+msgstr ""
+
+msgid "Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first."
+msgstr ""
+
 msgid "The title is required."
 msgstr ""
 
@@ -977,9 +1013,6 @@ msgid "The board is required and must be a positive integer."
 msgstr ""
 
 msgid "The board does not exist in the decker_board taxonomy."
-msgstr ""
-
-msgid "Task not found."
 msgstr ""
 
 msgid "Please enter a valid HTTP or HTTPS URL."

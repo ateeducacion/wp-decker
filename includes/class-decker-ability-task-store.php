@@ -157,7 +157,26 @@ class Decker_Ability_Task_Store {
 			return $result;
 		}
 
-		$post = $this->get_task_post( absint( $result ) );
+		$saved_id = absint( $result );
+
+		// ADR 001: any mutation that reaches a card from outside an editor form
+		// must rotate the generation, so a form rendered before it cannot
+		// silently revert it on its next save. Every other out-of-band path does
+		// this -- the order endpoints, assign, leave, stack, the due-date
+		// endpoint, the merge tools and the /wp/v2/tasks REST hook -- but the
+		// abilities called the shared writer directly and skipped it, so an
+		// agent's write left every open editor form valid and revertible.
+		//
+		// invalidate_sessions() is the right call rather than
+		// rotate_generation(): the agent holds no editor session to adopt a new
+		// token, and the lock owner and timestamp must survive, so whoever is
+		// editing keeps the lock and only has to reload. It no-ops on a task
+		// that was never locked, which is also every freshly created one.
+		if ( $task_id > 0 ) {
+			( new Decker_Task_Locks() )->invalidate_sessions( $saved_id );
+		}
+
+		$post = $this->get_task_post( $saved_id );
 
 		return is_wp_error( $post ) ? $post : $this->format_task( $post );
 	}

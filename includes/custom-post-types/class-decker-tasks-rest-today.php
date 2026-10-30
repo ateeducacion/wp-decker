@@ -54,7 +54,12 @@ class Decker_Tasks_Rest_Today {
 			),
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/today',
-				'methods'    => 'PUT',
+				// EDITABLE, not PUT alone, for the reason the order route gives:
+				// a PUT body does not survive every host, and this project's
+				// deployment sits behind a proxy that handles methods unevenly.
+				// POST reaches exactly the same callback and the same domain
+				// operation, so there is one implementation and two transports.
+				'methods'    => WP_REST_Server::EDITABLE,
 				'callback'   => 'handle_task_today',
 				'permission' => 'edit_task',
 				'args'       => array(

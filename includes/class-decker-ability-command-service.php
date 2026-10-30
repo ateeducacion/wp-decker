@@ -58,6 +58,19 @@ class Decker_Ability_Command_Service {
 	 * @return array<string, mixed>|WP_Error Updated task or error.
 	 */
 	public function update_task( $input ) {
+		$nothing = $this->nothing_to_change(
+			array_diff_key(
+				(array) $input,
+				array(
+					'task_id'           => true,
+					'expected_modified' => true,
+				)
+			)
+		);
+		if ( $nothing instanceof WP_Error ) {
+			return $nothing;
+		}
+
 		$loaded = $this->load_writable_task( $input );
 		if ( is_wp_error( $loaded ) ) {
 			return $loaded;
@@ -100,6 +113,31 @@ class Decker_Ability_Command_Service {
 	}
 
 	/**
+	 * Refuse a write that asks for nothing.
+	 *
+	 * `minProperties` cannot express this on its own: the concurrency token is
+	 * a property of the same schema, so `{ task_id, expected_modified }`
+	 * satisfies the schema while requesting no change. Writing it would not be
+	 * harmless -- the save stamps the task as modified and rotates the edit
+	 * generation, so a colleague with the task open is made to reload for a
+	 * change nobody asked for.
+	 *
+	 * @param array $fields The fields the write would change.
+	 * @return WP_Error|null The error, or null when there is something to write.
+	 */
+	private function nothing_to_change( array $fields ): ?WP_Error {
+		if ( ! empty( $fields ) ) {
+			return null;
+		}
+
+		return new WP_Error(
+			'decker_no_change_requested',
+			__( 'The write carried no field to change. Send at least one field besides the task id.', 'decker' ),
+			array( 'status' => 400 )
+		);
+	}
+
+	/**
 	 * Update a writable task with a constrained change set.
 	 *
 	 * @param array $input   Ability input.
@@ -107,6 +145,11 @@ class Decker_Ability_Command_Service {
 	 * @return array<string, mixed>|WP_Error Updated task or error.
 	 */
 	private function update_with_changes( $input, array $changes ) {
+		$nothing = $this->nothing_to_change( $changes );
+		if ( $nothing instanceof WP_Error ) {
+			return $nothing;
+		}
+
 		$loaded = $this->load_writable_task( $input );
 		if ( is_wp_error( $loaded ) ) {
 			return $loaded;
@@ -135,11 +178,79 @@ class Decker_Ability_Command_Service {
 			return $lock_check;
 		}
 
+		$stale_check = $this->assert_not_stale( $post, $input );
+		if ( is_wp_error( $stale_check ) ) {
+			return $stale_check;
+		}
+
 		$state = $this->store->get_write_state( $post );
 
 		return is_wp_error( $state ) ? $state : array(
 			'post'  => $post,
 			'state' => $state,
 		);
+	}
+
+	/**
+	 * Reject a write built from a stale read.
+	 *
+	 * The edit lock is advisory and only active when Decker's post-locking
+	 * feature is on, so on its own it does not stop an agent from overwriting a
+	 * change made between its read and its write. That matters most for the
+	 * read-modify-write operations: adding one label or one assignee means
+	 * sending the whole collection back, so a lost update silently drops
+	 * someone else's label or assignee.
+	 *
+	 * `expected_modified` is the task's `modified` value as the read returned
+	 * it. When it no longer matches, the write is refused with 409 and nothing
+	 * is persisted. It is optional, so existing callers are unaffected, and it
+	 * introduces no new storage and no second locking system: the comparison is
+	 * against post_modified_gmt, which WordPress already maintains.
+	 *
+	 * Known limit, inherited from that column: it has one-second granularity,
+	 * so a change saved within the same second as the caller's read carries an
+	 * identical timestamp and is not detected. Narrowing that window further
+	 * would need a real revision counter, which is more than this guard is for;
+	 * the edit lock remains the primary defence against concurrent editing.
+	 *
+	 * @param WP_Post $post  Task post.
+	 * @param array   $input Ability input.
+	 * @return true|WP_Error True when the write may proceed.
+	 */
+	private function assert_not_stale( WP_Post $post, $input ) {
+		$input = is_array( $input ) ? $input : array();
+
+		if ( ! isset( $input['expected_modified'] ) || '' === $input['expected_modified'] ) {
+			return true;
+		}
+
+		$current = mysql_to_rfc3339( $post->post_modified_gmt );
+
+		// Compared as instants, so an equivalent timestamp written with a
+		// different offset is not reported as a conflict.
+		$expected_time = strtotime( (string) $input['expected_modified'] );
+		$current_time  = strtotime( (string) $current );
+
+		if ( false === $expected_time ) {
+			return new WP_Error(
+				'decker_invalid_expected_modified',
+				__( 'The supplied expected_modified value is not a valid date.', 'decker' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( $expected_time !== $current_time ) {
+			return new WP_Error(
+				'decker_task_stale',
+				__( 'The task changed after it was read, so the update was not applied. Read the task again, rebuild the change and retry.', 'decker' ),
+				array(
+					'status'            => 409,
+					'expected_modified' => (string) $input['expected_modified'],
+					'current_modified'  => $current,
+				)
+			);
+		}
+
+		return true;
 	}
 }
