@@ -13,12 +13,16 @@ class DeckerTaskAttachmentLinksTest extends Decker_Test_Base {
 	 * @param string $url        Link URL.
 	 * @param string $method     HTTP method.
 	 * @param string $generation Editing session token.
+	 * @param string $label      Optional display title for the link.
 	 * @return WP_REST_Response The REST response.
 	 */
-	private function mutate( $task_id, $url, $method = 'POST', $generation = '' ) {
+	private function mutate( $task_id, $url, $method = 'POST', $generation = '', $label = null ) {
 		$request = new WP_REST_Request( $method, '/decker/v1/tasks/' . $task_id . '/attachment-links' );
 		$request->set_param( 'url', $url );
 		$request->set_param( 'lock_generation', $generation );
+		if ( null !== $label ) {
+			$request->set_param( 'label', $label );
+		}
 		return rest_get_server()->dispatch( $request );
 	}
 
@@ -63,5 +67,40 @@ class DeckerTaskAttachmentLinksTest extends Decker_Test_Base {
 		$this->assertSame( 404, $this->mutate( 999999, $url )->get_status() );
 		wp_update_post( array( 'ID' => $task_id, 'post_status' => 'archived' ) );
 		$this->assertSame( 403, $this->mutate( $task_id, $url, 'POST', $new_lock['generation'] )->get_status() );
+	}
+
+	/**
+	 * An optional label travels with the link and is dropped when the link goes.
+	 */
+	public function test_link_labels_are_stored_sanitized_and_removed_with_the_link() {
+		do_action( 'init' );
+		do_action( 'rest_api_init' );
+		$editor = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $editor );
+		$task_id = self::factory()->post->create(
+			array(
+				'post_type'   => 'decker_task',
+				'post_status' => 'publish',
+				'post_author' => $editor,
+			)
+		);
+		$locks = new Decker_Task_Locks();
+		$lock  = $locks->acquire_lock( $task_id, $editor );
+		$token = $lock['generation'];
+		$key   = '_decker_attachment_link_labels';
+
+		$labelled = 'https://example.org/acta.pdf';
+		$bare     = 'https://example.org/plain';
+
+		$this->assertSame( 200, $this->mutate( $task_id, $labelled, 'POST', $token, "  <b>Acta</b> de marzo\n" )->get_status() );
+		$this->assertSame( 200, $this->mutate( $task_id, $bare, 'POST', $token, '   ' )->get_status() );
+
+		// The URLs stay the meta values, untouched, so delete-by-value still works.
+		$this->assertSame( array( $labelled, $bare ), get_post_meta( $task_id, '_decker_attachment_link' ) );
+		// Only the labelled link gets an entry, and the markup is stripped.
+		$this->assertSame( array( $labelled => 'Acta de marzo' ), get_post_meta( $task_id, $key, true ) );
+
+		$this->assertSame( 200, $this->mutate( $task_id, $labelled, 'DELETE', $token )->get_status() );
+		$this->assertSame( array(), get_post_meta( $task_id, $key, true ) );
 	}
 }

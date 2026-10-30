@@ -134,6 +134,8 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 		add_post_meta( $source_task_id, '_decker_attachment_link', 'https://example.org/source' );
 		add_post_meta( $source_task_id, '_decker_attachment_link', 'https://example.org/shared' );
 		add_post_meta( $destination_task_id, '_decker_attachment_link', 'https://example.org/shared' );
+		update_post_meta( $source_task_id, '_decker_attachment_link_labels', array( 'https://example.org/source' => 'Source link' ) );
+		update_post_meta( $destination_task_id, '_decker_attachment_link_labels', array( 'https://example.org/shared' => 'Shared link' ) );
 
 		$result = Decker_Task_Merge::merge_tasks(
 			$source_task_id,
@@ -194,6 +196,14 @@ class DeckerTasksMergeTest extends Decker_Test_Base {
 
 		$this->assertSame( array( 'https://example.org/shared', 'https://example.org/source' ), get_post_meta( $destination_task_id, '_decker_attachment_link' ) );
 		$this->assertSame( array(), get_post_meta( $source_task_id, '_decker_attachment_link' ) );
+		$this->assertSame(
+			array(
+				'https://example.org/shared' => 'Shared link',
+				'https://example.org/source' => 'Source link',
+			),
+			get_post_meta( $destination_task_id, '_decker_attachment_link_labels', true )
+		);
+		$this->assertSame( '', get_post_meta( $source_task_id, '_decker_attachment_link_labels', true ) );
 
 		$this->assertEquals( 'archived', $source_post->post_status );
 		$this->assertEquals(

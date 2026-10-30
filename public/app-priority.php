@@ -253,6 +253,7 @@ if ( ! $has_today_tasks ) {
 															?>
 																		"
 															   data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>"
+															   title="<?php echo esc_attr( $task->title ); ?>"
 															   class="task-title-link d-block">
 																<?php echo esc_html( $task->title ); ?>
 															</a>
@@ -313,13 +314,8 @@ if ( ! $has_today_tasks ) {
 												?>
 												<tr>
 													<td><?php echo wp_kses_post( $board ); ?></td>
-													<td class="descripcion" title="<?php echo esc_attr( $task->title ); ?>">
-														<?php
-														// The title keeps the 150px cap it has always had, moved
-														// onto its own span so the subtask counter beside it is
-														// not swallowed by the ellipsis.
-														?>
-														<span class="d-inline-block align-middle text-truncate" style="max-width: 150px;">
+													<td class="descripcion">
+														<span class="align-middle">
 																				   <?php echo wp_kses_post( Decker_Tasks::get_stack_icon_html( $task->stack ) ); ?>
 															<a href="
 															<?php
@@ -333,7 +329,7 @@ if ( ! $has_today_tasks ) {
 																)
 															);
 															?>
-																		" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>">
+																		" data-bs-toggle="modal" data-bs-target="#task-modal" data-task-id="<?php echo esc_attr( $task->ID ); ?>" title="<?php echo esc_attr( $task->title ); ?>">
 																<?php echo esc_html( $task->title ); ?>
 															</a>
 														</span>

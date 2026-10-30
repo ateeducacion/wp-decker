@@ -135,6 +135,9 @@ class DeckerAppTaskFullTest extends Decker_Test_Base {
 		update_post_meta( $attachment_id, '_wp_attached_file', 'reference.pdf' );
 		$link_url = 'https://example.org/document?a=1&b=2';
 		add_post_meta( $task_id, '_decker_attachment_link', $link_url );
+		$titled_url = 'https://example.org/acta.pdf';
+		add_post_meta( $task_id, '_decker_attachment_link', $titled_url );
+		update_post_meta( $task_id, '_decker_attachment_link_labels', array( $titled_url => 'Acta de marzo' ) );
 
 		set_query_var( 'id', $task_id );
 		$output = $this->render_task_page();
@@ -169,7 +172,7 @@ class DeckerAppTaskFullTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'data-comment-id="' . $comment_id . '"', $output );
 
 		// Files and links share the list and count, while retaining their own actions.
-		$this->assertStringContainsString( 'id="attachment-count">2<', $output );
+		$this->assertStringContainsString( 'id="attachment-count">3<', $output );
 		$this->assertStringContainsString( 'data-attachment-id="' . $attachment_id . '"', $output );
 		$this->assertStringContainsString( 'Reference.pdf', $output );
 		$this->assertStringContainsString( 'ri-file-line', $output );
@@ -177,6 +180,13 @@ class DeckerAppTaskFullTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'href="' . esc_url( $link_url ) . '" target="_blank" rel="noopener noreferrer"', $output );
 		$this->assertStringContainsString( esc_html( $link_url ), $output );
 		$this->assertStringContainsString( 'ri-link', $output );
+
+		// A link with a title shows it instead of the URL, which drops to a caption.
+		$this->assertStringContainsString( 'Acta de marzo', $output );
+		$this->assertMatchesRegularExpression(
+			'/Acta de marzo<\/span>\s*<span class="text-muted[^"]*">' . preg_quote( esc_html( $titled_url ), '/' ) . '</',
+			$output
+		);
 
 		// An unlocked task is editable: no lock banner, and the today quick action shows.
 		$this->assertStringNotContainsString( 'decker-lock-banner', $output );

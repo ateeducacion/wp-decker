@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-29T23:37:22+00:00\n"
+"PO-Revision-Date: 2026-10-30T10:40:30+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -2227,14 +2227,20 @@ msgstr "Enlace"
 msgid "URL"
 msgstr "URL"
 
+msgid "Title (optional)"
+msgstr "Título (opcional)"
+
+msgid "Link title (optional)"
+msgstr "Título del enlace (opcional)"
+
 msgid "Upload"
 msgstr "Subir"
 
 msgid "Add link"
 msgstr "Añadir enlace"
 
-msgid "Use a complete HTTP or HTTPS URL."
-msgstr "Utiliza una URL completa HTTP o HTTPS."
+msgid "Use a complete HTTP or HTTPS URL. Leave the title empty to show the URL."
+msgstr "Usa una URL HTTP o HTTPS completa. Deja el título vacío para mostrar la URL."
 
 msgid "Save the task before adding attachments."
 msgstr "Guarda la tarea antes de añadir adjuntos."
