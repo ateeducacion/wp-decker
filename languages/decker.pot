@@ -2194,13 +2194,19 @@ msgstr ""
 msgid "URL"
 msgstr ""
 
+msgid "Title (optional)"
+msgstr ""
+
+msgid "Link title (optional)"
+msgstr ""
+
 msgid "Upload"
 msgstr ""
 
 msgid "Add link"
 msgstr ""
 
-msgid "Use a complete HTTP or HTTPS URL."
+msgid "Use a complete HTTP or HTTPS URL. Leave the title empty to show the URL."
 msgstr ""
 
 msgid "Save the task before adding attachments."

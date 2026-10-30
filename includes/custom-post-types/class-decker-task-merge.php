@@ -253,6 +253,18 @@ class Decker_Task_Merge {
 				add_post_meta( $destination_task_id, '_decker_attachment_link', wp_slash( $url ) );
 			}
 		}
+
+		// The link titles live in a url => title map beside the links, so they
+		// travel with them; the destination's own titles win on a shared URL.
+		$source_labels      = get_post_meta( $source_task_id, '_decker_attachment_link_labels', true );
+		$destination_labels = get_post_meta( $destination_task_id, '_decker_attachment_link_labels', true );
+		$merged_labels      = ( is_array( $destination_labels ) ? $destination_labels : array() )
+			+ ( is_array( $source_labels ) ? $source_labels : array() );
+		if ( ! empty( $merged_labels ) ) {
+			update_post_meta( $destination_task_id, '_decker_attachment_link_labels', wp_slash( $merged_labels ) );
+		}
+
+		delete_post_meta( $source_task_id, '_decker_attachment_link_labels' );
 		delete_post_meta( $source_task_id, '_decker_attachment_link' );
 		delete_post_meta( $source_task_id, 'attachments' );
 	}

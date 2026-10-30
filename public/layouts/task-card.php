@@ -386,6 +386,10 @@ require_once __DIR__ . '/partials/task-comments.php';
 
 			$attachments = $task_id ? get_attached_media( '', $task_id ) : array();
 			$attachment_links = $task_id ? get_post_meta( $task_id, '_decker_attachment_link' ) : array();
+			// Titles live in a url => title map beside the links, so a link
+			// without one keeps rendering its URL exactly as it always did.
+			$attachment_link_labels = $task_id ? get_post_meta( $task_id, '_decker_attachment_link_labels', true ) : array();
+			$attachment_link_labels = is_array( $attachment_link_labels ) ? $attachment_link_labels : array();
 
 			?>
 			<span class="badge bg-light text-dark" id="attachment-count"><?php echo count( $attachments ) + count( $attachment_links ); ?></span>
@@ -525,10 +529,16 @@ require_once __DIR__ . '/partials/task-comments.php';
 							</div>
 						</li>
 					<?php endforeach; ?>
-					<?php foreach ( $attachment_links as $attachment_link ) : ?>
+					<?php
+					foreach ( $attachment_links as $attachment_link ) :
+						$attachment_link_label = isset( $attachment_link_labels[ $attachment_link ] ) ? $attachment_link_labels[ $attachment_link ] : '';
+						?>
 						<li class="list-group-item d-flex justify-content-between align-items-center" data-attachment-url="<?php echo esc_attr( $attachment_link ); ?>">
 							<a class="text-break me-2" href="<?php echo esc_url( $attachment_link, array( 'http', 'https' ) ); ?>" target="_blank" rel="noopener noreferrer">
-								<i class="ri-link me-2" aria-hidden="true"></i><?php echo esc_html( $attachment_link ); ?>
+								<i class="ri-link me-2" aria-hidden="true"></i><span class="attachment-link-text"><?php echo esc_html( '' !== $attachment_link_label ? $attachment_link_label : $attachment_link ); ?></span>
+								<?php if ( '' !== $attachment_link_label ) : ?>
+									<span class="text-muted d-block small"><?php echo esc_html( $attachment_link ); ?></span>
+								<?php endif; ?>
 							</a>
 							<button type="button" class="btn btn-sm btn-danger me-2 remove-attachment" <?php disabled( $disabled ); ?>><?php esc_html_e( 'Delete', 'decker' ); ?></button>
 						</li>
@@ -544,10 +554,11 @@ require_once __DIR__ . '/partials/task-comments.php';
 						</select>
 						<input type="file" id="file-input" class="form-control" aria-label="<?php esc_attr_e( 'File', 'decker' ); ?>" />
 						<input type="url" id="attachment-url" class="form-control" placeholder="https://" aria-label="<?php esc_attr_e( 'URL', 'decker' ); ?>" aria-describedby="attachment-url-help" disabled hidden />
+						<input type="text" id="attachment-link-label" class="form-control" maxlength="255" placeholder="<?php esc_attr_e( 'Title (optional)', 'decker' ); ?>" aria-label="<?php esc_attr_e( 'Link title (optional)', 'decker' ); ?>" aria-describedby="attachment-url-help" disabled hidden />
 						<button type="button" class="btn btn-success rounded-end" id="upload-file"><?php esc_html_e( 'Upload', 'decker' ); ?></button>
 						<button type="button" class="btn btn-success text-nowrap rounded-end" id="add-attachment-link" hidden><?php esc_html_e( 'Add link', 'decker' ); ?></button>
 					</div>
-					<small id="attachment-url-help" class="form-text" hidden><?php esc_html_e( 'Use a complete HTTP or HTTPS URL.', 'decker' ); ?></small>
+					<small id="attachment-url-help" class="form-text" hidden><?php esc_html_e( 'Use a complete HTTP or HTTPS URL. Leave the title empty to show the URL.', 'decker' ); ?></small>
 				</fieldset>
 				<?php if ( ! $task_id ) : ?>
 					<p class="form-text"><?php esc_html_e( 'Save the task before adding attachments.', 'decker' ); ?></p>

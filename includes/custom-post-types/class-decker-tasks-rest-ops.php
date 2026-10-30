@@ -76,6 +76,7 @@ class Decker_Tasks_Rest_Ops {
 						'type'     => 'string',
 						'required' => true,
 					),
+					'label'           => array( 'type' => 'string' ),
 					'lock_generation' => array( 'type' => 'string' ),
 				),
 			),
@@ -207,9 +208,11 @@ class Decker_Tasks_Rest_Ops {
 			return new WP_Error( 'decker_invalid_link', __( 'Please enter a valid HTTP or HTTPS URL.', 'decker' ), array( 'status' => 400 ) );
 		}
 
-		$key = '_decker_attachment_link';
+		$key   = '_decker_attachment_link';
+		$label = sanitize_text_field( (string) $request->get_param( 'label' ) );
 		if ( 'DELETE' === $request->get_method() ) {
 			$changed = delete_post_meta( $task_id, $key, $url );
+			$label   = '';
 		} else {
 			if ( in_array( $url, get_post_meta( $task_id, $key ), true ) ) {
 				return new WP_Error( 'decker_duplicate_link', __( 'This link is already attached.', 'decker' ), array( 'status' => 409 ) );
@@ -219,8 +222,42 @@ class Decker_Tasks_Rest_Ops {
 		if ( ! $changed ) {
 			return new WP_Error( 'decker_link_not_saved', __( 'Could not update the attachment link.', 'decker' ), array( 'status' => 500 ) );
 		}
+		$this->store_attachment_link_label( $task_id, $url, $label );
 
-		return new WP_REST_Response( array( 'url' => $url ), 200 );
+		return new WP_REST_Response(
+			array(
+				'url'   => $url,
+				'label' => $label,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Write a link's display title into the task's url => title map.
+	 *
+	 * The URL stays the meta value of _decker_attachment_link, so deleting a
+	 * link by value and the merge dedupe keep working untouched; an empty
+	 * title drops the entry and leaves pre-existing links rendering their URL.
+	 *
+	 * @param int    $task_id The task ID.
+	 * @param string $url     The link URL.
+	 * @param string $label   The sanitized title, empty to drop the entry.
+	 * @return void
+	 */
+	private function store_attachment_link_label( $task_id, $url, $label ) {
+		$key    = '_decker_attachment_link_labels';
+		$labels = get_post_meta( $task_id, $key, true );
+		$labels = is_array( $labels ) ? $labels : array();
+		if ( '' === $label ) {
+			if ( ! isset( $labels[ $url ] ) ) {
+				return;
+			}
+			unset( $labels[ $url ] );
+		} else {
+			$labels[ $url ] = $label;
+		}
+		update_post_meta( $task_id, $key, wp_slash( $labels ) );
 	}
 
 	/**
