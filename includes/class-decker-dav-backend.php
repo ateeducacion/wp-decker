@@ -129,7 +129,7 @@ class Decker_Dav_Backend extends Sabre\CalDAV\Backend\AbstractBackend {
 		if ( ! current_user_can( 'publish_posts' ) || ! preg_match( '/^[^\/\\\\\x00-\x1f]{1,200}\.ics$/D', $object_uri ) ) {
 			throw new Sabre\DAV\Exception\Forbidden(); }
 		if ( $this->getCalendarObject( $calendar_id, $object_uri ) ) {
-			throw new Sabre\DAV\Exception\PreconditionFailed(); }
+			throw new Sabre\DAV\Exception\PreconditionFailed( 'Resource already exists.' ); }
 		$uid = (string) Decker_Event_Store::master( Decker_Event_Store::parse( $calendar_data ) )->{'UID'};
 		foreach ( $this->getCalendarObjects( $calendar_id ) as $object ) {
 			if ( (string) Decker_Event_Store::master( Decker_Event_Store::parse( $object['calendardata'] ) )->{'UID'} === $uid ) {

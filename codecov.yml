@@ -1,19 +1,16 @@
-# Codecov configuration.
-#
-# Statuses are informational: Codecov comments the coverage of every pull
-# request but never marks it as failed. A large part of this plugin can only be
-# exercised with a full WordPress environment loaded, so a blocking threshold
-# would measure what is testable rather than what is well done.
-#
-# To make these blocking, set `informational: false`.
+# Codecov enforces at least 90% coverage for both the project and changed lines.
 coverage:
   status:
     project:
       default:
-        informational: true
+        target: 90%
+        threshold: 0%
+        informational: false
     patch:
       default:
-        informational: true
+        target: 90%
+        threshold: 0%
+        informational: false
 
 # PHPUnit runs inside the wp-env container, where the plugin lives under
 # /var/www/html/wp-content/plugins/decker, and Clover records those absolute
