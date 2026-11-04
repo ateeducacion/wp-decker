@@ -130,7 +130,7 @@ class Decker_Calendar_Ical_Feed {
 			header( 'Content-Type: text/calendar; charset=utf-8' );
 			header( 'Content-Disposition: attachment; filename="decker-calendar.ics"' );
 			// Ignore browser caching; we cache server-side using transients.
-			header( 'Cache-Control: no-cache, must-revalidate' );
+			header( 'Cache-Control: private, no-store' );
 			header( 'Expires: Sat, 26 Jul 1997 05:00:00 GMT' ); // Date in past.
 			header( 'Pragma: no-cache' );
 		}
@@ -152,14 +152,14 @@ class Decker_Calendar_Ical_Feed {
 	 *
 	 * Mirrors get_calendar_permissions_check() so the iCal endpoint and the REST
 	 * route agree: logged-in users with the 'read' capability are allowed,
-	 * otherwise a valid per-user 'decker_calendar_token' is required.
+	 * otherwise a valid per-user 'decker_calendar_read_token' is required.
 	 *
 	 * @return bool True if access is granted, false otherwise.
 	 */
 	private function can_access_ical_feed() {
 
 		// Allow logged-in users with the read capability.
-		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
+		if ( is_user_logged_in() && Decker_Dav::allowed() ) {
 			return true;
 		}
 
@@ -171,15 +171,15 @@ class Decker_Calendar_Ical_Feed {
 
 		$users = get_users(
 			array(
-				'meta_key'   => 'decker_calendar_token',
+				'meta_key'   => 'decker_calendar_read_token',
 				'meta_value' => $token,
 				'number'     => 1,
 			)
 		);
 
 		if ( ! empty( $users ) ) {
-			$stored = get_user_meta( $users[0]->ID, 'decker_calendar_token', true );
-			if ( hash_equals( (string) $stored, $token ) ) {
+			$stored = get_user_meta( $users[0]->ID, 'decker_calendar_read_token', true );
+			if ( hash_equals( (string) $stored, $token ) && user_can( $users[0], 'edit_posts' ) && ( ! is_multisite() || is_user_member_of_blog( $users[0]->ID ) ) ) {
 				return true;
 			}
 		}

@@ -12,9 +12,8 @@
 /**
  * Stateless iCal serializer extracted from Decker_Calendar::generate_ical().
  *
- * The byte-level output of this class is asserted by the DeckerCalendarICS*
- * test suites; keep the string assembly (terminators, folding rules, escaping)
- * identical to the original implementation.
+ * Event components come from the canonical store. Tasks retain their read-only
+ * representation and never acquire a DAV resource.
  */
 final class Decker_Ical_Builder {
 
@@ -116,15 +115,22 @@ final class Decker_Ical_Builder {
 	 * @return string
 	 */
 	private function build_vevent( $event, $type ) {
+		if ( 'event' === ( $event['type'] ?? '' ) && get_post_type( $event['post_id'] ) === 'decker_event' ) {
+			$calendar = Decker_Event_Store::parse( Decker_Event_Store::resource( $event['post_id'] ) );
+			$output = '';
+			foreach ( $calendar->getComponents() as $component ) {
+				$output .= $component->serialize(); }
+			return $output;
+		}
 		$ical  = "BEGIN:VEVENT\r\n";
 		$ical .= 'UID:' . $event['id'] . "@decker\r\n";
 		// Important to let the clients to update an event if modified.
 		$ical .= 'SEQUENCE:' . get_post_modified_time( 'U', true, $event['post_id'] ) . "\r\n";
-		$ical .= 'DTSTAMP:' . gmdate( 'Ymd\THis\Z' ) . "\r\n";
+		$ical .= 'DTSTAMP:' . get_post_modified_time( 'Ymd\THis\Z', true, $event['post_id'] ) . "\r\n";
 
 		$ical .= $this->build_vevent_dates( $event );
 
-		$ical .= 'SUMMARY:' . $this->ical_escape( $this->build_summary_prefix( $event, $type ) . $event['title'] ) . "\r\n";
+		$ical .= 'SUMMARY:' . $this->ical_escape( $event['title'] ) . "\r\n";
 
 		// Split description into 75 character chunks.
 		$ical .= $this->fold_ical_property( 'DESCRIPTION', $this->ical_escape( $event['description'] ) );
@@ -154,12 +160,9 @@ final class Decker_Ical_Builder {
 
 		// Format dates for all-day events or with time.
 		if ( ! empty( $event['allDay'] ) && ( true === $event['allDay'] || '1' === $event['allDay'] || 1 === $event['allDay'] ) ) {
-			// For all-day events, use format VALUE=DATE and DTEND on the next day.
-			// Per RFC 5545 DTEND;VALUE=DATE is exclusive, so emit the day after
-			// the stored (inclusive) end date. This also makes single-day all-day
-			// events span exactly one day (DTEND = DTSTART + 1 day).
+			// All-day ends already use the exclusive RFC 5545 boundary.
 			$start_date = gmdate( 'Ymd', strtotime( $event['start'] ) );
-			$end_date   = gmdate( 'Ymd', strtotime( $event['end'] ) + DAY_IN_SECONDS );
+			$end_date   = gmdate( 'Ymd', strtotime( $event['end'] ) );
 
 			return 'DTSTART;VALUE=DATE:' . $start_date . "\r\n"
 				. 'DTEND;VALUE=DATE:' . $end_date . "\r\n";
@@ -170,33 +173,6 @@ final class Decker_Ical_Builder {
 
 		return 'DTSTART:' . $start . "\r\n"
 			. 'DTEND:' . $end . "\r\n";
-	}
-
-	/**
-	 * Build the assigned-users prefix for the SUMMARY (events only, not tasks).
-	 *
-	 * @param array  $event Event data.
-	 * @param string $type  Event type.
-	 * @return string The display-name list followed by ' » ', or '' when no prefix applies.
-	 */
-	private function build_summary_prefix( $event, $type ) {
-		if ( empty( $type ) || empty( $event['assigned_users'] ) ) {
-			return '';
-		}
-
-		$display_names = array();
-		foreach ( $event['assigned_users'] as $user_id ) {
-			$user = get_userdata( $user_id );
-			if ( $user && $user->user_email ) {
-
-				// Collect display names.
-				$display_names[] = $user->display_name;
-
-			}
-		}
-
-		// We use » because : had encoding problems in iCal.
-		return implode( ', ', $display_names ) . ' » ';
 	}
 
 	/**

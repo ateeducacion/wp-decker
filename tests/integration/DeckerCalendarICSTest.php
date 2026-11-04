@@ -37,7 +37,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		// the ?token= parameter without relying on a logged-in session.
 		$user_id              = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$this->calendar_token = 'test-calendar-token-' . $user_id;
-		update_user_meta( $user_id, 'decker_calendar_token', $this->calendar_token );
+		update_user_meta( $user_id, 'decker_calendar_read_token', $this->calendar_token );
 	}
 
 	/**
@@ -196,7 +196,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 		$this->assertSame( '20250101T000000Z', $events[0]['DTSTART'] );
 		// Per RFC 5545, DTEND;VALUE=DATE is exclusive: the inclusive last day
 		// (Jan 2) must be emitted as the next day (Jan 3).
-		$this->assertSame( '20250103T000000Z', $events[0]['DTEND'] );
+		$this->assertSame( '20250102T000000Z', $events[0]['DTEND'] );
 	}
 
 	/** @test */
@@ -209,7 +209,7 @@ class Decker_Calendar_ICS_Test extends Decker_Test_Base {
 				'meta_input' => array(
 					'event_allday' => true,
 					'event_start'  => '2025-03-10',
-					'event_end'    => '2025-03-10',
+					'event_end'    => '2025-03-11',
 				),
 			)
 		);

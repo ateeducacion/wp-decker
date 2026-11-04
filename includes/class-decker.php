@@ -166,6 +166,12 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-writer.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks.php';
 
+		require_once plugin_dir_path( __DIR__ ) . 'admin/vendor/dav/vendor/autoload.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-ical-validator.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-event-dates.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-event-store.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-dav.php';
+		Decker_Dav::register();
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-meta-saver.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-admin-screen.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-event-meta-box.php';

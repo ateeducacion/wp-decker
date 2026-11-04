@@ -71,6 +71,10 @@ $allday = isset( $meta['event_allday'][0] ) ? $meta['event_allday'][0] : '';
 
 $start_raw = $event_id ? $meta['event_start'][0] ?? '' : '';
 $end_raw   = $event_id ? $meta['event_end'][0] ?? '' : '';
+if ( $allday && $end_raw ) {
+	$end_raw = ( new DateTimeImmutable( substr( $end_raw, 0, 10 ), new DateTimeZone( 'UTC' ) ) )->modify( '-1 day' )->format( 'Y-m-d' );
+}
+
 
 /**
  * Function to round to the nearest half hour.

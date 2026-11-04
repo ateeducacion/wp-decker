@@ -73,29 +73,16 @@ class Decker_User_Extended {
 	 */
 	private function render_calendar_token_script( $user ) {
 		?>
-		<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				$('#generate-calendar-token').on('click', function() {
-					$.ajax({
-						url: ajaxurl,
-						type: 'POST',
-						data: {
-							action: 'generate_calendar_token',
-							user_id: <?php echo esc_js( $user->ID ); ?>,
-							nonce: '<?php echo esc_js( wp_create_nonce( 'generate_calendar_token' ) ); ?>',
-							action: 'generate_calendar_token'
-						},
-						success: function(response) {
-							if (response.success) {
-								$('#decker_calendar_token').val(response.data.token);
-								// Update calendar URL in description
-								const calendarUrl = '<?php echo esc_js( esc_url( home_url( 'decker-calendar' ) ) ); ?>?token=' + response.data.token;
-								$('#decker_calendar_token').closest('td').find('.description code').text(calendarUrl);
-							}
-						}
-					});
+		<script>
+		jQuery(function($) {
+			$('#generate-calendar-token, #revoke-calendar-token').on('click', function() {
+				$.post(ajaxurl, {action: 'generate_calendar_token', user_id: <?php echo (int) $user->ID; ?>,
+					nonce: '<?php echo esc_js( wp_create_nonce( 'generate_calendar_token' ) ); ?>',
+					revoke: this.id === 'revoke-calendar-token' ? '1' : '0'}, function(response) {
+					if (response.success) { window.location.reload(); }
 				});
 			});
+		});
 		</script>
 		<?php
 	}
@@ -106,79 +93,23 @@ class Decker_User_Extended {
 	 * @param WP_User $user The user object.
 	 */
 	private function render_calendar_token_row( $user ) {
+		$token = get_user_meta( $user->ID, 'decker_calendar_dav_enabled', true ) ? get_user_meta( $user->ID, 'decker_calendar_token', true ) : '';
+		$read_token = get_user_meta( $user->ID, 'decker_calendar_read_token', true );
 		?>
-			<!-- Calendar Token Field -->
-			<tr>
-				<th><label for="decker_calendar_token"><?php esc_html_e( 'Calendar Token', 'decker' ); ?></label></th>
-				<td>
-					<?php
-					$calendar_token = get_user_meta( $user->ID, 'decker_calendar_token', true );
-					if ( empty( $calendar_token ) ) {
-						$calendar_token = wp_generate_uuid4();
-					}
-					?>
-					<input type="text" name="decker_calendar_token" id="decker_calendar_token" 
-						value="<?php echo esc_attr( $calendar_token ); ?>" class="regular-text" readonly />
-					<button type="button" class="button" id="generate-calendar-token">
-						<?php esc_html_e( 'Generate New Token', 'decker' ); ?>
-					</button>
-					<br />
-					<span class="description">
-						<?php
-						$calendar_url = add_query_arg( 'token', $calendar_token, home_url( 'decker-calendar' ) );
-						$webcal_url = str_replace( 'http://', 'webcal://', $calendar_url );
-						$webcal_url = str_replace( 'https://', 'webcal://', $webcal_url );
-
-						echo '<div class="calendar-links" style="margin-top: 10px;">';
-						echo '<p style="margin-bottom: 5px;">' . esc_html__( 'Subscribe to Decker calendar:', 'decker' ) . '</p>';
-						echo '<a href="' . esc_url( 'https://www.google.com/calendar/render?cid=' . urlencode( $webcal_url ) ) . '" 
-								class="button" target="_blank" rel="noopener noreferrer">
-								<span class="dashicons dashicons-google" style="vertical-align: middle;"></span> ' .
-								esc_html__( 'Google Calendar', 'decker' ) . '</a> ';
-
-						echo '<a href="' . esc_url( $webcal_url ) . '" 
-								class="button" target="_blank" rel="noopener noreferrer">
-								<span class="dashicons dashicons-calendar-alt" style="vertical-align: middle;"></span> ' .
-								esc_html__( 'iCalendar', 'decker' ) . '</a> ';
-
-						echo '<a href="' . esc_url(
-							'https://outlook.office.com/owa?path=/calendar/action/compose&rru=addsubscription&url=' .
-							urlencode( $webcal_url ) . '&name=' . urlencode( get_bloginfo( 'name' ) . ' - ' . __( 'Calendar', 'decker' ) )
-						) . '" 
-								class="button" target="_blank" rel="noopener noreferrer">
-								<span class="dashicons dashicons-calendar" style="vertical-align: middle;"></span> ' .
-								esc_html__( 'Outlook 365', 'decker' ) . '</a> ';
-
-						echo '<a href="' . esc_url( add_query_arg( 'export', '1', $calendar_url ) ) . '" 
-								class="button" target="_blank" rel="noopener noreferrer">
-								<span class="dashicons dashicons-download" style="vertical-align: middle;"></span> ' .
-								esc_html__( 'Export .ics file', 'decker' ) . '</a>';
-												echo '</div>';
-
-											   $types = array(
-												   'event'  => __( 'Events', 'decker' ),
-												   'absence' => __( 'Absences', 'decker' ),
-												   'warning'  => __( 'Warnings', 'decker' ),
-												   // 'alert'    => __( 'Alert', 'decker' ),
-											   );
-											   echo '<div class="calendar-links" style="margin-top:10px;">';
-											   echo '<p style="margin-bottom:5px;">' . esc_html__( 'Event type feeds:', 'decker' ) . '</p>';
-											   foreach ( $types as $slug => $label ) {
-													$type_url = add_query_arg(
-														array(
-															'token' => $calendar_token,
-															'type'  => $slug,
-														),
-														home_url( 'decker-calendar' )
-													);
-													   $type_url = str_replace( array( 'http://', 'https://' ), 'webcal://', $type_url );
-													   echo '<p><strong>' . esc_html( $label ) . ':</strong> <code>' . esc_url( $type_url ) . '</code></p>';
-											   }
-											   echo '</div>';
-												?>
-					</span>
-				</td>
-			</tr>
+		<tr><th><?php esc_html_e( 'CalDAV synchronization', 'decker' ); ?></th><td>
+		<p><?php esc_html_e( 'Server URL', 'decker' ); ?>: <code><?php echo esc_url( Decker_Dav::url() ); ?></code></p>
+		<p><?php esc_html_e( 'Username', 'decker' ); ?>: <code><?php echo esc_html( $user->user_login ); ?></code></p>
+		<label for="decker_calendar_token"><?php esc_html_e( 'Calendar token (password)', 'decker' ); ?></label>
+		<input id="decker_calendar_token" type="text" readonly class="regular-text" value="<?php echo esc_attr( $token ); ?>">
+		<button type="button" class="button" id="generate-calendar-token"><?php esc_html_e( 'Generate New Token', 'decker' ); ?></button>
+		<button type="button" class="button" id="revoke-calendar-token"><?php esc_html_e( 'Revoke calendar access', 'decker' ); ?></button>
+		<p><?php esc_html_e( 'Generate a new token to enable editing. Regeneration or revocation immediately disconnects existing clients and subscriptions. Signing out of CAS does not revoke this token.', 'decker' ); ?></p>
+		<p><?php esc_html_e( 'iPhone: add a CalDAV account in Calendar settings. Android: add an account with URL and username in DAVx⁵. Use the token as password, enable SSL, and select the Decker calendar when creating events.', 'decker' ); ?></p>
+		<p><?php esc_html_e( 'ICS subscription (read only)', 'decker' ); ?>:
+		<?php if ( $read_token ) : ?>
+		<code><?php echo esc_url( add_query_arg( 'token', $read_token, home_url( '/decker-calendar/' ) ) ); ?></code>
+		<?php endif; ?></p>
+		</td></tr>
 		<?php
 	}
 
@@ -389,9 +320,18 @@ class Decker_User_Extended {
 			wp_send_json_error();
 		}
 
-		$new_token = wp_generate_uuid4();
-		update_user_meta( $user_id, 'decker_calendar_token', $new_token );
-
+		$revoke = isset( $_POST['revoke'] ) && '1' === $_POST['revoke'];
+		$new_token = $revoke ? '' : wp_generate_password( 48, false );
+		update_user_meta( $user_id, 'decker_calendar_dav_enabled', false );
+		if ( $revoke ) {
+			delete_user_meta( $user_id, 'decker_calendar_token' );
+			delete_user_meta( $user_id, 'decker_calendar_read_token' );
+		} else {
+			if ( ! update_user_meta( $user_id, 'decker_calendar_token', $new_token ) || ! update_user_meta( $user_id, 'decker_calendar_read_token', wp_generate_password( 48, false ) ) ) {
+				wp_send_json_error();
+			}
+			update_user_meta( $user_id, 'decker_calendar_dav_enabled', true );
+		}
 		wp_send_json_success( array( 'token' => $new_token ) );
 	}
 }

@@ -54,6 +54,7 @@ class Decker_Events {
 
 		// Add columns to admin.
 
+		add_filter( 'rest_pre_insert_decker_event', array( $this, 'validate_calendar_input' ), 10, 2 );
 		add_action( 'rest_after_insert_decker_event', array( $this, 'rest_fix_datetime_meta' ), 10, 3 );
 	}
 
@@ -117,7 +118,6 @@ class Decker_Events {
 				'sanitize_callback' => array( __CLASS__, 'sanitize_event_datetime' ),
 				'schema' => array(
 					'type' => 'string',
-					'format' => 'date-time',
 				),
 			),
 			'event_end' => array(
@@ -125,7 +125,6 @@ class Decker_Events {
 				'sanitize_callback' => array( __CLASS__, 'sanitize_event_datetime' ),
 				'schema' => array(
 					'type' => 'string',
-					'format' => 'date-time',
 				),
 			),
 			'event_location' => array(
@@ -253,57 +252,41 @@ class Decker_Events {
 		}
 	}
 
+	/** Reject invalid dates before WordPress persists any part of a REST write.
+	 *
+	 * @param object          $prepared Prepared post.
+	 * @param WP_REST_Request $request Request.
+	 * @return object|WP_Error
+	 */
+	public function validate_calendar_input( $prepared, $request ) {
+		$id = (int) $request->get_param( 'id' );
+		$meta = (array) $request->get_param( 'meta' );
+		if ( ! array_intersect( array_keys( $meta ), array( 'event_start', 'event_end', 'event_allday' ) ) ) {
+			return $prepared; }
+		try {
+			$stored = $id ? get_post_meta( $id, '_decker_ical', true ) : '';
+			$calendar = $stored ? Decker_Event_Store::parse( $stored ) : new Sabre\VObject\Component\VCalendar();
+			if ( ! $stored ) {
+				$calendar->add( 'VEVENT' ); }
+			Decker_Event_Store::patch_dates( $id, $calendar, $meta );
+		} catch ( Throwable $error ) {
+			return new WP_Error( 'invalid_calendar_dates', __( 'Invalid calendar dates.', 'decker' ), array( 'status' => 400 ) );
+		}
+		return $prepared;
+	}
+
 	/**
-	 * Normalize date metadata after a REST operation.
+	 * Apply the shared calendar projection after a validated REST write.
 	 *
-	 * – For all-day: trim the time.
-	 * – For timed events:
-	 *     · Convert ISO ('T…Z') to 'Y-m-d H:i:s'.
-	 *     · If only the date arrives, add '00:00:00'.
-	 *     · If end ≤ start, adjust end = start + 1h.
-	 *
-	 * @param WP_Post         $post the post.
-	 * @param WP_REST_Request $request the request.
-	 * @param bool            $update is updating.
+	 * @param WP_Post         $post Saved post.
+	 * @param WP_REST_Request $request REST request.
+	 * @param bool            $update Whether this updates an existing post.
 	 */
 	public function rest_fix_datetime_meta( $post, $request, $update ) {
 
-		$allday = get_post_meta( $post->ID, 'event_allday', true );
-
-		// 1. All‑day  →   YYYY‑MM‑DD.
-		if ( '1' === $allday ) {
-			foreach ( array( 'event_start', 'event_end' ) as $key ) {
-				$val = get_post_meta( $post->ID, $key, true );
-				update_post_meta( $post->ID, $key, substr( $val, 0, 10 ) );
-			}
-			return;
-		}
-
-		// 2. Timed events.
-		$start = get_post_meta( $post->ID, 'event_start', true );
-		$end   = get_post_meta( $post->ID, 'event_end', true );
-
-		// a) ISO → space.
-		foreach ( array(
-			'start' => 'event_start',
-			'end' => 'event_end',
-		) as $var => $meta ) {
-			$$var = preg_match( '/Z$/', $$var )
-			? str_replace( array( 'T', 'Z' ), array( ' ', '' ), $$var )
-			: $$var;
-
-						// b) date only → midnight.
-			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $$var ) ) {
-				$$var .= ' 00:00:00';
-			}
-
-			update_post_meta( $post->ID, $meta, $$var );
-		}
-
-		   // c) end empty or ≤ start  →  +1h.
-		if ( ! $end || strtotime( $end ) <= strtotime( $start ) ) {
-			$end = gmdate( 'Y-m-d H:i:s', strtotime( $start ) + HOUR_IN_SECONDS );
-			update_post_meta( $post->ID, 'event_end', $end );
+		$meta = $request->get_param( 'meta' );
+		if ( is_array( $meta ) ) {
+			Decker_Event_Store::web_meta( $post->ID, $meta );
 		}
 	}
 

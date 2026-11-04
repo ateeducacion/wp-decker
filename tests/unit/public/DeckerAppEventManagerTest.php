@@ -98,7 +98,7 @@ class DeckerAppEventManagerTest extends Decker_Test_Base {
 			array(
 				'event_allday'   => true,
 				'event_start'    => '2030-05-01 00:00:00',
-				'event_end'      => '2030-05-01 23:59:00',
+				'event_end'      => '2030-05-02',
 				'event_category' => 'bg-info',
 			)
 		);

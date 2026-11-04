@@ -115,33 +115,8 @@ class Decker_Calendar {
 	 */
 	public function get_calendar_permissions_check( $request ) {
 
-		// Check REST API nonce first.
-		$nonce = $request->get_header( 'X-WP-Nonce' );
-		if ( wp_verify_nonce( $nonce, 'wp_rest' ) ) {
-			return true;
-		}
-
-		// First check if user is logged in.
-		if ( is_user_logged_in() && current_user_can( 'read' ) ) {
-			return true;
-		}
-
-		// If not logged in, check for token.
-		$token = $request->get_param( 'token' );
-		if ( ! empty( $token ) ) {
-			// Look for a user with this calendar token.
-			$users = get_users(
-				array(
-					'meta_key' => 'decker_calendar_token',
-					'meta_value' => $token,
-					'number' => 1,
-				)
-			);
-
-			if ( ! empty( $users ) ) {
-				return true;
-			}
-		}
+		if ( Decker_Dav::allowed() ) {
+			return true; }
 
 		return new WP_Error(
 			'rest_forbidden',
@@ -158,8 +133,65 @@ class Decker_Calendar {
 	 */
 	public function get_calendar_json( $request ) {
 		$type   = $request->get_param( 'type' );
-		$events = $this->get_events( $type );
+		$events = $this->get_occurrences( $type, $request->get_param( 'start' ), $request->get_param( 'end' ) );
 		return rest_ensure_response( $events );
+	}
+
+	/** Expand recurrence only inside a bounded display window.
+	 *
+	 * @param string $type Type.
+	 * @param string $start Window start.
+	 * @param string $end Window end.
+	 * @return array|WP_Error
+	 * @throws \Sabre\DAV\Exception Invalid or forbidden calendar operation.
+	 */
+	public function get_occurrences( $type, $start, $end ) {
+		try {
+			$from = new DateTimeImmutable( $start ? $start : 'first day of this month', wp_timezone() );
+			$to = $end ? new DateTimeImmutable( $end ) : $from->modify( '+2 months' );
+			if ( $to <= $from || $to->getTimestamp() - $from->getTimestamp() > 370 * DAY_IN_SECONDS ) {
+				throw new Exception( 'Invalid window.' );
+			}
+			$rows = array();
+			foreach ( $this->get_events( $type ) as $row ) {
+				if ( 'event' !== $row['type'] ) {
+					$rows[] = $row;
+					continue; }
+				if ( ! current_user_can( 'read_post', $row['post_id'] ) ) {
+					continue; }
+				$rows = array_merge( $rows, $this->expand_event( $row, $from, $to ) );
+			}
+			return $rows;
+		} catch ( Throwable $error ) {
+			return new WP_Error( 'calendar_window', __( 'Unable to expand calendar in this interval.', 'decker' ), array( 'status' => 400 ) );
+		}
+	}
+
+	/** Map one shared resource to its displayed occurrences in the window.
+	 *
+	 * @param array             $row Calendar event metadata.
+	 * @param DateTimeImmutable $from Window start.
+	 * @param DateTimeImmutable $to Window end.
+	 * @return array
+	 */
+	private function expand_event( $row, $from, $to ) {
+		$calendar = Decker_Event_Store::parse( Decker_Event_Store::resource( $row['post_id'] ) );
+		$calendar = $calendar->expand( $from, $to, wp_timezone() );
+		$rows = array();
+		foreach ( $calendar->select( 'VEVENT' ) as $event ) {
+			if ( isset( $event->{'STATUS'} ) && 'CANCELLED' === (string) $event->{'STATUS'} ) {
+				continue;
+			}
+			$copy = $row;
+			$copy['allDay'] = ! $event->{'DTSTART'}->hasTime();
+			$format = $copy['allDay'] ? 'Y-m-d' : 'c';
+			$copy['start'] = $event->{'DTSTART'}->getDateTime()->format( $format );
+			$copy['end'] = Decker_Event_Store::end( $event )->format( $format );
+			$copy['title'] = (string) $event->{'SUMMARY'};
+			$copy['editable'] = ! isset( $event->{'RECURRENCE-ID'} );
+			$rows[] = $copy;
+		}
+		return $rows;
 	}
 
 	/**
@@ -286,8 +318,8 @@ class Decker_Calendar {
 					'title'          => $task->title,
 					'description'    => $task->description,
 					'allDay'         => true,
-					'start'          => $task->duedate->format( 'Y-m-d\TH:i:s' ),
-					'end'            => $task->duedate->format( 'Y-m-d\TH:i:s' ),
+					'start'          => $task->duedate->format( 'Y-m-d' ),
+					'end'            => ( clone $task->duedate )->modify( '+1 day' )->format( 'Y-m-d' ),
 					'color'          => $board_color,
 					'className'      => $board_color,
 					'max_priority'   => $task->max_priority,

@@ -495,7 +495,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 				'meta'  => array(
 					'event_allday' => true,
 					'event_start'  => '2025-01-01',
-					'event_end'    => '2025-01-01',
+					'event_end'    => '2025-01-02',
 				),
 			)
 		);
@@ -505,7 +505,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 
 		$this->assertEquals( 201, $response->get_status() );
 		$this->assertEquals( '2025-01-01', $data['meta']['event_start'] );
-		$this->assertEquals( '2025-01-01', $data['meta']['event_end'] );
+		$this->assertEquals( '2025-01-02', $data['meta']['event_end'] );
 	}
 
 	/**
@@ -559,7 +559,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 		);
 
 		$end          = get_post_meta( $event_id, 'event_end', true );
-		$expected_end = '2025-01-01 11:00:00';
+		$expected_end = '2025-01-01 10:00:00';
 
 		$this->assertEquals( $expected_end, $end );
 	}
@@ -568,6 +568,7 @@ class DeckerEventsRestTest extends WP_Test_REST_TestCase {
 	 * Test invalid date handling
 	 */
 	public function test_invalid_date_handling() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		update_option( 'timezone_string', 'UTC' );
 
 		$event_id = self::factory()->event->create(

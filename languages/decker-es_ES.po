@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-10-30T10:40:30+00:00\n"
+"PO-Revision-Date: 2026-11-04T07:29:46+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -459,6 +459,9 @@ msgstr "Alertas"
 msgid "You do not have permissions to access this data."
 msgstr "No tienes permisos para acceder a estos datos."
 
+msgid "Unable to expand calendar in this interval."
+msgstr "No se puede expandir el calendario en este intervalo."
+
 msgid "Warning"
 msgstr "Advertencia"
 
@@ -760,6 +763,9 @@ msgstr "Información"
 
 msgid "Dark"
 msgstr "Oscuro"
+
+msgid "Invalid calendar dates."
+msgstr "Las fechas del calendario no son válidas."
 
 msgctxt "post type general name"
 msgid "Events"
@@ -1163,32 +1169,32 @@ msgstr "Archivado"
 msgid "Archivado"
 msgstr "Archivado"
 
-msgid "Calendar Token"
-msgstr "Token del Calendario"
+msgid "CalDAV synchronization"
+msgstr "Sincronización CalDAV"
+
+msgid "Server URL"
+msgstr "URL del servidor"
+
+msgid "Username"
+msgstr "Nombre de usuario"
+
+msgid "Calendar token (password)"
+msgstr "Token de calendario (contraseña)"
 
 msgid "Generate New Token"
 msgstr "Generar Nuevo Token"
 
-msgid "Subscribe to Decker calendar:"
-msgstr "Suscribirse al calendario de Decker:"
+msgid "Revoke calendar access"
+msgstr "Revocar el acceso al calendario"
 
-msgid "Google Calendar"
-msgstr "Calendario de Google"
+msgid "Generate a new token to enable editing. Regeneration or revocation immediately disconnects existing clients and subscriptions. Signing out of CAS does not revoke this token."
+msgstr "Genera un token nuevo para habilitar la edición. Regenerarlo o revocarlo desconecta inmediatamente los clientes y las suscripciones existentes. Cerrar la sesión CAS no revoca este token."
 
-msgid "iCalendar"
-msgstr "iCalendar"
+msgid "iPhone: add a CalDAV account in Calendar settings. Android: add an account with URL and username in DAVx⁵. Use the token as password, enable SSL, and select the Decker calendar when creating events."
+msgstr "iPhone: añade una cuenta CalDAV en los ajustes de Calendario. Android: añade una cuenta con URL y nombre de usuario en DAVx⁵. Usa el token como contraseña, activa SSL y selecciona el calendario Decker al crear eventos."
 
-msgid "Calendar"
-msgstr "Calendario"
-
-msgid "Outlook 365"
-msgstr "Outlook 365"
-
-msgid "Export .ics file"
-msgstr "Exportar archivo .ics"
-
-msgid "Event type feeds:"
-msgstr "Calendarios por tipo de evento:"
+msgid "ICS subscription (read only)"
+msgstr "Suscripción ICS (solo lectura)"
 
 msgid "Select your favorite color."
 msgstr "Selecciona tu color favorito."
@@ -1368,6 +1374,9 @@ msgstr "Tareas por Estado"
 
 msgid "Tasks by Stack from current User"
 msgstr "Mis tareas por Estado"
+
+msgid "Calendar"
+msgstr "Calendario"
 
 msgid "Search..."
 msgstr "Buscar..."
