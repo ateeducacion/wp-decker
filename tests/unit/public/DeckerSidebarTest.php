@@ -10,8 +10,7 @@ class DeckerSidebarTest extends Decker_Test_Base {
 	/**
 	 * Test the theme customizer no longer offers a per-browser board status toggle.
 	 *
-	 * The indicators are a site-wide setting now, so the appearance panel, which
-	 * every user can reach, must not pretend otherwise.
+	 * The retired indicators must not appear in the appearance panel.
 	 */
 	public function test_right_sidebar_does_not_offer_a_board_status_toggle() {
 		ob_start();
@@ -91,84 +90,15 @@ class DeckerSidebarTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test board badges render only non-zero to-do and in-progress counts.
+	 * Retired options cannot restore board badges, while board links remain.
 	 */
-	public function test_left_sidebar_renders_board_status_badges() {
+	public function test_retired_board_setting_cannot_restore_badges() {
 		$this->seed_boards_with_counts();
-
+		update_option( 'decker_settings', array( 'sidebar_board_status' => '1' ) );
 		$output = $this->render_left_sidebar();
-
-		$this->assertStringContainsString(
-			'decker-sidebar-board-link',
-			$output
-		);
-		$this->assertStringContainsString(
-			'decker-sidebar-board-title',
-			$output
-		);
-		$this->assertStringContainsString(
-			'Infrastructure and Development',
-			$output
-		);
-		$this->assertStringContainsString(
-			'decker-sidebar-board-badges',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/decker-sidebar-board-status decker-sidebar-board-status-todo/',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/decker-sidebar-board-status decker-sidebar-board-status-in-progress/',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/ri-checkbox-blank-circle-line text-secondary/',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/ri-progress-3-line text-warning/',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/data-bs-original-title="To-Do"/',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/data-bs-original-title="In Progress"/',
-			$output
-		);
-		$this->assertMatchesRegularExpression(
-			'/<sup class="decker-sidebar-board-status-count">1<\/sup>/',
-			$output
-		);
-		$this->assertStringContainsString(
-			'Empty Board',
-			$output
-		);
-		$this->assertSame( 1, preg_match_all( '/decker-sidebar-board-badges/', $output ) );
-		$this->assertMatchesRegularExpression(
-			'/Infrastructure and Development.*decker-sidebar-board-badges/s',
-			$output
-		);
-		$this->assertDoesNotMatchRegularExpression(
-			'/<span class="decker-sidebar-board-title">Empty Board<\/span>(?:(?!<\/a>).)*decker-sidebar-board-badges/s',
-			$output
-		);
-	}
-
-	/**
-	 * Test the site-wide setting hides the badges for every user.
-	 */
-	public function test_left_sidebar_hides_board_status_badges_when_disabled() {
-		$this->seed_boards_with_counts();
-		update_option( 'decker_settings', array( 'sidebar_board_status' => '0' ) );
-
-		$output = $this->render_left_sidebar();
-
 		$this->assertStringNotContainsString( 'decker-sidebar-board-badges', $output );
-		// The boards themselves stay listed.
 		$this->assertStringContainsString( 'Infrastructure and Development', $output );
 		$this->assertStringContainsString( 'Empty Board', $output );
 	}
+
 }

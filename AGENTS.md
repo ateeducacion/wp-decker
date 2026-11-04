@@ -12,7 +12,7 @@ WordPress 6.1 and PHP 8.3. Keep `decker.php` as bootstrap, with domain classes i
   Do not raise the WordPress minimum merely to follow an upstream skill.
 - Task saves use the generation-token and takeover rules in `Decker_Task_Locks`
   and `Decker_Task_Lock_State`. Preserve stale-form rejection, including another
-  tab of the same user; locking stands down for explicitly enabled collaboration.
+  tab of the same user. Edit locking is always enforced.
 - Mail parser runtime code is copied by Composer into `admin/vendor/`; update the
   dependency/source, not the vendored copy.
 - Preserve existing classes, hooks and stored identifiers unless the task changes

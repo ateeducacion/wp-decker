@@ -23,7 +23,6 @@ Try Decker instantly in your browser using WordPress Playground. The demo includ
 - **Import from Nextcloud Deck** (one-way) through the API.
 - **AI Description Improvements**: Gemini Nano (browser) or Gemini API (server-side).
 - **Individual Calendar Feeds** for event types (Meeting, Absence, Warning, Alert).
-- **Collaborative editing** of tasks (optional, WebRTC).
 - **Email-to-post** endpoint.
 - Multisite support.
 - Follows WordPress Coding Standards.
@@ -34,7 +33,7 @@ Try Decker instantly in your browser using WordPress Playground. The demo includ
 1. Download the latest release from the [GitHub Releases page](https://github.com/ateeducacion/wp-decker/releases).
 2. Upload the ZIP via **Plugins → Add New → Upload Plugin**.
 3. Activate the plugin.
-4. Configure under **Settings → Decker** (AI provider, notifications, collaborative editing, etc.).
+4. Configure under **Settings → Decker** (AI provider, notifications, etc.).
 
 ## AI description improvements
 

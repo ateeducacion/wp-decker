@@ -111,11 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof window.destroyTaskEditor === 'function') {
             window.destroyTaskEditor();
         }
-
-        // Destroy collaborative editing session if active
-        if (window.DeckerCollaboration) {
-            window.DeckerCollaboration.destroyAll();
-        }
     }
 
     jQuery('#task-modal').on('hide.bs.modal', function (e) {

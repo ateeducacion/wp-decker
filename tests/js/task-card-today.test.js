@@ -119,14 +119,6 @@ describe( 'task-card today quick action', () => {
 		global.wpApiSettings = { nonce: 'nonce-123', root: 'http://x/wp-json/' };
 	} );
 
-	test( 'collaboration mapping excludes the personal today field', () => {
-		const start = SOURCE.indexOf( 'const FIELD_MAPPINGS' );
-		const end = SOURCE.indexOf( '];', start );
-		const mappings = SOURCE.slice( start, end );
-		expect( mappings ).not.toContain( 'task-today' );
-		expect( mappings ).toContain( 'task-title' );
-	} );
-
 	test( 'existing pristine unmarked task shows the add button and hides the checkbox', () => {
 		const context = buildDom( { marked: false } );
 		const button = context.querySelector( '#task-today-quick' );

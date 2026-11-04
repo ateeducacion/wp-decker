@@ -33,13 +33,9 @@ class Decker_Public_Assets {
 
 		$options                       = get_option( 'decker_settings', array() );
 		$task_editor_type              = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
-		$collaborative_editing_enabled = ! empty( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
-		$use_quill_editor              = $collaborative_editing_enabled || 'quill' === $task_editor_type;
+		$use_quill_editor              = 'quill' === $task_editor_type;
 
 		$resources = $this->build_resource_list( $decker_page, $use_quill_editor );
-
-		// Add collaborative editing module if enabled.
-		$this->maybe_enqueue_collaboration();
 
 		$localized_data = $this->build_localized_data( $task_editor_type, $use_quill_editor );
 
@@ -146,8 +142,6 @@ class Decker_Public_Assets {
 			$resources[] = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js';
 			$resources[] = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css';
 			$resources[] = 'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js';
-			$resources[] = 'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.min.js';
-			$resources[] = 'https://cdn.jsdelivr.net/npm/quill-cursors@4.1.0/dist/quill-cursors.css';
 		}
 
 		if ( 'board' == $decker_page ) {
@@ -620,60 +614,6 @@ class Decker_Public_Assets {
 				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
 			),
 			'prompts'          => Decker_AI_Manager::get_prompt_config( $options ),
-		);
-	}
-
-	/**
-	 * Enqueue collaborative editing module if enabled.
-	 *
-	 * Loads the Yjs-based collaboration module as an ES module.
-	 */
-	private function maybe_enqueue_collaboration() {
-		$options = get_option( 'decker_settings', array() );
-
-		// Check if collaborative editing is enabled.
-		if ( empty( $options['collaborative_editing'] ) || '1' !== $options['collaborative_editing'] ) {
-			return;
-		}
-
-		$current_user     = wp_get_current_user();
-		$signaling_server = ! empty( $options['signaling_server'] ) ? $options['signaling_server'] : 'wss://signaling.yjs.dev';
-
-		// Generate a user color based on user ID for consistency.
-		$colors     = array( '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9' );
-		$user_color = $colors[ $current_user->ID % count( $colors ) ];
-
-		// Prepare configuration for the collaboration module.
-		$collab_config = array(
-			'enabled'         => true,
-			'signalingServer' => esc_url( $signaling_server, array( 'wss', 'ws', 'https', 'http' ) ),
-			'roomPrefix'      => 'decker-task-' . sanitize_key( wp_parse_url( home_url(), PHP_URL_HOST ) ) . '-',
-			'userName'        => esc_js( $current_user->display_name ),
-			'userColor'       => $user_color,
-			'userId'          => $current_user->ID,
-			'userAvatar'      => esc_url( get_avatar_url( $current_user->ID, array( 'size' => 32 ) ) ),
-			'strings'         => array(
-				'connecting'         => __( 'Connecting...', 'decker' ),
-				'collaborative_mode' => __( 'Collaborative mode', 'decker' ),
-				'disconnected'       => __( 'Disconnected', 'decker' ),
-				'you'                => __( 'you', 'decker' ),
-			),
-		);
-
-		// Add inline script to set configuration before the module loads.
-		add_action(
-			'wp_footer',
-			function () use ( $collab_config ) {
-				$config_json = wp_json_encode( $collab_config );
-				$module_url  = esc_url( plugin_dir_url( __FILE__ ) . 'assets/js/decker-collaboration.js' );
-				?>
-				<script>
-					window.deckerCollabConfig = <?php echo $config_json; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
-				</script>
-				<script type="module" src="<?php echo $module_url; // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript,WordPress.Security.EscapeOutput.OutputNotEscaped -- ES modules require type="module" which wp_enqueue_script doesn't support ?>"></script>
-				<?php
-			},
-			100
 		);
 	}
 }
