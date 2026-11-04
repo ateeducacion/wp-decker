@@ -8,7 +8,7 @@ the Decker interface, the client may not do either.
 ## Configure and log in
 
 ```
-decker auth login --site https://example.org/medusa/gestionate/ \
+decker auth login --site https://example.org/work/tasks/ \
                   --cas https://login.example.org/cas/login \
                   --user your.username
 ```

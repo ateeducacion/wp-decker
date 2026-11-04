@@ -335,7 +335,6 @@ class Decker_Public_Assets {
 	 */
 	private function get_ui_strings() {
 		$strings = array(
-			// Common strings.
 			'confirm_delete_comment'        => __( 'Are you sure you want to delete this comment?', 'decker' ),
 			'failed_delete_comment'         => __( 'Failed to delete comment.', 'decker' ),
 			'error_deleting_comment'        => __( 'Error deleting comment.', 'decker' ),
@@ -362,7 +361,6 @@ class Decker_Public_Assets {
 			'ok'                            => __( 'OK', 'decker' ),
 			'cancel'                        => __( 'Cancel', 'decker' ),
 			'yes_delete'                    => __( 'Yes, delete', 'decker' ),
-			// Additional strings (from first version).
 			'confirm_archive_task_title'    => __( 'Are you sure you want to archive this task?', 'decker' ),
 			'confirm_archive_task_text'     => __( 'This action will move the task to the archive.', 'decker' ),
 			'confirm_unarchive_task_title'  => __( 'Are you sure you want to unarchive this task?', 'decker' ),
@@ -394,7 +392,6 @@ class Decker_Public_Assets {
 			'confirm_merge_task_button'     => __( 'Merge task', 'decker' ),
 			'task_merged_success'           => __( 'The task has been successfully merged.', 'decker' ),
 			'error_merging_task'            => __( 'An error occurred while merging the task.', 'decker' ),
-			// Extra keys from first version.
 			'success'                       => __( 'Success', 'decker' ),
 			'error'                         => __( 'Error', 'decker' ),
 			'today'                         => __( 'Today', 'decker' ),

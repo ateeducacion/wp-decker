@@ -502,17 +502,9 @@ class Decker_Tasks_Rest_Ops {
 	 * @return bool True when the request carries anything beyond a status transition.
 	 */
 	private function writes_task_content( $request ): bool {
-		foreach ( array_keys( $request->get_params() ) as $param ) {
-			if ( str_starts_with( (string) $param, '_' ) ) {
-				continue;
-			}
+		$params = preg_grep( '/^_/', array_keys( $request->get_params() ), PREG_GREP_INVERT );
 
-			if ( ! in_array( $param, self::CONTENTLESS_PARAMS, true ) ) {
-				return true;
-			}
-		}
-
-		return false;
+		return array_diff( $params, self::CONTENTLESS_PARAMS ) !== array();
 	}
 
 	/**

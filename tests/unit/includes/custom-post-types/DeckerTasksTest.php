@@ -264,6 +264,19 @@ class DeckerTasksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Stack metadata keeps the known values and escapes unknown stack labels.
+	 */
+	public function test_stack_metadata_keeps_known_and_unknown_values() {
+		foreach ( array( 'to-do' => 'To-Do', 'in-progress' => 'In Progress', 'done' => 'Done' ) as $stack => $label ) {
+			$this->assertSame( $label, Decker_Tasks::get_stack_label( $stack ) );
+			$this->assertStringContainsString( 'ri-', Decker_Tasks::get_stack_icon_classes( $stack ) );
+		}
+		$this->assertSame( '<unknown>', Decker_Tasks::get_stack_label( '<unknown>' ) );
+		$this->assertSame( '', Decker_Tasks::get_stack_icon_classes( '<unknown>' ) );
+		$this->assertSame( '&lt;unknown&gt;', Decker_Tasks::get_stack_icon_html( '<unknown>' ) );
+	}
+
+	/**
 	 * Test that stack icons use Bootstrap tooltip attributes.
 	 */
 	public function test_get_stack_icon_html_uses_bootstrap_tooltip_attributes() {
