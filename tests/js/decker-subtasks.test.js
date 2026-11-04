@@ -751,7 +751,12 @@ describe( 'subtask pane', () => {
 		};
 		global.Choices.defaults = {
 			templates: {
-				item: () => document.createElement( 'div' ),
+				item: ( config, data ) => {
+					const el = document.createElement( 'div' );
+					el.dataset.item = '';
+					el.textContent = data.label || 'Unassigned';
+					return el;
+				},
 				choice: () => document.createElement( 'div' ),
 			},
 		};
@@ -771,6 +776,7 @@ describe( 'subtask pane', () => {
 
 			const templates = created[ 0 ].config.callbackOnCreateTemplates();
 			const data = {
+				label: 'Alexandra Montgomery Wellington with a long display name',
 				customProperties: { avatar: 'https://example.test/fran.png' },
 			};
 
@@ -781,10 +787,18 @@ describe( 'subtask pane', () => {
 				);
 			} );
 
+			const selected = templates.item.call( {}, {}, data );
+			const name = selected.querySelector( '.decker-subtask-assignee-name' );
+			expect( name.textContent ).toBe( data.label );
+			expect( name.title ).toBe( data.label );
+			expect( name.classList.contains( 'text-truncate' ) ).toBe( true );
+			expect( selected.hasAttribute( 'data-item' ) ).toBe( true );
+			expect( templates.choice.call( {}, {}, data ).querySelector( '.text-truncate' ) ).toBeNull();
+
 			// Nothing to show for the unassigned entry, so no broken image.
-			expect(
-				templates.item.call( {}, {}, {} ).querySelector( 'img' )
-			).toBe( null );
+			const unassigned = templates.item.call( {}, {}, {} );
+			expect( unassigned.querySelector( 'img' ) ).toBe( null );
+			expect( unassigned.querySelector( '.decker-subtask-assignee-name' ).textContent ).toBe( 'Unassigned' );
 		} finally {
 			delete global.Choices;
 		}

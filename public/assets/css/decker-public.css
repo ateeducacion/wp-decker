@@ -497,6 +497,10 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
     min-width: 0;
 }
 
+.decker-subtasks-list .decker-subtask-assignee-name {
+    min-inline-size: 0;
+}
+
 .decker-subtasks-list .decker-subtask-avatar {
     flex: 0 0 auto;
     width: 20px;
