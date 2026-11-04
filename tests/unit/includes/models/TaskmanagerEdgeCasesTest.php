@@ -207,32 +207,5 @@ class DeckerTaskManagerEdgeCasesTest extends Decker_Test_Base {
 		$this->assertSame( array( $valid_date ), $this->task_manager->get_user_task_dates( $this->editor_id ) );
 	}
 
-	/**
-	 * Ensure an empty or sanitization-only stack list produces no counts.
-	 */
-	public function test_board_task_counts_return_empty_for_invalid_stack_input() {
-		$this->assertSame( array(), $this->task_manager->get_board_task_counts_by_stack( array() ) );
-		$this->assertSame(
-			array(),
-			$this->task_manager->get_board_task_counts_by_stack( array( '', '@@@', '   ' ) )
-		);
-	}
 
-	/**
-	 * Ensure duplicate stack input does not multiply aggregate counts.
-	 */
-	public function test_board_task_counts_deduplicate_stack_filters() {
-		self::factory()->task->create(
-			array(
-				'board' => $this->board->term_id,
-				'stack' => 'to-do',
-			)
-		);
-
-		$counts = $this->task_manager->get_board_task_counts_by_stack(
-			array( 'to-do', 'to-do', 'TO DO' )
-		);
-
-		$this->assertSame( 1, $counts[ $this->board->slug ]['to-do'] );
-	}
 }

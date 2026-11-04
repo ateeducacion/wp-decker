@@ -343,22 +343,6 @@ class Decker {
 		);
 	}
 
-
-	/**
-	 * Check whether the sidebar board status indicators are enabled.
-	 *
-	 * Site-wide, not per user and not per browser: everyone sees the same
-	 * sidebar. Absent from the settings means enabled, so installs that never
-	 * saved the option keep the indicators they already had.
-	 *
-	 * @return bool True when the indicators must be rendered.
-	 */
-	public static function show_board_status_indicators() {
-		$options = get_option( 'decker_settings', array() );
-
-		return ! isset( $options['sidebar_board_status'] ) || '1' === $options['sidebar_board_status'];
-	}
-
 	/**
 	 * Check whether a REST route addresses a given base, the way WordPress routes it.
 	 *

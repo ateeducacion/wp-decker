@@ -5,7 +5,7 @@
  * @package Decker\Tests
  */
 
-class DeckerAdminSettingsTest extends WP_UnitTestCase {
+class DeckerAdminSettingsTest extends Decker_Test_Base {
 
 	/**
 	 * Instance of Decker_Admin_Settings.
@@ -26,52 +26,20 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Render the board status field.
-	 *
-	 * @return string The field markup.
+	 * Retired settings are discarded without changing supported settings.
 	 */
-	private function render_board_status_field() {
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'sidebar_board_status' ) );
-		return ob_get_clean();
-	}
-
-	/**
-	 * Test the board status preference is a stored, site-wide setting.
-	 */
-	public function test_sidebar_board_status_render_is_a_stored_setting() {
-		delete_option( 'decker_settings' );
-
-		$output = $this->render_board_status_field();
-
-		$this->assertStringContainsString( 'name="decker_settings[sidebar_board_status]"', $output );
-		// On by default, so an install that never saved the settings keeps its
-		// indicators.
-		$this->assertStringContainsString( "checked='checked'", $output );
-		$this->assertStringNotContainsString( 'saved only in this browser', $output );
-		$this->assertStringNotContainsString( 'data-decker-persistent', $output );
-	}
-
-	/**
-	 * Test the board status field reflects the stored value.
-	 */
-	public function test_sidebar_board_status_render_reflects_a_disabled_setting() {
-		update_option( 'decker_settings', array( 'sidebar_board_status' => '0' ) );
-
-		$this->assertStringNotContainsString( "checked='checked'", $this->render_board_status_field() );
-	}
-
-	/**
-	 * Test the board status checkbox is validated like the other checkboxes.
-	 */
-	public function test_settings_validate_stores_the_board_status_checkbox() {
-		$validated = $this->admin_settings->settings_validate( array( 'sidebar_board_status' => '1' ) );
-
-		$this->assertSame( '1', $validated['sidebar_board_status'] );
-
-		$validated = $this->admin_settings->settings_validate( array() );
-
-		$this->assertSame( '0', $validated['sidebar_board_status'] );
+	public function test_retired_settings_are_not_saved() {
+		$input = array(
+			'collaborative_editing' => '1',
+			'signaling_server' => 'wss://obsolete.example.test',
+			'sidebar_board_status' => '1',
+			'alert_message' => 'Keep this setting',
+		);
+		$validated = $this->admin_settings->settings_validate( $input );
+		foreach ( array( 'collaborative_editing', 'signaling_server', 'sidebar_board_status' ) as $key ) {
+			$this->assertArrayNotHasKey( $key, $validated );
+		}
+		$this->assertSame( 'Keep this setting', $validated['alert_message'] );
 	}
 
 	/**
@@ -168,43 +136,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 		// Should default to 'editor'
 		$this->assertEquals( 'editor', $validated['minimum_user_profile'] );
-	}
-
-	/**
-	 * Test collaborative_editing setting validation with enabled value.
-	 */
-	public function test_settings_validate_collaborative_editing_enabled() {
-		$input = array(
-			'collaborative_editing' => '1',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( '1', $validated['collaborative_editing'] );
-	}
-
-	/**
-	 * Test collaborative_editing setting validation with disabled value.
-	 */
-	public function test_settings_validate_collaborative_editing_disabled() {
-		$input = array(
-			'collaborative_editing' => '0',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( '0', $validated['collaborative_editing'] );
-	}
-
-	/**
-	 * Test collaborative_editing setting validation with missing value defaults to disabled.
-	 */
-	public function test_settings_validate_collaborative_editing_missing() {
-		$input = array();
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( '0', $validated['collaborative_editing'] );
 	}
 
 	/**
@@ -328,43 +259,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test signaling_server setting validation with valid URL.
-	 */
-	public function test_settings_validate_signaling_server_valid_url() {
-		$input = array(
-			'signaling_server' => 'wss://my-signaling-server.example.com',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'wss://my-signaling-server.example.com', $validated['signaling_server'] );
-	}
-
-	/**
-	 * Test signaling_server setting validation with empty value defaults to public server.
-	 */
-	public function test_settings_validate_signaling_server_empty_defaults() {
-		$input = array(
-			'signaling_server' => '',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
-	}
-
-	/**
-	 * Test signaling_server setting validation with missing value defaults to public server.
-	 */
-	public function test_settings_validate_signaling_server_missing_defaults() {
-		$input = array();
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
-	}
-
-	/**
 	 * Test legacy OpenAI fields are removed while Gemini settings are preserved.
 	 */
 	public function test_settings_validate_removes_legacy_openai_fields() {
@@ -375,7 +269,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 			'openai_api_url'  => 'https://example.com/v1/chat/completions',
 			'openai_api_key'  => 'legacy-key',
 			'openai_model'    => 'legacy-model',
-			'signaling_server' => 'wss://signaling.yjs.dev',
 		);
 
 		$validated = $this->admin_settings->settings_validate( $input );
@@ -386,35 +279,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'openai_api_url', $validated );
 		$this->assertArrayNotHasKey( 'openai_api_key', $validated );
 		$this->assertArrayNotHasKey( 'openai_model', $validated );
-	}
-
-	/**
-	 * Test collaborative_editing_render outputs correct HTML when disabled.
-	 */
-	public function test_collaborative_editing_render_disabled() {
-		update_option( 'decker_settings', array( 'collaborative_editing' => '0' ) );
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'collaborative_editing' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[collaborative_editing]"', $output );
-		$this->assertStringContainsString( 'value="1"', $output );
-		$this->assertStringNotContainsString( 'checked', $output );
-	}
-
-	/**
-	 * Test collaborative_editing_render outputs correct HTML when enabled.
-	 */
-	public function test_collaborative_editing_render_enabled() {
-		update_option( 'decker_settings', array( 'collaborative_editing' => '1' ) );
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'collaborative_editing' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[collaborative_editing]"', $output );
-		$this->assertStringContainsString( "checked='checked'", $output );
 	}
 
 	/**
@@ -494,34 +358,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$this->assertStringContainsString( 'browser_gemini_nano', $output );
 		$this->assertStringContainsString( 'gemini_api', $output );
 		$this->assertStringContainsString( "checked='checked'", $output );
-	}
-
-	/**
-	 * Test signaling_server_render outputs correct HTML with default value.
-	 */
-	public function test_signaling_server_render_default() {
-		update_option( 'decker_settings', array() );
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'signaling_server' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[signaling_server]"', $output );
-		$this->assertStringContainsString( 'wss://signaling.yjs.dev', $output );
-		$this->assertStringContainsString( 'placeholder="wss://signaling.yjs.dev"', $output );
-	}
-
-	/**
-	 * Test signaling_server_render outputs correct HTML with custom value.
-	 */
-	public function test_signaling_server_render_custom_value() {
-		update_option( 'decker_settings', array( 'signaling_server' => 'wss://custom-server.example.com' ) );
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'signaling_server' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'value="wss://custom-server.example.com"', $output );
 	}
 
 	/**
@@ -633,13 +469,11 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 
 			$this->assertEquals( '', $validated['shared_key'] );
 			$this->assertEquals( '0', $validated['allow_email_notifications'] );
-			$this->assertEquals( '0', $validated['collaborative_editing'] );
 			$this->assertEquals( '0', $validated['ai_enabled'] );
 			$this->assertEquals( Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO, $validated['ai_provider'] );
 			$this->assertEquals( '', $validated['ai_api_key'] );
 			$this->assertEquals( Decker_AI_Manager::DEFAULT_GEMINI_MODEL, $validated['ai_model'] );
 			$this->assertEquals( Decker::get_default_ai_prompt_template(), $validated['ai_prompt'] );
-			$this->assertEquals( 'wss://signaling.yjs.dev', $validated['signaling_server'] );
 			$this->assertEquals( 'info', $validated['alert_color'] );
 			$this->assertEquals( 'editor', $validated['minimum_user_profile'] );
 			$this->assertEquals( 'quill', $validated['task_editor_type'] );
@@ -685,15 +519,12 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 			array(
 				'shared_key',
 				'allow_email_notifications',
-				'collaborative_editing',
 				'subtasks_enabled',
-				'sidebar_board_status',
 				'ai_enabled',
 				'ai_provider',
 				'ai_api_key',
 				'ai_model',
 				'ai_prompt',
-				'signaling_server',
 				'alert_color',
 				'minimum_user_profile',
 				'task_editor_type',
@@ -783,14 +614,6 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$this->assertEquals( Decker::get_default_ai_prompt_template(), $validated['ai_prompt'] );
 	}
 
-	/**
-	 * Lock-in: a disallowed protocol yields '' (not the default server).
-	 */
-	public function test_settings_validate_signaling_server_disallowed_protocol_becomes_empty() {
-		$validated = $this->admin_settings->settings_validate( array( 'signaling_server' => 'ftp://example.com' ) );
-
-		$this->assertSame( '', $validated['signaling_server'] );
-	}
 
 	/**
 	 * Lock-in: missing alert_color / minimum_user_profile keys take their defaults.
@@ -867,13 +690,11 @@ class DeckerAdminSettingsTest extends WP_UnitTestCase {
 		$input = array(
 			'shared_key'           => 'validkey123!',
 			'allow_email_notifications' => '1',
-			'collaborative_editing' => '1',
 			'ai_enabled'           => '1',
 			'ai_provider'          => 'gemini_api',
 			'ai_api_key'           => 'a-key',
 			'ai_model'             => 'gemini-2.5-flash',
 			'ai_prompt'            => 'Prompt',
-			'signaling_server'     => 'wss://example.com',
 			'alert_color'          => 'success',
 			'minimum_user_profile' => 'editor',
 			'alert_message'        => 'Hi',

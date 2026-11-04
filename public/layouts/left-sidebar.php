@@ -129,8 +129,6 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 			</a>
 	  </li>
 
-
-
 	  <!-- Tasks -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'tasks' ) ); ?>">
 		<a
@@ -246,8 +244,6 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 		  <span><?php esc_html_e( 'Boards', 'decker' ); ?></span>
 		  <span class="menu-arrow"></span>
 
-
-
 		</a>
 		<div class="collapse<?php echo ( 'board' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarBoards">
 		  <ul class="side-nav-second-level">
@@ -259,22 +255,9 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 
 			$boards = BoardManager::get_all_boards();
 
-			// No counts means no badges below, so the query is skipped entirely
-			// when an administrator has turned the indicators off.
-			$board_task_counts = Decker::show_board_status_indicators()
-				? $task_manager->get_board_task_counts_by_stack(
-					array(
-						'to-do',
-						'in-progress',
-					)
-				)
-				: array();
-
 			foreach ( $boards as $board ) {
 				// Only show boards that have show_in_boards set to true.
 				if ( $board->show_in_boards ) {
-					$to_do_count       = (int) ( $board_task_counts[ $board->slug ]['to-do'] ?? 0 );
-					$in_progress_count = (int) ( $board_task_counts[ $board->slug ]['in-progress'] ?? 0 );
 					$board_url         = add_query_arg(
 						array(
 							'decker_page' => 'board',
@@ -290,43 +273,7 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 							href="<?php echo esc_url( $board_url ); ?>"
 						>
 							<span class="decker-sidebar-board-title"><?php echo esc_html( $board->name ); ?></span>
-							<?php if ( $to_do_count > 0 || $in_progress_count > 0 ) : ?>
-								<span class="decker-sidebar-board-badges">
-									<?php if ( $to_do_count > 0 ) : ?>
-										<?php
-										$to_do_label = Decker_Tasks::get_stack_label( 'to-do' );
-										?>
-										<span
-											class="decker-sidebar-board-status decker-sidebar-board-status-todo"
-											data-bs-toggle="tooltip"
-											data-bs-placement="top"
-											aria-label="<?php echo esc_attr( $to_do_label ); ?>"
-											data-bs-original-title="<?php echo esc_attr( $to_do_label ); ?>"
-										>
-											<i class="<?php echo esc_attr( Decker_Tasks::get_stack_icon_classes( 'to-do' ) ); ?>" aria-hidden="true"></i>
-											<sup class="decker-sidebar-board-status-count"><?php echo esc_html( $to_do_count ); ?></sup>
-											<span class="visually-hidden"><?php echo esc_html( $to_do_label . ': ' . $to_do_count ); ?></span>
-										</span>
-									<?php endif; ?>
 
-									<?php if ( $in_progress_count > 0 ) : ?>
-										<?php
-										$in_progress_label = Decker_Tasks::get_stack_label( 'in-progress' );
-										?>
-										<span
-											class="decker-sidebar-board-status decker-sidebar-board-status-in-progress"
-											data-bs-toggle="tooltip"
-											data-bs-placement="top"
-											aria-label="<?php echo esc_attr( $in_progress_label ); ?>"
-											data-bs-original-title="<?php echo esc_attr( $in_progress_label ); ?>"
-										>
-											<i class="<?php echo esc_attr( Decker_Tasks::get_stack_icon_classes( 'in-progress' ) ); ?>" aria-hidden="true"></i>
-											<sup class="decker-sidebar-board-status-count"><?php echo esc_html( $in_progress_count ); ?></sup>
-											<span class="visually-hidden"><?php echo esc_html( $in_progress_label . ': ' . $in_progress_count ); ?></span>
-										</span>
-									<?php endif; ?>
-								</span>
-							<?php endif; ?>
 						</a>
 					</li>
 					<?php
@@ -400,8 +347,6 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 		</a>
 	  </li>
 
-
-
 	  <?php
 
 		if ( current_user_can( 'manage_options' ) ) {
@@ -425,8 +370,6 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 		  <!-- <span class="badge bg-success float-end"></span> -->
 		  <span><?php esc_html_e( 'Utilities', 'decker' ); ?></span>
 		  <span class="menu-arrow"></span>
-
-
 
 		</a>
 		<div class="collapse<?php echo ( 'term-manager' === get_query_var( 'decker_page' ) ) ? ' show' : ''; ?>" id="sidebarUtilities">

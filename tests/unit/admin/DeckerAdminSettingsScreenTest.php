@@ -117,8 +117,6 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 		return array(
 			'shared key'          => array( 'shared_key' ),
 			'email notifications' => array( 'allow_email_notifications' ),
-			'collaboration'       => array( 'collaborative_editing' ),
-			'signaling server'    => array( 'signaling_server' ),
 			'minimum profile'     => array( 'minimum_user_profile' ),
 			'alert message'       => array( 'alert_message' ),
 			'alert color'         => array( 'alert_color' ),
@@ -151,7 +149,6 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'value="fixed-shared-key-1234"', $html );
 		$this->assertStringContainsString( 'Maintenance tonight', $html );
 		$this->assertStringContainsString( 'value="7,9"', $html );
-		$this->assertStringContainsString( 'value="wss://collab.example.test"', $html );
 
 		// The stored radio choices come back checked.
 		$this->assertMatchesRegularExpression( '/value="warning"\s+checked=/', $html );
@@ -169,16 +166,15 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * The board status toggle submits as part of decker_settings.
-	 *
-	 * It is a site-wide setting, not a per-browser preference, so it has to
-	 * travel with the rest of the form.
+	 * Retired feature fields stay absent even when old settings remain stored.
 	 */
-	public function test_board_status_toggle_is_a_stored_setting() {
+	public function test_retired_feature_settings_are_not_rendered() {
 		$html = $this->render_screen();
-
-		$this->assertStringContainsString( 'name="decker_settings[sidebar_board_status]"', $html );
+		foreach ( array( 'collaborative_editing', 'signaling_server', 'sidebar_board_status' ) as $field ) {
+			$this->assertStringNotContainsString( 'name="decker_settings[' . $field . ']"', $html );
+		}
 	}
+
 
 	/**
 	 * The saved Gemini key is never echoed back into the form.

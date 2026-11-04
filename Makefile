@@ -175,11 +175,8 @@ setup-tests-env:
 		--skip-email 2>/dev/null || true
 	@npx wp-env run tests-cli wp plugin activate decker 2>/dev/null || true
 	@npx wp-env run tests-cli wp rewrite structure '/%postname%/' --hard 2>/dev/null || true
-	@# Keep the deterministic suite free of the external-service collaboration feature.
-	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
 
 # Run E2E tests with Playwright against wp-env tests environment (port 8889).
-# The collaboration spec is excluded here (see test-e2e-collab).
 #
 # Depends on `up`, not `start-if-not-running`: these drive the site over HTTP,
 # and that probe accepts another project's wp-env stack answering on 8888 as
@@ -189,15 +186,6 @@ test-e2e: check-docker up setup-tests-env
 
 test-e2e-visual: check-docker up setup-tests-env
 	WP_BASE_URL=http://localhost:8889 npm run test:e2e -- --ui
-
-# Run ONLY the collaboration spec. It needs the collaborative editing feature
-# enabled and reaches external services (esm.sh CDN + signalling server), so it
-# is kept out of the default CI gate. This enables the feature, runs the spec,
-# and restores the setting afterwards regardless of the outcome.
-test-e2e-collab: check-docker up setup-tests-env
-	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="1"; update_option("decker_settings",$$o);' 2>/dev/null || true
-	-WP_BASE_URL=http://localhost:8889 DECKER_E2E_COLLAB=1 npm run test:e2e -- tests/e2e/specs/task-collaboration.spec.js
-	@npx wp-env run tests-cli wp eval '$$o=get_option("decker_settings",array()); $$o["collaborative_editing"]="0"; update_option("decker_settings",$$o);' 2>/dev/null || true
 
 # Run the CAS end-to-end test: the real client, over real HTTP, through a real
 # Apereo CAS server, into a real WordPress with Decker.

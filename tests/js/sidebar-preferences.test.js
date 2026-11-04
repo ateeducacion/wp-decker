@@ -103,19 +103,6 @@ describe( 'sidebar preferences', () => {
 		).toHaveLength( 0 );
 	} );
 
-	test( 'does not touch the board status indicators, a site-wide setting', () => {
-		preferences.init();
-
-		expect( preferences.SHOW_BOARD_STATUS_KEY ).toBeUndefined();
-		expect( Object.keys( window.localStorage ) ).not.toContain(
-			'decker.sidebar.showBoardStatus'
-		);
-		expect(
-			document.documentElement.classList.contains(
-				'decker-hide-board-status'
-			)
-		).toBe( false );
-	} );
 
 	test( 'stores and restores the desktop sidebar size changed by the menu button', () => {
 		const button = document.querySelector( '.button-toggle-menu' );

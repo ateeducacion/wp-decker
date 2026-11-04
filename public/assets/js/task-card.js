@@ -25,127 +25,9 @@
 
     let quill = null;
     let taskEditor = null;
-    let collabSession = null;
 
     let assigneesSelect = null;
     let labelsSelect = null;
-
-    // Form fields collaboration binding state
-    let formFieldsBinding = null;
-
-    // Snapshot of original form values from server (captured before collaboration)
-    let originalValuesSnapshot = null;
-
-    // Field mappings for collaboration
-    // NOTE: 'task-today' is intentionally excluded. The "For today" state is
-    // user-specific and must never be synchronized through shared collaboration.
-    const FIELD_MAPPINGS = [
-        { id: 'task-title', key: 'title', type: 'text' },
-        { id: 'task-max-priority', key: 'maxPriority', type: 'checkbox' },
-        { id: 'task-board', key: 'board', type: 'select' },
-        { id: 'task-responsable', key: 'responsable', type: 'select' },
-        { id: 'task-stack', key: 'stack', type: 'select' },
-        { id: 'task-due-date', key: 'dueDate', type: 'date' },
-    ];
-
-    /**
-     * Capture all original form values from server-rendered HTML.
-     * Must be called BEFORE Quill and collaboration are initialized.
-     * @param {HTMLElement} context - The container element
-     * @returns {Object} Original values snapshot
-     */
-    function captureOriginalFormValues(context) {
-        const snapshot = {
-            fields: {},
-            choices: {},
-            quillHtml: null,
-            capturedAt: Date.now()
-        };
-
-        // Capture regular fields
-        FIELD_MAPPINGS.forEach(({ id, key, type }) => {
-            const el = context.querySelector(`#${id}`);
-            if (!el) return;
-
-            if (type === 'checkbox') {
-                snapshot.fields[key] = el.checked;
-            } else {
-                snapshot.fields[key] = el.value;
-            }
-        });
-
-        // Capture Quill content BEFORE binding (from raw HTML in #editor)
-        const editorEl = context.querySelector('#editor');
-        if (editorEl) {
-            snapshot.quillHtml = editorEl.innerHTML;
-        }
-
-        // Capture select multiple values (assignees, labels) from raw HTML
-        const assigneesEl = context.querySelector('#task-assignees');
-        if (assigneesEl) {
-            snapshot.choices.assignees = Array.from(assigneesEl.selectedOptions)
-                .map(opt => opt.value);
-        }
-
-        const labelsEl = context.querySelector('#task-labels');
-        if (labelsEl) {
-            snapshot.choices.labels = Array.from(labelsEl.selectedOptions)
-                .map(opt => opt.value);
-        }
-
-        console.log('Decker: Original form values captured:', snapshot);
-        return snapshot;
-    }
-
-    /**
-     * Disable all form fields (used when task is archived)
-     */
-    function disableAllFormFields(context, message) {
-        // Disable all input fields
-        const form = context.querySelector('#task-form');
-        if (!form) return;
-
-        // Disable all inputs, selects, textareas, buttons
-        form.querySelectorAll('input, select, textarea, button').forEach(el => {
-            el.disabled = true;
-        });
-
-        // Disable Choices.js instances
-        if (assigneesSelect) {
-            assigneesSelect.disable();
-        }
-        if (labelsSelect) {
-            labelsSelect.disable();
-        }
-
-        // Disable Quill editor
-        if (quill) {
-            quill.disable();
-        }
-
-        // Disable the classic (TinyMCE) editor
-        if (taskEditor && typeof taskEditor.setMode === 'function') {
-            taskEditor.setMode('readonly');
-        }
-
-        // Show archived overlay message
-        let overlay = context.querySelector('.decker-archived-overlay');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.className = 'decker-archived-overlay';
-            overlay.innerHTML = `
-                <div class="decker-archived-message">
-                    <i class="ri-archive-line"></i>
-                    <span>${message || 'This task has been archived'}</span>
-                </div>
-            `;
-            const modalBody = context.querySelector('#task-modal-body') || context.querySelector('#task-form');
-            if (modalBody) {
-                modalBody.style.position = 'relative';
-                modalBody.appendChild(overlay);
-            }
-        }
-    }
 
     /* ---------------------------------------------------------------------
      * Task edit locking (WordPress post lock compatible).
@@ -705,431 +587,6 @@
         return executedFunction;
     }
 
-    /**
-     * Animate a remote change on a field
-     */
-    function animateRemoteChange(element) {
-        const wrapper = element.closest('.form-floating') || element.closest('.form-check') || element.parentElement;
-        wrapper.classList.add('decker-remote-change');
-        setTimeout(() => {
-            wrapper.classList.remove('decker-remote-change');
-        }, 400);
-    }
-
-    /**
-     * Initialize form fields collaboration binding
-     * @param {Object} session - The collaboration session object
-     * @param {HTMLElement} context - The container element
-     */
-    function initFormFieldsCollaboration(session, context) {
-        if (!session || !session.formFields) {
-            console.warn('Decker: Cannot init form fields collaboration - no session or formFields');
-            return null;
-        }
-
-        const formFields = session.formFields;
-        const awareness = session.awareness;
-        let isRemoteUpdate = false;
-        let isDestroyed = false;
-        let remoteChangesHandler = null;
-        let fieldAwarenessChangeHandler = null;
-        let remoteUpdateResetTimerId = null;
-        const fieldCleanupCallbacks = [];
-
-        // Get local Choices.js instances
-        const choicesMappings = [
-            { instance: assigneesSelect, key: 'assignees', id: 'task-assignees' },
-            { instance: labelsSelect, key: 'labels', id: 'task-labels' },
-        ];
-
-        /**
-         * Register a DOM event listener and store its destroy-time cleanup callback.
-         *
-         * @param {Element} element DOM element.
-         * @param {string} eventName Event name.
-         * @param {Function} handler Event handler.
-         * @return {void}
-         */
-        function registerFieldListener(element, eventName, handler) {
-            element.addEventListener(eventName, handler);
-            // Store the teardown so destroy() can remove every listener registered here.
-            fieldCleanupCallbacks.push(() => element.removeEventListener(eventName, handler));
-        }
-
-        /**
-         * Remove all visual markers for remote field editors.
-         *
-         * @return {void}
-         */
-        function clearFieldAwarenessIndicators() {
-            context.querySelectorAll('.decker-field-editor').forEach(el => el.remove());
-            context.querySelectorAll('.decker-field-editing').forEach(el => {
-                el.classList.remove('decker-field-editing');
-                el.style.removeProperty('--editor-color');
-            });
-            context.querySelectorAll('.decker-field-editing-container').forEach(el => {
-                el.classList.remove('decker-field-editing-container');
-            });
-        }
-
-        /**
-         * Initialize form fields from Yjs or populate Yjs from original values.
-         * Uses event-based sync instead of fixed timeout.
-         * Only the first user (no other peers) populates Yjs.
-         * Subsequent users only receive and apply remote values.
-         */
-        function initializeFormFieldValues() {
-            // Wait for WebRTC sync to complete before initializing
-            session.onSynced(() => {
-                isRemoteUpdate = true;
-
-                // Check if there are other peers connected (not just myself)
-                const connectedPeers = awareness.getStates().size;
-                const hasRemoteData = formFields.size > 0;
-                // Trust the collaboration layer's peer-aware signal (real WebRTC
-                // connections + awareness), not just the awareness size sampled at this
-                // instant, which can transiently read 1 while a peer is mid-handshake.
-                const peerPresent = typeof session.hasPeers === 'function'
-                    ? session.hasPeers()
-                    : connectedPeers > 1;
-
-                // A peer is present but its form data has not synced yet: do NOT seed
-                // from the DB snapshot/DOM. Wait for observeRemoteChanges to apply the
-                // peer's live values when they arrive, otherwise we would overwrite them.
-                if (peerPresent && !hasRemoteData) {
-                    console.log('Decker: Peer present, awaiting remote form values (no DB seed)');
-                    isRemoteUpdate = false;
-                    return;
-                }
-
-                const isFirstUser = !peerPresent && connectedPeers === 1 && !hasRemoteData;
-
-                console.log('Decker: Form sync - Connected peers:', connectedPeers, 'Has remote data:', hasRemoteData, 'Peer present:', peerPresent, 'Is first user:', isFirstUser);
-
-                if (isFirstUser) {
-                    if (!originalValuesSnapshot) {
-                        console.warn('Decker: First user detected but originalValuesSnapshot is missing. Skipping initial form value population.');
-                        // Avoid falling through to non-first-user / edge-case branches.
-                        return;
-                    }
-                    // First user - populate Yjs with ORIGINAL values from snapshot
-                    console.log('Decker: First user, populating Yjs with original server values');
-
-                    // Use original values from snapshot (guaranteed to be correct)
-                    FIELD_MAPPINGS.forEach(({ id, key, type }) => {
-                        const originalValue = originalValuesSnapshot.fields[key];
-                        if (originalValue !== undefined) {
-                            formFields.set(key, originalValue);
-                        }
-                        // Also ensure local UI has the value
-                        const el = context.querySelector(`#${id}`);
-                        if (el) {
-                            if (type === 'checkbox') {
-                                if (originalValue !== undefined) {
-                                    el.checked = !!originalValue;
-                                }
-                            } else if (originalValue !== undefined) {
-                                el.value = originalValue;
-                            }
-                        }
-                    });
-
-                    // Choices.js fields from snapshot
-                    if (originalValuesSnapshot.choices.assignees && originalValuesSnapshot.choices.assignees.length > 0) {
-                        formFields.set('assignees', originalValuesSnapshot.choices.assignees);
-                    }
-                    if (originalValuesSnapshot.choices.labels && originalValuesSnapshot.choices.labels.length > 0) {
-                        formFields.set('labels', originalValuesSnapshot.choices.labels);
-                    }
-                } else if (hasRemoteData) {
-                    // Another user has data - apply remote values to local UI
-                    console.log('Decker: Joining existing session, applying remote values');
-
-                    // Apply all remote values to local UI
-                    FIELD_MAPPINGS.forEach(({ id, key, type }) => {
-                        const el = context.querySelector(`#${id}`);
-                        if (!el) return;
-
-                        const remoteValue = formFields.get(key);
-                        if (remoteValue !== undefined) {
-                            if (type === 'checkbox') {
-                                el.checked = remoteValue;
-                                if (id === 'task-max-priority') {
-                                    togglePriorityLabel(el);
-                                }
-                            } else {
-                                el.value = remoteValue;
-                            }
-                        }
-                    });
-
-                    // Apply Choices.js values
-                    choicesMappings.forEach(({ instance, key }) => {
-                        if (!instance) return;
-
-                        const remoteValue = formFields.get(key);
-                        if (remoteValue !== undefined && Array.isArray(remoteValue)) {
-                            instance.removeActiveItems();
-                            remoteValue.forEach(v => instance.setChoiceByValue(v.toString()));
-                        }
-                    });
-
-                    // Check if task is archived
-                    if (formFields.get('archived') === true) {
-                        disableAllFormFields(context, strings.task_is_archived || 'This task is archived');
-                    }
-                } else {
-                    // Edge case: No remote data and no snapshot - use current DOM values
-                    console.log('Decker: No remote data, no snapshot - using current DOM values as fallback');
-
-                    FIELD_MAPPINGS.forEach(({ id, key, type }) => {
-                        const el = context.querySelector(`#${id}`);
-                        if (!el) return;
-
-                        if (type === 'checkbox') {
-                            // For checkboxes, always store the boolean checked state
-                            formFields.set(key, el.checked);
-                        } else {
-                            // Store the value including empty strings (e.g. a cleared date field)
-                            formFields.set(key, el.value);
-                        }
-                    });
-
-                    choicesMappings.forEach(({ instance, key }) => {
-                        if (!instance) return;
-
-                        const localValues = instance.getValue(true);
-                        if (localValues && localValues.length > 0) {
-                            formFields.set(key, localValues);
-                        }
-                    });
-                }
-
-                isRemoteUpdate = false;
-            });
-        }
-
-        /**
-         * Bind local field changes to Yjs
-         */
-        function bindLocalChanges() {
-            // Regular fields
-            FIELD_MAPPINGS.forEach(({ id, key, type }) => {
-                const el = context.querySelector(`#${id}`);
-                if (!el) return;
-
-                const sendChange = () => {
-                    if (isRemoteUpdate) return;
-                    const value = type === 'checkbox' ? el.checked : el.value;
-                    formFields.set(key, value);
-                };
-
-                registerFieldListener(el, 'change', sendChange);
-
-                // For text inputs, use debounced input event
-                if (type === 'text') {
-                    const debouncedSendChange = debounce(sendChange, 150);
-                    registerFieldListener(el, 'input', debouncedSendChange);
-                    fieldCleanupCallbacks.push(() => debouncedSendChange.cancel());
-                }
-
-                // Focus tracking for awareness
-                const handleFocus = () => session.setActiveField(id);
-                const handleBlur = () => session.clearActiveField();
-
-                registerFieldListener(el, 'focus', handleFocus);
-                registerFieldListener(el, 'blur', handleBlur);
-            });
-
-            // Choices.js fields
-            choicesMappings.forEach(({ instance, key, id }) => {
-                if (!instance) return;
-
-                const handleChoicesChange = () => {
-                    if (isRemoteUpdate) return;
-                    const values = instance.getValue(true);
-                    formFields.set(key, values);
-                };
-
-                registerFieldListener(
-                    instance.passedElement.element,
-                    'change',
-                    handleChoicesChange
-                );
-
-                // Focus tracking for Choices.js dropdowns
-                const choicesContainer = context.querySelector(`#${id}`)?.closest('.choices');
-                if (choicesContainer) {
-                    const handleChoicesFocusIn = () => session.setActiveField(id);
-                    const handleChoicesFocusOut = () => session.clearActiveField();
-
-                    registerFieldListener(
-                        choicesContainer,
-                        'focusin',
-                        handleChoicesFocusIn
-                    );
-                    registerFieldListener(
-                        choicesContainer,
-                        'focusout',
-                        handleChoicesFocusOut
-                    );
-                }
-            });
-        }
-
-        /**
-         * Observe Yjs changes and update local fields
-         */
-        function observeRemoteChanges() {
-            remoteChangesHandler = (event) => {
-                if (isDestroyed) {
-                    return;
-                }
-
-                isRemoteUpdate = true;
-
-                event.keysChanged.forEach(key => {
-                    const value = formFields.get(key);
-
-                    // Check for archived status change
-                    if (key === 'archived' && value === true) {
-                        disableAllFormFields(context, strings.task_archived_by_another_user || 'This task has been archived by another user');
-                        return;
-                    }
-
-                    // Regular fields
-                    const mapping = FIELD_MAPPINGS.find(m => m.key === key);
-                    if (mapping) {
-                        const el = context.querySelector(`#${mapping.id}`);
-                        if (el) {
-                            if (mapping.type === 'checkbox') {
-                                el.checked = value;
-                                // Trigger visual update for priority label
-                                if (mapping.id === 'task-max-priority') {
-                                    togglePriorityLabel(el);
-                                }
-                            } else {
-                                el.value = value;
-                            }
-                            animateRemoteChange(el);
-                        }
-                    }
-
-                    // Choices.js fields
-                    const choicesMapping = choicesMappings.find(m => m.key === key);
-                    if (choicesMapping && choicesMapping.instance) {
-                        const instance = choicesMapping.instance;
-                        instance.removeActiveItems();
-                        (value || []).forEach(v => instance.setChoiceByValue(v.toString()));
-
-                        // Animate the Choices container
-                        const container = context.querySelector(`#${choicesMapping.id}`)?.closest('.choices');
-                        if (container) {
-                            container.classList.add('decker-remote-change');
-                            setTimeout(() => container.classList.remove('decker-remote-change'), 400);
-                        }
-                    }
-                });
-
-                // Clear any previous reset and keep only one pending timer so we
-                // can coalesce bursts of remote changes into a single flag reset.
-                clearTimeout(remoteUpdateResetTimerId);
-                remoteUpdateResetTimerId = setTimeout(() => {
-                    if (!isDestroyed) {
-                        isRemoteUpdate = false;
-                    }
-                }, 0);
-            };
-
-            formFields.observe(remoteChangesHandler);
-        }
-
-        /**
-         * Show indicators of who is editing which field
-         */
-        function observeFieldAwareness() {
-            fieldAwarenessChangeHandler = () => {
-                if (isDestroyed) {
-                    return;
-                }
-
-                clearFieldAwarenessIndicators();
-
-                // Create new indicators for remote users
-                awareness.getStates().forEach((state, clientId) => {
-                    if (clientId === awareness.clientID) return;
-                    if (!state.activeField || !state.user) return;
-
-                    const field = context.querySelector(`#${state.activeField}`);
-                    if (!field) return;
-
-                    // Add editing class to field
-                    field.classList.add('decker-field-editing');
-                    field.style.setProperty('--editor-color', state.user.color);
-
-                    // Create indicator element
-                    const wrapper = field.closest('.form-floating') || field.closest('.form-check') || field.closest('.choices') || field.parentElement;
-                    wrapper.style.position = 'relative';
-
-                    // Add special class for Choices.js containers to handle overflow
-                    if (wrapper.classList.contains('choices')) {
-                        wrapper.classList.add('decker-field-editing-container');
-                    }
-
-                    const indicator = document.createElement('div');
-                    indicator.className = 'decker-field-editor';
-                    indicator.style.backgroundColor = state.user.color;
-                    indicator.textContent = state.user.name;
-                    wrapper.appendChild(indicator);
-                });
-            };
-
-            awareness.on('change', fieldAwarenessChangeHandler);
-        }
-
-        // Initialize everything
-        bindLocalChanges();
-        observeRemoteChanges();
-        observeFieldAwareness();
-        initializeFormFieldValues();
-
-        console.log('Decker: Form fields collaboration initialized');
-
-        // Return binding object for cleanup and control
-        return {
-            /**
-             * Set the task as archived (syncs to all peers)
-             */
-            setArchived(archived) {
-                formFields.set('archived', archived);
-                if (archived) {
-                    disableAllFormFields(context, strings.task_archived || 'This task has been archived');
-                }
-            },
-
-            destroy() {
-                isDestroyed = true;
-                clearTimeout(remoteUpdateResetTimerId);
-                isRemoteUpdate = false;
-
-                if (remoteChangesHandler && typeof formFields.unobserve === 'function') {
-                    formFields.unobserve(remoteChangesHandler);
-                }
-
-                if (fieldAwarenessChangeHandler && typeof awareness.off === 'function') {
-                    awareness.off('change', fieldAwarenessChangeHandler);
-                }
-
-                fieldCleanupCallbacks.forEach(cleanup => cleanup());
-
-                // Clear awareness
-                session.clearActiveField();
-                clearFieldAwarenessIndicators();
-                console.log('Decker: Form fields collaboration destroyed');
-            }
-        };
-    }
-
     // Start of comment part
     var replyToCommentId = null;
 
@@ -1433,9 +890,6 @@
         window.deckerHasUnsavedChanges = false;
         window.deckerTodayChangedInSession = false;
 
-        // CRITICAL: Capture original values BEFORE any collaboration or Quill setup
-        originalValuesSnapshot = captureOriginalFormValues(context);
-
         // Read the server-provided edit-lock state for this card.
         const lockState = readTaskLockState(context);
         const lockedByOther = !!(lockState && lockState.locked);
@@ -1459,23 +913,11 @@
         }
 
         if (context.querySelector('#editor')) {
-            // Check if collaborative editing is enabled to include cursors module
-            const collabEnabled = window.deckerCollabConfig && window.deckerCollabConfig.enabled;
-
             // Register modules only once
             if (quill === null) {
                 // Register the HTML Edit Button module
                 Quill.register('modules/htmlEditButton', htmlEditButton);
 
-                // Register quill-cursors module if available (for collaborative editing)
-                if (typeof QuillCursors !== 'undefined') {
-                    // Try default export first, then module itself
-                    const CursorsModule = QuillCursors.default || QuillCursors;
-                    Quill.register('modules/cursors', CursorsModule);
-                    console.log('Decker: QuillCursors module registered');
-                } else {
-                    console.log('Decker: QuillCursors not available at registration time');
-                }
             }
 
             // Build modules configuration
@@ -1512,61 +954,11 @@
                 },
             };
 
-            // Add cursors module if collaborative editing is enabled and QuillCursors is available
-            // Check again here in case it wasn't available during initial registration
-            if (collabEnabled) {
-                if (typeof QuillCursors !== 'undefined') {
-                    // Register if not already registered
-                    try {
-                        const CursorsModule = QuillCursors.default || QuillCursors;
-                        if (!Quill.imports['modules/cursors']) {
-                            Quill.register('modules/cursors', CursorsModule);
-                            console.log('Decker: QuillCursors module registered (late)');
-                        }
-                        quillModules.cursors = {
-                            transformOnTextChange: true,
-                            hideDelayMs: 3000,
-                            hideSpeedMs: 400,
-                            selectionChangeSource: null,
-                        };
-                        console.log('Decker: Cursors module enabled in config');
-                    } catch (e) {
-                        console.warn('Decker: Error registering cursors module:', e);
-                    }
-                } else {
-                    console.warn('Decker: QuillCursors not available, remote cursors disabled');
-                }
-            }
-
             quill = new Quill(context.querySelector('#editor'), {
                 theme: 'snow',
                 readOnly: disabled || lockedByOther,
                 modules: quillModules
             });
-
-            // Initialize collaborative editing if enabled and we have a task ID
-            if (window.DeckerCollaboration && window.DeckerCollaboration.isEnabled() && !disabled && !lockedByOther) {
-                const taskId = getTaskId();
-                if (taskId && taskId !== '' && taskId !== '0') {
-                    // Destroy any previous collaboration session
-                    if (collabSession) {
-                        collabSession.destroy();
-                        collabSession = null;
-                    }
-
-                    // Initialize collaboration
-                    collabSession = window.DeckerCollaboration.init(quill, taskId, context);
-
-                    // Use event-based initialization with original content from snapshot
-                    if (collabSession && originalValuesSnapshot && originalValuesSnapshot.quillHtml) {
-                        collabSession.onSynced(() => {
-                            collabSession.initializeContentWithFallback(originalValuesSnapshot.quillHtml);
-                        });
-                    }
-
-                    console.log('Decker: Collaborative editing initialized for task', taskId);
-                }
-            }
 
             // Initialize AI improvement feature if available and editor is not read-only.
             if (window.DeckerAI && !disabled) {
@@ -1640,16 +1032,6 @@
         });
 
 
-        }
-
-        // Initialize form fields collaboration after Choices.js is ready
-        if (collabSession && !disabled && !lockedByOther) {
-            // Destroy previous form fields binding if exists
-            if (formFieldsBinding) {
-                formFieldsBinding.destroy();
-                formFieldsBinding = null;
-            }
-            formFieldsBinding = initFormFieldsCollaboration(collabSession, context);
         }
 
         var uploadFileButton = context.querySelector('#upload-file');
@@ -1755,8 +1137,7 @@
         // For the Quill editor
         if (quill) {
             quill.on('text-change', function(delta, oldDelta, source) {
-                // Only a local user edit marks the form dirty; remote collaboration
-                // updates must not switch this user into edit mode.
+                // Programmatic editor updates must not mark the form dirty.
                 if (source === 'user') {
                     enterDirtyEditMode(context);
                 }
@@ -2227,13 +1608,6 @@
     window.deleteComment = deleteComment;
     window.destroyTaskEditor = destroyTaskEditor;
     window.togglePriorityLabel = togglePriorityLabel;
-
-    // Expose function to set task as archived (for collaborative sync)
-    window.setTaskArchivedCollab = function(archived) {
-        if (formFieldsBinding && typeof formFieldsBinding.setArchived === 'function') {
-            formFieldsBinding.setArchived(archived);
-        }
-    };
 
     // Automatically initialize if the content is loaded directly on the page
     document.addEventListener('DOMContentLoaded', function() {

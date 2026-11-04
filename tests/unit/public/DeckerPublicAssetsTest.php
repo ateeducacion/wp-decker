@@ -53,7 +53,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			'decker_settings',
 			array(
 				'task_editor_type'      => $editor,
-				'collaborative_editing' => '0',
 			)
 		);
 
@@ -200,9 +199,9 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 
 		$this->assertContains( 'quill-min', $scripts );
 		$this->assertContains( 'quill-htmleditbutton-min', $scripts );
-		$this->assertContains( 'quill-cursors-min', $scripts );
+		$this->assertNotContains( 'quill-cursors-min', $scripts );
 		$this->assertContains( 'quill-snow-min', $styles );
-		$this->assertContains( 'quill-cursors', $styles );
+		$this->assertNotContains( 'quill-cursors', $styles );
 
 		$this->assertNotContains( 'tinymce-checklist', $scripts );
 	}
@@ -221,13 +220,13 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Collaborative editing forces Quill even when the classic editor is selected.
+	 * Retired collaboration settings cannot override the selected editor.
 	 */
-	public function test_collaborative_editing_forces_quill() {
+	public function test_retired_collaboration_setting_keeps_classic_editor() {
 		update_option(
 			'decker_settings',
 			array(
-				'task_editor_type'      => 'tinymce',
+				'task_editor_type'      => 'classic',
 				'collaborative_editing' => '1',
 			)
 		);
@@ -239,8 +238,8 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 		set_query_var( 'decker_page', 'task' );
 		$this->decker_public->enqueue_scripts();
 
-		$this->assertContains( 'quill-min', wp_scripts()->queue );
-		$this->assertNotContains( 'tinymce-checklist', wp_scripts()->queue );
+		$this->assertNotContains( 'quill-min', wp_scripts()->queue );
+		$this->assertContains( 'tinymce-checklist', wp_scripts()->queue );
 	}
 
 	/**

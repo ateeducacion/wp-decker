@@ -27,7 +27,7 @@ class Decker_Admin_Settings_Validator {
 	public function validate( $input, array $current_values ) {
 		$input = is_array( $input ) ? $input : array();
 
-		$input = $this->strip_legacy_openai_fields( $input );
+		$input = $this->strip_retired_fields( $input );
 
 		// Validate shared key.
 		$input['shared_key'] = $this->validate_shared_key( $input );
@@ -35,14 +35,8 @@ class Decker_Admin_Settings_Validator {
 		// Validate allow email notifications.
 		$input['allow_email_notifications'] = $this->sanitize_checkbox( $input, 'allow_email_notifications' );
 
-		// Validate collaborative editing.
-		$input['collaborative_editing'] = $this->sanitize_checkbox( $input, 'collaborative_editing' );
-
 		// Validate subtasks.
 		$input['subtasks_enabled'] = $this->sanitize_checkbox( $input, 'subtasks_enabled' );
-
-		// Validate the sidebar board status indicators.
-		$input['sidebar_board_status'] = $this->sanitize_checkbox( $input, 'sidebar_board_status' );
 
 		// Validate AI settings.
 		$input['ai_enabled']  = $this->sanitize_checkbox( $input, 'ai_enabled' );
@@ -50,9 +44,6 @@ class Decker_Admin_Settings_Validator {
 		$input['ai_api_key']  = $this->validate_ai_api_key( $input, $current_values );
 		$input['ai_model']    = $this->validate_ai_model( $input );
 		$input['ai_prompt']   = $this->validate_ai_prompt( $input );
-
-		// Validate signaling server.
-		$input['signaling_server'] = $this->validate_signaling_server( $input );
 
 		// Validate alert color.
 		$input['alert_color'] = $this->validate_alert_color( $input );
@@ -76,15 +67,18 @@ class Decker_Admin_Settings_Validator {
 	}
 
 	/**
-	 * Strip Legacy OpenAI Fields.
+	 * Strip Retired Fields.
 	 *
-	 * Removes the deprecated openai_* keys that are no longer stored.
+	 * Removes settings for retired features before saving.
 	 *
 	 * @param array $input The input fields being validated.
-	 * @return array The input array without the legacy OpenAI keys.
+	 * @return array The input array without retired keys.
 	 */
-	private function strip_legacy_openai_fields( array $input ) {
+	private function strip_retired_fields( array $input ) {
 		unset(
+			$input['collaborative_editing'],
+			$input['signaling_server'],
+			$input['sidebar_board_status'],
 			$input['openai_api_url'],
 			$input['openai_api_key'],
 			$input['openai_model']
@@ -155,20 +149,6 @@ class Decker_Admin_Settings_Validator {
 			: Decker::get_default_ai_prompt_template();
 	}
 
-	/**
-	 * Validate Signaling Server.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized server URL, or the default public server.
-	 */
-	private function validate_signaling_server( array $input ) {
-		if ( isset( $input['signaling_server'] ) && ! empty( $input['signaling_server'] ) ) {
-			// Include wss protocol for WebSocket signaling servers.
-			return esc_url_raw( $input['signaling_server'], array( 'wss', 'ws', 'https', 'http' ) );
-		}
-
-		return 'wss://signaling.yjs.dev';
-	}
 
 	/**
 	 * Validate Alert Color.

@@ -491,32 +491,26 @@ class DeckerTaskLocksTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Old collaboration options cannot bypass locks or stale-session rejection.
+	 */
+	public function test_retired_collaboration_setting_cannot_bypass_locks() {
+		update_option( 'decker_settings', array( 'collaborative_editing' => '1' ) );
+		$owner = $this->locks->acquire_lock( $this->task_id, $this->user_a );
+		$this->assertNotEmpty( $owner['generation'] );
+		$this->assertTrue( $this->locks->get_lock_info( $this->task_id, $this->user_b )['locked'] );
+		$this->assertWPError( $this->locks->assert_user_can_save( $this->task_id, $this->user_b ) );
+		$next = $this->locks->take_over_lock( $this->task_id, $this->user_b );
+		$this->assertTrue( $this->locks->release_lock( $this->task_id, $this->user_b, $next['generation'] ) );
+		$this->assertWPError( $this->locks->assert_user_can_save( $this->task_id, $this->user_a, $owner['generation'] ) );
+	}
+
+	/**
 	 * With no lock present at all, any editor is allowed to save.
 	 */
 	public function test_no_lock_allows_save() {
 		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_b ) );
 	}
 
-	/**
-	 * When collaborative editing is enabled, locking stands down: a second
-	 * user is never blocked and can save, because the CRDT resolves concurrency.
-	 */
-	public function test_locking_stands_down_when_collaboration_enabled() {
-		update_option( 'decker_settings', array( 'collaborative_editing' => '1' ) );
-
-		$this->assertFalse( $this->locks->is_enabled() );
-
-		// User A "acquires" the lock, but nothing is actually stored.
-		$this->locks->acquire_lock( $this->task_id, $this->user_a );
-		$this->assertEmpty( get_post_meta( $this->task_id, '_edit_lock', true ) );
-
-		// A second user still sees the card as unlocked and may save.
-		$info = $this->locks->get_lock_info( $this->task_id, $this->user_b );
-		$this->assertFalse( $info['locked'] );
-		$this->assertTrue( $this->locks->assert_user_can_save( $this->task_id, $this->user_b ) );
-
-		delete_option( 'decker_settings' );
-	}
 
 	/**
 	 * A heartbeat refresh extends the sole owner's lock without ever bumping the
