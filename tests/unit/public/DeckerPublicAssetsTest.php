@@ -67,6 +67,26 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Old AI settings cannot load retired resources or expose provider data.
+	 */
+	public function test_retired_ai_settings_do_not_load_assets_or_config() {
+		global $wp_scripts, $wp_styles;
+		foreach ( array( 'browser_gemini_nano', 'gemini_api' ) as $provider ) {
+			update_option( 'decker_settings', array( 'ai_enabled' => '1', 'ai_provider' => $provider, 'ai_api_key' => 'retired-api-key' ) );
+			$wp_scripts = null;
+			$wp_styles = null;
+			set_query_var( 'decker_page', 'task' );
+			$this->decker_public->enqueue_scripts();
+			$this->assertNotContains( 'decker-ai', wp_scripts()->queue );
+			$this->assertNotContains( 'decker-ai', wp_styles()->queue );
+			$data = wp_scripts()->get_data( 'task-card', 'data' );
+			$this->assertStringNotContainsString( '"ai":', $data );
+			$this->assertStringNotContainsString( 'retired-api-key', $data );
+			$this->assertStringContainsString( '"task_editor_type":"quill"', $data );
+		}
+	}
+
+	/**
 	 * Page-specific handles that must be enqueued for each Decker page.
 	 *
 	 * @return array<string, array{0:string, 1:array<int,string>, 2:array<int,string>}>
@@ -163,7 +183,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			'task-card',
 			'decker-heartbeat',
 			'global-search',
-			'decker-ai',
 		);
 
 		$common_styles = array(
@@ -172,7 +191,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			'attex',
 			'app',
 			'decker-public',
-			'decker-ai',
 		);
 
 		foreach ( array( 'task', 'board', 'calendar', 'tasks', 'knowledge-base', 'event-manager' ) as $page ) {
@@ -255,7 +273,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 
 		// Spot-check the chain across the tail of the Decker-owned scripts.
 		$chain = array(
-			'decker-ai'        => 'global-search',
 			'global-search'    => 'decker-heartbeat',
 			'decker-heartbeat' => 'decker-subtasks',
 			'decker-subtasks'  => 'task-card',
@@ -334,7 +351,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'users',
 				'locale',
 				'taskPermalinkStructure',
-				'ai',
 			),
 			array_keys( $vars )
 		);
@@ -350,10 +366,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			array_keys( $vars['nonces'] )
 		);
 
-		$this->assertSame(
-			array( 'enabled', 'provider', 'api_endpoint', 'server_available', 'strings', 'prompts' ),
-			array_keys( $vars['ai'] )
-		);
+		$this->assertArrayNotHasKey( 'ai', $vars );
 
 		// Pin the full key set, so a rename is caught as well as an add or a drop.
 		$this->assertSame(

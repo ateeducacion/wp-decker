@@ -130,7 +130,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -142,7 +141,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'app',
 					'decker-public',
 					'quill-snow-min',
-					'decker-ai',
 				),
 			),
 			'task / classic' => array(
@@ -168,7 +166,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -179,7 +176,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'attex',
 					'app',
 					'decker-public',
-					'decker-ai',
 				),
 			),
 			'board / quill' => array(
@@ -207,7 +203,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -219,7 +214,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'app',
 					'decker-public',
 					'quill-snow-min',
-					'decker-ai',
 				),
 			),
 			'board / classic' => array(
@@ -246,7 +240,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -257,7 +250,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'attex',
 					'app',
 					'decker-public',
-					'decker-ai',
 				),
 			),
 			'calendar / quill' => array(
@@ -288,7 +280,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -300,7 +291,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'app',
 					'decker-public',
 					'quill-snow-min',
-					'decker-ai',
 				),
 			),
 			'calendar / classic' => array(
@@ -330,7 +320,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -341,7 +330,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'attex',
 					'app',
 					'decker-public',
-					'decker-ai',
 				),
 			),
 			'tasks / quill' => array(
@@ -374,7 +362,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -390,7 +377,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'searchbuilder-datatables-min',
 					'select-datatables-min',
 					'buttons-datatables-min',
-					'decker-ai',
 				),
 			),
 			'tasks / classic' => array(
@@ -422,7 +408,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -437,7 +422,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'searchbuilder-datatables-min',
 					'select-datatables-min',
 					'buttons-datatables-min',
-					'decker-ai',
 				),
 			),
 			'knowledge-base / quill' => array(
@@ -465,7 +449,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -477,7 +460,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'app',
 					'decker-public',
 					'quill-snow-min',
-					'decker-ai',
 				),
 			),
 			'knowledge-base / classic' => array(
@@ -504,7 +486,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -515,7 +496,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'attex',
 					'app',
 					'decker-public',
-					'decker-ai',
 				),
 			),
 			'event-manager / quill' => array(
@@ -544,7 +524,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -556,7 +535,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'app',
 					'decker-public',
 					'quill-snow-min',
-					'decker-ai',
 				),
 			),
 			'event-manager / classic' => array(
@@ -584,7 +562,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -595,7 +572,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'attex',
 					'app',
 					'decker-public',
-					'decker-ai',
 				),
 			),
 			'analytics / quill' => array(
@@ -622,7 +598,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -634,7 +609,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'app',
 					'decker-public',
 					'quill-snow-min',
-					'decker-ai',
 				),
 			),
 			'analytics / classic' => array(
@@ -660,7 +634,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'decker-subtasks',
 					'decker-heartbeat',
 					'global-search',
-					'decker-ai',
 				),
 				array(
 					'bootstrap-min',
@@ -671,7 +644,6 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 					'attex',
 					'app',
 					'decker-public',
-					'decker-ai',
 				),
 			),
 		);

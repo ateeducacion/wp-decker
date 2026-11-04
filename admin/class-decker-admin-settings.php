@@ -148,13 +148,6 @@ class Decker_Admin_Settings {
 			'decker'
 		);
 
-		add_settings_section(
-			'decker_ai_section',
-			__( 'AI Configuration', 'decker' ),
-			array( $this->fields, 'ai_settings_section_callback' ),
-			'decker'
-		);
-
 		$fields = array(
 			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons.
 			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field.
@@ -174,25 +167,6 @@ class Decker_Admin_Settings {
 				array( $this->fields, 'render' ),
 				'decker',
 				'decker_main_section',
-				array( 'field' => $field_id )
-			);
-		}
-
-		$ai_fields = array(
-			'ai_enabled'  => __( 'AI Improvements', 'decker' ),
-			'ai_provider' => __( 'AI Provider', 'decker' ),
-			'ai_api_key'  => __( 'Gemini API Key', 'decker' ),
-			'ai_model'    => __( 'Gemini Model', 'decker' ),
-			'ai_prompt'   => __( 'AI Prompt', 'decker' ),
-		);
-
-		foreach ( $ai_fields as $field_id => $field_title ) {
-			add_settings_field(
-				$field_id,
-				$field_title,
-				array( $this->fields, 'render' ),
-				'decker',
-				'decker_ai_section',
 				array( 'field' => $field_id )
 			);
 		}
@@ -247,6 +221,6 @@ class Decker_Admin_Settings {
 	 * @return array The validated fields.
 	 */
 	public function settings_validate( $input ) {
-		return $this->validator->validate( $input, get_option( 'decker_settings', array() ) );
+		return $this->validator->validate( $input );
 	}
 }

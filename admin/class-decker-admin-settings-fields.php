@@ -44,17 +44,6 @@ class Decker_Admin_Settings_Fields {
 	}
 
 	/**
-	 * AI Settings Section Callback.
-	 *
-	 * Outputs a description for the AI settings section.
-	 *
-	 * @return void
-	 */
-	public function ai_settings_section_callback() {
-		echo '<p>' . esc_html__( 'Configure how Decker improves task descriptions with AI. Browser-based Gemini Nano keeps the text in the browser, while the Gemini API sends the prompt to Google through your WordPress server using the saved API key.', 'decker' ) . '</p>';
-	}
-
-	/**
 	 * Render Shared Key Field
 	 *
 	 * Outputs the HTML for the shared_key field, generating it only if it does not exist or does not meet the criteria.
@@ -107,108 +96,6 @@ class Decker_Admin_Settings_Fields {
 		echo '</label>';
 		echo '<p class="description">' . esc_html__( 'Adds a Subtasks tab to every task, where a task can be broken down into steps with their own state, assignee and due date. The card shows how many are done. Turning this off hides the tab and the counter; the stored subtasks are kept.', 'decker' ) . '</p>';
 	}
-
-
-	/**
-	 * Render AI Enabled Field.
-	 *
-	 * Outputs the HTML for the ai_enabled field.
-	 *
-	 * @return void
-	 */
-	private function ai_enabled_render() {
-		$options = get_option( 'decker_settings', array() );
-		$checked = isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'];
-
-		echo '<label>';
-		echo '<input type="checkbox" name="decker_settings[ai_enabled]" value="1" ' . checked( $checked, true, false ) . '>';
-		echo esc_html__( 'Enable AI improvements for task descriptions.', 'decker' );
-		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'When enabled, users can improve task descriptions with either Gemini Nano in supported browsers or the Gemini API through the server.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI Provider Field.
-	 *
-	 * Outputs the HTML for the ai_provider field.
-	 *
-	 * @return void
-	 */
-	private function ai_provider_render() {
-		$options  = get_option( 'decker_settings', array() );
-		$provider = Decker_AI_Manager::get_selected_provider( $options );
-		$choices  = array(
-			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO => __(
-				'Gemini Nano (browser-based)',
-				'decker'
-			),
-			Decker_AI_Manager::PROVIDER_GEMINI_API          => __(
-				'Gemini API (server-side)',
-				'decker'
-			),
-		);
-
-		foreach ( $choices as $value => $label ) {
-			echo '<p><label>';
-			echo '<input type="radio" name="decker_settings[ai_provider]" value="' . esc_attr( $value ) . '" ' . checked( $provider, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label></p>';
-		}
-
-		echo '<p class="description">' . esc_html__( 'Choose whether AI improvements run in the browser with Gemini Nano or through the Gemini API on the server.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI API Key Field.
-	 *
-	 * Outputs the HTML for the ai_api_key field.
-	 *
-	 * @return void
-	 */
-	private function ai_api_key_render() {
-		$options        = get_option( 'decker_settings', array() );
-		$has_saved_key  = ! empty( $options['ai_api_key'] );
-		$placeholder    = $has_saved_key ? '••••••••••••••••' : '';
-		$description    = $has_saved_key
-			? __( 'A Gemini API key is already stored. Leave this field empty to keep the current key.', 'decker' )
-			: __( 'Paste a Gemini API key to enable server-side Gemini requests. The saved key is never shown again after saving.', 'decker' );
-
-		echo '<input type="password" name="decker_settings[ai_api_key]" class="regular-text" value="" autocomplete="off" placeholder="' . esc_attr( $placeholder ) . '">';
-		echo '<p class="description">' . esc_html( $description ) . '</p>';
-	}
-
-	/**
-	 * Render AI Model Field.
-	 *
-	 * Outputs the HTML for the ai_model field.
-	 *
-	 * @return void
-	 */
-	private function ai_model_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = Decker_AI_Manager::get_model( $options );
-
-		echo '<input type="text" name="decker_settings[ai_model]" class="regular-text" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( Decker_AI_Manager::DEFAULT_GEMINI_MODEL ) . '">';
-		echo '<p class="description">' . esc_html__( 'Optional Gemini model name for server-side requests. Leave the default unless you need a different compatible text-generation model.', 'decker' ) . '</p>';
-	}
-
-	/**
-	 * Render AI Prompt Field.
-	 *
-	 * Outputs the HTML for the ai_prompt field.
-	 *
-	 * @return void
-	 */
-	private function ai_prompt_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = isset( $options['ai_prompt'] ) && '' !== $options['ai_prompt']
-			? sanitize_textarea_field( $options['ai_prompt'] )
-			: Decker::get_default_ai_prompt_template();
-
-		echo '<textarea name="decker_settings[ai_prompt]" class="large-text code" rows="12">' . esc_textarea( $value ) . '</textarea>';
-		echo '<p class="description">' . esc_html__( 'Customize the base prompt used for AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}.', 'decker' ) . '</p>';
-	}
-
 
 	/**
 	 * Render User Profile Field.

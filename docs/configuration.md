@@ -17,23 +17,9 @@ All main settings are under **Settings → Decker**.
 Task edit locks and stale-form protection are always active. The retired real-time
 collaboration, signaling-server and sidebar board-status options are ignored on
 existing installations and removed from the saved configuration the next time an
-administrator saves settings. Tasks and boards are kept.
-
-## AI Improvements
-
-| Setting | Description |
-|---------|-------------|
-| AI Improvements | Enable/disable the feature |
-| AI Provider | `Gemini Nano (browser-based)` or `Gemini API (server-side)` |
-| Gemini API Key | Required only for the server-side provider. Never shown again after saving |
-| Gemini Model | Optional model name (has a sensible default) |
-| AI Prompt | Customizable base prompt. Supports placeholders: `{{mode_instruction}}`, `{{task_context}}`, `{{content_html}}`, `{{language_instruction}}`, `{{response_format}}` |
-
-**Privacy notes**
-
-- The Gemini API key is stored only on the server.
-- It is never exposed in JavaScript, REST responses or the settings form after saving.
-- Leave the key field empty to keep the previously saved key.
+administrator saves settings. The retired AI provider, API key, model and prompt
+settings are discarded on that same save. Task descriptions and other task and
+board data are kept.
 
 ## Nextcloud import
 
