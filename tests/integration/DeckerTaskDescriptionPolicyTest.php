@@ -60,6 +60,92 @@ class DeckerTaskDescriptionPolicyTest extends Decker_Test_Base {
 		$this->assertSame( Decker_Description_Snapshot::items( $content ), Decker_Description_Snapshot::items( get_post( $clone )->post_content ) );
 	}
 
+	public function test_ambiguous_description_is_rejected_by_real_ajax_writer_and_abilities() {
+		$id = self::factory()->task->create( array( 'board' => $this->board ) );
+		$before = Decker_Task_Description_Migration::fingerprint( $id );
+		$html = '<p class="ql-unknown">Must remain uncommitted</p>';
+		$_POST = wp_slash( array( 'task_id' => $id, 'title' => 'Must not replace title', 'description' => $html, 'board' => $this->board, 'stack' => 'to-do', 'nonce' => wp_create_nonce( 'save_decker_task_nonce' ) ) );
+		$request = $_REQUEST;
+		$_REQUEST['nonce'] = $_POST['nonce'];
+		$this->enable_wp_send_json_capture();
+		ob_start();
+		try {
+			( new Decker_Task_Ajax_Save( new Decker_Tasks() ) )->handle_save_decker_task();
+			$this->fail( 'Expected the AJAX JSON response to terminate.' );
+		} catch ( WPDieException $error ) {
+			$response = json_decode( ob_get_contents(), true );
+		} finally {
+			ob_end_clean();
+			$this->disable_wp_send_json_capture();
+			$_REQUEST = $request;
+		}
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( 'decker_description_review', $response['data']['code'] );
+		$writer = Decker_Task_Writer::create_or_update_task( array( 'id' => $id, 'title' => 'Writer must not commit', 'description' => $html, 'board' => $this->board, 'stack' => 'done' ) );
+		$this->assertWPError( $writer );
+		$this->assertSame( 'decker_description_review', $writer->get_error_code() );
+		$ability = ( new Decker_Ability_Service() )->create_task( array( 'title' => 'Ability must not commit', 'description' => $html, 'board_id' => $this->board, 'stack' => 'to-do' ) );
+		$this->assertWPError( $ability );
+		$this->assertSame( 'decker_description_review', $ability->get_error_code() );
+		$this->assertSame( $before, Decker_Task_Description_Migration::fingerprint( $id ) );
+	}
+
+	public function test_writer_rejects_unmigrated_site_before_applying_defaults() {
+		$id = self::factory()->task->create( array( 'board' => $this->board ) );
+		$before = Decker_Task_Description_Migration::fingerprint( $id );
+		delete_option( Decker_Task_Description::VERSION_OPTION );
+		$result = Decker_Task_Writer::create_or_update_task( array( 'id' => $id, 'title' => 'Must not commit' ) );
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_description_migration_required', $result->get_error_code() );
+		$this->assertSame( $before, Decker_Task_Description_Migration::fingerprint( $id ) );
+	}
+
+	public function test_failed_writer_updates_and_inserts_emit_no_domain_notifications() {
+		$id = self::factory()->task->create( array( 'board' => $this->board ) );
+		$before = Decker_Task_Description_Migration::fingerprint( $id );
+		$events = array();
+		$record = static function () use ( &$events ) { $events[] = current_filter(); };
+		$hooks = array( 'decker_task_created', 'decker_task_updated', 'decker_stack_transition', 'decker_task_completed', 'decker_task_responsable_changed', 'decker_user_assigned' );
+		$reject = static fn ( $empty, $fields ) => 'decker_task' === $fields['post_type'] ? true : $empty;
+		foreach ( $hooks as $hook ) add_action( $hook, $record );
+		add_filter( 'wp_insert_post_empty_content', $reject, 99, 2 );
+		try {
+			foreach ( array( 0, $id ) as $target ) {
+				$result = Decker_Task_Writer::create_or_update_task( array( 'id' => $target, 'title' => 'Rejected write', 'description' => '<h2>Body</h2>', 'board' => $this->board, 'stack' => 'done', 'responsable' => $this->editor, 'assigned_users' => array( $this->editor ) ) );
+				$this->assertWPError( $result );
+				$this->assertSame( 'empty_content', $result->get_error_code() );
+			}
+		} finally {
+			remove_filter( 'wp_insert_post_empty_content', $reject, 99 );
+			foreach ( $hooks as $hook ) remove_action( $hook, $record );
+		}
+		$this->assertSame( array(), $events );
+		$this->assertSame( $before, Decker_Task_Description_Migration::fingerprint( $id ) );
+	}
+
+	public function test_failed_merge_validation_or_write_does_not_move_source_data() {
+		global $wpdb;
+		$destination = self::factory()->task->create( array( 'board' => $this->board, 'post_content' => '<p>Destination</p>' ) );
+		$source = self::factory()->task->create( array( 'board' => $this->board, 'post_content' => '<p>Source</p>', 'assigned_users' => array( $this->editor ) ) );
+		$wpdb->update( $wpdb->posts, array( 'post_content' => '<p class="ql-unknown">Review</p>' ), array( 'ID' => $source ) );
+		clean_post_cache( $source );
+		$before = array( Decker_Task_Description_Migration::fingerprint( $source ), Decker_Task_Description_Migration::fingerprint( $destination ) );
+		$result = Decker_Task_Merge::merge_tasks( $source, $destination );
+		$this->assertWPError( $result );
+		$this->assertSame( 'decker_description_review', $result->get_error_code() );
+		$this->assertSame( $before, array( Decker_Task_Description_Migration::fingerprint( $source ), Decker_Task_Description_Migration::fingerprint( $destination ) ) );
+		$wpdb->update( $wpdb->posts, array( 'post_content' => '<p>Source</p>' ), array( 'ID' => $source ) );
+		clean_post_cache( $source );
+		$before = array( Decker_Task_Description_Migration::fingerprint( $source ), Decker_Task_Description_Migration::fingerprint( $destination ) );
+		$reject = static fn ( $empty, $fields ) => (int) ( $fields['ID'] ?? 0 ) === $destination ? true : $empty;
+		add_filter( 'wp_insert_post_empty_content', $reject, 99, 2 );
+		try { $result = Decker_Task_Merge::merge_tasks( $source, $destination ); }
+		finally { remove_filter( 'wp_insert_post_empty_content', $reject, 99 ); }
+		$this->assertWPError( $result );
+		$this->assertSame( 'empty_content', $result->get_error_code() );
+		$this->assertSame( $before, array( Decker_Task_Description_Migration::fingerprint( $source ), Decker_Task_Description_Migration::fingerprint( $destination ) ) );
+	}
+
 	public function test_first_write_initializes_a_new_site_without_another_init_action() {
 		global $wpdb;
 		$this->assertSame( '0', (string) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type='decker_task'" ) );

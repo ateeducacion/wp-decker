@@ -347,4 +347,48 @@ describe( 'DeckerChecklist editor behavior', () => {
 		expect( parent.getAttribute( 'data-list' ) ).toBe( 'checked' );
 	} );
 
+	test( 'toolbar item state exposes checked status and disables after a lost lock', () => {
+		const element = document.createElement( 'button' );
+		const button = { active: vi.fn(), disabled: vi.fn(), getEl: () => element };
+		const config = fake.editor.addButton.mock.calls.find( ( args ) => args[ 0 ] === 'decker_check_item' )[ 1 ];
+		config.onPostRender.call( button );
+		fake.setCaret( document.getElementById( 'b' ) );
+		fake.emit( 'NodeChange', {} );
+		expect( button.active ).toHaveBeenLastCalledWith( true );
+		expect( button.disabled ).toHaveBeenLastCalledWith( false );
+		expect( element.getAttribute( 'aria-pressed' ) ).toBe( 'true' );
+		fake.editor.readonly = true;
+		fake.emit( 'NodeChange', {} );
+		expect( button.disabled ).toHaveBeenLastCalledWith( true );
+		fake.setCaret( document.getElementById( 'outside' ) );
+		fake.emit( 'NodeChange', {} );
+		expect( element.getAttribute( 'aria-pressed' ) ).toBe( 'false' );
+	} );
+
+	test( 'the keyboard shortcut toggles the caret item and uses dirty tracking', () => {
+		fake.editor.addShortcut = vi.fn();
+		window.DeckerChecklist.attach( fake.editor );
+		fake.setCaret( document.getElementById( 'b' ) );
+		const [ keys, , action ] = fake.editor.addShortcut.mock.calls[ 0 ];
+		expect( keys ).toBe( 'meta+shift+32' );
+		action();
+		expect( document.getElementById( 'b' ).getAttribute( 'data-list' ) ).toBe( 'unchecked' );
+		expect( fake.editor.fire ).toHaveBeenCalledWith( 'change' );
+	} );
+
+	test( 'creating a checklist cannot strip an adjacent checklist through a native command event', () => {
+		fake.setCaret( document.getElementById( 'b' ) );
+		fake.editor.deckerCreatingChecklist = true;
+		fake.emit( 'ExecCommand', { command: 'InsertUnorderedList' } );
+		expect( document.getElementById( 'b' ).getAttribute( 'data-list' ) ).toBe( 'checked' );
+	} );
+
+	test( 'read-only marker clicks cannot mutate an item', () => {
+		const item = document.getElementById( 'b' );
+		fake.editor.readonly = true;
+		fake.emit( 'click', { target: item, offsetX: 10, preventDefault: vi.fn() } );
+		expect( item.getAttribute( 'data-list' ) ).toBe( 'checked' );
+		expect( fake.editor.fire ).not.toHaveBeenCalledWith( 'change' );
+	} );
+
 } );

@@ -144,6 +144,117 @@ class DeckerTaskDescriptionMigrationTest extends Decker_Test_Base {
 		$this->assertFalse( get_option( Decker_Task_Description::VERSION_OPTION, false ) );
 	}
 
+	public function test_corrupted_backup_identity_types_and_bytes_never_replace_content() {
+		$id = $this->historical( '<ol><li data-list="checked">Original</li></ol>' );
+		$post = get_post( $id )->to_array();
+		$original = Decker_Task_Description_Backup::create( get_post( $id ) );
+		unset( $original['content'] );
+		$invalid = array( 'not an array', array_replace( $original, array( 'site_id' => -1 ) ), array_replace( $original, array( 'task_id' => $id + 1 ) ), array_replace( $original, array( 'bytes' => (string) $original['bytes'] ) ), array_replace( $original, array( 'content_base64' => '%%invalid%%' ) ), array_replace( $original, array( 'bytes' => $original['bytes'] + 1 ) ), array_replace( $original, array( 'sha256' => str_repeat( '0', 64 ) ) ) );
+		foreach ( $invalid as $backup ) {
+			update_option( Decker_Task_Description_Backup::key( $id ), $backup, false );
+			$report = $this->migration->run( false );
+			$this->assertSame( $id, $report['errors'][0]['task_id'] );
+			$this->assertSame( $backup, get_option( Decker_Task_Description_Backup::key( $id ) ) );
+			$this->assertSame( $post, get_post( $id )->to_array() );
+			$this->assertFalse( Decker_Task_Description::is_ready() );
+		}
+	}
+
+	/**
+	 * Query failures must never masquerade as an empty or complete site.
+	 *
+	 * @dataProvider failed_enumeration_queries
+	 */
+	public function test_enumeration_queries_fail_closed( string $needle, string $message, bool $verify ) {
+		global $wpdb;
+		$id = $this->historical( '<p>Original</p>' );
+		$before = get_post( $id )->to_array();
+		$failure = static fn ( $sql ) => str_contains( $sql, $needle ) ? 'SELECT * FROM decker_description_missing_table' : $sql;
+		$previous = $wpdb->suppress_errors( true );
+		add_filter( 'query', $failure );
+		try {
+			if ( $verify ) $this->migration->verify();
+			else $this->migration->run( false );
+			$this->fail( 'A failed query cannot complete migration.' );
+		} catch ( RuntimeException $error ) {
+			$this->assertSame( $message, $error->getMessage() );
+		} finally {
+			remove_filter( 'query', $failure );
+			$wpdb->suppress_errors( $previous );
+		}
+		$this->assertSame( $before, get_post( $id )->to_array() );
+		$this->assertFalse( get_option( Decker_Task_Description_Backup::key( $id ), false ) );
+	}
+
+	public static function failed_enumeration_queries(): array {
+		return array(
+			array( 'SELECT MAX(ID)', 'Task enumeration failed.', false ),
+			array( 'SELECT COUNT(*)', 'Task count failed.', false ),
+			array( 'AND ID >', 'Task batch could not be read.', false ),
+			array( "WHERE post_type = 'decker_task' ORDER BY ID", 'Task verification query failed.', true ),
+		);
+	}
+
+	public function test_lost_connection_lock_prevents_backup_and_can_be_retried() {
+		$id = $this->historical( '<ol><li data-list="checked">Original</li></ol>' );
+		$failure = static fn ( $sql ) => str_contains( $sql, 'SELECT IS_USED_LOCK(' ) ? 'SELECT 0' : $sql;
+		add_filter( 'query', $failure );
+		try { $report = $this->migration->run( false ); }
+		finally { remove_filter( 'query', $failure ); }
+		$this->assertSame( 'Migration connection lock was lost.', $report['errors'][0]['reason'] );
+		$this->assertFalse( get_option( Decker_Task_Description_Backup::key( $id ), false ) );
+		$this->assertSame( array(), $this->migration->run( false )['errors'] );
+	}
+
+	public function test_journal_failure_is_reported_without_losing_the_backup() {
+		$id = $this->historical( '<p class="ql-unknown">Review</p>' );
+		$reject = static fn ( $value, $old ) => $old;
+		add_filter( 'pre_update_option_' . Decker_Task_Description_Migration::state_key( $id ), $reject, 10, 2 );
+		try { $report = $this->migration->run( false ); }
+		finally { remove_filter( 'pre_update_option_' . Decker_Task_Description_Migration::state_key( $id ), $reject ); }
+		$this->assertCount( 2, $report['errors'] );
+		$this->assertSame( 'Failure could not be recorded in the journal.', $report['errors'][1]['reason'] );
+		$this->assertSame( get_post( $id )->post_content, Decker_Task_Description_Backup::read( $id )['content'] );
+		$this->assertSame( array( $id ), $this->migration->verify()['pending'] );
+		$this->assertFalse( Decker_Task_Description::is_ready() );
+	}
+
+	public function test_a_task_arriving_after_enumeration_prevents_site_completion() {
+		global $wpdb;
+		$this->historical( '<p>Original</p>' );
+		$late = 0;
+		$progress = static function () use ( &$late, $wpdb ) {
+			if ( $late ) return;
+			$wpdb->insert( $wpdb->posts, array( 'post_type' => 'decker_task', 'post_title' => 'Late task', 'post_status' => 'draft', 'post_content' => '<p>Late</p>' ) );
+			$late = (int) $wpdb->insert_id;
+		};
+		$report = $this->migration->run( false, 1, $progress );
+		$this->assertGreaterThan( 0, $late );
+		$this->assertSame( 'Verification found pending tasks.', $report['errors'][0]['reason'] );
+		$this->assertSame( array( $late ), $this->migration->verify()['pending'] );
+		$this->assertFalse( Decker_Task_Description::is_ready() );
+		$this->assertSame( array(), $this->migration->run( false )['errors'] );
+	}
+
+	public function test_failed_restore_write_remains_pending_until_retry_succeeds() {
+		$id = $this->historical( '<ol><li data-list="checked">Original</li></ol>' );
+		$original = get_post( $id )->post_content;
+		$this->assertSame( array(), $this->migration->run( false )['errors'] );
+		$converted = get_post( $id )->post_content;
+		$reject = static fn ( $empty, $fields ) => (int) ( $fields['ID'] ?? 0 ) === $id ? true : $empty;
+		add_filter( 'wp_insert_post_empty_content', $reject, 99, 2 );
+		try {
+			$this->migration->restore( $id );
+			$this->fail( 'Expected the restore write to fail.' );
+		} catch ( RuntimeException $error ) {
+			$this->assertSame( 'Exact description restore failed.', $error->getMessage() );
+		} finally { remove_filter( 'wp_insert_post_empty_content', $reject, 99 ); }
+		$this->assertSame( $converted, get_post( $id )->post_content );
+		$this->assertSame( 'restoring', get_option( Decker_Task_Description_Migration::state_key( $id ) )['phase'] );
+		$this->assertTrue( $this->migration->restore( $id ) );
+		$this->assertSame( $original, get_post( $id )->post_content );
+	}
+
 	public function test_resume_after_backup_and_after_content_commit() {
 		$id = $this->historical( '<ol><li data-list="checked">Original</li></ol>' );
 		$interrupt = static function () { throw new RuntimeException( 'Simulated interruption after backup.' ); };

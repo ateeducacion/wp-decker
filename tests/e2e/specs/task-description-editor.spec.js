@@ -307,10 +307,13 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 			await page.locator( '.media-modal .media-toolbar-primary .media-button' ).click();
 			await expect( page.locator( '.media-modal' ) ).not.toBeVisible();
 			await expect.poll( () => editorHtml( page ) ).toContain( 'https://example.invalid/media.png' );
+				const reloaded = page.waitForEvent( 'framenavigated', { predicate: ( frame ) => frame === page.mainFrame() } );
 			await saved( page );
+				await reloaded;
+				await page.waitForLoadState( 'domcontentloaded' );
 			expect( await stored( requestUtils, task.id ) ).toContain( 'https://example.invalid/media.png' );
 			await expect( page.locator( '#task-modal' ) ).not.toBeVisible();
-			await expect.poll( () => page.evaluate( () => !!tinymce.get( 'task-description' ) ) ).toBe( false );
+				expect( await page.evaluate( () => !!window.tinymce?.get( 'task-description' ) ) ).toBe( false );
 		}
 	} );
 
@@ -331,6 +334,27 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 		expect( ( await result.json() ).success ).toBe( false );
 		expect( await stored( requestUtils, task.id ) ).toBe( expected );
 	} );
+
+		test( 'ambiguous legacy input returns HTTP 400 without changing stored content', async ( { page, requestUtils } ) => {
+			const task = seed( 'task-5531.html' );
+			cli( [ 'decker', 'migrate-descriptions', '--writers-paused' ] );
+			await page.goto( `/?decker_page=task&id=${ task.id }` );
+			await ready( page );
+			const original = await stored( requestUtils, task.id );
+			await page.locator( '#task-description-html' ).click();
+			await page.locator( '#task-description' ).fill( '<p class="ql-unknown">Needs review</p>' );
+			const response = page.waitForResponse( ( result ) => ( result.request().postData() || '' ).includes( 'action=save_decker_task' ) );
+			await page.locator( '#save-task' ).click();
+			const result = await response;
+			expect( result.status() ).toBe( 400 );
+			const body = await result.json();
+			expect( body.success ).toBe( false );
+			expect( body.data.code ).toBe( 'decker_description_review' );
+			expect( await stored( requestUtils, task.id ) ).toBe( original );
+			await page.reload();
+			await ready( page );
+			expect( await stored( requestUtils, task.id ) ).toBe( original );
+		} );
 
 	test( 'closing while real TinyMCE init is held cannot orphan an instance', async ( { page, requestUtils } ) => {
 		const task = seed( 'task-5531.html' );

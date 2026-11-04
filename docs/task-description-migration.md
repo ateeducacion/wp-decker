@@ -286,6 +286,27 @@ parentheses, Unicode and unfinished values. The offline corpus checker loads
 recent core HTML/UTF-8 definitions when present and supplies the export's UTF-8
 charset through an option short-circuit, without loading a site or its database.
 
+Coverage follow-up adds real in-process WP-CLI dispatch tests for acknowledgement,
+bootstrap guards, dry runs, JSON/progress output, failure exit codes, verification
+and restoration conflicts. The CLI class can be imported when its base class is
+available; production command registration still requires `WP_CLI=true`. Tests
+keep WordPress outside CLI mode, use the already installed CLI's capture API and
+never read the operator's CLI configuration.
+
+Additional fault cases cover corrupt backup identities/bytes, failed enumeration
+queries, lost connection locks, journal persistence, late-arriving tasks, rejected
+restoration writes and AJAX/writer/Abilities/merge rejections without partial
+data or domain notifications. Checklist tests exercise keyboard, toolbar ARIA
+state and read-only controls. Local full validation recorded 1,300 PHP tests
+(one multisite-only skip), 93.35% PHP line coverage and 375 passing JavaScript
+tests (nine opt-in live CAS skips). A local comparison of changed executable
+lines against Clover/LCOV reports measured 96.40%; Codecov's server result remains
+the authoritative PR gate. Thresholds, report inputs and exclusions are unchanged.
+The targeted browser rerun passes all 21 description cases, including an actual
+HTTP 400 rejection with persisted-content verification. The modal/media test now
+waits for the real board navigation after save before checking for an orphaned
+editor; an unloaded TinyMCE global on that fresh page is a valid empty state.
+
 ## Local validation recorded on 2026-11-04
 
 The implementation branch is `feature/classic-task-descriptions`, based on

@@ -102,6 +102,7 @@ class DeckerTaskDescriptionConverterTest extends WP_UnitTestCase {
 	/** Never silently repair unknown or ambiguous historical structures. */
 	public function test_ambiguous_inputs_fail() {
 		$inputs = array( '<p class="ql-align-center" style="text-align:right">Ambiguous formatting</p>', '<ul><li data-list="checked"><span class="ql-ui" title="Content"></span></li></ul>', '<ol><li data-list="unknown">Text</li></ol>', '<ol><li class="ql-indent-2" data-list="checked">Orphan</li></ol>', '<p class="ql-unknown">Text</p>', '<ol><li data-list="checked"><span class="ql-ui">Actual text</span></li></ol>', '<ol><li data-list="checked">Broken</div></ol>' );
+		$inputs = array_merge( $inputs, array( '<p class="ql-align-center">' . "\xff" . '</p>', '<ol><div class="ql-align-left">Unidentified list child</div></ol>', '<ol reversed><li data-list="ordered">Reversed legacy list</li></ol>', '<div class="ql-code-block-container"><p>Unknown line</p></div>', '<div class="ql-code-block-container"><div class="ql-code-block"><a href="https://example.invalid/">Unknown code structure</a></div></div>' ) );
 		foreach ( $inputs as $input ) {
 			try {
 				Decker_Task_Description_Converter::convert( $input );
@@ -110,5 +111,14 @@ class DeckerTaskDescriptionConverterTest extends WP_UnitTestCase {
 				$this->assertNotSame( '', $error->getMessage() );
 			}
 		}
+	}
+
+	public function test_code_highlighting_container_whitespace_and_html_comments() {
+		$html = '<div class="ql-code-block-container">' . "\n  " . '<div class="ql-code-block"><span class="hljs-keyword">if</span> (x)</div>' . "\n " . '<div class="ql-code-block"><br></div>' . "\n" . '</div><pre class="ql-syntax">  old code</pre><p class="ql-align-left">Text<!--keep this comment--></p>';
+		$output = Decker_Task_Description_Converter::convert( $html );
+		$this->assertStringContainsString( "<pre><code>if (x)\n</code></pre>", $output );
+		$this->assertStringContainsString( '<pre>  old code</pre>', $output );
+		$this->assertStringContainsString( '<!--keep this comment-->', $output );
+		$this->assertSame( $output, Decker_Task_Description_Converter::convert( $output ) );
 	}
 }

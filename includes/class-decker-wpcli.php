@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) && defined( 'WP_CLI' ) && WP_CLI ) {
 	return;
 }
 defined( 'ABSPATH' ) || exit;
-if ( defined( 'WP_CLI' ) && WP_CLI && ! class_exists( 'Decker_WPCLI', false ) ) {
+if ( class_exists( 'WP_CLI_Command' ) && ! class_exists( 'Decker_WPCLI', false ) ) {
 
 	/**
 	 * Custom WP-CLI commands for Decker Plugin.
@@ -160,5 +160,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI && ! class_exists( 'Decker_WPCLI', false ) ) 
 	}
 
 	// Register the main command that groups the subcommands.
-	WP_CLI::add_command( 'decker', 'Decker_WPCLI' );
+	if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		WP_CLI::add_command( 'decker', 'Decker_WPCLI' );
+	}
 }
