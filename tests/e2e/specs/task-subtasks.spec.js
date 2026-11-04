@@ -55,11 +55,17 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 			decker_board: [ board.id ],
 			// The task list orders by `max_priority`, which drops tasks that
 			// carry no such meta, so the fixture has to set it explicitly.
-			meta: { stack: 'to-do', max_priority: true, assigned_users: [ assignee.id ] },
+			meta: { stack: 'to-do', max_priority: true },
 		},
 	} );
 
 	try {
+		const assigned = await requestUtils.rest( {
+			path: `/decker/v1/tasks/${ task.id }/assign`,
+			method: 'POST',
+			data: { user_id: assignee.id },
+		} );
+		expect( assigned.success ).toBe( true );
 		await setSubtasksEnabled( page, true );
 
 		await page.goto( `/?decker_page=task&id=${ task.id }` );
