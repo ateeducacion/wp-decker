@@ -424,6 +424,18 @@ class Decker_Public_Assets {
 			'lock_lost_message'             => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
 			'lock_takeover_failed'          => __( 'The card could not be taken over. Please reload and try again.', 'decker' ),
 			'reload_card'                   => __( 'Reload card', 'decker' ),
+		);
+
+		return array_merge( $strings, $this->get_today_strings(), $this->get_subtask_strings() );
+	}
+
+	/**
+	 * Labels for the content-free "For today" quick action.
+	 *
+	 * @return array<string, string> Localized strings.
+	 */
+	private function get_today_strings() {
+		return array(
 			// "For today" quick-action strings.
 			'add_to_today'                  => __( 'Add to today', 'decker' ),
 			'remove_from_today'             => __( 'Remove from today', 'decker' ),
@@ -431,8 +443,6 @@ class Decker_Public_Assets {
 			'removing_from_today'           => __( 'Removing from today…', 'decker' ),
 			'today_update_failed'           => __( 'The task could not be updated.', 'decker' ),
 		);
-
-		return array_merge( $strings, $this->get_subtask_strings() );
 	}
 
 	/**

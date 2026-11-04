@@ -143,6 +143,8 @@ class Decker {
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-labels.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-clone.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-attachment-links.php';
+		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-visibility.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-task-merge.php';
 
 		require_once plugin_dir_path( __DIR__ ) . 'includes/custom-post-types/class-decker-tasks-rest-support.php';
