@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // WordPress dialogs live outside the Bootstrap modal; let them receive focus.
     document.addEventListener('focusin', function(event) {
-        if (modalElement?.classList.contains('show') && event.target.closest('.mce-window, .mce-inline-toolbar, #wp-link-wrap, .media-modal')) {
+        if (modalElement?.classList.contains('show') && event.target.closest('.mce-window, .mce-inline-toolbar-grp, #wp-link-wrap, .media-modal')) {
             event.stopImmediatePropagation();
         }
     });

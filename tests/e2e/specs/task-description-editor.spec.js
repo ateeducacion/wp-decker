@@ -317,6 +317,45 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 		}
 	} );
 
+	test( 'modal fullscreen covers the card and the inline link field takes typing', async ( { page, requestUtils } ) => {
+		const task = seed( 'task-6976.html' );
+		cli( [ 'decker', 'migrate-descriptions', '--writers-paused' ] );
+		cli( [ 'post', 'meta', 'update', String( task.id ), 'max_priority', '1' ] );
+		// Room below the editor: WordPress hides inline toolbars when the modal scrolls.
+		await page.setViewportSize( { width: 1280, height: 1000 } );
+		const board = await requestUtils.rest( { path: `/wp/v2/decker_board/${ task.board_id }` } );
+		await page.goto( `/?decker_page=board&slug=${ board.slug }` );
+		await page.locator( `h5 a[data-task-id="${ task.id }"]` ).click();
+		await ready( page );
+		await expect( page.locator( '#task-today-quick' ) ).toBeVisible();
+
+		// Fullscreen: nothing from the card may paint over the editor. Floating
+		// labels ignore the pointer, so re-enable hit testing to probe paint order.
+		await page.locator( '#task-modal .mce-i-fullscreen' ).click();
+		await expect( page.locator( 'div.mce-fullscreen' ) ).toBeVisible();
+		await page.addStyleTag( { content: '#task-modal label, #task-modal .badge { pointer-events: auto !important; }' } );
+		for ( const selector of [ 'label[for="task-title"]', '#high-label', 'label[for="task-board"]' ] ) {
+			const box = await page.locator( selector ).boundingBox();
+			const hit = await page.evaluate( ( [ x, y ] ) => !! document.elementFromPoint( x, y )?.closest( 'div.mce-fullscreen' ), [ box.x + box.width / 2, box.y + box.height / 2 ] );
+			expect( hit, selector ).toBe( true );
+		}
+		await page.locator( '#task-modal .mce-i-fullscreen' ).click();
+		await expect( page.locator( 'div.mce-fullscreen' ) ).toHaveCount( 0 );
+		// Toggling the interface is not an edit: the card stays pristine.
+		await expect( page.locator( '#task-today-quick' ) ).toBeVisible();
+
+		// Inline link toolbar lives outside the Bootstrap modal focus trap.
+		await setEditor( page, '<p>Some words here</p>' );
+		await page.frameLocator( '#task-description_ifr' ).locator( 'p' ).dblclick();
+		await page.locator( '#task-modal .mce-i-link' ).click();
+		const input = page.locator( '.wp-link-input input:visible' );
+		await expect( input ).toBeFocused();
+		await page.keyboard.type( 'https://example.invalid/inline-link' );
+		await expect( input ).toHaveValue( 'https://example.invalid/inline-link' );
+		await page.keyboard.press( 'Enter' );
+		await expect.poll( () => editorHtml( page ) ).toContain( 'href="https://example.invalid/inline-link"' );
+	} );
+
 	test( 'old title-only form is rejected after a changed conversion', async ( { page, requestUtils } ) => {
 		const task = seed( 'task-5531.html' );
 		cli( [ 'decker', 'migrate-descriptions', '--writers-paused' ] );
