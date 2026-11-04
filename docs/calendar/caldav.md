@@ -60,6 +60,10 @@ editable synchronization, or subscribe twice to the same data.
 
 ## Deployment and CAS
 
+PHP needs the `dom`, `mbstring`, `xmlreader` and `xmlwriter` extensions (on Alpine,
+`php83-xmlwriter` and friends are separate packages). Without them `/decker-dav/`
+answers `503` naming the missing extension instead of a sabre `500`.
+
 The plugin handles `/decker-dav/` at `parse_request`, before template redirects,
 with its own HTTP Basic challenge. It does not invent a WP Cassify bypass hook or
 change CAS authentication filters. The repository's optional CAS test uses WP

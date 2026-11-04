@@ -1,6 +1,10 @@
 {
     "require": {
         "php": ">=8.3",
+        "ext-dom": "*",
+        "ext-mbstring": "*",
+        "ext-xmlreader": "*",
+        "ext-xmlwriter": "*",
         "erseco/mime-mail-parser": "^1.0",
         "sabre/dav": "^4.7"
     },

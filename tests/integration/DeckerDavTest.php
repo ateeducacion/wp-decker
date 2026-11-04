@@ -24,6 +24,9 @@ class DeckerDavTest extends WP_UnitTestCase {
 		$server->exec();
 		return $server->httpResponse;
 	}
+	public function test_required_dav_extensions_are_loaded() {
+		$this->assertSame( array(), Decker_Dav::missing_extensions() );
+	}
 	public function test_authentication_is_token_only_and_rechecks_revocation() {
 		foreach ( array( '', 'wrong' ) as $token ) {
 			$response = $this->request( 'PROPFIND', '', '', array( 'Depth' => '0' ), $token );
