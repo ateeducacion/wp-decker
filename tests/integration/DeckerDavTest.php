@@ -24,8 +24,16 @@ class DeckerDavTest extends WP_UnitTestCase {
 		$server->exec();
 		return $server->httpResponse;
 	}
-	public function test_required_dav_extensions_are_loaded() {
-		$this->assertSame( array(), Decker_Dav::missing_extensions() );
+	public function test_missing_php_extension_stops_with_503_naming_it() {
+		Decker_Dav::require_extensions();
+		try {
+			Decker_Dav::require_extensions( array( 'xmlwriter', 'decker_absent_extension' ) );
+			$this->fail( 'A missing extension must stop the request.' );
+		} catch ( WPDieException $error ) {
+			$this->assertStringContainsString( 'decker_absent_extension', $error->getMessage() );
+			$this->assertStringNotContainsString( 'xmlwriter', $error->getMessage() );
+			$this->assertSame( 503, $error->getCode() );
+		}
 	}
 	public function test_authentication_is_token_only_and_rechecks_revocation() {
 		foreach ( array( '', 'wrong' ) as $token ) {

@@ -110,19 +110,17 @@ class Decker_Dav {
 		}
 		update_option( 'decker_calendar_dates_v2', 1, false );
 	}
-	/** PHP extensions sabre/dav needs to serialize DAV responses.
+	/** Stop with 503 naming the PHP extensions sabre/dav cannot run without.
 	 *
-	 * @return array Names of the missing extensions.
+	 * Sabre cannot even serialize its own errors without them, so this runs first.
+	 *
+	 * @param array $required Extension names.
 	 */
-	public static function missing_extensions() {
-		return array_values(
-			array_filter(
-				array( 'xmlwriter', 'xmlreader', 'dom', 'mbstring' ),
-				static function ( $extension ) {
-					return ! extension_loaded( $extension );
-				}
-			)
-		);
+	public static function require_extensions( $required = array( 'xmlwriter', 'xmlreader', 'dom', 'mbstring' ) ) {
+		$missing = array_diff( $required, array_filter( $required, 'extension_loaded' ) );
+		if ( $missing ) {
+			wp_die( esc_html( 'CalDAV is unavailable: this PHP installation is missing the ' . implode( ', ', $missing ) . ' extension(s).' ), '', array( 'response' => 503 ) );
+		}
 	}
 	/** Build a server without scheduling, sync-token or browser plugins.
 	 *
@@ -155,13 +153,7 @@ class Decker_Dav {
 			status_header( 403 );
 			exit;
 		}
-		$missing = self::missing_extensions();
-		if ( $missing ) {
-			status_header( 503 );
-			header( 'Content-Type: text/plain; charset=utf-8' );
-			echo 'CalDAV is unavailable: this PHP installation is missing the ' . esc_html( implode( ', ', $missing ) ) . ' extension(s).';
-			exit;
-		}
+		self::require_extensions();
 		wp_set_current_user( 0 );
 		$server = self::server();
 		$server->on( 'beforeMethod:*', array( __CLASS__, 'lock' ), 20 );
