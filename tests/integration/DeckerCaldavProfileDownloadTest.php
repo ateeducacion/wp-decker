@@ -20,6 +20,12 @@ class DeckerCaldavProfileDownloadTest extends WP_Ajax_UnitTestCase {
 		$_GET['user_id'] = $owner->ID;
 		$_GET['nonce'] = $_REQUEST['nonce'] = wp_create_nonce( 'decker_caldav_profile' );
 		$this->assertSame( $owner->ID, $extended->caldav_profile_user()->ID );
+		try {
+			$this->_handleAjax( 'decker_caldav_profile' );
+		} catch ( WPAjaxDieContinueException $error ) {
+			unset( $error );
+		}
+		$this->assertStringContainsString( '<string>com.apple.caldav.account</string>', $this->_last_response );
 
 		update_user_meta( $owner->ID, 'decker_calendar_dav_enabled', false );
 		$this->assertNull( $extended->caldav_profile_user() );

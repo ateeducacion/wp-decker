@@ -162,7 +162,7 @@ class Decker_User_Extended {
 		header( 'Content-Type: application/x-apple-aspen-config' );
 		header( 'Content-Disposition: attachment; filename="decker-calendar.mobileconfig"' );
 		echo Decker_Dav::apple_profile( $user ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Each value is escaped with esc_xml() while building the plist.
-		exit; // wp_die() would replace the Content-Type that iOS needs.
+		wp_die();
 	}
 
 	/**
