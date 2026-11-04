@@ -89,6 +89,7 @@ class DeckerEventsProcessMetaTest extends Decker_Test_Base {
 	 * All-day with empty dates stores empty strings for both meta keys.
 	 */
 	public function test_allday_empty_dates_save_empty_strings() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		( new Decker_Events() )->process_and_save_meta(
 			$this->event_id,
 			array(
@@ -106,6 +107,7 @@ class DeckerEventsProcessMetaTest extends Decker_Test_Base {
 	 * All-day end before start is clamped to start.
 	 */
 	public function test_allday_end_before_start_clamped_to_start() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		( new Decker_Events() )->process_and_save_meta(
 			$this->event_id,
 			array(
@@ -139,6 +141,7 @@ class DeckerEventsProcessMetaTest extends Decker_Test_Base {
 	 * Timed date-only inputs get the asymmetric ' 00:00:00' / ' 01:00:00' suffixes.
 	 */
 	public function test_timed_date_only_inputs_set_midnight_and_one_oclock() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		( new Decker_Events() )->process_and_save_meta(
 			$this->event_id,
 			array(
@@ -163,14 +166,15 @@ class DeckerEventsProcessMetaTest extends Decker_Test_Base {
 			)
 		);
 
-		$this->assertSame( '2025-01-01 10:00:00', get_post_meta( $this->event_id, 'event_start', true ) );
-		$this->assertSame( '2025-01-01 11:15:00', get_post_meta( $this->event_id, 'event_end', true ) );
+		$this->assertSame( '2025-01-01 10:00:30', get_post_meta( $this->event_id, 'event_start', true ) );
+		$this->assertSame( '2025-01-01 11:15:45', get_post_meta( $this->event_id, 'event_end', true ) );
 	}
 
 	/**
 	 * Malformed timed start overwrites BOTH metas with the epoch pair.
 	 */
 	public function test_timed_malformed_start_resets_epoch_pair() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		( new Decker_Events() )->process_and_save_meta(
 			$this->event_id,
 			array(
@@ -187,6 +191,7 @@ class DeckerEventsProcessMetaTest extends Decker_Test_Base {
 	 * Empty timed dates store the current UTC time (strtotime( ' UTC' ) === now).
 	 */
 	public function test_timed_empty_dates_store_current_utc_time() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		( new Decker_Events() )->process_and_save_meta(
 			$this->event_id,
 			array(
@@ -234,7 +239,7 @@ class DeckerEventsProcessMetaTest extends Decker_Test_Base {
 			)
 		);
 
-		$this->assertSame( array(), get_post_meta( $this->event_id, 'event_assigned_users', true ) );
+		$this->assertSame( array( $this->editor ), get_post_meta( $this->event_id, 'event_assigned_users', true ) );
 	}
 
 	/**

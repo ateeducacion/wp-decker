@@ -156,7 +156,7 @@ function showTooltip(message, duration = 2000){
                     },
                     events: function(fetchInfo, successCallback, failureCallback) {
                        // Make the request manually with fetch
-                        fetch(wpApiSettings.root + 'decker/v1/calendar', {
+                        fetch(wpApiSettings.root + 'decker/v1/calendar?start=' + encodeURIComponent(fetchInfo.startStr) + '&end=' + encodeURIComponent(fetchInfo.endStr), {
                             method: 'GET',
                             headers: {
                                 'X-WP-Nonce': wpApiSettings.nonce // Use the nonce from wpApiSettings
@@ -186,7 +186,7 @@ function showTooltip(message, duration = 2000){
                         // Create event data.
                         const startStr = formatDateForStorage(info.date, info.allDay);
                         const endStr   = formatDateForStorage(
-                            new Date(info.date.getTime() + 45 * 60000),
+                            new Date(info.date.getTime() + (info.allDay ? 86400000 : 45 * 60000)),
                             info.allDay
                         );
 

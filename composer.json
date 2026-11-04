@@ -1,7 +1,8 @@
 {
     "require": {
         "php": ">=8.3",
-        "erseco/mime-mail-parser": "^1.0"
+        "erseco/mime-mail-parser": "^1.0",
+        "sabre/dav": "^4.7"
     },
     "require-dev": {
         "om/icalparser": "*",
@@ -17,11 +18,13 @@
     "scripts": {
         "post-install-cmd": [
             "rm -rf admin/vendor/mime-mail-parser",
-            "cp -r vendor/erseco/mime-mail-parser admin/vendor/"
+            "cp -r vendor/erseco/mime-mail-parser admin/vendor/",
+            "@php tests/package/bundle-dav.php"
         ],
         "post-update-cmd": [
             "rm -rf admin/vendor/mime-mail-parser",
-            "cp -r vendor/erseco/mime-mail-parser admin/vendor/"
+            "cp -r vendor/erseco/mime-mail-parser admin/vendor/",
+            "@php tests/package/bundle-dav.php"
         ],
         "phpunit": "vendor/bin/phpunit",
         "test": "phpunit",

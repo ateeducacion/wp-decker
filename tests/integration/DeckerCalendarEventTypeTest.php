@@ -12,7 +12,7 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 			parent::set_up();
 
 			do_action( 'init' );
-			$this->user_id = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+			$this->user_id = self::factory()->user->create( array( 'role' => 'editor' ) );
 			wp_set_current_user( $this->user_id );
 	}
 
@@ -79,6 +79,8 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 
 			$request = new WP_REST_Request( 'GET', '/decker/v1/calendar' );
 			$request->set_param( 'type', $type );
+			$request->set_param( 'start', '2025-01-01' );
+			$request->set_param( 'end', '2025-02-01' );
 			$nonce = wp_create_nonce( 'wp_rest' );
 			$request->set_header( 'X-WP-Nonce', $nonce );
 			$response = rest_get_server()->dispatch( $request );
@@ -148,8 +150,8 @@ class DeckerCalendarEventTypeTest extends Decker_Test_Base {
 			$ical = $calendar->generate_ical( $events, $type );
 
                    // Verify that only the event of the current type is present
-			$this->assertStringContainsString( 'event_' . $current_type_id, $ical );
-			$this->assertStringNotContainsString( 'event_' . $other_type_id, $ical );
+			$this->assertStringContainsString( (string) Decker_Event_Store::master( Decker_Event_Store::parse( Decker_Event_Store::resource( $current_type_id ) ) )->UID, $ical );
+			$this->assertStringNotContainsString( (string) Decker_Event_Store::master( Decker_Event_Store::parse( Decker_Event_Store::resource( $other_type_id ) ) )->UID, $ical );
 			// $this->assertStringNotContainsString( 'task_' . $task_id, $ical );
 	}
 }

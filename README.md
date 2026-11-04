@@ -73,3 +73,5 @@ Reusable procedures ship as [agent skills](docs/development.md#agent-skills) in
 `.agents/skills/` and `.claude/skills/`, installed with `gh skill add`. They cover plugin development, the REST API, WordPress.org
 directory guidelines, Playground blueprints, performance, project triage,
 plugin security and security auditing. None of it is included in the release ZIP.
+
+CalDAV synchronization and deployment: [configuration and device checklist](docs/calendar/caldav.md).

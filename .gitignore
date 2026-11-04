@@ -60,3 +60,5 @@ artifacts/
 # by `make package` and shipped in the release ZIP; never committed.
 languages/*.mo
 languages/*.l10n.php
+
+/admin/vendor/dav/

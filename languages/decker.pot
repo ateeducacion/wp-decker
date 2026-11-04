@@ -457,6 +457,9 @@ msgstr ""
 msgid "You do not have permissions to access this data."
 msgstr ""
 
+msgid "Unable to expand calendar in this interval."
+msgstr ""
+
 msgid "Warning"
 msgstr ""
 
@@ -728,6 +731,9 @@ msgid "Info"
 msgstr ""
 
 msgid "Dark"
+msgstr ""
+
+msgid "Invalid calendar dates."
 msgstr ""
 
 msgctxt "post type general name"
@@ -1130,31 +1136,31 @@ msgstr ""
 msgid "Archivado"
 msgstr ""
 
-msgid "Calendar Token"
+msgid "CalDAV synchronization"
+msgstr ""
+
+msgid "Server URL"
+msgstr ""
+
+msgid "Username"
+msgstr ""
+
+msgid "Calendar token (password)"
 msgstr ""
 
 msgid "Generate New Token"
 msgstr ""
 
-msgid "Subscribe to Decker calendar:"
+msgid "Revoke calendar access"
 msgstr ""
 
-msgid "Google Calendar"
+msgid "Generate a new token to enable editing. Regeneration or revocation immediately disconnects existing clients and subscriptions. Signing out of CAS does not revoke this token."
 msgstr ""
 
-msgid "iCalendar"
+msgid "iPhone: add a CalDAV account in Calendar settings. Android: add an account with URL and username in DAVx⁵. Use the token as password, enable SSL, and select the Decker calendar when creating events."
 msgstr ""
 
-msgid "Calendar"
-msgstr ""
-
-msgid "Outlook 365"
-msgstr ""
-
-msgid "Export .ics file"
-msgstr ""
-
-msgid "Event type feeds:"
+msgid "ICS subscription (read only)"
 msgstr ""
 
 msgid "Select your favorite color."
@@ -1334,6 +1340,9 @@ msgid "Tasks by Stack"
 msgstr ""
 
 msgid "Tasks by Stack from current User"
+msgstr ""
+
+msgid "Calendar"
 msgstr ""
 
 msgid "Search..."

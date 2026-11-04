@@ -323,7 +323,7 @@ class DeckerAdminScreenChromeTest extends Decker_Test_Base {
 				'meta_input' => array(
 					'event_allday'   => true,
 					'event_start'    => '2031-02-03 08:00:00',
-					'event_end'      => '2031-02-03 09:00:00',
+					'event_end'      => '2031-02-04',
 					'event_category' => 'bg-warning',
 				),
 			)
@@ -336,7 +336,7 @@ class DeckerAdminScreenChromeTest extends Decker_Test_Base {
 		$this->assertStringContainsString( '2031-02-03', $start );
 
 		$end = $this->capture( fn() => $this->event_screen->render_custom_columns( 'event_end', $event_id ) );
-		$this->assertStringContainsString( '2031-02-03', $end );
+		$this->assertStringContainsString( '2031-02-04', $end );
 
 		$category = $this->capture( fn() => $this->event_screen->render_custom_columns( 'event_category', $event_id ) );
 		$this->assertSame( 'bg-warning', $category );

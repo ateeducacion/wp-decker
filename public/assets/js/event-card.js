@@ -297,7 +297,7 @@ const startUtc = isAllDay
     : localToUtc(startInput.value);
 
 const endUtc   = isAllDay
-    ? endInput.value
+    ? new Date(Date.UTC(...endInput.value.split('-').map((part, index) => Number(part) - (index === 1 ? 1 : 0))) + 86400000).toISOString().slice(0, 10)
     : localToUtc(endInput.value);
 
 const eventData = {

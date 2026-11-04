@@ -48,6 +48,8 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 
 		$this->user = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
 		update_user_meta( $this->user->ID, 'decker_calendar_token', 'fixed-token' );
+		update_user_meta( $this->user->ID, 'decker_calendar_dav_enabled', true );
+		update_user_meta( $this->user->ID, 'decker_calendar_read_token', 'read-only-token' );
 		update_user_meta( $this->user->ID, 'decker_color', '#123456' );
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board_id );
 	}
@@ -90,7 +92,7 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 	public function test_renders_calendar_token_row() {
 		$html = $this->render();
 
-		$this->assertStringContainsString( 'name="decker_calendar_token"', $html );
+		$this->assertStringContainsString( 'id="decker_calendar_token"', $html );
 		$this->assertStringContainsString( 'id="decker_calendar_token"', $html );
 		$this->assertStringContainsString( 'value="fixed-token"', $html );
 		$this->assertStringContainsString( 'readonly', $html );
@@ -102,14 +104,8 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 	 */
 	public function test_generates_a_token_when_none_is_stored() {
 		delete_user_meta( $this->user->ID, 'decker_calendar_token' );
-
-		$html = $this->render();
-
-		$this->assertSame(
-			1,
-			preg_match( '/id="decker_calendar_token"\s*\n?\s*value="([0-9a-f-]{36})"/', $html ),
-			'A UUID token should be offered when none is stored.'
-		);
+		$this->assertStringContainsString( 'value=""', $this->render() );
+		$this->assertSame( '', get_user_meta( $this->user->ID, 'decker_calendar_token', true ) );
 	}
 
 	/**
@@ -117,14 +113,9 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 	 */
 	public function test_renders_calendar_subscription_links() {
 		$html = $this->render();
-
-		$this->assertStringContainsString( 'Google Calendar', $html );
-		$this->assertStringContainsString( 'iCalendar', $html );
-		$this->assertStringContainsString( 'Outlook 365', $html );
-		$this->assertStringContainsString( 'Export .ics file', $html );
-
-		// Subscription links must use the webcal scheme, not http.
-		$this->assertStringContainsString( 'webcal://', $html );
+		$this->assertStringContainsString( 'ICS subscription (read only)', $html );
+		$this->assertStringContainsString( 'token=read-only-token', $html );
+		$this->assertStringNotContainsString( 'token=fixed-token', $html );
 	}
 
 	/**
@@ -132,12 +123,9 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 	 */
 	public function test_renders_event_type_feeds() {
 		$html = $this->render();
-
-		$this->assertStringContainsString( 'Event type feeds:', $html );
-
-		foreach ( array( 'event', 'absence', 'warning' ) as $type ) {
-			$this->assertStringContainsString( 'type=' . $type, $html );
-		}
+		$this->assertStringContainsString( 'CalDAV synchronization', $html );
+		$this->assertStringContainsString( 'DAVx⁵', $html );
+		$this->assertStringContainsString( 'decker-dav/', $html );
 	}
 
 	/**

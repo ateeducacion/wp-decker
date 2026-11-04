@@ -46,6 +46,8 @@ class Decker_Calendar_Cache {
 		add_action( 'deleted_post', array( $this, 'flush_cache_on_delete' ), 10 );
 		add_action( 'trashed_post', array( $this, 'flush_cache_on_delete' ), 10 );
 
+		add_action( 'added_post_meta', array( $this, 'flush_cache_on_event_meta' ), 10, 4 );
+		add_action( 'deleted_post_meta', array( $this, 'flush_cache_on_event_meta' ), 10, 4 );
 		add_action( 'updated_post_meta', array( $this, 'flush_cache_on_event_meta' ), 10, 4 );
 	}
 
@@ -95,14 +97,8 @@ class Decker_Calendar_Cache {
 			return;
 		}
 
-		// Always clear the mixed .ics.
-		delete_transient( Decker_Calendar::TRANSIENT_PREFIX . 'all' );
-
-		// Detect the event category and clear only that .ics.
-		$category_css = get_post_meta( $post->ID, 'event_category', true );
-		if ( $category_css && isset( $this->category_to_slug[ $category_css ] ) ) {
-			$slug = $this->category_to_slug[ $category_css ];
-			delete_transient( Decker_Calendar::TRANSIENT_PREFIX . $slug );
+		foreach ( array( 'all', 'event', 'absence', 'warning', 'alert' ) as $type ) {
+			delete_transient( Decker_Calendar::TRANSIENT_PREFIX . $type );
 		}
 	}
 
@@ -135,7 +131,7 @@ class Decker_Calendar_Cache {
 		if ( 'decker_event' == get_post_type( $post_id ) ) {
 
 			/* Invalidate when the key matters for the iCal */
-			if ( 0 === strpos( $meta_key, 'event_' ) ) {
+			if ( '_decker_ical' === $meta_key || 0 === strpos( $meta_key, 'event_' ) ) {
 				$this->flush_cache_for_event( $post_id );
 			}
 		} else if ( 'decker_task' == get_post_type( $post_id ) ) {

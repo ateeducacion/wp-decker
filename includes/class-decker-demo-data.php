@@ -464,7 +464,7 @@ class Decker_Demo_Data {
 			} else {
 				$end_date = clone $event_date;
 				// All-day events might span 1-3 days.
-				$end_date->modify( '+' . $this->random->custom_rand( 0, 2 ) . ' days' );
+				$end_date->modify( '+' . $this->random->custom_rand( 1, 3 ) . ' days' );
 			}
 
 			// Create the event.

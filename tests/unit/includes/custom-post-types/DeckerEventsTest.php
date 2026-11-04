@@ -188,7 +188,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 				'meta_input'   => array(
 					'event_allday'         => true,
 					'event_start'          => '2025-02-01',
-					'event_end'            => '2025-02-01',
+					'event_end'            => '2025-02-02',
 					'event_location'       => 'Room B',
 					'event_url'            => 'https://new.example.com',
 					'event_category'       => 'bg-info',
@@ -207,12 +207,12 @@ class DeckerEventsTest extends Decker_Test_Base {
                 // Check metadata
 		$this->assertEquals( '1', get_post_meta( $this->event_id, 'event_allday', true ), "Meta 'event_allday' should be 1." );
 		$this->assertEquals( '2025-02-01', get_post_meta( $this->event_id, 'event_start', true ), "Meta 'event_start' for all-day should be Y-m-d." );
-		$this->assertEquals( '2025-02-01', get_post_meta( $this->event_id, 'event_end', true ), "Meta 'event_end' for all-day should be Y-m-d." );
+		$this->assertEquals( '2025-02-02', get_post_meta( $this->event_id, 'event_end', true ), "Meta 'event_end' for all-day should be Y-m-d." );
 
 		$meta = array(
 			'event_allday'         => true,
 			'event_start'          => '2025-02-01',
-			'event_end'            => '2025-02-01',
+			'event_end'            => '2025-02-02',
 			'event_location'       => 'Room B',
 			'event_url'            => 'https://new.example.com',
 			'event_category'       => 'bg-info',
@@ -292,6 +292,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 	}
 
 	public function test_end_date_is_adjusted_on_create_if_before_start() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 
 		$event_id = self::factory()->event->create(
@@ -332,6 +333,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 	}
 
 	public function test_end_date_is_adjusted_on_update_if_before_start() {
+		$this->expectException( Sabre\DAV\Exception\BadRequest::class );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
 
 		$event_id = self::factory()->event->create(
@@ -448,7 +450,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 				'meta_input' => array(
 					'event_allday' => true,
 					'event_start'  => '2025-01-01',
-					'event_end'    => '2025-01-01',
+					'event_end'    => '2025-01-02',
 				),
 			)
 		);
@@ -457,7 +459,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 		$end   = get_post_meta( $event_id, 'event_end', true );
 
 		$this->assertEquals( '2025-01-01', $start );
-		$this->assertEquals( '2025-01-01', $end );
+		$this->assertEquals( '2025-01-02', $end );
 	}
 
 
@@ -470,7 +472,7 @@ class DeckerEventsTest extends Decker_Test_Base {
 				'meta_input' => array(
 					'event_allday' => true,
 					'event_start'  => '2025-01-01',
-					'event_end'    => '2025-01-01',
+					'event_end'    => '2025-01-02',
 				),
 			)
 		);
