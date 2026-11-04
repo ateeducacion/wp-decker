@@ -66,15 +66,6 @@ msgstr ""
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr ""
 
-msgid "Classic Editor"
-msgstr ""
-
-msgid "Quill Editor"
-msgstr ""
-
-msgid "Choose which editor to use for task descriptions."
-msgstr ""
-
 msgid "Clear All Data"
 msgstr ""
 
@@ -97,9 +88,6 @@ msgid "Alert Message"
 msgstr ""
 
 msgid "Minimum User Profile"
-msgstr ""
-
-msgid "Task Editor Type"
 msgstr ""
 
 msgid "Shared Key"
@@ -371,6 +359,9 @@ msgid "Comment by %s"
 msgstr ""
 
 msgid "You are not authorized to access this resource."
+msgstr ""
+
+msgid "The legacy task description requires review before saving."
 msgstr ""
 
 msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
@@ -707,6 +698,9 @@ msgstr ""
 msgid "%s (copy)"
 msgstr ""
 
+msgid "The task could not be saved."
+msgstr ""
+
 msgid "The source task was not found."
 msgstr ""
 
@@ -815,6 +809,9 @@ msgid "Both tasks have to be on the same board."
 msgstr ""
 
 msgid "Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first."
+msgstr ""
+
+msgid "Task descriptions must be backed up and migrated before editing."
 msgstr ""
 
 msgid "The title is required."
@@ -1452,15 +1449,6 @@ msgstr ""
 msgid "The task has been saved successfully."
 msgstr ""
 
-msgid "Show HTML source"
-msgstr ""
-
-msgid "Edit the content in HTML format"
-msgstr ""
-
-msgid "OK"
-msgstr ""
-
 msgid "Are you sure you want to archive this task?"
 msgstr ""
 
@@ -1561,6 +1549,9 @@ msgid "Task URL copied!"
 msgstr ""
 
 msgid "Could not copy URL. Please copy it manually:"
+msgstr ""
+
+msgid "Toggle checklist item"
 msgstr ""
 
 msgid "Checklist"
@@ -1905,6 +1896,9 @@ msgid "Gantt"
 msgstr ""
 
 msgid "Information"
+msgstr ""
+
+msgid "Task descriptions must be backed up and migrated before editing. Ask an administrator to run wp decker migrate-descriptions."
 msgstr ""
 
 msgid "No subtasks yet. Break this task down into the steps it actually takes."

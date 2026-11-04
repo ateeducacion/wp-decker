@@ -43,12 +43,6 @@ class Decker_Admin_Settings_Validator {
 		// Validate user profile.
 		$input['minimum_user_profile'] = $this->validate_minimum_user_profile( $input );
 
-		// Validate task editor type. Quill stays the default during the transition period.
-		$valid_editors = array( 'classic', 'quill' );
-		if ( ! isset( $input['task_editor_type'] ) || ! in_array( $input['task_editor_type'], $valid_editors, true ) ) {
-			$input['task_editor_type'] = 'quill';
-		}
-
 		// Validate alert message.
 		$input['alert_message'] = $this->validate_alert_message( $input );
 
@@ -68,6 +62,7 @@ class Decker_Admin_Settings_Validator {
 	 */
 	private function strip_retired_fields( array $input ) {
 		unset(
+			$input['task_editor_type'],
 			$input['collaborative_editing'],
 			$input['signaling_server'],
 			$input['sidebar_board_status'],

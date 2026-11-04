@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const modalElement = document.getElementById('task-modal');
+    let pendingTaskRequest = null;
+    let requestGeneration = 0;
 
     /**
      * Return a task ID as a decimal string without numeric coercion.
@@ -45,13 +47,15 @@ document.addEventListener('DOMContentLoaded', function () {
      * @param {number} taskId The task ID to load (0 for a new task).
      */
     function loadTaskCard(modal, taskId) {
+        const generation = ++requestGeneration;
+        if (pendingTaskRequest) pendingTaskRequest.abort();
         modal.find('#task-modal-body').html('<p>' + jsdata_task.loadingMessage + '</p>');
 
         var url = jsdata_task.url;
         const params = new URLSearchParams(window.location.search);
         const boardSlug = params.get('slug'); // If present.
 
-        jQuery.ajax({
+        pendingTaskRequest = jQuery.ajax({
             url: url,
             type: 'GET',
             data: {
@@ -61,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 nocache: new Date().getTime()
             },
             success: function (data) {
+                if (generation !== requestGeneration) return;
                 modal.find('#task-modal-body').html(data);
 
                 const modalTitle = modal.find('#NewTaskModalLabel');
@@ -72,7 +77,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.initializeTaskPage(modal[0]);
                 }
             },
-            error: function () {
+            error: function (xhr, status) {
+                if (generation !== requestGeneration || status === 'abort') return;
                 modal.find('#task-modal-body').html('<p>' + jsdata_task.errorMessage + '</p>');
             }
         });
@@ -84,11 +90,13 @@ document.addEventListener('DOMContentLoaded', function () {
      * @param {jQuery} modal The jQuery-wrapped modal element.
      */
     function cleanupTaskModal(modal) {
+        ++requestGeneration;
+        if (pendingTaskRequest) { pendingTaskRequest.abort(); pendingTaskRequest = null; }
        // Remove the data-* attributes used to track initialization
         modal[0].removeAttribute('data-send-comments-initialized');
         modal[0].removeAttribute('data-task-page-initialized');
 
-        // Destroy instances of Choices.js or Quill editor if necessary
+        // Destroy instances of Choices.js if necessary
         if (window.Choices) {
             const assigneesSelectInstance = window.assigneesSelect;
             if (assigneesSelectInstance) {
@@ -103,15 +111,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        if (window.quill) {
-           window.quill = null; // Assuming that Quill doesn't need explicit destruction
-        }
 
-        // Tear down the classic (TinyMCE) editor when it was used instead of Quill.
+        // Tear down the classic (TinyMCE) editor for the departing card.
         if (typeof window.destroyTaskEditor === 'function') {
             window.destroyTaskEditor();
         }
     }
+
+    // WordPress dialogs live outside the Bootstrap modal; let them receive focus.
+    document.addEventListener('focusin', function(event) {
+        if (modalElement?.classList.contains('show') && event.target.closest('.mce-window, .mce-inline-toolbar, #wp-link-wrap, .media-modal')) {
+            event.stopImmediatePropagation();
+        }
+    });
 
     jQuery('#task-modal').on('hide.bs.modal', function (e) {
        // If we have unsaved changes, ask for confirmation

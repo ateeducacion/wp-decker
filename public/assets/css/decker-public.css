@@ -26,9 +26,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 }
 
 
-.ql-fullscreen::before {
-    content: '⛶'; /* Fullscreen symbol */
-}
+
 
 
 /* Fix for dropdown on choices.js */

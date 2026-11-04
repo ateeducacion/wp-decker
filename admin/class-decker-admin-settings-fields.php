@@ -181,29 +181,6 @@ class Decker_Admin_Settings_Fields {
 	}
 
 	/**
-	 * Render Task Editor Type Field.
-	 *
-	 * Outputs the HTML for the task_editor_type field.
-	 */
-	private function task_editor_type_render() {
-		$options     = get_option( 'decker_settings', array() );
-		$editor_type = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
-		$editors     = array(
-			'classic' => __( 'Classic Editor', 'decker' ),
-			'quill'   => __( 'Quill Editor', 'decker' ),
-		);
-
-		foreach ( $editors as $value => $label ) {
-			echo '<label style="margin-right: 15px;">';
-			echo '<input type="radio" name="decker_settings[task_editor_type]" value="' . esc_attr( $value ) . '" ' . checked( $editor_type, $value, false ) . '>';
-			echo esc_html( $label );
-			echo '</label>';
-		}
-
-		echo '<p class="description">' . esc_html__( 'Choose which editor to use for task descriptions.', 'decker' ) . '</p>';
-	}
-
-	/**
 	 * Render Clear All Data Button.
 	 *
 	 * Outputs the HTML for the clear_all_data_button field.

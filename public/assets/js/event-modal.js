@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function () {
        // Remove the data-* attributes used to track initialization
         // modal[0].removeAttribute('data-event-page-initialized');
 
-        // // Optional: destroy instances of Choices.js or Quill editor if necessary
+        // // Optional: destroy instances of Choices.js if necessary
         // // This depends on your implementation and memory usage
         // if (window.Choices) {
         //     const assigneesSelectInstance = window.assigneesSelect;
