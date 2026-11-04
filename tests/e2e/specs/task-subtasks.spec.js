@@ -29,6 +29,13 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 	requestUtils,
 } ) => {
 	await requestUtils.activatePlugin( 'decker' );
+	const username = `e2e-assignee-${ Date.now() }`;
+	const longName = 'Alexandra Montgomery Wellington with a very long display name';
+	const assignee = await requestUtils.rest( {
+		path: '/wp/v2/users',
+		method: 'POST',
+		data: { username, name: longName, email: `${ username }@example.com`, password: 'e2e-test-password', roles: [ 'editor' ] },
+	} );
 
 	const board = await requestUtils.rest( {
 		path: '/wp/v2/decker_board',
@@ -48,7 +55,7 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 			decker_board: [ board.id ],
 			// The task list orders by `max_priority`, which drops tasks that
 			// carry no such meta, so the fixture has to set it explicitly.
-			meta: { stack: 'to-do', max_priority: true },
+			meta: { stack: 'to-do', max_priority: true, assigned_users: [ assignee.id ] },
 		},
 	} );
 
@@ -95,6 +102,25 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		).not.toHaveValue( '0' );
 
 		const picker = rows.nth( 0 ).locator( '.decker-subtask-assignee-field' );
+		await picker.click();
+		const longOption = picker.locator( '.choices__list--dropdown .choices__item' ).filter( { hasText: longName } );
+		await expect( longOption ).toHaveText( longName );
+		await longOption.click();
+		const selectedName = picker.locator( '.choices__list--single .decker-subtask-assignee-name' );
+		await expect( selectedName ).toHaveText( longName );
+		await expect( selectedName ).toHaveAttribute( 'title', longName );
+		for ( const width of [ 1280, 390 ] ) {
+			await page.setViewportSize( { width, height: 900 } );
+			const layout = await selectedName.evaluate( ( el ) => ( {
+				clipped: el.scrollWidth > el.clientWidth,
+				height: el.getBoundingClientRect().height,
+				lineHeight: parseFloat( getComputedStyle( el ).lineHeight ),
+			} ) );
+			expect( layout.clipped ).toBe( true );
+			expect( layout.height ).toBeLessThanOrEqual( layout.lineHeight + 1 );
+			await picker.screenshot( { path: `artifacts/subtask-assignee-${ width }.png` } );
+		}
+		await page.setViewportSize( { width: 960, height: 700 } );
 		await picker.click();
 		await picker
 			.locator( '.choices__list--dropdown .choices__item' )
@@ -186,6 +212,11 @@ test( 'breaks a task down, tracks the three states and shows progress on the boa
 		} );
 		await requestUtils.rest( {
 			path: `/wp/v2/decker_board/${ board.id }?force=true`,
+			method: 'DELETE',
+		} );
+		const me = await requestUtils.rest( { path: '/wp/v2/users/me' } );
+		await requestUtils.rest( {
+			path: `/wp/v2/users/${ assignee.id }?force=true&reassign=${ me.id }`,
 			method: 'DELETE',
 		} );
 	}

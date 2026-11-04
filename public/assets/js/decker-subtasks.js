@@ -491,6 +491,7 @@
             const name = document.createElement('span');
             name.className = 'text-truncate decker-subtask-assignee-name';
             name.textContent = item.assignee_name || text('subtask_unassigned', 'Unassigned');
+            name.title = name.textContent;
             wrap.appendChild(name);
 
             return wrap;
@@ -536,7 +537,13 @@
 
                     return Object.assign({}, base, {
                         item: function (...args) {
-                            return withAvatar(base.item.apply(this, args), args[1]);
+                            const el = base.item.apply(this, args);
+                            const name = document.createElement('span');
+                            name.className = 'text-truncate decker-subtask-assignee-name';
+                            name.append(...el.childNodes);
+                            name.title = name.textContent;
+                            el.appendChild(name);
+                            return withAvatar(el, args[1]);
                         },
                         choice: function (...args) {
                             return withAvatar(base.choice.apply(this, args), args[1]);
