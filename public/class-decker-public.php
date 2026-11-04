@@ -169,14 +169,12 @@ class Decker_Public {
 		$include_files = array(
 			'analytics'      => 'public/app-analytics.php',
 			'board'          => 'public/app-kanban.php',
-			'calendar'       => 'public/app-calendar.php',
 			'my-board'       => 'public/app-kanban-my.php',
 			'priority'       => 'public/app-priority.php',
 			'task'           => 'public/app-task-full.php',
 			'tasks'          => 'public/app-tasks.php',
 			'term-manager'   => 'public/app-term-manager.php',
 			'upcoming'       => 'public/app-upcoming.php',
-			'event-manager'  => 'public/app-event-manager.php',
 			'knowledge-base' => 'public/app-knowledge-base.php',
 		);
 

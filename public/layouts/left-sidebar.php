@@ -117,17 +117,6 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 	  <li class="side-nav-title"><?php esc_html_e( 'Apps', 'decker' ); ?></li>
 
 
-		<!-- Calendar -->
-	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'calendar' ) ); ?>">
-
-
-			<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'calendar' ), home_url( '/' ) ) ); ?>" class="side-nav-link">
-			<i class="ri-calendar-event-line"></i>
-			  <span><?php esc_html_e( 'Calendar', 'decker' ); ?></span>
-			</a>
-	 
-			</a>
-	  </li>
 
 	  <!-- Tasks -->
 	  <li class="side-nav-item <?php echo esc_attr( decker_is_active_page( 'tasks' ) ); ?>">
@@ -403,12 +392,6 @@ if ( ! function_exists( 'decker_is_active_subpage' ) ) {
 										);
 										?>
 				"><?php esc_html_e( 'Boards', 'decker' ); ?></a></li>
-
-				<li class="<?php echo esc_attr( decker_is_active_page( 'event-manager' ) ); ?>">
-					<a href="<?php echo esc_url( add_query_arg( array( 'decker_page' => 'event-manager' ), home_url( '/' ) ) ); ?>">
-						<span><?php esc_html_e( 'Events', 'decker' ); ?></span>
-					</a>
-				</li>
 
 				  <?php
 					/*

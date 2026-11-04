@@ -96,12 +96,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			'board loads dragula'            => array(
 				'board',
 				array( 'dragula-min' ),
-				array( 'jquery-datatables-min', 'index-global-min', 'knowledge-base' ),
-			),
-			'calendar loads fullcalendar'    => array(
-				'calendar',
-				array( 'index-global-min', 'event-calendar', 'event-modal', 'event-card' ),
-				array( 'dragula-min', 'jquery-datatables-min', 'knowledge-base' ),
+				array( 'jquery-datatables-min', 'knowledge-base' ),
 			),
 			'tasks loads datatables'         => array(
 				'tasks',
@@ -113,22 +108,17 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 					'buttons-html5-min',
 					'buttons-print-min',
 				),
-				array( 'dragula-min', 'index-global-min', 'knowledge-base' ),
+				array( 'dragula-min', 'knowledge-base' ),
 			),
 			'knowledge-base loads its script' => array(
 				'knowledge-base',
 				array( 'knowledge-base' ),
-				array( 'dragula-min', 'jquery-datatables-min', 'index-global-min' ),
-			),
-			'event-manager loads event ui'   => array(
-				'event-manager',
-				array( 'event-modal', 'event-card' ),
-				array( 'dragula-min', 'jquery-datatables-min', 'event-calendar', 'knowledge-base' ),
+				array( 'dragula-min', 'jquery-datatables-min' ),
 			),
 			'task loads no page extras'      => array(
 				'task',
 				array(),
-				array( 'dragula-min', 'jquery-datatables-min', 'index-global-min', 'knowledge-base', 'event-modal' ),
+				array( 'dragula-min', 'jquery-datatables-min', 'knowledge-base' ),
 			),
 		);
 	}
@@ -193,7 +183,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			'decker-public',
 		);
 
-		foreach ( array( 'task', 'board', 'calendar', 'tasks', 'knowledge-base', 'event-manager' ) as $page ) {
+		foreach ( array( 'task', 'board', 'tasks', 'knowledge-base' ) as $page ) {
 			$this->enqueue_for( $page );
 
 			foreach ( $common_scripts as $handle ) {
@@ -427,15 +417,9 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'error_merging_task',
 				'success',
 				'error',
-				'today',
-				'month',
-				'week',
-				'day',
-				'list',
 				'unsaved_changes_title',
 				'unsaved_changes_text',
 				'close_anyway',
-				'confirm_delete_event',
 				'task_url_copied',
 				'task_url_copy_error',
 				'copy_task_url',
@@ -527,22 +511,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 
 		$public = $this->get_localized_data( 'decker-public', 'deckerData' );
 		$this->assertArrayHasKey( 'userId', $public );
-	}
-
-	/**
-	 * The event card payload is attached on pages that actually load the event UI.
-	 */
-	public function test_event_payload_only_on_event_pages() {
-		$this->enqueue_for( 'task' );
-		$this->assertFalse(
-			wp_scripts()->get_data( 'event-modal', 'data' ),
-			'The task page should not carry event-modal data.'
-		);
-
-		$this->enqueue_for( 'calendar' );
-		$event_modal = $this->get_localized_data( 'event-modal', 'jsdata_event' );
-		$this->assertArrayHasKey( 'ajaxUrl', $event_modal );
-		$this->assertArrayHasKey( 'nonce', $event_modal );
 	}
 
 	/**

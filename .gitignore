@@ -61,4 +61,3 @@ artifacts/
 languages/*.mo
 languages/*.l10n.php
 
-/admin/vendor/dav/

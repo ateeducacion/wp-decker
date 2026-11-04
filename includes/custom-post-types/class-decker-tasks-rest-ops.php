@@ -129,8 +129,7 @@ class Decker_Tasks_Rest_Ops {
 				'callback'   => array( $order_engine, 'handle_fix_order' ),
 				'permission' => 'manage_options',
 			),
-			// Dragging a task in the calendar view calls this; it is an ordinary
-			// per-task edit, so it takes the same object-level capability as the
+			// Changing a task's due date is an ordinary per-task edit, so it takes the same object-level capability as the
 			// other task routes rather than an administrator-only one.
 			array(
 				'route'      => '/tasks/(?P<id>\d+)/update_due_date',

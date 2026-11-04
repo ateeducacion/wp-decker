@@ -97,5 +97,3 @@ node_modules
 .idea
 sftp-config.json
 
-/admin/vendor/dav/composer.json
-/admin/vendor/dav/composer.lock

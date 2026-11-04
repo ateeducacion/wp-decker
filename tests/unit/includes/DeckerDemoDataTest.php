@@ -360,42 +360,6 @@ class DeckerDemoDataTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Demo events are created with expected count and meta.
-	 */
-	public function test_create_sample_data_creates_demo_events_with_meta() {
-		( new Decker_Demo_Data() )->create_sample_data();
-
-		$events = get_posts(
-			array(
-				'post_type'   => 'decker_event',
-				'post_status' => array( 'publish', 'archived' ),
-				'numberposts' => -1,
-			)
-		);
-		$this->assertGreaterThanOrEqual( 10, count( $events ) );
-		$this->assertLessThanOrEqual( 20, count( $events ) );
-
-		foreach ( $events as $event ) {
-			// 'event_allday' is registered with a rest_sanitize_boolean callback, so the
-			// '1'/'0' string saved by process_and_save_meta() is coerced to a boolean and
-			// stored by WordPress as '1' (true) or '' (false, the empty-string meta value).
-			$allday = get_post_meta( $event->ID, 'event_allday', true );
-			$this->assertContains( (string) $allday, array( '1', '' ) );
-
-			$start = get_post_meta( $event->ID, 'event_start', true );
-			$end   = get_post_meta( $event->ID, 'event_end', true );
-			$this->assertNotFalse( strtotime( $start ) );
-			$this->assertNotFalse( strtotime( $end ) );
-			$this->assertLessThanOrEqual( strtotime( $end ), strtotime( $start ) );
-
-			$assigned = get_post_meta( $event->ID, 'event_assigned_users', true );
-			$this->assertIsArray( $assigned );
-			$this->assertGreaterThanOrEqual( 1, count( $assigned ) );
-			$this->assertLessThanOrEqual( 3, count( $assigned ) );
-		}
-	}
-
-	/**
 	 * The alert option is written and the original current user is restored.
 	 */
 	public function test_create_sample_data_sets_alert_option_and_restores_current_user() {

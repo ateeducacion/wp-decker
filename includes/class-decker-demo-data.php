@@ -46,7 +46,6 @@ class Decker_Demo_Data {
 		$boards = $this->create_boards();
 		( new Decker_Demo_Tasks( $this->random ) )->create_tasks( $boards, $labels );
 		$this->create_kb_articles( $labels );
-		$this->create_events();
 
 		// Set up alert settings for demo data.
 		$options = get_option( 'decker_settings', array() );
@@ -373,127 +372,6 @@ class Decker_Demo_Data {
 				$this->insert_kb_article( $title, $content, $parent_id, $order, $board_term_id, $labels );
 			}
 			$order++;
-		}
-	}
-
-	/**
-	 * Creates demo events for the current and previous month.
-	 *
-	 * This method generates events with random titles, categories, locations,
-	 * and assigned users. Events can be all-day or have specific time slots.
-	 */
-	private function create_events() {
-		$event_categories = array( 'bg-success', 'bg-info', 'bg-warning' );
-		$event_titles = array(
-			__( 'Team Meeting', 'decker' ),
-			__( 'Project Review', 'decker' ),
-			__( 'Training Session', 'decker' ),
-			__( 'Client Presentation', 'decker' ),
-			__( 'Sprint Planning', 'decker' ),
-			__( 'Code Review', 'decker' ),
-			__( 'Release Day', 'decker' ),
-			__( 'Maintenance Window', 'decker' ),
-		);
-
-		$event_urls = array(
-			'https://site1.example.com',
-			'https://site2.example.com',
-			'https://wikipedia.org',
-		);
-
-		$event_locations = array(
-			__( 'Meeting Room A', 'decker' ),
-			__( 'Conference Room', 'decker' ),
-			__( 'Training Center', 'decker' ),
-			__( 'Virtual Meeting', 'decker' ),
-			__( 'Main Office', 'decker' ),
-		);
-
-		// Get all users for random assignment.
-		$users = get_users( array( 'fields' => array( 'ID' ) ) );
-		$user_ids = wp_list_pluck( $users, 'ID' );
-
-		// Create events for current month.
-		$current_month_start = new DateTime( 'first day of this month' );
-		$current_month_end = new DateTime( 'last day of this month' );
-		$this->generate_month_events( $current_month_start, $current_month_end, $event_titles, $event_categories, $event_urls, $event_locations, $user_ids );
-
-		// Create events for previous month.
-		$prev_month_start = new DateTime( 'first day of last month' );
-		$prev_month_end = new DateTime( 'last day of last month' );
-		$this->generate_month_events( $prev_month_start, $prev_month_end, $event_titles, $event_categories, $event_urls, $event_locations, $user_ids );
-	}
-
-	/**
-	 * Generates events for a specific month.
-	 *
-	 * This method creates a random number of events within the given date range.
-	 * Each event has a randomly assigned title, category, location, time slot,
-	 * and assigned users.
-	 *
-	 * @param DateTime $start_date Start date of the month.
-	 * @param DateTime $end_date   End date of the month.
-	 * @param array    $event_titles Array of possible event titles.
-	 * @param array    $event_categories Array of possible event categories.
-	 * @param array    $event_urls Array of possible event urls.
-	 * @param array    $event_locations Array of possible event locations.
-	 * @param array    $user_ids Array of user IDs for assignment.
-	 */
-	private function generate_month_events( $start_date, $end_date, $event_titles, $event_categories, $event_urls, $event_locations, $user_ids ) {
-		$num_events = $this->random->custom_rand( 5, 10 ); // 5-10 events per month.
-
-		for ( $i = 0; $i < $num_events; $i++ ) {
-			// Random date within the month.
-			$event_date = clone $start_date;
-			$interval = $start_date->diff( $end_date )->days;
-			$event_date->modify( '+' . $this->random->custom_rand( 0, $interval ) . ' days' );
-
-			// 50% chance of all-day event.
-			$is_all_day = $this->random->random_boolean( 0.5 );
-
-			if ( ! $is_all_day ) {
-				// For non-all-day events, set random time between 9 AM and 5 PM.
-				$hour = $this->random->custom_rand( 9, 17 );
-				$minute = $this->random->custom_rand( 0, 3 ) * 15; // 0, 15, 30, or 45.
-				$event_date->setTime( $hour, $minute );
-
-				// Duration between 30 minutes and 3 hours.
-				$duration_minutes = $this->random->custom_rand( 1, 6 ) * 30;
-				$end_date = clone $event_date;
-				$end_date->modify( "+{$duration_minutes} minutes" );
-			} else {
-				$end_date = clone $event_date;
-				// All-day events might span 1-3 days.
-				$end_date->modify( '+' . $this->random->custom_rand( 1, 3 ) . ' days' );
-			}
-
-			// Create the event.
-			$post_id = wp_insert_post(
-				array(
-					'post_type'   => 'decker_event',
-					'post_title'  => $event_titles[ array_rand( $event_titles ) ],
-					'post_content' => __( 'Demo event created automatically.', 'decker' ),
-					'post_status' => 'publish',
-				)
-			);
-
-			if ( ! is_wp_error( $post_id ) ) {
-				// Prepare data as expected in process_and_save_meta().
-				$data = array(
-					'event_allday'         => $is_all_day,
-					'event_start'          => $event_date->format( $is_all_day ? 'Y-m-d' : 'Y-m-d H:i:s' ),
-					'event_end'            => $end_date->format( $is_all_day ? 'Y-m-d' : 'Y-m-d H:i:s' ),
-					'event_location'       => $event_locations[ array_rand( $event_locations ) ],
-					'event_url'            => $event_urls[ array_rand( $event_urls ) ],
-					'event_category'       => $event_categories[ array_rand( $event_categories ) ],
-					// Assign 1-3 random users.
-					'event_assigned_users' => $this->random->wp_rand_elements( $user_ids, $this->random->custom_rand( 1, 3 ) ),
-				);
-
-				// Save the metadaa.
-				$events_handler = new Decker_Events();
-				$events_handler->process_and_save_meta( $post_id, $data );
-			}
 		}
 	}
 }

@@ -58,10 +58,6 @@ Subtasks are not tasks: they have no comments, attachments, history or calendar
 entry, and they are not found by search. Promote one when it needs any of that.
 See [ADR 003](adr/003-lightweight-subtasks.md) for why.
 
-## Calendar feeds
-
-The plugin exposes individual iCal feeds for different event types (Meeting, Absence, Warning, Alert). You can subscribe to them from any calendar client.
-
 ## Editing protection
 
 Opening a task for editing acquires an edit lock. Another user can explicitly
