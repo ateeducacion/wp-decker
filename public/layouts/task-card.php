@@ -7,11 +7,9 @@
  * @author     ATE <ate.educacion@gobiernodecanarias.org>
  */
 
-// task-card.php and event-card.php both declare this helper: each is fetched
-// directly over HTTP, so each has to be able to bootstrap WordPress on its own.
-// Without the guard, a request that loads both — one included as a template, the
-// other pulled into the same render — dies with "Cannot redeclare
-// include_wp_load()".
+// task-card.php is fetched directly over HTTP, so it bootstraps WordPress on its
+// own. The guard keeps it from redeclaring include_wp_load() when it is also
+// included as a template.
 if ( ! function_exists( 'include_wp_load' ) ) {
 	/**
 	 * Function to find and include wp-load.php dynamically.

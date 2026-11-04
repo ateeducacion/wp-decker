@@ -35,10 +35,10 @@ test.describe( 'Decker front-end', () => {
 	test( 'navigates between Decker views from the sidebar', async ( { page } ) => {
 		await page.goto( '/?decker_page=priority' );
 
-		await page.getByRole( 'link', { name: 'Calendar' } ).first().click();
+		await page.getByRole( 'link', { name: 'Upcoming Tasks' } ).first().click();
 
-		await expect( page ).toHaveURL( /decker_page=calendar/ );
-		await expect( page.locator( '#calendar' ) ).toBeVisible();
+		await expect( page ).toHaveURL( /decker_page=upcoming/ );
+		await expect( page.locator( '#task-list-today' ) ).toBeVisible();
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {

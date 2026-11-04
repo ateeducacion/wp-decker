@@ -4,7 +4,7 @@
  *
  * Subtasks are not `decker_task` posts: they live in a single serialized meta
  * on their parent so that none of the existing task queries (board columns,
- * task table, upcoming, analytics, today, board counters, iCal, global search)
+ * task table, upcoming, analytics, today, board counters, global search)
  * has to learn to exclude children, and so the menu_order engine never sees
  * them. See docs/adr/003-lightweight-subtasks.md for the trade-off and for the
  * promotion path, Decker_Tasks_Rest_Subtasks::convert_subtask(), that turns an

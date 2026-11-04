@@ -2,7 +2,7 @@
 /**
  * Comments on protected post types must be no easier to reach than the post itself.
  *
- * Decker gates `decker_kb`, `tasks` and `decker_event` behind `edit_posts`, but the
+ * Decker gates `decker_kb` and `tasks` behind `edit_posts`, but the
  * comment guards used to require only that the visitor be logged in. Any subscriber
  * could therefore read the comments of a task they were denied access to.
  *

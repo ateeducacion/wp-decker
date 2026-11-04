@@ -278,8 +278,8 @@ class DeckerTasksRestOpsEdgeCasesTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Dragging a task in the calendar view must work for the ordinary Decker
-	 * users who see that view, not only for administrators. The existing
+	 * Changing a task's due date must work for ordinary Decker users, not
+	 * only for administrators. The existing
 	 * due-date tests call the controller directly and so never exercised the
 	 * route's permission callback.
 	 */

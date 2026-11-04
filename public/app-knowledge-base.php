@@ -693,26 +693,6 @@ die();
 			// The table view is deprecated; interactions are now handled in knowledge-base.js
 		});
 
-	// Function to delete an event
-	function deleteEvent(id, title) {
-		if (confirm(strings.confirm_delete_event + ' "' + title + '"')) {
-			fetch(wpApiSettings.root + wpApiSettings.versionString + 'decker_event/' + id, {
-				method: 'DELETE',
-				headers: {
-					'X-WP-Nonce': wpApiSettings.nonce,
-					'Content-Type': 'application/json'
-				}
-			})
-			.then(response => response.json())
-			.then(() => {
-				location.reload();
-			})
-			.catch(error => {
-				console.error('Error:', error);
-				alert(strings.error_deleting_event);
-			});
-		}
-	}
 
 	function deleteArticle(id, title) {
 		Swal.fire({

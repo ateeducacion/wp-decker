@@ -66,13 +66,6 @@ class DeckerRestRouteCaseBypassTest extends Decker_Test_Base {
 	private $task_id;
 
 	/**
-	 * Published event.
-	 *
-	 * @var int
-	 */
-	private $event_id;
-
-	/**
 	 * Approved comment on the protected task.
 	 *
 	 * @var int
@@ -139,15 +132,6 @@ class DeckerRestRouteCaseBypassTest extends Decker_Test_Base {
 				'post_status'  => 'draft',
 				'post_title'   => 'Draft KB Title',
 				'post_content' => 'Draft KB body.',
-			)
-		);
-
-		$this->event_id = self::factory()->post->create(
-			array(
-				'post_type'    => 'decker_event',
-				'post_status'  => 'publish',
-				'post_title'   => 'Confidential Event Title',
-				'post_content' => 'Confidential event body.',
 			)
 		);
 
@@ -288,23 +272,6 @@ class DeckerRestRouteCaseBypassTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Anonymous users must not read events through any case variant.
-	 */
-	public function test_anonymous_cannot_read_events_through_case_variants() {
-		foreach ( $this->route_variants( 'decker_event' ) as $route ) {
-			$response = $this->get( $route );
-			$this->assertRouteMatched( $response, $route );
-			$this->assertDeniedWithoutPayload( $response, $route, 'Confidential Event Title' );
-		}
-
-		foreach ( $this->route_variants( 'decker_event', '/' . $this->event_id ) as $route ) {
-			$response = $this->get( $route );
-			$this->assertRouteMatched( $response, $route );
-			$this->assertDeniedWithoutPayload( $response, $route, 'Confidential Event Title' );
-		}
-	}
-
-	/**
 	 * Anonymous users must not read a protected comment through any case variant.
 	 */
 	public function test_anonymous_cannot_read_protected_comment_through_case_variants() {
@@ -356,7 +323,6 @@ class DeckerRestRouteCaseBypassTest extends Decker_Test_Base {
 		$cases = array(
 			'decker_kb'    => 'Confidential KB Title',
 			'tasks'        => 'Confidential Task Title',
-			'decker_event' => 'Confidential Event Title',
 		);
 
 		foreach ( $cases as $base => $secret ) {
@@ -392,10 +358,6 @@ class DeckerRestRouteCaseBypassTest extends Decker_Test_Base {
 		$response = $this->get( '/wp/v2/tasks/' . $this->task_id );
 		$this->assertEquals( 200, $response->get_status() );
 		$this->assertEquals( $this->task_id, $response->get_data()['id'] );
-
-		$response = $this->get( '/wp/v2/decker_event/' . $this->event_id );
-		$this->assertEquals( 200, $response->get_status() );
-		$this->assertEquals( $this->event_id, $response->get_data()['id'] );
 
 		$response = $this->get( '/wp/v2/comments/' . $this->task_comment_id );
 		$this->assertEquals( 200, $response->get_status() );

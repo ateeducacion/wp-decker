@@ -103,14 +103,12 @@ class DeckerPublicPageDispatchTest extends Decker_Test_Base {
 		return array(
 			'analytics'      => array( 'analytics', 'public/app-analytics.php' ),
 			'board'          => array( 'board', 'public/app-kanban.php' ),
-			'calendar'       => array( 'calendar', 'public/app-calendar.php' ),
 			'my board'       => array( 'my-board', 'public/app-kanban-my.php' ),
 			'priority'       => array( 'priority', 'public/app-priority.php' ),
 			'task'           => array( 'task', 'public/app-task-full.php' ),
 			'tasks'          => array( 'tasks', 'public/app-tasks.php' ),
 			'term manager'   => array( 'term-manager', 'public/app-term-manager.php' ),
 			'upcoming'       => array( 'upcoming', 'public/app-upcoming.php' ),
-			'event manager'  => array( 'event-manager', 'public/app-event-manager.php' ),
 			'knowledge base' => array( 'knowledge-base', 'public/app-knowledge-base.php' ),
 		);
 	}

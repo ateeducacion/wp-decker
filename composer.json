@@ -1,15 +1,9 @@
 {
     "require": {
         "php": ">=8.3",
-        "ext-dom": "*",
-        "ext-mbstring": "*",
-        "ext-xmlreader": "*",
-        "ext-xmlwriter": "*",
-        "erseco/mime-mail-parser": "^1.0",
-        "sabre/dav": "^4.7"
+        "erseco/mime-mail-parser": "^1.0"
     },
     "require-dev": {
-        "om/icalparser": "*",
         "phpcompatibility/phpcompatibility-wp": "*",
         "phpunit/phpunit": "*",
         "squizlabs/php_codesniffer": "^3.13.6",
@@ -22,13 +16,11 @@
     "scripts": {
         "post-install-cmd": [
             "rm -rf admin/vendor/mime-mail-parser",
-            "cp -r vendor/erseco/mime-mail-parser admin/vendor/",
-            "@php tests/package/bundle-dav.php"
+            "cp -r vendor/erseco/mime-mail-parser admin/vendor/"
         ],
         "post-update-cmd": [
             "rm -rf admin/vendor/mime-mail-parser",
-            "cp -r vendor/erseco/mime-mail-parser admin/vendor/",
-            "@php tests/package/bundle-dav.php"
+            "cp -r vendor/erseco/mime-mail-parser admin/vendor/"
         ],
         "phpunit": "vendor/bin/phpunit",
         "test": "phpunit",

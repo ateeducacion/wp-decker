@@ -21,7 +21,6 @@ Try Decker instantly in your browser using WordPress Playground. The demo includ
 
 - **Kanban board** with drag-and-drop and a distinctive priority system (including Max Priority).
 - **Import from Nextcloud Deck** (one-way) through the API.
-- **Individual Calendar Feeds** for event types (Meeting, Absence, Warning, Alert).
 - **Email-to-post** endpoint.
 - Multisite support.
 - Follows WordPress Coding Standards.
@@ -64,5 +63,3 @@ Reusable procedures ship as [agent skills](docs/development.md#agent-skills) in
 `.agents/skills/` and `.claude/skills/`, installed with `gh skill add`. They cover plugin development, the REST API, WordPress.org
 directory guidelines, Playground blueprints, performance, project triage,
 plugin security and security auditing. None of it is included in the release ZIP.
-
-CalDAV synchronization and deployment: [configuration and device checklist](docs/calendar/caldav.md).

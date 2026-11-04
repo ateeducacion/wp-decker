@@ -38,11 +38,6 @@ Go to the Import from NextCloud page, and enter your Nextcloud API credentials (
 = Can I use this plugin without Nextcloud Deck? =  
 Yes, the plugin independant, Nextcloud is only to oneway import.
 
-= Can I synchronize events with iPhone or Android? =
-Yes. Generate a calendar token under Users > Profile > Decker Settings. Add the displayed CalDAV URL and WordPress username to iPhone Calendar or DAVx⁵ on Android, using the token as password and SSL enabled. Create events inside the Decker calendar. ICS subscriptions are read only and use a separate secret. CAS logout does not revoke a calendar token; revoke or regenerate it in the profile.
-
-Deployment and device verification: https://github.com/ateeducacion/wp-decker/blob/main/docs/calendar/caldav.md
-
 == Screenshots ==
 
 1. **Kanban Board View**  
