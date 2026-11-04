@@ -26,9 +26,7 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
 }
 
 
-.ql-fullscreen::before {
-    content: '⛶'; /* Fullscreen symbol */
-}
+
 
 
 /* Fix for dropdown on choices.js */
@@ -683,4 +681,30 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
         padding-left: 0.4rem;
         font-size: 0.875rem;
     }
+}
+
+/* TinyMCE puts its fullscreen editor at z-index 100, under the Attex sidebar
+   and topbar (1000) and the task modal (1055). Stay below its own menus (65535). */
+div.mce-fullscreen {
+    z-index: 1056;
+}
+
+/* wp.editor.initialize() nests the editor inside .wp-editor-tools, whose
+   z-index: 1 traps it below the floating labels (z-index: 2) of the modal. */
+html.mce-fullscreen .wp-editor-tools {
+    z-index: auto;
+}
+
+/* The inline link field relies on wp-admin form styles, absent on the front end. */
+div.wp-link-input input {
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+/* Description source dialog (task-card.js, "decker_source" button). */
+.mce-window textarea.mce-decker-source {
+    font-family: SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
 }

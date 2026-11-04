@@ -28,3 +28,5 @@ Nextcloud Deck import is a separate page (not inside the main Settings screen).
 It is a **one-way** import of boards and cards. The plugin works fully without Nextcloud.
 
 See the FAQ in `readme.txt` for the basic usage.
+
+Task descriptions always use the WordPress classic editor. The retired `task_editor_type` option is ignored and discarded on the next settings save. Existing sites must follow the [description migration runbook](task-description-migration.md) before editing is reopened.

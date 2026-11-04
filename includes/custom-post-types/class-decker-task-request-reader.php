@@ -23,14 +23,20 @@ class Decker_Task_Request_Reader {
 	 *
 	 * The nonce is verified by the caller when the response filter is enabled.
 	 *
-	 * @return array{id:int,title:string,description:string,stack:string,board:int}
+	 * @return array|WP_Error Core fields or a description validation error.
 	 */
-	public function read_task_core_fields(): array {
+	public function read_task_core_fields() {
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// The post policy retains the classes/data attributes needed by conversion.
+		$description = isset( $_POST['description'] ) && is_string( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '';
+		$description = Decker_Task_Description::sanitize_task_description( $description );
+		if ( is_wp_error( $description ) ) {
+			return $description;
+		}
 		return array(
 			'id'          => isset( $_POST['task_id'] ) ? intval( wp_unslash( $_POST['task_id'] ) ) : 0,
 			'title'       => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '',
-			'description' => isset( $_POST['description'] ) ? wp_kses( wp_unslash( $_POST['description'] ), Decker::get_allowed_tags() ) : '',
+			'description' => $description,
 			'stack'       => isset( $_POST['stack'] ) ? sanitize_text_field( wp_unslash( $_POST['stack'] ) ) : '',
 			'board'       => isset( $_POST['board'] ) ? intval( wp_unslash( $_POST['board'] ) ) : 0,
 		);

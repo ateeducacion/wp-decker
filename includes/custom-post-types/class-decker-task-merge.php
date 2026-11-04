@@ -43,9 +43,6 @@ class Decker_Task_Merge {
 			return $validation;
 		}
 
-		self::merge_assigned_users_meta( $source_task_id, $destination_task_id );
-		self::merge_relations_meta( $source_task_id, $destination_task_id );
-
 		$merged_description = self::build_merged_task_description(
 			(string) $destination_post->post_content,
 			(string) $source_post->post_content,
@@ -53,15 +50,24 @@ class Decker_Task_Merge {
 			$source_task_id
 		);
 
-		wp_update_post(
-			array(
-				'ID'           => $destination_task_id,
-				'post_content' => wp_kses(
-					$merged_description,
-					Decker::get_allowed_tags()
-				),
-			)
+		$merged_description = Decker_Task_Description::sanitize_task_description( $merged_description );
+		if ( is_wp_error( $merged_description ) ) {
+			return $merged_description;
+		}
+		$result = wp_update_post(
+			wp_slash(
+				array(
+					'ID' => $destination_task_id,
+					'post_content' => $merged_description,
+				)
+			),
+			true
 		);
+		if ( is_wp_error( $result ) || ! $result ) {
+			return is_wp_error( $result ) ? $result : new WP_Error( 'decker_task_write_failed', __( 'The task could not be saved.', 'decker' ) );
+		}
+		self::merge_assigned_users_meta( $source_task_id, $destination_task_id );
+		self::merge_relations_meta( $source_task_id, $destination_task_id );
 
 		self::move_task_comments( $source_task_id, $destination_task_id );
 		self::merge_task_attachments( $source_task_id, $destination_task_id );

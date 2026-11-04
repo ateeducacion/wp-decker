@@ -80,6 +80,23 @@ describe( 'DeckerChecklist pure helpers', () => {
 		ul = document.getElementById( 'list' );
 	} );
 
+	test.each( [ 'bullet', 'ordered', 'other', '' ] )( 'does not treat data-list=%s as checklist', ( state ) => {
+		ul.children[ 0 ].setAttribute( 'data-list', state );
+		expect( window.DeckerChecklist.isChecklistItem( ul.children[ 0 ] ) ).toBe( false );
+		window.DeckerChecklist.toggleItemState( ul.children[ 0 ] );
+		expect( ul.children[ 0 ].getAttribute( 'data-list' ) ).toBe( state );
+	} );
+
+	test( 'detection and conversion both affect only immediate items', () => {
+		ul.innerHTML = '<li>Parent<ul><li data-list="checked"><strong>Nested</strong></li></ul></li><li>Sibling</li>';
+		expect( window.DeckerChecklist.listHasChecklist( ul ) ).toBe( false );
+		window.DeckerChecklist.setListChecklist( ul, true );
+		expect( ul.children[ 0 ].getAttribute( 'data-list' ) ).toBe( 'unchecked' );
+		expect( ul.children[ 0 ].querySelector( 'li' ).getAttribute( 'data-list' ) ).toBe( 'checked' );
+		window.DeckerChecklist.setListChecklist( ul, false );
+		expect( ul.children[ 0 ].querySelector( 'li' ).getAttribute( 'data-list' ) ).toBe( 'checked' );
+	} );
+
 	test( 'setListChecklist enables every item and preserves checked state', () => {
 		window.DeckerChecklist.setListChecklist( ul, true );
 
@@ -161,6 +178,20 @@ describe( 'DeckerChecklist editor behavior', () => {
 		expect( document.getElementById( 'b' ).getAttribute( 'data-list' ) ).toBe( 'unchecked' );
 	} );
 
+	test( 'numbered list conversion retains presentation and identity attributes', () => {
+		container.innerHTML = '<ol id="numbered" class="sample" style="text-align: right" dir="rtl" lang="es" start="5" type="a" reversed><li id="first">Item</li></ol>';
+		fake.setCaret( document.getElementById( 'first' ) );
+
+		window.DeckerChecklist.toggleChecklist( fake.editor );
+
+		const list = document.getElementById( 'numbered' );
+		expect( list.nodeName ).toBe( 'UL' );
+		expect( Array.from( list.attributes, ( attribute ) => [ attribute.name, attribute.value ] ) ).toEqual( [
+			[ 'id', 'numbered' ], [ 'class', 'sample' ], [ 'style', 'text-align: right' ], [ 'dir', 'rtl' ], [ 'lang', 'es' ],
+		] );
+		expect( document.getElementById( 'first' ).getAttribute( 'data-list' ) ).toBe( 'unchecked' );
+	} );
+
 	test( 'click on the marker area toggles the item', () => {
 		const li = document.getElementById( 'b' );
 		const event = { target: li, offsetX: 10, preventDefault: vi.fn() };
@@ -219,4 +250,145 @@ describe( 'DeckerChecklist editor behavior', () => {
 		expect( document.getElementById( 'a' ).hasAttribute( 'data-list' ) ).toBe( false );
 		expect( document.getElementById( 'b' ).hasAttribute( 'data-list' ) ).toBe( false );
 	} );
+
+	test( 'Enter in the middle keeps the original state and creates a pending fragment', () => {
+		const original = document.getElementById( 'b' );
+		original.innerHTML = '<strong>Before</strong> after';
+		fake.setCaret( original );
+		fake.emit( 'keydown', { keyCode: 13 } );
+		const fresh = document.createElement( 'li' );
+		fresh.setAttribute( 'data-list', 'checked' );
+		fresh.textContent = 'after';
+		original.innerHTML = '<strong>Before</strong>';
+		original.after( fresh );
+		fake.setCaret( fresh );
+		fake.emit( 'input', {} );
+		fake.emit( 'keyup', { keyCode: 13 } );
+		expect( original.getAttribute( 'data-list' ) ).toBe( 'checked' );
+		expect( fresh.getAttribute( 'data-list' ) ).toBe( 'unchecked' );
+		expect( original.querySelector( 'strong' ).textContent ).toBe( 'Before' );
+	} );
+
+	test( 'existing empty completed items stay completed during ordinary input', () => {
+		const original = document.getElementById( 'b' );
+		original.innerHTML = '<br>';
+		fake.setCaret( original );
+		fake.emit( 'input', {} );
+		expect( original.getAttribute( 'data-list' ) ).toBe( 'checked' );
+	} );
+
+	test( 'readonly blocks marker, toolbar, Enter and native-list mutations', () => {
+		fake.editor.readonly = true;
+		fake.setCaret( document.getElementById( 'b' ) );
+		const before = container.innerHTML;
+		fake.emit( 'click', { target: document.getElementById( 'b' ), offsetX: 5, preventDefault: vi.fn() } );
+		window.DeckerChecklist.toggleChecklist( fake.editor );
+		fake.emit( 'keyup', { keyCode: 13 } );
+		fake.emit( 'ExecCommand', { command: 'InsertUnorderedList' } );
+		const itemButton = fake.editor.addButton.mock.calls.find( ( args ) => args[ 0 ] === 'decker_check_item' );
+		itemButton[ 1 ].onclick();
+		expect( container.innerHTML ).toBe( before );
+	} );
+
+	test( 'toolbar item action preserves rich content and reports a change', () => {
+		const li = document.getElementById( 'a' );
+		li.innerHTML = '<strong>Rich</strong> <a href="https://example.invalid/?a=1&amp;b=2">link</a><img src="https://example.invalid/image.png">';
+		const before = li.innerHTML;
+		fake.setCaret( li );
+		const itemButton = fake.editor.addButton.mock.calls.find( ( args ) => args[ 0 ] === 'decker_check_item' );
+		itemButton[ 1 ].onclick();
+		expect( li.getAttribute( 'data-list' ) ).toBe( 'checked' );
+		expect( li.innerHTML ).toBe( before );
+		expect( fake.editor.fire ).toHaveBeenCalledWith( 'change' );
+	} );
+
+	test( 'the undo snapshot includes the new pending state after Enter', () => {
+		const original = document.getElementById( 'a' );
+		original.setAttribute( 'data-list', 'checked' );
+		fake.setCaret( original );
+		fake.emit( 'keydown', { keyCode: 13 } );
+		const next = original.cloneNode( true );
+		original.after( next );
+		fake.setCaret( next );
+		fake.editor.getContent = () => container.innerHTML;
+		const event = { level: { content: container.innerHTML } };
+		fake.emit( 'BeforeAddUndo', event );
+		expect( original.getAttribute( 'data-list' ) ).toBe( 'checked' );
+		expect( next.getAttribute( 'data-list' ) ).toBe( 'unchecked' );
+		expect( event.level.content ).toBe( container.innerHTML );
+	} );
+
+	test( 'creating outside a list preserves adjacent items merged by TinyMCE', () => {
+		container.innerHTML = '<p>Create</p><ul><li>Ordinary</li></ul>';
+		fake.editor.getBody = () => container;
+		fake.setCaret( container.querySelector( 'p' ) );
+		fake.editor.execCommand = () => {
+			const item = document.createElement( 'li' );
+			item.textContent = 'Create';
+			container.querySelector( 'ul' ).prepend( item );
+			container.querySelector( 'p' ).remove();
+			fake.setCaret( item );
+		};
+		window.DeckerChecklist.toggleChecklist( fake.editor );
+		expect( [ ...container.querySelectorAll( 'li' ) ].map( ( li ) => li.getAttribute( 'data-list' ) ) ).toEqual( [ 'unchecked', null ] );
+	} );
+
+
+	test( 'leaving a nested empty item cannot uncheck an existing parent', () => {
+		container.innerHTML = '<ul><li data-list="checked">Parent<ul><li data-list="unchecked"><br></li></ul></li></ul>';
+		fake.editor.getBody = () => container;
+		const parent = container.querySelector( 'li' );
+		const child = parent.querySelector( 'li' );
+		fake.setCaret( child );
+		fake.emit( 'keydown', { keyCode: 13 } );
+		child.parentElement.remove();
+		fake.setCaret( parent );
+		fake.emit( 'keyup', { keyCode: 13 } );
+		expect( parent.getAttribute( 'data-list' ) ).toBe( 'checked' );
+	} );
+
+	test( 'toolbar item state exposes checked status and disables after a lost lock', () => {
+		const element = document.createElement( 'button' );
+		const button = { active: vi.fn(), disabled: vi.fn(), getEl: () => element };
+		const config = fake.editor.addButton.mock.calls.find( ( args ) => args[ 0 ] === 'decker_check_item' )[ 1 ];
+		config.onPostRender.call( button );
+		fake.setCaret( document.getElementById( 'b' ) );
+		fake.emit( 'NodeChange', {} );
+		expect( button.active ).toHaveBeenLastCalledWith( true );
+		expect( button.disabled ).toHaveBeenLastCalledWith( false );
+		expect( element.getAttribute( 'aria-pressed' ) ).toBe( 'true' );
+		fake.editor.readonly = true;
+		fake.emit( 'NodeChange', {} );
+		expect( button.disabled ).toHaveBeenLastCalledWith( true );
+		fake.setCaret( document.getElementById( 'outside' ) );
+		fake.emit( 'NodeChange', {} );
+		expect( element.getAttribute( 'aria-pressed' ) ).toBe( 'false' );
+	} );
+
+	test( 'the keyboard shortcut toggles the caret item and uses dirty tracking', () => {
+		fake.editor.addShortcut = vi.fn();
+		window.DeckerChecklist.attach( fake.editor );
+		fake.setCaret( document.getElementById( 'b' ) );
+		const [ keys, , action ] = fake.editor.addShortcut.mock.calls[ 0 ];
+		expect( keys ).toBe( 'meta+shift+32' );
+		action();
+		expect( document.getElementById( 'b' ).getAttribute( 'data-list' ) ).toBe( 'unchecked' );
+		expect( fake.editor.fire ).toHaveBeenCalledWith( 'change' );
+	} );
+
+	test( 'creating a checklist cannot strip an adjacent checklist through a native command event', () => {
+		fake.setCaret( document.getElementById( 'b' ) );
+		fake.editor.deckerCreatingChecklist = true;
+		fake.emit( 'ExecCommand', { command: 'InsertUnorderedList' } );
+		expect( document.getElementById( 'b' ).getAttribute( 'data-list' ) ).toBe( 'checked' );
+	} );
+
+	test( 'read-only marker clicks cannot mutate an item', () => {
+		const item = document.getElementById( 'b' );
+		fake.editor.readonly = true;
+		fake.emit( 'click', { target: item, offsetX: 10, preventDefault: vi.fn() } );
+		expect( item.getAttribute( 'data-list' ) ).toBe( 'checked' );
+		expect( fake.editor.fire ).not.toHaveBeenCalledWith( 'change' );
+	} );
+
 } );

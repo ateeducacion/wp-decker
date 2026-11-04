@@ -38,6 +38,11 @@ Go to the Import from NextCloud page, and enter your Nextcloud API credentials (
 = Can I use this plugin without Nextcloud Deck? =  
 Yes, the plugin independant, Nextcloud is only to oneway import.
 
+= How do existing task descriptions move to the classic editor? =
+Pause all HTTP, cron, CLI and import writers before updating. Existing sites stay read-only for task description writes until an administrator runs `wp decker migrate-descriptions --writers-paused` and `wp decker verify-descriptions`. The command backs up every task, including archived, hidden and empty tasks. Never skip the backups or use a WXR export as the complete database backup.
+
+Read-only simulation, maintenance, recovery and future upgrade instructions: https://github.com/ateeducacion/wp-decker/blob/main/docs/task-description-migration.md
+
 == Screenshots ==
 
 1. **Kanban Board View**  

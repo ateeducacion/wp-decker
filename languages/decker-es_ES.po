@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-11-04T20:38:30+00:00\n"
+"PO-Revision-Date: 2026-11-04T22:58:58+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -67,15 +67,6 @@ msgstr "Por favor, introduzca IDs de usuario separados por comas (solo números)
 msgid "Enter comma-separated user IDs to ignore from Decker functionality."
 msgstr "Introduzca IDs de usuario separados por comas para ignorar de la funcionalidad de Decker."
 
-msgid "Classic Editor"
-msgstr "Editor clásico"
-
-msgid "Quill Editor"
-msgstr "Editor Quill"
-
-msgid "Choose which editor to use for task descriptions."
-msgstr "Elige qué editor usar para las descripciones de tareas."
-
 msgid "Clear All Data"
 msgstr "Borrar Todos los Datos"
 
@@ -99,9 +90,6 @@ msgstr "Mensaje de Alerta"
 
 msgid "Minimum User Profile"
 msgstr "Perfil de Usuario Mínimo"
-
-msgid "Task Editor Type"
-msgstr "Tipo de editor de tareas"
 
 msgid "Shared Key"
 msgstr "Clave Compartida"
@@ -313,6 +301,9 @@ msgstr "Comentario por %s"
 
 msgid "You are not authorized to access this resource."
 msgstr "No estás autorizado para acceder a este recurso."
+
+msgid "The legacy task description requires review before saving."
+msgstr "La descripción heredada de la tarea requiere revisión antes de guardarse."
 
 msgid "You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes."
 msgstr "Ya no puedes guardar esta tarjeta porque otro usuario ha tomado el control de la edición. Vuelve a cargar la tarjeta para ver los últimos cambios."
@@ -544,6 +535,9 @@ msgstr "Sin título"
 msgid "%s (copy)"
 msgstr "%s (copia)"
 
+msgid "The task could not be saved."
+msgstr "No se pudo guardar la tarea."
+
 msgid "The source task was not found."
 msgstr "No se encontró la tarea de origen."
 
@@ -659,6 +653,9 @@ msgstr "Las dos tareas tienen que estar en el mismo tablero."
 
 msgid "Maximum priority pulls a card to the front of its stack, so these two cannot be adjacent. Match their priority first."
 msgstr "La prioridad máxima lleva la tarjeta al principio de su pila, así que esas dos no pueden quedar contiguas. Iguala primero su prioridad."
+
+msgid "Task descriptions must be backed up and migrated before editing."
+msgstr "Las descripciones de las tareas deben respaldarse y migrarse antes de editarlas."
 
 msgid "The title is required."
 msgstr "El título es obligatorio."
@@ -1245,15 +1242,6 @@ msgstr "Error al guardar la tarea."
 msgid "The task has been saved successfully."
 msgstr "La tarea se ha guardado correctamente."
 
-msgid "Show HTML source"
-msgstr "Mostrar código fuente HTML"
-
-msgid "Edit the content in HTML format"
-msgstr "Editar el contenido en formato HTML"
-
-msgid "OK"
-msgstr "Aceptar"
-
 msgid "Are you sure you want to archive this task?"
 msgstr "¿Está seguro de que desea archivar esta tarea?"
 
@@ -1344,8 +1332,14 @@ msgstr "¡URL de la tarea copiada!"
 msgid "Could not copy URL. Please copy it manually:"
 msgstr "No se pudo copiar la URL. Por favor, cópiala manualmente:"
 
+msgid "Toggle checklist item"
+msgstr "Marcar o desmarcar elemento de la lista"
+
 msgid "Checklist"
 msgstr "Lista de verificación"
+
+msgid "Source code"
+msgstr "Código fuente"
 
 msgid "No comments yet."
 msgstr "No hay comentarios todavía."
@@ -1651,6 +1645,9 @@ msgstr "Gantt"
 
 msgid "Information"
 msgstr "Información"
+
+msgid "Task descriptions must be backed up and migrated before editing. Ask an administrator to run wp decker migrate-descriptions."
+msgstr "Las descripciones de las tareas deben respaldarse y migrarse antes de editarlas. Pide a un administrador que ejecute wp decker migrate-descriptions."
 
 msgid "No subtasks yet. Break this task down into the steps it actually takes."
 msgstr "Todavía no hay subtareas. Desglosa esta tarea en los pasos que realmente lleva."
