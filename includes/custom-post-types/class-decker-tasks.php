@@ -364,42 +364,7 @@ class Decker_Tasks {
 	 * @return mixed WP_Error if unauthorized, otherwise the original result.
 	 */
 	public function restrict_rest_access( $result, $rest_server, $request ) {
-		$route   = $request->get_route();
-		$generic = Decker::rest_route_matches( $route, '/wp/v2/tasks' );
-
-		if ( ! $generic && ! Decker::rest_route_matches( $route, '/decker/v1/tasks' ) ) {
-			return $result;
-		}
-
-		// Use the specific capability of the CPT. The decker/v1 routes carry
-		// their own permission callbacks, which answer to the configured
-		// minimum role rather than to edit_posts, so this one stays where it
-		// has always applied.
-		if ( $generic && ! current_user_can( 'edit_posts' ) ) {
-			return new WP_Error(
-				'rest_forbidden',
-				__( 'You do not have permission to access this resource.', 'decker' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		// A hidden task is reachable only by the people it is not hidden from,
-		// whatever the capability. The route carries the task being addressed.
-		//
-		// Both namespaces are covered here rather than in each permission
-		// callback: edit_task resolves to edit_post, which an editor holds for
-		// other people's posts, so the per-task routes would otherwise let
-		// somebody who cannot see a hidden card still act on it by id.
-		if ( preg_match( '#^/(?:wp/v2|decker/v1)/tasks/(?P<id>\d+)#i', $route, $matches )
-			&& self::is_hidden_from_current_user( (int) $matches['id'] ) ) {
-			return new WP_Error(
-				'rest_forbidden',
-				__( 'You do not have permission to access this resource.', 'decker' ),
-				array( 'status' => 403 )
-			);
-		}
-
-		return $result;
+		return Decker_Task_Visibility::restrict_rest_access( $result, $rest_server, $request );
 	}
 
 	/**
@@ -421,27 +386,7 @@ class Decker_Tasks {
 	 * @return array The possibly restricted arguments.
 	 */
 	public function exclude_hidden_tasks_from_rest_collection( $args, $request ) {
-		if ( current_user_can( 'manage_options' ) ) {
-			return $args;
-		}
-
-		$meta_query   = isset( $args['meta_query'] ) ? $args['meta_query'] : array();
-		$meta_query[] = array(
-			'relation' => 'OR',
-			array(
-				'key'     => 'hidden',
-				'compare' => 'NOT EXISTS',
-			),
-			array(
-				'key'     => 'hidden',
-				'value'   => '1',
-				'compare' => '!=',
-			),
-		);
-
-		$args['meta_query'] = $meta_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-
-		return $args;
+		return Decker_Task_Visibility::exclude_hidden_tasks_from_rest_collection( $args, $request );
 	}
 
 	/**
@@ -456,38 +401,7 @@ class Decker_Tasks {
 	 * @return bool True when the task must be concealed.
 	 */
 	public static function is_hidden_from_current_user( $task_id ) {
-		$task_id = (int) $task_id;
-
-		if ( ! $task_id || 'decker_task' !== get_post_type( $task_id ) ) {
-			return false;
-		}
-
-		if ( ! get_post_meta( $task_id, 'hidden', true ) ) {
-			return false;
-		}
-
-		if ( current_user_can( 'manage_options' ) ) {
-			return false;
-		}
-
-		$user_id = get_current_user_id();
-
-		if ( ! $user_id ) {
-			return true;
-		}
-
-		if ( (int) get_post_field( 'post_author', $task_id ) === $user_id ) {
-			return false;
-		}
-
-		if ( absint( get_post_meta( $task_id, 'responsable', true ) ) === $user_id ) {
-			return false;
-		}
-
-		$assignee_ids = get_post_meta( $task_id, 'assigned_users', true );
-		$assignee_ids = is_array( $assignee_ids ) ? array_map( 'absint', $assignee_ids ) : array();
-
-		return ! in_array( $user_id, $assignee_ids, true );
+		return Decker_Task_Visibility::is_hidden_from_current_user( $task_id );
 	}
 
 	/**
@@ -540,16 +454,12 @@ class Decker_Tasks {
 	 * @return string Stack label.
 	 */
 	public static function get_stack_label( string $stack ): string {
-		switch ( $stack ) {
-			case 'to-do':
-				return __( 'To-Do', 'decker' );
-			case 'in-progress':
-				return __( 'In Progress', 'decker' );
-			case 'done':
-				return __( 'Done', 'decker' );
-			default:
-				return $stack;
-		}
+		$labels = array(
+			'to-do' => __( 'To-Do', 'decker' ),
+			'in-progress' => __( 'In Progress', 'decker' ),
+			'done' => __( 'Done', 'decker' ),
+		);
+		return $labels[ $stack ] ?? $stack;
 	}
 
 	/**
@@ -559,16 +469,12 @@ class Decker_Tasks {
 	 * @return string Icon class list.
 	 */
 	public static function get_stack_icon_classes( string $stack ): string {
-		switch ( $stack ) {
-			case 'to-do':
-				return 'ri-checkbox-blank-circle-line text-secondary';
-			case 'in-progress':
-				return 'ri-progress-3-line text-warning';
-			case 'done':
-				return 'ri-checkbox-circle-line text-success';
-			default:
-				return '';
-		}
+		$icons = array(
+			'to-do' => 'ri-checkbox-blank-circle-line text-secondary',
+			'in-progress' => 'ri-progress-3-line text-warning',
+			'done' => 'ri-checkbox-circle-line text-success',
+		);
+		return $icons[ $stack ] ?? '';
 	}
 
 	/**
