@@ -761,10 +761,10 @@
         return new Promise((resolve) => {
             const session = { cancelled: false, ready: false, resolve };
             textarea.deckerEditorSession = session;
-            // Quicktags buttons modify the textarea programmatically and fire
-            // 'change' even when it is read-only or disabled, so dirty tracking
-            // must re-check the field state at event time (covers cards that
-            // are read-only from the start and locks applied while editing).
+            // Programmatic textarea changes can fire 'change' even when it is
+            // read-only or disabled, so dirty tracking re-checks the field state
+            // at event time (covers cards that are read-only from the start and
+            // locks applied while editing).
             const markDirty = () => {
                 if ((session.cancelled && !session.failed) || !textarea.isConnected || textarea.disabled || textarea.readOnly) {
                     return;
@@ -773,8 +773,8 @@
             };
             const debouncedMarkDirty = debounce(markDirty, 150);
 
-            // Quicktags (Text tab) edits bypass TinyMCE events entirely; track
-            // the textarea directly so they still mark the card dirty.
+            // If TinyMCE fails to start, the plain textarea is the editor; track
+            // it directly so those edits still mark the card dirty.
             textarea.addEventListener('input', debouncedMarkDirty);
             textarea.addEventListener('change', debouncedMarkDirty);
             if (readOnly) {
@@ -788,14 +788,24 @@
                     container: 'description-tab',
                     // Locked or archived cards must not be editable.
                     readonly: readOnly ? true : false,
-                    toolbar1: 'formatselect bold italic link bullist numlist decker_checklist decker_check_item blockquote alignleft aligncenter alignright wp_adv fullscreen',
-                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    // Compact like the former Quill editor: block format on the
+                    // second row, HTML source in a dialog instead of a Text tab.
+                    toolbar1: 'bold italic link bullist numlist decker_checklist decker_check_item blockquote alignleft aligncenter alignright decker_source wp_adv fullscreen',
+                    toolbar2: 'formatselect strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
                     menubar: false,
+                    statusbar: false,
+                    // Grow with the content (bundled wpautoresize plugin).
+                    wp_autoresize_on: true,
+                    autoresize_min_height: 200,
                     // Keep the native padding rule too: empty items must survive serialization.
                     extended_valid_elements: '#li[data-list|value|class|style|id|dir|title|lang]',
                     // Draw the checkboxes for checklist items; state handling lives
                     // in tinymce-checklist.js (DeckerChecklist).
-                    content_style: 'li[data-list=checked],li[data-list=unchecked]{list-style:none;position:relative;padding-left:1.7em;}' +
+                    // The editor is an iframe: load the page font (Figtree, as
+                    // attex.css does) and match the former Quill text metrics.
+                    content_style: '@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&display=swap");' +
+                        'body{font-family:"Figtree",sans-serif;font-size:13px;line-height:1.42;color:#6c757d;}p{margin:0;}' +
+                        'li[data-list=checked],li[data-list=unchecked]{list-style:none;position:relative;padding-left:1.7em;}' +
                         'li[data-list=checked]::before,li[data-list=unchecked]::before{content:"\\2610";position:absolute;left:0;top:0;width:1.4em;cursor:pointer;}' +
                         'li[data-list="checked"]::before{content:"\\2611";}',
                     setup: function(editor) {
@@ -807,6 +817,33 @@
                         if (window.DeckerChecklist) {
                             window.DeckerChecklist.attach(editor);
                         }
+                        // Edit the description HTML in a dialog, like Quill's "<>".
+                        const sourceLabel = (window.deckerVars && window.deckerVars.strings && window.deckerVars.strings.source_code) || 'Source code';
+                        editor.addButton('decker_source', {
+                            icon: 'code',
+                            tooltip: sourceLabel,
+                            onclick: function() {
+                                editor.windowManager.open({
+                                    title: sourceLabel,
+                                    body: [{
+                                        type: 'textbox',
+                                        name: 'html',
+                                        multiline: true,
+                                        classes: 'decker-source',
+                                        minWidth: Math.min(760, window.innerWidth - 80),
+                                        minHeight: Math.min(420, window.innerHeight - 200),
+                                        value: editor.getContent()
+                                    }],
+                                    onsubmit: function(event) {
+                                        editor.undoManager.transact(function() {
+                                            editor.setContent(event.data.html);
+                                        });
+                                        editor.nodeChanged();
+                                        editor.fire('change');
+                                    }
+                                });
+                            }
+                        });
                         editor.on('init', function() {
                             // Use the local reference: taskEditor may already be
                             // null if the modal was closed before init fired.
@@ -823,9 +860,6 @@
                             }
                             resolve();
                         });
-                        // Only genuine user edits switch the card into dirty mode;
-                        // the initial content load (SetContent during init) is
-                        // intentionally excluded so opening a card stays pristine.
                         // WordPress positions the inline link field in the page,
                         // assuming the page scrolls; inside the modal it can land
                         // past the viewport edge, and focusing it then scrolls and
@@ -843,6 +877,9 @@
                                 modal.scrollTop += overflow;
                             }
                         });
+                        // Only genuine user edits switch the card into dirty mode;
+                        // the initial content load (SetContent during init) is
+                        // intentionally excluded so opening a card stays pristine.
                         editor.on('input keyup change', debouncedMarkDirty);
                         // Toolbar commands that only change the interface
                         // (fullscreen, toolbar toggle, help) must not leave the
@@ -854,10 +891,10 @@
                         });
                     }
                 },
-                // No Text tab or media buttons on read-only cards: Quicktags
-                // edits the textarea programmatically, bypassing readOnly.
-                quicktags: !readOnly,
-                mediaButtons: !readOnly
+                // No Text/Visual tabs (the source dialog replaces them) and no
+                // media button: attachments have their own tab.
+                quicktags: false,
+                mediaButtons: false
             };
 
             try {

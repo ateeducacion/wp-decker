@@ -137,7 +137,7 @@ test.describe( 'Classic task descriptions', () => {
 		} );
 	}
 
-	test( 'Visual and Text edits both persist with legacy editor configuration', async ( { page, requestUtils } ) => {
+	test( 'Visual and source-dialog edits both persist with legacy editor configuration', async ( { page, requestUtils } ) => {
 		const task = seed( 'task-5531.html' );
 		cli( [ 'decker', 'migrate-descriptions', '--writers-paused' ] );
 		cli( [ 'eval', "$settings = get_option('decker_settings', array()); $settings['task_editor_type'] = 'quill'; update_option('decker_settings', $settings);" ] );
@@ -145,32 +145,19 @@ test.describe( 'Classic task descriptions', () => {
 		page.on( 'request', ( req ) => { if ( /quill|htmlEditButton/i.test( req.url() ) ) quillRequests.push( req.url() ); } );
 		await page.goto( `/?decker_page=task&id=${ task.id }` );
 		await ready( page );
+		// The compact editor has no Text/Visual tabs and no media button.
+		await expect( page.locator( '#task-description-html, #task-description-tmce, .insert-media' ) ).toHaveCount( 0 );
 		await page.evaluate( () => { const ed = tinymce.get( 'task-description' ); ed.insertContent( '<p>Visual addition</p>' ); ed.fire( 'change' ); } );
-		await page.locator( '#task-description-html' ).click();
-		await page.locator( '#task-description' ).fill( ( await page.locator( '#task-description' ).inputValue() ) + '<h2>Text addition</h2>' );
+		await editSource( page, ( html ) => html + '<h2>Source addition</h2>' );
 		await saved( page );
-		expect( await stored( requestUtils, task.id ) ).toContain( 'Text addition' );
+		expect( await stored( requestUtils, task.id ) ).toContain( 'Source addition' );
 		await page.reload();
 		await ready( page );
-		await page.locator( '#task-description-html' ).click();
-		await page.locator( '#task-description' ).fill( ( await page.locator( '#task-description' ).inputValue() ) + '<p>Text first</p>' );
-		await page.locator( '#task-description-tmce' ).click();
+		await editSource( page, ( html ) => html.replace( 'Source addition', '<strong>Source addition</strong>' ) + '<p>Source first</p>' );
 		await page.evaluate( () => { const ed = tinymce.get( 'task-description' ); ed.insertContent( '<p>Visual last</p>' ); ed.fire( 'change' ); } );
 		await saved( page );
 		const html = await stored( requestUtils, task.id );
-		for ( const text of [ 'Visual addition', 'Text addition', 'Text first', 'Visual last' ] ) expect( html ).toContain( text );
-		await page.reload();
-		await ready( page );
-		await page.locator( '#task-description-html' ).click();
-		await page.locator( '#task-description' ).evaluate( ( textarea ) => {
-			const offset = textarea.value.indexOf( 'Text first' );
-			textarea.focus();
-			textarea.setSelectionRange( offset, offset + 'Text first'.length );
-		} );
-		await page.locator( '#qt_task-description_strong' ).click();
-		await expect( page.locator( '#save-task' ) ).toBeEnabled();
-		await saved( page );
-		expect( await stored( requestUtils, task.id ) ).toContain( '<strong>Text first</strong>' );
+		for ( const text of [ 'Visual addition', '<strong>Source addition</strong>', 'Source first', 'Visual last' ] ) expect( html ).toContain( text );
 		expect( quillRequests ).toEqual( [] );
 	} );
 } );
@@ -195,6 +182,16 @@ async function shortcut( page, keys ) {
 
 async function editorHtml( page ) {
 	return page.evaluate( () => tinymce.get( 'task-description' ).getContent() );
+}
+
+// Edit the HTML through the toolbar's source dialog, as a user would.
+async function editSource( page, change ) {
+	await page.locator( '.mce-btn .mce-i-code' ).first().click();
+	const field = page.locator( '.mce-window textarea.mce-decker-source' );
+	await expect( field ).toBeFocused();
+	await field.fill( change( await field.inputValue() ) );
+	await page.locator( '.mce-window .mce-primary button' ).click();
+	await expect( page.locator( '.mce-window' ) ).toHaveCount( 0 );
 }
 
 async function setEditor( page, html ) {
@@ -299,13 +296,8 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 			await page.locator( '#wp-link-url' ).fill( 'https://example.invalid/modal-link' );
 			await expect( page.locator( '#wp-link-url' ) ).toBeFocused();
 			await page.locator( '#wp-link-cancel button' ).click();
-			await page.locator( '.insert-media' ).click();
-			await expect( page.locator( '.media-modal' ) ).toBeVisible();
-			await page.getByRole( 'tab', { name: /Insert from URL|Insertar desde una URL/ } ).click();
-			await page.locator( '.media-modal input[type="url"]' ).fill( 'https://example.invalid/media.png' );
-			await expect( page.locator( '.media-modal input[type="url"]' ) ).toBeFocused();
-			await page.locator( '.media-modal .media-toolbar-primary .media-button' ).click();
-			await expect( page.locator( '.media-modal' ) ).not.toBeVisible();
+			// The source dialog lives outside the Bootstrap modal focus trap too.
+			await editSource( page, ( html ) => html + '<p><img src="https://example.invalid/media.png" alt=""></p>' );
 			await expect.poll( () => editorHtml( page ) ).toContain( 'https://example.invalid/media.png' );
 				const reloaded = page.waitForEvent( 'framenavigated', { predicate: ( frame ) => frame === page.mainFrame() } );
 			await saved( page );
@@ -380,8 +372,7 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 			await page.goto( `/?decker_page=task&id=${ task.id }` );
 			await ready( page );
 			const original = await stored( requestUtils, task.id );
-			await page.locator( '#task-description-html' ).click();
-			await page.locator( '#task-description' ).fill( '<p class="ql-unknown">Needs review</p>' );
+			await editSource( page, () => '<p class="ql-unknown">Needs review</p>' );
 			const response = page.waitForResponse( ( result ) => ( result.request().postData() || '' ).includes( 'action=save_decker_task' ) );
 			await page.locator( '#save-task' ).click();
 			const result = await response;

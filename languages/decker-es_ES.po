@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-11-04T21:03:55+00:00\n"
+"PO-Revision-Date: 2026-11-04T22:58:58+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -1337,6 +1337,9 @@ msgstr "Marcar o desmarcar elemento de la lista"
 
 msgid "Checklist"
 msgstr "Lista de verificación"
+
+msgid "Source code"
+msgstr "Código fuente"
 
 msgid "No comments yet."
 msgstr "No hay comentarios todavía."

@@ -53,6 +53,10 @@ function instantiate( functionName, scope ) {
  */
 function createFakeEditor() {
 	const handlers = {};
+	const buttons = {};
+	const dialogs = [];
+	let content = '<p>Original</p>';
+	const emit = ( name, event ) => ( handlers[ name ] || [] ).forEach( ( callback ) => callback( event ) );
 	return {
 		editor: {
 			on( names, callback ) {
@@ -60,10 +64,20 @@ function createFakeEditor() {
 					( handlers[ name ] = handlers[ name ] || [] ).push( callback );
 				} );
 			},
+			addButton( name, settings ) {
+				buttons[ name ] = settings;
+			},
+			windowManager: { open: ( settings ) => dialogs.push( settings ) },
+			undoManager: { transact: ( callback ) => callback() },
+			getContent: () => content,
+			setContent: ( html ) => { content = html; },
+			nodeChanged: () => {},
+			fire: ( name ) => emit( name, {} ),
 		},
-		emit( name, event ) {
-			( handlers[ name ] || [] ).forEach( ( callback ) => callback( event ) );
-		},
+		emit,
+		buttons,
+		dialogs,
+		content: () => content,
 	};
 }
 
@@ -157,11 +171,40 @@ describe( 'initializeTaskEditor', () => {
 		expect( document.getElementById( 'task-description' ).readOnly ).toBe( true );
 	} );
 
-	test( 'read-only cards get no Text tab or media buttons (Quicktags bypasses readOnly)', () => {
-		build( true );
+	test( 'cards get no Text tab or media button, read-only or not', () => {
+		for ( const readOnly of [ true, false ] ) {
+			build( readOnly );
+			expect( capturedConfig.quicktags ).toBe( false );
+			expect( capturedConfig.mediaButtons ).toBe( false );
+		}
+	} );
 
-		expect( capturedConfig.quicktags ).toBe( false );
-		expect( capturedConfig.mediaButtons ).toBe( false );
+	test( 'compact layout: source button, block format on the second row, autoresize', () => {
+		build( false );
+		const tinymce = capturedConfig.tinymce;
+
+		expect( tinymce.toolbar1.split( ' ' ) ).toContain( 'decker_source' );
+		expect( tinymce.toolbar1.split( ' ' ) ).not.toContain( 'formatselect' );
+		expect( tinymce.toolbar2.split( ' ' )[ 0 ] ).toBe( 'formatselect' );
+		expect( tinymce.statusbar ).toBe( false );
+		expect( tinymce.wp_autoresize_on ).toBe( true );
+		expect( tinymce.content_style ).toContain( 'font-size:13px' );
+		expect( tinymce.content_style ).toContain( 'p{margin:0;}' );
+	} );
+
+	test( 'source dialog edits the HTML and marks the card dirty', () => {
+		build( false );
+		const fake = createFakeEditor();
+		capturedConfig.tinymce.setup( fake.editor );
+
+		fake.buttons.decker_source.onclick();
+		expect( fake.dialogs ).toHaveLength( 1 );
+		expect( fake.dialogs[ 0 ].body[ 0 ].value ).toBe( '<p>Original</p>' );
+		expect( enterDirtyEditMode ).not.toHaveBeenCalled();
+
+		fake.dialogs[ 0 ].onsubmit( { data: { html: '<p>Edited</p>' } } );
+		expect( fake.content() ).toBe( '<p>Edited</p>' );
+		expect( enterDirtyEditMode ).toHaveBeenCalledWith( context );
 	} );
 
 	test( 'stays editable by default', () => {
@@ -170,8 +213,6 @@ describe( 'initializeTaskEditor', () => {
 		expect( capturedConfig.tinymce.wpautop ).toBe( false );
 		expect( capturedConfig.tinymce.extended_valid_elements ).toContain( '#li[data-list|' );
 		expect( capturedConfig.tinymce.readonly ).toBe( false );
-		expect( capturedConfig.quicktags ).toBe( true );
-		expect( capturedConfig.mediaButtons ).toBe( true );
 		expect( document.getElementById( 'task-description' ).readOnly ).toBe( false );
 	} );
 

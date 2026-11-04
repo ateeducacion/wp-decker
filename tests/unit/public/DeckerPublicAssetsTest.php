@@ -420,6 +420,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'copy_task_url',
 				'toggle_checklist_item',
 				'checklist',
+				'source_code',
 				'loading_comments',
 				'no_comments',
 				'comments_error',

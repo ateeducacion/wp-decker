@@ -355,6 +355,7 @@ class Decker_Public_Assets {
 			'copy_task_url'                 => __( 'Copy Task URL', 'decker' ),
 			'toggle_checklist_item' => __( 'Toggle checklist item', 'decker' ),
 			'checklist'                     => __( 'Checklist', 'decker' ),
+			'source_code'                   => __( 'Source code', 'decker' ),
 			'loading_comments'              => __( 'Loading comments…', 'decker' ),
 			'no_comments'                   => __( 'No comments yet.', 'decker' ),
 			'comments_error'                => __( 'Could not load comments.', 'decker' ),
