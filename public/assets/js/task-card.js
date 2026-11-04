@@ -826,6 +826,23 @@
                         // Only genuine user edits switch the card into dirty mode;
                         // the initial content load (SetContent during init) is
                         // intentionally excluded so opening a card stays pristine.
+                        // WordPress positions the inline link field in the page,
+                        // assuming the page scrolls; inside the modal it can land
+                        // past the viewport edge, and focusing it then scrolls and
+                        // closes it. Make room by scrolling the modal first.
+                        editor.on('BeforeExecCommand', function(event) {
+                            const modal = textarea.closest('.modal');
+                            if (!modal || event.command !== 'WP_Link' || !editor.iframeElement) {
+                                return;
+                            }
+                            const node = editor.selection.getNode();
+                            const bottom = editor.iframeElement.getBoundingClientRect().top + node.getBoundingClientRect().bottom;
+                            // Link field height plus its arrow and a margin.
+                            const overflow = bottom + 90 - window.innerHeight;
+                            if (overflow > 0) {
+                                modal.scrollTop += overflow;
+                            }
+                        });
                         editor.on('input keyup change', debouncedMarkDirty);
                         // Toolbar commands that only change the interface
                         // (fullscreen, toolbar toggle, help) must not leave the

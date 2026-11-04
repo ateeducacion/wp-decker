@@ -321,8 +321,6 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 		const task = seed( 'task-6976.html' );
 		cli( [ 'decker', 'migrate-descriptions', '--writers-paused' ] );
 		cli( [ 'post', 'meta', 'update', String( task.id ), 'max_priority', '1' ] );
-		// Room below the editor: WordPress hides inline toolbars when the modal scrolls.
-		await page.setViewportSize( { width: 1280, height: 1000 } );
 		const board = await requestUtils.rest( { path: `/wp/v2/decker_board/${ task.board_id }` } );
 		await page.goto( `/?decker_page=board&slug=${ board.slug }` );
 		await page.locator( `h5 a[data-task-id="${ task.id }"]` ).click();
@@ -344,7 +342,9 @@ test.describe( 'Classic checklist and modal lifecycle', () => {
 		// Toggling the interface is not an edit: the card stays pristine.
 		await expect( page.locator( '#task-today-quick' ) ).toBeVisible();
 
-		// Inline link toolbar lives outside the Bootstrap modal focus trap.
+		// Inline link toolbar lives outside the Bootstrap modal focus trap. With
+		// the editor at the bottom of the default viewport WordPress places it past
+		// the edge, so focusing it must not scroll the page and close it.
 		await setEditor( page, '<p>Some words here</p>' );
 		await page.frameLocator( '#task-description_ifr' ).locator( 'p' ).dblclick();
 		await page.locator( '#task-modal .mce-i-link' ).click();
