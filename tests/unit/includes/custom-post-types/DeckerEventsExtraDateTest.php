@@ -32,7 +32,13 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$data = Decker_Event_Store::resource( $id );
 		Decker_Event_Store::put( $id, 'roundtrip.ics', $data );
 		$this->assertSame( $expected_end, get_post_meta( $id, 'event_end', true ) );
-		$this->assertSame( $data, Decker_Event_Store::resource( $id ) );
+		$roundtrip = Decker_Event_Store::resource( $id );
+		$this->assertMatchesRegularExpression( '/^DTSTAMP:\d{8}T\d{6}Z\r?$/m', $roundtrip );
+		// Each export regenerates DTSTAMP, so a round trip may cross a second boundary.
+		$this->assertSame(
+			preg_replace( '/^DTSTAMP:.*\r?\n/m', '', $data ),
+			preg_replace( '/^DTSTAMP:.*\r?\n/m', '', $roundtrip )
+		);
 	}
 	public function valid_dates() {
 		return array(
