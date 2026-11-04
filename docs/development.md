@@ -113,19 +113,14 @@ the new one. None of these changed behaviour; only their owner changed.
 | `Decker_Boards::add_color_field()` / `edit_color_field()` / `save_color_meta()` | `Decker_Board_Term_Fields` (extends `Decker_Term_Color_Field`) |
 | `Decker_Labels::add_color_field()` / `edit_color_field()` / `save_color_meta()` | `Decker_Term_Color_Field` |
 | `Decker_Kb::track_last_editor()` / `get_last_editor()` / `get_latest_revision_id()` / `get_revision_admin_url()` | `Decker_Kb_Revisions` |
-| `Decker_Events::add_meta_boxes()` / `display_users_meta_box()` / `render_event_details_meta_box()` | `Decker_Event_Meta_Box` |
-| `Decker_Events::hide_visibility_options()` / `add_custom_columns()` / `render_custom_columns()` | `Decker_Event_Admin_Screen` |
 | `Decker_Admin_Settings::*_render()` (16 field renderers) / section callbacks | `Decker_Admin_Settings_Fields` (single public `render()` dispatcher) |
 | `Decker_Admin_Settings` private validators | `Decker_Admin_Settings_Validator::validate()` |
 | `Decker_Notification_Handler::add_notification_to_user()` / `remove_notification_from_user()` | `Decker_Notification_Store` |
 | `Decker_Notification_Handler::MAX_NOTIFICATIONS` (public constant) | `Decker_Notification_Store::MAX_NOTIFICATIONS` |
 | `Decker_Notification_Handler::heartbeat_received()` / `modify_heartbeat_settings()` / `ajax_*()` | `Decker_Notification_Ajax` |
-| `Decker_Events` meta-saving pipeline (bodies; `process_and_save_meta()` / `save_event_meta()` stay as public delegators) | `Decker_Event_Meta_Saver` |
 | `Decker_Email_To_Post` attachment pipeline (`upload_attachment()` and helpers) | `Decker_Email_Attachment_Uploader` |
 | `Decker_Email_To_Post` board directive resolution | `Decker_Email_Board_Resolver` |
 | `Decker_Demo_Data` task/comment seeding and randomness helpers | `Decker_Demo_Tasks`, `Decker_Demo_Randomizer` |
-| `Decker_Calendar::handle_ical_request()` / `add_ical_endpoint()` and access checks | `Decker_Calendar_Ical_Feed` |
-| `Decker_Calendar::get_cached_ical()` / `flush_cache_*()` | `Decker_Calendar_Cache` |
 | `Decker_Kb::save_article()` and the write path | `Decker_Kb_Article_Writer` |
 | `Decker_Kb::reorder_articles()` and sibling renumbering | `Decker_Kb_Reorder` |
 | `TaskManager` "for today" query bodies (public entry points stay as delegators) | `Decker_Task_Today_Query`, `Decker_Task_Date_Relations` |

@@ -76,8 +76,8 @@ class Decker_REST_Comment_Protection {
 	/**
 	 * Check whether the current user may reach Decker's protected post types at all.
 	 *
-	 * This mirrors the capability the REST guards of `decker_kb`, `tasks` and
-	 * `decker_event` require, so a comment is never easier to read than the post
+	 * This mirrors the capability the REST guards of `decker_kb` and `tasks`
+	 * require, so a comment is never easier to read than the post
 	 * it belongs to. Being logged in is not enough: a subscriber has no access to
 	 * a task, and therefore none to its comments either.
 	 *

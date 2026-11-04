@@ -137,22 +137,6 @@ class Decker_Public_Assets {
 			$resources[] = 'https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.3/dragula.min.js';
 		}
 
-		if ( 'calendar' == $decker_page ) {
-
-			// FullCalendar.
-			$resources[] = 'https://cdn.jsdelivr.net/npm/fullcalendar@6.1.20/index.global.min.js';
-
-			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-calendar.js';
-
-		}
-
-		if ( 'calendar' == $decker_page || 'event-manager' == $decker_page ) {
-
-			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-modal.js';
-			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/event-card.js';
-
-		}
-
 		if ( 'knowledge-base' == $decker_page ) {
 
 			wp_enqueue_media(); // Required for media uploads.
@@ -270,7 +254,7 @@ class Decker_Public_Assets {
 	}
 
 	/**
-	 * Build the unified payload shared by the task and event scripts.
+	 * Build the unified payload shared by the task scripts.
 	 *
 	 * @return array<string, mixed> Localized data array.
 	 */
@@ -363,15 +347,9 @@ class Decker_Public_Assets {
 			// Extra keys from first version.
 			'success'                       => __( 'Success', 'decker' ),
 			'error'                         => __( 'Error', 'decker' ),
-			'today'                         => __( 'Today', 'decker' ),
-			'month'                         => __( 'Month', 'decker' ),
-			'week'                          => __( 'Week', 'decker' ),
-			'day'                           => __( 'Day', 'decker' ),
-			'list'                          => __( 'List', 'decker' ),
 			'unsaved_changes_title'         => __( 'Unsaved changes', 'decker' ),
 			'unsaved_changes_text'          => __( 'You have unsaved changes. Close without saving?', 'decker' ),
 			'close_anyway'                  => __( 'Close anyway', 'decker' ),
-			'confirm_delete_event'          => __( 'Are you sure you want to delete this event?', 'decker' ),
 			'task_url_copied'               => __( 'Task URL copied!', 'decker' ),
 			'task_url_copy_error'           => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 			'copy_task_url'                 => __( 'Copy Task URL', 'decker' ),
@@ -456,7 +434,7 @@ class Decker_Public_Assets {
 	/**
 	 * Hand the localized payloads to the scripts that consume them.
 	 *
-	 * @param array<string, mixed> $localized_data Unified payload shared by task and event scripts.
+	 * @param array<string, mixed> $localized_data Unified payload shared by the task scripts.
 	 */
 	private function localize_scripts( $localized_data ) {
 		// Localize the script with new data.
@@ -503,22 +481,6 @@ class Decker_Public_Assets {
 				),
 			)
 		);
-
-		// Localize the script with new data.
-		wp_localize_script(
-			'event-modal',
-			'jsdata_event',
-			array(
-				'ajaxUrl'        => esc_url( admin_url( 'admin-ajax.php' ) ),
-				'url'            => esc_url( plugins_url( 'public/layouts/event-card.php', __DIR__ ) ),
-				'loadingMessage' => esc_html__( 'Loading content. Please wait.', 'decker' ),
-				'errorMessage'   => esc_html__( 'Error loading content. Please try again.', 'decker' ),
-				'nonce'          => wp_create_nonce( 'decker_event_card' ),
-			)
-		);
-
-		// TODO: This can be removed, review.
-		wp_localize_script( 'event-card', 'deckerVars', $localized_data );
 
 		// Localize the global search script.
 		wp_localize_script(

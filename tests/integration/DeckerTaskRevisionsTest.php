@@ -376,7 +376,6 @@ class DeckerTaskRevisionsTest extends Decker_Test_Base {
 		$post_ids = array(
 			self::factory()->post->create( array( 'post_type' => 'post' ) ),
 			self::factory()->post->create( array( 'post_type' => 'page' ) ),
-			self::factory()->post->create( array( 'post_type' => 'decker_event' ) ),
 			self::factory()->post->create( array( 'post_type' => 'decker_kb' ) ),
 		);
 

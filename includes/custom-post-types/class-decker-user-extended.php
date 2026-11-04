@@ -34,7 +34,6 @@ class Decker_User_Extended {
 		add_action( 'edit_user_profile_update', array( $this, 'save_custom_user_profile_fields' ) );
 		add_filter( 'manage_users_columns', array( $this, 'add_custom_user_columns' ) );
 		add_filter( 'manage_users_custom_column', array( $this, 'show_custom_user_column_content' ), 10, 3 );
-		add_action( 'wp_ajax_generate_calendar_token', array( $this, 'generate_calendar_token' ) );
 	}
 
 	/**
@@ -46,13 +45,11 @@ class Decker_User_Extended {
 		wp_enqueue_script( 'wp-color-picker' );
 		wp_enqueue_style( 'wp-color-picker' );
 
-		$this->render_calendar_token_script( $user );
 		?>
 		<h3><?php esc_html_e( 'Decker Settings', 'decker' ); ?></h3>
 
 		<table class="form-table">
 			<?php
-			$this->render_calendar_token_row( $user );
 			$this->render_color_row( $user );
 			$this->render_default_board_row( $user );
 			$this->render_email_notifications_row( $user );
@@ -63,53 +60,6 @@ class Decker_User_Extended {
 				$('#decker_color').wpColorPicker();
 			});
 		</script>
-		<?php
-	}
-
-	/**
-	 * Print the script that refreshes the calendar token over AJAX.
-	 *
-	 * @param WP_User $user The user object.
-	 */
-	private function render_calendar_token_script( $user ) {
-		?>
-		<script>
-		jQuery(function($) {
-			$('#generate-calendar-token, #revoke-calendar-token').on('click', function() {
-				$.post(ajaxurl, {action: 'generate_calendar_token', user_id: <?php echo (int) $user->ID; ?>,
-					nonce: '<?php echo esc_js( wp_create_nonce( 'generate_calendar_token' ) ); ?>',
-					revoke: this.id === 'revoke-calendar-token' ? '1' : '0'}, function(response) {
-					if (response.success) { window.location.reload(); }
-				});
-			});
-		});
-		</script>
-		<?php
-	}
-
-	/**
-	 * Print the calendar token field and the calendar subscription links.
-	 *
-	 * @param WP_User $user The user object.
-	 */
-	private function render_calendar_token_row( $user ) {
-		$token = get_user_meta( $user->ID, 'decker_calendar_dav_enabled', true ) ? get_user_meta( $user->ID, 'decker_calendar_token', true ) : '';
-		$read_token = get_user_meta( $user->ID, 'decker_calendar_read_token', true );
-		?>
-		<tr><th><?php esc_html_e( 'CalDAV synchronization', 'decker' ); ?></th><td>
-		<p><?php esc_html_e( 'Server URL', 'decker' ); ?>: <code><?php echo esc_url( Decker_Dav::url() ); ?></code></p>
-		<p><?php esc_html_e( 'Username', 'decker' ); ?>: <code><?php echo esc_html( $user->user_login ); ?></code></p>
-		<label for="decker_calendar_token"><?php esc_html_e( 'Calendar token (password)', 'decker' ); ?></label>
-		<input id="decker_calendar_token" type="text" readonly class="regular-text" value="<?php echo esc_attr( $token ); ?>">
-		<button type="button" class="button" id="generate-calendar-token"><?php esc_html_e( 'Generate New Token', 'decker' ); ?></button>
-		<button type="button" class="button" id="revoke-calendar-token"><?php esc_html_e( 'Revoke calendar access', 'decker' ); ?></button>
-		<p><?php esc_html_e( 'Generate a new token to enable editing. Regeneration or revocation immediately disconnects existing clients and subscriptions. Signing out of CAS does not revoke this token.', 'decker' ); ?></p>
-		<p><?php esc_html_e( 'iPhone: add a CalDAV account in Calendar settings. Android: add an account with URL and username in DAVx⁵. Use the token as password, enable SSL, and select the Decker calendar when creating events.', 'decker' ); ?></p>
-		<p><?php esc_html_e( 'ICS subscription (read only)', 'decker' ); ?>:
-		<?php if ( $read_token ) : ?>
-		<code><?php echo esc_url( add_query_arg( 'token', $read_token, home_url( '/decker-calendar/' ) ) ); ?></code>
-		<?php endif; ?></p>
-		</td></tr>
 		<?php
 	}
 
@@ -306,33 +256,6 @@ class Decker_User_Extended {
 			}
 		}
 		return $value;
-	}
-
-	/**
-	 * Generate a new calendar token via AJAX
-	 */
-	public function generate_calendar_token() {
-		check_ajax_referer( 'generate_calendar_token', 'nonce' );
-
-		$user_id = isset( $_POST['user_id'] ) ? intval( $_POST['user_id'] ) : 0;
-
-		if ( ! current_user_can( 'edit_user', $user_id ) ) {
-			wp_send_json_error();
-		}
-
-		$revoke = isset( $_POST['revoke'] ) && '1' === $_POST['revoke'];
-		$new_token = $revoke ? '' : wp_generate_password( 48, false );
-		update_user_meta( $user_id, 'decker_calendar_dav_enabled', false );
-		if ( $revoke ) {
-			delete_user_meta( $user_id, 'decker_calendar_token' );
-			delete_user_meta( $user_id, 'decker_calendar_read_token' );
-		} else {
-			if ( ! update_user_meta( $user_id, 'decker_calendar_token', $new_token ) || ! update_user_meta( $user_id, 'decker_calendar_read_token', wp_generate_password( 48, false ) ) ) {
-				wp_send_json_error();
-			}
-			update_user_meta( $user_id, 'decker_calendar_dav_enabled', true );
-		}
-		wp_send_json_success( array( 'token' => $new_token ) );
 	}
 }
 

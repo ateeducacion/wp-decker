@@ -399,7 +399,6 @@ package-translations: mo l10n-php
 
 # Generate the decker-X.X.X.zip package
 package: package-translations
-	php tests/package/bundle-dav.php
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Error: No se ha especificado una versión. Usa 'make package VERSION=1.2.3'"; \
 		exit 1; \

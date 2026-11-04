@@ -3,8 +3,7 @@
  * Tests for the wp-admin list-table and edit-screen presentation classes.
  *
  * Decker_Task_Admin_List owns the task list table and its filters,
- * Decker_Task_Admin_Chrome the edit-screen tweaks, and
- * Decker_Event_Admin_Screen the event list table. All three are pure
+ * and Decker_Task_Admin_Chrome the edit-screen tweaks. Both are pure
  * presentation, so these assert the columns, the emitted markup and the query
  * mutations, including the cases where nothing should happen.
  *
@@ -28,13 +27,6 @@ class DeckerAdminScreenChromeTest extends Decker_Test_Base {
 	private $task_chrome;
 
 	/**
-	 * The event list-table presenter.
-	 *
-	 * @var Decker_Event_Admin_Screen
-	 */
-	private $event_screen;
-
-	/**
 	 * Set up before each test.
 	 */
 	public function set_up(): void {
@@ -43,7 +35,6 @@ class DeckerAdminScreenChromeTest extends Decker_Test_Base {
 
 		$this->task_list    = new Decker_Task_Admin_List();
 		$this->task_chrome  = new Decker_Task_Admin_Chrome();
-		$this->event_screen = new Decker_Event_Admin_Screen();
 
 		wp_set_current_user( 1 );
 		$_GET = array();
@@ -295,65 +286,4 @@ class DeckerAdminScreenChromeTest extends Decker_Test_Base {
 		$this->assertNotContains( 'post-new.php?post_type=decker_task', $slugs );
 	}
 
-	/**
-	 * The event list table adds its meta columns and keeps date last.
-	 */
-	public function test_event_columns_add_meta_columns_and_keep_date_last() {
-		$columns = $this->event_screen->add_custom_columns(
-			array(
-				'cb'    => '<input type="checkbox" />',
-				'title' => 'Title',
-				'date'  => 'Date',
-			)
-		);
-
-		$this->assertSame(
-			array( 'cb', 'title', 'event_allday', 'event_start', 'event_end', 'event_category', 'date' ),
-			array_keys( $columns )
-		);
-	}
-
-	/**
-	 * Each event column renders the corresponding meta value.
-	 */
-	public function test_event_columns_render_their_meta() {
-		$event_id = self::factory()->event->create(
-			array(
-				'post_title' => 'Column Event',
-				'meta_input' => array(
-					'event_allday'   => true,
-					'event_start'    => '2031-02-03 08:00:00',
-					'event_end'      => '2031-02-04',
-					'event_category' => 'bg-warning',
-				),
-			)
-		);
-
-		$allday = $this->capture( fn() => $this->event_screen->render_custom_columns( 'event_allday', $event_id ) );
-		$this->assertStringContainsString( 'checked', $allday );
-
-		$start = $this->capture( fn() => $this->event_screen->render_custom_columns( 'event_start', $event_id ) );
-		$this->assertStringContainsString( '2031-02-03', $start );
-
-		$end = $this->capture( fn() => $this->event_screen->render_custom_columns( 'event_end', $event_id ) );
-		$this->assertStringContainsString( '2031-02-04', $end );
-
-		$category = $this->capture( fn() => $this->event_screen->render_custom_columns( 'event_category', $event_id ) );
-		$this->assertSame( 'bg-warning', $category );
-
-		$unknown = $this->capture( fn() => $this->event_screen->render_custom_columns( 'nope', $event_id ) );
-		$this->assertSame( '', $unknown );
-	}
-
-	/**
-	 * The event edit screen hides the visibility box; other screens are untouched.
-	 */
-	public function test_event_visibility_css_is_scoped_to_the_event_screen() {
-		set_current_screen( 'decker_event' );
-		$css = $this->capture( fn() => $this->event_screen->hide_visibility_options() );
-		$this->assertStringContainsString( '.misc-pub-section.misc-pub-visibility', $css );
-
-		set_current_screen( 'post' );
-		$this->assertSame( '', $this->capture( fn() => $this->event_screen->hide_visibility_options() ) );
-	}
 }

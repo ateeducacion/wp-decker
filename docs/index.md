@@ -9,7 +9,6 @@ It provides a Kanban board interface with a unique priority system for managing 
 - Interactive Kanban board (drag & drop)
 - Unique priority system (including "Max Priority")
 - One-way import from Nextcloud Deck via API
-- Individual calendar feeds (Meeting, Absence, Warning, Alert)
 - Multisite compatible
 - Email-to-post endpoint
 

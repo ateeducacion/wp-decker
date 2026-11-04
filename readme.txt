@@ -38,11 +38,6 @@ Go to the Import from NextCloud page, and enter your Nextcloud API credentials (
 = Can I use this plugin without Nextcloud Deck? =  
 Yes, the plugin independant, Nextcloud is only to oneway import.
 
-= Can I synchronize events with iPhone or Android? =
-Yes. Generate a calendar token under Users > Profile > Decker Settings. Add the displayed CalDAV URL and WordPress username to iPhone Calendar or DAVx⁵ on Android, using the token as password and SSL enabled. Create events inside the Decker calendar. ICS subscriptions are read only and use a separate secret. CAS logout does not revoke a calendar token; revoke or regenerate it in the profile.
-
-Deployment and device verification: https://github.com/ateeducacion/wp-decker/blob/main/docs/calendar/caldav.md
-
 = How do existing task descriptions move to the classic editor? =
 Pause all HTTP, cron, CLI and import writers before updating. Existing sites stay read-only for task description writes until an administrator runs `wp decker migrate-descriptions --writers-paused` and `wp decker verify-descriptions`. The command backs up every task, including archived, hidden and empty tasks. Never skip the backups or use a WXR export as the complete database backup.
 

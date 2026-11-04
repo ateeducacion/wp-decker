@@ -47,9 +47,6 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 		$this->assertNotWPError( $this->board_id );
 
 		$this->user = self::factory()->user->create_and_get( array( 'role' => 'editor' ) );
-		update_user_meta( $this->user->ID, 'decker_calendar_token', 'fixed-token' );
-		update_user_meta( $this->user->ID, 'decker_calendar_dav_enabled', true );
-		update_user_meta( $this->user->ID, 'decker_calendar_read_token', 'read-only-token' );
 		update_user_meta( $this->user->ID, 'decker_color', '#123456' );
 		update_user_meta( $this->user->ID, 'decker_default_board', $this->board_id );
 	}
@@ -84,48 +81,6 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 		$this->assertStringContainsString( 'Decker Settings', $html );
 		$this->assertSame( 1, substr_count( $html, '<table class="form-table">' ) );
 		$this->assertSame( 1, substr_count( $html, '</table>' ) );
-	}
-
-	/**
-	 * The calendar token row exposes the token and its regeneration button.
-	 */
-	public function test_renders_calendar_token_row() {
-		$html = $this->render();
-
-		$this->assertStringContainsString( 'id="decker_calendar_token"', $html );
-		$this->assertStringContainsString( 'id="decker_calendar_token"', $html );
-		$this->assertStringContainsString( 'value="fixed-token"', $html );
-		$this->assertStringContainsString( 'readonly', $html );
-		$this->assertStringContainsString( 'id="generate-calendar-token"', $html );
-	}
-
-	/**
-	 * A user without a stored token is offered a freshly generated one.
-	 */
-	public function test_generates_a_token_when_none_is_stored() {
-		delete_user_meta( $this->user->ID, 'decker_calendar_token' );
-		$this->assertStringContainsString( 'value=""', $this->render() );
-		$this->assertSame( '', get_user_meta( $this->user->ID, 'decker_calendar_token', true ) );
-	}
-
-	/**
-	 * Every calendar subscription target is offered.
-	 */
-	public function test_renders_calendar_subscription_links() {
-		$html = $this->render();
-		$this->assertStringContainsString( 'ICS subscription (read only)', $html );
-		$this->assertStringContainsString( 'token=read-only-token', $html );
-		$this->assertStringNotContainsString( 'token=fixed-token', $html );
-	}
-
-	/**
-	 * A per-type feed is offered for each supported event type.
-	 */
-	public function test_renders_event_type_feeds() {
-		$html = $this->render();
-		$this->assertStringContainsString( 'CalDAV synchronization', $html );
-		$this->assertStringContainsString( 'DAVx⁵', $html );
-		$this->assertStringContainsString( 'decker-dav/', $html );
 	}
 
 	/**
