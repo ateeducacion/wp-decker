@@ -159,24 +159,39 @@ class Decker_Calendar {
 					continue; }
 				if ( ! current_user_can( 'read_post', $row['post_id'] ) ) {
 					continue; }
-				$calendar = Decker_Event_Store::parse( Decker_Event_Store::resource( $row['post_id'] ) );
-				$calendar = $calendar->expand( $from, $to, wp_timezone() );
-				foreach ( $calendar->select( 'VEVENT' ) as $event ) {
-					if ( isset( $event->{'STATUS'} ) && 'CANCELLED' === (string) $event->{'STATUS'} ) {
-						continue; }
-					$copy = $row;
-					$copy['allDay'] = ! $event->{'DTSTART'}->hasTime();
-					$copy['start'] = $event->{'DTSTART'}->getDateTime()->format( $copy['allDay'] ? 'Y-m-d' : 'c' );
-					$copy['end'] = Decker_Event_Store::end( $event )->format( $copy['allDay'] ? 'Y-m-d' : 'c' );
-					$copy['title'] = (string) $event->{'SUMMARY'};
-					$copy['editable'] = ! isset( $event->{'RECURRENCE-ID'} );
-					$rows[] = $copy;
-				}
+				$rows = array_merge( $rows, $this->expand_event( $row, $from, $to ) );
 			}
 			return $rows;
 		} catch ( Throwable $error ) {
 			return new WP_Error( 'calendar_window', __( 'Unable to expand calendar in this interval.', 'decker' ), array( 'status' => 400 ) );
 		}
+	}
+
+	/** Map one shared resource to its displayed occurrences in the window.
+	 *
+	 * @param array             $row Calendar event metadata.
+	 * @param DateTimeImmutable $from Window start.
+	 * @param DateTimeImmutable $to Window end.
+	 * @return array
+	 */
+	private function expand_event( $row, $from, $to ) {
+		$calendar = Decker_Event_Store::parse( Decker_Event_Store::resource( $row['post_id'] ) );
+		$calendar = $calendar->expand( $from, $to, wp_timezone() );
+		$rows = array();
+		foreach ( $calendar->select( 'VEVENT' ) as $event ) {
+			if ( isset( $event->{'STATUS'} ) && 'CANCELLED' === (string) $event->{'STATUS'} ) {
+				continue;
+			}
+			$copy = $row;
+			$copy['allDay'] = ! $event->{'DTSTART'}->hasTime();
+			$format = $copy['allDay'] ? 'Y-m-d' : 'c';
+			$copy['start'] = $event->{'DTSTART'}->getDateTime()->format( $format );
+			$copy['end'] = Decker_Event_Store::end( $event )->format( $format );
+			$copy['title'] = (string) $event->{'SUMMARY'};
+			$copy['editable'] = ! isset( $event->{'RECURRENCE-ID'} );
+			$rows[] = $copy;
+		}
+		return $rows;
 	}
 
 	/**

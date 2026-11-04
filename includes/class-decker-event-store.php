@@ -17,70 +17,7 @@ class Decker_Event_Store {
 	 * @throws Sabre\DAV\Exception\BadRequest Invalid or forbidden calendar operation.
 	 */
 	public static function parse( $data ) {
-		try {
-			if ( strlen( $data ) > 1048576 ) {
-				throw new Exception( 'Resource too large.' );
-			}
-			$calendar = Sabre\VObject\Reader::read( $data );
-			if ( 'VCALENDAR' !== $calendar->name || isset( $calendar->{'METHOD'} ) ) {
-				throw new Exception( 'Only calendar resources are supported.' );
-			}
-			$uid = null;
-			$masters = 0;
-			foreach ( $calendar->getComponents() as $event ) {
-				if ( 'VTIMEZONE' === $event->name ) {
-					continue;
-				}
-				if ( 'VEVENT' !== $event->name || ! isset( $event->{'DTSTART'}, $event->{'UID'} ) ) {
-					throw new Exception( 'VEVENT requires UID and DTSTART.' );
-				}
-				if ( null !== $uid && $uid !== (string) $event->{'UID'} ) {
-					throw new Exception( 'One UID per resource is required.' );
-				}
-				$uid = (string) $event->{'UID'};
-				foreach ( $event->children() as $property ) {
-					if ( ! $property instanceof Sabre\VObject\Property\ICalendar\DateTime ) {
-						continue; }
-					foreach ( $property->getParts() as $value ) {
-						if ( ! preg_match( '/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})Z?)?$/D', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) || ( isset( $parts[4] ) && ( (int) $parts[4] > 23 || (int) $parts[5] > 59 || (int) $parts[6] > 59 ) ) ) {
-							throw new Exception( 'Invalid calendar date.' );
-						}
-					}
-				}
-
-				$masters += isset( $event->{'RECURRENCE-ID'} ) ? 0 : 1;
-				if ( isset( $event->{'DTEND'}, $event->{'DURATION'} ) ) {
-					throw new Exception( 'DTEND and DURATION are mutually exclusive.' );
-				}
-				if ( isset( $event->{'RRULE'}, $event->{'RDATE'} ) ) {
-					throw new Exception( 'Combined RRULE and RDATE are unsupported by the recurrence engine.' ); }
-				foreach ( $event->select( 'RDATE' ) as $rdate ) {
-					if ( isset( $rdate['VALUE'] ) && 'PERIOD' === (string) $rdate['VALUE'] ) {
-						throw new Exception( 'Period-valued RDATE is unsupported.' ); }
-				}
-				$start = $event->{'DTSTART'}->getDateTime();
-				$end = self::end( $event );
-				if ( $end < $start || ( isset( $event->{'DTEND'} ) && $end <= $start ) ) {
-					throw new Exception( 'Invalid event interval.' );
-				}
-				foreach ( $event->select( 'RECURRENCE-ID' ) as $rid ) {
-					if ( isset( $rid['RANGE'] ) ) {
-						throw new Exception( 'RANGE exceptions are not supported.' );
-					}
-				}
-			}
-			if ( 1 !== $masters || '' === $uid ) {
-				throw new Exception( 'Exactly one master event is required.' );
-			}
-			foreach ( $calendar->validate() as $issue ) {
-				if ( $issue['level'] >= 3 ) {
-					throw new Exception( 'Invalid iCalendar property.' );
-				}
-			}
-			return $calendar;
-		} catch ( Throwable $error ) {
-			throw new Sabre\DAV\Exception\BadRequest( 'Invalid or unsupported iCalendar resource.' );
-		}
+		return Decker_Ical_Validator::parse( $data );
 	}
 
 	/** Resolve RFC 5545 implicit ends and duration.
@@ -89,12 +26,7 @@ class Decker_Event_Store {
 	 * @return DateTimeImmutable
 	 */
 	public static function end( $event ) {
-		$start = $event->{'DTSTART'}->getDateTime();
-		if ( isset( $event->{'DTEND'} ) ) {
-			return $event->{'DTEND'}->getDateTime(); }
-		if ( isset( $event->{'DURATION'} ) ) {
-			return $start->add( $event->{'DURATION'}->getDateInterval() ); }
-		return $event->{'DTSTART'}->hasTime() ? $start : $start->modify( '+1 day' );
+		return Decker_Event_Dates::end( $event );
 	}
 
 	/** Return the master component.
@@ -119,34 +51,11 @@ class Decker_Event_Store {
 		Decker_Dav::lock();
 		$post = get_post( $id );
 		$data = get_post_meta( $id, '_decker_ical', true );
-		$calendar = $data ? self::parse( $data ) : new Sabre\VObject\Component\VCalendar();
-		if ( ! $data ) {
-			$calendar->add(
-				'VEVENT',
-				array(
-					'UID' => wp_generate_uuid4() . '@decker',
-					'DTSTAMP' => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
-				)
-			);
-		}
+		$calendar = self::calendar( $data );
 		$event = self::master( $calendar );
 		$before = $calendar->serialize();
 		if ( $data ) {
-			$format = $event->{'DTSTART'}->hasTime() ? 'Y-m-d H:i:s' : 'Y-m-d';
-			$utc = new DateTimeZone( 'UTC' );
-			$start = $event->{'DTSTART'}->getDateTime()->setTimezone( $utc )->format( $format );
-			$end = self::end( $event )->setTimezone( $utc )->format( $format );
-			if ( get_post_meta( $id, 'event_start', true ) !== $start || get_post_meta( $id, 'event_end', true ) !== $end ) {
-				self::patch_dates(
-					$id,
-					$calendar,
-					array(
-						'event_start' => get_post_meta( $id, 'event_start', true ),
-						'event_end' => get_post_meta( $id, 'event_end', true ),
-						'event_allday' => get_post_meta( $id, 'event_allday', true ),
-					)
-				);
-			}
+			Decker_Event_Dates::reconcile( $id, $calendar );
 		}
 
 		$event->{'SUMMARY'} = $post->post_title;
@@ -176,30 +85,7 @@ class Decker_Event_Store {
 	 * @throws Sabre\DAV\Exception\BadRequest Invalid or forbidden calendar operation.
 	 */
 	public static function set_dates( $event, $start, $end, $all_day ) {
-		$format = $all_day ? 'Y-m-d' : 'Y-m-d H:i:s';
-		$dates = array();
-		foreach ( array( $start, $end ) as $value ) {
-			if ( '' === $value && count( $dates ) ) {
-				break;
-			}
-			$value = $all_day ? substr( $value, 0, 10 ) : str_replace( array( 'T', 'Z' ), array( ' ', '' ), $value );
-			$value = preg_replace( '/\.\d+$/', '', $value );
-			if ( ! $all_day && 16 === strlen( $value ) ) {
-				$value .= ':00';
-			}
-			$date = DateTimeImmutable::createFromFormat( '!' . $format, $value, new DateTimeZone( 'UTC' ) );
-			if ( ! $date || $date->format( $format ) !== $value ) {
-				throw new Sabre\DAV\Exception\BadRequest( 'Invalid calendar date.' );
-			}
-			$dates[] = $date;
-		}
-		if ( isset( $dates[1] ) && $dates[1] <= $dates[0] ) {
-			throw new Sabre\DAV\Exception\BadRequest( 'End must follow start.' );
-		}
-		unset( $event->{'DTSTART'}, $event->{'DTEND'}, $event->{'DURATION'} );
-		foreach ( $dates as $index => $date ) {
-			$event->add( $index ? 'DTEND' : 'DTSTART', $all_day ? $date->format( 'Ymd' ) : $date, $all_day ? array( 'VALUE' => 'DATE' ) : array() );
-		}
+		Decker_Event_Dates::set_dates( $event, $start, $end, $all_day );
 	}
 
 	/** Persist a DAV resource and refresh its WordPress projection.
@@ -265,17 +151,7 @@ class Decker_Event_Store {
 	 * @throws Sabre\DAV\Exception\Conflict Invalid or forbidden calendar operation.
 	 */
 	public static function patch_dates( $id, $calendar, $data ) {
-		$event = self::master( $calendar );
-		$copy = clone $event;
-		self::set_dates( $copy, $data['event_start'] ?? get_post_meta( $id, 'event_start', true ), $data['event_end'] ?? ( isset( $event->{'DTEND'} ) ? get_post_meta( $id, 'event_end', true ) : '' ), $data['event_allday'] ?? get_post_meta( $id, 'event_allday', true ) );
-		if ( isset( $event->{'DTSTART'} ) && $copy->{'DTSTART'}->getDateTime() == $event->{'DTSTART'}->getDateTime() && self::end( $copy ) == self::end( $event ) && $copy->{'DTSTART'}->hasTime() === $event->{'DTSTART'}->hasTime() ) {
-			return; }
-		if ( isset( $event->{'RRULE'} ) || isset( $event->{'RDATE'} ) || count( $calendar->select( 'VEVENT' ) ) > 1 ) {
-			throw new Sabre\DAV\Exception\Conflict( 'Edit recurring dates in a CalDAV client.' ); }
-		unset( $event->{'DTSTART'}, $event->{'DTEND'}, $event->{'DURATION'} );
-		$event->add( clone $copy->{'DTSTART'} );
-		if ( isset( $copy->{'DTEND'} ) ) {
-			$event->add( clone $copy->{'DTEND'} ); }
+		Decker_Event_Dates::patch_dates( $id, $calendar, $data );
 	}
 
 	/** Apply validated web metadata while preserving opaque calendar properties.
@@ -286,23 +162,11 @@ class Decker_Event_Store {
 	public static function web_meta( $id, $data ) {
 		Decker_Dav::lock();
 		$stored = get_post_meta( $id, '_decker_ical', true );
-		if ( ! $stored && empty( $data['event_start'] ) && ! array_key_exists( 'event_start', $data ) ) {
-			foreach ( array( 'event_category', 'event_assigned_users', 'event_location', 'event_url' ) as $key ) {
-				if ( isset( $data[ $key ] ) ) {
-					update_post_meta( $id, $key, 'event_assigned_users' === $key ? array_filter( array_map( 'absint', (array) $data[ $key ] ) ) : ( 'event_url' === $key ? esc_url_raw( $data[ $key ] ) : sanitize_text_field( $data[ $key ] ) ) ); }
-			}
+		if ( ! $stored && ! array_key_exists( 'event_start', $data ) ) {
+			self::save_fields( $id, $data, array( 'event_category', 'event_assigned_users', 'event_location', 'event_url' ) );
 			return;
 		}
-		$calendar = $stored ? self::parse( $stored ) : new Sabre\VObject\Component\VCalendar();
-		if ( ! $stored ) {
-			$calendar->add(
-				'VEVENT',
-				array(
-					'UID' => wp_generate_uuid4() . '@decker',
-					'DTSTAMP' => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
-				)
-			);
-		}
+		$calendar = self::calendar( $stored );
 		$event = self::master( $calendar );
 		$changes_dates = array_intersect( array_keys( $data ), array( 'event_start', 'event_end', 'event_allday' ) );
 		if ( $changes_dates ) {
@@ -314,17 +178,58 @@ class Decker_Event_Store {
 			'event_url' => 'URL',
 		) as $key => $property ) {
 			$data[ $key ] = $data[ $key ] ?? get_post_meta( $id, $key, true );
-			if ( isset( $data[ $key ] ) ) {
-				$event->$property = 'event_url' === $key ? esc_url_raw( $data[ $key ] ) : sanitize_text_field( $data[ $key ] );
-			}
+			$event->$property = self::sanitize_field( $key, $data[ $key ] );
 		}
 		self::parse( $calendar->serialize() );
 		update_post_meta( $id, '_decker_ical', wp_slash( $calendar->serialize() ) );
 		self::project( $id, $event );
-		foreach ( array( 'event_category', 'event_assigned_users' ) as $key ) {
+		self::save_fields( $id, $data, array( 'event_category', 'event_assigned_users' ) );
+	}
+
+	/** Read the canonical resource or initialize a new stable event identity.
+	 *
+	 * @param string $stored Stored resource, or empty for a new event.
+	 * @return object Calendar.
+	 */
+	private static function calendar( $stored ) {
+		if ( $stored ) {
+			return self::parse( $stored );
+		}
+		$calendar = new Sabre\VObject\Component\VCalendar();
+		$calendar->add(
+			'VEVENT',
+			array(
+				'UID' => wp_generate_uuid4() . '@decker',
+				'DTSTAMP' => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
+			)
+		);
+		return $calendar;
+	}
+
+	/** Persist only metadata explicitly present in a patch.
+	 *
+	 * @param int   $id Post ID.
+	 * @param array $data Metadata patch.
+	 * @param array $fields Field names to persist.
+	 */
+	private static function save_fields( $id, $data, $fields ) {
+		foreach ( $fields as $key ) {
 			if ( isset( $data[ $key ] ) ) {
-				update_post_meta( $id, $key, 'event_category' === $key ? sanitize_text_field( $data[ $key ] ) : array_filter( array_map( 'absint', (array) $data[ $key ] ) ) );
+				update_post_meta( $id, $key, self::sanitize_field( $key, $data[ $key ] ) );
 			}
 		}
+	}
+
+	/** Apply the existing sanitizer for each represented metadata field.
+	 *
+	 * @param string $key Field name.
+	 * @param mixed  $value Field value.
+	 * @return mixed Sanitized value.
+	 */
+	private static function sanitize_field( $key, $value ) {
+		if ( 'event_assigned_users' === $key ) {
+			return array_filter( array_map( 'absint', (array) $value ) );
+		}
+		return 'event_url' === $key ? esc_url_raw( $value ) : sanitize_text_field( $value );
 	}
 }

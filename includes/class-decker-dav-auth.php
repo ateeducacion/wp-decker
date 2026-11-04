@@ -22,7 +22,7 @@ class Decker_Dav_Auth extends Sabre\DAV\Auth\Backend\AbstractBasic {
 			return false;
 		}
 		$stored = (string) get_user_meta( $user->ID, 'decker_calendar_token', true );
-		if ( '' === $stored || ! hash_equals( $stored, $password ) || ( is_multisite() && ! is_user_member_of_blog( $user->ID ) ) || $user->spam || $user->deleted ) {
+		if ( '' === $stored || ! hash_equals( $stored, $password ) || $user->spam || $user->deleted ) {
 			return false;
 		}
 		wp_set_current_user( $user->ID );
