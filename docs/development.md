@@ -171,3 +171,5 @@ Run with `make test`.
 2. Make your changes following the coding standards and translation rules.
 3. Run `make check`.
 4. Open a Pull Request.
+
+Task description migration, private corpus verification and rollback: [runbook](task-description-migration.md).
