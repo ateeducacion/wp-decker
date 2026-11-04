@@ -440,13 +440,13 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 		$filter   = static function ( $terms, $object_ids, $taxonomies ) use ( $label_id ) {
 			return in_array( 'decker_label', $taxonomies, true ) ? array( 0, -1, '', (string) $label_id, $label_id ) : $terms;
 		};
-		add_filter( 'wp_get_object_terms', $filter, 10, 3 );
+		add_filter( 'get_object_terms', $filter, 10, 3 );
 		try {
 			$store = new Decker_Ability_Task_Store();
 			$this->assertSame( array( $label_id ), $store->format_task( get_post( $task_id ) )['label_ids'] );
 			$this->assertSame( array( $label_id ), $store->get_write_state( get_post( $task_id ) )['label_ids'] );
 		} finally {
-			remove_filter( 'wp_get_object_terms', $filter, 10 );
+			remove_filter( 'get_object_terms', $filter, 10 );
 		}
 	}
 
