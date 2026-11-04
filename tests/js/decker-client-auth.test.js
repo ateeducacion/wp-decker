@@ -811,14 +811,14 @@ describe( 'REST routing and transport', () => {
 	} );
 
 	it( 'builds both routing forms with bracketed input parameters', () => {
-		const base = new URL( 'https://example.org/medusa/gestionate/' );
+		const base = new URL( 'https://example.org/work/tasks/' );
 		const params = { input: { task_id: 12, include_hidden: false } };
 
 		expect( client.restUrl( base, 'wp-json', '/wp-abilities/v1/abilities', params ).href ).toBe(
-			'https://example.org/medusa/gestionate/wp-json/wp-abilities/v1/abilities?input%5Btask_id%5D=12&input%5Binclude_hidden%5D=0'
+			'https://example.org/work/tasks/wp-json/wp-abilities/v1/abilities?input%5Btask_id%5D=12&input%5Binclude_hidden%5D=0'
 		);
 		expect( client.restUrl( base, 'rest-route', '/wp-abilities/v1/abilities', params ).href ).toBe(
-			'https://example.org/medusa/gestionate/?rest_route=%2Fwp-abilities%2Fv1%2Fabilities&input%5Btask_id%5D=12&input%5Binclude_hidden%5D=0'
+			'https://example.org/work/tasks/?rest_route=%2Fwp-abilities%2Fv1%2Fabilities&input%5Btask_id%5D=12&input%5Binclude_hidden%5D=0'
 		);
 	} );
 

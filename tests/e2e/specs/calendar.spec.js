@@ -45,8 +45,10 @@ test.describe( 'Decker Calendar', () => {
 			await expect( modal.locator( '#event-start' ) ).toHaveValue( start );
 			await expect( modal.locator( '#event-end' ) ).toHaveValue( start );
 			const response = page.waitForResponse( reply => reply.url().includes( `decker_event/${ event.id }` ) && reply.request().method() === 'POST' );
+			const reload = page.waitForEvent( 'load' );
 			await modal.locator( '#form-event' ).evaluate( form => form.requestSubmit() );
 			expect( ( await response ).ok() ).toBeTruthy();
+			await reload;
 			const saved = await requestUtils.rest( { path: `/wp/v2/decker_event/${ event.id }` } );
 			expect( saved.meta.event_end ).toBe( end );
 		} finally {

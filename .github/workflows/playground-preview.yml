@@ -21,15 +21,27 @@ jobs:
     name: WordPress Playground preview
     runs-on: ubuntu-latest
     steps:
-      - name: Post Playground preview link
-        uses: WordPress/action-wp-playground-pr-preview@v4
+      # shortcut: upstream v4 still declares node20; restore uses when it supports node24.
+      - uses: actions/setup-node@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          mode: comment
+          node-version: '24'
+
+      - uses: actions/checkout@v7
+        with:
+          repository: WordPress/action-wp-playground-pr-preview
+          ref: v4
+          path: .playground-preview-action
+          persist-credentials: false
+
+      - name: Post Playground preview link
+        run: node .playground-preview-action/dist/index.js
+        env:
+          INPUT_GITHUB-TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_MODE: comment
           # Custom blueprint: install THIS PR's plugin from its branch ZIP and
           # reproduce the demo environment (Spanish, two editor users, land on the
           # Decker priority board). When `blueprint` is set, `plugin-path` is ignored.
-          blueprint: |
+          INPUT_BLUEPRINT: |
             {
               "$schema": "https://playground.wordpress.net/blueprint-schema.json",
               "preferredVersions": { "php": "latest", "wp": "latest" },

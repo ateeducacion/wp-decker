@@ -433,7 +433,7 @@ class Decker_Ability_Query_Service {
 			'title'    => (string) $post->post_title,
 			'excerpt'  => $this->article_excerpt( $post ),
 			'board_id' => $this->article_board_id( $post ),
-			'modified' => mysql_to_rfc3339( $post->post_modified_gmt ),
+			'modified' => (string) mysql_to_rfc3339( $post->post_modified_gmt ),
 		);
 	}
 
@@ -449,7 +449,7 @@ class Decker_Ability_Query_Service {
 			'title'    => (string) $post->post_title,
 			'content'  => (string) $post->post_content,
 			'board_id' => $this->article_board_id( $post ),
-			'modified' => mysql_to_rfc3339( $post->post_modified_gmt ),
+			'modified' => (string) mysql_to_rfc3339( $post->post_modified_gmt ),
 		);
 	}
 

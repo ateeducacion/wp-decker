@@ -324,14 +324,14 @@ describe( 'URL and parameter helpers', () => {
 
 	it( 'builds admin URLs with and without a trailing slash', () => {
 		for ( const base of [
-			'https://example.org/medusa/gestionate/',
-			'https://example.org/medusa/gestionate',
+			'https://example.org/work/tasks/',
+			'https://example.org/work/tasks',
 		] ) {
 			const url = new URL( base );
 			expect( client.adminAjaxUrl( url ).pathname ).toBe(
-				'/medusa/gestionate/wp-admin/admin-ajax.php'
+				'/work/tasks/wp-admin/admin-ajax.php'
 			);
-			expect( client.adminUrl( url ).pathname ).toBe( '/medusa/gestionate/wp-admin/' );
+			expect( client.adminUrl( url ).pathname ).toBe( '/work/tasks/wp-admin/' );
 		}
 	} );
 

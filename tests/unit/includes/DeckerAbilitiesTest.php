@@ -386,6 +386,71 @@ class DeckerAbilitiesTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Missing modification dates must remain strings in tasks and knowledge articles.
+	 */
+	public function test_missing_modified_dates_match_the_output_schemas() {
+		$task_id = self::factory()->task->create( array( 'board' => $this->board_id ) );
+		$task    = get_post( $task_id );
+		$task->post_modified_gmt = '';
+		$formatted = ( new Decker_Ability_Task_Store() )->format_task( $task );
+		$this->assertSame( '', $formatted['modified'] );
+
+		$article_id = wp_insert_post(
+			array(
+				'post_type'   => 'decker_kb',
+				'post_status' => 'publish',
+				'post_author' => $this->editor_id,
+				'post_title'  => 'Missing date handbook',
+			)
+		);
+		$article = get_post( $article_id );
+		$article->post_modified_gmt = '';
+		wp_cache_set( $article_id, $article, 'posts' );
+		$inject_article = static function ( $posts, $query ) use ( $article ) {
+			return 'decker_kb' === $query->get( 'post_type' ) ? array( $article ) : $posts;
+		};
+		add_filter( 'posts_pre_query', $inject_article, 10, 2 );
+		try {
+			$summary = $this->service->search_knowledge_base( array( 'search' => 'Missing date handbook' ) );
+			$full    = $this->service->get_knowledge_article( array( 'article_id' => $article_id ) );
+		} finally {
+			remove_filter( 'posts_pre_query', $inject_article, 10 );
+		}
+
+		$this->assertSame( '', $summary['articles'][0]['modified'] );
+		$this->assertSame( '', $full['modified'] );
+		$definitions = $this->abilities->get_ability_definitions();
+		foreach (
+			array(
+				'decker/get-task'              => $formatted,
+				'decker/search-knowledge-base' => $summary,
+				'decker/get-knowledge-article' => $full,
+			) as $name => $result
+		) {
+			$this->assertTrue( rest_validate_value_from_schema( $result, $definitions[ $name ]['output_schema'], 'output' ) );
+		}
+	}
+
+	/**
+	 * Taxonomy filters must not introduce invalid or duplicate label IDs.
+	 */
+	public function test_filtered_label_ids_are_normalized() {
+		$task_id  = self::factory()->task->create( array( 'board' => $this->board_id ) );
+		$label_id = self::factory()->label->create();
+		$filter   = static function ( $terms, $object_ids, $taxonomies ) use ( $label_id ) {
+			return in_array( 'decker_label', $taxonomies, true ) ? array( 0, -1, '', (string) $label_id, $label_id ) : $terms;
+		};
+		add_filter( 'get_object_terms', $filter, 10, 3 );
+		try {
+			$store = new Decker_Ability_Task_Store();
+			$this->assertSame( array( $label_id ), $store->format_task( get_post( $task_id ) )['label_ids'] );
+			$this->assertSame( array( $label_id ), $store->get_write_state( get_post( $task_id ) )['label_ids'] );
+		} finally {
+			remove_filter( 'get_object_terms', $filter, 10 );
+		}
+	}
+
+	/**
 	 * Knowledge-base search returns bounded summaries; retrieval returns full content.
 	 */
 	public function test_knowledge_base_search_summarizes_and_article_returns_full_content() {
