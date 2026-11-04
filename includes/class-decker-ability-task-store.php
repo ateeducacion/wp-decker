@@ -69,7 +69,7 @@ class Decker_Ability_Task_Store {
 			'max_priority'        => '1' === (string) get_post_meta( $post->ID, 'max_priority', true ),
 			'hidden'              => '1' === (string) get_post_meta( $post->ID, 'hidden', true ),
 			'order'               => (int) $post->menu_order,
-			'modified'            => mysql_to_rfc3339( $post->post_modified_gmt ),
+			'modified'            => (string) mysql_to_rfc3339( $post->post_modified_gmt ),
 		);
 	}
 
@@ -218,7 +218,7 @@ class Decker_Ability_Task_Store {
 			return array();
 		}
 
-		return array_values( array_map( 'intval', (array) $term_ids ) );
+		return $this->integer_ids( (array) $term_ids );
 	}
 
 	/**
@@ -232,6 +232,8 @@ class Decker_Ability_Task_Store {
 			return array();
 		}
 
-		return array_values( array_map( 'intval', $ids ) );
+		$ids = array_filter( array_map( 'intval', $ids ), static fn( $id ) => $id > 0 );
+
+		return array_values( array_unique( $ids ) );
 	}
 }

@@ -475,6 +475,10 @@ class Decker_Abilities {
 	 * @return array<string, mixed> Schema.
 	 */
 	private function task_schema(): array {
+		$id_array = $this->id_array_schema();
+		// Existing tasks can exceed the per-write limit without losing assignments or labels.
+		unset( $id_array['maxItems'] );
+
 		$properties = array(
 			'id'                  => $this->positive_integer_schema(),
 			'title'               => array( 'type' => 'string' ),
@@ -488,10 +492,16 @@ class Decker_Abilities {
 				'enum' => self::STACKS,
 			),
 			'board_id'            => array( 'type' => 'integer' ),
-			'label_ids'           => $this->id_array_schema(),
-			'assignee_ids'        => $this->id_array_schema(),
-			'author_id'           => $this->positive_integer_schema(),
-			'responsible_user_id' => $this->positive_integer_schema(),
+			'label_ids'           => $id_array,
+			'assignee_ids'        => $id_array,
+			'author_id'           => array(
+				'type' => 'integer',
+				'minimum' => 0,
+			),
+			'responsible_user_id' => array(
+				'type' => 'integer',
+				'minimum' => 0,
+			),
 			'due_date'            => array( 'type' => 'string' ),
 			'max_priority'        => array( 'type' => 'boolean' ),
 			'hidden'              => array( 'type' => 'boolean' ),
