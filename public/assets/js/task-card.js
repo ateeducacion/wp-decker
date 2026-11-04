@@ -826,8 +826,14 @@
                         // Only genuine user edits switch the card into dirty mode;
                         // the initial content load (SetContent during init) is
                         // intentionally excluded so opening a card stays pristine.
-                        editor.on('input keyup change ExecCommand', function() {
-                            debouncedMarkDirty();
+                        editor.on('input keyup change', debouncedMarkDirty);
+                        // Toolbar commands that only change the interface
+                        // (fullscreen, toolbar toggle, help) must not leave the
+                        // pristine "For today" quick-action mode.
+                        editor.on('ExecCommand', function(event) {
+                            if (!['mceFullScreen', 'WP_Adv', 'WP_Help'].includes(event && event.command)) {
+                                debouncedMarkDirty();
+                            }
                         });
                     }
                 },

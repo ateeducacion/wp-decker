@@ -682,3 +682,9 @@ div.choices__list--dropdown .choices__item[aria-disabled="true"] {
         font-size: 0.875rem;
     }
 }
+
+/* TinyMCE puts its fullscreen editor at z-index 100, under the Attex sidebar
+   and topbar (1000) and the task modal (1055). Stay below its own menus (65535). */
+div.mce-fullscreen {
+    z-index: 1056;
+}

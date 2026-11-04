@@ -199,6 +199,18 @@ describe( 'initializeTaskEditor', () => {
 		} finally { logger.mockRestore(); }
 	} );
 
+	test( 'interface commands such as fullscreen leave the card pristine', () => {
+		build( false );
+		const fake = createFakeEditor();
+		capturedConfig.tinymce.setup( fake.editor );
+
+		[ 'mceFullScreen', 'WP_Adv', 'WP_Help' ].forEach( ( command ) => fake.emit( 'ExecCommand', { command } ) );
+		expect( enterDirtyEditMode ).not.toHaveBeenCalled();
+
+		fake.emit( 'ExecCommand', { command: 'Bold' } );
+		expect( enterDirtyEditMode ).toHaveBeenCalledWith( context );
+	} );
+
 	test( 'programmatic changes on a read-only textarea never mark the card dirty', () => {
 		build( true );
 
