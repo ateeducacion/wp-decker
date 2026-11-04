@@ -301,6 +301,97 @@ class DeckerAbilitiesRestExposureTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Legacy assignee placeholders must not invalidate an entire task listing.
+	 */
+	public function test_invalid_stored_assignees_do_not_break_task_output() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create(
+			array(
+				'post_title' => 'Legacy assignee task',
+				'board'      => $this->board_id,
+				'stack'      => 'to-do',
+			)
+		);
+		$cases = array(
+			array( array( 0, '', null, 'invalid', -1, (string) $this->editor_id, $this->editor_id ), array( $this->editor_id ) ),
+			array( array( 0, '', -1 ), array() ),
+			array( array(), array() ),
+			array( '', array() ),
+		);
+		foreach ( $cases as list( $stored, $expected ) ) {
+			update_post_meta( $task_id, 'assigned_users', $stored );
+
+			foreach (
+				array(
+					'decker/list-tasks' => array(
+						'search'   => 'Legacy assignee task',
+						'stack'    => 'to-do',
+						'relation' => 'responsible',
+					),
+					'decker/get-task'   => array( 'task_id' => $task_id ),
+				) as $name => $input
+			) {
+				$response = $this->run_as( $this->editor_id, 'GET', $name, $input );
+				$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+				$data = $response->get_data();
+				$task = 'decker/list-tasks' === $name ? $data['tasks'][0] : $data;
+				$this->assertSame( $task_id, $task['id'] );
+				$this->assertSame( $expected, $task['assignee_ids'] );
+			}
+
+			$state = ( new Decker_Ability_Task_Store() )->get_write_state( get_post( $task_id ) );
+			$this->assertSame( $expected, $state['assignee_ids'] );
+			$this->assertSame( $stored, get_post_meta( $task_id, 'assigned_users', true ) );
+		}
+	}
+
+	/**
+	 * Output must preserve large existing collections while writes remain bounded.
+	 */
+	public function test_large_stored_id_lists_remain_readable() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create( array( 'board' => $this->board_id ) );
+		$ids     = range( 1, 101 );
+		$labels  = self::factory()->label->create_many( 101 );
+		update_post_meta( $task_id, 'assigned_users', $ids );
+		wp_set_object_terms( $task_id, $labels, 'decker_label' );
+
+		$response = $this->run_as( $this->editor_id, 'GET', 'decker/get-task', array( 'task_id' => $task_id ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( $ids, $response->get_data()['assignee_ids'] );
+		$this->assertEqualsCanonicalizing( $labels, $response->get_data()['label_ids'] );
+
+		$schema = ( new Decker_Abilities() )->get_ability_definitions()['decker/update-task']['input_schema'];
+		foreach ( array( 'assignee_ids', 'label_ids' ) as $field ) {
+			$error = rest_validate_value_from_schema( array( 'task_id' => $task_id, $field => $ids ), $schema, 'input' );
+			$this->assertWPError( $error );
+			$this->assertSame( 'rest_too_many_items', $error->get_error_code() );
+		}
+	}
+
+	/**
+	 * WordPress permits stored posts without an author or responsible user.
+	 */
+	public function test_task_without_an_author_remains_readable() {
+		wp_set_current_user( $this->editor_id );
+		$task_id = self::factory()->task->create( array( 'board' => $this->board_id ) );
+		global $wpdb;
+		$wpdb->update( $wpdb->posts, array( 'post_author' => 0 ), array( 'ID' => $task_id ) );
+		delete_post_meta( $task_id, 'responsable' );
+		clean_post_cache( $task_id );
+
+		$response = $this->run_as( $this->editor_id, 'GET', 'decker/get-task', array( 'task_id' => $task_id ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 0, $response->get_data()['author_id'] );
+		$this->assertSame( 0, $response->get_data()['responsible_user_id'] );
+
+		$schema = ( new Decker_Abilities() )->get_ability_definitions()['decker/update-task']['input_schema'];
+		foreach ( array( 'author_id', 'responsible_user_id' ) as $field ) {
+			$this->assertWPError( rest_validate_value_from_schema( array( 'task_id' => $task_id, $field => 0 ), $schema, 'input' ) );
+		}
+	}
+
+	/**
 	 * A create over REST must persist through the existing domain method.
 	 */
 	public function test_create_over_rest_persists_the_task() {
