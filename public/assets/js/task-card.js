@@ -960,10 +960,6 @@
                 modules: quillModules
             });
 
-            // Initialize AI improvement feature if available and editor is not read-only.
-            if (window.DeckerAI && !disabled) {
-                window.DeckerAI.init(quill, context, deckerVars);
-            }
 
         }
 

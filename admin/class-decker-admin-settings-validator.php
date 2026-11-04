@@ -20,11 +20,10 @@ class Decker_Admin_Settings_Validator {
 	/**
 	 * Validate a settings submission.
 	 *
-	 * @param mixed $input          The raw submission.
-	 * @param array $current_values The currently stored settings option.
+	 * @param mixed $input The raw submission.
 	 * @return array The validated fields.
 	 */
-	public function validate( $input, array $current_values ) {
+	public function validate( $input ) {
 		$input = is_array( $input ) ? $input : array();
 
 		$input = $this->strip_retired_fields( $input );
@@ -37,13 +36,6 @@ class Decker_Admin_Settings_Validator {
 
 		// Validate subtasks.
 		$input['subtasks_enabled'] = $this->sanitize_checkbox( $input, 'subtasks_enabled' );
-
-		// Validate AI settings.
-		$input['ai_enabled']  = $this->sanitize_checkbox( $input, 'ai_enabled' );
-		$input['ai_provider'] = Decker_AI_Manager::get_selected_provider( $input );
-		$input['ai_api_key']  = $this->validate_ai_api_key( $input, $current_values );
-		$input['ai_model']    = $this->validate_ai_model( $input );
-		$input['ai_prompt']   = $this->validate_ai_prompt( $input );
 
 		// Validate alert color.
 		$input['alert_color'] = $this->validate_alert_color( $input );
@@ -79,6 +71,11 @@ class Decker_Admin_Settings_Validator {
 			$input['collaborative_editing'],
 			$input['signaling_server'],
 			$input['sidebar_board_status'],
+			$input['ai_enabled'],
+			$input['ai_provider'],
+			$input['ai_api_key'],
+			$input['ai_model'],
+			$input['ai_prompt'],
 			$input['openai_api_url'],
 			$input['openai_api_key'],
 			$input['openai_model']
@@ -109,46 +106,6 @@ class Decker_Admin_Settings_Validator {
 	private function validate_shared_key( array $input ) {
 		return isset( $input['shared_key'] ) ? sanitize_text_field( $input['shared_key'] ) : '';
 	}
-
-	/**
-	 * Validate AI API Key.
-	 *
-	 * Sanitizes a newly provided key, otherwise keeps the previously stored one.
-	 *
-	 * @param array $input          The input fields being validated.
-	 * @param array $current_values The currently stored settings option.
-	 * @return string The validated API key.
-	 */
-	private function validate_ai_api_key( array $input, array $current_values ) {
-		return isset( $input['ai_api_key'] ) && '' !== trim( $input['ai_api_key'] )
-			? Decker_AI_Manager::sanitize_api_key( $input['ai_api_key'] )
-			: Decker_AI_Manager::get_api_key( $current_values );
-	}
-
-	/**
-	 * Validate AI Model.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized model name, or the default Gemini model.
-	 */
-	private function validate_ai_model( array $input ) {
-		return isset( $input['ai_model'] ) && '' !== trim( $input['ai_model'] )
-			? sanitize_text_field( $input['ai_model'] )
-			: Decker_AI_Manager::DEFAULT_GEMINI_MODEL;
-	}
-
-	/**
-	 * Validate AI Prompt.
-	 *
-	 * @param array $input The input fields being validated.
-	 * @return string The sanitized prompt, or the default prompt template.
-	 */
-	private function validate_ai_prompt( array $input ) {
-		return isset( $input['ai_prompt'] ) && '' !== trim( $input['ai_prompt'] )
-			? sanitize_textarea_field( $input['ai_prompt'] )
-			: Decker::get_default_ai_prompt_template();
-	}
-
 
 	/**
 	 * Validate Alert Color.

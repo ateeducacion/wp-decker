@@ -36,9 +36,6 @@ msgstr ""
 msgid "Configure the Decker plugin settings."
 msgstr ""
 
-msgid "Configure how Decker improves task descriptions with AI. Browser-based Gemini Nano keeps the text in the browser, while the Gemini API sends the prompt to Google through your WordPress server using the saved API key."
-msgstr ""
-
 msgid "Provide the Bearer token in the Authorization header for the email-to-post endpoint. Example request:"
 msgstr ""
 
@@ -52,33 +49,6 @@ msgid "Enable subtasks on task cards."
 msgstr ""
 
 msgid "Adds a Subtasks tab to every task, where a task can be broken down into steps with their own state, assignee and due date. The card shows how many are done. Turning this off hides the tab and the counter; the stored subtasks are kept."
-msgstr ""
-
-msgid "Enable AI improvements for task descriptions."
-msgstr ""
-
-msgid "When enabled, users can improve task descriptions with either Gemini Nano in supported browsers or the Gemini API through the server."
-msgstr ""
-
-msgid "Gemini Nano (browser-based)"
-msgstr ""
-
-msgid "Gemini API (server-side)"
-msgstr ""
-
-msgid "Choose whether AI improvements run in the browser with Gemini Nano or through the Gemini API on the server."
-msgstr ""
-
-msgid "A Gemini API key is already stored. Leave this field empty to keep the current key."
-msgstr ""
-
-msgid "Paste a Gemini API key to enable server-side Gemini requests. The saved key is never shown again after saving."
-msgstr ""
-
-msgid "Optional Gemini model name for server-side requests. Leave the default unless you need a different compatible text-generation model."
-msgstr ""
-
-msgid "Customize the base prompt used for AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}."
 msgstr ""
 
 msgid "Select the minimum user profile that can use Decker."
@@ -120,9 +90,6 @@ msgstr ""
 msgid "Decker Configuration"
 msgstr ""
 
-msgid "AI Configuration"
-msgstr ""
-
 msgid "Alert Color"
 msgstr ""
 
@@ -145,21 +112,6 @@ msgid "Subtasks"
 msgstr ""
 
 msgid "Ignored Users"
-msgstr ""
-
-msgid "AI Improvements"
-msgstr ""
-
-msgid "AI Provider"
-msgstr ""
-
-msgid "Gemini API Key"
-msgstr ""
-
-msgid "Gemini Model"
-msgstr ""
-
-msgid "AI Prompt"
 msgstr ""
 
 msgid "All Decker records have been deleted."
@@ -317,95 +269,6 @@ msgstr ""
 msgid "The task is not assigned to a valid board."
 msgstr ""
 
-msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings."
-msgstr ""
-
-msgid "The Gemini API request failed. Please try again in a moment."
-msgstr ""
-
-msgid "The Gemini API key was rejected. Please ask an administrator to review the saved key."
-msgstr ""
-
-msgid "The Gemini API rate limit was reached. Please wait a moment and try again."
-msgstr ""
-
-msgid "The Gemini API took too long to respond. Please try again."
-msgstr ""
-
-msgid "The Gemini API returned an unexpected response. Please try again later."
-msgstr ""
-
-msgid "The Gemini API response could not be parsed."
-msgstr ""
-
-msgid "The Gemini API returned an empty response."
-msgstr ""
-
-msgid "You must be logged in to use AI improvements."
-msgstr ""
-
-msgid "Your session has expired. Please reload the page and try again."
-msgstr ""
-
-msgid "You do not have permission to use AI improvements."
-msgstr ""
-
-msgid "AI improvements are disabled in Decker settings."
-msgstr ""
-
-msgid "The configured AI provider uses the browser directly and does not need the server endpoint."
-msgstr ""
-
-msgid "Please add some text before using AI improvement."
-msgstr ""
-
-msgid "Rewrite the following task description to make it clearer, better structured, and more actionable. Preserve the original meaning, language, and important details. Do not add invented information. Return only the improved description."
-msgstr ""
-
-msgid "Rewrite the task description as concrete, actionable steps. Each step should start with a verb and make clear WHO does WHAT. Use the assigned users in the task context only when helpful. Return only the final task description content."
-msgstr ""
-
-msgid "Convert the task description into a structured checklist. Group related items only when it improves clarity. Each item should be a single, verifiable action. Return only the final checklist content for the task description."
-msgstr ""
-
-msgid "Summarize the task description into 2-3 sentences maximum. Capture what needs to be done and the expected outcome. Return only the final short task description."
-msgstr ""
-
-#. translators: %s: locale code such as es_ES.
-#, php-format
-msgid "Write the result in the language configured in WordPress (%s)."
-msgstr ""
-
-msgid "Return only the final task description as HTML, preserving valid HTML formatting tags such as <strong>, <em>, <ul>, <ol>, <li>, <p>, <a>. Do not include explanations, markdown code fences, or any text outside the HTML description itself."
-msgstr ""
-
-msgid "Title"
-msgstr ""
-
-msgid "Board"
-msgstr ""
-
-msgid "Responsable"
-msgstr ""
-
-msgid "Assign to"
-msgstr ""
-
-msgid "Stack"
-msgstr ""
-
-msgid "Due Date"
-msgstr ""
-
-msgid "Labels"
-msgstr ""
-
-msgid "Maximum Priority"
-msgstr ""
-
-msgid "For today"
-msgstr ""
-
 msgid "Events"
 msgstr ""
 
@@ -525,37 +388,6 @@ msgid "You are not allowed to edit this card."
 msgstr ""
 
 msgid "The task could not be updated due to a concurrent change. Please try again."
-msgstr ""
-
-msgid ""
-"You are a task-writing assistant for Decker, a Kanban board used by a team that manages educational technology projects (virtual classrooms, digital content platforms, GSuite/Google Workspace, Moodle/EVAGD, teacher training, and school IT support).\n"
-"\n"
-"## Your role\n"
-"Transform raw task details into a brief, high-quality task description that is clear, useful, and ready to paste into the task card.\n"
-"\n"
-"## Task context\n"
-"{{task_context}}\n"
-"\n"
-"## Requested action\n"
-"{{mode_instruction}}\n"
-"\n"
-"## Content to transform\n"
-"{{content_html}}\n"
-"\n"
-"## Rules\n"
-"- Use the task context only to understand and improve the description. Do not repeat metadata unless it is essential inside the final description.\n"
-"- Return only the description content for the task. Do not add explanations, notes, meta commentary, or text outside the description itself.\n"
-"- Keep the result professional, concise, and specific — no filler, no corporate jargon.\n"
-"- Write a brief result that a team member can read quickly and understand immediately.\n"
-"- Preserve all URLs, reference numbers (e.g. incident IDs like 100004538192), dates, and proper nouns exactly as given.\n"
-"- NEVER invent information. If something is unclear, keep it as-is rather than guessing.\n"
-"- If the input contains credentials or passwords, replace them with \"[credenciales en la tarea original]\" and add a warning inside the description.\n"
-"- Use HTML formatting when helpful: <strong> for emphasis, <ul>/<ol>/<li> for lists, <p> for paragraphs, <a> for links.\n"
-"- Prefer a short paragraph or a compact list, depending on the requested action. Only use headings or sections if they clearly improve the task description.\n"
-"- For short, simple tasks, keep the description short and proportional.\n"
-"\n"
-"{{language_instruction}}\n"
-"{{response_format}}"
 msgstr ""
 
 msgctxt "taxonomy general name"
@@ -843,7 +675,13 @@ msgstr ""
 msgid "New Label Name"
 msgstr ""
 
+msgid "Labels"
+msgstr ""
+
 msgid "Status"
+msgstr ""
+
+msgid "Stack"
 msgstr ""
 
 msgid "Show All Boards"
@@ -898,6 +736,12 @@ msgstr ""
 msgid "Attachments"
 msgstr ""
 
+msgid "Board"
+msgstr ""
+
+msgid "Due Date"
+msgstr ""
+
 msgid "Max Priority"
 msgstr ""
 
@@ -911,6 +755,9 @@ msgid "Done"
 msgstr ""
 
 msgid "Nextcloud Card ID"
+msgstr ""
+
+msgid "Responsable"
 msgstr ""
 
 msgid "Hidden"
@@ -1334,6 +1181,9 @@ msgid "Absence"
 msgstr ""
 
 msgid "Alert"
+msgstr ""
+
+msgid "Title"
 msgstr ""
 
 msgid "All Day"
@@ -1859,83 +1709,6 @@ msgstr ""
 msgid "Error searching tasks"
 msgstr ""
 
-msgid "Improve with AI"
-msgstr ""
-
-msgid "Choose an action"
-msgstr ""
-
-msgid "Improve description"
-msgstr ""
-
-msgid "Make it actionable"
-msgstr ""
-
-msgid "Generate checklist"
-msgstr ""
-
-msgid "Summarize"
-msgstr ""
-
-msgid "Improving text…"
-msgstr ""
-
-msgid "Review improvement"
-msgstr ""
-
-msgid "Original"
-msgstr ""
-
-msgid "Improved"
-msgstr ""
-
-msgid "Accept"
-msgstr ""
-
-msgid "An error occurred while improving the text."
-msgstr ""
-
-msgid "No content"
-msgstr ""
-
-msgid "Browser AI unavailable"
-msgstr ""
-
-msgid "This AI action requires a compatible browser with built-in AI support."
-msgstr ""
-
-msgid "Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile."
-msgstr ""
-
-msgid "Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile."
-msgstr ""
-
-msgid "The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again."
-msgstr ""
-
-msgid "This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled."
-msgstr ""
-
-msgid "Open setup guide"
-msgstr ""
-
-msgid "The browser AI session could not be started."
-msgstr ""
-
-msgid "The browser AI response was empty."
-msgstr ""
-
-msgid "The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it."
-msgstr ""
-
-msgctxt "AI task context boolean value"
-msgid "Yes"
-msgstr ""
-
-msgctxt "AI task context boolean value"
-msgid "No"
-msgstr ""
-
 msgid "You do not have permission to view this page."
 msgstr ""
 
@@ -2104,6 +1877,12 @@ msgstr ""
 msgid "MAXIMUM PRIORITY"
 msgstr ""
 
+msgid "Maximum Priority"
+msgstr ""
+
+msgid "For today"
+msgstr ""
+
 msgid "Select Responsable"
 msgstr ""
 
@@ -2117,6 +1896,9 @@ msgid "Select date"
 msgstr ""
 
 msgid "Please select a due date."
+msgstr ""
+
+msgid "Assign to"
 msgstr ""
 
 msgid "Gantt"

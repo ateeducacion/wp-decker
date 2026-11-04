@@ -122,11 +122,6 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 			'alert color'         => array( 'alert_color' ),
 			'ignored users'       => array( 'ignored_users' ),
 			'task editor'         => array( 'task_editor_type' ),
-			'ai enabled'          => array( 'ai_enabled' ),
-			'ai provider'         => array( 'ai_provider' ),
-			'ai api key'          => array( 'ai_api_key' ),
-			'ai model'            => array( 'ai_model' ),
-			'ai prompt'           => array( 'ai_prompt' ),
 		);
 	}
 
@@ -137,7 +132,6 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 		$html = $this->render_screen();
 
 		$this->assertStringContainsString( 'Configure the Decker plugin settings.', $html );
-		$this->assertStringContainsString( 'Configure how Decker improves task descriptions with AI.', $html );
 	}
 
 	/**
@@ -170,14 +164,14 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 	 */
 	public function test_retired_feature_settings_are_not_rendered() {
 		$html = $this->render_screen();
-		foreach ( array( 'collaborative_editing', 'signaling_server', 'sidebar_board_status' ) as $field ) {
+		foreach ( array( 'collaborative_editing', 'signaling_server', 'sidebar_board_status', 'ai_enabled', 'ai_provider', 'ai_api_key', 'ai_model', 'ai_prompt' ) as $field ) {
 			$this->assertStringNotContainsString( 'name="decker_settings[' . $field . ']"', $html );
 		}
 	}
 
 
 	/**
-	 * The saved Gemini key is never echoed back into the form.
+	 * Retired API keys and the AI settings section are absent from the form.
 	 */
 	public function test_saved_api_key_is_not_echoed() {
 		update_option(
@@ -188,10 +182,7 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 		$html = $this->render_screen();
 
 		$this->assertStringNotContainsString( 'sk-super-secret', $html );
-		$this->assertMatchesRegularExpression(
-			'/name="decker_settings\[ai_api_key\]"[^>]*value=""/',
-			$html,
-			'The API key input must render empty even when a key is stored.'
-		);
+		$this->assertStringNotContainsString( 'name="decker_settings[ai_api_key]"', $html );
+		$this->assertStringNotContainsString( 'AI Configuration', $html );
 	}
 }

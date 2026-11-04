@@ -21,7 +21,6 @@ Try Decker instantly in your browser using WordPress Playground. The demo includ
 
 - **Kanban board** with drag-and-drop and a distinctive priority system (including Max Priority).
 - **Import from Nextcloud Deck** (one-way) through the API.
-- **AI Description Improvements**: Gemini Nano (browser) or Gemini API (server-side).
 - **Individual Calendar Feeds** for event types (Meeting, Absence, Warning, Alert).
 - **Email-to-post** endpoint.
 - Multisite support.
@@ -33,14 +32,7 @@ Try Decker instantly in your browser using WordPress Playground. The demo includ
 1. Download the latest release from the [GitHub Releases page](https://github.com/ateeducacion/wp-decker/releases).
 2. Upload the ZIP via **Plugins → Add New → Upload Plugin**.
 3. Activate the plugin.
-4. Configure under **Settings → Decker** (AI provider, notifications, etc.).
-
-## AI description improvements
-
-- **Gemini Nano (browser-based)** keeps the prompt inside a compatible browser.
-- **Gemini API (server-side)** sends the prompt from WordPress using a key stored in settings.
-
-The saved Gemini API key is never exposed in public JavaScript, REST responses, or the settings form after saving.
+4. Configure under **Settings → Decker** (notifications, subtasks, etc.).
 
 ## Documentation
 

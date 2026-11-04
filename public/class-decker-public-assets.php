@@ -222,8 +222,6 @@ class Decker_Public_Assets {
 			plugin_dir_url( __FILE__ ) . '../public/assets/js/global-search.js',
 
 			// Add the AI improvement module.
-			plugin_dir_url( __FILE__ ) . '../public/assets/css/decker-ai.css',
-			plugin_dir_url( __FILE__ ) . '../public/assets/js/decker-ai.js',
 		);
 	}
 
@@ -318,7 +316,6 @@ class Decker_Public_Assets {
 			'taskPermalinkStructure' => get_option( 'permalink_structure' )
 				? home_url( '/decker/task/%d/' )
 				: home_url( '/?decker_task=%d' ),
-			'ai'                     => $this->get_ai_config(),
 		);
 	}
 
@@ -564,56 +561,6 @@ class Decker_Public_Assets {
 					'error'              => __( 'Error searching tasks', 'decker' ),
 				),
 			)
-		);
-	}
-
-	/**
-	 * Build the AI configuration object passed to JavaScript.
-	 *
-	 * Exposes browser-only AI prompts and all required UI strings.
-	 *
-	 * @return array AI configuration array.
-	 */
-	private function get_ai_config() {
-		$options = get_option( 'decker_settings', array() );
-
-		return array(
-			'enabled'          => isset( $options['ai_enabled'] ) && '1' === $options['ai_enabled'],
-			'provider'         => Decker_AI_Manager::get_selected_provider( $options ),
-			'api_endpoint'     => Decker_AI_Manager::get_rest_endpoint_url(),
-			'server_available' => '' !== Decker_AI_Manager::get_api_key( $options ),
-			'strings'          => array(
-				'improve_with_ai'          => __( 'Improve with AI', 'decker' ),
-				'choose_action'            => __( 'Choose an action', 'decker' ),
-				'mode_improve_description' => __( 'Improve description', 'decker' ),
-				'mode_make_actionable'     => __( 'Make it actionable', 'decker' ),
-				'mode_generate_checklist'  => __( 'Generate checklist', 'decker' ),
-				'mode_summarize'           => __( 'Summarize', 'decker' ),
-				'improving'                => __( 'Improving text…', 'decker' ),
-				'preview_title'            => __( 'Review improvement', 'decker' ),
-				'original_text'            => __( 'Original', 'decker' ),
-				'improved_text'            => __( 'Improved', 'decker' ),
-				'accept'                   => __( 'Accept', 'decker' ),
-				'cancel'                   => __( 'Cancel', 'decker' ),
-				'error'                    => __( 'Error', 'decker' ),
-				'error_message'            => __( 'An error occurred while improving the text.', 'decker' ),
-				'no_content'               => __( 'No content', 'decker' ),
-				'no_content_message'       => __( 'Please add some text before using AI improvement.', 'decker' ),
-				'ai_unavailable_title'     => __( 'Browser AI unavailable', 'decker' ),
-				'ai_unavailable_intro'     => __( 'This AI action requires a compatible browser with built-in AI support.', 'decker' ),
-				'ai_chrome_unavailable'    => __( 'Chrome can use the Prompt API, but built-in AI is not currently available or enabled in this browser profile.', 'decker' ),
-				'ai_edge_unavailable'      => __( 'Microsoft Edge can support the experimental Prompt API, but it is not available in this browser profile.', 'decker' ),
-				'ai_download_required'     => __( 'The browser AI model is not ready yet. Finish downloading or enabling the built-in model and try again.', 'decker' ),
-				'ai_browser_unsupported'   => __( 'This feature currently requires a compatible browser with built-in AI support, such as Chrome or Microsoft Edge with the Prompt API enabled.', 'decker' ),
-				'ai_help_link'             => __( 'Open setup guide', 'decker' ),
-				'ai_session_error'         => __( 'The browser AI session could not be started.', 'decker' ),
-				'ai_empty_response'        => __( 'The browser AI response was empty.', 'decker' ),
-				'ai_api_missing_key'       => __( 'The Gemini API provider is selected, but no API key has been saved in Decker settings. Please ask an administrator to configure it.', 'decker' ),
-				'ai_api_request_error'     => __( 'The Gemini API request failed. Please try again in a moment.', 'decker' ),
-				'yes'                      => _x( 'Yes', 'AI task context boolean value', 'decker' ),
-				'no'                       => _x( 'No', 'AI task context boolean value', 'decker' ),
-			),
-			'prompts'          => Decker_AI_Manager::get_prompt_config( $options ),
 		);
 	}
 }

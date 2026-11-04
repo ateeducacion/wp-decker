@@ -57,29 +57,26 @@ class DeckerPublicTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test AI config exposes provider metadata without leaking secrets.
+	 * The retired AI endpoint stays unavailable with previously enabled settings.
 	 */
-	public function test_get_ai_config_exposes_provider_metadata() {
-		update_option( 'decker_settings', array() );
-
-		$assets     = new Decker_Public_Assets();
-		$reflection = new ReflectionMethod( $assets, 'get_ai_config' );
-		$reflection->setAccessible( true );
-
-		$config = $reflection->invoke( $assets );
-
-		$this->assertFalse( $config['enabled'] );
-		$this->assertSame(
-			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
-			$config['provider']
-		);
-		$this->assertFalse( $config['server_available'] );
-		$this->assertArrayHasKey( 'api_endpoint', $config );
-		$this->assertArrayHasKey( 'ai_unavailable_title', $config['strings'] );
-		$this->assertArrayHasKey( 'ai_chrome_unavailable', $config['strings'] );
-		$this->assertArrayHasKey( 'ai_edge_unavailable', $config['strings'] );
-		$this->assertArrayHasKey( 'ai_browser_unsupported', $config['strings'] );
-		$this->assertArrayHasKey( 'ai_api_missing_key', $config['strings'] );
+	public function test_retired_ai_endpoint_does_not_call_a_provider() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		update_option( 'decker_settings', array( 'ai_enabled' => '1', 'ai_provider' => 'gemini_api', 'ai_api_key' => 'retired-api-key' ) );
+		$calls = 0;
+		$block_http = static function () use ( &$calls ) {
+			++$calls;
+			return new WP_Error( 'unexpected_ai_request', 'Retired AI attempted an HTTP request.' );
+		};
+		add_filter( 'pre_http_request', $block_http );
+		try {
+			$request = new WP_REST_Request( 'POST', '/decker/v1/ai/improve' );
+			$request->set_header( 'X-WP-Nonce', wp_create_nonce( 'wp_rest' ) );
+			$request->set_param( 'task_context', array( 'content_text' => 'Existing task description' ) );
+			$this->assertSame( 404, rest_get_server()->dispatch( $request )->get_status() );
+			$this->assertSame( 0, $calls );
+		} finally {
+			remove_filter( 'pre_http_request', $block_http );
+		}
 	}
 
 	/**

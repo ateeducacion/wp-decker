@@ -33,13 +33,21 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 			'collaborative_editing' => '1',
 			'signaling_server' => 'wss://obsolete.example.test',
 			'sidebar_board_status' => '1',
+			'ai_enabled' => '1',
+			'ai_provider' => 'gemini_api',
+			'ai_api_key' => 'retired-api-key',
+			'ai_model' => 'retired-model',
+			'ai_prompt' => 'Retired prompt',
 			'alert_message' => 'Keep this setting',
 		);
+		update_option( 'decker_settings', $input );
 		$validated = $this->admin_settings->settings_validate( $input );
-		foreach ( array( 'collaborative_editing', 'signaling_server', 'sidebar_board_status' ) as $key ) {
+		foreach ( array( 'collaborative_editing', 'signaling_server', 'sidebar_board_status', 'ai_enabled', 'ai_provider', 'ai_api_key', 'ai_model', 'ai_prompt' ) as $key ) {
 			$this->assertArrayNotHasKey( $key, $validated );
 		}
 		$this->assertSame( 'Keep this setting', $validated['alert_message'] );
+		update_option( 'decker_settings', $validated );
+		$this->assertArrayNotHasKey( 'ai_api_key', get_option( 'decker_settings' ) );
 	}
 
 	/**
@@ -139,127 +147,7 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Test ai_enabled setting validation with enabled value.
-	 */
-	public function test_settings_validate_ai_enabled_enabled() {
-		$input = array(
-			'ai_enabled' => '1',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( '1', $validated['ai_enabled'] );
-	}
-
-	/**
-	 * Test ai_enabled setting validation with missing value defaults to disabled.
-	 */
-	public function test_settings_validate_ai_enabled_missing() {
-		$input = array();
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals( '0', $validated['ai_enabled'] );
-	}
-
-	/**
-	 * Test ai_provider defaults to the browser Gemini Nano provider.
-	 */
-	public function test_settings_validate_ai_provider_defaults_to_browser_gemini_nano() {
-		$validated = $this->admin_settings->settings_validate( array() );
-
-		$this->assertEquals(
-			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
-			$validated['ai_provider']
-		);
-	}
-
-	/**
-	 * Test ai_provider validation falls back for unsupported providers.
-	 */
-	public function test_settings_validate_ai_provider_rejects_invalid_values() {
-		$validated = $this->admin_settings->settings_validate(
-			array(
-				'ai_provider' => 'openrouter',
-			)
-		);
-
-		$this->assertEquals(
-			Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO,
-			$validated['ai_provider']
-		);
-	}
-
-	/**
-	 * Test ai_api_key preserves the stored value when the field is left empty.
-	 */
-	public function test_settings_validate_ai_api_key_preserves_existing_value() {
-		update_option(
-			'decker_settings',
-			array(
-				'ai_api_key' => 'existing-key',
-			)
-		);
-
-		$validated = $this->admin_settings->settings_validate(
-			array(
-				'ai_api_key' => '',
-			)
-		);
-
-		$this->assertEquals( 'existing-key', $validated['ai_api_key'] );
-	}
-
-	/**
-	 * Test ai_model defaults to the Gemini model constant.
-	 */
-	public function test_settings_validate_ai_model_defaults_when_empty() {
-		$validated = $this->admin_settings->settings_validate(
-			array(
-				'ai_model' => '',
-			)
-		);
-
-		$this->assertEquals(
-			Decker_AI_Manager::DEFAULT_GEMINI_MODEL,
-			$validated['ai_model']
-		);
-	}
-
-	/**
-	 * Test ai_prompt setting validation falls back to the default template.
-	 */
-	public function test_settings_validate_ai_prompt_defaults_when_empty() {
-		$input = array(
-			'ai_prompt' => '',
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals(
-			Decker::get_default_ai_prompt_template(),
-			$validated['ai_prompt']
-		);
-	}
-
-	/**
-	 * Test ai_prompt setting validation preserves a custom template.
-	 */
-	public function test_settings_validate_ai_prompt_custom_value() {
-		$input = array(
-			'ai_prompt' => "Custom prompt\n{{task_context}}",
-		);
-
-		$validated = $this->admin_settings->settings_validate( $input );
-
-		$this->assertEquals(
-			"Custom prompt\n{{task_context}}",
-			$validated['ai_prompt']
-		);
-	}
-
-	/**
-	 * Test legacy OpenAI fields are removed while Gemini settings are preserved.
+	 * Legacy OpenAI configuration is also discarded when settings are saved.
 	 */
 	public function test_settings_validate_removes_legacy_openai_fields() {
 		$input = array(
@@ -273,109 +161,12 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 
 		$validated = $this->admin_settings->settings_validate( $input );
 
-		$this->assertEquals( 'gemini_api', $validated['ai_provider'] );
-		$this->assertEquals( 'secret-key', $validated['ai_api_key'] );
-		$this->assertEquals( 'gemini-2.5-flash', $validated['ai_model'] );
+		foreach ( array( 'ai_provider', 'ai_api_key', 'ai_model' ) as $field ) {
+			$this->assertArrayNotHasKey( $field, $validated );
+		}
 		$this->assertArrayNotHasKey( 'openai_api_url', $validated );
 		$this->assertArrayNotHasKey( 'openai_api_key', $validated );
 		$this->assertArrayNotHasKey( 'openai_model', $validated );
-	}
-
-	/**
-	 * Test ai_enabled_render outputs unchecked HTML by default.
-	 */
-	public function test_ai_enabled_render_disabled_by_default() {
-		update_option( 'decker_settings', array() );
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_enabled' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[ai_enabled]"', $output );
-		$this->assertStringNotContainsString( "checked='checked'", $output );
-	}
-
-	/**
-	 * Test ai_prompt_render outputs the default template.
-	 */
-	public function test_ai_prompt_render_uses_default_template() {
-		update_option( 'decker_settings', array() );
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_prompt' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[ai_prompt]"', $output );
-		$this->assertStringContainsString(
-			'{{mode_instruction}}',
-			$output
-		);
-		$this->assertStringContainsString(
-			'nano-class models',
-			$output
-		);
-	}
-
-	/**
-	 * Test ai_api_key_render does not expose the saved API key.
-	 */
-	public function test_ai_api_key_render_masks_saved_value() {
-		update_option(
-			'decker_settings',
-			array(
-				'ai_api_key' => 'super-secret-key',
-			)
-		);
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_api_key' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'name="decker_settings[ai_api_key]"', $output );
-		$this->assertStringContainsString( 'type="password"', $output );
-		$this->assertStringNotContainsString( 'super-secret-key', $output );
-		$this->assertStringContainsString(
-			'Leave this field empty to keep the current key.',
-			$output
-		);
-	}
-
-	/**
-	 * Test ai_provider_render outputs the provider radio buttons.
-	 */
-	public function test_ai_provider_render_outputs_supported_providers() {
-		update_option(
-			'decker_settings',
-			array(
-				'ai_provider' => Decker_AI_Manager::PROVIDER_GEMINI_API,
-			)
-		);
-
-		ob_start();
-		( new Decker_Admin_Settings_Fields() )->render( array( 'field' => 'ai_provider' ) );
-		$output = ob_get_clean();
-
-		$this->assertStringContainsString( 'browser_gemini_nano', $output );
-		$this->assertStringContainsString( 'gemini_api', $output );
-		$this->assertStringContainsString( "checked='checked'", $output );
-	}
-
-	/**
-	 * Test AI settings fields are registered in the dedicated AI section.
-	 */
-	public function test_settings_init_registers_ai_fields_in_ai_section() {
-		global $wp_settings_fields;
-
-		update_option( 'decker_settings', array() );
-		$wp_settings_fields = array();
-
-		$this->admin_settings->settings_init();
-
-		$this->assertArrayHasKey( 'ai_enabled', $wp_settings_fields['decker']['decker_ai_section'] );
-		$this->assertArrayHasKey( 'ai_provider', $wp_settings_fields['decker']['decker_ai_section'] );
-		$this->assertArrayHasKey( 'ai_api_key', $wp_settings_fields['decker']['decker_ai_section'] );
-		$this->assertArrayHasKey( 'ai_model', $wp_settings_fields['decker']['decker_ai_section'] );
-		$this->assertArrayHasKey( 'ai_prompt', $wp_settings_fields['decker']['decker_ai_section'] );
 	}
 
 	/**
@@ -469,11 +260,6 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 
 			$this->assertEquals( '', $validated['shared_key'] );
 			$this->assertEquals( '0', $validated['allow_email_notifications'] );
-			$this->assertEquals( '0', $validated['ai_enabled'] );
-			$this->assertEquals( Decker_AI_Manager::PROVIDER_BROWSER_GEMINI_NANO, $validated['ai_provider'] );
-			$this->assertEquals( '', $validated['ai_api_key'] );
-			$this->assertEquals( Decker_AI_Manager::DEFAULT_GEMINI_MODEL, $validated['ai_model'] );
-			$this->assertEquals( Decker::get_default_ai_prompt_template(), $validated['ai_prompt'] );
 			$this->assertEquals( 'info', $validated['alert_color'] );
 			$this->assertEquals( 'editor', $validated['minimum_user_profile'] );
 			$this->assertEquals( 'quill', $validated['task_editor_type'] );
@@ -520,11 +306,6 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 				'shared_key',
 				'allow_email_notifications',
 				'subtasks_enabled',
-				'ai_enabled',
-				'ai_provider',
-				'ai_api_key',
-				'ai_model',
-				'ai_prompt',
 				'alert_color',
 				'minimum_user_profile',
 				'task_editor_type',
@@ -536,7 +317,7 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Lock-in: unknown keys pass through untouched (only legacy openai_* are removed).
+	 * Lock-in: unknown keys pass through untouched (retired feature keys are removed).
 	 */
 	public function test_settings_validate_preserves_unknown_passthrough_keys() {
 		$input = array(
@@ -566,54 +347,6 @@ class DeckerAdminSettingsTest extends Decker_Test_Base {
 			$this->admin_settings->settings_validate( array() )['allow_email_notifications']
 		);
 	}
-
-	/**
-	 * Lock-in: a whitespace-only ai_api_key keeps the previously stored key.
-	 */
-	public function test_settings_validate_ai_api_key_whitespace_only_keeps_stored_key() {
-		update_option( 'decker_settings', array( 'ai_api_key' => 'existing-key' ) );
-
-		$validated = $this->admin_settings->settings_validate( array( 'ai_api_key' => '   ' ) );
-
-		$this->assertEquals( 'existing-key', $validated['ai_api_key'] );
-	}
-
-	/**
-	 * Lock-in: a new ai_api_key is run through Decker_AI_Manager::sanitize_api_key.
-	 */
-	public function test_settings_validate_ai_api_key_strips_whitespace_from_new_key() {
-		$validated = $this->admin_settings->settings_validate( array( 'ai_api_key' => "abc def\t123" ) );
-
-		$this->assertEquals( 'abcdef123', $validated['ai_api_key'] );
-	}
-
-	/**
-	 * Lock-in: with no stored key an empty ai_api_key falls back to '' (string).
-	 */
-	public function test_settings_validate_ai_api_key_empty_when_no_stored_key() {
-		$validated = $this->admin_settings->settings_validate( array( 'ai_api_key' => '' ) );
-
-		$this->assertSame( '', $validated['ai_api_key'] );
-	}
-
-	/**
-	 * Lock-in: a whitespace-only ai_model falls back to the default Gemini model.
-	 */
-	public function test_settings_validate_ai_model_whitespace_only_defaults() {
-		$validated = $this->admin_settings->settings_validate( array( 'ai_model' => '   ' ) );
-
-		$this->assertEquals( Decker_AI_Manager::DEFAULT_GEMINI_MODEL, $validated['ai_model'] );
-	}
-
-	/**
-	 * Lock-in: a whitespace-only ai_prompt falls back to the default template.
-	 */
-	public function test_settings_validate_ai_prompt_whitespace_only_defaults() {
-		$validated = $this->admin_settings->settings_validate( array( 'ai_prompt' => "  \n  " ) );
-
-		$this->assertEquals( Decker::get_default_ai_prompt_template(), $validated['ai_prompt'] );
-	}
-
 
 	/**
 	 * Lock-in: missing alert_color / minimum_user_profile keys take their defaults.

@@ -58,13 +58,6 @@ Subtasks are not tasks: they have no comments, attachments, history or calendar
 entry, and they are not found by search. Promote one when it needs any of that.
 See [ADR 003](adr/003-lightweight-subtasks.md) for why.
 
-## AI description improvements
-
-When enabled in settings, you can improve a task description with AI:
-
-- **Gemini Nano**: runs entirely in a compatible browser.
-- **Gemini API**: runs on the server using the saved API key.
-
 ## Calendar feeds
 
 The plugin exposes individual iCal feeds for different event types (Meeting, Absence, Warning, Alert). You can subscribe to them from any calendar client.
