@@ -1,4 +1,8 @@
 # Codecov enforces at least 90% coverage for both the project and changed lines.
+codecov:
+  notify:
+    after_n_builds: 2
+
 coverage:
   status:
     project:
@@ -28,3 +32,4 @@ comment:
   # `header` prints the project total and its change against the base, which
   # the condensed header leaves out; `flags` splits PHP and JavaScript.
   layout: "header, diff, flags, files, footer"
+  hide_project_coverage: false
