@@ -247,36 +247,8 @@ class Decker_Task_Merge {
 			);
 		}
 
-		$destination_links = get_post_meta( $destination_task_id, '_decker_attachment_link' );
-		foreach ( get_post_meta( $source_task_id, '_decker_attachment_link' ) as $url ) {
-			if ( ! in_array( $url, $destination_links, true ) ) {
-				add_post_meta( $destination_task_id, '_decker_attachment_link', wp_slash( $url ) );
-			}
-		}
-
-		self::merge_attachment_link_labels( $source_task_id, $destination_task_id );
-
-		delete_post_meta( $source_task_id, '_decker_attachment_link_labels' );
-		delete_post_meta( $source_task_id, '_decker_attachment_link' );
+		Decker_Task_Attachment_Links::merge( $source_task_id, $destination_task_id );
 		delete_post_meta( $source_task_id, 'attachments' );
-	}
-
-	/**
-	 * Merge external-link titles, preserving the destination's existing titles.
-	 *
-	 * @param int $source_task_id      Source task ID.
-	 * @param int $destination_task_id Destination task ID.
-	 */
-	private static function merge_attachment_link_labels( int $source_task_id, int $destination_task_id ) {
-		// The link titles live in a url => title map beside the links, so they
-		// travel with them; the destination's own titles win on a shared URL.
-		$source_labels      = get_post_meta( $source_task_id, '_decker_attachment_link_labels', true );
-		$destination_labels = get_post_meta( $destination_task_id, '_decker_attachment_link_labels', true );
-		$merged_labels      = ( is_array( $destination_labels ) ? $destination_labels : array() )
-			+ ( is_array( $source_labels ) ? $source_labels : array() );
-		if ( ! empty( $merged_labels ) ) {
-			update_post_meta( $destination_task_id, '_decker_attachment_link_labels', wp_slash( $merged_labels ) );
-		}
 	}
 
 	/**

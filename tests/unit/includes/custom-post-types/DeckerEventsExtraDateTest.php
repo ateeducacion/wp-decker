@@ -30,15 +30,10 @@ class DeckerEventsExtraDateTest extends Decker_Test_Base {
 		$id = self::factory()->event->create( array( 'meta_input' => array( 'event_start' => $start, 'event_end' => $end, 'event_allday' => $all_day ) ) );
 		$this->assertSame( $expected_end, get_post_meta( $id, 'event_end', true ) );
 		$data = Decker_Event_Store::resource( $id );
+		$data = preg_replace( '/DTSTAMP:\d{8}T\d{6}Z/', 'DTSTAMP:20000101T000000Z', $data );
 		Decker_Event_Store::put( $id, 'roundtrip.ics', $data );
 		$this->assertSame( $expected_end, get_post_meta( $id, 'event_end', true ) );
-		$roundtrip = Decker_Event_Store::resource( $id );
-		$this->assertMatchesRegularExpression( '/^DTSTAMP:\d{8}T\d{6}Z\r?$/m', $roundtrip );
-		// Each export regenerates DTSTAMP, so a round trip may cross a second boundary.
-		$this->assertSame(
-			preg_replace( '/^DTSTAMP:.*\r?\n/m', '', $data ),
-			preg_replace( '/^DTSTAMP:.*\r?\n/m', '', $roundtrip )
-		);
+		$this->assertSame( $data, Decker_Event_Store::resource( $id ) );
 	}
 	public function valid_dates() {
 		return array(

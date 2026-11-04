@@ -75,6 +75,9 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           use_oidc: true
+          slug: ${{ github.repository }}
+          fail_ci_if_error: true
+          plugins: noop
           files: artifacts/coverage/clover.xml
           flags: php
           # The uploader otherwise also picks up artifacts/coverage/coverage.txt,
@@ -99,6 +102,9 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           use_oidc: true
+          slug: ${{ github.repository }}
+          fail_ci_if_error: true
+          plugins: noop
           files: artifacts/coverage-js/lcov.info
           flags: javascript
           disable_search: true

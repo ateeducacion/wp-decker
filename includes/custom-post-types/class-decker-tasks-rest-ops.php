@@ -204,7 +204,7 @@ class Decker_Tasks_Rest_Ops {
 		}
 
 		$url = trim( $request->get_param( 'url' ) );
-		if ( ! $this->is_valid_attachment_url( $url ) ) {
+		if ( ! Decker_Task_Attachment_Links::is_valid_url( $url ) ) {
 			return new WP_Error( 'decker_invalid_link', __( 'Please enter a valid HTTP or HTTPS URL.', 'decker' ), array( 'status' => 400 ) );
 		}
 
@@ -222,7 +222,7 @@ class Decker_Tasks_Rest_Ops {
 		if ( ! $changed ) {
 			return new WP_Error( 'decker_link_not_saved', __( 'Could not update the attachment link.', 'decker' ), array( 'status' => 500 ) );
 		}
-		$this->store_attachment_link_label( $task_id, $url, $label );
+		Decker_Task_Attachment_Links::store_label( $task_id, $url, $label );
 
 		return new WP_REST_Response(
 			array(
@@ -231,46 +231,6 @@ class Decker_Tasks_Rest_Ops {
 			),
 			200
 		);
-	}
-
-	/**
-	 * Write a link's display title into the task's url => title map.
-	 *
-	 * The URL stays the meta value of _decker_attachment_link, so deleting a
-	 * link by value and the merge dedupe keep working untouched; an empty
-	 * title drops the entry and leaves pre-existing links rendering their URL.
-	 *
-	 * @param int    $task_id The task ID.
-	 * @param string $url     The link URL.
-	 * @param string $label   The sanitized title, empty to drop the entry.
-	 * @return void
-	 */
-	private function store_attachment_link_label( $task_id, $url, $label ) {
-		$key    = '_decker_attachment_link_labels';
-		$labels = get_post_meta( $task_id, $key, true );
-		$labels = is_array( $labels ) ? $labels : array();
-		if ( '' === $label ) {
-			if ( ! isset( $labels[ $url ] ) ) {
-				return;
-			}
-			unset( $labels[ $url ] );
-		} else {
-			$labels[ $url ] = $label;
-		}
-		update_post_meta( $task_id, $key, wp_slash( $labels ) );
-	}
-
-	/**
-	 * Validate an HTTP or HTTPS attachment URL without embedded credentials.
-	 *
-	 * @param string $url The attachment URL.
-	 * @return bool Whether the URL can be stored unchanged.
-	 */
-	private function is_valid_attachment_url( $url ) {
-		$scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
-		return in_array( $scheme, array( 'http', 'https' ), true ) && filter_var( $url, FILTER_VALIDATE_URL )
-			&& esc_url_raw( $url, array( 'http', 'https' ) ) === $url
-			&& null === wp_parse_url( $url, PHP_URL_USER ) && null === wp_parse_url( $url, PHP_URL_PASS );
 	}
 
 	/**
@@ -502,9 +462,17 @@ class Decker_Tasks_Rest_Ops {
 	 * @return bool True when the request carries anything beyond a status transition.
 	 */
 	private function writes_task_content( $request ): bool {
-		$params = preg_grep( '/^_/', array_keys( $request->get_params() ), PREG_GREP_INVERT );
+		foreach ( array_keys( $request->get_params() ) as $param ) {
+			if ( str_starts_with( (string) $param, '_' ) ) {
+				continue;
+			}
 
-		return array_diff( $params, self::CONTENTLESS_PARAMS ) !== array();
+			if ( ! in_array( $param, self::CONTENTLESS_PARAMS, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

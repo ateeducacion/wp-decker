@@ -381,32 +381,24 @@ class DeckerAbilitiesStaleWriteTest extends Decker_Test_Base {
 	 * the primary defence against concurrent editing.
 	 */
 	public function test_same_second_change_is_not_detected() {
+		global $wpdb;
 		$stale = $this->read_modified();
-
-		// A plain save, with no timestamp nudge: same second as the read.
-		wp_update_post(
+		$before = get_post( $this->task_id );
+		wp_update_post( array( 'ID' => $this->task_id, 'post_title' => 'Renamed by the colleague' ) );
+		// Pin the same-second fixture even when the real clock rolls over during CI.
+		$wpdb->update(
+			$wpdb->posts,
 			array(
-				'ID'         => $this->task_id,
-				'post_title' => 'Renamed by the colleague',
-			)
+				'post_modified' => $before->post_modified,
+				'post_modified_gmt' => $before->post_modified_gmt,
+			),
+			array( 'ID' => $this->task_id )
 		);
 		clean_post_cache( $this->task_id );
-
-		$result = $this->service->update_task(
-			array(
-				'task_id'           => $this->task_id,
-				'expected_modified' => $stale,
-				'title'             => 'Renamed by the agent',
-			)
-		);
-
-		if ( $stale === $this->read_modified() ) {
-			// Same second: the write goes through. Documented, not desired.
-			$this->assertIsArray( $result );
-		} else {
-			// The second rolled over mid-test, so the guard catches it.
-			$this->assertWPError( $result );
-		}
+		$this->assertSame( $stale, $this->read_modified() );
+		$result = $this->service->update_task( array( 'task_id' => $this->task_id, 'expected_modified' => $stale, 'title' => 'Renamed by the agent' ) );
+		$this->assertIsArray( $result );
+		$this->assertSame( 'Renamed by the agent', get_the_title( $this->task_id ) );
 	}
 
 	/**

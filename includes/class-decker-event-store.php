@@ -58,10 +58,16 @@ class Decker_Event_Store {
 			Decker_Event_Dates::reconcile( $id, $calendar );
 		}
 
-		$event->{'SUMMARY'} = $post->post_title;
-		$event->{'DESCRIPTION'} = $post->post_content;
-		$event->{'LOCATION'} = get_post_meta( $id, 'event_location', true );
-		$event->{'URL'} = get_post_meta( $id, 'event_url', true );
+		foreach ( array(
+			'SUMMARY' => $post->post_title,
+			'DESCRIPTION' => $post->post_content,
+			'LOCATION' => get_post_meta( $id, 'event_location', true ),
+			'URL' => get_post_meta( $id, 'event_url', true ),
+		) as $property => $value ) {
+			if ( (string) $event->$property !== $value ) {
+				$event->$property = $value;
+			}
+		}
 		if ( ! $data ) {
 			self::set_dates( $event, get_post_meta( $id, 'event_start', true ), get_post_meta( $id, 'event_end', true ), get_post_meta( $id, 'event_allday', true ) );
 		}

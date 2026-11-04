@@ -150,4 +150,153 @@ class DeckerDavTest extends WP_UnitTestCase {
 		Decker_Event_Store::parse( $this->data( '', "DTSTART;VALUE=DATE:20260230\r\nDTEND;VALUE=DATE:20260303" ) );
 	}
 
+	public function test_backend_rejects_another_site_collection() {
+		wp_set_current_user( $this->user );
+		$this->expectException( Sabre\DAV\Exception\Forbidden::class );
+		( new Decker_Dav_Backend() )->getCalendarObjects( get_current_blog_id() + 1 );
+	}
+
+	/** @dataProvider unsupported_collection_operations */
+	public function test_collection_structure_cannot_be_changed( $operation ) {
+		wp_set_current_user( $this->user );
+		$backend = new Decker_Dav_Backend();
+		$this->expectException( Sabre\DAV\Exception\Forbidden::class );
+		if ( 'create' === $operation ) {
+			$backend->createCalendar( 'principals/davtester', 'second', array() );
+		} else {
+			$backend->deleteCalendar( get_current_blog_id() );
+		}
+	}
+	public function unsupported_collection_operations() { return array( array( 'create' ), array( 'delete' ) ); }
+
+	public function test_duplicate_uid_and_uri_do_not_create_or_overwrite_posts() {
+		wp_set_current_user( $this->user );
+		$backend = new Decker_Dav_Backend();
+		$site = get_current_blog_id();
+		$etag = $backend->createCalendarObject( $site, 'original.ics', $this->data() );
+		foreach ( array( 'original.ics' => Sabre\DAV\Exception\PreconditionFailed::class, 'duplicate.ics' => Sabre\DAV\Exception\Conflict::class ) as $uri => $exception ) {
+			try {
+				$backend->createCalendarObject( $site, $uri, $this->data() );
+				$this->fail( 'Duplicate creation must fail.' );
+			} catch ( Sabre\DAV\Exception $error ) {
+				$this->assertInstanceOf( $exception, $error );
+			}
+		}
+		$this->assertCount( 1, $backend->getCalendarObjects( $site ) );
+		$this->assertSame( $etag, $backend->getCalendarObject( $site, 'original.ics' )['etag'] );
+	}
+
+	/** @dataProvider missing_object_operations */
+	public function test_missing_resources_cannot_be_updated_or_deleted( $operation ) {
+		wp_set_current_user( $this->user );
+		$backend = new Decker_Dav_Backend();
+		$this->expectException( Sabre\DAV\Exception\NotFound::class );
+		if ( 'update' === $operation ) {
+			$backend->updateCalendarObject( get_current_blog_id(), 'missing.ics', $this->data() );
+		} else {
+			$backend->deleteCalendarObject( get_current_blog_id(), 'missing.ics' );
+		}
+	}
+	public function missing_object_operations() { return array( array( 'update' ), array( 'delete' ) ); }
+
+	public function test_author_cannot_modify_another_authors_shared_event() {
+		$owner = self::factory()->user->create( array( 'role' => 'editor' ) );
+		wp_set_current_user( $owner );
+		$id = Decker_Event_Store::put( 0, 'shared.ics', $this->data() );
+		update_option( 'decker_settings', array( 'minimum_user_profile' => 'author' ) );
+		( new WP_User( $this->user ) )->set_role( 'author' );
+		$path = 'calendars/davtester/decker/shared.ics';
+		$this->assertSame( 200, $this->request( 'GET', $path )->getStatus() );
+		$this->assertSame( 403, $this->request( 'PUT', $path, $this->data() )->getStatus() );
+		$this->assertSame( 403, $this->request( 'DELETE', $path )->getStatus() );
+		$this->assertSame( 'publish', get_post_status( $id ) );
+	}
+
+	public function test_creation_rejects_invalid_names_and_users_without_publish_capability() {
+		wp_set_current_user( $this->user );
+		$backend = new Decker_Dav_Backend();
+		try {
+			$backend->createCalendarObject( get_current_blog_id(), '../invalid.ics', $this->data() );
+			$this->fail( 'An invalid URI must be rejected.' );
+		} catch ( Sabre\DAV\Exception\Forbidden $error ) {
+			$this->assertSame( array(), $backend->getCalendarObjects( get_current_blog_id() ) );
+		}
+		update_option( 'decker_settings', array( 'minimum_user_profile' => 'contributor' ) );
+		( new WP_User( $this->user ) )->set_role( 'contributor' );
+		wp_set_current_user( 0 );
+		wp_set_current_user( $this->user );
+		$this->expectException( Sabre\DAV\Exception\Forbidden::class );
+		$backend->createCalendarObject( get_current_blog_id(), 'valid.ics', $this->data() );
+	}
+
+	public function test_unreadable_and_undated_posts_are_not_disclosed() {
+		wp_set_current_user( $this->user );
+		$id = Decker_Event_Store::put( 0, 'restricted.ics', $this->data() );
+		self::factory()->post->create( array( 'post_type' => 'decker_event', 'post_status' => 'publish' ) );
+		$deny = static function ( $caps, $cap, $user_id, $args ) use ( $id ) {
+			return 'read_post' === $cap && (int) $args[0] === $id ? array( 'do_not_allow' ) : $caps;
+		};
+		add_filter( 'map_meta_cap', $deny, 10, 4 );
+		try {
+			$backend = new Decker_Dav_Backend();
+			$this->assertSame( array(), $backend->getCalendarObjects( get_current_blog_id() ) );
+			$this->expectException( Sabre\DAV\Exception\Forbidden::class );
+			$backend->getCalendarObject( get_current_blog_id(), 'restricted.ics' );
+		} finally {
+			remove_filter( 'map_meta_cap', $deny, 10 );
+		}
+	}
+
+	public function test_failed_trash_reports_error_and_preserves_resource() {
+		wp_set_current_user( $this->user );
+		$id = Decker_Event_Store::put( 0, 'retained.ics', $this->data() );
+		add_filter( 'pre_trash_post', '__return_false' );
+		try {
+			( new Decker_Dav_Backend() )->deleteCalendarObject( get_current_blog_id(), 'retained.ics' );
+			$this->fail( 'A failed deletion must not be reported as successful.' );
+		} catch ( Sabre\DAV\Exception\ServiceUnavailable $error ) {
+			$this->assertSame( 'publish', get_post_status( $id ) );
+		} finally {
+			remove_filter( 'pre_trash_post', '__return_false' );
+		}
+	}
+
+	public function test_uid_change_and_failed_insert_do_not_persist_client_data() {
+		wp_set_current_user( $this->user );
+		$id = Decker_Event_Store::put( 0, 'identity.ics', $this->data() );
+		$original = Decker_Event_Store::resource( $id );
+		try {
+			Decker_Event_Store::put( $id, 'identity.ics', str_replace( 'client-uid@example.test', 'different-uid', $this->data() ) );
+			$this->fail( 'UID changes must fail.' );
+		} catch ( Sabre\DAV\Exception\Conflict $error ) {
+			$this->assertSame( $original, Decker_Event_Store::resource( $id ) );
+		}
+		add_filter( 'wp_insert_post_empty_content', '__return_true' );
+		try {
+			$this->expectException( Sabre\DAV\Exception\ServiceUnavailable::class );
+			Decker_Event_Store::put( 0, 'failed.ics', $this->data() );
+		} finally {
+			remove_filter( 'wp_insert_post_empty_content', '__return_true' );
+		}
+	}
+
+	public function test_principal_discovery_does_not_expose_other_users_or_groups() {
+		wp_set_current_user( $this->user );
+		$principals = new Decker_Dav_Principals();
+		$path = 'principals/davtester';
+		$this->assertSame( $path, $principals->getPrincipalsByPrefix( 'principals' )[0]['uri'] );
+		$this->assertSame( array(), $principals->getPrincipalsByPrefix( 'other' ) );
+		$this->assertNull( $principals->getPrincipalByPath( 'principals/another' ) );
+		$this->assertSame( array(), $principals->searchPrincipals( 'principals', array( '{DAV:}displayname' => 'someone' ) ) );
+		$this->assertSame( array(), $principals->getGroupMemberSet( $path ) );
+		$this->assertSame( array(), $principals->getGroupMembership( $path ) );
+		$patch = new Sabre\DAV\PropPatch( array( '{DAV:}displayname' => 'Forbidden rename' ) );
+		$principals->updatePrincipal( $path, $patch );
+		$this->assertNotSame( 'Forbidden rename', $principals->getPrincipalByPath( $path )['{DAV:}displayname'] );
+		wp_set_current_user( 0 );
+		$this->assertSame( array(), $principals->getPrincipalsByPrefix( 'principals' ) );
+		$this->expectException( Sabre\DAV\Exception\Forbidden::class );
+		$principals->setGroupMemberSet( $path, array( 'principals/another' ) );
+	}
+
 }

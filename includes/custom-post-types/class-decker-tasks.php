@@ -356,36 +356,52 @@ class Decker_Tasks {
 	}
 
 	/**
-	 * Restrict task REST access using the shared visibility rules.
+	 * Restrict REST access to tasks, in both the generic and the Decker namespace.
 	 *
-	 * @param mixed           $result      Pre-calculated result.
-	 * @param WP_REST_Server  $rest_server REST server.
-	 * @param WP_REST_Request $request     Current request.
-	 * @return mixed Original result or an authorization error.
+	 * @param mixed           $result The pre-calculated result to return.
+	 * @param WP_REST_Server  $rest_server The REST server instance.
+	 * @param WP_REST_Request $request The current REST request.
+	 * @return mixed WP_Error if unauthorized, otherwise the original result.
 	 */
 	public function restrict_rest_access( $result, $rest_server, $request ) {
-		return Decker_Tasks_Rest_Support::restrict_rest_access( $result, $rest_server, $request );
+		return Decker_Task_Visibility::restrict_rest_access( $result, $rest_server, $request );
 	}
 
 	/**
-	 * Exclude hidden tasks from the generic REST collection.
+	 * Keep hidden tasks out of the REST collection.
 	 *
-	 * @param array           $args    Query arguments.
-	 * @param WP_REST_Request $request Current request.
-	 * @return array Restricted query arguments.
+	 * The per-task rule depends on the author, the responsible user and the
+	 * assignees, which cannot be expressed as a single SQL condition, so the
+	 * listing simply drops hidden tasks for everyone but administrators. The
+	 * people a hidden task belongs to still reach it through its own route, and
+	 * the Decker screens build their listings with their own queries rather than
+	 * this endpoint.
+	 *
+	 * The restriction is applied to the query arguments, which WP_Query includes
+	 * in its cache key, so a listing cached for one user is never replayed to
+	 * another with different visibility.
+	 *
+	 * @param array           $args    Query arguments for the collection.
+	 * @param WP_REST_Request $request The current REST request (unused).
+	 * @return array The possibly restricted arguments.
 	 */
 	public function exclude_hidden_tasks_from_rest_collection( $args, $request ) {
-		return Decker_Tasks_Rest_Support::exclude_hidden_tasks_from_rest_collection( $args, $request );
+		return Decker_Task_Visibility::exclude_hidden_tasks_from_rest_collection( $args, $request );
 	}
 
 	/**
-	 * Determine whether the current user must not see a hidden task.
+	 * Determine whether a hidden task must be concealed from the current user.
+	 *
+	 * A task flagged `hidden` stays visible to the people it concerns: its
+	 * author, the responsible user, its assignees and administrators. Everyone
+	 * else is refused, whatever capabilities they hold. A task that is not
+	 * flagged hidden is never concealed.
 	 *
 	 * @param int $task_id Task to check.
-	 * @return bool Whether access must be denied.
+	 * @return bool True when the task must be concealed.
 	 */
 	public static function is_hidden_from_current_user( $task_id ) {
-		return Decker_Tasks_Rest_Support::is_hidden_from_current_user( $task_id );
+		return Decker_Task_Visibility::is_hidden_from_current_user( $task_id );
 	}
 
 	/**
@@ -438,13 +454,12 @@ class Decker_Tasks {
 	 * @return string Stack label.
 	 */
 	public static function get_stack_label( string $stack ): string {
-		$values = array(
+		$labels = array(
 			'to-do' => __( 'To-Do', 'decker' ),
 			'in-progress' => __( 'In Progress', 'decker' ),
 			'done' => __( 'Done', 'decker' ),
 		);
-
-		return $values[ $stack ] ?? $stack;
+		return $labels[ $stack ] ?? $stack;
 	}
 
 	/**
@@ -454,13 +469,12 @@ class Decker_Tasks {
 	 * @return string Icon class list.
 	 */
 	public static function get_stack_icon_classes( string $stack ): string {
-		$values = array(
+		$icons = array(
 			'to-do' => 'ri-checkbox-blank-circle-line text-secondary',
 			'in-progress' => 'ri-progress-3-line text-warning',
 			'done' => 'ri-checkbox-circle-line text-success',
 		);
-
-		return $values[ $stack ] ?? '';
+		return $icons[ $stack ] ?? '';
 	}
 
 	/**

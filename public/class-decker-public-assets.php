@@ -335,6 +335,7 @@ class Decker_Public_Assets {
 	 */
 	private function get_ui_strings() {
 		$strings = array(
+			// Common strings.
 			'confirm_delete_comment'        => __( 'Are you sure you want to delete this comment?', 'decker' ),
 			'failed_delete_comment'         => __( 'Failed to delete comment.', 'decker' ),
 			'error_deleting_comment'        => __( 'Error deleting comment.', 'decker' ),
@@ -361,6 +362,7 @@ class Decker_Public_Assets {
 			'ok'                            => __( 'OK', 'decker' ),
 			'cancel'                        => __( 'Cancel', 'decker' ),
 			'yes_delete'                    => __( 'Yes, delete', 'decker' ),
+			// Additional strings (from first version).
 			'confirm_archive_task_title'    => __( 'Are you sure you want to archive this task?', 'decker' ),
 			'confirm_archive_task_text'     => __( 'This action will move the task to the archive.', 'decker' ),
 			'confirm_unarchive_task_title'  => __( 'Are you sure you want to unarchive this task?', 'decker' ),
@@ -392,6 +394,7 @@ class Decker_Public_Assets {
 			'confirm_merge_task_button'     => __( 'Merge task', 'decker' ),
 			'task_merged_success'           => __( 'The task has been successfully merged.', 'decker' ),
 			'error_merging_task'            => __( 'An error occurred while merging the task.', 'decker' ),
+			// Extra keys from first version.
 			'success'                       => __( 'Success', 'decker' ),
 			'error'                         => __( 'Error', 'decker' ),
 			'today'                         => __( 'Today', 'decker' ),
@@ -421,6 +424,18 @@ class Decker_Public_Assets {
 			'lock_lost_message'             => __( 'You can no longer save this card because another user has taken over editing. Please reload the card to see the latest changes.', 'decker' ),
 			'lock_takeover_failed'          => __( 'The card could not be taken over. Please reload and try again.', 'decker' ),
 			'reload_card'                   => __( 'Reload card', 'decker' ),
+		);
+
+		return array_merge( $strings, $this->get_today_strings(), $this->get_subtask_strings() );
+	}
+
+	/**
+	 * Labels for the content-free "For today" quick action.
+	 *
+	 * @return array<string, string> Localized strings.
+	 */
+	private function get_today_strings() {
+		return array(
 			// "For today" quick-action strings.
 			'add_to_today'                  => __( 'Add to today', 'decker' ),
 			'remove_from_today'             => __( 'Remove from today', 'decker' ),
@@ -428,8 +443,6 @@ class Decker_Public_Assets {
 			'removing_from_today'           => __( 'Removing from today…', 'decker' ),
 			'today_update_failed'           => __( 'The task could not be updated.', 'decker' ),
 		);
-
-		return array_merge( $strings, $this->get_subtask_strings() );
 	}
 
 	/**
