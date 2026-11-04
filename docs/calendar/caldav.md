@@ -55,6 +55,28 @@ Never place the DAV token in a URL. The ICS URL has a separate read-only secret.
   discover and enable **Decker**, then enable calendar synchronization. Select
   **Decker** in a compatible calendar app when creating events.
 
+Once the token is enabled, the profile also offers one-tap setup. Neither shortcut
+contains the token; the user pastes it as the password.
+
+- Android: **Set up in DAVx⁵** opens a `davx5://login@host/path/` link that DAVx⁵
+  turns into a prefilled `https://` login. The same link is shown as a QR code
+  (generated in the browser with `qrcode-generator` 2.0.4 from jsDelivr, like the
+  other front-end libraries) for scanning from a computer screen with a scanner app
+  such as Binary Eye. Android, Google Calendar and Samsung Calendar have no built-in
+  CalDAV accounts: DAVx⁵ writes to the Android calendar storage, so the Google or
+  OEM calendar app shows **Decker** after enabling the DAVx⁵ account in that app
+  (Google Calendar: Settings → Manage accounts). Exclude DAVx⁵ from battery
+  optimization, or local changes can take minutes to upload.
+- iPhone/iPad: **Download configuration profile** serves an unsigned
+  `com.apple.caldav.account` profile through the nonce-protected
+  `decker_caldav_profile` AJAX action (profile owner or `edit_user`, DAV enabled).
+  It sets host, port, SSL, username and principal URL and omits the password, so
+  iOS asks for the token on install. Stable payload UUIDs let a reinstall replace
+  the account. iOS labels unsigned profiles as unverified.
+
+Google Calendar API sync and hosted CalDAV↔Google bridges were rejected: they would
+make Google or a third party part of the storage path.
+
 The exact settings labels vary by OS version. Do not add the ICS subscription for
 editable synchronization, or subscribe twice to the same data.
 

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2024-08-08T12:46:52+00:00\n"
-"PO-Revision-Date: 2026-11-04T11:33:41+00:00\n"
+"PO-Revision-Date: 2026-11-04T18:52:49+00:00\n"
 "Language: es\n"
 "X-Generator: Poedit 2.4.2\n"
 "X-Domain: decker\n"
@@ -287,6 +287,9 @@ msgstr "No tienes permisos para acceder a estos datos."
 
 msgid "Unable to expand calendar in this interval."
 msgstr "No se puede expandir el calendario en este intervalo."
+
+msgid "Decker calendar"
+msgstr "Calendario de Decker"
 
 msgid "Warning"
 msgstr "Advertencia"
@@ -978,6 +981,27 @@ msgstr "iPhone: añade una cuenta CalDAV en los ajustes de Calendario. Android: 
 
 msgid "ICS subscription (read only)"
 msgstr "Suscripción ICS (solo lectura)"
+
+msgid "Android (DAVx⁵)"
+msgstr "Android (DAVx⁵)"
+
+msgid "Set up in DAVx⁵"
+msgstr "Configurar en DAVx⁵"
+
+msgid "On the phone, tap the button. From a computer, scan the QR code with a QR scanner app such as Binary Eye. DAVx⁵ opens with the server and username filled in; paste the token as the password."
+msgstr "En el móvil, pulsa el botón. Desde un ordenador, escanea el código QR con una app lectora de QR como Binary Eye. DAVx⁵ se abre con el servidor y el usuario ya rellenos; pega el token como contraseña."
+
+msgid "To use Google Calendar or the phone's calendar app, enable the DAVx⁵ account in that app (in Google Calendar: Settings → Manage accounts). Exclude DAVx⁵ from battery optimization so changes made on the phone upload promptly."
+msgstr "Para usar Google Calendar o la app de calendario del móvil, activa la cuenta de DAVx⁵ en esa app (en Google Calendar: Ajustes → Gestionar cuentas). Excluye DAVx⁵ de la optimización de batería para que los cambios hechos en el móvil se suban enseguida."
+
+msgid "iPhone and iPad"
+msgstr "iPhone y iPad"
+
+msgid "Download configuration profile"
+msgstr "Descargar perfil de configuración"
+
+msgid "Open this page in Safari on the device, download the profile and install it from Settings → Profile Downloaded. Enter the token when asked for the password. The profile is not signed, so iOS marks it as unverified."
+msgstr "Abre esta página en Safari en el dispositivo, descarga el perfil e instálalo desde Ajustes → Perfil descargado. Introduce el token cuando te pida la contraseña. El perfil no está firmado, así que iOS lo marca como no verificado."
 
 msgid "Select your favorite color."
 msgstr "Selecciona tu color favorito."

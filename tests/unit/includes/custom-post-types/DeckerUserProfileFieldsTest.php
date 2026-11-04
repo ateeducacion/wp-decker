@@ -129,6 +129,21 @@ class DeckerUserProfileFieldsTest extends Decker_Test_Base {
 	}
 
 	/**
+	 * Device setup shortcuts appear only with an enabled token and never embed it.
+	 */
+	public function test_renders_device_setup_without_the_token() {
+		$html = $this->render();
+		$this->assertStringContainsString( 'href="davx5://', $html );
+		$this->assertStringContainsString( 'data-decker-qr="davx5://', $html );
+		$this->assertStringContainsString( 'action=decker_caldav_profile', $html );
+		$this->assertStringContainsString( 'Manage accounts', $html );
+		$this->assertSame( 1, substr_count( $html, 'fixed-token' ), 'Only the token field shows the secret.' );
+
+		update_user_meta( $this->user->ID, 'decker_calendar_dav_enabled', false );
+		$this->assertStringNotContainsString( 'davx5://', $this->render() );
+	}
+
+	/**
 	 * The colour picker row is rendered with the stored colour.
 	 */
 	public function test_renders_color_row() {

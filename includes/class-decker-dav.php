@@ -83,6 +83,55 @@ class Decker_Dav {
 	 */
 	public static function url() {
 		return home_url( '/decker-dav/' ); }
+	/** DAVx⁵ setup link with server and login prefilled; never the token.
+	 *
+	 * @param string $login WordPress username.
+	 * @return string
+	 */
+	public static function davx5_url( $login ) {
+		$parts = wp_parse_url( self::url() );
+		$host = $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
+		return 'davx5://' . rawurlencode( $login ) . '@' . $host . $parts['path'];
+	}
+	/** Unsigned Apple configuration profile for one CalDAV account.
+	 *
+	 * The password is omitted on purpose: iOS asks for the token on install.
+	 *
+	 * @param WP_User $user Account owner.
+	 * @return string Property list XML.
+	 */
+	public static function apple_profile( $user ) {
+		$parts = wp_parse_url( self::url() );
+		$seed = md5( self::url() . '|' . $user->ID );
+		$uuid = static function ( $salt ) use ( $seed ) {
+			$hex = md5( $seed . $salt );
+			return strtoupper( substr( $hex, 0, 8 ) . '-' . substr( $hex, 8, 4 ) . '-' . substr( $hex, 12, 4 ) . '-' . substr( $hex, 16, 4 ) . '-' . substr( $hex, 20, 12 ) );
+		};
+		$id = implode( '.', array_reverse( explode( '.', $parts['host'] ) ) ) . '.decker.caldav.' . $user->ID;
+		$name = esc_xml( __( 'Decker calendar', 'decker' ) );
+		return '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+			. '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' . "\n"
+			. '<plist version="1.0"><dict><key>PayloadContent</key><array><dict>'
+			. '<key>CalDAVAccountDescription</key><string>' . $name . '</string>'
+			. '<key>CalDAVHostName</key><string>' . esc_xml( $parts['host'] ) . '</string>'
+			. '<key>CalDAVPort</key><integer>' . ( isset( $parts['port'] ) ? (int) $parts['port'] : 443 ) . '</integer>'
+			. '<key>CalDAVPrincipalURL</key><string>' . esc_xml( self::url() . 'principals/' . rawurlencode( $user->user_login ) . '/' ) . '</string>'
+			. '<key>CalDAVUseSSL</key><true/>'
+			. '<key>CalDAVUsername</key><string>' . esc_xml( $user->user_login ) . '</string>'
+			. '<key>PayloadDisplayName</key><string>' . $name . '</string>'
+			. '<key>PayloadIdentifier</key><string>' . esc_xml( $id ) . '.account</string>'
+			. '<key>PayloadType</key><string>com.apple.caldav.account</string>'
+			. '<key>PayloadUUID</key><string>' . $uuid( 'account' ) . '</string>'
+			. '<key>PayloadVersion</key><integer>1</integer>'
+			. '</dict></array>'
+			. '<key>PayloadDisplayName</key><string>' . $name . '</string>'
+			. '<key>PayloadIdentifier</key><string>' . esc_xml( $id ) . '</string>'
+			. '<key>PayloadRemovalDisallowed</key><false/>'
+			. '<key>PayloadType</key><string>Configuration</string>'
+			. '<key>PayloadUUID</key><string>' . $uuid( 'profile' ) . '</string>'
+			. '<key>PayloadVersion</key><integer>1</integer>'
+			. '</dict></plist>' . "\n";
+	}
 	/** Migrate inclusive all-day ends exactly once per post and site. */
 	public static function migrate() {
 		if ( get_option( 'decker_calendar_dates_v2' ) ) {
