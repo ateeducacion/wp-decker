@@ -11,14 +11,13 @@ It provides a Kanban board interface with a unique priority system for managing 
 - One-way import from Nextcloud Deck via API
 - AI description improvements (Gemini Nano in browser or Gemini API server-side)
 - Individual calendar feeds (Meeting, Absence, Warning, Alert)
-- Collaborative editing (optional, WebRTC)
 - Multisite compatible
 - Email-to-post endpoint
 
 ## Quick start
 
 1. Install and activate the plugin.
-2. Go to **Settings → Decker** to configure AI, notifications, collaborative editing, etc.
+2. Go to **Settings → Decker** to configure AI, notifications, etc.
 3. Use the board interface to create and manage tasks.
 
 ## Try it online

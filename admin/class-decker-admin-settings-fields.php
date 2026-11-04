@@ -94,21 +94,6 @@ class Decker_Admin_Settings_Fields {
 		echo '<p class="description">' . esc_html__( 'This setting allows users to manage email notifications in their profile. By default, all notifications are enabled.', 'decker' ) . '</p>';
 	}
 
-	/**
-	 * Render Collaborative Editing Field.
-	 *
-	 * Outputs the HTML for the collaborative_editing field.
-	 */
-	private function collaborative_editing_render() {
-		$options = get_option( 'decker_settings', array() );
-		$checked = isset( $options['collaborative_editing'] ) && '1' === $options['collaborative_editing'];
-
-		echo '<label>';
-		echo '<input type="checkbox" name="decker_settings[collaborative_editing]" value="1" ' . checked( $checked, true, false ) . '>';
-		echo esc_html__( 'Enable real-time collaborative editing for tasks.', 'decker' );
-		echo '</label>';
-		echo '<p class="description">' . esc_html__( 'When enabled, multiple users can edit the same task simultaneously with real-time synchronization using WebRTC.', 'decker' ) . '</p>';
-	}
 
 	/**
 	 * Render Subtasks Field.
@@ -123,18 +108,6 @@ class Decker_Admin_Settings_Fields {
 		echo '<p class="description">' . esc_html__( 'Adds a Subtasks tab to every task, where a task can be broken down into steps with their own state, assignee and due date. The card shows how many are done. Turning this off hides the tab and the counter; the stored subtasks are kept.', 'decker' ) . '</p>';
 	}
 
-	/**
-	 * Render Board Status Indicators Field.
-	 *
-	 * Outputs the HTML for the sidebar_board_status field.
-	 */
-	private function sidebar_board_status_render() {
-		echo '<label for="sidebar-board-status-check">';
-		echo '<input type="checkbox" id="sidebar-board-status-check" name="decker_settings[sidebar_board_status]" value="1" ' . checked( Decker::show_board_status_indicators(), true, false ) . ' aria-describedby="sidebar-board-status-description"> ';
-		echo esc_html__( 'Show board status indicators', 'decker' );
-		echo '</label>';
-		echo '<p class="description" id="sidebar-board-status-description">' . esc_html__( 'Shows the to-do and in-progress counts next to every board in the sidebar, for all users of this site.', 'decker' ) . '</p>';
-	}
 
 	/**
 	 * Render AI Enabled Field.
@@ -236,24 +209,6 @@ class Decker_Admin_Settings_Fields {
 		echo '<p class="description">' . esc_html__( 'Customize the base prompt used for AI improvements. For smaller nano-class models, it usually works better to write this base prompt in English and let the model translate the final result into the WordPress language. Available placeholders: {{mode_instruction}}, {{task_context}}, {{content_html}}, {{language_instruction}}, {{response_format}}.', 'decker' ) . '</p>';
 	}
 
-	/**
-	 * Render Signaling Server Field.
-	 *
-	 * Outputs the HTML for the signaling_server field.
-	 */
-	private function signaling_server_render() {
-		$options = get_option( 'decker_settings', array() );
-		$value   = isset( $options['signaling_server'] ) ? sanitize_text_field( $options['signaling_server'] ) : 'wss://signaling.yjs.dev';
-
-		echo '<input type="url" name="decker_settings[signaling_server]" class="regular-text" value="' . esc_attr( $value ) . '" placeholder="wss://signaling.yjs.dev">';
-		echo '<p class="description">' . esc_html__( 'WebRTC signaling server URL for collaborative editing. Leave empty to use the default public server (wss://signaling.yjs.dev).', 'decker' ) . '</p>';
-		echo '<p class="description"><strong>' . esc_html__( 'Public servers:', 'decker' ) . '</strong></p>';
-		echo '<ul class="description" style="list-style: disc; margin-left: 20px;">';
-		echo '<li><code>wss://signaling.yjs.dev</code> ' . esc_html__( '(Default - Global)', 'decker' ) . '</li>';
-		echo '<li><code>wss://y-webrtc-signaling-eu.herokuapp.com</code> ' . esc_html__( '(Europe)', 'decker' ) . '</li>';
-		echo '<li><code>wss://y-webrtc-signaling-us.herokuapp.com</code> ' . esc_html__( '(United States)', 'decker' ) . '</li>';
-		echo '</ul>';
-	}
 
 	/**
 	 * Render User Profile Field.
@@ -358,7 +313,7 @@ class Decker_Admin_Settings_Fields {
 			echo '</label>';
 		}
 
-		echo '<p class="description">' . esc_html__( 'Choose which editor to use for task descriptions. Collaborative editing always uses Quill.', 'decker' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Choose which editor to use for task descriptions.', 'decker' ) . '</p>';
 	}
 
 	/**

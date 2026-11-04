@@ -69,9 +69,11 @@ When enabled in settings, you can improve a task description with AI:
 
 The plugin exposes individual iCal feeds for different event types (Meeting, Absence, Warning, Alert). You can subscribe to them from any calendar client.
 
-## Collaborative editing
+## Editing protection
 
-If enabled, multiple users can edit the same task at the same time using WebRTC.
+Opening a task for editing acquires an edit lock. Another user can explicitly
+take over; older forms are then rejected on save and must be reloaded. Real-time
+collaborative editing is no longer available.
 
 ## Email to post
 

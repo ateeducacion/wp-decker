@@ -101,8 +101,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	  });
 	}
 
-
-
   });
 
 function archiveTaskHandler(event) {
@@ -138,11 +136,6 @@ function archiveTaskHandler(event) {
 			})
 			.then(data => {
 				if (data.status === newStatus) {
-					// Sync archived state to other collaborative users
-					if (!isArchived && typeof window.setTaskArchivedCollab === 'function') {
-						window.setTaskArchivedCollab(true);
-					}
-
 					Swal.fire({
 						title: deckerVars.strings.success,
 						text: isArchived ? deckerVars.strings.task_unarchived_success : deckerVars.strings.task_archived_success,

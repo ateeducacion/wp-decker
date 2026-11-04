@@ -95,8 +95,8 @@ of plausibility, not as frequencies.
 
 If any of these is ever observed in practice — even once — the first
 escalation is **not** a lease: it is `GET_LOCK`/`SELECT ... FOR UPDATE`
-around the save endpoint, or moving the team to the collaborative-editing
-mode (CRDT) that already ships in Decker and stands the lock down entirely.
+around the save endpoint. Real-time collaborative editing has been retired;
+edit locking is always active.
 
 Note for whoever reaches for `GET_LOCK`: it is connection-scoped. That is
 fine in production under PHP-FPM, where each request gets its own connection,
