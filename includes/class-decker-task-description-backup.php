@@ -20,16 +20,29 @@ class Decker_Task_Description_Backup {
 		// Verify persisted storage rather than trusting add_option's cached value.
 		wp_cache_delete( self::key( $id ), 'options' );
 		$backup = get_option( self::key( $id ), false );
-		$site_id = get_current_blog_id();
-		if ( ! is_array( $backup ) || 1 !== ( $backup['version'] ?? null ) || ( $backup['site_id'] ?? null ) !== $site_id || ( $backup['task_id'] ?? null ) !== $id || ! is_string( $backup['content_base64'] ?? null ) || ! is_int( $backup['bytes'] ?? null ) || ! is_string( $backup['sha256'] ?? null ) ) {
+		if ( ! is_array( $backup ) ) {
 			throw new RuntimeException( 'Missing or invalid description backup.' );
 		}
+		self::validate_header( $backup, $id );
 		$content = base64_decode( $backup['content_base64'], true );
 		if ( false === $content || strlen( $content ) !== $backup['bytes'] || ! hash_equals( $backup['sha256'], hash( 'sha256', $content ) ) ) {
 			throw new RuntimeException( 'Description backup verification failed.' );
 		}
 		$backup['content'] = $content;
 		return $backup;
+	}
+
+	/**
+	 * Validate site/task ownership and field types before decoding any content.
+	 *
+	 * @param array $backup Stored backup.
+	 * @param int   $id Expected task ID.
+	 * @throws RuntimeException When identity or storage types do not match.
+	 */
+	private static function validate_header( array $backup, int $id ): void {
+		if ( 1 !== ( $backup['version'] ?? null ) || ( $backup['site_id'] ?? null ) !== get_current_blog_id() || ( $backup['task_id'] ?? null ) !== $id || ! is_string( $backup['content_base64'] ?? null ) || ! is_int( $backup['bytes'] ?? null ) || ! is_string( $backup['sha256'] ?? null ) ) {
+			throw new RuntimeException( 'Missing or invalid description backup.' );
+		}
 	}
 
 	/**

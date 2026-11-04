@@ -298,12 +298,11 @@ class DeckerTaskDescriptionMigrationTest extends Decker_Test_Base {
 	}
 
 	public function test_css_comparison_preserves_whitespace_inside_values() {
-		$compare = new ReflectionMethod( Decker_Task_Description_Migration::class, 'same_safe_html' );
 		$a = '<p style="font-family:&quot;Semi; Colon&quot;; color:red;">Text</p>';
 		$b = '<p style="font-family:&quot;Semi; Colon&quot;;color:red">Text</p>';
-		$this->assertTrue( $compare->invoke( null, $a, $b ) );
-		$this->assertFalse( $compare->invoke( null, $a, str_replace( 'Semi; Colon', 'Semi;Colon', $b ) ) );
-		$this->assertFalse( $compare->invoke( null, $a, '<p style="color:red">Text</p>' ) );
+		$this->assertTrue( Decker_Task_Description_Html::same_safe_html( $a, $b ) );
+		$this->assertFalse( Decker_Task_Description_Html::same_safe_html( $a, str_replace( 'Semi; Colon', 'Semi;Colon', $b ) ) );
+		$this->assertFalse( Decker_Task_Description_Html::same_safe_html( $a, '<p style="color:red">Text</p>' ) );
 	}
 
 	public function test_missing_slug_and_guid_do_not_gain_wordpress_defaults() {

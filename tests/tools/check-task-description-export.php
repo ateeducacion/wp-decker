@@ -19,11 +19,20 @@ $report = array( 'total' => 0, 'changed' => 0, 'unchanged' => 0, 'verified_items
 if ( isset( $argv[2] ) ) {
 	if ( ! $core_root || ! is_file( $core_root . '/wp-includes/version.php' ) ) exit( 1 );
 	define( 'WPINC', 'wp-includes' );
-	// Definitions only: no wp-load.php, wp-config.php, plugins, database or hooks.
+	// No wp-load.php, wp-config.php, site hooks or database connection.
+	foreach ( array( 'compat-utf8.php', 'compat.php', 'utf8.php' ) as $library ) {
+		if ( is_file( ABSPATH . WPINC . '/' . $library ) ) require_once ABSPATH . WPINC . '/' . $library;
+	}
 	foreach ( array( 'plugin.php', 'functions.php', 'formatting.php', 'http.php', 'kses.php', 'version.php' ) as $library ) require_once ABSPATH . WPINC . '/' . $library;
+	// The export is UTF-8; recent KSES calls esc_url(), which reads this option.
+	add_filter( 'pre_option_blog_charset', static fn () => 'UTF-8' );
+	// Recent KSES versions use the HTML API; load definitions only when available.
+	if ( is_file( ABSPATH . WPINC . '/class-wp-token-map.php' ) ) require_once ABSPATH . WPINC . '/class-wp-token-map.php';
+	foreach ( array( 'html5-named-character-references.php', 'class-wp-html-attribute-token.php', 'class-wp-html-span.php', 'class-wp-html-doctype-info.php', 'class-wp-html-text-replacement.php', 'class-wp-html-decoder.php', 'class-wp-html-tag-processor.php' ) as $library ) {
+		$path = ABSPATH . WPINC . '/html-api/' . $library;
+		if ( is_file( $path ) ) require_once $path;
+	}
 	require $plugin_root . '/includes/class-decker.php';
-	require $plugin_root . '/includes/class-decker-task-description-migration.php';
-	$policy_comparison = new ReflectionMethod( Decker_Task_Description_Migration::class, 'same_safe_html' );
 	$report['policy_wordpress'] = $wp_version;
 	$report['policy_php'] = PHP_VERSION;
 	$report['policy_normalized'] = 0;
@@ -52,9 +61,9 @@ foreach ( $xml->channel->item as $item ) {
 		if ( ! Decker_Description_Snapshot::preserves_inline_styles( $input, $output ) ) {
 			throw new UnexpectedValueException( 'Existing inline CSS was lost.' );
 		}
-		if ( isset( $policy_comparison ) ) {
+		if ( $core_root ) {
 			$safe = wp_kses( $output, Decker::get_allowed_tags() );
-			if ( ! $policy_comparison->invoke( null, $output, $safe ) ) throw new UnexpectedValueException( 'WordPress post policy would discard historical content; review required.' );
+			if ( ! Decker_Task_Description_Html::same_safe_html( $output, $safe ) ) throw new UnexpectedValueException( 'WordPress post policy would discard historical content; review required.' );
 			if ( $safe !== $output ) ++$report['policy_normalized'];
 		}
 		$report['verified_items'] += count( $before );

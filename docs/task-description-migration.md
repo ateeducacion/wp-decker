@@ -263,6 +263,29 @@ new PHP/WordPress minimum. `pre_wp_unique_post_slug` (available since WordPress
 5.1) is temporarily scoped to content writes so core cannot fill a historically
 empty slug after the data filter has run.
 
+## Implementation responsibilities
+
+The converter remains the single conversion entry point. Its permanent helpers
+separate list structure/numbering (`class-decker-task-description-lists.php`),
+presentation/code lines (`class-decker-task-description-format.php`) and HTML
+serialization/preservation checks (`class-decker-task-description-html.php`).
+They use no site bootstrap or database connection.
+
+The temporary migration class orchestrates site enumeration and executor locking.
+Its `migration-task`, `migration-restore` and `migration-state` helpers separate
+per-task commit/recovery, exact restoration and verified bookkeeping. Public
+`run()`, `verify()`, `restore()`, `fingerprint()` and `state_key()` contracts and
+all stored option identifiers remain unchanged. These temporary helpers retire
+with the executor; the permanent converter/editor support and backups remain.
+
+The PHPMD review follow-up retains the existing rules and thresholds. Local
+`codesize` and `design` checks report no findings for the description classes.
+All 3,854 converted corpus outputs are byte-identical to the pre-refactor outputs;
+CSS equivalence tests additionally cover escaped quotes/semicolons, function
+parentheses, Unicode and unfinished values. The offline corpus checker loads
+recent core HTML/UTF-8 definitions when present and supplies the export's UTF-8
+charset through an option short-circuit, without loading a site or its database.
+
 ## Local validation recorded on 2026-11-04
 
 The implementation branch is `feature/classic-task-descriptions`, based on
