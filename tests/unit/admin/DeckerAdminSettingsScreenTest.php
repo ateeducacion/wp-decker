@@ -121,7 +121,6 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 			'alert message'       => array( 'alert_message' ),
 			'alert color'         => array( 'alert_color' ),
 			'ignored users'       => array( 'ignored_users' ),
-			'task editor'         => array( 'task_editor_type' ),
 		);
 	}
 
@@ -146,7 +145,7 @@ class DeckerAdminSettingsScreenTest extends Decker_Test_Base {
 
 		// The stored radio choices come back checked.
 		$this->assertMatchesRegularExpression( '/value="warning"\s+checked=/', $html );
-		$this->assertMatchesRegularExpression( '/value="classic"\s+checked=/', $html );
+		$this->assertStringNotContainsString( 'name="decker_settings[task_editor_type]"', $html );
 	}
 
 	/**

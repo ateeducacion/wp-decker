@@ -116,7 +116,6 @@ describe( 'task-card lock UI', () => {
 		disableEditingControls = compile( 'disableEditingControls', {
 			assigneesSelect: null,
 			labelsSelect: null,
-			quill: null,
 			taskEditor: null,
 		} );
 		global.alert = vi.fn();

@@ -82,7 +82,8 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 			$data = wp_scripts()->get_data( 'task-card', 'data' );
 			$this->assertStringNotContainsString( '"ai":', $data );
 			$this->assertStringNotContainsString( 'retired-api-key', $data );
-			$this->assertStringContainsString( '"task_editor_type":"quill"', $data );
+			$this->assertStringNotContainsString( '"task_editor_type":', $data );
+			$this->assertContains( 'tinymce-checklist', wp_scripts()->queue );
 		}
 	}
 
@@ -207,7 +208,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 	}
 
 	/**
-	 * Selecting Quill loads the Quill bundle and not the classic editor shim.
+	 * A legacy Quill setting loads only the classic editor assets.
 	 */
 	public function test_quill_editor_assets() {
 		$this->enqueue_for( 'task', 'quill' );
@@ -215,13 +216,13 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 		$scripts = wp_scripts()->queue;
 		$styles  = wp_styles()->queue;
 
-		$this->assertContains( 'quill-min', $scripts );
-		$this->assertContains( 'quill-htmleditbutton-min', $scripts );
+		$this->assertNotContains( 'quill-min', $scripts );
+		$this->assertNotContains( 'quill-htmleditbutton-min', $scripts );
 		$this->assertNotContains( 'quill-cursors-min', $scripts );
-		$this->assertContains( 'quill-snow-min', $styles );
+		$this->assertNotContains( 'quill-snow-min', $styles );
 		$this->assertNotContains( 'quill-cursors', $styles );
 
-		$this->assertNotContains( 'tinymce-checklist', $scripts );
+		$this->assertContains( 'tinymce-checklist', $scripts );
 	}
 
 	/**
@@ -344,10 +345,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'nonces',
 				'strings',
 				'timeFormat24h',
-				'disabled',
 				'current_user_id',
-				'task_editor_type',
-				'use_quill_editor',
 				'users',
 				'locale',
 				'taskPermalinkStructure',
@@ -391,9 +389,6 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'request_error',
 				'error_saving_task',
 				'task_saved_success',
-				'show_html_source',
-				'edit_html_content',
-				'ok',
 				'cancel',
 				'yes_delete',
 				'confirm_archive_task_title',
@@ -439,6 +434,7 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 				'task_url_copied',
 				'task_url_copy_error',
 				'copy_task_url',
+				'toggle_checklist_item',
 				'checklist',
 				'loading_comments',
 				'no_comments',
@@ -495,13 +491,13 @@ class DeckerPublicAssetsTest extends Decker_Test_Base {
 	public function test_decker_vars_reports_editor_selection() {
 		$this->enqueue_for( 'task', 'quill' );
 		$vars = $this->get_localized_data( 'task-card', 'deckerVars' );
-		$this->assertSame( 'quill', $vars['task_editor_type'] );
-		$this->assertSame( '1', $vars['use_quill_editor'] );
+		$this->assertArrayNotHasKey( 'task_editor_type', $vars );
+		$this->assertArrayNotHasKey( 'use_quill_editor', $vars );
 
 		$this->enqueue_for( 'task', 'tinymce' );
 		$vars = $this->get_localized_data( 'task-card', 'deckerVars' );
-		$this->assertSame( 'tinymce', $vars['task_editor_type'] );
-		$this->assertSame( '', $vars['use_quill_editor'] );
+		$this->assertArrayNotHasKey( 'task_editor_type', $vars );
+		$this->assertArrayNotHasKey( 'use_quill_editor', $vars );
 	}
 
 	/**

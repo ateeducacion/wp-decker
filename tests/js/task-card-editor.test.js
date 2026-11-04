@@ -75,7 +75,6 @@ describe( 'getTaskDescription', () => {
 	test( 'prefers wp.editor.getContent so Text-tab edits are never lost', () => {
 		const getContent = vi.fn( () => 'from wp.editor' );
 		const getTaskDescription = instantiate( 'getTaskDescription', {
-			quill: null,
 			taskEditor: { getContent: () => 'stale tinymce buffer' },
 			wp: { editor: { getContent } },
 			tinyMCE: undefined,
@@ -89,7 +88,6 @@ describe( 'getTaskDescription', () => {
 
 	test( 'falls back to the textarea when wp.editor.getContent is unavailable', () => {
 		const getTaskDescription = instantiate( 'getTaskDescription', {
-			quill: null,
 			taskEditor: null,
 			wp: { editor: {} },
 			tinyMCE: undefined,
@@ -128,7 +126,7 @@ describe( 'initializeTaskEditor', () => {
 	let enterDirtyEditMode;
 	let context;
 
-	function build( readOnly ) {
+	function build( readOnly, fail = false ) {
 		capturedConfig = null;
 		enterDirtyEditMode = vi.fn();
 		document.body.innerHTML = '<form id="f"><textarea id="task-description">hola</textarea></form>';
@@ -140,6 +138,7 @@ describe( 'initializeTaskEditor', () => {
 				editor: {
 					initialize: ( id, config ) => {
 						capturedConfig = config;
+						if ( fail ) throw new Error( 'Simulated initialization failure' );
 					},
 				},
 			},
@@ -168,6 +167,8 @@ describe( 'initializeTaskEditor', () => {
 	test( 'stays editable by default', () => {
 		build( false );
 
+		expect( capturedConfig.tinymce.wpautop ).toBe( false );
+		expect( capturedConfig.tinymce.extended_valid_elements ).toContain( '#li[data-list|' );
 		expect( capturedConfig.tinymce.readonly ).toBe( false );
 		expect( capturedConfig.quicktags ).toBe( true );
 		expect( capturedConfig.mediaButtons ).toBe( true );
@@ -181,6 +182,21 @@ describe( 'initializeTaskEditor', () => {
 		textarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 
 		expect( enterDirtyEditMode ).toHaveBeenCalledWith( context );
+	} );
+
+	test( 'initialization failure retains dirty tracking until the card is closed', async () => {
+		const logger = vi.spyOn( console, 'error' ).mockImplementation( () => {} );
+		try {
+			await build( false, true );
+			const textarea = document.getElementById( 'task-description' );
+			textarea.value = 'Fallback edit';
+			textarea.dispatchEvent( new Event( 'input' ) );
+			expect( enterDirtyEditMode ).toHaveBeenCalledWith( context );
+			enterDirtyEditMode.mockClear();
+			instantiate( 'destroyTaskEditor', { taskEditor: null, wp: { editor: { remove: vi.fn() } } } )();
+			textarea.dispatchEvent( new Event( 'input' ) );
+			expect( enterDirtyEditMode ).not.toHaveBeenCalled();
+		} finally { logger.mockRestore(); }
 	} );
 
 	test( 'programmatic changes on a read-only textarea never mark the card dirty', () => {
@@ -220,7 +236,6 @@ describe( 'initializeTaskEditor', () => {
 		const disableEditingControls = instantiate( 'disableEditingControls', {
 			assigneesSelect: null,
 			labelsSelect: null,
-			quill: null,
 			taskEditor: null,
 		} );
 
@@ -231,16 +246,19 @@ describe( 'initializeTaskEditor', () => {
 		} );
 	} );
 
-	test( 'init callback survives an early destroy (uses the local editor)', async () => {
+	test( 'destroy really cancels an unfinished init and removes the late instance', async () => {
 		const promise = build( false );
 		const fake = createFakeEditor();
+		fake.editor.remove = vi.fn();
 
 		capturedConfig.tinymce.setup( fake.editor );
-
-		// Simulate the modal closing before init: the module-level reference
-		// is nulled by destroyTaskEditor. The init callback must not throw.
+		const remove = vi.fn();
+		const destroy = instantiate( 'destroyTaskEditor', { taskEditor: fake.editor, wp: { editor: { remove } } } );
+		destroy();
 		expect( () => fake.emit( 'init' ) ).not.toThrow();
-		expect( fake.editor.initialized ).toBe( true );
+		expect( remove ).toHaveBeenCalledWith( 'task-description' );
+		expect( fake.editor.remove ).toHaveBeenCalled();
+		expect( fake.editor.initialized ).not.toBe( true );
 		await promise;
 	} );
 } );

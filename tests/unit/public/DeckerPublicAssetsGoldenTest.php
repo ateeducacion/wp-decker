@@ -105,7 +105,7 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 	 * @return array<string, array{0:string,1:string,2:array<int,string>,3:array<int,string>}>
 	 */
 	public function golden_queue_provider() {
-		return array(
+		$cases = array(
 			'task / quill' => array(
 				'task',
 				'quill',
@@ -647,6 +647,15 @@ class DeckerPublicAssetsGoldenTest extends Decker_Test_Base {
 				),
 			),
 		);
+		foreach ( $cases as $name => &$case ) {
+			if ( 'quill' === $case[1] ) {
+				$classic = $cases[ $case[0] . ' / classic' ];
+				$case[2] = $classic[2];
+				$case[3] = $classic[3];
+			}
+		}
+		unset( $case );
+		return $cases;
 	}
 
 	/**
