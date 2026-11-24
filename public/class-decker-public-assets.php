@@ -31,13 +31,9 @@ class Decker_Public_Assets {
 			return;
 		}
 
-		$options                       = get_option( 'decker_settings', array() );
-		$task_editor_type              = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
-		$use_quill_editor              = 'quill' === $task_editor_type;
+		$resources = $this->build_resource_list( $decker_page );
 
-		$resources = $this->build_resource_list( $decker_page, $use_quill_editor );
-
-		$localized_data = $this->build_localized_data( $task_editor_type, $use_quill_editor );
+		$localized_data = $this->build_localized_data();
 
 		$this->enqueue_resources( $resources );
 
@@ -53,13 +49,12 @@ class Decker_Public_Assets {
 	 * need, and finally the Decker modules that depend on everything above.
 	 *
 	 * @param string $decker_page      The current Decker page.
-	 * @param bool   $use_quill_editor Whether the Quill editor is in use.
 	 * @return array<int, string> Ordered list of asset URLs and core handles.
 	 */
-	private function build_resource_list( $decker_page, $use_quill_editor ) {
+	private function build_resource_list( $decker_page ) {
 		return array_merge(
 			$this->get_common_resources(),
-			$this->get_page_resources( $decker_page, $use_quill_editor ),
+			$this->get_page_resources( $decker_page ),
 			$this->get_footer_resources()
 		);
 	}
@@ -132,17 +127,10 @@ class Decker_Public_Assets {
 	 * (media library, classic editor) that have no URL of their own.
 	 *
 	 * @param string $decker_page      The current Decker page.
-	 * @param bool   $use_quill_editor Whether the Quill editor is in use.
 	 * @return array<int, string> Ordered list of asset URLs.
 	 */
-	private function get_page_resources( $decker_page, $use_quill_editor ) {
+	private function get_page_resources( $decker_page ) {
 		$resources = array();
-
-		if ( $use_quill_editor ) {
-			$resources[] = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.min.js';
-			$resources[] = 'https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.min.css';
-			$resources[] = 'https://cdn.jsdelivr.net/npm/quill-html-edit-button@3.0.0/dist/quill.htmlEditButton.min.js';
-		}
 
 		if ( 'board' == $decker_page ) {
 			// Dragula.
@@ -160,14 +148,9 @@ class Decker_Public_Assets {
 
 		}
 
-		if ( ! $use_quill_editor ) {
-			// Load the WordPress Classic Editor assets and media library for task descriptions when Quill is not selected.
-			wp_enqueue_editor();
-			wp_enqueue_media();
-
-			// Checklist support for the classic editor (Quill-compatible markup).
-			$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/tinymce-checklist.js';
-		}
+		wp_enqueue_editor();
+		wp_enqueue_media();
+		$resources[] = plugin_dir_url( __FILE__ ) . '../public/assets/js/tinymce-checklist.js';
 
 		if ( 'tasks' == $decker_page ) { // Only load datatables.net on tasks page.
 			// Datatables JS CDN.
@@ -273,11 +256,9 @@ class Decker_Public_Assets {
 	/**
 	 * Build the unified payload shared by the task scripts.
 	 *
-	 * @param string $task_editor_type Configured editor type.
-	 * @param bool   $use_quill_editor Whether Quill is the effective editor.
 	 * @return array<string, mixed> Localized data array.
 	 */
-	private function build_localized_data( $task_editor_type, $use_quill_editor ) {
+	private function build_localized_data() {
 		return array(
 			'ajax_url'               => admin_url( 'admin-ajax.php' ),
 			'home_url'               => home_url( '/' ),
@@ -291,10 +272,7 @@ class Decker_Public_Assets {
 			),
 			'strings'                => $this->get_ui_strings(),
 			'timeFormat24h'          => ( get_option( 'time_format' ) === 'H:i' ),
-			'disabled'               => isset( $disabled ) && $disabled ? true : false,
 			'current_user_id'        => get_current_user_id(),
-			'task_editor_type'       => $task_editor_type,
-			'use_quill_editor'       => $use_quill_editor,
 			'users'                  => $this->get_users_for_js(),
 			'locale'                 => substr( get_user_locale(), 0, 2 ), // Ej: "es_ES" → "es".
 			'taskPermalinkStructure' => get_option( 'permalink_structure' )
@@ -332,9 +310,6 @@ class Decker_Public_Assets {
 			'request_error'                 => __( 'Request error.', 'decker' ),
 			'error_saving_task'             => __( 'Error saving task.', 'decker' ),
 			'task_saved_success'            => __( 'The task has been saved successfully.', 'decker' ),
-			'show_html_source'              => __( 'Show HTML source', 'decker' ),
-			'edit_html_content'             => __( 'Edit the content in HTML format', 'decker' ),
-			'ok'                            => __( 'OK', 'decker' ),
 			'cancel'                        => __( 'Cancel', 'decker' ),
 			'yes_delete'                    => __( 'Yes, delete', 'decker' ),
 			// Additional strings (from first version).
@@ -378,7 +353,9 @@ class Decker_Public_Assets {
 			'task_url_copied'               => __( 'Task URL copied!', 'decker' ),
 			'task_url_copy_error'           => __( 'Could not copy URL. Please copy it manually:', 'decker' ),
 			'copy_task_url'                 => __( 'Copy Task URL', 'decker' ),
+			'toggle_checklist_item' => __( 'Toggle checklist item', 'decker' ),
 			'checklist'                     => __( 'Checklist', 'decker' ),
+			'source_code'                   => __( 'Source code', 'decker' ),
 			'loading_comments'              => __( 'Loading comments…', 'decker' ),
 			'no_comments'                   => __( 'No comments yet.', 'decker' ),
 			'comments_error'                => __( 'Could not load comments.', 'decker' ),

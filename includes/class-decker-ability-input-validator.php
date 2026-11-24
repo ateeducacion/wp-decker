@@ -148,6 +148,11 @@ class Decker_Ability_Input_Validator {
 	 * @return array<string, mixed>|WP_Error Validated state or error.
 	 */
 	private function normalize_and_validate_state( array $state ) {
+		$description = Decker_Task_Description::sanitize_task_description( (string) $state['description'] );
+		if ( is_wp_error( $description ) ) {
+			return $description;
+		}
+		$state['description'] = $description;
 		$state = $this->normalize_state( $state );
 
 		$validation = $this->validate_state( $state );

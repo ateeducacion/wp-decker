@@ -152,7 +152,6 @@ class Decker_Admin_Settings {
 			'alert_color'           => __( 'Alert Color', 'decker' ), // Alert color radio buttons.
 			'alert_message'         => __( 'Alert Message', 'decker' ), // Alert message field.
 			'minimum_user_profile'  => __( 'Minimum User Profile', 'decker' ), // User profile dropdown.
-			'task_editor_type'      => __( 'Task Editor Type', 'decker' ),
 			'shared_key'            => __( 'Shared Key', 'decker' ),
 			'allow_email_notifications' => __( 'Allow Email Notifications', 'decker' ),
 			'subtasks_enabled'      => __( 'Subtasks', 'decker' ),

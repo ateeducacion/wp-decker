@@ -119,6 +119,11 @@ class Decker {
 		 */
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-lock-presenter.php';
 		require_once plugin_dir_path( __DIR__ ) . 'includes/class-decker-task-locks.php';
+		require_once __DIR__ . '/class-decker-task-description-converter.php';
+		require_once __DIR__ . '/class-decker-task-description.php';
+		require_once __DIR__ . '/class-decker-task-description-backup.php';
+		require_once __DIR__ . '/class-decker-task-description-migration.php';
+		Decker_Task_Description::register();
 
 		/**
 		 * User-specific "For today" relation service.
@@ -366,86 +371,13 @@ class Decker {
 	}
 
 	/**
-	 * Retur the allowed only simple and safe HTML elements.
+	 * Return WordPress post-context HTML plus the stored checklist attribute.
 	 *
-	 * This function allows basic formatting tags such as paragraphs, bold, italics,
-	 * lists, tables, links, and spans with specific classes and data attributes.
-	 * It excludes potentially dangerous elements like images, embeds, iframes, and scripts.
-	 *
-	 * @return array The allowrd tags array.
+	 * @return array Allowed task description tags and attributes.
 	 */
 	public static function get_allowed_tags() {
-
-		// Define the allowed CSS tags.
-		$allowed_css_properties = array(
-			'background-color',
-			'color',
-			'font-size',
-			'font-family',
-			'font-weight',
-			'text-decoration',
-		);
-
-		// Define the allowed HTML tags and their permitted attributes.
-		$allowed_tags = array(
-			'p' => array(
-				'class' => array(),
-				'style' => $allowed_css_properties,
-			),
-			'br' => array(),
-			'strong' => array(),
-			'b' => array(),
-			'em' => array(),
-			's' => array(),
-			'u' => array(),
-			'ul' => array(),
-			'ol' => array(),
-			'li' => array(
-				'data-list' => array(),
-			),
-			'table' => array(
-				'style' => $allowed_css_properties,
-				'border' => array(),
-				'cellpadding' => array(),
-				'cellspacing' => array(),
-			),
-			'thead' => array(),
-			'tbody' => array(),
-			'tr' => array(),
-			'th' => array(
-				'style' => $allowed_css_properties,
-				'colspan' => array(),
-				'rowspan' => array(),
-			),
-			'td' => array(
-				'style' => $allowed_css_properties,
-				'colspan' => array(),
-				'rowspan' => array(),
-			),
-			'a' => array(
-				'href' => array(),
-				'title' => array(),
-				'target' => array(),
-				'rel' => array(),
-			),
-			'span' => array(
-				'class' => array(),
-				'style' => $allowed_css_properties,
-			),
-			'blockquote' => array(),
-			'code' => array(),
-			'pre' => array(),
-			'img' => array(
-				'src' => array(),
-				'alt' => array(),
-				'style' => $allowed_css_properties,
-				'width' => array(),
-				'height' => array(),
-			),
-			// Add more basic tags if needed.
-		);
-
-		// Return the defined allowed tags.
+		$allowed_tags = wp_kses_allowed_html( 'post' );
+		$allowed_tags['li']['data-list'] = true;
 		return $allowed_tags;
 	}
 

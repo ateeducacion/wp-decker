@@ -1,10 +1,8 @@
 /**
  * Decker checklist support for the WordPress classic (TinyMCE) task editor.
  *
- * Renders and edits checkable checklists using the exact markup Quill stores
- * (<li data-list="checked|unchecked">), so task descriptions stay compatible
- * with both editors during the transition period. There is no format
- * conversion: the editor DOM is exactly what gets saved.
+ * Stores checklist state on li[data-list="checked|unchecked"].
+ * Ordinary and nested lists keep independent states.
  *
  * The checkboxes themselves are drawn with CSS (::before glyphs) from the
  * content_style passed to the editor in task-card.js; this file only manages
@@ -28,10 +26,10 @@
 	 * Whether the given node is a checklist item.
 	 *
 	 * @param {Node} li Candidate node.
-	 * @return {boolean} True when it is an <li> with a data-list attribute.
+	 * @return {boolean} True only for a known checklist state.
 	 */
 	function isChecklistItem( li ) {
-		return !! ( li && 'LI' === li.nodeName && li.hasAttribute && li.hasAttribute( ATTR ) );
+		return !! ( li && 'LI' === li.nodeName && li.getAttribute && ( CHECKED === li.getAttribute( ATTR ) || UNCHECKED === li.getAttribute( ATTR ) ) );
 	}
 
 	/**
@@ -41,7 +39,7 @@
 	 * @return {boolean} True when any child is a checklist item.
 	 */
 	function listHasChecklist( list ) {
-		return !! ( list && list.querySelector( 'li[' + ATTR + ']' ) );
+		return !! ( list && Array.prototype.some.call( list.children, isChecklistItem ) );
 	}
 
 	/**
@@ -72,7 +70,7 @@
 			}
 			if ( enable ) {
 				// Preserve an existing checked state when re-enabling.
-				if ( ! li.hasAttribute( ATTR ) ) {
+				if ( ! isChecklistItem( li ) ) {
 					li.setAttribute( ATTR, UNCHECKED );
 				}
 			} else {
@@ -108,12 +106,18 @@
 	 * @param {Object} editor TinyMCE editor instance.
 	 */
 	function toggleChecklist( editor ) {
+		if ( ! canEdit( editor ) ) return;
+		if ( editor.selection.getEnd && editor.dom.getParent( editor.selection.getStart(), 'ul,ol' ) !== editor.dom.getParent( editor.selection.getEnd(), 'ul,ol' ) ) return;
 		editor.undoManager.transact( function() {
 			var list = editor.dom.getParent( editor.selection.getStart(), 'ul,ol' );
+			var existing = null;
 
 			// Outside a list: create one first.
 			if ( ! list ) {
-				editor.execCommand( 'InsertUnorderedList' );
+				existing = new Set(editor.getBody ? editor.getBody().querySelectorAll('li') : []);
+				editor.deckerCreatingChecklist = true;
+				try { editor.execCommand( 'InsertUnorderedList' ); }
+				finally { editor.deckerCreatingChecklist = false; }
 				list = editor.dom.getParent( editor.selection.getStart(), 'ul,ol' );
 			}
 
@@ -121,7 +125,23 @@
 				return;
 			}
 
-			setListChecklist( list, ! listHasChecklist( list ) );
+			var enable = existing ? true : ! listHasChecklist( list );
+			if ( enable && list.nodeName === 'OL' ) {
+				var ul = list.ownerDocument.createElement( 'ul' );
+				Array.prototype.forEach.call( list.attributes, function( attribute ) {
+					if ( [ 'start', 'type', 'reversed' ].indexOf( attribute.name ) === -1 ) ul.setAttribute( attribute.name, attribute.value );
+				} );
+				while ( list.firstChild ) ul.appendChild( list.firstChild );
+				list.parentNode.replaceChild( ul, list );
+				list = ul;
+			}
+			if (existing) {
+				Array.prototype.forEach.call(list.children, function(li) {
+					if (li.nodeName === 'LI' && !existing.has(li)) li.setAttribute(ATTR, UNCHECKED);
+				});
+			} else {
+				setListChecklist( list, enable );
+			}
 			notifyChange( editor );
 		} );
 	}
@@ -135,6 +155,7 @@
 	 * @param {Event}  event  The click event.
 	 */
 	function handleClick( editor, event ) {
+		if ( ! canEdit( editor ) ) return;
 		var li = event.target;
 
 		if ( ! isChecklistItem( li ) ) {
@@ -158,13 +179,24 @@
 	 *
 	 * @param {Object} editor TinyMCE editor instance.
 	 */
-	function handleEnter( editor ) {
+	function handleEnter( editor, previousItem ) {
+		if ( ! canEdit( editor ) ) return;
 		var li = getCaretListItem( editor );
 		var previous;
 
 		if ( ! li ) {
 			return;
 		}
+
+        if ( previousItem ) {
+            if (previousItem.items && previousItem.items.has(li)) return;
+            if ( li !== previousItem.node && isChecklistItem( previousItem.node ) ) {
+                li.setAttribute( ATTR, UNCHECKED );
+                previousItem.node.setAttribute( ATTR, previousItem.state );
+                notifyChange( editor );
+            }
+            return;
+        }
 
 		var isEmpty = '' === li.textContent.replace( /\u200B/g, '' ).trim();
 		if ( ! isEmpty ) {
@@ -193,6 +225,7 @@
 	 * @param {Object} event  The ExecCommand event.
 	 */
 	function handleExecCommand( editor, event ) {
+		if ( ! canEdit( editor ) || editor.deckerCreatingChecklist ) return;
 		if ( 'InsertUnorderedList' !== event.command && 'InsertOrderedList' !== event.command ) {
 			return;
 		}
@@ -201,6 +234,22 @@
 		if ( list && listHasChecklist( list ) ) {
 			setListChecklist( list, false );
 		}
+	}
+
+	/** Whether this editor currently permits mutations, including a lost lock. */
+	function canEdit( editor ) {
+		var body = editor.getBody && editor.getBody();
+		return !editor.readonly && !(editor.settings && editor.settings.readonly) &&
+			(!editor.getBody || (body && body.getAttribute('contenteditable') !== 'false'));
+	}
+
+	/** Keyboard/toolbar equivalent of clicking the current item's marker. */
+	function toggleCaretItem( editor ) {
+		if ( !canEdit(editor) ) return;
+		var li = getCaretListItem(editor);
+		if ( !isChecklistItem(li) ) return;
+		editor.undoManager.transact(function() { toggleItemState(li); });
+		notifyChange(editor);
 	}
 
 	/**
@@ -254,13 +303,52 @@
 			} );
 		}
 
+		var itemLabel = (window.deckerVars && window.deckerVars.strings && window.deckerVars.strings.toggle_checklist_item) || 'Toggle checklist item';
+		if (editor.addButton) {
+			editor.addButton('decker_check_item', {
+				text: '✓', icon: false, tooltip: itemLabel,
+				onclick: function() { toggleCaretItem(editor); },
+				onPostRender: function() {
+					var button = this;
+					editor.on('NodeChange', function() {
+						var li = getCaretListItem(editor);
+						var checked = isChecklistItem(li) && li.getAttribute(ATTR) === CHECKED;
+						button.active(checked);
+						button.disabled(!canEdit(editor) || !isChecklistItem(li));
+						button.getEl().setAttribute('aria-pressed', checked ? 'true' : 'false');
+					});
+				}
+			});
+		}
+		if (editor.addShortcut) {
+			editor.addShortcut('meta+shift+32', itemLabel, function() { toggleCaretItem(editor); });
+		}
+		var beforeEnter = null;
+		editor.on('BeforeAddUndo', function(event) {
+			if (beforeEnter && getCaretListItem(editor) !== beforeEnter.node) {
+				handleEnter(editor, beforeEnter);
+				// Core captures the split before keyup: include the new pending state.
+				event.level.content = editor.getContent({format: 'raw'});
+			}
+		});
+		editor.on('keydown', function(event) {
+			beforeEnter = null;
+			if (event.keyCode === 13 && !event.shiftKey && canEdit(editor)) {
+				var li = getCaretListItem(editor);
+				if (isChecklistItem(li)) beforeEnter = {node: li, state: li.getAttribute(ATTR), items: editor.getBody ? new Set(editor.getBody().querySelectorAll('li')) : null};
+			}
+		}, true);
+		editor.on('input', function() {
+			if (beforeEnter) handleEnter(editor, beforeEnter);
+		});
 		editor.on( 'click', function( event ) {
 			handleClick( editor, event );
 		} );
 
 		editor.on( 'keyup', function( event ) {
 			if ( 13 === event.keyCode ) {
-				handleEnter( editor );
+				handleEnter( editor, beforeEnter );
+				beforeEnter = null;
 			}
 		} );
 

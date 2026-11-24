@@ -85,7 +85,7 @@ class Decker_Email_To_Post {
 		// Prefer HTML part.
 		$html_part = $message->getHtmlPart();
 		if ( $html_part ) {
-			return wp_kses_post( $html_part->getContent() );
+			return wp_kses( $html_part->getContent(), Decker::get_allowed_tags() );
 		}
 
 		// Fall back to plain text part.
@@ -103,7 +103,7 @@ class Decker_Email_To_Post {
 			if ( str_starts_with( strtolower( $content_type ), 'text/plain' ) ) {
 				return wp_kses_post( nl2br( esc_html( $content ) ) );
 			}
-			return wp_kses_post( $content );
+			return wp_kses( $content, Decker::get_allowed_tags() );
 		}
 
 		return '';

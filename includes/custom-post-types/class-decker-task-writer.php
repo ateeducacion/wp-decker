@@ -46,6 +46,9 @@ class Decker_Task_Writer {
 	 * @return int|WP_Error The ID of the created or updated task on success, or a WP_Error object on failure.
 	 */
 	public static function create_or_update_task( array $args ) {
+		if ( ! Decker_Task_Description::is_ready() ) {
+			return new WP_Error( 'decker_description_migration_required', __( 'Task descriptions must be backed up and migrated before editing.', 'decker' ) );
+		}
 		$defaults = array(
 			'id'                => 0,
 			'title'             => '',
@@ -68,6 +71,10 @@ class Decker_Task_Writer {
 		$id                = (int) $args['id'];
 		$title             = (string) $args['title'];
 		$description       = (string) $args['description'];
+		$description = Decker_Task_Description::sanitize_task_description( $description );
+		if ( is_wp_error( $description ) ) {
+			return $description;
+		}
 		$stack             = (string) $args['stack'];
 		$board             = (int) $args['board'];
 		$max_priority      = (bool) $args['max_priority'];
@@ -297,7 +304,10 @@ class Decker_Task_Writer {
 
 				   // Update the existing post.
 		$post_data['ID'] = $id;
-		$task_id         = wp_update_post( $post_data );
+		$task_id         = wp_update_post( wp_slash( $post_data ), true );
+		if ( is_wp_error( $task_id ) || ! $task_id ) {
+			return is_wp_error( $task_id ) ? $task_id : new WP_Error( 'decker_task_write_failed', __( 'The task could not be saved.', 'decker' ) );
+		}
 
 		// Check if the stack value has changed.
 		if ( ! is_wp_error( $task_id ) && $source_stack != $stack ) {
@@ -334,7 +344,10 @@ class Decker_Task_Writer {
 	 */
 	private static function insert_new_task( array $post_data ) {
 		// Create a new post.
-		$task_id = wp_insert_post( $post_data );
+		$task_id = wp_insert_post( wp_slash( $post_data ), true );
+		if ( is_wp_error( $task_id ) || ! $task_id ) {
+			return is_wp_error( $task_id ) ? $task_id : new WP_Error( 'decker_task_write_failed', __( 'The task could not be saved.', 'decker' ) );
+		}
 
 		// Trigger a hook after a new task has been created.
 		do_action( 'decker_task_created', $task_id );

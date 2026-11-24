@@ -72,6 +72,16 @@ class Decker_Task_Ajax_Save {
 
 		// Retrieve and sanitize form data.
 		$core    = $this->reader->read_task_core_fields();
+		if ( is_wp_error( $core ) ) {
+			return $this->fail_save(
+				array(
+					'message' => $core->get_error_message(),
+					'code' => $core->get_error_code(),
+				),
+				$send_response,
+				400
+			);
+		}
 		$options = $this->reader->read_task_option_fields();
 
 		// Enforce the edit lock server-side before applying changes to an

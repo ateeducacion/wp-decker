@@ -132,6 +132,9 @@ test.describe( 'Task edit locking', () => {
 		// User B cannot edit or save.
 		await expect( b.page.locator( '#task-title' ) ).toBeDisabled();
 		await expect( b.page.locator( '#save-task' ) ).toBeDisabled();
+		await b.page.waitForFunction( () => window.tinymce?.get( 'task-description' )?.initialized );
+		expect( await b.page.evaluate( () => tinymce.get( 'task-description' ).getBody().getAttribute( 'contenteditable' ) ) ).toBe( 'false' );
+		await expect( b.page.locator( '.insert-media:enabled, .quicktags-toolbar input:enabled' ) ).toHaveCount( 0 );
 
 		// User B explicitly takes over.
 		await b.page.locator( '.decker-take-over-lock' ).click();
@@ -220,6 +223,8 @@ test.describe( 'Task edit locking', () => {
 		await expect(
 			a.page.locator( '[data-decker-lock-lost]' )
 		).toBeVisible( { timeout: 10000 } );
+		expect( await a.page.evaluate( () => tinymce.get( 'task-description' ).getBody().getAttribute( 'contenteditable' ) ) ).toBe( 'false' );
+		await expect( a.page.locator( '.insert-media:enabled, .quicktags-toolbar input:enabled' ) ).toHaveCount( 0 );
 
 		// The final stored title is user B's value.
 		const final = await loginAs( browser, baseURL, USER_B );

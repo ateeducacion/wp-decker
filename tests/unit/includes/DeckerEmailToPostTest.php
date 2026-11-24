@@ -49,6 +49,20 @@ class DeckerEmailToPostTest extends Decker_Test_Base {
 		$this->board_id = self::factory()->board->create();
 	}
 
+	public function test_html_email_preserves_checklist_states_before_the_writer() {
+		update_user_meta( $this->user_id, 'decker_default_board', $this->board_id );
+		$html = '<h2>Heading</h2><hr><ul><li data-list="checked"><strong>Done</strong></li><li data-list="unchecked"><br></li></ul>';
+		$email = "From: test@example.com\r\nTo: decker@example.com\r\nSubject: Checklist email\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n" . $html;
+		$request = new WP_REST_Request( 'POST', $this->endpoint );
+		$request->add_header( 'Authorization', 'Bearer ' . $this->shared_key );
+		$request->add_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( array( 'rawEmail' => base64_encode( $email ), 'metadata' => array( 'from' => 'test@example.com', 'to' => 'decker@example.com', 'subject' => 'Checklist email', 'cc' => array(), 'bcc' => array() ) ) ) );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertSame( 200, $response->get_status() );
+		$content = get_post( $response->get_data()['task_id'] )->post_content;
+		$this->assertSame( wp_kses( $html, Decker::get_allowed_tags() ), $content );
+	}
+
 	public function test_endpoint_requires_authorization() {
 		$request  = new WP_REST_Request( 'POST', $this->endpoint );
 		$response = rest_get_server()->dispatch( $request );

@@ -18286,66 +18286,7 @@ span.flatpickr-weekday,
 }
 
 
-.ql-editor {
-  text-align: left;
-}
 
-.ql-editor ol,
-.ql-editor ul {
-  padding-left: 1.5em;
-  padding-right: 0;
-}
-
-.ql-editor li:not(.ql-direction-rtl)::before {
-  margin-left: -1.5em;
-  margin-right: 0.3em;
-  text-align: right;
-}
-
-
-.ql-container {
-  font-family: var(--ct-font-sans-serif);
-}
-
-.ql-container.ql-snow {
-  border-color: var(--ct-border-color);
-  border-radius: 0 0 0.25rem 0.25rem;
-}
-
-
-.ql-bubble {
-  border: var(--ct-border-width) solid var(--ct-border-color);
-  border-radius: 0.25rem;
-}
-
-
-.ql-toolbar {
-  font-family: var(--ct-font-sans-serif) !important;
-}
-
-.ql-toolbar span {
-  outline: none !important;
-  color: var(--ct-body-color);
-}
-
-.ql-toolbar span:hover {
-  color: #3e60d5 !important;
-}
-
-.ql-toolbar.ql-snow {
-  border-radius: 0.25rem 0.25rem 0 0;
-  border-color: var(--ct-border-color);
-}
-
-.ql-toolbar.ql-snow .ql-picker.ql-expanded .ql-picker-label {
-  border-color: transparent;
-}
-
-.ql-toolbar.ql-snow .ql-picker-options {
-  -webkit-box-shadow: var(--ct-box-shadow);
-          box-shadow: var(--ct-box-shadow);
-  border-radius: 0.375rem;
-}
 
 
 .ql-snow .ql-stroke,

@@ -91,7 +91,8 @@ if ( empty( $board_slug ) && isset( $_GET['slug'] ) ) {
 	$board_slug = sanitize_text_field( wp_unslash( $_GET['slug'] ) );
 }
 
-$disabled = false;
+$description_migration_pending = ! Decker_Task_Description::is_ready();
+$disabled = $description_migration_pending;
 if ( $task_id && 'archived' == $task->status ) {
 	$disabled = true;
 }
@@ -140,7 +141,7 @@ require_once __DIR__ . '/partials/task-comments.php';
 ?>
 
 <!-- Task card -->
-<form id="task-form" class="needs-validation" target="_self" novalidate data-task-id="<?php echo esc_attr( $task_id ); ?>" data-lock="<?php echo esc_attr( wp_json_encode( $lock_info ) ); ?>">
+<form id="task-form" data-readonly="<?php echo $disabled ? '1' : '0'; ?>" data-archived="<?php echo $task_id && 'archived' === get_post_status( $task_id ) ? '1' : '0'; ?>" class="needs-validation" target="_self" novalidate data-task-id="<?php echo esc_attr( $task_id ); ?>" data-lock="<?php echo esc_attr( wp_json_encode( $lock_info ) ); ?>">
 	<input type="hidden" name="action" value="save_decker_task">
 	<input type="hidden" name="task_id" value="<?php echo esc_attr( $task_id ); ?>">
 
@@ -408,21 +409,12 @@ require_once __DIR__ . '/partials/task-comments.php';
 	</ul>
 
 	<div class="tab-content">
-		<?php
-		$options                        = get_option( 'decker_settings', array() );
-		$task_editor_type               = isset( $options['task_editor_type'] ) ? $options['task_editor_type'] : 'quill';
-		$use_quill_editor              = 'quill' === $task_editor_type;
-		?>
-
 		<!-- Description -->
 		<div class="tab-pane show active" id="description-tab">
-			<?php if ( $use_quill_editor ) : ?>
-				<div id="editor-container">
-					<div id="editor" style="height: 200px;"><?php echo wp_kses( $task_id ? $task->description : $initial_description, Decker::get_allowed_tags() ); ?></div>
-				</div>
-			<?php else : ?>
-				<textarea name="description" id="task-description" rows="12" class="form-control"><?php echo esc_textarea( $task_id ? $task->description : $initial_description ); ?></textarea>
+			<?php if ( $description_migration_pending ) : ?>
+				<p class="alert alert-warning"><?php esc_html_e( 'Task descriptions must be backed up and migrated before editing. Ask an administrator to run wp decker migrate-descriptions.', 'decker' ); ?></p>
 			<?php endif; ?>
+			<textarea name="description" id="task-description" rows="12" class="form-control" <?php wp_readonly( $disabled ); ?>><?php echo esc_textarea( $task_id ? $task->description : $initial_description ); ?></textarea>
 		</div>
 
 		<?php if ( $subtasks_enabled ) : ?>

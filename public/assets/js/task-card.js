@@ -9,7 +9,7 @@
     const homeUrl = deckerVars.home_url;
     const nonces = deckerVars.nonces;
     const strings = deckerVars.strings;
-    const disabled = deckerVars.disabled;
+    let disabled = false;
     const userId = deckerVars.current_user_id;
 
     // Global variable to indicate if there are unsaved changes
@@ -23,7 +23,6 @@
     // is rotating the generation on the server.
     let taskSaveInFlight = false;
 
-    let quill = null;
     let taskEditor = null;
 
     let assigneesSelect = null;
@@ -107,9 +106,6 @@
         }
         if (labelsSelect) {
             labelsSelect.disable();
-        }
-        if (quill) {
-            quill.disable();
         }
         if (taskEditor && typeof taskEditor.setMode === 'function') {
             taskEditor.setMode('readonly');
@@ -746,7 +742,7 @@
 
     /**
      * Initialize the WordPress classic (TinyMCE) editor for the task
-     * description when Quill is not in use.
+     * description.
      *
      * @param {HTMLElement} context The container element holding the task form.
      * @return {Promise} Resolves once the editor is ready.
@@ -763,20 +759,22 @@
         }
 
         return new Promise((resolve) => {
-            // Quicktags buttons modify the textarea programmatically and fire
-            // 'change' even when it is read-only or disabled, so dirty tracking
-            // must re-check the field state at event time (covers cards that
-            // are read-only from the start and locks applied while editing).
+            const session = { cancelled: false, ready: false, resolve };
+            textarea.deckerEditorSession = session;
+            // Programmatic textarea changes can fire 'change' even when it is
+            // read-only or disabled, so dirty tracking re-checks the field state
+            // at event time (covers cards that are read-only from the start and
+            // locks applied while editing).
             const markDirty = () => {
-                if (textarea.disabled || textarea.readOnly) {
+                if ((session.cancelled && !session.failed) || !textarea.isConnected || textarea.disabled || textarea.readOnly) {
                     return;
                 }
                 enterDirtyEditMode(context);
             };
             const debouncedMarkDirty = debounce(markDirty, 150);
 
-            // Quicktags (Text tab) edits bypass TinyMCE events entirely; track
-            // the textarea directly so they still mark the card dirty.
+            // If TinyMCE fails to start, the plain textarea is the editor; track
+            // it directly so those edits still mark the card dirty.
             textarea.addEventListener('input', debouncedMarkDirty);
             textarea.addEventListener('change', debouncedMarkDirty);
             if (readOnly) {
@@ -785,48 +783,128 @@
 
             const config = {
                 tinymce: {
-                    wpautop: true,
+                    // Descriptions already store HTML; autop loses attributed empty paragraphs.
+                    wpautop: false,
                     container: 'description-tab',
-                    // Locked or archived cards must not be editable, matching
-                    // the Quill readOnly behavior.
+                    // Locked or archived cards must not be editable.
                     readonly: readOnly ? true : false,
-                    toolbar1: 'formatselect bold italic link bullist numlist decker_checklist blockquote alignleft aligncenter alignright wp_adv fullscreen',
-                    toolbar2: 'strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
+                    // Compact like the former Quill editor: block format on the
+                    // second row, HTML source in a dialog instead of a Text tab.
+                    toolbar1: 'bold italic link bullist numlist decker_checklist decker_check_item blockquote alignleft aligncenter alignright decker_source wp_adv fullscreen',
+                    toolbar2: 'formatselect strikethrough hr forecolor pastetext removeformat charmap outdent indent undo redo wp_help',
                     menubar: false,
-                    // Keep Quill's checklist markup (li[data-list]) intact through
-                    // TinyMCE's schema so both editors share the same stored format.
-                    extended_valid_elements: 'li[data-list|value|class|style]',
+                    statusbar: false,
+                    // Grow with the content (bundled wpautoresize plugin).
+                    wp_autoresize_on: true,
+                    autoresize_min_height: 200,
+                    // Keep the native padding rule too: empty items must survive serialization.
+                    extended_valid_elements: '#li[data-list|value|class|style|id|dir|title|lang]',
                     // Draw the checkboxes for checklist items; state handling lives
                     // in tinymce-checklist.js (DeckerChecklist).
-                    content_style: 'li[data-list]{list-style:none;position:relative;padding-left:1.7em;}' +
-                        'li[data-list]::before{content:"\\2610";position:absolute;left:0;top:0;width:1.4em;cursor:pointer;}' +
+                    // The editor is an iframe: load the page font (Figtree, as
+                    // attex.css does) and match the former Quill text metrics.
+                    content_style: '@import url("https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&display=swap");' +
+                        'body{font-family:"Figtree",sans-serif;font-size:13px;line-height:1.42;color:#6c757d;}p{margin:0;}' +
+                        'li[data-list=checked],li[data-list=unchecked]{list-style:none;position:relative;padding-left:1.7em;}' +
+                        'li[data-list=checked]::before,li[data-list=unchecked]::before{content:"\\2610";position:absolute;left:0;top:0;width:1.4em;cursor:pointer;}' +
                         'li[data-list="checked"]::before{content:"\\2611";}',
                     setup: function(editor) {
+                        if (session.cancelled || !textarea.isConnected) {
+                            editor.on('init', () => { editor.remove(); resolve(); });
+                            return;
+                        }
                         taskEditor = editor;
                         if (window.DeckerChecklist) {
                             window.DeckerChecklist.attach(editor);
                         }
+                        // Edit the description HTML in a dialog, like Quill's "<>".
+                        const sourceLabel = (window.deckerVars && window.deckerVars.strings && window.deckerVars.strings.source_code) || 'Source code';
+                        editor.addButton('decker_source', {
+                            icon: 'code',
+                            tooltip: sourceLabel,
+                            onclick: function() {
+                                editor.windowManager.open({
+                                    title: sourceLabel,
+                                    body: [{
+                                        type: 'textbox',
+                                        name: 'html',
+                                        multiline: true,
+                                        classes: 'decker-source',
+                                        minWidth: Math.min(760, window.innerWidth - 80),
+                                        minHeight: Math.min(420, window.innerHeight - 200),
+                                        value: editor.getContent()
+                                    }],
+                                    onsubmit: function(event) {
+                                        editor.undoManager.transact(function() {
+                                            editor.setContent(event.data.html);
+                                        });
+                                        editor.nodeChanged();
+                                        editor.fire('change');
+                                    }
+                                });
+                            }
+                        });
                         editor.on('init', function() {
                             // Use the local reference: taskEditor may already be
                             // null if the modal was closed before init fired.
+                            if (session.cancelled || !textarea.isConnected || textarea.deckerEditorSession !== session) {
+                                if (typeof editor.remove === 'function') editor.remove();
+                                resolve();
+                                return;
+                            }
                             editor.initialized = true;
+                            session.ready = true;
+                            if (textarea.disabled || textarea.readOnly) {
+                                if (typeof editor.setMode === 'function') editor.setMode('readonly');
+                                disableEditingControls(context);
+                            }
                             resolve();
+                        });
+                        // WordPress positions the inline link field in the page,
+                        // assuming the page scrolls; inside the modal it can land
+                        // past the viewport edge, and focusing it then scrolls and
+                        // closes it. Make room by scrolling the modal first.
+                        editor.on('BeforeExecCommand', function(event) {
+                            const modal = textarea.closest('.modal');
+                            if (!modal || event.command !== 'WP_Link' || !editor.iframeElement) {
+                                return;
+                            }
+                            const node = editor.selection.getNode();
+                            const bottom = editor.iframeElement.getBoundingClientRect().top + node.getBoundingClientRect().bottom;
+                            // Link field height plus its arrow and a margin.
+                            const overflow = bottom + 90 - window.innerHeight;
+                            if (overflow > 0) {
+                                modal.scrollTop += overflow;
+                            }
                         });
                         // Only genuine user edits switch the card into dirty mode;
                         // the initial content load (SetContent during init) is
                         // intentionally excluded so opening a card stays pristine.
-                        editor.on('input keyup change ExecCommand', function() {
-                            debouncedMarkDirty();
+                        editor.on('input keyup change', debouncedMarkDirty);
+                        // Toolbar commands that only change the interface
+                        // (fullscreen, toolbar toggle, help) must not leave the
+                        // pristine "For today" quick-action mode.
+                        editor.on('ExecCommand', function(event) {
+                            if (!['mceFullScreen', 'WP_Adv', 'WP_Help'].includes(event && event.command)) {
+                                debouncedMarkDirty();
+                            }
                         });
                     }
                 },
-                // No Text tab or media buttons on read-only cards: Quicktags
-                // edits the textarea programmatically, bypassing readOnly.
-                quicktags: !readOnly,
-                mediaButtons: !readOnly
+                // No Text/Visual tabs (the source dialog replaces them) and no
+                // media button: attachments have their own tab.
+                quicktags: false,
+                mediaButtons: false
             };
 
-            wp.editor.initialize('task-description', config);
+            try {
+                wp.editor.initialize('task-description', config);
+            } catch (error) {
+                session.cancelled = true;
+                session.failed = true; // Keep dirty tracking for the plain Text fallback.
+                resolve();
+                console.error('Task editor initialization failed', error);
+            }
         });
     }
 
@@ -837,9 +915,6 @@
      * @return {string} The description HTML.
      */
     function getTaskDescription(context) {
-        if (context.querySelector('#editor') && quill) {
-            return quill.root.innerHTML;
-        }
 
         // wp.editor.getContent() syncs TinyMCE into the textarea when the
         // Visual tab is active and always returns the textarea value, so
@@ -853,15 +928,8 @@
             return wp.editor.getContent('task-description');
         }
 
-        if (taskEditor && typeof taskEditor.getContent === 'function') {
+        if (taskEditor && typeof taskEditor.isHidden === 'function' && !taskEditor.isHidden()) {
             return taskEditor.getContent();
-        }
-
-        if (typeof tinyMCE !== 'undefined') {
-            const activeEditor = tinyMCE.get('task-description');
-            if (activeEditor) {
-                return activeEditor.getContent();
-            }
         }
 
         const textarea = context.querySelector('#task-description');
@@ -870,9 +938,15 @@
 
     /**
      * Destroy the active classic editor instance so the card can be
-     * reinitialized cleanly. Quill teardown is handled separately.
+     * reinitialized cleanly.
      */
     function destroyTaskEditor() {
+        const textarea = document.getElementById('task-description');
+        if (textarea?.deckerEditorSession) {
+            textarea.deckerEditorSession.cancelled = true;
+            textarea.deckerEditorSession.failed = false;
+            textarea.deckerEditorSession.resolve();
+        }
         // Remove any instance bound to the textarea even if 'init' has not
         // fired yet (fast modal open/close), so no orphan editor survives.
         // wp.editor.remove() is a safe no-op when nothing was initialized.
@@ -893,6 +967,8 @@
         // Read the server-provided edit-lock state for this card.
         const lockState = readTaskLockState(context);
         const lockedByOther = !!(lockState && lockState.locked);
+        const taskForm = context.querySelector('#task-form');
+        disabled = taskForm?.dataset.archived === '1';
 
         new Tablesort(context.querySelector('#user-history-table'));
 
@@ -905,62 +981,9 @@
             console.log('Task ID not found in data-task-id');
         }
 
-        // When Quill is not selected, the card renders a classic-editor textarea
-        // instead of the #editor container. Initialize it here, honoring the
-        // same read-only conditions as the Quill editor.
+        // Initialize the classic editor with the current card’s read-only state.
         if (context.querySelector('#task-description')) {
-            initializeTaskEditor(context, disabled || lockedByOther);
-        }
-
-        if (context.querySelector('#editor')) {
-            // Register modules only once
-            if (quill === null) {
-                // Register the HTML Edit Button module
-                Quill.register('modules/htmlEditButton', htmlEditButton);
-
-            }
-
-            // Build modules configuration
-            const quillModules = {
-                toolbar: {
-                    container: [
-                        ['bold', 'italic', 'underline', 'strike'],
-                        ['link', 'blockquote', 'code-block'],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
-                        [{ 'indent': '-1' }, { 'indent': '+1' }],
-                        ['clean'],
-                        ['fullscreen'],
-                    ],
-                    handlers: {
-                        'fullscreen': function() {
-                            var editorContainer = context.querySelector('#editor-container');
-                            if (!document.fullscreenElement) {
-                                editorContainer.requestFullscreen().catch(err => {
-                                    alert('Error attempting to enable full-screen mode: ' + err.message);
-                                });
-                            } else {
-                                document.exitFullscreen();
-                            }
-                        }
-                    }
-                },
-                htmlEditButton: {
-                    syntax: false,
-                    buttonTitle: strings.show_html_source,
-                    msg: strings.edit_html_content,
-                    okText: strings.ok,
-                    cancelText: strings.cancel,
-                    closeOnClickOverlay: false,
-                },
-            };
-
-            quill = new Quill(context.querySelector('#editor'), {
-                theme: 'snow',
-                readOnly: disabled || lockedByOther,
-                modules: quillModules
-            });
-
-
+            initializeTaskEditor(context, disabled || lockedByOther || taskForm?.dataset.readonly === '1');
         }
 
         // Initialize Choices.js for assignee and label selectors
@@ -1128,16 +1151,6 @@
         var taskMaxPriorityCheck = context.querySelector('#task-max-priority');
         if (taskMaxPriorityCheck) {
             togglePriorityLabel(taskMaxPriorityCheck);
-        }
-
-        // For the Quill editor
-        if (quill) {
-            quill.on('text-change', function(delta, oldDelta, source) {
-                // Programmatic editor updates must not mark the form dirty.
-                if (source === 'user') {
-                    enterDirtyEditMode(context);
-                }
-            });
         }
 
         // For the Choices.js selectors
@@ -1604,6 +1617,13 @@
     window.deleteComment = deleteComment;
     window.destroyTaskEditor = destroyTaskEditor;
     window.togglePriorityLabel = togglePriorityLabel;
+
+    window.addEventListener('beforeunload', function(event) {
+        if (window.deckerHasUnsavedChanges) {
+            event.preventDefault();
+            event.returnValue = '';
+        }
+    });
 
     // Automatically initialize if the content is loaded directly on the page
     document.addEventListener('DOMContentLoaded', function() {
